@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+	<!--
+		Test the extension point with an observer exiting the
+		simulation if Eclipse closes. 
+	-->
+   <extension
+         point="de.tuilmenau.ics.fog.simulation">
+         <observer
+         	class="de.tuilmenau.ics.fog.eclipse.launcher.ui.EclipseExitObserver">
+         </observer>
+   </extension>
+
+	<!--
+		Extension for the GUI in order to have a dialog for the defined
+		delegate. 
+	-->
+	<extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+	    <launchConfigurationTabGroup
+	        type="de.tuilmenau.ics.fog.launcher"
+	        class="de.tuilmenau.ics.fog.eclipse.launcher.ui.FoGLaunchTabGroup"
+	        id="de.tuilmenau.ics.fog.launcher.launching.FoGLaunchTabGroup">
+	    </launchConfigurationTabGroup>
+	</extension>
+
+	<!--
+		Extension for having a short cut for launching simulations.
+		Is shown for every object. 
+	-->
+	<extension point="org.eclipse.debug.ui.launchShortcuts">
+	    <shortcut
+		   id="de.tuilmenau.ics.fog.launcher.ui.FoGLaunchShortcut"
+		   class="de.tuilmenau.ics.fog.eclipse.launcher.ui.FoGLaunchShortcut"
+		   label="FoG Simulation"
+		   icon="icons/de.tuilmenau.ics.fog.eclipse.launcher.launching.gif"
+		   modes="run">
+			<contextualLaunch>
+				<enablement>
+					<instanceof value="java.lang.Object"/>
+				</enablement>
+			</contextualLaunch>
+			<configurationType
+			   id="de.tuilmenau.ics.fog.launcher">
+			</configurationType>
+			<description
+			   description="Launch a FoG simulation"
+			   mode="run">
+			</description>
+		</shortcut>
+	</extension>
+
+	<!--
+		Extension for displaying an icon for the simulation startup. 
+	-->
+	<extension point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+	    <launchConfigurationTypeImage
+	        icon="icons/de.tuilmenau.ics.fog.eclipse.launcher.launching.gif"
+	        configTypeID="de.tuilmenau.ics.fog.launcher"
+	        id="de.tuilmenau.ics.fog.launcher.launching.typeImage">
+	    </launchConfigurationTypeImage>
+	</extension>
+</plugin>
