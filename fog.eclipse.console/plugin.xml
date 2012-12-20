@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="de.tuilmenau.ics.fog.simulation">
+      <observer
+            class="de.tuilmenau.ics.fog.eclipse.console.SimulationConsoleCreator">
+      </observer>
+   </extension>
+
+   <extension
+         point="de.tuilmenau.ics.fog.hostApplications">
+      <plugin
+            name="Open console"
+            class="de.tuilmenau.ics.fog.app.console.ConsoleApp"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+
+      <plugin
+            name="Open logger"
+            class="de.tuilmenau.ics.fog.eclipse.console.OpenLoggerCommand"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+      <plugin
+            name="Open logger"
+            class="de.tuilmenau.ics.fog.eclipse.console.OpenLoggerCommand"
+            filter="de.tuilmenau.ics.fog.topology.Bus">
+      </plugin>
+      <plugin
+            name="Open logger"
+            class="de.tuilmenau.ics.fog.eclipse.console.OpenLoggerCommand"
+            filter="de.tuilmenau.ics.fog.topology.AutonomousSystem">
+      </plugin>
+   </extension>
+</plugin>
