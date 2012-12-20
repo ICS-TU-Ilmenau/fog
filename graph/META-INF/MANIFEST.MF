@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Graph implementation
+Bundle-SymbolicName: de.tuilmenau.ics.graph;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: ICS group of TU Ilmenau
+Bundle-License: Dual-license EPL and GPL 2 (details see about.html)
+Bundle-ClassPath: .
+Export-Package: de.tuilmenau.ics.graph
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: edu.uci.ics.jung.graph,
+ edu.uci.ics.jung.algorithms.shortestpath,
+ edu.uci.ics.jung.graph.util,
+ org.apache.commons.collections15
