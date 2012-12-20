@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoG simulator launcher for Eclipse
+Bundle-SymbolicName: de.tuilmenau.ics.fog.launcher;singleton:=true
+Bundle-Version: 1.0.2.qualifier
+Require-Bundle: de.tuilmenau.ics.fog;bundle-version="1.0.2",
+ de.tuilmenau.ics.fog.importer;bundle-version="1.0.2"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.tuilmenau.ics.fog.launcher
+Bundle-Vendor: ICS group of TU Ilmenau
+Import-Package: de.tuilmenau.ics.extensionpoint
