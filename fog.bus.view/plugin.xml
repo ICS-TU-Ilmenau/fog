@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.views">
+	  <category 
+           id="de.tuilmenau.ics.fog.views"
+           name="Forwarding on Gates">
+      </category>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="de.tuilmenau.ics.fog.bus.view.BusEditor"
+            icon="icons/de.tuilmenau.ics.fog.bus.view.BusEditor.gif"
+            id="de.tuilmenau.ics.fog.bus.view.BusEditor"
+            name="Bus Editor">
+      </editor>
+   </extension>
+   
+   <extension
+         point="de.tuilmenau.ics.fog.hostApplications">
+      <editor
+            name="Open"
+            editorID="de.tuilmenau.ics.fog.bus.view.BusEditor"
+            filter="de.tuilmenau.ics.fog.bus.Bus"
+            default="true">
+      </editor>
+
+      <plugin
+            name="Toggle broken flag"
+            class="de.tuilmenau.ics.fog.eclipse.commands.ToggleBrokenFlag"
+            filter="de.tuilmenau.ics.fog.bus.Bus">
+      </plugin>
+   </extension>
+
+	<extension
+         point="org.eclipse.core.runtime.adapters">
+
+      <factory
+            adaptableType="de.tuilmenau.ics.fog.bus.Bus"
+            class="de.tuilmenau.ics.fog.bus.view.PropertyAdapterFactory">
+         <adapter
+               type="org.eclipse.ui.views.properties.IPropertySource">
+         </adapter>
+      </factory>
+	</extension>
+
+</plugin>
