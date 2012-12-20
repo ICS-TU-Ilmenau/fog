@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+	<!--
+		Extension for the type of launch. This delegate is able to startup
+		a simulation based on the given parameters. 
+	-->
+	<extension point="org.eclipse.debug.core.launchConfigurationTypes">
+		<launchConfigurationType
+		    name="Forwarding on Gates Simulation"
+		    delegate="de.tuilmenau.ics.fog.eclipse.launcher.FoGLaunchConfigurationDelegate"
+		    modes="run"
+		    id="de.tuilmenau.ics.fog.launcher">        
+		</launchConfigurationType>
+	</extension>
+	
+   <!--
+       Extension for the simulation observer extension point for
+       restarting a simulation after the first one finised.
+   -->
+   <extension point="de.tuilmenau.ics.fog.simulation">
+         <observer
+         	class="de.tuilmenau.ics.fog.eclipse.launcher.RestartSimulationObserver">
+         </observer>
+   </extension>
+	
+</plugin>

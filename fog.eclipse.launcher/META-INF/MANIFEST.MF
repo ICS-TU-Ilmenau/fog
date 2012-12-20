@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoG simulator launcher for Eclipse
+Bundle-SymbolicName: de.tuilmenau.ics.fog.eclipse.launcher;singleton:=true
+Bundle-Version: 1.0.2.qualifier
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.debug.core;bundle-version="3.5.0",
+ de.tuilmenau.ics.fog;bundle-version="1.0.2"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.tuilmenau.ics.fog.eclipse.launcher
+Bundle-Activator: de.tuilmenau.ics.fog.eclipse.launcher.OsgiActivator
+Bundle-Vendor: ICS group of TU Ilmenau
+Import-Package: de.tuilmenau.ics.fog.launcher
