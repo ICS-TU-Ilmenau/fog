@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoG scenario importer
+Bundle-SymbolicName: de.tuilmenau.ics.fog.importer;singleton:=true
+Bundle-Version: 1.0.2.qualifier
+Bundle-Vendor: ICS group of TU Ilmenau
+Bundle-License: Dual-license EPL and GPL 2 (details see about.html)
+Require-Bundle: DatastreamBasePlugIn;bundle-version="1.0.0",
+ de.tuilmenau.ics.fog;bundle-version="1.0.2",
+ edu.uci.ics.jung;bundle-version="1.0.0",
+ de.tuilmenau.ics.extensionpoint;bundle-version="1.0.2"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.tuilmenau.ics.fog.importer
+Import-Package: au.com.bytecode.opencsv,
+ de.tuilmenau.ics.middleware

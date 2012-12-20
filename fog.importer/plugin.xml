@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="de.tuilmenau.ics.fog.importer" name="Importing scenarios" schema="schema/de.tuilmenau.ics.fog.importer.exsd"/>
+   
+   <extension
+         point="de.tuilmenau.ics.fog.importer">
+
+      <importer
+           name="Command file"
+           class="de.tuilmenau.ics.fog.importer.CommandFileImporter"/>
+
+      <importer
+           name="BRITE"
+           class="de.tuilmenau.ics.fog.importer.BRITEImporter"/>
+
+      <importer
+           name="DIMES"
+           class="de.tuilmenau.ics.fog.importer.DIMESImporter"/>
+
+      <importer
+           name="Inet"
+           class="de.tuilmenau.ics.fog.importer.InetImporter"/>
+
+      <importer
+           name="NS"
+           class="de.tuilmenau.ics.fog.importer.NSImporter"/>
+
+      <importer
+           name="Ark"
+           class="de.tuilmenau.ics.fog.importer.ArkImporter"/>
+
+   </extension>
+   
+</plugin>
