@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="de.tuilmenau.ics.fog.hostApplications" name="Host Applications" schema="schema/fog.hostApplications.exsd"/>
+   <extension-point id="de.tuilmenau.ics.fog.requirement.gui" name="Requirement GUI" schema="schema/fog.requirementGUI.exsd"/>
+
+   <extension
+         id="de.tuilmenau.ics.fog.application"
+         name="FoG for Eclipse"
+         point="org.eclipse.core.runtime.applications">
+      <application>
+         <run
+               class="de.tuilmenau.ics.fog.eclipse.ui.Application">
+         </run>
+      </application>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            name="FoG Simulation Perspective"
+            class="de.tuilmenau.ics.fog.eclipse.ui.Perspective"
+            id="de.tuilmenau.ics.fog.perspective"
+            icon="icons/de.tuilmenau.ics.fog.perspective.gif">
+      </perspective>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.views">
+	  <category 
+           id="de.tuilmenau.ics.fog.views"
+           name="Forwarding on Gates">
+      </category>
+      <view
+            name="Simulation View"
+            class="de.tuilmenau.ics.fog.eclipse.ui.views.SimulationView"
+            id="de.tuilmenau.ics.fog.simulationView"
+            icon="icons/de.tuilmenau.ics.fog.simulationView.gif"
+            category="de.tuilmenau.ics.fog.views">
+      </view>
+      <view
+            name="Packet View"
+            class="de.tuilmenau.ics.fog.eclipse.ui.views.PacketView"
+            id="de.tuilmenau.ics.fog.packetView"
+            icon="icons/de.tuilmenau.ics.fog.packetView.gif"
+            category="de.tuilmenau.ics.fog.views">
+      </view>
+      <view
+            name="Marker View"
+            class="de.tuilmenau.ics.fog.eclipse.ui.views.MarkerView"
+            id="de.tuilmenau.ics.fog.markerView"
+            icon="icons/de.tuilmenau.ics.fog.markerView.gif"
+            category="de.tuilmenau.ics.fog.views">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="de.tuilmenau.ics.fog.eclipse.ui.editors.GraphEditor"
+            icon="icons/de.tuilmenau.ics.fog.gif"
+            id="de.tuilmenau.ics.fog.grapheditor"
+            name="FoG Graph Editor">
+      </editor>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            name="Open Editor"
+            defaultHandler="de.tuilmenau.ics.fog.eclipse.ui.commands.CmdOpenEditor"
+            id="de.tuilmenau.ics.fog.commands.cmdOpenEditor" />
+   </extension>
+
+   <extension
+         point="de.tuilmenau.ics.fog.hostApplications">
+      <editor
+            name="Open"
+            editorID="de.tuilmenau.ics.fog.grapheditor"
+            filter="de.tuilmenau.ics.fog.topology.Node"
+            default="true">
+      </editor>
+      <editor
+            name="Open"
+            editorID="de.tuilmenau.ics.fog.grapheditor"
+            filter="de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService"
+            default="true">
+      </editor>
+      <editor
+            name="Open"
+            editorID="de.tuilmenau.ics.fog.grapheditor"
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService"
+            default="true">
+      </editor>
+      
+      <editor
+            name="Open"
+            editorID="de.tuilmenau.ics.fog.buseditor"
+            filter="de.tuilmenau.ics.fog.topology.Bus"
+            default="true">
+      </editor>
+      <editor
+            name="Open browser"
+            editorID="de.tuilmenau.ics.fog.browser"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </editor>
+      <editor
+            name="Open"
+            editorID="de.tuilmenau.ics.fog.grapheditor"
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.Coordinator"
+            default="true">
+      </editor>
+      <plugin
+            name="Open routing service"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenRoutingService"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      <plugin
+            name="Open Cluster View"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenClusterView"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      <plugin
+            name="Toggle broken flag"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.ToggleBrokenFlag"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      <plugin
+            name="Toggle broken flag"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.ToggleBrokenFlag"
+            filter="de.tuilmenau.ics.fog.topology.ILowerLayer">
+      </plugin>
+      <plugin
+            name="Invalidate gate"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.InvalidateGate"
+            filter="de.tuilmenau.ics.fog.gates.AbstractGate">
+      </plugin>
+      <plugin
+            name="Reload requirements mapping"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.ReloadRequirementsMappingCommand"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      <plugin
+            name="Do step"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.DoStep"
+            filter="de.tuilmenau.ics.fog.topology.IAutonomousSystem">
+      </plugin>
+      <plugin
+            name="Do step"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.DoStep"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      <subentry
+            name="Applications"
+            class="de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreatorApplication"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </subentry>
+      <plugin
+            name="Exit"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.ExitApplication"
+            filter="de.tuilmenau.ics.fog.application.Application">
+      </plugin>
+      <plugin
+            name="Close connection"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.CloseConnection"
+            filter="de.tuilmenau.ics.fog.transfer.forwardingNodes.ClientFN">
+      </plugin>
+      <plugin
+            name="Deactivate gate"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.DeaktivateGate"
+            filter="de.tuilmenau.ics.fog.transfer.gates.AbstractGate">
+      </plugin>
+      <plugin
+            name="Mark/Unmark"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.MarkElements">
+      </plugin>
+   </extension>
+      
+   <extension
+         point="de.tuilmenau.ics.fog.simulation">
+         <observer
+         	class="de.tuilmenau.ics.fog.eclipse.ui.views.SimulationViewSimulationObserver">
+         </observer>
+   </extension>
+   
+</plugin>
