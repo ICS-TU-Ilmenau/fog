@@ -1,0 +1,42 @@
+#
+# Context free grammar for describing valid chains of gates.
+#
+# Sa := Original stream from application
+# Sf := Fragments of original stream, which might be transmitted several times
+# Sx := Not readable fragments (maybe encrypted)
+# *  := Any other valid chain, transparent gates or DownGates
+#
+
+VirusScan: Sa -> VirusScan Sa | Sa VirusScan
+Transport: Sa -> Td Sf Tu
+Encryption: Sa -> Ed Sx Eu
+Sa -> Sf
+
+Base64: Sf -> Bd Sx Bu
+VirusScan: Sf -> VirusScan Sf
+VideoOSD: Sf -> VideoOSD Sf
+VideoDecoding: Sf -> Vd Sf Vu
+Sf -> Sx
+
+FEC: Sx -> Fd Sx Fu
+Encryption: Sx -> Ed Sx Eu
+Sx -> *
+
+#
+# Translations to class names
+#
+Bd -> Base64Encoder
+Bu -> Base64Decoder
+
+Ed -> EncryptionEncoder
+Eu -> EncryptionDecoder
+
+Td -> Numbering
+Tu -> OrderAndCheck
+
+Vd -> 
+Vu -> VideoDecoding
+
+Fd -> FECEncoder
+Fu -> FECDecoder
+

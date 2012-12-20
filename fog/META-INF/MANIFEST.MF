@@ -1,0 +1,41 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoG Simulator
+Bundle-SymbolicName: de.tuilmenau.ics.fog;singleton:=true
+Bundle-Version: 1.0.2.qualifier
+Bundle-Vendor: ICS group of TU Ilmenau
+Bundle-License: Dual-license EPL and GPL 2 (details see about.html)
+Bundle-ClassPath: .
+Export-Package: de.tuilmenau.ics.fog,
+ de.tuilmenau.ics.fog.application,
+ de.tuilmenau.ics.fog.application.interop,
+ de.tuilmenau.ics.fog.application.observer,
+ de.tuilmenau.ics.fog.authentication,
+ de.tuilmenau.ics.fog.commands,
+ de.tuilmenau.ics.fog.exceptions,
+ de.tuilmenau.ics.fog.facade,
+ de.tuilmenau.ics.fog.facade.properties,
+ de.tuilmenau.ics.fog.ipv4,
+ de.tuilmenau.ics.fog.ipv4.helper,
+ de.tuilmenau.ics.fog.packets,
+ de.tuilmenau.ics.fog.routing,
+ de.tuilmenau.ics.fog.routing.naming,
+ de.tuilmenau.ics.fog.routing.simulated,
+ de.tuilmenau.ics.fog.scenario,
+ de.tuilmenau.ics.fog.scripts,
+ de.tuilmenau.ics.fog.topology,
+ de.tuilmenau.ics.fog.transfer,
+ de.tuilmenau.ics.fog.transfer.forwardingNodes,
+ de.tuilmenau.ics.fog.transfer.gates,
+ de.tuilmenau.ics.fog.transfer.gates.headers,
+ de.tuilmenau.ics.fog.transfer.gates.roles,
+ de.tuilmenau.ics.fog.transfer.manager,
+ de.tuilmenau.ics.fog.ui,
+ de.tuilmenau.ics.fog.util
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: de.tuilmenau.ics.CommonSim.datastream,
+ de.tuilmenau.ics.CommonSim.datastream.annotations,
+ de.tuilmenau.ics.CommonSim.datastream.numeric,
+ de.tuilmenau.ics.extensionpoint,
+ de.tuilmenau.ics.graph,
+ de.tuilmenau.ics.middleware

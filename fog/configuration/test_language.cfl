@@ -1,0 +1,4 @@
+R1: Sa -> Sa Sa
+R2: Sa -> terminal Sf
+Sf -> T
+T -> *

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   
+   <extension-point id="de.tuilmenau.ics.fog.gateFactory" name="Gate Type" schema="schema/fog.gateFactory.exsd"/>
+   <extension-point id="de.tuilmenau.ics.fog.requirement" name="Requirement" schema="schema/fog.requirement.exsd"/>
+   <extension-point id="de.tuilmenau.ics.fog.nodeConfiguration" name="Node Configuration" schema="schema/fog.nodeConfiguration.exsd"/>
+   <extension-point id="de.tuilmenau.ics.fog.script" name="Script Registry" schema="schema/fog.script.exsd"/>
+   <extension-point id="de.tuilmenau.ics.fog.create" name="Create Command" schema="schema/fog.create.exsd"/>
+   
+   <extension point="de.tuilmenau.ics.fog.nodeConfiguration">
+      <application
+            class="de.tuilmenau.ics.fog.scenario.NodeConfiguratorEchoServer"
+            name="Start Echo Server">
+      </application>
+      
+      <application
+            class="de.tuilmenau.ics.fog.scenario.NodeConfiguratorRerouting"
+            name="Enable Rerouting Dummy">
+      </application>
+   </extension>
+   
+</plugin>
