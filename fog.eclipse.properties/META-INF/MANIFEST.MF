@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoG Properties and Outline for Eclipse
+Bundle-SymbolicName: de.tuilmenau.ics.fog.eclipse.properties;singleton:=true
+Bundle-Version: 1.0.2.qualifier
+Bundle-Vendor: ICS group of TU Ilmenau
+Bundle-License: http://www.eclipse.org/legal/epl-v10.html
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.ui;bundle-version="3.5.1",
+ org.eclipse.ui.views;bundle-version="3.4.1",
+ de.tuilmenau.ics.fog;bundle-version="1.0.2",
+ de.tuilmenau.ics.fog.launcher;bundle-version="1.0.2"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Export-Package: de.tuilmenau.ics.fog.eclipse.properties
+Import-Package: de.tuilmenau.ics.graph
