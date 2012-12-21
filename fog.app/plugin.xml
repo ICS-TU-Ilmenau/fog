@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="de.tuilmenau.ics.fog.app.streamClient.StreamClientEditor"
+            id="de.tuilmenau.ics.fog.app.streamClient"
+            name="FoG Stream Client">
+      </editor>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="de.tuilmenau.ics.fog.app.relayClient.RelayClientEditor"
+            id="de.tuilmenau.ics.fog.app.relayClient"
+            name="FoG Relay Client">
+      </editor>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="de.tuilmenau.ics.fog.app.multipath.MultipathServerEditor"
+            id="de.tuilmenau.ics.fog.app.multipath.server"
+            name="FoG Multipath Server">
+      </editor>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="de.tuilmenau.ics.fog.app.multipath.MultipathClientEditor"
+            id="de.tuilmenau.ics.fog.app.multipath.client"
+            name="FoG Multipath Client">
+      </editor>
+   </extension>
+
+   <extension
+         point="de.tuilmenau.ics.fog.hostApplications">
+      <editor
+            name="Open stream client GUI"
+            editorID="de.tuilmenau.ics.fog.app.streamClient"
+            filter="de.tuilmenau.ics.fog.app.streamClient.StreamClient"
+            onCreation="true">
+      </editor>
+      
+      <plugin
+            name="Start stream client"
+            class="de.tuilmenau.ics.fog.app.streamClient.StartStreamClient"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+   </extension>   
+   <extension
+         point="de.tuilmenau.ics.fog.hostApplications">
+      <editor
+            name="Open relay client GUI"
+            editorID="de.tuilmenau.ics.fog.app.relayClient"
+            filter="de.tuilmenau.ics.fog.app.relayClient.RelayClient"
+            onCreation="true">
+      </editor>
+      
+      <plugin
+            name="Start relay client"
+            class="de.tuilmenau.ics.fog.app.relayClient.StartRelayClient"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+      
+   </extension>   
+   <extension
+         point="de.tuilmenau.ics.fog.hostApplications">
+      <editor
+            name="Open multipath server GUI"
+            editorID="de.tuilmenau.ics.fog.app.multipath.server"
+            filter="de.tuilmenau.ics.fog.app.multipath.MultipathServer"
+            onCreation="true">
+      </editor>
+      <plugin
+            name="Start multipath server"
+            class="de.tuilmenau.ics.fog.app.multipath.StartMultipathServer"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+   </extension>   
+   <extension
+         point="de.tuilmenau.ics.fog.hostApplications">
+      <editor
+            name="Open multipath client GUI"
+            editorID="de.tuilmenau.ics.fog.app.multipath.client"
+            filter="de.tuilmenau.ics.fog.app.multipath.MultipathClient"
+            onCreation="true">
+      </editor>
+      <plugin
+            name="Start multipath client"
+            class="de.tuilmenau.ics.fog.app.multipath.StartMultipathClient"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+   </extension>
+</plugin>
