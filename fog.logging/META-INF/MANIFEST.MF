@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoG logging
+Bundle-SymbolicName: de.tuilmenau.ics.fog.logging;singleton:=true
+Bundle-Version: 1.0.2.qualifier
+Bundle-Vendor: ICS group of TU Ilmenau
+Bundle-License: Dual-license EPL and GPL 2 (details see about.html)
+Bundle-Activator: de.tuilmenau.ics.fog.logging.Activator
+Require-Bundle: de.tuilmenau.ics.fog;bundle-version="1.0.2",
+ de.tuilmenau.ics.fog.launcher;bundle-version="1.0.2"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Import-Package: de.tuilmenau.ics.CommonSim.datastream,
+ de.tuilmenau.ics.CommonSim.datastream.numeric,
+ org.osgi.framework;version="1.5.0"
