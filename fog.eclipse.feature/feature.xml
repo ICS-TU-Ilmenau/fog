@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="de.tuilmenau.ics.fog.feature"
+      label="FoG simulator/emulator"
+      version="1.0.2.qualifier"
+      provider-name="ICS group of TU Ilmenau"
+      plugin="de.tuilmenau.ics.fog.eclipse.branding">
+
+   <description url="http://www.tu-ilmenau.de/ics">
+      Simulator for the Future Internet architecture &quot;Forwarding on
+Gates&quot; (FoG).
+   </description>
+
+   <copyright url="http://www.tu-ilmenau.de/ics">
+      Copyright (C) 2012, Integrated Communication Systems Group, TU Ilmenau.
+   </copyright>
+
+   <license url="http://www.tu-ilmenau.de/ics">
+      All rights reserved. This program and the accompanying materials are made available under the terms of the Eclipse Public License v1.0 which accompanies this distribution, and is available at http://www.eclipse.org/legal/epl-v10.html.
+   </license>
+
+   <url>
+      <discovery label="TU Ilmenau, Integrated Communication Systems Group" url="http://www.tu-ilmenau.de/ics"/>
+   </url>
+
+   <plugin
+         id="DatastreamBasePlugIn"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog.app"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog.eclipse"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog.eclipse.console"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog.launcher"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog.launcher.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog.eclipse.properties"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog.logging"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog.video"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog.videodemo"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.datastream.eclipse"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.tuilmenau.ics.fog.eclipse.branding"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
+
+   <plugin
+         id="edu.uci.ics.jung"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="net.jini"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>
