@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoG Branding for Eclipse
+Bundle-SymbolicName: de.tuilmenau.ics.fog.eclipse.branding
+Bundle-Version: 1.0.2.qualifier
+Bundle-Vendor: ICS group of TU Ilmenau
+Bundle-License: http://www.eclipse.org/legal/epl-v10.html
