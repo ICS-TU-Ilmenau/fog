@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="de.tuilmenau.ics.fog.gateFactory">
+      <factory
+            class="de.tuilmenau.ics.fog.encryption.EncryptionGateFactory">
+            <gateType
+                name="EncryptionEncoderGate"
+                description="gate factory for handling encryption encoding/decoding a stream"/>
+      </factory>
+      <factory
+            class="de.tuilmenau.ics.fog.encryption.EncryptionGateFactory">
+            <gateType
+                name="EncryptionDecoderGate"
+                description="gate factory for handling encryption encoding/decoding a stream"/>
+      </factory>
+   </extension>
+   
+   <extension
+         point="de.tuilmenau.ics.fog.requirement">
+        <requirement
+            name="Encryption"
+            description="property to have an encrypted data stream"
+            factory="de.tuilmenau.ics.fog.encryption.EncryptionPropertyFactory"/>
+   </extension>
+   
+   <extension
+         point="de.tuilmenau.ics.fog.hostApplications">
+      <plugin
+            name="Enable encryption support"
+            class="de.tuilmenau.ics.fog.encryption.EncryptionEnableCommand"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+   </extension>
+</plugin>
