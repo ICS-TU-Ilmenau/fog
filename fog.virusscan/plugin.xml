@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="de.tuilmenau.ics.fog.gateFactory">
+      <factory
+            class="de.tuilmenau.ics.fog.virusscan.VirusScanGateFactory">
+            <gateType
+            	name="VirusScanGate"
+            	description="Gate scaning data for viruses."/>
+      </factory>
+   </extension>
+   
+   <extension
+         point="de.tuilmenau.ics.fog.requirement">
+      <requirement
+        	name="VirusScan"
+          	description="Stream must be virus free"
+          	factory="de.tuilmenau.ics.fog.virusscan.VirusScanPropertyFactory"/>
+   </extension>
+   <extension
+         point="de.tuilmenau.ics.fog.requirement.gui">
+      <widget
+        	propertyName="VirusScan"
+          	factory="de.tuilmenau.ics.fog.virusscan.VirusScanPropertyFactory"/>
+   </extension>
+   
+   <extension
+         point="de.tuilmenau.ics.fog.hostApplications">
+      <plugin
+            name="Enable virus scan support"
+            class="de.tuilmenau.ics.fog.virusscan.VirusScanEnableCommand"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+   </extension>
+   
+</plugin>
