@@ -775,24 +775,31 @@ public class Coordinator extends Application implements IServerCallback
 	
 	/**
 	 * 
-	 * @param pSignature is the signature of a coordinator that is not longer supposed to be authorized for the creation of 
-	 * FIB entries
+	 * @param pSignature is the signature of a coordinator that is not longer supposed to be authorized for the creation of FIB entries
 	 */
 	public void deleteApprovedSignature(Signature pSignature)
 	{
 		mApprovedSignatures.removeFirstOccurrence(pSignature);
 	}
 	
+	/**
+	 * 
+	 * @param pIdentity is the identity that is supposed to be used for signing FIB entries
+	 */
 	public void setIdentity(HierarchicalIdentity pIdentity)
 	{
 		mIdentity = pIdentity;
 	}
-	
+
 	public HierarchicalIdentity getIdentity()
 	{
 		return mIdentity;
 	}
 	
+	/**
+	 * 
+	 * @param pIdentification is one more identification the physical node may have because it can be either coordinator of different hierarchical levels or attached to different clusters
+	 */
 	public void addIdentification(HRMID pIdentification)
 	{
 		if(!mIdentifications.contains(pIdentification)) {
@@ -800,11 +807,21 @@ public class Coordinator extends Application implements IServerCallback
 		}
 	}
 	
+	/**
+	 * 
+	 * @param pIdentification is one HRMID that is checked against the identifications of the node owning the coordinator object
+	 * @return
+	 */
 	public boolean containsIdentification(HRMID pIdentification)
 	{
 		return mIdentifications.contains(pIdentification);
 	}
 	
+	/**
+	 * 
+	 * @param pLevel is the level at which a search for clusters is done
+	 * @return all virtual nodes that appear at the specified hierarchical level
+	 */
 	public LinkedList<VirtualNode> getClusters(int pLevel)
 	{
 		LinkedList<VirtualNode> tClusters = new LinkedList<VirtualNode>();
@@ -819,9 +836,9 @@ public class Coordinator extends Application implements IServerCallback
 	/**
 	 * In case the first hop is either required or not allowed, the following function finds candidates that allow routing from this
 	 * entity to the next hop. 
-	 * @param pSource
-	 * @param pLimitation
-	 * @return
+	 * @param pSource 
+	 * @param pLimitation contains restrictions regarding the allowed clusters, however the clusters have to be addressed by the given HRMID
+	 * @return a list of allowed cluster
 	 */
 	public LinkedList<Cluster> getAllowedCluster(Cluster pSource, AddressLimitationProperty pLimitation)
 	{
@@ -845,24 +862,24 @@ public class Coordinator extends Application implements IServerCallback
 				}
 				
 				int tLowestDifference = tClustersAddress.getDescendingDifference(tEntryAddress);
-				HRMID tComparisson = new HRMID(0);
+				HRMID tComparison = new HRMID(0);
 				for(int i = HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT -1; i >= tLowestDifference; i--) {
 					BigInteger tEntryLevelAddress = tEntryAddress.getLevelAddress(i);
 					if(tEntryLevelAddress.equals(BigInteger.valueOf(0))) {
-						tComparisson.setLevelAddress(i, BigInteger.valueOf(0));
+						tComparison.setLevelAddress(i, BigInteger.valueOf(0));
 						for(int j = 0; j >=0 ; j--) {
-							tComparisson.setLevelAddress(j, BigInteger.valueOf(0));
+							tComparison.setLevelAddress(j, BigInteger.valueOf(0));
 						}
 					} else {
-						tComparisson.setLevelAddress(i, tClustersAddress.getLevelAddress(i));
+						tComparison.setLevelAddress(i, tClustersAddress.getLevelAddress(i));
 					}
 				}
-				if(tComparisson.getAddress() != BigInteger.ZERO) {
+				if(tComparison.getAddress() != BigInteger.ZERO) {
 					if(pLimitation.getType().equals(AddressLimitationProperty.LIST_TYPE.OBSTRUCTIVE)) {
 						/*
 						 * If it is obstructive, the entries tell which clusters are not allowed to be used
 						 */
-						if(!tComparisson.equals(tEntry.getAddress())) {
+						if(!tComparison.equals(tEntry.getAddress())) {
 							tPossibleClusters.add(tCandidate);
 						} else {
 							if(tPossibleClusters.contains(tCandidate)) {
@@ -873,7 +890,7 @@ public class Coordinator extends Application implements IServerCallback
 						/*
 						 * If it is restrictive we allow the cluster to be taken if it appears in the list of possible HRMIDs
 						 */
-						if(tComparisson.equals(tEntry.getAddress())) {
+						if(tComparison.equals(tEntry.getAddress())) {
 							tPossibleClusters.add(tCandidate);
 						}
 					}
@@ -884,7 +901,12 @@ public class Coordinator extends Application implements IServerCallback
 		return tPossibleClusters;
 	}
 	
-	public void queryRoute(RouteRequest pRequest, Cluster pCluster)
+	/**
+	 * Query route to a target that has to be specified in the object RouteRequest
+	 * 
+	 * @param pRequest contains the target of the request and restrictions regarding the route that has to be chosen
+	 */
+	public void queryRoute(RouteRequest pRequest)
 	{
 		AddressLimitationProperty tLimitation = null;
 		for(Property tProperty: pRequest.getDescription()) {
@@ -930,6 +952,12 @@ public class Coordinator extends Application implements IServerCallback
 		}
 	}
 	
+	/**
+	 * As it is possible that several coordinators have to be asked for the route to the target as context has
+	 * to be saved. Therefore every request contains the session key.
+	 * 
+	 * @param pRequest
+	 */
 	public void addRequest(RouteRequest pRequest)
 	{
 		if(mSessionToRequest == null) {
@@ -938,17 +966,32 @@ public class Coordinator extends Application implements IServerCallback
 		mSessionToRequest.put(pRequest.getSession(), pRequest);
 	}
 	
+	/**
+	 * Find an appropriate route request in order to put together the pieces.
+	 * 
+	 * @param pSession is the identification of the session that has to be found
+	 * @return
+	 */
 	public RouteRequest getRouteRequest(Integer pSession)
 	{
 		return mSessionToRequest.get(pSession);
 	}
 	
+	/**
+	 * Find out whether this object is an edge router
+	 * 
+	 * @return true if the node is a router to another autonomous system
+	 */
 	public boolean isEdgeRouter()
 	{
 		return mIsEdgeRouter;
 	}
 	
-	
+	/**
+	 * 
+	 * @param pLevel is the level at which a multiplexer to other clusters is installed and that has to be returned
+	 * @return
+	 */
 	public CoordinatorCEPMultiplexer getMultiplexerOnLevel(int pLevel)
 	{
 		if(mMuxOnLevel == null) {

@@ -171,52 +171,12 @@ public class CoordinatorCEP extends Session
 		
 		return true;
 	}
-	
-	public RouteSegmentPath homogenizeRoute(Route pRoute)
-	{
-		Route tRoute = pRoute.clone();
-		RouteSegmentPath tSegmentPath = new RouteSegmentPath();
-		for(RouteSegment tSegment : tRoute)
-		{
-			if(tSegment instanceof RouteSegmentPath)
-			{
-				for(GateID tID : (RouteSegmentPath)tSegment)
-				{
-					tSegmentPath.addLast(tID);
-				}
-			}
-		}
-		return tSegmentPath;
-	}
-	
-	public RouteSegmentPath trimRoute(Route pRoute)
-	{
-		if(pRoute != null) {
-			Route tRoute = pRoute.clone();
-			RouteSegmentPath tSegmentPath = new RouteSegmentPath();
-			if(tRoute.get(0) instanceof RouteSegmentPath)
-			{
-				if(((RouteSegmentPath)tRoute.get(0)).size() > 1)
-				{
-					if(mServerSide)
-					{
-						((RouteSegmentPath)tRoute.getFirst()).removeFirst();
-					} else {
-						((RouteSegmentPath)tRoute.getFirst()).removeLast();
-					}
-					for(GateID tGate : ((RouteSegmentPath)tRoute.get(0)))
-					{
-						tSegmentPath.add(tGate);
-					}
-					return tSegmentPath;
-				}
-			}
-		} else {
-			return new RouteSegmentPath();
-		}
-		return null;
-	}
-	
+
+	/**
+	 * 
+	 * @param pData is the data that should be sent to the entity at the opposite.
+	 * @return true if information was sent successfully
+	 */
 	public boolean write(Serializable pData)
 	{
 		if(pData instanceof MultiplexedPackage && ((MultiplexedPackage)pData).getData() instanceof TopologyEnvelope) {
@@ -236,21 +196,37 @@ public class CoordinatorCEP extends Session
 		return true;
 	}
 	
+	/**
+	 * 
+	 * @return The route to the central forwarding node of the peer is returned.
+	 */
 	public Route getRouteToPeer()
 	{
 		return mRouteToPeer;
 	}
 	
+	/**
+	 * 
+	 * @param pRoute is the route that is used to reach the peer
+	 */
 	public void setRouteToPeer(Route pRoute)
 	{
 		mRouteToPeer = pRoute;
 	}
 	
+	/**
+	 * 
+	 * @return The physical name of the central forwarding node at sender side is returned.
+	 */
 	public HRMName getSourceRoutingServiceAddress()
 	{
 		return mSourceIdentification;
 	}
 	
+	/**
+	 * 
+	 * @return The phsyical name of central forwarding node at the other side is returned.
+	 */
 	public HRMName getPeerRoutingServiceAddress()
 	{
 		return mPeerIdentification;

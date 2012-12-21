@@ -423,7 +423,7 @@ public class HierarchicalRoutingService implements RoutingService
 				
 				if(tLimitation != null) {
 					RouteRequest tRequest = new RouteRequest(null, tTarget, pRequirements, mRandomGenerator.nextLong());
-					getCoordinator().queryRoute(tRequest, null);
+					getCoordinator().queryRoute(tRequest);
 					
 					for(RoutingServiceLinkVector tVector : tRequest.getRoutingVectors()) {
 						tRoute.addAll(tVector.getPath());
