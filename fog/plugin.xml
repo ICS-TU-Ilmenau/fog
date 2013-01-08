@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
+<!--
+	Forwarding on Gates Simulator/Emulator
+	Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
+	
+	This program and the accompanying materials are dual-licensed under either
+	the terms of the Eclipse Public License v1.0 as published by the Eclipse
+	Foundation
+	
+	or (per the licensee's choosing)
+	
+	under the terms of the GNU General Public License version 2 as published
+	by the Free Software Foundation.
+-->
 <plugin>
    
    <extension-point id="de.tuilmenau.ics.fog.gateFactory" name="Gate Type" schema="schema/fog.gateFactory.exsd"/>
