@@ -3,7 +3,7 @@
    <description name="FoG Simulator/Emulator Update Site">
       FoG Simulator/Emulator Update Site
    </description>
-   <feature url="features/de.tuilmenau.ics.fog.feature_1.0.2.qualifier.jar" id="de.tuilmenau.ics.fog.feature" version="1.0.2.qualifier">
+   <feature url="features/de.tuilmenau.ics.fog.feature_1.0.2.201301081435.jar" id="de.tuilmenau.ics.fog.feature" version="1.0.2.201301081435">
       <category name="de.tuilmenau.ics"/>
    </feature>
    <category-def name="de.tuilmenau.ics" label="ICS group of TU Ilmenau">
