@@ -23,7 +23,6 @@ Export-Package: de.tuilmenau.ics.fog.packets.hierarchical,
  de.tuilmenau.ics.fog.routing.hierarchical.properties,
  de.tuilmenau.ics.fog.routing.naming.hierarchical
 Import-Package: de.tuilmenau.ics.graph,
- edu.uci.ics.jung.algorithms.connectivity,
  edu.uci.ics.jung.algorithms.shortestpath,
  edu.uci.ics.jung.graph,
  edu.uci.ics.jung.graph.util

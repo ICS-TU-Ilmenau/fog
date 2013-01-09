@@ -232,6 +232,10 @@ public class CoordinatorCEP extends Session
 		return mPeerIdentification;
 	}
 	
+	/**
+	 * 
+	 * @return coordinator this connection endpoint is attached to
+	 */
 	public Coordinator getCoordinator()
 	{
 		return mReferenceCoordinator;
@@ -247,6 +251,10 @@ public class CoordinatorCEP extends Session
 		 
 	}
 	
+	/**
+	 * 
+	 * @return multiplexer that is in charge of this connection - only of relevance if Multicast is implemented
+	 */
 	public CoordinatorCEPMultiplexer getMultiplexer()
 	{
 		return mMux;
