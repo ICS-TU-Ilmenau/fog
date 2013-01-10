@@ -5,11 +5,12 @@ Bundle-SymbolicName: de.tuilmenau.ics.fog.importer;singleton:=true
 Bundle-Version: 1.0.2.qualifier
 Bundle-Vendor: ICS group of TU Ilmenau
 Bundle-License: Dual-license EPL and GPL 2 (details see about.html)
-Require-Bundle: DatastreamBasePlugIn;bundle-version="1.0.0",
- de.tuilmenau.ics.fog;bundle-version="1.0.2",
- edu.uci.ics.jung;bundle-version="1.0.0",
- de.tuilmenau.ics.extensionpoint;bundle-version="1.0.2"
+Require-Bundle: de.tuilmenau.ics.fog;bundle-version="1.0.2"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.tuilmenau.ics.fog.importer
 Import-Package: au.com.bytecode.opencsv,
- de.tuilmenau.ics.middleware
+ de.tuilmenau.ics.CommonSim.datastream.numeric,
+ de.tuilmenau.ics.extensionpoint,
+ de.tuilmenau.ics.middleware,
+ edu.uci.ics.jung.graph;version="2.0.1",
+ edu.uci.ics.jung.graph.util;version="2.0.1"
