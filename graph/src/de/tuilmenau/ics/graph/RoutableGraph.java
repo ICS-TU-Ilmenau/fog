@@ -441,7 +441,7 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	
 	public synchronized boolean isLinked(NodeObject pFrom, NodeObject pTo)
 	{
-		return mNodes.areNeighbors(pFrom, pTo);
+		return mNodes.isNeighbor(pFrom, pTo);
 	}
 	
 	public synchronized void notifyObservers(Object pEvent)
