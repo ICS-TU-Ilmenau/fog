@@ -67,14 +67,14 @@ import de.tuilmenau.ics.graph.RoutableGraph;
 import de.tuilmenau.ics.graph.Transformer;
 import edu.uci.ics.jung.algorithms.layout.GraphElementAccessor;
 import edu.uci.ics.jung.algorithms.layout.Layout;
-import edu.uci.ics.jung.algorithms.util.Context;
+import edu.uci.ics.jung.graph.util.Context;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.ObservableGraph;
 import edu.uci.ics.jung.graph.event.GraphEvent;
 import edu.uci.ics.jung.graph.event.GraphEventListener;
 import edu.uci.ics.jung.graph.util.EdgeIndexFunction;
-import edu.uci.ics.jung.visualization.DefaultEdgeLabelRenderer;
-import edu.uci.ics.jung.visualization.EdgeLabelRenderer;
+import edu.uci.ics.jung.visualization.renderers.DefaultEdgeLabelRenderer;
+import edu.uci.ics.jung.visualization.renderers.EdgeLabelRenderer;
 import edu.uci.ics.jung.visualization.FourPassImageShaper;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.RenderContext;
@@ -255,7 +255,6 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 			
 			return instance;
 		}
-
 	}
 
 	public class vertexLabelRenderer extends BasicVertexLabelRenderer<NodeObject, LinkObject> {

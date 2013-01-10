@@ -50,7 +50,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
-import edu.uci.ics.jung.algorithms.connectivity.BFSDistanceLabeler;
+import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
 public class CoordinatorCEPDemultiplexed implements VirtualNode
 {

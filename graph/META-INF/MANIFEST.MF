@@ -8,7 +8,7 @@ Bundle-License: Dual-license EPL and GPL 2 (details see about.html)
 Bundle-ClassPath: .
 Export-Package: de.tuilmenau.ics.graph
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Import-Package: edu.uci.ics.jung.graph,
- edu.uci.ics.jung.algorithms.shortestpath,
+Import-Package: edu.uci.ics.jung.algorithms.shortestpath,
+ edu.uci.ics.jung.graph;version="2.0.1",
  edu.uci.ics.jung.graph.util,
  org.apache.commons.collections15
