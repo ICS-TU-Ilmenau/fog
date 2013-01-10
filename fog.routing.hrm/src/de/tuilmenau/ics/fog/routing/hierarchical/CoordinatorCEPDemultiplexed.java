@@ -54,9 +54,6 @@ import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
 public class CoordinatorCEPDemultiplexed implements VirtualNode
 {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -8290946480171751216L;
 	private Cluster mRemoteCluster;
 	private Cluster mCluster;
@@ -74,6 +71,12 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 	private boolean mCrossLevelCEP = false;
 	private StackTraceElement[] mStackTrace = null;
 	
+	/**
+	 * 
+	 * @param pLogger Logger that should be used
+	 * @param pCoord is the coordinator of a node
+	 * @param pCluster is the cluster this connection endpoint serves
+	 */
 	public CoordinatorCEPDemultiplexed(Logger pLogger, Coordinator pCoord, Cluster pCluster)
 	{
 		mReferenceCoordinator = pCoord;
@@ -85,6 +88,12 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 		mStackTrace = Thread.currentThread().getStackTrace();
 	}
 	
+	/**
+	 * 
+	 * @param pData is the data that should be sent to the receiver side of this connection endpoint
+	 * @return true if the packet left the central multiplexer and the forwarding node that is attached to a direct down gate
+	 * @throws NetworkException
+	 */
 	public boolean receive(Serializable pData) throws NetworkException
 	{
 		if(pData == null) {
@@ -105,7 +114,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						}
 						write(tAnnounce);
 					} else {
-						write(new BullyAlive(getCoordinator().getReferenceNode().getCentralFN().getName(), mReferenceCoordinator.getCoord()));
+						write(new BullyAlive(getCoordinator().getReferenceNode().getCentralFN().getName(), getCluster().getCoordinatorName()));
 					}
 				} else {
 					mPeerPriority = ((BullyElect)pData).getPriority();
@@ -347,11 +356,20 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 		return true;
 	}
 	
+	/**
+	 * @deprecated
+	 * If this CEP is used for communcation between different hierarchical levels: for use of HRM+BGP
+	 */
 	public void setCrossLayerCEP()
 	{
 		mCrossLevelCEP = true;
 	}
 	
+	/**
+	 * 
+	 * @param pTarget is the target to which routing service link vectors should be generated
+	 * @return vectors that provide a patch between forwarding nodes along with the gate numbers
+	 */
 	public LinkedList<RoutingServiceLinkVector> getPath(HRMName pTarget)
 	{
 		LinkedList<RoutingServiceLinkVector> tVectors = new LinkedList<RoutingServiceLinkVector>();
@@ -373,6 +391,15 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 		return tVectors;
 	}
 
+	/**
+	 * The nested discovery entry you provide in the first argument is the message that has to be filled with
+	 * information on how to get to the cluster(s coordinator) provided as second argument
+	 * 
+	 * @param pDiscovery entry of the entity that has to be informed about the cluster provided as second argument
+	 * @param pCluster as cluster (along with the coordinator) to which a path has to be filled into the discovery entry
+	 * @throws NetworkException 
+	 * @throws PropertyException in case the requirements to the target coordinator can not be fulfilled
+	 */
 	public void getPathTo(NestedDiscovery pDiscovery, Cluster pCluster) throws NetworkException, PropertyException
 	{
 		if(pCluster.getCoordinatorName() != null) {
@@ -394,11 +421,21 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 		}
 	}
 	
+	/**
+	 * Connection endpoints control the clusters they are associated to.
+	 * 
+	 * @return As one node may be associated to more than one cluster you can use this method to find out
+	 * which cluster is controlled by this connection endpoint.
+	 */
 	public Cluster getCluster()
 	{
 		return mCluster;
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public Cluster getRemoteCluster()
 	{
 		Cluster tCluster = null;
