@@ -71,7 +71,7 @@ public class PacketPropertySource implements IPropertySource
 			return packet.getReturnRoute();
 		}
 		else if(PROPERTY_DATA.equals(name)) {
-			return packet.getData();
+			return packet.getDataAsString();
 		}
 		else if(PROPERTY_SIGNATURES.equals(name)) {
 			return packet.getAuthentications();
