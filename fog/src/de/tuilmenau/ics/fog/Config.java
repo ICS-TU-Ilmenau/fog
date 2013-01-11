@@ -460,7 +460,4 @@ public class Config
 		 */
 		public static final boolean OPTIMISATION_CRITERIONS_ACTIVATED = false;
 	}
-	
-
-	Object[] ConfigOptions = new Object[128];
 }
