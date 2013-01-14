@@ -88,7 +88,7 @@ public abstract class EditorAWT extends EditorPart
 				}
 			};
 			
-			JScrollPane tScroll = new JScrollPane(mView);
+			JScrollPane tScroll = new JScrollPane(createPartAWT(tRootPanel));
 			tRootPanel.add(tScroll);
 //			tRootPanel.add(mGraphView);
 			
@@ -104,6 +104,18 @@ public abstract class EditorAWT extends EditorPart
 		catch(Exception tExc) {
 			tExc.printStackTrace();
 		}
+	}
+
+	/**
+	 * Constructs the AWT part of the SWT widget. It is called during the
+	 * execution of {@link createPartControl}.
+	 * 
+	 * @param rootPanel The root panel of the AWT part 
+	 * @return AWT component (!= null)
+	 */
+	protected Component createPartAWT(Panel rootPanel)
+	{
+		return mView;
 	}
 
 	@Override
@@ -124,7 +136,9 @@ public abstract class EditorAWT extends EditorPart
 	}
 	
 	/**
-	 * Had to be called during init
+	 * Can be called during {@link init} in order to set the
+	 * reference for the AWT part of the SWT widget. Method
+	 * is not required, if {@link createPartAWT} is overwritten.
 	 */
 	protected void setView(Component newView)
 	{

@@ -14,6 +14,7 @@
 package de.tuilmenau.ics.fog.packets;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 
@@ -255,6 +256,33 @@ public class Packet implements Serializable
 	public Serializable getData()
 	{
 		return mPayload;
+	}
+	
+	/**
+	 * Method intended for GUI usage.
+	 * 
+	 * @return Payload of packet as printable text. It is a longer version of getData().toString(), which tries to format byte data.
+	 */
+	public String getDataAsString()
+	{
+		String res = null;
+		
+		if(mPayload != null) {
+			if(mPayload instanceof byte[]) {
+				try {
+					res = new String((byte[]) mPayload, "UTF-8");
+				}
+				catch(UnsupportedEncodingException exc) {
+					res = mPayload.toString() +" (" +exc.getLocalizedMessage() +")";
+				}
+			} else {
+				res = mPayload.toString();
+			}
+		} else {
+			res = "null";
+		}
+		
+		return res;
 	}
 	
 	/**
