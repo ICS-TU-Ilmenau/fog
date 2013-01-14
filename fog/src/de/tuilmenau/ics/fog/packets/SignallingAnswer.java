@@ -49,7 +49,15 @@ abstract public class SignallingAnswer extends Signalling
 					if(tProcess != null) {
 						return execute(tProcess, pPacket, tSender);
 					} else {
-						tFN.getNode().getLogger().warn(this, "No process available for owner " +tSender + " and ID " +getProcessNumber() +" in " +tFN);
+						tFN.getNode().getLogger().warn(this, "No process available for owner " +tSender + " and ID " +getProcessNumber() +" in " +tFN + " while authentications of packets were " + pPacket.getAuthentications());
+						pPacket.getAuthentications().removeFirst();
+						tSender = getSenderIdentity(tFN.getNode().getAuthenticationService(), pPacket);
+						tProcess = tFN.getNode().getProcessRegister().getProcess(tFN, tSender, getProcessNumber());
+						if(tProcess != null) {
+							return execute(tProcess, pPacket, tSender);
+						} else {
+							tFN.getNode().getLogger().err(this, "Absolutely unable to find owner of process");
+						}
 					}
 				}
 			} else {
