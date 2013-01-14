@@ -401,6 +401,8 @@ public class FoGLauncher
 				case FINISHED:
 					obs.finished();
 					break;
+				default:
+					throw new RuntimeException(this +": function " +func +" can not be signaled to observers.");
 				}
 			}
 			catch(Exception tExc) {
