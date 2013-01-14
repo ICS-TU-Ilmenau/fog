@@ -23,6 +23,9 @@ import de.tuilmenau.ics.middleware.JiniHelper;
 
 public class RemoteMediumBus implements RemoteMedium
 {
+	private static final long serialVersionUID = 2110634970734111464L;
+	
+
 	public RemoteMediumBus(ILowerLayer medium)
 	{
 		if(JiniHelper.isEnabled()) {

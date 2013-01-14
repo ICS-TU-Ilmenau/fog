@@ -170,6 +170,9 @@ public class ConnectionEndPointUDPProxy extends Session
 				}else
 					mLogger.log(this, "Peer closed connection. Socket has other peers connected.");
 				break;
+			default:
+				// ignore
+				break;
 		}
 	}
 

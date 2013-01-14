@@ -13,8 +13,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.facade;
 
-import java.util.LinkedList;
-
 
 /**
  * Represents a binding of a higher layer at a layer.

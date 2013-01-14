@@ -15,6 +15,9 @@ package de.tuilmenau.ics.fog.facade;
 
 public class NetworkException extends Exception
 {
+	private static final long serialVersionUID = 4067012136555907717L;
+	
+
 	public NetworkException(String errorMsg)
 	{
 		super(errorMsg);

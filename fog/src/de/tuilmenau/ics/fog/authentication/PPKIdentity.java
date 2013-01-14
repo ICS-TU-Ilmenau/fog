@@ -21,6 +21,9 @@ import javax.crypto.Cipher;
  */
 public class PPKIdentity extends SimpleIdentity
 {
+	private static final long serialVersionUID = 2175625223234148605L;
+	
+
 	public PPKIdentity(String name, Cipher publicKey)
 	{
 		super(name);

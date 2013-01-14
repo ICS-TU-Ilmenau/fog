@@ -14,12 +14,17 @@
 package de.tuilmenau.ics.fog.authentication;
 
 import de.tuilmenau.ics.fog.facade.Identity;
-import de.tuilmenau.ics.fog.facade.Signature;
 
 
-
+/**
+ * An identity without any keys or other "advanced" things.
+ * It is just a string and optimized for simulation performance.
+ */
 public class SimpleIdentity implements Identity
 {
+	private static final long serialVersionUID = -2527795091170379614L;
+	
+
 	public SimpleIdentity(String name)
 	{
 		this.name = name;

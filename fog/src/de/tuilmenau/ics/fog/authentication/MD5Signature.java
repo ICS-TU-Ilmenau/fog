@@ -26,6 +26,9 @@ import de.tuilmenau.ics.fog.facade.Identity;
  */
 public class MD5Signature extends SimpleSignature
 {
+	private static final long serialVersionUID = 6546990138319999153L;
+	
+
 	public MD5Signature(Identity identity, Serializable data)
 	{
 		super(identity);

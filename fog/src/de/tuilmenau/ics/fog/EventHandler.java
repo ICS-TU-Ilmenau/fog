@@ -114,7 +114,7 @@ public class EventHandler extends Thread
 					// Test if it is newer than the newest in queue. If so, we
 					// will have to wake up the event handling thread later
 					// on.
-					boolean newer = time < getNewestEventTime();
+//					boolean newer = time < getNewestEventTime();
 					
 					// Create event and store it in queue
 					EventHolder res = new EventHolder(time, event);

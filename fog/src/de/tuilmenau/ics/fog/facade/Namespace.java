@@ -21,6 +21,9 @@ import java.io.Serializable;
  */
 public class Namespace implements Serializable
 {
+	private static final long serialVersionUID = 5923391131934016194L;
+	
+	
 	/**
 	 * Creates a name space object based on a string, which
 	 * is defining the prefix for all names of this name space.
