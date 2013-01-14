@@ -56,7 +56,16 @@ public class FoGLauncher
 
 	public static final String CONFIG_DIRECTORY = "directory";
 	public static final String CONFIG_DIRECTORY_DEFAULT = null;
-	
+
+	public static final String CONFIG_LINK_DATA_RATE = "link.datarate";
+	public static final int    CONFIG_LINK_DATA_RATE_DEFAULT = -1;
+	public static final String CONFIG_LINK_DELAY = "link.delay";
+	public static final int    CONFIG_LINK_DELAY_DEFAULT = 0;
+	public static final String CONFIG_LINK_LOSS_PROB = "link.loss";
+	public static final int    CONFIG_LINK_LOSS_PROB_DEFAULT = 0;
+	public static final String CONFIG_LINK_BIT_ERROR = "link.biterror";
+	public static final int    CONFIG_LINK_BIT_ERROR_DEFAULT = 0;
+
 	public static final String CONFIG_WORKER = "worker";
 	public static final String CONFIG_WORKER_DEFAULT = "<DEFAULT>";
 	
@@ -91,11 +100,16 @@ public class FoGLauncher
 		this.configuration = configuration;
 		
 		// read configuration from Eclipse launch framework
-		String  baseDirectory   = configuration.get(FoGLauncher.CONFIG_DIRECTORY, FoGLauncher.CONFIG_DIRECTORY_DEFAULT);
-		String  worker          = configuration.get(FoGLauncher.CONFIG_WORKER, FoGLauncher.CONFIG_WORKER_DEFAULT);
-		Level   loglevel        = Level.valueOf(configuration.get(FoGLauncher.CONFIG_LOG_LEVEL, FoGLauncher.CONFIG_LOG_LEVEL_DEFAULT));
-		String  configuratorRS  = configuration.get(FoGLauncher.CONFIG_NODE_ROUTING_CONFIGURATOR, FoGLauncher.CONFIG_NODE_CONFIGURATOR_DEFAULT);
-		String  configuratorApp = configuration.get(FoGLauncher.CONFIG_NODE_APPLICATION_CONFIGURATOR, FoGLauncher.CONFIG_NODE_CONFIGURATOR_DEFAULT);
+		String  baseDirectory   = configuration.get(CONFIG_DIRECTORY, CONFIG_DIRECTORY_DEFAULT);
+		String  worker          = configuration.get(CONFIG_WORKER, CONFIG_WORKER_DEFAULT);
+		Level   loglevel        = Level.valueOf(configuration.get(CONFIG_LOG_LEVEL, CONFIG_LOG_LEVEL_DEFAULT));
+		String  configuratorRS  = configuration.get(CONFIG_NODE_ROUTING_CONFIGURATOR, CONFIG_NODE_CONFIGURATOR_DEFAULT);
+		String  configuratorApp = configuration.get(CONFIG_NODE_APPLICATION_CONFIGURATOR, CONFIG_NODE_CONFIGURATOR_DEFAULT);
+		
+		int linkDatarate = configuration.get(CONFIG_LINK_DATA_RATE, CONFIG_LINK_DATA_RATE_DEFAULT);
+		int linkDelay = configuration.get(CONFIG_LINK_DELAY, CONFIG_LINK_DELAY_DEFAULT);
+		int linkLoss = configuration.get(CONFIG_LINK_LOSS_PROB, CONFIG_LINK_LOSS_PROB_DEFAULT);
+		int linkBitError = configuration.get(CONFIG_LINK_BIT_ERROR, CONFIG_LINK_BIT_ERROR_DEFAULT);
 		
 		String logLevelParam = System.getProperty(CONFIG_LOG_LEVEL);
 		if(logLevelParam != null) {
@@ -113,6 +127,11 @@ public class FoGLauncher
 		logger.log(this, CONFIG_LOG_LEVEL +": " +loglevel);
 		logger.log(this, CONFIG_NODE_ROUTING_CONFIGURATOR +": " + configuratorRS);
 		logger.log(this, CONFIG_NODE_APPLICATION_CONFIGURATOR +": " + configuratorApp);
+		
+		logger.log(this, CONFIG_LINK_DATA_RATE +": " + linkDatarate +"kbit/s");
+		logger.log(this, CONFIG_LINK_DELAY +": " + linkDelay +"ms");
+		logger.log(this, CONFIG_LINK_LOSS_PROB +": " + linkLoss +"%");
+		logger.log(this, CONFIG_LINK_BIT_ERROR +": " + linkBitError +"%");
 
 		//
 		// CREATE LOCAL WORKER
@@ -151,6 +170,11 @@ public class FoGLauncher
 		// set configuration
 		sim.getConfig().Scenario.ROUTING_CONFIGURATOR = configuratorRS;
 		sim.getConfig().Scenario.APPLICATION_CONFIGURATOR = configuratorApp;
+		
+		sim.getConfig().Scenario.DEFAULT_DATA_RATE_KBIT = linkDatarate;
+		sim.getConfig().Scenario.DEFAULT_DELAY_MSEC = linkDelay;
+		sim.getConfig().Scenario.DEFAULT_PACKET_LOSS_PROP = linkLoss;
+		sim.getConfig().Scenario.DEFAULT_BIT_ERROR_PROP = linkBitError;
 		
 		observers = getObservers(sim);
 		

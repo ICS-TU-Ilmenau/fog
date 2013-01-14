@@ -25,6 +25,7 @@ public class FoGLaunchTabGroup extends AbstractLaunchConfigurationTabGroup
 		setTabs(new ILaunchConfigurationTab[] {
 				new SimulationParametersTab(),
 				new NodeParametersTab(),
+				new LinkParametersTab(),
 				new CommonTab() // that should be present as last point by default
 		});
 	}
