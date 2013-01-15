@@ -632,23 +632,23 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			}
 		}
 		if(event instanceof UnregisterEvent) {
-			if(((UnregisterEvent) event).getRegistrationType().equals(RegistrationType.LINK)) {
+			if(((UnregisterEvent) event).getRegistrationType() == RegistrationType.LINK) {
 				mUnregisterLinkCounter++;
 				if(mProcessingFromBroken) {
 					if(mUnregisterLinkCounter == 2) {
-						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregister during this period");
+						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregistered during this period");
 					} else {
-						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregister during this period");
+						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregistered during this period");
 					}
 				}
 			}
-			if(((UnregisterEvent) event).getRegistrationType().equals(RegistrationType.NODE)) {
+			if(((UnregisterEvent) event).getRegistrationType() == RegistrationType.NODE) {
 				mUnregisterNodeCounter++;
 				if(mProcessingFromBroken) {
 					if(mUnregisterNodeCounter == 2) {
-						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregister during this period");
+						mLogger.log(this, "This is the " + mUnregisterNodeCounter + "st/nd/rd/th time a node was unregistered during this period");
 					} else {
-						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregister during this period");
+						mLogger.log(this, "This is the " + mUnregisterNodeCounter + "st/nd/rd/th time a node was unregistered during this period");
 					}
 				}
 			}

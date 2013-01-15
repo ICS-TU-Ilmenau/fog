@@ -1089,7 +1089,10 @@ public class Controller
 				LinkedList<Name> tHops = tRs.getIntermediateFNs(mNode.getCentralFN(), tOldRoute, false);
 				
 				// remove first FN on peer node; since node is broken, FN should be not available, too
-				if((tHops.size() >= 2)) tRs.reportError(tHops.get(1));
+				if((tHops.size() >= 2)) {
+					mLogger.warn(this, "this code causes extreme trouble!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+					tRs.reportError(tHops.get(1));
+				}
 				
 				if(tRerouteMethod == RerouteMethod.LOCAL) {
 					// try to get first FN after peer node
