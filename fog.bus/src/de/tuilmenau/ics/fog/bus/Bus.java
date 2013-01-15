@@ -316,9 +316,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		if(destination != null) {
 			if(!broken) {
 				if(!isPacketLost(packet)) {
-					if(Config.Transfer.BUS_CAN_CAUSE_BIT_ERRORS) {
-						generateByteErrors(packet);
-					}
+					generateByteErrors(packet);
 					
 					//
 					// Calculate timing issues

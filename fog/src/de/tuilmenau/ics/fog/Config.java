@@ -224,12 +224,6 @@ public class Config
 		public static final boolean PROCESS_CHECK_CONTINOUSLY_IN_OPERATING_MODE = true;
 		
 		/**
-		 * Indicates if a bus causes bit errors within a packet payload, 
-		 * otherwise only packet loss can be caused.
-		 */
-		public static final boolean BUS_CAN_CAUSE_BIT_ERRORS = true;
-
-		/**
 		 * Switches between constant bus delay and variable delay
 		 * caused by bandwidth and packet size. 
 		 */
