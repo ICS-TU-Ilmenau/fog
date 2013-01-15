@@ -57,14 +57,16 @@ public class FoGLauncher
 	public static final String CONFIG_DIRECTORY = "directory";
 	public static final String CONFIG_DIRECTORY_DEFAULT = null;
 
-	public static final String CONFIG_LINK_DATA_RATE = "link.datarate";
-	public static final int    CONFIG_LINK_DATA_RATE_DEFAULT = -1;
-	public static final String CONFIG_LINK_DELAY = "link.delay";
-	public static final int    CONFIG_LINK_DELAY_DEFAULT = 0;
-	public static final String CONFIG_LINK_LOSS_PROB = "link.loss";
-	public static final int    CONFIG_LINK_LOSS_PROB_DEFAULT = 0;
-	public static final String CONFIG_LINK_BIT_ERROR = "link.biterror";
-	public static final int    CONFIG_LINK_BIT_ERROR_DEFAULT = 0;
+	public static final String  CONFIG_LINK_DATA_RATE = "link.datarate";
+	public static final int     CONFIG_LINK_DATA_RATE_DEFAULT = -1;
+	public static final String  CONFIG_LINK_DELAY = "link.delay";
+	public static final int     CONFIG_LINK_DELAY_DEFAULT = 0;
+	public static final String  CONFIG_LINK_DELAY_CONSTANT = "link.delay.constant";
+	public static final boolean CONFIG_LINK_DELAY_CONSTANT_DEFAULT = true;
+	public static final String  CONFIG_LINK_LOSS_PROB = "link.loss";
+	public static final int     CONFIG_LINK_LOSS_PROB_DEFAULT = 0;
+	public static final String  CONFIG_LINK_BIT_ERROR = "link.biterror";
+	public static final int     CONFIG_LINK_BIT_ERROR_DEFAULT = 0;
 
 	public static final String CONFIG_WORKER = "worker";
 	public static final String CONFIG_WORKER_DEFAULT = "<DEFAULT>";
@@ -108,6 +110,7 @@ public class FoGLauncher
 		
 		int linkDatarate = configuration.get(CONFIG_LINK_DATA_RATE, CONFIG_LINK_DATA_RATE_DEFAULT);
 		int linkDelay = configuration.get(CONFIG_LINK_DELAY, CONFIG_LINK_DELAY_DEFAULT);
+		boolean linkDelayConstant = configuration.get(CONFIG_LINK_DELAY_CONSTANT, CONFIG_LINK_DELAY_CONSTANT_DEFAULT);
 		int linkLoss = configuration.get(CONFIG_LINK_LOSS_PROB, CONFIG_LINK_LOSS_PROB_DEFAULT);
 		int linkBitError = configuration.get(CONFIG_LINK_BIT_ERROR, CONFIG_LINK_BIT_ERROR_DEFAULT);
 		
@@ -130,6 +133,7 @@ public class FoGLauncher
 		
 		logger.log(this, CONFIG_LINK_DATA_RATE +": " + linkDatarate +"kbit/s");
 		logger.log(this, CONFIG_LINK_DELAY +": " + linkDelay +"ms");
+		logger.log(this, CONFIG_LINK_DELAY_CONSTANT +": " + linkDelayConstant);
 		logger.log(this, CONFIG_LINK_LOSS_PROB +": " + linkLoss +"%");
 		logger.log(this, CONFIG_LINK_BIT_ERROR +": " + linkBitError +"%");
 
@@ -173,6 +177,7 @@ public class FoGLauncher
 		
 		sim.getConfig().Scenario.DEFAULT_DATA_RATE_KBIT = linkDatarate;
 		sim.getConfig().Scenario.DEFAULT_DELAY_MSEC = linkDelay;
+		sim.getConfig().Scenario.DEFAULT_DELAY_CONSTANT = linkDelayConstant;
 		sim.getConfig().Scenario.DEFAULT_PACKET_LOSS_PROP = linkLoss;
 		sim.getConfig().Scenario.DEFAULT_BIT_ERROR_PROP = linkBitError;
 		

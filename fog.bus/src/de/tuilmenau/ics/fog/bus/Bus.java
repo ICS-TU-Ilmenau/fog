@@ -88,6 +88,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		setDelayMSec(mConfig.Scenario.DEFAULT_DELAY_MSEC);
 		setPacketLossProbability(mConfig.Scenario.DEFAULT_PACKET_LOSS_PROP);
 		setBitErrorProbability(mConfig.Scenario.DEFAULT_BIT_ERROR_PROP);
+		mDelayConstant = mConfig.Scenario.DEFAULT_DELAY_CONSTANT;
 		
 		// if a description is given, override the default values
 		if(pDescr != null) {
@@ -348,7 +349,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 					}
 					
 					double tDelayForPacket = 0;
-					if(Config.Transfer.BUS_DELAY_CONSTANT) {
+					if(mDelayConstant) {
 						tDelayForPacket += mDelaySec;
 					} else {
 						if(mBandwidth >= 0) {
@@ -366,7 +367,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 					mNextFreeTimeSlot = tPacketDeliverTime;
 					
 					if(Config.Transfer.DEBUG_PACKETS) {
-						if(Config.Transfer.BUS_DELAY_CONSTANT) {
+						if(mDelayConstant) {
 							mLogger.debug(this, "Bus delay is " + mDelaySec + "s (still blocked for " +tAheadOfTime +"s)");
 						} else {
 							mLogger.debug(this, "Bus data rate is " + mBandwidth + "kbit/s and packet takes " +tDelayForPacket +"s delay (still blocked for " +tAheadOfTime +"s)");
@@ -718,6 +719,8 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	private int mBandwidth;
 	@Viewable("Delay (sec)")
 	private double mDelaySec;
+	@Viewable("Delay constant")
+	private boolean mDelayConstant;
 	@Viewable("Loss probability")
 	private float mPacketLossRate;
 	@Viewable("Bit error probability")
