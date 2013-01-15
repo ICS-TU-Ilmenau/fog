@@ -35,6 +35,8 @@ import de.tuilmenau.ics.fog.topology.SimulationEventHandler;
 import de.tuilmenau.ics.fog.transfer.Gate;
 import de.tuilmenau.ics.fog.transfer.manager.NodeUp;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.RerouteMethod;
+import de.tuilmenau.ics.fog.transfer.manager.UnregisterEvent.RegistrationType;
+import de.tuilmenau.ics.fog.transfer.manager.UnregisterEvent;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.middleware.JiniHelper;
@@ -78,6 +80,9 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	private String mBrokenName = null;
 	private float mPosition = 2;
 	private int mAssertPosition;
+	private int mUnregisterLinkCounter = 0;
+	private int mUnregisterNodeCounter = 0;
+	private boolean mProcessingFromBroken = false;
 	
 	private RerouteMethod mRerouteMethod;
 	
@@ -266,7 +271,10 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 				if(queryValidExperiment()) {
 					mFailedNeighbours.clear();
 					breakElement();
+					mUnregisterLinkCounter = 0;
+					mUnregisterNodeCounter = 0;
 					mRerouteMethod = RerouteMethod.FROM_BROKEN;
+					mProcessingFromBroken = true;
 					mLogger.log(this, "Now executing experiment for rerouting from broken node from " + mSource +" to " + mTarget + " while broken element is " + mBrokenName+ " and reroute method is local ");
 					/*
 					 * push, send, ack
@@ -277,6 +285,9 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 				break;
 			case 6:
 				if(queryValidExperiment()) {
+					mUnregisterLinkCounter = 0;
+					mUnregisterNodeCounter = 0;
+					mProcessingFromBroken = false;
 					mLogger.log(this, "step "  + mStep + ":-------------------------REPAIRING--------------------");
 					repairElement();
 				}
@@ -375,7 +386,6 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	 */
 	private void sendPacket(boolean signal, boolean pRerouteInformation)
 	{
-		getLogger().debug(this, "sending packet " +( signal ? "to recreate original routes " : "to test rerouting"));
 		ReroutingTestAgent packet = null;
 		packet = new ReroutingTestAgent();
 		if(!signal) {
@@ -390,6 +400,8 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 				packet.setBrokenType(BROKEN_TYPE_NOTHING);
 			}
 		}
+		getLogger().debug(this, "sending packet " +( signal ? "to recreate original routes " : "to test rerouting with broken name " + mBrokenName + " and source to target pair " + mSource + "->" + mTarget));
+
 		packet.setStep(mStep);
 		packet.setCount(mCount);
 		packet.setDestNode(mTarget);
@@ -618,6 +630,29 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 				}
 				break;
 			}
+		}
+		if(event instanceof UnregisterEvent) {
+			if(((UnregisterEvent) event).getRegistrationType().equals(RegistrationType.LINK)) {
+				mUnregisterLinkCounter++;
+				if(mProcessingFromBroken) {
+					if(mUnregisterLinkCounter == 2) {
+						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregister during this period");
+					} else {
+						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregister during this period");
+					}
+				}
+			}
+			if(((UnregisterEvent) event).getRegistrationType().equals(RegistrationType.NODE)) {
+				mUnregisterNodeCounter++;
+				if(mProcessingFromBroken) {
+					if(mUnregisterNodeCounter == 2) {
+						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregister during this period");
+					} else {
+						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregister during this period");
+					}
+				}
+			}
+			
 		}
 	}
 }

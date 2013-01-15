@@ -34,6 +34,7 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.properties.FunctionalRequirementProperty;
 import de.tuilmenau.ics.fog.facade.properties.Property;
+import de.tuilmenau.ics.fog.packets.statistics.ReroutingExperiment;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
@@ -168,7 +169,7 @@ public class PartialRoutingService implements RemoteRoutingService
 	@Override
 	public boolean unregisterNode(RoutingServiceAddress pNode) throws RemoteException
 	{
-		mLogger.trace(this, "Unregister node: " +pNode);
+		mLogger.trace(this, "#####################################Unregister node: " +pNode);
 		
 		if(pNode != null) {
 			if(mMap.contains(pNode)) {
@@ -272,6 +273,7 @@ public class PartialRoutingService implements RemoteRoutingService
 	@Override
 	public boolean registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription, Number pLinkCost) throws RemoteException 
 	{
+		mLogger.log("<<<<<<<<<<<<<<<<<<<<<<<<<<< Registering Link");
 		boolean remoteLink = false;
 		
 		mLogger.log(this, "Register link " +pFrom +"-" +pGateID +"->" +pTo);
@@ -359,6 +361,8 @@ public class PartialRoutingService implements RemoteRoutingService
 	@Override
 	public boolean unregisterLink(RoutingServiceAddress pFrom, GateID pGateID)
 	{
+		mLogger.log(">>>>>>>>>>>>>>>>>>>>>>>>>> Unregistering Link");
+		
 		boolean tRes = false;
 		
 		if(pGateID != null) {
