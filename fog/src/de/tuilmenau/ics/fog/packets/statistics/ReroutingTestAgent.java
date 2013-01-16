@@ -56,7 +56,6 @@ public class ReroutingTestAgent extends ExperimentAgent implements IPacketStatis
 		super(ExperimentAgent.FN_NODE | ExperimentAgent.GATE);
 		mGates = new LinkedList<GateID>();
 		mNodes = new TreeSet<String>();
-		Logging.debug(this, "Created a Rerouting Packet");
 	}
 	
 	@Override

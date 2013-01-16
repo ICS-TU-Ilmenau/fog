@@ -34,6 +34,7 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.properties.FunctionalRequirementProperty;
 import de.tuilmenau.ics.fog.facade.properties.Property;
+import de.tuilmenau.ics.fog.packets.statistics.ReroutingExperiment;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
@@ -172,7 +173,15 @@ public class PartialRoutingService implements RemoteRoutingService
 		
 		if(pNode != null) {
 			if(mMap.contains(pNode)) {
-				Collection<RoutingServiceLink> tOutEdges = mMap.getOutEdges(pNode);
+				
+				/**
+				 * Clone the set of outgoing edges
+				 */
+				Collection<RoutingServiceLink> tOutToCloneEdges = mMap.getOutEdges(pNode);
+				LinkedList<RoutingServiceLink> tOutEdges = new LinkedList<RoutingServiceLink>();
+				for(RoutingServiceLink tLink : tOutToCloneEdges) {
+					tOutEdges.add(tLink);
+				}
 				
 				for(RoutingServiceLink tOutEdge : tOutEdges) {
 					// mark link as "not usable" by setting cost to infinity
@@ -183,7 +192,9 @@ public class PartialRoutingService implements RemoteRoutingService
 				mMap.edgeWeightChanged(null);
 				
 				// remove old node inclusive its links after a while
-				new CleanupEventNode(pNode).schedule();
+				
+				CleanupEventNode tToCleanup = new CleanupEventNode(pNode, tOutEdges); 
+				tToCleanup.schedule();
 				
 				return true;
 			}
@@ -203,6 +214,12 @@ public class PartialRoutingService implements RemoteRoutingService
 			oldNode = node;
 		}
 		
+		public CleanupEventNode(RoutingServiceAddress node, LinkedList<RoutingServiceLink> pLinks)
+		{
+			oldNode = node;
+			mAffectedLinks = pLinks;
+		}
+		
 		public void schedule()
 		{
 			// lazy creation of container
@@ -218,8 +235,11 @@ public class PartialRoutingService implements RemoteRoutingService
 		{
 			boolean deleteIt = false;
 			if(mDelayedRemovalOfNodes != null) {
-				// check if delete job is still active
-				deleteIt = mDelayedRemovalOfNodes.remove(oldNode) != null;
+				// check if this delete job is still active
+				CleanupEventNode tEv = mDelayedRemovalOfNodes.get(oldNode);
+				if (tEv == this) {
+					deleteIt = true;
+				}
 			}
 			
 			if(deleteIt) {
@@ -246,10 +266,11 @@ public class PartialRoutingService implements RemoteRoutingService
 		@Override
 		public String toString()
 		{
-			return this.getClass().getSimpleName() + ":" + oldNode;
+			return this.getClass().getSimpleName() + ":" + oldNode + (mAffectedLinks != null ? "->AFFECTS:" + mAffectedLinks  : "");
 		}
 		
 		private RoutingServiceAddress oldNode;
+		private LinkedList<RoutingServiceLink> mAffectedLinks;
 	}
 	
 	@Override

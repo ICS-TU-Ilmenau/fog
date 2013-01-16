@@ -80,6 +80,11 @@ public class ProcessRegister
 		return list;
 	}
 	
+	@Override
+	public String toString()
+	{
+		return this.getClass().getSimpleName() + "(registered FNs: " + mProcesses.size() + ")";
+	}
 	
 	private HashMap<ForwardingNode, ProcessList> mProcesses = new HashMap<ForwardingNode, ProcessList>();
 }

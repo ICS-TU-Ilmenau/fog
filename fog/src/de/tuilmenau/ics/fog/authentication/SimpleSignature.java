@@ -19,8 +19,15 @@ import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Signature;
 
 
+/**
+ * This signature class is optimized for simulation performance. It contains
+ * a string only. Thus, it is not a "real signature".
+ */
 public class SimpleSignature implements Signature
 {
+	private static final long serialVersionUID = -2055333911690373441L;
+	
+
 	public SimpleSignature(Identity identity)
 	{
 		this.identity = identity;

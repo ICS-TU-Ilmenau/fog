@@ -1065,7 +1065,6 @@ public class Controller
 			int removeGatesFromRoute = 0;
 			if(tRerouteMethod == RerouteMethod.FROM_BROKEN) {
 				LinkedList<Name> tDestination = tRs.getIntermediateFNs(mNode.getCentralFN(), tOldRoute, true);
-				
 				if(tDestination.size() >= 1) {
 					destinationFromBroken = tDestination.get(0);
 					removeGatesFromRoute = -1;
@@ -1087,9 +1086,10 @@ public class Controller
 			//
 			if (pType == BrokenType.NODE) {
 				LinkedList<Name> tHops = tRs.getIntermediateFNs(mNode.getCentralFN(), tOldRoute, false);
-				
 				// remove first FN on peer node; since node is broken, FN should be not available, too
-				if((tHops.size() >= 2)) tRs.reportError(tHops.get(1));
+				if((tHops.size() >= 2)) {
+					tRs.reportError(tHops.get(1));
+				}
 				
 				if(tRerouteMethod == RerouteMethod.LOCAL) {
 					// try to get first FN after peer node

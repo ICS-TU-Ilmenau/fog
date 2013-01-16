@@ -521,6 +521,7 @@ public class RoutingServiceSimulated implements RoutingService
 		if(!res && (pElement instanceof RoutingServiceAddress)) {
 			try {
 				mRS.unregisterNode((RoutingServiceAddress) pElement);
+
 			} catch (RemoteException tExc) {
 				mLogger.err(this, "Failed to unregister node " +pElement, tExc);
 			}

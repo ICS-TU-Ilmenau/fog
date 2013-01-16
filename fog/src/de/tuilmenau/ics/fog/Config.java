@@ -176,6 +176,12 @@ public class Config
 		public int DEFAULT_DELAY_MSEC = 0;
 		
 		/**
+		 * Switches between constant bus delay and variable delay
+		 * caused by bandwidth and packet size. 
+		 */
+		public boolean DEFAULT_DELAY_CONSTANT = true;
+
+		/**
 		 * Default value for loss probability of a packet transfered
 		 * via a link in %. Allowed are value between [0, 100].
 		 */
@@ -222,18 +228,6 @@ public class Config
 		 * it to {@code false}. Timeouts during the starting period of a process are detected in both cases.
 		 */
 		public static final boolean PROCESS_CHECK_CONTINOUSLY_IN_OPERATING_MODE = true;
-		
-		/**
-		 * Indicates if a bus causes bit errors within a packet payload, 
-		 * otherwise only packet loss can be caused.
-		 */
-		public static final boolean BUS_CAN_CAUSE_BIT_ERRORS = true;
-
-		/**
-		 * Switches between constant bus delay and variable delay
-		 * caused by bandwidth and packet size. 
-		 */
-		public static final boolean BUS_DELAY_CONSTANT = true;
 		
 		/**
 		 * Enables packet loss, if link is overloaded.

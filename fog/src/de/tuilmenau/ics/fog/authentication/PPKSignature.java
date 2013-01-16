@@ -20,6 +20,9 @@ import java.util.Arrays;
 
 public class PPKSignature extends SimpleSignature
 {
+	private static final long serialVersionUID = -8367522442173253573L;
+	
+
 	public PPKSignature(PPKIdentity identity, byte[] signature)
 	{
 		super(identity);

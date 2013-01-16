@@ -16,7 +16,6 @@ package de.tuilmenau.ics.fog.application;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.CounterNode;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.fog.IEvent;
-import de.tuilmenau.ics.fog.IEventRef;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
@@ -97,7 +96,7 @@ public class ConnectTest extends ApplicationClient
 		{
 			// start timeout for detecting errors
 			// due to packet loss or other problems
-			mTimer = getHost().getTimeBase().scheduleIn(CONNECT_TEST_TIMEOUT_SEC, this);
+			getHost().getTimeBase().scheduleIn(CONNECT_TEST_TIMEOUT_SEC, this);
 			
 			count("Send");
 			try {
@@ -136,15 +135,13 @@ public class ConnectTest extends ApplicationClient
 			getLogger().err(this, "Exception during connection from " +getHost() +" to " +getDestination(), pExc);
 			exit();
 		}
-
+		
 		/**
 		 * Called if timeout occurs.
 		 */
 		@Override
 		public void fire()
 		{
-			mTimer = null;
-			
 			if(isRunning()) {
 				count("Timeout");
 				exit();
@@ -175,7 +172,6 @@ public class ConnectTest extends ApplicationClient
 		counter.write(+1.0, getHost().getTimeBase().nowStream());
 	}
 	
-	private IEventRef mTimer = null;
 	private boolean mCloseAfterTest = true;
 	private Description mRequirements = null;
 	

@@ -18,6 +18,9 @@ import java.io.Serializable;
 
 public class NeighborInformation implements Serializable
 {
+	private static final long serialVersionUID = 9145024336202009409L;
+	
+	
 	public NeighborInformation(String hlName, Serializable llName)
 	{
 		mHLName = hlName;
