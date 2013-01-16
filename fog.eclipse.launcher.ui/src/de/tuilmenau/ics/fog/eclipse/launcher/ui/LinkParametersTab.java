@@ -14,10 +14,12 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Text;
 
 import de.tuilmenau.ics.fog.eclipse.launcher.FoGLaunchConfigurationDelegate;
+import de.tuilmenau.ics.fog.scenario.NodeConfiguratorContainer;
 
 
 /**
@@ -32,7 +34,12 @@ public class LinkParametersTab extends ParametersTab
 	private static final String TEXT_DELAY = "Delay [ms]";
 	private static final String TEXT_LOSS = "Loss probability [0..100%]";
 	private static final String TEXT_BITERROR = "Bit error probability [0..100%] (only if loss > 0)";
-	
+
+	private static final String TEXT_GROUP_VARIOUS = "Further settings";
+	private static final String TEXT_DELAY_CONSTANT = "Delay calculation";
+	private static final String TEXT_DELAY_CONSTANT_TRUE  = "constant according to delay value";
+	private static final String TEXT_DELAY_CONSTANT_FALSE = "variable according to data rate and packet size";
+
 
 	@Override
 	public void createControl(Composite parent)
@@ -43,11 +50,12 @@ public class LinkParametersTab extends ParametersTab
 		comp.setLayout(new GridLayout(1, true));
 		comp.setFont(parent.getFont());
 
-		createNodeComponent(comp);
+		createLinkCapComponent(comp);
+		createLinkVariousComponent(comp);
 	}
 
 	
-	private void createNodeComponent(Composite parent)
+	private void createLinkCapComponent(Composite parent)
 	{
 		Composite comp = createGroup(parent, TEXT_GROUP, 2);
 
@@ -64,6 +72,14 @@ public class LinkParametersTab extends ParametersTab
 		biterrorText = createText(comp, "", 1, true);
 	}
 	
+	private void createLinkVariousComponent(Composite parent)
+	{
+		Composite comp = createGroup(parent, TEXT_GROUP_VARIOUS, 2);
+
+		createLabel(comp, TEXT_DELAY_CONSTANT);
+		delayConstantCombo = createCombo(comp, new Object[] { TEXT_DELAY_CONSTANT_TRUE, TEXT_DELAY_CONSTANT_FALSE }, true, 1, true);
+	}
+	
 	@Override
 	public String getName()
 	{
@@ -78,11 +94,18 @@ public class LinkParametersTab extends ParametersTab
 			int delay = configuration.getAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_DELAY, FoGLaunchConfigurationDelegate.CONFIG_LINK_DELAY_DEFAULT);
 			int loss = configuration.getAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_LOSS_PROB, FoGLaunchConfigurationDelegate.CONFIG_LINK_LOSS_PROB_DEFAULT);
 			int biterror = configuration.getAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_BIT_ERROR, FoGLaunchConfigurationDelegate.CONFIG_LINK_BIT_ERROR_DEFAULT);
+			boolean delayconstant = configuration.getAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_DELAY_CONSTANT, FoGLaunchConfigurationDelegate.CONFIG_LINK_DELAY_CONSTANT_DEFAULT);
 	
 			datarateText.setText(Integer.toString(datarate));
 			delayText.setText(Integer.toString(delay));
 			lossText.setText(Integer.toString(loss));
 			biterrorText.setText(Integer.toString(biterror));
+			
+			if(delayconstant) {
+				delayConstantCombo.setText(TEXT_DELAY_CONSTANT_TRUE);
+			} else {
+				delayConstantCombo.setText(TEXT_DELAY_CONSTANT_FALSE);
+			}
 		}
 		catch(CoreException exc) {
 			throw new RuntimeException(this + " - Error while loading parameters from configuration " +configuration, exc);
@@ -96,6 +119,9 @@ public class LinkParametersTab extends ParametersTab
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_DELAY, getIntegerFrom(delayText));
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_LOSS_PROB, getIntegerFrom(lossText));
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_BIT_ERROR, getIntegerFrom(biterrorText));
+		
+		boolean delayConstant = TEXT_DELAY_CONSTANT_TRUE.equals(delayConstantCombo.getText());
+		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_DELAY_CONSTANT, delayConstant);
 	}
 
 	@Override
@@ -105,6 +131,7 @@ public class LinkParametersTab extends ParametersTab
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_DELAY, FoGLaunchConfigurationDelegate.CONFIG_LINK_DELAY_DEFAULT);
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_LOSS_PROB, FoGLaunchConfigurationDelegate.CONFIG_LINK_LOSS_PROB_DEFAULT);
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_BIT_ERROR, FoGLaunchConfigurationDelegate.CONFIG_LINK_BIT_ERROR_DEFAULT);
+		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_LINK_DELAY_CONSTANT, FoGLaunchConfigurationDelegate.CONFIG_LINK_DELAY_CONSTANT_DEFAULT);
 	}
 
 	@Override
@@ -137,4 +164,6 @@ public class LinkParametersTab extends ParametersTab
 	private Text delayText;
 	private Text lossText;
 	private Text biterrorText;
+	
+	private Combo delayConstantCombo;
 }

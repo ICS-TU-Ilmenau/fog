@@ -75,7 +75,7 @@ public class BusEditor extends EditorPart
 		//
 		// Bit error probability
 		//
-		tGrp.createRow("Bit error probability:", Integer.toString(mBus.getBitErrorProbability()), "%", from, to, mBus.getBitErrorProbability(), Config.Transfer.BUS_CAN_CAUSE_BIT_ERRORS && enabled, tGrp.new SliderChangeListener() {
+		tGrp.createRow("Bit error probability:", Integer.toString(mBus.getBitErrorProbability()), "%", from, to, mBus.getBitErrorProbability(), enabled, tGrp.new SliderChangeListener() {
 			@Override
 			public void handleEvent(Event event)
 			{
