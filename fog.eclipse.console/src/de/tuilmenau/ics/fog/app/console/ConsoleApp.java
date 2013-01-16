@@ -32,6 +32,7 @@ import de.tuilmenau.ics.fog.facade.properties.PropertyFactoryContainer;
 import de.tuilmenau.ics.fog.facade.properties.MinMaxProperty.Limit;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Logging.Level;
+import de.tuilmenau.ics.fog.util.Helper;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
 
@@ -40,6 +41,8 @@ public class ConsoleApp extends HostApplication implements IReceiveCallback
 {
 	private static final String EXIT_CMD = "exit";
 	private static final int EXIT_SLEEP_MSEC = 1000;
+	
+	private static final String REQUEST_CMD = "GET";
 	
 	// counter after how many messages the console should print message (MUST be > 1)
 	private static final int NUMBER_MSG_LOOP_COUNTER = 1000;
@@ -74,6 +77,15 @@ public class ConsoleApp extends HostApplication implements IReceiveCallback
 							socket = null;
 							log(Level.INFO, "Connection closed.");
 						} else {
+							if(cmd != null) {
+								// if it is the start of the HTTP request,
+								// extend it to a real one
+								if(cmd.startsWith(REQUEST_CMD)) {
+									cmd += " HTTP/1.1\n";
+									cmd += "Host: \n\n";
+								}
+							}
+							
 							socket.write(cmd);
 						}
 					}
@@ -145,6 +157,7 @@ public class ConsoleApp extends HostApplication implements IReceiveCallback
 				log(Level.INFO, "connect <name> [<min bandwidth kbit/s> [<max delay msec> [<loss probability %>]]] - connect to a remote host");
 				log(Level.INFO, "requirements | requ - opens dialog for setting requirements for connections");
 				log(Level.INFO, "add <requ type name> [<param>] - adds a requirements to the list of requirements");
+				log(Level.INFO, "GET <path and filename> - is extended to a HTTP 1.1 request");
 				log(Level.INFO, "exit - closing connection and/or console");
 				log(Level.INFO, "If the console is connected, all input (exept 'exit') will be passed to the peer.");
 				log(Level.INFO, "If a number is received from a peer the console will increment it and send it back.");
@@ -276,7 +289,7 @@ public class ConsoleApp extends HostApplication implements IReceiveCallback
 		}
 		
 		if(loopCounter <= 0) {
-			log(Level.INFO, "peer> " +pData.toString());
+			log(Level.INFO, "peer> " +Helper.toString(pData));
 			
 			if(isNumber) {
 				double duration = now -loopTime;
