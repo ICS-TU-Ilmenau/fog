@@ -13,7 +13,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -145,11 +144,44 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	public OutputStream getOutputStream() throws IOException
 	{
 		if(mOutputStream == null) {
-			mOutputStream = new ByteArrayOutputStream() {
+			mOutputStream = new OutputStream() {
+				@Override
+				public void write(int value) throws IOException
+				{
+					try {
+						ConnectionEndPoint.this.write(new byte[] { (byte)value });
+					}
+					catch(NetworkException exc) {
+						throw new IOException(exc);
+					}
+				}
+				
+				public synchronized void write(byte b[], int off, int len) throws IOException
+				{
+					if(b != null) {
+						try {
+							// Copy array since some apps will reuse b in order
+							// to send the next data chunk! That copy can only be
+							// avoided, if the calls behind "write" really do a
+							// deep copy of the packet. However, the payload will
+							// only be copied if the packet is send through a real
+							// lower layer. In pure simulation scenarios that never
+							// happens.
+							byte[] copyB = new byte[len];
+							System.arraycopy(b, off, copyB, 0, len);
+							
+							ConnectionEndPoint.this.write(copyB);
+						}
+						catch(NetworkException exc) {
+							throw new IOException(exc);
+						}
+					}
+				}
+				
 				@Override
 				public void flush() throws IOException
 				{
-					if(count > 0) {
+/*					if(count > 0) {
 						super.flush();
 	
 						//Logging.Log(this, "sending: " +new String(toByteArray()));
@@ -160,8 +192,9 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 							throw new IOException(exc);
 						}
 						reset();
-					}
+					}*/
 				}
+
 			};
 		}
 
@@ -172,7 +205,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	{
 		if(mInputStream == null) {
 			synchronized (this) {
-				mInputStream = new PipedInputStream();
+				mInputStream = new PipedInputStream(100000); // TODO resize is not thread safe!
 				mInputOutStream = new PipedOutputStream(mInputStream);
 				
 				// if there are already some data, copy it to stream
@@ -199,7 +232,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 				mInputOutStream.write(data.toString().getBytes());
 			}
 		} catch (IOException tExc) {
-			logger.err(this, "Exception " +tExc +" while receiving packet for stream.");
+			logger.err(this, "Error while writing received packet to stream buffer.", tExc);
 		}
 	}
 
@@ -249,7 +282,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		notifyObservers(new ServiceDegradationEvent(this));
 	}
 	
-	private void cleanup()
+	private synchronized void cleanup()
 	{
 		try {
 			if(mOutputStream != null) mOutputStream.close();
