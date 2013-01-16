@@ -46,8 +46,6 @@ import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
-import de.tuilmenau.ics.fog.transfer.manager.UnregisterEvent;
-import de.tuilmenau.ics.fog.transfer.manager.UnregisterEvent.RegistrationType;
 import de.tuilmenau.ics.fog.util.Logger;
 
 
@@ -76,11 +74,6 @@ public class RoutingServiceSimulated implements RoutingService
 		mRoutingIDs = new HashMap<ForwardingNode, RoutingServiceAddress>();
 		mNameMapping = HierarchicalNameMappingService.getGlobalNameMappingService();
 		mLogger = pNode.getLogger();
-		
-		/**
-		 * If this object was uploaded to GitHub it happened accidentally - it is only for debugging
-		 */
-		mNode = pNode;
 		
 		mCounterGetRouteFound = SumNode.openAsWriter(getClass().getName() +".route.number");
 	}
@@ -504,7 +497,6 @@ public class RoutingServiceSimulated implements RoutingService
 				RoutingServiceAddress tAddr = getNameFor(pElement);
 				if(tAddr != null) {
 					mRS.unregisterNode(tAddr);
-					mNode.getAS().getSimulation().publish(new UnregisterEvent(RegistrationType.NODE));
 				}
 				// else: not registered at all
 			} catch (RemoteException tExc) {
@@ -529,7 +521,6 @@ public class RoutingServiceSimulated implements RoutingService
 		if(!res && (pElement instanceof RoutingServiceAddress)) {
 			try {
 				mRS.unregisterNode((RoutingServiceAddress) pElement);
-				mNode.getAS().getSimulation().publish(new UnregisterEvent(RegistrationType.NODE));
 
 			} catch (RemoteException tExc) {
 				mLogger.err(this, "Failed to unregister node " +pElement, tExc);
@@ -618,7 +609,6 @@ public class RoutingServiceSimulated implements RoutingService
 			
 			if(tID != null) {	
 				try {
-					mNode.getAS().getSimulation().publish(new UnregisterEvent(RegistrationType.LINK));
 					return mRS.unregisterLink(tID, pGate.getGateID());
 				}
 				catch (RemoteException exc) {
@@ -737,11 +727,6 @@ public class RoutingServiceSimulated implements RoutingService
 	private final HashMap<ForwardingNode, RoutingServiceAddress> mRoutingIDs;
 	private final NameMappingService<RoutingServiceAddress> mNameMapping;
 	private Logger mLogger;
-	
-	/**
-	 * If this object was uploaded to GitHub it happened accidentally - it is only for debugging
-	 */
-	private Node mNode;
 	
 	/**
 	 * Counter for calls to getRoute with a positive result.

@@ -1065,7 +1065,6 @@ public class Controller
 			int removeGatesFromRoute = 0;
 			if(tRerouteMethod == RerouteMethod.FROM_BROKEN) {
 				LinkedList<Name> tDestination = tRs.getIntermediateFNs(mNode.getCentralFN(), tOldRoute, true);
-				mLogger.log(this, "Reported destination is " + tDestination);
 				if(tDestination.size() >= 1) {
 					destinationFromBroken = tDestination.get(0);
 					removeGatesFromRoute = -1;
@@ -1073,7 +1072,6 @@ public class Controller
 					mLogger.warn(this, "Rerouting method " +tRerouteMethod +", but destination is not known for route " +tOldRoute +". Fallback to last known FN of route.");
 					
 					LinkedList<Name> tHops = tRs.getIntermediateFNs(mNode.getCentralFN(), tOldRoute, false);
-					mLogger.log(this, "Reported hops are " + tHops + " while considering rerouting method from broken");
 					if(tHops.size() > 1) {
 						destinationFromBroken = tHops.getLast();
 						removeGatesFromRoute = tHops.size() -2;
@@ -1088,10 +1086,8 @@ public class Controller
 			//
 			if (pType == BrokenType.NODE) {
 				LinkedList<Name> tHops = tRs.getIntermediateFNs(mNode.getCentralFN(), tOldRoute, false);
-				mLogger.log(this, "Reported hops are " + tHops + " while considering broken node");
 				// remove first FN on peer node; since node is broken, FN should be not available, too
 				if((tHops.size() >= 2)) {
-					mLogger.warn(this, "this code causes extreme trouble!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 					tRs.reportError(tHops.get(1));
 				}
 				

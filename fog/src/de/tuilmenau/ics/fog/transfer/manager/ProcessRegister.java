@@ -30,16 +30,12 @@ public class ProcessRegister
 	{
 		ProcessList list = getList(fn, true);
 		
-		fn.getNode().getLogger().info(this, "$$$$$$$$$$$$$$$$ Registering process " + process.getID() + " for forwarding node " + fn + " and owner " + process.getOwner());
-		
 		list.registerProcess(process);
 	}
 	
 	public Process getProcess(ForwardingNode fn, Identity owner, int processID)
 	{
 		ProcessList list = getList(fn, false);
-		
-		fn.getNode().getLogger().info(this, "$$$$$$$$$$$$$$$$$ Requesting process " + processID + " for forwarding node " + fn + " and owner " + owner);
 		
 		if(list != null) {
 			return list.getProcess(owner, processID);

@@ -35,8 +35,6 @@ import de.tuilmenau.ics.fog.topology.SimulationEventHandler;
 import de.tuilmenau.ics.fog.transfer.Gate;
 import de.tuilmenau.ics.fog.transfer.manager.NodeUp;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.RerouteMethod;
-import de.tuilmenau.ics.fog.transfer.manager.UnregisterEvent.RegistrationType;
-import de.tuilmenau.ics.fog.transfer.manager.UnregisterEvent;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.middleware.JiniHelper;
@@ -630,29 +628,6 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 				}
 				break;
 			}
-		}
-		if(event instanceof UnregisterEvent) {
-			if(((UnregisterEvent) event).getRegistrationType() == RegistrationType.LINK) {
-				mUnregisterLinkCounter++;
-				if(mProcessingFromBroken) {
-					if(mUnregisterLinkCounter == 2) {
-						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregistered during this period");
-					} else {
-						mLogger.log(this, "This is the " + mUnregisterLinkCounter + "st/nd/rd/th time a link was unregistered during this period");
-					}
-				}
-			}
-			if(((UnregisterEvent) event).getRegistrationType() == RegistrationType.NODE) {
-				mUnregisterNodeCounter++;
-				if(mProcessingFromBroken) {
-					if(mUnregisterNodeCounter == 2) {
-						mLogger.log(this, "This is the " + mUnregisterNodeCounter + "st/nd/rd/th time a node was unregistered during this period");
-					} else {
-						mLogger.log(this, "This is the " + mUnregisterNodeCounter + "st/nd/rd/th time a node was unregistered during this period");
-					}
-				}
-			}
-			
 		}
 	}
 }
