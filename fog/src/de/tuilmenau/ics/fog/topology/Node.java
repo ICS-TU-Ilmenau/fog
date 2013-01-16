@@ -81,7 +81,7 @@ public class Node extends Observable implements IElementDecorator
 		multiplexgate = null;
 		
 		// set capabilities of the node
-		String tCap = pParameters.get(Cap, null);
+		String tCap = getParameter().get(Cap, null);
 		if((tCap == null) || "all".equalsIgnoreCase(tCap)) {
 			capabilities = Description.createHostExtended();
 		}
