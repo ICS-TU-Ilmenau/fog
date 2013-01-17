@@ -13,12 +13,13 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.LinkedList;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Connection;
@@ -272,17 +273,23 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	
 	public synchronized void receive(Object data)
 	{
-		if(mInputStream != null) {
-			mInputStream.addToBuffer(data);
-		} else {
-			if(mReceiveBuffer == null) {
-				mReceiveBuffer = new LinkedList<Object>();
-			}
+		try {
+			if(mInputStream != null) {
+				mInputStream.addToBuffer(data);
+			} else {
+				if(mReceiveBuffer == null) {
+					mReceiveBuffer = new LinkedList<Object>();
+				}
 				
-			mReceiveBuffer.addLast(data);
+				mReceiveBuffer.addLast(data);
+			}
+			
+			notifyObservers(new DataAvailableEvent(this));
 		}
-		
-		notifyObservers(new DataAvailableEvent(this));
+		catch(IOException exc) {
+			logger.err(this, "Can not receive data '" +data +"'. Closing connection.", exc);
+			close();
+		}
 	}
 	
 	@Override
@@ -295,77 +302,130 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		}
 	}
 
-	private class CEPInputStream extends InputStream
+	private class CEPInputStream extends ByteArrayInputStream
 	{
-		@Override
-		public synchronized int read() throws IOException
+		public CEPInputStream()
 		{
-			while(isConnected()) {
-				if(currentPart != null) {
-					// end of current part?
-					if(currentIndex >= currentPart.length) {
-						currentIndex = 0;
-						currentPart = null;
-						// The current part was transmitted and the
-						// next part is required. However, we have
-						// to inform the caller (InputStream.read)
-						// about the end of the part with an exception.
-						throw new IOException();
-					} else {
-						int res = currentPart[currentIndex];
-						currentIndex++;
-						return res;
-					}
-				} else {
-					// load next part
-					try {
-						Object obj = buffer.take();
-						
-						if(obj == null) {
-							throw new IOException();
-						}
-						else if(obj instanceof byte[]) {
-							currentPart = (byte[]) obj;
-						}
-						else {
-							currentPart = obj.toString().getBytes();
-						}
-					}
-					catch(InterruptedException exc) {
-						// ignore and loop again
-					}
-					currentIndex = 0;
-				}
+			super(new byte[0]);
+		}
+
+		@Override
+		public synchronized int read()
+		{
+			int res = super.read();
+			
+			// current buffer empty?
+			if(res < 0) {
+				// blocks until buffers changed
+				res = flipBuffers();
+				
+				// if no error occurred, read again
+				if(res >= 0) res = read();
 			}
 			
-			// socket closed
-			return -1;
+			return res;
 		}
 		
-		public void addToBuffer(Object data)
+		@Override
+		public synchronized int read(byte recBuffer[], int offset, int length)
 		{
-			if(!buffer.offer(data)) {
-				// buffer full
-				logger.err(this, "Receive stream buffer is full. Terminating connection.");
+			int res = super.read(recBuffer, offset, length);
+			
+			// current buffer empty?
+			if(res < 0) {
+				// blocks until buffers changed
+				res = flipBuffers();
 				
-				// close stream and ...
-				try {
-					close();
-				}
-				catch(IOException exc) {
-					// ignore it
-				}
-				
-				// ... connection due to overload situation
-				ConnectionEndPoint.this.close();
+				// if no error occurred, read again
+				if(res >= 0) res = read(recBuffer, offset, length);
+			}
+			
+			return res;
+		}
+		
+		@Override
+		public void close() throws IOException
+		{
+			super.close();
+			
+			synchronized (buffer) {
+				buffer.close();
+				buffer.notifyAll();
 			}
 		}
 		
-		private byte[] currentPart;
-		private int currentIndex = 0;
-		private LinkedBlockingQueue<Object> buffer = new LinkedBlockingQueue<Object>();
+		/**
+		 * Replaces the current buffer of the input stream (which is empty)
+		 * with the current buffer of the output stream, which contains
+		 * the remaining data received via the connection.
+		 * 
+		 * @return number of new bytes; -1 on error
+		 */
+		private synchronized int flipBuffers()
+		{
+			if(isConnected()) {
+				synchronized (buffer) {
+					// wait until 
+					while(buffer.size() <= 0) {
+						try {
+							buffer.wait();
+						}
+						catch (InterruptedException exc) {
+							// ignore it
+						}
+						
+						if(!isConnected()) return -1;
+					}
+					
+					// reset read buffer with buffer from output stream
+					this.count = buffer.size();
+					this.buf = buffer.replaceBuffer();
+					this.pos = 0;
+					this.mark = 0;
+				}
+				return this.count;
+			} else {
+				return -1;
+			}
+		}
+		
+		public void addToBuffer(Object data) throws IOException
+		{
+			if(data != null) {
+				if(data instanceof byte[]) {
+					buffer.write((byte[]) data);
+				} else {
+					buffer.write(data.toString().getBytes());
+				}
+				
+				synchronized (buffer) {
+					buffer.notify();
+				}
+			}
+		}
+		
+		private class CEPByteArrayOutputStream extends ByteArrayOutputStream
+		{
+			/**
+			 * Extracts the current puffer from the output stream and replaces it
+			 * with a new empty one.
+			 * 
+			 * @return current buffer
+			 */
+			public synchronized byte[] replaceBuffer()
+			{
+				byte[] oldBuf = buf;
+				buf = new byte[Math.max(32, count)];
+				count = 0;
+				
+				return oldBuf;
+			}
+		}
+		
+		private CEPByteArrayOutputStream buffer = new CEPByteArrayOutputStream();
 	}
-
+	
+	
 	private Name bindingName;
 	
 	private Logger logger;
