@@ -395,6 +395,12 @@ public class MultipathServer extends Application implements Connection
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public int available() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 	
 
 }
