@@ -39,9 +39,8 @@ import de.tuilmenau.ics.fog.util.SimpleName;
  * Server, which forwards multipath data to an external destination.
  * The data is relayed to an IP based destination. For this purpose,
  * it uses a UDPServerProxy.
- *  
  */
-public class MultipathServer extends Application implements Connection
+public class MultipathServer extends Application
 {
 	public static final boolean DEBUG_SCTP_IO = false;
 	public static final boolean DEBUG_PACKETS = false;
@@ -74,7 +73,7 @@ public class MultipathServer extends Application implements Connection
 		try {
 			if (mTransport ==  InterOpIP.Transport.UDP){
 				mClientCEP2IP = new ConnectionEndPointUDPProxy(mLogger, mDestinationIp, mDestinationPort, 0);
-				mClientCEP2IP.start(this);
+				mClientCEP2IP.start(new MultipathConnection());
 			}else
 			{
 				mLogger.err(this, "TCP is not supported by SCTP encapsulation");
@@ -312,96 +311,101 @@ public class MultipathServer extends Application implements Connection
 	 */
 	private LinkedList<Session> mSctpClientSessions = new LinkedList<Session>();
 
-	@Override
-	public void registerListener(EventListener observer) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean unregisterListener(EventListener observer) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void connect() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isConnected() {
-		return isRunning();
-	}
-
-	@Override
-	public Name getBindingName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LinkedList<Signature> getAuthentications() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Description getRequirements() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void write(Serializable pData) throws NetworkException {
-		// incoming UDP encapsulation data
-		if (pData instanceof byte[]){
-			byte[] tSCTPData = (byte[])pData;
+	/**
+	 * Proxy connection, which receives data (via write) and relays
+	 * it to the main class.
+	 */
+	private class MultipathConnection implements Connection
+	{
+		@Override
+		public void registerListener(EventListener observer) {
+			// TODO Auto-generated method stub
 			
-//			if (DEBUG_PACKETS) {
-//				mLogger.log(this, "write()-received SCTP data of " + tSCTPData.length + " bytes");
-//			}
-//			if (DEBUG_PACKETS_DATA) {
-//				mLogger.log(this, "write()-received SCTP data " + tSCTPData.toString());
-//			}
-
-			receivedSCTP(tSCTPData);
-		}else{
-			getLogger().warn(this, "Malformed received SCTP packet from UDP listener " + pData);
+		}
+	
+		@Override
+		public boolean unregisterListener(EventListener observer) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+	
+		@Override
+		public void connect() {
+			// TODO Auto-generated method stub
+			
+		}
+	
+		@Override
+		public boolean isConnected() {
+			return isRunning();
+		}
+	
+		@Override
+		public Name getBindingName() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	
+		@Override
+		public LinkedList<Signature> getAuthentications() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	
+		@Override
+		public Description getRequirements() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	
+		@Override
+		public void write(Serializable pData) throws NetworkException {
+			// incoming UDP encapsulation data
+			if (pData instanceof byte[]){
+				byte[] tSCTPData = (byte[])pData;
+				
+	//			if (DEBUG_PACKETS) {
+	//				mLogger.log(this, "write()-received SCTP data of " + tSCTPData.length + " bytes");
+	//			}
+	//			if (DEBUG_PACKETS_DATA) {
+	//				mLogger.log(this, "write()-received SCTP data " + tSCTPData.toString());
+	//			}
+	
+				receivedSCTP(tSCTPData);
+			}else{
+				getLogger().warn(this, "Malformed received SCTP packet from UDP listener " + pData);
+			}
+		}
+	
+		@Override
+		public Object read() throws NetworkException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	
+		@Override
+		public OutputStream getOutputStream() throws IOException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	
+		@Override
+		public InputStream getInputStream() throws IOException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	
+		@Override
+		public void close() {
+			// TODO Auto-generated method stub
+			
+		}
+	
+		@Override
+		public int available() {
+			// TODO Auto-generated method stub
+			return 0;
 		}
 	}
-
-	@Override
-	public Object read() throws NetworkException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public OutputStream getOutputStream() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public InputStream getInputStream() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void close() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public int available() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	
-
 }
 
