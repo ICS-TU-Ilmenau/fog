@@ -16,10 +16,9 @@ package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.io.Serializable;
 import java.util.LinkedList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Connection;
@@ -125,7 +124,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	{
 		//TODO blocking mode?
 		
-		if(mInputOutStream != null) {
+		if(mInputStream != null) {
 			throw new NetworkException(this, "Receiving is done via input stream. Do not call Connection.read."); 
 		}
 		
@@ -139,9 +138,9 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		
 		return null;
 	}
-
+	
 	@Override
-	public OutputStream getOutputStream() throws IOException
+	public synchronized OutputStream getOutputStream() throws IOException
 	{
 		if(mOutputStream == null) {
 			mOutputStream = new OutputStream() {
@@ -181,18 +180,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 				@Override
 				public void flush() throws IOException
 				{
-/*					if(count > 0) {
-						super.flush();
-	
-						//Logging.Log(this, "sending: " +new String(toByteArray()));
-						try {
-							ConnectionEndPoint.this.write(toByteArray());
-						}
-						catch(NetworkException exc) {
-							throw new IOException(exc);
-						}
-						reset();
-					}*/
+					// nothing to do
 				}
 
 			};
@@ -201,41 +189,25 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		return mOutputStream;
 	}
 	
-	public InputStream getInputStream() throws IOException
+	public synchronized InputStream getInputStream() throws IOException
 	{
 		if(mInputStream == null) {
-			synchronized (this) {
-				mInputStream = new PipedInputStream(100000); // TODO resize is not thread safe!
-				mInputOutStream = new PipedOutputStream(mInputStream);
-				
-				// if there are already some data, copy it to stream
-				// and delete buffer
-				if(mReceiveBuffer != null) {
-					for(Object obj : mReceiveBuffer) {
-						writeDataToStream(obj);
-					}
-					
-					mReceiveBuffer = null;
+			mInputStream = new CEPInputStream();
+			
+			// if there are already some data, copy it to stream
+			// and delete buffer
+			if(mReceiveBuffer != null) {
+				for(Object obj : mReceiveBuffer) {
+					mInputStream.addToBuffer(obj);
 				}
+				
+				mReceiveBuffer = null;
 			}
 		}
 
 		return mInputStream;
 	}
 	
-	private void writeDataToStream(Object data)
-	{
-		try {
-			if(data instanceof byte[]) {
-				mInputOutStream.write((byte[]) data);
-			} else {
-				mInputOutStream.write(data.toString().getBytes());
-			}
-		} catch (IOException tExc) {
-			logger.err(this, "Error while writing received packet to stream buffer.", tExc);
-		}
-	}
-
 	/**
 	 * Called by higher layer to close socket.
 	 */
@@ -286,12 +258,10 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	{
 		try {
 			if(mOutputStream != null) mOutputStream.close();
-			//if(mInputStream != null) mInputStream.close();
-			if(mInputOutStream != null) mInputOutStream.close();
+			if(mInputStream != null) mInputStream.close();
 			
 			mOutputStream = null;
 			mInputStream = null;
-			mInputOutStream = null;
 		} catch (IOException tExc) {
 			// ignore exception
 			logger.warn(this, "Ignoring exception during closing operation.", tExc);
@@ -302,8 +272,8 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	
 	public synchronized void receive(Object data)
 	{
-		if(mInputOutStream != null) {
-			writeDataToStream(data);
+		if(mInputStream != null) {
+			mInputStream.addToBuffer(data);
 		} else {
 			if(mReceiveBuffer == null) {
 				mReceiveBuffer = new LinkedList<Object>();
@@ -314,6 +284,87 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		
 		notifyObservers(new DataAvailableEvent(this));
 	}
+	
+	@Override
+	public String toString()
+	{
+		if(forwardingNode != null) {
+			return super.toString() +"@" +forwardingNode.getNode();
+		} else {
+			return super.toString();
+		}
+	}
+
+	private class CEPInputStream extends InputStream
+	{
+		@Override
+		public synchronized int read() throws IOException
+		{
+			while(isConnected()) {
+				if(currentPart != null) {
+					// end of current part?
+					if(currentIndex >= currentPart.length) {
+						currentIndex = 0;
+						currentPart = null;
+						// The current part was transmitted and the
+						// next part is required. However, we have
+						// to inform the caller (InputStream.read)
+						// about the end of the part with an exception.
+						throw new IOException();
+					} else {
+						int res = currentPart[currentIndex];
+						currentIndex++;
+						return res;
+					}
+				} else {
+					// load next part
+					try {
+						Object obj = buffer.take();
+						
+						if(obj == null) {
+							throw new IOException();
+						}
+						else if(obj instanceof byte[]) {
+							currentPart = (byte[]) obj;
+						}
+						else {
+							currentPart = obj.toString().getBytes();
+						}
+					}
+					catch(InterruptedException exc) {
+						// ignore and loop again
+					}
+					currentIndex = 0;
+				}
+			}
+			
+			// socket closed
+			return -1;
+		}
+		
+		public void addToBuffer(Object data)
+		{
+			if(!buffer.offer(data)) {
+				// buffer full
+				logger.err(this, "Receive stream buffer is full. Terminating connection.");
+				
+				// close stream and ...
+				try {
+					close();
+				}
+				catch(IOException exc) {
+					// ignore it
+				}
+				
+				// ... connection due to overload situation
+				ConnectionEndPoint.this.close();
+			}
+		}
+		
+		private byte[] currentPart;
+		private int currentIndex = 0;
+		private LinkedBlockingQueue<Object> buffer = new LinkedBlockingQueue<Object>();
+	}
 
 	private Name bindingName;
 	
@@ -322,7 +373,6 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	private LinkedList<Signature> authentications;
 	
 	private OutputStream mOutputStream;
-	private PipedInputStream mInputStream;
-	private PipedOutputStream mInputOutStream;
+	private CEPInputStream mInputStream;
 	private LinkedList<Object> mReceiveBuffer;
 }
