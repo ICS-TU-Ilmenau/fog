@@ -85,6 +85,16 @@ public class ServerFN extends Multiplexer
 		}
 
 		@Override
+		public synchronized int getNumberWaitingConnections()
+		{
+			if(newConnections != null) {
+				return newConnections.size();
+			} else {
+				return 0;
+			}
+		}
+
+		@Override
 		public Name getName()
 		{
 			return ServerFN.this.getName();

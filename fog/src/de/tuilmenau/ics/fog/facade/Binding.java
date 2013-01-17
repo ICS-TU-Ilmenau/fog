@@ -27,6 +27,11 @@ public interface Binding extends EventSource
 	 */
 	public Connection getIncomingConnection();
 	
+	/**
+	 * @return number of connections waiting
+	 */
+	public int getNumberWaitingConnections();
+	
 	public Name getName();
 	
 	/**

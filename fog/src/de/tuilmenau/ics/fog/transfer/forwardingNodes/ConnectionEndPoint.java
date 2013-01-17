@@ -141,6 +141,21 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	}
 	
 	@Override
+	public int available()
+	{
+		if(mInputStream != null) {
+			return mInputStream.available();
+		}
+		
+		if(mReceiveBuffer != null) {
+			return mReceiveBuffer.size();
+		}
+		
+		// no data or connection not open
+		return 0;
+	}
+	
+	@Override
 	public synchronized OutputStream getOutputStream() throws IOException
 	{
 		if(mOutputStream == null) {
