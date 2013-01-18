@@ -21,6 +21,11 @@ import de.tuilmenau.ics.fog.util.Logger;
 
 public class TopologyParserDIMES extends TopologyParser
 {
+	private static final String FILENAME_POSTFIX_META  = "_meta.csv";
+	private static final String FILENAME_POSTFIX_NODES = "_nodes.csv";
+	private static final String FILENAME_POSTFIX_NODES_SORTED = "_nodes-OK.csv";
+	private static final String FILENAME_POSTFIX_EDGES = "_edges.csv";
+	
 	private CSVReaderNamedCol csvNodes;
 	private CSVReaderNamedCol csvEdges;
 	private CSVReaderNamedCol csvMeta;
@@ -34,6 +39,8 @@ public class TopologyParserDIMES extends TopologyParser
 	{
 		mLogger = pLogger;
 		
+		importFilename = removeFilenamePostfix(importFilename);
+		
 		try {
 			mLogger.log("Going to create CSV Readers for " +importFilename);
 			/*
@@ -42,10 +49,10 @@ public class TopologyParserDIMES extends TopologyParser
 			if(meta)
 			{
 				mLogger.info(this, "Meta activated");
-				csvMeta  = new CSVReaderNamedCol(importFilename + "_meta.csv", ',');
+				csvMeta  = new CSVReaderNamedCol(importFilename + FILENAME_POSTFIX_META, ',');
 			}
-			csvNodes = new CSVReaderNamedCol(importFilename + "_nodes.csv", ',');
-			csvEdges = new CSVReaderNamedCol(importFilename + "_edges.csv",',');
+			csvNodes = new CSVReaderNamedCol(importFilename + FILENAME_POSTFIX_NODES, ',');
+			csvEdges = new CSVReaderNamedCol(importFilename + FILENAME_POSTFIX_EDGES,',');
 			
 			if(meta)
 			{
@@ -70,10 +77,10 @@ public class TopologyParserDIMES extends TopologyParser
 						csvNodes.close();
 
 						// TODO switch: sortierung und ohne sortierung
-						CSVFieldSorter sorter = new CSVFieldSorter(importFilename + "_nodes.csv",importFilename + "_nodes-OK.csv", pos );
+						CSVFieldSorter sorter = new CSVFieldSorter(importFilename +FILENAME_POSTFIX_NODES, importFilename + FILENAME_POSTFIX_NODES_SORTED, pos);
 						sorter.sort();
 
-						csvNodes = new CSVReaderNamedCol(importFilename + "_nodes-OK.csv", ',');
+						csvNodes = new CSVReaderNamedCol(importFilename +FILENAME_POSTFIX_NODES_SORTED, ',');
 						csvNodes.readHeaders();
 					}
 				}
@@ -83,6 +90,24 @@ public class TopologyParserDIMES extends TopologyParser
 			close();
 			throw tExc;
 		}
+	}
+
+	/**
+	 * @return importFilename without postfix "_[nodes|edges|meta].csv" (if it was included)
+	 */
+	private String removeFilenamePostfix(String importFilename) {
+		if(importFilename.endsWith(FILENAME_POSTFIX_META)) {
+			return importFilename.replaceAll(FILENAME_POSTFIX_META, "");
+		}
+		if(importFilename.endsWith(FILENAME_POSTFIX_NODES)) {
+			return importFilename.replaceAll(FILENAME_POSTFIX_NODES, "");
+		}
+		if(importFilename.endsWith(FILENAME_POSTFIX_EDGES)) {
+			return importFilename.replaceAll(FILENAME_POSTFIX_EDGES, "");
+		}
+		
+		// no postfix; no changes
+		return importFilename;
 	}
 
 	/**
