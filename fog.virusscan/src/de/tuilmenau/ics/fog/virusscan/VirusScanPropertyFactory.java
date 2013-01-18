@@ -52,4 +52,10 @@ public class VirusScanPropertyFactory implements PropertyFactory, PropertyGUIFac
 		return tWidget;
 	}
 
+	@Override
+	public Class<?> createPropertyClass(String pName) throws PropertyException 
+	{
+		return VirusScanProperty.class;
+	}
+
 }

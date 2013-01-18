@@ -32,4 +32,11 @@ public class EncryptionPropertyFactory implements PropertyFactory
 			
 		return tProp;
 	}
+	
+	@Override
+	public Class<?> createPropertyClass(String pName) throws PropertyException 
+	{
+		return EncryptionProperty.class;
+	}
+	
 }
