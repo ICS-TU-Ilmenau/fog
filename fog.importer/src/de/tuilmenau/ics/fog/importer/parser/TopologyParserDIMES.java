@@ -41,7 +41,7 @@ public class TopologyParserDIMES extends TopologyParser
 			 */
 			if(meta)
 			{
-				mLogger.log(this, "Meta activated");
+				mLogger.info(this, "Meta activated");
 				csvMeta  = new CSVReaderNamedCol(importFilename + "_meta.csv", ',');
 			}
 			csvNodes = new CSVReaderNamedCol(importFilename + "_nodes.csv", ',');
@@ -56,44 +56,33 @@ public class TopologyParserDIMES extends TopologyParser
 			
 			if(meta)
 			{
- 				csvMeta.readRecord();
- 				numberAS = Integer.parseInt(csvMeta.get("NumberAS"));
- 				numberWorkers = Integer.parseInt(csvMeta.get("NumberWorkers"));
- 				
- 				typeOfScenario = csvMeta.get("Type");
- 				
- 				// Make sure we create the nodes in order
- 				if(typeOfScenario.equals("popul_sim"))
- 				{
- 					if(!csvMeta.get("Sort").equals("0"))
- 					{
- 						int pos= this.csvNodes.getIndex("ASNumber");
- 						csvNodes.close();
- 						
- 						// TODO switch: sortierung und ohne sortierung
- 						CSVFieldSorter sorter = new CSVFieldSorter(importFilename + "_nodes.csv",importFilename + "_nodes-OK.csv", pos );
- 						sorter.sort();
- 						
- 						csvNodes = new CSVReaderNamedCol(importFilename + "_nodes-OK.csv", ',');
- 						csvNodes.readHeaders();
- 					}
- 				}
+				csvMeta.readRecord();
+				numberAS = Integer.parseInt(csvMeta.get("NumberAS"));
+				numberWorkers = Integer.parseInt(csvMeta.get("NumberWorkers"));
+				typeOfScenario = csvMeta.get("Type");
+
+				// Make sure we create the nodes in order
+				if(typeOfScenario.equals("popul_sim"))
+				{
+					if(!csvMeta.get("Sort").equals("0"))
+					{
+						int pos= this.csvNodes.getIndex("ASNumber");
+						csvNodes.close();
+
+						// TODO switch: sortierung und ohne sortierung
+						CSVFieldSorter sorter = new CSVFieldSorter(importFilename + "_nodes.csv",importFilename + "_nodes-OK.csv", pos );
+						sorter.sort();
+
+						csvNodes = new CSVReaderNamedCol(importFilename + "_nodes-OK.csv", ',');
+						csvNodes.readHeaders();
+					}
+				}
 			}
 		}
 		catch(IOException tExc) {
 			close();
 			throw tExc;
 		}
-	}
-
-	@Override
-	public String getNode() {
-		try {
-			return csvNodes.get("IP");
-		} catch (IOException e) {
-			mLogger.err(this, "Can not get node.", e);
-		}
-		return null;
 	}
 
 	/**
@@ -155,12 +144,28 @@ public class TopologyParserDIMES extends TopologyParser
 	}
 
 	@Override
+	public String getNode() {
+		try {
+			return csvNodes.get("IP");
+		} catch (IOException e) {
+			mLogger.err(this, "Can not get node.", e);
+		}
+		return null;
+	}
+
+	@Override
 	public String getAS() {
 		try {
 			return csvNodes.get("ASNumber");
 		} catch (IOException e) {
 			mLogger.err(this, "Can not get as number.", e);
 		}
+		return null;
+	}
+	
+	@Override
+	public String getParameter() {
+		// no node parameters in file
 		return null;
 	}
 
@@ -183,10 +188,13 @@ public class TopologyParserDIMES extends TopologyParser
 		return numberAS;
 	}
 	
+	/**
+	 * AS mode is required if the meta file specifies it
+	 * or if there is no "IP" column in file
+	 */
 	@Override
-	public String getParameter() {
-		// TODO Auto-generated method stub
-		return null;
+	public boolean requiresASMode() {
+		return "as_only".equalsIgnoreCase(typeOfScenario) || !csvNodes.hasColumn("IP");
 	}
-	
+
 }

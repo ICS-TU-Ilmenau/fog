@@ -82,16 +82,6 @@ public class TopologyDistributor
 		}
 	}
 
-	private boolean isPopulSimScenario()
-	{
-		return topoHandler.getTypeOfScenario().equalsIgnoreCase("popul_sim");
-	}
-	
-	private boolean isASOnlyScenario()
-	{
-		return topoHandler.getTypeOfScenario().equalsIgnoreCase("as_only");
-	}
-	
 	protected boolean switchAS(String toName)
 	{
 		if((toName == null) || ("".equals(toName))) {
@@ -141,16 +131,19 @@ public class TopologyDistributor
 	
  	public boolean createNodes()
  	{
- 		if(isASOnlyScenario() || topoHandler.requiresASMode() || oneAS) {
-			logger.info(this, "Create simulation inside a single AS");
+ 		if(topoHandler.requiresASMode() || oneAS) {
+ 			if(oneAS) {
+ 				logger.info(this, "Create nodes in one single AS " +DEFAULT_AS_NAME +".");
+ 			} else {
+ 				logger.info(this, "Create each node in own AS.");
+ 			}
+ 				
  			return createNodes(true);
  		}
- 		else if(isPopulSimScenario()) {
-			logger.info(this, "Create simulation inside a single AS");
+ 		else {
+			logger.info(this, "Create nodes in AS as specified in scenario file.");
 			return createNodes(false);
 		}
-
- 		return false;
  	}
 
 	private boolean createNodes(boolean asMode)
@@ -167,7 +160,7 @@ public class TopologyDistributor
 				}
  			} else {
  				node = topoHandler.getNode();
- 				as   = topoHandler.getAS();
+ 				as = topoHandler.getAS();
  			}
  			String tParameter = topoHandler.getParameter();
 
@@ -203,15 +196,8 @@ public class TopologyDistributor
  	{
 		int numberWorkers = Math.max(1, topoHandler.getNumberWorkers());
 		
-		if(isASOnlyScenario()) {
-			gauge++;
-			gauge %= numberWorkers;
-		}
-		
-		if(isPopulSimScenario()){
-			gauge++;
-			gauge %= numberWorkers;
-		}
+		gauge++;
+		gauge %= numberWorkers;
 		
 		if(workerByJini != null) {
 			if(workerByJini.size() <= numberWorkers) {

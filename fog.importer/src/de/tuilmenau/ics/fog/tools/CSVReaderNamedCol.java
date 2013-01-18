@@ -97,6 +97,14 @@ public class CSVReaderNamedCol extends CSVReader
 			return -1;
 		}
 	}
+	
+	/**
+	 * @return true, if the name of the column is known; false, otherwise
+	 */
+	public boolean hasColumn(String colName)
+	{
+		return getIndex(colName) >= 0;
+	}
 
 	private String[] currentRecord;
 	private HashMap<String, Integer> colNumbers;
