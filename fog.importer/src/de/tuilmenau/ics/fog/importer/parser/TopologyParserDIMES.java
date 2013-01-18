@@ -96,6 +96,10 @@ public class TopologyParserDIMES extends TopologyParser
 		return null;
 	}
 
+	/**
+	 * AS Edges: Source AS number, Dest AS number, Date Of Discovery, Min Delay, Max Delay, Date Of Validation
+	 * AllEdges: SourceIP, DestIP, Date Of Discovery, Date Of Validation, InterAS, Is Unknown, Min Delay, Avg Delay, Delay Variance 
+	 */
 	@Override
 	public boolean readNextEdgeEntry() {
 		if(csvEdges != null) {
@@ -178,10 +182,11 @@ public class TopologyParserDIMES extends TopologyParser
 	public int getNumberAS() {
 		return numberAS;
 	}
-
+	
 	@Override
 	public String getParameter() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
 }

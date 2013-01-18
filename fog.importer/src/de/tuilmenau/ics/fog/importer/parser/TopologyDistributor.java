@@ -142,10 +142,11 @@ public class TopologyDistributor
  	public boolean createNodes()
  	{
  		if(isASOnlyScenario() || topoHandler.requiresASMode() || oneAS) {
+			logger.info(this, "Create simulation inside a single AS");
  			return createNodes(true);
  		}
  		else if(isPopulSimScenario()) {
-			logger.debug(this, "We create simulation inside the AS");
+			logger.info(this, "Create simulation inside a single AS");
 			return createNodes(false);
 		}
 
@@ -229,10 +230,6 @@ public class TopologyDistributor
  		boolean res = true;
  		
 		while ( topoHandler.readNextEdgeEntry() ) {
-
-			// AS Edges: Source AS number, Dest AS number, Date Of Discovery, Min Delay, Max Delay, Date Of Validation
-			// AllEdges: SourceIP, DestIP, Date Of Discovery, Date Of Validation, InterAS, Is Unknown, Min Delay, Avg Delay, Delay Variance 
-
 			nodeA = topoHandler.getEdgeNodeOne();
 			nodeB = topoHandler.getEdgeNodeTwo();
 			
@@ -240,7 +237,7 @@ public class TopologyDistributor
 				if(!oneAS) {
 					String nodeOneAS = mNMS.getASNameByNode(nodeA);
 					if(!switchAS(nodeOneAS)) {
-						logger.err(this, "Unable to switch to AS '" +nodeOneAS +"'");
+						logger.err(this, "Unable to switch to AS '" +nodeOneAS +"'. Skip edge from " +nodeA +"->" +nodeB +".");
 						continue; //We skip the creation of that edge
 					}
 				}
