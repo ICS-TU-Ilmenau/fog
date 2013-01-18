@@ -149,7 +149,7 @@ public class ConnectionEndPointUDPProxy extends Session
 		switch(mProxyMode)
 		{
 			case FOG2IP:
-				//super.closed();
+				// don't execute "super.closed()" here because this would close all connections
 				break;
 			case IP2FOG:
 				boolean tFoundRunningSocket = false;
@@ -166,7 +166,7 @@ public class ConnectionEndPointUDPProxy extends Session
 					if(mIpSocket != null) {
 						mIpSocket.close();
 					}
-					//super.closed();
+					// don't execute "super.closed()" here because this would close all connections
 				}else
 					mLogger.log(this, "Peer closed connection. Socket has other peers connected.");
 				break;
