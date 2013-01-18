@@ -35,7 +35,10 @@ import de.tuilmenau.ics.fog.util.SimpleName;
 
 
 /**
- * TODO add description 
+ * Client, which receives data from an external source and forwards it to the server 
+ * within the FoG network. There, the data is relayed to an IP based destination. For 
+ * this purpose, it uses a UDPServerProxy.
+ *  
  */
 public class MultipathClient extends Application
 {
@@ -85,11 +88,11 @@ public class MultipathClient extends Application
 	protected void started() 
 	{
 		// connect to multipath server
-		mHighPrioToMultipathServer = mHost.connect(mServerName, null /* TODO: unterscheiden der pfade und stream-anforderungen */, null);
+		mHighPrioToMultipathServer = mHost.connect(mServerName, null /* TODO: differentiate between the paths and stream requirements */, null);
 		mHighPrioSocketToMultipathServer = new MultipathSession();
 		mHighPrioSocketToMultipathServer.start(mHighPrioToMultipathServer);
 
-		mLowPrioToMultipathServer = mHost.connect(mServerName, null /* TODO: unterscheiden der pfade und stream-anforderungen */, null);
+		mLowPrioToMultipathServer = mHost.connect(mServerName, null /* TODO: differentiate between the paths and stream requirements */, null);
 		mLowPrioSocketToMultipathServer = new MultipathSession();
 		mLowPrioSocketToMultipathServer.start(mLowPrioToMultipathServer);
 		

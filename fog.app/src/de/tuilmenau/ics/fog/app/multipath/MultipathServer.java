@@ -128,8 +128,9 @@ public class MultipathServer extends Application
 		mReceivedSctpPackets++;
 		mReceivedSctpBytes +=  pPayload.length;
 		
-		if (MultipathServer.DEBUG_PACKETS_DATA)
+		if (MultipathServer.DEBUG_PACKETS_DATA) {
 			SCTP.parsePacket(pPayload);
+		}
 
 		int tStreamId = SCTP.getStreamIdFromPacket(pPayload);
 		if (MultipathServer.DEBUG_SCTP_IO) {
@@ -144,10 +145,12 @@ public class MultipathServer extends Application
 						SctpClientSession tSctpClientSession = (SctpClientSession)tSession;
 						tResult &= tSctpClientSession.sendtoMultipathClient(pPayload);				
 					}
-					break; //TODO: at the moment we answer via the first connection
+					break; //TODO: at the moment we respond via the first connection
 				}
-			}else
+			}
+			else{
 				mLogger.err(this, "No valid FoG connection towards Multipath client");
+			}
 		}
 		
 		return tResult;
@@ -205,8 +208,8 @@ public class MultipathServer extends Application
 	public synchronized void exit()
 	{
 		if(isRunning()) {
-			if(mSctpClientSessions != null) {
-				while(!mSctpClientSessions.isEmpty()) {
+			if (mSctpClientSessions != null) {
+				while (!mSctpClientSessions.isEmpty()) {
 					mSctpClientSessions.getFirst().closed();
 				}
 				mSctpClientSessions.clear();
@@ -233,8 +236,7 @@ public class MultipathServer extends Application
 		{
 			boolean tResult = false;
 			
-			if (!(pData instanceof byte[]))
-			{
+			if (!(pData instanceof byte[]))	{
 				getLogger().warn(this, "Malformed data from multipath client: " + pData);
 				return false;
 			}
@@ -255,9 +257,9 @@ public class MultipathServer extends Application
 			boolean tResult = false;
 			
 			Connection tConnection = getConnection();
-			if(tConnection != null) {
+			if (tConnection != null) {
 				try {
-					if(pData instanceof Serializable) {
+					if (pData instanceof Serializable) {
 						tConnection.write((Serializable) pData);
 					} else {
 						tConnection.write(pData.toString());
@@ -267,7 +269,8 @@ public class MultipathServer extends Application
 				catch(NetworkException tExc) {
 					getLogger().err(this, "Sending SCTP packet to multipath client failed for: " + pData, tExc);
 				}
-			} else {
+			} 
+			else {
 				getLogger().warn(this, "No socket towards multipath client available");
 			}
 			
@@ -277,7 +280,7 @@ public class MultipathServer extends Application
 		public void closed()
 		{
 			super.closed();
-			if(mSctpClientSessions != null) {
+			if (mSctpClientSessions != null) {
 				mSctpClientSessions.remove(this);
 			}
 		}
@@ -318,48 +321,54 @@ public class MultipathServer extends Application
 	private class MultipathConnection implements Connection
 	{
 		@Override
-		public void registerListener(EventListener observer) {
-			// TODO Auto-generated method stub
-			
+		public void registerListener(EventListener observer) 
+		{
+			//not used here
 		}
 	
 		@Override
-		public boolean unregisterListener(EventListener observer) {
-			// TODO Auto-generated method stub
+		public boolean unregisterListener(EventListener observer) 
+		{
+			//not used here
 			return false;
 		}
 	
 		@Override
-		public void connect() {
-			// TODO Auto-generated method stub
-			
+		public void connect() 
+		{
+			//not used here
 		}
 	
 		@Override
-		public boolean isConnected() {
+		public boolean isConnected() 
+		{
 			return isRunning();
 		}
 	
 		@Override
-		public Name getBindingName() {
-			// TODO Auto-generated method stub
+		public Name getBindingName() 
+		{
+			//not used here
 			return null;
 		}
 	
 		@Override
-		public LinkedList<Signature> getAuthentications() {
-			// TODO Auto-generated method stub
+		public LinkedList<Signature> getAuthentications()
+		{
+			//not used here
 			return null;
 		}
 	
 		@Override
-		public Description getRequirements() {
-			// TODO Auto-generated method stub
+		public Description getRequirements() 
+		{
+			//not used here
 			return null;
 		}
 	
 		@Override
-		public void write(Serializable pData) throws NetworkException {
+		public void write(Serializable pData) throws NetworkException 
+		{
 			// incoming UDP encapsulation data
 			if (pData instanceof byte[]){
 				byte[] tSCTPData = (byte[])pData;
@@ -378,32 +387,36 @@ public class MultipathServer extends Application
 		}
 	
 		@Override
-		public Object read() throws NetworkException {
-			// TODO Auto-generated method stub
+		public Object read() throws NetworkException 
+		{
+			//not used here
 			return null;
 		}
 	
 		@Override
-		public OutputStream getOutputStream() throws IOException {
-			// TODO Auto-generated method stub
+		public OutputStream getOutputStream() throws IOException 
+		{
+			//not used here
 			return null;
 		}
 	
 		@Override
-		public InputStream getInputStream() throws IOException {
-			// TODO Auto-generated method stub
+		public InputStream getInputStream() throws IOException 
+		{
+			//not used here
 			return null;
 		}
 	
 		@Override
-		public void close() {
-			// TODO Auto-generated method stub
-			
+		public void close() 
+		{
+			//not used here
 		}
 	
 		@Override
-		public int available() {
-			// TODO Auto-generated method stub
+		public int available() 
+		{
+			//not used here
 			return 0;
 		}
 	}
