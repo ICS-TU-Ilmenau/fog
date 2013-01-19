@@ -77,7 +77,12 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 		super();
 		
 		mNodes = new SparseMultigraph<NodeObject, LinkObject>();
-		mLinkToValueTransformer = new LinkTransformerAdapter(pLinkToValueTransformer);
+		
+		// is transformer valid?
+		if(pLinkToValueTransformer != null) {
+			mLinkToValueTransformer = new LinkTransformerAdapter(pLinkToValueTransformer);
+		}
+		// else: mLinkToValueTransformer remains null
 	}
 	
 	private class LinkTransformerAdapter implements Transformer<LinkObject, Number>
