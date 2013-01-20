@@ -17,6 +17,9 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 
 public class TransferServiceException extends NetworkException
 {
+	private static final long serialVersionUID = -5699684493760914037L;
+	
+
 	public TransferServiceException(String errorMsg)
 	{
 		super(errorMsg);

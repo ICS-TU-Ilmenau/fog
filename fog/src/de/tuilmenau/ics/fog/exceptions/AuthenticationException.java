@@ -17,6 +17,9 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 
 public class AuthenticationException extends NetworkException
 {
+	private static final long serialVersionUID = 7491345881405833474L;
+	
+
 	public AuthenticationException(Object object, String errorMsg)
 	{
 		super(object.toString() +" - " +errorMsg);

@@ -18,6 +18,9 @@ package de.tuilmenau.ics.fog.exceptions;
  */
 public class InvalidParameterException extends Exception
 {
+	private static final long serialVersionUID = 2012480966487099874L;
+	
+
 	public InvalidParameterException(String errorMessage)
 	{
 		super(errorMessage);
