@@ -287,4 +287,9 @@ public class TopologyDistributor
 	{
 		topoHandler.close();
 	}
+	
+	protected Simulation getSim()
+	{
+		return sim;
+	}
 }

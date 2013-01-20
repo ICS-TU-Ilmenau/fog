@@ -30,7 +30,7 @@ import edu.uci.ics.jung.graph.util.Pair;
 
 public class TopologyDistributorAnalyser extends TopologyDistributor
 {
-	private static final String ENV_VAR_PROB_HAVING_RS = "import.rs_probability";
+	private static final String PROPERTY_PROB_HAVING_RS = "import.rs_probability";
 	
 	
 	public TopologyDistributorAnalyser(ITopologyParser parser, Simulation sim) throws Exception
@@ -38,11 +38,11 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 		super(parser, sim, false);
 		
 		// try to get probability from environment variable
-		String probStr = System.getenv(ENV_VAR_PROB_HAVING_RS);
+		String probStr = System.getProperty(PROPERTY_PROB_HAVING_RS);
 		if(probStr != null) {
 			probabilityGettingRS = Double.parseDouble(probStr);
 		}
-		sim.getLogger().info(this, "ENV_VAR_PROB_HAVING_RS = " +probabilityGettingRS);
+		sim.getLogger().info(this, PROPERTY_PROB_HAVING_RS  +" = " +probabilityGettingRS);
 		
 		IDoubleWriter out = DoubleNode.openAsWriter(getClass().getCanonicalName() +".probability");
 		out.write(probabilityGettingRS, sim.getTimeBase().nowStream());
@@ -206,8 +206,13 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 		
 		// assign others to existing RS
 		boolean allHaveRS;
+		int maxIterations = mASGraph.getVertexCount() * mASGraph.getVertexCount() +1;
 		do {
 			allHaveRS = true;
+			maxIterations--;
+			if(maxIterations <= 0) {
+				throw new RuntimeException(this +": Too many iterations while deciding about RS. Maybe scenario is partitioned and there is no RS entity in a partition.");
+			}
 			
 			for(String as : mASGraph.getVertices()) {
 				String rs = mASToRS.get(as);
@@ -227,21 +232,29 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	{
 		Object[] neighbors = mASGraph.getNeighbors(as).toArray();
 		LinkedList<String> neighborRSNames = new LinkedList<String>();
-		for(Object neighborAS : neighbors) {
-			String neighborRSName = mASToRS.get(neighborAS);
-			
-			if(neighborRSName != null) {
-				neighborRSNames.add(neighborRSName);
+		if(neighbors.length > 0) {
+			// extract RS names of neighbors, which have one
+			for(Object neighborAS : neighbors) {
+				String neighborRSName = mASToRS.get(neighborAS);
+				
+				if(neighborRSName != null) {
+					neighborRSNames.add(neighborRSName);
+				}
 			}
-		}
-		
-		if(!neighborRSNames.isEmpty()) {
-			int choice = rand.nextInt(neighborRSNames.size());
-			mASToRS.put(as, neighborRSNames.get(choice));
 			
-			return true;
+			if(!neighborRSNames.isEmpty()) {
+				int choice = rand.nextInt(neighborRSNames.size());
+				mASToRS.put(as, neighborRSNames.get(choice));
+				
+				return true;
+			} else {
+				return false;
+			}
 		} else {
-			return false;
+			// no neighbors => scenario partitioned!
+			getSim().getLogger().warn(this, "AS " +as +" does not have any neighbor ASs. Scenario graph partitioned. Creating RS for AS " +as +".");
+			mASToRS.put(as, "standalone_" +as);
+			return true;
 		}
 	}
 	
