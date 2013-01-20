@@ -30,20 +30,22 @@ import edu.uci.ics.jung.graph.util.Pair;
 
 public class TopologyDistributorAnalyser extends TopologyDistributor
 {
-	/**
-	 * Probability for a AS of having its own routing service.
-	 * E.g. 0.5 means that 50% of the AS will chose to have
-	 * there own routing service.
-	 */
-	private static final double PROB_HAVING_RS = 0.5d;
+	private static final String ENV_VAR_PROB_HAVING_RS = "import.rs_probability";
 	
 	
-	public TopologyDistributorAnalyser(ITopologyParser parser, Simulation sim, boolean flat) throws Exception
+	public TopologyDistributorAnalyser(ITopologyParser parser, Simulation sim) throws Exception
 	{
-		super(parser, sim, flat);
+		super(parser, sim, false);
+		
+		// try to get probability from environment variable
+		String probStr = System.getenv(ENV_VAR_PROB_HAVING_RS);
+		if(probStr != null) {
+			probabilityGettingRS = Double.parseDouble(probStr);
+		}
+		sim.getLogger().info(this, "ENV_VAR_PROB_HAVING_RS = " +probabilityGettingRS);
 		
 		IDoubleWriter out = DoubleNode.openAsWriter(getClass().getCanonicalName() +".probability");
-		out.write(PROB_HAVING_RS, sim.getTimeBase().nowStream());
+		out.write(probabilityGettingRS, sim.getTimeBase().nowStream());
 	}
 	
 	@Override
@@ -188,7 +190,7 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 		
 		// chose AS having an RS on there own
 		for(String as : asSet) {
-			if(rand.nextDouble() < PROB_HAVING_RS) {
+			if(rand.nextDouble() < probabilityGettingRS) {
 				rsCounter++;
 				
 				mASToRS.put(as, as);
@@ -242,6 +244,13 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 			return false;
 		}
 	}
+	
+	/**
+	 * Probability for a AS of having its own routing service.
+	 * E.g. 0.5 means that 50% of the AS will chose to have
+	 * there own routing service.
+	 */
+	private double probabilityGettingRS = 0.5d;
 	
 	private int mNodeCounter = 0;
 	
