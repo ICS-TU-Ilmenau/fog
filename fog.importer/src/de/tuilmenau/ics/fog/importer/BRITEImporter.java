@@ -45,6 +45,8 @@ public class BRITEImporter implements ScenarioImporter
 		
 		distributor.createNodes();
 		distributor.createEdges();
+		
+		distributor.close();
 	}
 	
 	protected ITopologyParser createParser(String importFilename, Simulation simulation) throws Exception
