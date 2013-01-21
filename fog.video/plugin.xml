@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="de.tuilmenau.ics.fog.gateFactory">
+      <factory
+            class="de.tuilmenau.ics.fog.video.gates.VideoGateFactory">
+            <gateType
+                name="VideoBufferingGate"
+                description="gate factory for handling a video stream"/>
+      </factory>
+      <factory
+            class="de.tuilmenau.ics.fog.video.gates.VideoGateFactory">
+            <gateType
+                name="VideoDecodingGate"
+                description="gate factory for handling a video stream"/>
+      </factory>
+      <factory
+            class="de.tuilmenau.ics.fog.video.gates.VideoGateFactory">
+            <gateType
+                name="VideoTranscodingGate"
+                description="gate factory for handling a video stream"/>
+      </factory>
+   </extension>
+   
+   <extension
+         point="de.tuilmenau.ics.fog.requirement">
+        <requirement
+            name="VideoDecoding"
+            description="property to select decoding for video stream"
+            factory="de.tuilmenau.ics.fog.video.properties.VideoPropertyFactory"/>
+        <requirement
+            name="VideoBuffering"
+            description="property to select buffering for video stream"
+            factory="de.tuilmenau.ics.fog.video.properties.VideoPropertyFactory"/>
+        <requirement
+            name="VideoTranscoding"
+            description="property to select transcoding for video stream"
+            factory="de.tuilmenau.ics.fog.video.properties.VideoPropertyFactory"/>
+        <requirement
+            name="VariableMediaQuality"
+            nonfunctional="true"
+            description="Indicates that the content of the connections is audio/video and can be modified."
+            factory="de.tuilmenau.ics.fog.video.properties.VideoPropertyFactory"/>
+   </extension>
+</plugin>
