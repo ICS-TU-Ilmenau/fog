@@ -21,14 +21,25 @@ import edu.uci.ics.jung.algorithms.shortestpath.DijkstraShortestPath;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
-public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject, LinkObject> {
-
+/**
+ * 
+ * 
+ * @param <NodeObject> This is a parameterized class - Define which objects are supposed to be nodes.
+ * @param <LinkObject> This is a parameterized class - Define which objects are supposed to be links.
+ */
+public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject, LinkObject>
+{
 	public ClusterMap()
 	{
 		super();
 		mNodes =  new UndirectedSparseGraph<NodeObject, LinkObject>(); 
 	}
-	
+
+	/**
+	 * 
+	 * @param pSource is the node you want to know all neighbors for.
+	 * @return
+	 */
 	public synchronized Collection<NodeObject> getNeighbors(NodeObject pSource)
 	{
 		return (mNodes.containsVertex(pSource) ? mNodes.getNeighbors(pSource) : new LinkedList<NodeObject>());
@@ -60,6 +71,13 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 		}
 	}
 	
+	/**
+	 * Get all nodes that are between the source and the target
+	 * 
+	 * @param pFrom This is the source of the path you want to get all nodes for.
+	 * @param pTo This is the target of the path you want to get all nodes for
+	 * @return a list of all nodes between source and target
+	 */
 	public synchronized List<NodeObject> getIntermediateNodes(NodeObject pFrom, NodeObject pTo)
 	{
 		List<LinkObject> tPath = null;
@@ -85,6 +103,14 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 		return tNodes;
 	}
 	
+	/**
+	 * Get the destination of a link. You need to provide one endpoint of a link because a cluster
+	 * map uses an undirected graph.
+	 * 
+	 * @param pSource This is one endpoint of the link you wish to know the other endpoint.
+	 * @param pLink This is the link you wish to know one endpoint while providing the other one.
+	 * @return Other endpoint of the link is provided.
+	 */
 	public NodeObject getDest(NodeObject pSource, LinkObject pLink)
 	{
 		try {
@@ -96,6 +122,12 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 		
 	}
 	
+
+	/**
+	 * Check whether two object are connected.
+	 * 
+	 * @return true in case first and second object are linked.
+	 */
 	public boolean isLinked(NodeObject pFirst, NodeObject pSecond)
 	{
 		if(mNodes.containsVertex(pFirst)) {
@@ -104,6 +136,7 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 			return false;
 		}
 	}
+	
 	
 	public String toString()
 	{
@@ -128,8 +161,11 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 	}
 
 	/**
+	 * Use this method if you want to know a route from one node to another and some nodes are not allowed to be routed along
 	 * 
-	 * @param pNode
+	 * @param pSource This is the source of the path you wish to know.
+	 * @param pTarget This is the target of the path you want to know
+	 * @param pIgnoredNodes Please provide a set of nodes that are not allowed to be used for route determination.
 	 * @return
 	 */
 	public List<LinkObject> getRouteWithInvalidatedNodes(NodeObject pSource, NodeObject pTarget, LinkedList<NodeObject> pIgnoredNodes)
