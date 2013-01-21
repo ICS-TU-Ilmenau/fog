@@ -32,27 +32,22 @@ public class Statistic
 	/**
 	 * Constructor for dummy /dev/null statistic handler
 	 */
-	private Statistic()
+	private Statistic(Simulation pSim)
 	{
 		mFilename = null;
 		mStatsFile = null;
 	}
 	
-	private Statistic(String pPath, String pName) throws IOException
+	private Statistic(Simulation pSim, String pName) throws IOException
 	{
-		if(pPath == null) {
-			pPath = "";
-		} else {
-			if(!pPath.endsWith("/") && !pPath.endsWith("\\")) {
-				pPath = pPath +"/";
-			}
-		}
 		if(pName == null) {
-			mFilename = pPath +"stats-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + ".csv";
-		} else if(!Config.STATISTIC_FILE.equals("")) {
-			mFilename = pPath +pName + ".csv";
-		} else {
-			mFilename = pPath +pName +"-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + ".csv";
+			mFilename = pSim.getBaseDirectory() +"stats-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + ".csv";
+		}
+		else if(!Config.STATISTIC_FILE.equals("")) {
+			mFilename = pSim.getBaseDirectory() +pName + ".csv";
+		}
+		else {
+			mFilename = pSim.getBaseDirectory() +pName +"-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + ".csv";
 		}
 		
 		mStatsFile = new CSVWriter(mFilename, true, "\t");
@@ -65,7 +60,7 @@ public class Statistic
 	 * @return != null
 	 * @throws Exception On error
 	 */
-	public static Statistic getInstance(Object pForObj) throws Exception
+	public static Statistic getInstance(Simulation pSim, Object pForObj) throws Exception
 	{
 		// get/create central repository for statistics
 		if(sInstances == null) {
@@ -86,12 +81,12 @@ public class Statistic
 		
 		if(tStat == null) {
 			try {
-				tStat = (Config.STATISTIC_FILE.equals("")) ? new Statistic(sPath, pForObj.toString()) : new Statistic(sPath, Config.STATISTIC_FILE) ;
+				tStat = (Config.STATISTIC_FILE.equals("")) ? new Statistic(pSim, pForObj.toString()) : new Statistic(pSim, Config.STATISTIC_FILE) ;
 			}
 			catch(IOException exc) {
 				// Only first exception will be reported!
 				// Next ones will be caught by the dummy handler.
-				sInstances.put(pForObj, new Statistic());
+				sInstances.put(pForObj, new Statistic(pSim));
 				throw new Exception("Exception while creating statistic handler. Next calls will be answered with dummy handler.", exc);
 			}
 			
@@ -101,21 +96,6 @@ public class Statistic
 		return tStat;
 	}
 	
-	/**
-	 * Used to set the path for the statistic files.
-	 * 
-	 * TODO This is a hack, since the statistic files should belong
-	 *      to a {@link Simulation}. GetInstance had to be shifted to
-	 *      Simulation. But currently Worker and Simulation are not
-	 *      properly separated and we can not use Simulation directly.
-	 *      
-	 * @deprecated See comment for this method.
-	 */
-	public static void setPath(String path)
-	{
-		sPath = path;
-	}
-
 	public void close()
 	{
 		if(mStatsFile != null) {
@@ -161,6 +141,5 @@ public class Statistic
 	private String mFilename;
 	private CSVWriter mStatsFile;
 	
-	private static String sPath = "";
 	private static HashMap<Object, Statistic> sInstances = null;
 }
