@@ -57,4 +57,29 @@ public class ConfigVideoViews
 	 * otherwise no message will occur for a processed video packet.
 	 */
 	public static final boolean DEBUG_PACKETS = false;
+	
+	/**
+	 * Interface between video decoding gates and video views:
+	 * define positions within the video stream statistics
+	 */
+	public static final int VIDEO_STREAM_STATS_INDEX_PKT_MAX_SIZE = 0; 
+	public static final int VIDEO_STREAM_STATS_INDEX_DATA_RATE = 1; 
+	public static final int VIDEO_STREAM_STATS_INDEX_PKT_CNT = 2; 
+	public static final int VIDEO_STREAM_STATS_INDEX_PKT_SIZE = 3; 
+	public static final int VIDEO_STREAM_STATS_INDEX_PKT_LOST = 4; 
+	public static final int VIDEO_STREAM_STATS_INDEX_PKT_AVG_SIZE = 6; 
+	public static final int VIDEO_STREAM_STATS_INDEX_CODEC = 7; 
+	public static final int VIDEO_STREAM_STATS_INDEX_RTP_ACTIVE = 8; 
+	public static final int VIDEO_STREAM_STATS_INDEX_RES_X = 9; 
+	public static final int VIDEO_STREAM_STATS_INDEX_RES_Y = 10; 
+	
+	/**
+	 * Interface between video buffering gates and video views:
+	 * define positions within the video stream statistics
+	 */
+	public static final int VIDEO_TRANS_STATS_INDEX_TIME_PREBUFFER = 0; 
+	public static final int VIDEO_TRANS_STATS_INDEX_BUFFER_SIZE = 1; 
+	public static final int VIDEO_TRANS_STATS_INDEX_TIME_BUFFER = 2; 
+	public static final int VIDEO_TRANS_STATS_INDEX_FPS = 3; 
+	public static final int VIDEO_TRANS_STATS_INDEX_STATE = 4; 
 }
