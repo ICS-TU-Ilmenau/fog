@@ -216,6 +216,31 @@ public class FoGLauncher
 				logger.err(this, "Can not start watchdog " +watchdogSystemProperty +". Continuing without.", exc);
 			}
 		}
+		
+		//
+		// End
+		//
+		// do not block: Create a new thread waiting for the end... 
+		new Thread() {
+			public void run()
+			{
+				sim.waitForExit();
+				
+				logger.info(this, "Simulation finished. Informing observers.");
+				notifyObservers(FUNCTION.ENDED);
+				
+				// store old list in order to enable re-start
+				// of simulation during FINISHED callback
+				LinkedList<SimulationObserver> oldObservers = observers;
+				
+				observers = null;
+				sim = null;
+				
+				logger.info(this, "Inform observer about finished cleanup.");
+				notifyObservers(FUNCTION.FINISHED, oldObservers);	
+				oldObservers.clear();
+			}
+		}.start();
     }
 	
 	/**
@@ -324,31 +349,6 @@ public class FoGLauncher
 				sim.getTimeBase().scheduleIn(START_COMMAND_DELAY_AFTER_SETUP_SEC, new CommandEvent(sim, cmdSystemProperty));
 			}
 		}
-		
-		//
-		// END
-		//
-		// do not block: Create a new thread waiting for the end... 
-		new Thread() {
-			public void run()
-			{
-				sim.waitForExit();
-				
-				logger.info(this, "Simulation finished. Informing observers.");
-				notifyObservers(FUNCTION.ENDED);
-				
-				// store old list in order to enable re-start
-				// of simulation during FINISHED callback
-				LinkedList<SimulationObserver> oldObservers = observers;
-				
-				observers = null;
-				sim = null;
-				
-				logger.info(this, "Inform observer about finished cleanup.");
-				notifyObservers(FUNCTION.FINISHED, oldObservers);	
-				oldObservers.clear();
-			}
-		}.start();
 	}
 	
 	/**
