@@ -27,7 +27,6 @@ import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.IWorker;
 import de.tuilmenau.ics.fog.Worker;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
-import de.tuilmenau.ics.fog.ui.Statistic;
 import de.tuilmenau.ics.fog.ui.Logging.Level;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.middleware.JiniHelper;
@@ -61,18 +60,10 @@ public class Simulation
 		if(mBaseDirectory == null) {
 			mBaseDirectory = DEFAULT_DIRECTORY;
 		}
-		if(!mBaseDirectory.endsWith("/") && !mBaseDirectory.endsWith("\\")) {
-			mBaseDirectory += "/";
-		}
 		
 		mLogger.setLogLevel(pLogLevel);
-		mLogger.info(this, "Simulation started");
-		mLogger.log(this, "Using base directory = '" +getBaseDirectory() +"'");
 		
 		Worker.registerSimulation(this);
-		
-		// TODO move statistic base to simulation after separation from worker 
-		Statistic.setPath(getBaseDirectory());
 		
 		HierarchicalNameMappingService.createGlobalNameMappingService(this);
 	}
@@ -172,7 +163,10 @@ public class Simulation
 	}
 	
 	/**
-	 * @return Base directory for files of simulation with an "/" at the end (!= null)
+	 * Specifies the unique prefix for all files of this simulation.
+	 * Might contain a directory and a prefix for file names.
+	 * 
+	 * @return Base directory and filename for files of simulation (!= null)
 	 */
 	public String getBaseDirectory()
 	{

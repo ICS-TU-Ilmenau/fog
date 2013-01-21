@@ -20,28 +20,16 @@ import java.util.Set;
 
 import de.tuilmenau.ics.CommonSim.datastream.DatastreamManager;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleReader;
-import de.tuilmenau.ics.fog.launcher.SimulationObserver;
-import de.tuilmenau.ics.fog.topology.Simulation;
+import de.tuilmenau.ics.fog.launcher.SimpleSimulationObserver;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.CSVWriter;
 
 
-public class EndStatisticWriter implements SimulationObserver
+public class EndStatisticWriter extends SimpleSimulationObserver
 {
 	private static final String DATASTREAM_IGNORE_PREFIX = "__";
 	
 	public EndStatisticWriter()
-	{
-	}
-
-	@Override
-	public void init(Simulation sim)
-	{
-		this.sim = sim;
-	}
-
-	@Override
-	public void started()
 	{
 	}
 
@@ -51,7 +39,7 @@ public class EndStatisticWriter implements SimulationObserver
 		DatastreamManager dm = DatastreamManager.getInstance();
 		Set<String> streamNames = dm.getRegisteredNames();
 		
-		String filename = sim.getBaseDirectory() +this.getClass().getCanonicalName() +"_" +System.currentTimeMillis() +".csv";
+		String filename = getSimulation().getBaseDirectory() +this.getClass().getCanonicalName() +".csv";
 		CSVWriter out = null;
 		
 		try {
@@ -93,11 +81,4 @@ public class EndStatisticWriter implements SimulationObserver
 		// after saving, remove all elements of data stream
 		DatastreamManager.clear();
 	}
-	
-	@Override
-	public void finished()
-	{
-	}
-
-	private Simulation sim;
 }

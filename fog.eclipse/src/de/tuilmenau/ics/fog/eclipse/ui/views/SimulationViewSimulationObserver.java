@@ -9,36 +9,26 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.eclipse.ui.views;
 
-import de.tuilmenau.ics.fog.launcher.SimulationObserver;
-import de.tuilmenau.ics.fog.topology.Simulation;
+import de.tuilmenau.ics.fog.launcher.SimpleSimulationObserver;
 
 
-public class SimulationViewSimulationObserver implements SimulationObserver
+public class SimulationViewSimulationObserver extends SimpleSimulationObserver
 {
 	@Override
-	public void init(Simulation sim)
+	public void init()
 	{
-		this.sim = sim;
-		
-		SimulationView.addSimulation(sim);
+		SimulationView.addSimulation(getSimulation());
 	}
 
 	@Override
 	public void started()
 	{
-		SimulationView.openSimulation(sim);
+		SimulationView.openSimulation(getSimulation());
 	}
 
 	@Override
 	public void ended()
 	{
-		SimulationView.removeSimulation(sim);
+		SimulationView.removeSimulation(getSimulation());
 	}
-	
-	@Override
-	public void finished()
-	{
-	}
-
-	private Simulation sim = null;
 }

@@ -84,6 +84,7 @@ public class FoGLauncher
 	
 	public static final String PARAMETER_EXECUTE_CMD = "execute";
 	public static final String PARAMETER_WATCHDOG_NAME = "watchdog";
+	public static final String PARAMETER_OUTPUT_FILE_PREFIX = "outputprefix";
 	
 	private static final double START_COMMAND_DELAY_AFTER_SETUP_SEC = 5.0d;
 
@@ -115,9 +116,7 @@ public class FoGLauncher
 		int linkLoss = configuration.get(CONFIG_LINK_LOSS_PROB, CONFIG_LINK_LOSS_PROB_DEFAULT);
 		int linkBitError = configuration.get(CONFIG_LINK_BIT_ERROR, CONFIG_LINK_BIT_ERROR_DEFAULT);
 		
-		//
-		// Overwrite some properties with system properties
-		//
+		// Overwrite log level with system properties
 		String logLevelParam = System.getProperty(CONFIG_LOG_LEVEL);
 		if(logLevelParam != null) {
 			try {
@@ -128,10 +127,18 @@ public class FoGLauncher
 			}
 		}
 		
-		String baseDirectorySystem = System.getProperty(CONFIG_DIRECTORY);
-		if(baseDirectorySystem != null) {
-			baseDirectory = baseDirectorySystem;
+		// ensure ending "/" of directory name
+		if(!baseDirectory.endsWith("/") && !baseDirectory.endsWith("\\")) {
+			baseDirectory += "/";
 		}
+		
+		// determine file prefix
+		String outputPrefix = System.getProperty(PARAMETER_OUTPUT_FILE_PREFIX);
+		if(outputPrefix == null) {
+			outputPrefix = Long.toString(System.currentTimeMillis()) +"_";
+		}
+		
+		baseDirectory = baseDirectory +outputPrefix;
 		
 		//
 		// CREATE LOCAL WORKER
@@ -167,6 +174,9 @@ public class FoGLauncher
 		//
 		sim = new Simulation(baseDirectory, loglevel);
 		
+		observers = getObservers(sim);
+		notifyObservers(FUNCTION.CREATE);
+		
 		// switch to logger from simulation
 		// -> errors and paramters will appear in simulation log
 		logger = sim.getLogger();
@@ -193,8 +203,6 @@ public class FoGLauncher
 		sim.getConfig().Scenario.DEFAULT_DELAY_CONSTANT = linkDelayConstant;
 		sim.getConfig().Scenario.DEFAULT_PACKET_LOSS_PROP = linkLoss;
 		sim.getConfig().Scenario.DEFAULT_BIT_ERROR_PROP = linkBitError;
-		
-		observers = getObservers(sim);
 		
 		//
 		// Start watchdog if required
@@ -431,8 +439,11 @@ public class FoGLauncher
 		for(SimulationObserver obs : observerList) {
 			try {
 				switch(func) {
+				case CREATE:
+					obs.created(sim);
+					break;
 				case INIT:
-					obs.init(sim);
+					obs.init();
 					break;
 				case START:
 					obs.started();

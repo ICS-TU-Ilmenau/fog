@@ -27,13 +27,20 @@ import de.tuilmenau.ics.fog.topology.Simulation;
 public interface SimulationObserver
 {
 	/**
+	 * Called directly after calling the constructor
+	 * of a simulation. Thus, simulation configuration
+	 * might not be configured completely. 
+	 * 
+	 * @param sim Simulation the observer is used for
+	 */
+	public void created(Simulation sim);
+	
+	/**
 	 * Called before the simulation is initialised.
 	 * This is the very first call the observer will
 	 * receive. 
-	 * 
-	 * @param sim Simulation the observer is used for. 
 	 */
-	public void init(Simulation sim);
+	public void init();
 	
 	/**
 	 * Is called after the simulation is initialised.

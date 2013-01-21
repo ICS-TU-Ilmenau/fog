@@ -39,7 +39,7 @@ public class FileLogObserver implements LogObserver
 	public void open(String path, String filename) throws IOException
 	{
 		if(path == null) path = "./";
-		if(filename == null) filename = "log-" +System.currentTimeMillis() +".txt";
+		if(filename == null) filename = "log.txt";
 		
 		mLogFile = new BufferedWriter(new FileWriter(path +filename, true));
 	}
