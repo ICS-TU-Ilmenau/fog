@@ -1,0 +1,2 @@
+Copy the content of folder "libs" from "https://github.com/ICS-TU-Ilmenau/fog-addons/tree/master/fog.emulator.libs" to this folder.
+This step is needed in order to use the emulator interface of this plug-in. 
