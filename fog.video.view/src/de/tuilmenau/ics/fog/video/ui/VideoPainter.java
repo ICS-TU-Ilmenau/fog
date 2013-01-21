@@ -35,7 +35,6 @@ public class VideoPainter implements PaintListener
 {
 	private static final int AUDIO_BARS_HEIGHT = 20;
 	private boolean mDoubleBuffering = true;
-	private int[] mTransmissionStats = null;
 	private float[] mBufferingStats = null;
 	private VideoListener mVideoWorker = null;
 	private AudioListener mAudioWorker = null;
@@ -45,6 +44,23 @@ public class VideoPainter implements PaintListener
 	private Composite mParent = null;
 	private int mCurrentAudioLevel = 0;
 	private boolean mFirstAudioDataReceived = false;
+	private String[][] mStatisticText = { 
+			{ "Server: ", "" },
+			{ "Source codec: ", "" },
+			{ "-------------", ""},
+			{ "FoG-Received packets: ", "" }, 
+			{ "FoG-Received fps: ", "" },
+			{ "-------------", ""},
+			{ "IP-Min. packet: ", "" }, 
+			{ "IP-Max. packet: ", "" },
+			{ "IP-Avg. packet: ", "" },
+			{ "IP-Lost packets: ", "" },
+			{ "IP-Bandwidth: ", "" }, 
+			{ "-------------", ""},
+			{ "Buffer init. delay: ", "" }, 
+			{ "Buffer size: ", "" },
+			{ "Buffer time: ", "" },
+			{ "Buffer output: ", "" } };
 	
 	public VideoPainter(Device pDevice, Shell pShell, Composite pParent, VideoListener pVideoWorker, AudioListener pAudioWorker)
 	{
@@ -115,24 +131,56 @@ public class VideoPainter implements PaintListener
 		tImage.dispose();
 	}
 	
-	private String[][] mStatisticText = { 
-			{ "Server: ", "" },
-			{ "Source codec: ", "" },
-			{ "-------------", ""},
-			{ "FoG-Received packets: ", "" }, 
-			{ "FoG-Received fps: ", "" },
-			{ "-------------", ""},
-			{ "IP-Min. packet: ", "" }, 
-			{ "IP-Max. packet: ", "" },
-			{ "IP-Avg. packet: ", "" },
-			{ "IP-Lost packets: ", "" },
-			{ "IP-Bandwidth: ", "" }, 
-			{ "-------------", ""},
-			{ "Buffer init. delay: ", "" }, 
-			{ "Buffer size: ", "" },
-			{ "Buffer time: ", "" },
-			{ "Buffer output: ", "" } };
+	/**
+	 * Central repaint function
+	 * 
+	 * @param pEvent The SWT paint event structure
+	 */
+	@Override
+	public synchronized void paintControl(PaintEvent pEvent) 
+	{
+		//Logging.info(this, "Repaint");
+		if (mShell != null)	{
 			
+			GC tGc = null;
+			Image tImage = null;
+			
+			int tWindowWidth = mParent.getClientArea().width; 
+			int tWindowHeight = mParent.getClientArea().height;
+			//Logging.getInstance().log(this, "Client area to be filled with video is " + tWindowWidth + "*" +  tWindowHeight);
+
+			// use own double buffering here, on some systems this might lead to triple buffering  
+			if (mDoubleBuffering) {
+				tImage = new Image(mDevice, tWindowWidth, tWindowHeight);
+				tGc = new GC(tImage);
+			}else {
+				tGc = pEvent.gc;
+			}
+			
+			drawVideo(tGc, 0, 0, tWindowWidth, tWindowHeight - AUDIO_BARS_HEIGHT);
+			drawAudio(tGc, 0, tWindowHeight - AUDIO_BARS_HEIGHT + 1, tWindowWidth, AUDIO_BARS_HEIGHT);
+			drawStatText(tGc, 10, 12);
+			
+			//drawBackground(pEvent.gc, 0, 0, tWindowWidth, tWindowHeight);
+
+			if (mDoubleBuffering) {
+				pEvent.gc.drawImage(tImage, 0, 0);
+				
+				tGc.dispose();
+				tImage.dispose();
+			}
+		}
+	}
+
+	public synchronized void setDoubleBuffering(boolean pState) 
+	{
+		mDoubleBuffering = pState;
+	}
+	
+	public synchronized boolean getDoubleBuffering() 
+	{
+		return mDoubleBuffering;
+	}
 
 	private String Float2String(float pValue) 
 	{
@@ -174,31 +222,31 @@ public class VideoPainter implements PaintListener
 		
 		mStatisticText[0][1] = mVideoWorker.getServerName();
 
-		mTransmissionStats = mVideoWorker.getVideoStreamStats();
-		if (mTransmissionStats == null)	{
+		int[] tTransmissionStats = mVideoWorker.getVideoStreamStats();
+		if (tTransmissionStats == null)	{
 			return;
 		}
 
 		mBufferingStats = mVideoWorker.getVideoBufferStats();
 		
-		mStatisticText[1][1] = GetCodecName(mTransmissionStats[7]) + (mTransmissionStats[8] == 1 ? "/RTP" : "") + " (" + mTransmissionStats[9] + "*" + mTransmissionStats[10] + ")";
-		mStatisticText[3][1] = Integer.toString(mTransmissionStats[2]); 
+		mStatisticText[1][1] = GetCodecName(tTransmissionStats[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_CODEC]) + (tTransmissionStats[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_RTP_ACTIVE] == 1 ? "/RTP" : "") + " (" + tTransmissionStats[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_RES_X] + "*" + tTransmissionStats[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_RES_Y] + ")";
+		mStatisticText[3][1] = Integer.toString(tTransmissionStats[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_PKT_CNT]); 
 		mStatisticText[4][1] = Float2String((float)mVideoWorker.getFps());
-		mStatisticText[6][1] = Integer.toString(mTransmissionStats[3]) + " bytes";
-		mStatisticText[7][1] = Integer.toString(mTransmissionStats[0]) + " bytes";
-		mStatisticText[8][1] = Integer.toString(mTransmissionStats[6]) + " bytes";
-		mStatisticText[9][1] = Integer.toString(mTransmissionStats[4]);
-		mStatisticText[10][1] = Integer.toString(mTransmissionStats[1]) + " bytes/s";
+		mStatisticText[6][1] = Integer.toString(tTransmissionStats[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_PKT_SIZE]) + " bytes";
+		mStatisticText[7][1] = Integer.toString(tTransmissionStats[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_PKT_MAX_SIZE]) + " bytes";
+		mStatisticText[8][1] = Integer.toString(tTransmissionStats[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_PKT_AVG_SIZE]) + " bytes";
+		mStatisticText[9][1] = Integer.toString(tTransmissionStats[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_PKT_LOST]);
+		mStatisticText[10][1] = Integer.toString(tTransmissionStats[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_DATA_RATE]) + " bytes/s";
 
 		Font tFont = new Font(mDevice, "Arial", 12, SWT.BOLD);  
 		pGc.setFont(tFont); 
 
 		if(mBufferingStats != null) {
-			mStatisticText[12][1] = Float2String(mBufferingStats[0] / 1000) + " s"; //mPreBufferTime
-			mStatisticText[13][1] = Float2String(((float)(int)mBufferingStats[1])) + " entries"; //mBufferSize
-			mStatisticText[14][1] = Float2String(mBufferingStats[2] / 1000) + " s"; //mBufferTime
-			mStatisticText[15][1] = Float2String(mBufferingStats[3]) + " fps"; //mBufferFps
-			if (mBufferingStats[4] == 1) {
+			mStatisticText[12][1] = Float2String(mBufferingStats[ConfigVideoViews.VIDEO_TRANS_STATS_INDEX_TIME_PREBUFFER] / 1000) + " s"; //mPreBufferTime
+			mStatisticText[13][1] = Float2String(((float)(int)mBufferingStats[ConfigVideoViews.VIDEO_TRANS_STATS_INDEX_BUFFER_SIZE])) + " entries"; //mBufferSize
+			mStatisticText[14][1] = Float2String(mBufferingStats[ConfigVideoViews.VIDEO_TRANS_STATS_INDEX_TIME_BUFFER] / 1000) + " s"; //mBufferTime
+			mStatisticText[15][1] = Float2String(mBufferingStats[ConfigVideoViews.VIDEO_TRANS_STATS_INDEX_FPS]) + " fps"; //mBufferFps
+			if (mBufferingStats[ConfigVideoViews.VIDEO_TRANS_STATS_INDEX_STATE] == 1) {
 				pGc.setForeground(mDevice.getSystemColor(SWT.COLOR_GREEN));
 				pGc.drawText("Warning", 250 + pX, pY, true);
 			}
@@ -224,12 +272,24 @@ public class VideoPainter implements PaintListener
 		tFont.dispose();
 	}
 
-	public void drawVideo(GC pGc, int pOfsX, int pOfsY, int pWidth, int pHeight)
+	private void drawVideo(GC pGc, int pOfsX, int pOfsY, int pWidth, int pHeight)
 	{		
 		byte[] tFrameBuffer = mVideoWorker.getFrame(); // pixel format from HomerMultimedia(ffmpeg): 32-bit RGB format (0xffRRGGBB)
-			
+		
+		int tInputWidth = geVideoInputWidth();
+		if (tInputWidth == -1) {
+			return;
+		}
+		
+		int tInputHeight = getVideoInputHeight();
+		if (tInputHeight == -1) {
+			return;
+		}
+		
+		//Logging.log(this, "Showing video input with dimension " + tInputWidth + "*" + tInputHeight);
+		
 		if (tFrameBuffer != null) {
-			ImageData tPictureData = new ImageData(352, 288, 32, new PaletteData(0xFF00, 0xFF0000, 0xFF000000), 1, tFrameBuffer);   
+			ImageData tPictureData = new ImageData(tInputWidth, tInputHeight, 32, new PaletteData(0xFF00, 0xFF0000, 0xFF000000), 1, tFrameBuffer);   
 			Image tOriginalImage= new Image(mDevice, tPictureData);
 
 			Image tScaledImage = new Image(mDevice, tOriginalImage.getImageData().scaledTo(pWidth,  pHeight));
@@ -244,7 +304,7 @@ public class VideoPainter implements PaintListener
 		}
 	}
 	
-	public void drawAudio(GC pGc, int pOfsX, int pOfsY, int pWidth, int pHeight)
+	private void drawAudio(GC pGc, int pOfsX, int pOfsY, int pWidth, int pHeight)
 	{
 		int tScaledLevel = 0;
 		
@@ -305,7 +365,7 @@ public class VideoPainter implements PaintListener
 	 * @param pWidth width of visible video/audio
 	 * @param pHeight height of visible video/audio
 	 */
-	public void drawBackground(GC pGc, int pOfsX, int pOfsY, int pWidth, int pHeight)
+	private void drawBackground(GC pGc, int pOfsX, int pOfsY, int pWidth, int pHeight)
 	{
 		//TODO: not needed at the moment because the picture is scaled to the window borders
 
@@ -316,56 +376,23 @@ public class VideoPainter implements PaintListener
 //		pGc.fillRectangle(ConfigVideoViews.RES_X, 0, tPoint.x - ConfigVideoViews.RES_X, tPoint.y);
 //		pGc.fillRectangle(0, ConfigVideoViews.RES_Y + AUDIO_BARS_HEIGHT, ConfigVideoViews.RES_X, tPoint.y - ConfigVideoViews.RES_Y - AUDIO_BARS_HEIGHT);
 	}
-	
-	/**
-	 * Central repaint function
-	 * 
-	 * @param pEvent The SWT paint event structure
-	 */
-	@Override
-	public synchronized void paintControl(PaintEvent pEvent) 
+
+	private int geVideoInputWidth()
 	{
-		//Logging.info(this, "Repaint");
-		if (mShell != null)	{
-			
-			GC tGc = null;
-			Image tImage = null;
-			
-			int tWindowWidth = mParent.getClientArea().width; 
-			int tWindowHeight = mParent.getClientArea().height;
-			//Logging.getInstance().log(this, "Client area to be filled with video is " + tWindowWidth + "*" +  tWindowHeight);
+		int[] tVideoStreamStat = mVideoWorker.getVideoStreamStats();
+		if (tVideoStreamStat == null)
+			return -1;
 
-			// use own double buffering here, on some systems this might lead to triple buffering  
-			if (mDoubleBuffering) {
-				tImage = new Image(mDevice, tWindowWidth, tWindowHeight);
-				tGc = new GC(tImage);
-			}else {
-				tGc = pEvent.gc;
-			}
-			
-			drawVideo(tGc, 0, 0, tWindowWidth, tWindowHeight - AUDIO_BARS_HEIGHT);
-			drawAudio(tGc, 0, tWindowHeight - AUDIO_BARS_HEIGHT + 1, tWindowWidth, AUDIO_BARS_HEIGHT);
-			drawStatText(tGc, 10, 12);
-			
-			//drawBackground(pEvent.gc, 0, 0, tWindowWidth, tWindowHeight);
-
-			if (mDoubleBuffering) {
-				pEvent.gc.drawImage(tImage, 0, 0);
-				
-				tGc.dispose();
-				tImage.dispose();
-			}
-		}
+		return (tVideoStreamStat[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_RES_X]);
 	}
 
-	public synchronized void setDoubleBuffering(boolean pState) 
+	private int getVideoInputHeight()
 	{
-		mDoubleBuffering = pState;
-	}
-	
-	public synchronized boolean getDoubleBuffering() 
-	{
-		return mDoubleBuffering;
+		int[] tVideoStreamStat = mVideoWorker.getVideoStreamStats();
+		if (tVideoStreamStat == null)
+			return -1;
+		
+		return (tVideoStreamStat[ConfigVideoViews.VIDEO_STREAM_STATS_INDEX_RES_Y]);
 	}
 }
 

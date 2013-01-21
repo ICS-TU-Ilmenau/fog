@@ -1,0 +1,63 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoG video gates
+Bundle-SymbolicName: de.tuilmenau.ics.fog.video;singleton:=true
+Bundle-Version: 1.0.2.qualifier
+Bundle-Vendor: ICS group of TU Ilmenau
+Bundle-License: GPL 2 (details see about.html)
+Bundle-ClassPath: .
+Require-Bundle: de.tuilmenau.ics.fog;bundle-version="1.0.2"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.tuilmenau.ics.fog.video.gates,
+ de.tuilmenau.ics.fog.video.gates.role,
+ de.tuilmenau.ics.fog.video.properties,
+ jniImports
+Import-Package: de.tuilmenau.ics.CommonSim.datastream,
+ de.tuilmenau.ics.CommonSim.datastream.annotations,
+ de.tuilmenau.ics.CommonSim.datastream.numeric,
+ org.osgi.framework
+Bundle-NativeCode: libs/win32/avcodec-54.dll;
+ libs/win32/avdevice-54.dll;
+ libs/win32/avfilter-3.dll;
+ libs/win32/avformat-54.dll;
+ libs/win32/avutil-51.dll;
+ libs/win32/HomerBase.dll;
+ libs/win32/HomerGAPI.dll;
+ libs/win32/HomerMonitor.dll;
+ libs/win32/HomerMultimedia.dll;
+ libs/win32/libgcc_s_dw2-1.dll;
+ libs/win32/libstdc++-6.dll;
+ libs/win32/msvcrt.dll;
+ libs/win32/MultimediaJni.dll;
+ libs/win32/portaudio.dll;
+ libs/win32/postproc-52.dll;
+ libs/win32/SDL.dll;
+ libs/win32/swresample-0.dll;
+ libs/win32/swscale-2.dll;
+ osname=Win32;
+ processor=x86,
+ libs/linux32/libHomerBase.so;
+ libs/linux32/libHomerGAPI.so;
+ libs/linux32/libHomerMonitor.so;
+ libs/linux32/libHomerMultimedia.so;
+ libs/linux32/libMultimediaJni.so;
+ osname=linux;
+ processor=x86,
+ libs/linux64/libHomerBase.so;
+ libs/linux64/libHomerGAPI.so;
+ libs/linux64/libHomerMonitor.so;
+ libs/linux64/libHomerMultimedia.so;
+ libs/linux64/libMultimediaJni.so;
+ osname=linux;
+ processor=x86_64,
+ libs/osx64/libHomerBase.dylib;
+ libs/osx64/libHomerGAPI.dylib;
+ libs/osx64/libHomerMonitor.dylib;
+ libs/osx64/libHomerMultimedia.dylib;
+ libs/osx64/libHomerSoundOutput.dylib;
+ libs/osx64/libMultimediaJni.dylib;
+ osname=macosx;
+ processor=x86_64
+ 
+
