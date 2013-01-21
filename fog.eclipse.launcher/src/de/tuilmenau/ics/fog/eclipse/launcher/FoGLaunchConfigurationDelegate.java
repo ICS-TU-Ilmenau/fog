@@ -21,6 +21,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.ILaunchConfigurationDelegate;
 
 import de.tuilmenau.ics.fog.launcher.FoGLauncher;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 
@@ -45,7 +46,7 @@ public class FoGLaunchConfigurationDelegate extends FoGLauncher implements ILaun
 	
 	public FoGLaunchConfigurationDelegate()
 	{
-		super(Logging.getInstance());
+		super();
 	}
 	
 	@Override
@@ -135,6 +136,12 @@ public class FoGLaunchConfigurationDelegate extends FoGLauncher implements ILaun
 			}
 		}
 		catch(Exception exc) {
+			// write error to log
+			Simulation sim = getSim();
+			if(sim != null) {
+				sim.getLogger().err(this, "Error while launching. Terminating again.", exc);
+			}
+			
 			// terminate started simulation
 			terminate();
 			

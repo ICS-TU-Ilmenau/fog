@@ -27,6 +27,7 @@ import de.tuilmenau.ics.fog.importer.ScenarioImporter;
 import de.tuilmenau.ics.fog.importer.ScenarioImporterExtensionPoint;
 import de.tuilmenau.ics.fog.scenario.ScenarioSetup;
 import de.tuilmenau.ics.fog.topology.Simulation;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Logging.Level;
 import de.tuilmenau.ics.fog.util.Configuration;
 import de.tuilmenau.ics.fog.util.Logger;
@@ -83,13 +84,14 @@ public class FoGLauncher
 	
 	public static final String PARAMETER_EXECUTE_CMD = "execute";
 	public static final String PARAMETER_WATCHDOG_NAME = "watchdog";
+	public static final String PARAMETER_OUTPUT_FILE_PREFIX = "outputprefix";
 	
 	private static final double START_COMMAND_DELAY_AFTER_SETUP_SEC = 5.0d;
 
 	
-	public FoGLauncher(Logger parentLogger)
+	public FoGLauncher()
 	{
-		this.logger = new Logger(parentLogger);
+		logger = Logging.getInstance();
 	}
 	
 	public void create(Configuration configuration) throws LauncherException
@@ -114,6 +116,7 @@ public class FoGLauncher
 		int linkLoss = configuration.get(CONFIG_LINK_LOSS_PROB, CONFIG_LINK_LOSS_PROB_DEFAULT);
 		int linkBitError = configuration.get(CONFIG_LINK_BIT_ERROR, CONFIG_LINK_BIT_ERROR_DEFAULT);
 		
+		// Overwrite log level with system properties
 		String logLevelParam = System.getProperty(CONFIG_LOG_LEVEL);
 		if(logLevelParam != null) {
 			try {
@@ -124,19 +127,19 @@ public class FoGLauncher
 			}
 		}
 		
-		// output configuration
-		logger.log(this, CONFIG_DIRECTORY +": " +baseDirectory);
-		logger.log(this, CONFIG_WORKER +": " +worker);
-		logger.log(this, CONFIG_LOG_LEVEL +": " +loglevel);
-		logger.log(this, CONFIG_NODE_ROUTING_CONFIGURATOR +": " + configuratorRS);
-		logger.log(this, CONFIG_NODE_APPLICATION_CONFIGURATOR +": " + configuratorApp);
+		// ensure ending "/" of directory name
+		if(!baseDirectory.endsWith("/") && !baseDirectory.endsWith("\\")) {
+			baseDirectory += "/";
+		}
 		
-		logger.log(this, CONFIG_LINK_DATA_RATE +": " + linkDatarate +"kbit/s");
-		logger.log(this, CONFIG_LINK_DELAY +": " + linkDelay +"ms");
-		logger.log(this, CONFIG_LINK_DELAY_CONSTANT +": " + linkDelayConstant);
-		logger.log(this, CONFIG_LINK_LOSS_PROB +": " + linkLoss +"%");
-		logger.log(this, CONFIG_LINK_BIT_ERROR +": " + linkBitError +"%");
-
+		// determine file prefix
+		String outputPrefix = System.getProperty(PARAMETER_OUTPUT_FILE_PREFIX);
+		if(outputPrefix == null) {
+			outputPrefix = Long.toString(System.currentTimeMillis()) +"_";
+		}
+		
+		baseDirectory = baseDirectory +outputPrefix;
+		
 		//
 		// CREATE LOCAL WORKER
 		//
@@ -171,6 +174,26 @@ public class FoGLauncher
 		//
 		sim = new Simulation(baseDirectory, loglevel);
 		
+		observers = getObservers(sim);
+		notifyObservers(FUNCTION.CREATE);
+		
+		// switch to logger from simulation
+		// -> errors and paramters will appear in simulation log
+		logger = sim.getLogger();
+
+		// output configuration
+		logger.log(this, CONFIG_DIRECTORY +": " +baseDirectory);
+		logger.log(this, CONFIG_WORKER +": " +worker);
+		logger.log(this, CONFIG_LOG_LEVEL +": " +loglevel);
+		logger.log(this, CONFIG_NODE_ROUTING_CONFIGURATOR +": " + configuratorRS);
+		logger.log(this, CONFIG_NODE_APPLICATION_CONFIGURATOR +": " + configuratorApp);
+		
+		logger.log(this, CONFIG_LINK_DATA_RATE +": " + linkDatarate +"kbit/s");
+		logger.log(this, CONFIG_LINK_DELAY +": " + linkDelay +"ms");
+		logger.log(this, CONFIG_LINK_DELAY_CONSTANT +": " + linkDelayConstant);
+		logger.log(this, CONFIG_LINK_LOSS_PROB +": " + linkLoss +"%");
+		logger.log(this, CONFIG_LINK_BIT_ERROR +": " + linkBitError +"%");
+		
 		// set configuration
 		sim.getConfig().Scenario.ROUTING_CONFIGURATOR = configuratorRS;
 		sim.getConfig().Scenario.APPLICATION_CONFIGURATOR = configuratorApp;
@@ -180,8 +203,6 @@ public class FoGLauncher
 		sim.getConfig().Scenario.DEFAULT_DELAY_CONSTANT = linkDelayConstant;
 		sim.getConfig().Scenario.DEFAULT_PACKET_LOSS_PROP = linkLoss;
 		sim.getConfig().Scenario.DEFAULT_BIT_ERROR_PROP = linkBitError;
-		
-		observers = getObservers(sim);
 		
 		//
 		// Start watchdog if required
@@ -195,6 +216,31 @@ public class FoGLauncher
 				logger.err(this, "Can not start watchdog " +watchdogSystemProperty +". Continuing without.", exc);
 			}
 		}
+		
+		//
+		// End
+		//
+		// do not block: Create a new thread waiting for the end... 
+		new Thread() {
+			public void run()
+			{
+				sim.waitForExit();
+				
+				logger.info(this, "Simulation finished. Informing observers.");
+				notifyObservers(FUNCTION.ENDED);
+				
+				// store old list in order to enable re-start
+				// of simulation during FINISHED callback
+				LinkedList<SimulationObserver> oldObservers = observers;
+				
+				observers = null;
+				sim = null;
+				
+				logger.info(this, "Inform observer about finished cleanup.");
+				notifyObservers(FUNCTION.FINISHED, oldObservers);	
+				oldObservers.clear();
+			}
+		}.start();
     }
 	
 	/**
@@ -206,6 +252,11 @@ public class FoGLauncher
 		String  file         = configuration.get(FoGLauncher.CONFIG_SCENARIO_FILE, FoGLauncher.CONFIG_SCENARIO_FILE_DEFAULT);
 		String  options      = configuration.get(FoGLauncher.CONFIG_SCENARIO_OPTIONS, FoGLauncher.CONFIG_SCENARIO_OPTIONS_DEFAULT);
 		
+		// debug check
+		if(sim == null) {
+			throw new LauncherException(this, "Simulation not running.");
+		}
+
 		// override configuration from configuration with parameters of VM
 		String fileNameParam = System.getProperty(CONFIG_SCENARIO_FILE);
 		if(fileNameParam != null) {
@@ -215,11 +266,6 @@ public class FoGLauncher
 		logger.log(this, CONFIG_SCENARIO_IMPORTER +": " +importerName);
 		logger.log(this, CONFIG_SCENARIO_FILE +": " +file);
 		logger.log(this, CONFIG_SCENARIO_OPTIONS +": " +options);
-
-		// debug check
-		if(sim == null) {
-			throw new LauncherException(this, "Simulation not running.");
-		}
 
 		notifyObservers(FUNCTION.INIT);
 
@@ -303,31 +349,6 @@ public class FoGLauncher
 				sim.getTimeBase().scheduleIn(START_COMMAND_DELAY_AFTER_SETUP_SEC, new CommandEvent(sim, cmdSystemProperty));
 			}
 		}
-		
-		//
-		// END
-		//
-		// do not block: Create a new thread waiting for the end... 
-		new Thread() {
-			public void run()
-			{
-				sim.waitForExit();
-				
-				logger.info(this, "Simulation finished. Informing observers.");
-				notifyObservers(FUNCTION.ENDED);
-				
-				// store old list in order to enable re-start
-				// of simulation during FINISHED callback
-				LinkedList<SimulationObserver> oldObservers = observers;
-				
-				observers = null;
-				sim = null;
-				
-				logger.info(this, "Inform observer about finished cleanup.");
-				notifyObservers(FUNCTION.FINISHED, oldObservers);	
-				oldObservers.clear();
-			}
-		}.start();
 	}
 	
 	/**
@@ -418,8 +439,11 @@ public class FoGLauncher
 		for(SimulationObserver obs : observerList) {
 			try {
 				switch(func) {
+				case CREATE:
+					obs.created(sim);
+					break;
 				case INIT:
-					obs.init(sim);
+					obs.init();
 					break;
 				case START:
 					obs.started();

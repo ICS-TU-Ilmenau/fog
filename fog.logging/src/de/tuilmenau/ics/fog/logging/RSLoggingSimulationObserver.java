@@ -38,7 +38,7 @@ public class RSLoggingSimulationObserver extends FileLogObserver implements Simu
 	}
 
 	@Override
-	public void init(Simulation sim)
+	public void created(Simulation sim)
 	{
 		timeBase = sim.getTimeBase();
 		
@@ -51,6 +51,11 @@ public class RSLoggingSimulationObserver extends FileLogObserver implements Simu
 		catch(IOException tExc) {
 			sim.getLogger().err(this, "Can not open log file.", tExc);
 		}
+	}
+	
+	@Override
+	public void init()
+	{
 	}
 
 	@Override

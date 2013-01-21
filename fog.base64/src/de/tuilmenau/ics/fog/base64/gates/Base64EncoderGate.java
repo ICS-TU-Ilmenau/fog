@@ -78,7 +78,7 @@ public class Base64EncoderGate extends FunctionalGate
 			}
 		} else {
 			mLogger.log(this, "No next hop given. Packet " +pPacket +" dropped.");
-			pPacket.logStats();
+			pPacket.logStats(getNode().getAS().getSimulation());
 		}
 	}
 	

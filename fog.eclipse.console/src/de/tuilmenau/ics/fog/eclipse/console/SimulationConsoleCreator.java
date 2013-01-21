@@ -74,7 +74,7 @@ public class SimulationConsoleCreator implements SimulationObserver
 	}
 	
 	@Override
-	public void init(Simulation sim)
+	public void created(Simulation sim)
 	{
 		mConsole.setLogLevel(sim.getLogLevel());
 		
@@ -83,6 +83,11 @@ public class SimulationConsoleCreator implements SimulationObserver
 
 		Logging.getInstance().addLogObserver(mConsole);
 		mCmdExe = new CommandExecutor(mConsole.getReader(), sim);
+	}
+	
+	public void init()
+	{
+		// nothing to do
 	}
 
 	@Override

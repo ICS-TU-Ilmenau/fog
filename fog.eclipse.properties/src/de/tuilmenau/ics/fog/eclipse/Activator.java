@@ -9,7 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.eclipse;
 
-import de.tuilmenau.ics.fog.launcher.SimulationObserver;
+import de.tuilmenau.ics.fog.launcher.SimpleSimulationObserver;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -22,26 +22,11 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * started. Then the bundle is activated. In summary: The dialogs are
  * available after the first starting of a simulation.
  */
-public class Activator implements SimulationObserver
+public class Activator extends SimpleSimulationObserver
 {
 	@Override
-	public void ended()
-	{
-	}
-
-	@Override
-	public void init(Simulation sim)
+	public void created(Simulation sim)
 	{
 		Logging.debug(this, "Bundle activated. Detail views are now available.");
-	}
-
-	@Override
-	public void started()
-	{
-	}
-	
-	@Override
-	public void finished()
-	{
 	}
 }

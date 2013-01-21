@@ -33,9 +33,12 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	private static final String PROPERTY_PROB_HAVING_RS = "import.rs_probability";
 	
 	
-	public TopologyDistributorAnalyser(ITopologyParser parser, Simulation sim) throws Exception
+	public TopologyDistributorAnalyser(ITopologyParser parser, Simulation sim, boolean checkGraph, boolean cleanGraph) throws Exception
 	{
 		super(parser, sim, false);
+		
+		this.checkGraph = checkGraph;
+		this.cleanGraph = cleanGraph;
 		
 		// try to get probability from environment variable
 		String probStr = System.getProperty(PROPERTY_PROB_HAVING_RS);
@@ -122,12 +125,33 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 		tLog.info(this, "AS graph contains " +mASGraph.getVertexCount() +" AS with " +mASGraph.getEdgeCount() +" inter-AS links");
 		tLog.info(this, "Node graph contians " +mGraph.getVertexCount() +" nodes with " +mGraph.getEdgeCount() +" links");
 
+		// cleanup graph
+		if(cleanGraph) {
+			int removedAS = removeStandAloneNodes(mASGraph);
+			int removedNodes = removeStandAloneNodes(mGraph);
+			
+			getSim().getLogger().warn(this, "Cleaned " +removedAS +" AS and " +removedNodes +" nodes");
+
+			if(removedAS > removedNodes) {
+				getSim().getLogger().warn(this, "More AS removed than nodes. There might be nodes, which are mapped to the removed AS.");
+			}
+		}
+		
+		if(checkGraph) {
+			// debug check if the graph is connected
+			if(!checkIfConnected(mASGraph)) {
+	 			tLog.warn(this, "AS graph is not connected. Try to setup scenario but errors might happen.");
+			}
+		}
+		
+		// assign AS to RS
 		tLog.info(this, decideAboutRS() +" AS with routing service");
 		
 /*		for(String as : mASGraph.getVertices()) {
 			tLog.info(this, "AS " +as +" has " +mASGraph.getNeighborCount(as) +" neighbors and used RS " +mASToRS.get(as));
 		}*/
-		
+
+		// now the nodes/AS/edges are really created!
 		createAll();
 		
 		super.close();
@@ -206,7 +230,7 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 		
 		// assign others to existing RS
 		boolean allHaveRS;
-		int maxIterations = mASGraph.getVertexCount() * mASGraph.getVertexCount() +1;
+		int maxIterations = mASGraph.getVertexCount() +1;
 		do {
 			allHaveRS = true;
 			maxIterations--;
@@ -259,6 +283,95 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	}
 	
 	/**
+	 * Checks if the graph is connected or if it contains partitions.
+	 */
+	private boolean checkIfConnected(SparseMultigraph<String, String> graph)
+	{
+		HashMap<String, Boolean> visited = new HashMap<String, Boolean>();
+		LinkedList<String> pending = new LinkedList<String>();
+		boolean tRes = false;
+		final int numberNode = graph.getVertexCount();
+		
+		if(numberNode > 0) {
+			// start with one node in list of pending nodes
+			pending.add(graph.getVertices().iterator().next());
+			
+			while(!pending.isEmpty()) {
+				String currNode = pending.removeFirst();
+				visited.put(currNode, true);
+				
+				// add neighbors not already visited to list of pending nodes
+				Collection<String> neighbors = graph.getNeighbors(currNode);
+				for(String neighbor : neighbors) {
+					if(!visited.containsKey(neighbor)) {
+						pending.addLast(neighbor);
+					}
+				}
+			}
+			
+			if(numberNode != visited.size()) {
+				getSim().getLogger().err(this, visited.size() +" nodes in partition. " +numberNode +" in graph.");
+				
+				// printing the smaller list of nodes
+				if(visited.size() >= (numberNode -visited.size())) {
+					// output nodes NOT in partition
+					for(String node : graph.getVertices()) {
+						if(!visited.containsKey(node)) {
+							getSim().getLogger().log("node " +node +" not in partition");
+						}
+					}
+				} else {
+					// output nodes IN partition
+					for(String node : graph.getVertices()) {
+						if(visited.containsKey(node)) {
+							getSim().getLogger().log("node " +node +" in partition");
+						}
+					}
+				}
+				
+				return false;
+			} else {
+				getSim().getLogger().info(this, "Graph with " +numberNode +" nodes is connected.");
+			}
+		}
+		
+		return true;
+	}
+
+	/**
+	 * Removes all nodes from graph, which do not have any neighbors
+	 */
+	private int removeStandAloneNodes(SparseMultigraph<String, String> graph)
+	{
+		LinkedList<String> nodesToRemove = null;
+		
+		for(String node : graph.getVertices()) {
+			Collection<String> neighbors = graph.getNeighbors(node);
+			
+			if(neighbors.isEmpty()) {
+				if(nodesToRemove == null) {
+					nodesToRemove = new LinkedList<String>();
+				}
+				
+				nodesToRemove.add(node);
+			}
+		}
+		
+		// remove nodes after previous loop in order to avoid
+		// ConcurrentModificationException due to the remove
+		// operation
+		if(nodesToRemove != null) {
+			for(String node : nodesToRemove) {
+				graph.removeVertex(node);
+			}
+			
+			return nodesToRemove.size();
+		}
+		
+		return 0;
+	}
+	
+	/**
 	 * Probability for a AS of having its own routing service.
 	 * E.g. 0.5 means that 50% of the AS will chose to have
 	 * there own routing service.
@@ -275,4 +388,7 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	private HashMap<String, String> mASToRS = new HashMap<String, String>();
 
 	private boolean passToSuper = false;
+	
+	private boolean checkGraph;
+	private boolean cleanGraph;
 }

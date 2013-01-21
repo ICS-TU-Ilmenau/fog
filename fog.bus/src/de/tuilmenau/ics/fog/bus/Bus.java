@@ -74,13 +74,12 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	public Bus(AutonomousSystem pAS, String pName, Description pDescr)
 	{
 		setNewBusNumber();
-		mEventHandler = pAS.getTimeBase();
-		mASName = pAS.getName();
+		mAS = pAS;
 		mLogger = new Logger(pAS.getLogger());
 		mName = pName;
 		mConfig = pAS.getSimulation().getConfig();
 		
-		packetLog = PacketLogger.createLogger(mEventHandler, this, null);
+		packetLog = PacketLogger.createLogger(getTimeBase(), this, null);
 		packetLog.addObserver(this);
 
 		mDescription = new Description();
@@ -111,19 +110,19 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		if(OUTPUT_STATISTICS_VIA_DATASTREAM) {
 			DatastreamManager.autowire(this);
 			
-			mDatarateMeasurement = new RateMeasurement(mEventHandler, this +".rate");
+			mDatarateMeasurement = new RateMeasurement(getTimeBase(), this +".rate");
 		}
 	}
 	
 	private void setNewBusNumber()
 	{
-		mASName = null;
+		mAS = null;
 		init();
 	}
 
 	public String getASName()
 	{
-		return mASName;
+		return mAS.getName();
 	}
 	
 	public void init()
@@ -153,7 +152,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		
 		// initiate the repair operation
 		if(repaired) {
-			mEventHandler.scheduleIn(0, new IEvent() {
+			getTimeBase().scheduleIn(0, new IEvent() {
 				@Override
 				public void fire()
 				{
@@ -192,7 +191,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	
 	public EventHandler getTimeBase()
 	{
-		return mEventHandler;
+		return mAS.getTimeBase();
 	}
 	
 	public Logger getLogger()
@@ -322,7 +321,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 					//
 					// Calculate timing issues
 					//
-					double tNow = mEventHandler.now();
+					double tNow = getTimeBase().now();
 					StreamTime tNowStream = null;
 					if(OUTPUT_STATISTICS_VIA_DATASTREAM) {
 						tNowStream = new StreamTime(tNow);
@@ -424,9 +423,9 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 					
 					// log end result of packet
 					if(OUTPUT_STATISTICS_VIA_DATASTREAM) {
-						mDroppedPackets.write(1.0d, new StreamTime(mEventHandler.now()));
+						mDroppedPackets.write(1.0d, new StreamTime(getTimeBase().now()));
 					}
-					packet.logStats(this);
+					packet.logStats(mAS.getSimulation(), this);
 					
 					return SendResult.OK;
 				}
@@ -674,7 +673,6 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		return false;
 	}
 	
-	private EventHandler mEventHandler;
 	private Logger mLogger;
 	private double mNextFreeTimeSlot = 0;
 	private Config mConfig;
@@ -692,8 +690,8 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	private Boolean broken = false;
 	private boolean mErrorTypeVisible = Config.Routing.ERROR_TYPE_VISIBLE;
 	
-	@Viewable("AS name")
-	private String mASName = null;
+	@Viewable("Autonomous system")
+	private AutonomousSystem mAS = null;
 	@Viewable("Name")
 	private String mName = null;
 

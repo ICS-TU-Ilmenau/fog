@@ -231,7 +231,7 @@ public class Multiplexer extends GateContainer
 	 */
 	protected void handlePacket(Packet packet)
 	{
-		packet.logStats();
+		packet.logStats(getNode().getAS().getSimulation());
 		if(packet.getData() instanceof Signalling) {
 			Signalling tSig = (Signalling) packet.getData();
 			
