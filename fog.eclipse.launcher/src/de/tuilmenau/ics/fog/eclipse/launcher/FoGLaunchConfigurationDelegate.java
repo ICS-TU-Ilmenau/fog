@@ -45,7 +45,7 @@ public class FoGLaunchConfigurationDelegate extends FoGLauncher implements ILaun
 	
 	public FoGLaunchConfigurationDelegate()
 	{
-		super(Logging.getInstance());
+		super();
 	}
 	
 	@Override

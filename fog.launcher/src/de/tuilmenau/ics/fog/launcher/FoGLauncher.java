@@ -27,6 +27,7 @@ import de.tuilmenau.ics.fog.importer.ScenarioImporter;
 import de.tuilmenau.ics.fog.importer.ScenarioImporterExtensionPoint;
 import de.tuilmenau.ics.fog.scenario.ScenarioSetup;
 import de.tuilmenau.ics.fog.topology.Simulation;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Logging.Level;
 import de.tuilmenau.ics.fog.util.Configuration;
 import de.tuilmenau.ics.fog.util.Logger;
@@ -87,9 +88,9 @@ public class FoGLauncher
 	private static final double START_COMMAND_DELAY_AFTER_SETUP_SEC = 5.0d;
 
 	
-	public FoGLauncher(Logger parentLogger)
+	public FoGLauncher()
 	{
-		this.logger = new Logger(parentLogger);
+		logger = Logging.getInstance();
 	}
 	
 	public void create(Configuration configuration) throws LauncherException
@@ -114,6 +115,9 @@ public class FoGLauncher
 		int linkLoss = configuration.get(CONFIG_LINK_LOSS_PROB, CONFIG_LINK_LOSS_PROB_DEFAULT);
 		int linkBitError = configuration.get(CONFIG_LINK_BIT_ERROR, CONFIG_LINK_BIT_ERROR_DEFAULT);
 		
+		//
+		// Overwrite some properties with system properties
+		//
 		String logLevelParam = System.getProperty(CONFIG_LOG_LEVEL);
 		if(logLevelParam != null) {
 			try {
@@ -124,19 +128,11 @@ public class FoGLauncher
 			}
 		}
 		
-		// output configuration
-		logger.log(this, CONFIG_DIRECTORY +": " +baseDirectory);
-		logger.log(this, CONFIG_WORKER +": " +worker);
-		logger.log(this, CONFIG_LOG_LEVEL +": " +loglevel);
-		logger.log(this, CONFIG_NODE_ROUTING_CONFIGURATOR +": " + configuratorRS);
-		logger.log(this, CONFIG_NODE_APPLICATION_CONFIGURATOR +": " + configuratorApp);
+		String baseDirectorySystem = System.getProperty(CONFIG_DIRECTORY);
+		if(baseDirectorySystem != null) {
+			baseDirectory = baseDirectorySystem;
+		}
 		
-		logger.log(this, CONFIG_LINK_DATA_RATE +": " + linkDatarate +"kbit/s");
-		logger.log(this, CONFIG_LINK_DELAY +": " + linkDelay +"ms");
-		logger.log(this, CONFIG_LINK_DELAY_CONSTANT +": " + linkDelayConstant);
-		logger.log(this, CONFIG_LINK_LOSS_PROB +": " + linkLoss +"%");
-		logger.log(this, CONFIG_LINK_BIT_ERROR +": " + linkBitError +"%");
-
 		//
 		// CREATE LOCAL WORKER
 		//
@@ -170,6 +166,23 @@ public class FoGLauncher
 		// CREATE SIMULATION
 		//
 		sim = new Simulation(baseDirectory, loglevel);
+		
+		// switch to logger from simulation
+		// -> errors and paramters will appear in simulation log
+		logger = sim.getLogger();
+
+		// output configuration
+		logger.log(this, CONFIG_DIRECTORY +": " +baseDirectory);
+		logger.log(this, CONFIG_WORKER +": " +worker);
+		logger.log(this, CONFIG_LOG_LEVEL +": " +loglevel);
+		logger.log(this, CONFIG_NODE_ROUTING_CONFIGURATOR +": " + configuratorRS);
+		logger.log(this, CONFIG_NODE_APPLICATION_CONFIGURATOR +": " + configuratorApp);
+		
+		logger.log(this, CONFIG_LINK_DATA_RATE +": " + linkDatarate +"kbit/s");
+		logger.log(this, CONFIG_LINK_DELAY +": " + linkDelay +"ms");
+		logger.log(this, CONFIG_LINK_DELAY_CONSTANT +": " + linkDelayConstant);
+		logger.log(this, CONFIG_LINK_LOSS_PROB +": " + linkLoss +"%");
+		logger.log(this, CONFIG_LINK_BIT_ERROR +": " + linkBitError +"%");
 		
 		// set configuration
 		sim.getConfig().Scenario.ROUTING_CONFIGURATOR = configuratorRS;
@@ -206,6 +219,11 @@ public class FoGLauncher
 		String  file         = configuration.get(FoGLauncher.CONFIG_SCENARIO_FILE, FoGLauncher.CONFIG_SCENARIO_FILE_DEFAULT);
 		String  options      = configuration.get(FoGLauncher.CONFIG_SCENARIO_OPTIONS, FoGLauncher.CONFIG_SCENARIO_OPTIONS_DEFAULT);
 		
+		// debug check
+		if(sim == null) {
+			throw new LauncherException(this, "Simulation not running.");
+		}
+
 		// override configuration from configuration with parameters of VM
 		String fileNameParam = System.getProperty(CONFIG_SCENARIO_FILE);
 		if(fileNameParam != null) {
@@ -215,11 +233,6 @@ public class FoGLauncher
 		logger.log(this, CONFIG_SCENARIO_IMPORTER +": " +importerName);
 		logger.log(this, CONFIG_SCENARIO_FILE +": " +file);
 		logger.log(this, CONFIG_SCENARIO_OPTIONS +": " +options);
-
-		// debug check
-		if(sim == null) {
-			throw new LauncherException(this, "Simulation not running.");
-		}
 
 		notifyObservers(FUNCTION.INIT);
 
