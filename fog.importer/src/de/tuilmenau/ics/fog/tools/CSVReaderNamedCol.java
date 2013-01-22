@@ -69,7 +69,7 @@ public class CSVReaderNamedCol extends CSVReader
 	public String get(int colNumber) throws IOException
 	{
 		if(currentRecord != null) {
-			if((colNumber > 0) && (colNumber < currentRecord.length)) {
+			if((colNumber >= 0) && (colNumber < currentRecord.length)) {
 				return currentRecord[colNumber];
 			} else {
 				throw new IOException("Column " +colNumber +" is not available.");
@@ -104,6 +104,18 @@ public class CSVReaderNamedCol extends CSVReader
 			return colNumber.intValue();
 		} else {
 			return -1;
+		}
+	}
+	
+	/**
+	 * @return Number of columns in current record
+	 */
+	public int getNumberColumns()
+	{
+		if(currentRecord != null) {
+			return currentRecord.length;
+		} else {
+			return 0;
 		}
 	}
 	

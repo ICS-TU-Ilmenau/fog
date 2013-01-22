@@ -46,6 +46,7 @@ public class TopologyParserArk extends TopologyParser
 	private LinkedList<String> mImportFilenames = null;
 	private Logger mLogger;
 	private boolean mToReadFirstEntry = true;
+	private String mCurrentNodeName = null;
 	
 	/**
 	 * Constructor for parser that reads in Skitter/Ark files
@@ -94,18 +95,18 @@ public class TopologyParserArk extends TopologyParser
 
 	private boolean processFileSeek(int pTeam) throws IOException
 	{
-		boolean tTryToRead = mReaders.get(pTeam).readRecord(); //readNext() != null; 
-		while(tTryToRead) {
-			String[] tOutput = mReaders.get(pTeam).readNext();
-			if(tOutput != null) {
-				if(tOutput.length > 0) {
-					if(tOutput[0].startsWith("D")) {
-						return true;
-					}
+		CSVReaderNamedCol reader = mReaders.get(pTeam);
+		
+		
+		// go through lines and stop at one starting with "D"
+		while(reader.readRecord()) {
+			if(reader.getNumberColumns() > 0) {
+				if(reader.get(0).startsWith("D")) {
+					return true;
 				}
 			}
-			tTryToRead = mReaders.get(pTeam).readNext() != null;
 		}
+		
 		throw new IOException("Reached end of file");
 	}
 	
@@ -122,6 +123,8 @@ public class TopologyParserArk extends TopologyParser
 	@Override
 	public boolean readNextNodeEntry()
 	{
+		mCurrentNodeName = null;
+		
 		try {
 			String tNode = null;
 			if(mToReadFirstEntry) {
@@ -133,6 +136,7 @@ public class TopologyParserArk extends TopologyParser
 				mToReadFirstEntry = true;
 			}
 			if(mNodes.add(tNode) && !tNode.equals("")) {
+				mCurrentNodeName = tNode;
 				return true;
 			} else {
 				return readNextNodeEntry();
@@ -158,16 +162,7 @@ public class TopologyParserArk extends TopologyParser
 	@Override
 	public String getNode()
 	{
-		try {
-			String tReturnNode = mReaders.get(mCurrentReaderIndex).get(1);
-			if(!mNodes.contains(tReturnNode)) {
-				mNodes.add(tReturnNode);
-			}
-			return tReturnNode;
-		} catch (IOException tExc) {
-			getLogger().err(this, "Unable to get node from concurrent entry", tExc);
-		}
-		return null;
+		return mCurrentNodeName;
 	}
 
 	@Override
