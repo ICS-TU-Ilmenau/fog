@@ -24,12 +24,21 @@ import de.tuilmenau.ics.fog.tools.CSVReaderNamedCol;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.Tuple;
 
+
+/**
+ * Importer for the graphs from http://www.caida.org/home/
+ * 
+ * One Ark/Skitter graph consits of several input files from
+ * multiple "teams". Thus, the import filename is the name of
+ * a file, which contains the filename (one per line). If the
+ * file names do not contain a path, the path of the "file
+ * name file" is used. 
+ */
 public class TopologyParserArk extends TopologyParser
 {
 	/*
 	 * Ark/Skitter files are produced by various teams
 	 */
-	private int mTeamAmount = 0;
 	private int mCurrentReaderIndex = 0;
 	private LinkedList<CSVReaderNamedCol> mReaders = null;
 	private TreeSet<String> mNodes = null;
@@ -43,8 +52,9 @@ public class TopologyParserArk extends TopologyParser
 	 * 
 	 * @param pImportFilename
 	 * @param pOneAS
+	 * @throws FileNotFoundException 
 	 */
-	public TopologyParserArk(Logger pLogger, String pImportFilename)
+	public TopologyParserArk(Logger pLogger, String pImportFilename) throws FileNotFoundException
 	{
 		mLogger = pLogger;
 		mNodes = new TreeSet<String>();
@@ -58,6 +68,18 @@ public class TopologyParserArk extends TopologyParser
 				do {
 					tFile = tReader.readLine();
 					if(tFile != null && !tFile.equals("")) {
+						// does it contain a path?
+						if(!tFile.contains("/") && !tFile.contains("\\")) {
+							// no -> add the path from the original file
+							int lastSlash = Math.max(pImportFilename.lastIndexOf('/'), pImportFilename.lastIndexOf('\\'));
+							
+							if(lastSlash >= 0) {
+								String path = pImportFilename.substring(0, lastSlash +1);
+								
+								tFile = path +tFile;
+							}
+						}
+						
 						mImportFilenames.add(tFile);
 					}
 				} while (tFile != null);
@@ -70,9 +92,9 @@ public class TopologyParserArk extends TopologyParser
 		createReaders();
 	}
 
-	public boolean processFileSeek(int pTeam) throws IOException
+	private boolean processFileSeek(int pTeam) throws IOException
 	{
-		boolean tTryToRead = mReaders.get(pTeam).readNext() != null; 
+		boolean tTryToRead = mReaders.get(pTeam).readRecord(); //readNext() != null; 
 		while(tTryToRead) {
 			String[] tOutput = mReaders.get(pTeam).readNext();
 			if(tOutput != null) {
@@ -87,21 +109,14 @@ public class TopologyParserArk extends TopologyParser
 		throw new IOException("Reached end of file");
 	}
 	
-	public void createReaders()
+	private void createReaders() throws FileNotFoundException
 	{
-		try {
-			mReaders = new LinkedList<CSVReaderNamedCol>();
-			for(String tFilename : mImportFilenames) {
-				CSVReaderNamedCol tReader = new CSVReaderNamedCol(tFilename, '\t');
-				mReaders.add(tReader);
-				mTeamAmount++;
-			}
-			mCurrentReaderIndex = 0;
-		} catch (IndexOutOfBoundsException tExc) {
-			getLogger().err(this, "Unable to put together appropriate filename", tExc);
-		} catch (FileNotFoundException tExc) {
-			getLogger().err(this, "Unable to put together appropriate filename", tExc);			
+		mReaders = new LinkedList<CSVReaderNamedCol>();
+		for(String tFilename : mImportFilenames) {
+			CSVReaderNamedCol tReader = new CSVReaderNamedCol(tFilename, '\t');
+			mReaders.add(tReader);
 		}
+		mCurrentReaderIndex = 0;
 	}
 	
 	@Override
@@ -122,9 +137,16 @@ public class TopologyParserArk extends TopologyParser
 			} else {
 				return readNextNodeEntry();
 			}
-		} catch (IOException tExc) {
-			if(mCurrentReaderIndex + 1 == mTeamAmount) {
-				createReaders();
+		}
+		catch (IOException tExc) {
+			if(mCurrentReaderIndex + 1 == mReaders.size()) {
+				// re-open readers for reading edges
+				try {
+					createReaders();
+				}
+				catch(FileNotFoundException exc) {
+					throw new RuntimeException(this +": Not able to setup files for reading edges.", exc);
+				}
 				return false;
 			} else {
 				mCurrentReaderIndex++;
@@ -167,7 +189,7 @@ public class TopologyParserArk extends TopologyParser
 				return readNextEdgeEntry();
 			}
 		} catch (IOException tExc) {
-			if(mCurrentReaderIndex + 1 == mTeamAmount) {
+			if(mCurrentReaderIndex + 1 == mReaders.size()) {
 				return false;
 			} else {
 				mCurrentReaderIndex++;
