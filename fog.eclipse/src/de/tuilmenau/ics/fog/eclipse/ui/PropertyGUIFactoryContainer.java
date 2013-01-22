@@ -66,12 +66,14 @@ public class PropertyGUIFactoryContainer implements PropertyGUIFactory
 	public PropertyParameterWidget createParameterWidget(String pName, Property pTemplate, Composite pParent, int pStyle) throws PropertyException
 	{
 		PropertyGUIFactory factory = mRequirementGUIs.get(pName);
+		PropertyParameterWidget tResult = null;
 		
-		if(factory != null) {
-			return factory.createParameterWidget(pName, pTemplate, pParent, pStyle);
-		} else {
-			return null;
+		if (factory != null) {
+			tResult = factory.createParameterWidget(pName, pTemplate, pParent, pStyle);
 		}
+		Logging.info(this, "Creating widget for requirement " +pName +" with factory " +factory + " resulted in the widget " + tResult);
+		
+		return tResult;
 	}
 	
 	private HashMap<String, PropertyGUIFactory> mRequirementGUIs  = new HashMap<String, PropertyGUIFactory>();

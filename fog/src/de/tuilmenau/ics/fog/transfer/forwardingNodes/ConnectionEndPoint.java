@@ -13,12 +13,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.io.Serializable;
 import java.util.LinkedList;
 
@@ -126,7 +125,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	{
 		//TODO blocking mode?
 		
-		if(mInputOutStream != null) {
+		if(mInputStream != null) {
 			throw new NetworkException(this, "Receiving is done via input stream. Do not call Connection.read."); 
 		}
 		
@@ -140,69 +139,91 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		
 		return null;
 	}
-
+	
 	@Override
-	public OutputStream getOutputStream() throws IOException
+	public int available()
+	{
+		if(mInputStream != null) {
+			return mInputStream.available();
+		}
+		
+		if(mReceiveBuffer != null) {
+			return mReceiveBuffer.size();
+		}
+		
+		// no data or connection not open
+		return 0;
+	}
+	
+	@Override
+	public synchronized OutputStream getOutputStream() throws IOException
 	{
 		if(mOutputStream == null) {
-			mOutputStream = new ByteArrayOutputStream() {
+			mOutputStream = new OutputStream() {
 				@Override
-				public void flush() throws IOException
+				public void write(int value) throws IOException
 				{
-					if(count > 0) {
-						super.flush();
-	
-						//Logging.Log(this, "sending: " +new String(toByteArray()));
+					try {
+						ConnectionEndPoint.this.write(new byte[] { (byte)value });
+					}
+					catch(NetworkException exc) {
+						throw new IOException(exc);
+					}
+				}
+				
+				public synchronized void write(byte b[], int off, int len) throws IOException
+				{
+					if(b != null) {
 						try {
-							ConnectionEndPoint.this.write(toByteArray());
+							// Copy array since some apps will reuse b in order
+							// to send the next data chunk! That copy can only be
+							// avoided, if the calls behind "write" really do a
+							// deep copy of the packet. However, the payload will
+							// only be copied if the packet is send through a real
+							// lower layer. In pure simulation scenarios that never
+							// happens.
+							byte[] copyB = new byte[len];
+							System.arraycopy(b, off, copyB, 0, len);
+							
+							ConnectionEndPoint.this.write(copyB);
 						}
 						catch(NetworkException exc) {
 							throw new IOException(exc);
 						}
-						reset();
 					}
 				}
+				
+				@Override
+				public void flush() throws IOException
+				{
+					// nothing to do
+				}
+
 			};
 		}
 
 		return mOutputStream;
 	}
 	
-	public InputStream getInputStream() throws IOException
+	public synchronized InputStream getInputStream() throws IOException
 	{
 		if(mInputStream == null) {
-			synchronized (this) {
-				mInputStream = new PipedInputStream();
-				mInputOutStream = new PipedOutputStream(mInputStream);
-				
-				// if there are already some data, copy it to stream
-				// and delete buffer
-				if(mReceiveBuffer != null) {
-					for(Object obj : mReceiveBuffer) {
-						writeDataToStream(obj);
-					}
-					
-					mReceiveBuffer = null;
+			mInputStream = new CEPInputStream();
+			
+			// if there are already some data, copy it to stream
+			// and delete buffer
+			if(mReceiveBuffer != null) {
+				for(Object obj : mReceiveBuffer) {
+					mInputStream.addToBuffer(obj);
 				}
+				
+				mReceiveBuffer = null;
 			}
 		}
 
 		return mInputStream;
 	}
 	
-	private void writeDataToStream(Object data)
-	{
-		try {
-			if(data instanceof byte[]) {
-				mInputOutStream.write((byte[]) data);
-			} else {
-				mInputOutStream.write(data.toString().getBytes());
-			}
-		} catch (IOException tExc) {
-			logger.err(this, "Exception " +tExc +" while receiving packet for stream.");
-		}
-	}
-
 	/**
 	 * Called by higher layer to close socket.
 	 */
@@ -249,16 +270,14 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		notifyObservers(new ServiceDegradationEvent(this));
 	}
 	
-	private void cleanup()
+	private synchronized void cleanup()
 	{
 		try {
 			if(mOutputStream != null) mOutputStream.close();
-			//if(mInputStream != null) mInputStream.close();
-			if(mInputOutStream != null) mInputOutStream.close();
+			if(mInputStream != null) mInputStream.close();
 			
 			mOutputStream = null;
 			mInputStream = null;
-			mInputOutStream = null;
 		} catch (IOException tExc) {
 			// ignore exception
 			logger.warn(this, "Ignoring exception during closing operation.", tExc);
@@ -269,19 +288,159 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	
 	public synchronized void receive(Object data)
 	{
-		if(mInputOutStream != null) {
-			writeDataToStream(data);
-		} else {
-			if(mReceiveBuffer == null) {
-				mReceiveBuffer = new LinkedList<Object>();
-			}
+		try {
+			if(mInputStream != null) {
+				mInputStream.addToBuffer(data);
+			} else {
+				if(mReceiveBuffer == null) {
+					mReceiveBuffer = new LinkedList<Object>();
+				}
 				
-			mReceiveBuffer.addLast(data);
+				mReceiveBuffer.addLast(data);
+			}
+			
+			notifyObservers(new DataAvailableEvent(this));
 		}
-		
-		notifyObservers(new DataAvailableEvent(this));
+		catch(IOException exc) {
+			logger.err(this, "Can not receive data '" +data +"'. Closing connection.", exc);
+			close();
+		}
+	}
+	
+	@Override
+	public String toString()
+	{
+		if(forwardingNode != null) {
+			return super.toString() +"@" +forwardingNode.getNode();
+		} else {
+			return super.toString();
+		}
 	}
 
+	private class CEPInputStream extends ByteArrayInputStream
+	{
+		public CEPInputStream()
+		{
+			super(new byte[0]);
+		}
+
+		@Override
+		public synchronized int read()
+		{
+			int res = super.read();
+			
+			// current buffer empty?
+			if(res < 0) {
+				// blocks until buffers changed
+				res = flipBuffers();
+				
+				// if no error occurred, read again
+				if(res >= 0) res = read();
+			}
+			
+			return res;
+		}
+		
+		@Override
+		public synchronized int read(byte recBuffer[], int offset, int length)
+		{
+			int res = super.read(recBuffer, offset, length);
+			
+			// current buffer empty?
+			if(res < 0) {
+				// blocks until buffers changed
+				res = flipBuffers();
+				
+				// if no error occurred, read again
+				if(res >= 0) res = read(recBuffer, offset, length);
+			}
+			
+			return res;
+		}
+		
+		@Override
+		public void close() throws IOException
+		{
+			super.close();
+			
+			synchronized (buffer) {
+				buffer.close();
+				buffer.notifyAll();
+			}
+		}
+		
+		/**
+		 * Replaces the current buffer of the input stream (which is empty)
+		 * with the current buffer of the output stream, which contains
+		 * the remaining data received via the connection.
+		 * 
+		 * @return number of new bytes; -1 on error
+		 */
+		private synchronized int flipBuffers()
+		{
+			if(isConnected()) {
+				synchronized (buffer) {
+					// wait until 
+					while(buffer.size() <= 0) {
+						try {
+							buffer.wait();
+						}
+						catch (InterruptedException exc) {
+							// ignore it
+						}
+						
+						if(!isConnected()) return -1;
+					}
+					
+					// reset read buffer with buffer from output stream
+					this.count = buffer.size();
+					this.buf = buffer.replaceBuffer();
+					this.pos = 0;
+					this.mark = 0;
+				}
+				return this.count;
+			} else {
+				return -1;
+			}
+		}
+		
+		public void addToBuffer(Object data) throws IOException
+		{
+			if(data != null) {
+				if(data instanceof byte[]) {
+					buffer.write((byte[]) data);
+				} else {
+					buffer.write(data.toString().getBytes());
+				}
+				
+				synchronized (buffer) {
+					buffer.notify();
+				}
+			}
+		}
+		
+		private class CEPByteArrayOutputStream extends ByteArrayOutputStream
+		{
+			/**
+			 * Extracts the current puffer from the output stream and replaces it
+			 * with a new empty one.
+			 * 
+			 * @return current buffer
+			 */
+			public synchronized byte[] replaceBuffer()
+			{
+				byte[] oldBuf = buf;
+				buf = new byte[Math.max(32, count)];
+				count = 0;
+				
+				return oldBuf;
+			}
+		}
+		
+		private CEPByteArrayOutputStream buffer = new CEPByteArrayOutputStream();
+	}
+	
+	
 	private Name bindingName;
 	
 	private Logger logger;
@@ -289,7 +448,6 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	private LinkedList<Signature> authentications;
 	
 	private OutputStream mOutputStream;
-	private PipedInputStream mInputStream;
-	private PipedOutputStream mInputOutStream;
+	private CEPInputStream mInputStream;
 	private LinkedList<Object> mReceiveBuffer;
 }

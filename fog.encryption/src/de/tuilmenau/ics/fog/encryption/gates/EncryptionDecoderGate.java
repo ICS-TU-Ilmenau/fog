@@ -62,7 +62,7 @@ public class EncryptionDecoderGate extends FunctionalGate
 			tTargetFE.handlePacket(pPacket, this);
 		} else {
 			mLogger.log(this, "No next hop given. Packet " +pPacket +" dropped.");
-			pPacket.logStats();
+			pPacket.logStats(getNode().getAS().getSimulation());
 		}
 	}
 	

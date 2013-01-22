@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.util;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 
 
@@ -48,4 +49,35 @@ public class Helper
 		
 		return null;
 	}
+	
+	
+	/**
+	 * Method intended for GUI usage. It converts an object to a string, which can be shown to
+	 * a user. It is a longer version of data.toString(), since it tries to convert the
+	 * object. E.g. it tries to format byte arrays to text.
+	 * 
+	 * @return data as printable text (!= null)
+	 */
+	public static String toString(Object data)
+	{
+		String res = null;
+		
+		if(data != null) {
+			if(data instanceof byte[]) {
+				try {
+					res = new String((byte[]) data, "UTF-8");
+				}
+				catch(UnsupportedEncodingException exc) {
+					res = data.toString() +" (" +exc.getLocalizedMessage() +")";
+				}
+			} else {
+				res = data.toString();
+			}
+		} else {
+			res = "null";
+		}
+		
+		return res;
+	}
+	
 }

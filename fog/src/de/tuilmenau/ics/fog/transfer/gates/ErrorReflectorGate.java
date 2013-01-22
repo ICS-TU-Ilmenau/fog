@@ -63,7 +63,7 @@ public class ErrorReflectorGate extends AbstractGate
 			if (pLastHop instanceof ForwardingNode) {
 				name = ((ForwardingNode)pLastHop).getNode().toString();
 			}
-			pPacket.logStats(name);
+			pPacket.logStats(getNode().getAS().getSimulation(), name);
 			Packet tNewPacket = new Packet(tReturnRoute, new Reroute(), pPacket);
 			
 			tNewPacket.setSourceNode(mNode.toString());

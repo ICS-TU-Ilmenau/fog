@@ -55,6 +55,11 @@ public interface Connection extends EventSource
 	 * @throws NetworkException On error
 	 */
 	public Object read() throws NetworkException;
+	
+	/**
+	 * @return number of available bytes (if stream is used) or objects (if read is used)
+	 */
+	public int available();
 
 	/**
 	 * Opens output stream for sending data via FoG.

@@ -35,6 +35,9 @@ public class PropertyFactoryContainer implements PropertyFactory
 	{
 	}
 	
+	/** 
+	 * @return returns the singleton object (always != null).
+	 */
 	public static PropertyFactoryContainer getInstance()
 	{
 		if(sInstance == null) {
@@ -94,6 +97,24 @@ public class PropertyFactoryContainer implements PropertyFactory
 		}
 	}
 	
+	/**
+	 * @param string
+	 * @return
+	 */
+	public Class<?> createPropertyClass(String pName) throws PropertyException
+	{
+		PropertyFactory factory = mFuncRequirements.get(pName);
+		if(factory == null) {
+			factory = mNonFuncRequirements.get(pName);
+		}
+		
+		if(factory != null) {
+			return factory.createPropertyClass(pName);
+		} else {
+			throw new PropertyException(this, "Can not create property class with name " +pName);
+		}
+	}
+
 	public Iterable<String> getRequirementNames(boolean nonfunctional)
 	{
 		if(nonfunctional) {

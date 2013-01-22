@@ -1,0 +1,2 @@
+Copy the content of folder "libs" from "https://github.com/ICS-TU-Ilmenau/fog-addons/tree/master/fog.video.libs" to this folder.
+This step is needed in order to use the video decoding/transcoding gates of this plug-in. 

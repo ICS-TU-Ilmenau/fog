@@ -14,6 +14,7 @@
 package de.tuilmenau.ics.fog.importer;
 
 import de.tuilmenau.ics.fog.importer.parser.TopologyDistributor;
+import de.tuilmenau.ics.fog.importer.parser.TopologyDistributorAnalyser;
 import de.tuilmenau.ics.fog.importer.parser.TopologyParserBRITE;
 import de.tuilmenau.ics.fog.topology.Simulation;
 
@@ -24,18 +25,31 @@ public class BRITEImporter implements ScenarioImporter
 	public void importScenario(String importFilename, Simulation simulation, String parameters) throws Exception
 	{
 		boolean flat = false;
+		boolean distributorAnalysor = false;
+		boolean check = false;
+		boolean clean = false;
 		
 		if(parameters != null) {
 			flat = parameters.contains("flat");
-			
 			meta = parameters.contains("meta");
+			check = parameters.contains("check");
+			clean = parameters.contains("clean");
+			
+			distributorAnalysor = parameters.contains("variable");
 		}
 		
 		ITopologyParser parser = createParser(importFilename, simulation);
-		TopologyDistributor distributor = new TopologyDistributor(parser, simulation, flat);
+		TopologyDistributor distributor;
+		if(distributorAnalysor) {
+			distributor = new TopologyDistributorAnalyser(parser, simulation, check, clean);
+		} else {
+			distributor = new TopologyDistributor(parser, simulation, flat);
+		}
 		
 		distributor.createNodes();
 		distributor.createEdges();
+		
+		distributor.close();
 	}
 	
 	protected ITopologyParser createParser(String importFilename, Simulation simulation) throws Exception

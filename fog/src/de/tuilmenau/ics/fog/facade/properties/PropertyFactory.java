@@ -32,4 +32,11 @@ public interface PropertyFactory
 	 * @throws PropertyException On error
 	 */
 	public Property createProperty(String pName, Object pParameters) throws PropertyException;
+
+	/**
+	 * @param pName Name of the property type the factory should create
+	 * @return Class object of addressed property type
+	 * @throws PropertyException On error 
+	 */
+	public Class<?> createPropertyClass(String pName) throws PropertyException;
 }

@@ -15,6 +15,9 @@ package de.tuilmenau.ics.fog.exceptions;
 
 public class CreationException extends InvalidParameterException
 {
+	private static final long serialVersionUID = 7113494795126616843L;
+	
+
 	public CreationException(String errorMessage, Throwable cause)
 	{
 		super(errorMessage, cause);

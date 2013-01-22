@@ -21,6 +21,11 @@ import de.tuilmenau.ics.fog.util.Logger;
 
 public class TopologyParserDIMES extends TopologyParser
 {
+	private static final String FILENAME_POSTFIX_META  = "_meta.csv";
+	private static final String FILENAME_POSTFIX_NODES = "_nodes.csv";
+	private static final String FILENAME_POSTFIX_NODES_SORTED = "_nodes-OK.csv";
+	private static final String FILENAME_POSTFIX_EDGES = "_edges.csv";
+	
 	private CSVReaderNamedCol csvNodes;
 	private CSVReaderNamedCol csvEdges;
 	private CSVReaderNamedCol csvMeta;
@@ -34,6 +39,8 @@ public class TopologyParserDIMES extends TopologyParser
 	{
 		mLogger = pLogger;
 		
+		importFilename = removeFilenamePostfix(importFilename);
+		
 		try {
 			mLogger.log("Going to create CSV Readers for " +importFilename);
 			/*
@@ -41,11 +48,11 @@ public class TopologyParserDIMES extends TopologyParser
 			 */
 			if(meta)
 			{
-				mLogger.log(this, "Meta activated");
-				csvMeta  = new CSVReaderNamedCol(importFilename + "_meta.csv", ',');
+				mLogger.info(this, "Meta activated");
+				csvMeta  = new CSVReaderNamedCol(importFilename + FILENAME_POSTFIX_META, ',');
 			}
-			csvNodes = new CSVReaderNamedCol(importFilename + "_nodes.csv", ',');
-			csvEdges = new CSVReaderNamedCol(importFilename + "_edges.csv",',');
+			csvNodes = new CSVReaderNamedCol(importFilename + FILENAME_POSTFIX_NODES, ',');
+			csvEdges = new CSVReaderNamedCol(importFilename + FILENAME_POSTFIX_EDGES,',');
 			
 			if(meta)
 			{
@@ -56,28 +63,27 @@ public class TopologyParserDIMES extends TopologyParser
 			
 			if(meta)
 			{
- 				csvMeta.readRecord();
- 				numberAS = Integer.parseInt(csvMeta.get("NumberAS"));
- 				numberWorkers = Integer.parseInt(csvMeta.get("NumberWorkers"));
- 				
- 				typeOfScenario = csvMeta.get("Type");
- 				
- 				// Make sure we create the nodes in order
- 				if(typeOfScenario.equals("popul_sim"))
- 				{
- 					if(!csvMeta.get("Sort").equals("0"))
- 					{
- 						int pos= this.csvNodes.getIndex("ASNumber");
- 						csvNodes.close();
- 						
- 						// TODO switch: sortierung und ohne sortierung
- 						CSVFieldSorter sorter = new CSVFieldSorter(importFilename + "_nodes.csv",importFilename + "_nodes-OK.csv", pos );
- 						sorter.sort();
- 						
- 						csvNodes = new CSVReaderNamedCol(importFilename + "_nodes-OK.csv", ',');
- 						csvNodes.readHeaders();
- 					}
- 				}
+				csvMeta.readRecord();
+				numberAS = Integer.parseInt(csvMeta.get("NumberAS"));
+				numberWorkers = Integer.parseInt(csvMeta.get("NumberWorkers"));
+				typeOfScenario = csvMeta.get("Type");
+
+				// Make sure we create the nodes in order
+				if(typeOfScenario.equals("popul_sim"))
+				{
+					if(!csvMeta.get("Sort").equals("0"))
+					{
+						int pos= this.csvNodes.getIndex("ASNumber");
+						csvNodes.close();
+
+						// TODO switch: sortierung und ohne sortierung
+						CSVFieldSorter sorter = new CSVFieldSorter(importFilename +FILENAME_POSTFIX_NODES, importFilename + FILENAME_POSTFIX_NODES_SORTED, pos);
+						sorter.sort();
+
+						csvNodes = new CSVReaderNamedCol(importFilename +FILENAME_POSTFIX_NODES_SORTED, ',');
+						csvNodes.readHeaders();
+					}
+				}
 			}
 		}
 		catch(IOException tExc) {
@@ -86,16 +92,28 @@ public class TopologyParserDIMES extends TopologyParser
 		}
 	}
 
-	@Override
-	public String getNode() {
-		try {
-			return csvNodes.get("IP");
-		} catch (IOException e) {
-			mLogger.err(this, "Can not get node.", e);
+	/**
+	 * @return importFilename without postfix "_[nodes|edges|meta].csv" (if it was included)
+	 */
+	private String removeFilenamePostfix(String importFilename) {
+		if(importFilename.endsWith(FILENAME_POSTFIX_META)) {
+			return importFilename.replaceAll(FILENAME_POSTFIX_META, "");
 		}
-		return null;
+		if(importFilename.endsWith(FILENAME_POSTFIX_NODES)) {
+			return importFilename.replaceAll(FILENAME_POSTFIX_NODES, "");
+		}
+		if(importFilename.endsWith(FILENAME_POSTFIX_EDGES)) {
+			return importFilename.replaceAll(FILENAME_POSTFIX_EDGES, "");
+		}
+		
+		// no postfix; no changes
+		return importFilename;
 	}
 
+	/**
+	 * AS Edges: Source AS number, Dest AS number, Date Of Discovery, Min Delay, Max Delay, Date Of Validation
+	 * AllEdges: SourceIP, DestIP, Date Of Discovery, Date Of Validation, InterAS, Is Unknown, Min Delay, Avg Delay, Delay Variance 
+	 */
 	@Override
 	public boolean readNextEdgeEntry() {
 		if(csvEdges != null) {
@@ -151,12 +169,28 @@ public class TopologyParserDIMES extends TopologyParser
 	}
 
 	@Override
+	public String getNode() {
+		try {
+			return csvNodes.get("IP");
+		} catch (IOException e) {
+			mLogger.err(this, "Can not get node.", e);
+		}
+		return null;
+	}
+
+	@Override
 	public String getAS() {
 		try {
 			return csvNodes.get("ASNumber");
 		} catch (IOException e) {
 			mLogger.err(this, "Can not get as number.", e);
 		}
+		return null;
+	}
+	
+	@Override
+	public String getParameter() {
+		// no node parameters in file
 		return null;
 	}
 
@@ -178,10 +212,14 @@ public class TopologyParserDIMES extends TopologyParser
 	public int getNumberAS() {
 		return numberAS;
 	}
-
+	
+	/**
+	 * AS mode is required if the meta file specifies it
+	 * or if there is no "IP" column in file
+	 */
 	@Override
-	public String getParameter() {
-		// TODO Auto-generated method stub
-		return null;
+	public boolean requiresASMode() {
+		return "as_only".equalsIgnoreCase(typeOfScenario) || !csvNodes.hasColumn("IP");
 	}
+
 }

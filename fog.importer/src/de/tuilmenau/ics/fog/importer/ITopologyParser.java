@@ -28,7 +28,6 @@ public interface ITopologyParser
 		
 		public int getNumberWorkers();
 		public int getNumberAS();
-		public String getTypeOfScenario();
 		
 		public boolean requiresASMode();
 }

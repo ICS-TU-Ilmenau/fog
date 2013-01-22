@@ -277,8 +277,8 @@ public class MarkerView extends ViewPart implements IMarkerContainerObserver, IS
 				}
 			});
 		} else {
-			viewer.refresh(); // TODO baut alles neu auf; performance?
-			//viewer.add(log.getFirst()); // TODO fügt am ende an, was nicht so schön ist
+			viewer.refresh(); // TODO: refreshes all, performance?
+			//viewer.add(log.getFirst()); // TODO adds at the end, not the best solution
 		}
 	}
 	

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="de.tuilmenau.ics.fog.requirement.gui">
+	    <widget
+	        propertyName="VideoOSD"
+	        factory="de.tuilmenau.ics.fog.videoOSD.VideoOSDPropertyFactory"/>
+	    <widget
+            propertyName="VideoBuffering"
+            factory="de.tuilmenau.ics.fog.video.ui.VideoPropertyGUIFactory"/>
+	    <widget
+            propertyName="VideoDecoding"
+            factory="de.tuilmenau.ics.fog.video.ui.VideoPropertyGUIFactory"/>
+	    <widget
+            propertyName="VideoTranscoding"
+            factory="de.tuilmenau.ics.fog.video.ui.VideoPropertyGUIFactory"/>
+   </extension>
+   <extension
+         point="de.tuilmenau.ics.fog.gateFactory">
+      <factory
+            class="de.tuilmenau.ics.fog.videoOSD.VideoOSDGateFactory">
+            <gateType
+                name="VideoOSDGate"
+                description="gate factory for handling a video stream"/>
+      </factory>
+   </extension>
+      <extension
+         point="de.tuilmenau.ics.fog.requirement">
+        <requirement
+            name="VideoOSD"
+            description="property to select OSD for video stream"
+            factory="de.tuilmenau.ics.fog.videoOSD.VideoOSDPropertyFactory"/>
+   </extension>
+	<extension
+         point="org.eclipse.ui.editors">
+		<editor
+      		class="de.tuilmenau.ics.fog.video.ui.VideoViewer"
+      		icon="icons/de.tuilmenau.ics.fog.videoEditor.gif" 
+      		id="de.tuilmenau.ics.fog.videoeditor"
+      		name="Video Viewer">
+     	 </editor>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+	  <category 
+           id="de.tuilmenau.ics.fog.views"
+           name="Forwarding on Gates">
+      </category>
+      <view
+            name="Video Processing View"
+            class="de.tuilmenau.ics.fog.video.ui.VideoProcessingView"
+            id="de.tuilmenau.ics.fog.videoProcessingView"
+            icon="icons/de.tuilmenau.ics.fog.videoProcessingView.gif"
+            category="de.tuilmenau.ics.fog.views">
+      </view>
+   </extension>     
+   <extension
+         point="de.tuilmenau.ics.fog.hostApplications">
+      <plugin
+            name="Enable video transcoding support"
+            class="de.tuilmenau.ics.fog.video.ui.VideoTranscodingEnableCommand"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+   </extension>
+   <extension
+  	   point="de.tuilmenau.ics.fog.hostApplications">
+      <plugin
+	name="Start video proxy"
+	class="de.tuilmenau.ics.fog.video.ui.commands.StartVideoProxy"
+	filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+      <plugin
+	name="Start audio proxy"
+	class="de.tuilmenau.ics.fog.video.ui.commands.StartAudioProxy"
+	filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+      <editor
+        name="Start video viewer"
+        editorID="de.tuilmenau.ics.fog.videoeditor"
+        filter="de.tuilmenau.ics.fog.facade.Host"
+        allowMultiple="true">
+	  </editor>
+   </extension>
+
+</plugin>

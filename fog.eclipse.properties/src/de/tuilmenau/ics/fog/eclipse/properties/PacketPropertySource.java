@@ -14,6 +14,7 @@ import org.eclipse.ui.views.properties.IPropertySource;
 import org.eclipse.ui.views.properties.TextPropertyDescriptor;
 
 import de.tuilmenau.ics.fog.packets.Packet;
+import de.tuilmenau.ics.fog.util.Helper;
 
 
 /**
@@ -71,7 +72,7 @@ public class PacketPropertySource implements IPropertySource
 			return packet.getReturnRoute();
 		}
 		else if(PROPERTY_DATA.equals(name)) {
-			return packet.getDataAsString();
+			return Helper.toString(packet.getData());
 		}
 		else if(PROPERTY_SIGNATURES.equals(name)) {
 			return packet.getAuthentications();

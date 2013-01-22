@@ -89,7 +89,7 @@ public class SelectRequirementsDialog extends Dialog
 		// Dialog's shell
 		final Shell tShell = new Shell(getParent(), SWT.TITLE | SWT.BORDER | SWT.APPLICATION_MODAL);
 		if(pServerName != null)	{
-			tShell.setText("Select requirements for connection to " + pServerName);
+			tShell.setText("Select requirements for connection to " + pServerName + " and allowed requirements" + pSelectedRequirements);
 		}else {
 			tShell.setText("Select requirements");
 		}
@@ -344,7 +344,8 @@ public class SelectRequirementsDialog extends Dialog
 	{
 		PropertyFactoryContainer tPropsFactory = PropertyFactoryContainer.getInstance();
 		Iterable<String> tNamesFactProps = tPropsFactory.getRequirementNames(nonfunctional);
-		
+		Logging.info(this, "Creating selectRequ. widgets for requirements " +tNamesFactProps);
+
 		for(String tNameProp : tNamesFactProps) {
 			String tToolTip = tPropsFactory.getDescription(tNameProp);
 			Property tSelectedProp = getProp(pSelectedRequirements, tNameProp);
@@ -361,7 +362,8 @@ public class SelectRequirementsDialog extends Dialog
 			// Parameter Input Widget
 			try {
 				PropertyParameterWidget tWidget = PropertyGUIFactoryContainer.getInstance().createParameterWidget(tNameProp, tSelectedProp, pGroup, SWT.SHADOW_OUT);
-				
+				Logging.info(this, "Creating selectRequ. widget for requirement " +tNameProp + "/" + tSelectedProp +" with factory resulted in a widget " + tWidget);
+
 				if(tWidget != null) {
 					// dis/enable like button
 					tWidget.setEnabled(tBtPropActivation.isEnabled());

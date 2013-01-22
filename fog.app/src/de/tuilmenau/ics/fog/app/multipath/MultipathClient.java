@@ -9,18 +9,15 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.app.multipath;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.InterOpIP;
+import de.tuilmenau.ics.fog.application.InterOpIP.Transport;
 import de.tuilmenau.ics.fog.application.Service;
 import de.tuilmenau.ics.fog.application.Session;
-import de.tuilmenau.ics.fog.application.InterOpIP.Transport;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointUDPProxy;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Binding;
@@ -28,25 +25,22 @@ import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
-import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IReceiveCallback;
 import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
 import de.tuilmenau.ics.fog.facade.properties.DelayProperty;
-import de.tuilmenau.ics.fog.facade.properties.TransportProperty;
 import de.tuilmenau.ics.fog.facade.properties.MinMaxProperty.Limit;
+import de.tuilmenau.ics.fog.facade.properties.TransportProperty;
 import de.tuilmenau.ics.fog.ui.Viewable;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
 
 /**
- * Server, which forwards multipath data to an external destination.
- * The data is relayed to an IP based destination. For this purpose,
- * it uses a UDPServerProxy.
+ * Client, which receives data from an external source and forwards it to the server 
+ * within the FoG network. There, the data is relayed to an IP based destination. For 
+ * this purpose, it uses a UDPServerProxy.
  *  
  */
-public class MultipathClient extends Application implements Connection, IReceiveCallback
+public class MultipathClient extends Application
 {
 	private static final String NAME_MULTIPATH_IP_BRIDGE_CLIENT = "ClientBridge";
 	private static final int REQUIREMENTS_SIGNALING_STREAM = 0;
@@ -94,12 +88,12 @@ public class MultipathClient extends Application implements Connection, IReceive
 	protected void started() 
 	{
 		// connect to multipath server
-		mHighPrioToMultipathServer = mHost.connect(mServerName, null /* TODO: unterscheiden der pfade und stream-anforderungen */, null);
-		mHighPrioSocketToMultipathServer = new Session(false, mHost.getLogger(), this);
+		mHighPrioToMultipathServer = mHost.connect(mServerName, null /* TODO: differentiate between the paths and stream requirements */, null);
+		mHighPrioSocketToMultipathServer = new MultipathSession();
 		mHighPrioSocketToMultipathServer.start(mHighPrioToMultipathServer);
 
-		mLowPrioToMultipathServer = mHost.connect(mServerName, null /* TODO: unterscheiden der pfade und stream-anforderungen */, null);
-		mLowPrioSocketToMultipathServer = new Session(false, mHost.getLogger(), this);
+		mLowPrioToMultipathServer = mHost.connect(mServerName, null /* TODO: differentiate between the paths and stream requirements */, null);
+		mLowPrioSocketToMultipathServer = new MultipathSession();
 		mLowPrioSocketToMultipathServer.start(mLowPrioToMultipathServer);
 		
 		// provide a service within the FoG network which catches incoming UDP requests/associations
@@ -554,115 +548,28 @@ public class MultipathClient extends Application implements Connection, IReceive
 	private LinkedList<Session> mSctpClients = new LinkedList<Session>();
 	private HashMap<Integer, Boolean> mIsHighPriorityStream = new HashMap<Integer, Boolean>();
 	
-	@Override
-	public void registerListener(EventListener observer) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean unregisterListener(EventListener observer) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void connect() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isConnected() {
-		return isRunning();
-	}
-
-	@Override
-	public Name getBindingName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LinkedList<Signature> getAuthentications() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Description getRequirements() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void write(Serializable pData) throws NetworkException {
-		// incoming UDP encapsulation data
-		if (pData instanceof byte[]){
-			byte[] tSCTPData = (byte[])pData;
-			
-			receivedSCTP(tSCTPData);
-		}else{
-			getLogger().warn(this, "Malformed received SCTP packet from UDP listener " + pData);
+	private class MultipathSession extends Session
+	{
+		public MultipathSession()
+		{
+			super(false, mHost.getLogger(), null);
 		}
-	}
 
-	@Override
-	public Object read() throws NetworkException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public OutputStream getOutputStream() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public InputStream getInputStream() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void close() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void connected() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean receiveData(Object pData) {
-		boolean tResult = false;
-		
-		// incoming UDP encapsulation data
-		if (pData instanceof byte[]){
-			byte[] tSCTPData = (byte[])pData;
+		@Override
+		public boolean receiveData(Object pData) {
+			boolean tResult = false;
 			
-			tResult = sendSCTP(tSCTPData);
-		}else{
-			getLogger().warn(this, "Malformed received SCTP packet from Multipath server: " + pData);
+			// incoming UDP encapsulation data
+			if (pData instanceof byte[]){
+				byte[] tSCTPData = (byte[])pData;
+				
+				tResult = sendSCTP(tSCTPData);
+			}else{
+				getLogger().warn(this, "Malformed received SCTP packet from Multipath server: " + pData);
+			}
+			
+			return tResult;
 		}
-		
-		return tResult;
-	}
-
-	@Override
-	public void closed() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void error(Exception pExc) {
-		// TODO Auto-generated method stub
-		
 	}
 }
 

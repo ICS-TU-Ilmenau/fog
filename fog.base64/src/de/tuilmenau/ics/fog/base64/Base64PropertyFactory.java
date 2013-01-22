@@ -32,4 +32,11 @@ public class Base64PropertyFactory implements PropertyFactory
 			
 		return tProp;
 	}
+	
+	@Override
+	public Class<?> createPropertyClass(String pName) throws PropertyException 
+	{
+		return Base64Property.class;
+	}
+	
 }

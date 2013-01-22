@@ -14,7 +14,6 @@
 package de.tuilmenau.ics.fog.packets;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 
@@ -27,6 +26,7 @@ import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentDescription;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
@@ -259,33 +259,6 @@ public class Packet implements Serializable
 	}
 	
 	/**
-	 * Method intended for GUI usage.
-	 * 
-	 * @return Payload of packet as printable text. It is a longer version of getData().toString(), which tries to format byte data.
-	 */
-	public String getDataAsString()
-	{
-		String res = null;
-		
-		if(mPayload != null) {
-			if(mPayload instanceof byte[]) {
-				try {
-					res = new String((byte[]) mPayload, "UTF-8");
-				}
-				catch(UnsupportedEncodingException exc) {
-					res = mPayload.toString() +" (" +exc.getLocalizedMessage() +")";
-				}
-			} else {
-				res = mPayload.toString();
-			}
-		} else {
-			res = "null";
-		}
-		
-		return res;
-	}
-	
-	/**
 	 * @param data The serializable Payload to set.
 	 */
 	public void setData(Serializable data)
@@ -504,7 +477,7 @@ public class Packet implements Serializable
 		return mDownRoute;
 	}	
 
-	public void logStats()
+	public void logStats(Simulation pSim)
 	{
 		if(Config.Logging.WRITE_PACKET_STATISTIC) {
 			if(mPayload instanceof LoggableElement) {
@@ -514,14 +487,14 @@ public class Packet implements Serializable
 				}
 			}
 			if(mAuthentications != null) {
-				if(!mAuthentications.isEmpty()) logStats(mAuthentications.getLast());
+				if(!mAuthentications.isEmpty()) logStats(pSim, mAuthentications.getLast());
 			} else {
-				logStats(null);
+				logStats(pSim, null);
 			}
 		}
 	}
 	
-	public void logStats(Object pLastHopName)
+	public void logStats(Simulation pSim, Object pLastHopName)
 	{
 		if(Config.Logging.WRITE_PACKET_STATISTIC) {
 			if(mPayload instanceof LoggableElement)
@@ -587,7 +560,7 @@ public class Packet implements Serializable
 //						Logging.log("Logstats", tElem.toString());
 //					}
 //				}
-				Statistic.getInstance(Packet.class).log(tColumnList);
+				Statistic.getInstance(pSim, Packet.class).log(tColumnList);
 			} catch(Exception e) {
 				Logging.err(this, "Can not write statistic log.", e);
 			}
@@ -668,7 +641,7 @@ public class Packet implements Serializable
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(handler, this);
 		}
-		this.logStats(handler.getNode()); // log statistics of this packet as it finished its way through the network
+		this.logStats(handler.getNode().getAS().getSimulation(), handler.getNode()); // log statistics of this packet as it finished its way through the network
 	}
 	
 	/**
@@ -694,7 +667,7 @@ public class Packet implements Serializable
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(target, this);
 		}
-		this.logStats(target.getNode()); // log statistics of this packet as it finished its way through the network
+		this.logStats(target.getNode().getAS().getSimulation(), target.getNode()); // log statistics of this packet as it finished its way through the network
 	}
 
 	/**

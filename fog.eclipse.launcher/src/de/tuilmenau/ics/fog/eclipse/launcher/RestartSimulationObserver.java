@@ -10,25 +10,13 @@
 package de.tuilmenau.ics.fog.eclipse.launcher;
 
 import de.tuilmenau.ics.fog.Config;
-import de.tuilmenau.ics.fog.launcher.SimulationObserver;
-import de.tuilmenau.ics.fog.topology.Simulation;
+import de.tuilmenau.ics.fog.launcher.SimpleSimulationObserver;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Statistic;
 
 
-public class RestartSimulationObserver implements SimulationObserver
+public class RestartSimulationObserver extends SimpleSimulationObserver
 {
-	@Override
-	public void init(Simulation sim)
-	{
-		this.sim = sim;
-	}
-
-	@Override
-	public void started()
-	{
-	}
-
 	@Override
 	public void ended()
 	{
@@ -53,7 +41,7 @@ public class RestartSimulationObserver implements SimulationObserver
 		}
 		else if(simulationRuns == 0){
 			if(Config.Simulator.EXIT_OSGI_CONTAINER_AFTER_LAST_SIMULATON) {
-				sim.executeCommand("@ - shutdown");
+				getSimulation().executeCommand("@ - shutdown");
 				OsgiActivator.terminateOsgi();
 			}
 		}
@@ -65,6 +53,5 @@ public class RestartSimulationObserver implements SimulationObserver
 		simulationRuns = newSimulationRuns;
 	}
 	
-	private Simulation sim;
 	private static int simulationRuns = -1;
 }

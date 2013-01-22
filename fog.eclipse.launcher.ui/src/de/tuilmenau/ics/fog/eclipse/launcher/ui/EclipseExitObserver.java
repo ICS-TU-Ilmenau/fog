@@ -16,28 +16,23 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchListener;
 import org.eclipse.ui.PlatformUI;
 
-import de.tuilmenau.ics.fog.launcher.SimulationObserver;
+import de.tuilmenau.ics.fog.launcher.SimpleSimulationObserver;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 
-public class EclipseExitObserver implements SimulationObserver, IWorkbenchListener
+public class EclipseExitObserver extends SimpleSimulationObserver implements IWorkbenchListener
 {
 	private static final String TEXT_MSG_BOX_TITLE = "Exit simulation?";
 	private static final String TEXT_MSG_BOX_QUESTION = "Simulation is still running. Would you like to exit it?";
 
 
 	@Override
-	public void init(Simulation sim)
+	public void created(Simulation sim)
 	{
-		simulation = sim;
+		super.created(sim);
 		
 		PlatformUI.getWorkbench().addWorkbenchListener(this);
-	}
-
-	@Override
-	public void started()
-	{
 	}
 
 	@Override
@@ -46,11 +41,6 @@ public class EclipseExitObserver implements SimulationObserver, IWorkbenchListen
 		PlatformUI.getWorkbench().removeWorkbenchListener(this);
 	}
 	
-	@Override
-	public void finished()
-	{
-	}
-
 	@Override
 	public boolean preShutdown(IWorkbench workbench, boolean forced)
 	{
@@ -63,7 +53,7 @@ public class EclipseExitObserver implements SimulationObserver, IWorkbenchListen
 			if((result & SWT.YES) != 0) {
 				Logging.info(this, "Eclipse is terminating; exit simulation");
 				
-				Job shutdownJob = new ShutdownSimulationJob(simulation, true);
+				Job shutdownJob = new ShutdownSimulationJob(getSimulation(), true);
 				shutdownJob.setUser(true);
 				shutdownJob.schedule();
 				return false;
@@ -77,6 +67,4 @@ public class EclipseExitObserver implements SimulationObserver, IWorkbenchListen
 	public void postShutdown(IWorkbench workbench)
 	{
 	}
-
-	private Simulation simulation;
 }

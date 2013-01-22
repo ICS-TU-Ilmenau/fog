@@ -82,16 +82,6 @@ public class TopologyDistributor
 		}
 	}
 
-	private boolean isPopulSimScenario()
-	{
-		return topoHandler.getTypeOfScenario().equalsIgnoreCase("popul_sim");
-	}
-	
-	private boolean isASOnlyScenario()
-	{
-		return topoHandler.getTypeOfScenario().equalsIgnoreCase("as_only");
-	}
-	
 	protected boolean switchAS(String toName)
 	{
 		if((toName == null) || ("".equals(toName))) {
@@ -141,15 +131,19 @@ public class TopologyDistributor
 	
  	public boolean createNodes()
  	{
- 		if(isASOnlyScenario() || topoHandler.requiresASMode() || oneAS) {
+ 		if(topoHandler.requiresASMode() || oneAS) {
+ 			if(oneAS) {
+ 				logger.info(this, "Create nodes in one single AS " +DEFAULT_AS_NAME +".");
+ 			} else {
+ 				logger.info(this, "Create each node in own AS.");
+ 			}
+ 				
  			return createNodes(true);
  		}
- 		else if(isPopulSimScenario()) {
-			logger.debug(this, "We create simulation inside the AS");
+ 		else {
+			logger.info(this, "Create nodes in AS as specified in scenario file.");
 			return createNodes(false);
 		}
-
- 		return false;
  	}
 
 	private boolean createNodes(boolean asMode)
@@ -166,7 +160,7 @@ public class TopologyDistributor
 				}
  			} else {
  				node = topoHandler.getNode();
- 				as   = topoHandler.getAS();
+ 				as = topoHandler.getAS();
  			}
  			String tParameter = topoHandler.getParameter();
 
@@ -202,15 +196,8 @@ public class TopologyDistributor
  	{
 		int numberWorkers = Math.max(1, topoHandler.getNumberWorkers());
 		
-		if(isASOnlyScenario()) {
-			gauge++;
-			gauge %= numberWorkers;
-		}
-		
-		if(isPopulSimScenario()){
-			gauge++;
-			gauge %= numberWorkers;
-		}
+		gauge++;
+		gauge %= numberWorkers;
 		
 		if(workerByJini != null) {
 			if(workerByJini.size() <= numberWorkers) {
@@ -229,10 +216,6 @@ public class TopologyDistributor
  		boolean res = true;
  		
 		while ( topoHandler.readNextEdgeEntry() ) {
-
-			// AS Edges: Source AS number, Dest AS number, Date Of Discovery, Min Delay, Max Delay, Date Of Validation
-			// AllEdges: SourceIP, DestIP, Date Of Discovery, Date Of Validation, InterAS, Is Unknown, Min Delay, Avg Delay, Delay Variance 
-
 			nodeA = topoHandler.getEdgeNodeOne();
 			nodeB = topoHandler.getEdgeNodeTwo();
 			
@@ -240,7 +223,7 @@ public class TopologyDistributor
 				if(!oneAS) {
 					String nodeOneAS = mNMS.getASNameByNode(nodeA);
 					if(!switchAS(nodeOneAS)) {
-						logger.err(this, "Unable to switch to AS '" +nodeOneAS +"'");
+						logger.err(this, "Unable to switch to AS '" +nodeOneAS +"'. Skip edge from " +nodeA +"->" +nodeB +".");
 						continue; //We skip the creation of that edge
 					}
 				}
@@ -303,5 +286,10 @@ public class TopologyDistributor
 	public void close()
 	{
 		topoHandler.close();
+	}
+	
+	protected Simulation getSim()
+	{
+		return sim;
 	}
 }
