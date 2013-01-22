@@ -236,7 +236,9 @@ public class TopologyDistributor
 						nodeBASname = mNMS.getASNameByNode(nodeB);
 					}
 					
-					if(!link(nodeA, nodeB, nodeBASname)) {
+					if(link(nodeA, nodeB, nodeBASname)) {
+						logger.log(this, "Created link between " +nodeA +" and " +nodeB);
+					} else {
 						logger.err(this, "Can not connect " + nodeA + " and " +nodeB);
 						res = false;
 					}

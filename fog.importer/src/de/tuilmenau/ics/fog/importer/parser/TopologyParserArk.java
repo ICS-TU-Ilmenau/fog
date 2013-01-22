@@ -17,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.TreeSet;
 
@@ -41,9 +42,9 @@ public class TopologyParserArk extends TopologyParser
 	 */
 	private int mCurrentReaderIndex = 0;
 	private LinkedList<CSVReaderNamedCol> mReaders = null;
-	private TreeSet<String> mNodes = null;
-	private TreeSet<Tuple<String, String>> mEdges = null;
-	private LinkedList<String> mImportFilenames = null;
+	private TreeSet<String> mNodes = new TreeSet<String>();
+	private HashMap<String, Boolean> mEdges = new HashMap<String, Boolean>();
+	private LinkedList<String> mImportFilenames = new LinkedList<String>();
 	private Logger mLogger;
 	private boolean mToReadFirstEntry = true;
 	private String mCurrentNodeName = null;
@@ -58,9 +59,6 @@ public class TopologyParserArk extends TopologyParser
 	public TopologyParserArk(Logger pLogger, String pImportFilename) throws FileNotFoundException
 	{
 		mLogger = pLogger;
-		mNodes = new TreeSet<String>();
-		mImportFilenames = new LinkedList<String>();
-		mEdges = new TreeSet<Tuple<String, String>>();
 		
 		if(pImportFilename != null) {
 			try {
@@ -101,7 +99,8 @@ public class TopologyParserArk extends TopologyParser
 		// go through lines and stop at one starting with "D"
 		while(reader.readRecord()) {
 			if(reader.getNumberColumns() > 0) {
-				if(reader.get(0).startsWith("D")) {
+				String firstCol = reader.get(0);
+				if(firstCol.startsWith("D") || firstCol.startsWith("I")) {
 					return true;
 				}
 			}
@@ -120,6 +119,11 @@ public class TopologyParserArk extends TopologyParser
 		mCurrentReaderIndex = 0;
 	}
 	
+	private String getCurrentColumn(int column) throws IOException
+	{
+		return mReaders.get(mCurrentReaderIndex).get(column).trim().replaceAll(" ", "_");
+	}
+	
 	@Override
 	public boolean readNextNodeEntry()
 	{
@@ -129,10 +133,10 @@ public class TopologyParserArk extends TopologyParser
 			String tNode = null;
 			if(mToReadFirstEntry) {
 				processFileSeek(mCurrentReaderIndex);
-				tNode = mReaders.get(mCurrentReaderIndex).get(1);
+				tNode = getCurrentColumn(1);
 				mToReadFirstEntry = false;
 			} else {
-				tNode = mReaders.get(mCurrentReaderIndex).get(2);
+				tNode = getCurrentColumn(2);
 				mToReadFirstEntry = true;
 			}
 			if(mNodes.add(tNode) && !tNode.equals("")) {
@@ -176,9 +180,19 @@ public class TopologyParserArk extends TopologyParser
 	{
 		try {
 			processFileSeek(mCurrentReaderIndex);
-			Tuple<String, String> tCompareTuple = new Tuple<String, String>(mReaders.get(mCurrentReaderIndex).get(1), mReaders.get(mCurrentReaderIndex).get(2), true);
 			
-			if(mEdges.add(tCompareTuple)) {
+			// get names and sort them
+			String node1 = getCurrentColumn(1);
+			String node2 = getCurrentColumn(2);
+			if(node1.compareTo(node2) > 0) {
+				String tmp = node2;
+				node2 = node1;
+				node1 = tmp;
+			}
+			String linkName = node1 +"_" +node2;
+			
+			if(!mEdges.containsKey(linkName)) {
+				mEdges.put(linkName, true);
 				return true;
 			} else {
 				return readNextEdgeEntry();
@@ -197,7 +211,7 @@ public class TopologyParserArk extends TopologyParser
 	public String getEdgeNodeOne()
 	{
 		try {
-			return mReaders.get(mCurrentReaderIndex).get(1);
+			return getCurrentColumn(1);
 		} catch (IOException tExc) {
 			getLogger().err(this, "Unable to read first edge node");
 		}
@@ -208,7 +222,7 @@ public class TopologyParserArk extends TopologyParser
 	public String getEdgeNodeTwo()
 	{
 		try {
-			return mReaders.get(mCurrentReaderIndex).get(2);
+			return getCurrentColumn(2);
 		} catch (IOException tExc) {
 			getLogger().err(this, "Unable to read first edge node");
 		}
