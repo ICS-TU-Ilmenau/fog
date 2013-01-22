@@ -1,4 +1,9 @@
 # Set default behaviour, in case users don't have core.autocrlf set.
 # LF in database and core.autocrlf for working copy.
-* text=auto
+*        text=auto
 
+*.java   text diff=java
+*.html   text diff=html
+*.xml    text
+*.mf     text
+.project text
