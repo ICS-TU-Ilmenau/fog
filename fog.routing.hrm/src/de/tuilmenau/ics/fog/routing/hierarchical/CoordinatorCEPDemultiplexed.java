@@ -104,7 +104,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 				if(getCluster().getCoordinatorCEP() != null && ((BullyElect)pData).getPriority() < getCluster().getHighestPriority()) {
 					mPeerPriority = ((BullyElect)pData).getPriority();
 					if(getCluster().getCoordinator().equals(getCoordinator().getReferenceNode().getCentralFN().getName())) {
-						BullyAnnounce tAnnounce = new BullyAnnounce(getCoordinator().getReferenceNode().getCentralFN().getName(), getCluster().getPriority(), getCoordinator().getIdentity().createSignature(null, getCluster().getLevel()), getCluster().getToken());
+						BullyAnnounce tAnnounce = new BullyAnnounce(getCoordinator().getReferenceNode().getCentralFN().getName(), getCluster().getPriority(), getCoordinator().getIdentity().createSignature(getCoordinator().getReferenceNode().toString(), null, getCluster().getLevel()), getCluster().getToken());
 						mLogger.log(this, " Sending bullyannounce because I have a coordinator: " + tAnnounce);
 						for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
 							tAnnounce.addCoveredNode(tCEP.getPeerName());
