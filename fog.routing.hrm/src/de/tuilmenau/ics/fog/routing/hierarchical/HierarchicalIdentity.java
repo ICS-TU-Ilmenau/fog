@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import de.tuilmenau.ics.fog.authentication.SimpleIdentity;
+import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 
 public class HierarchicalIdentity extends SimpleIdentity
 {
@@ -22,9 +23,9 @@ public class HierarchicalIdentity extends SimpleIdentity
 		mLevel = pLevel;
 	}
 	
-	public HierarchicalSignature createSignature(Object pData, int pLevel)
+	public HierarchicalSignature createSignature(Object pOrigin, byte[] pData, int pLevel) throws AuthenticationException
 	{
-		return new HierarchicalSignature(this, (byte[]) pData, pLevel);
+		return new HierarchicalSignature(this, pOrigin, pData, pLevel);
 	}
 	
 	public void setLevel(int pLevel)

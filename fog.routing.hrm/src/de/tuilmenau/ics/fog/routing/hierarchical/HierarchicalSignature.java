@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import de.tuilmenau.ics.fog.authentication.SimpleSignature;
+import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Signature;
 
@@ -18,11 +19,15 @@ public class HierarchicalSignature extends SimpleSignature
 	private static final long serialVersionUID = 4847037702247056096L;
 	private int mLevel = 0;
 	
-	public HierarchicalSignature(Identity pIdentity, byte[] pSignature, int pLevel)
+	public HierarchicalSignature(Identity pIdentity, Object pOrigin, byte[] pSignature, int pLevel) throws AuthenticationException
 	{
 		super(pIdentity);
 		mLevel = pLevel;
-		mSignature = pSignature;
+		if(pOrigin != null) {
+			mOrigin = pOrigin;
+		} else {
+			throw new AuthenticationException(this, "Unable to create signature ");
+		}
 	}
 	
 	public int getLevel()
@@ -32,7 +37,7 @@ public class HierarchicalSignature extends SimpleSignature
 	
 	public String toString()
 	{
-		return super.toString() + "@" + mLevel;
+		return mOrigin + "@" + mLevel;
 	}
 	
 	public boolean equals(Object pObj)
@@ -45,5 +50,5 @@ public class HierarchicalSignature extends SimpleSignature
 		return false;
 	}
 
-	private byte[] mSignature;
+	private Object mOrigin;
 }

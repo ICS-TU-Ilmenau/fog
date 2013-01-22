@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Random;
 
 import de.tuilmenau.ics.fog.IEvent;
+import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
@@ -132,43 +133,48 @@ public class ElectionProcess extends Thread
 			pCluster.getCoordinator().setIdentity(tIdentity);
 		}
 		pCluster.getCoordinator().getIdentity().setLevel(pCluster.getLevel());
-		BullyAnnounce tAnnounce = new BullyAnnounce(pCluster.getCoordinator().getReferenceNode().getCentralFN().getName(), pCluster.getPriority(), pCluster.getCoordinator().getIdentity().createSignature(null, pCluster.getLevel()), pCluster.getToken());
-		for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
-			tAnnounce.addCoveredNode(tCEP.getPeerName());
-		}
-		if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
-			pCluster.getCoordinator().getLogger().log(this, "Sending announce that does not cover anyhting");
-		}
-		pCluster.sendClusterBroadcast(tAnnounce, null);
-		
-		Name tAddress = pCluster.getCoordinator().getReferenceNode().getRoutingService().getNameFor(pCluster.getCoordinator().getReferenceNode().getCentralFN());; 
-		
-		pCluster.setCoordinatorCEP(null, pCluster.getCoordinator().getIdentity().createSignature(null, pCluster.getLevel()), pCluster.getCoordinator().getReferenceNode().getCentralFN().getName(), (L2Address)tAddress);
-		if(pCluster.getCoordinator().getIdentity() == null) {
-			pCluster.getCoordinator().setIdentity(new HierarchicalIdentity(getCoordinator().getReferenceNode().getName(), pCluster.getLevel()));
-		}
-		Coordinator tCoordinator = pCluster.getCoordinator();
-		LinkedList<HierarchicalSignature> tSignatures = tCoordinator.getApprovedSignatures();
-		tSignatures.add(tCoordinator.getIdentity().createSignature(null, pCluster.getLevel()));
-		
-		if(mLevel > 0) {
-			pCluster.getCoordinator().getLogger().log(pCluster, "has the coordinator and will now announce itself");
-			for(Cluster tToAnnounce : pCluster.getNeighbors()) {
-				List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);
-				/*
-				 * OK: Because of the formerly sent 
-				 */
-				if(tToAnnounce instanceof AttachedCluster) {
-					BullyAnnounce tBullyAnnounce = new BullyAnnounce(pCluster.getCoordinator().getReferenceNode().getCentralFN().getName(), pCluster.getPriority(), pCluster.getCoordinator().getIdentity().createSignature(null, pCluster.getLevel()), pCluster.getToken());
-					for(CoordinatorCEPDemultiplexed tCEP: pCluster.getParticipatingCEPs()) {
-						tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
-					}
-					for(CoordinatorCEPDemultiplexed tCEP : ((AttachedCluster)tToAnnounce).getAnnouncedCEPs()) {
-						tCEP.write(tBullyAnnounce);
+		try {
+			BullyAnnounce tAnnounce = new BullyAnnounce(pCluster.getCoordinator().getReferenceNode().getCentralFN().getName(), pCluster.getPriority(), pCluster.getCoordinator().getIdentity().createSignature(pCluster.getCoordinator().getReferenceNode().toString(), null, pCluster.getLevel()), pCluster.getToken());
+			for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
+				tAnnounce.addCoveredNode(tCEP.getPeerName());
+			}
+			if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
+				pCluster.getCoordinator().getLogger().log(this, "Sending announce that does not cover anyhting");
+			}
+			pCluster.sendClusterBroadcast(tAnnounce, null);
+			
+			Name tAddress = pCluster.getCoordinator().getReferenceNode().getRoutingService().getNameFor(pCluster.getCoordinator().getReferenceNode().getCentralFN());; 
+			
+			pCluster.setCoordinatorCEP(null, pCluster.getCoordinator().getIdentity().createSignature(pCluster.getCoordinator().getReferenceNode().toString(), null, pCluster.getLevel()), pCluster.getCoordinator().getReferenceNode().getCentralFN().getName(), (L2Address)tAddress);
+			if(pCluster.getCoordinator().getIdentity() == null) {
+				pCluster.getCoordinator().setIdentity(new HierarchicalIdentity(getCoordinator().getReferenceNode().getName(), pCluster.getLevel()));
+			}
+			Coordinator tCoordinator = pCluster.getCoordinator();
+			LinkedList<HierarchicalSignature> tSignatures = tCoordinator.getApprovedSignatures();
+			tSignatures.add(tCoordinator.getIdentity().createSignature(pCluster.getCoordinator().getReferenceNode().toString(), null, pCluster.getLevel()));
+			
+			if(mLevel > 0) {
+				pCluster.getCoordinator().getLogger().log(pCluster, "has the coordinator and will now announce itself");
+				for(Cluster tToAnnounce : pCluster.getNeighbors()) {
+					List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);
+					/*
+					 * OK: Because of the formerly sent 
+					 */
+					if(tToAnnounce instanceof AttachedCluster) {
+						BullyAnnounce tBullyAnnounce = new BullyAnnounce(pCluster.getCoordinator().getReferenceNode().getCentralFN().getName(), pCluster.getPriority(), pCluster.getCoordinator().getIdentity().createSignature(pCluster.getCoordinator().getReferenceNode().toString(), null, pCluster.getLevel()), pCluster.getToken());
+						for(CoordinatorCEPDemultiplexed tCEP: pCluster.getParticipatingCEPs()) {
+							tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
+						}
+						for(CoordinatorCEPDemultiplexed tCEP : ((AttachedCluster)tToAnnounce).getAnnouncedCEPs()) {
+							tCEP.write(tBullyAnnounce);
+						}
 					}
 				}
 			}
+		} catch (AuthenticationException tExc) {
+			pCluster.getCoordinator().getLogger().err(this, "Unable to create signature for coordinator", tExc);
 		}
+		
 		
 		if(!mPleaseInterrupt) {
 			/*
