@@ -39,6 +39,12 @@ import de.tuilmenau.ics.middleware.JiniHelper;
  */
 public class AutonomousSystem extends Network implements IAutonomousSystem
 {
+	/**
+	 * Required to stop execution time of event handler during the execution of an command.
+	 */
+	private final static boolean ENABLE_SYNCHRONIZED_COMMAND_EXECUTION = true;
+	
+	
 	public AutonomousSystem(String pName, Simulation pSimulation, Boolean pPartialRouting, String pPartialRoutingServiceName)
 	{	
 		super(pName, new Logger(pSimulation.getLogger()), pSimulation.getTimeBase());
@@ -150,7 +156,11 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		// check if we have to pause the simulation in
 		// order to stop the simulation time during the
 		// execution of an command
-		boolean inEventThread = mSim.getTimeBase().inEventThread();
+		boolean inEventThread = true;
+		if(ENABLE_SYNCHRONIZED_COMMAND_EXECUTION) {
+			inEventThread = mSim.getTimeBase().inEventThread();
+		}
+		
 		boolean result = false;
 		boolean paused = true;
 		

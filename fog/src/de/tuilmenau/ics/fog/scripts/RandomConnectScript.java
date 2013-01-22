@@ -22,7 +22,7 @@ import de.tuilmenau.ics.fog.topology.Simulation;
 
 
 /**
- * 'start RandomConnect <integer number of connections> [<close connection after test=true> [<terminate simulation in the end=false>]]'
+ * 'start RandomConnect <integer number of connections> [<close connection after test=true> [<terminate simulation in the end=false> [datarate|loss]]]'
  */
 public class RandomConnectScript extends Script implements IEvent
 {
@@ -47,6 +47,13 @@ public class RandomConnectScript extends Script implements IEvent
 		// terminate simulation after connection test?
 		if(commandParts.length > 4) {
 			mExitSimulationAfterConnection = Boolean.parseBoolean(commandParts[4]);
+		}
+		
+		// optional other parts?
+		if(commandParts.length > 5) {
+			for(int i=5; i<commandParts.length; i++) {
+				mOptionalParameters = mOptionalParameters +" " +commandParts[i];
+			}
 		}
 
 		// register for end event
@@ -109,7 +116,7 @@ public class RandomConnectScript extends Script implements IEvent
 			// execute connect
 			//
 			if(tSim.switchToAS(tAS1.getName())) {
-				tSim.executeCommand("start App ConnectTest " +tNode1 +" " +tNode2 +" " +mCloseAfterTest);
+				tSim.executeCommand("start App ConnectTest " +tNode1 +" " +tNode2 +" " +mCloseAfterTest +mOptionalParameters);
 			} else {
 				throw new NetworkException(this, "Can not switch to AS '" +tAS1.getName() +"'");
 			}
@@ -121,5 +128,6 @@ public class RandomConnectScript extends Script implements IEvent
 	private boolean mCloseAfterTest = true;
 	private boolean mExitSimulationAfterConnection = false;
 	private int mCounter = 1;
+	private String mOptionalParameters = "";
 }
 

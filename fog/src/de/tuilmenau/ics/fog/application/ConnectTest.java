@@ -21,6 +21,9 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
+import de.tuilmenau.ics.fog.facade.properties.LossRateProperty;
+import de.tuilmenau.ics.fog.facade.properties.MinMaxProperty.Limit;
 import de.tuilmenau.ics.fog.util.Logger;
 
 
@@ -34,7 +37,7 @@ public class ConnectTest extends ApplicationClient
 		
 		count("Start");
 	}
-//?? parameters nicht in started parsen?
+	
 	@Override
 	public void setParameters(String[] pParameters) throws InvalidParameterException
 	{
@@ -43,6 +46,15 @@ public class ConnectTest extends ApplicationClient
 		if(pParameters != null) {
 			if(pParameters.length > 2) {
 				mCloseAfterTest = Boolean.parseBoolean(pParameters[2]);
+			}
+			
+			for(String tParam : pParameters) {
+				if("datarate".equals(tParam)) {
+					mRequestDatarate = true;
+				}
+				if("loss".equals(tParam)) {
+					mRequestLoss = true;
+				}
 			}
 		}
 	}
@@ -159,8 +171,10 @@ public class ConnectTest extends ApplicationClient
 	{
 		if(mRequirements == null) {
 			mRequirements = new Description();
-			//mRequirements.set(new LossRateProperty(1));
-			//mRequirements.set(new DatarateProperty(1, Limit.MIN));
+			
+			if(mRequestLoss) mRequirements.set(new LossRateProperty(1, Limit.MAX));
+			if(mRequestDatarate) mRequirements.set(new DatarateProperty(1, Limit.MIN));
+			
 			//mRequirements.set(DatarateProperty.createSoftRequirement(1000, 0.7d));
 		}
 		return mRequirements;
@@ -173,7 +187,10 @@ public class ConnectTest extends ApplicationClient
 	}
 	
 	private boolean mCloseAfterTest = true;
+	
 	private Description mRequirements = null;
+	private boolean mRequestDatarate = false;
+	private boolean mRequestLoss = false;
 	
 	private static IEvent sOnExit = null;
 }

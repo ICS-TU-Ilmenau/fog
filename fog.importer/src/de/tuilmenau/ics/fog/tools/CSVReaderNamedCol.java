@@ -49,9 +49,18 @@ public class CSVReaderNamedCol extends CSVReader
 		currentRecord = null;
 	}
 	
+	@Override
+	public String[] readNext() throws IOException
+	{
+		// buffer result
+		currentRecord = super.readNext();
+		
+		return currentRecord;
+	}
+	
 	public boolean readRecord() throws IOException
 	{
-		currentRecord = readNext();
+		currentRecord = super.readNext();
 		
 		// null indicates end of file
 		return currentRecord != null;

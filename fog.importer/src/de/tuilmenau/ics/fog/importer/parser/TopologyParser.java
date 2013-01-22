@@ -28,11 +28,6 @@ public abstract class TopologyParser implements ITopologyParser
 		return numberAS;
 	}
 	
-	public String getTypeOfScenario()
-	{
-		return typeOfScenario;
-	}
-	
 	public boolean requiresASMode()
 	{
 		return false;
@@ -40,6 +35,5 @@ public abstract class TopologyParser implements ITopologyParser
 	
 	protected int numberAS = -1;
 	protected int numberWorkers = -1;
-	
 	protected String typeOfScenario = "popul_sim";
 }
