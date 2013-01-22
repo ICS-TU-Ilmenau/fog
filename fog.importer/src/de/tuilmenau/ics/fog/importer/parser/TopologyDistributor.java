@@ -188,7 +188,7 @@ public class TopologyDistributor
 		if(pParameter != null) {
 			tCommand = tCommand + " " + pParameter;
 		}
-		Logging.log(this, "Executing command " + tCommand);
+
 		return sim.executeCommand(tCommand);
 	}
 

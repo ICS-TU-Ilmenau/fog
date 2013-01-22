@@ -86,8 +86,6 @@ public class RoutingServiceInstanceRegister
 			} else {
 				tLogger.log("Using RoutingService provided via Jini");
 			}
-		} else {
-			tLogger.log("Using local RoutingService");
 		}
 		
 		return tRS;
