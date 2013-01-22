@@ -39,8 +39,10 @@ import de.tuilmenau.ics.middleware.JiniHelper;
  */
 public class AutonomousSystem extends Network implements IAutonomousSystem
 {
-	private final static boolean ENABLE_SYNCHRONIZED_COMMAND_EXECUTION = true; 
-	
+	/**
+	 * Required to stop execution time of event handler during the execution of an command.
+	 */
+	private final static boolean ENABLE_SYNCHRONIZED_COMMAND_EXECUTION = true;
 	
 	
 	public AutonomousSystem(String pName, Simulation pSimulation, Boolean pPartialRouting, String pPartialRoutingServiceName)
