@@ -278,8 +278,8 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 
 	    	if(pNode instanceof IElementDecorator) {
 
-	    		if(((IElementDecorator)pNode).getValue() != null && ((IElementDecorator)pNode).getValue() instanceof String) {
-	    			pLabel += ((Node)pNode).getValue();
+	    		if(((IElementDecorator)pNode).getDecorationValue() != null && ((IElementDecorator)pNode).getDecorationValue() instanceof String) {
+	    			pLabel += ((Node)pNode).getDecorationValue();
 	    		}
 	    	}
 	    	
@@ -420,9 +420,9 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 				if(i instanceof IElementDecorator && ((IElementDecorator)i).getDecorationParameter() != null && ((IElementDecorator)i).getDecorationParameter() instanceof IElementDecorator.Color) {
 					IElementDecorator tDecorator = (IElementDecorator)i;
 					Color tColor = null;
-					if(tDecorator.getDecorationParameter() == IElementDecorator.Color.GREEN) tColor =  new Color(0, (Float)tDecorator.getValue(), 0);
-					if(tDecorator.getDecorationParameter() == IElementDecorator.Color.RED) tColor =  new Color((Float)tDecorator.getValue(), 0, 0);
-					if(tDecorator.getDecorationParameter() == IElementDecorator.Color.BLUE) tColor =  new Color(0, 0, (Float)tDecorator.getValue());
+					if(tDecorator.getDecorationParameter() == IElementDecorator.Color.GREEN) tColor =  new Color(0, (Float)tDecorator.getDecorationValue(), 0);
+					if(tDecorator.getDecorationParameter() == IElementDecorator.Color.RED) tColor =  new Color((Float)tDecorator.getDecorationValue(), 0, 0);
+					if(tDecorator.getDecorationParameter() == IElementDecorator.Color.BLUE) tColor =  new Color(0, 0, (Float)tDecorator.getDecorationValue());
 					return tColor;
 				}
 				

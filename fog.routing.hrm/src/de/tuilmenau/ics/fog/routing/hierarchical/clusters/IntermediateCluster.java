@@ -82,7 +82,7 @@ public class IntermediateCluster implements Cluster, VirtualNode, IElementDecora
 		mReceivedAnnounces = new LinkedList<NeighborZoneAnnounce>();
 		mSentAnnounces = new LinkedList<NeighborZoneAnnounce>();
 		mCoordinatorInstance = pCoordinatorInstance;
-		mPriority = getCoordinator().getReferenceNode().getBullyPriority(getLevel());
+		mPriority = (float) getCoordinator().getReferenceNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), 3.14159);
 		getCoordinator().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mLevel + " with priority " + mPriority);
 		mLevel = pLevel;
 		for(Cluster tCluster : getCoordinator().getClusters())
@@ -126,13 +126,13 @@ public class IntermediateCluster implements Cluster, VirtualNode, IElementDecora
 			}
 			setCoordinatorPriority(getPriority());
 			getCoordinator().getReferenceNode().setDecorationParameter("L"+ (mLevel+1));
-			getCoordinator().getReferenceNode().setValue("(" + pCoordSignature + ")");
+			getCoordinator().getReferenceNode().setDecorationValue("(" + pCoordSignature + ")");
 		} else {
 			synchronized(this) {
 				mCoordAddress = pAddress;
 				notifyAll();
 			}
-			getCoordinator().getReferenceNode().setValue("(" + pCoordSignature + ")");
+			getCoordinator().getReferenceNode().setDecorationValue("(" + pCoordSignature + ")");
 			setCoordinatorPriority(pCoord.getPeerPriority());
 			try {
 				getCoordinator().getHRS().registerNode(pCoordName, pAddress);
@@ -689,7 +689,7 @@ public class IntermediateCluster implements Cluster, VirtualNode, IElementDecora
 
 		setHRMID(pEnvelope.getHRMID());
 		
-		getCoordinator().getReferenceNode().setValue(getCoordinator().getReferenceNode().getValue() + " " + pEnvelope.getHRMID().toString() + ",");
+		getCoordinator().getReferenceNode().setDecorationValue(getCoordinator().getReferenceNode().getDecorationValue() + " " + pEnvelope.getHRMID().toString() + ",");
 		getCoordinator().addIdentification(pEnvelope.getHRMID());
 		if(mEnvelope.getEntries() != null) {
 			for(FIBEntry tEntry : mEnvelope.getEntries()) {
@@ -762,7 +762,7 @@ public class IntermediateCluster implements Cluster, VirtualNode, IElementDecora
 	}
 
 	@Override
-	public Object getValue()
+	public Object getDecorationValue()
 	{
 		return Float.valueOf(0.8f);
 	}
@@ -773,7 +773,7 @@ public class IntermediateCluster implements Cluster, VirtualNode, IElementDecora
 	}
 	
 	@Override
-	public void setValue(Object tLabal)
+	public void setDecorationValue(Object tLabal)
 	{
 		
 	}

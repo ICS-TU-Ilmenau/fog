@@ -105,7 +105,7 @@ public class ClusterManager implements Cluster, VirtualNode, Observer
 		mManagedCluster = pCluster;
 		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
 		mManagedCluster.getCoordinator().getClusterMap().addObserver(this);
-		mPriority = getCoordinator().getReferenceNode().getBullyPriority(mLevel);
+		mPriority = (float) getCoordinator().getReferenceNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + mLevel, 2.71828);
 		getCoordinator().registerClusterManager(this, mLevel);
 	}
 	
@@ -1034,7 +1034,7 @@ public class ClusterManager implements Cluster, VirtualNode, Observer
 		}
 		getLogger().log(this, "Received "+ pEnvelope);
 		mEnvelope = pEnvelope;
-		getCoordinator().getReferenceNode().setValue(getCoordinator().getReferenceNode().getValue() + "," + pEnvelope.getHRMID());
+		getCoordinator().getReferenceNode().setDecorationValue(getCoordinator().getReferenceNode().getDecorationValue() + "," + pEnvelope.getHRMID());
 		getCoordinator().addIdentification(pEnvelope.getHRMID());
 		if(pEnvelope.getEntries() != null && !pEnvelope.getEntries().isEmpty()) {
 			if(this.mHigherHRMIDs == null) mHigherHRMIDs = new LinkedList<HRMID>();
@@ -1393,7 +1393,7 @@ public class ClusterManager implements Cluster, VirtualNode, Observer
 			mCoordinatorAddress = pAddress;
 			this.notifyAll();
 		}
-		getCoordinator().getReferenceNode().setValue("(" + pCoordSignature + ")");
+		getCoordinator().getReferenceNode().setDecorationValue("(" + pCoordSignature + ")");
 		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
 		if(pCoordSignature != null) {
 			for(VirtualNode tNode: getCoordinator().getClusterMap().getNeighbors(getManagedCluster())) {

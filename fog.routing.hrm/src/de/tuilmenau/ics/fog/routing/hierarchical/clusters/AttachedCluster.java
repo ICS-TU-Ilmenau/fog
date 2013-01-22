@@ -510,13 +510,13 @@ public class AttachedCluster implements Cluster, IElementDecorator
 	}
 
 	@Override
-	public Object getValue()
+	public Object getDecorationValue()
 	{
 		return Float.valueOf(0.6f);
 	}
 
 	@Override
-	public void setValue(Object pValue)
+	public void setDecorationValue(Object pValue)
 	{
 		
 	}

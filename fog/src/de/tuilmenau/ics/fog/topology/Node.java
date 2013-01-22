@@ -17,7 +17,6 @@ package de.tuilmenau.ics.fog.topology;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.Observable;
-import java.util.Random;
 
 import de.tuilmenau.ics.CommonSim.datastream.StreamTime;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
@@ -43,7 +42,6 @@ import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.transfer.manager.Controller;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessRegister;
-import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.ParameterMap;
@@ -66,14 +64,6 @@ public class Node extends Observable implements IElementDecorator
 		as = pAS;
 		controlgate = new Controller(this);
 		transferPlane = new TransferPlane(getTimeBase(), logger);
-
-		// TODO move this stuff to hierarchical plug-in
-		Random tRandomGenerator = new Random(System.currentTimeMillis());
-		for(int i = 0; i < mBullyPriority.length; i++)
-		{
-			mBullyPriority[i] = tRandomGenerator.nextFloat() * 10;
-		}
-		Logging.log(this, "This node has priority " + mBullyPriority[0]);
 
 		parameters = pParameters;
 		// Note: Do not create central FN here, because we do not have
@@ -504,14 +494,6 @@ public class Node extends Observable implements IElementDecorator
 		if(name == null) return null;
 		else return name.toString();
 	}
-
-	/**
-	 * @deprecated TODO remove it from Node/Host and move it to hierarchical plug-in
-	 */
-	public float getBullyPriority(int pLevel)
-    {
-            return mBullyPriority[pLevel];
-    }
 	
 	public String getDecorationParameter()
 	{
@@ -525,13 +507,13 @@ public class Node extends Observable implements IElementDecorator
 	}
 	
 	@Override
-	public Object getValue()
+	public Object getDecorationValue()
 	{
 		return mLabel;
 	}
 
 	@Override
-	public void setValue(Object pLabel)
+	public void setDecorationValue(Object pLabel)
 	{
 		mLabel = pLabel;
 	}
@@ -559,12 +541,10 @@ public class Node extends Observable implements IElementDecorator
 	private ProcessRegister processes;
 	private Description capabilities;
 	private boolean isShuttingDown;
-    private float [] mBullyPriority = new float[5];
     private Object mDecorationParameter=null;
     private Object mLabel;
     private String countPrefixCache;
 	public static final Namespace NAMESPACE_HOST = new Namespace("host");
-    public static final int MAXIMUM_BULLY_PRIORITY = 90;
 	private ParameterMap parameters;
 	private final String Cap = "CAPABILITY";
 }

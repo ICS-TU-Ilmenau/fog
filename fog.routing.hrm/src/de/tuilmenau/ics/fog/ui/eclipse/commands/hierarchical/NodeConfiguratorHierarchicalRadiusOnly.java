@@ -9,11 +9,15 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
+import java.util.LinkedList;
+import java.util.Random;
+
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 public class NodeConfiguratorHierarchicalRadiusOnly implements NodeConfigurator
 {
@@ -45,6 +49,13 @@ public class NodeConfiguratorHierarchicalRadiusOnly implements NodeConfigurator
 				 * So do nothing now!
 				 */
 			}
+		}
+
+		Random tRandomGenerator = new Random(System.currentTimeMillis());
+		float tCurrentRandomNumber = tRandomGenerator.nextFloat();
+		
+		for(int i = 0; i < HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
+			pNode.getParameter().put("BULLY_PRIORITY_LEVEL_" + i, ( HierarchicalConfig.INHERIT_PRIORITY_TO_UPPER_LEVELS ? tCurrentRandomNumber : tRandomGenerator.nextFloat()));
 		}
 	}
 }

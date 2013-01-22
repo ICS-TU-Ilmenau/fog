@@ -56,4 +56,9 @@ public class HierarchicalConfig
 		public static final boolean ENABLE_REGION_LIMITATION = false;
 	}
 	public Routing routing = new Routing();
+	
+	public static final boolean INHERIT_PRIORITY_TO_UPPER_LEVELS = true;
+	
+    public static final int MAXIMUM_BULLY_PRIORITY = 90;
+
 }
