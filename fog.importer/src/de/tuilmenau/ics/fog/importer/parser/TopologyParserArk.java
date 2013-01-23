@@ -121,7 +121,7 @@ public class TopologyParserArk extends TopologyParser
 	
 	private String getCurrentColumn(int column) throws IOException
 	{
-		return mReaders.get(mCurrentReaderIndex).get(column).trim().replaceAll(" ", "_");
+		return mReaders.get(mCurrentReaderIndex).get(column).trim().replaceAll(" ", "_").replaceAll("[.]", ":");
 	}
 	
 	@Override
