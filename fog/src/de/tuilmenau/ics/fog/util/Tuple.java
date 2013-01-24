@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.util;
 
 import java.io.Serializable;
 
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Tuple;
 
 public class Tuple<FirstObject, SecondObject> implements Serializable, Comparable
@@ -47,7 +48,7 @@ public class Tuple<FirstObject, SecondObject> implements Serializable, Comparabl
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "|" + mFirst + ":" + mSecond;
+		return this.getClass().getSimpleName() + (mUndirected ? "{" : "(") + mFirst + "," + mSecond + (mUndirected ? "}" : ")");
 	}
 	
 	/**
@@ -80,18 +81,77 @@ public class Tuple<FirstObject, SecondObject> implements Serializable, Comparabl
 	@Override
 	public int hashCode()
 	{
-		return (mFirst != null ? mFirst.hashCode() : 0) & (mSecond != null ? mSecond.hashCode() : 0 ) | (mUndirected ? 0 : 1);
+		int tHashCode = 0; 
+		if(mUndirected) {
+			tHashCode = (mFirst != null ? mFirst.hashCode() : 0) + (mSecond != null ? mSecond.hashCode() : 0 );
+		} else {
+			tHashCode = (mFirst != null ? mFirst.hashCode() : 0) - (mSecond != null ? mSecond.hashCode() : 0 );
+		}
+		return tHashCode;
 	}
 
+	/**
+	 * WARN: either first and second components are greater, equal or less than other object
+	 * 
+	 * @param pObj object you want to compare to this tuple
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public int compareTo(Object pObj)
 	{
 		if(pObj instanceof Tuple) {
 			Tuple tTuple = (Tuple) pObj;
-			if(tTuple.getFirst() instanceof Comparable && tTuple.getSecond() instanceof Comparable) {
-				return ((Comparable)tTuple.getFirst()).compareTo(this.getFirst()) + ((Comparable)tTuple.getSecond()).compareTo(this.getSecond()); 
+			if(tTuple.getFirst() instanceof Comparable && tTuple.getSecond() instanceof Comparable && this.getFirst() instanceof Comparable && this.getSecond() instanceof Comparable) {
+				Comparable tMyFirst = (Comparable) this.getFirst();
+				Comparable tMySecond = (Comparable) this.getSecond();
+				Comparable tFirst = (Comparable) tTuple.getFirst();
+				Comparable tSecond = (Comparable) tTuple.getSecond();
+				if(mUndirected) {
+					int tFirstValue = tMyFirst.compareTo(tFirst);
+					int tSecondValue = tMySecond.compareTo(tSecond);
+					return (tFirstValue) + (tSecondValue);
+				} else {
+					if((tMyFirst.compareTo(tFirst) < 0) && (tMySecond.compareTo(tSecond) < 0)) {
+						return tMyFirst.compareTo(tFirst) + (tMySecond.compareTo(tSecond));
+					} else if ((tMyFirst.compareTo(tFirst) > 0) && (tMySecond.compareTo(tSecond) > 0)) {
+						return tMyFirst.compareTo(tFirst) + (tMySecond.compareTo(tSecond));
+					} else if((tMyFirst.compareTo(tFirst) == 0) && (tMySecond.compareTo(tSecond) == 0)) {
+						return 0;
+					} else {
+						throw new RuntimeException("Unable to compare objects to each other before comparison of components not representable in a tuple");
+					}
+				} 
 			}
 		}
-		return 0;
+		throw new RuntimeException("At least of of the objects you wish to compare does not provide an appropriate compareto method");
 	}
+	/*
+	public static void main(String args[])
+	{
+		Tuple<String, String> tFirstOrderedTuple = new Tuple<String, String>("halli", "hallo", false);
+		Tuple<String, String> tSecondOrderedTuple = new Tuple<String, String>("hallo", "halli", false);
+		Tuple<String, String> tFirstUnorderedTuple = new Tuple<String, String>("halli", "hallo", true);
+		Tuple<String, String> tSecondUnorderedTuple = new Tuple<String, String>("hallo", "halli", true);
+		
+		Logger tLogger = Logging.getInstance();
+		tLogger.log("first undirected: " + tFirstUnorderedTuple);
+		tLogger.log("second undirected: " + tSecondUnorderedTuple);
+		
+		tLogger.log("hash codes: " + tFirstUnorderedTuple.hashCode() + " and " + tSecondUnorderedTuple.hashCode() + " and do they equal ? " + tFirstUnorderedTuple.equals(tSecondUnorderedTuple) + " while comparison is " + tFirstUnorderedTuple.compareTo(tSecondUnorderedTuple));
+		
+		tLogger.log("individual comparison of halli hallo " + "halli".compareTo("hallo") + " and individual comparison of hallo halli " + "hallo".compareTo("halli"));
+		
+		Tuple<Integer, Integer> tFirst = new Tuple<Integer, Integer>(3,4);
+		Tuple<Integer, Integer> tSecond = new Tuple<Integer, Integer>(1,2);
+		
+		tLogger.log("comparison: " + tFirst.compareTo(tSecond) + " and " + tSecond.compareTo(tFirst));
+		
+		tLogger.log("first directed: " + tFirstOrderedTuple);
+		tLogger.log("second directed: " + tSecondOrderedTuple);
+		
+		tLogger.log("hash codes: " + tFirstOrderedTuple.hashCode() + " and " + tSecondOrderedTuple.hashCode() + " and do they equal ? " + tFirstOrderedTuple.equals(tSecondOrderedTuple) + " while comparison is " tFirstOrderedTuple.compareTo(tSecondOrderedTuple);
+		tLogger.log("individual comparison of halli hallo " + "halli".compareTo("hallo") + " and individual comparison of hallo halli " + "hallo".compareTo("halli"));
+		
+	}
+	*/
 }
