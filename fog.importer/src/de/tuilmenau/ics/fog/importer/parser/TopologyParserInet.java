@@ -88,8 +88,8 @@ public class TopologyParserInet extends TopologyParser
 	}
 
 	@Override
-	public String getInterAS() {
-		return "1";
+	public boolean getInterAS() {
+		return true;
 	}
 
 	@Override

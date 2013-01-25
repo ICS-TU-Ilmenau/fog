@@ -232,7 +232,7 @@ public class TopologyDistributor
 				if(createBus(busName)) {
 					String nodeBASname = null;
 					
-					if(!oneAS || !topoHandler.getInterAS().equals("0")) {
+					if(!oneAS || topoHandler.getInterAS()) {
 						nodeBASname = mNMS.getASNameByNode(nodeB);
 					}
 					
