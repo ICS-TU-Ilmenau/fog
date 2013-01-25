@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.routing;
 import java.util.Collection;
 import java.util.HashMap;
 
+import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
@@ -61,6 +62,11 @@ public class RoutingServiceInstanceRegister
 	public Collection<RemoteRoutingService> getAll()
 	{
 		return sRoutingServiceInstances.values();
+	}
+	
+	public RemoteRoutingService create(EventHandler timeBase, Logger parentLogger, String name, RemoteRoutingService parentRS)
+	{
+		return new PartialRoutingService(timeBase, parentLogger, name, parentRS);
 	}
 	
 	public static RemoteRoutingService getGlobalRoutingService(Simulation pSim)
