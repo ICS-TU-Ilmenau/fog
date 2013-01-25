@@ -276,6 +276,7 @@ public class PartialRoutingService implements RemoteRoutingService
 	@Override
 	public boolean registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription, Number pLinkCost) throws RemoteException 
 	{
+		boolean didSomething = false;
 		boolean remoteLink = false;
 		
 		mLogger.log(this, "Register link " +pFrom +"-" +pGateID +"->" +pTo);
@@ -306,6 +307,7 @@ public class PartialRoutingService implements RemoteRoutingService
 		RoutingServiceLink currentLinkObj = mMap.getEdge(pFrom, pTo, newLink);
 		if(currentLinkObj == null) {
 			mMap.link(pFrom, pTo, newLink);
+			didSomething = true;
 		} else {
 			if(currentLinkObj.hasInfiniteCost()) {
 				mLogger.log(this, "Reactivating link " +currentLinkObj +" between " +pFrom +"->" +pTo);
@@ -320,6 +322,7 @@ public class PartialRoutingService implements RemoteRoutingService
 				
 				// inform map about changed link weights
 				mMap.edgeWeightChanged(currentLinkObj);
+				didSomething = true;
 			} else {
 				mLogger.log(this, "Link " +currentLinkObj +" between " +pFrom +"->" +pTo +" is already known (" +currentLinkObj +")");
 
@@ -330,6 +333,7 @@ public class PartialRoutingService implements RemoteRoutingService
 						// update link cost and inform map about it
 						currentLinkObj.setCost(pLinkCost);
 						mMap.edgeWeightChanged(currentLinkObj);
+						didSomething = true;
 					}
 				}
 				// else: stick to old cost value
@@ -357,7 +361,7 @@ public class PartialRoutingService implements RemoteRoutingService
 			}
 		}
 		
-		return true;
+		return didSomething;
 	}
 
 	@Override

@@ -28,12 +28,14 @@ public class BRITEImporter implements ScenarioImporter
 		boolean distributorAnalysor = false;
 		boolean check = false;
 		boolean clean = false;
+		boolean delegation = false;
 		
 		if(parameters != null) {
 			flat = parameters.contains("flat");
 			meta = parameters.contains("meta");
 			check = parameters.contains("check");
 			clean = parameters.contains("clean");
+			delegation = parameters.contains("delegation");
 			
 			distributorAnalysor = parameters.contains("variable");
 		}
@@ -41,7 +43,7 @@ public class BRITEImporter implements ScenarioImporter
 		ITopologyParser parser = createParser(importFilename, simulation);
 		TopologyDistributor distributor;
 		if(distributorAnalysor) {
-			distributor = new TopologyDistributorAnalyser(parser, simulation, check, clean);
+			distributor = new TopologyDistributorAnalyser(parser, simulation, check, clean, delegation);
 		} else {
 			distributor = new TopologyDistributor(parser, simulation, flat);
 		}
