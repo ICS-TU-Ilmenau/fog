@@ -125,33 +125,4 @@ public class Tuple<FirstObject, SecondObject> implements Serializable, Comparabl
 		}
 		throw new RuntimeException("At least of of the objects you wish to compare does not provide an appropriate compareto method");
 	}
-	/*
-	public static void main(String args[])
-	{
-		Tuple<String, String> tFirstOrderedTuple = new Tuple<String, String>("halli", "hallo", false);
-		Tuple<String, String> tSecondOrderedTuple = new Tuple<String, String>("hallo", "halli", false);
-		Tuple<String, String> tFirstUnorderedTuple = new Tuple<String, String>("halli", "hallo", true);
-		Tuple<String, String> tSecondUnorderedTuple = new Tuple<String, String>("hallo", "halli", true);
-		
-		Logger tLogger = Logging.getInstance();
-		tLogger.log("first undirected: " + tFirstUnorderedTuple);
-		tLogger.log("second undirected: " + tSecondUnorderedTuple);
-		
-		tLogger.log("hash codes: " + tFirstUnorderedTuple.hashCode() + " and " + tSecondUnorderedTuple.hashCode() + " and do they equal ? " + tFirstUnorderedTuple.equals(tSecondUnorderedTuple) + " while comparison is " + tFirstUnorderedTuple.compareTo(tSecondUnorderedTuple));
-		
-		tLogger.log("individual comparison of halli hallo " + "halli".compareTo("hallo") + " and individual comparison of hallo halli " + "hallo".compareTo("halli"));
-		
-		Tuple<Integer, Integer> tFirst = new Tuple<Integer, Integer>(3,4);
-		Tuple<Integer, Integer> tSecond = new Tuple<Integer, Integer>(1,2);
-		
-		tLogger.log("comparison: " + tFirst.compareTo(tSecond) + " and " + tSecond.compareTo(tFirst));
-		
-		tLogger.log("first directed: " + tFirstOrderedTuple);
-		tLogger.log("second directed: " + tSecondOrderedTuple);
-		
-		tLogger.log("hash codes: " + tFirstOrderedTuple.hashCode() + " and " + tSecondOrderedTuple.hashCode() + " and do they equal ? " + tFirstOrderedTuple.equals(tSecondOrderedTuple) + " while comparison is " tFirstOrderedTuple.compareTo(tSecondOrderedTuple);
-		tLogger.log("individual comparison of halli hallo " + "halli".compareTo("hallo") + " and individual comparison of hallo halli " + "hallo".compareTo("halli"));
-		
-	}
-	*/
 }
