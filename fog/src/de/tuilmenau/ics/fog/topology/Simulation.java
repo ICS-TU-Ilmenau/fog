@@ -13,6 +13,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.topology;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.Collection;
@@ -417,6 +419,18 @@ public class Simulation
 		mLogger.info(this, "Shutting down");
 		mTimeBase.exit();
 		
+		if(mExitObserver != null) {
+			for(Closeable exitObs : mExitObserver) {
+				try {
+					exitObs.close();
+				}
+				catch(IOException exc) {
+					mLogger.err(this, "Can not close exit observer " +exitObs, exc);
+				}
+			}
+			mExitObserver = null;
+		}
+		
 		for(AutonomousSystem as : mASs.values()) {
 			as.cleanup();
 		}
@@ -488,6 +502,21 @@ public class Simulation
 		}
 	}
 	
+	/**
+	 * Registers an observer, which is called if the simulation is
+	 * exiting. It is called before the clean-up operations.
+	 * 
+	 * Exceptions thrown by the observer are reported but ignored.
+	 */
+	public synchronized void registerClosable(Closeable exitObserver)
+	{
+		if(mExitObserver == null) {
+			mExitObserver = new LinkedList<Closeable>();
+		}
+		
+		mExitObserver.add(exitObserver);
+	}
+	
 	private EventHandler mTimeBase;
 	private Logger mLogger;
 	
@@ -502,5 +531,6 @@ public class Simulation
 	private Random mRandomGenerator = new Random();
 	
 	private LinkedList<IEvent> mEventsAfterSetup;
+	private LinkedList<Closeable> mExitObserver;
 	private HashSet<SimulationEventHandler> mHandlers;
 }

@@ -143,6 +143,12 @@ public class Config
 		 * length per node. Values will be written to Datastream.
 		 */
 		public static final boolean CREATE_NODE_STATISTIC = false;
+
+		/**
+		 * Enables the transfer service to log all its routing service
+		 * requests in a statistic file.
+		 */
+		public static final boolean LOG_ROUTE_REQUEST_RESULTS = false;
 	}
 	/**
 	 * File statistical output will be written to.

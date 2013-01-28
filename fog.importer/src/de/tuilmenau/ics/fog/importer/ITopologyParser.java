@@ -21,7 +21,7 @@ public interface ITopologyParser
  		public boolean readNextEdgeEntry();
  		public String getEdgeNodeOne();
  		public String getEdgeNodeTwo();
- 		public String getInterAS();
+ 		public boolean getInterAS();
  		public String getParameter();
  		
 		public void close();

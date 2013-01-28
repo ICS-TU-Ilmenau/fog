@@ -159,13 +159,13 @@ public class TopologyParserDIMES extends TopologyParser
 	}
 
 	@Override
-	public String getInterAS() {
+	public boolean getInterAS() {
 		try {
-			return csvEdges.get("InterAS");
+			return csvEdges.get("InterAS").equals("1");
 		} catch (IOException e) {
 			mLogger.err(this, "Can not get InterAS.", e);
 		}
-		return null;
+		return false;
 	}
 
 	@Override

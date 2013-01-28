@@ -24,7 +24,6 @@ import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
-import de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceSimulated;
 import de.tuilmenau.ics.fog.scenario.NodeConfiguratorContainer;
@@ -60,8 +59,10 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		getGraph().add(tGrs);
 		
 		if(pPartialRouting) {
+			RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance();
+			
 			if(pPartialRoutingServiceName != null) {
-				mRoutingService = RoutingServiceInstanceRegister.getInstance().get(pPartialRoutingServiceName);
+				mRoutingService = register.get(pPartialRoutingServiceName);
 				
 				if(mRoutingService == null) {
 					mLogger.log(this, "Can not get routing service with name '" +pPartialRoutingServiceName +"'. Creating new one with this name.");
@@ -71,7 +72,7 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 			}
 			
 			if(mRoutingService == null) {
-				mRoutingService = new PartialRoutingService(mSim.getTimeBase(), mLogger, pPartialRoutingServiceName, tGrs);
+				mRoutingService = register.create(mSim.getTimeBase(), mLogger, pPartialRoutingServiceName, tGrs);
 	
 				attach(mRoutingService, tGrs);
 			}

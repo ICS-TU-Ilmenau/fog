@@ -13,10 +13,13 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.SumNode;
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
@@ -26,8 +29,11 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
+import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
+import de.tuilmenau.ics.fog.util.CSVWriter;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.graph.RoutableGraph;
 
@@ -65,16 +71,126 @@ public class TransferPlane implements TransferPlaneObserver
 
 	public Route getRoute(ForwardingNode pSource, Name pDestination, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException
 	{
-		// check if the route is just a local one
-		// within the graph of this instance
-		ForwardingNode tLocalDestination = mRS.getLocalElement(pDestination);
-		if(tLocalDestination != null) {
-			// routing service thinks that destination is a local element
-			// -> local route request
-			return getRoute(pSource, tLocalDestination);
-		}
+		Route resRoute = null;
+		boolean internalRequest = false;
 		
-		return mRS.getRoute(pSource, pDestination, pRequirements, pRequester);
+		try {
+			// check if the route is just a local one
+			// within the graph of this instance
+			ForwardingNode tLocalDestination = mRS.getLocalElement(pDestination);
+			if(tLocalDestination != null) {
+				// routing service thinks that destination is a local element
+				// -> local route request
+				internalRequest = true;
+				resRoute = getRoute(pSource, tLocalDestination);
+			} else {
+				resRoute = mRS.getRoute(pSource, pDestination, pRequirements, pRequester);
+			}
+			
+			logRSRequest(pSource.getNode(), resRoute, internalRequest);
+			return resRoute;
+		}
+		catch(RoutingException exc) {
+			logRSRequest(pSource.getNode(), null, internalRequest);
+			throw exc;
+		}
+		catch(RequirementsException exc) {
+			logRSRequest(pSource.getNode(), null, internalRequest);
+			throw exc;
+		}
+	}
+	
+	/**
+	 * Logs a routing service request and its result.
+	 * The file format is as follows:
+	 * 1. Node name
+	 * 2. RS name (tranfer service name if internal)
+	 * 3. RS vertices
+	 * 4. RS edges
+	 * 5. RS size (zero if internal)
+	 * 6. route length in gate numbers
+	 * 7. route length in segments
+	 * 
+	 * 6 and 7 are zero if an error occured.
+	 */
+	private synchronized void logRSRequest(Node node, Route result, boolean internal)
+	{
+		if(Config.Logging.LOG_ROUTE_REQUEST_RESULTS) {
+			Simulation sim = node.getAS().getSimulation();
+			
+			try {
+				if((sRoutingLog == null) && !sTriedToOpen) {
+					// try to open log (only once)
+					sTriedToOpen = true;
+					
+					String filename = sim.getBaseDirectory() +"RS_results.csv";
+					sRoutingLog = new CSVWriter(filename);
+					
+					// write header line
+					sRoutingLog.write("node");
+					sRoutingLog.write("RS name");
+					sRoutingLog.write("RS vertices");
+					sRoutingLog.write("RS edges");
+					sRoutingLog.write("RS size");
+					sRoutingLog.write("Route length in gate numbers");
+					sRoutingLog.write("Route length in segments");
+					sRoutingLog.finishEntry();
+					
+					sim.getLogger().info(this, "Opened routing service log '" +filename +"'");
+					
+					sim.registerClosable(new Closeable() {
+						@Override
+						public void close() throws IOException {
+							synchronized(TransferPlane.this) {
+								if(sRoutingLog != null) {
+									sRoutingLog.close();
+									sRoutingLog = null;
+									sTriedToOpen = false;
+								}
+							}
+						}
+					});
+				}
+				
+				// log statistical data about routing service itself and the result
+				if(sRoutingLog != null) {
+					sRoutingLog.write(node.toString());
+					if(internal) {
+						sRoutingLog.write(this.toString());
+						sRoutingLog.write(mMap.getNumberVertices());
+						sRoutingLog.write(mMap.getNumberEdges());
+						sRoutingLog.write(0);
+					} else {
+						sRoutingLog.write(mRS.toString());
+						sRoutingLog.write(mRS.getNumberVertices());
+						sRoutingLog.write(mRS.getNumberEdges());
+						sRoutingLog.write(mRS.getSize());
+					}
+					
+					if(result != null) {
+						sRoutingLog.write(result.sizeNumberGates());
+						sRoutingLog.write(result.size());
+					} else {
+						sRoutingLog.write(0);
+						sRoutingLog.write(0);
+					}
+					
+					sRoutingLog.finishEntry();
+				}
+			}
+			catch(IOException exc) {
+				if(sRoutingLog != null) {
+					sim.getLogger().err(this, "Error while opening/writing routing service log.", exc);
+					try {
+						sRoutingLog.close();
+					}
+					catch(IOException exc2) {
+						// ignore
+					}
+					sRoutingLog = null;
+				}
+			}
+		}
 	}
 	
 	/**
@@ -249,4 +365,9 @@ public class TransferPlane implements TransferPlaneObserver
 	 */
 	private IDoubleWriter mCounterGetRouteFound;
 
+	/**
+	 * Static routing log
+	 */
+	private static CSVWriter sRoutingLog = null;
+	private static boolean sTriedToOpen = false;
 }

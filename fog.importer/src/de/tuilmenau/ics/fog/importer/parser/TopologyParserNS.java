@@ -109,9 +109,9 @@ public class TopologyParserNS extends TopologyParser
 	}
 
 	@Override
-	public String getInterAS() {
+	public boolean getInterAS() {
 		// TODO look whether it is really inter AS
-		return "1";
+		return true;
 	}
 
 	@Override

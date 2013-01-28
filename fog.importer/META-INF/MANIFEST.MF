@@ -9,6 +9,7 @@ Require-Bundle: de.tuilmenau.ics.fog;bundle-version="1.0.2"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.tuilmenau.ics.fog.importer
 Import-Package: au.com.bytecode.opencsv,
+ de.tuilmenau.ics.CommonSim.datastream,
  de.tuilmenau.ics.CommonSim.datastream.numeric,
  de.tuilmenau.ics.extensionpoint,
  de.tuilmenau.ics.middleware,

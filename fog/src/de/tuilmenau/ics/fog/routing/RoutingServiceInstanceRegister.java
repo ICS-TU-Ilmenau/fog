@@ -16,6 +16,8 @@ package de.tuilmenau.ics.fog.routing;
 import java.util.Collection;
 import java.util.HashMap;
 
+import de.tuilmenau.ics.fog.EventHandler;
+import de.tuilmenau.ics.fog.routing.simulated.DelegationPartialRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
@@ -34,6 +36,14 @@ public class RoutingServiceInstanceRegister
 		}
 		
 		return sInstance;
+	}
+	
+	/**
+	 * Switches between PartialRS and DelegationPRS
+	 */
+	public void setRoutingServiceType(boolean delegation)
+	{
+		useDelegationType = delegation;
 	}
 	
 	/**
@@ -61,6 +71,15 @@ public class RoutingServiceInstanceRegister
 	public Collection<RemoteRoutingService> getAll()
 	{
 		return sRoutingServiceInstances.values();
+	}
+	
+	public RemoteRoutingService create(EventHandler timeBase, Logger parentLogger, String name, RemoteRoutingService parentRS)
+	{
+		if(useDelegationType) {
+			return new DelegationPartialRoutingService(timeBase, parentLogger, name, parentRS);
+		} else {
+			return new PartialRoutingService(timeBase, parentLogger, name, parentRS);
+		}
 	}
 	
 	public static RemoteRoutingService getGlobalRoutingService(Simulation pSim)
@@ -94,5 +113,6 @@ public class RoutingServiceInstanceRegister
 	private static RoutingServiceInstanceRegister sInstance = null;
 	private static PartialRoutingService sSingletonRoutingService = null;
 	
+	private boolean useDelegationType = false;
 	private HashMap<String, RemoteRoutingService> sRoutingServiceInstances = new HashMap<String, RemoteRoutingService>();
 }
