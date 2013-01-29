@@ -102,7 +102,7 @@ public class TopologyDistributor
 	
 	protected boolean createAS(String asName)
 	{
-		return createAS(asName, false, null);
+		return createAS(asName, sim.getConfig().Scenario.ENABLE_PARTIAL_RS_IN_IMPORT, null);
 	}
 	
 	protected boolean createAS(String asName, boolean partialRouting, String routingServiceName)
@@ -232,7 +232,7 @@ public class TopologyDistributor
 				if(createBus(busName)) {
 					String nodeBASname = null;
 					
-					if(!oneAS || !topoHandler.getInterAS().equals("0")) {
+					if(!oneAS || topoHandler.getInterAS()) {
 						nodeBASname = mNMS.getASNameByNode(nodeB);
 					}
 					

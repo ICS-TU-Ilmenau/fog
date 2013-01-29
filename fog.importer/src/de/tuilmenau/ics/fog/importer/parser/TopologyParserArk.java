@@ -172,7 +172,7 @@ public class TopologyParserArk extends TopologyParser
 	@Override
 	public String getAS()
 	{
-		return "default";
+		return mCurrentNodeName;
 	}
 
 	@Override
@@ -230,9 +230,9 @@ public class TopologyParserArk extends TopologyParser
 	}
 
 	@Override
-	public String getInterAS()
+	public boolean getInterAS()
 	{
-		return "no";
+		return true;
 	}
 
 	@Override

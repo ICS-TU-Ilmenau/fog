@@ -21,6 +21,8 @@ import java.util.Random;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.DoubleNode;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.fog.importer.ITopologyParser;
+import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
+import de.tuilmenau.ics.fog.routing.simulated.DelegationPartialRoutingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
@@ -31,14 +33,15 @@ import edu.uci.ics.jung.graph.util.Pair;
 public class TopologyDistributorAnalyser extends TopologyDistributor
 {
 	private static final String PROPERTY_PROB_HAVING_RS = "import.rs_probability";
+
 	
-	
-	public TopologyDistributorAnalyser(ITopologyParser parser, Simulation sim, boolean checkGraph, boolean cleanGraph) throws Exception
+	public TopologyDistributorAnalyser(ITopologyParser parser, Simulation sim, boolean checkGraph, boolean cleanGraph, boolean delegation) throws Exception
 	{
 		super(parser, sim, false);
 		
 		this.checkGraph = checkGraph;
 		this.cleanGraph = cleanGraph;
+		this.delegation = delegation;
 		
 		// try to get probability from environment variable
 		String probStr = System.getProperty(PROPERTY_PROB_HAVING_RS);
@@ -154,8 +157,13 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 			}
 		}
 		
-		// assign AS to RS
-		tLog.info(this, decideAboutRS() +" AS with routing service");
+		if(delegation) {
+			// link RS entities
+			tLog.info(this, decideAboutDelegation() +" AS delegate its routing service information");
+		} else {
+			// assign AS to RS
+			tLog.info(this, decideAboutRS() +" AS with routing service");
+		}
 		
 /*		for(String as : mASGraph.getVertices()) {
 			tLog.info(this, "AS " +as +" has " +mASGraph.getNeighborCount(as) +" neighbors and used RS " +mASToRS.get(as));
@@ -174,9 +182,11 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 		//
 		// create ASs
 		//
-		Collection<String> asSet = mASGraph.getVertices();
-		for(String as : asSet) {
-			super.createAS(as, true, mASToRS.get(as));
+		if(mASGraph != null) {
+			Collection<String> asSet = mASGraph.getVertices();
+			for(String as : asSet) {
+				super.createAS(as, true, mASToRS.get(as));
+			}
 		}
 		
 		// create nodes
@@ -262,6 +272,51 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 		return rsCounter;
 	}
 	
+	private int decideAboutDelegation()
+	{
+		// switch to delegation routing service
+		RoutingServiceInstanceRegister.getInstance().setRoutingServiceType(true);
+		
+		// create ASs in order to create RS entities
+		Collection<String> asSet = mASGraph.getVertices();
+		for(String as : asSet) {
+			super.createAS(as, true, mASToRS.get(as));
+		}
+				
+		Random rand = new Random();
+		int rsCounter = 0;
+		
+		// chose AS delegating to neighbors
+		for(String as : asSet) {
+			if(rand.nextDouble() < probabilityGettingRS) {
+				rsCounter++;
+				
+				for(String neighbor : mASGraph.getNeighbors(as)) {
+					delegateFrom(as, neighbor);
+				}
+			}
+		}
+		
+		// remove graph to prevent AS creation in "createAll"
+		mASGraph = null;
+		
+		return rsCounter;
+	}
+	
+	private void delegateFrom(String as, String neighbor)
+	{
+		RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance();
+		DelegationPartialRoutingService rsFrom = (DelegationPartialRoutingService) register.get(as);
+		DelegationPartialRoutingService rsTo   = (DelegationPartialRoutingService) register.get(neighbor);
+		
+		// debug check
+		if((rsFrom == null) || (rsTo == null)) {
+			throw new RuntimeException(this +": Can not delegate from " +as +" (" +rsFrom +") to " +neighbor +"(" +rsTo +").");
+		}
+		
+		rsFrom.registerDelegationDestination(rsTo);
+	}
+
 	private boolean assignRSTo(String as, Random rand)
 	{
 		Object[] neighbors = mASGraph.getNeighbors(as).toArray();
@@ -401,4 +456,5 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	
 	private boolean checkGraph;
 	private boolean cleanGraph;
+	private boolean delegation;	
 }

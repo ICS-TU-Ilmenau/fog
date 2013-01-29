@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.util;
 
 import java.io.Serializable;
 
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Tuple;
 
 public class Tuple<FirstObject, SecondObject> implements Serializable, Comparable
@@ -47,7 +48,7 @@ public class Tuple<FirstObject, SecondObject> implements Serializable, Comparabl
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "|" + mFirst + ":" + mSecond;
+		return this.getClass().getSimpleName() + (mUndirected ? "{" : "(") + mFirst + "," + mSecond + (mUndirected ? "}" : ")");
 	}
 	
 	/**
@@ -80,18 +81,48 @@ public class Tuple<FirstObject, SecondObject> implements Serializable, Comparabl
 	@Override
 	public int hashCode()
 	{
-		return (mFirst != null ? mFirst.hashCode() : 0) & (mSecond != null ? mSecond.hashCode() : 0 ) | (mUndirected ? 0 : 1);
+		int tHashCode = 0; 
+		if(mUndirected) {
+			tHashCode = (mFirst != null ? mFirst.hashCode() : 0) + (mSecond != null ? mSecond.hashCode() : 0 );
+		} else {
+			tHashCode = (mFirst != null ? mFirst.hashCode() : 0) - (mSecond != null ? mSecond.hashCode() : 0 );
+		}
+		return tHashCode;
 	}
 
+	/**
+	 * WARN: either first and second components are greater, equal or less than other object
+	 * 
+	 * @param pObj object you want to compare to this tuple
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public int compareTo(Object pObj)
 	{
 		if(pObj instanceof Tuple) {
 			Tuple tTuple = (Tuple) pObj;
-			if(tTuple.getFirst() instanceof Comparable && tTuple.getSecond() instanceof Comparable) {
-				return ((Comparable)tTuple.getFirst()).compareTo(this.getFirst()) + ((Comparable)tTuple.getSecond()).compareTo(this.getSecond()); 
+			if(tTuple.getFirst() instanceof Comparable && tTuple.getSecond() instanceof Comparable && this.getFirst() instanceof Comparable && this.getSecond() instanceof Comparable) {
+				Comparable tMyFirst = (Comparable) this.getFirst();
+				Comparable tMySecond = (Comparable) this.getSecond();
+				Comparable tFirst = (Comparable) tTuple.getFirst();
+				Comparable tSecond = (Comparable) tTuple.getSecond();
+				if(mUndirected) {
+					int tFirstValue = tMyFirst.compareTo(tFirst);
+					int tSecondValue = tMySecond.compareTo(tSecond);
+					return (tFirstValue) + (tSecondValue);
+				} else {
+					if((tMyFirst.compareTo(tFirst) < 0) && (tMySecond.compareTo(tSecond) < 0)) {
+						return tMyFirst.compareTo(tFirst) + (tMySecond.compareTo(tSecond));
+					} else if ((tMyFirst.compareTo(tFirst) > 0) && (tMySecond.compareTo(tSecond) > 0)) {
+						return tMyFirst.compareTo(tFirst) + (tMySecond.compareTo(tSecond));
+					} else if((tMyFirst.compareTo(tFirst) == 0) && (tMySecond.compareTo(tSecond) == 0)) {
+						return 0;
+					} else {
+						throw new RuntimeException("Unable to compare objects to each other before comparison of components not representable in a tuple");
+					}
+				} 
 			}
 		}
-		return 0;
+		throw new RuntimeException("At least of of the objects you wish to compare does not provide an appropriate compareto method");
 	}
 }

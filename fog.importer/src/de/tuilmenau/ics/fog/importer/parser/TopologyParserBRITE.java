@@ -90,11 +90,11 @@ public class TopologyParserBRITE extends TopologyParser
 	}
 
 	@Override
-	public String getInterAS() {
+	public boolean getInterAS() {
 		if( line.split("\t")[6].equals(line.split("\t")[7])) {
-			return "0";
+			return false;
 		}
-		return "1";
+		return true;
 	}
 
 	@Override
