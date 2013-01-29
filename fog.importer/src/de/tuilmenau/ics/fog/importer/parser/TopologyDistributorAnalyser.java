@@ -114,7 +114,14 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
  			}
  		}
  		
- 		return mGraph.addEdge(nodeName1 +"-" +nodeName2, nodeName1, nodeName2);
+ 		// check 
+ 		boolean res = mGraph.addEdge(nodeName1 +"-" +nodeName2, nodeName1, nodeName2);
+ 		
+ 		if(!res) {
+ 			return mGraph.isNeighbor(nodeName1, nodeName2);
+ 		} else {
+ 			return res;
+ 		}
  	}
  	
 	public void close()
@@ -141,6 +148,9 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 			// debug check if the graph is connected
 			if(!checkIfConnected(mASGraph)) {
 	 			tLog.warn(this, "AS graph is not connected. Try to setup scenario but errors might happen.");
+			}
+			if(!checkIfConnected(mGraph)) {
+	 			tLog.warn(this, "Node graph is not connected. Try to setup scenario but errors might happen.");
 			}
 		}
 		
