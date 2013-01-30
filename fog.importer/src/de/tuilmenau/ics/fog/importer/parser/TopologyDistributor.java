@@ -23,7 +23,6 @@ import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.middleware.JiniHelper;
 
 
@@ -44,7 +43,6 @@ public class TopologyDistributor
 		nodeA,
 		nodeB;
 	
-	private Logger logger = Logging.getInstance();
 	private boolean oneAS;
 	
 	
@@ -72,12 +70,12 @@ public class TopologyDistributor
 				
 			if(workerByJini == null) {
 				String errMsg = "Jini has no workers available.";
-				logger.err(this, errMsg);
+				sim.getLogger().err(this, errMsg);
 				throw new RuntimeException(errMsg);
 			}
 			
 			if(workerByJini.size() != numberWorkers) {
-				logger.err(this, "Jini reports another amount of total available workers.");
+				sim.getLogger().err(this, "Jini reports another amount of total available workers.");
 			}
 		}
 	}
@@ -92,7 +90,7 @@ public class TopologyDistributor
 			createAS(toName);
 		
 			if(!sim.switchToAS(toName)) {
-				logger.err(this, "Chosen worker did not create AS '" +toName +"' or was unable to switch to it!");
+				sim.getLogger().err(this, "Chosen worker did not create AS '" +toName +"' or was unable to switch to it!");
 				return false;
 			}
 		}
@@ -124,7 +122,7 @@ public class TopologyDistributor
 			return sim.executeCommand(cmd.toString());
 
 		} catch (RemoteException exc) {
-			logger.err(this, "Can not switch to AS '" +asName +"'", exc);
+			sim.getLogger().err(this, "Can not switch to AS '" +asName +"'", exc);
 			return false;
 		}
 	}
@@ -133,15 +131,15 @@ public class TopologyDistributor
  	{
  		if(topoHandler.requiresASMode() || oneAS) {
  			if(oneAS) {
- 				logger.info(this, "Create nodes in one single AS " +DEFAULT_AS_NAME +".");
+ 				sim.getLogger().info(this, "Create nodes in one single AS " +DEFAULT_AS_NAME +".");
  			} else {
- 				logger.info(this, "Create each node in own AS.");
+ 				sim.getLogger().info(this, "Create each node in own AS.");
  			}
  				
  			return createNodes(true);
  		}
  		else {
-			logger.info(this, "Create nodes in AS as specified in scenario file.");
+ 			sim.getLogger().info(this, "Create nodes in AS as specified in scenario file.");
 			return createNodes(false);
 		}
  	}
@@ -166,14 +164,14 @@ public class TopologyDistributor
 
 			if(switchAS(as)) {
 				if(createNode(node, tParameter)) {
-					logger.log(this, "Created node " + node + " in AS " + as + " with parameter " + tParameter);
+					sim.getLogger().log(this, "Created node " + node + " in AS " + as + " with parameter " + tParameter);
 			 		try {
 						mNMS.setNodeASName(node, as);
 					} catch (RemoteException tExc) {
 						Logging.err(this, "Error when trying to set AS where node was supposed to be located", tExc);
 					}
 				} else {
-					logger.warn(this, "Failed to created node " + node + " in AS " + as);
+					sim.getLogger().warn(this, "Failed to created node " + node + " in AS " + as);
 				}
 			} else {
 				return false;
@@ -223,7 +221,7 @@ public class TopologyDistributor
 				if(!oneAS) {
 					String nodeOneAS = mNMS.getASNameByNode(nodeA);
 					if(!switchAS(nodeOneAS)) {
-						logger.err(this, "Unable to switch to AS '" +nodeOneAS +"'. Skip edge from " +nodeA +"->" +nodeB +".");
+						sim.getLogger().err(this, "Unable to switch to AS '" +nodeOneAS +"'. Skip edge from " +nodeA +"->" +nodeB +".");
 						continue; //We skip the creation of that edge
 					}
 				}
@@ -237,13 +235,13 @@ public class TopologyDistributor
 					}
 					
 					if(link(nodeA, nodeB, nodeBASname)) {
-						logger.log(this, "Created link between " +nodeA +" and " +nodeB);
+						sim.getLogger().log(this, "Created link between " +nodeA +" and " +nodeB);
 					} else {
-						logger.err(this, "Can not connect " + nodeA + " and " +nodeB);
+						sim.getLogger().err(this, "Can not connect " + nodeA + " and " +nodeB);
 						res = false;
 					}
 				} else {
-					logger.err(this, "Can not create bus '" +busName +"'");
+					sim.getLogger().err(this, "Can not create bus '" +busName +"'");
 					res = false;
 				}
 			} catch (RemoteException tExc) {
@@ -269,7 +267,7 @@ public class TopologyDistributor
 		// OK we are doing inter AS routing, so we have to find the other node inside another autonomous system
 		if(nodeName2ASname != null) {
 			if(!switchAS(nodeName2ASname)) {
-				logger.err(this, "Can not switch to AS '" +nodeName2ASname +"'");
+				sim.getLogger().err(this, "Can not switch to AS '" +nodeName2ASname +"'");
 				sim.executeCommand("disconnect " +nodeName1 + " " +busName);
 				sim.executeCommand("remove bus " +busName);
 			}
