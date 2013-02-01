@@ -232,6 +232,7 @@ public class Multiplexer extends GateContainer
 	protected void handlePacket(Packet packet)
 	{
 		packet.logStats(getNode().getAS().getSimulation());
+		
 		if(packet.getData() instanceof Signalling) {
 			Signalling tSig = (Signalling) packet.getData();
 			
@@ -243,15 +244,17 @@ public class Multiplexer extends GateContainer
 		}
 		else if(packet.getData() instanceof Invisible) {
 			// ignore it; had been handled before
+			mLogger.trace(this, "Received invisible " + packet +" and ignoring it.");
 		}
 		else {
 			if(mDataSocket != null) {
+				mLogger.trace(this, "Received " + packet +" for " +mDataSocket);
+				
 				mDataSocket.receiveData(packet.getData());
 			} else {
 				mLogger.warn(this, "Skip packet " +packet +" because socket towards app. " + getName().toString() + " is not valid (no signaling packet)");
 			}
 		}
-		mNode.getLogger().log(this, "Received " + packet);
 	}
 	
 	/**
