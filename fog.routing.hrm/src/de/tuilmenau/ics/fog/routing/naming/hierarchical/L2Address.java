@@ -13,17 +13,14 @@ import java.math.BigInteger;
 
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ASParticipationProperty;
 
 public class L2Address extends HRMName
 {
 	private static final long serialVersionUID = 4484202410314555829L;
 
-	public L2Address(long pAddress, String pASName)
+	public L2Address(long pAddress)
 	{
 		super(BigInteger.valueOf(pAddress));
-		Description tDescription = new Description();
-		tDescription.set(new ASParticipationProperty(pASName));
 	}
 
 	public L2Address(BigInteger pAddress)

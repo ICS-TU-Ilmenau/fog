@@ -53,7 +53,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
-public class ClusterManager implements Cluster, VirtualNode, Observer
+public class ClusterManager implements Cluster, Observer
 {
 	/*
 	 * List for identification of clusters
@@ -1076,21 +1076,6 @@ public class ClusterManager implements Cluster, VirtualNode, Observer
 	}
 
 	@Override
-	public Cluster getClusterWithHighestPriority() {
-		float tHighestPriority=0;
-		Cluster tCluster=null;
-		for(VirtualNode tNode : getCoordinator().getClusterMap().getVertices()) {
-			if(tNode instanceof Cluster) {
-				if(((Cluster)tNode).getPriority() > tHighestPriority) {
-					tCluster = (Cluster)tNode;
-					tHighestPriority = ((Cluster)tNode).getPriority();
-				}
-			}
-		}
-		return tCluster;
-	}
-
-	@Override
 	public float getHighestPriority() {
 		return mHighestPriority;
 	}
@@ -1118,7 +1103,6 @@ public class ClusterManager implements Cluster, VirtualNode, Observer
 
 	public void interpretAnnouncement(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
-		setRouteToCoordinator(pCEP.getRouteToPeer());
 		/*
 		 * check whether old priority was lower than new priority
 		 */
@@ -1435,14 +1419,6 @@ public class ClusterManager implements Cluster, VirtualNode, Observer
 	public void addNeighborCluster(Cluster pNeighbor) {
 		/*
 		 * cluster manager does not need neighbors
-		 */
-	}
-
-	@Override
-	public void setRouteToCoordinator(Route pPath) {
-		Logging.log(this, "This is the " + (++this.mReceivedAnnounces) + " time an announcement came in");
-		/*
-		 * cluster manager retrieves route to target via local routing map
 		 */
 	}
 
