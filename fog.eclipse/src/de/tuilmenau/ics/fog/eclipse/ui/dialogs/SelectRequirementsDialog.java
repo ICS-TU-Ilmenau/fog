@@ -21,6 +21,7 @@ import de.tuilmenau.ics.fog.eclipse.ui.PropertyGUIFactoryContainer;
 import de.tuilmenau.ics.fog.eclipse.ui.PropertyParameterWidget;
 import de.tuilmenau.ics.fog.eclipse.widget.EmptyPropertyParameterWidget;
 import de.tuilmenau.ics.fog.facade.Description;
+import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
 import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
 import de.tuilmenau.ics.fog.facade.properties.DelayProperty;
 import de.tuilmenau.ics.fog.facade.properties.Property;
@@ -100,6 +101,20 @@ public class SelectRequirementsDialog extends Dialog
 		
 		final GridData tHorizontalFill = new GridData(SWT.FILL, SWT.FILL, false, false);
 
+		// 
+		// type of communication
+		//
+		new Label(tShell, SWT.NONE).setText("Type of communication");
+		final Combo tTypeCombo = new Combo(tShell, SWT.READ_ONLY);
+		tTypeCombo.add(CommunicationTypeProperty.DATAGRAM.toString());
+		tTypeCombo.add(CommunicationTypeProperty.DATAGRAM_STREAM.toString());
+		tTypeCombo.add(CommunicationTypeProperty.STREAM.toString());
+		Property tProp = getProp(pSelectedRequirements, CommunicationTypeProperty.class);
+		if(tProp == null) {
+			tProp = CommunicationTypeProperty.getDefault();
+		}
+		tTypeCombo.setText(tProp.toString());
+		
 		//
 		// non functional
 		//
@@ -247,6 +262,11 @@ public class SelectRequirementsDialog extends Dialog
 	    		 *  The order of the properties in the resulting requirements description influences 
 	    		 *  directly the order during gate creation.
 	    		 */
+	    		// type of communication
+	    		CommunicationTypeProperty commType = CommunicationTypeProperty.getType(tTypeCombo.getText());
+	    		if (commType != null) {
+	    			mSelectedRequirements.set(commType);
+	    		}
 	    		
 	    		// non-functional requirements
 	    		if (tBtOrdered.getSelection())

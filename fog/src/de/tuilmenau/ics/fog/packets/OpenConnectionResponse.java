@@ -150,7 +150,7 @@ public class OpenConnectionResponse extends SignallingAnswer
 						// error-message, remote system seems to accept
 						// requirements. -> Build up socket path.
 						try {
-							tProcessConnection.recreatePath(/*use known requirements*/null, pPacket.getReturnRoute(), mSendersRouteUpToHisClient);
+							tProcessConnection.recreatePath(/*use known requirements*/null, pPacket.getReturnRoute());
 						} catch (NetworkException tNetExc) {
 							throw new NetworkException("Process " +pProcess +" could not build up connection.", tNetExc);
 						}

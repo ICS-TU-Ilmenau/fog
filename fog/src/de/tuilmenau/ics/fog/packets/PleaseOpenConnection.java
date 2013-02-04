@@ -68,13 +68,14 @@ public class PleaseOpenConnection extends SignallingRequest
 		mSendersProcessNumber = pSendersProcess != null ? pSendersProcess.getID() : 0;
 		mReceiversProcessNumber = 0;
 		
-		Route tSendersRouteUpToHisClient = pSendersProcess.getRouteUpToClient();
-		setSendersRouteUpToHisClient(tSendersRouteUpToHisClient);
-		
 		setDescription(pDescription);
 		
-		ForwardingNode tFN = pSendersProcess.getBase(); 
-		mPeerRoutingName = tFN.getNode().getRoutingService().getNameFor(tFN);
+		if(pSendersProcess != null) {
+			mSendersRouteUpToHisClient = pSendersProcess.getRouteUpToClient();
+			
+			ForwardingNode tFN = pSendersProcess.getBase(); 
+			mPeerRoutingName = tFN.getNode().getRoutingService().getNameFor(tFN);
+		}
 		mToApplication = pToApplication;
 	}
 	
@@ -100,12 +101,25 @@ public class PleaseOpenConnection extends SignallingRequest
 		mSendersProcessNumber = pSendersProcess != null ? pSendersProcess.getID() : 0;
 		mReceiversProcessNumber = pPredecessor.mSendersProcessNumber;
 		
-		Route tSendersRouteUpToHisClient = pSendersProcess.getRouteUpToClient();
-		setSendersRouteUpToHisClient(tSendersRouteUpToHisClient);
+		mSendersRouteUpToHisClient = pSendersProcess.getRouteUpToClient();
 		
 		ForwardingNode tFN = pSendersProcess.getBase(); 
 		mPeerRoutingName = tFN.getNode().getRoutingService().getNameFor(tFN);
 		setDescription(pDescription);
+	}
+	
+	/**
+	 * Short constructor for a dummy signaling message. The signal workflow
+	 * will create a connection end point locally and do not send any
+	 * signaling answers.
+	 * 
+	 * @param pDescription Requirements for the connection end point.
+	 */
+	public PleaseOpenConnection(Description pDescription)
+	{
+		this(null, null, pDescription, true);
+		
+		mIsLocalDummy = true;
 	}
 	
 	/**
@@ -215,6 +229,13 @@ public class PleaseOpenConnection extends SignallingRequest
 						tFN.setConnectionEndPoint(tCEP);
 						tServerFN.addNewConnection(tCEP);
 						
+						// are we just a dummy?
+						// -> send packet to connection end point
+						if(mIsLocalDummy) {
+							pPacket.getRoute().addLast(tProcessConn.getRouteUpToClient());
+							pFN.handlePacket(pPacket, null);
+						}
+						
 					} else {
 						// Connection request can also arrive at a
 						// MultiplexerGate that is no ServerGate!
@@ -278,7 +299,7 @@ public class PleaseOpenConnection extends SignallingRequest
 		tReceiversProcess.start();
 		mReceiversProcessNumber = tReceiversProcess.getID();
 		
-		if(Config.Connection.LAZY_REQUEST_RECEIVER) {
+		if(Config.Connection.LAZY_REQUEST_RECEIVER && !mIsLocalDummy) {
 			// Socket-path will not be created before next handshake arrives. 
 			
 			// Send an answer.
@@ -292,7 +313,9 @@ public class PleaseOpenConnection extends SignallingRequest
 			// Build up socket path.
 			Packet answer = completeConnectionProcess(tReceiversProcess, pRequester);
 			
-			signAndSend(tReceiversProcess.getBase(), answer);
+			if(!mIsLocalDummy) {
+				signAndSend(tReceiversProcess.getBase(), answer);
+			}
 		}
 		
 		if(Config.Connection.TERMINATE_WHEN_IDLE) {
@@ -352,9 +375,9 @@ public class PleaseOpenConnection extends SignallingRequest
 		/* *********************************************************************
 		 * (Re-)Build socket path.
 		 **********************************************************************/
-		pReceiversProcess.recreatePath(getDescription(), mReturnRouteFromBaseFN, mSendersRouteUpToHisClient);
+		pReceiversProcess.recreatePath(getDescription(), mReturnRouteFromBaseFN);
 		
-		if(mSendersRouteUpToHisClient != null && !mSendersRouteUpToHisClient.isEmpty()) {
+		if(mSendersRouteUpToHisClient != null) {
 			
 			/* *****************************************************************
 			 * Path from remote base FN to remote client FN available so
@@ -524,12 +547,9 @@ public class PleaseOpenConnection extends SignallingRequest
 	 * @param pSendersRouteUpToHisClient The route starting at senders base FN
 	 * and ending at his client FN.
 	 */
-	private void setSendersRouteUpToHisClient(Route pSendersRouteUpToHisClient)
+	public void setSendersRouteUpToHisClient(Route pSendersRouteUpToHisClient)
 	{
 		this.mSendersRouteUpToHisClient = pSendersRouteUpToHisClient;
-		if(mSendersRouteUpToHisClient == null) {
-			mSendersRouteUpToHisClient = new Route();
-		}
 	}
 	
 	@Override
@@ -693,6 +713,9 @@ public class PleaseOpenConnection extends SignallingRequest
 	
 	@Viewable("To application")
 	private boolean mToApplication;
+	
+	@Viewable("Local dummy for creating connection")
+	private boolean mIsLocalDummy = false;
 	
 	
 	/* *************************************************************************

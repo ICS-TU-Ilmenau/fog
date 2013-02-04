@@ -148,12 +148,9 @@ public class ProcessGateCollectionConstruction extends ProcessConstruction
 	 * @param pReturnRouteFromLocalBaseFN The route starting at local base FN
 	 * and ending at remote base FN, may be needed for some gates.
 	 * 
-	 * @param pRemotesRouteUpToHisClient The route starting at remote base FN
-	 * and ending at its client FN, may be needed for some gates.
-	 * 
 	 * @throws NetworkException on errors
 	 */
-	public void recreatePath(Description pDescription, Route pReturnRouteFromLocalBaseFN, Route pRemotesRouteUpToHisClient) throws NetworkException
+	public void recreatePath(Description pDescription, Route pReturnRouteFromLocalBaseFN) throws NetworkException
 	{
 		/*
 		 * Check whether rebuild is necessary.

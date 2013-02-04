@@ -804,7 +804,7 @@ public class Controller
 			try {
 				tProcess.disableHorizontal();
 				tProcess.start();
-				tProcess.recreatePath(null, null, null);
+				tProcess.recreatePath(null, null);
 				if(Config.Connection.TERMINATE_WHEN_IDLE) {
 					tProcess.activateIdleTimeout();
 				}
@@ -1447,8 +1447,13 @@ public class Controller
 								tIntermediateRequirements.add(req);
 							}
 						} else {
-							// non-functional requirments
-							tIntermediateRequirements.add(prop);
+							if(prop instanceof NonFunctionalRequirementsProperty) {
+								// non-functional requirements
+								tIntermediateRequirements.add(prop);
+							} else {
+								// requirement not classified
+								// -> ignore it
+							}
 						}
 					}
 				}

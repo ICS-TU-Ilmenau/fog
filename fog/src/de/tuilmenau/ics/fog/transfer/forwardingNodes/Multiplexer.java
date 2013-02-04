@@ -247,13 +247,22 @@ public class Multiplexer extends GateContainer
 			mLogger.trace(this, "Received invisible " + packet +" and ignoring it.");
 		}
 		else {
-			if(mDataSocket != null) {
-				mLogger.trace(this, "Received " + packet +" for " +mDataSocket);
-				
-				mDataSocket.receiveData(packet.getData());
-			} else {
-				mLogger.warn(this, "Skip packet " +packet +" because socket towards app. " + getName().toString() + " is not valid (no signaling packet)");
-			}
+			handleDataPacket(packet);
+		}
+	}
+	
+	/**
+	 * Called if a FN received data packets, which have to be
+	 * forwarded to higher layer entities.
+	 */
+	protected void handleDataPacket(Packet packet)
+	{
+		if(mDataSocket != null) {
+			mLogger.trace(this, "Received " + packet +" for " +mDataSocket);
+			
+			mDataSocket.receiveData(packet.getData());
+		} else {
+			mLogger.warn(this, "Skip packet " +packet +" because socket towards app. " + getName().toString() + " is not valid (no signaling packet)");
 		}
 	}
 	
