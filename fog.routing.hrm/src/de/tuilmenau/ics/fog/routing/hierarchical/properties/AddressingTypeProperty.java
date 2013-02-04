@@ -9,32 +9,54 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.properties;
 
+import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * @author ossy
+ * 
+ * This class can be used in case HRM is used in hybrid mode where some routes are computed via the radius algorithm,
+ * while the routes between the highest clusters are computed via BGP or another routing algorithm.
  *
  */
 public class AddressingTypeProperty extends AbstractProperty
 {
-	public AddressingTypeProperty(AddressingType pType, RoutingServiceAddress pAddress)
+	/**
+	 * Please provide the type of the address that can be either AddressingType.DataLinkLayer, AddressingType.Hierarchical
+	 * or AddressingType.IP.
+	 * 
+	 * @param pType Fill in the type of the address you are about to provide here.
+	 * @param pAddress 
+	 */
+	public AddressingTypeProperty(AddressingType pType, Name pAddress)
 	{
 		mType = pType;
 		mAddress = pAddress;
 	}
 
+	/**
+	 * 
+	 * @return The type of the address that is used is returned here.
+	 */
 	public AddressingType getAddressingType()
 	{
 		return mType;
 	}
 	
-	public RoutingServiceAddress getAddress()
+	/**
+	 * 
+	 * @return The address can be found out via this method.
+	 */
+	public Name getAddress()
 	{
 		return mAddress;
 	}
 	
+	/**
+	 * 
+	 * @param pAS In case the name of the autonomous system should be provided you can set it here.
+	 */
 	public void setAS(String pAS)
 	{
 		if(mAddress.toString().contains("@32") && pAS.contains("1")); {
@@ -43,13 +65,18 @@ public class AddressingTypeProperty extends AbstractProperty
 		mAS = pAS;
 	}
 	
+	/**
+	 * 
+	 * @return In case the name of the autonomous system was set, it is returned via this method. Otherwise null is the result.
+	 * 
+	 */
 	public String getAS()
 	{
 		return mAS;
 	}
 	
 	public enum  AddressingType{DataLinkLayer, Hierarchical, IP};
-	private RoutingServiceAddress mAddress;
+	private Name mAddress;
 	private AddressingType mType;
 	private String mAS = null;
 }

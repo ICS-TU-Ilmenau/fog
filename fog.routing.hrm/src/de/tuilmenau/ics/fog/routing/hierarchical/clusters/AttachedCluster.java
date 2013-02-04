@@ -313,14 +313,6 @@ public class AttachedCluster implements Cluster, IElementDecorator
 	}
 
 	@Override
-	public Cluster getClusterWithHighestPriority() {
-		/*
-		 * not needed, this is just a dummy for topology
-		 */
-		return null;
-	}
-
-	@Override
 	public void setHighestPriority(float pHighestPriority) {
 		/*
 		 * not needed, this is just a dummy for topology

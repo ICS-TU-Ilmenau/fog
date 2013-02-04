@@ -696,7 +696,7 @@ public class HierarchicalRoutingService implements RoutingService
 		L2Address tAddress = null;
 		mLogger.log(this, "Found name " + (tEntries != null && tEntries.length > 0 ? tEntries[0].getAddress() : tEntries ) + " for " + pElement);
 		if(!mLocalNameMapping.containsKey(pElement)) {
-			tAddress = new L2Address(mRandomGenerator.nextLong(), pElement.getNode().getAS().toString());
+			tAddress = new L2Address(mRandomGenerator.nextLong());
 			tAddress.setCaps(mReferenceNode.getCapabilities());
 			tAddress.setDescr(pElement.toString());
 			mNameMapping.registerName(pName, tAddress, pLevel);
