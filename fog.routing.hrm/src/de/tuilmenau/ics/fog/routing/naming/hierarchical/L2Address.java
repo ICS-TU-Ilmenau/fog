@@ -18,16 +18,26 @@ public class L2Address extends HRMName
 {
 	private static final long serialVersionUID = 4484202410314555829L;
 
+	/**
+	 * Create an address that is used to identify a node at the MAC layer.
+	 * 
+	 * @param pAddress This can be a simple long value.
+	 */
 	public L2Address(long pAddress)
 	{
 		super(BigInteger.valueOf(pAddress));
 	}
 
+	/**
+	 * Create an address that is used to identify a node at the MAC layer.
+	 * 
+	 * @param pAddress This can be an object that takes a long value.
+	 */
 	public L2Address(BigInteger pAddress)
 	{
 		super(pAddress);
 	}
-	
+
 	public void setCaps(Description pDescription)
 	{
 		super.setCaps(pDescription);

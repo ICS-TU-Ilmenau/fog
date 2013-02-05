@@ -15,6 +15,10 @@ import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
 
+/**
+ * The implementation expects the network to be synchronized. This class causes the start of all elections.
+ *
+ */
 public class ElectionEvent implements IEvent 
 {
 	public ElectionEvent()

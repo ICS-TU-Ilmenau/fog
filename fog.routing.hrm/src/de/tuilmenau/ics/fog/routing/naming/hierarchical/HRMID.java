@@ -17,27 +17,35 @@ import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.VirtualNode;
 
-
+/**
+ * This identifies either physical nodes or clusters within the HRM system.
+ *
+ */
 public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 {
 	private static final long serialVersionUID = -8441496024628988477L;
 	public static Namespace HRMNamespace = new Namespace("HRM", false);
 	
-
+	/**
+	 * Because HRM system neither limits the amount of hierarchical levels nor the amount of nodes per hierarchical level,
+	 * you have to use BigInteger for addressing.
+	 * 
+	 * @param pAddress Provide a BigInteger that will be used as address, here.
+	 */
 	public HRMID(BigInteger pAddress)
 	{
 		super(pAddress);
 	}
 	
+	/**
+	 * 
+	 * @param pAddress It is possible to use a long type in order to generate an address.
+	 */
 	public HRMID(long pAddress)
 	{
 		super(BigInteger.valueOf(pAddress));
 	}
 	
-	public BigInteger getAddress()
-	{
-		return mAddress;
-	}
 	
 	@Override
 	public HRMID retrieveAddress()
@@ -45,11 +53,22 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 		return this;
 	}
 	
+	/**
+	 * Someone might be interested in the address of a specific hierarchical level.
+	 * 
+	 * @param pLevel Specify the hierarchical level you wish to know the address for, here.
+	 * @return The address of the specified hierarchical level will be returned.
+	 */
 	public BigInteger getLevelAddress(int pLevel)
 	{
 		return (mAddress.mod( (BigInteger.valueOf(2)).pow(HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (pLevel + 1) ) ).shiftRight(( HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (pLevel)) ) );
 	}
 	
+	/**
+	 * 
+	 * @param pLevel Specify the level you wish to set the address for, here.
+	 * @param pAddress Please provide a BigInteger that should be used as address for the specific hierarchical level.
+	 */
 	public void setLevelAddress(int pLevel, BigInteger pAddress)
 	{
 		if(pLevel != 0) {
@@ -67,25 +86,14 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 		mAddress = mAddress.add(pAddress.shiftLeft(pLevel*HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL));
 	}
 	
-	public void setCaps(Description pCapabilities)
-	{
-		if(pCapabilities != null) mCaps = pCapabilities.clone();
-		else pCapabilities = null;
-	}
-	
-	public Description getCaps()
-	{
-		return mCaps;
-	}
-	
+	/**
+	 * You may set a description of that address. 
+	 * 
+	 * @param pInfo This has to be of the type string.
+	 */
 	public void setDescr(String pInfo)
 	{
 		mDescr = pInfo;
-	}
-	
-	public String getDescr()
-	{
-		return mDescr;
 	}
 	
 	@Override
@@ -117,9 +125,10 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 	}
 	
 	/**
-	 * ascending in relation to an increasing exponent
-	 * @param pAddressToCompare
-	 * @return
+	 * Use this method to find out the ascending difference in relation to another address. 
+	 * 
+	 * @param pAddressToCompare Provide the address that should be compared to this entity, here.
+	 * @return The first occurrence at which a difference was found will be returned.
 	 */
 	public int getAscendingDifference(HRMID pAddressToCompare)
 	{
@@ -141,9 +150,10 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 	}
 	
 	/**
-	 * descending in relation to a decreasing exponent
-	 * @param pAddressToCompare
-	 * @return
+	 * Use this method to find out the descending difference in relation to another address.
+	 * 
+	 * @param pAddressToCompare Provide the address that should be compared to this entity, here.
+	 * @return The first occurrence at which a difference was found will be returned.
 	 */
 	public int getDescendingDifference(HRMID pAddressToCompare)
 	{
