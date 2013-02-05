@@ -23,8 +23,9 @@
 ARCH_BITS:= 			$(shell getconf LONG_BIT)
 JDK_PATH=               $(JDK_HOME)
 OSX_JDK_INCLUDE=		/System/Library/Frameworks/JavaVM.framework/Headers
-HOMER_PATH=             ../../../Homer-Conferencing
-GAPI_LIB_PATH=			$(HOMER_PATH)/HomerGAPI
+HOMER_PATH=             /mnt/workspace-desktop/Homer-Conferencing
+#../../../Homer-Conferencing
+NAPI_LIB_PATH=			$(HOMER_PATH)/HomerNAPI
 MEDIA_LIB_PATH=			$(HOMER_PATH)/HomerMultimedia
 BASE_LIB_PATH=			$(HOMER_PATH)/HomerBase
 MONITOR_LIB_PATH=		$(HOMER_PATH)/HomerMonitor
@@ -33,11 +34,12 @@ RM=                     rm -rf
 GENERAL_FLAGS=			-O0 -g3 -Wall -c -fmessage-length=0 -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS
 
 ifeq ($(MSYSTEM),MINGW32)
-	ARCH_BITS:=				32
-	LIB_TARGET=				../../libs/win32/MultimediaJni.dll
+# MODIFY THIS IN ORDER TO SELECT BETWEEN 32/64 bit builds
+	ARCH_BITS:= 			64
+	LIB_TARGET=				../../libs/win$(ARCH_BITS)/MultimediaJni.dll
 	JDK_PATH=				/mnt/jdk
-	INCLUDES= 				-I. -I$(MEDIA_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/Logging/ -I$(MONITOR_LIB_PATH)/include/ -I$(GAPI_LIB_PATH)/include/ -I$(FFMPEG_PATH) -I$(JDK_PATH)/include -I$(JDK_PATH)/include/win32
-	FLAGS= 					$(GENERAL_FLAGS) -DWIN32 -mwin32
+	INCLUDES= 				-I. -I$(MEDIA_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/Logging/ -I$(MONITOR_LIB_PATH)/include/ -I$(NAPI_LIB_PATH)/include/ -I$(FFMPEG_PATH) -I$(JDK_PATH)/include -I$(JDK_PATH)/include/win32
+	FLAGS= 					$(GENERAL_FLAGS) -DWINDOWS
 else
 	ifneq (,$(findstring xquartz,$(DISPLAY)))
 		# OSX found
@@ -46,7 +48,7 @@ else
 		# Linux found
 		LIB_TARGET=				../../libs/linux$(ARCH_BITS)/libMultimediaJni.so
 	endif
-	INCLUDES= 				-I./ -I$(MEDIA_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/Logging/ -I$(MONITOR_LIB_PATH)/include/ -I$(GAPI_LIB_PATH)/include/ -I$(FFMPEG_PATH) -I$(JDK_PATH)/include -I$(JDK_PATH)/include/linux -I$(OSX_JDK_INCLUDE)
+	INCLUDES= 				-I./ -I$(MEDIA_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/Logging/ -I$(MONITOR_LIB_PATH)/include/ -I$(NAPI_LIB_PATH)/include/ -I$(FFMPEG_PATH) -I$(JDK_PATH)/include -I$(JDK_PATH)/include/linux -I$(OSX_JDK_INCLUDE)
 	FLAGS= 					$(GENERAL_FLAGS) -DLINUX -fPIC -m$(ARCH_BITS)
 endif
 
