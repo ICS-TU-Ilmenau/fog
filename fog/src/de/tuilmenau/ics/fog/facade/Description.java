@@ -145,9 +145,6 @@ public class Description implements Iterable<Property>, Serializable
 						return false;
 					}
 				}
-				else {
-					return false;
-				}
 			}
 		}
 		

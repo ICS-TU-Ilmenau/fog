@@ -70,7 +70,7 @@ int initTranscoderInstance()
 
     Socket::DisableIPv6Support();
 	SVC_PROCESS_STATISTIC.DisableProcessStatisticSupport();
-	sTranscoder[tInstanceHandle].source = new MediaSourceMem(true);
+	sTranscoder[tInstanceHandle].source = new MediaSourceMem("FoG_AV_Transcoder", true);
 	sTranscoder[tInstanceHandle].muxer = new MediaSourceMuxer(sTranscoder[tInstanceHandle].source);
     sTranscoder[tInstanceHandle].storage = new MediaSinkMem("MemorySink", MEDIA_SINK_VIDEO, true /* assume RTP is always activated */);
     sTranscoder[tInstanceHandle].muxer->RegisterMediaSink(sTranscoder[tInstanceHandle].storage);
@@ -90,7 +90,7 @@ JNIEXPORT void JNICALL Java_jniImports_VideoTranscoder_open(JNIEnv *env, jobject
 	const char * tOutputCodec = (*env).GetStringUTFChars(pOutputCodec, 0);
 
 	// define input stream parameters
-	sTranscoder[pHandle].source->SetInputStreamPreferences(string(tInputCodec), false, pRtp);
+	sTranscoder[pHandle].source->SetInputStreamPreferences(string(tInputCodec), false);
 
     // define output stream parameters
     sTranscoder[pHandle].muxer->SetOutputStreamPreferences(tOutputCodec, 10 /* output quality */, 1200 /* max. packet size */, false /* no immediate reset */, xRes, yRes, pRtp);
@@ -129,7 +129,7 @@ JNIEXPORT void JNICALL Java_jniImports_VideoTranscoder_addDataInput(JNIEnv *env,
 {
 	jbyte* tBuffer = (*env).GetByteArrayElements(ba, 0);
 
-	sTranscoder[pHandle].source->WriteFragment((char*)tBuffer, size);
+	sTranscoder[pHandle].source->WriteFragment((char*)tBuffer, size, 0);
 
 	(*env).ReleaseByteArrayElements(ba, tBuffer, 0);
 }
@@ -138,8 +138,9 @@ JNIEXPORT jbyteArray JNICALL Java_jniImports_VideoTranscoder_getOutputPacket(JNI
 {
     int tBufferSize = MAX_PACKET_SIZE;
     char *tBuffer = sTranscoder[pHandle].packetBuffer;
+    int64_t tFragmentNumber = 0;
 
-    sTranscoder[pHandle].storage->ReadFragment(tBuffer, tBufferSize);
+    sTranscoder[pHandle].storage->ReadFragment(tBuffer, tBufferSize, tFragmentNumber);
 
     //printf("Buffer sizes: decoder is %d of %d, encoder is %d of %d, output is %d of %d\n", sTranscoder[pHandle].source->GetFragmentBufferCounter(), sTranscoder[pHandle].source->GetFragmentBufferSize(), sTranscoder[pHandle].muxer->GetMuxingBufferCounter(), sTranscoder[pHandle].muxer->GetMuxingBufferSize(), sTranscoder[pHandle].storage->GetFragmentBufferCounter(), sTranscoder[pHandle].storage->GetFragmentBufferSize());
 
