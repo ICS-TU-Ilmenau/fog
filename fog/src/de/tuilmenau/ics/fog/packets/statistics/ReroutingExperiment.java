@@ -174,13 +174,25 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	{
 		ReroutingSession tSession = mConcurrentReroutingSession;
 		if(tSession == null) {
+			mLogger.log(this, "--------------------------ESTABLISHING CONNECTION------------------------");
 			try {
-				mLogger.log(this, "--------------------------ESTABLISHING CONNECTION------------------------");
 				mConcurrentReroutingSession = mScript.getSourceAS().establishConnection(mSource, mTarget);
 			}
 			catch(RemoteException exc) {
-				throw new RuntimeException(this +" - Can not establish connection.", exc);
+				mLogger.warn(this, "Can not establish connection because AS not reachable.", exc);
+				mConcurrentReroutingSession = null;
 			}
+			
+			// connection created?
+			if(mConcurrentReroutingSession == null) {
+				terminateFailedExperiment();
+			} else {
+				// connection failed?
+				if(mConcurrentReroutingSession.isStopped()) {
+					terminateFailedExperiment();
+				}
+			}
+			
 			mLogger.log(this, "Rerouting session is now " + mConcurrentReroutingSession);
 			return;
 		}
@@ -201,13 +213,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			case 2:
 				if(!determineElementToBreak()) {
 					// stop this experiment run as it is impossible
-					mScript.getAS().getSimulation().unsubscribe(this);
-					mScript.getAS().getSimulation().getTimeBase().scheduleIn(0.1, new IEvent() {
-						@Override
-						public void fire() {
-							mScript.getAS().getSimulation().publish(new ExperimentEvent(ExperimentEvent.IMPOSSIBLE));
-						}
-					});
+					terminateFailedExperiment();
 				} else {
 					mFailedNeighbours.clear();
 					breakElement();
@@ -523,6 +529,19 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			getLogger().debug(this, (execution ? "successfully" : "unsuccessfully") + " repaired element " + mBrokenName + " in turn " + mCount + " at step " + mStep);
 			return true;
 		}
+	}
+	
+	private void terminateFailedExperiment()
+	{
+		mLogger.warn(this, "Terminate current experiment.");
+		
+		mScript.getAS().getSimulation().unsubscribe(this);
+		mScript.getAS().getSimulation().getTimeBase().scheduleIn(0.1, new IEvent() {
+			@Override
+			public void fire() {
+				mScript.getAS().getSimulation().publish(new ExperimentEvent(ExperimentEvent.IMPOSSIBLE));
+			}
+		});
 	}
 
 	public synchronized boolean queryValidExperiment()

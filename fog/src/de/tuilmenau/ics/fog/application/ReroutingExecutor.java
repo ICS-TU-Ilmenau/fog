@@ -119,9 +119,11 @@ public class ReroutingExecutor extends Application
 			return true;
 		}
 		
-		public void closed()
+		// called on error and normal shutdown
+		public void stop()
 		{
-			super.closed();
+			super.stop();
+			
 			if(mSessions != null) {
 				mSessions.remove(this);
 			}
@@ -156,7 +158,6 @@ public class ReroutingExecutor extends Application
 		public void connected()
 		{
 			mLogger.log(this, "Session is now connected");
-			super.connected();
 			try {
 				if(mSource) {
 					RerouteScript.getCurrentInstance().getExperiment().tell(null);

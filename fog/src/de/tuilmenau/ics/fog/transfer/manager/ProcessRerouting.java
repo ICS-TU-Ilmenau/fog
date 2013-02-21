@@ -85,7 +85,7 @@ public class ProcessRerouting extends Process
 		return !reroutingGate.isDeleted();
 	}
 	
-	public void signal()
+	public void signal() throws NetworkException
 	{
 		try {
 			Description tDescr = reroutingGate.getDescription();
@@ -134,7 +134,12 @@ public class ProcessRerouting extends Process
 						{
 							if(!reroutingGate.isOperational()) {
 								getLogger().info(this, "Resending signal message");
-								signal();
+								try {
+									signal();
+								}
+								catch(NetworkException exc) {
+									getLogger().warn(this, "Failed to resend signal message. Try again later.", exc);
+								}
 								timer = getBase().getNode().getTimeBase().scheduleIn(RESEND_OPEN_REQUEST_TIMEOUT_SEC, this);
 							}
 							// else: everything fine; no further signaling required
@@ -146,9 +151,8 @@ public class ProcessRerouting extends Process
 			}
 		}
 		catch(NetworkException tExc) {
-			mLogger.warn(this, "Can not determine backup route to " +reroutingGate.getRemoteDestinationName(), tExc);
+			throw new NetworkException(this, "Can not determine backup route to " +reroutingGate.getRemoteDestinationName(), tExc);
 		}
-
 	}
 
 	public void update(Route alternativeRoute)

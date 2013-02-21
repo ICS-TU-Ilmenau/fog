@@ -79,6 +79,11 @@ public abstract class ApplicationEventHandler<EventSourceType extends EventSourc
 		stopHandling = true;
 	}
 	
+	public boolean isStopped()
+	{
+		return stopHandling;
+	}
+	
 	@Override
 	public void run()
 	{
