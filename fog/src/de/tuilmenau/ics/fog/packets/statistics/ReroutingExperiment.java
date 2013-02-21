@@ -165,38 +165,9 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	
 	public synchronized void reconstruct()
 	{
-		try {
-    		if (mConcurrentBrokenType == BROKEN_TYPE_NODE) {
-
-				if(JiniHelper.isEnabled()) {
-					((IAutonomousSystem)JiniHelper.getService(IAutonomousSystem.class, mNMS.getASNameByNode(mBrokenName))).executeCommand("time");
-				} else {
-					String tASName = mNMS.getASNameByNode(mBrokenName);
-					for(IAutonomousSystem tAS : mScript.getSimulation().getAS()) {
-						if(tAS.getName().equals(tASName)) {
-							tAS.executeCommand("time");
-						}
-					}
-				}
-				getLogger().warn(this, "Completed execution of necessary reconstruction steps");
-				sendPacket(true,false);
-			} else {
-				if(JiniHelper.isEnabled()) {
-					((IAutonomousSystem)JiniHelper.getService(
-							IAutonomousSystem.class,
-							((ILowerLayer)JiniHelper.getService(ILowerLayer.class, mBrokenName)).getASName())).executeCommand("time");
-				} else {
-					/*
-					 * in this case we do it in the simulation, so all autonomous systems execute dostep
-					 */
-					mScript.getSimulation().executeCommand("time");
-				}
-				getLogger().warn(this, "Maybe completed execution of necessary reconstruction steps");
-				sendPacket(true,false);
-			}
-		} catch (RemoteException e) {
-			getLogger().err(this, "error in reconstruction", e);
-		}
+		getLogger().log(this, "Completed execution of necessary reconstruction steps");
+		sendPacket(true,false);
+		return;
 	}
 	
 	public void executeNextStep()
