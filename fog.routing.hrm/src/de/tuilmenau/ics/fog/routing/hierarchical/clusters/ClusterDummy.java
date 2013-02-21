@@ -159,12 +159,6 @@ public class ClusterDummy implements Serializable, Cluster
 	}
 
 	@Override
-	public Cluster getClusterWithHighestPriority()
-	{
-		return null;
-	}
-
-	@Override
 	public float getHighestPriority()
 	{
 		return 0;
@@ -201,12 +195,6 @@ public class ClusterDummy implements Serializable, Cluster
 
 	@Override
 	public void addNeighborCluster(Cluster pNeighbor)
-	{
-		
-	}
-
-	@Override
-	public void setRouteToCoordinator(Route pPath)
 	{
 		
 	}

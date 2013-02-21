@@ -64,7 +64,7 @@ int initDecoderInstance()
 	Socket::DisableIPv6Support();
 	SVC_PROCESS_STATISTIC.DisableProcessStatisticSupport();
 
-	sDecoder[tInstanceHandle].source = new MediaSourceMem(true);
+	sDecoder[tInstanceHandle].source = new MediaSourceMem("FoG_AV_Decoder", true);
 	sDecoder[tInstanceHandle].frameBuffer = (char*)malloc(MAX_FRAME_SIZE);
 
 	return tInstanceHandle;
@@ -76,7 +76,7 @@ int initDecoderInstance()
 JNIEXPORT void JNICALL Java_jniImports_VideoDecoder_open(JNIEnv *env, jobject, jint pHandle, jstring codec, jboolean rtp, jbyteArray picBuffer, jintArray stats, jint xRes, jint yRes, jfloat fps)
 {
 	const char * tCodec = (*env).GetStringUTFChars(codec, 0);
-	sDecoder[pHandle].source->SetInputStreamPreferences(string(tCodec), false, rtp);
+	sDecoder[pHandle].source->SetInputStreamPreferences(string(tCodec), false);
 	sDecoder[pHandle].source->OpenVideoGrabDevice(xRes, yRes, fps);
 }
 
@@ -119,7 +119,7 @@ JNIEXPORT void JNICALL Java_jniImports_VideoDecoder_close(JNIEnv *env, jobject,	
 JNIEXPORT void JNICALL Java_jniImports_VideoDecoder_addDataInput(JNIEnv *env, jobject obj, jint pHandle, jbyteArray ba, jint size)
 {
 	jbyte* tBuffer = (*env).GetByteArrayElements(ba, 0);
-	sDecoder[pHandle].source->WriteFragment((char*)tBuffer, size);
+	sDecoder[pHandle].source->WriteFragment((char*)tBuffer, size, 0);
 	(*env).ReleaseByteArrayElements(ba, tBuffer, 0);
 }
 

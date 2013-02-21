@@ -13,24 +13,31 @@ import java.math.BigInteger;
 
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ASParticipationProperty;
 
 public class L2Address extends HRMName
 {
 	private static final long serialVersionUID = 4484202410314555829L;
 
-	public L2Address(long pAddress, String pASName)
+	/**
+	 * Create an address that is used to identify a node at the MAC layer.
+	 * 
+	 * @param pAddress This can be a simple long value.
+	 */
+	public L2Address(long pAddress)
 	{
 		super(BigInteger.valueOf(pAddress));
-		Description tDescription = new Description();
-		tDescription.set(new ASParticipationProperty(pASName));
 	}
 
+	/**
+	 * Create an address that is used to identify a node at the MAC layer.
+	 * 
+	 * @param pAddress This can be an object that takes a long value.
+	 */
 	public L2Address(BigInteger pAddress)
 	{
 		super(pAddress);
 	}
-	
+
 	public void setCaps(Description pDescription)
 	{
 		super.setCaps(pDescription);

@@ -40,7 +40,10 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical.RegionLimitationDialog;
 
 /**
- * @author ossy
+ * In order to create simulations this class sends packets from one node to another randomly chosen node. Or from one 
+ * packets are sent to all other nodes within the network. The last case is to iteratively walk through the nodes of a network
+ * and send packets to all other nodes. In that case you can determine the stretch of your system.
+ *  
  *
  */
 public class SendPacket extends Command
@@ -48,9 +51,7 @@ public class SendPacket extends Command
 	private Node mNode;
 	private IWorkbenchPartSite mSite;
 
-	/**
-	 * 
-	 */
+
 	public SendPacket()
 	{
 		

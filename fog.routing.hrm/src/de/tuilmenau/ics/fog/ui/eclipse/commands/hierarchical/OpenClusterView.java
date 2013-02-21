@@ -21,7 +21,7 @@ import de.tuilmenau.ics.fog.topology.Node;
 
 public class OpenClusterView extends Command
 {
-
+	
 	public OpenClusterView()
 	{
 		super();

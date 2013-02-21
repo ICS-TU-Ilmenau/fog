@@ -26,13 +26,16 @@ import de.tuilmenau.ics.fog.video.gates.ConfigVideoGates;
 
 /**
  * This is the wrapper class for the video decoder of the Homer Conferencing libraries.
- * It works for Windows-32bit, Linux-32/64bit and OS X-64bit        
+ * It works for Windows-32/64bit, Linux-32/64bit and OS X-64bit        
  */
 public class VideoDecoder 
 {
-	public final static String[] winLibraries = { "msvcrt.dll", "libgcc_s_dw2-1.dll", "libstdc++-6.dll",
-										    	  "avutil-51.dll", "swscale-2.dll", "avcodec-54.dll", "avformat-54.dll", "swresample-0.dll", "postproc-52.dll", "avfilter-3.dll", "avdevice-54.dll", "portaudio.dll", "SDL.dll", 
-										    	  "HomerBase.dll", "HomerMonitor.dll", "HomerGAPI.dll", "HomerMultimedia.dll", "MultimediaJni.dll" };
+	public final static String[] winLibraries = { "libgcc_s_dw2-1.dll", "libstdc++-6.dll",
+										    	  "avutil-52.dll", "swscale-2.dll", "avcodec-54.dll", "avformat-54.dll", "swresample-0.dll", "postproc-52.dll", "avfilter-3.dll", "avdevice-54.dll", "portaudio.dll", 
+										    	  "HomerBase.dll", "HomerMonitor.dll", "HomerNAPI.dll", "HomerMultimedia.dll", "MultimediaJni.dll" };
+	public final static String[] winLibraries64 = { "libgcc_s_sjlj-1.dll", "libstdc++-6.dll",
+											  	    "avutil-52.dll", "swscale-2.dll", "avcodec-54.dll", "avformat-54.dll", "swresample-0.dll", "postproc-52.dll", "avfilter-3.dll", "avdevice-54.dll", "portaudio.dll",
+											  	    "HomerBase.dll", "HomerMonitor.dll", "HomerNAPI.dll", "HomerMultimedia.dll", "MultimediaJni.dll" };
 	public final static String[] linLibraries = { "libHomerBase.so", "libHomerMonitor.so", "libHomerGAPI.so", "libHomerMultimedia.so", "libMultimediaJni.so" };
 	public final static String[] osxLibraries = { "libHomerBase.dylib", "libHomerMonitor.dylib", "libHomerGAPI.dylib", "libHomerSoundOutput.dylib", "libHomerMultimedia.dylib", "libMultimediaJni.dylib" };
 	public final static String VIDEO_LIBS_PLUGIN = "de.tuilmenau.ics.fog.video";
@@ -70,15 +73,16 @@ public class VideoDecoder
 		
 		switch(tOsType) {
 				case Windows:
-					tResult =  new String[winLibraries.length];
 					if (ARCHDetector.is32Bit()) {
+						tResult =  new String[winLibraries.length];
 						for (int i = 0; i < winLibraries.length; i++) {
 							tResult[i] = "win32/" + winLibraries[i];
 						}				
 					}
 					else{
-						for (int i = 0; i < winLibraries.length; i++) {
-							tResult[i] = "win64/" + winLibraries[i];
+						tResult =  new String[winLibraries64.length];
+						for (int i = 0; i < winLibraries64.length; i++) {
+							tResult[i] = "win64/" + winLibraries64[i];
 						}				
 					}
 					break;

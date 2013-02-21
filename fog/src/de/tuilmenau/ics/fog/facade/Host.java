@@ -24,6 +24,7 @@ import de.tuilmenau.ics.fog.authentication.IdentityManagement;
 import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
 import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
+import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
 import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
@@ -150,8 +151,8 @@ public class Host extends EventSourceBase implements Layer
 			tCEP.setError(new NetworkException(this, "Name " +pName +" is not known to routing service."));
 			return tCEP;
 		}
-			
-		// make sure there is no null pointer in
+		
+		// make sure there is no null pointer
 		if(pDescription == null) pDescription = Description.createEmpty();
 		
 		// in which name do we start the creation and the signaling?
@@ -188,7 +189,7 @@ public class Host extends EventSourceBase implements Layer
 				// Do nothing here.
 			} else {
 				// Socket-path will be created instantly.
-				tProcess.recreatePath(pDescription, null, null);
+				tProcess.recreatePath(pDescription, null);
 			}
 	
 			/*
@@ -203,10 +204,17 @@ public class Host extends EventSourceBase implements Layer
 			IContinuation<Process> tCont = new WaitForSocketContinuation(tProcess, tCEP);
 			tProcess.observeNextStateChange(-1.0d, tCont);
 			
-			/*
-			 * Send request to remote system.
-			 */
-			tProcess.signal(true, tRoute);
+			if(signalingRequired(pDescription)) {
+				/*
+				 * Send request to remote system.
+				 */
+				tProcess.signal(true, tRoute);
+			} else {
+				/*
+				 * No signaling required; use partial route and start right away.
+				 */
+				tProcess.updateRoute(tRoute, null);
+			}
 		}
 		catch(Exception exc) {
 			mNode.getLogger().err(this, "Exception during connect to " +pName, exc);
@@ -263,7 +271,26 @@ public class Host extends EventSourceBase implements Layer
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
+	private static boolean signalingRequired(Description requConnect)
+	{
+		boolean isBE = requConnect.isBestEffort();
+		
+		if(isBE) {
+			if(requConnect != null) {
+				CommunicationTypeProperty tCommType = (CommunicationTypeProperty) requConnect.get(CommunicationTypeProperty.class);
+				if(tCommType != null) {
+					return tCommType.requiresSignaling();
+				}
+			}
+			
+			return CommunicationTypeProperty.getDefault().requiresSignaling();
+		} else {
+			// we require some QoS and, thus, have to signal it
+			return true;
+		}
+	}
+	
 	/**
 	 * Checks whether or not a name is known by the FoG system.
 	 * That does not imply that a connection to this name can

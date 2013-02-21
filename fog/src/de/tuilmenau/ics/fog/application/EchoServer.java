@@ -19,9 +19,13 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
+import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
+import de.tuilmenau.ics.fog.facade.properties.OrderedProperty;
+import de.tuilmenau.ics.fog.facade.properties.TransportProperty;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.RateLimitedAction;
 
@@ -56,7 +60,12 @@ public class EchoServer extends Application
 	protected void started()
 	{
 		try {
-			Binding tBinding = getHost().bind(null, mName, getDescription(), getIdentity());
+			// enable single datagram connections to echo server
+			Description requ = getDescription();
+			requ.set(CommunicationTypeProperty.DATAGRAM);
+			
+			// register at FoG
+			Binding tBinding = getHost().bind(null, mName, requ, getIdentity());
 			
 			// create object, which adds EchoService objects
 			// to each incoming connection

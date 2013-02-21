@@ -22,6 +22,10 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.events.NewConnectionEvent;
+import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
+import de.tuilmenau.ics.fog.packets.Packet;
+import de.tuilmenau.ics.fog.packets.PleaseOpenConnection;
+import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.util.EventSourceBase;
@@ -58,6 +62,28 @@ public class ServerFN extends Multiplexer
 	public Description getDescription()
 	{
 		return description;
+	}
+	
+	@Override
+	protected void handleDataPacket(Packet packet)
+	{
+		// are we allowed to open connections implicitly?
+		CommunicationTypeProperty type = null;
+		if(description != null) {
+			type = (CommunicationTypeProperty) description.get(CommunicationTypeProperty.class);
+		}
+		if(type == null) {
+			type = CommunicationTypeProperty.getDefault();
+		}
+		
+		if(!type.requiresSignaling()) {
+			PleaseOpenConnection artSigMsg = new PleaseOpenConnection(description);
+			
+			artSigMsg.setSendersRouteUpToHisClient(new Route());
+			artSigMsg.execute(this, packet);
+		} else {
+			mLogger.err(this, "Binding is not allowed to open connection implicitly due to type " +type);
+		}
 	}
 	
 	public Binding getBinding()

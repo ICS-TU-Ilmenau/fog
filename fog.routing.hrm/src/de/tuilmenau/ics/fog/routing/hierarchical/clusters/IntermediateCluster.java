@@ -43,8 +43,14 @@ import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 
-
-public class IntermediateCluster implements Cluster, VirtualNode, IElementDecorator
+/**
+ * This class represents clusters that are directly attached to a physical node. In contrast to this class
+ * there also exists the attached cluster. Attached clusters are representatives of clusters that are not
+ * directly connected to a physical node. There is always one intermediate cluster between an attached cluster
+ * and a physical node. Only on an intermediate cluster may be managed by a ClusterManager.
+ * 
+ */
+public class IntermediateCluster implements Cluster, IElementDecorator
 {
 	private CoordinatorCEPDemultiplexed mCoordinator;
 	private Long mClusterID;
@@ -74,6 +80,17 @@ public class IntermediateCluster implements Cluster, VirtualNode, IElementDecora
 	private ClusterManager mClusterManager = null;
 	private CoordinatorCEPMultiplexer mMux = null;
 	
+	/**
+	 * This is the constructor of an intermediate cluster. At first such a cluster is identified by its cluster
+	 * ID and the hierarchical level. Later on - once a coordinator is found, it is additionally identified
+	 * by a token the coordinator sends to all participants. In contrast to the cluster token the identity is used
+	 * to filter potential participants that may be used for the election of a coordinator.
+	 * 
+	 * @param pClusterID
+	 * @param pLevel
+	 * @param pCoordinatorInstance
+	 * @param pLogger
+	 */
 	public IntermediateCluster(Long pClusterID, int pLevel, Coordinator pCoordinatorInstance, Logger pLogger)
 	{
 		mClusterID = pClusterID;
@@ -393,24 +410,6 @@ public class IntermediateCluster implements Cluster, VirtualNode, IElementDecora
 			mReceivedAnnounces.add(pAnnouncement);
 		}
 	}
-
-	/**
-	 * This method searches the cluster that has the highest ID within a cluster range specified by Config.Routing.PAN...
-	 */
-	@Override
-	public Cluster getClusterWithHighestPriority() {
-		float tHighestPriority=0;
-		Cluster tCluster=null;
-		for(VirtualNode tNode : getCoordinator().getClusterMap().getVertices()) {
-			if(tNode instanceof Cluster && ((Cluster)tNode).getLevel() == mLevel) {
-				if(((Cluster)tNode).getPriority() > tHighestPriority) {
-					tCluster = (Cluster)tNode;
-					tHighestPriority = ((Cluster)tNode).getPriority();
-				}
-			}
-		}
-		return tCluster;
-	}
 	
 	/**
 	 * @param pHRMID identification of this cluster
@@ -715,6 +714,11 @@ public class IntermediateCluster implements Cluster, VirtualNode, IElementDecora
 		return mEnvelope;
 	}
 	
+	/**
+	 * 
+	 * @return Return the cluster manager that is associated to this intermediate cluster. However it is only initialized if this
+	 * node really had the highest priority.
+	 */
 	public ClusterManager getClusterManager()
 	{
 		return mClusterManager;
@@ -738,6 +742,12 @@ public class IntermediateCluster implements Cluster, VirtualNode, IElementDecora
 		return mMux;
 	}
 
+	/**
+	 * This method is specific for the handling of RouteRequests.
+	 * 
+	 * @param pCluster
+	 * @return
+	 */
 	public CoordinatorCEPDemultiplexed getCEPOfCluster(Cluster pCluster)
 	{
 		for(CoordinatorCEPDemultiplexed tCEP : getParticipatingCEPs()) {

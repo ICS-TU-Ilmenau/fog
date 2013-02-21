@@ -15,6 +15,10 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 
+/**
+ * This is the base class for the addresses that are used within the HRM system.
+ *
+ */
 public class HRMName implements Name
 {
 	protected BigInteger mAddress;
@@ -25,22 +29,38 @@ public class HRMName implements Name
 	 */
 	protected transient Object mOptionalDescr;
 	
+	/**
+	 * This description includes the requirements given by the FoG system. 
+	 */
 	protected Description mDescription;
 	
 	private static final long serialVersionUID = 6612145890128148511L;
 	public static final Namespace NAMESPACE_HRM = new Namespace("HRM");
 	
+	/**
+	 * 
+	 * @param pAddress Provide the address 
+	 */
 	public HRMName(BigInteger pAddress)
 	{
 		mAddress = pAddress;
 	}
 	
+	/**
+	 * Use this if you have to use the addresses twice.
+	 * 
+	 * @param pName
+	 */
 	public HRMName(HRMName pName)
 	{
 		this.mAddress = pName.mAddress;
 		this.mOptionalDescr = pName.mOptionalDescr;
 	}
 	
+	/**
+	 * 
+	 * @return The address will be returned by this method.
+	 */
 	public BigInteger getAddress()
 	{
 		return mAddress;
@@ -58,21 +78,40 @@ public class HRMName implements Name
 		return mAddress.bitLength();
 	}
 	
+	/**
+	 * Because a node that is identified by an HRMName can have several abilities, they have to be described.
+	 * 
+	 * @param pDescription Provide the the description of the nodes abilities.
+	 */
 	public void setCaps(Description pDescription)
 	{
 		mDescription = pDescription;
 	}
 
+	/**
+	 * Because a node that is identified by an HRMName can have several abilities, they have to be described.
+	 * 
+	 * @return Returned is the description of the nodes abilities.
+	 */
 	public Description getCaps()
 	{
 		return mDescription;
 	}
 	
+	/**
+	 * Set a description of the HRMName via this method.
+	 * 
+	 * @param pDescr
+	 */
 	public void setDescr(Object pDescr)
 	{
 		mOptionalDescr = pDescr;
 	}
 	
+	/**
+	 * 
+	 * @return The object used for description is returned.
+	 */
 	public Object getDescr()
 	{
 		return mOptionalDescr;
