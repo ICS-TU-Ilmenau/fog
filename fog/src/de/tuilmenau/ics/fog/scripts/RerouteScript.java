@@ -28,9 +28,10 @@ import de.tuilmenau.ics.fog.util.SimpleName;
 
 
 /**
- * If you type in 'start Reroute <node|bus|atwill> <local|distributed> <integer number of experiments>'
- * you start this Script. Please be aware of the fact that you need
- * Jini (running) in case you want a distributed Rerouting Experiment
+ * Usage:
+ *   'start Reroute <node|bus|atwill> [<integer number of experiments = 1> [<devisor for finding element to break = 2.0 (2.0=middle of route; 0=random)>]]'
+ *   
+ * If you run the experiment in a distributed setup, JINI is required.
  */
 public class RerouteScript extends Script implements SimulationEventHandler
 {
@@ -50,13 +51,13 @@ public class RerouteScript extends Script implements SimulationEventHandler
 	@Override
 	public boolean execute(String[] commandParts, AutonomousSystem as) throws Exception
 	{
-		getLogger().debug(this, "now executing RerouteScript with called parameters " + commandParts[0] + " " + commandParts[1] + " " + commandParts[2] + " " + commandParts[3]);
 		boolean tOk = false;
 		
 		this.as = as;
 
 		if(commandParts.length >= 3) {
 			mCount = 10;
+			// determine number of experiments
 			if (commandParts.length >= 4) {
 				try {
 					mCount = Integer.parseInt(commandParts[3]);
@@ -65,6 +66,8 @@ public class RerouteScript extends Script implements SimulationEventHandler
 					mCount = 1;
 				}
 			}
+			
+			// define which element to break (2==middle of route; 0==random)
 			if (commandParts.length >= 5) {
 				try {
 					mPosition = Float.parseFloat(commandParts[4]);
@@ -72,13 +75,13 @@ public class RerouteScript extends Script implements SimulationEventHandler
 					mPosition = 2;
 				}
 			}
-			if (commandParts[2].equals("node")) {
+			if (commandParts[2].equalsIgnoreCase("node")) {
 				mType = ReroutingExperiment.BROKEN_TYPE_NODE;
 			}
-			else if (commandParts[2].equals("bus")) {
+			else if (commandParts[2].equalsIgnoreCase("bus")) {
 				mType = ReroutingExperiment.BROKEN_TYPE_BUS;
 			}
-			else if (commandParts[2].equals("atwill")) {
+			else if (commandParts[2].equalsIgnoreCase("atwill")) {
 				mType = ReroutingExperiment.BROKEN_TYPE_AT_WILL;
 			}
 			else {
@@ -88,7 +91,7 @@ public class RerouteScript extends Script implements SimulationEventHandler
 			
 			mCurrCount = 0;
 			getAS().getSimulation().subscribe(this);
-			runExperiment();
+			tOk = runExperiment();
 		}
 		return tOk;
 	}
