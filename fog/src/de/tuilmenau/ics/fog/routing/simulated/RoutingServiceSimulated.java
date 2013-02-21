@@ -584,11 +584,9 @@ public class RoutingServiceSimulated implements RoutingService
 				
 				if(!tQoSGate) {
 					try {
-						if(!mRS.registerLink(tFrom, tTo, pGate.getGateID(), pGate.getDescription(), pGate.getCost())) {
-							throw new NetworkException("Failed to register link " +pGate +": " +tFrom +"->" +tTo +" at higher entity.");
-						}
+						mRS.registerLink(tFrom, tTo, pGate.getGateID(), pGate.getDescription(), pGate.getCost());
 					} catch (RemoteException exc) {
-						throw new NetworkException("Failed to register link " +pGate, exc);
+						throw new NetworkException("Failed to register link " +pGate +": " +tFrom +"->" +tTo +" at higher entity.", exc);
 					}
 				}
 			} else {

@@ -124,13 +124,13 @@ public class PartialRoutingService implements RemoteRoutingService
 	}
 
 	@Override
-	public boolean registerNode(RoutingServiceAddress pNode, boolean pGloballyImportant) throws RemoteException
+	public Result registerNode(RoutingServiceAddress pNode, boolean pGloballyImportant) throws RemoteException
 	{
-		boolean inserted = false;
+		Result inserted;
 		
 		if(!mMap.contains(pNode)) {
 			mMap.add(pNode);
-			inserted = true;
+			inserted = Result.INSERTED;
 			
 			mLogger.trace(this, "Register node " +pNode +" (important=" +pGloballyImportant +"; new=" +inserted +")");
 		} else {
@@ -141,9 +141,12 @@ public class PartialRoutingService implements RemoteRoutingService
 			// are they really different objects?
 			if(tLocalNode != pNode) {
 				tLocalNode.setCaps(pNode.getCaps());
+				
+				inserted = Result.UPDATED;
+				mLogger.trace(this, "Update capabilities of node " +pNode +" to " +tLocalNode.getCaps());
+			} else {
+				inserted = Result.NOTHING;
 			}
-			
-			mLogger.trace(this, "Update capabilities of node " +pNode +" to " +tLocalNode.getCaps());
 		}
 		
 		// delete old deletion jobs for this node
@@ -274,9 +277,9 @@ public class PartialRoutingService implements RemoteRoutingService
 	}
 	
 	@Override
-	public boolean registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription, Number pLinkCost) throws RemoteException 
+	public Result registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription, Number pLinkCost) throws RemoteException 
 	{
-		boolean didSomething = false;
+		Result didSomething;
 		boolean remoteLink = false;
 		
 		mLogger.log(this, "Register link " +pFrom +"-" +pGateID +"->" +pTo);
@@ -307,8 +310,10 @@ public class PartialRoutingService implements RemoteRoutingService
 		RoutingServiceLink currentLinkObj = mMap.getEdge(pFrom, pTo, newLink);
 		if(currentLinkObj == null) {
 			mMap.link(pFrom, pTo, newLink);
-			didSomething = true;
+			didSomething = Result.INSERTED;
 		} else {
+			didSomething = Result.NOTHING;
+			
 			if(currentLinkObj.hasInfiniteCost()) {
 				mLogger.log(this, "Reactivating link " +currentLinkObj +" between " +pFrom +"->" +pTo);
 				currentLinkObj.setCost(pLinkCost);
@@ -322,7 +327,7 @@ public class PartialRoutingService implements RemoteRoutingService
 				
 				// inform map about changed link weights
 				mMap.edgeWeightChanged(currentLinkObj);
-				didSomething = true;
+				didSomething = Result.UPDATED;
 			} else {
 				mLogger.log(this, "Link " +currentLinkObj +" between " +pFrom +"->" +pTo +" is already known (" +currentLinkObj +")");
 
@@ -333,7 +338,7 @@ public class PartialRoutingService implements RemoteRoutingService
 						// update link cost and inform map about it
 						currentLinkObj.setCost(pLinkCost);
 						mMap.edgeWeightChanged(currentLinkObj);
-						didSomething = true;
+						didSomething = Result.UPDATED;
 					}
 				}
 				// else: stick to old cost value
