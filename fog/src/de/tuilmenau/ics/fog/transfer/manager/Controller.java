@@ -1049,12 +1049,8 @@ public class Controller
 			pPacket.clearDownRoute();
 		}
 		RoutingService tRs = mNode.getRoutingService();
-		Route tNewRoute = null;
-		Route tReturnRoute = null;
-		HorizontalGate tHorizontalGate = null;
 
 		try {
-			Route tLastPartRoute = tOldRoute.clone();
 			Description tRouteRequirements = pFrom.getDescription();
 			ProcessRerouting tProcess = null;
 
@@ -1181,9 +1177,6 @@ public class Controller
 		}
 	}
 	
-
-	//private static void fillList(boolean up, IName pTargetName, Word solution, Description pDescription, LinkedList<SocketPathParam> pList, ForwardingNode pBaseFN, Controller pController)
-
 	private ErrorReflectorGate createErrorReflectorGate()
 	{
 		ErrorReflectorGate tGate = new ErrorReflectorGate(mNode, null);
