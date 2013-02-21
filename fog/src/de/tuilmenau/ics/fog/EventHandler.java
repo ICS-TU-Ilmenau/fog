@@ -59,7 +59,9 @@ public class EventHandler extends Thread
 	private void alignSimTimeWithSystemTime()
 	{
 		mSystemTimeOffsetSec = mCurrentTime -(double) System.currentTimeMillis() / 1000.0d;
-		mLogger.log(this, "Align with system time by offset " +mSystemTimeOffsetSec);
+		if(DEBUG_OUTPUT) {
+			mLogger.log(this, "Align with system time by offset " +mSystemTimeOffsetSec);
+		}
 	}
 	
 	/**
