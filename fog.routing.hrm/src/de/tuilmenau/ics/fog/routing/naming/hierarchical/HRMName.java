@@ -14,6 +14,8 @@ import java.math.BigInteger;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
+import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 
 /**
  * This is the base class for the addresses that are used within the HRM system.
@@ -115,5 +117,21 @@ public class HRMName implements Name
 	public Object getDescr()
 	{
 		return mOptionalDescr;
+	}
+	
+	public boolean equals(Object pObj)
+	{
+		if(pObj == null) return false;
+		if(pObj == this) return true;
+		
+		if(pObj instanceof RoutingServiceAddress) {
+			return ((RoutingServiceAddress) pObj).getAddress() == mAddress.longValue();
+		} else if(pObj instanceof HRMName) {
+			return (((HRMName) pObj).mAddress.equals(mAddress));
+		} if (pObj instanceof RoutingServiceLinkVector) {
+			return ( ((RoutingServiceLinkVector)pObj).getSource() != null && ((RoutingServiceLinkVector)pObj).getSource().equals(this)) || (((RoutingServiceLinkVector)pObj).getDestination() != null && ((RoutingServiceLinkVector)pObj).getDestination().equals(this) ) ;
+		}
+		
+		return false;
 	}
 }

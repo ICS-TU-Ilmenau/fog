@@ -19,7 +19,6 @@ import java.util.Random;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.routing.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.util.Size;
 
 
@@ -78,8 +77,6 @@ public class RoutingServiceAddress implements Name
 		
 		if(pObj instanceof RoutingServiceAddress) {
 			return (((RoutingServiceAddress) pObj).mAddress.equals(mAddress));
-		} else if (pObj instanceof RoutingServiceLinkVector) {
-			return ( ((RoutingServiceLinkVector)pObj).getSource() != null && ((RoutingServiceLinkVector)pObj).getSource().equals(this)) || (((RoutingServiceLinkVector)pObj).getDestination() != null && ((RoutingServiceLinkVector)pObj).getDestination().equals(this) ) ;
 		}
 		
 		return false;
