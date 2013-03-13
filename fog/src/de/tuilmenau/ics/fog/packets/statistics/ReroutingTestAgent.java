@@ -17,8 +17,6 @@ import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.TreeSet;
 
-import de.tuilmenau.ics.fog.Config;
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.ExperimentAgent;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.scripts.RerouteScript;
@@ -28,7 +26,6 @@ import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.RerouteMethod;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.ui.Statistic;
 import de.tuilmenau.ics.middleware.JiniHelper;
 
 /**
@@ -48,50 +45,55 @@ public class ReroutingTestAgent extends ExperimentAgent implements IPacketStatis
 	private LinkedList<GateID> mGates;
 	private TreeSet<String> mNodes;
 	
-	/*
-	 * possibility to set attributes for object
-	 */
-	
-	public ReroutingTestAgent () {
+	public ReroutingTestAgent()
+	{
 		super(ExperimentAgent.FN_NODE | ExperimentAgent.GATE);
+		
 		mGates = new LinkedList<GateID>();
 		mNodes = new TreeSet<String>();
 	}
 	
 	@Override
-	public LinkedList<String> getStats() {
-		Logging.info(this, "This packet went from " + this.getSourceNode() + " to " + this.getDestNode());
+	public LinkedList<String> getStats()
+	{
 		LinkedList<String> tStats = new LinkedList<String>();
-		if(mRerouteMethod!=null) tStats.add(Integer.toString(mRerouteMethod.ordinal()));
+		if(mRerouteMethod != null) tStats.add(Integer.toString(mRerouteMethod.ordinal()));
+		
 		int tBrokenType;
 		if (mStep==1) tBrokenType = ReroutingExperiment.BROKEN_TYPE_NOTHING;
 		else tBrokenType = mBrokenType;
+		
 		tStats.add(Integer.toString(tBrokenType));
 		tStats.add(mBrokenName);
 		return tStats;
 	}
 	
-	public boolean setRerouteMethod(RerouteMethod method) {
+	public boolean setRerouteMethod(RerouteMethod method)
+	{
 		this.mRerouteMethod = method;
 		return true;
 	}
 	
-	public boolean setStep(int step) {
+	public boolean setStep(int step)
+	{
 		this.mStep = step;
 		return true;
 	}
 	
-	public boolean setBrokenName(String broken) {
+	public boolean setBrokenName(String broken)
+	{
 		this.mBrokenName = broken;
 		return true;
 	}
 	
-	public boolean setBrokenType(int type) {
+	public boolean setBrokenType(int type)
+	{
 		this.mBrokenType = type;
 		return true;
 	}
 	
-	public boolean setCount(int count) {
+	public boolean setCount(int count)
+	{
 		this.mCountValue = count;
 		return true;
 	}
@@ -100,15 +102,18 @@ public class ReroutingTestAgent extends ExperimentAgent implements IPacketStatis
 	 *  output of object
 	 */
 	
-	public RerouteMethod getRerouteMethod() {
+	public RerouteMethod getRerouteMethod()
+	{
 		return this.mRerouteMethod;
 	}
 
-	public int getStep() {
+	public int getStep()
+	{
 		return this.mStep;
 	}
 	
-	public int getCount() {
+	public int getCount()
+	{
 		return this.mCountValue;
 	}
 	
@@ -135,7 +140,6 @@ public class ReroutingTestAgent extends ExperimentAgent implements IPacketStatis
 	 * @param pElement the forwarding element that received this packet
 	 * @param pPacket the packet that was received, maybe this packet itself
 	 */
-	
 	@Override
 	public boolean finish(ForwardingElement pElemet, Packet pPacket)
 	{

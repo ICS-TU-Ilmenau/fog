@@ -35,7 +35,6 @@ import de.tuilmenau.ics.fog.topology.SimulationEventHandler;
 import de.tuilmenau.ics.fog.transfer.Gate;
 import de.tuilmenau.ics.fog.transfer.manager.NodeUp;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.RerouteMethod;
-import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.middleware.JiniHelper;
 
@@ -105,7 +104,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 		mRerouteMethod = RerouteMethod.LOCAL;
 		mFailedNeighbours = new LinkedList<Name>();
 		
-		mLogger = Logging.getInstance();
+		mLogger = pScript.getLogger();
 		
 		pScript.getAS().getSimulation().subscribe(this);
 	}
@@ -133,9 +132,8 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	
 	public void setCount(int pCount)
 	{	
-		getLogger().debug(this, "Reroute Script set Count Value");
 		mCount = pCount;
-		getLogger().err(this, "This is Rerouting Experiment Number " + this.mCount);
+		getLogger().info(this, "This is Rerouting Experiment Number " + this.mCount);
 	}
 	
 	/**
@@ -144,21 +142,18 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	@Override
 	public LinkedList<String> getStats()
 	{
-		getLogger().debug(this, "getting statistics");
-		getLogger().trace(this, "Creating Linked List");
+		getLogger().debug(this, "getting statistics (" +mConcurrentBrokenType +", " +mBrokenName +")");
+		
 		LinkedList<String> tStats = new LinkedList<String>();
-		getLogger().trace(this, "adding reroute method to statistics");
 		tStats.add(Integer.toString(mRerouteMethod.ordinal()));
+		
 		int tBrokenType;
-		getLogger().trace(this, "As this is first step, nothing is broken");
 		if (mStep==1) {
 			tBrokenType = BROKEN_TYPE_NOTHING;
 		} else {
 			tBrokenType = mConcurrentBrokenType;
 		}
-		getLogger().trace(this, "Adding borken type");
 		tStats.add(Integer.toString(tBrokenType));
-		getLogger().trace(this, "Adding broken name");
 		tStats.add(mBrokenName);
 		return tStats;
 	}
@@ -381,30 +376,21 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 		packet.setCount(mCount);
 		packet.setDestNode(mTarget);
 		packet.setSourceNode(mSource);
-		if(!signal) {
-			try {
-				if(mCurrentlyReceived != null) {
-					getLogger().log(this, "Ordering AS " + mScript.getSourceAS().toString() + " to send reroute experiment " + " from " + mSource + " to " + mTarget + " (last route:" + mCurrentlyReceived.getAuthentications().toString() + ")");
-				}
-				mConcurrentReroutingSession.sendData(packet);
-			} catch (RemoteException rExc) {
-				getLogger().err(this, "Warning! Unable to send packet", rExc);
-			} catch (NetworkException rExc) {
-				getLogger().err(this, "Warning! Unable to send packet", rExc);
+		
+		try {
+			if(mCurrentlyReceived != null) {
+				getLogger().log(this, "Ordering AS " + mScript.getSourceAS().toString() + " to send reroute experiment from " + mSource + " to " + mTarget + " (last route:" + mCurrentlyReceived.getAuthentications().toString() + ")");
 			}
-		} else {
-			try {
-				if(mCurrentlyReceived != null) {
-					getLogger().warn(this, "Ordering AS " + mScript.getSourceAS().toString() + " to send signalling packet " + " from " + mSource + " to " + mTarget + " (last route:" + mCurrentlyReceived.getAuthentications().toString() + ")");
-				}
+			
+			if(signal) {
 				packet.dontLog();
-				mConcurrentReroutingSession.sendData(packet);
-			} catch (RemoteException rExc) {
-				getLogger().err(this, "Warning! Unable to send packet");
-			} catch (NetworkException rExc) {
-				getLogger().err(this, "Warning! Unable to send packet");
-
 			}
+			
+			mConcurrentReroutingSession.sendData(packet);
+		} catch (RemoteException rExc) {
+			getLogger().err(this, "Warning! Unable to send packet", rExc);
+		} catch (NetworkException rExc) {
+			getLogger().err(this, "Warning! Unable to send packet", rExc);
 		}
 	}
 
@@ -428,8 +414,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			}
 			if(mPosition != 0) {
 				if ( (int)(tNodes.size() / mPosition) == 0 || (int)(tNodes.size() / mPosition) == tNodes.size() - 1) {
-					getLogger().warn(this, "Breaking node in the middle of the route");
-					getLogger().log(this, "values are " + tNodes.size() + " and " + (double)tNodes.size() /2 + " and " + Math.floor((double)tNodes.size() /2) + "  and " + ((int) Math.floor((double)tNodes.size() /2)));
+					getLogger().log(this, "Breaking node in the middle of the route.");
 					mAssertPosition = (int) Math.floor((double)tNodes.size() /2);
 				} else {
 					mAssertPosition = (int) Math.floor(((double)tNodes.size()-1)/mPosition);
@@ -453,7 +438,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			//mPosition = (mPosition == 0) ? mPosition = randomGenerator.nextInt(tBusses.size()) + 1 : mPosition;
 			if(mPosition!=0) {
 				if ( (int)(tBusses.size() / mPosition) == 0 || (int)(tBusses.size() / mPosition) == tBusses.size() - 1) {
-					getLogger().warn(this, "Breaking bus in the middle of the route");
+					getLogger().log(this, "Breaking bus in the middle of the route");
 					mAssertPosition = tBusses.size()/2;
 				} else {
 					mAssertPosition = (int) ((tBusses.size()-1)/mPosition);
@@ -570,9 +555,9 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	{
 		public ExperimentNotifier(int pStep)
 		{
-			getLogger().warn(this, "Registering next rerouting action at step " + pStep);
+			getLogger().debug(this, "Registering next rerouting action at step " + pStep);
 			if(pStep == 0) {
-				getLogger().warn(this, "Will now establish a connection");
+				getLogger().log(this, "Will now establish a connection");
 			}
 		}
 		
