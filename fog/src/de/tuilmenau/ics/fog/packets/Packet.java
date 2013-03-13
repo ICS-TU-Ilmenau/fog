@@ -133,7 +133,7 @@ public class Packet implements Serializable
 		try {
 			Id = IDManager.getID();
 		} catch (RemoteException rExc) {
-			Logging.err(Packet.class, "No managagement of packet IDs available",rExc);
+			Logging.err(Packet.class, "No managagement of packet IDs available", rExc);
 			Id = lastUsedId++;
 		} 
 		return Id;
@@ -482,7 +482,7 @@ public class Packet implements Serializable
 		if(Config.Logging.WRITE_PACKET_STATISTIC) {
 			if(mPayload instanceof LoggableElement) {
 				if(!((LoggableElement)mPayload).logMe()) {
-					Logging.log(this, "Not logging me");
+					pSim.getLogger().trace(this, "Not logging me");
 					return;
 				}
 			}
@@ -500,7 +500,7 @@ public class Packet implements Serializable
 			if(mPayload instanceof LoggableElement)
 			{
 				if(!((LoggableElement)mPayload).logMe()) {
-					Logging.log(this, "Not logging me");
+					pSim.getLogger().trace(this, "Not logging me");
 					return;
 				}
 			}
@@ -547,7 +547,7 @@ public class Packet implements Serializable
 			}
 			// additional payload specific columns
 			if (mPayload instanceof IPacketStatistics) {
-				Logging.debug(this, "getting statistics from this packet");
+				pSim.getLogger().debug(this, "getting statistics from this packet");
 				tColumnList.addAll(((IPacketStatistics) mPayload).getStats());
 				// TODO: evtl. auf null testen
 			}
@@ -562,7 +562,7 @@ public class Packet implements Serializable
 //				}
 				Statistic.getInstance(pSim, Packet.class).log(tColumnList);
 			} catch(Exception e) {
-				Logging.err(this, "Can not write statistic log.", e);
+				pSim.getLogger().err(this, "Can not write statistic log.", e);
 			}
 		}
 	}
