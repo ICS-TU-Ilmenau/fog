@@ -180,7 +180,7 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	}
 	
 	/**
-	 * Adds node to topology, if it is not already included.
+	 * Adds a node to the topology map if it isn't already included.
 	 * 
 	 * @param pNode node to include
 	 * @return node object used for structure (object added previously but equal to pNode OR pNode if it is new)

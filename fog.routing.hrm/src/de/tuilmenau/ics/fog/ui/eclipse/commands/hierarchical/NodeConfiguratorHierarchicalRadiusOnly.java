@@ -9,7 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
-import java.util.LinkedList;
 import java.util.Random;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
@@ -17,7 +16,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
-import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This class is used to configure nodes that are newly created.

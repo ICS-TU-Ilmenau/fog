@@ -22,7 +22,7 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
 /**
- * 
+ * Data storage for the abstracted topology view of a higher coordinator. 
  * 
  * @param <NodeObject> This is a parameterized class - Define which objects are supposed to be nodes.
  * @param <LinkObject> This is a parameterized class - Define which objects are supposed to be links.
@@ -104,12 +104,12 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 	}
 	
 	/**
-	 * Get the destination of a link. You need to provide one endpoint of a link because a cluster
+	 * Get the destination of a link. You need to provide one end point of a link because a cluster
 	 * map uses an undirected graph.
 	 * 
-	 * @param pSource This is one endpoint of the link you wish to know the other endpoint.
-	 * @param pLink This is the link you wish to know one endpoint while providing the other one.
-	 * @return Other endpoint of the link is provided.
+	 * @param pSource This is one end point of the link you wish to know the other end point.
+	 * @param pLink This is the link you wish to know one end point while providing the other one.
+	 * @return Other end point of the link is provided.
 	 */
 	public NodeObject getDest(NodeObject pSource, LinkObject pLink)
 	{

@@ -14,7 +14,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 public class HierarchicalConfig
 {
 	/**
-	 * Config parameters for the routing process and routing service
+	 * Configuration parameters for the routing process and routing service
 	 */
 	public class Routing
 	{
