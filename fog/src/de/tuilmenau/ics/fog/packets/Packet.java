@@ -678,12 +678,12 @@ public class Packet implements Serializable
 	 * 
 	 * @param detector The node that detected the dropping of the packet.
 	 */
-	public void droppingDetected(Object detector)
+	public void droppingDetected(Object detector, Simulation simulation)
 	{
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(null, this);
 		}
-		this.logStats(null); // log statistics of this packet as it finished its way through the network		
+		this.logStats(simulation); // log statistics of this packet as it finished its way through the network		
 	}
 	
 	private Route mRoute = null;

@@ -303,7 +303,7 @@ public class Controller
 		public void failure(Gate pGate, Exception pException)
 		{
 			mLogger.err(this, "Can not use new gate " +pGate +". Dropping packet " +mPacket, pException);
-			mPacket.droppingDetected(this);
+			mPacket.droppingDetected(this, mNode.getAS().getSimulation());
 		}
 		
 		public Process getProcess()
@@ -1173,7 +1173,7 @@ public class Controller
 		}
 		catch(Exception exc) {
 			mLogger.err(this, "Handle broken element failed at " + this, exc);
-			pPacket.droppingDetected(this);
+			pPacket.droppingDetected(this, mNode.getAS().getSimulation());
 		}
 	}
 	
