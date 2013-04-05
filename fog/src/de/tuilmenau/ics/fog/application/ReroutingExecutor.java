@@ -30,8 +30,8 @@ import de.tuilmenau.ics.fog.packets.statistics.ReroutingTestAgent;
 import de.tuilmenau.ics.fog.scripts.RerouteScript;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.RerouteMethod;
-import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.SimpleName;
+
 
 public class ReroutingExecutor extends Application
 {
@@ -138,7 +138,8 @@ public class ReroutingExecutor extends Application
 		protected void unknownEvent(Event event)
 		{
 			if(event instanceof ServiceDegradationEvent) {
-				Logging.log(this, "Received Service Degradation Event");
+				mLogger.log(this, "Received Service Degradation Event");
+				
 				ReroutingTestAgent tPacket = new ReroutingTestAgent();
 				tPacket.setSourceNode(RerouteScript.getCurrentInstance().getExperiment().getSource());
 				tPacket.setDestNode(RerouteScript.getCurrentInstance().getExperiment().getTarget());

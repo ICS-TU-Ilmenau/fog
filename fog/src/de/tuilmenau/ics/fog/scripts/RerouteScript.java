@@ -16,15 +16,12 @@ package de.tuilmenau.ics.fog.scripts;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 
+import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.Config.Simulator.SimulatorMode;
 import de.tuilmenau.ics.fog.packets.statistics.ReroutingExperiment;
-import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.IAutonomousSystem;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.topology.SimulationEventHandler;
-import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.SimpleName;
 
 
 /**
@@ -41,6 +38,12 @@ public class RerouteScript extends Script implements SimulationEventHandler
 	 */
 	private static final boolean RANDOM_AS_SELECTION_WEIGHTED_BY_NUMBER_OF_NODES = false;
 	private static RerouteScript sInstance;
+	
+	/**
+	 * Exit if the experiments are executed in a fast simulation
+	 * (meaning: in batch mode on a server)
+	 */
+	private static final boolean EXIT_AFTER_ALL_EXPERIMENTS = Config.Simulator.MODE == SimulatorMode.FAST_SIM;
 	
 	public RerouteScript() 
 	{
@@ -111,13 +114,17 @@ public class RerouteScript extends Script implements SimulationEventHandler
 		if(mCurrCount >= mCount) {
 			getLogger().info(this, "Finished running "+Integer.toString(mCurrCount)+" experiments.");
 			getAS().getSimulation().unsubscribe(this);
+			
+			if(EXIT_AFTER_ALL_EXPERIMENTS) {
+				getLogger().warn(this, "Exiting simulation after "+Integer.toString(mCurrCount)+" experiments.");
+				getSimulation().exit();
+			}
 			return true;
 		}
 
 		mCurrCount++;
 		
 		getLogger().info(this, "*********************STARTING EXPERIMENT #"+Integer.toString(mCurrCount)+" of "+Integer.toString(mCount)+"*********************");
-		getLogger().debug(this, "You requested the script to execute a rerouting experiment");
 		
 		String SourceNode = null;
 		String ForeignNode = null;

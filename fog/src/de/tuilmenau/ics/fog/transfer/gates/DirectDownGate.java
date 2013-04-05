@@ -15,6 +15,8 @@ package de.tuilmenau.ics.fog.transfer.gates;
 
 import java.util.NoSuchElementException;
 
+import de.tuilmenau.ics.fog.Config.Simulator.SimulatorMode;
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -89,7 +91,13 @@ public class DirectDownGate extends DownGate
 			// Error during transmission?
 			// Do not do any recovery for invisible packets.
 			if((res != SendResult.OK) && !invisible) {
-				mNode.getLogger().warn(this, "Cannot send packet " +packet +" to " +mToLowerLayerID +" due to " +res);
+				String msg = "Cannot send packet " +packet +" to " +mToLowerLayerID +" due to " +res;
+				if(Config.Simulator.MODE == SimulatorMode.FAST_SIM) {
+					// do not report it in batch mode as warning, since it might be intended by scenario
+					mNode.getLogger().log(this, msg);
+				} else {
+					mNode.getLogger().warn(this, msg);
+				}
 				
 				// maybe gate already closed during error recovery? 
 				if((getState() != GateState.SHUTDOWN) && (getState() != GateState.DELETED)) {
