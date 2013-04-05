@@ -198,6 +198,8 @@ public class Host extends EventSourceBase implements Layer
 			Description tIntermediateDescr = tProcess.getIntermediateDescr();
 			Route tRoute = mNode.getTransferPlane().getRoute(tMultiplexer, pName, tIntermediateDescr, pRequester);
 	
+			mNode.getLogger().debug(this, "About to open connection to " + pName + " via route " + tRoute + " and requirement " + tIntermediateDescr);
+			
 			/*
 			 * Register for notification of state changes now, since "handlePacket" might cause it immediately.
 			 */

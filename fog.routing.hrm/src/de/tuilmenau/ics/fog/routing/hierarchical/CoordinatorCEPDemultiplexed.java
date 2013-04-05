@@ -29,6 +29,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.PriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.RequestZoneMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest.ResultType;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
@@ -100,7 +101,14 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 			throw new NetworkException("Received " + null + " data");
 		}
 		try {
-			if(pData instanceof BullyElect)	{
+			if(pData instanceof RequestZoneMembership) {
+				if(getCluster().getCoordinatorCEP() != null) {
+					Name tMyName = getCoordinator().getReferenceNode().getRoutingService().getNameFor(getCoordinator().getReferenceNode().getCentralFN());
+					if(getCluster().getCoordinatorName().equals(tMyName)) {
+						
+					}
+				}
+			} else if(pData instanceof BullyElect)	{
 				if(getCluster().getCoordinatorCEP() != null && ((BullyElect)pData).getPriority() < getCluster().getHighestPriority()) {
 					mPeerPriority = ((BullyElect)pData).getPriority();
 					if(getCluster().getCoordinator().equals(getCoordinator().getReferenceNode().getCentralFN().getName())) {
