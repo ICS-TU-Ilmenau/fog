@@ -14,7 +14,7 @@ import java.io.Serializable;
 import de.tuilmenau.ics.fog.facade.Name;
 
 /**
- * This class is supposed to signalise the fact that the peer is alive
+ * This class is supposed to signal the fact that the peer is alive
  *
  */
 public class BullyAlive implements Serializable

@@ -67,9 +67,9 @@ public class ClusterViewer extends EditorAWT implements IController
 		// configure view
 		if(inputObject != null) {
 			if(inputObject instanceof Coordinator) {
-				GraphViewer<RoutingServiceAddress,RoutingServiceLink> mViewer2 = new GraphViewer<RoutingServiceAddress,RoutingServiceLink>(this);
-				mViewer2.init((RoutableGraph)((Coordinator) inputObject).getClusterMap());
-				setView(mViewer2.getComponent());
+				GraphViewer<RoutingServiceAddress,RoutingServiceLink> tViewer = new GraphViewer<RoutingServiceAddress,RoutingServiceLink>(this);
+				tViewer.init((RoutableGraph)((Coordinator) inputObject).getClusterMap());
+				setView(tViewer.getComponent());
 			}
 			else {
 				throw new PartInitException("Invalid input '" +inputObject + "' for editor.");

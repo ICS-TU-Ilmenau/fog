@@ -15,7 +15,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 
 /**
  *
- * Packet that is used to initate a election
+ * Packet that is used to initiate an election
  */
 public class BullyElect implements Serializable
 {

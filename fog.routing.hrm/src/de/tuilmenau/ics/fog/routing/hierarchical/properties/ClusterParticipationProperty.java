@@ -35,8 +35,8 @@ public class ClusterParticipationProperty extends AbstractProperty
 	private static final long serialVersionUID = 7561293731302599090L;
 	
 	/**
-	 * @param pClusterID This is the identificator of the cluster that is supposed to be created.
-	 * @param pLevel This is the hierarchical level of the entitiy from which this entity comes.
+	 * @param pClusterID This is the identifier of the cluster that is supposed to be created.
+	 * @param pLevel This is the hierarchical level of the entity from which this entity comes.
 	 * @param pClusterHops amount of hops to the target
 	 * @param pTargetToken token of the cluster this request comes from
 	 */
@@ -155,6 +155,10 @@ public class ClusterParticipationProperty extends AbstractProperty
 	 */
 	public class NestedParticipation implements Serializable
 	{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -6712697028015706544L;
 		private Long mSourceClusterID;
 		private int mSourceToken;
 		private ClusterDummy mPredecessor;

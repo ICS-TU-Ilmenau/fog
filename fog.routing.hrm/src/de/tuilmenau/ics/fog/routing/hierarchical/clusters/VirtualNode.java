@@ -14,11 +14,11 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
 /**
  * This class is used to represent nodes within the HRM system. Such a virtual node can be either clusters 
- * to which addresses are assigned to or it can be connection endpoints that are associated to participants of the
+ * to which addresses are assigned to or it can be connection end points that are associated to participants of the
  * clusters at the lowest hierarchical level. 
  * 
- * It is called virtual node because it can be either a physical node or a supernode that aggregates multiple nodes 
- * (phsyical nodes) or supernodes (clusters). 
+ * It is called virtual node because it can be either a physical node or a super node that aggregates multiple nodes 
+ * (physical nodes) or super nodes (clusters). 
  */
 public interface VirtualNode extends Name
 {
@@ -30,7 +30,7 @@ public interface VirtualNode extends Name
 	
 	/**
 	 * 
-	 * @returnThe name that was assigned to that node can be retrieed here. 
+	 * @return The name that was assigned to that node can be retried here. 
 	 */
 	public Name retrieveName();
 }
