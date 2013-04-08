@@ -41,6 +41,7 @@ public class ElectionProcess extends Thread
 	private long TIMEOUT_FOR_PEERS = 5000;
 	private long WAIT_BEFORE_ADDRESS_DISTRIBUTION = 5000;
 	private long TIMEOUT_FOR_ANNOUNCEMENT=5000;
+	
 	private ClusterManager mClusterManager=null;
 	private LinkedList<IntermediateCluster> mElectingClusters = new LinkedList<IntermediateCluster>();
 	private boolean mInProgress = false;
