@@ -25,8 +25,8 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
 
@@ -101,19 +101,19 @@ public class TCPProxy extends Application implements ServerCallback
 			mLogger.warn(this, "openAck failes", tExc);
 		}
 	}
+	
+	@Override
+	public void error(ErrorEvent cause)
+	{
+		terminated(cause.getException());
+	}
 
 	protected void started()
 	{
-		try {
-			Binding tBinding = getHost().bind(null, new SimpleName(HttpServer.NAMESPACE_HTTP, mName), getDescription(), getIdentity());
-			
-			mServerBinding = new Service(false, this);
-			mServerBinding.start(tBinding);
-		}
-		catch(NetworkException tExc) {
-			terminated(tExc);
-		}
-
+		Binding tBinding = getLayer().bind(null, new SimpleName(HttpServer.NAMESPACE_HTTP, mName), getDescription(), getIdentity());
+		
+		mServerBinding = new Service(false, this);
+		mServerBinding.start(tBinding);
 	}
 	
 	@Override

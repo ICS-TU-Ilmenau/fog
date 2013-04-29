@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import de.tuilmenau.ics.fog.application.util.BlockingCalls;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
@@ -158,7 +159,7 @@ public class CoordinatorCEPMultiplexer
 			getLogger().log(this, "Connecting to " + pTargetCluster);
 			Connection tConn = null;;
 			try {
-				tConn = pSourceCluster.getCoordinator().getHost().connectBlock(tName, tConnectDescription, tIdentity);
+				tConn = BlockingCalls.connect(pSourceCluster.getCoordinator().getLayer(), tName, tConnectDescription, tIdentity);
 				tCEP.start(tConn);
 				tCEP.write(tCEP.getSourceRoutingServiceAddress());
 			} catch (NetworkException tExc) {

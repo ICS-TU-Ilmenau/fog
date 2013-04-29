@@ -26,8 +26,6 @@ import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
-import de.tuilmenau.ics.fog.facade.properties.OrderedProperty;
-import de.tuilmenau.ics.fog.facade.properties.TransportProperty;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.RateLimitedAction;
 
@@ -61,37 +59,32 @@ public class EchoServer extends Application
 	
 	protected void started()
 	{
-		try {
-			// enable single datagram connections to echo server
-			Description requ = getDescription();
-			requ.set(CommunicationTypeProperty.DATAGRAM);
-			
-			// register at FoG
-			Binding tBinding = getHost().bind(null, mName, requ, getIdentity());
-			
-			// create object, which adds EchoService objects
-			// to each incoming connection
-			mServerSocket = new Service(false, null)
+		// enable single datagram connections to echo server
+		Description requ = getDescription();
+		requ.set(CommunicationTypeProperty.DATAGRAM);
+		
+		// register at FoG
+		Binding tBinding = getLayer().bind(null, mName, requ, getIdentity());
+		
+		// create object, which adds EchoService objects
+		// to each incoming connection
+		mServerSocket = new Service(false, null)
+		{
+			public void newConnection(Connection pConnection)
 			{
-				public void newConnection(Connection pConnection)
-				{
-					Session tSession = new EchoSession();
-					
-					// start event processing
-					tSession.start(pConnection);
-					
-					// add it to list of ongoing connections
-					if(mSessions == null) {
-						mSessions = new LinkedList<Session>();
-					}
-					mSessions.add(tSession);
+				Session tSession = new EchoSession();
+				
+				// start event processing
+				tSession.start(pConnection);
+				
+				// add it to list of ongoing connections
+				if(mSessions == null) {
+					mSessions = new LinkedList<Session>();
 				}
-			};
-			mServerSocket.start(tBinding);
-		}
-		catch (NetworkException tExc) {
-			terminated(tExc);
-		}
+				mSessions.add(tSession);
+			}
+		};
+		mServerSocket.start(tBinding);
 	}
 	
 	public boolean isRunning()

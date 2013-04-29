@@ -26,6 +26,7 @@ import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.events.ServiceDegradationEvent;
 import de.tuilmenau.ics.fog.packets.statistics.ReroutingTestAgent;
@@ -51,32 +52,33 @@ public class ReroutingExecutor extends Application
 	@Override
 	protected void started()
 	{
-		try {
-			Binding tBinding = getHost().bind(null, mName, getDescription(), getIdentity());
-			
-			// create object, which adds EchoService objects
-			// to each incoming connection
-			mServerSocket = new Service(false, null)
+		Binding tBinding = getLayer().bind(null, mName, getDescription(), getIdentity());
+		
+		// create object, which adds EchoService objects
+		// to each incoming connection
+		mServerSocket = new Service(false, null)
+		{
+			public void newConnection(Connection pConnection)
 			{
-				public void newConnection(Connection pConnection)
-				{
-					Session tSession = new ReroutingSession(false);
-					
-					// start event processing
-					tSession.start(pConnection);
-					
-					// add it to list of ongoing connections
-					if(mSessions == null) {
-						mSessions = new LinkedList<Session>();
-					}
-					mSessions.add(tSession);
+				Session tSession = new ReroutingSession(false);
+				
+				// start event processing
+				tSession.start(pConnection);
+				
+				// add it to list of ongoing connections
+				if(mSessions == null) {
+					mSessions = new LinkedList<Session>();
 				}
-			};
-			mServerSocket.start(tBinding);
-		}
-		catch (NetworkException tExc) {
-			terminated(tExc);
-		}
+				mSessions.add(tSession);
+			}
+			
+			@Override
+			public void error(ErrorEvent cause)
+			{
+				terminated(cause.getException());
+			}
+		};
+		mServerSocket.start(tBinding);
 	}
 
 	@Override

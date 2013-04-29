@@ -43,7 +43,7 @@ public class AudioListener extends VideoListener
 			for (int i = 0; i < UDPServerAudioProxy.sMaxRunningServers; i++){
 				SimpleName name = new SimpleName(UDPServerAudioProxy.NAMESPACE_AUDIO, "AudioServer" +i);
 				
-				if (mHost.isKnown(name)) {
+				if (mHost.getLayer(null).isKnown(name)) {
 					tRegisteredServers[i] = true;
 					tFound++;
 					Logging.log(this, "Found " + name + " registered in Routing Service");
@@ -78,7 +78,7 @@ public class AudioListener extends VideoListener
 			mServerName = AskUserForServerSelection();
 			if(!"".equals(mServerName)) {
 				try {
-					Connection tConn = mHost.connect(SimpleName.parse(mServerName), mTransmissionRequirements, null); //TODO
+					Connection tConn = mHost.getLayer(null).connect(SimpleName.parse(mServerName), mTransmissionRequirements, null); //TODO
 					mSocket = new Session(false, mHost.getLogger(), this);
 				}
 				catch(InvalidParameterException exception) {

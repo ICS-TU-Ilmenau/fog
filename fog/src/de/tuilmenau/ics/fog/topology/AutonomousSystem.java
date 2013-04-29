@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.topology;
 import java.rmi.RemoteException;
 
 import de.tuilmenau.ics.fog.EventHandler;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.ReroutingExecutor;
 import de.tuilmenau.ics.fog.application.ReroutingExecutor.ReroutingSession;
@@ -116,7 +117,7 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		
 		if(!newNode.hasRoutingService()) {
 			// no routing service at all? -> create default routing service
-			newNode.getHost().registerRoutingService(new RoutingServiceSimulated(getRoutingService(), pName, newNode));
+			FoGEntity.registerRoutingService(newNode.getHost(), new RoutingServiceSimulated(getRoutingService(), pName, newNode));
 		}
 		
 		String tAppConfigurator = mSim.getConfig().Scenario.APPLICATION_CONFIGURATOR;
@@ -228,7 +229,7 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	{
 		Node tNode = getNodeByName(pSendingNode);
 		Connection tConnection = null;
-		tConnection = tNode.getHost().connect(new SimpleName(new Namespace("rerouting"), pTargetNode), Description.createBE(false), null);
+		tConnection = tNode.getHost().getLayer(null).connect(new SimpleName(new Namespace("rerouting"), pTargetNode), Description.createBE(false), null);
 		
 		for(Application tApplication : tNode.getHost().getApps()) {
 			if(tApplication instanceof ReroutingExecutor) { 

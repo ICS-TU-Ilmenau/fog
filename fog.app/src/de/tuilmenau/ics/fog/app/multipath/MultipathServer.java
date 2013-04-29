@@ -31,6 +31,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.ui.Viewable;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
@@ -84,28 +85,30 @@ public class MultipathServer extends Application
 		} 
 		
 		// provide the service within the FoG network
-		try {
-			Binding tBinding = getHost().bind(null, mServerName, getDescription(), getIdentity());
-			
-			// per incoming connection
-			mServerSocket = new Service(false, null)
+		Binding tBinding = getLayer().bind(null, mServerName, getDescription(), getIdentity());
+		
+		// per incoming connection
+		mServerSocket = new Service(false, null)
+		{
+			@Override
+			public void newConnection(Connection pConnection)
 			{
-				public void newConnection(Connection pConnection)
-				{
-					Session tSession = new SctpClientSession();
-					
-					// start event processing
-					tSession.start(pConnection);
-					
-					// add it to list of ongoing connections
-					mSctpClientSessions.add(tSession);
-				}
-			};
-			mServerSocket.start(tBinding);
-		}
-		catch (NetworkException tExc) {
-			terminated(tExc);
-		}
+				Session tSession = new SctpClientSession();
+				
+				// start event processing
+				tSession.start(pConnection);
+				
+				// add it to list of ongoing connections
+				mSctpClientSessions.add(tSession);
+			}
+			
+			@Override
+			public void error(ErrorEvent cause)
+			{
+				terminated(cause.getException());
+			}
+		};
+		mServerSocket.start(tBinding);
 	}
 
 	@Override

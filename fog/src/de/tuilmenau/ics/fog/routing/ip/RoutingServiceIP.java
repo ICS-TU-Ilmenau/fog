@@ -246,7 +246,7 @@ public class RoutingServiceIP implements RoutingService
 		mLogger.trace(this, "Try to connect to InterOpIPv4 application");
 		
 		try {
-			Connection tConn = mHost.connect(SimpleName.parse(InterOpIP.INTEROP_APPL_ID), null, null);
+			Connection tConn = mHost.getLayer(null).connect(SimpleName.parse(InterOpIP.INTEROP_APPL_ID), null, null);
 			RoutingServiceIPSession mSocket2InterOpIP = new RoutingServiceIPSession(mHost.getLogger(), pTokenList);
 			mSocket2InterOpIP.start(tConn);
 		}

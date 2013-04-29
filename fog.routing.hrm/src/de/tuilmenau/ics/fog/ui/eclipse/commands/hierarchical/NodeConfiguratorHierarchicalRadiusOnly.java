@@ -9,15 +9,15 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
-import java.util.LinkedList;
 import java.util.Random;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
-import de.tuilmenau.ics.fog.ui.Logging;
+
 
 public class NodeConfiguratorHierarchicalRadiusOnly implements NodeConfigurator
 {
@@ -37,7 +37,7 @@ public class NodeConfiguratorHierarchicalRadiusOnly implements NodeConfigurator
 	{
 		HierarchicalRoutingService hRS = new HierarchicalRoutingService(pNode);
 		
-		pNode.getHost().registerRoutingService(hRS);
+		FoGEntity.registerRoutingService(pNode.getHost(), hRS);
 		hRS.initiateCoordinator();
 		
 		if(HierarchicalConfig.Routing.ELECTION_BEGINS_IMMEDIATLY_AFTER_SETUP) {

@@ -23,6 +23,7 @@ import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
+import de.tuilmenau.ics.fog.facade.Layer;
 import de.tuilmenau.ics.fog.ui.Viewable;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -223,6 +224,11 @@ public abstract class Application
 	public Host getHost()
 	{
 		return mHost;
+	}
+	
+	public Layer getLayer()
+	{
+		return mHost.getLayer(null);
 	}
 	
 	public Logger getLogger()

@@ -64,7 +64,7 @@ public abstract class ApplicationClient extends Application
 		mIsRunning = true;
 		mIsExiting = false;
 		
-		Connection tConn = getHost().connect(mConnectTo, getDescription(), getIdentity());
+		Connection tConn = getLayer().connect(mConnectTo, getDescription(), getIdentity());
 		mSession = createSession();
 		mSession.start(tConn);
 	}

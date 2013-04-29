@@ -34,7 +34,8 @@ public interface Layer extends EventSource
 	/**
 	 * Registers an entity with a given name at the layer. Afterwards,
 	 * clients can connect to this service by using the same name.
-	 * This method does not block.
+	 * This method does not block. Errors are indicated via events
+	 * of the {@link Binding} object.
 	 * 
 	 * @param parentSocket Optional parent connection (optional; might be {@code null} if no)
 	 * @param name Name for the service
@@ -43,19 +44,21 @@ public interface Layer extends EventSource
 	 * @return Reference to the service registration ({@code != null})
 	 * @throws NetworkException On error
 	 */
-	public Binding bind(Connection parentSocket, Name name, Description requirements, Identity identity) throws NetworkException;
+	public Binding bind(Connection parentSocket, Name name, Description requirements, Identity identity);
 
 	/**
 	 * Connects to a {@link Binding} with the given name.
-	 * The method does not block. All feedback is given via events.
+	 * The method does not block. The establishment of a connection is
+	 * signaled with an event. All other feedbacks are given via events
+	 * as well. In particular, the error exceptions are not triggered by the
+	 * method but handed over via events of the {@link Connection} object.
 	 * 
 	 * @param name Name of the {@link Binding}, to which should be connected to 
 	 * @param requirements Description of the requirements of the caller for the connection
 	 * @param requester Optional identity of the caller. It is used for signing the connect request.
 	 * @return Reference for the connection ({@code != null})
-	 * @throws NetworkException On error
 	 */
-	public Connection connect(Name name, Description requirements, Identity requester) throws NetworkException;
+	public Connection connect(Name name, Description requirements, Identity requester);
 
 	/**
 	 * Checks whether or not a {@link Binding} with this name is known by the layer.

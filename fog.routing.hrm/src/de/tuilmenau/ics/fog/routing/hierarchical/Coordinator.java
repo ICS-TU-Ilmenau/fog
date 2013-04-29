@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.tuilmenau.ics.fog.application.Application;
+import de.tuilmenau.ics.fog.application.util.BlockingCalls;
 import de.tuilmenau.ics.fog.application.util.ServerCallback;
 import de.tuilmenau.ics.fog.application.util.Service;
 import de.tuilmenau.ics.fog.facade.Binding;
@@ -30,6 +31,7 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
@@ -101,14 +103,12 @@ public class Coordinator extends Application implements ServerCallback
 		mHost = pHost;
 		mReferenceNode = pNode;
 		getLogger().log(this, "created");
-		Binding serverSocket=null;
-		try {
-			serverSocket = getHost().bind(null, mName, getDescription(), getIdentity());
-			Service service = new Service(false, this);
-			service.start(serverSocket);
-		} catch (NetworkException tExc) {
-			Logging.err(this, "Unable to bind to hosts application interface", tExc);
-		}
+
+		Binding serverSocket =null;
+		serverSocket = getLayer().bind(null, mName, getDescription(), getIdentity());
+		Service service = new Service(false, this);
+		service.start(serverSocket);
+		
 		mHRS = pHRS;
 		mApprovedSignatures = new LinkedList<HierarchicalSignature>();
 	}
@@ -303,6 +303,12 @@ public class Coordinator extends Application implements ServerCallback
 		return true;
 	}
 	
+	@Override
+	public void error(ErrorEvent cause)
+	{
+		Logging.err(this, "Unable to bind to hosts application interface", cause.getException());
+	}
+
 	public String toString()
 	{
 		return "Coordinator@" + mReferenceNode;
@@ -510,7 +516,7 @@ public class Coordinator extends Application implements ServerCallback
 			{
 				Connection tConn = null;
 				try {
-					tConn = mHost.connectBlock(tName, getConnectDescription(tProperty), getReferenceNode().getIdentity());
+					tConn = BlockingCalls.connect(mHost.getLayer(null), tName, getConnectDescription(tProperty), getReferenceNode().getIdentity());
 				} catch (NetworkException tExc) {
 					Logging.err(this, "Unable to connecto to " + tName, tExc);
 				}

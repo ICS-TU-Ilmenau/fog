@@ -26,8 +26,8 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
 
@@ -126,15 +126,18 @@ public class UDPServerProxy extends Application implements ServerCallback
 	}
 
 	@Override
+	public void error(ErrorEvent cause)
+	{
+		terminated(cause.getException());
+	}
+	
+	@Override
 	protected void started()
 	{
 		try {
-			Binding tBinding = getHost().bind(null, createServerName(mDestName), getDescription(), getIdentity());
+			Binding tBinding = getLayer().bind(null, createServerName(mDestName), getDescription(), getIdentity());
 			mServerBinding = new Service(false, this);
 			mServerBinding.start(tBinding);
-		}
-		catch(NetworkException tExc) {
-			terminated(tExc);
 		} catch (InvalidParameterException tExc) {
 			terminated(tExc);
 		}

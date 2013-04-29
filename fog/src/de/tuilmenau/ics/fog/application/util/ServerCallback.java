@@ -19,6 +19,7 @@ import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 
 
 /**
@@ -49,4 +50,11 @@ public interface ServerCallback
 	 * @param pConnection Socket for sending data via the connection to the communication partner  
 	 */
 	public void newConnection(Connection pConnection);
+	
+	/**
+	 * Some error occured with the binding (e.g. Name not allowed).
+	 * 
+	 * @param pCause Cause of error
+	 */
+	public void error(ErrorEvent pCause);
 }

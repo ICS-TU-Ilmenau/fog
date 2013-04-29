@@ -20,7 +20,6 @@ import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectRequirementsDialog;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
-import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
@@ -124,7 +123,6 @@ public class ConsoleApp extends HostApplication implements ReceiveCallback
 	public boolean executeCommand(String pCmd) throws RemoteException
 	{
 		boolean tOk = false;
-		Host host = getHost();
 		
 		// ignore empty commands
 		if (pCmd == null) return true;
@@ -215,7 +213,7 @@ public class ConsoleApp extends HostApplication implements ReceiveCallback
 						}						
 					}
 					
-					socket = host.connect(SimpleName.parse(tParts[1]), tDescr, identity);
+					socket = getHost().getLayer(null).connect(SimpleName.parse(tParts[1]), tDescr, identity);
 					
 					Session session = new Session(false, Logging.getInstance(), this);
 					session.start(socket);

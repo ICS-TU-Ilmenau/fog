@@ -21,6 +21,7 @@ import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.events.NewConnectionEvent;
 
@@ -60,6 +61,9 @@ public class Service extends ApplicationEventHandler<Binding> implements ServerC
 			}
 			while(cep != null);
 		}
+		else if(event instanceof ErrorEvent) {
+			error((ErrorEvent) event);
+		}
 	}
 
 	@Override
@@ -82,6 +86,16 @@ public class Service extends ApplicationEventHandler<Binding> implements ServerC
 			// have to override this function if required.
 			// Therefore, we close the connection.
 			pConnection.close();
+		}
+	}
+	
+	@Override
+	public void error(ErrorEvent pCause)
+	{
+		if(callback != null) {
+			callback.error(pCause);
+		} else {
+			// no nothing
 		}
 	}
 	

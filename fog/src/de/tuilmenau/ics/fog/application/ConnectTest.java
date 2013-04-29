@@ -117,7 +117,7 @@ public class ConnectTest extends ApplicationClient
 			}
 			catch(NetworkException tExc) {
 				count("Exception");
-				getLogger().err(this, "Exception during sending data from " +getHost() +" to " +getDestination(), tExc);
+				getLogger().err(this, "Exception during sending data from " +getLayer() +" to " +getDestination(), tExc);
 				exit();
 			}
 		}
@@ -145,7 +145,7 @@ public class ConnectTest extends ApplicationClient
 		public void error(Exception pExc)
 		{
 			count("Exception");
-			getLogger().err(this, "Exception during connection from " +getHost() +" to " +getDestination(), pExc);
+			getLogger().err(this, "Exception during connection from " +getLayer() +" to " +getDestination(), pExc);
 			exit();
 		}
 		

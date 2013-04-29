@@ -73,7 +73,7 @@ public class VideoListener implements ReceiveCallback
 			// probe all possible server names by asking the corresponding routing service
 			for (int i = 0; i < UDPServerVideoProxy.sMaxRunningServers; i++) {
 				SimpleName name = new SimpleName(UDPServerVideoProxy.NAMESPACE_VIDEO, "VideoServer" +i);
-				if (mHost.isKnown(name)) {
+				if (mHost.getLayer(null).isKnown(name)) {
 					tRegisteredVideoServers[i] = true;
 					tFound++;
 					Logging.log(this, "Found " + name + " registered in Routing Service");
@@ -175,7 +175,7 @@ public class VideoListener implements ReceiveCallback
 						}
 
 						try {
-							Connection tConn = mHost.connect(SimpleName.parse(mServerName), mTransmissionRequirements, null);
+							Connection tConn = mHost.getLayer(null).connect(SimpleName.parse(mServerName), mTransmissionRequirements, null);
 							mSocket = new Session(false, mHost.getLogger(), mSocketReceiver);
 							mSocket.start(tConn);
 						}

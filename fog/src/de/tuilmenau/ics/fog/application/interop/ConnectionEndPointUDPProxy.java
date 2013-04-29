@@ -265,7 +265,7 @@ public class ConnectionEndPointUDPProxy extends Session
 									{
 										mLogger.info(this, "Creating new FoG2Ip listener for new IP remote address " + mIpPeerAddress);
 										// create connection to the FoG server
-										Connection tSocket = mHost.connect(mFogServerApplication, mFogServerConnectionRequirements, null);
+										Connection tSocket = mHost.getLayer(null).connect(mFogServerApplication, mFogServerConnectionRequirements, null);
 										// create and initialize new FoG2IP listener
 										Fog2IpListener tFoGListener = new Fog2IpListener(tSocket); 
 										tFoGListener.setIpPeer(mIpSocket, mIpPeerAddress);

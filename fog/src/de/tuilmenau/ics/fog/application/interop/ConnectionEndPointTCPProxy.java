@@ -195,7 +195,7 @@ public class ConnectionEndPointTCPProxy extends Session
 								if (mHost != null)
 								{
 									mLogger.info(this, "Creating new FoGIpBridge for new IP remote address " + mIpPeerAddress);
-									Connection tConn = mHost.connect(mFogServerApplication, mFogServerConnectionRequirements, null);
+									Connection tConn = mHost.getLayer(null).connect(mFogServerApplication, mFogServerConnectionRequirements, null);
 									
 									FogIpBridge tFoGIpBridge = new FogIpBridge(tConn); 
 									tFoGIpBridge.setIpPeer(tIpClientSocket, mIpPeerAddress);
