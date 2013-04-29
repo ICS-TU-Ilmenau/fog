@@ -41,7 +41,7 @@ public class ServerFN extends Multiplexer
 {
 	public ServerFN(Node node, Name name, NamingLevel level, Description description, Identity identity)
 	{
-		super(node, name, level, false, identity, null, node.getController());
+		super(node, name, level, false, identity, node.getController());
 		
 		this.description = description;
 		

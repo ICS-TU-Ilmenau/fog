@@ -14,8 +14,8 @@
 package de.tuilmenau.ics.fog.application.interop;
 
 import de.tuilmenau.ics.fog.application.InterOpIP;
-import de.tuilmenau.ics.fog.application.Session;
 import de.tuilmenau.ics.fog.application.InterOpIP.Transport;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.util.SimpleName;

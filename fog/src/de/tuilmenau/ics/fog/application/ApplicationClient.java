@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.application;
 
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;

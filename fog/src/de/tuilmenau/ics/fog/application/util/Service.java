@@ -11,15 +11,15 @@
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.application;
+package de.tuilmenau.ics.fog.application.util;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.application.ApplicationEventHandler;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IServerCallback;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.events.NewConnectionEvent;
@@ -29,9 +29,9 @@ import de.tuilmenau.ics.fog.facade.events.NewConnectionEvent;
  * Represents the part of an application handling the issues of a binding.
  * It processes the events from a binding and handles incoming connections.
  */
-public class Service extends ApplicationEventHandler<Binding> implements IServerCallback
+public class Service extends ApplicationEventHandler<Binding> implements ServerCallback
 {
-	public Service(boolean ownThread, IServerCallback callback)
+	public Service(boolean ownThread, ServerCallback callback)
 	{
 		super(ownThread);
 		
@@ -92,5 +92,5 @@ public class Service extends ApplicationEventHandler<Binding> implements IServer
 		super.stop();
 	}
 	
-	private IServerCallback callback;
+	private ServerCallback callback;
 }

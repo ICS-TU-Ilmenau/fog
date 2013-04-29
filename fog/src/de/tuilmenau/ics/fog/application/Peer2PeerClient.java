@@ -17,6 +17,8 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.IEvent;
+import de.tuilmenau.ics.fog.application.util.ServerCallback;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
@@ -24,7 +26,6 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IServerCallback;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.properties.IgnoreDestinationProperty;
@@ -32,7 +33,7 @@ import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.Timer;
 
 
-public class Peer2PeerClient extends ThreadApplication implements IServerCallback
+public class Peer2PeerClient extends ThreadApplication implements ServerCallback
 {
 	public Peer2PeerClient(Host pHost, Identity pIdentity)
 	{

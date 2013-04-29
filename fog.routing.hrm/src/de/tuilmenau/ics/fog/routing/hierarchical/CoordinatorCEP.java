@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import java.io.Serializable;
 
-import de.tuilmenau.ics.fog.application.Session;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;

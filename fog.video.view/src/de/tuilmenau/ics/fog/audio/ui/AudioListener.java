@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.audio.ui;
 
 import org.eclipse.ui.PlatformUI;
 
-import de.tuilmenau.ics.fog.application.Session;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.*;
 import de.tuilmenau.ics.fog.ui.Logging;

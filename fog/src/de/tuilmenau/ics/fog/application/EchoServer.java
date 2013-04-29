@@ -16,6 +16,8 @@ package de.tuilmenau.ics.fog.application;
 import java.io.Serializable;
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.application.util.Service;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;

@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.topology;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
+import de.tuilmenau.ics.fog.application.util.LayerObserverCallback;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.util.Logger;
@@ -60,7 +61,7 @@ public interface ILowerLayer extends Remote
 	 * 
 	 * @param observer entity, which will be informed about updates of the neighbor relationships
 	 */
-	public void registerObserverNeighborList(INeighborCallback observer) throws RemoteException;
+	public void registerObserverNeighborList(LayerObserverCallback observer) throws RemoteException;
 	
 	/**
 	 * Unregisters observer for the neighbor list.
@@ -68,40 +69,7 @@ public interface ILowerLayer extends Remote
 	 * @param observer entity, which should be removed from the observer list
 	 * @return true, if observer had been successfully unregistered; false otherwise
 	 */
-	public boolean unregisterObserverNeighborList(INeighborCallback observer) throws RemoteException;
-	
-	/**
-	 * Inferface for observer of the neighbor list
-	 */
-	public interface INeighborCallback extends Remote
-	{
-		/**
-		 * Called if a new neighbor appears at this lower layer.
-		 * Callback is only called if lower layer is not broken.
-		 * 
-		 * @param newNeighbor New neighbor attached to the bus.
-		 * @throws RemoteException On error.
-		 */
-		public void neighborDiscovered(NeighborInformation newNeighbor) throws RemoteException;
-		
-		/**
-		 * Called if a neighbor disappears from the lower layer.
-		 * Callback is only called if lower layer is not broken.
-		 * 
-		 * @param oldNeighbor Neighbor disconnected from bus.
-		 * @throws RemoteException On error.
-		 */
-		public void neighborDisappeared(NeighborInformation oldNeighbor) throws RemoteException;
-		
-		/**
-		 * Called after lower layer was broken. The attached objects
-		 * should check, if all there gates using this lower layer are
-		 * ok.
-		 * 
-		 * @throws RemoteException On error.
-		 */
-		public void neighborCheck() throws RemoteException;
-	}
+	public boolean unregisterObserverNeighborList(LayerObserverCallback observer) throws RemoteException;
 	
 	/**
 	 * Detaches a receiving element from the lower layer

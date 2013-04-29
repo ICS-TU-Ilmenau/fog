@@ -12,7 +12,7 @@ package de.tuilmenau.ics.fog.app.streamClient;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.IEventRef;
 import de.tuilmenau.ics.fog.application.ApplicationClient;
-import de.tuilmenau.ics.fog.application.Session;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;

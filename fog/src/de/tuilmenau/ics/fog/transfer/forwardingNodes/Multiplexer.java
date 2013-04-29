@@ -17,7 +17,6 @@ import de.tuilmenau.ics.fog.authentication.IdentityManagement;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IReceiveCallback;
 import de.tuilmenau.ics.fog.packets.Invisible;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.Signalling;
@@ -66,10 +65,9 @@ public class Multiplexer extends GateContainer
 	 * @param name Name of the FN (just for GUI and debugging reasons)
 	 * @param level Level of abstraction of name
 	 * @param owner Identity of the FN (optional; null if not available)
-	 * @param dataSocket Socket received packets are forwarded to (optional; null if no application)
 	 * @param errorHandling Controller doing error handling for this FN (if null, the controller of the node is used)
 	 */
-	public Multiplexer(Node node, Name name, NamingLevel level, boolean privateForTransfer, Identity owner, IReceiveCallback dataSocket, Controller errorHandling)
+	public Multiplexer(Node node, Name name, NamingLevel level, boolean privateForTransfer, Identity owner, Controller errorHandling)
 	{
 		super(node, name, level);
 		
@@ -80,7 +78,6 @@ public class Multiplexer extends GateContainer
 			mErrorGate = node.getController();
 		}
 		
-		mDataSocket = dataSocket;
 		mOwner = owner;
 		
 		// TODO where to close it?
@@ -252,18 +249,12 @@ public class Multiplexer extends GateContainer
 	}
 	
 	/**
-	 * Called if a FN received data packets, which have to be
-	 * forwarded to higher layer entities.
+	 * Called if a FN received data packets, which have to be forwarded to higher layer entities.
+	 * The implementation of this class just outputs an error.
 	 */
 	protected void handleDataPacket(Packet packet)
 	{
-		if(mDataSocket != null) {
-			mLogger.trace(this, "Received " + packet +" for " +mDataSocket);
-			
-			mDataSocket.receiveData(packet.getData());
-		} else {
-			mLogger.warn(this, "Skip packet " +packet +" because socket towards app. " + getName().toString() + " is not valid (no signaling packet)");
-		}
+		mLogger.warn(this, "Skip packet " +packet +" because socket towards app. " + getName().toString() + " is not valid (no signaling packet)");
 	}
 	
 	/**
@@ -298,7 +289,6 @@ public class Multiplexer extends GateContainer
 	}
 	
 	private Controller mErrorGate = null;
-	private IReceiveCallback mDataSocket = null;
 	private PacketLogger mPacketLog = null;
 	private boolean mIsPrivate = true;
 	

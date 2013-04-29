@@ -11,15 +11,20 @@
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.facade;
+package de.tuilmenau.ics.fog.application.util;
 
 import java.util.LinkedList;
+
+import de.tuilmenau.ics.fog.facade.Connection;
+import de.tuilmenau.ics.fog.facade.Description;
+import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.facade.Signature;
 
 
 /**
  * Interface of a higher layer for callbacks from FoG.
  */
-public interface IServerCallback
+public interface ServerCallback
 {
 	/**
 	 * Callback asking for the permission to open a new connection to a server.

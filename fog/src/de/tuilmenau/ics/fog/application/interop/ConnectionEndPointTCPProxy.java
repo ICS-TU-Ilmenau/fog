@@ -23,11 +23,11 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import de.tuilmenau.ics.fog.application.Session;
+import de.tuilmenau.ics.fog.application.util.ReceiveCallback;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
-import de.tuilmenau.ics.fog.facade.IReceiveCallback;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.SimpleName;
@@ -232,7 +232,7 @@ public class ConnectionEndPointTCPProxy extends Session
 	 * HINT: FoG socket has to be allocated by outside classes and afterwards set by a call to setSocket.
 	 * HINT: IP socket has to be allocated by outside classes and afterwards set by a call to setTcpStreams.
 	 */
-	private class FogIpBridge extends Thread implements IReceiveCallback
+	private class FogIpBridge extends Thread implements ReceiveCallback
 	{
 		private Connection mSocket = null;
 		private Socket mIpClientSocket = null;

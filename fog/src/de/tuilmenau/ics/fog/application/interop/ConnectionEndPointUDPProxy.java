@@ -25,11 +25,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.application.Session;
+import de.tuilmenau.ics.fog.application.util.ReceiveCallback;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
-import de.tuilmenau.ics.fog.facade.IReceiveCallback;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
@@ -381,7 +381,7 @@ public class ConnectionEndPointUDPProxy extends Session
 	 * 
 	 * One instance is created either per remote IP peer or per connection request towards IP destination.
 	 */
-	private class Fog2IpListener implements IReceiveCallback
+	private class Fog2IpListener implements ReceiveCallback
 	{
 		private Connection mSocket = null;
 		private DatagramSocket mIpSocket = null;

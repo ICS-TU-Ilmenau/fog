@@ -18,6 +18,7 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 
 import de.tuilmenau.ics.fog.EventHandler;
+import de.tuilmenau.ics.fog.application.util.LayerObserverCallback;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
@@ -127,17 +128,17 @@ public class BusStub implements ILowerLayer, ForwardingElement
 	}
 
 	@Override
-	public void registerObserverNeighborList(INeighborCallback observer) throws RemoteException
+	public void registerObserverNeighborList(LayerObserverCallback observer) throws RemoteException
 	{
-		INeighborCallback receivingNodeProxy = (INeighborCallback) getStubForObserver(observer, true);
+		LayerObserverCallback receivingNodeProxy = (LayerObserverCallback) getStubForObserver(observer, true);
 		mLogger.debug(this, "Registered receiving node with " + receivingNodeProxy);
 		mRemoteBus.registerObserverNeighborList(receivingNodeProxy);
 	}
 
 	@Override
-	public boolean unregisterObserverNeighborList(INeighborCallback observer) throws RemoteException
+	public boolean unregisterObserverNeighborList(LayerObserverCallback observer) throws RemoteException
 	{
-		INeighborCallback receivingNodeProxy = (INeighborCallback) getStubForObserver(observer, true);
+		LayerObserverCallback receivingNodeProxy = (LayerObserverCallback) getStubForObserver(observer, true);
 		
 		if(receivingNodeProxy != null) {
 			mLogger.debug(this, "Registered receiving node with " + receivingNodeProxy);

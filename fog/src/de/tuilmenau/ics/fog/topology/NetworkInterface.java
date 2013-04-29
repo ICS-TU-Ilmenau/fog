@@ -18,9 +18,9 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.IEvent;
+import de.tuilmenau.ics.fog.application.util.LayerObserverCallback;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.Packet;
-import de.tuilmenau.ics.fog.topology.ILowerLayer.INeighborCallback;
 import de.tuilmenau.ics.fog.topology.ILowerLayer.SendResult;
 import de.tuilmenau.ics.fog.transfer.DummyForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
@@ -33,7 +33,7 @@ import de.tuilmenau.ics.fog.transfer.gates.LowerLayerReceiveGate;
 import de.tuilmenau.ics.fog.transfer.manager.Controller;
 
 
-public class NetworkInterface implements INeighborCallback
+public class NetworkInterface implements LayerObserverCallback
 {
 	private static final double REATTACH_TIMER_SEC = 10.0d;
 	
@@ -70,7 +70,7 @@ public class NetworkInterface implements INeighborCallback
 				if(!Config.Routing.REDUCE_NUMBER_FNS) {
 					tFNName = Controller.generateRoutingServiceName();
 				}
-				mMultiplexer = new Multiplexer(mNode, tFNName, NamingLevel.NAMES, false, getNode().getIdentity(), null, mNode.getController());
+				mMultiplexer = new Multiplexer(mNode, tFNName, NamingLevel.NAMES, false, getNode().getIdentity(), mNode.getController());
 			}
 			mMultiplexer.open();
 			

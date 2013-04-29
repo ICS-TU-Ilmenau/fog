@@ -11,10 +11,10 @@
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.application;
+package de.tuilmenau.ics.fog.application.util;
 
+import de.tuilmenau.ics.fog.application.ApplicationEventHandler;
 import de.tuilmenau.ics.fog.facade.Connection;
-import de.tuilmenau.ics.fog.facade.IReceiveCallback;
 import de.tuilmenau.ics.fog.facade.events.ClosedEvent;
 import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
 import de.tuilmenau.ics.fog.facade.events.DataAvailableEvent;
@@ -24,9 +24,9 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 
 
-public class Session extends ApplicationEventHandler<Connection> implements IReceiveCallback
+public class Session extends ApplicationEventHandler<Connection> implements ReceiveCallback
 {
-	public Session(boolean ownThread, Logger logger, IReceiveCallback callback)
+	public Session(boolean ownThread, Logger logger, ReceiveCallback callback)
 	{
 		super(ownThread);
 	
@@ -128,5 +128,5 @@ public class Session extends ApplicationEventHandler<Connection> implements IRec
 	}
 
 	protected Logger logger;
-	private IReceiveCallback callback;
+	private ReceiveCallback callback;
 }

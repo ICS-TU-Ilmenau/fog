@@ -18,6 +18,8 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointInterOpIP;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointTCPProxy;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointUDPProxy;
+import de.tuilmenau.ics.fog.application.util.ServerCallback;
+import de.tuilmenau.ics.fog.application.util.Service;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
@@ -25,7 +27,6 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IServerCallback;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.properties.IpDestinationProperty;
@@ -39,7 +40,7 @@ import de.tuilmenau.ics.fog.util.SimpleName;
  * The two operating modes are provided by two interfaces.
  * 
  */
-public class InterOpIP extends Application implements IServerCallback
+public class InterOpIP extends Application implements ServerCallback
 {
 	public enum Transport{ TCP, UDP };
 	public final static String INTEROP_APPL_ID = "IP://";

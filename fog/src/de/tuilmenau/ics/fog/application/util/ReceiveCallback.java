@@ -11,13 +11,13 @@
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.facade;
+package de.tuilmenau.ics.fog.application.util;
 
 
 /**
  * Interface of a higher layer object handling a specific connection.
  */
-public interface IReceiveCallback
+public interface ReceiveCallback
 {
 	public void connected();
 	

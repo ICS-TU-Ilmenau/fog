@@ -11,10 +11,10 @@ package de.tuilmenau.ics.fog.app.relayClient;
 
 import de.tuilmenau.ics.fog.application.ApplicationClient;
 import de.tuilmenau.ics.fog.application.InterOpIP;
-import de.tuilmenau.ics.fog.application.Session;
 import de.tuilmenau.ics.fog.application.InterOpIP.Transport;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointTCPProxy;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointUDPProxy;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;

@@ -17,12 +17,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.tuilmenau.ics.fog.application.Application;
-import de.tuilmenau.ics.fog.application.Service;
+import de.tuilmenau.ics.fog.application.util.ServerCallback;
+import de.tuilmenau.ics.fog.application.util.Service;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
-import de.tuilmenau.ics.fog.facade.IServerCallback;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
@@ -65,7 +65,7 @@ import de.tuilmenau.ics.fog.util.Tuple;
  * 
  * This object delegates functions that are necessary to build up the hierarchical structure - every node contains such an object
  */
-public class Coordinator extends Application implements IServerCallback
+public class Coordinator extends Application implements ServerCallback
 {
 	private Namespace mNamespace = null;
 	private SimpleName mName = null;

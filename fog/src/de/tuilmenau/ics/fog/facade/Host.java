@@ -20,6 +20,7 @@ import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.ExitEvent;
 import de.tuilmenau.ics.fog.IContinuation;
 import de.tuilmenau.ics.fog.application.Application;
+import de.tuilmenau.ics.fog.application.util.LayerObserverCallback;
 import de.tuilmenau.ics.fog.authentication.IdentityManagement;
 import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
 import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
@@ -448,14 +449,14 @@ public class Host extends EventSourceBase implements Layer
 	}
 
 	@Override
-	public void registerObserverNeighborList(INeighborCallback observer)
+	public void registerObserverNeighborList(LayerObserverCallback observer)
 	{
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public boolean unregisterObserverNeighborList(INeighborCallback observer)
+	public boolean unregisterObserverNeighborList(LayerObserverCallback observer)
 	{
 		// TODO Auto-generated method stub
 		return false;

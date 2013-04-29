@@ -15,7 +15,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
-import de.tuilmenau.ics.fog.application.Session;
+import de.tuilmenau.ics.fog.application.util.ReceiveCallback;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.MessageBoxDialog;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectRequirementsDialog;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
@@ -27,7 +28,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.video.UDPServerVideoProxy;
 
-public class VideoListener implements IReceiveCallback
+public class VideoListener implements ReceiveCallback
 {
 		private Shell mShell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 		protected Host mHost;
@@ -38,7 +39,7 @@ public class VideoListener implements IReceiveCallback
 		protected boolean mHasNewFrame = false;
 		protected Session mSocket = null;
 		private Thread mSocketConnectionThread = null;
-		private IReceiveCallback mSocketReceiver = null;
+		private ReceiveCallback mSocketReceiver = null;
 		protected String mServerName = "";
 		protected Description mTransmissionRequirements;
 		protected long mLastFrameTime = 0;

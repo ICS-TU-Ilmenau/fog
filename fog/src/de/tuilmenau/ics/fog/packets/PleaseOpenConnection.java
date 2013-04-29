@@ -20,7 +20,6 @@ import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IReceiveCallback;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
@@ -284,7 +283,7 @@ public class PleaseOpenConnection extends SignallingRequest
 	/**
 	 * Create and start the connection process.
 	 * 
-	 * @param pReceiveCallback The local {@link IReceiveCallback} instance to use.
+	 * @param pReceiveCallback The local {@link ReceiveCallback} instance to use.
 	 * @param pPacket The packet containing the connection request.
 	 * 
 	 * @return The created local connection process.
@@ -332,7 +331,7 @@ public class PleaseOpenConnection extends SignallingRequest
 	/**
 	 * Create and start the connection process.
 	 * 
-	 * @param pReceiveCallback The local {@link IReceiveCallback} instance to use.
+	 * @param pReceiveCallback The local {@link ReceiveCallback} instance to use.
 	 * @param pPacket The packet containing the connection request.
 	 * 
 	 * @return The created local connection process.

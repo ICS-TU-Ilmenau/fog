@@ -19,8 +19,8 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.application.HttpServer;
 import de.tuilmenau.ics.fog.application.InterOpIP;
-import de.tuilmenau.ics.fog.application.Session;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointInterOpIP;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;

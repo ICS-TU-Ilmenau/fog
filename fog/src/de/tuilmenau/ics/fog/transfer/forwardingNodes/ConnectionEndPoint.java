@@ -286,6 +286,12 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		mReceiveBuffer = null;
 	}
 	
+	/**
+	 * Called if FoG receives data for a connection end point.
+	 * The method delivers the data to the higher layer or buffers it.
+	 * 
+	 * @param data Received data for higher layer
+	 */
 	public synchronized void receive(Object data)
 	{
 		try {

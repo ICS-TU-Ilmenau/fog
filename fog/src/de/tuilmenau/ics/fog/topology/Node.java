@@ -205,7 +205,7 @@ public class Node extends Observable implements IElementDecorator
 			// Register node in routing services at attaching the first interface.
 			// It is important, that it is registered before the interface is created.
 			// TODO name for multiplexer is not really needed => remove it when code finished
-			multiplexgate = new Multiplexer(this, nameObj, NamingLevel.NAMES, Config.Routing.ENABLE_NODE_RS_HIERARCHY_LEVEL, ownIdentity, null, controlgate);
+			multiplexgate = new Multiplexer(this, nameObj, NamingLevel.NAMES, Config.Routing.ENABLE_NODE_RS_HIERARCHY_LEVEL, ownIdentity, controlgate);
 			multiplexgate.open();
 		}
 		

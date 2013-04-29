@@ -27,6 +27,7 @@ import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.Config.Simulator.SimulatorMode;
+import de.tuilmenau.ics.fog.application.util.LayerObserverCallback;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
 import de.tuilmenau.ics.fog.facade.properties.DelayProperty;
@@ -168,7 +169,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	 */
 	private void checkAfterRepair()
 	{
-		for(INeighborCallback obs : observerList) {
+		for(LayerObserverCallback obs : observerList) {
 			try {
 				obs.neighborCheck();
 			}
@@ -287,7 +288,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 			
 			nodelist.add(higherLayer);
 			
-			for(INeighborCallback obs : observerList) {
+			for(LayerObserverCallback obs : observerList) {
 				try {
 					obs.neighborDiscovered(higherLayer.getNeighbor());
 				}
@@ -460,7 +461,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 						//
 						// inform observer about removed neighbor
 						//
-						for(INeighborCallback obs : observerList) {
+						for(LayerObserverCallback obs : observerList) {
 							try {
 								obs.neighborDisappeared(hl.getNeighbor());
 							}
@@ -534,7 +535,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	}
 
 	@Override
-	public void registerObserverNeighborList(INeighborCallback observer)
+	public void registerObserverNeighborList(LayerObserverCallback observer)
 	{
 		if(!observerList.contains(observer))
 			observerList.add(observer);
@@ -542,7 +543,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	}
 
 	@Override
-	public boolean unregisterObserverNeighborList(INeighborCallback observer)
+	public boolean unregisterObserverNeighborList(LayerObserverCallback observer)
 	{
 		return observerList.remove(observer);	
 	}
@@ -680,7 +681,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	private static Integer busNumber = 0;
 	private PacketLogger packetLog;
 	private LinkedList<HigherLayerRegistration> nodelist = new LinkedList<HigherLayerRegistration>();
-	private LinkedList<INeighborCallback> observerList = new LinkedList<INeighborCallback>();
+	private LinkedList<LayerObserverCallback> observerList = new LinkedList<LayerObserverCallback>();
 	private static Random randomGenerator = new Random();
 	
 	@Viewable("ID")

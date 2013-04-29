@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.application;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.CounterNode;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.fog.IEvent;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
