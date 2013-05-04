@@ -577,7 +577,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	{
 		getLogger().log(this, "Scheduling execution of next step while current step is " + mStep);
 		mCurrentlyReceived = pPacket;
-		mScript.getSimulation().getTimeBase().scheduleIn(0.5, new ExperimentNotifier(mStep));
+		mScript.getSimulation().getTimeBase().scheduleIn(0, new ExperimentNotifier(mStep));
 		return true;
 	}
 
