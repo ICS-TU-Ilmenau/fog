@@ -72,6 +72,12 @@ public class DatarateProperty extends MinMaxProperty
 	}
 	
 	@Override
+	public int getMax()
+	{
+		return Integer.MAX_VALUE;
+	}
+	
+	@Override
 	public Property deriveRequirements(Property property) throws PropertyException
 	{
 		if(property instanceof DatarateProperty) {
