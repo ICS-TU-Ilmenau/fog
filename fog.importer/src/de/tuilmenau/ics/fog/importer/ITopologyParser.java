@@ -24,6 +24,9 @@ public interface ITopologyParser
  		public boolean getInterAS();
  		public String getParameter();
  		
+ 		public float getBandWidth();
+ 		public float getDelay();
+ 		
 		public void close();
 		
 		public int getNumberWorkers();

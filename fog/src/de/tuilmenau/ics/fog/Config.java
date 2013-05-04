@@ -187,6 +187,8 @@ public class Config
 		 */
 		public boolean DEFAULT_DELAY_CONSTANT = true;
 
+		public boolean USE_IMPORTED_DELAY_AND_BW = false;
+		
 		/**
 		 * Default value for loss probability of a packet transfered
 		 * via a link in %. Allowed are value between [0, 100].
@@ -266,6 +268,10 @@ public class Config
 		 * Amount of none acknowledged packets can be sent.  
 		 */
 		public static final int ACKNOWLEDGEMENT_WINDOW = 100;
+		
+		public enum COST_METRIC {DELAY, BANDWIDTH, HOP_COUNT};
+
+		public static final COST_METRIC USED_METRIC = COST_METRIC.BANDWIDTH;
 	}
 
 	/**

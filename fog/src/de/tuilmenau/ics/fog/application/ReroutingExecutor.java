@@ -20,12 +20,16 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
+import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.events.ServiceDegradationEvent;
+import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
+import de.tuilmenau.ics.fog.facade.properties.MinMaxProperty.Limit;
+import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.statistics.ReroutingTestAgent;
 import de.tuilmenau.ics.fog.scripts.RerouteScript;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -45,6 +49,25 @@ public class ReroutingExecutor extends Application
 	
 		mName = new SimpleName(new Namespace("rerouting"), pNode.toString());
 	}
+	
+//	@Override
+//	public Description getDescription()
+//	{
+//		Description tDescription = super.getDescription();
+//		DatarateProperty tDatarateProperty = null;
+//		if(tDescription.get(DatarateProperty.class) instanceof DatarateProperty) {
+//			tDatarateProperty = (DatarateProperty) tDescription.get(DatarateProperty.class);
+//		}
+//		if(tDatarateProperty == null) {
+//			tDatarateProperty = new DatarateProperty(2, Limit.MIN);
+//		}
+//		try {
+//			tDescription.add(tDatarateProperty);
+//		} catch (PropertyException tExc) {
+//			mLogger.err(this, "Unable to add bandwidth requirement", tExc);
+//		}
+//		return tDescription;
+//	}
 	
 	@Override
 	protected void started()

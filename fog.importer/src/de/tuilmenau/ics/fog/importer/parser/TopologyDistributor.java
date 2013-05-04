@@ -17,14 +17,17 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.Config.Scenario;
 import de.tuilmenau.ics.fog.IWorker;
 import de.tuilmenau.ics.fog.importer.ITopologyParser;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
+import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.middleware.JiniHelper;
-
+import de.tuilmenau.ics.fog.bus.Bus;
 
 public class TopologyDistributor
 {
@@ -227,6 +230,10 @@ public class TopologyDistributor
 				}
 				
 				String busName = nodeA + "-" + nodeB;
+				if(sim.getConfig().Scenario.USE_IMPORTED_DELAY_AND_BW) {
+					Config.getConfig().Scenario.DEFAULT_DATA_RATE_KBIT = (int)topoHandler.getBandWidth();
+					Config.getConfig().Scenario.DEFAULT_DELAY_MSEC = (int) (topoHandler.getDelay()*100);
+				}
 				if(createBus(busName)) {
 					String nodeBASname = null;
 					

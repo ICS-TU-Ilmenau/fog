@@ -250,6 +250,10 @@ public class TransferPlane implements TransferPlaneObserver
 	@Override
 	public void registerNode(ForwardingNode pElement, Name pName, NamingLevel pLevel, Description pDescription)
 	{
+		mLogger.log(this, "Received request to register " + pElement + " with name " + pName);
+		if(pName == null) {
+			mLogger.err(this, "Trying to register an element with name null");
+		}
 		if(!mMap.contains(pElement)) {
 			// add it to graph
 			mMap.add(pElement);

@@ -5,7 +5,8 @@ Bundle-SymbolicName: de.tuilmenau.ics.fog.importer;singleton:=true
 Bundle-Version: 1.0.2.qualifier
 Bundle-Vendor: ICS group of TU Ilmenau
 Bundle-License: Dual-license EPL and GPL 2 (details see about.html)
-Require-Bundle: de.tuilmenau.ics.fog;bundle-version="1.0.2"
+Require-Bundle: de.tuilmenau.ics.fog;bundle-version="1.0.2",
+ de.tuilmenau.ics.fog.bus;bundle-version="1.0.2"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.tuilmenau.ics.fog.importer
 Import-Package: au.com.bytecode.opencsv,

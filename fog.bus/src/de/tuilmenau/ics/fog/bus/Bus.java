@@ -24,6 +24,7 @@ import de.tuilmenau.ics.CommonSim.datastream.annotations.AutoWire;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.DoubleNode;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.Config.Transfer.COST_METRIC;
 import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.Config.Simulator.SimulatorMode;
@@ -83,11 +84,15 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		packetLog.addObserver(this);
 
 		mDescription = new Description();
-		setDataRate(mConfig.Scenario.DEFAULT_DATA_RATE_KBIT, mConfig.Scenario.DEFAULT_DATA_RATE_VARIANCE);
+		int tNewBandwidth = Config.getConfig().Scenario.DEFAULT_DATA_RATE_KBIT;
+		double tVariance = Config.getConfig().Scenario.DEFAULT_DATA_RATE_VARIANCE;
+		setDataRate(tNewBandwidth, tVariance);
 		setDelayMSec(mConfig.Scenario.DEFAULT_DELAY_MSEC);
 		setPacketLossProbability(mConfig.Scenario.DEFAULT_PACKET_LOSS_PROP);
 		setBitErrorProbability(mConfig.Scenario.DEFAULT_BIT_ERROR_PROP);
 		mDelayConstant = mConfig.Scenario.DEFAULT_DELAY_CONSTANT;
+		
+		mLogger.log(this, "Created with bandwidth " + tNewBandwidth);
 		
 		// if a description is given, override the default values
 		if(pDescr != null) {
@@ -237,9 +242,11 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	{
 		mBandwidth = newBandwidth;
 		
-		if(mBandwidth > 0) {
+		mLogger.log(this, "Setting new bandwidth to " + newBandwidth);
+		
+		if(mBandwidth.intValue() > 0) {
 			// update description
-			mDescription.set(new DatarateProperty(mBandwidth, newBandwidthVariance, Limit.MAX));
+			mDescription.set(new DatarateProperty(mBandwidth.intValue(), newBandwidthVariance, Limit.MAX));
 		} else {
 			// Infinite data rate:
 			// remove previous limits from list
@@ -351,10 +358,10 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 					if(mDelayConstant) {
 						tDelayForPacket += mDelaySec;
 					} else {
-						if(mBandwidth >= 0) {
+						if(mBandwidth.floatValue() >= 0) {
 							// 1000 * kbit/s = bit/s
 							// bit/s / 8 = byte/s
-							double tBytesPerSecond = 1000 * mBandwidth / 8;
+							double tBytesPerSecond = 1000 * mBandwidth.floatValue() / 8;
 							
 							tDelayForPacket += (double)packet.getSerialisedSize() / tBytesPerSecond;
 						}
@@ -708,13 +715,25 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	
 	private RemoteMedium proxyForRemote = null;
 	
+	public Number getRemainingTransferMetric()
+	{
+		if(Config.Transfer.USED_METRIC.equals(COST_METRIC.BANDWIDTH)) {
+			if(mBandwidth.floatValue() == 0) {
+				return Float.POSITIVE_INFINITY;
+			} else {
+				return 1 / mBandwidth.floatValue();
+			}
+		}
+		return 0;
+	}
+	
 	//
 	// QoS parameters for lower layer
 	//
 	@Viewable("Description")
 	private Description mDescription;
 	@Viewable("Bandwidth")
-	private int mBandwidth;
+	private Number mBandwidth;
 	@Viewable("Delay (sec)")
 	private double mDelaySec;
 	@Viewable("Delay constant")

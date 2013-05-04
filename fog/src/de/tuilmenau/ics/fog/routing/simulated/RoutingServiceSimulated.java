@@ -340,6 +340,7 @@ public class RoutingServiceSimulated implements RoutingService
 	@Override
 	public RoutingServiceAddress getNameFor(ForwardingNode pNode)
 	{
+		mLogger.log(this, "Looking for node " + pNode + " while available routing IDs: " + mRoutingIDs);
 		return mRoutingIDs.get(pNode);
 	}
 

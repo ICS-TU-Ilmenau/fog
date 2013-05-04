@@ -46,6 +46,8 @@ public class DirectDownGate extends DownGate
 		mToLowerLayerID = toLowerLayerID;
 
 		networkInterface.attachDownGate(this);
+		
+		mCost = networkInterface.getBus().getRemainingTransferMetric();
 	}
 	
 	@Override
@@ -165,10 +167,19 @@ public class DirectDownGate extends DownGate
 			return BrokenType.UNKNOWN;
 		}
 	}
+	
+	@Override
+	public Number getCost()
+	{
+		return mCost;
+	}
 
 	@Viewable("Local process number")
 	private int mLocalProcessNumber = -1;
 	
 	@Viewable("Lower layer name")
 	private NeighborInformation mToLowerLayerID;
+	
+	@Viewable("Gate cost")
+	private Number mCost = 0;
 }
