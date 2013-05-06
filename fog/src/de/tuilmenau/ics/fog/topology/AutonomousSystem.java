@@ -227,12 +227,15 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	public ReroutingSession establishConnection(String pSendingNode, String pTargetNode)
 	{
 		Node tNode = getNodeByName(pSendingNode);
-		Connection tConnection = null;
-		tConnection = tNode.getHost().connect(new SimpleName(new Namespace("rerouting"), pTargetNode), Description.createBE(false), null);
 		
 		for(Application tApplication : tNode.getHost().getApps()) {
-			if(tApplication instanceof ReroutingExecutor) { 
-				ReroutingSession tSession = ((ReroutingExecutor)tApplication).new ReroutingSession(true);
+			if(tApplication instanceof ReroutingExecutor) {
+				ReroutingExecutor tExecutor = ((ReroutingExecutor)tApplication); 
+				ReroutingSession tSession = tExecutor.new ReroutingSession(true);
+
+				Connection tConnection = null;
+				tConnection = tNode.getHost().connect(new SimpleName(new Namespace("rerouting"), pTargetNode), tExecutor.getDescription(), null);
+
 				tSession.start(tConnection);
 				if(!JiniHelper.isEnabled()) {
 					return tSession;

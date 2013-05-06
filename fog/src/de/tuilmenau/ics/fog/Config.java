@@ -187,7 +187,7 @@ public class Config
 		 */
 		public boolean DEFAULT_DELAY_CONSTANT = true;
 
-		public boolean USE_IMPORTED_DELAY_AND_BW = false;
+		public boolean USE_IMPORTED_DELAY_AND_BW = true;
 		
 		/**
 		 * Default value for loss probability of a packet transfered
@@ -325,6 +325,12 @@ public class Config
 		 * alternative/backup route for relaying packets "around" an failed element.
 		 */
 		public static final boolean REROUTE_USE_HORIZONTAL_GATES = true;
+		
+		/**
+		 * Enable the following flag if you want the rerouting executor to establish connections that require a given bandwidth.
+		 * This can be used to simulate the routing of demands through the network.
+		 */
+		public static final boolean REROUTING_EXECUTOR_ALLOCATES_BANDWIDTH = true;
 		
 		/**
 		 * Activates for rerouting the automatic instantiation of a VideoTranscoding gate in case 

@@ -17,6 +17,7 @@ import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.IEventRef;
 import de.tuilmenau.ics.fog.facade.Description;
+import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.FunctionalRequirementProperty;
@@ -56,6 +57,11 @@ public class ProcessRerouting extends Process
 		}
 	}
 
+	public void storeAndForwardOnEstablishment(Packet pPacket)
+	{
+		mPacketToForward = pPacket;
+	}
+	
 	/**
 	 * Synch with {@link check} in order to prevent checks during the start operations. 
 	 */
@@ -133,6 +139,7 @@ public class ProcessRerouting extends Process
 						public void fire()
 						{
 							if(!reroutingGate.isOperational()) {
+								mLogger.trace(this, "Rerouting gate is not yet operational, Signalling and scheduling event to recheck.");
 								getLogger().info(this, "Resending signal message");
 								try {
 									signal();
@@ -141,6 +148,8 @@ public class ProcessRerouting extends Process
 									getLogger().warn(this, "Failed to resend signal message. Try again later.", exc);
 								}
 								timer = getBase().getNode().getTimeBase().scheduleIn(RESEND_OPEN_REQUEST_TIMEOUT_SEC, this);
+							} else {
+								mLogger.trace(this, "Rerouting gate seems to be operational. Recheck is omitted.");
 							}
 							// else: everything fine; no further signaling required
 						}
@@ -155,15 +164,32 @@ public class ProcessRerouting extends Process
 		}
 	}
 
-	public void update(Route alternativeRoute)
+	public void update(Route alternativeRoute, Identity peerIdentity)
 	{
-		mLogger.log(this, "Set backup route to " +alternativeRoute);
-		
+		mLogger.log(this, "Set backup route to " +alternativeRoute + " and peer identity is " + peerIdentity);
+		this.peerIdentity = peerIdentity;
 		if(alternativeRoute != null) {
 			reroutingGate.setRoute(alternativeRoute);
 			getBase().getNode().getTimeBase().cancelEvent(timer);
 			timer = null;
 		}
+		reroutingGate.handlePacket(mPacketToForward, fnOfGate);
+	}
+	
+	@Override
+	public boolean isChangableBy(Identity changer)
+	{
+		boolean allowed = super.isChangableBy(changer);
+		
+		if(!allowed) {
+			if(peerIdentity != null) {
+				allowed = peerIdentity.equals(changer);
+			} else {
+				allowed = true;
+			}
+		}
+		
+		return allowed;
 	}
 	
 	public void errorNotification(Exception pCause)
@@ -200,5 +226,12 @@ public class ProcessRerouting extends Process
 	@Viewable("Forwarding node at which gate is attached")
 	private ForwardingNode fnOfGate;
 	
+	@Viewable("Stored packet for Forwarding")
+	private Packet mPacketToForward = null;
+	
+	@Viewable("Peer Identity")
+	private Identity peerIdentity;
+	
 	private IEventRef timer = null;
+
 }

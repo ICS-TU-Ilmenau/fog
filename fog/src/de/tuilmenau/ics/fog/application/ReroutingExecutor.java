@@ -18,6 +18,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -50,24 +51,27 @@ public class ReroutingExecutor extends Application
 		mName = new SimpleName(new Namespace("rerouting"), pNode.toString());
 	}
 	
-//	@Override
-//	public Description getDescription()
-//	{
-//		Description tDescription = super.getDescription();
-//		DatarateProperty tDatarateProperty = null;
-//		if(tDescription.get(DatarateProperty.class) instanceof DatarateProperty) {
-//			tDatarateProperty = (DatarateProperty) tDescription.get(DatarateProperty.class);
-//		}
-//		if(tDatarateProperty == null) {
-//			tDatarateProperty = new DatarateProperty(2, Limit.MIN);
-//		}
-//		try {
-//			tDescription.add(tDatarateProperty);
-//		} catch (PropertyException tExc) {
-//			mLogger.err(this, "Unable to add bandwidth requirement", tExc);
-//		}
-//		return tDescription;
-//	}
+	@Override
+	public Description getDescription()
+	{
+		Description tDescription = super.getDescription();
+		if(Config.Routing.REROUTING_EXECUTOR_ALLOCATES_BANDWIDTH) {
+			DatarateProperty tDatarateProperty = null;
+			if(tDescription.get(DatarateProperty.class) instanceof DatarateProperty) {
+				tDatarateProperty = (DatarateProperty) tDescription.get(DatarateProperty.class);
+			}
+			if(tDatarateProperty == null) {
+				tDatarateProperty = new DatarateProperty(2, Limit.MIN);
+			}
+			try {
+				tDescription.add(tDatarateProperty);
+			} catch (PropertyException tExc) {
+				mLogger.err(this, "Unable to add bandwidth requirement", tExc);
+			}
+		}
+		
+		return tDescription;
+	}
 	
 	@Override
 	protected void started()

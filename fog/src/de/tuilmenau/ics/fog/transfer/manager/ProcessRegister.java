@@ -17,6 +17,8 @@ import java.util.HashMap;
 
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
+import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.ui.Logging.Level;
 
 
 /**
@@ -83,7 +85,30 @@ public class ProcessRegister
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "(registered FNs: " + mProcesses.size() + ")";
+		Level tLogLevel = null;
+		
+		String tString = new String();
+		tString += this.getSimpleToString() + " contains the following process lists:";
+		for(ForwardingNode tFN : mProcesses.keySet()) {
+			tString += "\n" + tFN + ":" + mProcesses.get(tFN);
+			if(tLogLevel == null) {
+				tLogLevel = tFN.getNode().getAS().getSimulation().getLogLevel();
+				if(tLogLevel.ordinal() <= Level.LOG.ordinal()) {
+					break;
+				}
+			}
+		}
+		
+		if(tLogLevel.ordinal() > Level.LOG.ordinal()) {
+			return tString;
+		} else {
+			return getSimpleToString();
+		}
+	}
+	
+	private String getSimpleToString()
+	{
+		return this.getClass().getSimpleName() + "(registered FNs: " + mProcesses.size() + ")";		
 	}
 	
 	private HashMap<ForwardingNode, ProcessList> mProcesses = new HashMap<ForwardingNode, ProcessList>();

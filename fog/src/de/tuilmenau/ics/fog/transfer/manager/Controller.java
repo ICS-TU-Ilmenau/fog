@@ -1105,6 +1105,7 @@ public class Controller
 				if((tConfig.routing.REROUTE_USE_HORIZONTAL_GATES) && (tRerouteMethod != RerouteMethod.GLOBAL)) {
 					// setup backup gates with alternative routes
 					tProcess = new ProcessRerouting(pNetworkInterface, pFrom, removeGatesFromRoute, destinationFromBroken);
+					tProcess.storeAndForwardOnEstablishment(pPacket);
 					tProcess.start();
 				} else {
 					// do we send an error msg back?
@@ -1123,6 +1124,7 @@ public class Controller
 				if((tConfig.routing.REROUTE_USE_HORIZONTAL_GATES) && (tRerouteMethod != RerouteMethod.GLOBAL)) {
 					// setup backup gates with alternative routes
 					tProcess = new ProcessRerouting(pNetworkInterface, pFrom, removeGatesFromRoute, destinationFromBroken);
+					tProcess.storeAndForwardOnEstablishment(pPacket);
 					tProcess.start();
 					
 					pFrom.shutdown();

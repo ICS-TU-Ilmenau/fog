@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.packets;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.transfer.manager.Process;
@@ -68,7 +69,12 @@ public class OpenGateResponse extends SignallingAnswer
 				constrProcess.update(peerOutgoingNumber, peerBaseRoutingName, responder);
 			}
 			else if(process instanceof ProcessRerouting) {
-				((ProcessRerouting) process).update(packet.getReturnRoute());
+				Signature signature = packet.getSenderAuthentication();
+				Identity senderIdentity = null;
+				if(signature != null) {
+					senderIdentity = signature.getIdentity();
+				}
+				((ProcessRerouting) process).update(packet.getReturnRoute(), senderIdentity);
 			}
 			else {
 				process.getLogger().err(this, "Unexpected type of process (" +process +"); can not execute.");

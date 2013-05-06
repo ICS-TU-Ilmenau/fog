@@ -45,19 +45,24 @@ abstract public class SignallingAnswer extends Signalling
 			
 			if(tSender != null) {
 				synchronized(tFN) {
+					tFN.getNode().getLogger().trace(this, "Processes in process register: " + tFN.getNode().getProcessRegister().toString());
 					Process tProcess = tFN.getNode().getProcessRegister().getProcess(tFN, tSender, getProcessNumber());
 					if(tProcess != null) {
 						return execute(tProcess, pPacket, tSender);
 					} else {
 						tFN.getNode().getLogger().warn(this, "No process available for owner " +tSender + " and ID " +getProcessNumber() +" in " +tFN + " while authentications of packets were " + pPacket.getAuthentications());
-						pPacket.getAuthentications().removeFirst();
-						tSender = getSenderIdentity(tFN.getNode().getAuthenticationService(), pPacket);
-						tProcess = tFN.getNode().getProcessRegister().getProcess(tFN, tSender, getProcessNumber());
-						if(tProcess != null) {
-							return execute(tProcess, pPacket, tSender);
-						} else {
-							tFN.getNode().getLogger().err(this, "Absolutely unable to find owner of process");
-						}
+//						Packet tBackupPacket = pPacket.clone();
+//						while(!pPacket.getAuthentications().isEmpty()) {
+//							tSender = getSenderIdentity(tFN.getNode().getAuthenticationService(), pPacket);
+//							tFN.getNode().getLogger().trace(this, "Will now check pair " + tFN + " with sender " + tSender + " and process number " + getProcessNumber());
+//							tProcess = tFN.getNode().getProcessRegister().getProcess(tFN, tSender, getProcessNumber());
+//							if(tProcess != null) {
+//								return execute(tProcess, pPacket, tSender);
+//							} else {
+//								tFN.getNode().getLogger().err(this, "Absolutely unable to find owner of process");
+//							}
+//							pPacket.getAuthentications().removeFirst();
+//						}
 					}
 				}
 			} else {
