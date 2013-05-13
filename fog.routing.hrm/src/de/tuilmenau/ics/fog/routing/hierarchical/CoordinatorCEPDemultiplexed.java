@@ -70,13 +70,12 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 	private Logger mLogger = Logging.getInstance();
 	private BFSDistanceLabeler<VirtualNode, NodeConnection> mBreadthFirstSearch;
 	private boolean mCrossLevelCEP = false;
-	private StackTraceElement[] mStackTrace = null;
 	
 	/**
 	 * 
 	 * @param pLogger Logger that should be used
 	 * @param pCoord is the coordinator of a node
-	 * @param pCluster is the cluster this connection endpoint serves
+	 * @param pCluster is the cluster this connection end point serves
 	 */
 	public CoordinatorCEPDemultiplexed(Logger pLogger, Coordinator pCoord, Cluster pCluster)
 	{
@@ -85,13 +84,11 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 		mLogger = pLogger;
 		mLogger.log(this, "Created");
 		getCoordinator().getLogger().log(this, "Created for " + mCluster);
-		
-		mStackTrace = Thread.currentThread().getStackTrace();
 	}
 	
 	/**
 	 * 
-	 * @param pData is the data that should be sent to the receiver side of this connection endpoint
+	 * @param pData is the data that should be sent to the receiver side of this connection end point
 	 * @return true if the packet left the central multiplexer and the forwarding node that is attached to a direct down gate
 	 * @throws NetworkException
 	 */
@@ -265,7 +262,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 					}
 					/*
 					 * This comment relates to the following else if statement: use routing service address as last instance because it is the default and all
-					 * other addresses are interited from HRMID
+					 * other addresses are derived from the HRMID
 					 */
 				} else if(tRequest.getTarget() instanceof HRMID && !tRequest.isAnswer()) {
 					List<Route> tFinalPath = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute(tRequest.getSource(), tRequest.getTarget());
@@ -366,7 +363,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 	
 	/**
 	 * @deprecated
-	 * If this CEP is used for communcation between different hierarchical levels: for use of HRM+BGP
+	 * If this CEP is used for communication between different hierarchical levels: for use of HRM+BGP
 	 */
 	public void setCrossLayerCEP()
 	{
@@ -430,10 +427,10 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 	}
 	
 	/**
-	 * Connection endpoints control the clusters they are associated to.
+	 * Connection end points control the clusters they are associated to.
 	 * 
 	 * @return As one node may be associated to more than one cluster you can use this method to find out
-	 * which cluster is controlled by this connection endpoint.
+	 * which cluster is controlled by this connection end point.
 	 */
 	public Cluster getCluster()
 	{
@@ -596,7 +593,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						Cluster tCluster = (Cluster) tVirtualNode;
 						int tRadius;
 
-						tRadius = HierarchicalConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER;
+						tRadius = HRMConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER;
 						Logging.log(this, "radius is " + tRadius);
 						if(tCluster instanceof AttachedCluster && ((AttachedCluster)tCluster).getClustersToTarget() + pDiscovery.getDistance() > tRadius) continue;
 						boolean tBreak=false;

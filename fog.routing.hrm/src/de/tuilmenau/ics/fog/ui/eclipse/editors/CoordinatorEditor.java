@@ -21,7 +21,6 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -48,7 +47,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.AttachedCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
@@ -64,7 +63,6 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class CoordinatorEditor extends EditorPart
 {
 	private Coordinator mCoordinator = null;
-	private Display mDisplay = null;
     private Composite mShell = null;
     private ScrolledComposite mScroller = null;
     private Composite mContainer = null;
@@ -76,7 +74,6 @@ public class CoordinatorEditor extends EditorPart
 	@Override
 	public void createPartControl(Composite parent)
 	{
-		mDisplay = Display.getCurrent();
 		mShell = parent;
 		mShell.setLayout(new FillLayout());
 		mScroller = new ScrolledComposite(mShell, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
@@ -85,8 +82,12 @@ public class CoordinatorEditor extends EditorPart
 		GridLayout tLayout = new GridLayout(1, true);
 		mContainer.setLayout(tLayout);
 		
-		for(int i = 0; i <= HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
+		for(int i = 0; i <= HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
+			Logging.log(this, "Amount of found clusters: " + mCoordinator.getClusters().size());
+			int j = -1;
 			for(Cluster tCluster : mCoordinator.getClusters()) {
+				j++;
+				Logging.log(this, "Printing cluster " + j + ": " + tCluster.toString());
 				if( !(tCluster instanceof AttachedCluster) && tCluster.getLevel() == i) {
 					printCluster(tCluster);
 				}
@@ -340,8 +341,11 @@ public class CoordinatorEditor extends EditorPart
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
 		
-		int j = 0;
+		int j = -1;
+		Logging.log(this, "Amount of participating CEPs is " + pCluster.getParticipatingCEPs().size());
 		for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
+			j++;
+			Logging.log(this, "Printing table item number " + j);
 			TableItem item = new TableItem(tTable, SWT.NONE, j);
 			item.setText(0, (pCluster.getCoordinatorSignature() != null ? pCluster.getCoordinatorSignature().toString() : ""));
 			Name tPeerAddress = tCEP.getPeerName();

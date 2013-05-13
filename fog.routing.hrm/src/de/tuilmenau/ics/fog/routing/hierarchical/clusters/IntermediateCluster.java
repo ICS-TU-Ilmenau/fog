@@ -29,7 +29,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
@@ -198,12 +198,12 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 			}
 		}
 		if(pCoord == null) {
-			boolean tIsEdgeRouter = false;
+//			boolean tIsEdgeRouter = false;
 			LinkedList<ClusterDummy> tInterASClusterIdentifications = new LinkedList<ClusterDummy>();
 
 			for(VirtualNode tNode : getCoordinator().getClusterMap().getNeighbors(this)) {
 				if(tNode instanceof Cluster && ((Cluster) tNode).isInterASCluster()) {
-					tIsEdgeRouter = true;
+//					tIsEdgeRouter = true;
 					tInterASClusterIdentifications.add(ClusterDummy.compare(((Cluster)tNode).getClusterID(), ((Cluster)tNode).getToken(), ((Cluster)tNode).getLevel()));
 				}
 			}
@@ -255,7 +255,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		addNeighborCluster(tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
-			Description tDescription = new Description();
+//			Description tDescription = new Description();
 			try {
 				getCoordinator().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 			} catch (RemoteException tExc) {
@@ -308,11 +308,11 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 			
 			
 			if(pAnnounce.getCoveringClusterEntry() != null) {
-				Cluster tForwardingCluster = null;
+//				Cluster tForwardingCluster = null;
 				
 				if(pAnnounce.isRejected()) {
-					Cluster tMultiplex = this;
-					tForwardingCluster = (Cluster) ((Cluster) getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster()) == null ? pCEP.getRemoteCluster() : getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster())) ;
+//					Cluster tMultiplex = this;
+//					tForwardingCluster = (Cluster) ((Cluster) getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster()) == null ? pCEP.getRemoteCluster() : getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster())) ;
 					//pAnnounce.setAnnouncer( (tForwardingCluster.getCoordinatorsAddress() != null ? tForwardingCluster.getCoordinatorsAddress() : null ));
 					getCoordinator().getLogger().log(this, "Removing " + this + " as participating CEP from " + this);
 					getParticipatingCEPs().remove(this);
@@ -443,8 +443,11 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 			getCoordinator().getLogger().info(this, "Added " + pParticipatingCEP + " to participating CEPs");
 			if(mCEPs.size() > 1) {
 				getCoordinator().getLogger().info(this, "Adding second participating CEP " + pParticipatingCEP);
+//				StackTraceElement[] tStackTrace = Thread.currentThread().getStackTrace();
+//				for (StackTraceElement tElement : tStackTrace) {
+//					getCoordinator().getLogger().log(tElement.toString());
+//				}
 			}
-			
 		}
 	}
 
@@ -558,7 +561,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	
 	public String toString()
 	{
-		if(mHRMID != null && HierarchicalConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
+		if(mHRMID != null && HRMConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
 			return mHRMID.toString();
 		} else {
 			return this.getClass().getSimpleName() + "@" + getCoordinator().getReferenceNode() + ":ID(" + getClusterID() + ")TK(" + mToken +  "):PR(" + getPriority() + ")COORD(" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "") + ")" + ")@" + getLevel() + (mInterASCluster ? ":InterAS" : "");

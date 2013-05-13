@@ -59,7 +59,7 @@ public class CoordinatorCEPMultiplexer
 	{
 		Name tName = pTargetCluster.getCoordinatorName();
 		CoordinatorCEPDemultiplexed tCEPDemultiplexed = null;
-		long tAddress=0;
+//		long tAddress=0;
 
 		if(!mConnectedEntities.contains(pTargetCluster.getCoordinatorName())) {
 			mConnectedEntities.add(pTargetCluster.getCoordinatorName());
@@ -86,7 +86,7 @@ public class CoordinatorCEPMultiplexer
 					NestedParticipation tParticipate = tParticipationProperty.new NestedParticipation(pTargetCluster.getClusterID(), pTargetCluster.getToken());
 					tParticipationProperty.addNestedparticipation(tParticipate);
 					tParticipate.setSourcePriority(tManager.getManagedCluster().getPriority());
-					tAddress = pTargetCluster.getCoordinatorsAddress().getAddress().longValue();
+//					tAddress = pTargetCluster.getCoordinatorsAddress().getAddress().longValue();
 					
 					tParticipate.setSourceClusterID(tManager.getManagedCluster().getClusterID());
 					tParticipate.setSourceToken(tManager.getManagedCluster().getToken());

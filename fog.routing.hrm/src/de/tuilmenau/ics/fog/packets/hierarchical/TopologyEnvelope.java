@@ -93,7 +93,7 @@ public class TopologyEnvelope implements Serializable
 	
 	/**
 	 * 
-	 * @return List of entries that should be skippied during address distribution
+	 * @return List of entries that should be skipped during address distribution
 	 */
 	public LinkedList<Name> getIgnoreEntries()
 	{
@@ -111,7 +111,7 @@ public class TopologyEnvelope implements Serializable
 	
 	/**
 	 * 
-	 * @return List of entries that contian information on how to reach a given HRMID
+	 * @return List of entries which contain information on how to reach a given HRMID
 	 */
 	public LinkedList<FIBEntry> getEntries()
 	{
@@ -181,7 +181,7 @@ public class TopologyEnvelope implements Serializable
 		private HRMName mNextHop;
 		private ClusterDummy mNextCluster;
 		private ClusterDummy mFartestClusterInDirection;
-		private boolean mWriteProtected;
+//		private boolean mWriteProtected;
 		private HierarchicalSignature mSignature;
 		private LinkedList<RoutingServiceLinkVector> mRoutingVectors;
 		private int mBorderIdentification = 0;

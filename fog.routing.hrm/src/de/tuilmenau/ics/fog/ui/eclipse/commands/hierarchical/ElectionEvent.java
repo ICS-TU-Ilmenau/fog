@@ -14,6 +14,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * The implementation expects the network to be synchronized. This class causes the start of all elections.
@@ -29,6 +30,7 @@ public class ElectionEvent implements IEvent
 	@Override
 	public void fire()
 	{
+		Logging.log(this,  "Firing election event " + toString());
 		for(ElectionProcess tElection : ElectionManager.getElectionManager().getAllElections()) {
 			boolean tStartProcess=true;
 			for(Cluster tCluster : tElection.getParticipatingClusters()) {

@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.properties;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
-import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
+//import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -22,6 +22,10 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class AddressingTypeProperty extends AbstractProperty
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1582901513075074005L;
 	/**
 	 * Please provide the type of the address that can be either AddressingType.DataLinkLayer, AddressingType.Hierarchical
 	 * or AddressingType.IP.

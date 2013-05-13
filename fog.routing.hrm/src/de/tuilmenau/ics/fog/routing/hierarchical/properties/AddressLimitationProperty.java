@@ -22,7 +22,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class AddressLimitationProperty extends AbstractProperty
 {
 	/**
-	 * The zone limitation can be either obstructive, restricitive or mixed. However mixed was not implemented.
+	 * The zone limitation can be either obstructive, restrictive or mixed. However mixed was not implemented.
 	 * 
 	 * Via the obstructive limitation you only prohibit some zones. An easy and common example would be:
 	 * Dear children. You may walk around anywhere. But never enter the dark forest.
@@ -37,7 +37,7 @@ public class AddressLimitationProperty extends AbstractProperty
 	/**
 	 * 
 	 * @param pEntry constructor or previously prepared list of limitation entries
-	 * @param pListType expects an enum entry that says whether limitation is restrictive, obstructive or mixed
+	 * @param pListType expects an enumeration entry that says whether limitation is restrictive, obstructive or mixed
 	 */
 	public AddressLimitationProperty(LinkedList<HierarchyLevelLimitationEntry> pEntries, LIST_TYPE pListType) {
 		mEntries = pEntries;

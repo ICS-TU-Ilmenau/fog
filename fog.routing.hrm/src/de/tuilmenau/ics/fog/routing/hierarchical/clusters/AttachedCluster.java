@@ -26,7 +26,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEP;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -39,7 +39,7 @@ import de.tuilmenau.ics.fog.util.Logger;
 public class AttachedCluster implements Cluster, IElementDecorator
 {
 	private static final long serialVersionUID = -8746079632866375924L;
-	private LinkedList<RoutingServiceLinkVector> mVectors;
+//	private LinkedList<RoutingServiceLinkVector> mVectors;
 	private int mToken;
 	protected int mLevel;
 	protected float mPriority;
@@ -57,16 +57,16 @@ public class AttachedCluster implements Cluster, IElementDecorator
 	protected Name mAnnouncer;
 	protected LinkedList<CoordinatorCEPDemultiplexed> mAnnouncedCEPs;
 	protected CoordinatorCEPDemultiplexed mNegotiator=null;
-	private int mClusterHopsOnOpposite;
+//	private int mClusterHopsOnOpposite;
 	private IntermediateCluster mSourceIntermediateCluster = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
 	private boolean mInterASCluster = false;
 	private HashMap<CoordinatorCEPDemultiplexed, Integer> mClustersOnOppositeCounter = new HashMap<CoordinatorCEPDemultiplexed, Integer>();
-	private StackTraceElement[] mStackTrace = null;
+//	private StackTraceElement[] mStackTrace = null;
 	
 	/**
 	 * 
-	 * @param pClusterID identificator of the cluster
+	 * @param pClusterID identifier of the cluster
 	 * @param pCoordName name of the coordinator
 	 * @param pAddress routing service address
 	 * @param pToken as the token this cluster got
@@ -83,7 +83,7 @@ public class AttachedCluster implements Cluster, IElementDecorator
 		mCoordName = pCoordName;
 		mToken = pToken;
 		mLevel = pLevel;
-		mStackTrace = Thread.currentThread().getStackTrace();
+//		mStackTrace = Thread.currentThread().getStackTrace();
 	}
 	
 	public void addAnnouncedCEP(CoordinatorCEPDemultiplexed pCEP)
@@ -328,7 +328,7 @@ public class AttachedCluster implements Cluster, IElementDecorator
 	
 	public String toString()
 	{
-		if(mHRMID != null && HierarchicalConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
+		if(mHRMID != null && HRMConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
 			return mHRMID.toString();
 		} else {
 			return getClusterDescription() + ":HOPS(" + getCoordinator().getClusterDistance(this) + ")" + (mInterASCluster ? "InterAS" : "");
@@ -446,7 +446,7 @@ public class AttachedCluster implements Cluster, IElementDecorator
 	public void setClusterHopsOnOpposite(int pClustersOnOpposite, CoordinatorCEPDemultiplexed pCEP)
 	{
 		mClustersOnOppositeCounter.put(pCEP, pClustersOnOpposite);
-		mClusterHopsOnOpposite = pClustersOnOpposite;
+//		mClusterHopsOnOpposite = pClustersOnOpposite;
 	}
 	
 	public void setSourceIntermediate(IntermediateCluster pIntermediate)

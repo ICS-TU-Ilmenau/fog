@@ -21,15 +21,15 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscover
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexedPackage;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.RouteSegment;
+//import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
-import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
+//import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.transfer.gates.GateID;
+//import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.Tuple;
@@ -47,8 +47,8 @@ public class CoordinatorCEP extends Session
 	/**
 	 * 
 	 * @param pLogger
-	 * @param pCoord is the coordinator this connection endpoint is associated to
-	 * @param pServerSide indicates whether this connection endpoint is the origin of a server or not
+	 * @param pCoord is the coordinator this connection end point is associated to
+	 * @param pServerSide indicates whether this connection end point is the origin of a server or not
 	 * @param pLevel is the level this connection end point is located at
 	 * @param pMux is the multiplexer to use
 	 * 
@@ -225,7 +225,7 @@ public class CoordinatorCEP extends Session
 	
 	/**
 	 * 
-	 * @return The phsyical name of central forwarding node at the other side is returned.
+	 * @return The physical name of central forwarding node at the other side is returned.
 	 */
 	public HRMName getPeerRoutingServiceAddress()
 	{
@@ -234,7 +234,7 @@ public class CoordinatorCEP extends Session
 	
 	/**
 	 * 
-	 * @return coordinator this connection endpoint is attached to
+	 * @return coordinator this connection end point is attached to
 	 */
 	public Coordinator getCoordinator()
 	{

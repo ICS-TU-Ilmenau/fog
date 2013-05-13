@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
+//import java.util.List;
 import java.util.Random;
 
 import de.tuilmenau.ics.fog.IEvent;
@@ -28,7 +28,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.AttachedCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.VirtualNode;
+//import de.tuilmenau.ics.fog.routing.hierarchical.clusters.VirtualNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -36,6 +36,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
 
 public class ElectionProcess extends Thread
 {
+	private static final int FIRST_ELECTING_CLUSTER = 0; //TV
+
 	private Boolean mPleaseInterrupt = false;
 	//private long mTimeStamp = System.currentTimeMillis();
 	private long TIMEOUT_FOR_PEERS = 5000;
@@ -53,7 +55,7 @@ public class ElectionProcess extends Thread
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() /*+ "(TS:" + mTimeStamp + ")"*/ + (mElectingClusters.isEmpty() ? "" : "@" + mElectingClusters.get(0).getClusterID()) + "@" + mLevel;
+		return this.getClass().getSimpleName() /*+ "(TS:" + mTimeStamp + ")"*/ + (mElectingClusters.isEmpty() ? "" : "@" + mElectingClusters.get(FIRST_ELECTING_CLUSTER).getClusterID()) + "@" + mLevel;
 	}
 	
 	public void interruptElection()
@@ -81,22 +83,38 @@ public class ElectionProcess extends Thread
 		mLevel = pLevel;
 	}
 	
+	//TV: checked
 	public void addElectingCluster(IntermediateCluster pCluster)
 	{
-		boolean tIsContainted=false;
+		boolean tClusterIsAlreadyKnown = false;
+		
+		// avoid duplicates: iterate over all already known clusters and check if pCluster is already contained
 		for(Cluster tCluster : mElectingClusters) {
 			if(tCluster.getCoordinator().getReferenceNode().getName().equals(pCluster.getCoordinator().getReferenceNode().getName())) {
-				tIsContainted |= true;
+				tClusterIsAlreadyKnown = true;
 			}
 		}
-		if(!tIsContainted) {
+		
+		// add cluster to the list of known clusters which needs an election
+		if(!tClusterIsAlreadyKnown) {
 			mElectingClusters.add(pCluster);
 		}
-		if(!this.getName().equals(this.toString())) {
-			setName(this.toString());
-		}
+
+		// update the thread name
+		updateThreadName();
 	}
 	
+	/**
+	 * 
+	 */
+	//TV: checked
+	private void updateThreadName()
+	{
+		if(!getName().equals(toString())) {
+			setName(toString());
+		}
+	}
+
 	public void sendElections()
 	{
 		try {
@@ -155,7 +173,7 @@ public class ElectionProcess extends Thread
 			if(mLevel > 0) {
 				pCluster.getCoordinator().getLogger().log(pCluster, "has the coordinator and will now announce itself");
 				for(Cluster tToAnnounce : pCluster.getNeighbors()) {
-					List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);
+//					List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);
 					/*
 					 * OK: Because of the formerly sent 
 					 */
@@ -191,21 +209,20 @@ public class ElectionProcess extends Thread
 			pCluster.getCoordinator().setSourceIntermediateCluster(mClusterManager, pCluster);
 			mClusterManager.setPriority(pCluster.getPriority());
 			pCluster.getCoordinator().addCluster(mClusterManager);
-			if(pCluster.getLevel() +1 != HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT) {
-				if(HierarchicalConfig.Routing.STEP_WISE_HIERARCHY_PREPARATION) {
-					Logging.log(this, "Will now wait because hierarchy build up is done stepwise");
-					mWillInitiateManager = true;
-					if(mLevel == 1) {
-						Logging.log(this, "Trigger");
-					}
-					Logging.log(this, "Reevaluating whether other processes settled");
-					ElectionManager.getElectionManager().reevaluate(pCluster.getLevel());
-					synchronized(this) {
-						try {
-							this.wait();
-						} catch (InterruptedException tExc) {
-							Logging.err(this, "Unable to fulfill stepwise hierarchy preparation", tExc);
-						}
+			if(pCluster.getLevel() +1 != HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT) {
+				// stepwise hierarchy creation
+				Logging.log(this, "Will now wait because hierarchy build up is done stepwise");
+				mWillInitiateManager = true;
+				if(mLevel == 1) {
+					Logging.log(this, "Trigger");
+				}
+				Logging.log(this, "Reevaluating whether other processes settled");
+				ElectionManager.getElectionManager().reevaluate(pCluster.getLevel());
+				synchronized(this) {
+					try {
+						this.wait();
+					} catch (InterruptedException tExc) {
+						Logging.err(this, "Unable to fulfill stepwise hierarchy preparation", tExc);
 					}
 				}
 				mClusterManager.prepareAboveCluster(pCluster.getLevel() +1);
@@ -441,7 +458,7 @@ public class ElectionProcess extends Thread
 		
 		public void removeElection(Integer pLevel, Long pClusterID)
 		{
-			if(HierarchicalConfig.Routing.BUILD_UP_HIERARCHY_AUTOMATICALLY) {
+			if(HRMConfig.Routing.BUILD_UP_HIERARCHY_AUTOMATICALLY) {
 				mElections.get(pLevel).remove(pClusterID);
 				if(mElections.get(pLevel).isEmpty()) {
 					if(mNotification != null) {
@@ -476,7 +493,7 @@ public class ElectionProcess extends Thread
 		
 		public void reevaluate(int pLevel)
 		{
-			if(HierarchicalConfig.Routing.BUILD_UP_HIERARCHY_AUTOMATICALLY) {
+			if(HRMConfig.Routing.BUILD_UP_HIERARCHY_AUTOMATICALLY) {
 				boolean tWontBeginDistribution = false;
 				ElectionProcess tWaitingFor = null;
 				for(ElectionProcess tProcess : mElections.get(pLevel).values()) {

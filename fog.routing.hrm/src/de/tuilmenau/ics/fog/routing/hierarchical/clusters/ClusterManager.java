@@ -38,10 +38,10 @@ import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
-import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEP;
+//import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEP;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchyLevelLimitationEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
@@ -60,7 +60,7 @@ public class ClusterManager implements Cluster, Observer
 	 */
 	private LinkedList<Integer> mTokens = new LinkedList<Integer>();
 	/*
-	 * List for identification of entitities this cluster manager is connected to
+	 * List for identification of entities this cluster manager is connected to
 	 */
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
 	private HRMID mHRMID = null;
@@ -88,7 +88,7 @@ public class ClusterManager implements Cluster, Observer
 	private HashMap<HRMID, FIBEntry> mIDToFIBMapping = new HashMap<HRMID, FIBEntry>();
 	private LinkedList<NeighborZoneAnnounce> mReceivedAnnouncements;
 	private LinkedList<HierarchicalSignature> mSignatures = new LinkedList<HierarchicalSignature>();
-	private HashMap<CoordinatorCEPDemultiplexed, Integer> mCEPsToBGPRouters;
+//	private HashMap<CoordinatorCEPDemultiplexed, Integer> mCEPsToBGPRouters;
 	private HashMap<Long, CoordinatorCEPDemultiplexed> mRouteRequestDispatcher;
 	private HashMap<HRMID, LinkedList<RoutingServiceLinkVector>> mAddressToPathMapping;
 	
@@ -136,7 +136,7 @@ public class ClusterManager implements Cluster, Observer
 	
 	public static BigInteger generateAdress(int pLevel, BigInteger pValue)
 	{
-		return pValue.shiftLeft(HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * pLevel);
+		return pValue.shiftLeft(HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * pLevel);
 	}
 	
 	public void storeAnnouncement(NeighborZoneAnnounce pAnnounce)
@@ -174,7 +174,7 @@ public class ClusterManager implements Cluster, Observer
 	{
 		getLogger().log(this, "Preparing cluster on level "  +pLevel + ":I will connect to " + mManagedCluster.getNeighbors());
 		int tRadius = 0;
-		tRadius = HierarchicalConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER;
+		tRadius = HRMConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER;
 
 		Logging.log(this, "radius is " + tRadius);
 		for(int i = 1; i <= tRadius; i++) {
@@ -243,8 +243,8 @@ public class ClusterManager implements Cluster, Observer
 		VirtualNode tTransitiveElement = pSource;
 		try {
 			int tDistance = 0;
-			if(tList.size() > HierarchicalConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER) {
-				while(tDistance != HierarchicalConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER) {
+			if(tList.size() > HRMConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER) {
+				while(tDistance != HRMConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER) {
 					tTransitiveElement = getCoordinator().getClusterMap().getDest(tTransitiveElement, tList.get(0));
 					tList.remove(0);
 					tDistance++;
@@ -275,9 +275,9 @@ public class ClusterManager implements Cluster, Observer
 			mManagedCluster.setHRMID(tSelf);
 		}
 		/*
-		 * in this part the addresses are mapped either to CEPs or Clustn ers
+		 * in this part the addresses are mapped either to CEPs or clusters
 		 * 
-		 * level one : map addresses to connection endpoints later on the methode retrieveAddress is used in order to distribute the next hop entry
+		 * level one : map addresses to connection end points, later retrieveAddress() is used in order to distribute the next hop entry
 		 */
 		getLogger().log(this, "available clients for address distribution: " + mManagedCluster.getParticipatingCEPs());
 		for(CoordinatorCEPDemultiplexed tReceivingCEP : mManagedCluster.getParticipatingCEPs()) {
@@ -498,10 +498,10 @@ public class ClusterManager implements Cluster, Observer
 						for(HRMID tHRMID : this.mHigherHRMIDs) {
 							/*
 							 * tNegotiator is the source cluster
-							 * tRelevant is the supernode that provides the possibility to route the packet to its destination
-							 * tHRMIDMapping gets the cluster of the connection endpoint that announced that cluster.
+							 * tRelevant is the super node that provides the possibility to route the packet to its destination
+							 * tHRMIDMapping gets the cluster of the connection end point that announced that cluster.
 							 * 
-							 * special treatment occurs in case the negotiator equals the HRMID mapping: we have to tell that cluster how to reach the destination via a routing service link
+							 * special treatment is used if the negotiator equals the HRMID mapping: we have to tell that cluster how to reach the destination via a routing service link
 							 */
 							Cluster tNegotiator = tSourceCEP.getRemoteCluster();
 							Cluster tRelevant = ((Cluster)getVirtualNodeFromHRMID(tHRMID));
@@ -570,8 +570,7 @@ public class ClusterManager implements Cluster, Observer
 							getLogger().log(this, "Cluster route from " + tNegotiator + " to " + tHRMIDMapping + " is " + tList);
 							
 							/*
-							 * Here forwarding is done on HRMIDs, so for a target HRMID the next hop hast to be calculated, what is
-							 * an HRMID, too
+							 * forwarding is done based on HRMIDs, for a target HRMID the next hop (an HRMID) has to be calculated
 							 */
 							
 							//HRMID tFrom =  tSourceCEP.getRemoteCluster().retrieveAddress();
@@ -885,7 +884,7 @@ public class ClusterManager implements Cluster, Observer
 					 * was it really this cluster? -> reevaluate
 					 */
 					getLogger().log(this, "Opening connection to " + tCluster.getCoordinatorName() + " because I discovered cluster " + tNode);
-					CoordinatorCEPDemultiplexed tCEP = getMultiplexer().addConnection(tCluster, mManagedCluster);
+//					CoordinatorCEPDemultiplexed tCEP = getMultiplexer().addConnection(tCluster, mManagedCluster);
 					//new CoordinatorCEP(mManagedCluster.getCoordinator().getLogger(), mManagedCluster.getCoordinator(), this, false);
 					Name tName = tCluster.getCoordinatorName();
 					mConnectedEntities.add(tName);
@@ -1170,7 +1169,7 @@ public class ClusterManager implements Cluster, Observer
 							tOldCoveredEntry.setPriority(getCoordinatorPriority());
 							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(getCoordinator().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorsAddress()));
 							tOldCovered.setCoveringClusterEntry(tOldCoveredEntry);
-							List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute((HRMName)pCEP.getSourceName(), getCoordinatorsAddress());
+//							List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute((HRMName)pCEP.getSourceName(), getCoordinatorsAddress());
 							//tOldCovered.setAnnouncer(getCoordinator().getHRS().getCoordinatorRoutingMap().getDest(tPathToCoordinator.get(0)));
 							pCEP.write(tOldCovered);
 							
@@ -1271,7 +1270,7 @@ public class ClusterManager implements Cluster, Observer
 			NeighborZoneAnnounce tCoveredAnnounce = new NeighborZoneAnnounce(pAnnounce.getCoord(), getLevel(), pAnnounce.getCoordSignature(), pCEP.getPeerName(), pAnnounce.getToken(), (pCEP.getPeerName()).getAddress().longValue());
 			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getPriority());
 			
-			List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute(pCEP.getSourceName(), pCEP.getPeerName());
+//			List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute(pCEP.getSourceName(), pCEP.getPeerName());
 			
 			//tCoveredAnnounce.setAnnouncer(getCoordinator().getHRS().getCoordinatorRoutingMap().getDest(tPathToCoordinator.get(0)));
 			tCoveredAnnounce.setNegotiatorIdentification(tDummy);
@@ -1340,11 +1339,11 @@ public class ClusterManager implements Cluster, Observer
 	public void handleAnnouncement(NeighborZoneAnnounce	pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{		
 		if(pAnnounce.getCoveringClusterEntry() != null) {
-			Cluster tForwardingCluster = null;
+//			Cluster tForwardingCluster = null;
 			
 			if(pAnnounce.isRejected()) {
-				Cluster tMultiplex = getManagedCluster();
-				tForwardingCluster = (Cluster) ((Cluster) getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster()) == null ? pCEP.getRemoteCluster() : getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster())) ;
+//				Cluster tMultiplex = getManagedCluster();
+//				tForwardingCluster = (Cluster) ((Cluster) getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster()) == null ? pCEP.getRemoteCluster() : getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster())) ;
 				//pAnnounce.setAnnouncer( (tForwardingCluster.getCoordinatorsAddress() != null ? tForwardingCluster.getCoordinatorsAddress() : null ));
 				getLogger().log(this, "Removing " + this + " as participating CEP from " + this);
 				getParticipatingCEPs().remove(this);
@@ -1390,7 +1389,7 @@ public class ClusterManager implements Cluster, Observer
 			this.notifyAll();
 		}
 		getCoordinator().getReferenceNode().setDecorationValue("(" + pCoordSignature + ")");
-		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
+//		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
 		if(pCoordSignature != null) {
 			for(VirtualNode tNode: getCoordinator().getClusterMap().getNeighbors(getManagedCluster())) {
 				if(tNode instanceof Cluster && !((Cluster) tNode).isInterASCluster()) {

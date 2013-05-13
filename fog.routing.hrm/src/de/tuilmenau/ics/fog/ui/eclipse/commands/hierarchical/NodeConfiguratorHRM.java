@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
 import java.util.Random;
 
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
@@ -21,12 +21,12 @@ import de.tuilmenau.ics.fog.topology.Node;
  * This class is used to configure nodes that are newly created.
  *
  */
-public class NodeConfiguratorHierarchicalRadiusOnly implements NodeConfigurator
+public class NodeConfiguratorHRM implements NodeConfigurator
 {
 
-	public static final String NAME = "hierarchical";
+//	public static final String NAME = "hierarchical";
 	
-	public NodeConfiguratorHierarchicalRadiusOnly()
+	public NodeConfiguratorHRM()
 	{
 		
 	}
@@ -34,15 +34,17 @@ public class NodeConfiguratorHierarchicalRadiusOnly implements NodeConfigurator
 	@Override
 	public void configure(String pName, AutonomousSystem pAS, Node pNode)
 	{
-		HierarchicalRoutingService hRS = new HierarchicalRoutingService(pNode);
+		// create a new HRM instance for this node
+		HierarchicalRoutingService tHRS = new HierarchicalRoutingService(pNode);
 		
-		pNode.getHost().registerRoutingService(hRS);
-		hRS.initiateCoordinator();
-		
-		if(HierarchicalConfig.Routing.ELECTION_BEGINS_IMMEDIATLY_AFTER_SETUP) {
-			if(pAS.getSimulation().getEvents() == null) {
+		// register HRM instance as routing service for the current node
+		pNode.getHost().registerRoutingService(tHRS);
+				
+		// start coordinator election for the created HRM instance if desired
+		if(HRMConfig.Routing.ELECTION_BEGINS_IMMEDIATLY_AFTER_SETUP) {
+			if(pAS.getSimulation().getPendingEvents() == null) {
 				pAS.getSimulation().addEvent(new ElectionEvent());
-			} else if (pAS.getSimulation().getEvents().contains(new ElectionEvent())) {
+			} else if (pAS.getSimulation().getPendingEvents().contains(new ElectionEvent())) {
 				/*
 				 * hashCode of ElectionEvent always returns 0 because it is only needed once
 				 * So do nothing now!
@@ -53,8 +55,8 @@ public class NodeConfiguratorHierarchicalRadiusOnly implements NodeConfigurator
 		Random tRandomGenerator = new Random(System.currentTimeMillis());
 		float tCurrentRandomNumber = tRandomGenerator.nextFloat();
 		
-		for(int i = 0; i < HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
-			pNode.getParameter().put("BULLY_PRIORITY_LEVEL_" + i, ( HierarchicalConfig.INHERIT_PRIORITY_TO_UPPER_LEVELS ? tCurrentRandomNumber : tRandomGenerator.nextFloat()));
+		for(int i = 0; i < HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
+			pNode.getParameter().put("BULLY_PRIORITY_LEVEL_" + i, ( HRMConfig.Election.INHERIT_L0_PRIORITY_TO_HIGHER_LEVELS ? tCurrentRandomNumber : tRandomGenerator.nextFloat()));
 		}
 	}
 }

@@ -19,7 +19,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
 
 /**
  * 
- * object that contains as payload data that will be sent to more than one cluster
+ * An object that contains payload data that will be sent to more than one cluster
  */
 public class MultiplexedPackage implements Serializable, Name
 {

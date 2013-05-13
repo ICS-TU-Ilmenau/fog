@@ -83,13 +83,13 @@ public class Coordinator extends Application implements IServerCallback
 	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
 	public final static Namespace CoordinatorNamespace = new Namespace("routing");
-	private int [] mBullyPriority = new int [HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT];
+//	private int [] mBullyPriority = new int [HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT];
 	private int mConnectionCounter = 0;
 	
 	/**
 	 * @param pHost is the hosts that runs the coordinator
 	 * @param pParentLogger is the logger that is used for log output
-	 * @param pIdentity is the identity of the hosts that runs the coordiantor
+	 * @param pIdentity is the identity of the hosts that runs the coordinator
 	 * @param pNode is the node running the coordinator
 	 * @param pHRS is the hierarchical routing service that should be used
 	 */
@@ -113,6 +113,9 @@ public class Coordinator extends Application implements IServerCallback
 		mApprovedSignatures = new LinkedList<HierarchicalSignature>();
 	}
 
+	/**
+	 * This method is inherited from the class application and is called by the ServerFN object once a new connection setup request is required to be established.
+	 */
 	@Override
 	public void newConnection(Connection pConnection)
 	{
@@ -246,7 +249,6 @@ public class Coordinator extends Application implements IServerCallback
 							} catch (RemoteException tExc) {
 								Logging.err(this, "Unable to fulfill requirements", tExc);
 							}
-							//}
 							
 							
 							
@@ -292,6 +294,7 @@ public class Coordinator extends Application implements IServerCallback
 				tCEP.setRemoteCluster(ClusterDummy.compare(tParticipate.getSourceClusterID(), tParticipate.getSourceToken(), tParticipate.getLevel()));
 			}
 			tCEP.setPeerPriority(tParticipate.getSourcePriority());
+			mLogger.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);
 		}
 		
 		tConnection.start(pConnection);
@@ -311,7 +314,7 @@ public class Coordinator extends Application implements IServerCallback
 	/**
 	 * This function returns the last cluster is known as covered by another coordinator
 	 * 
-	 * @param pSourceCluster as cluster from which an unovered node is propagated
+	 * @param pSourceCluster as cluster from which an uncovered node is propagated
 	 * @param pTargetCluster as target cluster to which the first uncovered node has to be found
 	 * @return first uncovered node - that node is the "outgoing interface of the cluster"
 	 */
@@ -338,7 +341,7 @@ public class Coordinator extends Application implements IServerCallback
 	 * 
 	 * @param pSourceCluster source cluster
 	 * @param pTargetCluster specify the target cluster to which the path has to be checked for separation through another coordinator
-	 * @param pCEPsToEvaluate list of connection endpoints that have to be chosen to the target
+	 * @param pCEPsToEvaluate list of connection end points that have to be chosen to the target
 	 * @return true if the path contains a node that is covered by another coordinator
 	 */
 	public boolean checkPathToTargetContainsCovered(VirtualNode pSourceCluster, VirtualNode pTargetCluster, LinkedList<CoordinatorCEPDemultiplexed> pCEPsToEvaluate)
@@ -426,7 +429,7 @@ public class Coordinator extends Application implements IServerCallback
 		//try {
 		tDescription.set(new ContactDestinationApplication(null, Coordinator.CoordinatorNamespace));
 		//} catch (PropertyException tExc) {
-		//	mLogger.err(this, "Unable to fullfill requirements given by ContactDestinationProperty", tExc);
+		//	mLogger.err(this, "Unable to fulfill requirements given by ContactDestinationProperty", tExc);
 		//}
 
 		try {
@@ -438,6 +441,8 @@ public class Coordinator extends Application implements IServerCallback
 	}
 	
 	/**
+	 * This method has to be invoked once a new neighbor node is spotted (/hierarchy level 0).
+	 * It causes the addition to the intermediate cluster that is associated to the interface the note was spotted at.
 	 * 
 	 * @param pName is the name of the entity a connection will be established to
 	 * @param pLevel is the level at which a connection is added
@@ -637,8 +642,12 @@ public class Coordinator extends Application implements IServerCallback
 	 */
 	public synchronized LinkedList<Cluster> getClusters()
 	{
+		Logging.log(this, "Amount of found clusters: " + mClusterMap.getVertices().size());
+		int j = -1;
 		LinkedList<Cluster> tList = new LinkedList<Cluster>();
 		for(VirtualNode tNode : mClusterMap.getVertices()) {
+			j++;
+			Logging.log(this, "Returning cluster map entry " + j + " : " + tNode.toString());
 			if(tNode instanceof Cluster) {
 				tList.add((Cluster)tNode);
 			}
@@ -863,7 +872,7 @@ public class Coordinator extends Application implements IServerCallback
 				
 				int tLowestDifference = tClustersAddress.getDescendingDifference(tEntryAddress);
 				HRMID tComparison = new HRMID(0);
-				for(int i = HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT -1; i >= tLowestDifference; i--) {
+				for(int i = HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT -1; i >= tLowestDifference; i--) {
 					BigInteger tEntryLevelAddress = tEntryAddress.getLevelAddress(i);
 					if(tEntryLevelAddress.equals(BigInteger.valueOf(0))) {
 						tComparison.setLevelAddress(i, BigInteger.valueOf(0));

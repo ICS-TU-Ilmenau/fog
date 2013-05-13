@@ -66,15 +66,15 @@ import de.tuilmenau.ics.graph.RoutableGraph;
  */
 public class HierarchicalRoutingService implements RoutingService
 {
-	private final String HIERARCHICAL_ROUTING_SERVICE_NAME = "Hierarchical Routing Service";
+//	private final String HIERARCHICAL_ROUTING_SERVICE_NAME = "Hierarchical Routing Service";
 	
 	private final RoutableGraph<HRMName, RoutingServiceLink> mRoutingMap;
 	private final RoutableGraph<HRMName, Route> mCoordinatorRoutingMap;
 	private LinkedList<HRMID> mUsedAddresses = new LinkedList<HRMID>();
-	List<RememberFN> mNeighborRoutes = new LinkedList<RememberFN>();
+//	List<RememberFN> mNeighborRoutes = new LinkedList<RememberFN>();
 	private HierarchicalNameMappingService<Name> mNameMapping=null;
 	private Node mReferenceNode = null;
-	private Random mRandomGenerator = null;
+	private static Random mRandomGenerator = null; //singleton needed, otherwise parallel number generators might be initialized with the same seed
 	private Coordinator mCoordinatorInstance = null;
 	private Logger mLogger = null;
 	private HashMap<HRMID, FIBEntry> mHopByHopRoutingMap = new HashMap<HRMID, FIBEntry>();
@@ -93,18 +93,17 @@ public class HierarchicalRoutingService implements RoutingService
 		
 		mNameMapping = new HierarchicalNameMappingService(HierarchicalNameMappingService.getGlobalNameMappingService(), pReferenceNode.getLogger());
 		Logging.log("Constructor: Using name mapping service " + mNameMapping.toString());
-		mRandomGenerator = new Random(System.currentTimeMillis());
+		if (mRandomGenerator == null)
+			mRandomGenerator = new Random(System.currentTimeMillis());
 		mRoutingMap = new RoutableGraph<HRMName, RoutingServiceLink>();
 		mCoordinatorRoutingMap = new RoutableGraph<HRMName, Route>();
 		mLogger = new Logger(mReferenceNode.getHost().getLogger());
-	}
-
-	public void initiateCoordinator()
-	{
+		
+		// initiate coordinator
 		mCoordinatorInstance = new Coordinator(mReferenceNode.getHost(), mReferenceNode.getLogger(), mReferenceNode.getIdentity(), mReferenceNode, this);
 		mReferenceNode.getHost().registerApp(mCoordinatorInstance);
 	}
-	
+
 	public Coordinator getCoordinator()
 	{
 		return mCoordinatorInstance;
@@ -133,6 +132,7 @@ public class HierarchicalRoutingService implements RoutingService
 		@Override
 		public void fire()
 		{
+			Logging.log(this, "Opening connection to " + mConnectTo);
 			mCoordinatorInstance.addConnection(mConnectTo, 0, mToClusterID, mConnectionToOtherAS);
 		}
 		
@@ -158,14 +158,15 @@ public class HierarchicalRoutingService implements RoutingService
 		return true;
 	}
 
+	/*
 	private class RememberFN
 	{
 		private List<RoutingServiceLink> mRoute = null;
-		private Name mDestination = null;
+//		private Name mDestination = null;
 		public RememberFN(List<RoutingServiceLink> pRoute, Name pDestination)
 		{
 			mRoute = pRoute;
-			mDestination = pDestination;
+//			mDestination = pDestination;
 		}
 		
 		public List<RoutingServiceLink> getRoute()
@@ -173,6 +174,7 @@ public class HierarchicalRoutingService implements RoutingService
 			return mRoute;
 		}
 	}
+	*/
 	
 	public LinkedList<Name> getIntermediateNodes(Name pSource, HRMName pTarget) throws RoutingException
 	{
@@ -214,7 +216,7 @@ public class HierarchicalRoutingService implements RoutingService
 		}
 		
 		HRMID tMyIdentification = null;
-		int tHighestDescendingDifference = HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT-1;
+		int tHighestDescendingDifference = HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT-1;
 		
 		for(NameMappingEntry tEntry : tNMS.getAddresses(mReferenceNode.getCentralFN().getName())) {
 			if(((HRMID)tEntry.getAddress()).getDescendingDifference(pToCompare) < tHighestDescendingDifference) {
@@ -238,18 +240,18 @@ public class HierarchicalRoutingService implements RoutingService
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
 		}
 		
-		HRMID tMyIdentification = null;
-		int tHighestDescendingDifference = HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT-1;
+//		HRMID tMyIdentification = null;
+		int tHighestDescendingDifference = HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT-1;
 		
 		for(NameMappingEntry tEntry : tNMS.getAddresses(mReferenceNode.getCentralFN().getName())) {
 			if(((HRMID)tEntry.getAddress()).getDescendingDifference(pTarget) < tHighestDescendingDifference) {
 				tHighestDescendingDifference = ((HRMID)tEntry.getAddress()).getDescendingDifference(pTarget);
-				tMyIdentification = ((HRMID)tEntry.getAddress()).clone();
+//				tMyIdentification = ((HRMID)tEntry.getAddress()).clone();
 			}
 		}
 		HRMID tForwarding=new HRMID(0);
-		HRMID tForwardingEntry = new HRMID(0);
-		for(int i =  HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i >= tHighestDescendingDifference ; i--) {
+//		HRMID tForwardingEntry = new HRMID(0);
+		for(int i =  HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i >= tHighestDescendingDifference ; i--) {
 			tForwarding.setLevelAddress(i, pTarget.getLevelAddress(i));
 		}
 		Logging.log(this, "Forwarding entry will be " + tForwarding);
@@ -366,7 +368,7 @@ public class HierarchicalRoutingService implements RoutingService
 		
 		if(mCoordinatorRoutingMap.contains(tSource) && mCoordinatorRoutingMap.contains(tDestination)) {
 			Route tRoute = new Route();
-			Description tFuncReq = pRequirements.getNonFunctional();
+//			Description tFuncReq = pRequirements.getNonFunctional();
 			List<Route> tSegmentPaths = null;
 			tSegmentPaths = mCoordinatorRoutingMap.getRoute(tSource, tDestination);
 			Logging.log(this, "route from " + pSource + " to " + pDestination + " is " + tSegmentPaths);
@@ -463,7 +465,7 @@ public class HierarchicalRoutingService implements RoutingService
 		if(tLinks == null || tLinks.isEmpty()) {
 			throw(new RoutingException("This hierarchical entity is unable to determine a route to the given address"));
 		} else {
-			Description tFuncReq = pRequirements.getNonFunctional();
+//			Description tFuncReq = pRequirements.getNonFunctional();
 			// cut was necessary to fulfill requested requirements
 			/*
 			 * Compare with partial routing service
@@ -544,21 +546,22 @@ public class HierarchicalRoutingService implements RoutingService
 		return mRoutingMap.getVertices().toString();
 	}
 	
-	private Name getNameForRSA(HRMID pAddress)
-	{
-		if(mReferenceNode.getRoutingService() instanceof RoutingService)
-		{
-			Name[] tNames = null;
-			tNames = mNameMapping.getNames(pAddress);
-			if(tNames != null) {
-				/*
-				 * return only the first name found for the provided address
-				 */
-				return tNames[0];
-			}
-		}
-		return null;
-	}
+	
+//	private Name getNameForRSA(HRMID pAddress)
+//	{
+//		if(mReferenceNode.getRoutingService() instanceof RoutingService)
+//		{
+//			Name[] tNames = null;
+//			tNames = mNameMapping.getNames(pAddress);
+//			if(tNames != null) {
+//				/*
+//				 * return only the first name found for the provided address
+//				 */
+//				return tNames[0];
+//			}
+//		}
+//		return null;
+//	}
 	
 	public FIBEntry getFIBEntry(HRMID pHRMID)
 	{
@@ -696,7 +699,10 @@ public class HierarchicalRoutingService implements RoutingService
 		L2Address tAddress = null;
 		mLogger.log(this, "Found name " + (tEntries != null && tEntries.length > 0 ? tEntries[0].getAddress() : tEntries ) + " for " + pElement);
 		if(!mLocalNameMapping.containsKey(pElement)) {
-			tAddress = new L2Address(mRandomGenerator.nextLong());
+			long tRandomNumber = mRandomGenerator.nextLong();
+			getLogger().log(this, "Generated for L2 address the long value " + tRandomNumber);
+			
+			tAddress = new L2Address(tRandomNumber);
 			tAddress.setCaps(mReferenceNode.getCapabilities());
 			tAddress.setDescr(pElement.toString());
 			mNameMapping.registerName(pName, tAddress, pLevel);
@@ -803,7 +809,7 @@ public class HierarchicalRoutingService implements RoutingService
 				}
 			}
 		} else {
-			HRMName tFrom = (HRMName) getNameFor(pFrom);
+//			HRMName tFrom = (HRMName) getNameFor(pFrom);
 			HRMName tTo;
 			
 			if(pRemoteDestinationName instanceof HRMID) {
@@ -874,13 +880,20 @@ public class HierarchicalRoutingService implements RoutingService
 		if(pGate instanceof DirectDownGate && !mUsedAddresses.contains(tDestination)) {
 			mLogger.info(this, "Add link to external " +tDestination);
 			
-			double waitTime = (mRandomGenerator.nextDouble()*5)+2;
+			double waitTime = 0.1;//(mRandomGenerator.nextDouble()*5)+2; //TODO: check if event handler still drops events which have a time in the past or the very near future
 			Logging.log(this, "Waiting " + waitTime + " seconds");
 			if(tDestination != null && !pFrom.equals(tThisHostAddress) && !tDestination.equals(tThisHostAddress)) {
 				if(tSource.getAddress().longValue() < tDestination.getAddress().longValue()) {
 					List<RoutingServiceLink> tContemporaryRoute = mRoutingMap.getRoute(tThisHostAddress, tDestination);
 					mLogger.log(this, "Will initiate connection from " + tThisHostAddress + " to " + tDestination + " via FN " + pFrom);
-					mNeighborRoutes.add(new RememberFN(tContemporaryRoute, tDestination));
+
+					// output stack trace
+//					StackTraceElement[] tStackTrace = Thread.currentThread().getStackTrace();
+//					for (StackTraceElement tElement : tStackTrace) {
+//						mLogger.log(this, tElement.toString());
+//					}
+
+//					mNeighborRoutes.add(new RememberFN(tContemporaryRoute, tDestination));
 					/*
 					 * We hash the name of the bus on which the packet came in to create a temporary identification of the cluster
 					 */
@@ -898,6 +911,7 @@ public class HierarchicalRoutingService implements RoutingService
 					} else {
 						ForwardingElement tFirstElement = (tGate).getNextNode();
 						GateContainer tContainer = (GateContainer) tFirstElement;
+						mLogger.log(this, "Contemporary route is " + tContemporaryRoute);
 						RoutingServiceLink tLink = tContemporaryRoute.get(1); 
 						GateID tID = tLink.getID();
 						DirectDownGate ttGate = (DirectDownGate) tContainer.getGate(tID);
@@ -931,7 +945,7 @@ public class HierarchicalRoutingService implements RoutingService
 	public boolean unregisterLink(ForwardingElement pNode, AbstractGate pGate)
 	{
 		L2Address tSource = mLocalNameMapping.get(pNode);
-		L2Address tDestination = mLocalNameMapping.get(pGate.getNextNode());
+//		L2Address tDestination = mLocalNameMapping.get(pGate.getNextNode());
 		
 		Collection<RoutingServiceLink> tCandidateLinks = mRoutingMap.getOutEdges(tSource);
 		if(tCandidateLinks != null) {

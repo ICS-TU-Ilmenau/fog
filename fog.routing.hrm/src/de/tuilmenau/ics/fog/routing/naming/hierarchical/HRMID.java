@@ -11,10 +11,10 @@ package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 
 import java.math.BigInteger;
 
-import de.tuilmenau.ics.fog.facade.Description;
+//import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.VirtualNode;
 
 /**
@@ -61,7 +61,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 	 */
 	public BigInteger getLevelAddress(int pLevel)
 	{
-		return (mAddress.mod( (BigInteger.valueOf(2)).pow(HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (pLevel + 1) ) ).shiftRight(( HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (pLevel)) ) );
+		return (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (pLevel + 1) ) ).shiftRight(( HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (pLevel)) ) );
 	}
 	
 	/**
@@ -74,16 +74,16 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 		if(pLevel != 0) {
 			BigInteger tValue = this.getLevelAddress(pLevel);
 			if(!tValue.equals(BigInteger.valueOf(0))) {
-				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel +1)*HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)).divide(BigInteger.valueOf(pLevel*HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)));
+				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel +1)*HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)).divide(BigInteger.valueOf(pLevel*HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)));
 			}
 		} else {
 			BigInteger tValue = this.getLevelAddress(pLevel);
 			if(!tValue.equals(BigInteger.valueOf(0))) {
-				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel +1)*HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)));
+				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel +1)*HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)));
 			}
 		}		
 		
-		mAddress = mAddress.add(pAddress.shiftLeft(pLevel*HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL));
+		mAddress = mAddress.add(pAddress.shiftLeft(pLevel*HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL));
 	}
 	
 	/**
@@ -100,11 +100,11 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 	public String toString()
 	{
 		String tOutput = new String();
-		for(int i = HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT -1; i > 0  ; i--) {
-			tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (i + 1) ) ).shiftRight(( HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (i)) ) ).toString();
+		for(int i = HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT -1; i > 0  ; i--) {
+			tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (i + 1) ) ).shiftRight(( HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (i)) ) ).toString();
 			tOutput += ".";
 		}
-		tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (1) ) ).shiftRight(( HierarchicalConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (0)) ) ).toString();
+		tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (1) ) ).shiftRight(( HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (0)) ) ).toString();
 		if(mDescr != null) {
 			return tOutput +"(" +Long.toString(mAddress.longValue()) +")";
 		}
@@ -132,7 +132,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 	 */
 	public int getAscendingDifference(HRMID pAddressToCompare)
 	{
-		for(int i = 0; i < HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
+		for(int i = 0; i < HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
 			BigInteger tOtherAddress = pAddressToCompare.getLevelAddress(i);
 			BigInteger tMyAddress = getLevelAddress(i);
 			if(tOtherAddress.equals(tMyAddress)) {
@@ -146,7 +146,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 				return i;
 			}
 		}
-		return HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT;
+		return HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT;
 	}
 	
 	/**
@@ -157,7 +157,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 	 */
 	public int getDescendingDifference(HRMID pAddressToCompare)
 	{
-		for(int i = HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i >= 0; i--) {
+		for(int i = HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i >= 0; i--) {
 			BigInteger tOtherAddress = pAddressToCompare.getLevelAddress(i);
 			BigInteger tMyAddress = getLevelAddress(i);
 			if(tOtherAddress.equals(tMyAddress)) {
@@ -200,6 +200,6 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 	}
 	
 	private String mDescr;
-	private Description mCaps;
+//	private Description mCaps;
 
 }

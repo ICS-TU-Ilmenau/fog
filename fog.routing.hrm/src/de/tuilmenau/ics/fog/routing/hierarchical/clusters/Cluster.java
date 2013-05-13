@@ -16,14 +16,14 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
-import de.tuilmenau.ics.fog.routing.Route;
+//import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+//import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
 
 public interface Cluster extends Serializable, VirtualNode
@@ -57,15 +57,15 @@ public interface Cluster extends Serializable, VirtualNode
 	
 	/**
 	 * 
-	 * @return Provide list of connection endpoints that are connected to this cluster - the other connection endpoint
+	 * @return Provide list of connection end points that are connected to this cluster - the other connection end point
 	 * governs the cluster it is associated to
 	 */
 	public LinkedList<CoordinatorCEPDemultiplexed> getParticipatingCEPs();
 	
 	/**
 	 * 
-	 * @param pParticipatingCEP This is one connection endpoint that is used to communicate with the remote
-	 * connection endpoints that govern the clusters they are associated to.
+	 * @param pParticipatingCEP This is one connection end point that is used to communicate with the remote
+	 * connection end points that govern the clusters they are associated to.
 	 */
 	public void addParticipatingCEP(CoordinatorCEPDemultiplexed pParticipatingCEP);
 	
@@ -141,7 +141,7 @@ public interface Cluster extends Serializable, VirtualNode
 	
 	/**
 	 * 
-	 * @return The concurrently known highest priority of all priorities provided by the connection endpoints
+	 * @return The concurrently known highest priority of all priorities provided by the connection end points
 	 * is provided here.
 	 */
 	public float getHighestPriority();
@@ -158,7 +158,7 @@ public interface Cluster extends Serializable, VirtualNode
 	public void interruptElection();
 	
 	/**
-	 * Once a connection endpoint receives an announcement it calls this method.
+	 * Once a connection end point receives an announcement it calls this method.
 	 * 
 	 * @param pAnnounce This is the announcement from which relevant information has to be extracted.
 	 * @param pCEP This is the connection from which necessary information will be extracted as well.
@@ -166,17 +166,17 @@ public interface Cluster extends Serializable, VirtualNode
 	public void interpretAnnouncement(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP);
 	
 	/**
-	 * This method has to be called by an connection endpoint once it receives the announcement about the existence
+	 * This method has to be called by an connection end point once it receives the announcement about the existence
 	 * of a neighbor zone. 
 	 * 
 	 * @param pAnnounce This is the message that contains important information about the neighbor zone.
-	 * @param pCEP This is the connection endpoint that is used to transfer data to the object that CEP governs
+	 * @param pCEP This is the connection end point that is used to transfer data to the object that CEP governs
 	 */
 	public void handleAnnouncement(NeighborZoneAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP);
 	
 	/**
 	 * 
-	 * @return Return null in case the node is coordinator itself, otherwise the connection endpoint that leads to the coordinator is returned. 
+	 * @return Return null in case the node is coordinator itself, otherwise the connection end point that leads to the coordinator is returned. 
 	 */
 	public CoordinatorCEPDemultiplexed getCoordinatorCEP();
 	
@@ -184,7 +184,7 @@ public interface Cluster extends Serializable, VirtualNode
 	 * Once an announcement was received, the coordinator is set via this method. However this function does not have to be necessarily called
 	 * if a BullyAnnounce message was received.  
 	 * 
-	 * @param pCoord Provide the connection endpoint that leads to the coordinator here.
+	 * @param pCoord Provide the connection end point that leads to the coordinator here.
 	 * @param pCoordSignature Provide the signature you received from the coordinator here.
 	 * @param pCoordName Set the name of the coordiinator here.
 	 * @param pAddress The address of the coordinator can be set here. It can be either an OSI Layer 2 address or a HRMID. However using the last type as address
@@ -244,7 +244,7 @@ public interface Cluster extends Serializable, VirtualNode
 	/**
 	 * As the implemented version of HRM uses a fully distributed algorithm for signaling it is possible that some nodes are not
 	 * associated to a coordinator because they were not covered. In that case such a node sends RequestCoordinator messages to 
-	 * the neighbors. If a neighbor is not covered by a coordinator either, it is aded as laggard.
+	 * the neighbors. If a neighbor is not covered by a coordinator either, it is added as laggard.
 	 * 
 	 * @return Return the list of laggards that were not covered by a coordinator either. 
 	 */
@@ -256,32 +256,32 @@ public interface Cluster extends Serializable, VirtualNode
 	 * associated to a coordinator because they were not covered. In that case such a node sends RequestCoordinator messages to
 	 * the neighbors. If a neighbor is not covered by a coordinator either, it is aded as laggard.
 	 * 
-	 * @param pCEP Add one connection endpoint as laggard here.
+	 * @param pCEP Add one connection end point as laggard here.
 	 */
 	public void addLaggard(CoordinatorCEPDemultiplexed pCEP);
 	
 	/**
 	 * HRM was implemented as distributed system. If a cluster is notified about the existence of a nother cluster it remembers which
-	 * connection endpoint announced that cluster. The implementation expects that in order to route to that cluster it has
+	 * connection end point announced that cluster. The implementation expects that in order to route to that cluster it has
 	 * to reach the announcer first. However the announcer can be updated in case a shorter route to the target cluster is found. 
 	 * 
-	 * @return Return the connection endpoint that announced this cluster via NeighborZoneAnnounce to another connection endpoint. 
+	 * @return Return the connection end point that announced this cluster via NeighborZoneAnnounce to another connection end point. 
 	 */
 	public CoordinatorCEPDemultiplexed getNegotiatorCEP();
 	
 	/**
 	 * HRM was implemented as distributed system. If a cluster is notified about the existence of a nother cluster it remembers which
-	 * connection endpoint announced that cluster. The implementation expects that in order to route to that cluster it has
+	 * connection end point announced that cluster. The implementation expects that in order to route to that cluster it has
 	 * to reach the announcer first. However the announcer can be updated in case a shorter route to the target cluster is found. 
 	 * 
-	 * @param pCEP Setthe connection endpoint that announced this cluster via NeighborZoneAnnounce to another connection endpoint. 
+	 * @param pCEP Setthe connection end point that announced this cluster via NeighborZoneAnnounce to another connection end point. 
 	 */
 	public void setNegotiatorCEP(CoordinatorCEPDemultiplexed pCEP);
 	
 	/**
 	 * 
 	 * @param pEnvelope This object has to include the address that should be associated to the cluster along with several entries that
-	 * desribe as to how that entitiy should be reached.
+	 * desribe as to how that entity should be reached.
 	 */
 	public void handleTopologyEnvelope(TopologyEnvelope pEnvelope);
 	

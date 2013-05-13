@@ -25,7 +25,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressLimitationProperty;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
@@ -38,7 +38,7 @@ import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.IAutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical.RegionLimitationDialog;
+//import de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical.RegionLimitationDialog;
 
 /**
  * In order to create simulations this class sends packets from one node to another randomly chosen node. Or from one 
@@ -78,11 +78,11 @@ public class SendPacket extends Command
 			String tDestination = EnterStringDialog.open(mSite.getShell(), "Target of packet", "Please enter a target:", mNode.getName(), null);
 			
 			Description tDescription = new Description();
-			if(HierarchicalConfig.Routing.ENABLE_REGION_LIMITATION) {
-				AddressLimitationProperty tProperty = RegionLimitationDialog.open(mSite.getShell());
-				if(tProperty != null) {
-					tDescription.add(tProperty);
-				}
+			if(HRMConfig.Routing.ENABLE_REGION_LIMITATION) {
+//				AddressLimitationProperty tProperty = RegionLimitationDialog.open(mSite.getShell());
+//				if(tProperty != null) {
+//					tDescription.add(tProperty);
+//				}
 			} else {
 				tDescription = null;
 			}

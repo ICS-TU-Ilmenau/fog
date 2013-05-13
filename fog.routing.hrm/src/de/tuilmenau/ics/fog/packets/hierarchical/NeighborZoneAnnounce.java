@@ -113,7 +113,7 @@ public class NeighborZoneAnnounce implements Serializable
 	
 	/**
 	 * 
-	 * @return signatur of the coordinator
+	 * @return signature of the coordinator
 	 */
 	public Signature getCoordSignature()
 	{
@@ -182,7 +182,7 @@ public class NeighborZoneAnnounce implements Serializable
 	
 	/**
 	 * Tell another potential coordinator that the announcement as coordinator was not accepted. The node belongs to another cluster and therefore the node
-	 * that announced itself as cooridnator is notified about the existence of another zone
+	 * that announced itself as coordinator is notified about the existence of another zone
 	 */
 	public void setRejection()
 	{
@@ -191,7 +191,7 @@ public class NeighborZoneAnnounce implements Serializable
 	
 	/**
 	 * Find out whether another potential coordinator that the announcement as coordinator was not accepted. The node belongs to another cluster and therefore the node
-	 * that announced itself as cooridnator is notified about the existence of another zone
+	 * that announced itself as coordinator is notified about the existence of another zone
 	 */
 	public boolean isRejected()
 	{
@@ -199,7 +199,7 @@ public class NeighborZoneAnnounce implements Serializable
 	}
 	
 	/**
-	 * Specify this announcement as one that notifies abount the existence of a cluster to a cluster in another autonomous system
+	 * Specify this announcement as one that notifies about the existence of a cluster to a cluster in another autonomous system
 	 */
 	public void isForeignAnnouncement()
 	{
@@ -244,7 +244,7 @@ public class NeighborZoneAnnounce implements Serializable
 	
 	/**
 	 * 
-	 * @param pDummy as cluster identification of a supernode that has to be used to reach the target cluster
+	 * @param pDummy as cluster identification of a super-node that has to be used to reach the target cluster
 	 */
 	public void setNegotiatorIdentification(ClusterDummy pDummy)
 	{
@@ -253,7 +253,7 @@ public class NeighborZoneAnnounce implements Serializable
 	
 	/**
 	 * 
-	 * @return cluster identification of a supernode that has to be used to reach the target cluster
+	 * @return cluster identification of a super-node that has to be used to reach the target cluster
 	 */
 	public ClusterDummy getNegotiatorIdentification()
 	{

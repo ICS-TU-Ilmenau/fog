@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 
 
-public class HierarchicalConfig
+public class HRMConfig
 {
 	/**
 	 * Configuration parameters for the routing process and routing service
@@ -53,12 +53,24 @@ public class HierarchicalConfig
 		
 		public static final boolean ADDR_DISTRIBUTOR_PRINTS_HRMID = false;
 		
-		public static final boolean ENABLE_REGION_LIMITATION = false;
+		/**
+		 * Disables/enables the region limitation feature which can be used to implement an obstructive/restrictive routing based on the HRM infrastructure.
+		 */
+		public static final boolean ENABLE_REGION_LIMITATION = false; //TV
 	}
-	public Routing routing = new Routing();
+//	public Routing routing = new Routing();
 	
-	public static final boolean INHERIT_PRIORITY_TO_UPPER_LEVELS = true;
+	/**
+	 * Configuration for the election process
+	 */
+	public class Election //TV
+	{
+		/**
+		 * Should the priority from hierarchy level 0 be inherited to higher levels?
+		 */
+		public static final boolean INHERIT_L0_PRIORITY_TO_HIGHER_LEVELS = true; //TV		
+	}
 	
-    public static final int MAXIMUM_BULLY_PRIORITY = 90;
+//    public static final int MAXIMUM_BULLY_PRIORITY = 90;
 
 }

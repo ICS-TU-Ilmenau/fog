@@ -447,7 +447,7 @@ public class Simulation
 		return mASs.values();
 	}
 	
-	public LinkedList<IEvent> getEvents()
+	public LinkedList<IEvent> getPendingEvents()
 	{
 		return mEventsAfterSetup;
 	}
