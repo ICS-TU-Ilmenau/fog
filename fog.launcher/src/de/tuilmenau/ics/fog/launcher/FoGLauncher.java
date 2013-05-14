@@ -179,7 +179,7 @@ public class FoGLauncher
 		notifyObservers(FUNCTION.CREATE);
 		
 		// switch to logger from simulation
-		// -> errors and paramters will appear in simulation log
+		// -> errors and parameters will appear in simulation log
 		logger = sim.getLogger();
 
 		// output configuration
