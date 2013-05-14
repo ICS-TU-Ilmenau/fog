@@ -98,8 +98,14 @@ public class HierarchicalRoutingService implements RoutingService
 		mRoutingMap = new RoutableGraph<HRMName, RoutingServiceLink>();
 		mCoordinatorRoutingMap = new RoutableGraph<HRMName, Route>();
 		mLogger = new Logger(mReferenceNode.getHost().getLogger());
-		
-		// initiate coordinator
+	}
+
+	/**
+	 * Separate INIT function for the coordinator. It is needed because it uses a server FN, which registers a node and links at the local routing service.
+	 * However, this demands for an already registered routing service. This step should be done between the constructor call and the call to this function.
+	 */
+	public void initiateCoordinator() //TV
+	{
 		mCoordinatorInstance = new Coordinator(mReferenceNode.getHost(), mReferenceNode.getLogger(), mReferenceNode.getIdentity(), mReferenceNode, this);
 		mReferenceNode.getHost().registerApp(mCoordinatorInstance);
 	}
