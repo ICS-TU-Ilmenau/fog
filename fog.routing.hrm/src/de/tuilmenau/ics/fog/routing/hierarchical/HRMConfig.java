@@ -43,10 +43,8 @@ public class HRMConfig
 		public static final boolean USE_LOOKUP_MAP_IN_HIERARCHICAL_ROUTING = true;
 		
 		/**
-		 * specifies whether hierarchy preparation is done stepwise 
+		 * specifies whether the hierarchy is created automatically if the process is once started
 		 */
-		public static final boolean STEP_WISE_HIERARCHY_PREPARATION = true;
-		
 		public static final boolean BUILD_UP_HIERARCHY_AUTOMATICALLY = false;
 		
 		public static final boolean ELECTION_BEGINS_IMMEDIATLY_AFTER_SETUP = false;
