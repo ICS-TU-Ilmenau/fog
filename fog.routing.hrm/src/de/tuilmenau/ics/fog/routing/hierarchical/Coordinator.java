@@ -82,8 +82,11 @@ public class Coordinator extends Application implements IServerCallback
 	private HierarchicalIdentity mIdentity;
 	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
+	/**
+	 * The global namespace which is used to identify the coordinator instances on neighbor nodes. //TV
+	 */
 	public final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
-//	private int [] mBullyPriority = new int [HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT];
+	
 	private int mConnectionCounter = 0;
 	
 	/**
