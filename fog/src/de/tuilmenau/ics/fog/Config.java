@@ -463,6 +463,6 @@ public class Config
 		/**
 		 * Do not use intermediate description of gates but use requirement of applications
 		 */
-		public static final boolean DONT_USE_INTERMEDIATE_DESCRIPTION = false;
+		public static final boolean DONT_USE_INTERMEDIATE_DESCRIPTION = true;
 	}
 }
