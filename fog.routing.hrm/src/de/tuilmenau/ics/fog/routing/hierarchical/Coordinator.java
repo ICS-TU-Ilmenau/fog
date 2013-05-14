@@ -82,7 +82,7 @@ public class Coordinator extends Application implements IServerCallback
 	private HierarchicalIdentity mIdentity;
 	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
-	public final static Namespace CoordinatorNamespace = new Namespace("routing");
+	public final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
 //	private int [] mBullyPriority = new int [HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT];
 	private int mConnectionCounter = 0;
 	
@@ -96,7 +96,7 @@ public class Coordinator extends Application implements IServerCallback
 	public Coordinator(Host pHost, Logger pParentLogger, Identity pIdentity, Node pNode, HierarchicalRoutingService pHRS)
 	{
 		super(pHost, pParentLogger, pIdentity);
-		mNamespace = CoordinatorNamespace;
+		mNamespace = ROUTING_NAMESPACE;
 		mName = new SimpleName(mNamespace, null);
 		mHost = pHost;
 		mReferenceNode = pNode;
@@ -427,7 +427,7 @@ public class Coordinator extends Application implements IServerCallback
 		mLogger.log(this, "Creating a cluster participation property for level " + pParticipationProperty.getLevel());
 		Description tDescription = new Description();
 		//try {
-		tDescription.set(new ContactDestinationApplication(null, Coordinator.CoordinatorNamespace));
+		tDescription.set(new ContactDestinationApplication(null, Coordinator.ROUTING_NAMESPACE));
 		//} catch (PropertyException tExc) {
 		//	mLogger.err(this, "Unable to fulfill requirements given by ContactDestinationProperty", tExc);
 		//}
