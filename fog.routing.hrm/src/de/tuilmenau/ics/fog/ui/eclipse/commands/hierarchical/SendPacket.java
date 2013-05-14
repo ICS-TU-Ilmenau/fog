@@ -31,6 +31,7 @@ import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
@@ -127,8 +128,8 @@ public class SendPacket extends Command
 							}
 						}
 					}
-					RoutingServiceAddress tGlobalTargetIdentification = null;
-					tGlobalTargetIdentification = (RoutingServiceAddress)tTargetNode.getRoutingService().getNameFor(tTargetNode.getCentralFN());
+					L2Address tGlobalTargetIdentification = null;
+					tGlobalTargetIdentification = (L2Address)tTargetNode.getRoutingService().getNameFor(tTargetNode.getCentralFN());
 					if(tTargetNode != null) {
 						Name tTargetName = tTargetNode.getCentralFN().getName();
 						for(NameMappingEntry tEntry : tNMS.getAddresses(tTargetName)) {
@@ -159,12 +160,14 @@ public class SendPacket extends Command
 						}
 					}
 					if(tCompareToRoutingService == 0) {
+						/*
 						RoutingServiceAddress tSource = (RoutingServiceAddress)mNode.getRoutingService().getNameFor(mNode.getCentralFN());
 						RemoteRoutingService tGRS = RoutingServiceInstanceRegister.getGlobalRoutingService(mNode.getAS().getSimulation());
 						Route tRoute = tGRS.getRoute(tSource, tGlobalTargetIdentification, null, null);
 						
 						mNode.getLogger().log(mNode, "Route to " + tGlobalTargetIdentification + " is " + tRoute);
 						sendHello(mNode, tRoute, tTargetNode);
+						*/
 					}
 				}
 			} else {

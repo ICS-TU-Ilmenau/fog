@@ -459,5 +459,10 @@ public class Config
 		 * Indicates if Non Functional Requirements should be considered! 
 		 */
 		public static final boolean OPTIMISATION_CRITERIONS_ACTIVATED = false;
+		
+		/**
+		 * Do not use intermediate description of gates but use requirement of applications
+		 */
+		public static final boolean DONT_USE_INTERMEDIATE_DESCRIPTION = false;
 	}
 }

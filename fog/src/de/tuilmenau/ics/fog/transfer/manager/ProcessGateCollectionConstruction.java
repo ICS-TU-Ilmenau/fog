@@ -325,7 +325,14 @@ public class ProcessGateCollectionConstruction extends ProcessConstruction
 			
 			mIntermediateDescription = getBase().getNode().getController().deriveGatesFromRequirements(getBase(), mDescription, tListUp, tListDown);
 		}
-				
+		
+		if(mIntermediateDescription.isEmpty() && mDescription != null) {
+			if(Config.Connection.DONT_USE_INTERMEDIATE_DESCRIPTION) {
+				mLogger.info(this, "No intermediate description was generated, using description provided by application");
+				return mDescription;
+			}
+		}
+		
 		return mIntermediateDescription;
 	}
 	
