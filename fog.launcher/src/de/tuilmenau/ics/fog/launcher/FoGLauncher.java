@@ -21,6 +21,7 @@ import de.tuilmenau.ics.extensionpoint.ExtensionRegistry;
 import de.tuilmenau.ics.fog.CommandEvent;
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.ExitEvent;
+import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.Worker;
 import de.tuilmenau.ics.fog.Config.Simulator.SimulatorMode;
 import de.tuilmenau.ics.fog.importer.ScenarioImporter;
@@ -330,8 +331,21 @@ public class FoGLauncher
 		
 		notifyObservers(FUNCTION.START);
 
+		//
+		// EXIT command
+		//
 		if(exitAt >= 0) {
 			sim.getTimeBase().scheduleIn(exitAt, new ExitEvent(sim));
+		}
+		
+		//
+		// QUEUED EVENTS for simulation start (e.g., start HRM election/hierarchy creations)
+		//
+		if(sim.getPendingEvents() != null) {
+			for(IEvent tEvent: sim.getPendingEvents()) {
+				sim.getLogger().log(this, "Scheduling election event");
+				sim.getTimeBase().scheduleIn(0, tEvent);
+			}
 		}
 		
 		//
