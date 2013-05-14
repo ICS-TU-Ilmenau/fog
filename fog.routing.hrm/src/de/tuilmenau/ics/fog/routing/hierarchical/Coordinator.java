@@ -67,7 +67,6 @@ import de.tuilmenau.ics.fog.util.Tuple;
  */
 public class Coordinator extends Application implements IServerCallback
 {
-	private Namespace mNamespace = null;
 	private SimpleName mName = null;
 	private Node mReferenceNode;
 	private HierarchicalRoutingService mHRS = null;
@@ -99,8 +98,7 @@ public class Coordinator extends Application implements IServerCallback
 	public Coordinator(Host pHost, Logger pParentLogger, Identity pIdentity, Node pNode, HierarchicalRoutingService pHRS)
 	{
 		super(pHost, pParentLogger, pIdentity);
-		mNamespace = ROUTING_NAMESPACE;
-		mName = new SimpleName(mNamespace, null);
+		mName = new SimpleName(ROUTING_NAMESPACE, null);
 		mHost = pHost;
 		mReferenceNode = pNode;
 		getLogger().log(this, "created");
