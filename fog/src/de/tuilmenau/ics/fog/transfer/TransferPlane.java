@@ -258,6 +258,9 @@ public class TransferPlane implements TransferPlaneObserver
 		// report it to higher layer, if it is not private or if it is important for naming
 		boolean reportIt = !pElement.isPrivateToTransfer() || (pLevel != NamingLevel.NONE);
 		if(reportIt) {
+			if (mRS == null) {
+				mLogger.err(this, "Invalid routing service found, cannot register node " + pName + "[" + pElement + "]");
+			}
 			mRS.registerNode(pElement, pName, pLevel, pDescription);
 		}
 	}
@@ -324,6 +327,9 @@ public class TransferPlane implements TransferPlaneObserver
 			// ignore other start and end points since they are
 			// just private elements of the node or helper elements of the GUI
 			if(pFrom instanceof ForwardingNode) {
+				if (mRS == null) {
+					mLogger.err(this, "Invalid routing service found, cannot register link from " + pFrom + " to " + tTo);
+				}
 				mRS.registerLink(pFrom, pGate);
 			}
 		}
