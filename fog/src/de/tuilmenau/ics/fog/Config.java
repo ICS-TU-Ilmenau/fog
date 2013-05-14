@@ -336,7 +336,7 @@ public class Config
 	{
 		/**
 		 * Indicates if the first forwarding node of an outgoing connection
-		 * (ClientFN) is analysing the data send by the application. If so,
+		 * (ClientFN) is analyzing the data send by the application. If so,
 		 * it searches for an object of type string equaling the
 		 * UPDATE_ROUTE_COMMAND. If such a command is found, the forwarding
 		 * node triggers a route update procedure for its socket.
