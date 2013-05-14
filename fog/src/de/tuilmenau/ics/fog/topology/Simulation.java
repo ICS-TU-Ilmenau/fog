@@ -454,6 +454,7 @@ public class Simulation
 	
 	public void addEvent(IEvent pEvent)
 	{
+		mLogger.log(this, "Adding simulation event " + pEvent.toString());
 		if(mEventsAfterSetup == null) {
 			mEventsAfterSetup = new LinkedList<IEvent>();
 		}

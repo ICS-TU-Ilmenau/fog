@@ -242,7 +242,7 @@ public class PleaseOpenConnection extends SignallingRequest
 						// -> Need to know target service. -> Workaround.
 						// -> TODO Search for relevant server and try to connect.
 						
-						throw new NetworkException("Destination forwarding node " +pFN +" is not attached to a higher layer.");
+						throw new NetworkException("Destination forwarding node " +pFN +" is not attached to a higher layer, source of request is " + pRequester.getName());
 					}
 				} else {
 					/* *************************************************************
