@@ -387,9 +387,9 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			}
 			
 			mConcurrentReroutingSession.sendData(packet);
-		} catch (RemoteException rExc) {
+		} catch(RemoteException rExc) {
 			getLogger().err(this, "Warning! Unable to send packet", rExc);
-		} catch (NetworkException rExc) {
+		} catch(NetworkException rExc) {
 			getLogger().err(this, "Warning! Unable to send packet", rExc);
 		}
 	}
@@ -400,7 +400,13 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	 */
 	private boolean determineElementToBreak()
 	{
-		if (mConcurrentBrokenType == BROKEN_TYPE_NODE) {
+		mAssertPosition = -1;
+		mBrokenName = null;
+		
+		/**
+		 * --- BROKEN NODE ---
+		 */
+		if(mConcurrentBrokenType == BROKEN_TYPE_NODE) {
 			LinkedList<Signature> tNodes = new LinkedList<Signature>();
 			if(mCurrentlyReceived != null) {
 				for (Signature signature: mCurrentlyReceived.getAuthentications()) {
@@ -409,11 +415,11 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			} else {
 				return false;
 			}
-			for (Signature signature: tNodes) {
+			for(Signature signature: tNodes) {
 				mLogger.log(this, "may choose from node element " + signature.toString());
 			}
 			if(mPosition != 0) {
-				if ( (int)(tNodes.size() / mPosition) == 0 || (int)(tNodes.size() / mPosition) == tNodes.size() - 1) {
+				if( (int)(tNodes.size() / mPosition) == 0 || (int)(tNodes.size() / mPosition) == tNodes.size() - 1) {
 					getLogger().log(this, "Breaking node in the middle of the route.");
 					mAssertPosition = (int) Math.floor((double)tNodes.size() /2);
 				} else {
@@ -421,6 +427,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 				}
 				mBrokenName = tNodes.get(mAssertPosition).getIdentity().getName();
 			} else {
+				getLogger().log(this, "Breaking random node");
 				mBrokenName = tNodes.get(mRandomGenerator.nextInt(tNodes.size()-2)+1).getIdentity().getName();
 			}
 			if(mBrokenName.equals(mSource) || mBrokenName.equals(mTarget)) {
@@ -428,34 +435,38 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 				getLogger().err(this, "The position you specified would break source or destination, skipping");
 				return false;
 			}
-		} else if (mConcurrentBrokenType == BROKEN_TYPE_BUS) {
+		}
+		/**
+		 * --- BROKEN BUS ---
+		 */
+		else if(mConcurrentBrokenType == BROKEN_TYPE_BUS) {
 			LinkedList<String> tBusses = null;
 			if(mCurrentlyReceived != null) {
 				tBusses = mCurrentlyReceived.getBus();
 			} else {
 				return false;
 			}
-			//mPosition = (mPosition == 0) ? mPosition = randomGenerator.nextInt(tBusses.size()) + 1 : mPosition;
-			if(mPosition!=0) {
-				if ( (int)(tBusses.size() / mPosition) == 0 || (int)(tBusses.size() / mPosition) == tBusses.size() - 1) {
+			
+			if(mPosition != 0) {
+				if( (int)(tBusses.size() / mPosition) == 0 || (int)(tBusses.size() / mPosition) == tBusses.size() - 1) {
 					getLogger().log(this, "Breaking bus in the middle of the route");
 					mAssertPosition = tBusses.size()/2;
 				} else {
 					mAssertPosition = (int) ((tBusses.size()-1)/mPosition);
 				}
-				try {
-					mBrokenName = tBusses.get(mAssertPosition);
-				} catch (IndexOutOfBoundsException tExc) {
-					mLogger.warn(this, "Unable to determine element to break");
-				}
-				
 			} else {
-				/*
-				 *  every bus may break down because source or destination could have more than one link
-				 */
-				mBrokenName = tBusses.get(mRandomGenerator.nextInt(tBusses.size()));
+				// every bus may break down because source or destination could have more than one link
+				getLogger().log(this, "Breaking random bus");
+				mAssertPosition = mRandomGenerator.nextInt(tBusses.size());
+			}
+			
+			try {
+				mBrokenName = tBusses.get(mAssertPosition);
+			} catch (IndexOutOfBoundsException tExc) {
+				mLogger.warn(this, "Unable to determine element to break");
 			}
 		}
+		
 		getLogger().debug(this, "Determined element to break: " + mBrokenName);
 		return true;
 	}
