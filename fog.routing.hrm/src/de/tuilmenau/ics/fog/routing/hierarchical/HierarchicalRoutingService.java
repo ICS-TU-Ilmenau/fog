@@ -82,10 +82,9 @@ public class HierarchicalRoutingService implements RoutingService
 	private HashMap<ForwardingElement, L2Address> mLocalNameMapping = new HashMap<ForwardingElement, L2Address>();
 	
 	/**
-	 * Creates a local routing service entity.
+	 * Create a routing service entity that is fed by the graph information gathered through the radius algorithm
 	 * 
-	 * @param pRS Reference to next higher layer routing service entity
-	 * @param pNameMapping Reference to name resolution
+	 * @param pReferenceNode This is the node the hierarchical routing service entity gathers and computes routing information for.
 	 */
 	public HierarchicalRoutingService(Node pReferenceNode)
 	{
