@@ -124,7 +124,7 @@ public class ElectionProcess extends Thread
 				Logging.log(this, "Sending elections from " + tCluster);
 				for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
 					if(tCEP.getPeerPriority() == 0 && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
-						tCEP.write(new BullyElect(tCluster.getPriority(), tCluster.getLevel(), tCluster.getCoordinator().getPhysicalNode().getCentralFN().getName()));
+						tCEP.write(new BullyElect(tCluster.getCoordinator().getPhysicalNode().getCentralFN().getName(), tCluster.getPriority(), tCluster.getLevel()));
 					}
 				}
 			}
