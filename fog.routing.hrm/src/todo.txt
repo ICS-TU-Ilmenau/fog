@@ -1,0 +1,2 @@
+BullyAlive:
+ - wird im Moment nur vom CoordCEPDemux gesendet aber nicht geparst, eine Timer-Anpassung fehlt ebenfalls -> Erkennnung von Koordinatorausfällen?
