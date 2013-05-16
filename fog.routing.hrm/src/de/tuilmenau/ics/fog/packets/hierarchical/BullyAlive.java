@@ -14,47 +14,58 @@ import java.io.Serializable;
 import de.tuilmenau.ics.fog.facade.Name;
 
 /**
- * This class is supposed to signal the fact that the peer is alive
- *
+ * Packet to signal a peer is still alive.
  */
 public class BullyAlive implements Serializable
 {
 	private static final long serialVersionUID = 4870662765189881992L;
 	
 	/**
-	 * @param pHLName: name of the bus 
-	 * @param pPeerName name of the peer that sent the alive message
+	 * @param pSenderName the sender's name 
+	 * @param pCoordinatorName the coordinator's name
 	 */
-	public BullyAlive(Name pPeerName, Name pCoordinatorName)
+	public BullyAlive(Name pSenderName, Name pCoordinatorName)
 	{
-		mPeerName = pPeerName;
-		mCoord=pCoordinatorName;
+		mSenderName = pSenderName;
+		mCoordinator = pCoordinatorName;
 	}
 	
 	/**
+	 * Determine the name of the source coordinator
 	 * 
-	 * @return name of the coordinator that is active for the domain the election was initiated
+	 * @return name of the coordinator that
 	 */
-	public Name getCoord()
+	//TODO: not used until now, however, the function is maybe used in the future when BullyAlive will be parsed by the main packet processing CoordinatorCEPDemultiplexed
+	public Name getCoordinatorName()
 	{
-		return mCoord;
+		return mCoordinator;
 	}
 	
 	/**
+	 * Determine the name of the sender
 	 * 
-	 * @return name of the initiator of this message
+	 * @return name of the sender
 	 */
-	public Name getPeerName()
+	//TODO: not used until now, however, the function is maybe used in the future when BullyAlive will be parsed by the main packet processing CoordinatorCEPDemultiplexed
+	public Name getSenderName()
 	{
-		return mPeerName;
+		return mSenderName;
 	}
 	
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + ":" + mPeerName;
+		return this.getClass().getSimpleName() + ": Sender=" + mSenderName + ", Coordinator=" + mCoordinator;
 	}
 	
-	private Name mCoord = null;
-	private Name mPeerName=null;
+	// ########################################################################################################
+	/**
+	 * coordinator name
+	 */
+	private Name mCoordinator = null;
+
+	/**
+	 * sender name
+	 */
+	private Name mSenderName=null;
 }
