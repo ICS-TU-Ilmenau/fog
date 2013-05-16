@@ -106,8 +106,8 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 					}
 				}
 			} else if(pData instanceof BullyElect)	{
-				if(getCluster().getCoordinatorCEP() != null && ((BullyElect)pData).getPriority() < getCluster().getHighestPriority()) {
-					mPeerPriority = ((BullyElect)pData).getPriority();
+				if(getCluster().getCoordinatorCEP() != null && ((BullyElect)pData).getSenderPriority() < getCluster().getHighestPriority()) {
+					mPeerPriority = ((BullyElect)pData).getSenderPriority();
 					if(getCluster().getCoordinator().equals(getCoordinator().getPhysicalNode().getCentralFN().getName())) {
 						BullyAnnounce tAnnounce = new BullyAnnounce(getCoordinator().getPhysicalNode().getCentralFN().getName(), getCluster().getPriority(), getCoordinator().getIdentity().createSignature(getCoordinator().getPhysicalNode().toString(), null, getCluster().getLevel()), getCluster().getToken());
 						mLogger.log(this, " Sending bullyannounce because I have a coordinator: " + tAnnounce);
@@ -122,7 +122,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						write(new BullyAlive(getCoordinator().getPhysicalNode().getCentralFN().getName(), getCluster().getCoordinatorName()));
 					}
 				} else {
-					mPeerPriority = ((BullyElect)pData).getPriority();
+					mPeerPriority = ((BullyElect)pData).getSenderPriority();
 					BullyReply tAnswer = new BullyReply(getCluster().getPriority(), getCoordinator().getPhysicalNode().getCentralFN().getName());
 					write(tAnswer);
 				}

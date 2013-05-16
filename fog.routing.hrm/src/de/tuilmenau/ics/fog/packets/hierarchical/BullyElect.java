@@ -14,52 +14,54 @@ import java.io.Serializable;
 import de.tuilmenau.ics.fog.facade.Name;
 
 /**
- *
- * Packet that is used to initiate an election
+ * Packet that is used to start an election.
  */
-public class BullyElect implements Serializable
+public class BullyElect implements Serializable //TV
 {
 	private static final long serialVersionUID = -335936730603961378L;
 
 	/**
 	 * 
-	 * @param pBullyPriority senders priority
-	 * @param pElectionLevel hierarchical level the election is processed
-	 * @param pInitiatorName is the identification of the initiator of this message
-	 * @param pAS is the name of the autonomous system
+	 * @param pSenderName senders identification
+	 * @param pSenderPriority senders priority for the election
+	 * @param pHierarchyLevel hierarchy level for this election
 	 */
-	public BullyElect(float pBullyPriority, int pElectionLevel, Name pInitiatorName)
+	public BullyElect(Name pSenderName, float pSenderPriority, int pHierarchyLevel)
 	{
-		mBullyPriority = pBullyPriority;
-		mInitiatorName = pInitiatorName;
-		mElectionLevel = pElectionLevel;
+		mSenderPriority = pSenderPriority;
+		mSenderName = pSenderName;
+		mHierarchyLevel = pHierarchyLevel;
 	}
 	
 	/**
+	 * Determine the sender's priority.
 	 * 
 	 * @return find out the priority of the initiator of this packet
 	 */
-	public float getPriority()
+	public float getSenderPriority()
 	{
-		return mBullyPriority;
+		return mSenderPriority;
 	}
-	
-	/**
-	 * 
-	 * @return level the election is carried out
-	 */
-	public int getElectionLevel()
-	{
-		return mElectionLevel;
-	}
-	
-	private float mBullyPriority = 0;
-	private Name mInitiatorName = null;
-	private int mElectionLevel = 0;
 	
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + ":" + mInitiatorName + ")" + ":Priority(" + mBullyPriority + "L" + mElectionLevel + ")";
+		return this.getClass().getSimpleName() + ": Sender=" + mSenderName + ", Priority=" + mSenderPriority + ", Level=" + mHierarchyLevel;
 	}
+
+	// ########################################################################################################
+	/**
+	 * The priority of the sender for the BULLY election process.
+	 */
+	private float mSenderPriority = 0;
+	
+	/**
+	 * The name of the sender of this message. This is always a name of a physical node.
+	 */
+	private Name mSenderName = null;
+	
+	/**
+	 * The hierarchy level for this election.
+	 */
+	private int mHierarchyLevel = 0;
 }
