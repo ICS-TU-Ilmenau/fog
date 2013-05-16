@@ -28,12 +28,11 @@ public class BullyElect implements Serializable
 	 * @param pInitiatorName is the identification of the initiator of this message
 	 * @param pAS is the name of the autonomous system
 	 */
-	public BullyElect(float pBullyPriority, int pElectionLevel, Name pInitiatorName, String pAS)
+	public BullyElect(float pBullyPriority, int pElectionLevel, Name pInitiatorName)
 	{
 		mBullyPriority = pBullyPriority;
 		mInitiatorName = pInitiatorName;
 		mElectionLevel = pElectionLevel;
-		mAS = pAS;
 	}
 	
 	/**
@@ -47,15 +46,6 @@ public class BullyElect implements Serializable
 	
 	/**
 	 * 
-	 * @return name of the initiator of the message
-	 */
-	public Name getInitiatorName()
-	{
-		return mInitiatorName;
-	}
-	
-	/**
-	 * 
 	 * @return level the election is carried out
 	 */
 	public int getElectionLevel()
@@ -63,19 +53,9 @@ public class BullyElect implements Serializable
 		return mElectionLevel;
 	}
 	
-	/**
-	 * 
-	 * @return name of the autonomous system of the node the election is carried out
-	 */
-	public String getAS()
-	{
-		return mAS;
-	}
-	
 	private float mBullyPriority = 0;
 	private Name mInitiatorName = null;
 	private int mElectionLevel = 0;
-	private String mAS;
 	
 	@Override
 	public String toString()

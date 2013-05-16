@@ -58,8 +58,8 @@ public class CoordinatorCEP extends Session
 		super(false, Logging.getInstance(), null);
 		mReferenceCoordinator = pCoord;
 		
-			RoutingService tRS = (RoutingService)getCoordinator().getReferenceNode().getRoutingService();
-			mSourceIdentification = (L2Address) tRS.getNameFor(getCoordinator().getReferenceNode().getCentralFN());
+			RoutingService tRS = (RoutingService)getCoordinator().getPhysicalNode().getRoutingService();
+			mSourceIdentification = (L2Address) tRS.getNameFor(getCoordinator().getPhysicalNode().getCentralFN());
 		
 		getLogger().log(this, "Created");
 
@@ -77,7 +77,7 @@ public class CoordinatorCEP extends Session
 			if(mServerSide) {
 				Route tRouteToPeer = null;
 				try {
-					tRouteToPeer = getCoordinator().getHRS().getRoute(getCoordinator().getReferenceNode().getCentralFN(), ((Tuple<HRMID, HRMID>)pData).getSecond(), new Description(), getCoordinator().getReferenceNode().getIdentity());
+					tRouteToPeer = getCoordinator().getHRS().getRoute(getCoordinator().getPhysicalNode().getCentralFN(), ((Tuple<HRMID, HRMID>)pData).getSecond(), new Description(), getCoordinator().getPhysicalNode().getIdentity());
 					mRouteToPeer = tRouteToPeer;
 				} catch (RoutingException tExc) {
 					getLogger().err(this, "Unable to find route to ", tExc);

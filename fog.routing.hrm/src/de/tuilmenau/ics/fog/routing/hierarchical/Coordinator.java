@@ -68,7 +68,10 @@ import de.tuilmenau.ics.fog.util.Tuple;
 public class Coordinator extends Application implements IServerCallback
 {
 	private SimpleName mName = null;
-	private Node mReferenceNode;
+	/**
+	 * Reference to physical node.
+	 */
+	private Node mPhysicalNode; //TV
 	private HierarchicalRoutingService mHRS = null;
 	private ClusterMap<VirtualNode, NodeConnection> mClusterMap = new ClusterMap<VirtualNode, NodeConnection>();
 	private boolean mIsEdgeRouter;
@@ -100,7 +103,7 @@ public class Coordinator extends Application implements IServerCallback
 		super(pHost, pParentLogger, pIdentity);
 		mName = new SimpleName(ROUTING_NAMESPACE, null);
 		mHost = pHost;
-		mReferenceNode = pNode;
+		mPhysicalNode = pNode;
 		getLogger().log(this, "created");
 		Binding serverSocket=null;
 		try {
@@ -309,7 +312,7 @@ public class Coordinator extends Application implements IServerCallback
 	
 	public String toString()
 	{
-		return "Coordinator@" + mReferenceNode;
+		return "Coordinator@" + getPhysicalNode();
 	}
 	
 	/**
@@ -467,7 +470,7 @@ public class Coordinator extends Application implements IServerCallback
 				tCEP = new CoordinatorCEP(mLogger, this, false, pLevel, tCluster.getMultiplexer());
 				Route tRoute = null;
 				try {
-					tRoute = getHRS().getRoute(getReferenceNode().getCentralFN(), pName, new Description(), getReferenceNode().getIdentity());
+					tRoute = getHRS().getRoute(getPhysicalNode().getCentralFN(), pName, new Description(), getPhysicalNode().getIdentity());
 				} catch (RoutingException tExc) {
 					mLogger.err(this, "Unable to resolve route to " + pName, tExc);
 				} catch (RequirementsException tExc) {
@@ -516,7 +519,7 @@ public class Coordinator extends Application implements IServerCallback
 			{
 				Connection tConn = null;
 				try {
-					tConn = mHost.connectBlock(tName, getConnectDescription(tProperty), getReferenceNode().getIdentity());
+					tConn = mHost.connectBlock(tName, getConnectDescription(tProperty), getPhysicalNode().getIdentity());
 				} catch (NetworkException tExc) {
 					Logging.err(this, "Unable to connecto to " + tName, tExc);
 				}
@@ -528,7 +531,7 @@ public class Coordinator extends Application implements IServerCallback
 
 					Route tRoute = null;
 					try {
-						tRoute = getHRS().getRoute(getReferenceNode().getCentralFN(), tName, new Description(), getReferenceNode().getIdentity());
+						tRoute = getHRS().getRoute(getPhysicalNode().getCentralFN(), tName, new Description(), getPhysicalNode().getIdentity());
 					} catch (RoutingException tExc) {
 						getLogger().err(this, "Unable to find route to " + tName, tExc);
 					} catch (RequirementsException tExc) {
@@ -570,11 +573,11 @@ public class Coordinator extends Application implements IServerCallback
 	 */
 	public Name getCentralFNAddress(Namespace pNamespace)
 	{
-		if(getReferenceNode().getRoutingService() instanceof RoutingServiceMultiplexer) {
-			for(NameMappingService tNMS : ((RoutingServiceMultiplexer)getReferenceNode().getRoutingService()).getNameMappingServices()) {
+		if(getPhysicalNode().getRoutingService() instanceof RoutingServiceMultiplexer) {
+			for(NameMappingService tNMS : ((RoutingServiceMultiplexer)getPhysicalNode().getRoutingService()).getNameMappingServices()) {
 				NameMappingEntry[] tEntries;
 				try {
-					tEntries = tNMS.getAddresses(getReferenceNode().getCentralFN().getName());
+					tEntries = tNMS.getAddresses(getPhysicalNode().getCentralFN().getName());
 					if(tEntries != null) {
 						for(NameMappingEntry tEntry : tEntries) {
 							if( ((Name)tEntry.getAddress()).getNamespace().equals(pNamespace)) {
@@ -583,7 +586,7 @@ public class Coordinator extends Application implements IServerCallback
 						}
 					}
 				} catch (RemoteException tExc) {
-					mLogger.err(this, "Unable to determine name for " + getReferenceNode().getName(), tExc);
+					mLogger.err(this, "Unable to determine name for " + getPhysicalNode().getName(), tExc);
 				}
 				
 			}
@@ -618,12 +621,11 @@ public class Coordinator extends Application implements IServerCallback
 	}
 	
 	/**
-	 * 
-	 * @return node that runs all services
+	 * @return physical node that on which this coordinator is located
 	 */
-	public Node getReferenceNode()
+	public Node getPhysicalNode() //TV
 	{
-		return mReferenceNode;
+		return mPhysicalNode;
 	}
 	
 	/**

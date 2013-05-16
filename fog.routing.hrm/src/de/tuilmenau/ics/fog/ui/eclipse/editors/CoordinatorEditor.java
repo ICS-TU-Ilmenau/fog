@@ -364,7 +364,7 @@ public class CoordinatorEditor extends EditorPart
 				tSource = tCEP.getSourceName();
 				tTarget = tCEP.getPeerName();
 				if(tSource != null && tTarget != null) {
-					tRoute = mCoordinator.getHRS().getRoute(tCEP.getCoordinator().getReferenceNode().getCentralFN(), tTarget, new Description(), tCEP.getCoordinator().getReferenceNode().getIdentity());
+					tRoute = mCoordinator.getHRS().getRoute(tCEP.getCoordinator().getPhysicalNode().getCentralFN(), tTarget, new Description(), tCEP.getCoordinator().getPhysicalNode().getIdentity());
 				} else {
 					tRoute = new Route();
 				}

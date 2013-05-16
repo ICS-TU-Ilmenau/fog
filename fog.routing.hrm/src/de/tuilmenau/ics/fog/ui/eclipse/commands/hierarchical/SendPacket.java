@@ -65,7 +65,7 @@ public class SendPacket extends Command
 		if(object instanceof Node) {
 			mNode = (Node) object;
 		} else if(object instanceof Coordinator) {
-			mNode = ((Coordinator)object).getReferenceNode();
+			mNode = ((Coordinator)object).getPhysicalNode();
 		}
 	}
 

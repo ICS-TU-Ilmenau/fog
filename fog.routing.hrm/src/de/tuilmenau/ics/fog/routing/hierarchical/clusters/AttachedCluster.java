@@ -75,7 +75,7 @@ public class AttachedCluster implements Cluster, IElementDecorator
 	 */
 	public AttachedCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, int pLevel, Coordinator pResponsibleCoordinator)
 	{	
-		mAnnouncer = pResponsibleCoordinator.getReferenceNode().getCentralFN().getName();
+		mAnnouncer = pResponsibleCoordinator.getPhysicalNode().getCentralFN().getName();
 		mCoordAddress = pAddress;
 		setCoordinatorName(pCoordName);
 		mClusterID = pClusterID;
@@ -151,7 +151,7 @@ public class AttachedCluster implements Cluster, IElementDecorator
 		addNeighborCluster(tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
-			RoutingService tRS = (RoutingService)getCoordinator().getReferenceNode().getRoutingService();
+			RoutingService tRS = (RoutingService)getCoordinator().getPhysicalNode().getRoutingService();
 			if(! tRS.isKnown(pAnnounce.getCoordinatorName())) {
 				try {
 					getCoordinator().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());

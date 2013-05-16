@@ -688,7 +688,7 @@ public class HierarchicalRoutingService implements RoutingService
 	{
 		if(mSourceIdentification == null) {
 			NameMappingEntry<Name> tAddresses[] = null;
-			tAddresses = mNameMapping.getAddresses(getCoordinator().getReferenceNode().getCentralFN().getName());
+			tAddresses = mNameMapping.getAddresses(getCoordinator().getPhysicalNode().getCentralFN().getName());
 			for(NameMappingEntry<Name> tEntry : tAddresses) {
 				mSourceIdentification = tEntry.getAddress();
 			}
