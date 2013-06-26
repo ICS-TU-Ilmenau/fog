@@ -896,7 +896,8 @@ public class ClusterManager implements Cluster, Observer
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + (mManagedCluster != null ? "(" + mManagedCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;
+		//return this.getClass().getSimpleName() + (mManagedCluster != null ? "(" + mManagedCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;
+		return "Coordinator L" + mLevel + (mManagedCluster != null ? "(cluster=" + mManagedCluster.toString() + ", ": "(" ) + "Tok=" +mToken + ", CoordSign=" + mCoordinatorSignature + ")";		
 	}
 	
 	@Override
