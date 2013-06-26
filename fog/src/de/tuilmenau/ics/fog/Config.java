@@ -426,7 +426,7 @@ public class Config
 		public static final boolean SERVER_REDIRECT_TO_MULTIPLEXER = false;
 		
 		/**
-		 * Indicates whether estalished connection should be observed to detect
+		 * Indicates whether established connection should be observed to detect
 		 * long time idle state without receiving any packets or
 		 * keep-alive-messages from remote peer.
 		 * <br/>If receive-idle-time exceeds {@link IDLE_TIMEOUT_SEC}
@@ -438,7 +438,7 @@ public class Config
 		public static final boolean TERMINATE_WHEN_IDLE = false;
 		
 		/**
-		 * Indicates whether estalished connection should be observed to detect
+		 * Indicates whether established connection should be observed to detect
 		 * long time idle state without sending a packet or keep-alive-message
 		 * to remote peer.
 		 * <br/>If send-idle-time exceeds one third of
