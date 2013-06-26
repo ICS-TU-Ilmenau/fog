@@ -16,8 +16,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
 
 /**
- * 
- * Packet that contains important data from the coordinator: meta information about the cluster as well as members of the cluster
+ * Packet that is used when a new coordinator to the other domain members
  */
 public class BullyAnnounce implements Serializable
 {
