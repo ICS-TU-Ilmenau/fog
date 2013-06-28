@@ -14,7 +14,7 @@ import java.io.Serializable;
 import de.tuilmenau.ics.fog.facade.Name;
 
 /**
- * Packet to signal a peer is still alive.
+ * PACKET: It is used to signal that a peer is still alive.
  */
 public class BullyAlive implements Serializable
 {

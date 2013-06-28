@@ -18,8 +18,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.util.Tuple;
 
 /**
- * 
- * This class carries information of other clusters that have to be discovered by other nodes
+ * PACKET: This class carries information of other clusters that have to be discovered by other nodes
  */
 public class ClusterDiscovery implements Serializable
 {	

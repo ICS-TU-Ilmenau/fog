@@ -16,7 +16,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
 
 /**
- * Packet that is used when a new coordinator to the other domain members
+ * PACKET: It is used when a new coordinator is signaled to all cluster members
  */
 public class BullyAnnounce implements Serializable
 {

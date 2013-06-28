@@ -14,8 +14,7 @@ import java.io.Serializable;
 import de.tuilmenau.ics.fog.facade.Name;
 
 /**
- * 
- * Create an instance of this class if you would like to create an answer to a BullyElect message
+ * PACKET: It is used when an answer to BullyElect is signaled.
  */
 public class BullyReply implements Serializable
 {

@@ -14,7 +14,7 @@ import java.io.Serializable;
 import de.tuilmenau.ics.fog.facade.Name;
 
 /**
- * Packet that is used to start an election.
+ * PACKET: It is used when an election start is signaled.
  */
 public class BullyElect implements Serializable //TV
 {

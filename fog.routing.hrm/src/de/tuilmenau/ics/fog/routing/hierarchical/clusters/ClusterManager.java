@@ -53,6 +53,9 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
+/**
+ * This class is used for a coordinator instance and can be used on all hierarchy levels.
+ */
 public class ClusterManager implements Cluster, Observer
 {
 	/*
