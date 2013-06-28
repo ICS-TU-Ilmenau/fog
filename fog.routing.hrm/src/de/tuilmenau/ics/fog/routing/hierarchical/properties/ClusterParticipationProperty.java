@@ -343,7 +343,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		
 		public String toString()
 		{
-			return this.getClass().getSimpleName() + ":TARGET(" + mTargetClusterID + ")SOURCE(" + mSourceClusterID + ")STOKEN(" + mSourceToken + ")DTOKEN(" + mTargetToken + ")";
+			return getClass().getSimpleName() + ":TARGET(" + mTargetClusterID + ")SOURCE(" + mSourceClusterID + ")STOKEN(" + mSourceToken + ")DTOKEN(" + mTargetToken + ")";
 		}
 		
 		/**
@@ -352,7 +352,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		 */
 		public Long getSourceClusterID()
 		{
-			return this.mSourceClusterID;
+			return mSourceClusterID;
 		}
 		
 		/**

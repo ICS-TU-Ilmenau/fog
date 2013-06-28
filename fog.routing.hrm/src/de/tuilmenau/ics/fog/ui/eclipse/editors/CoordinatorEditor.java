@@ -552,7 +552,7 @@ public class CoordinatorEditor extends EditorPart
 	@Override
 	public Object getAdapter(Class required)
 	{
-		if(this.getClass().equals(required)) return this;
+		if(getClass().equals(required)) return this;
 		
 		Object res = super.getAdapter(required);
 		
@@ -567,6 +567,6 @@ public class CoordinatorEditor extends EditorPart
 
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "@" + this.hashCode();
+		return getClass().getSimpleName() + "@" + hashCode();
 	}
 }

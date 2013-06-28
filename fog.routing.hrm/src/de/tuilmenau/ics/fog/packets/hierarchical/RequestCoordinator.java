@@ -109,6 +109,6 @@ public class RequestCoordinator implements Serializable
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "KNOWS(" + mKnowCoordinator + ")" + mRandomNumber;
+		return getClass().getSimpleName() + "KNOWS(" + mKnowCoordinator + ")" + mRandomNumber;
 	}
 }

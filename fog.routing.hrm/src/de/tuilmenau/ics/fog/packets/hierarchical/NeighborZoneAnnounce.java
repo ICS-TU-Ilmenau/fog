@@ -99,7 +99,7 @@ public class NeighborZoneAnnounce implements Serializable
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "(COORDINATOR:" + mCoordinatorName.toString() + ",ID:" + mClusterID + ")@L(" + mLevel + ")VECTORS(" + mServiceLinks + ")|" + (mReject ? ("(REJECT)") : "") + (mForeignAnnouncement ? "|FOREIGN" : "");
+		return getClass().getSimpleName() + "(COORDINATOR:" + mCoordinatorName.toString() + ",ID:" + mClusterID + ")@L(" + mLevel + ")VECTORS(" + mServiceLinks + ")|" + (mReject ? ("(REJECT)") : "") + (mForeignAnnouncement ? "|FOREIGN" : "");
 	}
 	
 	/**

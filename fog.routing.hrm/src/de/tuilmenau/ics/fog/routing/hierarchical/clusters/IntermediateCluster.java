@@ -131,7 +131,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	
 	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HierarchicalSignature pCoordSignature, Name pCoordName, HRMName pAddress)
 	{
-		getCoordinator().getLogger().log(this, "announcement number " + (++this.mAnnoucementCounter) + ": Setting Coordinator " + pCoord + " with signature " + pCoordSignature + " with routing address " + pAddress + " and priority ");
+		getCoordinator().getLogger().log(this, "announcement number " + (++mAnnoucementCounter) + ": Setting Coordinator " + pCoord + " with signature " + pCoordSignature + " with routing address " + pAddress + " and priority ");
 		getCoordinator().getLogger().log(this, "previous coordinator was " + mCoordinator + " with name " + mCoordName);
 		mCoordinator = pCoord;
 		mCoordSignature = pCoordSignature;
@@ -318,7 +318,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 					getParticipatingCEPs().remove(this);
 				}
 				try {
-					this.addNeighborCluster(getCoordinator().getCluster(pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
+					addNeighborCluster(getCoordinator().getCluster(pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
 				} catch (PropertyException tExc) {
 					getCoordinator().getLogger().log(this, "Unable to fulfill requirements");
 				}
@@ -380,7 +380,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 			}
 			if(pNeighbor instanceof IntermediateCluster && !pNeighbor.isInterASCluster()) {
 				mPriority *= 10;
-				if(!this.mInterASCluster) {
+				if(!mInterASCluster) {
 					getCoordinator().getLogger().log(this, "Informing " + getParticipatingCEPs() + " about change in priority and initiating new election");
 					sendClusterBroadcast(new PriorityUpdate(mPriority), (LinkedList<CoordinatorCEPDemultiplexed>)null);
 					getCoordinator().getLogger().log(this, "Informed other clients about change of priority - it is now " + mPriority);
@@ -564,7 +564,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		if(mHRMID != null && HRMConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
 			return mHRMID.toString();
 		} else {
-			return this.getClass().getSimpleName() + "@" + getCoordinator().getPhysicalNode() + ":ID(" + getClusterID() + ")TK(" + mToken +  "):PR(" + getPriority() + ")COORD(" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "") + ")" + ")@" + getLevel() + (mInterASCluster ? ":InterAS" : "");
+			return getClass().getSimpleName() + "@" + getCoordinator().getPhysicalNode() + ":ID(" + getClusterID() + ")TK(" + mToken +  "):PR(" + getPriority() + ")COORD(" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "") + ")" + ")@" + getLevel() + (mInterASCluster ? ":InterAS" : "");
 
 		}
 	}
@@ -639,7 +639,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	@Override
 	public LinkedList<CoordinatorCEPDemultiplexed> getLaggards()
 	{
-		return this.mLaggards;
+		return mLaggards;
 	}
 
 	@Override

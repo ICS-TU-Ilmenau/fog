@@ -256,19 +256,19 @@ public class RouteRequest implements Serializable
 
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "->" + mTarget + (mResult != null ? "(Result:" + mResult  + ")" : "") + "\n" + (mRoute != null ? mRoute.toString() + "\n" : "") + (mRouteToTarget != null && !mRouteToTarget.isEmpty() ? mRouteToTarget.toString(): "");
+		return getClass().getSimpleName() + "->" + mTarget + (mResult != null ? "(Result:" + mResult  + ")" : "") + "\n" + (mRoute != null ? mRoute.toString() + "\n" : "") + (mRouteToTarget != null && !mRouteToTarget.isEmpty() ? mRouteToTarget.toString(): "");
 	}
 
 	public RouteRequest clone()
 	{
 		RouteRequest tRequest = new RouteRequest(mSource, mTarget, mDescription, mSession);
-		tRequest.mAnswer = this.mAnswer;
-		tRequest.mRoute = this.mRoute;
-		tRequest.mRouteToTarget = (LinkedList<RoutingServiceLinkVector>) this.mRouteToTarget.clone();
-		tRequest.mInterASRequest = this.mInterASRequest;
-		tRequest.mDescription = this.mDescription.clone();
-		tRequest.mRouteAccumulation = this.mRouteAccumulation;
-		tRequest.mResult = this.mResult;
+		tRequest.mAnswer = mAnswer;
+		tRequest.mRoute = mRoute;
+		tRequest.mRouteToTarget = (LinkedList<RoutingServiceLinkVector>) mRouteToTarget.clone();
+		tRequest.mInterASRequest = mInterASRequest;
+		tRequest.mDescription = mDescription.clone();
+		tRequest.mRouteAccumulation = mRouteAccumulation;
+		tRequest.mResult = mResult;
 		return tRequest;
 	}
 	

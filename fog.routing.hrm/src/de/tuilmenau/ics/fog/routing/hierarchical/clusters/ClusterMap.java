@@ -95,7 +95,7 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 			NodeObject tTarget = pFrom;
 			
 			for(LinkObject tLink : tPath) {
-				tTarget = this.getDest(tTarget, tLink);
+				tTarget = getDest(tTarget, tLink);
 				tNodes.add(tTarget);
 			}
 		}
@@ -140,7 +140,7 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName();
+		return getClass().getSimpleName();
 	}
 
 	@Override

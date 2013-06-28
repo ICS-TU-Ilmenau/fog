@@ -67,7 +67,7 @@ public class ClusterDiscovery implements Serializable
 
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + ":"  + mSource + "(" + mIdentification + "):" /*+ tResult*/ ;
+		return getClass().getSimpleName() + ":"  + mSource + "(" + mIdentification + "):" /*+ tResult*/ ;
 	}
 	
 	/**
@@ -188,11 +188,11 @@ public class ClusterDiscovery implements Serializable
 
 		/**
 		 * 
-		 * @param mTokens is a list of tokens that identify clusters that are already known to the sender of this discovery request
+		 * @param pTokens is a list of tokens that identify clusters that are already known to the sender of this discovery request
 		 */
-		public void setTokens(LinkedList<Integer> mTokens)
+		public void setTokens(LinkedList<Integer> pTokens)
 		{
-			this.mTokens = mTokens;
+			mTokens = pTokens;
 		}
 
 		/**
@@ -213,18 +213,18 @@ public class ClusterDiscovery implements Serializable
 		 */
 		public void addDiscoveryEntry(DiscoveryEntry pVector)
 		{
-			if(this.mDiscoveryEntries == null) {
-				this.mDiscoveryEntries = new LinkedList<DiscoveryEntry>();
+			if(mDiscoveryEntries == null) {
+				mDiscoveryEntries = new LinkedList<DiscoveryEntry>();
 			}
-			this.mDiscoveryEntries.add(pVector);
+			mDiscoveryEntries.add(pVector);
 		}
 		
 		public String toString()
 		{
 			String tResult = new String();
-			tResult = "\n" + this.getClass().getSimpleName() + "\nFROM " + mSourceClusterID + "\nTO " + mTargetClusterID + "\n{";
+			tResult = "\n" + getClass().getSimpleName() + "\nFROM " + mSourceClusterID + "\nTO " + mTargetClusterID + "\n{";
 			if(mDiscoveryEntries != null) {
-				for(DiscoveryEntry tDiscovery : this.mDiscoveryEntries) {
+				for(DiscoveryEntry tDiscovery : mDiscoveryEntries) {
 					tResult += tDiscovery + "\n";
 				}
 			}

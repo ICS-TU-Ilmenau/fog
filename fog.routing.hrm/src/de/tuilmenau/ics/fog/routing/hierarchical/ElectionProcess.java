@@ -56,7 +56,7 @@ public class ElectionProcess extends Thread
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() /*+ "(TS:" + mTimeStamp + ")"*/ + (mElectingClusters.isEmpty() ? "" : "@" + mElectingClusters.get(FIRST_ELECTING_CLUSTER).getClusterID()) + "@" + mLevel;
+		return getClass().getSimpleName() /*+ "(TS:" + mTimeStamp + ")"*/ + (mElectingClusters.isEmpty() ? "" : "@" + mElectingClusters.get(FIRST_ELECTING_CLUSTER).getClusterID()) + "@" + mLevel;
 	}
 	
 	public void interruptElection()
@@ -225,7 +225,7 @@ public class ElectionProcess extends Thread
 				ElectionManager.getElectionManager().reevaluate(pCluster.getLevel());
 				synchronized(this) {
 					try {
-						this.wait();
+						wait();
 					} catch (InterruptedException tExc) {
 						Logging.err(this, "Unable to fulfill stepwise hierarchy preparation", tExc);
 					}
@@ -307,8 +307,8 @@ public class ElectionProcess extends Thread
 				/*
 				 * initiate new election in case other clusters had higher priority
 				 */
-				tTimeWaitUntil = System.currentTimeMillis()+this.TIMEOUT_FOR_ANNOUNCEMENT;
-				this.checkWait(System.currentTimeMillis(), tTimeWaitUntil);
+				tTimeWaitUntil = System.currentTimeMillis() + TIMEOUT_FOR_ANNOUNCEMENT;
+				checkWait(System.currentTimeMillis(), tTimeWaitUntil);
 				if(mLevel > 0) {
 					for(Cluster tCluster : mElectingClusters) { 
 						/*
@@ -330,8 +330,8 @@ public class ElectionProcess extends Thread
 								}
 							}
 							/*
-							tTimeWaitUntil = System.currentTimeMillis()+this.TIMEOUT_FOR_LAGGARDS;
-							this.checkWait(System.currentTimeMillis(), tTimeWaitUntil);
+							tTimeWaitUntil = System.currentTimeMillis()+TIMEOUT_FOR_LAGGARDS;
+							checkWait(System.currentTimeMillis(), tTimeWaitUntil);
 							*/
 							try {
 								LinkedList<CoordinatorCEPDemultiplexed> tCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();

@@ -40,6 +40,6 @@ public class PriorityUpdate implements Serializable
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + ":" + Float.toString(mPriority);
+		return getClass().getSimpleName() + ":" + Float.toString(mPriority);
 	}
 }

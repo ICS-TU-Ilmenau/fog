@@ -37,7 +37,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 
 /**
- * This class represents a layer 0 neighbor cluster. //TV
+ * This class is used when a layer 0 neighbor cluster is detected. 
+ * It includes all needed data about the neighbor cluster. //TV
  */
 public class NeighborCluster implements Cluster, IElementDecorator
 {
@@ -94,7 +95,7 @@ public class NeighborCluster implements Cluster, IElementDecorator
 		if(mAnnouncedCEPs == null) {
 			mAnnouncedCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
 		}
-		Logging.log(this.getClusterDescription(), "Adding announcer " + pCEP);
+		Logging.log(getClusterDescription(), "Adding announcer " + pCEP);
 		mAnnouncedCEPs.add(pCEP);
 	}
 	
@@ -173,8 +174,8 @@ public class NeighborCluster implements Cluster, IElementDecorator
 
 	public synchronized void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HierarchicalSignature pCoordSignature, Name pCoordName, HRMName pAddress)
 	{
-		this.mCoordAddress = pAddress;
-		this.mCoordName = pCoordName;
+		mCoordAddress = pAddress;
+		mCoordName = pCoordName;
 	}
 
 	public void addNeighborCluster(Cluster pNeighbor)
@@ -214,7 +215,7 @@ public class NeighborCluster implements Cluster, IElementDecorator
 
 	@Override
 	public Coordinator getCoordinator() {
-		return this.mCoordinatorInstance;
+		return mCoordinatorInstance;
 	}
 
 	@Override
@@ -247,7 +248,7 @@ public class NeighborCluster implements Cluster, IElementDecorator
 	@Override
 	public Name getCoordinatorName()
 	{
-		return this.mCoordName;
+		return mCoordName;
 	}
 
 	@Override
@@ -259,7 +260,7 @@ public class NeighborCluster implements Cluster, IElementDecorator
 	@Override
 	public String getClusterDescription()
 	{
-		return this.getClass().getSimpleName() + "(" + this.mAnnouncer + "->" + this.mCoordName + ")"+"PR" + "(" + mPriority + ")" + "ID(" + this.mClusterID + ")TK(" + mToken + ")@" + mLevel;
+		return getClass().getSimpleName() + "(" + mAnnouncer + "->" + mCoordName + ")"+"PR" + "(" + mPriority + ")" + "ID(" + mClusterID + ")TK(" + mToken + ")@" + mLevel;
 	}
 
 	@Override
@@ -399,7 +400,7 @@ public class NeighborCluster implements Cluster, IElementDecorator
 	@Override
 	public void setNegotiatorCEP(CoordinatorCEPDemultiplexed pCEP)
 	{
-		getLogger().log(this.getClusterDescription(), "Setting " + pCEP + " as  negotiating CEP");
+		getLogger().log(getClusterDescription(), "Setting " + pCEP + " as  negotiating CEP");
 		if(!mNegotiators.contains(pCEP)) mNegotiators.add(pCEP);
 		mNegotiator = pCEP;
 	}

@@ -55,7 +55,7 @@ public class NodeConnection implements Serializable
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "(" + mType.toString() + "):" + mID;
+		return getClass().getSimpleName() + "(" + mType.toString() + "):" + mID;
 	}
 	
 	private ConnectionType mType;

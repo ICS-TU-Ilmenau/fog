@@ -169,7 +169,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 					} else {
 						if(getCluster() instanceof IntermediateCluster) {
 							if(!getSourceName().equals(getPeerName())) {
-								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(this.getRouteToPeer(), (HRMName)getSourceName(), (HRMName)getPeerName());
+								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), (HRMName)getSourceName(), (HRMName)getPeerName());
 								tAnnounce.addRoutingVector(tVector);
 							}
 							for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
@@ -195,7 +195,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 				getCluster().handleTopologyEnvelope((TopologyEnvelope)pData);
 			}/* else if (pData instanceof NestedDiscovery) {
 				NestedDiscovery tDiscovery = (NestedDiscovery) pData;
-				this.handleClusterDiscovery(tDiscovery);
+				handleClusterDiscovery(tDiscovery);
 			}*/
 			else if(pData instanceof RouteRequest) {
 				RouteRequest tRequest = (RouteRequest) pData;
@@ -356,8 +356,8 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 					if(tRequest.getDiscoveryEntries() != null) {
 						for(DiscoveryEntry tEntry : tRequest.getDiscoveryEntries()) {
 							ClusterDummy tDummy = handleDiscoveryEntry(tEntry);
-							getCluster().getCoordinator().getCluster(ClusterDummy.compare((((HRMName)this.getSourceName()).getAddress().longValue()), getCluster().getToken(), getCluster().getLevel())).addNeighborCluster(getCluster().getCoordinator().getCluster(tDummy));
-							this.addAnnouncedCluster(getCoordinator().getCluster(tDummy), getRemoteCluster());
+							getCluster().getCoordinator().getCluster(ClusterDummy.compare((((HRMName)getSourceName()).getAddress().longValue()), getCluster().getToken(), getCluster().getLevel())).addNeighborCluster(getCluster().getCoordinator().getCluster(tDummy));
+							addAnnouncedCluster(getCoordinator().getCluster(tDummy), getRemoteCluster());
 						}
 					}
 					synchronized(tRequest) {
@@ -505,7 +505,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 		if(pNegotiate == null) {
 			return;
 		}
-		if(this.mAnnouncerMapping == null) {
+		if(mAnnouncerMapping == null) {
 			mAnnouncerMapping = new HashMap<Cluster, Cluster>();
 		}
 		if(!mAnnouncerMapping.containsKey(pAnnounced)) {
@@ -595,7 +595,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteCluster());
 			}
 			if(mBreadthFirstSearch == null ) {
-				this.mBreadthFirstSearch = new BFSDistanceLabeler<VirtualNode, NodeConnection>();
+				mBreadthFirstSearch = new BFSDistanceLabeler<VirtualNode, NodeConnection>();
 			}
 			mBreadthFirstSearch.labelDistances(getCoordinator().getClusterMap().getGraphForGUI(), tSourceCluster);
 			List<VirtualNode> tDiscoveryCandidates = mBreadthFirstSearch.getVerticesInOrderVisited();
@@ -640,7 +640,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 					tToSetNegotiator.put(handleDiscoveryEntry(tEntry), tEntry.getPredecessor());
 				}
 				for(ClusterDummy tDummy : tToSetNegotiator.keySet()) {
-					this.addAnnouncedCluster(getCoordinator().getCluster(tDummy), getCoordinator().getCluster(tToSetNegotiator.get(tDummy)));
+					addAnnouncedCluster(getCoordinator().getCluster(tDummy), getCoordinator().getCluster(tToSetNegotiator.get(tDummy)));
 				}
 			}
 		}
@@ -701,7 +701,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName()/* + "(" + mIdentification + ")"*/ + "@" + getCluster().getClusterDescription() +  (getPeerName() != null ? "->" + ((HRMName)getPeerName()).getDescr() + ":PR(" + mPeerPriority + ")" : "") + (mIsEdgeRouter ? "|INTER" : "|INTRA");
+		return getClass().getSimpleName()/* + "(" + mIdentification + ")"*/ + "@" + getCluster().getClusterDescription() +  (getPeerName() != null ? "->" + ((HRMName)getPeerName()).getDescr() + ":PR(" + mPeerPriority + ")" : "") + (mIsEdgeRouter ? "|INTER" : "|INTRA");
 	}
 	
 	public boolean hasRequestedCoordinator()

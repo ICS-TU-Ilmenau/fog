@@ -46,7 +46,7 @@ public class BullyElect implements Serializable //TV
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + ": Sender=" + mSenderName + ", Priority=" + mSenderPriority + ", Level=" + mHierarchyLevel;
+		return getClass().getSimpleName() + ": Sender=" + mSenderName + ", Priority=" + mSenderPriority + ", Level=" + mHierarchyLevel;
 	}
 
 	// ########################################################################################################

@@ -421,7 +421,7 @@ public class HierarchicalRoutingService implements RoutingService
 				mLogger.err(this, "Unable to find forwarding HRMID", tExc);
 			}
 			
-			if(this.mHopByHopRoutingMap != null) {
+			if(mHopByHopRoutingMap != null) {
 				
 				FIBEntry tFIBEntry = mHopByHopRoutingMap.get(tForwarding);
 				HRMName tForwardingEntity = null;
@@ -539,7 +539,7 @@ public class HierarchicalRoutingService implements RoutingService
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "@" + mReferenceNode.toString();
+		return getClass().getSimpleName() + "@" + mReferenceNode.toString();
 	}
 	
 	public String getEdges()

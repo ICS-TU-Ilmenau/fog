@@ -65,7 +65,7 @@ public class MultiplexedPackage implements Serializable, Name
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + mSourceClusterIdentification + " to " + mDestinationClusterIdentification + ":\n" + mData;
+		return getClass().getSimpleName() + mSourceClusterIdentification + " to " + mDestinationClusterIdentification + ":\n" + mData;
 	}
 	
 	/**

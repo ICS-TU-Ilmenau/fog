@@ -158,7 +158,7 @@ public class TopologyEnvelope implements Serializable
 	public String toString()
 	{
 		String tString = new String();
-		tString += this.getClass().getSimpleName() + ":" + mHRMID;
+		tString += getClass().getSimpleName() + ":" + mHRMID;
 		if(mForwardingEntries != null) {
 			for(FIBEntry tEntry : mForwardingEntries) {
 				tString += "\n" + tEntry.toString();
@@ -276,7 +276,7 @@ public class TopologyEnvelope implements Serializable
 		
 		public String toString()
 		{
-			return this.getClass().getSimpleName() + ":FROM(" + mSignature + ")DEST(" + mDestination + ")VIA(" + mNextHop + ")CLUSTER(" + mNextCluster + ")" + (mRoutingVectors != null ? "VECTORS(" + mRoutingVectors + ")" : "");
+			return getClass().getSimpleName() + ":FROM(" + mSignature + ")DEST(" + mDestination + ")VIA(" + mNextHop + ")CLUSTER(" + mNextCluster + ")" + (mRoutingVectors != null ? "VECTORS(" + mRoutingVectors + ")" : "");
 		}
 		
 		/**

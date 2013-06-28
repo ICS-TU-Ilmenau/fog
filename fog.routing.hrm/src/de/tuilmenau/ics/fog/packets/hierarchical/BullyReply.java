@@ -53,7 +53,7 @@ public class BullyReply implements Serializable
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + ":" + mInitiator + "(" + mBullyPriority + ")";
+		return getClass().getSimpleName() + ":" + mInitiator + "(" + mBullyPriority + ")";
 	}
 	
 	private float mBullyPriority = 0;

@@ -244,9 +244,9 @@ public class CoordinatorCEP extends Session
 	public String toString()
 	{
 		if(mPeerIdentification != null ) {
-			return this.getClass().getSimpleName() + "@" + mSourceIdentification + "->" + mPeerIdentification;
+			return getClass().getSimpleName() + "@" + mSourceIdentification + "->" + mPeerIdentification;
 		} else {
-			return this.getClass().getSimpleName() + "@" + mSourceIdentification;
+			return getClass().getSimpleName() + "@" + mSourceIdentification;
 		}
 		 
 	}

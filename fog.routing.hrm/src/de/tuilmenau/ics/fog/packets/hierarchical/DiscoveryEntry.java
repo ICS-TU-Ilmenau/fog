@@ -129,7 +129,7 @@ public class DiscoveryEntry implements Serializable
 	 */
 	public void setCoordinatorName(Name pCoordinatorName)
 	{
-		this.mCoordinatorName = pCoordinatorName;
+		mCoordinatorName = pCoordinatorName;
 	}
 
 	/**
@@ -147,10 +147,10 @@ public class DiscoveryEntry implements Serializable
 	 */
 	public void addRoutingVectors(RoutingServiceLinkVector pRoutingVector)
 	{
-		if(this.mRoutingVectors == null) {
+		if(mRoutingVectors == null) {
 			mRoutingVectors = new LinkedList<RoutingServiceLinkVector>();
 		}
-		this.mRoutingVectors.add(pRoutingVector);
+		mRoutingVectors.add(pRoutingVector);
 	}
 	
 	/**
@@ -177,7 +177,7 @@ public class DiscoveryEntry implements Serializable
 	 */
 	public void setToken(int pToken)
 	{
-		this.mToken = pToken;
+		mToken = pToken;
 	}
 
 	/**
@@ -195,7 +195,7 @@ public class DiscoveryEntry implements Serializable
 	 */
 	public void setClusterID(Long pClusterID)
 	{
-		this.mClusterID = pClusterID;
+		mClusterID = pClusterID;
 	}
 
 	/**
@@ -213,12 +213,12 @@ public class DiscoveryEntry implements Serializable
 	 */
 	public void setCoordinatorRoutingAddress(HRMName pCoordinatorRoutingAddress)
 	{
-		this.mCoordinatorRoutingAddress = pCoordinatorRoutingAddress;
+		mCoordinatorRoutingAddress = pCoordinatorRoutingAddress;
 	}
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "ID(" + mClusterID + ")COORD(" + this.mCoordinatorName + ")+VECTORS(" + this.mRoutingVectors + ")HOPS(" + mClusterHops + ")" + (mIsInterASCluster ? "|InterAS" : "|IntraAS");
+		return getClass().getSimpleName() + "ID(" + mClusterID + ")COORD(" + mCoordinatorName + ")+VECTORS(" + mRoutingVectors + ")HOPS(" + mClusterHops + ")" + (mIsInterASCluster ? "|InterAS" : "|IntraAS");
 	}
 	
 	/**

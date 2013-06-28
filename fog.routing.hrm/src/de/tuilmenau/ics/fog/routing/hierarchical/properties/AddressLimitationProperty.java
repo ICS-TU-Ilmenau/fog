@@ -102,7 +102,7 @@ public class AddressLimitationProperty extends AbstractProperty
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + ":" + mType + "-(" + mEntries + ")";
+		return getClass().getSimpleName() + ":" + mType + "-(" + mEntries + ")";
 	}
 	
 	private LinkedList<HierarchyLevelLimitationEntry> mEntries;

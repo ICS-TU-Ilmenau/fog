@@ -82,7 +82,7 @@ public class ClusterViewer extends EditorAWT implements IController
 	@Override
 	public Object getAdapter(Class required)
 	{
-		if(this.getClass().equals(required)) return this;
+		if(getClass().equals(required)) return this;
 		
 		Object res = super.getAdapter(required);
 		

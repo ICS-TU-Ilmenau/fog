@@ -63,7 +63,7 @@ public class BullyAnnounce implements Serializable
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + ":" + mName + "(" + mBullyPriority + ")";
+		return getClass().getSimpleName() + ":" + mName + "(" + mBullyPriority + ")";
 	}
 	
 	/**

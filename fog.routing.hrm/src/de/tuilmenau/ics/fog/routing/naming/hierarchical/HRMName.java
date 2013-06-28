@@ -55,8 +55,8 @@ public class HRMName implements Name
 	 */
 	public HRMName(HRMName pName)
 	{
-		this.mAddress = pName.mAddress;
-		this.mOptionalDescr = pName.mOptionalDescr;
+		mAddress = pName.mAddress;
+		mOptionalDescr = pName.mOptionalDescr;
 	}
 	
 	/**

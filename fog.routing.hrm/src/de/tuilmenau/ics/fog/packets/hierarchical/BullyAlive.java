@@ -55,7 +55,7 @@ public class BullyAlive implements Serializable
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + ": Sender=" + mSenderName + ", Coordinator=" + mCoordinator;
+		return getClass().getSimpleName() + ": Sender=" + mSenderName + ", Coordinator=" + mCoordinator;
 	}
 	
 	// ########################################################################################################

@@ -72,12 +72,12 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 	public void setLevelAddress(int pLevel, BigInteger pAddress)
 	{
 		if(pLevel != 0) {
-			BigInteger tValue = this.getLevelAddress(pLevel);
+			BigInteger tValue = getLevelAddress(pLevel);
 			if(!tValue.equals(BigInteger.valueOf(0))) {
 				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel + 1) * HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)).divide(BigInteger.valueOf(pLevel * HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)));
 			}
 		} else {
-			BigInteger tValue = this.getLevelAddress(pLevel);
+			BigInteger tValue = getLevelAddress(pLevel);
 			if(!tValue.equals(BigInteger.valueOf(0))) {
 				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel + 1) * HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)));
 			}
@@ -194,7 +194,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
 	public boolean equals(Object pObj)
 	{
 		if(pObj instanceof HRMID) {
-			return this.getAddress().equals(((HRMID) pObj).getAddress());
+			return getAddress().equals(((HRMID) pObj).getAddress());
 		}
 		return false;
 	}

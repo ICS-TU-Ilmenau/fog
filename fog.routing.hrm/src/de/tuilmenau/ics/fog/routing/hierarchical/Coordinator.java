@@ -171,9 +171,9 @@ public class Coordinator extends Application implements IServerCallback
 				IntermediateCluster tCluster = new IntermediateCluster(new Long(tJoin.getTargetClusterID()), tJoin.getLevel(), this, mLogger);
 				if(tParticipate.isInterASCluster()) {
 					tCluster.setInterASCluster();
-					this.setSourceIntermediateCluster(tCluster, tCluster);
+					setSourceIntermediateCluster(tCluster, tCluster);
 				}
-				this.setSourceIntermediateCluster(tCluster, tCluster);
+				setSourceIntermediateCluster(tCluster, tCluster);
 				if(tConnection == null) {
 					tConnection = new CoordinatorCEP(mLogger, this, true, tJoin.getLevel(), tCluster.getMultiplexer());
 				}
@@ -222,10 +222,10 @@ public class Coordinator extends Application implements IServerCallback
 				mLogger.log(this, "as joining cluster");
 				for(Cluster tCandidate : getClusters()) {
 					if(tCandidate instanceof IntermediateCluster && tCandidate.getLevel() == tAttachedCluster.getLevel()) {
-						this.setSourceIntermediateCluster(tAttachedCluster, (IntermediateCluster)tCandidate);
+						setSourceIntermediateCluster(tAttachedCluster, (IntermediateCluster)tCandidate);
 					}
 				}
-				if(this.getSourceIntermediate(tAttachedCluster) == null) {
+				if(getSourceIntermediate(tAttachedCluster) == null) {
 					mLogger.err(this, "No source intermediate cluster for" + tAttachedCluster.getClusterDescription() + " found");
 				}
 				
@@ -260,11 +260,11 @@ public class Coordinator extends Application implements IServerCallback
 							tNewlyCreatedClusters.put(tCluster, tEntry.getPredecessor());
 							for(Cluster tCandidate : getClusters()) {
 								if(tCandidate instanceof IntermediateCluster && tCluster.getLevel() == tCandidate.getLevel()) {
-									this.setSourceIntermediateCluster(tCluster, (IntermediateCluster)tCandidate);
+									setSourceIntermediateCluster(tCluster, (IntermediateCluster)tCandidate);
 									mLogger.log(this, "as joining neighbor");
 								}
 							}
-							if(this.getSourceIntermediate(tAttachedCluster) == null) {
+							if(getSourceIntermediate(tAttachedCluster) == null) {
 								mLogger.err(this, "No source intermediate cluster for" + tCluster.getClusterDescription() + " found");
 							}
 							((NeighborCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
@@ -280,8 +280,8 @@ public class Coordinator extends Application implements IServerCallback
 						getClusterMap().link(tAttachedCluster, tCluster, new NodeConnection(NodeConnection.ConnectionType.REMOTE));
 					}
 					for(Cluster tCluster : tAttachedCluster.getNeighbors()) {
-						if(this.getSourceIntermediate(tCluster) != null) {
-							this.setSourceIntermediateCluster(tAttachedCluster, this.getSourceIntermediate(tCluster));
+						if(getSourceIntermediate(tCluster) != null) {
+							setSourceIntermediateCluster(tAttachedCluster, getSourceIntermediate(tCluster));
 						}
 					}
 				} else {
@@ -403,10 +403,10 @@ public class Coordinator extends Application implements IServerCallback
 	{
 		List<NodeConnection> tClusterRoute = null;
 		int tDistance = 0;
-		if(this.getSourceIntermediate(pCluster) == null || pCluster == null) {
+		if(getSourceIntermediate(pCluster) == null || pCluster == null) {
 			mLogger.log(this, "source cluster for " + (pCluster instanceof NeighborCluster ? ((NeighborCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
 		}
-		Cluster tIntermediate = this.getSourceIntermediate(pCluster);
+		Cluster tIntermediate = getSourceIntermediate(pCluster);
 		tClusterRoute = getClusterMap().getRoute(tIntermediate, pCluster);
 		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
 			for(NodeConnection tConnection : tClusterRoute) {
@@ -488,7 +488,7 @@ public class Coordinator extends Application implements IServerCallback
 		if(!tClusterFound)
 		{
 			IntermediateCluster tCluster = new IntermediateCluster(new Long(pToClusterID), pLevel, this, mLogger);
-			this.setSourceIntermediateCluster(tCluster, tCluster);
+			setSourceIntermediateCluster(tCluster, tCluster);
 			addCluster(tCluster);
 			tCEP = new CoordinatorCEP(mLogger, this, false, pLevel, tCluster.getMultiplexer());
 			tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
@@ -699,7 +699,7 @@ public class Coordinator extends Application implements IServerCallback
 	 */
 	public Cluster getClusterWithCoordinatorOnLevel(int pLevel)
 	{
-		return (mLevelToCluster.containsKey(pLevel) ? this.mLevelToCluster.get(pLevel) : null );
+		return (mLevelToCluster.containsKey(pLevel) ? mLevelToCluster.get(pLevel) : null );
 	}
 	
 	/**
@@ -724,7 +724,7 @@ public class Coordinator extends Application implements IServerCallback
 	{
 		if(mIntermediateMapping.containsKey(pCluster)) {
 			
-			return this.mIntermediateMapping.get(pCluster);
+			return mIntermediateMapping.get(pCluster);
 		} else {
 			return null;
 		}

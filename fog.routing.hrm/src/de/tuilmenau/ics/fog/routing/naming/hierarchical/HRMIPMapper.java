@@ -69,7 +69,7 @@ public class HRMIPMapper
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName();
+		return getClass().getSimpleName();
 	}
 	
 	public static void registerHRMID(HRMID pHRMID)

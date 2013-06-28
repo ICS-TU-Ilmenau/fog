@@ -83,6 +83,6 @@ public class ContactDestinationApplication extends AbstractProperty
 
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "(->" + (mName != null ? mName  : "" ) + "@" + mNamespace + (mApplicationParameter != null ? ";" + mApplicationParameter : "") + ")";
+		return getClass().getSimpleName() + "(->" + (mName != null ? mName  : "" ) + "@" + mNamespace + (mApplicationParameter != null ? ";" + mApplicationParameter : "") + ")";
 	}
 }
