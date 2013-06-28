@@ -621,7 +621,7 @@ public class Coordinator extends Application implements IServerCallback
 	}
 	
 	/**
-	 * @return physical node that on which this coordinator is located
+	 * @return the physical node running this coordinator
 	 */
 	public Node getPhysicalNode() //TV
 	{
@@ -746,10 +746,10 @@ public class Coordinator extends Application implements IServerCallback
 	
 	/**
 	 * 
-	 * @param pManager is the entity that administrates a cluster
+	 * @param pCoordinator is the entity that manages a cluster
 	 * @param pLevel is the level at which the manager is registered
 	 */
-	public void registerClusterManager(ClusterManager pManager, int pLevel)
+	public void registerClusterManager(ClusterManager pCoordinator, int pLevel)
 	{
 		if(mClusterManagers == null) {
 			mClusterManagers = new LinkedList<LinkedList<ClusterManager>>();
@@ -759,7 +759,7 @@ public class Coordinator extends Application implements IServerCallback
 				mClusterManagers.add(new LinkedList<ClusterManager>());
 			}
 		}
-		mClusterManagers.get(pLevel).add(pManager);
+		mClusterManagers.get(pLevel).add(pCoordinator);
 	}
 	
 	/**
