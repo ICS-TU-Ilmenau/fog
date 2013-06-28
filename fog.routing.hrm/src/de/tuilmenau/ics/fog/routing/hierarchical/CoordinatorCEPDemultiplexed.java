@@ -38,7 +38,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.AttachedCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
@@ -515,7 +515,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 			if(pNegotiate.getLevel() < mAnnouncerMapping.get(pAnnounced).getLevel()) {
 				mAnnouncerMapping.remove(pAnnounced);
 				mAnnouncerMapping.put(pAnnounced, pNegotiate);
-			} else if (pNegotiate instanceof AttachedCluster && mAnnouncerMapping.get(pAnnounced) instanceof AttachedCluster && ((AttachedCluster)pNegotiate).getClustersToTarget() < ((AttachedCluster)mAnnouncerMapping.get(pAnnounced)).getClustersToTarget()) {
+			} else if (pNegotiate instanceof NeighborCluster && mAnnouncerMapping.get(pAnnounced) instanceof NeighborCluster && ((NeighborCluster)pNegotiate).getClustersToTarget() < ((NeighborCluster)mAnnouncerMapping.get(pAnnounced)).getClustersToTarget()) {
 				getCluster().getCoordinator().getLogger().log(this, "replacing negotiating cluster of " + pAnnounced + ": " + mAnnouncerMapping.get(pAnnounced) + " with " + pNegotiate);
 				mAnnouncerMapping.remove(pAnnounced);
 				mAnnouncerMapping.put(pAnnounced, pNegotiate);
@@ -607,7 +607,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						int tRadius = HRMConfig.Routing.EXPANSION_MAX_RADIUS;
 						Logging.log(this, "Radius is " + tRadius);
 						
-						if(tCluster instanceof AttachedCluster && ((AttachedCluster)tCluster).getClustersToTarget() + pDiscovery.getDistance() > tRadius) continue;
+						if(tCluster instanceof NeighborCluster && ((NeighborCluster)tCluster).getClustersToTarget() + pDiscovery.getDistance() > tRadius) continue;
 						boolean tBreak=false;
 						for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
 							if(tCEP.isEdgeCEP()) tBreak = true;
@@ -617,8 +617,8 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						}
 						int tToken = tCluster.getToken();
 						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
-							if(tCluster instanceof AttachedCluster) {
-								getCoordinator().getLogger().log(this, "Reporting " + tCluster + " to " + ((HRMName)getPeerName()).getDescr() + " because " + pDiscovery.getDistance() + " + " + ((AttachedCluster)tCluster).getClustersToTarget() + "=" + (pDiscovery.getDistance() + ((AttachedCluster)tCluster).getClustersToTarget()));
+							if(tCluster instanceof NeighborCluster) {
+								getCoordinator().getLogger().log(this, "Reporting " + tCluster + " to " + ((HRMName)getPeerName()).getDescr() + " because " + pDiscovery.getDistance() + " + " + ((NeighborCluster)tCluster).getClustersToTarget() + "=" + (pDiscovery.getDistance() + ((NeighborCluster)tCluster).getClustersToTarget()));
 								Logging.log(this, "token list was " + pDiscovery.getTokens());
 							}
 							getPathTo(pDiscovery, tCluster);
@@ -654,7 +654,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 			for(Cluster tCluster : getCoordinator().getClusters()) {
 				if(tCluster.equals(ClusterDummy.compare(pEntry.getClusterID(), pEntry.getToken(), getCluster().getLevel() - 1))) {
 					tNewCluster = tCluster;
-					if(tNewCluster instanceof AttachedCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {
+					if(tNewCluster instanceof NeighborCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {
 						getCoordinator().getLogger().log(this, "Filling required information into " + tNewCluster);
 						tNewCluster.setCoordinatorCEP(null, null, pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress());
 						if(pEntry.isInterASCluster()) tNewCluster.setInterASCluster();
@@ -665,7 +665,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 				/*
 				 * Be aware of the fact that the new attached cluster has lower level
 				 */
-				tNewCluster = new AttachedCluster(
+				tNewCluster = new NeighborCluster(
 						pEntry.getClusterID(),
 						pEntry.getCoordinatorName(),
 						pEntry.getCoordinatorRoutingAddress(),
@@ -673,7 +673,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						pEntry.getLevel(),
 						getCoordinator());
 				getCluster().getCoordinator().setSourceIntermediateCluster(tNewCluster, getCluster().getCoordinator().getSourceIntermediate(getCluster()));
-				((AttachedCluster)tNewCluster).addAnnouncedCEP(this);
+				((NeighborCluster)tNewCluster).addAnnouncedCEP(this);
 				tNewCluster.setToken(pEntry.getToken());
 				tNewCluster.setPriority(pEntry.getPriority());
 				getCoordinator().addCluster(tNewCluster);
@@ -688,8 +688,8 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 				getCoordinator().getLogger().log(this, "Created " + tNewCluster);
 			}
 			
-			((AttachedCluster)tNewCluster).addAnnouncedCEP(this);
-			((AttachedCluster)tNewCluster).setClusterHopsOnOpposite(pEntry.getClusterHops(), this);
+			((NeighborCluster)tNewCluster).addAnnouncedCEP(this);
+			((NeighborCluster)tNewCluster).setClusterHopsOnOpposite(pEntry.getClusterHops(), this);
 		}
 		if(pEntry.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tLink : pEntry.getRoutingVectors()) {

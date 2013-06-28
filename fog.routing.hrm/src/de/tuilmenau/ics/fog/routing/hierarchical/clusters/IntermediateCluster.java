@@ -219,7 +219,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		}
 		Cluster tCluster = getCoordinator().getCluster(ClusterDummy.compare(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
 		if(tCluster == null) {
-			tCluster = new AttachedCluster(
+			tCluster = new NeighborCluster(
 					pAnnounce.getClusterID(),
 					pAnnounce.getCoordinatorName(),
 					pAnnounce.getCoordAddress(),
@@ -227,8 +227,8 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 					mLevel,
 					getCoordinator());
 			getCoordinator().setSourceIntermediateCluster(tCluster, this);
-			((AttachedCluster)tCluster).addAnnouncedCEP(pCEP);
-			((AttachedCluster)tCluster).setSourceIntermediate(this);
+			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
+			((NeighborCluster)tCluster).setSourceIntermediate(this);
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			tCluster.setToken(pAnnounce.getToken());
 			

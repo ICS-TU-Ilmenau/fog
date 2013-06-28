@@ -48,7 +48,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.AttachedCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
@@ -88,7 +88,7 @@ public class CoordinatorEditor extends EditorPart
 			for(Cluster tCluster : mCoordinator.getClusters()) {
 				j++;
 				Logging.log(this, "Printing cluster " + j + ": " + tCluster.toString());
-				if( !(tCluster instanceof AttachedCluster) && tCluster.getLevel() == i) {
+				if( !(tCluster instanceof NeighborCluster) && tCluster.getLevel() == i) {
 					printCluster(tCluster);
 				}
 			}
@@ -353,8 +353,8 @@ public class CoordinatorEditor extends EditorPart
 			item.setText(3, Boolean.toString(tCEP.isPartOfMyCluster()));
 			item.setText(4, (tCEP.getPeerPriority() != 0 ? Float.toString(tCEP.getPeerPriority()) : "UNKNOWN"));
 			item.setText(5, (tCEP.getRemoteCluster() != null ? tCEP.getRemoteCluster().toString() : "UNKNOWN"));
-			if(tCEP.getRemoteCluster() != null && tCEP.getRemoteCluster() instanceof AttachedCluster && ((AttachedCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()) != null && ((AttachedCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster() != null) {
-				item.setText(6, ((AttachedCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster().toString());
+			if(tCEP.getRemoteCluster() != null && tCEP.getRemoteCluster() instanceof NeighborCluster && ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()) != null && ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster() != null) {
+				item.setText(6, ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster().toString());
 			}
 			Route tRoute = null;
 			Name tSource = null;

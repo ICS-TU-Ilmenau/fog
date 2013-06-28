@@ -194,7 +194,7 @@ public class ClusterManager implements Cluster, Observer
 				if(!((Cluster)tNode).isInterASCluster()) {
 					if(tNode instanceof IntermediateCluster && i == 1) {
 						tClustersToNotify.add(tNode);
-					} else if (tNode instanceof AttachedCluster && ((AttachedCluster)tNode).getClustersToTarget() <= i && ((AttachedCluster)tNode).getClustersToTarget() != 0 && !mConnectedEntities.contains(((AttachedCluster)tNode).getCoordinatorName())) {
+					} else if (tNode instanceof NeighborCluster && ((NeighborCluster)tNode).getClustersToTarget() <= i && ((NeighborCluster)tNode).getClustersToTarget() != 0 && !mConnectedEntities.contains(((NeighborCluster)tNode).getCoordinatorName())) {
 						tClustersToNotify.add(tNode);					
 					}
 				}
@@ -507,8 +507,8 @@ public class ClusterManager implements Cluster, Observer
 							Cluster tNegotiator = tSourceCEP.getRemoteCluster();
 							Cluster tRelevant = ((Cluster)getVirtualNodeFromHRMID(tHRMID));
 							Cluster tHRMIDMapping = null;
-							if(tRelevant instanceof AttachedCluster) {
-								AttachedCluster tNewRelevant = (AttachedCluster)tRelevant;
+							if(tRelevant instanceof NeighborCluster) {
+								NeighborCluster tNewRelevant = (NeighborCluster)tRelevant;
 								CoordinatorCEPDemultiplexed tNewRelevantCEP = tNewRelevant.getAnnouncedCEP(tSourceCEP.getRemoteCluster());
 								tHRMIDMapping = tNewRelevantCEP.getNegotiator(tRelevant);
 								
@@ -1305,10 +1305,10 @@ public class ClusterManager implements Cluster, Observer
 				getCoordinator().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		AttachedCluster tCluster = null;
+		NeighborCluster tCluster = null;
 		if(pAnnounce.isAnnouncementFromForeign())
 		{
-			tCluster = new AttachedCluster(
+			tCluster = new NeighborCluster(
 					pAnnounce.getCoordAddress().getAddress().longValue(),
 					pAnnounce.getCoordinatorName(),
 					pAnnounce.getCoordAddress(),
@@ -1316,7 +1316,7 @@ public class ClusterManager implements Cluster, Observer
 					mLevel + 1,
 					mManagedCluster.getCoordinator());
 			getCoordinator().setSourceIntermediateCluster(tCluster, getCoordinator().getSourceIntermediate(this));
-			((AttachedCluster)tCluster).addAnnouncedCEP(pCEP);
+			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			tCluster.setToken(pAnnounce.getToken());
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			//mManagedCluster.addNeighborCluster(tCluster);
@@ -1436,7 +1436,7 @@ public class ClusterManager implements Cluster, Observer
 		return mHRMID;
 	}
 	
-	public void includeCluster(AttachedCluster pAttached)
+	public void includeCluster(NeighborCluster pAttached)
 	{
 		if(!mTokens.contains(pAttached.getToken())) {
 			mTokens.add(pAttached.getToken());

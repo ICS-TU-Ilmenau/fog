@@ -25,7 +25,7 @@ import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.BullyElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.AttachedCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
 //import de.tuilmenau.ics.fog.routing.hierarchical.clusters.VirtualNode;
@@ -182,12 +182,12 @@ public class ElectionProcess extends Thread
 					/*
 					 * OK: Because of the formerly sent 
 					 */
-					if(tToAnnounce instanceof AttachedCluster) {
+					if(tToAnnounce instanceof NeighborCluster) {
 						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tReferenceNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getCoordinator().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
 						for(CoordinatorCEPDemultiplexed tCEP: pCluster.getParticipatingCEPs()) {
 							tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
 						}
-						for(CoordinatorCEPDemultiplexed tCEP : ((AttachedCluster)tToAnnounce).getAnnouncedCEPs()) {
+						for(CoordinatorCEPDemultiplexed tCEP : ((NeighborCluster)tToAnnounce).getAnnouncedCEPs()) {
 							tCEP.write(tBullyAnnounce);
 						}
 					}

@@ -25,7 +25,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexedPackage;
 import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.AttachedCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
@@ -181,8 +181,8 @@ public class CoordinatorCEPMultiplexer
 							pTargetCluster.getClusterID(),
 							pTargetCluster.getToken(),
 							pTargetCluster.getLevel(),
-							(pTargetCluster instanceof AttachedCluster ? ((AttachedCluster)pTargetCluster).getClustersToTarget() : 0));
-					if(pTargetCluster instanceof AttachedCluster && ((AttachedCluster)pTargetCluster).getClustersToTarget() == 0) {
+							(pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClustersToTarget() : 0));
+					if(pTargetCluster instanceof NeighborCluster && ((NeighborCluster)pTargetCluster).getClustersToTarget() == 0) {
 						getLogger().warn(this, "Set 0 as hop count to target " + pTargetCluster);
 					}
 					getLogger().log(this, "Created " + tDiscovery + " for " + pTargetCluster);

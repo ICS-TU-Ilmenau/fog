@@ -38,7 +38,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.AttachedCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
@@ -180,7 +180,7 @@ public class Coordinator extends Application implements IServerCallback
 
 				if(tJoin.getLevel() > 0) {
 					for(Cluster tVirtualNode : getClusters()) {
-						if(tVirtualNode.getLevel() == tJoin.getLevel() - 1 && !(tVirtualNode instanceof ClusterManager || tVirtualNode instanceof AttachedCluster)) {
+						if(tVirtualNode.getLevel() == tJoin.getLevel() - 1 && !(tVirtualNode instanceof ClusterManager || tVirtualNode instanceof NeighborCluster)) {
 							tCluster.setPriority(tVirtualNode.getPriority());
 						}
 					}
@@ -209,7 +209,7 @@ public class Coordinator extends Application implements IServerCallback
 			}
 			if(tCEP.getRemoteCluster() == null && tJoin.getLevel() > 0) {
 				HashMap<Cluster, ClusterDummy> tNewlyCreatedClusters = new HashMap<Cluster, ClusterDummy>(); 
-				AttachedCluster tAttachedCluster = new AttachedCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), tJoin.getLevel() -1, this);
+				NeighborCluster tAttachedCluster = new NeighborCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), tJoin.getLevel() -1, this);
 				tAttachedCluster.setPriority(tParticipate.getSourcePriority());
 				if(tAttachedCluster.getCoordinatorName() != null) {
 					try {
@@ -243,7 +243,7 @@ public class Coordinator extends Application implements IServerCallback
 							getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 						}
 						if(!getClusters().contains(ClusterDummy.compare(tEntry.getClusterID(), tEntry.getToken(), tEntry.getLevel()))) {
-							tCluster = new AttachedCluster(tEntry.getClusterID(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken(), tEntry.getLevel(), this);
+							tCluster = new NeighborCluster(tEntry.getClusterID(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken(), tEntry.getLevel(), this);
 							tCluster.setPriority(tEntry.getPriority());
 							if(tEntry.isInterASCluster()) {
 								tCluster.setInterASCluster();
@@ -267,8 +267,8 @@ public class Coordinator extends Application implements IServerCallback
 							if(this.getSourceIntermediate(tAttachedCluster) == null) {
 								mLogger.err(this, "No source intermediate cluster for" + tCluster.getClusterDescription() + " found");
 							}
-							((AttachedCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
-							((AttachedCluster)tCluster).addAnnouncedCEP(tCEP);
+							((NeighborCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
+							((NeighborCluster)tCluster).addAnnouncedCEP(tCEP);
 							Logging.log(this, "Created " +tCluster);
 						} else {
 							for(Cluster tPossibleCandidate : getClusters()) {
@@ -404,7 +404,7 @@ public class Coordinator extends Application implements IServerCallback
 		List<NodeConnection> tClusterRoute = null;
 		int tDistance = 0;
 		if(this.getSourceIntermediate(pCluster) == null || pCluster == null) {
-			mLogger.log(this, "source cluster for " + (pCluster instanceof AttachedCluster ? ((AttachedCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
+			mLogger.log(this, "source cluster for " + (pCluster instanceof NeighborCluster ? ((NeighborCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
 		}
 		Cluster tIntermediate = this.getSourceIntermediate(pCluster);
 		tClusterRoute = getClusterMap().getRoute(tIntermediate, pCluster);

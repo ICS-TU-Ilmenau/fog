@@ -36,7 +36,10 @@ import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 
-public class AttachedCluster implements Cluster, IElementDecorator
+/**
+ * This class represents a layer 0 neighbor cluster. //TV
+ */
+public class NeighborCluster implements Cluster, IElementDecorator
 {
 	private static final long serialVersionUID = -8746079632866375924L;
 //	private LinkedList<RoutingServiceLinkVector> mVectors;
@@ -73,7 +76,7 @@ public class AttachedCluster implements Cluster, IElementDecorator
 	 * @param pLevel is the level this cluster is related to
 	 * @param pResponsibleCoordinator as the coordinator this cluster works on (local)
 	 */
-	public AttachedCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, int pLevel, Coordinator pResponsibleCoordinator)
+	public NeighborCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, int pLevel, Coordinator pResponsibleCoordinator)
 	{	
 		mAnnouncer = pResponsibleCoordinator.getPhysicalNode().getCentralFN().getName();
 		mCoordAddress = pAddress;
@@ -129,7 +132,7 @@ public class AttachedCluster implements Cluster, IElementDecorator
 		Cluster tCluster = getCoordinator().getCluster(ClusterDummy.compare(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
 		if(tCluster == null)
 		{
-			tCluster = new AttachedCluster(
+			tCluster = new NeighborCluster(
 					pAnnounce.getClusterID(),
 					pAnnounce.getCoordinatorName(),
 					pAnnounce.getCoordAddress(),
@@ -137,7 +140,7 @@ public class AttachedCluster implements Cluster, IElementDecorator
 					mLevel,
 					getCoordinator());
 			getCoordinator().setSourceIntermediateCluster(tCluster, getCoordinator().getSourceIntermediate(this));
-			((AttachedCluster)tCluster).addAnnouncedCEP(pCEP);
+			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			tCluster.setToken(pAnnounce.getToken());
 		} else {
