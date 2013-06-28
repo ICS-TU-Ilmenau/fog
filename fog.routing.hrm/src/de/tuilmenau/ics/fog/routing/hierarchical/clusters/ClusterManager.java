@@ -108,6 +108,8 @@ public class ClusterManager implements Cluster, Observer
 		mManagedCluster.getCoordinator().getClusterMap().addObserver(this);
 		mPriority = (float) getCoordinator().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + mLevel, 2.71828);
 		getCoordinator().registerClusterManager(this, mLevel);
+		
+		Logging.log(this, "Creating coordinator instance on hierarchy level " + mLevel);
 	}
 	
 	public void addIgnoreEntry(Name pEntry)
@@ -173,10 +175,9 @@ public class ClusterManager implements Cluster, Observer
 	public boolean prepareAboveCluster(int pLevel)
 	{
 		getLogger().log(this, "Preparing cluster on level "  +pLevel + ":I will connect to " + mManagedCluster.getNeighbors());
-		int tRadius = 0;
-		tRadius = HRMConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER;
+		int tRadius = HRMConfig.Routing.EXPANSION_MAX_RADIUS;
 
-		Logging.log(this, "radius is " + tRadius);
+		Logging.log(this, "Radius is " + tRadius);
 		for(int i = 1; i <= tRadius; i++) {
 			String tString = new String("Expanding in round " + i + ", possible clusters:");
 			for(Cluster tCluster : getCoordinator().getClusters()) {
@@ -243,8 +244,8 @@ public class ClusterManager implements Cluster, Observer
 		VirtualNode tTransitiveElement = pSource;
 		try {
 			int tDistance = 0;
-			if(tList.size() > HRMConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER) {
-				while(tDistance != HRMConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER) {
+			if(tList.size() > HRMConfig.Routing.EXPANSION_MAX_RADIUS) {
+				while(tDistance != HRMConfig.Routing.EXPANSION_MAX_RADIUS) {
 					tTransitiveElement = getCoordinator().getClusterMap().getDest(tTransitiveElement, tList.get(0));
 					tList.remove(0);
 					tDistance++;
@@ -286,7 +287,7 @@ public class ClusterManager implements Cluster, Observer
 			try {
 				if(!tReceivingCEP.isPeerCoordinatorForNeighborZone() || (this.mIgnoreOnAddressDistribution != null && this.mIgnoreOnAddressDistribution.contains(tReceivingCEP.getPeerName()))) {
 					/*
-					 * generate next address and map it to an connection andpoint in case we are on level one, or to a cluster in case we are in a level higher than 1
+					 * generate next address and map it to a CEP in case we are on level one, or to a cluster in case we are in a level higher than 1
 					 */
 					tID = generateNextAddress();
 					
@@ -310,7 +311,7 @@ public class ClusterManager implements Cluster, Observer
 					getLogger().log(this, "Skipping " + tReceivingCEP + " in address distribution as it is a coordinator for another cluster on level " + mLevel);
 				}
 				/*
-				 * Collect all forwarding entries for connection endpoint tReceivingCEP, afterwards routes to supernodes are calculated
+				 * Collect all forwarding entries for connection end point tReceivingCEP, afterwards routes to supernodes are calculated
 				 */
 				mAddressMapping.put(tReceivingCEP, tEnvelope);
 				
@@ -756,7 +757,7 @@ public class ClusterManager implements Cluster, Observer
 									tHRMID,
 									tDestination,
 									(tCluster != null ? ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getLevel()) : null),
-									getCoordinator().getIdentity().createSignature(getCoordinator().getPhysicalNode().toString(), null, mLevel-1));
+									getCoordinator().getIdentity().createSignature(getCoordinator().getPhysicalNode().toString(), null, mLevel - 1));
 							mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
 							if(tPolygon != null && !tPolygon.isEmpty()) {
 								tEntry.setRoutingVectors(tPolygon);
@@ -778,7 +779,7 @@ public class ClusterManager implements Cluster, Observer
 						mAddressMapping.get(tSourceCEP).addApprovedSignature(tSignature);
 					}
 				}
-				mAddressMapping.get(tSourceCEP).addApprovedSignature(getCoordinator().getIdentity().createSignature(getCoordinator().getPhysicalNode().toString(), null, mLevel -1));
+				mAddressMapping.get(tSourceCEP).addApprovedSignature(getCoordinator().getIdentity().createSignature(getCoordinator().getPhysicalNode().toString(), null, mLevel - 1));
 				tSourceCEP.write(mAddressMapping.get(tSourceCEP));
 			}
 			if(mHigherHRMIDs != null) {
@@ -866,8 +867,9 @@ public class ClusterManager implements Cluster, Observer
 		for(VirtualNode tNode : mClustersToNotify) {
 			if(tNode instanceof Cluster && !((Cluster) tNode).isInterASCluster()) {
 				Cluster tCluster = (Cluster)tNode;
+				Name tName = tCluster.getCoordinatorName();
 				synchronized(tCluster) {
-					if(tCluster.getCoordinatorName() == null) {
+					if(tName == null) {
 						try {
 							tCluster.wait();
 						} catch (InterruptedException tExc) {
@@ -876,17 +878,16 @@ public class ClusterManager implements Cluster, Observer
 					}
 				}
 				
-				if(mConnectedEntities.contains(tCluster.getCoordinatorName())){
-					getLogger().log(this, "Skipping connection to " + tCluster.getCoordinatorName() + " because connection to that entity is already established");
+				if(mConnectedEntities.contains(tName)){
+					getLogger().log(this, "coordinator L" + mLevel + "-skipping connection to " + tName + " for cluster " + tNode + " because connection already exists");
 					continue;
 				} else {
 					/*
 					 * was it really this cluster? -> reevaluate
 					 */
-					getLogger().log(this, "Opening connection to " + tCluster.getCoordinatorName() + " because I discovered cluster " + tNode);
+					getLogger().log(this, "coordinator L" + mLevel + "-adding connection to " + tName + " for cluster " + tNode);
 //					CoordinatorCEPDemultiplexed tCEP = getMultiplexer().addConnection(tCluster, mManagedCluster);
 					//new CoordinatorCEP(mManagedCluster.getCoordinator().getLogger(), mManagedCluster.getCoordinator(), this, false);
-					Name tName = tCluster.getCoordinatorName();
 					mConnectedEntities.add(tName);
 				}
 			}

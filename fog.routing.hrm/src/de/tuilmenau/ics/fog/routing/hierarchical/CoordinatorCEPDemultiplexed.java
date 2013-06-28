@@ -603,10 +603,10 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 				for(VirtualNode tVirtualNode : tDiscoveryCandidates) {
 					if(tVirtualNode instanceof Cluster) {
 						Cluster tCluster = (Cluster) tVirtualNode;
-						int tRadius;
-
-						tRadius = HRMConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER;
-						Logging.log(this, "radius is " + tRadius);
+						
+						int tRadius = HRMConfig.Routing.EXPANSION_MAX_RADIUS;
+						Logging.log(this, "Radius is " + tRadius);
+						
 						if(tCluster instanceof AttachedCluster && ((AttachedCluster)tCluster).getClustersToTarget() + pDiscovery.getDistance() > tRadius) continue;
 						boolean tBreak=false;
 						for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {

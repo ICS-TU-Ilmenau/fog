@@ -28,9 +28,9 @@ public class HRMConfig
 		public static final int HIERARCHICAL_BIT_SIZE_PER_LEVEL = 8;
 		
 		/**
-		 * This limits the radius that is used to limit the cluster size of (virtual) nodes 
+		 * Maximum radius that is allowed during expansion phase 
 		 */
-		public static final int PAN_CLUSTER_ELECTION_NUMBER = 4;
+		public static final int EXPANSION_MAX_RADIUS = 4; //TV
 		
 		/**
 		 * specifies whether a coordinator should be used
