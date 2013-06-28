@@ -886,7 +886,7 @@ public class ClusterManager implements Cluster, Observer
 					 * was it really this cluster? -> reevaluate
 					 */
 					getLogger().log(this, "coordinator L" + mLevel + "-adding connection to " + tName + " for cluster " + tNode);
-//					CoordinatorCEPDemultiplexed tCEP = getMultiplexer().addConnection(tCluster, mManagedCluster);
+					CoordinatorCEPDemultiplexed tCEP = getMultiplexer().addConnection(tCluster, mManagedCluster);
 					//new CoordinatorCEP(mManagedCluster.getCoordinator().getLogger(), mManagedCluster.getCoordinator(), this, false);
 					mConnectedEntities.add(tName);
 				}
