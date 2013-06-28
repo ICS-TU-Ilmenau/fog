@@ -49,7 +49,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
@@ -85,7 +85,7 @@ public class CoordinatorEditor extends EditorPart
 		for(int i = 0; i <= HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
 			Logging.log(this, "Amount of found clusters: " + mCoordinator.getClusters().size());
 			int j = -1;
-			for(Cluster tCluster : mCoordinator.getClusters()) {
+			for(ICluster tCluster : mCoordinator.getClusters()) {
 				j++;
 				Logging.log(this, "Printing cluster " + j + ": " + tCluster.toString());
 				if( !(tCluster instanceof NeighborCluster) && tCluster.getLevel() == i) {
@@ -198,7 +198,7 @@ public class CoordinatorEditor extends EditorPart
 			}
 			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcessesOnLevel(mCluster.getLevel())) {
 				boolean tStartProcess=true;
-				for(Cluster tCluster : tProcess.getParticipatingClusters()) {
+				for(ICluster tCluster : tProcess.getParticipatingClusters()) {
 					for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
 						if(tCEP.isEdgeCEP()) {
 							tStartProcess = false;
@@ -290,7 +290,7 @@ public class CoordinatorEditor extends EditorPart
 		}	
 	}
 	
-	public void printCluster(Cluster pCluster)
+	public void printCluster(ICluster pCluster)
 	{
 		Text overviewText = new Text(mContainer, SWT.BORDER);;
 		overviewText.setText(pCluster.toString());
@@ -403,7 +403,7 @@ public class CoordinatorEditor extends EditorPart
 					tItem.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
 					tItem.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
 					ClusterDummy tDummy = tEntry.getFarthestClusterInDirection();
-					Cluster tFarthestCluster = null;
+					ICluster tFarthestCluster = null;
 					if(tDummy != null) {
 						tFarthestCluster = mCoordinator.getCluster(tEntry.getFarthestClusterInDirection());
 					}
@@ -419,7 +419,7 @@ public class CoordinatorEditor extends EditorPart
 					tItem.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
 					tItem.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
 					ClusterDummy tDummy = tEntry.getFarthestClusterInDirection();
-					Cluster tFarthestCluster = null;
+					ICluster tFarthestCluster = null;
 					if(tDummy != null) {
 						tFarthestCluster = mCoordinator.getCluster(tEntry.getFarthestClusterInDirection());
 					}

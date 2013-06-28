@@ -6,3 +6,5 @@ BullyAlive:
  
  Renamings:
  - AttachedCluster -> NeighborCluster
+ - Cluster -> ICluster
+ - VirtualNode -> IVirtualNode

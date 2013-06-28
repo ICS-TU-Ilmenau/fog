@@ -50,7 +50,7 @@ import de.tuilmenau.ics.fog.util.Logger;
  * and a physical node. Only on an intermediate cluster may be managed by a ClusterManager.
  * 
  */
-public class IntermediateCluster implements Cluster, IElementDecorator
+public class IntermediateCluster implements ICluster, IElementDecorator
 {
 	private CoordinatorCEPDemultiplexed mCoordinator;
 	private Long mClusterID;
@@ -102,7 +102,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		mPriority = (float) getCoordinator().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), 3.14159);
 		getCoordinator().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mLevel + " with priority " + mPriority);
 		mLevel = pLevel;
-		for(Cluster tCluster : getCoordinator().getClusters())
+		for(ICluster tCluster : getCoordinator().getClusters())
 		{
 			if(tCluster.getLevel() == pLevel && !(tCluster == this))
 			{
@@ -168,7 +168,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 			/*getCoordinator().getReferenceNode().setDecorationParameter(null);*/
 		}
 		getCoordinator().getLogger().log(this, "This cluster has the following neighbors: " + getNeighbors());
-		for(Cluster tCluster : getNeighbors()) {
+		for(ICluster tCluster : getNeighbors()) {
 			if(tCluster instanceof IntermediateCluster) {
 				getCoordinator().getLogger().log(this, "Preparing neighbor zone announcement");
 				NeighborZoneAnnounce tAnnounce = new NeighborZoneAnnounce(pCoordName, mLevel, pCoordSignature, pAddress, getToken(), mClusterID);
@@ -201,23 +201,23 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 //			boolean tIsEdgeRouter = false;
 			LinkedList<ClusterDummy> tInterASClusterIdentifications = new LinkedList<ClusterDummy>();
 
-			for(VirtualNode tNode : getCoordinator().getClusterMap().getNeighbors(this)) {
-				if(tNode instanceof Cluster && ((Cluster) tNode).isInterASCluster()) {
+			for(IVirtualNode tNode : getCoordinator().getClusterMap().getNeighbors(this)) {
+				if(tNode instanceof ICluster && ((ICluster) tNode).isInterASCluster()) {
 //					tIsEdgeRouter = true;
-					tInterASClusterIdentifications.add(ClusterDummy.compare(((Cluster)tNode).getClusterID(), ((Cluster)tNode).getToken(), ((Cluster)tNode).getLevel()));
+					tInterASClusterIdentifications.add(ClusterDummy.compare(((ICluster)tNode).getClusterID(), ((ICluster)tNode).getToken(), ((ICluster)tNode).getLevel()));
 				}
 			}
 		}
 	}
 	
-	public Cluster addAnnouncedCluster(NeighborZoneAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public ICluster addAnnouncedCluster(NeighborZoneAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
 				getCoordinator().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		Cluster tCluster = getCoordinator().getCluster(ClusterDummy.compare(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
+		ICluster tCluster = getCoordinator().getCluster(ClusterDummy.compare(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
 		if(tCluster == null) {
 			tCluster = new NeighborCluster(
 					pAnnounce.getClusterID(),
@@ -366,9 +366,9 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		
 	}
 	
-	public void addNeighborCluster(Cluster pNeighbor)
+	public void addNeighborCluster(ICluster pNeighbor)
 	{
-		LinkedList<Cluster> tNeighbors = getNeighbors(); 
+		LinkedList<ICluster> tNeighbors = getNeighbors(); 
 		if(!tNeighbors.contains(pNeighbor))
 		{
 			if(pNeighbor instanceof IntermediateCluster) {
@@ -486,12 +486,12 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		return mCoordSignature;
 	}
 	
-	public LinkedList<Cluster> getNeighbors()
+	public LinkedList<ICluster> getNeighbors()
 	{
-		LinkedList<Cluster> tList = new LinkedList<Cluster>();
-		for(VirtualNode tNode : getCoordinator().getClusterMap().getNeighbors(this)) {
-			if(tNode instanceof Cluster) {
-				tList.add((Cluster)tNode);
+		LinkedList<ICluster> tList = new LinkedList<ICluster>();
+		for(IVirtualNode tNode : getCoordinator().getClusterMap().getNeighbors(this)) {
+			if(tNode instanceof ICluster) {
+				tList.add((ICluster)tNode);
 			}
 		}
 		return tList;
@@ -609,8 +609,8 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		if(pObj instanceof ClusterManager) {
 			return false;
 		}
-		if(pObj instanceof Cluster) {
-			Cluster tCluster = (Cluster) pObj;
+		if(pObj instanceof ICluster) {
+			ICluster tCluster = (ICluster) pObj;
 			if(tCluster.getClusterID().equals(getClusterID()) &&
 					tCluster.getToken() == getToken() &&
 					tCluster.getLevel() == getLevel()) {
@@ -755,7 +755,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	 * @param pCluster
 	 * @return
 	 */
-	public CoordinatorCEPDemultiplexed getCEPOfCluster(Cluster pCluster)
+	public CoordinatorCEPDemultiplexed getCEPOfCluster(ICluster pCluster)
 	{
 		for(CoordinatorCEPDemultiplexed tCEP : getParticipatingCEPs()) {
 			if(tCEP.getRemoteCluster().equals(pCluster)) {

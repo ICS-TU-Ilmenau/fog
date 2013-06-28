@@ -25,7 +25,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
-public class ClusterDummy implements Serializable, Cluster
+public class ClusterDummy implements Serializable, ICluster
 {
 	/**
 	 * 
@@ -149,7 +149,7 @@ public class ClusterDummy implements Serializable, Cluster
 	}
 
 	@Override
-	public LinkedList<Cluster> getNeighbors() {
+	public LinkedList<ICluster> getNeighbors() {
 		return null;
 	}
 
@@ -194,7 +194,7 @@ public class ClusterDummy implements Serializable, Cluster
 	}
 
 	@Override
-	public void addNeighborCluster(Cluster pNeighbor)
+	public void addNeighborCluster(ICluster pNeighbor)
 	{
 		
 	}
@@ -231,8 +231,8 @@ public class ClusterDummy implements Serializable, Cluster
 	@Override
 	public boolean equals(Object pObj)
 	{
-		if(pObj instanceof Cluster) {
-			Cluster tCluster = (Cluster) pObj;
+		if(pObj instanceof ICluster) {
+			ICluster tCluster = (ICluster) pObj;
 			if(tCluster.getClusterID().equals(getClusterID()) &&
 					tCluster.getToken() == getToken() &&
 					tCluster.getLevel() == getLevel()) {

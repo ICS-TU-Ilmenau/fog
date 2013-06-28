@@ -27,7 +27,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.BullyElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 //import de.tuilmenau.ics.fog.routing.hierarchical.clusters.VirtualNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -68,7 +68,7 @@ public class ElectionProcess extends Thread
 		}
 	}
 	
-	public boolean isElecting(Cluster pCluster)
+	public boolean isElecting(ICluster pCluster)
 	{
 		Logging.log(this, "does " + (mElectingClusters.contains(pCluster) ? "contain " : "not contain ") + pCluster);
 		return (mElectingClusters.contains(pCluster));
@@ -90,7 +90,7 @@ public class ElectionProcess extends Thread
 		boolean tClusterIsAlreadyKnown = false;
 		
 		// avoid duplicates: iterate over all already known clusters and check if pCluster is already contained
-		for(Cluster tCluster : mElectingClusters) {
+		for(ICluster tCluster : mElectingClusters) {
 			if(tCluster.getCoordinator().getPhysicalNode().getName().equals(pCluster.getCoordinator().getPhysicalNode().getName())) {
 				tClusterIsAlreadyKnown = true;
 			}
@@ -119,7 +119,7 @@ public class ElectionProcess extends Thread
 	public void sendElections()
 	{
 		try {
-			for(Cluster tCluster : mElectingClusters)
+			for(ICluster tCluster : mElectingClusters)
 			{
 				Logging.log(this, "Sending elections from " + tCluster);
 				for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
@@ -177,7 +177,7 @@ public class ElectionProcess extends Thread
 			
 			if(mLevel > 0) {
 				pCluster.getCoordinator().getLogger().log(pCluster, "has the coordinator and will now announce itself");
-				for(Cluster tToAnnounce : pCluster.getNeighbors()) {
+				for(ICluster tToAnnounce : pCluster.getNeighbors()) {
 //					List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);
 					/*
 					 * OK: Because of the formerly sent 
@@ -256,7 +256,7 @@ public class ElectionProcess extends Thread
 	{
 		float tPriority = 0;
 		String tOutput = new String();
-		for(Cluster tCluster : mElectingClusters) {
+		for(ICluster tCluster : mElectingClusters) {
 			for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
 				tPriority = tCEP.getPeerPriority(); 
 				tOutput +=  (tOutput.equals("") ? "" : ", ") +  tPriority;
@@ -310,7 +310,7 @@ public class ElectionProcess extends Thread
 				tTimeWaitUntil = System.currentTimeMillis() + TIMEOUT_FOR_ANNOUNCEMENT;
 				checkWait(System.currentTimeMillis(), tTimeWaitUntil);
 				if(mLevel > 0) {
-					for(Cluster tCluster : mElectingClusters) { 
+					for(ICluster tCluster : mElectingClusters) { 
 						/*
 						 * For loop can be ignored as this can only happen in case we are above level one
 						 */

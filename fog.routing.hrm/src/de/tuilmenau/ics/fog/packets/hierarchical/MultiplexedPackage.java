@@ -15,7 +15,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 
 /**
  * 
@@ -35,11 +35,11 @@ public class MultiplexedPackage implements Serializable, Name
 	 * @param pDestinationCluster is a list of the targets of this packet
 	 * @param pData contains some kind of serializable data
 	 */
-	public MultiplexedPackage(Cluster pSourceCluster, LinkedList<ClusterDummy> pDestinationCluster, Serializable pData)
+	public MultiplexedPackage(ICluster pSourceCluster, LinkedList<ClusterDummy> pDestinationCluster, Serializable pData)
 	{
 		mSourceClusterIdentification = ClusterDummy.compare(pSourceCluster.getClusterID(), pSourceCluster.getToken(), pSourceCluster.getLevel());
 		mDestinationClusterIdentification = new LinkedList<ClusterDummy>();
-		for(Cluster tCluster : pDestinationCluster) {
+		for(ICluster tCluster : pDestinationCluster) {
 			mDestinationClusterIdentification.add(ClusterDummy.compare(tCluster.getClusterID(), tCluster.getToken(), tCluster.getLevel()));
 		}
 		mData = pData;
@@ -49,7 +49,7 @@ public class MultiplexedPackage implements Serializable, Name
 	 * 
 	 * @return cluster that was origin of this multiplexed package
 	 */
-	public Cluster getSourceCluster()
+	public ICluster getSourceCluster()
 	{
 		return mSourceClusterIdentification;
 	}

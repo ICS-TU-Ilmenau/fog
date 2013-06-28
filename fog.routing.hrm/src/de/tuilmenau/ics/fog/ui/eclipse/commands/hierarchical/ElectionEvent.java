@@ -13,7 +13,7 @@ import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -33,7 +33,7 @@ public class ElectionEvent implements IEvent
 		Logging.log(this,  "Firing election event " + toString());
 		for(ElectionProcess tElection : ElectionManager.getElectionManager().getAllElections()) {
 			boolean tStartProcess=true;
-			for(Cluster tCluster : tElection.getParticipatingClusters()) {
+			for(ICluster tCluster : tElection.getParticipatingClusters()) {
 				for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
 					if(tCEP.isEdgeCEP()) {
 						tStartProcess = false;

@@ -28,7 +28,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NodeConnection;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
@@ -43,7 +43,7 @@ public class CoordinatorCEPMultiplexer
 	private HashMap<Tuple<Long, Long>, CoordinatorCEPDemultiplexed> mClusterToCEPMapping;
 	private Coordinator mCoordinatorInstance = null;
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
-	private Cluster mCluster;
+	private ICluster mCluster;
 	
 	public CoordinatorCEPMultiplexer(Coordinator pCoordinatorInstance)
 	{
@@ -55,7 +55,7 @@ public class CoordinatorCEPMultiplexer
 		mClusterToCEPMapping = new HashMap<Tuple<Long, Long>, CoordinatorCEPDemultiplexed>();
 	}
 	
-	public CoordinatorCEPDemultiplexed addConnection(Cluster pTargetCluster, Cluster pSourceCluster)
+	public CoordinatorCEPDemultiplexed addConnection(ICluster pTargetCluster, ICluster pSourceCluster)
 	{
 		Name tName = pTargetCluster.getCoordinatorName();
 		CoordinatorCEPDemultiplexed tCEPDemultiplexed = null;
@@ -98,7 +98,7 @@ public class CoordinatorCEPMultiplexer
 						/*
 						 * we need the last hop in direct to the neighbor
 						 */
-						Cluster tPredecessorToRemote = (Cluster) getCoordinator().getClusterMap().getDest(pTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
+						ICluster tPredecessorToRemote = (ICluster) getCoordinator().getClusterMap().getDest(pTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
 						tParticipate.setPredecessor(ClusterDummy.compare(tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getToken(), tPredecessorToRemote.getLevel()));
 						getLogger().log(this, "Successfully set predecessor for " + pTargetCluster + ":" + tPredecessorToRemote);
 					} else {
@@ -116,7 +116,7 @@ public class CoordinatorCEPMultiplexer
 					}
 					
 					
-					for(Cluster tNeighbor: tManager.getManagedCluster().getNeighbors()) {
+					for(ICluster tNeighbor: tManager.getManagedCluster().getNeighbors()) {
 						boolean tBreak = false;
 						for(CoordinatorCEPDemultiplexed tCheckForEdgeCluster : tNeighbor.getParticipatingCEPs()) {
 							if(tCheckForEdgeCluster != null && tCheckForEdgeCluster.isEdgeCEP()) tBreak = true;
@@ -134,7 +134,7 @@ public class CoordinatorCEPMultiplexer
 						 * the predecessor has to be the next hop
 						 */
 						if(!tClusterList.isEmpty()) {
-							Cluster tPredecessor = (Cluster) getCoordinator().getClusterMap().getDest(tNeighbor, tClusterList.get(tClusterList.size()-1));
+							ICluster tPredecessor = (ICluster) getCoordinator().getClusterMap().getDest(tNeighbor, tClusterList.get(tClusterList.size()-1));
 							tEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getLevel()));
 							getLogger().log(this, "Successfully set predecessor for " + tNeighbor + ":" + tPredecessor);
 						} else {
@@ -167,7 +167,7 @@ public class CoordinatorCEPMultiplexer
 
 			for(ClusterManager tManager : getCoordinator().getClusterManagers(pSourceCluster.getLevel() + 1)) {
 				LinkedList<Integer> tTokens = new LinkedList<Integer>();
-				for(Cluster tClusterForToken : tManager.getManagedCluster().getNeighbors()) {
+				for(ICluster tClusterForToken : tManager.getManagedCluster().getNeighbors()) {
 					if(tClusterForToken.getLevel() == tManager.getLevel() - 1) {
 						tTokens.add((tClusterForToken.getToken()));
 					}
@@ -203,7 +203,7 @@ public class CoordinatorCEPMultiplexer
 					}
 					for(NestedDiscovery tDiscovery : tBigDiscovery.getDiscoveries()) {
 						String tClusters = new String();
-						for(Cluster tCandidates : getCoordinator().getClusters()) {
+						for(ICluster tCandidates : getCoordinator().getClusters()) {
 							tClusters += tCandidates + "\n";
 						}
 						String tDiscoveries = new String();
@@ -213,8 +213,8 @@ public class CoordinatorCEPMultiplexer
 						if(tDiscovery.getNeighborRelations() != null) {
 							for(Tuple<ClusterDummy, ClusterDummy> tTuple : tDiscovery.getNeighborRelations()) {
 								if(!getCoordinator().getClusterMap().isLinked(tTuple.getFirst(), tTuple.getSecond())) {
-									Cluster tFirstCluster = getCoordinator().getCluster(tTuple.getFirst());
-									Cluster tSecondCluster = getCoordinator().getCluster(tTuple.getSecond());
+									ICluster tFirstCluster = getCoordinator().getCluster(tTuple.getFirst());
+									ICluster tSecondCluster = getCoordinator().getCluster(tTuple.getSecond());
 									if(tFirstCluster != null && tSecondCluster != null ) {
 										tFirstCluster.addNeighborCluster(tSecondCluster);
 										getLogger().log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);
@@ -268,7 +268,7 @@ public class CoordinatorCEPMultiplexer
 		return tCEPDemultiplexed;
 	}
 	
-	public boolean write(Serializable pData, CoordinatorCEPDemultiplexed pDemux, Cluster pTargetCluster)
+	public boolean write(Serializable pData, CoordinatorCEPDemultiplexed pDemux, ICluster pTargetCluster)
 	{	
 		getLogger().log(this, "Writing " + pData + " from " + pDemux.getCluster() + " to the demultiplexed target cluster " + pTargetCluster);
 		LinkedList<ClusterDummy> tList = new LinkedList<ClusterDummy>();
@@ -369,7 +369,7 @@ public class CoordinatorCEPMultiplexer
 		return "CEPMultiplexer" + "@" + mCoordinatorInstance.getPhysicalNode().getName() + ( mCluster != null ? "(" + mCluster + ")" : "");
 	}
 	
-	public void setCluster(Cluster pCluster)
+	public void setCluster(ICluster pCluster)
 	{
 		mCluster = pCluster;
 	}

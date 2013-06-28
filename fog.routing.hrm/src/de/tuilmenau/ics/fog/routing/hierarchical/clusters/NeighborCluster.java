@@ -40,7 +40,7 @@ import de.tuilmenau.ics.fog.util.Logger;
  * This class is used when a layer 0 neighbor cluster is detected. 
  * It includes all needed data about the neighbor cluster. //TV
  */
-public class NeighborCluster implements Cluster, IElementDecorator
+public class NeighborCluster implements ICluster, IElementDecorator
 {
 	private static final long serialVersionUID = -8746079632866375924L;
 //	private LinkedList<RoutingServiceLinkVector> mVectors;
@@ -130,7 +130,7 @@ public class NeighborCluster implements Cluster, IElementDecorator
 				getCoordinator().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		Cluster tCluster = getCoordinator().getCluster(ClusterDummy.compare(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
+		ICluster tCluster = getCoordinator().getCluster(ClusterDummy.compare(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
 		if(tCluster == null)
 		{
 			tCluster = new NeighborCluster(
@@ -178,7 +178,7 @@ public class NeighborCluster implements Cluster, IElementDecorator
 		mCoordName = pCoordName;
 	}
 
-	public void addNeighborCluster(Cluster pNeighbor)
+	public void addNeighborCluster(ICluster pNeighbor)
 	{
 		getCoordinator().getClusterMap().link(this,	pNeighbor, new NodeConnection(NodeConnection.ConnectionType.REMOTE));
 	}
@@ -286,11 +286,11 @@ public class NeighborCluster implements Cluster, IElementDecorator
 	}
 
 	@Override
-	public LinkedList<Cluster> getNeighbors() {
-		LinkedList<Cluster> tCluster = new LinkedList<Cluster>();
-		for(VirtualNode tNode : getCoordinator().getClusterMap().getNeighbors(this)) {
-			if(tNode instanceof Cluster) {
-				tCluster.add((Cluster) tNode);
+	public LinkedList<ICluster> getNeighbors() {
+		LinkedList<ICluster> tCluster = new LinkedList<ICluster>();
+		for(IVirtualNode tNode : getCoordinator().getClusterMap().getNeighbors(this)) {
+			if(tNode instanceof ICluster) {
+				tCluster.add((ICluster) tNode);
 			}
 		}
 		return tCluster;
@@ -309,7 +309,7 @@ public class NeighborCluster implements Cluster, IElementDecorator
 	/**
 	 * Return the announcer of this cluster, so the next hop is determined
 	 * (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.routing.hierarchical.clusters.VirtualNode#retrieveName()
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.clusters.IVirtualNode#retrieveName()
 	 */
 	@Override
 	public Name retrieveName() {
@@ -352,8 +352,8 @@ public class NeighborCluster implements Cluster, IElementDecorator
 	@Override
 	public boolean equals(Object pObj)
 	{
-		if(pObj instanceof Cluster) {
-			Cluster tCluster = (Cluster) pObj;
+		if(pObj instanceof ICluster) {
+			ICluster tCluster = (ICluster) pObj;
 			if(tCluster.getClusterID().equals(getClusterID()) &&
 					tCluster.getToken() == getToken() &&
 					tCluster.getLevel() == getLevel()) {
@@ -405,12 +405,12 @@ public class NeighborCluster implements Cluster, IElementDecorator
 		mNegotiator = pCEP;
 	}
 
-	public CoordinatorCEPDemultiplexed getAnnouncedCEP(Cluster pCluster)
+	public CoordinatorCEPDemultiplexed getAnnouncedCEP(ICluster pCluster)
 	{
 		int tClosestCluster = Integer.MAX_VALUE;
 		CoordinatorCEPDemultiplexed tClosest = null;
 		for(CoordinatorCEPDemultiplexed tCEP : mAnnouncedCEPs) {
-			Cluster tRemoteCluster = tCEP.getRemoteCluster();
+			ICluster tRemoteCluster = tCEP.getRemoteCluster();
 			tRemoteCluster = getCoordinator().getCluster(tRemoteCluster) != null ? getCoordinator().getCluster(tRemoteCluster) : tRemoteCluster;
 			if(pCluster.getLevel() == tRemoteCluster.getLevel()) {
 				List<NodeConnection> tConnection = getCoordinator().getClusterMap().getRoute(pCluster, tRemoteCluster);

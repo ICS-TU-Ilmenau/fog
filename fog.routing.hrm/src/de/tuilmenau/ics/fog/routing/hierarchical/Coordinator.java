@@ -39,13 +39,13 @@ import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterMap;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NodeConnection;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.VirtualNode;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IVirtualNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressLimitationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ContactDestinationApplication;
@@ -73,10 +73,10 @@ public class Coordinator extends Application implements IServerCallback
 	 */
 	private Node mPhysicalNode; //TV
 	private HierarchicalRoutingService mHRS = null;
-	private ClusterMap<VirtualNode, NodeConnection> mClusterMap = new ClusterMap<VirtualNode, NodeConnection>();
+	private ClusterMap<IVirtualNode, NodeConnection> mClusterMap = new ClusterMap<IVirtualNode, NodeConnection>();
 	private boolean mIsEdgeRouter;
-	private HashMap<Integer, Cluster> mLevelToCluster = new HashMap<Integer, Cluster>();
-	private HashMap<Cluster, IntermediateCluster> mIntermediateMapping = new HashMap<Cluster, IntermediateCluster>();
+	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
+	private HashMap<ICluster, IntermediateCluster> mIntermediateMapping = new HashMap<ICluster, IntermediateCluster>();
 	private HashMap<Long, RouteRequest> mSessionToRequest = null;
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
 	private LinkedList<LinkedList<ClusterManager>> mClusterManagers;
@@ -143,8 +143,8 @@ public class Coordinator extends Application implements IServerCallback
 		for(NestedParticipation tParticipate : tJoin.getNestedParticipations()) {
 			CoordinatorCEPDemultiplexed tCEP = null;
 			boolean tClusterFound = false;
-			Cluster tFoundCluster = null;
-			for(Cluster tCluster : getClusters())
+			ICluster tFoundCluster = null;
+			for(ICluster tCluster : getClusters())
 			{
 				if(tCluster.equals(ClusterDummy.compare(tJoin.getTargetClusterID(), 0, tJoin.getLevel())) && !(tCluster instanceof ClusterManager) || tJoin.getTargetToken() != 0 && tCluster.equals(ClusterDummy.compare(tJoin.getTargetClusterID(), tJoin.getTargetToken(), tJoin.getLevel() )))	{
 					if(tConnection == null) {
@@ -179,7 +179,7 @@ public class Coordinator extends Application implements IServerCallback
 				}
 
 				if(tJoin.getLevel() > 0) {
-					for(Cluster tVirtualNode : getClusters()) {
+					for(ICluster tVirtualNode : getClusters()) {
 						if(tVirtualNode.getLevel() == tJoin.getLevel() - 1 && !(tVirtualNode instanceof ClusterManager || tVirtualNode instanceof NeighborCluster)) {
 							tCluster.setPriority(tVirtualNode.getPriority());
 						}
@@ -202,13 +202,13 @@ public class Coordinator extends Application implements IServerCallback
 				tFoundCluster = tCluster;
 			}
 			tFoundCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnection);
-			for(Cluster tNegotiatingCluster : getClusters()) {
+			for(ICluster tNegotiatingCluster : getClusters()) {
 				if(tNegotiatingCluster.equals(ClusterDummy.compare(tParticipate.getSourceClusterID(), tParticipate.getSourceToken(), (tJoin.getLevel() - 1 > 0 ? tJoin.getLevel() - 1 : 0 )))) {
 					tCEP.setRemoteCluster(getCluster(ClusterDummy.compare(tParticipate.getSourceClusterID(), tParticipate.getSourceToken(), (tJoin.getLevel() - 1 > 0 ? tJoin.getLevel() - 1 : 0 ))));
 				}
 			}
 			if(tCEP.getRemoteCluster() == null && tJoin.getLevel() > 0) {
-				HashMap<Cluster, ClusterDummy> tNewlyCreatedClusters = new HashMap<Cluster, ClusterDummy>(); 
+				HashMap<ICluster, ClusterDummy> tNewlyCreatedClusters = new HashMap<ICluster, ClusterDummy>(); 
 				NeighborCluster tAttachedCluster = new NeighborCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), tJoin.getLevel() -1, this);
 				tAttachedCluster.setPriority(tParticipate.getSourcePriority());
 				if(tAttachedCluster.getCoordinatorName() != null) {
@@ -220,7 +220,7 @@ public class Coordinator extends Application implements IServerCallback
 				}
 				tNewlyCreatedClusters.put(tAttachedCluster, tParticipate.getPredecessor());
 				mLogger.log(this, "as joining cluster");
-				for(Cluster tCandidate : getClusters()) {
+				for(ICluster tCandidate : getClusters()) {
 					if(tCandidate instanceof IntermediateCluster && tCandidate.getLevel() == tAttachedCluster.getLevel()) {
 						setSourceIntermediateCluster(tAttachedCluster, (IntermediateCluster)tCandidate);
 					}
@@ -237,7 +237,7 @@ public class Coordinator extends Application implements IServerCallback
 				if(tParticipate.getNeighbors() != null && !tParticipate.getNeighbors().isEmpty()) {
 					Logging.log(this, "Working on neighbors " + tParticipate.getNeighbors());
 					for(DiscoveryEntry tEntry : tParticipate.getNeighbors()) {
-						Cluster tCluster = null;
+						ICluster tCluster = null;
 						if(tEntry.getRoutingVectors()!= null) {
 							for(RoutingServiceLinkVector tVector : tEntry.getRoutingVectors())
 							getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
@@ -258,7 +258,7 @@ public class Coordinator extends Application implements IServerCallback
 							
 							if(tEntry.isInterASCluster()) tCluster.setInterASCluster();
 							tNewlyCreatedClusters.put(tCluster, tEntry.getPredecessor());
-							for(Cluster tCandidate : getClusters()) {
+							for(ICluster tCandidate : getClusters()) {
 								if(tCandidate instanceof IntermediateCluster && tCluster.getLevel() == tCandidate.getLevel()) {
 									setSourceIntermediateCluster(tCluster, (IntermediateCluster)tCandidate);
 									mLogger.log(this, "as joining neighbor");
@@ -271,7 +271,7 @@ public class Coordinator extends Application implements IServerCallback
 							((NeighborCluster)tCluster).addAnnouncedCEP(tCEP);
 							Logging.log(this, "Created " +tCluster);
 						} else {
-							for(Cluster tPossibleCandidate : getClusters()) {
+							for(ICluster tPossibleCandidate : getClusters()) {
 								if(tPossibleCandidate.equals(ClusterDummy.compare(tEntry.getClusterID(), tEntry.getToken(), tEntry.getLevel()))) {
 									tCluster = tPossibleCandidate;
 								}
@@ -279,7 +279,7 @@ public class Coordinator extends Application implements IServerCallback
 						}
 						getClusterMap().link(tAttachedCluster, tCluster, new NodeConnection(NodeConnection.ConnectionType.REMOTE));
 					}
-					for(Cluster tCluster : tAttachedCluster.getNeighbors()) {
+					for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
 						if(getSourceIntermediate(tCluster) != null) {
 							setSourceIntermediateCluster(tAttachedCluster, getSourceIntermediate(tCluster));
 						}
@@ -287,7 +287,7 @@ public class Coordinator extends Application implements IServerCallback
 				} else {
 					Logging.warn(this, "Adding cluster that contains no neighbors");
 				}
-				for(Cluster tEveluateNegotiator : tNewlyCreatedClusters.keySet()) {
+				for(ICluster tEveluateNegotiator : tNewlyCreatedClusters.keySet()) {
 					tCEP.addAnnouncedCluster(tEveluateNegotiator, getCluster(tNewlyCreatedClusters.get(tEveluateNegotiator)));
 				}
 			} else {
@@ -322,20 +322,20 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pTargetCluster as target cluster to which the first uncovered node has to be found
 	 * @return first uncovered node - that node is the "outgoing interface of the cluster"
 	 */
-	public VirtualNode getLastUncovered(VirtualNode pSourceCluster, VirtualNode pTargetCluster)
+	public IVirtualNode getLastUncovered(IVirtualNode pSourceCluster, IVirtualNode pTargetCluster)
 	{	
 		if(pSourceCluster == null || pTargetCluster == null) {
-			((Cluster)pSourceCluster).getCoordinator().getLogger().log("You did not provide clusters for path search: " + pSourceCluster + " to " + pTargetCluster);
+			((ICluster)pSourceCluster).getCoordinator().getLogger().log("You did not provide clusters for path search: " + pSourceCluster + " to " + pTargetCluster);
 			return null;
 		}
-		ClusterMap<VirtualNode, NodeConnection> tMap = ((Cluster)pSourceCluster).getCoordinator().getClusterMap();
+		ClusterMap<IVirtualNode, NodeConnection> tMap = ((ICluster)pSourceCluster).getCoordinator().getClusterMap();
 		List<NodeConnection> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
-		VirtualNode tPredecessor=pSourceCluster;
+		IVirtualNode tPredecessor=pSourceCluster;
 		for(NodeConnection tLink: tClusterConnection) {
-			if( ((Cluster)getClusterMap().getDest(tLink)).getNegotiatorCEP() != null && ((Cluster)getClusterMap().getDest(tLink)).getNegotiatorCEP().knowsCoordinator()) {
+			if( ((ICluster)getClusterMap().getDest(tLink)).getNegotiatorCEP() != null && ((ICluster)getClusterMap().getDest(tLink)).getNegotiatorCEP().knowsCoordinator()) {
 				return tPredecessor;
-			} else if(((Cluster)getClusterMap().getDest(tLink)).getNegotiatorCEP() != null) {
-				tPredecessor = ((Cluster)getClusterMap().getDest(tLink));
+			} else if(((ICluster)getClusterMap().getDest(tLink)).getNegotiatorCEP() != null) {
+				tPredecessor = ((ICluster)getClusterMap().getDest(tLink));
 			}
 		}
 		return pTargetCluster;
@@ -348,20 +348,20 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pCEPsToEvaluate list of connection end points that have to be chosen to the target
 	 * @return true if the path contains a node that is covered by another coordinator
 	 */
-	public boolean checkPathToTargetContainsCovered(VirtualNode pSourceCluster, VirtualNode pTargetCluster, LinkedList<CoordinatorCEPDemultiplexed> pCEPsToEvaluate)
+	public boolean checkPathToTargetContainsCovered(IVirtualNode pSourceCluster, IVirtualNode pTargetCluster, LinkedList<CoordinatorCEPDemultiplexed> pCEPsToEvaluate)
 	{
 		if(pSourceCluster == null || pTargetCluster == null) {
 			Logging.log(this, "checking cluster route between null and null");
 			return false;
 		}
-		ClusterMap<VirtualNode, NodeConnection> tMap = ((Cluster)pSourceCluster).getCoordinator().getClusterMap();
+		ClusterMap<IVirtualNode, NodeConnection> tMap = ((ICluster)pSourceCluster).getCoordinator().getClusterMap();
 		List<NodeConnection> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		String tCheckedClusters = new String();
 		boolean isCovered = false;
 		for(NodeConnection tConnection : tClusterConnection) {
-			Collection<VirtualNode> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
-			for(VirtualNode tNode : tNodes) {
-				if(tNode instanceof Cluster) {
+			Collection<IVirtualNode> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
+			for(IVirtualNode tNode : tNodes) {
+				if(tNode instanceof ICluster) {
 					CoordinatorCEPDemultiplexed tCEPLookingFor = null;
 					for(CoordinatorCEPDemultiplexed tCEP : pCEPsToEvaluate) {
 						if(tCEP.getRemoteCluster().equals(tNode)) {
@@ -384,9 +384,9 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pCluster cluster identification
 	 * @return local object that holds meta information about the specified entity
 	 */
-	public Cluster getCluster(Cluster pCluster)
+	public ICluster getCluster(ICluster pCluster)
 	{
-		for(Cluster tCluster : getClusters()) {
+		for(ICluster tCluster : getClusters()) {
 			if(tCluster.equals(pCluster) && !(tCluster instanceof ClusterManager)) {
 				return tCluster;
 			}
@@ -399,14 +399,14 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pCluster cluster to which the distance has to be computed
 	 * @return number of clusters to target
 	 */
-	public int getClusterDistance(Cluster pCluster)
+	public int getClusterDistance(ICluster pCluster)
 	{
 		List<NodeConnection> tClusterRoute = null;
 		int tDistance = 0;
 		if(getSourceIntermediate(pCluster) == null || pCluster == null) {
 			mLogger.log(this, "source cluster for " + (pCluster instanceof NeighborCluster ? ((NeighborCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
 		}
-		Cluster tIntermediate = getSourceIntermediate(pCluster);
+		ICluster tIntermediate = getSourceIntermediate(pCluster);
 		tClusterRoute = getClusterMap().getRoute(tIntermediate, pCluster);
 		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
 			for(NodeConnection tConnection : tClusterRoute) {
@@ -460,11 +460,11 @@ public class Coordinator extends Application implements IServerCallback
 		}
 		
 		CoordinatorCEP tCEP = null;
-		Cluster tFoundCluster = null;
+		ICluster tFoundCluster = null;
 		CoordinatorCEPDemultiplexed tDemux = null;
 		
 		boolean tClusterFound = false;
-		for(Cluster tCluster : getClusters())
+		for(ICluster tCluster : getClusters())
 		{
 			if(tCluster.getClusterID().equals(pToClusterID)) {
 				tCEP = new CoordinatorCEP(mLogger, this, false, pLevel, tCluster.getMultiplexer());
@@ -512,7 +512,7 @@ public class Coordinator extends Application implements IServerCallback
 		final Name tName = pName;
 		final CoordinatorCEP tConnectionCEP = tCEP;
 		final CoordinatorCEPDemultiplexed tDemultiplexed = tDemux;
-		final Cluster tClusterToAdd = tFoundCluster;
+		final ICluster tClusterToAdd = tFoundCluster;
 		
 		Thread tThread = new Thread() {
 			public void run()
@@ -632,7 +632,7 @@ public class Coordinator extends Application implements IServerCallback
 	 * 
 	 * @param pCluster is the cluster to be added to the local cluster map
 	 */
-	public synchronized void addCluster(Cluster pCluster)
+	public synchronized void addCluster(ICluster pCluster)
 	{
 		if(!mClusterMap.contains(pCluster)) {
 			mClusterMap.add(pCluster);
@@ -643,16 +643,16 @@ public class Coordinator extends Application implements IServerCallback
 	 * 
 	 * @return list of all known clusters
 	 */
-	public synchronized LinkedList<Cluster> getClusters()
+	public synchronized LinkedList<ICluster> getClusters()
 	{
 		Logging.log(this, "Amount of found clusters: " + mClusterMap.getVertices().size());
 		int j = -1;
-		LinkedList<Cluster> tList = new LinkedList<Cluster>();
-		for(VirtualNode tNode : mClusterMap.getVertices()) {
+		LinkedList<ICluster> tList = new LinkedList<ICluster>();
+		for(IVirtualNode tNode : mClusterMap.getVertices()) {
 			j++;
 			Logging.log(this, "Returning cluster map entry " + j + " : " + tNode.toString());
-			if(tNode instanceof Cluster) {
-				tList.add((Cluster)tNode);
+			if(tNode instanceof ICluster) {
+				tList.add((ICluster)tNode);
 			}
 		}
 		return tList;
@@ -662,7 +662,7 @@ public class Coordinator extends Application implements IServerCallback
 	 * 
 	 * @return cluster map that is actually the graph that represents the network
 	 */
-	public ClusterMap<VirtualNode, NodeConnection> getClusterMap()
+	public ClusterMap<IVirtualNode, NodeConnection> getClusterMap()
 	{
 		return mClusterMap;
 	}
@@ -686,7 +686,7 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pLevel as level at which a a coordinator will be set
 	 * @param pCluster is the cluster that has set a coordinator
 	 */
-	public void setClusterWithCoordinator(int pLevel, Cluster pCluster)
+	public void setClusterWithCoordinator(int pLevel, ICluster pCluster)
 	{
 		mLogger.log(this, "Setting " + pCluster + " as cluster that has a connection to a coordinator at level " + pLevel);
 		mLevelToCluster.put(Integer.valueOf(pLevel), pCluster);
@@ -697,7 +697,7 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pLevel level at which a cluster with a coordinator should be provided
 	 * @return cluster that contains a reference or a connection to a coordinator
 	 */
-	public Cluster getClusterWithCoordinatorOnLevel(int pLevel)
+	public ICluster getClusterWithCoordinatorOnLevel(int pLevel)
 	{
 		return (mLevelToCluster.containsKey(pLevel) ? mLevelToCluster.get(pLevel) : null );
 	}
@@ -707,7 +707,7 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pCluster is the cluster for which an intermediate cluster is saved as entity that is physically connected
 	 * @param pIntermediate is the cluster that acts as cluster that is intermediately connected to the node
 	 */
-	public void setSourceIntermediateCluster(Cluster pCluster, IntermediateCluster pIntermediate)
+	public void setSourceIntermediateCluster(ICluster pCluster, IntermediateCluster pIntermediate)
 	{
 		if(pIntermediate == null) {
 			mLogger.err(this, "Setting " + pIntermediate + " as source intermediate for " + pCluster);
@@ -720,7 +720,7 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pCluster for which an intermediate cluster is searched
 	 * @return intermediate cluster that is directly connected to the node
 	 */
-	public IntermediateCluster getSourceIntermediate(Cluster pCluster)
+	public IntermediateCluster getSourceIntermediate(ICluster pCluster)
 	{
 		if(mIntermediateMapping.containsKey(pCluster)) {
 			
@@ -834,12 +834,12 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pLevel is the level at which a search for clusters is done
 	 * @return all virtual nodes that appear at the specified hierarchical level
 	 */
-	public LinkedList<VirtualNode> getClusters(int pLevel)
+	public LinkedList<IVirtualNode> getClusters(int pLevel)
 	{
-		LinkedList<VirtualNode> tClusters = new LinkedList<VirtualNode>();
-		for(VirtualNode tNode : getClusterMap().getVertices()) {
-			if(tNode instanceof Cluster && ((Cluster) tNode).getLevel() == pLevel) {
-				tClusters.add((Cluster) tNode);
+		LinkedList<IVirtualNode> tClusters = new LinkedList<IVirtualNode>();
+		for(IVirtualNode tNode : getClusterMap().getVertices()) {
+			if(tNode instanceof ICluster && ((ICluster) tNode).getLevel() == pLevel) {
+				tClusters.add((ICluster) tNode);
 			}
 		}
 		return tClusters;
@@ -852,18 +852,18 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pLimitation contains restrictions regarding the allowed clusters, however the clusters have to be addressed by the given HRMID
 	 * @return a list of allowed cluster
 	 */
-	public LinkedList<Cluster> getAllowedCluster(Cluster pSource, AddressLimitationProperty pLimitation)
+	public LinkedList<ICluster> getAllowedCluster(ICluster pSource, AddressLimitationProperty pLimitation)
 	{
-		LinkedList<Cluster> tPossibleClusters = new LinkedList<Cluster>();
-		LinkedList<Cluster> tCandidates = new LinkedList<Cluster>();
+		LinkedList<ICluster> tPossibleClusters = new LinkedList<ICluster>();
+		LinkedList<ICluster> tCandidates = new LinkedList<ICluster>();
 		tCandidates.add(pSource);
-		for(Cluster tCandidate : pSource.getNeighbors()) {
+		for(ICluster tCandidate : pSource.getNeighbors()) {
 			if(tCandidate instanceof IntermediateCluster) {
 				tCandidates.add(tCandidate);
 			}
 		}
 		
-		for(Cluster tCandidate : tCandidates) {
+		for(ICluster tCandidate : tCandidates) {
 			for(HierarchyLevelLimitationEntry tEntry : pLimitation.getEntries()) {
 				HRMID tClustersAddress = tCandidate.retrieveAddress();
 				HRMID tEntryAddress = null;
@@ -929,12 +929,12 @@ public class Coordinator extends Application implements IServerCallback
     	
 		try {
 			HRMID tForwardingHRMID = getHRS().getForwardingHRMID( (HRMID) pRequest.getTarget());
-			Cluster tForwardingCluster = getCluster(getHRS().getFIBEntry(tForwardingHRMID).getNextCluster());
+			ICluster tForwardingCluster = getCluster(getHRS().getFIBEntry(tForwardingHRMID).getNextCluster());
 			
-			LinkedList<Cluster> tAllowedClusters = getAllowedCluster(tForwardingCluster, tLimitation);
+			LinkedList<ICluster> tAllowedClusters = getAllowedCluster(tForwardingCluster, tLimitation);
 			LinkedList<RouteRequest> tResults = new LinkedList<RouteRequest>();
 			
-			for(Cluster tCandidate : tAllowedClusters) {
+			for(ICluster tCandidate : tAllowedClusters) {
 				if(tCandidate.getCoordinatorCEP() != null) {
 					if(pRequest.getRoute() == null) {
 						//Route tRoute = new Route();

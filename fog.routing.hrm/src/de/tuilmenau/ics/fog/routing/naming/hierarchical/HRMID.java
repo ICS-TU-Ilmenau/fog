@@ -15,13 +15,13 @@ import java.math.BigInteger;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.VirtualNode;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IVirtualNode;
 
 /**
  * This identifies either physical nodes or clusters within the HRM system.
  *
  */
-public class HRMID extends HRMName implements Comparable<HRMID>, VirtualNode
+public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 {
 	private static final long serialVersionUID = -8441496024628988477L;
 	public static Namespace HRMNamespace = new Namespace("HRM", false);

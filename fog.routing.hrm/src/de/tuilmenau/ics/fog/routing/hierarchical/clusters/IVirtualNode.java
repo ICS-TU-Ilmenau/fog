@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
  * It is called virtual node because it can be either a physical node or a super node that aggregates multiple nodes 
  * (physical nodes) or super nodes (clusters). 
  */
-public interface VirtualNode extends Name
+public interface IVirtualNode extends Name
 {
 	/**
 	 * 

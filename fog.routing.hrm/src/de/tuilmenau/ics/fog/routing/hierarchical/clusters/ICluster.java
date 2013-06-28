@@ -26,7 +26,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 //import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
 
-public interface Cluster extends Serializable, VirtualNode
+public interface ICluster extends Serializable, IVirtualNode
 {
 	/**
 	 * Sets the priority of the currently acting coordinator of this cluster.
@@ -131,7 +131,7 @@ public interface Cluster extends Serializable, VirtualNode
 	 * 
 	 * @return The neighbor clusters of this entity are provided here.
 	 */
-	public LinkedList<Cluster> getNeighbors();
+	public LinkedList<ICluster> getNeighbors();
 	
 	/**
 	 * 
@@ -196,7 +196,7 @@ public interface Cluster extends Serializable, VirtualNode
 	 * 
 	 * @param pNeighbor This is the neighbor that has to be added to the cluster. 
 	 */
-	public void addNeighborCluster(Cluster pNeighbor);
+	public void addNeighborCluster(ICluster pNeighbor);
 	
 	/**
 	 * 
@@ -274,7 +274,7 @@ public interface Cluster extends Serializable, VirtualNode
 	 * connection end point announced that cluster. The implementation expects that in order to route to that cluster it has
 	 * to reach the announcer first. However the announcer can be updated in case a shorter route to the target cluster is found. 
 	 * 
-	 * @param pCEP Setthe connection end point that announced this cluster via NeighborZoneAnnounce to another connection end point. 
+	 * @param pCEP Set the connection end point that announced this cluster via NeighborZoneAnnounce to another connection end point. 
 	 */
 	public void setNegotiatorCEP(CoordinatorCEPDemultiplexed pCEP);
 	
