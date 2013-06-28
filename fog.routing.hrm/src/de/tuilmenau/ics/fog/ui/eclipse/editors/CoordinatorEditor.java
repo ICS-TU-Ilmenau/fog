@@ -341,10 +341,9 @@ public class CoordinatorEditor extends EditorPart
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
 		
-		int j = -1;
+		int j = 0;
 		Logging.log(this, "Amount of participating CEPs is " + pCluster.getParticipatingCEPs().size());
 		for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
-			j++;
 			Logging.log(this, "Printing table item number " + j);
 			TableItem item = new TableItem(tTable, SWT.NONE, j);
 			item.setText(0, (pCluster.getCoordinatorSignature() != null ? pCluster.getCoordinatorSignature().toString() : ""));
