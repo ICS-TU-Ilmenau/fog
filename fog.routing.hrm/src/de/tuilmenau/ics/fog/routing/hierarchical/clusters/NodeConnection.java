@@ -14,9 +14,8 @@ import java.util.Random;
 
 /**
  * Clusters are built up at bus level at the first hierarchical level. Clusters that are not physically connected to the node
- * are attached clusters. In order to know how a fat a cluster is away, this class is used. 
- * 
- * 
+ * are attached neighbor clusters. This class is used in order to determine the distance to a cluster.
+ *  
  */
 public class NodeConnection implements Serializable
 {
