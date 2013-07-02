@@ -22,8 +22,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.PriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope.FIBEntry;
+import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
+import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
@@ -74,7 +74,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 	private static final long serialVersionUID = -2087553402508167474L;
 	protected CoordinatorCEPDemultiplexed mNegotiator = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
-	private TopologyEnvelope mEnvelope = null;
+	private TopologyData mEnvelope = null;
 	private CoordinatorCEPDemultiplexed mAnnouncer = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mOldParticipatingCEPs;
 	private ClusterManager mClusterManager = null;
@@ -672,7 +672,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void handleTopologyEnvelope(TopologyEnvelope pEnvelope)
+	public void handleTopologyEnvelope(TopologyData pEnvelope)
 	{
 		if(pEnvelope.getApprovedSignatures() != null) {
 			for(HierarchicalSignature tSignature : pEnvelope.getApprovedSignatures()) {
@@ -717,7 +717,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 	}
 	
 	@Override
-	public TopologyEnvelope getTopologyData()
+	public TopologyData getTopologyData()
 	{
 		return mEnvelope;
 	}

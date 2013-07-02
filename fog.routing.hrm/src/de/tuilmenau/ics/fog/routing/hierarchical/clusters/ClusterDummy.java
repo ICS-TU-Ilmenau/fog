@@ -16,7 +16,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
+import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 //import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
@@ -276,7 +276,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public void handleTopologyEnvelope(TopologyEnvelope pEnvelope)
+	public void handleTopologyEnvelope(TopologyData pEnvelope)
 	{
 		
 	}
@@ -294,7 +294,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public TopologyEnvelope getTopologyData()
+	public TopologyData getTopologyData()
 	{
 		// TODO Auto-generated method stub
 		return null;

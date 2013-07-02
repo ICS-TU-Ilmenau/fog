@@ -32,8 +32,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestZoneMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest.ResultType;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope.FIBEntry;
+import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
+import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
@@ -191,8 +191,8 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				Logging.log(this, "Received " + tAnnounce + " from remote cluster " + mRemoteCluster);
 			} else if(pData instanceof PriorityUpdate) {
 				mPeerPriority = ((PriorityUpdate)pData).getPriority();
-			} else if(pData instanceof TopologyEnvelope) {
-				getCluster().handleTopologyEnvelope((TopologyEnvelope)pData);
+			} else if(pData instanceof TopologyData) {
+				getCluster().handleTopologyEnvelope((TopologyData)pData);
 			}/* else if (pData instanceof NestedDiscovery) {
 				NestedDiscovery tDiscovery = (NestedDiscovery) pData;
 				handleClusterDiscovery(tDiscovery);

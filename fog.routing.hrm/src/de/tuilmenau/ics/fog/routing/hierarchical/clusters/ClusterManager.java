@@ -32,9 +32,9 @@ import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.PriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
+import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest.ResultType;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope.FIBEntry;
+import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
@@ -70,7 +70,7 @@ public class ClusterManager implements ICluster, Observer
 	private int mLevel;
 	private int mLastUsedAddress;
 	private IntermediateCluster mManagedCluster;
-	private HashMap<CoordinatorCEPDemultiplexed, TopologyEnvelope> mAddressMapping = null;
+	private HashMap<CoordinatorCEPDemultiplexed, TopologyData> mAddressMapping = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mCEPs = null;
 	private CoordinatorCEPDemultiplexed mCoordinatorCEP = null;
 	private HierarchicalSignature mCoordinatorSignature = null;
@@ -86,7 +86,7 @@ public class ClusterManager implements ICluster, Observer
 	private LinkedList<Name> mIgnoreOnAddressDistribution=null;
 	private Long mClusterID;
 	private LinkedList<HRMID> mHigherHRMIDs = null;
-	private TopologyEnvelope mEnvelope = null;
+	private TopologyData mEnvelope = null;
 	private HashMap<HRMID, IVirtualNode> mAddressToClusterMapping = new HashMap<HRMID, IVirtualNode>();
 	private HashMap<HRMID, FIBEntry> mIDToFIBMapping = new HashMap<HRMID, FIBEntry>();
 	private LinkedList<NeighborZoneAnnounce> mReceivedAnnouncements;
@@ -105,7 +105,7 @@ public class ClusterManager implements ICluster, Observer
 		mLevel = pLevel;
 		mClusterID = pCluster.getClusterID();
 		mLastUsedAddress = 0;
-		mAddressMapping = new HashMap<CoordinatorCEPDemultiplexed, TopologyEnvelope>();
+		mAddressMapping = new HashMap<CoordinatorCEPDemultiplexed, TopologyData>();
 		mManagedCluster = pCluster;
 		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
 		mManagedCluster.getCoordinator().getClusterMap().addObserver(this);
@@ -271,7 +271,7 @@ public class ClusterManager implements ICluster, Observer
 	 */
 	public void distributeAddresses() throws RoutingException, RequirementsException, RemoteException
 	{
-		TopologyEnvelope tManagedClusterEnvelope = new TopologyEnvelope();
+		TopologyData tManagedClusterEnvelope = new TopologyData();
 		Logging.log(this, "Will now distribute addresses to entities on level 0");
 		if(mLevel == 1) {
 			HRMID tSelf = this.generateNextAddress();
@@ -286,7 +286,7 @@ public class ClusterManager implements ICluster, Observer
 		getLogger().log(this, "available clients for address distribution: " + mManagedCluster.getParticipatingCEPs());
 		for(CoordinatorCEPDemultiplexed tReceivingCEP : mManagedCluster.getParticipatingCEPs()) {
 			HRMID tID = null;
-			TopologyEnvelope tEnvelope = new TopologyEnvelope();
+			TopologyData tEnvelope = new TopologyData();
 			try {
 				if(!tReceivingCEP.isPeerCoordinatorForNeighborZone() || (this.mIgnoreOnAddressDistribution != null && this.mIgnoreOnAddressDistribution.contains(tReceivingCEP.getPeerName()))) {
 					/*
@@ -944,7 +944,7 @@ public class ClusterManager implements ICluster, Observer
 		return mHigherHRMIDs;
 	}
 	
-	public HashMap<CoordinatorCEPDemultiplexed, TopologyEnvelope> getAddressMapping()
+	public HashMap<CoordinatorCEPDemultiplexed, TopologyData> getAddressMapping()
 	{
 		return mAddressMapping;
 	}
@@ -1034,7 +1034,7 @@ public class ClusterManager implements ICluster, Observer
 		map(pEntry.getDestination(), tTargetCluster);
 	}
 	
-	public void getRadiusFIB(TopologyEnvelope pEnvelope)
+	public void getRadiusFIB(TopologyData pEnvelope)
 	{
 		if(pEnvelope.getPushThrougs() != null && !pEnvelope.getPushThrougs().isEmpty()) {
 			for(FIBEntry tEntry : pEnvelope.getPushThrougs()) {
@@ -1074,7 +1074,7 @@ public class ClusterManager implements ICluster, Observer
 	}
 	
 	@Override
-	public void handleTopologyEnvelope(TopologyEnvelope pEnvelope)
+	public void handleTopologyEnvelope(TopologyData pEnvelope)
 	{
 		/*
 		 * this cluster manager only computes the FIB derived from Radius algorithm
@@ -1551,7 +1551,7 @@ public class ClusterManager implements ICluster, Observer
 	}
 	
 	@Override
-	public TopologyEnvelope getTopologyData()
+	public TopologyData getTopologyData()
 	{
 		return mEnvelope;
 	}

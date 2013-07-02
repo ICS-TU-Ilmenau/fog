@@ -19,7 +19,7 @@ import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexedPackage;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
+import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.routing.Route;
 //import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
@@ -179,7 +179,7 @@ public class CoordinatorCEP extends Session
 	 */
 	public boolean write(Serializable pData)
 	{
-		if(pData instanceof MultiplexedPackage && ((MultiplexedPackage)pData).getData() instanceof TopologyEnvelope) {
+		if(pData instanceof MultiplexedPackage && ((MultiplexedPackage)pData).getData() instanceof TopologyData) {
 			Logging.log(this, "Sending topology envelope to " + ((MultiplexedPackage)pData).getDestinationCluster().getFirst().getClusterID());
 		}
 		if(getConnection() != null && getConnection().isConnected()) {

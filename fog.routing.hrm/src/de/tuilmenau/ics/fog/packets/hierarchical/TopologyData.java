@@ -23,7 +23,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
  * 
  * This object is used to distribute the Forwarding Information Base to the members of the cluster
  */
-public class TopologyEnvelope implements Serializable
+public class TopologyData implements Serializable
 {
 	private static final long serialVersionUID = 8442835110014485795L;
 	private LinkedList<Name> mIgnoreList = null;
@@ -36,13 +36,13 @@ public class TopologyEnvelope implements Serializable
 	 * 
 	 * @param pHRMID constructor must contain an HRMID
 	 */
-	public TopologyEnvelope(HRMID pHRMID)
+	public TopologyData(HRMID pHRMID)
 	{
 		mHRMID = pHRMID;
 		mForwardingEntries = new LinkedList<FIBEntry>();
 	}
 	
-	public TopologyEnvelope()
+	public TopologyData()
 	{
 	}
 	
@@ -343,8 +343,8 @@ public class TopologyEnvelope implements Serializable
 	@Override
 	public boolean equals(Object pObj)
 	{
-		if(pObj instanceof TopologyEnvelope) {
-			return mHRMID.equals(((TopologyEnvelope)pObj).getHRMID());
+		if(pObj instanceof TopologyData) {
+			return mHRMID.equals(((TopologyData)pObj).getHRMID());
 		}
 		return false;
 	}

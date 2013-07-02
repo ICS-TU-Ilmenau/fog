@@ -19,7 +19,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
+import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
@@ -475,7 +475,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 */
 	@Override
-	public void handleTopologyEnvelope(TopologyEnvelope pEnvelope)
+	public void handleTopologyEnvelope(TopologyData pEnvelope)
 	{
 		
 	}
@@ -528,7 +528,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public TopologyEnvelope getTopologyData()
+	public TopologyData getTopologyData()
 	{
 		return null;
 	}	

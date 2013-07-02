@@ -15,7 +15,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
+import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 //import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
@@ -283,14 +283,14 @@ public interface ICluster extends Serializable, IVirtualNode
 	 *  
 	 * @return
 	 */
-	public TopologyEnvelope getTopologyData();
+	public TopologyData getTopologyData();
 
 	/**
 	 * 
 	 * @param pEnvelope This object has to include the address that should be associated to the cluster along with several entries that
 	 * describe as to how that entity should be reached.
 	 */
-	public void handleTopologyEnvelope(TopologyEnvelope pEnvelope);
+	public void handleTopologyEnvelope(TopologyData pEnvelope);
 	
 	/**
 	 * It is possible, to address more than one destination within one packet - for that purpose a multiplexer is used.
