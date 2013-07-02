@@ -19,6 +19,7 @@ import java.text.ParseException;
 import java.util.HashMap;
 
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 
 /**
@@ -63,7 +64,7 @@ public class ParameterMap implements Configuration
 				return formater.parse(res.toString()).doubleValue();
 			}
 			catch(ParseException exc) {
-				// goto end of method
+				Logging.getInstance().err(this, "Unable to convert parameter " + res.toString() + " to a double value", exc);
 			}
 		}
 		
