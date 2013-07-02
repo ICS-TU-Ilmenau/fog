@@ -62,10 +62,9 @@ import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.Tuple;
 
 /**
- * 
- * This object delegates functions that are necessary to build up the hierarchical structure - every node contains such an object
+ * This is the main HRM controller. It provides functions that are necessary to build up the hierarchical structure - every node contains such an object
  */
-public class Coordinator extends Application implements IServerCallback
+public class HRMController extends Application implements IServerCallback
 {
 	private SimpleName mName = null;
 	/**
@@ -85,7 +84,7 @@ public class Coordinator extends Application implements IServerCallback
 	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
 	/**
-	 * The global namespace which is used to identify the coordinator instances on neighbor nodes. //TV
+	 * The global name space which is used to identify the HRM instances on neighbor nodes. //TV
 	 */
 	public final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
 	
@@ -98,7 +97,7 @@ public class Coordinator extends Application implements IServerCallback
 	 * @param pNode is the node running the coordinator
 	 * @param pHRS is the hierarchical routing service that should be used
 	 */
-	public Coordinator(Host pHost, Logger pParentLogger, Identity pIdentity, Node pNode, HierarchicalRoutingService pHRS)
+	public HRMController(Host pHost, Logger pParentLogger, Identity pIdentity, Node pNode, HierarchicalRoutingService pHRS)
 	{
 		super(pHost, pParentLogger, pIdentity);
 		mName = new SimpleName(ROUTING_NAMESPACE, null);
@@ -312,7 +311,7 @@ public class Coordinator extends Application implements IServerCallback
 	
 	public String toString()
 	{
-		return "Coordinator@" + getPhysicalNode();
+		return "HRM controller@" + getPhysicalNode();
 	}
 	
 	/**
@@ -431,7 +430,7 @@ public class Coordinator extends Application implements IServerCallback
 		mLogger.log(this, "Creating a cluster participation property for level " + pParticipationProperty.getLevel());
 		Description tDescription = new Description();
 		//try {
-		tDescription.set(new ContactDestinationApplication(null, Coordinator.ROUTING_NAMESPACE));
+		tDescription.set(new ContactDestinationApplication(null, HRMController.ROUTING_NAMESPACE));
 		//} catch (PropertyException tExc) {
 		//	mLogger.err(this, "Unable to fulfill requirements given by ContactDestinationProperty", tExc);
 		//}

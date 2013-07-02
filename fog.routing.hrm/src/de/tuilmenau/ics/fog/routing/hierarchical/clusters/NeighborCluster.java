@@ -22,7 +22,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
-import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEP;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
@@ -53,7 +53,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	protected HRMName mCoordAddress;
 	protected L2Address mNegotiatingHost;
 	protected Long mClusterID;
-	protected Coordinator mCoordinatorInstance;
+	protected HRMController mCoordinatorInstance;
 	protected CoordinatorCEP mCEP;
 	protected HierarchicalSignature mCoordSignature;
 	protected Route mRouteToCoordinator;
@@ -77,7 +77,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	 * @param pLevel is the level this cluster is related to
 	 * @param pResponsibleCoordinator as the coordinator this cluster works on (local)
 	 */
-	public NeighborCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, int pLevel, Coordinator pResponsibleCoordinator)
+	public NeighborCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, int pLevel, HRMController pResponsibleCoordinator)
 	{	
 		mAnnouncer = pResponsibleCoordinator.getPhysicalNode().getCentralFN().getName();
 		mCoordAddress = pAddress;
@@ -202,7 +202,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public float getCoordinatorPriority()
+	public float getNodePriority()
 	{
 		return mCoordinatorPriority;
 	}
@@ -214,7 +214,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public Coordinator getCoordinator() {
+	public HRMController getCoordinator() {
 		return mCoordinatorInstance;
 	}
 

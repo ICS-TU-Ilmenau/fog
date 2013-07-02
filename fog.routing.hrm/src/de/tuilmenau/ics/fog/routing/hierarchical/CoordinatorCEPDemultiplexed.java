@@ -59,7 +59,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	private static final long serialVersionUID = -8290946480171751216L;
 	private ICluster mRemoteCluster;
 	private ICluster mCluster;
-	private float mPeerPriority;
+	private float mPeerPriority = -1;
 	private boolean mReceivedBorderNodeAnnouncement = false;
 	private boolean mPeerIsCoordinatorForNeighborZone = false;
 	private boolean mIsEdgeRouter = false;
@@ -67,7 +67,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	private HashMap<ICluster, ICluster> mAnnouncerMapping;
 	private boolean mRequestedCoordinator = false;
 	private boolean mPartOfCluster = false;
-	private Coordinator mReferenceCoordinator = null;
+	private HRMController mHRMController = null;
 	private Logger mLogger = Logging.getInstance();
 	private BFSDistanceLabeler<IVirtualNode, NodeConnection> mBreadthFirstSearch;
 	private boolean mCrossLevelCEP = false;
@@ -75,12 +75,12 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	/**
 	 * 
 	 * @param pLogger Logger that should be used
-	 * @param pCoord is the coordinator of a node
+	 * @param pHRMController is the coordinator of a node
 	 * @param pCluster is the cluster this connection end point serves
 	 */
-	public CoordinatorCEPDemultiplexed(Logger pLogger, Coordinator pCoord, ICluster pCluster)
+	public CoordinatorCEPDemultiplexed(Logger pLogger, HRMController pHRMController, ICluster pCluster)
 	{
-		mReferenceCoordinator = pCoord;
+		mHRMController = pHRMController;
 		mCluster = pCluster;
 		mLogger = pLogger;
 		mLogger.log(this, "Created");
@@ -337,7 +337,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						int tLevel = getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getLevel();
 						
 						DiscoveryEntry tEntry = new DiscoveryEntry(tToken, tCoordinatorName, tCoordinatorAddress, tL2Address, tLevel);
-						tEntry.setPriority(getCluster().getCoordinatorPriority());
+						tEntry.setPriority(getCluster().getNodePriority());
 						tEntry.setRoutingVectors(getPath(getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorsAddress()));
 						tRequest.addDiscoveryEntry(tEntry);
 						tRequest.setCoordinatorKnown(true);
@@ -465,9 +465,9 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		return (tCluster == null ? mRemoteCluster : tCluster);
 	}
 
-	public Coordinator getCoordinator()
+	public HRMController getCoordinator()
 	{
-		return mReferenceCoordinator;
+		return mHRMController;
 	}
 	
 	public void setAsParticipantOfMyCluster(boolean pPartOfMyCluster)

@@ -13,21 +13,21 @@
       <editor
             class="de.tuilmenau.ics.fog.ui.eclipse.editors.CoordinatorEditor"
             id="de.tuilmenau.ics.fog.coordinatoreditor"
-            name="Coordinator Editor">
+            name="HRM viewer">
       </editor>
       <editor
             class="de.tuilmenau.ics.fog.ui.eclipse.editors.ClusterViewer"
             default="false"
             id="de.tuilmenau.ics.fog.clusterviewer"
-            name="Cluster View">
+            name="Hierarchy viewer">
       </editor>
    </extension>
    <extension
          point="de.tuilmenau.ics.fog.hostApplications">
       <editor
             editorID="de.tuilmenau.ics.fog.coordinatoreditor"
-            filter="de.tuilmenau.ics.fog.routing.hierarchical.Coordinator"
-            name="Coordinator View">
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
+            name="HRM viewer">
       </editor>
       <plugin
             class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.SendPacket"
@@ -35,8 +35,8 @@
       </plugin>
       <editor
             editorID="de.tuilmenau.ics.fog.clusterviewer"
-            filter="de.tuilmenau.ics.fog.routing.hierarchical.Coordinator"
-            name="Cluster View">
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
+            name="Hierarchy viewer">
       </editor>
    </extension>
 

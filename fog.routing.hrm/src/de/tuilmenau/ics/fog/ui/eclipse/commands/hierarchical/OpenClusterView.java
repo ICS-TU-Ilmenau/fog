@@ -16,7 +16,7 @@ import org.eclipse.ui.IWorkbenchPartSite;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
-import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.topology.Node;
 
 public class OpenClusterView extends Command
@@ -43,26 +43,21 @@ public class OpenClusterView extends Command
 	public void main() throws Exception
 	{
 		if((mNode != null) && (mSite != null)) {
-			Coordinator tCoord = null;
-			Object reference = null;
-			
-			MenuCreator menu = new MenuCreator(mSite);
-			ActionListener action = null;
-			
+			HRMController tHRMController = null;
 			
 			for(Application tApp : mNode.getHost().getApps()) {
-				if(tApp instanceof Coordinator) {
-					tCoord = (Coordinator) tApp;
-					reference = tCoord;
+				if(tApp instanceof HRMController) {
+					tHRMController = (HRMController) tApp;
 				}
 			}
 
-			action = menu.getDefaultAction(tCoord.getClusterMap());
+			MenuCreator tMenu = new MenuCreator(mSite);
+			ActionListener tAction = tMenu.getDefaultAction(tHRMController.getClusterMap());
 			
-			if(action != null) {
-				action.actionPerformed(null);
+			if(tAction != null) {
+				tAction.actionPerformed(null);
 			} else {
-				throw new RuntimeException("No default action for " +reference +" available.");
+				throw new RuntimeException("No default action for " + tHRMController.getClusterMap() +" available.");
 			}
 		}
 	}

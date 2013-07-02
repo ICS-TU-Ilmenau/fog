@@ -36,7 +36,7 @@ import de.tuilmenau.ics.fog.util.Tuple;
 
 public class CoordinatorCEP extends Session
 {
-	private Coordinator mReferenceCoordinator=null;
+	private HRMController mHRMController = null;
 	private boolean mServerSide = false;
 	private L2Address mSourceIdentification = null;
 	private L2Address mPeerIdentification = null;
@@ -47,16 +47,16 @@ public class CoordinatorCEP extends Session
 	/**
 	 * 
 	 * @param pLogger
-	 * @param pCoord is the coordinator this connection end point is associated to
+	 * @param pHRMController is the coordinator this connection end point is associated to
 	 * @param pServerSide indicates whether this connection end point is the origin of a server or not
 	 * @param pLevel is the level this connection end point is located at
 	 * @param pMux is the multiplexer to use
 	 * 
 	 */
-	public CoordinatorCEP(Logger pLogger, Coordinator pCoord, boolean pServerSide, int pLevel, CoordinatorCEPMultiplexer pMux)
+	public CoordinatorCEP(Logger pLogger, HRMController pHRMController, boolean pServerSide, int pLevel, CoordinatorCEPMultiplexer pMux)
 	{
 		super(false, Logging.getInstance(), null);
-		mReferenceCoordinator = pCoord;
+		mHRMController = pHRMController;
 		
 			RoutingService tRS = (RoutingService)getCoordinator().getPhysicalNode().getRoutingService();
 			mSourceIdentification = (L2Address) tRS.getNameFor(getCoordinator().getPhysicalNode().getCentralFN());
@@ -236,9 +236,9 @@ public class CoordinatorCEP extends Session
 	 * 
 	 * @return coordinator this connection end point is attached to
 	 */
-	public Coordinator getCoordinator()
+	public HRMController getCoordinator()
 	{
-		return mReferenceCoordinator;
+		return mHRMController;
 	}
 	
 	public String toString()

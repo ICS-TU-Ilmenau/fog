@@ -37,7 +37,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest.ResultType;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
-import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 //import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEP;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
@@ -917,7 +917,7 @@ public class ClusterManager implements ICluster, Observer
 	}
 
 	@Override
-	public float getCoordinatorPriority() {
+	public float getNodePriority() {
 		if(mCoordinatorCEP != null) {
 			return mCoordinatorCEP.getPeerPriority();
 		}
@@ -930,7 +930,7 @@ public class ClusterManager implements ICluster, Observer
 	}
 
 	@Override
-	public Coordinator getCoordinator() {
+	public HRMController getCoordinator() {
 		return mManagedCluster.getCoordinator();
 	}
 
@@ -1113,7 +1113,7 @@ public class ClusterManager implements ICluster, Observer
 		/*
 		 * check whether old priority was lower than new priority
 		 */
-		if(getCoordinatorPriority() <= pAnnounce.getPriority()) {
+		if(getNodePriority() <= pAnnounce.getPriority()) {
 			/*
 			 * check whether a coordinator is already set
 			 */
@@ -1171,7 +1171,7 @@ public class ClusterManager implements ICluster, Observer
 								ICluster tPredecessor = (ICluster) getCoordinator().getClusterMap().getDest(getManagedCluster(), tClusterList.get(0));
 								tOldCoveredEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getLevel()));
 							}
-							tOldCoveredEntry.setPriority(getCoordinatorPriority());
+							tOldCoveredEntry.setPriority(getNodePriority());
 							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(getCoordinator().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorsAddress()));
 							tOldCovered.setCoveringClusterEntry(tOldCoveredEntry);
 //							List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute((HRMName)pCEP.getSourceName(), getCoordinatorsAddress());
@@ -1261,7 +1261,7 @@ public class ClusterManager implements ICluster, Observer
 				ICluster tPredecessor = (ICluster) getCoordinator().getClusterMap().getDest(getManagedCluster(), tClusterList.get(0));
 				tUncoveredEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getLevel()));
 			}
-			tUncoveredEntry.setPriority(getCoordinatorPriority());
+			tUncoveredEntry.setPriority(getNodePriority());
 			tUncoveredEntry.setRoutingVectors(pCEP.getPath(getCoordinator().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorsAddress()));
 			tUncoveredAnnounce.setCoveringClusterEntry(tUncoveredEntry);
 			getLogger().warn(this, "Rejecting " + (getCoordinatorCEP().getPeerName()).getDescr() + " in favour of " + pAnnounce.getCoord());

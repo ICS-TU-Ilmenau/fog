@@ -41,15 +41,13 @@ public class CoordinatorCEPMultiplexer
 	private HashMap<CoordinatorCEPDemultiplexed, CoordinatorCEP> mMultiplexer;
 	private HashMap<CoordinatorCEP, LinkedList<CoordinatorCEPDemultiplexed>> mDemux;
 	private HashMap<Tuple<Long, Long>, CoordinatorCEPDemultiplexed> mClusterToCEPMapping;
-	private Coordinator mCoordinatorInstance = null;
+	private HRMController mHRMController = null;
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
 	private ICluster mCluster;
 	
-	public CoordinatorCEPMultiplexer(Coordinator pCoordinatorInstance)
+	public CoordinatorCEPMultiplexer(HRMController pHRMController)
 	{
-		if(pCoordinatorInstance != null) {
-			mCoordinatorInstance = pCoordinatorInstance;
-		}
+		mHRMController = pHRMController;
 		mMultiplexer = new HashMap<CoordinatorCEPDemultiplexed, CoordinatorCEP>();
 		mDemux = new HashMap<CoordinatorCEP, LinkedList<CoordinatorCEPDemultiplexed>>();
 		mClusterToCEPMapping = new HashMap<Tuple<Long, Long>, CoordinatorCEPDemultiplexed>();
@@ -68,7 +66,7 @@ public class CoordinatorCEPMultiplexer
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(getCoordinator().getPhysicalNode().getCentralFN().getName());
 			
 			for(ClusterManager tManager : getCoordinator().getClusterManagers(pSourceCluster.getLevel()+1)) {
-				tCEPDemultiplexed = new CoordinatorCEPDemultiplexed(getLogger(), mCoordinatorInstance, tManager);
+				tCEPDemultiplexed = new CoordinatorCEPDemultiplexed(getLogger(), mHRMController, tManager);
 				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getPriority());
 				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
 				tCEP.getMultiplexer().addDemultiplex(tCEP, tCEPDemultiplexed);
@@ -359,14 +357,14 @@ public class CoordinatorCEPMultiplexer
 		throw new NetworkException("No demultiplexed CEP found for " + pCEP + " and target cluster " + pCluster);
 	}
 	
-	public Coordinator getCoordinator()
+	public HRMController getCoordinator()
 	{
-		return mCoordinatorInstance;
+		return mHRMController;
 	}
 	
 	public String toString()
 	{
-		return "CEPMultiplexer" + "@" + mCoordinatorInstance.getPhysicalNode().getName() + ( mCluster != null ? "(" + mCluster + ")" : "");
+		return "CEPMultiplexer" + "@" + mHRMController.getPhysicalNode().getName() + ( mCluster != null ? "(" + mCluster + ")" : "");
 	}
 	
 	public void setCluster(ICluster pCluster)

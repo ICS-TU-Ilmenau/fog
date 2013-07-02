@@ -75,7 +75,7 @@ public class HierarchicalRoutingService implements RoutingService
 	private HierarchicalNameMappingService<Name> mNameMapping=null;
 	private Node mReferenceNode = null;
 	private static Random mRandomGenerator = null; //singleton needed, otherwise parallel number generators might be initialized with the same seed
-	private Coordinator mCoordinatorInstance = null;
+	private HRMController mHRMController = null;
 	private Logger mLogger = null;
 	private HashMap<HRMID, FIBEntry> mHopByHopRoutingMap = new HashMap<HRMID, FIBEntry>();
 	private Name mSourceIdentification = null;
@@ -106,13 +106,13 @@ public class HierarchicalRoutingService implements RoutingService
 	 */
 	public void initiateCoordinator() //TV
 	{
-		mCoordinatorInstance = new Coordinator(mReferenceNode.getHost(), mReferenceNode.getLogger(), mReferenceNode.getIdentity(), mReferenceNode, this);
-		mReferenceNode.getHost().registerApp(mCoordinatorInstance);
+		mHRMController = new HRMController(mReferenceNode.getHost(), mReferenceNode.getLogger(), mReferenceNode.getIdentity(), mReferenceNode, this);
+		mReferenceNode.getHost().registerApp(mHRMController);
 	}
 
-	public Coordinator getCoordinator()
+	public HRMController getCoordinator()
 	{
-		return mCoordinatorInstance;
+		return mHRMController;
 	}
 
 	public void registerNode(L2Address pAddress, boolean pGloballyImportant)
@@ -139,7 +139,7 @@ public class HierarchicalRoutingService implements RoutingService
 		public void fire()
 		{
 			Logging.log(this, "Opening connection to " + mConnectTo);
-			mCoordinatorInstance.addConnection(mConnectTo, 0, mToClusterID, mConnectionToOtherAS);
+			mHRMController.addConnection(mConnectTo, 0, mToClusterID, mConnectionToOtherAS);
 		}
 		
 		private Name mConnectTo;

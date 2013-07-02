@@ -17,7 +17,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 //import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
@@ -40,7 +40,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 * 
 	 * @return priority of the acting coordinator
 	 */
-	public float getCoordinatorPriority();
+	public float getNodePriority();
 	
 	/**
 	 * Set the priority the reference node has in this cluster
@@ -53,7 +53,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 *  
 	 * @return Return the coordinator object of a node that is used for cluster handling etc.
 	 */
-	public Coordinator getCoordinator();
+	public HRMController getCoordinator();
 	
 	/**
 	 * 

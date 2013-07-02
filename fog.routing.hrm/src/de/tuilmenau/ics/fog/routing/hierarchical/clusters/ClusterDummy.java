@@ -18,7 +18,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 //import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
@@ -79,7 +79,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public float getCoordinatorPriority() {
+	public float getNodePriority() {
 		return 0;
 	}
 
@@ -89,7 +89,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public Coordinator getCoordinator() {
+	public HRMController getCoordinator() {
 		return null;
 	}
 

@@ -24,7 +24,7 @@ import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
-import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressLimitationProperty;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
@@ -64,8 +64,8 @@ public class SendPacket extends Command
 		mSite = site;
 		if(object instanceof Node) {
 			mNode = (Node) object;
-		} else if(object instanceof Coordinator) {
-			mNode = ((Coordinator)object).getPhysicalNode();
+		} else if(object instanceof HRMController) {
+			mNode = ((HRMController)object).getPhysicalNode();
 		}
 	}
 

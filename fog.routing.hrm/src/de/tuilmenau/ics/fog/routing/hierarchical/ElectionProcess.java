@@ -48,7 +48,7 @@ public class ElectionProcess extends Thread
 	private ClusterManager mClusterManager=null;
 	private LinkedList<IntermediateCluster> mElectingClusters = new LinkedList<IntermediateCluster>();
 	private boolean mInProgress = false;
-	private Coordinator mCoordinatorInstance = null;
+	private HRMController mHRMController = null;
 	private int mLevel = 0;	
 	private boolean mWillInitiateManager = false;
 	private boolean mLostElection = false;
@@ -74,9 +74,10 @@ public class ElectionProcess extends Thread
 		return (mElectingClusters.contains(pCluster));
 	}
 	
-	public Coordinator getCoordinator()
+	//TODO: really needed? otherwise delete it!
+	public HRMController getCoordinator()
 	{
-		return mCoordinatorInstance;
+		return mHRMController;
 	}
 	
 	public ElectionProcess(int pLevel)
@@ -142,7 +143,7 @@ public class ElectionProcess extends Thread
 	public void initiateCoordinatorFunctions(IntermediateCluster pCluster)
 	{
 		Random tRandom = new Random(System.currentTimeMillis());
-		Coordinator tCoordinator = pCluster.getCoordinator();
+		HRMController tCoordinator = pCluster.getCoordinator();
 		Node tReferenceNode = tCoordinator.getPhysicalNode();
 		int tToken = tRandom.nextInt();
 		
