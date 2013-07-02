@@ -525,5 +525,11 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	public int hashCode()
 	{
 		return mClusterID.intValue() * 1;
+	}
+
+	@Override
+	public TopologyEnvelope getTopologyData()
+	{
+		return null;
 	}	
 }

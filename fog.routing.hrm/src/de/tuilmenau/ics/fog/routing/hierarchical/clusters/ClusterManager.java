@@ -1550,7 +1550,8 @@ public class ClusterManager implements ICluster, Observer
 		return mManagedCluster;
 	}
 	
-	public TopologyEnvelope getTopologyEnvelope()
+	@Override
+	public TopologyEnvelope getTopologyData()
 	{
 		return mEnvelope;
 	}

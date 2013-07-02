@@ -279,9 +279,16 @@ public interface ICluster extends Serializable, IVirtualNode
 	public void setNegotiatorCEP(CoordinatorCEPDemultiplexed pCEP);
 	
 	/**
+	 * TODO
+	 *  
+	 * @return
+	 */
+	public TopologyEnvelope getTopologyData();
+
+	/**
 	 * 
 	 * @param pEnvelope This object has to include the address that should be associated to the cluster along with several entries that
-	 * desribe as to how that entity should be reached.
+	 * describe as to how that entity should be reached.
 	 */
 	public void handleTopologyEnvelope(TopologyEnvelope pEnvelope);
 	

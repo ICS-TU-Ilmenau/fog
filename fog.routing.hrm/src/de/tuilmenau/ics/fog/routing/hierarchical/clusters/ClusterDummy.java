@@ -292,4 +292,11 @@ public class ClusterDummy implements Serializable, ICluster
 	{
 		return null;
 	}
+
+	@Override
+	public TopologyEnvelope getTopologyData()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

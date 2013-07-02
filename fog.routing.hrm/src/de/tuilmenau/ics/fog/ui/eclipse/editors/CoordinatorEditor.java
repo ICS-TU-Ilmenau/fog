@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.ui.eclipse.editors;
 
 import java.rmi.RemoteException;
 import java.text.Collator;
+import java.util.LinkedList;
 import java.util.Locale;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -161,11 +162,15 @@ public class CoordinatorEditor extends EditorPart
         mContainer.setSize(mContainer.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 	}
 	
-	public class ElectionOnClusterListener implements Listener
+	/**
+	 * Listener for electing coordinator for this cluster.
+	 * 
+	 */
+	public class ListenerElectCoordinator implements Listener
 	{
 		private IntermediateCluster mCluster = null;
 		
-		public ElectionOnClusterListener(IntermediateCluster pCluster)
+		public ListenerElectCoordinator(IntermediateCluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -174,16 +179,20 @@ public class CoordinatorEditor extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			ElectionManager.getElectionManager().getElectionProcess(mCluster.getLevel(), mCluster.getClusterID()).start();
+			ElectionManager.getElectionManager().getProcess(mCluster.getLevel(), mCluster.getClusterID()).start();
 		}
 		
 	}
-	
-	public class ElectionOnAllClustersListener implements Listener
+
+	/**
+	 * Listener for electing coordinators for all clusters on this hierarchy level. 
+	 *
+	 */
+	public class ListenerElectHierarchyLevelCoordinators implements Listener
 	{
 		private IntermediateCluster mCluster = null;
 		
-		public ElectionOnAllClustersListener(IntermediateCluster pCluster)
+		public ListenerElectHierarchyLevelCoordinators(IntermediateCluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -196,7 +205,7 @@ public class CoordinatorEditor extends EditorPart
 			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(tProcess.toString());
 			}
-			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcessesOnLevel(mCluster.getLevel())) {
+			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getLevel())) {
 				boolean tStartProcess=true;
 				for(ICluster tCluster : tProcess.getParticipatingClusters()) {
 					for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
@@ -214,11 +223,15 @@ public class CoordinatorEditor extends EditorPart
 		
 	}
 	
-	public class AbovePreparationOnAllClustersListener implements Listener
+	/**
+	 * Listener for clustering the network on a defined hierarchy level. 
+	 *
+	 */
+	public class ListenerClusterHierarchyLevel implements Listener
 	{
 		private IntermediateCluster mCluster = null;
 		
-		public AbovePreparationOnAllClustersListener(IntermediateCluster pCluster)
+		public ListenerClusterHierarchyLevel(IntermediateCluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -231,7 +244,7 @@ public class CoordinatorEditor extends EditorPart
 			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(tProcess.toString());
 			}
-			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcessesOnLevel(mCluster.getLevel())) {
+			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getLevel())) {
 				synchronized(tProcess) {
 					 tProcess.notifyAll();
 				}
@@ -240,11 +253,15 @@ public class CoordinatorEditor extends EditorPart
 		
 	}
 	
-	public class AbovePreparationOnClusterListener implements Listener
+	/**
+	 * Listener for clustering the network, including the current cluster's coordinator and its siblings. 
+	 *
+	 */
+	public class ListenerClusterHierarchy implements Listener
 	{
 		private IntermediateCluster mCluster = null;
 		
-		public AbovePreparationOnClusterListener(IntermediateCluster pCluster)
+		public ListenerClusterHierarchy(IntermediateCluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -253,8 +270,8 @@ public class CoordinatorEditor extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			synchronized(ElectionManager.getElectionManager().getElectionProcess(mCluster.getLevel(), mCluster.getClusterID())) {
-				ElectionManager.getElectionManager().getElectionProcess(mCluster.getLevel(), mCluster.getClusterID()).notifyAll();
+			synchronized(ElectionManager.getElectionManager().getProcess(mCluster.getLevel(), mCluster.getClusterID())) {
+				ElectionManager.getElectionManager().getProcess(mCluster.getLevel(), mCluster.getClusterID()).notifyAll();
 			}
 		}		
 	}	
@@ -272,7 +289,7 @@ public class CoordinatorEditor extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			final ClusterManager tManager = new ClusterManager(mCluster, mCluster.getLevel()+1, new HRMID(0));
+			final ClusterManager tManager = new ClusterManager(mCluster, mCluster.getLevel() + 1, new HRMID(0));
 			new Thread() {
 	        	public void run()
 	        	{
@@ -290,39 +307,77 @@ public class CoordinatorEditor extends EditorPart
 		}	
 	}
 	
+	/**
+	 * Draws GUI elements for depicting cluster information.
+	 * 
+	 * @param pCluster ID of selected cluster. 
+	 */
 	public void printCluster(ICluster pCluster)
 	{
+		// on which hierarchy level are we?
+		int tHierarchyLevel = pCluster.getLevel();
+
+		// FIB topology data from the coordinator/cluster
+		LinkedList<FIBEntry> tTopologyData = null;
+
+		// do we have a cluster?
+		IntermediateCluster tCluster = null;
+		if (pCluster instanceof IntermediateCluster){
+			tCluster = (IntermediateCluster)pCluster; 
+			if (tCluster.getTopologyData() != null) {
+				tTopologyData = tCluster.getTopologyData().getEntries();
+			}
+		}
+			
+		// do we have a coordinator?
+		ClusterManager tCoordinator = null; 
+		if (pCluster instanceof ClusterManager){
+			tCoordinator = (ClusterManager)pCluster; 
+			if (tCoordinator.getTopologyData() != null) {
+				tTopologyData = tCoordinator.getTopologyData().getEntries();
+			}
+		}
+		
+		/**
+		 * GUI part 1: name of the cluster 
+		 */
 		Text overviewText = new Text(mContainer, SWT.BORDER);;
 		overviewText.setText(pCluster.toString());
 		
+		/**
+		 * GUI part 2: tool box 
+		 */
 		if(pCluster instanceof IntermediateCluster) {
 			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
 			
 			ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem1.setText("Election");
+		    toolItem1.setText("Elect cluster coordinator");
 		    ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem2.setText("Elect(all)");
+		    toolItem2.setText("Elect level " + tHierarchyLevel + " coordinators");
 		    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem3.setText("Prepare Above");
+		    toolItem3.setText("Cluster with siblings");
 		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem4.setText("Prepare Above (all)");
+		    toolItem4.setText("Cluster level " + tHierarchyLevel + " coordiantors");
 		    ToolItem toolItem5 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem5.setText("Distribute Addresses");
 		    
 		    
-		    toolItem1.addListener(SWT.Selection, new ElectionOnClusterListener((IntermediateCluster)pCluster));
-		    toolItem2.addListener(SWT.Selection, new ElectionOnAllClustersListener((IntermediateCluster)pCluster));
-		    toolItem3.addListener(SWT.Selection, new AbovePreparationOnClusterListener((IntermediateCluster)pCluster));
-		    toolItem4.addListener(SWT.Selection, new AbovePreparationOnAllClustersListener((IntermediateCluster)pCluster));
+		    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator((IntermediateCluster)pCluster));
+		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators((IntermediateCluster)pCluster));
+		    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy((IntermediateCluster)pCluster));
+		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel((IntermediateCluster)pCluster));
 		    toolItem5.addListener(SWT.Selection, new AddressDistributionListener((IntermediateCluster)pCluster));
 		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
 		
+		/**
+		 * GUI part 3: table about coordinators 
+		 */
 		Table tTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		TableColumn tColumnCoordinator = new TableColumn(tTable, SWT.NONE, 0);
 		tColumnCoordinator.setText("Coordinator");
 		TableColumn tColumnCEP = new TableColumn(tTable, SWT.NONE, 1);
-		tColumnCEP.setText("Connection Endpoint");
+		tColumnCEP.setText("CEP");
 		TableColumn tColumnTargetCovered = new TableColumn(tTable, SWT.NONE, 2);
 		tColumnTargetCovered.setText("Target Covered");
 		TableColumn tColumnPartofCluster = new TableColumn(tTable, SWT.NONE, 3);
@@ -344,18 +399,58 @@ public class CoordinatorEditor extends EditorPart
 		int j = 0;
 		Logging.log(this, "Amount of participating CEPs is " + pCluster.getParticipatingCEPs().size());
 		for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
-			Logging.log(this, "Printing table item number " + j);
-			TableItem item = new TableItem(tTable, SWT.NONE, j);
-			item.setText(0, (pCluster.getCoordinatorSignature() != null ? pCluster.getCoordinatorSignature().toString() : ""));
-			Name tPeerAddress = tCEP.getPeerName();
-			item.setText(1, tPeerAddress.toString());
+			Logging.log(this, "Updating table item number " + j);
+			
+			// get table row
+			TableItem item = tTable.getItem(j);
+			if (tTable.getItem(j) == null){
+				item = new TableItem(tTable, SWT.NONE, j);
+			}
+			
+			/**
+			 * Column 0: coordinator
+			 */
+			if (pCluster.getCoordinatorSignature() != null) {
+				item.setText(0,	pCluster.getCoordinatorSignature().toString());
+			}else{ 
+				item.setText(0, "??");
+			}
+
+			/**
+			 * Column 1: CEP 
+			 */
+			item.setText(1, tCEP.getPeerName().toString());
+
+			/**
+			 * Column 2:  
+			 */
 			item.setText(2, tCEP.hasRequestedCoordinator() ? Boolean.toString(tCEP.knowsCoordinator()) : "UNKNOWN");
+
+			/**
+			 * Column 3:  
+			 */
 			item.setText(3, Boolean.toString(tCEP.isPartOfMyCluster()));
+			
+			/**
+			 * Column 4:  
+			 */
 			item.setText(4, (tCEP.getPeerPriority() != 0 ? Float.toString(tCEP.getPeerPriority()) : "UNKNOWN"));
+			
+			/**
+			 * Column 5:  
+			 */
 			item.setText(5, (tCEP.getRemoteCluster() != null ? tCEP.getRemoteCluster().toString() : "UNKNOWN"));
+			
+			/**
+			 * Column 6:  
+			 */
 			if(tCEP.getRemoteCluster() != null && tCEP.getRemoteCluster() instanceof NeighborCluster && ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()) != null && ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster() != null) {
 				item.setText(6, ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster().toString());
 			}
+
+			/**
+			 * Column 7:  
+			 */
 			Route tRoute = null;
 			Name tSource = null;
 			Name tTarget = null;
@@ -371,18 +466,25 @@ public class CoordinatorEditor extends EditorPart
 				Logging.err(this, "Unable to compute route to " + tTarget, tExc);
 			} catch (RequirementsException tExc) {
 				Logging.err(this, "Unable to fulfill requirements for route calculation to " + tTarget, tExc);
-			}
+			}			
 			item.setText(7, (tRoute != null ? tRoute.toString() : "UNKNOWN"));
+			
+			/**
+			 * Column 8:  
+			 */
 			item.setText(8, Boolean.toString(tCEP.receivedBorderNodeAnnouncement()));
 			
-			++j;
+			j++;
 		}
 		
+		/**
+		 * GUI part 4: Forwarding Information Base  
+		 */
 		TableColumn[] cols = tTable.getColumns();
-		for(int k=0; k<cols.length; k++) cols[k].pack();
+		for(int k=0; k < cols.length; k++) cols[k].pack();
 		tTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
-		
-		if((pCluster instanceof IntermediateCluster && ((IntermediateCluster)pCluster).getTopologyEnvelope()!= null && ((IntermediateCluster)pCluster).getTopologyEnvelope().getEntries() != null) || (pCluster instanceof ClusterManager && ((ClusterManager)pCluster).getTopologyEnvelope()!= null && ((ClusterManager)pCluster).getTopologyEnvelope().getEntries() != null) ) {
+
+		if (tTopologyData != null){
 			Table tFIB = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 			TableColumn tColumnDestination = new TableColumn(tFIB, SWT.NONE, 0);
 			tColumnDestination.setText("destination");
@@ -397,8 +499,8 @@ public class CoordinatorEditor extends EditorPart
 			TableColumn tColumnOrigin = new TableColumn(tFIB, SWT.NONE, 5);
 			tColumnOrigin.setText("origin");
 			j=0;
-			if(pCluster instanceof IntermediateCluster) {
-				for(FIBEntry tEntry: ((IntermediateCluster)pCluster).getTopologyEnvelope().getEntries()) {
+			if (tCluster != null) {
+				for (FIBEntry tEntry: tTopologyData) {
 					TableItem tItem = new TableItem(tFIB, SWT.NONE, j);
 					tItem.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
 					tItem.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
@@ -413,8 +515,8 @@ public class CoordinatorEditor extends EditorPart
 					tItem.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "UNKNOWN"));
 					j++;
 				}
-			} else if(pCluster instanceof ClusterManager) {
-				for(FIBEntry tEntry: ((ClusterManager)pCluster).getTopologyEnvelope().getEntries()) {
+			} else if (tCoordinator != null) {
+				for (FIBEntry tEntry: tTopologyData) {
 					TableItem tItem = new TableItem(tFIB, SWT.NONE, j);
 					tItem.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
 					tItem.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
@@ -427,7 +529,7 @@ public class CoordinatorEditor extends EditorPart
 					tItem.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "UNKNOWN"));
 					String tTargetString = (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : null);
 					if(tTargetString == null) {
-						tTargetString = ((ClusterManager)pCluster).getPathToCoordinator(((ClusterManager)pCluster).getManagedCluster(), pCluster.getCoordinator().getCluster(tEntry.getNextCluster())).toString();
+						tTargetString = tCoordinator.getPathToCoordinator(tCoordinator.getManagedCluster(), tCoordinator.getCoordinator().getCluster(tEntry.getNextCluster())).toString();
 					}
 					tItem.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "UNKNOWN"));
 					tItem.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "UNKNOWN"));
@@ -442,10 +544,10 @@ public class CoordinatorEditor extends EditorPart
 			tFIB.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
 		
-		if(pCluster instanceof ClusterManager) {
-			if(pCluster.getLevel() == 3) {
-				mCoordinator.getLogger().log(this, "Will print cluster manager");
-			}
+		/**
+		 * GUI part 5: coordinator data  
+		 */
+		if (tCoordinator != null) {
 			j=0;
 			Table tMappingTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 			
@@ -459,15 +561,15 @@ public class CoordinatorEditor extends EditorPart
 			tColumnSignature.setText("signature");
 			
 			
-			if(((ClusterManager)pCluster).getMappings() != null && !((ClusterManager)pCluster).getMappings().isEmpty()) {
-				for(HRMID tHRMID : ((ClusterManager)pCluster).getMappings().keySet()) {
+			if(tCoordinator.getMappings() != null && !tCoordinator.getMappings().isEmpty()) {
+				for(HRMID tHRMID : tCoordinator.getMappings().keySet()) {
 					TableItem item = new TableItem(tMappingTable, SWT.NONE, j);
 					item.setText(0, tHRMID != null ? tHRMID.toString() : "");
-					item.setText(1, ((ClusterManager)pCluster).getVirtualNodeFromHRMID(tHRMID) != null ? ((ClusterManager)pCluster).getVirtualNodeFromHRMID(tHRMID).toString() : "" );
-					item.setText(2, ((ClusterManager)pCluster).getPathFromHRMID(tHRMID) != null ? ((ClusterManager)pCluster).getPathFromHRMID(tHRMID).toString(): "UNKNOWN");
+					item.setText(1, tCoordinator.getVirtualNodeFromHRMID(tHRMID) != null ? tCoordinator.getVirtualNodeFromHRMID(tHRMID).toString() : "" );
+					item.setText(2, tCoordinator.getPathFromHRMID(tHRMID) != null ? tCoordinator.getPathFromHRMID(tHRMID).toString(): "UNKNOWN");
 					Signature tOrigin = null;
-					if(((ClusterManager)pCluster).getTopologyEnvelope() != null && ((ClusterManager)pCluster).getTopologyEnvelope().getEntries() != null) {
-						for(FIBEntry tEntry : ((ClusterManager)pCluster).getTopologyEnvelope().getEntries()) {
+					if(tTopologyData != null) {
+						for(FIBEntry tEntry : tTopologyData) {
 							if(tEntry.equals(tHRMID)) {
 								tOrigin = tEntry.getSignature();
 							}

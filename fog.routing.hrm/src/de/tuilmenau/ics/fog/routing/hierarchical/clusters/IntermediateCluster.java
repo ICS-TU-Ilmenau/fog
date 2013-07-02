@@ -350,18 +350,18 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 	public void initiateElection()
 	{
 		try {
-			if(!ElectionManager.getElectionManager().getElectionProcess(mLevel, mClusterID).isStarted() && ! ElectionManager.getElectionManager().getElectionProcess(mLevel, mClusterID).getState().equals(Thread.State.RUNNABLE)) {
-				getCoordinator().getLogger().log(this, "Election " + ElectionManager.getElectionManager().getElectionProcess(mLevel, mClusterID) + " is running? " + (ElectionManager.getElectionManager().getElectionProcess(mLevel, mClusterID).isAlive()));
-				ElectionManager.getElectionManager().getElectionProcess(mLevel, mClusterID).start();
+			if(!ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).isStarted() && ! ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).getState().equals(Thread.State.RUNNABLE)) {
+				getCoordinator().getLogger().log(this, "Election " + ElectionManager.getElectionManager().getProcess(mLevel, mClusterID) + " is running? " + (ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).isAlive()));
+				ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).start();
 			} else {
-				ElectionManager.getElectionManager().getElectionProcess(mLevel, mClusterID).interrupt();
+				ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).interrupt();
 			}
 		} catch (IllegalStateException tExc) {
-			getCoordinator().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getElectionProcess(mLevel, mClusterID).getState(), tExc);
+			getCoordinator().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).getState(), tExc);
 		} catch (IllegalMonitorStateException tExc) {
-			getCoordinator().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getElectionProcess(mLevel, mClusterID).getState(), tExc);
+			getCoordinator().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).getState(), tExc);
 		} catch (IllegalThreadStateException tExc) {
-			getCoordinator().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getElectionProcess(mLevel, mClusterID).getState(), tExc);
+			getCoordinator().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).getState(), tExc);
 		}
 		
 	}
@@ -716,7 +716,8 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 		}
 	}
 	
-	public TopologyEnvelope getTopologyEnvelope()
+	@Override
+	public TopologyEnvelope getTopologyData()
 	{
 		return mEnvelope;
 	}

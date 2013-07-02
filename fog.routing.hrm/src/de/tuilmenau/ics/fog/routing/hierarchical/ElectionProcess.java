@@ -426,7 +426,15 @@ public class ElectionProcess extends Thread
 			return mManager;
 		}
 		
-		public synchronized ElectionProcess getElectionProcess(int pLevel, Long pClusterID)
+		/**
+		 * Returns a processes of a defined hierarchy level and cluster ID.
+		 * This functions is used within the GUI.
+		 * 
+		 * @param pLevel
+		 * @param pClusterID
+		 * @return
+		 */
+		public synchronized ElectionProcess getProcess(int pLevel, Long pClusterID)
 		{
 			if(mElections.containsKey(pLevel)) {
 				if(mElections.containsKey(pLevel) && mElections.get(pLevel).containsKey(pClusterID)) {
@@ -436,7 +444,14 @@ public class ElectionProcess extends Thread
 			return null;
 		}
 		
-		public Collection<ElectionProcess> getProcessesOnLevel(int pLevel)
+		/**
+		 * Returns all processes on a defined hierarchy level.
+		 * This functions is used within the GUI.
+		 * 
+		 * @param pLevel
+		 * @return
+		 */
+		public Collection<ElectionProcess> getProcesses(int pLevel)
 		{
 			try {
 				return mElections.get(pLevel).values();
