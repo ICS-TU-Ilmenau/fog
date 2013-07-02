@@ -108,7 +108,7 @@ public class Coordinator implements ICluster, Observer
 		mManagedCluster = pCluster;
 		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
 		mManagedCluster.getCoordinator().getClusterMap().addObserver(this);
-		mPriority = (float) getCoordinator().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + mLevel, 2.71828);
+		mPriority = (float) getCoordinator().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + mLevel, HRMConfig.Election.DEFAULT_PRIORITY);
 		getCoordinator().registerClusterManager(this, mLevel);
 		
 		Logging.log(this, "Creating coordinator instance on hierarchy level " + mLevel);
