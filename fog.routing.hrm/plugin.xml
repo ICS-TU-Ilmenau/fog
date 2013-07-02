@@ -19,7 +19,7 @@
             class="de.tuilmenau.ics.fog.ui.eclipse.editors.ClusterViewer"
             default="false"
             id="de.tuilmenau.ics.fog.clusterviewer"
-            name="Hierarchy viewer">
+            name="Cluster viewer">
       </editor>
    </extension>
    <extension
@@ -36,7 +36,7 @@
       <editor
             editorID="de.tuilmenau.ics.fog.clusterviewer"
             filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
-            name="Hierarchy viewer">
+            name="Cluster viewer">
       </editor>
    </extension>
 
