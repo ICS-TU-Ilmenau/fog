@@ -53,7 +53,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IntermediateCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -226,9 +226,9 @@ public class HRMViewer extends EditorPart
 	 */
 	public class ListenerElectCoordinator implements Listener
 	{
-		private IntermediateCluster mCluster = null;
+		private Cluster mCluster = null;
 		
-		public ListenerElectCoordinator(IntermediateCluster pCluster)
+		public ListenerElectCoordinator(Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -248,9 +248,9 @@ public class HRMViewer extends EditorPart
 	 */
 	public class ListenerElectHierarchyLevelCoordinators implements Listener
 	{
-		private IntermediateCluster mCluster = null;
+		private Cluster mCluster = null;
 		
-		public ListenerElectHierarchyLevelCoordinators(IntermediateCluster pCluster)
+		public ListenerElectHierarchyLevelCoordinators(Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -287,9 +287,9 @@ public class HRMViewer extends EditorPart
 	 */
 	public class ListenerClusterHierarchyLevel implements Listener
 	{
-		private IntermediateCluster mCluster = null;
+		private Cluster mCluster = null;
 		
-		public ListenerClusterHierarchyLevel(IntermediateCluster pCluster)
+		public ListenerClusterHierarchyLevel(Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -317,9 +317,9 @@ public class HRMViewer extends EditorPart
 	 */
 	public class ListenerClusterHierarchy implements Listener
 	{
-		private IntermediateCluster mCluster = null;
+		private Cluster mCluster = null;
 		
-		public ListenerClusterHierarchy(IntermediateCluster pCluster)
+		public ListenerClusterHierarchy(Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -336,9 +336,9 @@ public class HRMViewer extends EditorPart
 
 	public class AddressDistributionListener implements Listener
 	{
-		private IntermediateCluster mCluster = null;
+		private Cluster mCluster = null;
 		
-		public AddressDistributionListener(IntermediateCluster pCluster)
+		public AddressDistributionListener(Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -379,9 +379,9 @@ public class HRMViewer extends EditorPart
 		LinkedList<FIBEntry> tTopologyData = null;
 
 		// do we have a cluster?
-		IntermediateCluster tCluster = null;
-		if (pCluster instanceof IntermediateCluster){
-			tCluster = (IntermediateCluster)pCluster; 
+		Cluster tCluster = null;
+		if (pCluster instanceof Cluster){
+			tCluster = (Cluster)pCluster; 
 			if (tCluster.getTopologyData() != null) {
 				tTopologyData = tCluster.getTopologyData().getEntries();
 			}
@@ -405,7 +405,7 @@ public class HRMViewer extends EditorPart
 		/**
 		 * GUI part 2: tool box 
 		 */
-		if(pCluster instanceof IntermediateCluster) {
+		if(pCluster instanceof Cluster) {
 			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
 			
 			ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
@@ -420,11 +420,11 @@ public class HRMViewer extends EditorPart
 		    toolItem5.setText(">Distribute addresses<");
 		    
 		    
-		    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator((IntermediateCluster)pCluster));
-		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators((IntermediateCluster)pCluster));
-		    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy((IntermediateCluster)pCluster));
-		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel((IntermediateCluster)pCluster));
-		    toolItem5.addListener(SWT.Selection, new AddressDistributionListener((IntermediateCluster)pCluster));
+		    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator((Cluster)pCluster));
+		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators((Cluster)pCluster));
+		    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy((Cluster)pCluster));
+		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel((Cluster)pCluster));
+		    toolItem5.addListener(SWT.Selection, new AddressDistributionListener((Cluster)pCluster));
 		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
 		

@@ -62,7 +62,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	protected LinkedList<CoordinatorCEPDemultiplexed> mAnnouncedCEPs;
 	protected CoordinatorCEPDemultiplexed mNegotiator=null;
 //	private int mClusterHopsOnOpposite;
-	private IntermediateCluster mSourceIntermediateCluster = null;
+	private Cluster mSourceIntermediateCluster = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
 	private boolean mInterASCluster = false;
 	private HashMap<CoordinatorCEPDemultiplexed, Integer> mClustersOnOppositeCounter = new HashMap<CoordinatorCEPDemultiplexed, Integer>();
@@ -453,12 +453,12 @@ public class NeighborCluster implements ICluster, IElementDecorator
 //		mClusterHopsOnOpposite = pClustersOnOpposite;
 	}
 	
-	public void setSourceIntermediate(IntermediateCluster pIntermediate)
+	public void setSourceIntermediate(Cluster pIntermediate)
 	{
 		mSourceIntermediateCluster = pIntermediate;
 	}
 	
-	public IntermediateCluster getSourceIntermediateCluster()
+	public Cluster getSourceIntermediateCluster()
 	{
 		return mSourceIntermediateCluster;
 	}

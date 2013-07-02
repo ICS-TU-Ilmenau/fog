@@ -50,7 +50,7 @@ import de.tuilmenau.ics.fog.util.Logger;
  * and a physical node. Only on an intermediate cluster may be managed by a ClusterManager.
  * 
  */
-public class IntermediateCluster implements ICluster, IElementDecorator
+public class Cluster implements ICluster, IElementDecorator
 {
 	private CoordinatorCEPDemultiplexed mCoordinator;
 	private Long mClusterID;
@@ -91,7 +91,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 	 * @param pCoordinatorInstance
 	 * @param pLogger
 	 */
-	public IntermediateCluster(Long pClusterID, int pLevel, HRMController pCoordinatorInstance, Logger pLogger)
+	public Cluster(Long pClusterID, int pLevel, HRMController pCoordinatorInstance, Logger pLogger)
 	{
 		mClusterID = pClusterID;
 		mLevel = pLevel;
@@ -169,7 +169,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 		}
 		getCoordinator().getLogger().log(this, "This cluster has the following neighbors: " + getNeighbors());
 		for(ICluster tCluster : getNeighbors()) {
-			if(tCluster instanceof IntermediateCluster) {
+			if(tCluster instanceof Cluster) {
 				getCoordinator().getLogger().log(this, "Preparing neighbor zone announcement");
 				NeighborZoneAnnounce tAnnounce = new NeighborZoneAnnounce(pCoordName, mLevel, pCoordSignature, pAddress, getToken(), mClusterID);
 				tAnnounce.setCoordinatorsPriority(mPriority);
@@ -177,7 +177,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoord.getRouteToPeer(), pCoord.getSourceName(), pCoord.getPeerName()));
 				}
 				mSentAnnounces.add(tAnnounce);
-				((IntermediateCluster)tCluster).announceNeighborCoord(tAnnounce, pCoord);
+				((Cluster)tCluster).announceNeighborCoord(tAnnounce, pCoord);
 			}
 		}
 		if(mReceivedAnnounces.isEmpty()) {
@@ -371,14 +371,14 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 		LinkedList<ICluster> tNeighbors = getNeighbors(); 
 		if(!tNeighbors.contains(pNeighbor))
 		{
-			if(pNeighbor instanceof IntermediateCluster) {
+			if(pNeighbor instanceof Cluster) {
 				NodeConnection tLink = new NodeConnection(NodeConnection.ConnectionType.LOCAL);
 				getCoordinator().getClusterMap().link(pNeighbor, this, tLink);
 			} else {
 				NodeConnection tLink = new NodeConnection(NodeConnection.ConnectionType.REMOTE);
 				getCoordinator().getClusterMap().link(pNeighbor, this, tLink);
 			}
-			if(pNeighbor instanceof IntermediateCluster && !pNeighbor.isInterASCluster()) {
+			if(pNeighbor instanceof Cluster && !pNeighbor.isInterASCluster()) {
 				//TODO
 				mPriority *= 10;
 				if(!mInterASCluster) {

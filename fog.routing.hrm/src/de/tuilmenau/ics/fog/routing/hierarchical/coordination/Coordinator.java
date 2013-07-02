@@ -41,7 +41,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IVirtualNode;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IntermediateCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NodeConnection;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressLimitationProperty;
@@ -68,7 +68,7 @@ public class Coordinator implements ICluster, Observer
 	private HRMID mHRMID = null;
 	private int mLevel;
 	private int mLastUsedAddress;
-	private IntermediateCluster mManagedCluster;
+	private Cluster mManagedCluster;
 	private HashMap<CoordinatorCEPDemultiplexed, TopologyData> mAddressMapping = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mCEPs = null;
 	private CoordinatorCEPDemultiplexed mCoordinatorCEP = null;
@@ -98,7 +98,7 @@ public class Coordinator implements ICluster, Observer
 	 * 
 	 */
 	private static final long serialVersionUID = 6824959379284820010L;
-	public Coordinator(IntermediateCluster pCluster, int pLevel, HRMID pInitialAddress)
+	public Coordinator(Cluster pCluster, int pLevel, HRMID pInitialAddress)
 	{
 		mHRMID =  pInitialAddress;
 		mLevel = pLevel;
@@ -194,7 +194,7 @@ public class Coordinator implements ICluster, Observer
 			getLogger().log(this, "Clusters remembered for notification: " + mClustersToNotify);
 			for(IVirtualNode tNode : mClustersToNotify) {
 				if(!((ICluster)tNode).isInterASCluster()) {
-					if(tNode instanceof IntermediateCluster && i == 1) {
+					if(tNode instanceof Cluster && i == 1) {
 						tClustersToNotify.add(tNode);
 					} else if (tNode instanceof NeighborCluster && ((NeighborCluster)tNode).getClustersToTarget() <= i && ((NeighborCluster)tNode).getClustersToTarget() != 0 && !mConnectedEntities.contains(((NeighborCluster)tNode).getCoordinatorName())) {
 						tClustersToNotify.add(tNode);					
@@ -216,7 +216,7 @@ public class Coordinator implements ICluster, Observer
 	
 	public LinkedList<RoutingServiceLinkVector> getPathToCoordinator(ICluster pSourceCluster, ICluster pDestinationCluster)
 	{
-		if(pDestinationCluster instanceof IntermediateCluster && ((IntermediateCluster)pDestinationCluster).isInterASCluster()) {
+		if(pDestinationCluster instanceof Cluster && ((Cluster)pDestinationCluster).isInterASCluster()) {
 			getLogger().info(this, "Omitting " + pDestinationCluster + " because it is an inter AS cluster");
 		} else {
 			List<Route> tCoordinatorPath = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute(pSourceCluster.getCoordinatorsAddress(), pDestinationCluster.getCoordinatorsAddress());
@@ -1125,7 +1125,7 @@ public class Coordinator implements ICluster, Observer
 					 */
 					List<NodeConnection> tClusterList = getCoordinator().getClusterMap().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
 					if(tClusterList.size() > 0) {
-						if(getCoordinator().getClusterMap().getDest(pCEP.getRemoteCluster(), tClusterList.get(tClusterList.size() - 1)) instanceof IntermediateCluster) {
+						if(getCoordinator().getClusterMap().getDest(pCEP.getRemoteCluster(), tClusterList.get(tClusterList.size() - 1)) instanceof Cluster) {
 							getLogger().warn(this, "Not sending neighbor zone announce because another intermediate cluster has a shorter route to target");
 							if(tClusterList != null) {
 								String tClusterRoute = new String();
@@ -1489,7 +1489,7 @@ public class Coordinator implements ICluster, Observer
 	@Override
 	public boolean equals(Object pObj)
 	{
-		if(pObj instanceof IntermediateCluster) {
+		if(pObj instanceof Cluster) {
 			return false;
 		}
 		if(pObj instanceof ICluster) {
@@ -1544,7 +1544,7 @@ public class Coordinator implements ICluster, Observer
 		
 	}
 	
-	public IntermediateCluster getManagedCluster()
+	public Cluster getManagedCluster()
 	{
 		return mManagedCluster;
 	}

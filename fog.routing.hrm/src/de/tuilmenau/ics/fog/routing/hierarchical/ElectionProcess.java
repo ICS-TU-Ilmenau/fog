@@ -25,7 +25,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.BullyElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IntermediateCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
@@ -45,7 +45,7 @@ public class ElectionProcess extends Thread
 	private long TIMEOUT_FOR_ANNOUNCEMENT=5000;
 	
 	private Coordinator mClusterManager=null;
-	private LinkedList<IntermediateCluster> mElectingClusters = new LinkedList<IntermediateCluster>();
+	private LinkedList<Cluster> mElectingClusters = new LinkedList<Cluster>();
 	private boolean mInProgress = false;
 	private HRMController mHRMController = null;
 	private int mLevel = 0;	
@@ -85,7 +85,7 @@ public class ElectionProcess extends Thread
 	}
 	
 	//TV: checked
-	public void addElectingCluster(IntermediateCluster pCluster)
+	public void addElectingCluster(Cluster pCluster)
 	{
 		boolean tClusterIsAlreadyKnown = false;
 		
@@ -139,7 +139,7 @@ public class ElectionProcess extends Thread
 		return mInProgress;
 	}
 	
-	public void initiateCoordinatorFunctions(IntermediateCluster pCluster)
+	public void initiateCoordinatorFunctions(Cluster pCluster)
 	{
 		Random tRandom = new Random(System.currentTimeMillis());
 		HRMController tCoordinator = pCluster.getCoordinator();
@@ -267,8 +267,8 @@ public class ElectionProcess extends Thread
 				}
 			}
 		}
-		IntermediateCluster tNodessClusterForCoordinator = null;
-		for(IntermediateCluster tCluster : mElectingClusters) {
+		Cluster tNodessClusterForCoordinator = null;
+		for(Cluster tCluster : mElectingClusters) {
 			Logging.log(this, "Checking cluster " + tCluster);
 			if(tCluster.getHighestPriority() <= tCluster.getPriority())	{
 				tNodessClusterForCoordinator = tCluster;
@@ -336,8 +336,8 @@ public class ElectionProcess extends Thread
 							try {
 								LinkedList<CoordinatorCEPDemultiplexed> tCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
 								tCEPs.addAll(tCluster.getParticipatingCEPs());
-								if(((IntermediateCluster)tCluster).getOldParticipatingCEPs() != null) {
-									tCEPs.addAll(((IntermediateCluster)tCluster).getOldParticipatingCEPs());
+								if(((Cluster)tCluster).getOldParticipatingCEPs() != null) {
+									tCEPs.addAll(((Cluster)tCluster).getOldParticipatingCEPs());
 								}
 								for(CoordinatorCEPDemultiplexed tCEP: tCluster.getParticipatingCEPs()) {
 									if(! tCEP.knowsCoordinator()) {
@@ -353,7 +353,7 @@ public class ElectionProcess extends Thread
 								Logging.err(this, "Error when looking for uncovered clusters", tExc);
 							}
 							if(tCluster.getLaggards() != null) {
-								((IntermediateCluster)tCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPDemultiplexed>) tCluster.getLaggards().clone());
+								((Cluster)tCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPDemultiplexed>) tCluster.getLaggards().clone());
 								tCluster.getLaggards().clear();
 							}
 							if(tCluster.getCoordinator().getClusterWithCoordinatorOnLevel(tCluster.getLevel()) == null) {
@@ -402,7 +402,7 @@ public class ElectionProcess extends Thread
 		}
 	}
 	
-	public LinkedList<IntermediateCluster> getParticipatingClusters()
+	public LinkedList<Cluster> getParticipatingClusters()
 	{
 		return mElectingClusters;
 	}

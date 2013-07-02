@@ -67,7 +67,7 @@ public class HRMController extends Application implements IServerCallback
 	private ClusterMap<IVirtualNode, NodeConnection> mClusterMap = new ClusterMap<IVirtualNode, NodeConnection>();
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
-	private HashMap<ICluster, IntermediateCluster> mIntermediateMapping = new HashMap<ICluster, IntermediateCluster>();
+	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	private HashMap<Long, RouteRequest> mSessionToRequest = null;
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
 	private LinkedList<LinkedList<Coordinator>> mClusterManagers;
@@ -143,9 +143,9 @@ public class HRMController extends Application implements IServerCallback
 					}
 					
 					tCEP = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
-					((IntermediateCluster)tCluster).getMultiplexer().addMultiplexedConnection(tCEP, tConnection);
+					((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tCEP, tConnection);
 					if(tJoin.getLevel() > 0) {
-						((IntermediateCluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
+						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 					} else {
 						if(tParticipate.isInterASCluster()) {
 							tCEP.setEdgeCEP();
@@ -159,7 +159,7 @@ public class HRMController extends Application implements IServerCallback
 			}
 			if(!tClusterFound)
 			{
-				IntermediateCluster tCluster = new IntermediateCluster(new Long(tJoin.getTargetClusterID()), tJoin.getLevel(), this, mLogger);
+				Cluster tCluster = new Cluster(new Long(tJoin.getTargetClusterID()), tJoin.getLevel(), this, mLogger);
 				if(tParticipate.isInterASCluster()) {
 					tCluster.setInterASCluster();
 					setSourceIntermediateCluster(tCluster, tCluster);
@@ -178,7 +178,7 @@ public class HRMController extends Application implements IServerCallback
 				}
 				tCEP = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
 				if(tJoin.getLevel() > 0) {
-					((IntermediateCluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
+					((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 				} else {
 					if(tParticipate.isInterASCluster()) {
 						tCEP.setEdgeCEP();
@@ -212,8 +212,8 @@ public class HRMController extends Application implements IServerCallback
 				tNewlyCreatedClusters.put(tAttachedCluster, tParticipate.getPredecessor());
 				mLogger.log(this, "as joining cluster");
 				for(ICluster tCandidate : getClusters()) {
-					if(tCandidate instanceof IntermediateCluster && tCandidate.getLevel() == tAttachedCluster.getLevel()) {
-						setSourceIntermediateCluster(tAttachedCluster, (IntermediateCluster)tCandidate);
+					if(tCandidate instanceof Cluster && tCandidate.getLevel() == tAttachedCluster.getLevel()) {
+						setSourceIntermediateCluster(tAttachedCluster, (Cluster)tCandidate);
 					}
 				}
 				if(getSourceIntermediate(tAttachedCluster) == null) {
@@ -250,8 +250,8 @@ public class HRMController extends Application implements IServerCallback
 							if(tEntry.isInterASCluster()) tCluster.setInterASCluster();
 							tNewlyCreatedClusters.put(tCluster, tEntry.getPredecessor());
 							for(ICluster tCandidate : getClusters()) {
-								if(tCandidate instanceof IntermediateCluster && tCluster.getLevel() == tCandidate.getLevel()) {
-									setSourceIntermediateCluster(tCluster, (IntermediateCluster)tCandidate);
+								if(tCandidate instanceof Cluster && tCluster.getLevel() == tCandidate.getLevel()) {
+									setSourceIntermediateCluster(tCluster, (Cluster)tCandidate);
 									mLogger.log(this, "as joining neighbor");
 								}
 							}
@@ -469,7 +469,7 @@ public class HRMController extends Application implements IServerCallback
 				}
 				tCEP.setRouteToPeer(tRoute);
 				tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
-				((IntermediateCluster)tCluster).getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
+				((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
 				
 				tCluster.addParticipatingCEP(tDemux);
 				tFoundCluster = tCluster;
@@ -478,12 +478,12 @@ public class HRMController extends Application implements IServerCallback
 		}
 		if(!tClusterFound)
 		{
-			IntermediateCluster tCluster = new IntermediateCluster(new Long(pToClusterID), pLevel, this, mLogger);
+			Cluster tCluster = new Cluster(new Long(pToClusterID), pLevel, this, mLogger);
 			setSourceIntermediateCluster(tCluster, tCluster);
 			addCluster(tCluster);
 			tCEP = new CoordinatorCEP(mLogger, this, false, pLevel, tCluster.getMultiplexer());
 			tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
-			((IntermediateCluster)tCluster).getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
+			((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
 			
 			tCluster.addParticipatingCEP(tDemux);
 			tFoundCluster = tCluster;
@@ -698,7 +698,7 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pCluster is the cluster for which an intermediate cluster is saved as entity that is physically connected
 	 * @param pIntermediate is the cluster that acts as cluster that is intermediately connected to the node
 	 */
-	public void setSourceIntermediateCluster(ICluster pCluster, IntermediateCluster pIntermediate)
+	public void setSourceIntermediateCluster(ICluster pCluster, Cluster pIntermediate)
 	{
 		if(pIntermediate == null) {
 			mLogger.err(this, "Setting " + pIntermediate + " as source intermediate for " + pCluster);
@@ -711,7 +711,7 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pCluster for which an intermediate cluster is searched
 	 * @return intermediate cluster that is directly connected to the node
 	 */
-	public IntermediateCluster getSourceIntermediate(ICluster pCluster)
+	public Cluster getSourceIntermediate(ICluster pCluster)
 	{
 		if(mIntermediateMapping.containsKey(pCluster)) {
 			
@@ -849,7 +849,7 @@ public class HRMController extends Application implements IServerCallback
 		LinkedList<ICluster> tCandidates = new LinkedList<ICluster>();
 		tCandidates.add(pSource);
 		for(ICluster tCandidate : pSource.getNeighbors()) {
-			if(tCandidate instanceof IntermediateCluster) {
+			if(tCandidate instanceof Cluster) {
 				tCandidates.add(tCandidate);
 			}
 		}
@@ -945,7 +945,7 @@ public class HRMController extends Application implements IServerCallback
 						pRequest = pRequest.clone();
 					}
 				} else {
-					((IntermediateCluster)tCandidate).getClusterManager().handleRouteRequest(pRequest, tCandidate);
+					((Cluster)tCandidate).getClusterManager().handleRouteRequest(pRequest, tCandidate);
 				}
 			}
 		} catch (RemoteException tExc) {

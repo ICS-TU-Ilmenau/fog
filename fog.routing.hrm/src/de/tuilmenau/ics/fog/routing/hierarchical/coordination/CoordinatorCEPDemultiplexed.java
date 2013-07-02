@@ -45,7 +45,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IVirtualNode;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IntermediateCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NodeConnection;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -170,7 +170,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 							Logging.log(this, "Testing " + tCEP + " whether it is an inter as link:" + tWroteAnnouncement);
 						}
 					} else {
-						if(getCluster() instanceof IntermediateCluster) {
+						if(getCluster() instanceof Cluster) {
 							if(!getSourceName().equals(getPeerName())) {
 								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), (HRMName)getSourceName(), (HRMName)getPeerName());
 								tAnnounce.addRoutingVector(tVector);
@@ -211,7 +211,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						 */
 						for(IVirtualNode tCluster : getCoordinator().getClusters(0)) {
 							FIBEntry tEntry = tHRS.getFIBEntry( (HRMID) tRequest.getTarget());
-							if(tCluster instanceof IntermediateCluster && tEntry != null && (tEntry.getFarthestClusterInDirection() == null || tEntry.getFarthestClusterInDirection().equals(tCluster))) {
+							if(tCluster instanceof Cluster && tEntry != null && (tEntry.getFarthestClusterInDirection() == null || tEntry.getFarthestClusterInDirection().equals(tCluster))) {
 								Route tRoute = tHRS.getRoutePath( getSourceName(), tRequest.getTarget(), new Description(), tPhysicalNode.getIdentity());
 								RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
 								HRMName tSource = null;
@@ -265,8 +265,8 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						}
 						return true;
 					}
-					if(getCluster() instanceof IntermediateCluster) {
-						Coordinator tManager = ((IntermediateCluster)getCluster()).getClusterManager();
+					if(getCluster() instanceof Cluster) {
+						Coordinator tManager = ((Cluster)getCluster()).getClusterManager();
 						tManager.handleRouteRequest((RouteRequest) pData, getRemoteCluster());
 						tManager.registerRouteRequest(tRequest.getSession(), this);
 					} else if (getCluster() instanceof Coordinator) {
@@ -290,8 +290,8 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 							ICluster tCluster = getCoordinator().getCluster(tDummy);
 							LinkedList<HRMName> tAddressesOfCluster = new LinkedList<HRMName>();
 							
-							if( tCluster instanceof IntermediateCluster ) {
-								for(CoordinatorCEPDemultiplexed tCEP : ((IntermediateCluster)tCluster).getParticipatingCEPs()) {
+							if( tCluster instanceof Cluster ) {
+								for(CoordinatorCEPDemultiplexed tCEP : ((Cluster)tCluster).getParticipatingCEPs()) {
 									tAddressesOfCluster.add(tCEP.getPeerName());
 								}
 							}
