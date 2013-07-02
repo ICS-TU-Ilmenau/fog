@@ -17,10 +17,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 
-/**
- * @author ossy
- *
- */
+
 public class RoutingServiceLinkVector implements Serializable
 {
 	private static final long serialVersionUID = -5849337098555217923L;

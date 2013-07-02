@@ -30,7 +30,7 @@ public class NeighborZoneAnnounce implements Serializable
 	private int mLevel;
 	private HRMName mCoordAddress;
 	private boolean mAnnouncerHasAddress = false;;
-	private LinkedList<RoutingServiceLinkVector> mServiceLinks;
+	private LinkedList<RoutingServiceLinkVector> mRoutingLinks;
 	private float mClusterCoordinatorPriority;
 	private int mToken;
 	private Long mClusterID;
@@ -99,7 +99,7 @@ public class NeighborZoneAnnounce implements Serializable
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(COORDINATOR:" + mCoordinatorName.toString() + ",ID:" + mClusterID + ")@L(" + mLevel + ")VECTORS(" + mServiceLinks + ")|" + (mReject ? ("(REJECT)") : "") + (mForeignAnnouncement ? "|FOREIGN" : "");
+		return getClass().getSimpleName() + "(COORDINATOR:" + mCoordinatorName.toString() + ",ID:" + mClusterID + ")@L(" + mLevel + ")VECTORS(" + mRoutingLinks + ")|" + (mReject ? ("(REJECT)") : "") + (mForeignAnnouncement ? "|FOREIGN" : "");
 	}
 	
 	/**
@@ -145,11 +145,11 @@ public class NeighborZoneAnnounce implements Serializable
 	public void addRoutingVector(RoutingServiceLinkVector pLink)
 	{
 		Logging.log(this, "Added routing service link vector " + pLink);
-		if(mServiceLinks == null) {
-			mServiceLinks = new LinkedList<RoutingServiceLinkVector>();
-			mServiceLinks.add(pLink);
+		if(mRoutingLinks == null) {
+			mRoutingLinks = new LinkedList<RoutingServiceLinkVector>();
+			mRoutingLinks.add(pLink);
 		} else {
-			mServiceLinks.add(pLink);
+			mRoutingLinks.add(pLink);
 		}
 	}
 	
@@ -159,7 +159,7 @@ public class NeighborZoneAnnounce implements Serializable
 	 */
 	public LinkedList<RoutingServiceLinkVector> getRoutingVectors()
 	{
-		return mServiceLinks;
+		return mRoutingLinks;
 	}
 	
 	/**
@@ -266,7 +266,7 @@ public class NeighborZoneAnnounce implements Serializable
 	 */
 	public void setRoutingVectors(LinkedList<RoutingServiceLinkVector> pVectors)
 	{
-		mServiceLinks = pVectors;
+		mRoutingLinks = pVectors;
 	}
 	
 	/**
