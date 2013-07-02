@@ -61,16 +61,17 @@ import de.tuilmenau.ics.fog.ui.Logging;
 
 
 /**
- * Editor for showing and editing the internals of a bus.
+ * The HRM viewer, which depicts all information from an HRM controller.
+ * 
  */
-public class CoordinatorEditor extends EditorPart
+public class HRMViewer extends EditorPart
 {
 	private HRMController mCoordinator = null;
     private Composite mShell = null;
     private ScrolledComposite mScroller = null;
     private Composite mContainer = null;
 	
-	public CoordinatorEditor()
+	public HRMViewer()
 	{
 	}
 	
