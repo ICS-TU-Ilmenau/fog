@@ -88,20 +88,31 @@ public class HRMViewer extends EditorPart
 		GridLayout tLayout = new GridLayout(1, true);
 		mContainer.setLayout(tLayout);
 		
+		/**
+		 * GUI part 0: cluster information
+		 */
 		for(int i = 0; i <= HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
+			
 			if (DEBUG_HRM_VIEWER)
 				Logging.log(this, "Amount of found clusters: " + mCoordinator.getClusters().size());
+			
 			int j = -1;
-			for(ICluster tCluster : mCoordinator.getClusters()) {
+			
+			for (ICluster tCluster : mCoordinator.getClusters()) {
 				j++;
+				
 				if (DEBUG_HRM_VIEWER)
 					Logging.log(this, "Printing cluster " + j + ": " + tCluster.toString());
+				
 				if( !(tCluster instanceof NeighborCluster) && tCluster.getLevel() == i) {
 					printCluster(tCluster);
 				}
 			}
 		}
 		
+		/**
+		 * GUI part 2: 
+		 */
 		Text overviewText = new Text(mContainer, SWT.BORDER);;
 		overviewText.setText("Approved signatures: " + mCoordinator.getApprovedSignatures());
 		
@@ -188,6 +199,9 @@ public class HRMViewer extends EditorPart
 		tMappingTable.setLinesVisible(true);
 		
 		
+		/**
+		 * 
+		 */
 		tColumnHRMID.addListener(SWT.Selection, new Listener() {
 		      public void handleEvent(Event e) {
 		        // sort column 2
@@ -433,7 +447,7 @@ public class HRMViewer extends EditorPart
 		}
 		
 		/**
-		 * GUI part 3: table about coordinators 
+		 * GUI part 3: table about CEPs 
 		 */
 		Table tTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		TableColumn tColumnCoordinator = new TableColumn(tTable, SWT.NONE, 0);
@@ -654,7 +668,7 @@ public class HRMViewer extends EditorPart
 					 */
 					String tTargetString = (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : null);
 					if(tTargetString == null) {
-						tTargetString = tCoordinator.getPathToCoordinator(tCoordinator.getManagedCluster(), tCoordinator.getCoordinator().getCluster(tEntry.getNextCluster())).toString();
+						tTargetString = tCoordinator.getPathToCoordinator(tCoordinator.getManagedCluster(), tCoordinator.getHRMController().getCluster(tEntry.getNextCluster())).toString();
 					}
 					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "UNKNOWN"));
 					

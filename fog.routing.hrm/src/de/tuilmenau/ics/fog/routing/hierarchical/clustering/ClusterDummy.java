@@ -89,7 +89,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public HRMController getCoordinator() {
+	public HRMController getHRMController() {
 		return null;
 	}
 

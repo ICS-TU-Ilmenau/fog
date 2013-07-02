@@ -91,7 +91,7 @@ public class ElectionProcess extends Thread
 		
 		// avoid duplicates: iterate over all already known clusters and check if pCluster is already contained
 		for(ICluster tCluster : mElectingClusters) {
-			if(tCluster.getCoordinator().getPhysicalNode().getName().equals(pCluster.getCoordinator().getPhysicalNode().getName())) {
+			if(tCluster.getHRMController().getPhysicalNode().getName().equals(pCluster.getHRMController().getPhysicalNode().getName())) {
 				tClusterIsAlreadyKnown = true;
 			}
 		}
@@ -124,7 +124,7 @@ public class ElectionProcess extends Thread
 				Logging.log(this, "Sending elections from " + tCluster);
 				for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
 					if(tCEP.getPeerPriority() == 0 && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
-						tCEP.write(new BullyElect(tCluster.getCoordinator().getPhysicalNode().getCentralFN().getName(), tCluster.getPriority(), tCluster.getLevel()));
+						tCEP.write(new BullyElect(tCluster.getHRMController().getPhysicalNode().getCentralFN().getName(), tCluster.getPriority(), tCluster.getLevel()));
 					}
 				}
 			}
@@ -142,48 +142,48 @@ public class ElectionProcess extends Thread
 	public void initiateCoordinatorFunctions(Cluster pCluster)
 	{
 		Random tRandom = new Random(System.currentTimeMillis());
-		HRMController tCoordinator = pCluster.getCoordinator();
+		HRMController tCoordinator = pCluster.getHRMController();
 		Node tReferenceNode = tCoordinator.getPhysicalNode();
 		int tToken = tRandom.nextInt();
 		
 		pCluster.setToken(tToken);
-		pCluster.getCoordinator().getLogger().log(pCluster, "generated token " + tToken);
+		pCluster.getHRMController().getLogger().log(pCluster, "generated token " + tToken);
 
-		if(pCluster.getCoordinator().getIdentity() == null) {
+		if(pCluster.getHRMController().getIdentity() == null) {
 			String tName = tReferenceNode.getName();
 			HRMIdentity tIdentity= new HRMIdentity(tName, pCluster.getLevel());
-			pCluster.getCoordinator().setIdentity(tIdentity);
+			pCluster.getHRMController().setIdentity(tIdentity);
 		}
 		
-		pCluster.getCoordinator().getIdentity().setLevel(pCluster.getLevel());
+		pCluster.getHRMController().getIdentity().setLevel(pCluster.getLevel());
 		try {
-			BullyAnnounce tAnnounce = new BullyAnnounce(tReferenceNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getCoordinator().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
+			BullyAnnounce tAnnounce = new BullyAnnounce(tReferenceNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
 			for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
 				tAnnounce.addCoveredNode(tCEP.getPeerName());
 			}
 			if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
-				pCluster.getCoordinator().getLogger().log(this, "Sending announce that does not cover anyhting");
+				pCluster.getHRMController().getLogger().log(this, "Sending announce that does not cover anyhting");
 			}
 			pCluster.sendClusterBroadcast(tAnnounce, null);
 			
 			Name tAddress = tReferenceNode.getRoutingService().getNameFor(tReferenceNode.getCentralFN());; 
 			
-			pCluster.setCoordinatorCEP(null, pCluster.getCoordinator().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), tReferenceNode.getCentralFN().getName(), (L2Address)tAddress);
-			if(pCluster.getCoordinator().getIdentity() == null) {
-				pCluster.getCoordinator().setIdentity(new HRMIdentity(getCoordinator().getPhysicalNode().getName(), pCluster.getLevel()));
+			pCluster.setCoordinatorCEP(null, pCluster.getHRMController().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), tReferenceNode.getCentralFN().getName(), (L2Address)tAddress);
+			if(pCluster.getHRMController().getIdentity() == null) {
+				pCluster.getHRMController().setIdentity(new HRMIdentity(getCoordinator().getPhysicalNode().getName(), pCluster.getLevel()));
 			}
 			LinkedList<HRMSignature> tSignatures = tCoordinator.getApprovedSignatures();
 			tSignatures.add(tCoordinator.getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()));
 			
 			if(mLevel > 0) {
-				pCluster.getCoordinator().getLogger().log(pCluster, "has the coordinator and will now announce itself");
+				pCluster.getHRMController().getLogger().log(pCluster, "has the coordinator and will now announce itself");
 				for(ICluster tToAnnounce : pCluster.getNeighbors()) {
 //					List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);
 					/*
 					 * OK: Because of the formerly sent 
 					 */
 					if(tToAnnounce instanceof NeighborCluster) {
-						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tReferenceNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getCoordinator().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
+						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tReferenceNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
 						for(CoordinatorCEPDemultiplexed tCEP: pCluster.getParticipatingCEPs()) {
 							tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
 						}
@@ -194,7 +194,7 @@ public class ElectionProcess extends Thread
 				}
 			}
 		} catch (AuthenticationException tExc) {
-			pCluster.getCoordinator().getLogger().err(this, "Unable to create signature for coordinator", tExc);
+			pCluster.getHRMController().getLogger().err(this, "Unable to create signature for coordinator", tExc);
 		}
 		
 		
@@ -211,9 +211,9 @@ public class ElectionProcess extends Thread
 			 */
 			mClusterManager = new Coordinator(pCluster, pCluster.getLevel()+1, pCluster.retrieveAddress());
 			pCluster.setClusterManager(mClusterManager);
-			pCluster.getCoordinator().setSourceIntermediateCluster(mClusterManager, pCluster);
+			pCluster.getHRMController().setSourceIntermediateCluster(mClusterManager, pCluster);
 			mClusterManager.setPriority(pCluster.getPriority());
-			pCluster.getCoordinator().addCluster(mClusterManager);
+			pCluster.getHRMController().addCluster(mClusterManager);
 			if(pCluster.getLevel() +1 != HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT) {
 				// stepwise hierarchy creation
 				Logging.log(this, "Will now wait because hierarchy build up is done stepwise");
@@ -263,7 +263,7 @@ public class ElectionProcess extends Thread
 				if(tPriority >= tCluster.getHighestPriority()) {
 					tCluster.setHighestPriority(tPriority);
 				} else {
-					if(pVerbose) tCluster.getCoordinator().getLogger().log(tCluster, "has lower priority than " + tCEP + " while mine is " + tCluster.getPriority());
+					if(pVerbose) tCluster.getHRMController().getLogger().log(tCluster, "has lower priority than " + tCEP + " while mine is " + tCluster.getPriority());
 				}
 			}
 		}
@@ -314,7 +314,7 @@ public class ElectionProcess extends Thread
 						/*
 						 * For loop can be ignored as this can only happen in case we are above level one
 						 */
-						while((tCluster.getCoordinator().getClusterWithCoordinatorOnLevel(tCluster.getLevel()) == null)) {
+						while((tCluster.getHRMController().getClusterWithCoordinatorOnLevel(tCluster.getLevel()) == null)) {
 							tCluster.setHighestPriority(tCluster.getPriority());
 							Logging.log(tCluster, " did not yet receive an announcement");
 							for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
@@ -341,11 +341,11 @@ public class ElectionProcess extends Thread
 								}
 								for(CoordinatorCEPDemultiplexed tCEP: tCluster.getParticipatingCEPs()) {
 									if(! tCEP.knowsCoordinator()) {
-										if(!tCluster.getCoordinator().checkPathToTargetContainsCovered(tCluster.getCoordinator().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster(), tCEPs)) {
-											tCluster.getCoordinator().getLogger().log(tCluster, "adding laggard " + tCEP + " while clusters between are " + tCluster.getCoordinator().getClusterMap().getIntermediateNodes(tCluster.getCoordinator().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster()));
+										if(!tCluster.getHRMController().checkPathToTargetContainsCovered(tCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster(), tCEPs)) {
+											tCluster.getHRMController().getLogger().log(tCluster, "adding laggard " + tCEP + " while clusters between are " + tCluster.getHRMController().getClusterMap().getIntermediateNodes(tCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster()));
 											tCluster.addLaggard(tCEP);
 										} else {
-											tCluster.getCoordinator().getLogger().info(tCluster, "not adding laggard " + tCEP);
+											tCluster.getHRMController().getLogger().info(tCluster, "not adding laggard " + tCEP);
 										}
 									} 
 								}
@@ -356,7 +356,7 @@ public class ElectionProcess extends Thread
 								((Cluster)tCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPDemultiplexed>) tCluster.getLaggards().clone());
 								tCluster.getLaggards().clear();
 							}
-							if(tCluster.getCoordinator().getClusterWithCoordinatorOnLevel(tCluster.getLevel()) == null) {
+							if(tCluster.getHRMController().getClusterWithCoordinatorOnLevel(tCluster.getLevel()) == null) {
 								checkClustersForHighestPriority(true);
 							} else {
 								break;
@@ -529,7 +529,7 @@ public class ElectionProcess extends Thread
 					if(mNotification == null) {
 						mNotification = new ElectionNotification(mElections.get(pLevel).values());
 						for(ElectionProcess tProcess : mElections.get(pLevel).values()) {
-							tProcess.mElectingClusters.getFirst().getCoordinator().getPhysicalNode().getAS().getSimulation().getTimeBase().scheduleIn(5, mNotification);
+							tProcess.mElectingClusters.getFirst().getHRMController().getPhysicalNode().getAS().getSimulation().getTimeBase().scheduleIn(5, mNotification);
 							break;
 						}
 					} else {

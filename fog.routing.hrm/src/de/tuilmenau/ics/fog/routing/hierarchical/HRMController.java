@@ -316,10 +316,10 @@ public class HRMController extends Application implements IServerCallback
 	public IVirtualNode getLastUncovered(IVirtualNode pSourceCluster, IVirtualNode pTargetCluster)
 	{	
 		if(pSourceCluster == null || pTargetCluster == null) {
-			((ICluster)pSourceCluster).getCoordinator().getLogger().log("You did not provide clusters for path search: " + pSourceCluster + " to " + pTargetCluster);
+			((ICluster)pSourceCluster).getHRMController().getLogger().log("You did not provide clusters for path search: " + pSourceCluster + " to " + pTargetCluster);
 			return null;
 		}
-		ClusterMap<IVirtualNode, NodeConnection> tMap = ((ICluster)pSourceCluster).getCoordinator().getClusterMap();
+		ClusterMap<IVirtualNode, NodeConnection> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
 		List<NodeConnection> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		IVirtualNode tPredecessor=pSourceCluster;
 		for(NodeConnection tLink: tClusterConnection) {
@@ -345,7 +345,7 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "checking cluster route between null and null");
 			return false;
 		}
-		ClusterMap<IVirtualNode, NodeConnection> tMap = ((ICluster)pSourceCluster).getCoordinator().getClusterMap();
+		ClusterMap<IVirtualNode, NodeConnection> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
 		List<NodeConnection> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		String tCheckedClusters = new String();
 		boolean isCovered = false;

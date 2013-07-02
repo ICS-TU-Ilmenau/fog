@@ -122,7 +122,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 			} else if(pData instanceof BullyElect)	{
 				if(getCluster().getCoordinatorCEP() != null && ((BullyElect)pData).getSenderPriority() < getCluster().getHighestPriority()) {
 					mPeerPriority = ((BullyElect)pData).getSenderPriority();
-					if(getCluster().getCoordinator().equals(tPhysicalNode.getCentralFN().getName())) {
+					if(getCluster().getHRMController().equals(tPhysicalNode.getCentralFN().getName())) {
 						BullyAnnounce tAnnounce = new BullyAnnounce(tPhysicalNode.getCentralFN().getName(), getCluster().getPriority(), getCoordinator().getIdentity().createSignature(tPhysicalNode.toString(), null, getCluster().getLevel()), getCluster().getToken());
 						mLogger.log(this, " Sending bullyannounce because I have a coordinator: " + tAnnounce);
 						for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
@@ -331,17 +331,17 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				RequestCoordinator tRequest = (RequestCoordinator) pData;
 				if(!tRequest.isAnswer()) {
 					if(getCluster().getCoordinatorCEP() != null) {
-						Logging.log(this, "Name of coordinator is " + getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorName());
+						Logging.log(this, "Name of coordinator is " + getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorName());
 						
-						int tToken = getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getToken();
-						Name tCoordinatorName = getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorName();
-						long tCoordinatorAddress = getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorsAddress().getAddress().longValue();
-						HRMName tL2Address = getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorsAddress();
-						int tLevel = getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getLevel();
+						int tToken = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getToken();
+						Name tCoordinatorName = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorName();
+						long tCoordinatorAddress = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorsAddress().getAddress().longValue();
+						HRMName tL2Address = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorsAddress();
+						int tLevel = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getLevel();
 						
 						DiscoveryEntry tEntry = new DiscoveryEntry(tToken, tCoordinatorName, tCoordinatorAddress, tL2Address, tLevel);
 						tEntry.setPriority(getCluster().getNodePriority());
-						tEntry.setRoutingVectors(getPath(getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorsAddress()));
+						tEntry.setRoutingVectors(getPath(getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorsAddress()));
 						tRequest.addDiscoveryEntry(tEntry);
 						tRequest.setCoordinatorKnown(true);
 						tRequest.setAnswer();
@@ -359,7 +359,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 					if(tRequest.getDiscoveryEntries() != null) {
 						for(DiscoveryEntry tEntry : tRequest.getDiscoveryEntries()) {
 							ClusterDummy tDummy = handleDiscoveryEntry(tEntry);
-							getCluster().getCoordinator().getCluster(ClusterDummy.compare((((HRMName)getSourceName()).getAddress().longValue()), getCluster().getToken(), getCluster().getLevel())).addNeighborCluster(getCluster().getCoordinator().getCluster(tDummy));
+							getCluster().getHRMController().getCluster(ClusterDummy.compare((((HRMName)getSourceName()).getAddress().longValue()), getCluster().getToken(), getCluster().getLevel())).addNeighborCluster(getCluster().getHRMController().getCluster(tDummy));
 							addAnnouncedCluster(getCoordinator().getCluster(tDummy), getRemoteCluster());
 						}
 					}
@@ -424,7 +424,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	{
 		if(pCluster.getCoordinatorName() != null) {
 			DiscoveryEntry tEntry = new DiscoveryEntry(pCluster.getToken(), pCluster.getCoordinatorName(), pCluster.getClusterID(), pCluster.getCoordinatorsAddress(), pCluster.getLevel());
-			tEntry.setClusterHops(getCluster().getCoordinator().getClusterDistance(pCluster));
+			tEntry.setClusterHops(getCluster().getHRMController().getClusterDistance(pCluster));
 			tEntry.setPriority(pCluster.getPriority());
 			tEntry.setRoutingVectors(getPath(pCluster.getCoordinatorsAddress()));
 			if(pCluster.isInterASCluster()) {
@@ -519,7 +519,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				mAnnouncerMapping.remove(pAnnounced);
 				mAnnouncerMapping.put(pAnnounced, pNegotiate);
 			} else if (pNegotiate instanceof NeighborCluster && mAnnouncerMapping.get(pAnnounced) instanceof NeighborCluster && ((NeighborCluster)pNegotiate).getClustersToTarget() < ((NeighborCluster)mAnnouncerMapping.get(pAnnounced)).getClustersToTarget()) {
-				getCluster().getCoordinator().getLogger().log(this, "replacing negotiating cluster of " + pAnnounced + ": " + mAnnouncerMapping.get(pAnnounced) + " with " + pNegotiate);
+				getCluster().getHRMController().getLogger().log(this, "replacing negotiating cluster of " + pAnnounced + ": " + mAnnouncerMapping.get(pAnnounced) + " with " + pNegotiate);
 				mAnnouncerMapping.remove(pAnnounced);
 				mAnnouncerMapping.put(pAnnounced, pNegotiate);
 			}
@@ -668,14 +668,9 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				/*
 				 * Be aware of the fact that the new attached cluster has lower level
 				 */
-				tNewCluster = new NeighborCluster(
-						pEntry.getClusterID(),
-						pEntry.getCoordinatorName(),
-						pEntry.getCoordinatorRoutingAddress(),
-						pEntry.getToken(),
-						pEntry.getLevel(),
-						getCoordinator());
-				getCluster().getCoordinator().setSourceIntermediateCluster(tNewCluster, getCluster().getCoordinator().getSourceIntermediate(getCluster()));
+				tNewCluster = new NeighborCluster(pEntry.getClusterID(), pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress(), pEntry.getToken(), pEntry.getLevel(), getCoordinator());
+				
+				getCluster().getHRMController().setSourceIntermediateCluster(tNewCluster, getCluster().getHRMController().getSourceIntermediate(getCluster()));
 				((NeighborCluster)tNewCluster).addAnnouncedCEP(this);
 				tNewCluster.setToken(pEntry.getToken());
 				tNewCluster.setPriority(pEntry.getPriority());

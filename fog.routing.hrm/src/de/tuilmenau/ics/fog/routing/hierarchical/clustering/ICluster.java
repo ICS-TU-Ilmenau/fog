@@ -53,7 +53,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 *  
 	 * @return Return the coordinator object of a node that is used for cluster handling etc.
 	 */
-	public HRMController getCoordinator();
+	public HRMController getHRMController();
 	
 	/**
 	 * 

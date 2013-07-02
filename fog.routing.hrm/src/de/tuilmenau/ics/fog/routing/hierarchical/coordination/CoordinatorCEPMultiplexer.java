@@ -157,7 +157,7 @@ public class CoordinatorCEPMultiplexer
 			getLogger().log(this, "Connecting to " + pTargetCluster);
 			Connection tConn = null;;
 			try {
-				tConn = pSourceCluster.getCoordinator().getHost().connectBlock(tName, tConnectDescription, tIdentity);
+				tConn = pSourceCluster.getHRMController().getHost().connectBlock(tName, tConnectDescription, tIdentity);
 				tCEP.start(tConn);
 				tCEP.write(tCEP.getSourceRoutingServiceAddress());
 			} catch (NetworkException tExc) {

@@ -101,7 +101,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	
 	public int getClustersToTarget()
 	{
-		return getCoordinator().getClusterDistance(this);
+		return getHRMController().getClusterDistance(this);
 	}
 
 	public float getHighestPriority()
@@ -127,10 +127,10 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
-				getCoordinator().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
+				getHRMController().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		ICluster tCluster = getCoordinator().getCluster(ClusterDummy.compare(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
+		ICluster tCluster = getHRMController().getCluster(ClusterDummy.compare(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
 		if(tCluster == null)
 		{
 			tCluster = new NeighborCluster(
@@ -139,8 +139,8 @@ public class NeighborCluster implements ICluster, IElementDecorator
 					pAnnounce.getCoordAddress(),
 					pAnnounce.getToken(),
 					mLevel,
-					getCoordinator());
-			getCoordinator().setSourceIntermediateCluster(tCluster, getCoordinator().getSourceIntermediate(this));
+					getHRMController());
+			getHRMController().setSourceIntermediateCluster(tCluster, getHRMController().getSourceIntermediate(this));
 			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			tCluster.setToken(pAnnounce.getToken());
@@ -155,10 +155,10 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		addNeighborCluster(tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
-			RoutingService tRS = (RoutingService)getCoordinator().getPhysicalNode().getRoutingService();
+			RoutingService tRS = (RoutingService)getHRMController().getPhysicalNode().getRoutingService();
 			if(! tRS.isKnown(pAnnounce.getCoordinatorName())) {
 				try {
-					getCoordinator().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
+					getHRMController().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 				} catch (RemoteException tExc) {
 					getLogger().err(this, "Unable to register " + pAnnounce.getCoordinatorName() + " at name mapping service", tExc);
 				}
@@ -180,7 +180,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 
 	public void addNeighborCluster(ICluster pNeighbor)
 	{
-		getCoordinator().getClusterMap().link(this,	pNeighbor, new NodeConnection(NodeConnection.ConnectionType.REMOTE));
+		getHRMController().getClusterMap().link(this,	pNeighbor, new NodeConnection(NodeConnection.ConnectionType.REMOTE));
 	}
 
 	public void setRouteToCoordinator(Route pPath)
@@ -214,7 +214,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public HRMController getCoordinator() {
+	public HRMController getHRMController() {
 		return mCoordinatorInstance;
 	}
 
@@ -288,7 +288,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	@Override
 	public LinkedList<ICluster> getNeighbors() {
 		LinkedList<ICluster> tCluster = new LinkedList<ICluster>();
-		for(IVirtualNode tNode : getCoordinator().getClusterMap().getNeighbors(this)) {
+		for(IVirtualNode tNode : getHRMController().getClusterMap().getNeighbors(this)) {
 			if(tNode instanceof ICluster) {
 				tCluster.add((ICluster) tNode);
 			}
@@ -335,7 +335,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		if(mHRMID != null && HRMConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
 			return mHRMID.toString();
 		} else {
-			return getClusterDescription() + ":HOPS(" + getCoordinator().getClusterDistance(this) + ")" + (mInterASCluster ? "InterAS" : "");
+			return getClusterDescription() + ":HOPS(" + getHRMController().getClusterDistance(this) + ")" + (mInterASCluster ? "InterAS" : "");
 		}
 	}
 
@@ -411,9 +411,9 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		CoordinatorCEPDemultiplexed tClosest = null;
 		for(CoordinatorCEPDemultiplexed tCEP : mAnnouncedCEPs) {
 			ICluster tRemoteCluster = tCEP.getRemoteCluster();
-			tRemoteCluster = getCoordinator().getCluster(tRemoteCluster) != null ? getCoordinator().getCluster(tRemoteCluster) : tRemoteCluster;
+			tRemoteCluster = getHRMController().getCluster(tRemoteCluster) != null ? getHRMController().getCluster(tRemoteCluster) : tRemoteCluster;
 			if(pCluster.getLevel() == tRemoteCluster.getLevel()) {
-				List<NodeConnection> tConnection = getCoordinator().getClusterMap().getRoute(pCluster, tRemoteCluster);
+				List<NodeConnection> tConnection = getHRMController().getClusterMap().getRoute(pCluster, tRemoteCluster);
 				int tDistance = 0;
 				if(tConnection != null) {
 					tDistance = tConnection.size();
@@ -519,7 +519,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 
 	public Logger getLogger()
 	{
-		return getCoordinator().getLogger();
+		return getHRMController().getLogger();
 	}
 	
 	public int hashCode()
