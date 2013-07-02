@@ -48,31 +48,31 @@ public class ClusterViewer extends EditorAWT implements IController
 	}
 	
 	@Override
-	public void init(IEditorSite site, IEditorInput input) throws PartInitException
+	public void init(IEditorSite pSite, IEditorInput pInput) throws PartInitException
 	{
-		setSite(site);
-		setInput(input);
+		setSite(pSite);
+		setInput(pInput);
 		
 		// get selected object to show in editor
-		if(input instanceof EditorInput) {
-			inputObject = ((EditorInput) input).getObj();
+		if(pInput instanceof EditorInput) {
+			mEditorParameter = ((EditorInput) pInput).getObj();
 		} else {
-			inputObject = null;
+			mEditorParameter = null;
 		}
-		Logging.log(this, "init editor for " +inputObject + " (class=" +inputObject.getClass() +")");
+		Logging.log(this, "init editor for " + mEditorParameter + " (class=" + mEditorParameter.getClass() +")");
 		
 		// update title of editor
-		setTitle(inputObject.toString());
+		setTitle(mEditorParameter.toString());
 		
 		// configure view
-		if(inputObject != null) {
-			if(inputObject instanceof HRMController) {
+		if(mEditorParameter != null) {
+			if(mEditorParameter instanceof HRMController) {
 				GraphViewer<RoutingServiceAddress,RoutingServiceLink> tViewer = new GraphViewer<RoutingServiceAddress,RoutingServiceLink>(this);
-				tViewer.init((RoutableGraph)((HRMController) inputObject).getClusterMap());
+				tViewer.init((RoutableGraph)((HRMController) mEditorParameter).getClusterMap());
 				setView(tViewer.getComponent());
 			}
 			else {
-				throw new PartInitException("Invalid input '" +inputObject + "' for editor.");
+				throw new PartInitException("Invalid input '" + mEditorParameter + "' for editor.");
 			}
 		} else {
 			throw new PartInitException("No input for editor.");
@@ -80,16 +80,18 @@ public class ClusterViewer extends EditorAWT implements IController
 	}
 
 	@Override
-	public Object getAdapter(Class required)
+	public Object getAdapter(Class pFilter)
 	{
-		if(getClass().equals(required)) return this;
+		if (getClass().equals(pFilter)) {
+			return this;
+		}
 		
-		Object res = super.getAdapter(required);
+		Object res = super.getAdapter(pFilter);
 		
 		if(res == null) {
-			res = Platform.getAdapterManager().getAdapter(this, required);
+			res = Platform.getAdapterManager().getAdapter(this, pFilter);
 			
-			if(res == null)	res = Platform.getAdapterManager().getAdapter(inputObject, required);
+			if(res == null)	res = Platform.getAdapterManager().getAdapter(mEditorParameter, pFilter);
 		}
 		
 		return res;
@@ -99,7 +101,7 @@ public class ClusterViewer extends EditorAWT implements IController
 	public void selected(Object selection, boolean pByDefaultButton, int clickCount)
 	{
 		// default: select whole object represented in the view
-		if(selection == null) selection = inputObject;
+		if(selection == null) selection = mEditorParameter;
 
 		Logging.trace(this, "Selected: " +selection);
 		
@@ -152,7 +154,7 @@ public class ClusterViewer extends EditorAWT implements IController
 				popup.addSeparator();
 			}
 			
-			menuCreator.fillMenu(inputObject, popup);
+			menuCreator.fillMenu(mEditorParameter, popup);
 		}
 		
 		//
@@ -167,7 +169,7 @@ public class ClusterViewer extends EditorAWT implements IController
 		}
 	}
 	
-	private Object inputObject = null;
+	private Object mEditorParameter = null;
 	private SelectionProvider selectionCache = null;
 	private MenuCreator menuCreator = null;
 }
