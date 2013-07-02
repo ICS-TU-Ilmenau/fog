@@ -18,7 +18,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 //import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -137,7 +137,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 * 
 	 * @return Find out which signature the coordinator actually has.
 	 */
-	public HierarchicalSignature getCoordinatorSignature();
+	public HRMSignature getCoordinatorSignature();
 	
 	/**
 	 * 
@@ -190,7 +190,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 * @param pAddress The address of the coordinator can be set here. It can be either an OSI Layer 2 address or a HRMID. However using the last type as address
 	 * was not implemented. 
 	 */
-	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HierarchicalSignature pCoordSignature, Name pCoordName, HRMName pAddress);
+	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress);
 	
 	/**
 	 * 

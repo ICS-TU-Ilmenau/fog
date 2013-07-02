@@ -71,8 +71,8 @@ public class HRMController extends Application implements IServerCallback
 	private HashMap<Long, RouteRequest> mSessionToRequest = null;
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
 	private LinkedList<LinkedList<Coordinator>> mClusterManagers;
-	private LinkedList<HierarchicalSignature> mApprovedSignatures;
-	private HierarchicalIdentity mIdentity;
+	private LinkedList<HRMSignature> mApprovedSignatures;
+	private HRMIdentity mIdentity;
 	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
 	/**
@@ -105,7 +105,7 @@ public class HRMController extends Application implements IServerCallback
 			Logging.err(this, "Unable to bind to hosts application interface", tExc);
 		}
 		mHRS = pHRS;
-		mApprovedSignatures = new LinkedList<HierarchicalSignature>();
+		mApprovedSignatures = new LinkedList<HRMSignature>();
 	}
 
 	/**
@@ -757,7 +757,7 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @return list of all signatures that were already approved
 	 */
-	public LinkedList<HierarchicalSignature> getApprovedSignatures()
+	public LinkedList<HRMSignature> getApprovedSignatures()
 	{
 		return mApprovedSignatures;
 	}
@@ -766,10 +766,10 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @param pSignature is a signature that validates a FIB entry.
 	 */
-	public void addApprovedSignature(HierarchicalSignature pSignature)
+	public void addApprovedSignature(HRMSignature pSignature)
 	{
 		if(mApprovedSignatures == null) {
-			mApprovedSignatures = new LinkedList<HierarchicalSignature>();
+			mApprovedSignatures = new LinkedList<HRMSignature>();
 		}
 		if(!mApprovedSignatures.contains(pSignature)) {
 			mApprovedSignatures.add(pSignature);
@@ -789,12 +789,12 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @param pIdentity is the identity that is supposed to be used for signing FIB entries
 	 */
-	public void setIdentity(HierarchicalIdentity pIdentity)
+	public void setIdentity(HRMIdentity pIdentity)
 	{
 		mIdentity = pIdentity;
 	}
 
-	public HierarchicalIdentity getIdentity()
+	public HRMIdentity getIdentity()
 	{
 		return mIdentity;
 	}

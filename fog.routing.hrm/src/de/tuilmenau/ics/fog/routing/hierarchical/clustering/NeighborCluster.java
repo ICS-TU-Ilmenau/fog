@@ -24,7 +24,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEP;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
@@ -55,7 +55,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	protected Long mClusterID;
 	protected HRMController mCoordinatorInstance;
 	protected CoordinatorCEP mCEP;
-	protected HierarchicalSignature mCoordSignature;
+	protected HRMSignature mCoordSignature;
 	protected Route mRouteToCoordinator;
 	protected HRMID mHRMID;
 	protected Name mAnnouncer;
@@ -172,7 +172,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return null;
 	}
 
-	public synchronized void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HierarchicalSignature pCoordSignature, Name pCoordName, HRMName pAddress)
+	public synchronized void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
 	{
 		mCoordAddress = pAddress;
 		mCoordName = pCoordName;
@@ -297,7 +297,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public HierarchicalSignature getCoordinatorSignature() {
+	public HRMSignature getCoordinatorSignature() {
 		return mCoordSignature;
 	}
 

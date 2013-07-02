@@ -14,12 +14,12 @@ import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Signature;
 
-public class HierarchicalSignature extends SimpleSignature
+public class HRMSignature extends SimpleSignature
 {
 	private static final long serialVersionUID = 4847037702247056096L;
 	private int mLevel = 0;
 	
-	public HierarchicalSignature(Identity pIdentity, Object pOrigin, byte[] pSignature, int pLevel) throws AuthenticationException
+	public HRMSignature(Identity pIdentity, Object pOrigin, byte[] pSignature, int pLevel) throws AuthenticationException
 	{
 		super(pIdentity);
 		mLevel = pLevel;
@@ -42,8 +42,8 @@ public class HierarchicalSignature extends SimpleSignature
 	
 	public boolean equals(Object pObj)
 	{
-		if(pObj instanceof HierarchicalSignature) {
-			return ((HierarchicalSignature)pObj).getLevel() == getLevel() && ((HierarchicalSignature)pObj).getIdentity().equals(getIdentity());
+		if(pObj instanceof HRMSignature) {
+			return ((HRMSignature)pObj).getLevel() == getLevel() && ((HRMSignature)pObj).getIdentity().equals(getIdentity());
 		} else if(pObj instanceof Signature) {
 			return ((Signature)pObj).getIdentity().equals(getIdentity());
 		}

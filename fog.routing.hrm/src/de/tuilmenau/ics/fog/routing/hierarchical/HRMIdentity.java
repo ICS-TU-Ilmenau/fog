@@ -12,20 +12,20 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 import de.tuilmenau.ics.fog.authentication.SimpleIdentity;
 import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 
-public class HierarchicalIdentity extends SimpleIdentity
+public class HRMIdentity extends SimpleIdentity
 {
 	private static final long serialVersionUID = -1773497102949450924L;
 	int mLevel = 0;
 	
-	public HierarchicalIdentity(String pName, int pLevel)
+	public HRMIdentity(String pName, int pLevel)
 	{
 		super(pName);
 		mLevel = pLevel;
 	}
 	
-	public HierarchicalSignature createSignature(Object pOrigin, byte[] pData, int pLevel) throws AuthenticationException
+	public HRMSignature createSignature(Object pOrigin, byte[] pData, int pLevel) throws AuthenticationException
 	{
-		return new HierarchicalSignature(this, pOrigin, pData, pLevel);
+		return new HRMSignature(this, pOrigin, pData, pLevel);
 	}
 	
 	public void setLevel(int pLevel)

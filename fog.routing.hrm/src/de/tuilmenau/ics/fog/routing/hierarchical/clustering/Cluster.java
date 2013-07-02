@@ -30,7 +30,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMult
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
@@ -52,6 +52,12 @@ import de.tuilmenau.ics.fog.util.Logger;
  */
 public class Cluster implements ICluster, IElementDecorator
 {
+	/**
+	 * This is the GUI specific cluster counter, which allows for globally unique cluster IDs.
+	 * It's only used within the GUI. 	
+	 */
+	private static int sGUIClusterID = 0;
+
 	private CoordinatorCEPDemultiplexed mCoordinator;
 	private Long mClusterID;
 	private float mHighestPriority;
@@ -65,7 +71,7 @@ public class Cluster implements ICluster, IElementDecorator
 	protected LinkedList<CoordinatorCEPDemultiplexed> mCEPs;
 	protected LinkedList<NeighborZoneAnnounce> mReceivedAnnounces = null;
 	protected LinkedList<NeighborZoneAnnounce> mSentAnnounces = null;
-	protected HierarchicalSignature mCoordSignature;
+	protected HRMSignature mCoordSignature;
 	protected Route mRouteToCoordinator;
 	protected boolean mInterASCluster = false;
 	private int mToken;
@@ -79,6 +85,11 @@ public class Cluster implements ICluster, IElementDecorator
 	private LinkedList<CoordinatorCEPDemultiplexed> mOldParticipatingCEPs;
 	private Coordinator mClusterManager = null;
 	private CoordinatorCEPMultiplexer mMux = null;
+	
+	/**
+	 * This is the GUI specific cluster ID. It is used to allow for an easier debugging.
+	 */
+	private int mGUIClusterID = sGUIClusterID++;
 	
 	/**
 	 * This is the constructor of an intermediate cluster. At first such a cluster is identified by its cluster
@@ -129,7 +140,7 @@ public class Cluster implements ICluster, IElementDecorator
 		getCoordinator().setClusterWithCoordinator(getLevel(), this);
 	}
 	
-	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HierarchicalSignature pCoordSignature, Name pCoordName, HRMName pAddress)
+	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
 	{
 		getCoordinator().getLogger().log(this, "announcement number " + (++mAnnoucementCounter) + ": Setting Coordinator " + pCoord + " with signature " + pCoordSignature + " with routing address " + pAddress + " and priority ");
 		getCoordinator().getLogger().log(this, "previous coordinator was " + mCoordinator + " with name " + mCoordName);
@@ -482,7 +493,7 @@ public class Cluster implements ICluster, IElementDecorator
 		return mClusterID;
 	}
 	
-	public HierarchicalSignature getCoordinatorSignature()
+	public HRMSignature getCoordinatorSignature()
 	{
 		return mCoordSignature;
 	}
@@ -560,12 +571,17 @@ public class Cluster implements ICluster, IElementDecorator
 		return mLevel;
 	}
 	
+	public int getGUIClusterID()
+	{
+		return mGUIClusterID;
+	}
+	
 	public String toString()
 	{
 		if(mHRMID != null && HRMConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
 			return mHRMID.toString();
 		} else {
-			return "Cluster L" + mLevel + " (ID=" + getClusterID() + ", Tok=" + mToken +  ", Prio=" + getPriority() + ", Coord.=" +  (getCoordinatorSignature() != null ? getCoordinatorSignature() : "-") + (mInterASCluster ? ":transit" : "") + ")";
+			return "Cluster " + mGUIClusterID + "@L" + mLevel + " (ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getPriority() + ", Coord.=" +  (getCoordinatorSignature() != null ? getCoordinatorSignature() : "-") + (mInterASCluster ? ":transit" : "") + ")";
 
 		}
 	}
@@ -676,7 +692,7 @@ public class Cluster implements ICluster, IElementDecorator
 	public void handleTopologyEnvelope(TopologyData pEnvelope)
 	{
 		if(pEnvelope.getApprovedSignatures() != null) {
-			for(HierarchicalSignature tSignature : pEnvelope.getApprovedSignatures()) {
+			for(HRMSignature tSignature : pEnvelope.getApprovedSignatures()) {
 				getCoordinator().addApprovedSignature(tSignature);
 			}
 		}

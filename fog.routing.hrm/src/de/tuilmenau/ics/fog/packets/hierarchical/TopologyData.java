@@ -13,7 +13,7 @@ import java.io.Serializable;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -30,7 +30,7 @@ public class TopologyData implements Serializable
 	private HRMID mHRMID = null;
 	private LinkedList<FIBEntry> mForwardingEntries;
 	private LinkedList<FIBEntry> mPushThrougs = null;
-	private LinkedList<HierarchicalSignature> mApprovedSignatures = new LinkedList<HierarchicalSignature>();
+	private LinkedList<HRMSignature> mApprovedSignatures = new LinkedList<HRMSignature>();
 	
 	/**
 	 * 
@@ -52,7 +52,7 @@ public class TopologyData implements Serializable
 	 *  (1) the coordinator is reliable for that route
 	 *  (2) FIBEntries could be signed
 	 */
-	public void addApprovedSignature(HierarchicalSignature pSignature)
+	public void addApprovedSignature(HRMSignature pSignature)
 	{
 		if(!mApprovedSignatures.contains(pSignature)) {
 			mApprovedSignatures.add(pSignature);
@@ -63,7 +63,7 @@ public class TopologyData implements Serializable
 	 * 
 	 * @return list of approved signatures for this TopologyEnvelope
 	 */
-	public LinkedList<HierarchicalSignature> getApprovedSignatures()
+	public LinkedList<HRMSignature> getApprovedSignatures()
 	{
 		return mApprovedSignatures;
 	}
@@ -182,7 +182,7 @@ public class TopologyData implements Serializable
 		private ClusterDummy mNextCluster;
 		private ClusterDummy mFartestClusterInDirection;
 //		private boolean mWriteProtected;
-		private HierarchicalSignature mSignature;
+		private HRMSignature mSignature;
 		private LinkedList<RoutingServiceLinkVector> mRoutingVectors;
 		private int mBorderIdentification = 0;
 		
@@ -193,7 +193,7 @@ public class TopologyData implements Serializable
 		 * @param pNextCluster as the cluster that is forwarding that entry
 		 * @param pSignature is the signature of the router that produced this entry
 		 */
-		public FIBEntry(HRMID pDestination, HRMName pNextHop, ClusterDummy pNextCluster, HierarchicalSignature pSignature)
+		public FIBEntry(HRMID pDestination, HRMName pNextHop, ClusterDummy pNextCluster, HRMSignature pSignature)
 		{
 			mNextHop = pNextHop;
 			mDestination = pDestination;
@@ -223,7 +223,7 @@ public class TopologyData implements Serializable
 		 * 
 		 * @return signature of the coordinator that created this FIB entry
 		 */
-		public HierarchicalSignature getSignature()
+		public HRMSignature getSignature()
 		{
 			return mSignature;
 		}
@@ -283,7 +283,7 @@ public class TopologyData implements Serializable
 		 * 
 		 * @param pSignature of the coordinator to verify the validty and the responsibility
 		 */
-		public void setSignature(HierarchicalSignature pSignature)
+		public void setSignature(HRMSignature pSignature)
 		{
 			mSignature = pSignature;
 		}

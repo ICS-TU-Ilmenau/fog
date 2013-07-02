@@ -151,7 +151,7 @@ public class ElectionProcess extends Thread
 
 		if(pCluster.getCoordinator().getIdentity() == null) {
 			String tName = tReferenceNode.getName();
-			HierarchicalIdentity tIdentity= new HierarchicalIdentity(tName, pCluster.getLevel());
+			HRMIdentity tIdentity= new HRMIdentity(tName, pCluster.getLevel());
 			pCluster.getCoordinator().setIdentity(tIdentity);
 		}
 		
@@ -170,9 +170,9 @@ public class ElectionProcess extends Thread
 			
 			pCluster.setCoordinatorCEP(null, pCluster.getCoordinator().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), tReferenceNode.getCentralFN().getName(), (L2Address)tAddress);
 			if(pCluster.getCoordinator().getIdentity() == null) {
-				pCluster.getCoordinator().setIdentity(new HierarchicalIdentity(getCoordinator().getPhysicalNode().getName(), pCluster.getLevel()));
+				pCluster.getCoordinator().setIdentity(new HRMIdentity(getCoordinator().getPhysicalNode().getName(), pCluster.getLevel()));
 			}
-			LinkedList<HierarchicalSignature> tSignatures = tCoordinator.getApprovedSignatures();
+			LinkedList<HRMSignature> tSignatures = tCoordinator.getApprovedSignatures();
 			tSignatures.add(tCoordinator.getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()));
 			
 			if(mLevel > 0) {

@@ -57,6 +57,12 @@ import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
  */
 public class Coordinator implements ICluster, Observer
 {
+	/**
+	 * This is the GUI specific cluster counter, which allows for globally unique cluster IDs.
+	 * It's only used within the GUI. 	
+	 */
+	private static int sGUICoordinatorID = 0;
+	
 	/*
 	 * List for identification of clusters
 	 */
@@ -72,7 +78,7 @@ public class Coordinator implements ICluster, Observer
 	private HashMap<CoordinatorCEPDemultiplexed, TopologyData> mAddressMapping = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mCEPs = null;
 	private CoordinatorCEPDemultiplexed mCoordinatorCEP = null;
-	private HierarchicalSignature mCoordinatorSignature = null;
+	private HRMSignature mCoordinatorSignature = null;
 	private Name mCoordinatorName = null;
 	private HRMName mCoordinatorAddress = null;
 	private float mPriority;
@@ -89,11 +95,16 @@ public class Coordinator implements ICluster, Observer
 	private HashMap<HRMID, IVirtualNode> mAddressToClusterMapping = new HashMap<HRMID, IVirtualNode>();
 	private HashMap<HRMID, FIBEntry> mIDToFIBMapping = new HashMap<HRMID, FIBEntry>();
 	private LinkedList<NeighborZoneAnnounce> mReceivedAnnouncements;
-	private LinkedList<HierarchicalSignature> mSignatures = new LinkedList<HierarchicalSignature>();
+	private LinkedList<HRMSignature> mSignatures = new LinkedList<HRMSignature>();
 //	private HashMap<CoordinatorCEPDemultiplexed, Integer> mCEPsToBGPRouters;
 	private HashMap<Long, CoordinatorCEPDemultiplexed> mRouteRequestDispatcher;
 	private HashMap<HRMID, LinkedList<RoutingServiceLinkVector>> mAddressToPathMapping;
 	
+	/**
+	 * This is the GUI specific coordinator ID. It is used to allow for an easier debugging.
+	 */
+	private int mGUICoordinatorID = sGUICoordinatorID++;
+
 	/**
 	 * 
 	 */
@@ -231,7 +242,7 @@ public class Coordinator implements ICluster, Observer
 		return null;
 	}
 	
-	public void addApprovedSignature(HierarchicalSignature pSignature)
+	public void addApprovedSignature(HRMSignature pSignature)
 	{
 		if(!mSignatures.contains(pSignature)) {
 			mSignatures.add(pSignature);
@@ -777,7 +788,7 @@ public class Coordinator implements ICluster, Observer
 					}
 				}
 				if(mSignatures!= null && !mSignatures.isEmpty()) {
-					for(HierarchicalSignature tSignature : mSignatures) {
+					for(HRMSignature tSignature : mSignatures) {
 						mAddressMapping.get(tSourceCEP).addApprovedSignature(tSignature);
 					}
 				}
@@ -852,7 +863,7 @@ public class Coordinator implements ICluster, Observer
 			
 			
 			if(mLevel == 1) {
-				for(HierarchicalSignature tSignature : mSignatures) {
+				for(HRMSignature tSignature : mSignatures) {
 					tManagedClusterEnvelope.addApprovedSignature(tSignature);
 				}
 				tManagedClusterEnvelope.addApprovedSignature(getCoordinator().getIdentity().createSignature(getCoordinator().getPhysicalNode().toString(), null, mLevel));
@@ -900,7 +911,7 @@ public class Coordinator implements ICluster, Observer
 	public String toString()
 	{
 		//return this.getClass().getSimpleName() + (mManagedCluster != null ? "(" + mManagedCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;
-		return "Coordinator L" + mLevel + " " + (mManagedCluster != null ? "(Cluster=" + mManagedCluster.toString() + ", ": "(" ) + "Tok=" +mToken + ", CoordSign=" + mCoordinatorSignature + ")";		
+		return "Coordinator " + mGUICoordinatorID + "@L" + mLevel + " " + (mManagedCluster != null ? "(ManagedCluster=" + mManagedCluster.getGUIClusterID() + ", ": "(" ) + "Tok=" +mToken + ", CoordSign=" + mCoordinatorSignature + ")";
 	}
 	
 	@Override
@@ -1021,7 +1032,7 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public HierarchicalSignature getCoordinatorSignature() {
+	public HRMSignature getCoordinatorSignature() {
 		return mCoordinatorSignature;
 	}
 	
@@ -1043,7 +1054,7 @@ public class Coordinator implements ICluster, Observer
 			}
 		}
 		if(pEnvelope.getApprovedSignatures() != null) {
-			for(HierarchicalSignature tSignature : pEnvelope.getApprovedSignatures()) {
+			for(HRMSignature tSignature : pEnvelope.getApprovedSignatures()) {
 				this.addApprovedSignature(tSignature);
 			}
 		}
@@ -1382,7 +1393,7 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HierarchicalSignature pCoordSignature, Name pCoordName, HRMName pAddress) {
+	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress) {
 		Logging.log(this, "announcement number " + (++this.mReceivedAnnounces) + ": Setting Coordinator " + pCoord + " with name " + pCoordName + " with routing address " + pAddress);
 		Logging.log(this, "previous coordinator was " + mCoordinatorCEP + " with name " + mCoordinatorName);
 		mCoordinatorCEP = pCoord;
@@ -1563,7 +1574,7 @@ public class Coordinator implements ICluster, Observer
 		return 0;
 	}
 	
-	public HierarchicalSignature getSignatureOfPath(HRMID tHRMID)
+	public HRMSignature getSignatureOfPath(HRMID tHRMID)
 	{
 		if(mIDToFIBMapping.containsKey(tHRMID) && mIDToFIBMapping.get(tHRMID).getSignature() != null) {
 			return mIDToFIBMapping.get(tHRMID).getSignature();

@@ -13,7 +13,7 @@ import java.io.Serializable;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 
 /**
  * PACKET: It is used when a new coordinator is signaled to all cluster members
@@ -27,7 +27,7 @@ public class BullyAnnounce implements Serializable
 	 * @param pCoordinatorSignature is the signature of the coordinator - can be replaced by cryptographic identity
 	 * @param pToken is the active token that is used for the identification of the domain the coordinator is active in case no Cluster IDs can be provided a priori
 	 */
-	public BullyAnnounce(Name pCoord, float pBullyPriority, HierarchicalSignature pCoordinatorSignature, int pToken)
+	public BullyAnnounce(Name pCoord, float pBullyPriority, HRMSignature pCoordinatorSignature, int pToken)
 	{
 		mName = pCoord;
 		mBullyPriority = pBullyPriority;
@@ -70,7 +70,7 @@ public class BullyAnnounce implements Serializable
 	 * 
 	 * @return the signature of the coordinator - can be replaced by cryptographic identity
 	 */
-	public HierarchicalSignature getCoordSignature()
+	public HRMSignature getCoordSignature()
 	{
 		return mCoordSignature;
 	}
@@ -98,7 +98,7 @@ public class BullyAnnounce implements Serializable
 	
 	private Name mName =null;
 	private float mBullyPriority = 0;
-	private HierarchicalSignature mCoordSignature;
+	private HRMSignature mCoordSignature;
 	private int mToken;
 	private LinkedList<Name> mCoveredNodes = null;
 }
