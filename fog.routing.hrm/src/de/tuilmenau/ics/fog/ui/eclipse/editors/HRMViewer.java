@@ -107,15 +107,15 @@ public class HRMViewer extends EditorPart
 		TableColumn tColumnHRMID = new TableColumn(tMappingTable, SWT.NONE, 0);
 		tColumnHRMID.setText("HRMID");
 		TableColumn tColumnNextHop = new TableColumn(tMappingTable, SWT.NONE, 1);
-		tColumnNextHop.setText("next hop");
+		tColumnNextHop.setText("Next hop");
 		TableColumn tColumnNextCluster = new TableColumn(tMappingTable, SWT.NONE, 2);
-		tColumnNextCluster.setText("next cluster");
+		tColumnNextCluster.setText("Next cluster");
 		TableColumn tColumnFarthestCluster = new TableColumn(tMappingTable, SWT.NONE, 3);
-		tColumnFarthestCluster.setText("farthest cluster");
+		tColumnFarthestCluster.setText("Farthest cluster");
 		TableColumn tColumnRoute = new TableColumn(tMappingTable, SWT.NONE, 4);
-		tColumnRoute.setText("route");
+		tColumnRoute.setText("Route");
 		TableColumn tColumnOrigin = new TableColumn(tMappingTable, SWT.NONE, 5);
-		tColumnOrigin.setText("origin");
+		tColumnOrigin.setText("Origin");
 		
 		HierarchicalRoutingService tHRS = mCoordinator.getHRS();
 		
