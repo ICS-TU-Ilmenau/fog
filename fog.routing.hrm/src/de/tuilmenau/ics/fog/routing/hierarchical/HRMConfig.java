@@ -66,7 +66,13 @@ public class HRMConfig
 		/**
 		 * Should the priority from hierarchy level 0 be inherited to higher levels?
 		 */
-		public static final boolean INHERIT_L0_PRIORITY_TO_HIGHER_LEVELS = true; //TV		
+		public static final boolean INHERIT_L0_PRIORITY_TO_HIGHER_LEVELS = true; //TV
+		
+		
+		/**
+		 * Default priority for election process. This value is used when no value is explicitly defined for a node.
+		 */
+		public static final int DEFAULT_PRIORITY = 1;
 	}
 	
 //    public static final int MAXIMUM_BULLY_PRIORITY = 90;

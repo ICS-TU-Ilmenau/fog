@@ -25,7 +25,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
@@ -61,7 +61,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 	protected float mCoordinatorPriority;
 	protected Name mCoordName;
 	protected Name mCoordAddress;
-	protected Coordinator mCoordinatorInstance;
+	protected HRMController mCoordinatorInstance;
 	protected LinkedList<CoordinatorCEPDemultiplexed> mCEPs;
 	protected LinkedList<NeighborZoneAnnounce> mReceivedAnnounces = null;
 	protected LinkedList<NeighborZoneAnnounce> mSentAnnounces = null;
@@ -91,7 +91,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 	 * @param pCoordinatorInstance
 	 * @param pLogger
 	 */
-	public IntermediateCluster(Long pClusterID, int pLevel, Coordinator pCoordinatorInstance, Logger pLogger)
+	public IntermediateCluster(Long pClusterID, int pLevel, HRMController pCoordinatorInstance, Logger pLogger)
 	{
 		mClusterID = pClusterID;
 		mLevel = pLevel;
@@ -99,7 +99,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 		mReceivedAnnounces = new LinkedList<NeighborZoneAnnounce>();
 		mSentAnnounces = new LinkedList<NeighborZoneAnnounce>();
 		mCoordinatorInstance = pCoordinatorInstance;
-		mPriority = (float) getCoordinator().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), 3.14159);
+		mPriority = (float) getCoordinator().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), HRMConfig.Election.DEFAULT_PRIORITY);
 		getCoordinator().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mLevel + " with priority " + mPriority);
 		mLevel = pLevel;
 		for(ICluster tCluster : getCoordinator().getClusters())
@@ -379,6 +379,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 				getCoordinator().getClusterMap().link(pNeighbor, this, tLink);
 			}
 			if(pNeighbor instanceof IntermediateCluster && !pNeighbor.isInterASCluster()) {
+				//TODO
 				mPriority *= 10;
 				if(!mInterASCluster) {
 					getCoordinator().getLogger().log(this, "Informing " + getParticipatingCEPs() + " about change in priority and initiating new election");
@@ -456,7 +457,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 		return mCEPs;
 	}
 	
-	public Coordinator getCoordinator()
+	public HRMController getCoordinator()
 	{
 		return mCoordinatorInstance;
 	}
@@ -466,7 +467,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 		mPriority = pPriority;
 	}
 	
-	public float getCoordinatorPriority()
+	public float getNodePriority()
 	{
 		return mCoordinatorPriority;
 	}
@@ -564,7 +565,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 		if(mHRMID != null && HRMConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
 			return mHRMID.toString();
 		} else {
-			return getClass().getSimpleName() + "@" + getCoordinator().getPhysicalNode() + ":ID(" + getClusterID() + ")TK(" + mToken +  "):PR(" + getPriority() + ")COORD(" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "") + ")" + ")@" + getLevel() + (mInterASCluster ? ":InterAS" : "");
+			return "Cluster L" + mLevel + "(ID=" + getClusterID() + ", Tok=" + mToken +  ", Prio=" + getPriority() + ", Coord.=" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "-") + ")" + ")"  + (mInterASCluster ? ":transit" : "");
 
 		}
 	}
