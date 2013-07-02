@@ -900,7 +900,7 @@ public class Coordinator implements ICluster, Observer
 	public String toString()
 	{
 		//return this.getClass().getSimpleName() + (mManagedCluster != null ? "(" + mManagedCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;
-		return "Coordinator L" + mLevel + (mManagedCluster != null ? "(cluster=" + mManagedCluster.toString() + ", ": "(" ) + "Tok=" +mToken + ", CoordSign=" + mCoordinatorSignature + ")";		
+		return "Coordinator L" + mLevel + " " + (mManagedCluster != null ? "(Cluster=" + mManagedCluster.toString() + ", ": "(" ) + "Tok=" +mToken + ", CoordSign=" + mCoordinatorSignature + ")";		
 	}
 	
 	@Override
