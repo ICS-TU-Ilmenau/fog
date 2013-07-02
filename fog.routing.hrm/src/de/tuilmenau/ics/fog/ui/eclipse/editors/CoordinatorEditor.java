@@ -359,7 +359,7 @@ public class CoordinatorEditor extends EditorPart
 		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem4.setText("Cluster level " + tHierarchyLevel + " coordiantors");
 		    ToolItem toolItem5 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem5.setText("Distribute Addresses");
+		    toolItem5.setText("Distribute addresses");
 		    
 		    
 		    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator((IntermediateCluster)pCluster));
