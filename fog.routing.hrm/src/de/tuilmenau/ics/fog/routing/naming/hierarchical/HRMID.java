@@ -15,7 +15,7 @@ import java.math.BigInteger;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IVirtualNode;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IVirtualNode;
 
 /**
  * This identifies either physical nodes or clusters within the HRM system.

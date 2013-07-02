@@ -14,8 +14,8 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 
 /**
  * 

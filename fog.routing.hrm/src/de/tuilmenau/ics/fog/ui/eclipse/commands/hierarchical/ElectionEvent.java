@@ -10,10 +10,10 @@
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
 import de.tuilmenau.ics.fog.IEvent;
-import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**

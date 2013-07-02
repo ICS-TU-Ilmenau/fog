@@ -14,7 +14,7 @@ import java.util.LinkedList;
 import java.util.Random;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.util.Tuple;
 
 /**

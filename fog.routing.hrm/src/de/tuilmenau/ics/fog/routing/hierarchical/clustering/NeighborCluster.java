@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.routing.hierarchical.clusters;
+package de.tuilmenau.ics.fog.routing.hierarchical.clustering;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -23,12 +23,12 @@ import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEP;
-import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
-import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEP;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -309,7 +309,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	/**
 	 * Return the announcer of this cluster, so the next hop is determined
 	 * (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.routing.hierarchical.clusters.IVirtualNode#retrieveName()
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.clustering.IVirtualNode#retrieveName()
 	 */
 	@Override
 	public Name retrieveName() {

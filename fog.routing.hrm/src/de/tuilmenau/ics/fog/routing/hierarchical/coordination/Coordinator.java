@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.routing.hierarchical.clusters;
+package de.tuilmenau.ics.fog.routing.hierarchical.coordination;
 
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -37,14 +37,13 @@ import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest.ResultType;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-//import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEP;
-import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
-import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchyLevelLimitationEntry;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
+import de.tuilmenau.ics.fog.routing.hierarchical.*;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IVirtualNode;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IntermediateCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NodeConnection;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressLimitationProperty;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMIPMapper;

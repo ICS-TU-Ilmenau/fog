@@ -17,11 +17,11 @@ Require-Bundle: org.eclipse.core.runtime,
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.tuilmenau.ics.fog.packets.hierarchical,
- de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical,
  de.tuilmenau.ics.fog.routing.hierarchical,
- de.tuilmenau.ics.fog.routing.hierarchical.clusters,
+ de.tuilmenau.ics.fog.routing.hierarchical.clustering,
  de.tuilmenau.ics.fog.routing.hierarchical.properties,
- de.tuilmenau.ics.fog.routing.naming.hierarchical
+ de.tuilmenau.ics.fog.routing.naming.hierarchical,
+ de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical
 Import-Package: de.tuilmenau.ics.graph,
  edu.uci.ics.jung.algorithms.shortestpath;version="2.0.1",
  edu.uci.ics.jung.graph;version="2.0.1",
