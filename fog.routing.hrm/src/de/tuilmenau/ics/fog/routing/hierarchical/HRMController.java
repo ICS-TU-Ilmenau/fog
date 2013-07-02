@@ -41,7 +41,7 @@ import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterMap;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NodeConnection;
@@ -78,7 +78,7 @@ public class HRMController extends Application implements IServerCallback
 	private HashMap<ICluster, IntermediateCluster> mIntermediateMapping = new HashMap<ICluster, IntermediateCluster>();
 	private HashMap<Long, RouteRequest> mSessionToRequest = null;
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
-	private LinkedList<LinkedList<ClusterManager>> mClusterManagers;
+	private LinkedList<LinkedList<Coordinator>> mClusterManagers;
 	private LinkedList<HierarchicalSignature> mApprovedSignatures;
 	private HierarchicalIdentity mIdentity;
 	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
@@ -145,7 +145,7 @@ public class HRMController extends Application implements IServerCallback
 			ICluster tFoundCluster = null;
 			for(ICluster tCluster : getClusters())
 			{
-				if(tCluster.equals(ClusterDummy.compare(tJoin.getTargetClusterID(), 0, tJoin.getLevel())) && !(tCluster instanceof ClusterManager) || tJoin.getTargetToken() != 0 && tCluster.equals(ClusterDummy.compare(tJoin.getTargetClusterID(), tJoin.getTargetToken(), tJoin.getLevel() )))	{
+				if(tCluster.equals(ClusterDummy.compare(tJoin.getTargetClusterID(), 0, tJoin.getLevel())) && !(tCluster instanceof Coordinator) || tJoin.getTargetToken() != 0 && tCluster.equals(ClusterDummy.compare(tJoin.getTargetClusterID(), tJoin.getTargetToken(), tJoin.getLevel() )))	{
 					if(tConnection == null) {
 						tConnection = new CoordinatorCEP(mLogger, this, true, tJoin.getLevel(), tCluster.getMultiplexer());
 					}
@@ -179,7 +179,7 @@ public class HRMController extends Application implements IServerCallback
 
 				if(tJoin.getLevel() > 0) {
 					for(ICluster tVirtualNode : getClusters()) {
-						if(tVirtualNode.getLevel() == tJoin.getLevel() - 1 && !(tVirtualNode instanceof ClusterManager || tVirtualNode instanceof NeighborCluster)) {
+						if(tVirtualNode.getLevel() == tJoin.getLevel() - 1 && !(tVirtualNode instanceof Coordinator || tVirtualNode instanceof NeighborCluster)) {
 							tCluster.setPriority(tVirtualNode.getPriority());
 						}
 					}
@@ -386,7 +386,7 @@ public class HRMController extends Application implements IServerCallback
 	public ICluster getCluster(ICluster pCluster)
 	{
 		for(ICluster tCluster : getClusters()) {
-			if(tCluster.equals(pCluster) && !(tCluster instanceof ClusterManager)) {
+			if(tCluster.equals(pCluster) && !(tCluster instanceof Coordinator)) {
 				return tCluster;
 			}
 		}
@@ -734,7 +734,7 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pLevel level for which all cluster managers should be provided
 	 * @return list of managers at the level
 	 */
-	public LinkedList<ClusterManager> getClusterManagers(int pLevel)
+	public LinkedList<Coordinator> getClusterManagers(int pLevel)
 	{
 		if(mClusterManagers.size() < pLevel) {
 			return null;
@@ -748,14 +748,14 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pCoordinator is the entity that manages a cluster
 	 * @param pLevel is the level at which the manager is registered
 	 */
-	public void registerClusterManager(ClusterManager pCoordinator, int pLevel)
+	public void registerClusterManager(Coordinator pCoordinator, int pLevel)
 	{
 		if(mClusterManagers == null) {
-			mClusterManagers = new LinkedList<LinkedList<ClusterManager>>();
+			mClusterManagers = new LinkedList<LinkedList<Coordinator>>();
 		}
 		if(mClusterManagers.size() <= pLevel) {
 			for(int i = mClusterManagers.size() - 1; i <= pLevel ; i++) {
-				mClusterManagers.add(new LinkedList<ClusterManager>());
+				mClusterManagers.add(new LinkedList<Coordinator>());
 			}
 		}
 		mClusterManagers.get(pLevel).add(pCoordinator);

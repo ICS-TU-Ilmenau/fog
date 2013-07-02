@@ -41,7 +41,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NodeConnection;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IVirtualNode;
@@ -180,9 +180,9 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 								}
 								Logging.log(this, "Testing " + tCEP + " whether it leads to the clusters coordinator: " + tWroteAnnouncement);
 							}
-						} else if(getCluster() instanceof ClusterManager) {
+						} else if(getCluster() instanceof Coordinator) {
 							Logging.log(this, "Inter AS announcement " + tAnnounce + " is handled by " + getCluster() + " whether it leads to the clusters coordinator");
-							((ClusterManager)getCluster()).getManagedCluster().handleAnnouncement(tAnnounce, this);
+							((Coordinator)getCluster()).getManagedCluster().handleAnnouncement(tAnnounce, this);
 						}
 					}
 				} else {
@@ -263,14 +263,14 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						return true;
 					}
 					if(getCluster() instanceof IntermediateCluster) {
-						ClusterManager tManager = ((IntermediateCluster)getCluster()).getClusterManager();
+						Coordinator tManager = ((IntermediateCluster)getCluster()).getClusterManager();
 						tManager.handleRouteRequest((RouteRequest) pData, getRemoteCluster());
 						tManager.registerRouteRequest(tRequest.getSession(), this);
-					} else if (getCluster() instanceof ClusterManager) {
+					} else if (getCluster() instanceof Coordinator) {
 						/*
 						 * Normally that case should not appear ...
 						 */
-						((ClusterManager)getCluster()).handleRouteRequest((RouteRequest) pData, this);
+						((Coordinator)getCluster()).handleRouteRequest((RouteRequest) pData, this);
 					}
 					/*
 					 * This comment relates to the following else if statement: use routing service address as last instance because it is the default and all
@@ -547,7 +547,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 			mRequestedCoordinator = true;
 			getCoordinator().getLogger().log(this, "Sending " + pData);
 		}
-		if(getCluster() instanceof ClusterManager && !mCrossLevelCEP) {
+		if(getCluster() instanceof Coordinator && !mCrossLevelCEP) {
 			getCEPMultiplexer().write(pData, this, ClusterDummy.compare(((L2Address)getPeerName()).getAddress().longValue(), getCluster().getToken(), getCluster().getLevel()));
 		} else {
 			getCEPMultiplexer().write(pData, this, getRemoteCluster());

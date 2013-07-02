@@ -77,7 +77,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 	private TopologyData mEnvelope = null;
 	private CoordinatorCEPDemultiplexed mAnnouncer = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mOldParticipatingCEPs;
-	private ClusterManager mClusterManager = null;
+	private Coordinator mClusterManager = null;
 	private CoordinatorCEPMultiplexer mMux = null;
 	
 	/**
@@ -288,7 +288,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 				/*
 				 * no coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(ClusterManager tManager : getCoordinator().getClusterManagers(mLevel)) {
+				for(Coordinator tManager : getCoordinator().getClusterManagers(mLevel)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						tManager.storeAnnouncement(pAnnounce);
 					}
@@ -297,7 +297,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 				/*
 				 * coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(ClusterManager tManager : getCoordinator().getClusterManagers(mLevel)) {
+				for(Coordinator tManager : getCoordinator().getClusterManagers(mLevel)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						if(tManager.getCoordinatorCEP() != null) {
 							tManager.getCoordinatorCEP().write(pAnnounce);
@@ -607,7 +607,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 	@Override
 	public boolean equals(Object pObj)
 	{
-		if(pObj instanceof ClusterManager) {
+		if(pObj instanceof Coordinator) {
 			return false;
 		}
 		if(pObj instanceof ICluster) {
@@ -728,12 +728,12 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 	 * @return Return the cluster manager that is associated to this intermediate cluster. However it is only initialized if this
 	 * node really had the highest priority.
 	 */
-	public ClusterManager getClusterManager()
+	public Coordinator getClusterManager()
 	{
 		return mClusterManager;
 	}
 	
-	public void setClusterManager(ClusterManager pManager)
+	public void setClusterManager(Coordinator pManager)
 	{
 		mClusterManager = pManager;
 	}

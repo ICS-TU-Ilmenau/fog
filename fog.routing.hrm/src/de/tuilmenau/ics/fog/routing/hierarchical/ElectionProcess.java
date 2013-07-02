@@ -26,7 +26,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.BullyElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 //import de.tuilmenau.ics.fog.routing.hierarchical.clusters.VirtualNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
@@ -45,7 +45,7 @@ public class ElectionProcess extends Thread
 	private long WAIT_BEFORE_ADDRESS_DISTRIBUTION = 5000;
 	private long TIMEOUT_FOR_ANNOUNCEMENT=5000;
 	
-	private ClusterManager mClusterManager=null;
+	private Coordinator mClusterManager=null;
 	private LinkedList<IntermediateCluster> mElectingClusters = new LinkedList<IntermediateCluster>();
 	private boolean mInProgress = false;
 	private HRMController mHRMController = null;
@@ -210,7 +210,7 @@ public class ElectionProcess extends Thread
 				}
 			}
 			 */
-			mClusterManager = new ClusterManager(pCluster, pCluster.getLevel()+1, pCluster.retrieveAddress());
+			mClusterManager = new Coordinator(pCluster, pCluster.getLevel()+1, pCluster.retrieveAddress());
 			pCluster.setClusterManager(mClusterManager);
 			pCluster.getCoordinator().setSourceIntermediateCluster(mClusterManager, pCluster);
 			mClusterManager.setPriority(pCluster.getPriority());

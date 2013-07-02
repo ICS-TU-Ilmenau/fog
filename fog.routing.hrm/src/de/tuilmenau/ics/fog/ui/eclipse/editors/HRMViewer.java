@@ -53,7 +53,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -347,7 +347,7 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			final ClusterManager tManager = new ClusterManager(mCluster, mCluster.getLevel() + 1, new HRMID(0));
+			final Coordinator tManager = new Coordinator(mCluster, mCluster.getLevel() + 1, new HRMID(0));
 			new Thread() {
 	        	public void run()
 	        	{
@@ -388,9 +388,9 @@ public class HRMViewer extends EditorPart
 		}
 			
 		// do we have a coordinator?
-		ClusterManager tCoordinator = null; 
-		if (pCluster instanceof ClusterManager){
-			tCoordinator = (ClusterManager)pCluster; 
+		Coordinator tCoordinator = null; 
+		if (pCluster instanceof Coordinator){
+			tCoordinator = (Coordinator)pCluster; 
 			if (tCoordinator.getTopologyData() != null) {
 				tTopologyData = tCoordinator.getTopologyData().getEntries();
 			}

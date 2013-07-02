@@ -56,7 +56,7 @@ import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 /**
  * This class is used for a coordinator instance and can be used on all hierarchy levels.
  */
-public class ClusterManager implements ICluster, Observer
+public class Coordinator implements ICluster, Observer
 {
 	/*
 	 * List for identification of clusters
@@ -99,7 +99,7 @@ public class ClusterManager implements ICluster, Observer
 	 * 
 	 */
 	private static final long serialVersionUID = 6824959379284820010L;
-	public ClusterManager(IntermediateCluster pCluster, int pLevel, HRMID pInitialAddress)
+	public Coordinator(IntermediateCluster pCluster, int pLevel, HRMID pInitialAddress)
 	{
 		mHRMID =  pInitialAddress;
 		mLevel = pLevel;
@@ -184,7 +184,7 @@ public class ClusterManager implements ICluster, Observer
 		for(int i = 1; i <= tRadius; i++) {
 			String tString = new String("Expanding in round " + i + ", possible clusters:");
 			for(ICluster tCluster : getCoordinator().getClusters()) {
-				if(tCluster.getLevel() == getLevel() -1 && !(tCluster instanceof ClusterManager)) {
+				if(tCluster.getLevel() == getLevel() -1 && !(tCluster instanceof Coordinator)) {
 					tString += "\n" + tCluster.toString();
 				}
 			}
@@ -1621,7 +1621,7 @@ public class ClusterManager implements ICluster, Observer
 	{
 		final RouteRequest tParameterRouteRequest = pRequest;
 		final IVirtualNode tSourceCluster = pSourceCluster;
-		final ClusterManager tManager = this;
+		final Coordinator tManager = this;
 		
 		if(pRequest.getResult() != null && pRequest.getResult().equals(ResultType.UNFEASIBLE)) {
 			CoordinatorCEPDemultiplexed tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());

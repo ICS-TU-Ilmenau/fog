@@ -27,7 +27,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscover
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
-import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
+import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NodeConnection;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty;
@@ -65,7 +65,7 @@ public class CoordinatorCEPMultiplexer
 			CoordinatorCEP tCEP = new CoordinatorCEP(getLogger(), getCoordinator(), false, pSourceCluster.getLevel() + 1, getCoordinator().getMultiplexerOnLevel(pSourceCluster.getLevel() + 1));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(getCoordinator().getPhysicalNode().getCentralFN().getName());
 			
-			for(ClusterManager tManager : getCoordinator().getClusterManagers(pSourceCluster.getLevel()+1)) {
+			for(Coordinator tManager : getCoordinator().getClusterManagers(pSourceCluster.getLevel()+1)) {
 				tCEPDemultiplexed = new CoordinatorCEPDemultiplexed(getLogger(), mHRMController, tManager);
 				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getPriority());
 				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
@@ -77,7 +77,7 @@ public class CoordinatorCEPMultiplexer
 				tCEPDemultiplexed.setRemoteCluster(pTargetCluster);
 			}
 			
-			for(ClusterManager tManager : getCoordinator().getClusterManagers(pSourceCluster.getLevel()+1)) {
+			for(Coordinator tManager : getCoordinator().getClusterManagers(pSourceCluster.getLevel()+1)) {
 				if(pTargetCluster.getCoordinatorsAddress() == null) {
 					getLogger().err(this, "Error on trying to contact other clusters, as name is set please check its address");
 				} else {
@@ -163,7 +163,7 @@ public class CoordinatorCEPMultiplexer
 				getLogger().err(this, "Unable to connect to " + tName, tExc);
 			}
 
-			for(ClusterManager tManager : getCoordinator().getClusterManagers(pSourceCluster.getLevel() + 1)) {
+			for(Coordinator tManager : getCoordinator().getClusterManagers(pSourceCluster.getLevel() + 1)) {
 				LinkedList<Integer> tTokens = new LinkedList<Integer>();
 				for(ICluster tClusterForToken : tManager.getManagedCluster().getNeighbors()) {
 					if(tClusterForToken.getLevel() == tManager.getLevel() - 1) {
