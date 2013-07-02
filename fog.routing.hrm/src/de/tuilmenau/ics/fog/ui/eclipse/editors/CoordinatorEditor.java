@@ -401,51 +401,58 @@ public class CoordinatorEditor extends EditorPart
 		for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
 			Logging.log(this, "Updating table item number " + j);
 			
-			// get table row
-			TableItem item = tTable.getItem(j);
-			if (tTable.getItem(j) == null){
-				item = new TableItem(tTable, SWT.NONE, j);
+			// table row
+			TableItem tItem = null;
+			
+			// get reference to already existing table row
+			if (tTable.getItemCount() > j) {
+				tItem = tTable.getItem(j);
+			}				
+			
+			// create a table row if necessary
+			if (tItem == null){
+				tItem = new TableItem(tTable, SWT.NONE, j);
 			}
 			
 			/**
 			 * Column 0: coordinator
 			 */
 			if (pCluster.getCoordinatorSignature() != null) {
-				item.setText(0,	pCluster.getCoordinatorSignature().toString());
+				tItem.setText(0,	pCluster.getCoordinatorSignature().toString());
 			}else{ 
-				item.setText(0, "??");
+				tItem.setText(0, "??");
 			}
 
 			/**
 			 * Column 1: CEP 
 			 */
-			item.setText(1, tCEP.getPeerName().toString());
+			tItem.setText(1, tCEP.getPeerName().toString());
 
 			/**
 			 * Column 2:  
 			 */
-			item.setText(2, tCEP.hasRequestedCoordinator() ? Boolean.toString(tCEP.knowsCoordinator()) : "UNKNOWN");
+			tItem.setText(2, tCEP.hasRequestedCoordinator() ? Boolean.toString(tCEP.knowsCoordinator()) : "UNKNOWN");
 
 			/**
 			 * Column 3:  
 			 */
-			item.setText(3, Boolean.toString(tCEP.isPartOfMyCluster()));
+			tItem.setText(3, Boolean.toString(tCEP.isPartOfMyCluster()));
 			
 			/**
 			 * Column 4:  
 			 */
-			item.setText(4, (tCEP.getPeerPriority() != 0 ? Float.toString(tCEP.getPeerPriority()) : "UNKNOWN"));
+			tItem.setText(4, (tCEP.getPeerPriority() != 0 ? Float.toString(tCEP.getPeerPriority()) : "UNKNOWN"));
 			
 			/**
 			 * Column 5:  
 			 */
-			item.setText(5, (tCEP.getRemoteCluster() != null ? tCEP.getRemoteCluster().toString() : "UNKNOWN"));
+			tItem.setText(5, (tCEP.getRemoteCluster() != null ? tCEP.getRemoteCluster().toString() : "UNKNOWN"));
 			
 			/**
 			 * Column 6:  
 			 */
 			if(tCEP.getRemoteCluster() != null && tCEP.getRemoteCluster() instanceof NeighborCluster && ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()) != null && ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster() != null) {
-				item.setText(6, ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster().toString());
+				tItem.setText(6, ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster().toString());
 			}
 
 			/**
@@ -467,12 +474,12 @@ public class CoordinatorEditor extends EditorPart
 			} catch (RequirementsException tExc) {
 				Logging.err(this, "Unable to fulfill requirements for route calculation to " + tTarget, tExc);
 			}			
-			item.setText(7, (tRoute != null ? tRoute.toString() : "UNKNOWN"));
+			tItem.setText(7, (tRoute != null ? tRoute.toString() : "UNKNOWN"));
 			
 			/**
 			 * Column 8:  
 			 */
-			item.setText(8, Boolean.toString(tCEP.receivedBorderNodeAnnouncement()));
+			tItem.setText(8, Boolean.toString(tCEP.receivedBorderNodeAnnouncement()));
 			
 			j++;
 		}
