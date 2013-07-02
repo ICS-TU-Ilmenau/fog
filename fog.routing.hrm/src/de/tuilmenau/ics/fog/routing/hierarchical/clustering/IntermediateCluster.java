@@ -565,7 +565,7 @@ public class IntermediateCluster implements ICluster, IElementDecorator
 		if(mHRMID != null && HRMConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
 			return mHRMID.toString();
 		} else {
-			return "Cluster L" + mLevel + "(ID=" + getClusterID() + ", Tok=" + mToken +  ", Prio=" + getPriority() + ", Coord.=" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "-") + ")" + ")"  + (mInterASCluster ? ":transit" : "");
+			return "Cluster L" + mLevel + " (ID=" + getClusterID() + ", Tok=" + mToken +  ", Prio=" + getPriority() + ", Coord.=" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "-") + ")" + ")"  + (mInterASCluster ? ":transit" : "");
 
 		}
 	}
