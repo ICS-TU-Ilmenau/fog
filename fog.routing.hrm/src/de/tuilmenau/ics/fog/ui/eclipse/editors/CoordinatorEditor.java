@@ -44,17 +44,19 @@ import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 
@@ -63,7 +65,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class CoordinatorEditor extends EditorPart
 {
-	private Coordinator mCoordinator = null;
+	private HRMController mCoordinator = null;
     private Composite mShell = null;
     private ScrolledComposite mScroller = null;
     private Composite mContainer = null;
@@ -114,15 +116,60 @@ public class CoordinatorEditor extends EditorPart
 		TableColumn tColumnOrigin = new TableColumn(tMappingTable, SWT.NONE, 5);
 		tColumnOrigin.setText("origin");
 		
-		if(mCoordinator.getHRS().getRoutingTable() != null && !mCoordinator.getHRS().getRoutingTable().isEmpty()) {
-			for(HRMID tHRMID : mCoordinator.getHRS().getRoutingTable().keySet()) {
-				TableItem item = new TableItem(tMappingTable, SWT.NONE, j);
-				item.setText(0, tHRMID != null ? tHRMID.toString() : "");
-				item.setText(1, mCoordinator.getHRS().getFIBEntry(tHRMID).getNextHop() != null ? mCoordinator.getHRS().getFIBEntry(tHRMID).getNextHop().toString() : "UNKNOWN");
-				item.setText(2, mCoordinator.getHRS().getFIBEntry(tHRMID).getNextCluster()!=null && mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(tHRMID).getNextCluster()) != null ? mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(tHRMID).getNextCluster()).toString() : "UNKNOWN");
-				item.setText(3, mCoordinator.getHRS().getFIBEntry(tHRMID).getFarthestClusterInDirection()!=null && mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(tHRMID).getFarthestClusterInDirection()) != null ? mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(tHRMID).getFarthestClusterInDirection()).toString() : "UNKNOWN");
-				item.setText(4, mCoordinator.getHRS().getFIBEntry(tHRMID).getRouteToTarget()!=null ? mCoordinator.getHRS().getFIBEntry(tHRMID).getRouteToTarget().toString() : "UNKNOWN");
-				item.setText(5, mCoordinator.getHRS().getFIBEntry(tHRMID).getSignature()!=null ? mCoordinator.getHRS().getFIBEntry(tHRMID).getSignature().toString() : "UNKNOWN");
+		HierarchicalRoutingService tHRS = mCoordinator.getHRS();
+		
+		if(tHRS.getRoutingTable() != null && !tHRS.getRoutingTable().isEmpty()) {
+			for(HRMID tHRMID : tHRS.getRoutingTable().keySet()) {
+				TableItem tRow = new TableItem(tMappingTable, SWT.NONE, j);
+				/**
+				 * Column 0:  
+				 */
+				tRow.setText(0, tHRMID != null ? tHRMID.toString() : "");
+
+				/**
+				 * Column 1:  
+				 */
+				if (tHRS.getFIBEntry(tHRMID).getNextHop() != null) {
+					tRow.setText(1, tHRS.getFIBEntry(tHRMID).getNextHop().toString());
+				}else{
+					tRow.setText(1, "??");
+				}
+				
+				/**
+				 * Column 2:  
+				 */
+				if (tHRS.getFIBEntry(tHRMID).getNextCluster() != null){
+					tRow.setText(2, mCoordinator.getCluster(tHRS.getFIBEntry(tHRMID).getNextCluster()).toString());
+				}else{
+					tRow.setText(2, "??");
+				}
+				
+				/**
+				 * Column 3:  
+				 */
+				if (tHRS.getFIBEntry(tHRMID).getFarthestClusterInDirection() != null){
+					tRow.setText(3,  mCoordinator.getCluster(tHRS.getFIBEntry(tHRMID).getFarthestClusterInDirection()).toString());
+				}else{
+					tRow.setText(3, "??");
+				}
+				
+				/**
+				 * Column 4:  
+				 */
+				if (tHRS.getFIBEntry(tHRMID).getRouteToTarget() != null){					
+					tRow.setText(4, tHRS.getFIBEntry(tHRMID).getRouteToTarget().toString());
+				}else{
+					tRow.setText(4, "??");
+				}
+				
+				/**
+				 * Column 5:  
+				 */
+				if (tHRS.getFIBEntry(tHRMID).getSignature() != null){
+					tRow.setText(5, tHRS.getFIBEntry(tHRMID).getSignature().toString());				
+				}else{
+					tRow.setText(5, "??");
+				}
 				
 				j++;
 			}
@@ -139,19 +186,29 @@ public class CoordinatorEditor extends EditorPart
 		tColumnHRMID.addListener(SWT.Selection, new Listener() {
 		      public void handleEvent(Event e) {
 		        // sort column 2
-		        TableItem[] items = tMappingTable.getItems();
+		        TableItem[] tAllRows = tMappingTable.getItems();
 		        Collator collator = Collator.getInstance(Locale.getDefault());
-		        for (int i = 1; i < items.length; i++) {
-		          String value1 = items[i].getText(1);
+		        
+		        for (int i = 1; i < tAllRows.length; i++) {
+		          String value1 = tAllRows[i].getText(1);
+		          
 		          for (int j = 0; j < i; j++) {
-		            String value2 = items[j].getText(1);
+		            String value2 = tAllRows[j].getText(1);
+		            
 		            if (collator.compare(value1, value2) < 0) {
-		              String[] values = { items[i].getText(0),
-		                  items[i].getText(1) };
-		              items[i].dispose();
-		              TableItem item = new TableItem(tMappingTable, SWT.NONE, j);
-		              item.setText(values);
-		              items = tMappingTable.getItems();
+		              // copy table row data
+		              String[] tRowData = { tAllRows[i].getText(0), tAllRows[i].getText(1) };
+		              
+		              // delete table row "i"
+		              tAllRows[i].dispose();
+		              
+		              // create new table row
+		              TableItem tRow = new TableItem(tMappingTable, SWT.NONE, j);
+		              tRow.setText(tRowData);
+		              
+		              // update data of table rows
+		              tAllRows = tMappingTable.getItems();
+		              
 		              break;
 		            }
 		          }
@@ -351,15 +408,15 @@ public class CoordinatorEditor extends EditorPart
 			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
 			
 			ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem1.setText("Elect cluster coordinator");
+		    toolItem1.setText(">Elect coordinator<");
 		    ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem2.setText("Elect level " + tHierarchyLevel + " coordinators");
+		    toolItem2.setText(">Elect all level " + tHierarchyLevel + " coordinators<");
 		    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem3.setText("Cluster with siblings");
+		    toolItem3.setText(">Cluster with siblings");
 		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem4.setText("Cluster level " + tHierarchyLevel + " coordiantors");
+		    toolItem4.setText(">Cluster level " + tHierarchyLevel + " coordiantors<");
 		    ToolItem toolItem5 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem5.setText("Distribute addresses");
+		    toolItem5.setText(">Distribute addresses<");
 		    
 		    
 		    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator((IntermediateCluster)pCluster));
@@ -381,7 +438,7 @@ public class CoordinatorEditor extends EditorPart
 		TableColumn tColumnTargetCovered = new TableColumn(tTable, SWT.NONE, 2);
 		tColumnTargetCovered.setText("Target Covered");
 		TableColumn tColumnPartofCluster = new TableColumn(tTable, SWT.NONE, 3);
-		tColumnPartofCluster.setText("Part of Cluster");
+		tColumnPartofCluster.setText("Knows coord.");
 		TableColumn tColumnPeerPriority = new TableColumn(tTable, SWT.NONE, 4);
 		tColumnPeerPriority.setText("Peer Priority");
 		TableColumn tColumnNegotiator = new TableColumn(tTable, SWT.NONE, 5);
@@ -389,9 +446,9 @@ public class CoordinatorEditor extends EditorPart
 		TableColumn tColumnAnnouncerNegotiator = new TableColumn(tTable, SWT.NONE, 6);
 		tColumnAnnouncerNegotiator.setText("Announcers negotiator");
 		TableColumn tColumnRoute = new TableColumn(tTable, SWT.NONE, 7);
-		tColumnRoute.setText("route");
+		tColumnRoute.setText("Route");
 		TableColumn tColumnBorder = new TableColumn(tTable, SWT.NONE, 8);
-		tColumnBorder.setText("received BNA");
+		tColumnBorder.setText("BNA");
 		
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
@@ -402,57 +459,61 @@ public class CoordinatorEditor extends EditorPart
 			Logging.log(this, "Updating table item number " + j);
 			
 			// table row
-			TableItem tItem = null;
+			TableItem tRow = null;
 			
 			// get reference to already existing table row
 			if (tTable.getItemCount() > j) {
-				tItem = tTable.getItem(j);
+				tRow = tTable.getItem(j);
 			}				
 			
 			// create a table row if necessary
-			if (tItem == null){
-				tItem = new TableItem(tTable, SWT.NONE, j);
+			if (tRow == null){
+				tRow = new TableItem(tTable, SWT.NONE, j);
 			}
 			
 			/**
 			 * Column 0: coordinator
 			 */
 			if (pCluster.getCoordinatorSignature() != null) {
-				tItem.setText(0,	pCluster.getCoordinatorSignature().toString());
+				tRow.setText(0, pCluster.getCoordinatorSignature().toString());
 			}else{ 
-				tItem.setText(0, "??");
+				tRow.setText(0, "??");
 			}
 
 			/**
 			 * Column 1: CEP 
 			 */
-			tItem.setText(1, tCEP.getPeerName().toString());
+			tRow.setText(1, tCEP.getPeerName().toString());
 
 			/**
 			 * Column 2:  
 			 */
-			tItem.setText(2, tCEP.hasRequestedCoordinator() ? Boolean.toString(tCEP.knowsCoordinator()) : "UNKNOWN");
+			tRow.setText(2, Boolean.toString(tCEP.knowsCoordinator()));
 
 			/**
 			 * Column 3:  
 			 */
-			tItem.setText(3, Boolean.toString(tCEP.isPartOfMyCluster()));
+			tRow.setText(3, Boolean.toString(tCEP.isPartOfMyCluster()));
 			
 			/**
 			 * Column 4:  
 			 */
-			tItem.setText(4, (tCEP.getPeerPriority() != 0 ? Float.toString(tCEP.getPeerPriority()) : "UNKNOWN"));
+			tRow.setText(4, Float.toString(tCEP.getPeerPriority()));
 			
 			/**
 			 * Column 5:  
 			 */
-			tItem.setText(5, (tCEP.getRemoteCluster() != null ? tCEP.getRemoteCluster().toString() : "UNKNOWN"));
+			if (tCEP.getRemoteCluster() != null){
+				tRow.setText(5, tCEP.getRemoteCluster().toString());
+			}else{
+				tRow.setText(5, "??");
+			}
 			
 			/**
 			 * Column 6:  
 			 */
 			if(tCEP.getRemoteCluster() != null && tCEP.getRemoteCluster() instanceof NeighborCluster && ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()) != null && ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster() != null) {
-				tItem.setText(6, ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster().toString());
+				tRow.setText(6, ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster().toString());
 			}
 
 			/**
@@ -465,7 +526,8 @@ public class CoordinatorEditor extends EditorPart
 				tSource = tCEP.getSourceName();
 				tTarget = tCEP.getPeerName();
 				if(tSource != null && tTarget != null) {
-					tRoute = mCoordinator.getHRS().getRoute(tCEP.getCoordinator().getPhysicalNode().getCentralFN(), tTarget, new Description(), tCEP.getCoordinator().getPhysicalNode().getIdentity());
+					Node tNode = tCEP.getCoordinator().getPhysicalNode();
+					tRoute = mCoordinator.getHRS().getRoute(tNode.getCentralFN(), tTarget, new Description(), tNode.getIdentity());
 				} else {
 					tRoute = new Route();
 				}
@@ -474,12 +536,16 @@ public class CoordinatorEditor extends EditorPart
 			} catch (RequirementsException tExc) {
 				Logging.err(this, "Unable to fulfill requirements for route calculation to " + tTarget, tExc);
 			}			
-			tItem.setText(7, (tRoute != null ? tRoute.toString() : "UNKNOWN"));
+			if (tRoute != null){
+				tRow.setText(7, tRoute.toString());
+			}else{
+				tRow.setText(7, "??");
+			}
 			
 			/**
 			 * Column 8:  
 			 */
-			tItem.setText(8, Boolean.toString(tCEP.receivedBorderNodeAnnouncement()));
+			tRow.setText(8, Boolean.toString(tCEP.receivedBorderNodeAnnouncement()));
 			
 			j++;
 		}
@@ -505,49 +571,102 @@ public class CoordinatorEditor extends EditorPart
 			tColumnProposedRoute.setText("proposed route");
 			TableColumn tColumnOrigin = new TableColumn(tFIB, SWT.NONE, 5);
 			tColumnOrigin.setText("origin");
-			j=0;
+			j = 0;
 			if (tCluster != null) {
 				for (FIBEntry tEntry: tTopologyData) {
-					TableItem tItem = new TableItem(tFIB, SWT.NONE, j);
-					tItem.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
-					tItem.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
+					TableItem tRow = new TableItem(tFIB, SWT.NONE, j);
+					
+					/**
+					 * Column 0:  
+					 */
+					tRow.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
+
+					/**
+					 * Column 1:  
+					 */
+					tRow.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
+					
+					/**
+					 * Column 2:  
+					 */
 					ClusterDummy tDummy = tEntry.getFarthestClusterInDirection();
 					ICluster tFarthestCluster = null;
 					if(tDummy != null) {
 						tFarthestCluster = mCoordinator.getCluster(tEntry.getFarthestClusterInDirection());
 					}
-					tItem.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "UNKNOWN"));
-					tItem.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "UNKNOWN"));
-					tItem.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "UNKNOWN"));
-					tItem.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "UNKNOWN"));
+					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "UNKNOWN"));
+
+					/**
+					 * Column 3:  
+					 */
+					tRow.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "UNKNOWN"));
+					
+					/**
+					 * Column 4:  
+					 */
+					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "UNKNOWN"));
+					
+					/**
+					 * Column 5:  
+					 */
+					tRow.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "UNKNOWN"));
+					
 					j++;
 				}
 			} else if (tCoordinator != null) {
 				for (FIBEntry tEntry: tTopologyData) {
-					TableItem tItem = new TableItem(tFIB, SWT.NONE, j);
-					tItem.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
-					tItem.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
+					TableItem tRow = new TableItem(tFIB, SWT.NONE, j);
+					
+					/**
+					 * Column 0:  
+					 */
+					tRow.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
+					
+					/**
+					 * Column 1:  
+					 */
+					tRow.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
+					
+					/**
+					 * Column 2:  
+					 */
 					ClusterDummy tDummy = tEntry.getFarthestClusterInDirection();
 					ICluster tFarthestCluster = null;
 					if(tDummy != null) {
 						tFarthestCluster = mCoordinator.getCluster(tEntry.getFarthestClusterInDirection());
 					}
-					tItem.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "UNKNOWN"));
-					tItem.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "UNKNOWN"));
+					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "UNKNOWN"));
+					
+					/**
+					 * Column 3:  
+					 */
+					tRow.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "UNKNOWN"));
+					
+					/**
+					 * Column 4:  
+					 */
 					String tTargetString = (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : null);
 					if(tTargetString == null) {
 						tTargetString = tCoordinator.getPathToCoordinator(tCoordinator.getManagedCluster(), tCoordinator.getCoordinator().getCluster(tEntry.getNextCluster())).toString();
 					}
-					tItem.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "UNKNOWN"));
-					tItem.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "UNKNOWN"));
+					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "UNKNOWN"));
+					
+					/**
+					 * Column 5:  
+					 */
+					tRow.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "UNKNOWN"));
+					
 					j++;
 				}
 			}
 			
 			tFIB.setHeaderVisible(true);
 			tFIB.setLinesVisible(true);
+			
 			TableColumn[] columns = tFIB.getColumns();
-			for(int k=0; k<columns.length; k++) columns[k].pack();
+			for(int k=0; k < columns.length; k++) {
+				columns[k].pack();
+			}
 			tFIB.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
 		
@@ -555,7 +674,7 @@ public class CoordinatorEditor extends EditorPart
 		 * GUI part 5: coordinator data  
 		 */
 		if (tCoordinator != null) {
-			j=0;
+			j = 0;
 			Table tMappingTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 			
 			TableColumn tColumnHRMID = new TableColumn(tMappingTable, SWT.NONE, 0);
@@ -570,10 +689,38 @@ public class CoordinatorEditor extends EditorPart
 			
 			if(tCoordinator.getMappings() != null && !tCoordinator.getMappings().isEmpty()) {
 				for(HRMID tHRMID : tCoordinator.getMappings().keySet()) {
-					TableItem item = new TableItem(tMappingTable, SWT.NONE, j);
-					item.setText(0, tHRMID != null ? tHRMID.toString() : "");
-					item.setText(1, tCoordinator.getVirtualNodeFromHRMID(tHRMID) != null ? tCoordinator.getVirtualNodeFromHRMID(tHRMID).toString() : "" );
-					item.setText(2, tCoordinator.getPathFromHRMID(tHRMID) != null ? tCoordinator.getPathFromHRMID(tHRMID).toString(): "UNKNOWN");
+					TableItem tRow = new TableItem(tMappingTable, SWT.NONE, j);
+					
+					/**
+					 * Column 0:  
+					 */
+					if (tHRMID != null){
+						tRow.setText(0, tHRMID.toString());
+					}else{
+						tRow.setText(0, "??");
+					}
+
+					/**
+					 * Column 1:  
+					 */
+					if (tCoordinator.getVirtualNodeFromHRMID(tHRMID) != null){
+						tRow.setText(1, tCoordinator.getVirtualNodeFromHRMID(tHRMID).toString());
+					}else{
+						tRow.setText(1, "??");
+					}
+					
+					/**
+					 * Column 2:  
+					 */
+					if (tCoordinator.getPathFromHRMID(tHRMID) != null){
+						tRow.setText(2, tCoordinator.getPathFromHRMID(tHRMID).toString());
+					}else{
+						tRow.setText(2, "UNKNOWN");
+					}
+					
+					/**
+					 * Column 3:  
+					 */
 					Signature tOrigin = null;
 					if(tTopologyData != null) {
 						for(FIBEntry tEntry : tTopologyData) {
@@ -582,13 +729,21 @@ public class CoordinatorEditor extends EditorPart
 							}
 						}
 					}
-					item.setText(3, tOrigin != null ? tOrigin.toString() : "UNKNOWN");
+					if (tOrigin != null){
+						tRow.setText(3,  tOrigin.toString());
+					}else{
+						tRow.setText(3,  "??");
+					}
+					
 					j++;
 				}
 			}
 			
 			TableColumn[] columns = tMappingTable.getColumns();
-			for(int k=0; k<columns.length; k++) columns[k].pack();
+			for (int k = 0; k < columns.length; k++){
+				columns[k].pack();
+			}
+			
 			tMappingTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 			
 			tMappingTable.setHeaderVisible(true);
@@ -607,25 +762,27 @@ public class CoordinatorEditor extends EditorPart
 		setInput(input);
 		
 		// get selected object to show in editor
-		Object inputObject;
+		Object tInputObject;
 		if(input instanceof EditorInput) {
-			inputObject = ((EditorInput) input).getObj();
+			tInputObject = ((EditorInput) input).getObj();
 		} else {
-			inputObject = null;
+			tInputObject = null;
 		}
-		Logging.log(this, "init editor for " +inputObject + " (class=" +inputObject.getClass() +")");
+		Logging.log(this, "init editor for " +tInputObject + " (class=" +tInputObject.getClass() +")");
 		
-		if(inputObject != null) {
+		if(tInputObject != null) {
 			// update title of editor
-			setTitle(inputObject.toString());
+			setTitle(tInputObject.toString());
 
-			if(inputObject instanceof Coordinator) {
-				mCoordinator = (Coordinator) inputObject;
-				
+			if(tInputObject instanceof HRMController) {
+				mCoordinator = (HRMController) tInputObject;				
 			} else {
-				throw new PartInitException("Invalid input object " +inputObject +". Bus expected.");
+				throw new PartInitException("Invalid input object " +tInputObject +". Bus expected.");
 			}
+			
+			// update name of editor part
 			setPartName(mCoordinator.toString());
+			
 		} else {
 			throw new PartInitException("No input for editor.");
 		}
@@ -676,6 +833,6 @@ public class CoordinatorEditor extends EditorPart
 
 	public String toString()
 	{
-		return getClass().getSimpleName() + "@" + hashCode();
+		return "HRM viewer@" + hashCode();
 	}
 }
