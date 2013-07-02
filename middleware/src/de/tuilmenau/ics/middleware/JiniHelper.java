@@ -493,7 +493,7 @@ public class JiniHelper
 	 * Shuts down remote call features of an object.
 	 * 
 	 * @param pServerObject which should be disconnected
-	 * @return true=successfull; false=error or object not exported
+	 * @return true=successful; false=error or object not exported
 	 */
 	static private boolean unexport(Object pServerObject)
 	{
