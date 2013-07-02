@@ -66,6 +66,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class HRMViewer extends EditorPart
 {
+	private static boolean DEBUG_HRM_VIEWER = false;
+	
 	private HRMController mCoordinator = null;
     private Composite mShell = null;
     private ScrolledComposite mScroller = null;
@@ -87,11 +89,13 @@ public class HRMViewer extends EditorPart
 		mContainer.setLayout(tLayout);
 		
 		for(int i = 0; i <= HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
-			Logging.log(this, "Amount of found clusters: " + mCoordinator.getClusters().size());
+			if (DEBUG_HRM_VIEWER)
+				Logging.log(this, "Amount of found clusters: " + mCoordinator.getClusters().size());
 			int j = -1;
 			for(ICluster tCluster : mCoordinator.getClusters()) {
 				j++;
-				Logging.log(this, "Printing cluster " + j + ": " + tCluster.toString());
+				if (DEBUG_HRM_VIEWER)
+					Logging.log(this, "Printing cluster " + j + ": " + tCluster.toString());
 				if( !(tCluster instanceof NeighborCluster) && tCluster.getLevel() == i) {
 					printCluster(tCluster);
 				}
@@ -455,9 +459,11 @@ public class HRMViewer extends EditorPart
 		tTable.setLinesVisible(true);
 		
 		int j = 0;
-		Logging.log(this, "Amount of participating CEPs is " + pCluster.getParticipatingCEPs().size());
+		if (DEBUG_HRM_VIEWER)
+			Logging.log(this, "Amount of participating CEPs is " + pCluster.getParticipatingCEPs().size());
 		for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
-			Logging.log(this, "Updating table item number " + j);
+			if (DEBUG_HRM_VIEWER)
+				Logging.log(this, "Updating table item number " + j);
 			
 			// table row
 			TableItem tRow = null;
@@ -769,7 +775,8 @@ public class HRMViewer extends EditorPart
 		} else {
 			tInputObject = null;
 		}
-		Logging.log(this, "init editor for " +tInputObject + " (class=" +tInputObject.getClass() +")");
+		if (DEBUG_HRM_VIEWER)
+			Logging.log(this, "Initiating HRM viewer " + tInputObject + " (class=" + tInputObject.getClass() +")");
 		
 		if(tInputObject != null) {
 			// update title of editor
