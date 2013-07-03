@@ -23,7 +23,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 
 
 /**
- * Stores a hash map with parameter values and provides typ-safe
+ * Stores a hash map with parameter values and provides type-safe
  * method to access them. If allowed, it tries to get the parameter
  * values from the system properties.
  */
