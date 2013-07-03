@@ -112,6 +112,10 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		 * main packet processing
 		 */
 		try {
+			
+			/**
+			 * RequestZoneMembership
+			 */
 			if(pData instanceof RequestZoneMembership) {
 				if(getCluster().getCoordinatorCEP() != null) {
 					Name tMyName = tPhysicalNode.getRoutingService().getNameFor(tPhysicalNode.getCentralFN());
@@ -119,7 +123,13 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						
 					}
 				}
-			} else if(pData instanceof BullyElect)	{
+				
+			}
+			
+			/**
+			 * BullyElect
+			 */
+			if(pData instanceof BullyElect)	{
 				if(getCluster().getCoordinatorCEP() != null && ((BullyElect)pData).getSenderPriority() < getCluster().getHighestPriority()) {
 					mPeerPriority = ((BullyElect)pData).getSenderPriority();
 					if(getCluster().getHRMController().equals(tPhysicalNode.getCentralFN().getName())) {
@@ -141,14 +151,29 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 					BullyReply tAnswer = new BullyReply(getCluster().getPriority(), tPhysicalNode.getCentralFN().getName());
 					write(tAnswer);
 				}
-			} else if(pData instanceof BullyReply) {
+			}
+			
+			/**
+			 * BullyReply
+			 */
+			if(pData instanceof BullyReply) {
 				mPeerPriority = ((BullyReply)pData).getBullyPriority();
-			} else if(pData instanceof BullyAnnounce)  {
+			}
+			
+			/**
+			 * BullyAnnounce
+			 */
+			if(pData instanceof BullyAnnounce)  {
 				/*
 				 * Only an intermediate cluster on level 0 is able to store an announcement an forward it once a coordinator is set
 				 */
 				getCluster().interpretAnnouncement((BullyAnnounce)pData, this);
-			} else if(pData instanceof NeighborZoneAnnounce) {
+			}
+			
+			/**
+			 * NeighborZoneAnnounce
+			 */
+			if(pData instanceof NeighborZoneAnnounce) {
 				NeighborZoneAnnounce tAnnounce = (NeighborZoneAnnounce)pData;
 
 				getCoordinator().getLogger().log(this, "\n\n\nReceived " + tAnnounce + "\n\n\n");
@@ -192,15 +217,27 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 					getCluster().handleAnnouncement(tAnnounce, this);
 				}
 				Logging.log(this, "Received " + tAnnounce + " from remote cluster " + mRemoteCluster);
-			} else if(pData instanceof PriorityUpdate) {
+			}
+			/**
+			 * PriorityUpdate
+			 */
+			if(pData instanceof PriorityUpdate) {
 				mPeerPriority = ((PriorityUpdate)pData).getPriority();
-			} else if(pData instanceof TopologyData) {
+			}
+			/**
+			 * TopologyData
+			 */
+			if(pData instanceof TopologyData) {
 				getCluster().handleTopologyEnvelope((TopologyData)pData);
 			}/* else if (pData instanceof NestedDiscovery) {
 				NestedDiscovery tDiscovery = (NestedDiscovery) pData;
 				handleClusterDiscovery(tDiscovery);
 			}*/
-			else if(pData instanceof RouteRequest) {
+			
+			/**
+			 * RouteRequest
+			 */
+			if(pData instanceof RouteRequest) {
 				RouteRequest tRequest = (RouteRequest) pData;
 				if(tRequest.getTarget() instanceof HRMID) {
 					HRMName tRequestAddress = tRequest.getSource();
@@ -232,7 +269,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						}
 					}
 					
-					if(!((RouteRequest)pData).isAnswer() && ((RouteRequest)pData).isRouteAccumulation()) {
+					if(!tRequest.isAnswer() && tRequest.isRouteAccumulation()) {
 						if(getRemoteCluster().getLevel() != getCluster().getLevel() && getCluster().isInterASCluster()) {
 							HRMID tAddress =  (HRMID) tRequest.getTarget();
 							LinkedList<Name> tIPAddresses = HRMIPMapper.getHRMIPMapper().getIPFromHRMID(tAddress);
@@ -250,9 +287,9 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 								getCoordinator().getLogger().err(this, "Unable to distribute addresses because no IP address is available");
 							}
 							if(tRoute != null) {
-								((RouteRequest)pData).setAnswer();
-								((RouteRequest)pData).setRoute(tRoute);
-								write(pData);
+								tRequest.setAnswer();
+								tRequest.setRoute(tRoute);
+								write(tRequest);
 							}
 						} 
 						return true;
@@ -279,7 +316,12 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 					 * This comment relates to the following else if statement: use routing service address as last instance because it is the default and all
 					 * other addresses are derived from the HRMID
 					 */
-				} else if(tRequest.getTarget() instanceof HRMID && !tRequest.isAnswer()) {
+				}
+				
+				/**
+				 * HRMID
+				 */
+				if(tRequest.getTarget() instanceof HRMID && !tRequest.isAnswer()) {
 					List<Route> tFinalPath = tHRS.getCoordinatorRoutingMap().getRoute(tRequest.getSource(), tRequest.getTarget());
 					if(tRequest.getRequiredClusters() != null) {
 
@@ -326,7 +368,12 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						tRequest.notifyAll();
 					}
 				}
-			} else if (pData instanceof RequestCoordinator) {
+			}
+			
+			/**
+			 * RequestCoordinator
+			 */
+			if (pData instanceof RequestCoordinator) {
 				getCoordinator().getLogger().log(this, "Received " + pData);
 				RequestCoordinator tRequest = (RequestCoordinator) pData;
 				if(!tRequest.isAnswer()) {
