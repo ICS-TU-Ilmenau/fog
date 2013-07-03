@@ -178,7 +178,7 @@ public class Coordinator implements ICluster, Observer
 	{
 		HRMID tID = mHRMID.clone();
 		BigInteger tAddress = BigInteger.valueOf(++mLastUsedAddress);
-		tID.setLevelAddress(mLevel-1, tAddress);
+		tID.setLevelAddress(mLevel - 1, tAddress);
 		if(mLevel != 1) {
 			HRMIPMapper.registerHRMID(tID);
 		}
@@ -366,7 +366,8 @@ public class Coordinator implements ICluster, Observer
 					 * if cluster managers level is above one, HRMIDs are mapped to clusters
 					 */
 					
-					if(mLevel != 1) {
+					// are we on a higher hierarchy level?
+					if(mLevel > 1) {
 						/*
 						 * calculate entire cluster route from source to target
 						 * 
@@ -470,6 +471,8 @@ public class Coordinator implements ICluster, Observer
 						tEntry.setFarthestClusterInDirection(tDummy);
 					}
 				}
+				
+				// are we on basic level?
 				if(mLevel == 1 ) {
 					/*
 					 * The host itself has to tell its client how to reach it: get the address providers address: retrieveAddress() and then give the clients the address of the address provider
@@ -508,7 +511,8 @@ public class Coordinator implements ICluster, Observer
 				 */
 				
 				if(mHigherHRMIDs != null) {
-					if(mLevel != 1) {
+					// are we on a higher hierarchy level?
+					if(mLevel > 1) {
 						for(HRMID tHRMID : this.mHigherHRMIDs) {
 							/*
 							 * tNegotiator is the source cluster
@@ -603,7 +607,7 @@ public class Coordinator implements ICluster, Observer
 										tNegotiator.getClusterID(),
 										tNegotiator.getToken(),
 										tNegotiator.getLevel()),
-										getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel-1)
+										getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel - 1)
 								);
 								/*
 								 * As the cluster probably does not know to which node it has to forward that packet,
@@ -633,7 +637,7 @@ public class Coordinator implements ICluster, Observer
 											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getClusterID(),
 											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getToken(),
 											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getLevel()),
-											getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel-1)
+											getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel - 1)
 										);
 									if(tListToTarget != null) {
 										LinkedList<RoutingServiceLinkVector> tVectors = (LinkedList<RoutingServiceLinkVector>) tListToTarget.clone();
@@ -672,7 +676,7 @@ public class Coordinator implements ICluster, Observer
 											tSourceCEP.getRemoteCluster().getLevel()
 											);
 									tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, null, tDummy,
-											getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel-1)
+											getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel - 1)
 										);
 									if(tVectors != null) {
 										tEntry.setRoutingVectors(tVectors);
@@ -861,8 +865,9 @@ public class Coordinator implements ICluster, Observer
 				}
 			}
 			
-			
+			// are we at base level?
 			if(mLevel == 1) {
+				
 				for(HRMSignature tSignature : mSignatures) {
 					tManagedClusterEnvelope.addApprovedSignature(tSignature);
 				}
@@ -892,13 +897,13 @@ public class Coordinator implements ICluster, Observer
 				}
 				
 				if(mConnectedEntities.contains(tName)){
-					getLogger().log(this, "coordinator L" + mLevel + "-skipping connection to " + tName + " for cluster " + tNode + " because connection already exists");
+					getLogger().log(this, " L" + mLevel + "-skipping connection to " + tName + " for cluster " + tNode + " because connection already exists");
 					continue;
 				} else {
 					/*
 					 * was it really this cluster? -> reevaluate
 					 */
-					getLogger().log(this, "coordinator L" + mLevel + "-adding connection to " + tName + " for cluster " + tNode);
+					getLogger().log(this, " L" + mLevel + "-adding connection to " + tName + " for cluster " + tNode);
 					CoordinatorCEPDemultiplexed tCEP = getMultiplexer().addConnection(tCluster, mManagedCluster);
 					//new CoordinatorCEP(mManagedCluster.getCoordinator().getLogger(), mManagedCluster.getCoordinator(), this, false);
 					mConnectedEntities.add(tName);
