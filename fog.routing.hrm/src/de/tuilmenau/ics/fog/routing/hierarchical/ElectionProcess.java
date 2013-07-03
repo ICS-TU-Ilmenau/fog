@@ -478,7 +478,7 @@ public class ElectionProcess extends Thread
 		
 		public void removeElection(Integer pLevel, Long pClusterID)
 		{
-			if(HRMConfig.Routing.BUILD_UP_HIERARCHY_AUTOMATICALLY) {
+			if(HRMConfig.Hierarchy.BUILD_AUTOMATICALLY) {
 				mElections.get(pLevel).remove(pClusterID);
 				if(mElections.get(pLevel).isEmpty()) {
 					if(mNotification != null) {
@@ -513,7 +513,7 @@ public class ElectionProcess extends Thread
 		
 		public void reevaluate(int pLevel)
 		{
-			if(HRMConfig.Routing.BUILD_UP_HIERARCHY_AUTOMATICALLY) {
+			if(HRMConfig.Hierarchy.BUILD_AUTOMATICALLY) {
 				boolean tWontBeginDistribution = false;
 				ElectionProcess tWaitingFor = null;
 				for(ElectionProcess tProcess : mElections.get(pLevel).values()) {

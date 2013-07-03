@@ -24,6 +24,16 @@ public class HRMConfig
 		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level
 		 */
 		public static final int USED_BITS_PER_LEVEL = 8; //TV
+
+		/**
+		 * specifies whether the hierarchy is created automatically if the process is once started
+		 */
+		public static final boolean BUILD_AUTOMATICALLY = false; //TV
+		
+		/**
+		 * Defines if the election process begins immediately after node is configured (inside NodeConfiguratorHRM).
+		 */
+		public static final boolean BUILD_STARTS_AFTER_NODE_CONFIGURATION = false;		
 	}
 	
 	/**
@@ -37,21 +47,20 @@ public class HRMConfig
 		 */
 		public static final int EXPANSION_RADIUS = 4; //TV
 		
-		/**
-		 * specifies whether the hierarchy is created automatically if the process is once started
-		 */
-		public static final boolean BUILD_UP_HIERARCHY_AUTOMATICALLY = false;
-		
-		public static final boolean ELECTION_BEGINS_IMMEDIATLY_AFTER_SETUP = false;
-		
-		public static final boolean ADDR_DISTRIBUTOR_PRINTS_HRMID = false;
 		
 		/**
 		 * Disables/enables the region limitation feature which can be used to implement an obstructive/restrictive routing based on the HRM infrastructure.
 		 */
 		public static final boolean ENABLE_REGION_LIMITATION = false; //TV
 	}
-//	public Routing routing = new Routing();
+
+	public class Debugging
+	{
+		/**
+		 * (De-)activates the usage of HRMIDs when using toString() for clusters.
+		 */
+		public static final boolean PRINT_HRMIDS_AS_CLUSTER_IDS = false; //TV
+	}
 	
 	/**
 	 * Configuration for the election process

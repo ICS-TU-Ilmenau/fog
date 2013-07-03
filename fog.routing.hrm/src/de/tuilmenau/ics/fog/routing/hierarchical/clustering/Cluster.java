@@ -578,7 +578,7 @@ public class Cluster implements ICluster, IElementDecorator
 	
 	public String toString()
 	{
-		if(mHRMID != null && HRMConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
+		if(mHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
 			return mHRMID.toString();
 		} else {
 			return "Cluster " + mGUIClusterID + "@L" + mLevel + " (ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getPriority() + ", Coord.=" +  (getCoordinatorSignature() != null ? getCoordinatorSignature() : "-") + (mInterASCluster ? ":transit" : "") + ")";

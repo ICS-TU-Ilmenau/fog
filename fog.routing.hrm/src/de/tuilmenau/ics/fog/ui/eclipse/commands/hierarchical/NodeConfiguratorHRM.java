@@ -44,7 +44,7 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		tHRS.initiateCoordinator();
 
 		// start coordinator election for the created HRM instance if desired
-		if(HRMConfig.Routing.ELECTION_BEGINS_IMMEDIATLY_AFTER_SETUP) {
+		if(HRMConfig.Hierarchy.BUILD_STARTS_AFTER_NODE_CONFIGURATION) {
 			if(pAS.getSimulation().getPendingEvents() == null) {
 				pAS.getSimulation().addEvent(new ElectionEvent());
 			} else if (pAS.getSimulation().getPendingEvents().contains(new ElectionEvent())) {

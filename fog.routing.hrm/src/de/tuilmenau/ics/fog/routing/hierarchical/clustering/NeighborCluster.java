@@ -332,7 +332,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	
 	public String toString()
 	{
-		if(mHRMID != null && HRMConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
+		if(mHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
 			return mHRMID.toString();
 		} else {
 			return getClusterDescription() + ":HOPS(" + getHRMController().getClusterDistance(this) + ")" + (mInterASCluster ? "InterAS" : "");
