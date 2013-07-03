@@ -18,6 +18,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -35,6 +37,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
+import org.eclipse.swt.graphics.Color;
 
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -98,14 +101,19 @@ public class HRMViewer extends EditorPart
 			
 			int j = -1;
 			
-			for (ICluster tCluster : mCoordinator.getClusters()) {
+			for (ICluster tEntry : mCoordinator.getClusters()) {
 				j++;
 				
-				if (DEBUG_HRM_VIEWER)
-					Logging.log(this, "Printing cluster " + j + ": " + tCluster.toString());
-				
-				if( !(tCluster instanceof NeighborCluster) && tCluster.getLevel() == i) {
-					printCluster(tCluster);
+				if (tEntry.getLevel() == i) {
+					if (tEntry instanceof Cluster){
+						// a cluster
+						printCluster(tEntry);
+					}else if(tEntry instanceof Coordinator) {
+						// a coordinator
+						printCoordinator(tEntry);
+					}else if(tEntry instanceof NeighborCluster) {
+						// neighbor cluster
+					}
 				}
 			}
 		}
@@ -113,9 +121,16 @@ public class HRMViewer extends EditorPart
 		/**
 		 * GUI part 2: 
 		 */
-		Text overviewText = new Text(mContainer, SWT.BORDER);;
-		overviewText.setText("Approved signatures: " + mCoordinator.getApprovedSignatures());
-		
+		StyledText tSignaturesLabel = new StyledText(mContainer, SWT.BORDER);;
+		tSignaturesLabel.setText("Approved signatures: " + mCoordinator.getApprovedSignatures());
+		tSignaturesLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
+		tSignaturesLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
+	    StyleRange style2 = new StyleRange();
+	    style2.start = 0;
+	    style2.length = tSignaturesLabel.getText().length();
+	    style2.fontStyle = SWT.BOLD;
+	    tSignaturesLabel.setStyleRange(style2);
+	    
 		int j = 0;
 		final Table tMappingTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		
@@ -192,7 +207,9 @@ public class HRMViewer extends EditorPart
 		}
 		
 		TableColumn[] columns = tMappingTable.getColumns();
-		for(int k=0; k<columns.length; k++) columns[k].pack();
+		for (int k = 0; k<columns.length; k++){
+			columns[k].pack();
+		}
 		tMappingTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		
 		tMappingTable.setHeaderVisible(true);
@@ -384,71 +401,202 @@ public class HRMViewer extends EditorPart
 	}
 	
 	/**
-	 * Draws GUI elements for depicting cluster information.
+	 * Draws GUI elements for depicting coordinator information.
 	 * 
-	 * @param pCluster ID of selected cluster. 
+	 * @param pCoordinator selected coordinator 
 	 */
-	public void printCluster(ICluster pCluster)
+	public void printCoordinator(ICluster pCoordinator)
 	{
-		// on which hierarchy level are we?
-		int tHierarchyLevel = pCluster.getLevel();
-
+		int j = 0;
+		
 		// FIB topology data from the coordinator/cluster
 		LinkedList<FIBEntry> tTopologyData = null;
 
-		// do we have a cluster?
-		Cluster tCluster = null;
-		if (pCluster instanceof Cluster){
-			tCluster = (Cluster)pCluster; 
-			if (tCluster.getTopologyData() != null) {
-				tTopologyData = tCluster.getTopologyData().getEntries();
-			}
-		}
-			
 		// do we have a coordinator?
 		Coordinator tCoordinator = null; 
-		if (pCluster instanceof Coordinator){
-			tCoordinator = (Coordinator)pCluster; 
+		if (pCoordinator instanceof Coordinator){
+			tCoordinator = (Coordinator)pCoordinator; 
 			if (tCoordinator.getTopologyData() != null) {
 				tTopologyData = tCoordinator.getTopologyData().getEntries();
 			}
 		}
-		
+
+		if (DEBUG_HRM_VIEWER)
+			Logging.log(this, "Printing coordinator \"" + tCoordinator.toString() +"\"");
+
 		/**
-		 * GUI part 1: name of the cluster 
+		 * GUI part 1: name of the coordinator 
 		 */
-		Text overviewText = new Text(mContainer, SWT.BORDER);;
-		overviewText.setText(pCluster.toString());
-		
+		printNAME(pCoordinator);
+
 		/**
-		 * GUI part 2: tool box 
+		 * GUI part 2: table about CEPs 
 		 */
-		if(pCluster instanceof Cluster) {
-			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
+		printCEPs(pCoordinator);
+
+		/**
+		 * GUI part 3: Forwarding Information Base  
+		 */
+		if (tTopologyData != null){
+			Table tFIB = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+			TableColumn tColumnDestination = new TableColumn(tFIB, SWT.NONE, 0);
+			tColumnDestination.setText("destination");
+			TableColumn tColumnForwardingCluster = new TableColumn(tFIB, SWT.NONE, 1);
+			tColumnForwardingCluster.setText("forwarding cluster");
+			TableColumn tColumnFarthestCluster = new TableColumn(tFIB, SWT.NONE, 2);
+			tColumnFarthestCluster.setText("farthest cluster");
+			TableColumn tColumnNextHop = new TableColumn(tFIB, SWT.NONE, 3);
+			tColumnNextHop.setText("next hop");
+			TableColumn tColumnProposedRoute = new TableColumn(tFIB, SWT.NONE, 4);
+			tColumnProposedRoute.setText("proposed route");
+			TableColumn tColumnOrigin = new TableColumn(tFIB, SWT.NONE, 5);
+			tColumnOrigin.setText("origin");
+			j = 0;
+			if (tCoordinator != null) {
+				for (FIBEntry tEntry: tTopologyData) {
+					TableItem tRow = new TableItem(tFIB, SWT.NONE, j);
+					
+					/**
+					 * Column 0:  
+					 */
+					tRow.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
+					
+					/**
+					 * Column 1:  
+					 */
+					tRow.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
+					
+					/**
+					 * Column 2:  
+					 */
+					ClusterDummy tDummy = tEntry.getFarthestClusterInDirection();
+					ICluster tFarthestCluster = null;
+					if(tDummy != null) {
+						tFarthestCluster = mCoordinator.getCluster(tEntry.getFarthestClusterInDirection());
+					}
+					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "UNKNOWN"));
+					
+					/**
+					 * Column 3:  
+					 */
+					tRow.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "UNKNOWN"));
+					
+					/**
+					 * Column 4:  
+					 */
+					String tTargetString = (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : null);
+					if(tTargetString == null) {
+						tTargetString = tCoordinator.getPathToCoordinator(tCoordinator.getManagedCluster(), tCoordinator.getHRMController().getCluster(tEntry.getNextCluster())).toString();
+					}
+					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "UNKNOWN"));
+					
+					/**
+					 * Column 5:  
+					 */
+					tRow.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "UNKNOWN"));
+					
+					j++;
+				}
+			}
 			
-			ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem1.setText(">Elect coordinator<");
-		    ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem2.setText(">Elect all level " + tHierarchyLevel + " coordinators<");
-		    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem3.setText(">Cluster with siblings");
-		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem4.setText(">Cluster level " + tHierarchyLevel + " coordiantors<");
-		    ToolItem toolItem5 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem5.setText(">Distribute addresses<");
-		    
-		    
-		    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator((Cluster)pCluster));
-		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators((Cluster)pCluster));
-		    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy((Cluster)pCluster));
-		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel((Cluster)pCluster));
-		    toolItem5.addListener(SWT.Selection, new AddressDistributionListener((Cluster)pCluster));
-		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
+			tFIB.setHeaderVisible(true);
+			tFIB.setLinesVisible(true);
+			
+			TableColumn[] columns = tFIB.getColumns();
+			for(int k=0; k < columns.length; k++) {
+				columns[k].pack();
+			}
+			tFIB.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
 		
 		/**
-		 * GUI part 3: table about CEPs 
+		 * GUI part 4: coordinator data  
 		 */
+		if (tCoordinator != null) {
+			j = 0;
+			Table tMappingTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+			
+			TableColumn tColumnHRMID = new TableColumn(tMappingTable, SWT.NONE, 0);
+			tColumnHRMID.setText("HRMID");
+			TableColumn tClumnMappedEntry = new TableColumn(tMappingTable, SWT.NONE, 1);
+			tClumnMappedEntry.setText("mapped entity");
+			TableColumn tColumnProvidedPath = new TableColumn(tMappingTable, SWT.NONE, 2);
+			tColumnProvidedPath.setText("provided path");
+			TableColumn tColumnSignature = new TableColumn(tMappingTable, SWT.NONE, 3);
+			tColumnSignature.setText("signature");
+			
+			
+			if(tCoordinator.getMappings() != null && !tCoordinator.getMappings().isEmpty()) {
+				for(HRMID tHRMID : tCoordinator.getMappings().keySet()) {
+					TableItem tRow = new TableItem(tMappingTable, SWT.NONE, j);
+					
+					/**
+					 * Column 0:  
+					 */
+					if (tHRMID != null){
+						tRow.setText(0, tHRMID.toString());
+					}else{
+						tRow.setText(0, "??");
+					}
+
+					/**
+					 * Column 1:  
+					 */
+					if (tCoordinator.getVirtualNodeFromHRMID(tHRMID) != null){
+						tRow.setText(1, tCoordinator.getVirtualNodeFromHRMID(tHRMID).toString());
+					}else{
+						tRow.setText(1, "??");
+					}
+					
+					/**
+					 * Column 2:  
+					 */
+					if (tCoordinator.getPathFromHRMID(tHRMID) != null){
+						tRow.setText(2, tCoordinator.getPathFromHRMID(tHRMID).toString());
+					}else{
+						tRow.setText(2, "UNKNOWN");
+					}
+					
+					/**
+					 * Column 3:  
+					 */
+					Signature tOrigin = null;
+					if(tTopologyData != null) {
+						for(FIBEntry tEntry : tTopologyData) {
+							if(tEntry.equals(tHRMID)) {
+								tOrigin = tEntry.getSignature();
+							}
+						}
+					}
+					if (tOrigin != null){
+						tRow.setText(3,  tOrigin.toString());
+					}else{
+						tRow.setText(3,  "??");
+					}
+					
+					j++;
+				}
+			}
+			
+			TableColumn[] columns = tMappingTable.getColumns();
+			for (int k = 0; k < columns.length; k++){
+				columns[k].pack();
+			}
+			
+			tMappingTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
+			
+			tMappingTable.setHeaderVisible(true);
+			tMappingTable.setLinesVisible(true);
+		}
+		
+		Label separator = new Label (mContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
+		separator.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
+		separator.setVisible(true);
+		
+	}
+	
+	public void printCEPs(ICluster pCluster)
+	{
 		Table tTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		TableColumn tColumnCoordinator = new TableColumn(tTable, SWT.NONE, 0);
 		tColumnCoordinator.setText("Coordinator");
@@ -571,27 +719,114 @@ public class HRMViewer extends EditorPart
 			j++;
 		}
 		
-		/**
-		 * GUI part 4: Forwarding Information Base  
-		 */
 		TableColumn[] cols = tTable.getColumns();
 		for(int k=0; k < cols.length; k++) cols[k].pack();
 		tTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
+	}
+	
+	public void printNAME(ICluster pEntity)
+	{
+		StyledText tClusterLabel = new StyledText(mContainer, SWT.BORDER);;
+		tClusterLabel.setText(pEntity.toString());
+		tClusterLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
+		tClusterLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
+	    StyleRange style1 = new StyleRange();
+	    style1.start = 0;
+	    style1.length = tClusterLabel.getText().length();
+	    style1.fontStyle = SWT.BOLD;
+	    tClusterLabel.setStyleRange(style1);
+	}
+	
+	/**
+	 * Draws GUI elements for depicting cluster information.
+	 * 
+	 * @param pCluster selected cluster 
+	 */
+	public void printCluster(ICluster pCluster)
+	{
+		int j = 0;
 
+		// on which hierarchy level are we?
+		int tHierarchyLevel = pCluster.getLevel();
+
+		// FIB topology data from the coordinator/cluster
+		LinkedList<FIBEntry> tTopologyData = null;
+
+		// do we have a cluster?
+		Cluster tCluster = null;
+		if (pCluster instanceof Cluster){
+			tCluster = (Cluster)pCluster; 
+			if (tCluster.getTopologyData() != null) {
+				tTopologyData = tCluster.getTopologyData().getEntries();
+			}
+		}
+		
+		if (DEBUG_HRM_VIEWER)
+			Logging.log(this, "Printing cluster \"" + tCluster.toString() +"\"");
+
+		/**
+		 * GUI part 1: name of the cluster 
+		 */
+		printNAME(pCluster);
+		
+		/**
+		 * GUI part 2: tool box 
+		 */
+		if(tCluster != null) {
+			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
+			
+			ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
+		    toolItem1.setText("[Elect coordinator]");
+
+		    ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
+		    toolItem2.setText("[Elect all level " + tHierarchyLevel + " coordinators]");
+		    
+		    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
+		    toolItem3.setText("[Cluster with siblings]");
+		    
+		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
+		    toolItem4.setText("[Cluster level " + tHierarchyLevel + " coordiantors]");
+		    
+		    ToolItem toolItem5 = new ToolItem(tToolbar, SWT.PUSH);
+		    toolItem5.setText("[Distribute addresses]");
+		    
+		    
+		    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(tCluster));
+		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(tCluster));
+		    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(tCluster));
+		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(tCluster));
+		    toolItem5.addListener(SWT.Selection, new AddressDistributionListener(tCluster));
+		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
+		}
+		
+		/**
+		 * GUI part 3: table about CEPs 
+		 */
+		printCEPs(pCluster);
+
+		/**
+		 * GUI part 4: Forwarding Information Base  
+		 */
 		if (tTopologyData != null){
 			Table tFIB = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+			
 			TableColumn tColumnDestination = new TableColumn(tFIB, SWT.NONE, 0);
-			tColumnDestination.setText("destination");
+			tColumnDestination.setText("Destination");
+			
 			TableColumn tColumnForwardingCluster = new TableColumn(tFIB, SWT.NONE, 1);
-			tColumnForwardingCluster.setText("forwarding cluster");
+			tColumnForwardingCluster.setText("Forwarding cluster");
+			
 			TableColumn tColumnFarthestCluster = new TableColumn(tFIB, SWT.NONE, 2);
-			tColumnFarthestCluster.setText("farthest cluster");
+			tColumnFarthestCluster.setText("Farthest cluster");
+			
 			TableColumn tColumnNextHop = new TableColumn(tFIB, SWT.NONE, 3);
-			tColumnNextHop.setText("next hop");
+			tColumnNextHop.setText("Next hop");
+			
 			TableColumn tColumnProposedRoute = new TableColumn(tFIB, SWT.NONE, 4);
-			tColumnProposedRoute.setText("proposed route");
+			tColumnProposedRoute.setText("Route");
+			
 			TableColumn tColumnOrigin = new TableColumn(tFIB, SWT.NONE, 5);
-			tColumnOrigin.setText("origin");
+			tColumnOrigin.setText("Origin");
 			j = 0;
 			if (tCluster != null) {
 				for (FIBEntry tEntry: tTopologyData) {
@@ -634,51 +869,6 @@ public class HRMViewer extends EditorPart
 					
 					j++;
 				}
-			} else if (tCoordinator != null) {
-				for (FIBEntry tEntry: tTopologyData) {
-					TableItem tRow = new TableItem(tFIB, SWT.NONE, j);
-					
-					/**
-					 * Column 0:  
-					 */
-					tRow.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
-					
-					/**
-					 * Column 1:  
-					 */
-					tRow.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
-					
-					/**
-					 * Column 2:  
-					 */
-					ClusterDummy tDummy = tEntry.getFarthestClusterInDirection();
-					ICluster tFarthestCluster = null;
-					if(tDummy != null) {
-						tFarthestCluster = mCoordinator.getCluster(tEntry.getFarthestClusterInDirection());
-					}
-					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "UNKNOWN"));
-					
-					/**
-					 * Column 3:  
-					 */
-					tRow.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "UNKNOWN"));
-					
-					/**
-					 * Column 4:  
-					 */
-					String tTargetString = (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : null);
-					if(tTargetString == null) {
-						tTargetString = tCoordinator.getPathToCoordinator(tCoordinator.getManagedCluster(), tCoordinator.getHRMController().getCluster(tEntry.getNextCluster())).toString();
-					}
-					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "UNKNOWN"));
-					
-					/**
-					 * Column 5:  
-					 */
-					tRow.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "UNKNOWN"));
-					
-					j++;
-				}
 			}
 			
 			tFIB.setHeaderVisible(true);
@@ -689,86 +879,6 @@ public class HRMViewer extends EditorPart
 				columns[k].pack();
 			}
 			tFIB.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
-		}
-		
-		/**
-		 * GUI part 5: coordinator data  
-		 */
-		if (tCoordinator != null) {
-			j = 0;
-			Table tMappingTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
-			
-			TableColumn tColumnHRMID = new TableColumn(tMappingTable, SWT.NONE, 0);
-			tColumnHRMID.setText("HRMID");
-			TableColumn tClumnMappedEntry = new TableColumn(tMappingTable, SWT.NONE, 1);
-			tClumnMappedEntry.setText("mapped entity");
-			TableColumn tColumnProvidedPath = new TableColumn(tMappingTable, SWT.NONE, 2);
-			tColumnProvidedPath.setText("provided path");
-			TableColumn tColumnSignature = new TableColumn(tMappingTable, SWT.NONE, 3);
-			tColumnSignature.setText("signature");
-			
-			
-			if(tCoordinator.getMappings() != null && !tCoordinator.getMappings().isEmpty()) {
-				for(HRMID tHRMID : tCoordinator.getMappings().keySet()) {
-					TableItem tRow = new TableItem(tMappingTable, SWT.NONE, j);
-					
-					/**
-					 * Column 0:  
-					 */
-					if (tHRMID != null){
-						tRow.setText(0, tHRMID.toString());
-					}else{
-						tRow.setText(0, "??");
-					}
-
-					/**
-					 * Column 1:  
-					 */
-					if (tCoordinator.getVirtualNodeFromHRMID(tHRMID) != null){
-						tRow.setText(1, tCoordinator.getVirtualNodeFromHRMID(tHRMID).toString());
-					}else{
-						tRow.setText(1, "??");
-					}
-					
-					/**
-					 * Column 2:  
-					 */
-					if (tCoordinator.getPathFromHRMID(tHRMID) != null){
-						tRow.setText(2, tCoordinator.getPathFromHRMID(tHRMID).toString());
-					}else{
-						tRow.setText(2, "UNKNOWN");
-					}
-					
-					/**
-					 * Column 3:  
-					 */
-					Signature tOrigin = null;
-					if(tTopologyData != null) {
-						for(FIBEntry tEntry : tTopologyData) {
-							if(tEntry.equals(tHRMID)) {
-								tOrigin = tEntry.getSignature();
-							}
-						}
-					}
-					if (tOrigin != null){
-						tRow.setText(3,  tOrigin.toString());
-					}else{
-						tRow.setText(3,  "??");
-					}
-					
-					j++;
-				}
-			}
-			
-			TableColumn[] columns = tMappingTable.getColumns();
-			for (int k = 0; k < columns.length; k++){
-				columns[k].pack();
-			}
-			
-			tMappingTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
-			
-			tMappingTable.setHeaderVisible(true);
-			tMappingTable.setLinesVisible(true);
 		}
 		
 		Label separator = new Label (mContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
