@@ -38,11 +38,6 @@ public class HRMConfig
 		public static final int EXPANSION_RADIUS = 4; //TV
 		
 		/**
-		 * If this is set to true a lookup map is used to calculate the next hop in the hierarchy
-		 */
-		public static final boolean USE_LOOKUP_MAP_IN_HIERARCHICAL_ROUTING = true;
-		
-		/**
 		 * specifies whether the hierarchy is created automatically if the process is once started
 		 */
 		public static final boolean BUILD_UP_HIERARCHY_AUTOMATICALLY = false;
@@ -72,7 +67,7 @@ public class HRMConfig
 		/**
 		 * Default priority for election process. This value is used when no value is explicitly defined for a node.
 		 */
-		public static final int DEFAULT_PRIORITY = 1;
+		public static final int DEFAULT_BULLY_PRIORITY = 1; //TV
 	}
 	
 //    public static final int MAXIMUM_BULLY_PRIORITY = 90;

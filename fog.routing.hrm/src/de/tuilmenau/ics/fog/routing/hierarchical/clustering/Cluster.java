@@ -110,7 +110,7 @@ public class Cluster implements ICluster, IElementDecorator
 		mReceivedAnnounces = new LinkedList<NeighborZoneAnnounce>();
 		mSentAnnounces = new LinkedList<NeighborZoneAnnounce>();
 		mCoordinatorInstance = pCoordinatorInstance;
-		mPriority = (float) getHRMController().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), HRMConfig.Election.DEFAULT_PRIORITY);
+		mPriority = (float) getHRMController().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
 		getHRMController().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mLevel + " with priority " + mPriority);
 		mLevel = pLevel;
 		for(ICluster tCluster : getHRMController().getClusters())
