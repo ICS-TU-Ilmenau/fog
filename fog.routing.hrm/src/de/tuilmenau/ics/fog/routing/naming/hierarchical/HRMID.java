@@ -61,7 +61,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 	 */
 	public BigInteger getLevelAddress(int pLevel)
 	{
-		return (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (pLevel + 1) ) ).shiftRight(( HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (pLevel)) ) );
+		return (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pLevel + 1) ) ).shiftRight(( HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pLevel)) ) );
 	}
 	
 	/**
@@ -74,16 +74,16 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 		if(pLevel != 0) {
 			BigInteger tValue = getLevelAddress(pLevel);
 			if(!tValue.equals(BigInteger.valueOf(0))) {
-				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel + 1) * HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)).divide(BigInteger.valueOf(pLevel * HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)));
+				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)).divide(BigInteger.valueOf(pLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
 			}
 		} else {
 			BigInteger tValue = getLevelAddress(pLevel);
 			if(!tValue.equals(BigInteger.valueOf(0))) {
-				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel + 1) * HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL)));
+				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
 			}
 		}		
 		
-		mAddress = mAddress.add(pAddress.shiftLeft(pLevel * HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL));
+		mAddress = mAddress.add(pAddress.shiftLeft(pLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
 	}
 	
 	/**
@@ -101,10 +101,10 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 	{
 		String tOutput = new String();
 		for(int i = HRMConfig.Hierarchy.HEIGHT -1; i > 0  ; i--) {
-			tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (i + 1) ) ).shiftRight(( HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (i)) ) ).toString();
+			tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (i + 1) ) ).shiftRight(( HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * i) ) ).toString();
 			tOutput += ".";
 		}
-		tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (1) ) ).shiftRight(( HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (0)) ) ).toString();
+		tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 1 ) ).shiftRight(( HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 0) ) ).toString();
 		if(mDescr != null) {
 			return tOutput +"(" +Long.toString(mAddress.longValue()) +")";
 		}

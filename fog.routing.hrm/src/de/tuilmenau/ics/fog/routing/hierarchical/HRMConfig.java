@@ -19,6 +19,11 @@ public class HRMConfig
 		 * amount of hierarchical levels in the simulation
 		 */
 		public static final int HEIGHT = 3;
+
+		/**
+		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level
+		 */
+		public static final int USED_BITS_PER_LEVEL = 8;
 	}
 	
 	/**
@@ -27,11 +32,6 @@ public class HRMConfig
 	public class Routing
 	{
 
-		/**
-		 * this limits the maximum amount of nodes inside one cluster
-		 */
-		public static final int HIERARCHICAL_BIT_SIZE_PER_LEVEL = 8;
-		
 		/**
 		 * Maximum radius that is allowed during expansion phase 
 		 */

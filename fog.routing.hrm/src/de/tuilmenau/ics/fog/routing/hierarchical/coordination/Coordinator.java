@@ -151,7 +151,7 @@ public class Coordinator implements ICluster, Observer
 	
 	public static BigInteger generateAdress(int pLevel, BigInteger pValue)
 	{
-		return pValue.shiftLeft(HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * pLevel);
+		return pValue.shiftLeft(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * pLevel);
 	}
 	
 	public void storeAnnouncement(NeighborZoneAnnounce pAnnounce)
