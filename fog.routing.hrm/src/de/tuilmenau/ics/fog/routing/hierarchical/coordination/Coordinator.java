@@ -1080,11 +1080,11 @@ public class Coordinator implements ICluster, Observer
 		try {
 			distributeAddresses();
 		} catch (RoutingException tExc) {
-			Logging.err(this, "Error when trying to distribute addresses", tExc);
+			Logging.err(this, "Error-got routing exception when trying to distribute addresses", tExc);
 		} catch (RequirementsException tExc) {
-			Logging.err(this, "Error when trying to distribute addresses", tExc);
+			Logging.err(this, "Error-got requirements exception when trying to distribute addresses", tExc);
 		} catch (RemoteException tExc) {
-			Logging.err(this, "Error when trying to distribute addresses", tExc);
+			Logging.err(this, "Error-got remote exception when trying to distribute addresses", tExc);
 		}
 	}
 	
