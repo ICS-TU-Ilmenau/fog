@@ -94,7 +94,7 @@ public class HRMViewer extends EditorPart
 		/**
 		 * GUI part 0: cluster information
 		 */
-		for(int i = 0; i <= HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
+		for(int i = 0; i <= HRMConfig.Hierarchy.HEIGHT; i++) {
 			
 			if (DEBUG_HRM_VIEWER)
 				Logging.log(this, "Amount of found clusters: " + mCoordinator.getClusters().size());

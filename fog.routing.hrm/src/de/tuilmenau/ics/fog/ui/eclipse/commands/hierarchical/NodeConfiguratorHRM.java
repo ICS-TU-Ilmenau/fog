@@ -58,7 +58,7 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		Random tRandomGenerator = new Random(System.currentTimeMillis());
 		float tCurrentRandomNumber = tRandomGenerator.nextFloat();
 		
-		for(int i = 0; i < HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++) {
 			pNode.getParameter().put("BULLY_PRIORITY_LEVEL_" + i, ( HRMConfig.Election.INHERIT_L0_PRIORITY_TO_HIGHER_LEVELS ? tCurrentRandomNumber : tRandomGenerator.nextFloat()));
 		}
 	}

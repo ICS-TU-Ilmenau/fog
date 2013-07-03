@@ -218,7 +218,7 @@ public class HierarchicalRoutingService implements RoutingService
 		}
 		
 		HRMID tMyIdentification = null;
-		int tHighestDescendingDifference = HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT-1;
+		int tHighestDescendingDifference = HRMConfig.Hierarchy.HEIGHT - 1;
 		
 		for(NameMappingEntry tEntry : tNMS.getAddresses(mReferenceNode.getCentralFN().getName())) {
 			if(((HRMID)tEntry.getAddress()).getDescendingDifference(pToCompare) < tHighestDescendingDifference) {
@@ -243,7 +243,7 @@ public class HierarchicalRoutingService implements RoutingService
 		}
 		
 //		HRMID tMyIdentification = null;
-		int tHighestDescendingDifference = HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT-1;
+		int tHighestDescendingDifference = HRMConfig.Hierarchy.HEIGHT - 1;
 		
 		for(NameMappingEntry tEntry : tNMS.getAddresses(mReferenceNode.getCentralFN().getName())) {
 			if(((HRMID)tEntry.getAddress()).getDescendingDifference(pTarget) < tHighestDescendingDifference) {
@@ -253,7 +253,7 @@ public class HierarchicalRoutingService implements RoutingService
 		}
 		HRMID tForwarding=new HRMID(0);
 //		HRMID tForwardingEntry = new HRMID(0);
-		for(int i =  HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i >= tHighestDescendingDifference ; i--) {
+		for(int i =  HRMConfig.Hierarchy.HEIGHT; i >= tHighestDescendingDifference ; i--) {
 			tForwarding.setLevelAddress(i, pTarget.getLevelAddress(i));
 		}
 		Logging.log(this, "Forwarding entry will be " + tForwarding);

@@ -214,7 +214,7 @@ public class ElectionProcess extends Thread
 			pCluster.getHRMController().setSourceIntermediateCluster(mClusterManager, pCluster);
 			mClusterManager.setPriority(pCluster.getPriority());
 			pCluster.getHRMController().addCluster(mClusterManager);
-			if(pCluster.getLevel() +1 != HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT) {
+			if(pCluster.getLevel() +1 != HRMConfig.Hierarchy.HEIGHT) {
 				// stepwise hierarchy creation
 				Logging.log(this, "Will now wait because hierarchy build up is done stepwise");
 				mWillInitiateManager = true;

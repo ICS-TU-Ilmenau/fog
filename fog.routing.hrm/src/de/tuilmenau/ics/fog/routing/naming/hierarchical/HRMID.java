@@ -100,7 +100,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 	public String toString()
 	{
 		String tOutput = new String();
-		for(int i = HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT -1; i > 0  ; i--) {
+		for(int i = HRMConfig.Hierarchy.HEIGHT -1; i > 0  ; i--) {
 			tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (i + 1) ) ).shiftRight(( HRMConfig.Routing.HIERARCHICAL_BIT_SIZE_PER_LEVEL * (i)) ) ).toString();
 			tOutput += ".";
 		}
@@ -132,7 +132,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 	 */
 	public int getAscendingDifference(HRMID pAddressToCompare)
 	{
-		for(int i = 0; i < HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++) {
 			BigInteger tOtherAddress = pAddressToCompare.getLevelAddress(i);
 			BigInteger tMyAddress = getLevelAddress(i);
 			if(tOtherAddress.equals(tMyAddress)) {
@@ -146,7 +146,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 				return i;
 			}
 		}
-		return HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT;
+		return HRMConfig.Hierarchy.HEIGHT;
 	}
 	
 	/**
@@ -157,7 +157,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 	 */
 	public int getDescendingDifference(HRMID pAddressToCompare)
 	{
-		for(int i = HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i >= 0; i--) {
+		for(int i = HRMConfig.Hierarchy.HEIGHT; i >= 0; i--) {
 			BigInteger tOtherAddress = pAddressToCompare.getLevelAddress(i);
 			BigInteger tMyAddress = getLevelAddress(i);
 			if(tOtherAddress.equals(tMyAddress)) {

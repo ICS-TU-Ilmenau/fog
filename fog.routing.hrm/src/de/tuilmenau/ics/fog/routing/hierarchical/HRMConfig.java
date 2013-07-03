@@ -13,15 +13,20 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 public class HRMConfig
 {
+	public class Hierarchy
+	{
+		/**
+		 * amount of hierarchical levels in the simulation
+		 */
+		public static final int HEIGHT = 3;
+	}
+	
 	/**
 	 * Configuration parameters for the routing process and routing service
 	 */
 	public class Routing
 	{
-		/**
-		 * amount of hierarchical levels in the simulation
-		 */
-		public static final int HIERARCHY_LEVEL_AMOUNT = 3;
+
 		/**
 		 * this limits the maximum amount of nodes inside one cluster
 		 */

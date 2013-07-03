@@ -866,7 +866,7 @@ public class HRMController extends Application implements IServerCallback
 				
 				int tLowestDifference = tClustersAddress.getDescendingDifference(tEntryAddress);
 				HRMID tComparison = new HRMID(0);
-				for(int i = HRMConfig.Routing.HIERARCHY_LEVEL_AMOUNT -1; i >= tLowestDifference; i--) {
+				for(int i = HRMConfig.Hierarchy.HEIGHT -1; i >= tLowestDifference; i--) {
 					BigInteger tEntryLevelAddress = tEntryAddress.getLevelAddress(i);
 					if(tEntryLevelAddress.equals(BigInteger.valueOf(0))) {
 						tComparison.setLevelAddress(i, BigInteger.valueOf(0));
