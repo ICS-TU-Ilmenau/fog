@@ -135,7 +135,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	
 	/**
 	 * 
-	 * @return Find out which signature the coordinator actually has.
+	 * @return Find out which signature the coordinator has.
 	 */
 	public HRMSignature getCoordinatorSignature();
 	
