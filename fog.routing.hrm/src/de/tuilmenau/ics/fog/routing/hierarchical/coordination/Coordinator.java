@@ -188,7 +188,7 @@ public class Coordinator implements ICluster, Observer
 	public boolean prepareAboveCluster(int pLevel)
 	{
 		getLogger().log(this, "Preparing cluster on level "  +pLevel + ":I will connect to " + mManagedCluster.getNeighbors());
-		int tRadius = HRMConfig.Routing.EXPANSION_MAX_RADIUS;
+		int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 
 		Logging.log(this, "Radius is " + tRadius);
 		for(int i = 1; i <= tRadius; i++) {
@@ -257,8 +257,8 @@ public class Coordinator implements ICluster, Observer
 		IVirtualNode tTransitiveElement = pSource;
 		try {
 			int tDistance = 0;
-			if(tList.size() > HRMConfig.Routing.EXPANSION_MAX_RADIUS) {
-				while(tDistance != HRMConfig.Routing.EXPANSION_MAX_RADIUS) {
+			if(tList.size() > HRMConfig.Routing.EXPANSION_RADIUS) {
+				while(tDistance != HRMConfig.Routing.EXPANSION_RADIUS) {
 					tTransitiveElement = getHRMController().getClusterMap().getDest(tTransitiveElement, tList.get(0));
 					tList.remove(0);
 					tDistance++;

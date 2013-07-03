@@ -607,7 +607,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 					if(tVirtualNode instanceof ICluster) {
 						ICluster tCluster = (ICluster) tVirtualNode;
 						
-						int tRadius = HRMConfig.Routing.EXPANSION_MAX_RADIUS;
+						int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 						Logging.log(this, "Radius is " + tRadius);
 						
 						if(tCluster instanceof NeighborCluster && ((NeighborCluster)tCluster).getClustersToTarget() + pDiscovery.getDistance() > tRadius) continue;

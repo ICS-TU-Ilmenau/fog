@@ -18,12 +18,12 @@ public class HRMConfig
 		/**
 		 * amount of hierarchical levels in the simulation
 		 */
-		public static final int HEIGHT = 3;
+		public static final int HEIGHT = 3; // TV
 
 		/**
 		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level
 		 */
-		public static final int USED_BITS_PER_LEVEL = 8;
+		public static final int USED_BITS_PER_LEVEL = 8; //TV
 	}
 	
 	/**
@@ -35,12 +35,7 @@ public class HRMConfig
 		/**
 		 * Maximum radius that is allowed during expansion phase 
 		 */
-		public static final int EXPANSION_MAX_RADIUS = 4; //TV
-		
-		/**
-		 * specifies whether a coordinator should be used
-		 */
-		public static final boolean USE_COORDINATOR = true;
+		public static final int EXPANSION_RADIUS = 4; //TV
 		
 		/**
 		 * If this is set to true a lookup map is used to calculate the next hop in the hierarchy
