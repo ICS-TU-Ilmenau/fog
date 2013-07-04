@@ -695,7 +695,7 @@ public class HRMViewer extends EditorPart
 				tSource = tCEP.getSourceName();
 				tTarget = tCEP.getPeerName();
 				if(tSource != null && tTarget != null) {
-					Node tNode = tCEP.getCoordinator().getPhysicalNode();
+					Node tNode = tCEP.getHRMController().getPhysicalNode();
 					tRoute = mCoordinator.getHRS().getRoute(tNode.getCentralFN(), tTarget, new Description(), tNode.getIdentity());
 				} else {
 					tRoute = new Route();
