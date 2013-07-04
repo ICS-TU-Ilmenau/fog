@@ -20,29 +20,17 @@ public class BullyReply  extends BullyMessage
 	
 	/**
 	 * 
-	 * @param pBullyPriority is the priority of the node that generated the reply message
-	 * @param pInitiator is the initiator of this message
+	 * @param pSenderName sender's identification
+	 * @param pSenderPriority senders priority for the election
 	 */
-	public BullyReply(Name pSenderName, float pBullyPriority)
+	public BullyReply(Name pSenderName, float pSenderPriority)
 	{
-		super(pSenderName);
-		mBullyPriority = pBullyPriority;
-	}
-	
-	/**
-	 * find out the priority of the node that created the message
-	 * @return
-	 */
-	public float getBullyPriority()
-	{
-		return mBullyPriority;
+		super(pSenderName, pSenderPriority);
 	}
 	
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + ":" + getSenderName() + "(" + mBullyPriority + ")";
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority() + ")";
 	}
-	
-	private float mBullyPriority = 0;
 }

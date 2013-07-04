@@ -26,32 +26,17 @@ public class BullyElect extends BullyMessage //TV
 	 */
 	public BullyElect(Name pSenderName, float pSenderPriority, int pHierarchyLevel)
 	{
-		super(pSenderName);
-		mSenderPriority = pSenderPriority;
+		super(pSenderName, pSenderPriority);
 		mHierarchyLevel = pHierarchyLevel;
 	}
 	
-	/**
-	 * Determine the sender's priority.
-	 * 
-	 * @return find out the priority of the initiator of this packet
-	 */
-	public float getSenderPriority()
-	{
-		return mSenderPriority;
-	}
-	
+
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + ": Sender=" + getSenderName() + ", Priority=" + mSenderPriority + ", Level=" + mHierarchyLevel;
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority() + ", Level=" + mHierarchyLevel + ")";
 	}
 
-	// ########################################################################################################
-	/**
-	 * The priority of the sender for the BULLY election process.
-	 */
-	private float mSenderPriority = 0;
 	
 	/**
 	 * The hierarchy level for this election.

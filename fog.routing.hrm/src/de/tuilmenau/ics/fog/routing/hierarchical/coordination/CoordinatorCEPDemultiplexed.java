@@ -155,7 +155,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 			 * BullyReply
 			 */
 			if(pData instanceof BullyReply) {
-				mPeerPriority = ((BullyReply)pData).getBullyPriority();
+				mPeerPriority = ((BullyReply)pData).getSenderPriority();
 			}
 			
 			/**

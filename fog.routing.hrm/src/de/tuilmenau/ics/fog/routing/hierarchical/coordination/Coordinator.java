@@ -1128,7 +1128,7 @@ public class Coordinator implements ICluster, Observer
 		/*
 		 * check whether old priority was lower than new priority
 		 */
-		if(getNodePriority() <= pAnnounce.getPriority()) {
+		if(getNodePriority() <= pAnnounce.getSenderPriority()) {
 			/*
 			 * check whether a coordinator is already set
 			 */
@@ -1198,7 +1198,7 @@ public class Coordinator implements ICluster, Observer
 							 */
 							
 							NeighborZoneAnnounce tNewCovered = new NeighborZoneAnnounce(pAnnounce.getSenderName(), getLevel(), pAnnounce.getCoordSignature(), (HRMName)pCEP.getPeerName(), pAnnounce.getToken(), (((HRMName)pCEP.getPeerName()).getAddress().longValue()));
-							tNewCovered.setCoordinatorsPriority(pAnnounce.getPriority());
+							tNewCovered.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 							tNewCovered.setNegotiatorIdentification(tDummy);
 							DiscoveryEntry tCoveredEntry = new DiscoveryEntry(
 									pAnnounce.getToken(),
@@ -1209,7 +1209,7 @@ public class Coordinator implements ICluster, Observer
 									);
 							tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerName()));
 							tNewCovered.setCoveringClusterEntry(tCoveredEntry);
-							tCoveredEntry.setPriority( pAnnounce.getPriority());
+							tCoveredEntry.setPriority( pAnnounce.getSenderPriority());
 							
 							List<NodeConnection> tClusters = getHRMController().getClusterMap().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
 							if(!tClusters.isEmpty()) {
@@ -1288,7 +1288,7 @@ public class Coordinator implements ICluster, Observer
 			 */
 			
 			NeighborZoneAnnounce tCoveredAnnounce = new NeighborZoneAnnounce(pAnnounce.getSenderName(), getLevel(), pAnnounce.getCoordSignature(), pCEP.getPeerName(), pAnnounce.getToken(), (pCEP.getPeerName()).getAddress().longValue());
-			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getPriority());
+			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 			
 //			List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute(pCEP.getSourceName(), pCEP.getPeerName());
 			
@@ -1303,8 +1303,8 @@ public class Coordinator implements ICluster, Observer
 					);
 			tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerName()));
 			tCoveredAnnounce.setCoveringClusterEntry(tCoveredEntry);
-			tCoveredEntry.setPriority(pAnnounce.getPriority());
-			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getPriority());
+			tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
+			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 			
 			List<NodeConnection> tClusters = getHRMController().getClusterMap().getRoute(getManagedCluster(), getCoordinatorCEP().getRemoteCluster());
 			if(!tClusters.isEmpty()) {

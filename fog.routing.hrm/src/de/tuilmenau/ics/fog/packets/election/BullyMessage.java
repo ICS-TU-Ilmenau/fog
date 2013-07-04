@@ -15,22 +15,36 @@ import de.tuilmenau.ics.fog.facade.Name;
 
 public class BullyMessage implements Serializable
 {
-	public BullyMessage(Name pSenderName)
+	public BullyMessage(Name pSenderName, float pSenderPriority)
 	{
 		mSenderName = pSenderName;
 	}
 	
 	/**
-	 * Determine the name of the sender
+	 * Determine the name of the message sender
 	 * 
 	 * @return name of the sender
 	 */
-	//TODO: not used until now, however, the function is maybe used in the future when BullyAlive will be parsed by the main packet processing CoordinatorCEPDemultiplexed
 	public Name getSenderName()
 	{
 		return mSenderName;
 	}
 
+	/**
+	 * Determine the sender's priority.
+	 * 
+	 * @return the priority of the message sender
+	 */
+	public float getSenderPriority()
+	{
+		return mSenderPriority;
+	}
+
+	/**
+	 * This is the Bully priority of the message sender.
+	 */
+	private float mSenderPriority = 0;
+	
 	/**
 	 * The name of the sender of this message. This is always a name of a physical node.
 	 */

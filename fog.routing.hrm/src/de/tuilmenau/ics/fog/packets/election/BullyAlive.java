@@ -24,7 +24,7 @@ public class BullyAlive extends BullyMessage
 	 */
 	public BullyAlive(Name pSenderName, Name pCoordinatorName)
 	{
-		super(pSenderName);
+		super(pSenderName, -1 /* some value to signal "invalid priority */);
 		mCoordinator = pCoordinatorName;
 	}
 	
@@ -42,7 +42,7 @@ public class BullyAlive extends BullyMessage
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + ": Sender=" + getSenderName() + ", Coordinator=" + mCoordinator;
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", Coordinator=" + mCoordinator + ")";
 	}
 	
 	// ########################################################################################################

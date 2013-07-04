@@ -22,14 +22,13 @@ public class BullyAnnounce extends BullyMessage
 	private static final long serialVersionUID = 794175467972815277L;
 	/**
 	 * @param pCoord Name (IName) of the coordinator that is announcing itself
-	 * @param pBullyPriority is the priority the coordinator was elected with
+	 * @param pSenderPriority is the priority the coordinator was elected with
 	 * @param pCoordinatorSignature is the signature of the coordinator - can be replaced by cryptographic identity
 	 * @param pToken is the active token that is used for the identification of the domain the coordinator is active in case no Cluster IDs can be provided a priori
 	 */
-	public BullyAnnounce(Name pSenderName, float pBullyPriority, HRMSignature pCoordinatorSignature, int pToken)
+	public BullyAnnounce(Name pSenderName, float pSenderPriority, HRMSignature pCoordinatorSignature, int pToken)
 	{
-		super(pSenderName);
-		mBullyPriority = pBullyPriority;
+		super(pSenderName, pSenderPriority);
 		mCoordSignature = pCoordinatorSignature;
 		mToken = pToken;
 	}
@@ -43,19 +42,10 @@ public class BullyAnnounce extends BullyMessage
 		return mToken;
 	}
 
-	/**
-	 * 
-	 * @return priority of the coordinator
-	 */
-	public float getPriority()
-	{
-		return mBullyPriority;
-	}
-		
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + ":" + getSenderName() + "(" + mBullyPriority + ")";
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority() + ")";
 	}
 	
 	/**
@@ -88,7 +78,6 @@ public class BullyAnnounce extends BullyMessage
 		return mCoveredNodes;
 	}
 	
-	private float mBullyPriority = 0;
 	private HRMSignature mCoordSignature;
 	private int mToken;
 	private LinkedList<Name> mCoveredNodes = null;
