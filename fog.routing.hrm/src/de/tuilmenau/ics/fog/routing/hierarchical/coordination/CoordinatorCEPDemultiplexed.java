@@ -52,6 +52,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
+import de.tuilmenau.ics.graph.RoutableGraph;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
 public class CoordinatorCEPDemultiplexed implements IVirtualNode
@@ -375,17 +376,18 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				RequestCoordinator tRequest = (RequestCoordinator) pData;
 				if(!tRequest.isAnswer()) {
 					if(getCluster().getCoordinatorCEP() != null) {
-						Logging.log(this, "Name of coordinator is " + getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorName());
+						ICluster tCluster = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel());
+						Logging.log(this, "Name of coordinator is " + tCluster.getCoordinatorName());
 						
-						int tToken = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getToken();
-						Name tCoordinatorName = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorName();
-						long tCoordinatorAddress = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorsAddress().getAddress().longValue();
-						HRMName tL2Address = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorsAddress();
-						int tLevel = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getLevel();
+						int tToken = tCluster.getToken();
+						Name tCoordinatorName = tCluster.getCoordinatorName();
+						long tCoordinatorAddress = tCluster.getCoordinatorsAddress().getAddress().longValue();
+						HRMName tL2Address = tCluster.getCoordinatorsAddress();
+						int tLevel = tCluster.getLevel();
 						
 						DiscoveryEntry tEntry = new DiscoveryEntry(tToken, tCoordinatorName, tCoordinatorAddress, tL2Address, tLevel);
 						tEntry.setPriority(getCluster().getNodePriority());
-						tEntry.setRoutingVectors(getPath(getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorsAddress()));
+						tEntry.setRoutingVectors(getPath(tCluster.getCoordinatorsAddress()));
 						tRequest.addDiscoveryEntry(tEntry);
 						tRequest.setCoordinatorKnown(true);
 						tRequest.setAnswer();
@@ -437,7 +439,8 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	public LinkedList<RoutingServiceLinkVector> getPath(HRMName pTarget)
 	{
 		LinkedList<RoutingServiceLinkVector> tVectors = new LinkedList<RoutingServiceLinkVector>();
-		List<Route> tRoute = getHRMController().getHRS().getCoordinatorRoutingMap().getRoute(getMultiplexer().getSourceRoutingServiceAddress(this), pTarget);
+		RoutableGraph<HRMName, Route> tRoutingDatabase = getHRMController().getHRS().getCoordinatorRoutingMap();
+		List<Route> tRoute = tRoutingDatabase.getRoute(getMultiplexer().getSourceRoutingServiceAddress(this), pTarget);
 		HRMName tSource = getMultiplexer().getSourceRoutingServiceAddress(this);
 		HRMName tDestination;
 		if(tRoute == null) {
@@ -445,7 +448,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		} else {
 			for(int i = 0 ; i < tRoute.size() ; i++) {
 				if(tRoute.get(i) instanceof Route) {
-					tDestination = getHRMController().getHRS().getCoordinatorRoutingMap().getDest(tRoute.get(i));
+					tDestination = tRoutingDatabase.getDest(tRoute.get(i));
 					RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(tRoute.get(i), tSource, tDestination);
 					tVectors.add(tVector);
 					tSource = tDestination;
