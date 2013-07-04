@@ -9,8 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.election;
 
-import java.io.Serializable;
-
 import de.tuilmenau.ics.fog.facade.Name;
 
 /**

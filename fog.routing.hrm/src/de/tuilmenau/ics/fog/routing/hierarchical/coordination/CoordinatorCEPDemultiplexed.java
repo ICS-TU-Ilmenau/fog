@@ -146,7 +146,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 					}
 				} else {
 					mPeerPriority = ((BullyElect)pData).getSenderPriority();
-					BullyReply tAnswer = new BullyReply(tPhysicalNode.getCentralFN().getName(), getCluster().getPriority(), tPhysicalNode.getCentralFN().getName());
+					BullyReply tAnswer = new BullyReply(tPhysicalNode.getCentralFN().getName(), getCluster().getPriority());
 					write(tAnswer);
 				}
 			}

@@ -9,8 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.election;
 
-import java.io.Serializable;
-
 import de.tuilmenau.ics.fog.facade.Name;
 
 /**
@@ -25,11 +23,10 @@ public class BullyReply  extends BullyMessage
 	 * @param pBullyPriority is the priority of the node that generated the reply message
 	 * @param pInitiator is the initiator of this message
 	 */
-	public BullyReply(Name pSenderName, float pBullyPriority, Name pInitiator)
+	public BullyReply(Name pSenderName, float pBullyPriority)
 	{
 		super(pSenderName);
 		mBullyPriority = pBullyPriority;
-		mInitiator = pInitiator;
 	}
 	
 	/**
@@ -41,21 +38,11 @@ public class BullyReply  extends BullyMessage
 		return mBullyPriority;
 	}
 	
-	/**
-	 * 
-	 * @return initiator of this message
-	 */
-	public Name getInitiator()
-	{
-		return mInitiator;
-	}
-	
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + ":" + mInitiator + "(" + mBullyPriority + ")";
+		return getClass().getSimpleName() + ":" + getSenderName() + "(" + mBullyPriority + ")";
 	}
 	
 	private float mBullyPriority = 0;
-	private Name mInitiator = null;
 }
