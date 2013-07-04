@@ -20,7 +20,7 @@ public class BullyElect extends BullyMessage //TV
 
 	/**
 	 * 
-	 * @param pSenderName senders identification
+	 * @param pSenderName sender's identification
 	 * @param pSenderPriority senders priority for the election
 	 * @param pHierarchyLevel hierarchy level for this election
 	 */
