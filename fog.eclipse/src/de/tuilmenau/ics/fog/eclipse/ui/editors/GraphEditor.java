@@ -19,18 +19,12 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 
-import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IController;
 import de.tuilmenau.ics.fog.eclipse.GraphViewer;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
-import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
-import de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService;
-import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
-import de.tuilmenau.ics.fog.topology.IAutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
-import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.graph.RoutableGraph;
+import de.tuilmenau.ics.graph.GraphProvider;
 
 
 public class GraphEditor extends EditorAWT implements IController
@@ -70,66 +64,25 @@ public class GraphEditor extends EditorAWT implements IController
 		
 		// configure view
 		if(inputObject != null) {
-			if(inputObject instanceof IAutonomousSystem) {
+			if(inputObject instanceof GraphProvider) {
 				try {
 					GraphViewer<Object, Object> tViewer = new GraphViewer<Object, Object>(this);
-					IAutonomousSystem as = (IAutonomousSystem) inputObject;
-					
-					tViewer.init(((RoutableGraph) as.getGraph()));
+
+					tViewer.init(((GraphProvider) inputObject).getGraph());
 					
 					setView(tViewer.getComponent());
 				}
 				catch(UnmarshalException tExc) {
-					String errMsg = "Can not display AS because it is not locally available.";
+					String errMsg = "Can not display graph because it is not locally available.";
 					Logging.err(this, errMsg);
 					throw new PartInitException(errMsg, tExc);
 				}
 				catch(Exception tExc) {
-					String errMsg = "Exception during view init for new AS: " +tExc.getMessage();
+					String errMsg = "Exception during init of view for graph " +inputObject +": " +tExc.getMessage();
 					Logging.err(this, errMsg);
 					throw new PartInitException(errMsg, tExc);
 				}
 			}
-			else if(inputObject instanceof FoGEntity) {
-				GraphViewer<ForwardingElement,ForwardingElement> mViewer2 = new GraphViewer<ForwardingElement,ForwardingElement>(this);
-				mViewer2.init(((FoGEntity)inputObject).getTransferPlane().getGraph());
-
-				setView(mViewer2.getComponent());
-			}
-			else if(inputObject instanceof Node) {
-				GraphViewer<ForwardingElement,ForwardingElement> mViewer2 = new GraphViewer<ForwardingElement,ForwardingElement>(this);
-				mViewer2.init(((FoGEntity)((Node) inputObject).getLayer(FoGEntity.class)).getTransferPlane().getGraph());
-
-				setView(mViewer2.getComponent());
-			}
-			else if(inputObject instanceof PartialRoutingService) {
-				try {
-					GraphViewer<RoutingServiceAddress,RoutingServiceLink> mViewer2 = new GraphViewer<RoutingServiceAddress,RoutingServiceLink>(this);
-					mViewer2.init(((PartialRoutingService) inputObject).getGraph());
-	
-					setView(mViewer2.getComponent());
-				}
-				catch(Exception tExc) {
-					String msg = "Exception during view setup for routing service: " +tExc;
-					Logging.err(this, msg);
-					throw new PartInitException(msg, tExc);
-				}
-			}
-			/*
-			else if (inputObject instanceof HierarchicalRoutingService) {
-				GraphViewer<RoutingServiceAddress, RouteSegmentPath> mViewer2 = new GraphViewer<RoutingServiceAddress,RouteSegmentPath>(this);
-				mViewer2.init(800, 800, ((HierarchicalRoutingService) inputObject).getCoordinatorRoutingMap());
-
-				setView(mViewer2.getComponent());
-
-			}
-			else if (inputObject instanceof Coordinator) {
-				GraphViewer<IVirtualNode, NodeConnection> mViewer2 = new GraphViewer<IVirtualNode,NodeConnection>(this);
-				mViewer2.init(800, 800, ((Coordinator)inputObject).getClusterMap());
-				
-				setView(mViewer2.getComponent());
-			}
-			*/
 			else {
 				throw new PartInitException("Invalid input '" +inputObject + "' for editor.");
 			}

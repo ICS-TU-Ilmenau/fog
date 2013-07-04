@@ -44,12 +44,14 @@ import de.tuilmenau.ics.fog.transfer.manager.ProcessRegister;
 import de.tuilmenau.ics.fog.util.EventSourceBase;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.SimpleName;
+import de.tuilmenau.ics.graph.GraphProvider;
+import de.tuilmenau.ics.graph.RoutableGraph;
 
 
 /**
  * A FoGEntity represents an instance of a FoG layer on a node.
  */
-public class FoGEntity extends EventSourceBase implements Layer
+public class FoGEntity extends EventSourceBase implements Layer, GraphProvider
 {
 	public FoGEntity(Node pNode)
 	{
@@ -462,10 +464,21 @@ public class FoGEntity extends EventSourceBase implements Layer
 	{
 		return mNode.getTimeBase();
 	}
+	
+	/**
+	 * For GUI purposes, only!
+	 */
+	@Override
+	public RoutableGraph getGraph()
+	{
+		return transferPlane.getGraph();
+	}
 
 	/**
 	 * Informs node that it was deleted from the scenario.
 	 * Resets node and closes everything.
+	 * 
+	 * TODO use method
 	 */
 	public void deleted()
 	{
@@ -498,6 +511,5 @@ public class FoGEntity extends EventSourceBase implements Layer
 	private ProcessRegister processes;
 	
 	private LinkedList<Name> mRegisteredServers = new LinkedList<Name>();
-
 	
 }

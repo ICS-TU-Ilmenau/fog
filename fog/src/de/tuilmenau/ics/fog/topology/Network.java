@@ -22,6 +22,7 @@ import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.util.Logger;
+import de.tuilmenau.ics.graph.GraphProvider;
 import de.tuilmenau.ics.graph.RoutableGraph;
 import de.tuilmenau.ics.middleware.JiniHelper;
 
@@ -30,7 +31,7 @@ import de.tuilmenau.ics.middleware.JiniHelper;
  * Container for collecting "physical" nodes and links somehow belonging together.
  * In addition this container provides a graph representation for drawing the GUI. 
  */
-public class Network
+public class Network implements GraphProvider
 {
 	public Network(String pName, Logger pLogger, EventHandler pTimeBase)
 	{
@@ -367,6 +368,10 @@ public class Network
 		return mLogger;
 	}
 	
+	/**
+	 * For GUI purposes, only!
+	 */
+	@Override
 	public RoutableGraph<Object, Object> getGraph()
 	{
 		return mScenario;

@@ -17,12 +17,9 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.views.contentoutline.ContentOutlinePage;
 
-import de.tuilmenau.ics.fog.FoGEntity;
-import de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService;
-import de.tuilmenau.ics.fog.topology.IAutonomousSystem;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.graph.GraphProvider;
 import de.tuilmenau.ics.graph.RoutableGraph;
 
 
@@ -35,17 +32,8 @@ public class GraphContentOutlinePage extends ContentOutlinePage
 		Logging.log(this, "GraphContentOutlinePage for " +selection);
 
 		try {
-			if(selection instanceof IAutonomousSystem) {
-				IAutonomousSystem as = (IAutonomousSystem) selection;
-				map = (RoutableGraph<Object, Object>) as.getGraph();
-			}
-			else if(selection instanceof PartialRoutingService) {
-				PartialRoutingService rs = (PartialRoutingService) selection;
-				map = (RoutableGraph) rs.getGraph();
-			}
-			else if(selection instanceof Node) {
-				Node node = (Node) selection;
-				map = (RoutableGraph) ((FoGEntity)node.getLayer(FoGEntity.class)).getTransferPlane().getGraph();
+			if(selection instanceof GraphProvider) {
+				map = ((GraphProvider) selection).getGraph();
 			}
 		}
 		catch(UnmarshalException tExc) {

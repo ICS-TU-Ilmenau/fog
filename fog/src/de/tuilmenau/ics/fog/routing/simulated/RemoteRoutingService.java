@@ -22,9 +22,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
-import de.tuilmenau.ics.graph.RoutableGraph;
 
 
 public interface RemoteRoutingService extends Remote
@@ -57,12 +55,4 @@ public interface RemoteRoutingService extends Remote
 	public Route getRoute(RoutingServiceAddress pSource, RoutingServiceAddress pTarget, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException, RemoteException;
 	
 	public Name getAddressFromRoute(RoutingServiceAddress pSource, Route pRoute) throws RemoteException;
-
-	/**
-	 * Method MUST be used by GUI only!
-	 * 
-	 * @return Reference for graph for displaying it in a GUI
-	 * @throws RemoteException If the map is remote and not available 
-	 */
-	public RoutableGraph<RoutingServiceAddress, RoutingServiceLink> getGraph() throws RemoteException;
 }

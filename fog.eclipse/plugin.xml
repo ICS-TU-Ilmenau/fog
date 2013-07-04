@@ -103,12 +103,6 @@
             editorID="de.tuilmenau.ics.fog.browser"
             filter="de.tuilmenau.ics.fog.facade.Host">
       </editor>
-      <editor
-            name="Open"
-            editorID="de.tuilmenau.ics.fog.grapheditor"
-            filter="de.tuilmenau.ics.fog.routing.hierarchical.Coordinator"
-            default="true">
-      </editor>
       <plugin
             name="Open routing service"
             class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenRoutingService"

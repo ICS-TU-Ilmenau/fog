@@ -34,7 +34,6 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.properties.FunctionalRequirementProperty;
 import de.tuilmenau.ics.fog.facade.properties.Property;
-import de.tuilmenau.ics.fog.packets.statistics.ReroutingExperiment;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
@@ -45,6 +44,7 @@ import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.util.Logger;
+import de.tuilmenau.ics.graph.GraphProvider;
 import de.tuilmenau.ics.graph.LinkTransformer;
 import de.tuilmenau.ics.graph.RoutableGraph;
 
@@ -56,7 +56,7 @@ import de.tuilmenau.ics.graph.RoutableGraph;
  * some other routing service entity. In general, the entities will be connected
  * in a tree manner.
  */
-public class PartialRoutingService implements RemoteRoutingService
+public class PartialRoutingService implements RemoteRoutingService, GraphProvider
 {
 	private final double DELAYED_DELETION_TIMEOUT_SEC = 2* Config.PROCESS_STD_TIMEOUT_SEC;
 	
@@ -745,8 +745,11 @@ public class PartialRoutingService implements RemoteRoutingService
 		return null;
 	}
 
+	/**
+	 * For GUI purposes, only!
+	 */
 	@Override
-	public RoutableGraph<RoutingServiceAddress, RoutingServiceLink> getGraph()
+	public RoutableGraph getGraph()
 	{
 		return mMap;
 	}
