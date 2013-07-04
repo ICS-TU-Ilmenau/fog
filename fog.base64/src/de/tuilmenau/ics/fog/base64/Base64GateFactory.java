@@ -12,10 +12,10 @@ package de.tuilmenau.ics.fog.base64;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.base64.gates.Base64DecoderGate;
 import de.tuilmenau.ics.fog.base64.gates.Base64EncoderGate;
 import de.tuilmenau.ics.fog.facade.Identity;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateFactory;
@@ -24,7 +24,7 @@ import de.tuilmenau.ics.fog.transfer.gates.GateFactory;
 public class Base64GateFactory implements GateFactory
 {
 	@Override
-	public AbstractGate createGate(String gateType, Node pNode, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
+	public AbstractGate createGate(String gateType, FoGEntity pNode, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
 	{
 		if (gateType.equals("Base64EncoderGate")) {
 			return new Base64EncoderGate(pNode, pNext, pConfigParams, pOwner);

@@ -99,7 +99,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		mReceivedAnnounces = new LinkedList<NeighborZoneAnnounce>();
 		mSentAnnounces = new LinkedList<NeighborZoneAnnounce>();
 		mCoordinatorInstance = pCoordinatorInstance;
-		mPriority = (float) getCoordinator().getReferenceNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), 3.14159);
+		mPriority = (float) getCoordinator().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), 3.14159);
 		getCoordinator().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mLevel + " with priority " + mPriority);
 		mLevel = pLevel;
 		for(Cluster tCluster : getCoordinator().getClusters())
@@ -138,7 +138,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		mCoordName = pCoordName;
 		if(mCoordinator == null) {
 			synchronized(this) {
-				mCoordAddress = getCoordinator().getReferenceNode().getRoutingService().getNameFor(getCoordinator().getReferenceNode().getCentralFN());
+				mCoordAddress = getCoordinator().getRSName();
 				notifyAll();
 			}
 			setCoordinatorPriority(getPriority());
@@ -267,7 +267,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	
 	public void handleAnnouncement(NeighborZoneAnnounce	pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
-		if(!pAnnounce.getCoordinatorName().equals(getCoordinator().getReferenceNode().getCentralFN().getName())) {
+		if(!pAnnounce.getCoordinatorName().equals(getCoordinator().getName())) {
 			Logging.log(this, "Received announcement of foreign cluster");
 		}
 		
@@ -400,7 +400,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		getCoordinator().getLogger().log(this, "Handling " + pAnnouncement);
 		if(mCoordName != null)
 		{
-			if(getCoordinator().getReferenceNode().getCentralFN().getName().equals(mCoordName))
+			if(getCoordinator().getName().equals(mCoordName))
 			{
 				handleAnnouncement(pAnnouncement, pCEP);
 			} else {
@@ -534,7 +534,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	
 	public String getClusterDescription()
 	{
-		return getCoordinator().getReferenceNode() + ":" + mClusterID + "@" + mLevel + "(" + mCoordSignature + ")";
+		return getCoordinator() + ":" + mClusterID + "@" + mLevel + "(" + mCoordSignature + ")";
 	}
 	
 	public float getPriority()
@@ -557,7 +557,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		if(mHRMID != null && HierarchicalConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
 			return mHRMID.toString();
 		} else {
-			return this.getClass().getSimpleName() + "@" + getCoordinator().getReferenceNode() + ":ID(" + getClusterID() + ")TK(" + mToken +  "):PR(" + getPriority() + ")COORD(" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "") + ")" + ")@" + getLevel() + (mInterASCluster ? ":InterAS" : "");
+			return this.getClass().getSimpleName() + "@" + getCoordinator() + ":ID(" + getClusterID() + ")TK(" + mToken +  "):PR(" + getPriority() + ")COORD(" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "") + ")" + ")@" + getLevel() + (mInterASCluster ? ":InterAS" : "");
 
 		}
 	}
@@ -577,7 +577,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	
 	@Override
 	public Name retrieveName() {
-		return getCoordinator().getReferenceNode().getCentralFN().getName();
+		return getCoordinator().getName();
 	}
 	
 	@Override
@@ -679,9 +679,9 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		} catch (RuntimeException tExc) {
 			HierarchicalNameMappingService.createGlobalNameMappingService(getCoordinator().getReferenceNode().getAS().getSimulation());
 		}
-		tNMS.registerName(getCoordinator().getReferenceNode().getCentralFN().getName(), pEnvelope.getHRMID(), NamingLevel.NAMES);
+		tNMS.registerName(getCoordinator().getName(), pEnvelope.getHRMID(), NamingLevel.NAMES);
 		String tString = new String();
-		for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(getCoordinator().getReferenceNode().getCentralFN().getName())) {
+		for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(getCoordinator().getName())) {
 			tString += tEntry + " ";
 		}
 		getCoordinator().getLogger().log(this, "Currently registered names: " + tString);

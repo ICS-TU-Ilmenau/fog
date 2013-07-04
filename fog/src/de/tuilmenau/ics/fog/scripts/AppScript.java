@@ -94,9 +94,7 @@ public class AppScript extends Script
 		Node tNode = as.getNodeByName(host);
 		
 		if(tNode != null) {
-			Host tHost = tNode.getHost();
-		
-			return startApplication(tHost, appName, identity, parameters);
+			return startApplication(tNode, appName, identity, parameters);
 		} else {
 			throw new InvalidParameterException("Host " +host +" not known in AS " +as +".");
 		}

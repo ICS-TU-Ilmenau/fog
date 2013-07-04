@@ -13,6 +13,7 @@ import java.awt.event.ActionListener;
 
 import org.eclipse.ui.IWorkbenchPartSite;
 
+import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.topology.Node;

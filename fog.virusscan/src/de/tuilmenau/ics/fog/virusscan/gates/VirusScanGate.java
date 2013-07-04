@@ -12,9 +12,9 @@ package de.tuilmenau.ics.fog.virusscan.gates;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.packets.Packet;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.FunctionalGate;
 import de.tuilmenau.ics.fog.ui.Viewable;
@@ -31,9 +31,9 @@ public class VirusScanGate extends FunctionalGate
 	@Viewable("Scan type")
 	private String mScanType = "default";
 
-	public VirusScanGate(Node pNode, ForwardingElement pNextNode, HashMap<String, Serializable> pConfigParams, Identity pOwner)
+	public VirusScanGate(FoGEntity pEntity, ForwardingElement pNextNode, HashMap<String, Serializable> pConfigParams, Identity pOwner)
 	{
-		super(pNode, pNextNode, VirusScan.VIRUSSCAN, pOwner);
+		super(pEntity, pNextNode, VirusScan.VIRUSSCAN, pOwner);
 		if (pConfigParams != null)
 		{
 			mScanType = (String)pConfigParams.get(VirusScanProperty.HashKey_ScanType);

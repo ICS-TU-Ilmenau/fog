@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import de.tuilmenau.ics.fog.EventHandler;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.util.BlockingCalls;
 import de.tuilmenau.ics.fog.application.util.ServerCallback;
@@ -23,7 +25,6 @@ import de.tuilmenau.ics.fog.application.util.Service;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
-import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
@@ -38,8 +39,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
+import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
-import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.AttachedCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
@@ -52,14 +53,14 @@ import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressLimitationPro
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ContactDestinationApplication;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
-import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
-import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
+import de.tuilmenau.ics.fog.util.ParameterMap;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.Tuple;
 
@@ -71,7 +72,7 @@ public class Coordinator extends Application implements ServerCallback
 {
 	private Namespace mNamespace = null;
 	private SimpleName mName = null;
-	private Node mReferenceNode;
+	private FoGEntity mReferenceNode;
 	private HierarchicalRoutingService mHRS = null;
 	private ClusterMap<VirtualNode, NodeConnection> mClusterMap = new ClusterMap<VirtualNode, NodeConnection>();
 	private boolean mIsEdgeRouter;
@@ -95,12 +96,11 @@ public class Coordinator extends Application implements ServerCallback
 	 * @param pNode is the node running the coordinator
 	 * @param pHRS is the hierarchical routing service that should be used
 	 */
-	public Coordinator(Host pHost, Logger pParentLogger, Identity pIdentity, Node pNode, HierarchicalRoutingService pHRS)
+	public Coordinator(Logger pParentLogger, Identity pIdentity, FoGEntity pNode, HierarchicalRoutingService pHRS)
 	{
-		super(pHost, pParentLogger, pIdentity);
+		super(pNode.getNode(), pParentLogger, pIdentity);
 		mNamespace = CoordinatorNamespace;
 		mName = new SimpleName(mNamespace, null);
-		mHost = pHost;
 		mReferenceNode = pNode;
 		getLogger().log(this, "created");
 
@@ -465,14 +465,7 @@ public class Coordinator extends Application implements ServerCallback
 		{
 			if(tCluster.getClusterID().equals(pToClusterID)) {
 				tCEP = new CoordinatorCEP(mLogger, this, false, pLevel, tCluster.getMultiplexer());
-				Route tRoute = null;
-				try {
-					tRoute = getHRS().getRoute(getReferenceNode().getCentralFN(), pName, new Description(), getReferenceNode().getIdentity());
-				} catch (RoutingException tExc) {
-					mLogger.err(this, "Unable to resolve route to " + pName, tExc);
-				} catch (RequirementsException tExc) {
-					mLogger.err(this, "Unable to resolve route to " + pName, tExc);
-				}
+				Route tRoute = getRouteFromCentralFN(pName);
 				tCEP.setRouteToPeer(tRoute);
 				tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
 				((IntermediateCluster)tCluster).getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
@@ -516,7 +509,7 @@ public class Coordinator extends Application implements ServerCallback
 			{
 				Connection tConn = null;
 				try {
-					tConn = BlockingCalls.connect(mHost.getLayer(null), tName, getConnectDescription(tProperty), getReferenceNode().getIdentity());
+					tConn = BlockingCalls.connect(mHost.getLayer(null), tName, getConnectDescription(tProperty), ((FoGEntity) mHost.getLayer(FoGEntity.class)).getIdentity());
 				} catch (NetworkException tExc) {
 					Logging.err(this, "Unable to connecto to " + tName, tExc);
 				}
@@ -526,14 +519,7 @@ public class Coordinator extends Application implements ServerCallback
 					
 					HRMName tMyAddress = tConnectionCEP.getSourceRoutingServiceAddress();
 
-					Route tRoute = null;
-					try {
-						tRoute = getHRS().getRoute(getReferenceNode().getCentralFN(), tName, new Description(), getReferenceNode().getIdentity());
-					} catch (RoutingException tExc) {
-						getLogger().err(this, "Unable to find route to " + tName, tExc);
-					} catch (RequirementsException tExc) {
-						getLogger().err(this, "Unable to find route to " + tName + " with requirements no requirents, Huh!", tExc);
-					}
+					Route tRoute = getRouteFromCentralFN(tName);
 					
 					HRMName tMyFirstNodeInDirection = null;
 					if(tRoute != null) {
@@ -562,49 +548,32 @@ public class Coordinator extends Application implements ServerCallback
 		tThread.start();
 	}
 	
-	/**
-	 * 
-	 * @deprecated This function is for the old infrastructure in which BGP and HRM was mixed quite unorthodox
-	 * @param pNamespace is the namespace that defines which routing identity is wished
-	 * @return name of the central FN according to the routing service that was specified
-	 */
-	public Name getCentralFNAddress(Namespace pNamespace)
+	private Route getRouteFromCentralFN(Name pName)
 	{
-		if(getReferenceNode().getRoutingService() instanceof RoutingServiceMultiplexer) {
-			for(NameMappingService tNMS : ((RoutingServiceMultiplexer)getReferenceNode().getRoutingService()).getNameMappingServices()) {
-				NameMappingEntry[] tEntries;
-				try {
-					tEntries = tNMS.getAddresses(getReferenceNode().getCentralFN().getName());
-					if(tEntries != null) {
-						for(NameMappingEntry tEntry : tEntries) {
-							if( ((Name)tEntry.getAddress()).getNamespace().equals(pNamespace)) {
-								return (Name)tEntry.getAddress();
-							}
-						}
-					}
-				} catch (RemoteException tExc) {
-					mLogger.err(this, "Unable to determine name for " + getReferenceNode().getName(), tExc);
-				}
-				
-			}
-		} else {
-			return getHRS().getSourceIdentification();
+		try {
+			return getHRS().getRoute(getCentralFN(), pName, new Description(), mReferenceNode.getIdentity());
+		} catch (RoutingException tExc) {
+			mLogger.err(this, "Unable to resolve route to " + pName, tExc);
+		} catch (RequirementsException tExc) {
+			mLogger.err(this, "Unable to resolve route to " + pName, tExc);
 		}
+		
 		return null;
 	}
 	
-	
 	@Override
-	protected void started() {
-		;
+	protected void started()
+	{
 	}
 	
 	@Override
-	public void exit() {
+	public void exit()
+	{
 	}
 
 	@Override
-	public boolean isRunning() {
+	public boolean isRunning()
+	{
 		return true;
 	}
 	
@@ -618,12 +587,62 @@ public class Coordinator extends Application implements ServerCallback
 	}
 	
 	/**
-	 * 
-	 * @return node that runs all services
+	 * TODO Why is the name of the central FN used? Why not a HRM-internal name? Why not getRSName?
+	 */
+	public Name getName()
+	{
+		return mReferenceNode.getCentralFN().getName();
+	}
+	
+	/**
+	 * TODO Why getRoutingService and not mHRS?
+	 * @deprecated TODO maybe getName() sufficient? Why second name required?
+	 */
+	public Name getRSName()
+	{
+		return getRoutingService().getNameFor(mReferenceNode.getCentralFN());
+	}
+	
+	/**
+	 * TODO Why not getIdentity? Differs the identity of the central FN from the identity of the coordinator?
+	 */
+	public Identity getNodeIdentity()
+	{
+		return mReferenceNode.getIdentity();
+	}
+	
+	/**
+	 * @deprecated A FoG implementation is not required to provide a central FN!
+	 */
+	public ForwardingNode getCentralFN()
+	{
+		return mReferenceNode.getCentralFN();
+	}
+	
+	/**
+	 * TODO why is not mHRS returned?
+	 */
+	public RoutingService getRoutingService()
+	{
+		return mReferenceNode.getRoutingService();
+	}
+	
+	public EventHandler getTimeBase()
+	{
+		return mReferenceNode.getTimeBase();
+	}
+
+	public ParameterMap getParameter()
+	{
+		return mReferenceNode.getNode().getParameter();
+	}
+	
+	/**
+	 * @deprecated Routing service should encapsulate operate over protocol entities and not over physical nodes. Thus, there should be no direct access to a node. 
 	 */
 	public Node getReferenceNode()
 	{
-		return mReferenceNode;
+		return mReferenceNode.getNode();
 	}
 	
 	/**

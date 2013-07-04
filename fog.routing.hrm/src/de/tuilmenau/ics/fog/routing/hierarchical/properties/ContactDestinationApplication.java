@@ -50,6 +50,11 @@ public class ContactDestinationApplication extends AbstractProperty
 		return mNamespace;
 	}
 
+	public boolean isIntermediateRequirement()
+	{
+		return true;
+	}
+	
 	public String toString()
 	{
 		return this.getClass().getSimpleName() + "(->" + (mName != null ? mName  : "" ) + "@" + mNamespace + (mApplicationParameter != null ? ";" + mApplicationParameter : "") + ")";

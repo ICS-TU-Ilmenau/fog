@@ -13,10 +13,10 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.manager;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.Gate;
 import de.tuilmenau.ics.fog.transfer.Gate.GateState;
@@ -27,14 +27,14 @@ import de.tuilmenau.ics.fog.ui.Viewable;
 
 public abstract class ProcessGateConstruction extends Process
 {
-	public ProcessGateConstruction(ForwardingNode pBase, AbstractGate pReplacementFor, Identity pOwner)
+	public ProcessGateConstruction(ForwardingNode base, AbstractGate replacementFor, Identity owner)
 	{
-		super(pBase, pOwner);
+		super(base, owner);
 		
-		mReplacementFor = pReplacementFor;
+		mReplacementFor = replacementFor;
 	}
 	
-	protected abstract AbstractGate newGate(Node pNode) throws NetworkException;
+	protected abstract AbstractGate newGate(FoGEntity entity) throws NetworkException;
 	
 	public Gate create() throws NetworkException
 	{
@@ -43,7 +43,7 @@ public abstract class ProcessGateConstruction extends Process
 		// synch for test&set of down gates
 		synchronized(tBase) {
 			// create gate
-			mGate = newGate(getBase().getNode());
+			mGate = newGate(getBase().getEntity());
 			
 			// assign gate a local ID
 			if(mReplacementFor != null) {
@@ -81,7 +81,7 @@ public abstract class ProcessGateConstruction extends Process
 	
 	public void update(GateID reverseGateNumberAtPeer, Name peerNodeRoutingName, Identity peerIdentity)
 	{
-		Node tNode = getBase().getNode();
+		FoGEntity tNode = getBase().getEntity();
 		
 		// check access permissions
 		if(mPeerIdentity == null) {

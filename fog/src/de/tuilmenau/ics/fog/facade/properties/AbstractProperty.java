@@ -53,6 +53,15 @@ public abstract class AbstractProperty implements Property
 		return obj.getClass().equals(getClass());
 	}
 	
+	/**
+	 * Indicate if the requirement is valid also for relay systems.
+	 * Default value is false.
+	 */
+	public boolean isIntermediateRequirement()
+	{
+		return false;
+	}
+	
 	public String toString()
 	{
 		String values = getPropertyValues();

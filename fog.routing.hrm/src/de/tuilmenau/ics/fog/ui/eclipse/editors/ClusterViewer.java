@@ -163,7 +163,7 @@ public class ClusterViewer extends EditorAWT implements IController
 				popup.addSeparator();
 			}
 			
-			menuCreator.fillMenu(((Node) selection).getHost(), popup);
+			menuCreator.fillMenu(((Node) selection), popup);
 		}
 	}
 	

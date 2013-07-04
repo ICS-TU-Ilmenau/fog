@@ -18,6 +18,7 @@ import java.util.HashMap;
 import de.tuilmenau.ics.extensionpoint.Extension;
 import de.tuilmenau.ics.extensionpoint.ExtensionRegistry;
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.scripts.IScript;
@@ -150,8 +151,9 @@ public class CommandParsing
 					
 					if(tNode != null) {
 						SimpleName tDest = SimpleName.parse(tParts[2]);
+						FoGEntity fogLayer = (FoGEntity) tNode.getLayer(FoGEntity.class);
 
-						Route tRoute = tNode.getTransferPlane().getRoute(tNode.getCentralFN(), tDest, null, null);
+						Route tRoute = fogLayer.getTransferPlane().getRoute(fogLayer.getCentralFN(), tDest, null, null);
 						pAS.getLogger().info(pSim, tParts[1] +"->" +tDest +"=" +tRoute);
 					} else {
 						pAS.getLogger().warn(pSim, "node " +tParts[1] +" is not known.");

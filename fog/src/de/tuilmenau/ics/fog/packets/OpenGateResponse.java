@@ -83,7 +83,7 @@ public class OpenGateResponse extends SignallingAnswer
 			}
 		}
 		// TODO this might be quick&dirty -> telling the controller that we received a response to trigger "repair ready" in experiments
-		process.getBase().getNode().getController().receivedOpenGateResponse();
+		process.getBase().getEntity().getController().receivedOpenGateResponse();
 		
 		return true;
 	}

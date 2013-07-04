@@ -17,13 +17,13 @@ import de.tuilmenau.ics.CommonSim.datastream.numeric.CounterNode;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.ContinuationHandler;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IContinuation;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.Gate;
 import de.tuilmenau.ics.fog.ui.Viewable;
@@ -37,12 +37,12 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 	protected static final double UNUSED_TIMEOUT_SEC = Config.Transfer.GATE_UNUSED_TIMEOUT_SEC;
 	
 	
-	public AbstractGate(Node pNode, Description pDescription, Identity pOwner)
+	public AbstractGate(FoGEntity pEntity, Description pDescription, Identity pOwner)
 	{
-		mNode = pNode;
+		mEntity = pEntity;
 		mState = GateState.START;
 		mRefCounter = 1;
-		mLogger = pNode.getLogger();
+		mLogger = pEntity.getLogger();
 		mOwner = pOwner;
 		
 		setDescription(pDescription);
@@ -79,9 +79,9 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 		return mId;
 	}
 	
-	public Node getNode()
+	public FoGEntity getEntity()
 	{
-		return mNode;
+		return mEntity;
 	}
 	
 	public ForwardingElement getNextNode()
@@ -111,7 +111,7 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 		mRemoteDestinationName = pRemoteDestinationName;
 		// TODO quick&dirty notification of new BE-DirectDownGates for the Rerouting experiment infrastructure
 		if (this instanceof DirectDownGate && mState == GateState.OPERATE && (mDescription == null || mDescription.isBestEffort())) {
-			getNode().getAS().getSimulation().publish(new Gate.GateNotification(Gate.GateNotification.GOT_BE_GATE, mRemoteDestinationName));
+			getEntity().getNode().getAS().getSimulation().publish(new Gate.GateNotification(Gate.GateNotification.GOT_BE_GATE, mRemoteDestinationName));
 		}
 	}
 	
@@ -168,7 +168,7 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 	public Identity getOwner()
 	{
 		if(mOwner != null) return mOwner;
-		else return mNode.getIdentity();
+		else return mEntity.getIdentity();
 	}
 	
 	protected void setDescription(Description pNewDescr)
@@ -182,7 +182,7 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 	{
 		if(continuation != null) {
 			if(mContinuationsStateChange == null) {
-				mContinuationsStateChange = new ContinuationHandler<Gate>(mNode.getTimeBase(), maxWaitTimeSec, this);
+				mContinuationsStateChange = new ContinuationHandler<Gate>(mEntity.getTimeBase(), maxWaitTimeSec, this);
 			}
 			
 			mContinuationsStateChange.add(continuation);
@@ -239,10 +239,10 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 			setState(GateState.INIT);
 			
 			IDoubleWriter counter = CounterNode.openAsWriter(getClass().getCanonicalName() +".number");
-			counter.write(+1.0, mNode.getTimeBase().nowStream());
+			counter.write(+1.0, mEntity.getTimeBase().nowStream());
 			
 			IDoubleWriter sum = CounterNode.openAsWriter(getClass().getCanonicalName() +".sum");
-			sum.write(+1.0, mNode.getTimeBase().nowStream());
+			sum.write(+1.0, mEntity.getTimeBase().nowStream());
 			
 			try {
 				init();
@@ -271,7 +271,7 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 					setState(GateState.SHUTDOWN);
 					
 					IDoubleWriter counter = CounterNode.openAsWriter(getClass().getCanonicalName() +".number");
-					counter.write(-1.0, mNode.getTimeBase().nowStream());
+					counter.write(-1.0, mEntity.getTimeBase().nowStream());
 
 					try {
 						close();
@@ -285,7 +285,7 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 				// more time required?
 				if(getState() != GateState.DELETED) {
 					// start timer for deleting internals of gate by force
-					Timer timer = new Timer(mNode.getTimeBase(), new IEvent() {
+					Timer timer = new Timer(mEntity.getTimeBase(), new IEvent() {
 						@Override
 						public void fire()
 						{
@@ -414,7 +414,7 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 		
 		public void schedule()
 		{
-			mNode.getTimeBase().scheduleIn(AbstractGate.UNUSED_TIMEOUT_SEC, this);
+			mEntity.getTimeBase().scheduleIn(AbstractGate.UNUSED_TIMEOUT_SEC, this);
 		}
 		
 		private int mPacketCounter;
@@ -471,7 +471,7 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 		}
 		
 		tOut.append("@");
-		tOut.append(mNode);
+		tOut.append(mEntity);
 		
 		return tOut.toString();
 	}
@@ -501,8 +501,8 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 	@Viewable("Processed messages")
 	private int mMsgCounter = 0;
 	
-	@Viewable("Node")
-	protected Node mNode;
+	@Viewable("FoG entity")
+	protected FoGEntity mEntity;
 	
 	protected Logger mLogger;
 	

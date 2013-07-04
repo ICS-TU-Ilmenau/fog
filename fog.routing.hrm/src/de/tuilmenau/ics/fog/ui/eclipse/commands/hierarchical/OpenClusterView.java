@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Forwarding on Gates Simulator/Emulator - Hierarchical Routing Management
+ * Forwarding on Gates Simulator/Emulator - Eclipse
  * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * All rights reserved. This program and the accompanying materials
@@ -13,14 +13,12 @@ import java.awt.event.ActionListener;
 
 import org.eclipse.ui.IWorkbenchPartSite;
 
-import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
-import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
-import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 
-public class OpenClusterView extends Command
-{
+
+public class OpenClusterView extends Command {
 
 	public OpenClusterView()
 	{
@@ -30,8 +28,8 @@ public class OpenClusterView extends Command
 	@Override
 	public void init(IWorkbenchPartSite pSite, Object pObject)
 	{
-		if(pObject instanceof Node) {
-			mNode = (Node) pObject; 
+		if(pObject instanceof HierarchicalRoutingService) {
+			mNode = (HierarchicalRoutingService) pObject; 
 		} else {
 			throw new RuntimeException(this +" requires a Node object instead of " + pObject +" to proceed.");
 		}
@@ -43,22 +41,33 @@ public class OpenClusterView extends Command
 	public void main() throws Exception
 	{
 		if((mNode != null) && (mSite != null)) {
+			/*
 			Coordinator tCoord = null;
-			Object reference = null;
+			*/
+			Object reference = mNode;
 			
 			MenuCreator menu = new MenuCreator(mSite);
 			ActionListener action = null;
 			
-			
-			for(Application tApp : mNode.getHost().getApps()) {
-				if(tApp instanceof Coordinator) {
-					tCoord = (Coordinator) tApp;
+			/* If one accidentally activates this item, the local routing service is displayed
+			 *
+			 * if(rs instanceof RoutingService) {
+				if(((RoutingService) rs).getRoutingService() instanceof HierarchicalRoutingService) {
+					tCoord = ((HierarchicalRoutingService)((RoutingService) rs).getRoutingService()).getCoordinator();
 					reference = tCoord;
+				
+				} else {
+					reference =rs;
+				
 				}
-			}
-
-			action = menu.getDefaultAction(tCoord.getClusterMap());
-			
+				action = menu.getDefaultAction(reference);
+				
+			} else {
+				// Display local routing service instead to avoid null pointer exception
+				*/
+				action = menu.getDefaultAction(reference);
+			/*	
+			}*/
 			if(action != null) {
 				action.actionPerformed(null);
 			} else {
@@ -68,5 +77,5 @@ public class OpenClusterView extends Command
 	}
 
 	private IWorkbenchPartSite mSite;
-	private Node mNode;
+	private HierarchicalRoutingService mNode;
 }

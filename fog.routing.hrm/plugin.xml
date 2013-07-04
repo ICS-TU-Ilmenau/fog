@@ -8,6 +8,7 @@
             name="HRMRadius">
       </routing>
    </extension>
+   
    <extension
          point="org.eclipse.ui.editors">
       <editor
@@ -22,6 +23,7 @@
             name="Cluster View">
       </editor>
    </extension>
+   
    <extension
          point="de.tuilmenau.ics.fog.hostApplications">
       <editor
@@ -31,7 +33,13 @@
       </editor>
       <plugin
             class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.SendPacket"
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService"
             name="Send packet">
+      </plugin>
+      <plugin
+            name="Open Cluster View"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenClusterView"
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService">
       </plugin>
       <editor
             editorID="de.tuilmenau.ics.fog.clusterviewer"

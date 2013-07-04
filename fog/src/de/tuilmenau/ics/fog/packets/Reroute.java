@@ -42,7 +42,7 @@ public class Reroute extends SignallingRequest
 	@Override
 	public boolean execute(ForwardingNode fn, Packet packet, Identity requester)
 	{
-		Logger log = fn.getNode().getLogger();
+		Logger log = fn.getEntity().getLogger();
 
 		// are we executed on an end point?
 		if(fn instanceof ClientFN) {
@@ -53,7 +53,7 @@ public class Reroute extends SignallingRequest
 			
 			// do we know the name of the destination binding?
 			if(tTarget != null) {
-				RoutingService rs = fn.getNode().getRoutingService();
+				RoutingService rs = fn.getEntity().getRoutingService();
 				Route route = null;
 				
 				// calculate new route

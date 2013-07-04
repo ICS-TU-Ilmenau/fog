@@ -28,7 +28,7 @@ public class NodeConfiguratorEchoServer implements NodeConfigurator
 	public void configure(String pName, AutonomousSystem pAS, Node pNode)
 	{
 		try {
-			AppScript.startApplication(pNode.getHost(), CLASS.getName(), null, new String[] {CLASS.getName(), pNode.getName()});
+			AppScript.startApplication(pNode, CLASS.getName(), null, new String[] {CLASS.getName(), pNode.getName()});
 		}
 		catch(InvalidParameterException exc) {
 			pNode.getLogger().err(this, "Can not start echo server.", exc);

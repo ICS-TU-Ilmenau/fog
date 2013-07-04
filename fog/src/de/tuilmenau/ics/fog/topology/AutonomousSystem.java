@@ -115,9 +115,12 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		String tRoutingConfigurator = mSim.getConfig().Scenario.ROUTING_CONFIGURATOR;
 		NodeConfiguratorContainer.getRouting().configure(tRoutingConfigurator, pName, this, newNode);
 		
-		if(!newNode.hasRoutingService()) {
-			// no routing service at all? -> create default routing service
-			FoGEntity.registerRoutingService(newNode.getHost(), new RoutingServiceSimulated(getRoutingService(), pName, newNode));
+		FoGEntity layer = (FoGEntity) newNode.getLayer(FoGEntity.class);
+		if(layer != null) {
+			if(!layer.hasRoutingService()) {
+				// no routing service at all? -> create default routing service
+				layer.registerRoutingService(new RoutingServiceSimulated(getRoutingService(), pName, newNode));
+			}
 		}
 		
 		String tAppConfigurator = mSim.getConfig().Scenario.APPLICATION_CONFIGURATOR;
@@ -229,9 +232,9 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	{
 		Node tNode = getNodeByName(pSendingNode);
 		Connection tConnection = null;
-		tConnection = tNode.getHost().getLayer(null).connect(new SimpleName(new Namespace("rerouting"), pTargetNode), Description.createBE(false), null);
+		tConnection = tNode.getLayer(null).connect(new SimpleName(new Namespace("rerouting"), pTargetNode), Description.createBE(false), null);
 		
-		for(Application tApplication : tNode.getHost().getApps()) {
+		for(Application tApplication : tNode.getApps()) {
 			if(tApplication instanceof ReroutingExecutor) { 
 				ReroutingSession tSession = ((ReroutingExecutor)tApplication).new ReroutingSession(true);
 				tSession.start(tConnection);

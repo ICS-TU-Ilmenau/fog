@@ -82,13 +82,13 @@
       <editor
             name="Open"
             editorID="de.tuilmenau.ics.fog.grapheditor"
-            filter="de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService"
+            filter="de.tuilmenau.ics.fog.FoGEntity"
             default="true">
       </editor>
       <editor
             name="Open"
             editorID="de.tuilmenau.ics.fog.grapheditor"
-            filter="de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService"
+            filter="de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService"
             default="true">
       </editor>
       
@@ -112,12 +112,7 @@
       <plugin
             name="Open routing service"
             class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenRoutingService"
-            filter="de.tuilmenau.ics.fog.topology.Node">
-      </plugin>
-      <plugin
-            name="Open Cluster View"
-            class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenClusterView"
-            filter="de.tuilmenau.ics.fog.topology.Node">
+            filter="de.tuilmenau.ics.fog.routing.RoutingService">
       </plugin>
       <plugin
             name="Toggle broken flag"
@@ -137,7 +132,7 @@
       <plugin
             name="Reload requirements mapping"
             class="de.tuilmenau.ics.fog.eclipse.ui.commands.ReloadRequirementsMappingCommand"
-            filter="de.tuilmenau.ics.fog.topology.Node">
+            filter="de.tuilmenau.ics.fog.FoGEntity">
       </plugin>
       <plugin
             name="Do step"
@@ -152,6 +147,11 @@
       <subentry
             name="Applications"
             class="de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreatorApplication"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </subentry>
+      <subentry
+            name="Layer entities"
+            class="de.tuilmenau.ics.fog.eclipse.ui.menu.LayerMenuCreator"
             filter="de.tuilmenau.ics.fog.facade.Host">
       </subentry>
       <plugin

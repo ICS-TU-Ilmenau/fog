@@ -19,9 +19,9 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.CommonSim.datastream.StreamTime;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.SumNode;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.Gate.GateState;
@@ -42,7 +42,7 @@ abstract public class GateContainer implements ForwardingNode
 	private HashMap<Integer,AbstractGate> mGates = new HashMap<Integer,AbstractGate>();
 	protected Name mName;
 	protected NamingLevel mLevel;
-	protected Node mNode;
+	protected FoGEntity mEntity;
 	protected Logger mLogger;
 	
 	/**
@@ -54,9 +54,9 @@ abstract public class GateContainer implements ForwardingNode
 	private static int sLastUsedGateNumber = 0;
 	
 	
-	public GateContainer(Node pNode, Name pName, NamingLevel pLevel)
+	public GateContainer(FoGEntity pNode, Name pName, NamingLevel pLevel)
 	{
-		mNode = pNode;
+		mEntity = pNode;
 		mName = pName;
 		mLevel = pLevel;
 		mLogger = pNode.getLogger();
@@ -67,7 +67,7 @@ abstract public class GateContainer implements ForwardingNode
 	 */
 	public void open()
 	{
-		mNode.getTransferPlane().registerNode(this, mName, mLevel, getDescription());
+		mEntity.getTransferPlane().registerNode(this, mName, mLevel, getDescription());
 	}
 	
 	@Override
@@ -86,9 +86,9 @@ abstract public class GateContainer implements ForwardingNode
 				newgate.setID(gateID);
 				mGates.put(gateID.GetID(), newgate);
 				
-				mNode.getTransferPlane().registerLink(this, newgate);
+				mEntity.getTransferPlane().registerLink(this, newgate);
 				
-				mNode.count(newgate.getClass().getName(), true);
+				mEntity.getNode().count(newgate.getClass().getName(), true);
 
 				mLogger.log(this, newgate +" added");
 				return newgate.getGateID();
@@ -144,11 +144,11 @@ abstract public class GateContainer implements ForwardingNode
 	{
 		Integer tID = Helper.removeValueFromHashMap(mGates, oldgate);
 		if(tID != null) {
-			mNode.getTransferPlane().unregisterLink(this, oldgate);
+			mEntity.getTransferPlane().unregisterLink(this, oldgate);
 			
 			if(oldgate != null) {
-				StreamTime tNow = mNode.getTimeBase().nowStream();
-				String baseName = mNode.getClass().getName() +"." +mNode +"." +oldgate.getClass().getName();
+				StreamTime tNow = mEntity.getTimeBase().nowStream();
+				String baseName = mEntity.getClass().getName() +"." +mEntity +"." +oldgate.getClass().getName();
 				
 				IDoubleWriter tSum = SumNode.openAsWriter(baseName +".number");
 				tSum.write(-1.0d, tNow);
@@ -214,7 +214,7 @@ abstract public class GateContainer implements ForwardingNode
 			}
 		}
 		
-		getNode().getTransferPlane().unregisterNode(this);
+		getEntity().getTransferPlane().unregisterNode(this);
 	}
 	
 	/**
@@ -296,19 +296,25 @@ abstract public class GateContainer implements ForwardingNode
 		}
 	}
 	
+	/**
+	 * TODO remove since FN does not have a name
+	 */
+	@Deprecated
 	public Name getName()
 	{
 		return mName;
 	}
 	
-	public Node getNode()
+	@Override
+	public FoGEntity getEntity()
 	{
-		return mNode;
+		return mEntity;
 	}
 	
+	@Override
 	public String toString()
 	{
-		if(mName != null) return this.getClass().getSimpleName() +"(" +mName +")@" +mNode;
+		if(mName != null) return this.getClass().getSimpleName() +"(" +mName +")@" +mEntity;
 		else return super.toString();
 	}
 	

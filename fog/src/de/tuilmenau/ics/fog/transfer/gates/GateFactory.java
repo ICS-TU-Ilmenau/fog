@@ -16,12 +16,12 @@ package de.tuilmenau.ics.fog.transfer.gates;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 
 
 public interface GateFactory
 {
-	public AbstractGate createGate(String gateType, Node pNode, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner);
+	public AbstractGate createGate(String gateType, FoGEntity entity, ForwardingElement next, HashMap<String, Serializable> configParams, Identity owner);
 }

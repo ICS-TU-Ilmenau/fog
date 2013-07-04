@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.transfer.gates;
 
 import java.util.NoSuchElementException;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -23,7 +24,6 @@ import de.tuilmenau.ics.fog.packets.PleaseOpenDownGate;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.topology.ILowerLayer.SendResult;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.BrokenType;
@@ -36,9 +36,9 @@ import de.tuilmenau.ics.fog.ui.Viewable;
  */
 public class DirectDownGate extends DownGate
 {
-	public DirectDownGate(int localProcessNumber, Node node, NetworkInterface networkInterface,	NeighborInformation toLowerLayerID, Description description, Identity owner)
+	public DirectDownGate(int localProcessNumber, FoGEntity entity, NetworkInterface networkInterface,	NeighborInformation toLowerLayerID, Description description, Identity owner)
 	{
-		super(node, networkInterface, description, owner);
+		super(entity, networkInterface, description, owner);
 
 		mLocalProcessNumber = localProcessNumber;
 		mToLowerLayerID = toLowerLayerID;
@@ -89,7 +89,7 @@ public class DirectDownGate extends DownGate
 			// Error during transmission?
 			// Do not do any recovery for invisible packets.
 			if((res != SendResult.OK) && !invisible) {
-				mNode.getLogger().warn(this, "Cannot send packet " +packet +" to " +mToLowerLayerID +" due to " +res);
+				mEntity.getLogger().warn(this, "Cannot send packet " +packet +" to " +mToLowerLayerID +" due to " +res);
 				
 				// maybe gate already closed during error recovery? 
 				if((getState() != GateState.SHUTDOWN) && (getState() != GateState.DELETED)) {
@@ -104,9 +104,9 @@ public class DirectDownGate extends DownGate
 					}
 				}
 				catch (NoSuchElementException e) {
-					mNode.getLogger().err(this, "Could not modify return route", e);
+					mEntity.getLogger().err(this, "Could not modify return route", e);
 				}
-				mNode.getController().handleBrokenElement(convertError(res), getLowerLayer(), packet, this);
+				mEntity.getController().handleBrokenElement(convertError(res), getLowerLayer(), packet, this);
 			}
 		} else {
 			if(!invisible) {
@@ -124,10 +124,10 @@ public class DirectDownGate extends DownGate
 		NetworkInterface ll = getLowerLayer();
 		
 		if(ll != null) {
-			Name addr = mNode.getRoutingService().getNameFor(ll.getMultiplexerGate());
+			Name addr = mEntity.getRoutingService().getNameFor(ll.getMultiplexerGate());
 			
 			Packet tReq = new Packet(new PleaseOpenDownGate(mLocalProcessNumber, getGateID(), addr, Description.createBE(false)));
-			getNode().getAuthenticationService().sign(tReq, getOwner());
+			getEntity().getAuthenticationService().sign(tReq, getOwner());
 	
 			handlePacket(tReq, null);
 		} else {

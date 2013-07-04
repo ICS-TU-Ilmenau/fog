@@ -23,12 +23,12 @@ import de.tuilmenau.ics.CommonSim.datastream.annotations.AutoWire;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.DoubleNode;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.Config.Simulator.SimulatorMode;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.properties.TransportProperty;
 import de.tuilmenau.ics.fog.packets.Packet;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.headers.NumberingHeader;
 import de.tuilmenau.ics.fog.transfer.gates.roles.Numbering;
@@ -65,9 +65,9 @@ public class NumberingGate extends FunctionalGate implements IEvent
 	private static final int WINDOW_SIZE = 1;
 
 	
-	public NumberingGate(Node pNode, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
+	public NumberingGate(FoGEntity pEntity, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
 	{
-		super(pNode, pNext, Numbering.NUMBERING, pOwner);
+		super(pEntity, pNext, Numbering.NUMBERING, pOwner);
 		
 		mMaxQueueLength = INFINITE_QUEUE_LENGTH;
 		if(pConfigParams != null) {
@@ -79,7 +79,7 @@ public class NumberingGate extends FunctionalGate implements IEvent
 			}
 		}
 		
-		mQueue = new PacketQueue(pNode.getTimeBase(), mMaxQueueLength);
+		mQueue = new PacketQueue(pEntity.getTimeBase(), mMaxQueueLength);
 		
 		if(OUTPUT_STATISTICS_TO_DATASTREAM) {
 			DatastreamManager.autowire(this);
@@ -90,7 +90,7 @@ public class NumberingGate extends FunctionalGate implements IEvent
 	protected void init()
 	{
 		mCounter = 0;
-		mTimer = new Timer(mNode.getTimeBase(), this, RETRANSMISSION_TIMEOUT_SEC / GRANULARITY_FOR_TIMER);
+		mTimer = new Timer(mEntity.getTimeBase(), this, RETRANSMISSION_TIMEOUT_SEC / GRANULARITY_FOR_TIMER);
 		mTimer.start();
 		
 		if(getReverseGate() != null) switchToState(GateState.OPERATE);
@@ -118,7 +118,7 @@ public class NumberingGate extends FunctionalGate implements IEvent
 	 */
 	private void sendNext()
 	{
-		double tNow = mNode.getTimeBase().now();
+		double tNow = mEntity.getTimeBase().now();
 		double tTimeoutTime = tNow - mRetransmissionTimeout;
 		Iterator<PacketQueueEntry> tIter = mQueue.descendingIterator();
 
@@ -160,7 +160,7 @@ public class NumberingGate extends FunctionalGate implements IEvent
 				mQueue.add(this, pPacket.clone());
 				
 				if(OUTPUT_STATISTICS_TO_DATASTREAM) {
-					mQueueLength.write(mQueue.size(), mNode.getTimeBase().nowStream());
+					mQueueLength.write(mQueue.size(), mEntity.getTimeBase().nowStream());
 				}
 	
 				// are we allowed to send some more packets?
@@ -199,7 +199,7 @@ public class NumberingGate extends FunctionalGate implements IEvent
 	
 	private void calculateRTT(double pSendTime)
 	{
-		double tNow = mNode.getTimeBase().now();
+		double tNow = mEntity.getTimeBase().now();
 		double tRTT = tNow -pSendTime; 
 		
 		if(OUTPUT_STATISTICS_TO_DATASTREAM) {
@@ -256,7 +256,7 @@ public class NumberingGate extends FunctionalGate implements IEvent
 			if(DEBUG_OUTPUT_NUMBERING_GATE) {
 				mLogger.debug(this, "ACK for " +pPacketNumber +" removed " +tDelCounter +" packets from queue. Smallest number in queue is/was " +tSmallestNumber);
 			}
-			StreamTime now = getNode().getTimeBase().nowStream();
+			StreamTime now = getEntity().getTimeBase().nowStream();
 			if(OUTPUT_STATISTICS_TO_DATASTREAM) {
 				mQueueLength.write(mQueue.size(), now);
 			}
@@ -312,7 +312,7 @@ public class NumberingGate extends FunctionalGate implements IEvent
 	@Override
 	public synchronized void fire()
 	{
-		double tNow = mNode.getTimeBase().now();
+		double tNow = mEntity.getTimeBase().now();
 		double tTimeoutTime = tNow - mRetransmissionTimeout;
 		Iterator<PacketQueueEntry> tIter = mQueue.descendingIterator();
 		PacketQueueEntry tLowestNoOverall = null;

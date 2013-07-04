@@ -9,9 +9,9 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.eclipse.ui.commands;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.properties.InvalidProperty;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.manager.RequirementsToGatesMapper;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -27,15 +27,15 @@ public class ReloadRequirementsMappingCommand extends SilentCommand
 	@Override
 	public void init(Object object)
 	{
-		if(object instanceof Node) node = (Node) object; 
+		if(object instanceof FoGEntity) entity = (FoGEntity) object; 
 			
-		if(node == null) throw new RuntimeException(this +" requires a Node object to proceed. Instead of " +object +".");
+		if(entity == null) throw new RuntimeException(this +" requires a FoG entity to proceed. Instead of " +object +".");
 	}
 	
 	@Override
 	public void main()
 	{
-		RequirementsToGatesMapper mapper = RequirementsToGatesMapper.getInstance(node);
+		RequirementsToGatesMapper mapper = RequirementsToGatesMapper.getInstance(entity);
 
 		// reload, if file had been changed during testing
 		mapper.init();
@@ -50,5 +50,5 @@ public class ReloadRequirementsMappingCommand extends SilentCommand
 		Logging.info(this, "TEST: Solution for " +requ2 +" = " +mapper.getSolutionFor(requ2));
 	}
 
-	private Node node;
+	private FoGEntity entity;
 }

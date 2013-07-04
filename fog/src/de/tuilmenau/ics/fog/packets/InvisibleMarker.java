@@ -13,7 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets;
 
-import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.transfer.gates.DownGate;
@@ -48,7 +48,7 @@ public class InvisibleMarker implements Invisible
 			doUnMarking(((DownGate) pElement).getLowerLayer());
 		}
 		if(pElement instanceof Multiplexer) {
-			Node tNode = ((Multiplexer) pElement).getNode();
+			FoGEntity tNode = ((Multiplexer) pElement).getEntity();
 			if(pElement == tNode.getCentralFN()) {
 				doUnMarking(tNode);
 			}

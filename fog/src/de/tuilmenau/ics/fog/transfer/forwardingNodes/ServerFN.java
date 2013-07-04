@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -26,7 +27,6 @@ import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.PleaseOpenConnection;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.util.EventSourceBase;
 
@@ -39,9 +39,9 @@ import de.tuilmenau.ics.fog.util.EventSourceBase;
  */
 public class ServerFN extends Multiplexer
 {
-	public ServerFN(Node node, Name name, NamingLevel level, Description description, Identity identity)
+	public ServerFN(FoGEntity entity, Name name, NamingLevel level, Description description, Identity identity)
 	{
-		super(node, name, level, false, identity, node.getController());
+		super(entity, name, level, false, identity, entity.getController());
 		
 		this.description = description;
 		
@@ -53,7 +53,7 @@ public class ServerFN extends Multiplexer
 	 */
 	public void open()
 	{
-		mNode.getTransferPlane().registerNode(this, mName, mLevel, description);
+		mEntity.getTransferPlane().registerNode(this, mName, mLevel, description);
 	}
 
 	/**

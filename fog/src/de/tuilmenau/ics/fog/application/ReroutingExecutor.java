@@ -44,7 +44,7 @@ public class ReroutingExecutor extends Application
 	
 	public ReroutingExecutor(Node pNode, Identity pIdentity)
 	{
-		super(pNode.getHost(), pIdentity);
+		super(pNode, pIdentity);
 	
 		mName = new SimpleName(new Namespace("rerouting"), pNode.toString());
 	}

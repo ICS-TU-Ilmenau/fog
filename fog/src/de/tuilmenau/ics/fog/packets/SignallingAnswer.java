@@ -41,27 +41,27 @@ abstract public class SignallingAnswer extends Signalling
 	{
 		if(pElement instanceof ForwardingNode) {
 			ForwardingNode tFN = (ForwardingNode) pElement;
-			Identity tSender = getSenderIdentity(tFN.getNode().getAuthenticationService(), pPacket);
+			Identity tSender = getSenderIdentity(tFN.getEntity().getAuthenticationService(), pPacket);
 			
 			if(tSender != null) {
 				synchronized(tFN) {
-					Process tProcess = tFN.getNode().getProcessRegister().getProcess(tFN, tSender, getProcessNumber());
+					Process tProcess = tFN.getEntity().getProcessRegister().getProcess(tFN, tSender, getProcessNumber());
 					if(tProcess != null) {
 						return execute(tProcess, pPacket, tSender);
 					} else {
-						tFN.getNode().getLogger().warn(this, "No process available for owner " +tSender + " and ID " +getProcessNumber() +" in " +tFN + " while authentications of packets were " + pPacket.getAuthentications());
+						tFN.getEntity().getLogger().warn(this, "No process available for owner " +tSender + " and ID " +getProcessNumber() +" in " +tFN + " while authentications of packets were " + pPacket.getAuthentications());
 						pPacket.getAuthentications().removeFirst();
-						tSender = getSenderIdentity(tFN.getNode().getAuthenticationService(), pPacket);
-						tProcess = tFN.getNode().getProcessRegister().getProcess(tFN, tSender, getProcessNumber());
+						tSender = getSenderIdentity(tFN.getEntity().getAuthenticationService(), pPacket);
+						tProcess = tFN.getEntity().getProcessRegister().getProcess(tFN, tSender, getProcessNumber());
 						if(tProcess != null) {
 							return execute(tProcess, pPacket, tSender);
 						} else {
-							tFN.getNode().getLogger().err(this, "Absolutely unable to find owner of process");
+							tFN.getEntity().getLogger().err(this, "Absolutely unable to find owner of process");
 						}
 					}
 				}
 			} else {
-				tFN.getNode().getLogger().err(this, "Can not execute signaling message " +pPacket +" at " +pElement +" due to invalid authentication.");
+				tFN.getEntity().getLogger().err(this, "Can not execute signaling message " +pPacket +" at " +pElement +" due to invalid authentication.");
 			}
 		} else {
 			Logging.warn(this, "Element '" +pElement +"' has wrong type for signalling msg.");

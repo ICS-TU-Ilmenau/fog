@@ -19,6 +19,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IController;
 import de.tuilmenau.ics.fog.eclipse.GraphViewer;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
@@ -89,9 +90,15 @@ public class GraphEditor extends EditorAWT implements IController
 					throw new PartInitException(errMsg, tExc);
 				}
 			}
+			else if(inputObject instanceof FoGEntity) {
+				GraphViewer<ForwardingElement,ForwardingElement> mViewer2 = new GraphViewer<ForwardingElement,ForwardingElement>(this);
+				mViewer2.init(((FoGEntity)inputObject).getTransferPlane().getGraph());
+
+				setView(mViewer2.getComponent());
+			}
 			else if(inputObject instanceof Node) {
 				GraphViewer<ForwardingElement,ForwardingElement> mViewer2 = new GraphViewer<ForwardingElement,ForwardingElement>(this);
-				mViewer2.init(((Node) inputObject).getTransferPlane().getGraph());
+				mViewer2.init(((FoGEntity)((Node) inputObject).getLayer(FoGEntity.class)).getTransferPlane().getGraph());
 
 				setView(mViewer2.getComponent());
 			}
@@ -215,7 +222,7 @@ public class GraphEditor extends EditorAWT implements IController
 				popup.addSeparator();
 			}
 			
-			menuCreator.fillMenu(((Node) selection).getHost(), popup);
+			menuCreator.fillMenu(((Node) selection), popup);
 		}
 	}
 	

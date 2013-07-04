@@ -21,6 +21,7 @@ import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.SumNode;
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.EventHandler;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -29,7 +30,6 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
@@ -87,15 +87,15 @@ public class TransferPlane implements TransferPlaneObserver
 				resRoute = mRS.getRoute(pSource, pDestination, pRequirements, pRequester);
 			}
 			
-			logRSRequest(pSource.getNode(), resRoute, internalRequest);
+			logRSRequest(pSource.getEntity(), resRoute, internalRequest);
 			return resRoute;
 		}
 		catch(RoutingException exc) {
-			logRSRequest(pSource.getNode(), null, internalRequest);
+			logRSRequest(pSource.getEntity(), null, internalRequest);
 			throw exc;
 		}
 		catch(RequirementsException exc) {
-			logRSRequest(pSource.getNode(), null, internalRequest);
+			logRSRequest(pSource.getEntity(), null, internalRequest);
 			throw exc;
 		}
 	}
@@ -113,10 +113,10 @@ public class TransferPlane implements TransferPlaneObserver
 	 * 
 	 * 6 and 7 are zero if an error occured.
 	 */
-	private synchronized void logRSRequest(Node node, Route result, boolean internal)
+	private synchronized void logRSRequest(FoGEntity entity, Route result, boolean internal)
 	{
 		if(Config.Logging.LOG_ROUTE_REQUEST_RESULTS) {
-			Simulation sim = node.getAS().getSimulation();
+			Simulation sim = entity.getNode().getAS().getSimulation();
 			
 			try {
 				if((sRoutingLog == null) && !sTriedToOpen) {
@@ -154,7 +154,7 @@ public class TransferPlane implements TransferPlaneObserver
 				
 				// log statistical data about routing service itself and the result
 				if(sRoutingLog != null) {
-					sRoutingLog.write(node.toString());
+					sRoutingLog.write(entity.toString());
 					if(internal) {
 						sRoutingLog.write(this.toString());
 						sRoutingLog.write(mMap.getNumberVertices());

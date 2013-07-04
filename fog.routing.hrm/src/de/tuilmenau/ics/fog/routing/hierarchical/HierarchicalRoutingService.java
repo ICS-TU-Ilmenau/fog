@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
@@ -73,7 +74,7 @@ public class HierarchicalRoutingService implements RoutingService
 	private LinkedList<HRMID> mUsedAddresses = new LinkedList<HRMID>();
 	List<RememberFN> mNeighborRoutes = new LinkedList<RememberFN>();
 	private HierarchicalNameMappingService<Name> mNameMapping=null;
-	private Node mReferenceNode = null;
+	private FoGEntity mReferenceNode = null;
 	private Random mRandomGenerator = null;
 	private Coordinator mCoordinatorInstance = null;
 	private Logger mLogger = null;
@@ -89,20 +90,24 @@ public class HierarchicalRoutingService implements RoutingService
 	 */
 	public HierarchicalRoutingService(Node pReferenceNode)
 	{
-		mReferenceNode = pReferenceNode;
+		mReferenceNode = (FoGEntity) pReferenceNode.getLayer(FoGEntity.class);
 		
+		if(mReferenceNode == null) {
+			throw new RuntimeException("No FoG layer available for " +mReferenceNode);
+		}
+
 		mNameMapping = new HierarchicalNameMappingService(HierarchicalNameMappingService.getGlobalNameMappingService(), pReferenceNode.getLogger());
 		Logging.log("Constructor: Using name mapping service " + mNameMapping.toString());
 		mRandomGenerator = new Random(System.currentTimeMillis());
 		mRoutingMap = new RoutableGraph<HRMName, RoutingServiceLink>();
 		mCoordinatorRoutingMap = new RoutableGraph<HRMName, Route>();
-		mLogger = new Logger(mReferenceNode.getHost().getLogger());
+		mLogger = new Logger(mReferenceNode.getLogger());
 	}
 
 	public void initiateCoordinator()
 	{
-		mCoordinatorInstance = new Coordinator(mReferenceNode.getHost(), mReferenceNode.getLogger(), mReferenceNode.getIdentity(), mReferenceNode, this);
-		mReferenceNode.getHost().registerApp(mCoordinatorInstance);
+		mCoordinatorInstance = new Coordinator(mReferenceNode.getLogger(), mReferenceNode.getIdentity(), mReferenceNode, this);
+		mReferenceNode.getNode().registerApp(mCoordinatorInstance);
 	}
 	
 	public Coordinator getCoordinator()
@@ -209,7 +214,7 @@ public class HierarchicalRoutingService implements RoutingService
 		try {
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
 		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(mReferenceNode.getAS().getSimulation());
+			HierarchicalNameMappingService.createGlobalNameMappingService(mReferenceNode.getNode().getAS().getSimulation());
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
 		}
 		
@@ -234,7 +239,7 @@ public class HierarchicalRoutingService implements RoutingService
 		try {
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
 		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(mReferenceNode.getAS().getSimulation());
+			HierarchicalNameMappingService.createGlobalNameMappingService(mReferenceNode.getNode().getAS().getSimulation());
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
 		}
 		
@@ -679,7 +684,7 @@ public class HierarchicalRoutingService implements RoutingService
 	{
 		if(mSourceIdentification == null) {
 			NameMappingEntry<Name> tAddresses[] = null;
-			tAddresses = mNameMapping.getAddresses(getCoordinator().getReferenceNode().getCentralFN().getName());
+			tAddresses = mNameMapping.getAddresses(getCoordinator().getName());
 			for(NameMappingEntry<Name> tEntry : tAddresses) {
 				mSourceIdentification = tEntry.getAddress();
 			}
@@ -697,7 +702,7 @@ public class HierarchicalRoutingService implements RoutingService
 		mLogger.log(this, "Found name " + (tEntries != null && tEntries.length > 0 ? tEntries[0].getAddress() : tEntries ) + " for " + pElement);
 		if(!mLocalNameMapping.containsKey(pElement)) {
 			tAddress = new L2Address(mRandomGenerator.nextLong());
-			tAddress.setCaps(mReferenceNode.getCapabilities());
+			tAddress.setCaps(mReferenceNode.getNode().getCapabilities());
 			tAddress.setDescr(pElement.toString());
 			mNameMapping.registerName(pName, tAddress, pLevel);
 		}
@@ -923,7 +928,7 @@ public class HierarchicalRoutingService implements RoutingService
 							Logging.log(this, "Pair " + tSource.getDescr() + ", " + tDestination.getDescr() + " scheduled for election");
 						}
 						CoordinatorConnectEvent tConnectEvent = new CoordinatorConnectEvent(tDestination, tClusterID, tDontElect);
-						mReferenceNode.getHost().getTimeBase().scheduleIn(waitTime, tConnectEvent);
+						mReferenceNode.getTimeBase().scheduleIn(waitTime, tConnectEvent);
 					}
 				}
 			}

@@ -14,13 +14,13 @@
 package de.tuilmenau.ics.fog.transfer.gates;
 
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.packets.Invisible;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.topology.ILowerLayerReceive;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.ui.PacketLogger;
 import de.tuilmenau.ics.fog.ui.Viewable;
@@ -35,12 +35,12 @@ import de.tuilmenau.ics.fog.ui.Viewable;
  */
 public class LowerLayerReceiveGate extends AbstractGate implements ILowerLayerReceive
 {
-	public LowerLayerReceiveGate(Node node, NetworkInterface networkInterface)
+	public LowerLayerReceiveGate(FoGEntity entity, NetworkInterface networkInterface)
 	{
-		super(node, null, node.getIdentity());
+		super(entity, null, entity.getIdentity());
 	
 		mNetworkInterface = networkInterface;
-		packetLog = PacketLogger.createLogger(node.getTimeBase(), this, node);
+		packetLog = PacketLogger.createLogger(entity.getTimeBase(), this, entity);
 	}
 	
 	@Override
@@ -71,7 +71,7 @@ public class LowerLayerReceiveGate extends AbstractGate implements ILowerLayerRe
 					packetLog.add(packet);
 				}
 	
-				if(mNode.isBroken() != Status.OK) {
+				if(mEntity.getNode().isBroken() != Status.OK) {
 					// Should not happen
 					mLogger.err(this, "Received packet " + packet + " while broken.");
 					return;
@@ -161,7 +161,7 @@ public class LowerLayerReceiveGate extends AbstractGate implements ILowerLayerRe
 	@Override
 	public Status isBroken()
 	{
-		return mNetworkInterface.getNode().isBroken();
+		return mNetworkInterface.getEntity().getNode().isBroken();
 	}
 	
 	@Override

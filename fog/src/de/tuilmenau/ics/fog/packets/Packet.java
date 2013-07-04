@@ -641,7 +641,7 @@ public class Packet implements Serializable
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(handler, this);
 		}
-		this.logStats(handler.getNode().getAS().getSimulation(), handler.getNode()); // log statistics of this packet as it finished its way through the network
+		this.logStats(handler.getEntity().getNode().getAS().getSimulation(), handler.getEntity()); // log statistics of this packet as it finished its way through the network
 	}
 	
 	/**
@@ -667,7 +667,7 @@ public class Packet implements Serializable
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(target, this);
 		}
-		this.logStats(target.getNode().getAS().getSimulation(), target.getNode()); // log statistics of this packet as it finished its way through the network
+		this.logStats(target.getEntity().getNode().getAS().getSimulation(), target.getEntity()); // log statistics of this packet as it finished its way through the network
 	}
 
 	/**

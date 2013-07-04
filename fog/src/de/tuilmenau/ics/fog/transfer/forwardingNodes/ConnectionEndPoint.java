@@ -317,7 +317,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	public String toString()
 	{
 		if(forwardingNode != null) {
-			return super.toString() +"@" +forwardingNode.getNode();
+			return super.toString() +"@" +forwardingNode.getEntity();
 		} else {
 			return super.toString();
 		}

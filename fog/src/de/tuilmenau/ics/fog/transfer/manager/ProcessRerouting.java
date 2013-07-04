@@ -39,7 +39,7 @@ public class ProcessRerouting extends Process
 	
 	public ProcessRerouting(NetworkInterface netInterface, DownGate forGate, int removeGatesFromRoute, Name externalGivenRemoteDestinationName)
 	{
-		super(netInterface.getNode().getCentralFN(), forGate.getOwner());
+		super(netInterface.getEntity().getCentralFN(), forGate.getOwner());
 		
 		this.forGate = forGate;
 		this.removeGatesFromRoute = removeGatesFromRoute;
@@ -63,7 +63,7 @@ public class ProcessRerouting extends Process
 	{
 		super.start();
 		
-		reroutingGate = new ReroutingGate(getBase().getNode(), forGate, forGate.getOwner(), removeGatesFromRoute);
+		reroutingGate = new ReroutingGate(getBase().getEntity(), forGate, forGate.getOwner(), removeGatesFromRoute);
 		
 		reroutingGate.initialise();
 		reroutingGate.setReverseGateID(forGate.getReverseGateID());
@@ -114,7 +114,7 @@ public class ProcessRerouting extends Process
 				}
 			}
 			
-			Route tAlternativeRoute = getBase().getNode().getTransferPlane().getRoute(getBase(), reroutingGate.getRemoteDestinationName(), tDescr, reroutingGate.getOwner());
+			Route tAlternativeRoute = getBase().getEntity().getTransferPlane().getRoute(getBase(), reroutingGate.getRemoteDestinationName(), tDescr, reroutingGate.getOwner());
 			
 			if(tAlternativeRoute.isExplicit()) {
 				// route complete; set it as backup
@@ -124,18 +124,18 @@ public class ProcessRerouting extends Process
 				PleaseOpenUnicast tRequ = new PleaseOpenUnicast(this.getID(), reroutingGate.getGateID(), null);
 				Packet tRequest = new Packet(tAlternativeRoute, tRequ);
 				
-				getBase().getNode().getAuthenticationService().sign(tRequest, getOwner());
+				getBase().getEntity().getAuthenticationService().sign(tRequest, getOwner());
 				
 				// set timeout for re-sending the open request if it gets lost
 				if(timer == null) {
-					timer = getBase().getNode().getTimeBase().scheduleIn(RESEND_OPEN_REQUEST_TIMEOUT_SEC, new IEvent() {
+					timer = getBase().getEntity().getTimeBase().scheduleIn(RESEND_OPEN_REQUEST_TIMEOUT_SEC, new IEvent() {
 						@Override
 						public void fire()
 						{
 							if(!reroutingGate.isOperational()) {
 								getLogger().info(this, "Resending signal message");
 								signal();
-								timer = getBase().getNode().getTimeBase().scheduleIn(RESEND_OPEN_REQUEST_TIMEOUT_SEC, this);
+								timer = getBase().getEntity().getTimeBase().scheduleIn(RESEND_OPEN_REQUEST_TIMEOUT_SEC, this);
 							}
 							// else: everything fine; no further signaling required
 						}
@@ -157,7 +157,7 @@ public class ProcessRerouting extends Process
 		
 		if(alternativeRoute != null) {
 			reroutingGate.setRoute(alternativeRoute);
-			getBase().getNode().getTimeBase().cancelEvent(timer);
+			getBase().getEntity().getTimeBase().cancelEvent(timer);
 			timer = null;
 		}
 	}

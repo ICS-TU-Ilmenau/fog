@@ -17,11 +17,10 @@ import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceSimulated;
-import de.tuilmenau.ics.fog.topology.Node;
 
 
 /**
- * Runs default command for the routing service object registered at a node.
+ * Runs default command for a routing service object.
  */
 public class OpenRoutingService extends Command
 {
@@ -34,10 +33,10 @@ public class OpenRoutingService extends Command
 	@Override
 	public void init(IWorkbenchPartSite site, Object object)
 	{
-		if(object instanceof Node) {
-			node = (Node) object; 
+		if(object instanceof RoutingService) {
+			rs = (RoutingService) object; 
 		} else {
-			throw new RuntimeException(this +" requires a Node object instead of " +object +" to proceed.");
+			throw new RuntimeException(this +" requires a RoutingService object instead of " +object +" to proceed.");
 		}
 		
 		this.site = site;
@@ -46,8 +45,7 @@ public class OpenRoutingService extends Command
 	@Override
 	public void main()
 	{
-		if((node != null) && (site != null)) {
-			RoutingService rs = node.getRoutingService();
+		if((rs != null) && (site != null)) {
 			Object reference = rs;
 			
 			MenuCreator menu = new MenuCreator(site);
@@ -71,5 +69,5 @@ public class OpenRoutingService extends Command
 	}
 
 	private IWorkbenchPartSite site;
-	private Node node;
+	private RoutingService rs;
 }

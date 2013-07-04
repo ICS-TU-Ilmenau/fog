@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IContinuation;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.exceptions.TransferServiceException;
@@ -28,6 +29,7 @@ import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.facade.properties.FunctionalRequirementProperty;
 import de.tuilmenau.ics.fog.facade.properties.IDirectionPair;
 import de.tuilmenau.ics.fog.facade.properties.Property;
@@ -77,10 +79,10 @@ import de.tuilmenau.ics.fog.util.SimpleName;
 
 public class Controller
 {
-	public Controller(Node node)
+	public Controller(FoGEntity entity)
 	{
-		mNode = node;
-		mLogger = node.getLogger();
+		mEntity = entity;
+		mLogger = entity.getLogger();
 	}
 	
 	/**
@@ -132,7 +134,7 @@ public class Controller
 			}
 			
 			Packet errMsg = new Packet(reverseRoute, new TransferFailed(error, basedOn));
-			mNode.getAuthenticationService().sign(errMsg, mNode.getIdentity());
+			mEntity.getAuthenticationService().sign(errMsg, mEntity.getIdentity());
 			lastHop.handlePacket(errMsg, null);
 		} else {
 			mLogger.warn(this, "No reverse route for packet. Can not send an error message to source.");
@@ -184,7 +186,7 @@ public class Controller
 						if(firstSig != null) {
 							origin = firstSig.getIdentity();
 						}
-						Route nextRoute = mNode.getTransferPlane().getRoute(lastHop, addr, descr, origin);
+						Route nextRoute = mEntity.getTransferPlane().getRoute(lastHop, addr, descr, origin);
 					
 						packet.getRoute().addFirst(nextRoute);
 						mLogger.log(this, "Set new route for " + packet);
@@ -446,7 +448,7 @@ public class Controller
 						Description tRequ = new Description();
 						tRequ.set(new TransportProperty(false, true));
 						
-						CreationResult res = createNewArbitraryGate(fn, tRequ, mNode.getIdentity(), fn, routeToPeer);
+						CreationResult res = createNewArbitraryGate(fn, tRequ, mEntity.getIdentity(), fn, routeToPeer);
 						newGate = res.mGate;
 						
 						// how to proceed with the packet itself?
@@ -587,12 +589,12 @@ public class Controller
 		
 		// isn't node already connected to bus?
 		if(newNetworkInterface == null) {
-			newNetworkInterface = new NetworkInterface(bus, mNode);
+			newNetworkInterface = new NetworkInterface(bus, mEntity);
 			
 			if(newNetworkInterface.attach()) {
 				mLogger.log(this, "new network interface " +newNetworkInterface);
 				
-				mNode.count(NetworkInterface.class.getName(), true);
+				mEntity.getNode().count(NetworkInterface.class.getName(), true);
 				
 				// register generic send gate
 				// => that is important for calculating the reverse routes, while setting up DownGates
@@ -610,7 +612,7 @@ public class Controller
 			*/		
 				buslist.add(newNetworkInterface);
 				
-				mNode.notifyObservers(newNetworkInterface);
+				mEntity.getNode().notifyObservers(newNetworkInterface);
 			} else {
 				mLogger.warn(this, "Can not attach to network interface to lower layer " +bus);
 			}
@@ -648,7 +650,7 @@ public class Controller
 				removeNetworkInterface(tInter);
 				
 				if(tInter != null) {
-					mNode.count(NetworkInterface.class.getName(), false);
+					mEntity.getNode().count(NetworkInterface.class.getName(), false);
 				}
 				
 				return tInter;
@@ -664,14 +666,14 @@ public class Controller
 		
 		netInterface.detach();
 		
-		mNode.notifyObservers(netInterface);
+		mEntity.getNode().notifyObservers(netInterface);
 	}
 	
 	public void addNeighbor(NetworkInterface pInterface, NeighborInformation pNeighborLLID)
 	{
 		GateContainer tFN = pInterface.getMultiplexerGate(); 
 
-		synchronized(tFN) { synchronized(tFN.getNode()) {
+		synchronized(tFN) { synchronized(tFN.getEntity()) {
 			ReroutingGate[] backup = new ReroutingGate[1];
 			Description requ = Description.createBE(false);
 			DownGate downGate = checkDownGateAvailable(tFN, pNeighborLLID, null, requ, backup);
@@ -683,7 +685,7 @@ public class Controller
 				if(backup[0] != null) {
 					mLogger.trace(this, "BE DownGate to neighbor available as rerouting gate. Maybe other gates can be repaired, too? Schedule event.");
 					
-					mNode.getTimeBase().scheduleIn(1.0d, new RepairEvent(pInterface, pNeighborLLID));
+					mEntity.getTimeBase().scheduleIn(1.0d, new RepairEvent(pInterface, pNeighborLLID));
 				}
 				
 				//
@@ -697,7 +699,7 @@ public class Controller
 				// Setup one gate immediately and request reverse gate, only
 				//
 				try {
-					createNewDownGate(tFN, pInterface, pNeighborLLID, requ, mNode.getIdentity(), backup[0], false);
+					createNewDownGate(tFN, pInterface, pNeighborLLID, requ, mEntity.getIdentity(), backup[0], false);
 				}
 				catch (NetworkException tExc) {
 					mLogger.warn(this, "Can not add down gate to neighbor " +pNeighborLLID +". Ignoring neighbor.", tExc);
@@ -740,7 +742,7 @@ public class Controller
 			}
 			
 			// Request reverse gate from peer
-			Name localRoutingName = mNode.getRoutingService().getNameFor(pFN);
+			Name localRoutingName = mEntity.getRoutingService().getNameFor(pFN);
 			
 			tProcess.signal(localRoutingName);
 			
@@ -767,7 +769,7 @@ public class Controller
 	private ProcessConstruction isAlreadyAvailable(GateContainer pFN, Description pRequirements)
 	{
 		ProcessConstruction tRes = null;
-		ProcessList processList = pFN.getNode().getProcessRegister().getProcesses(pFN);
+		ProcessList processList = pFN.getEntity().getProcessRegister().getProcesses(pFN);
 		
 		if((processList != null) && (pRequirements != null)) {
 			for(Process tProcess : processList) {
@@ -871,7 +873,7 @@ public class Controller
 				gate = checkDownGateAvailable(container, pNeighborLLID, null, null, null);
 				
 				if(gate != null) {
-					mNode.getTransferPlane().unregisterLink(container, gate);
+					mEntity.getTransferPlane().unregisterLink(container, gate);
 					gate.shutdown();
 					
 					container.unregisterGate(gate);
@@ -1028,7 +1030,7 @@ public class Controller
 	 */
 	public void handleBrokenElement(BrokenType pType, NetworkInterface pNetworkInterface, Packet pPacket, DirectDownGate pFrom)
 	{
-		Config tConfig = mNode.getConfig();
+		Config tConfig = mEntity.getNode().getConfig();
 		RerouteMethod tRerouteMethod = tConfig.routing.REROUTE;
 		
 		if (pPacket.getData() instanceof ReroutingTestAgent) {
@@ -1048,7 +1050,7 @@ public class Controller
 			tOldRoute.addFirst(pPacket.getDownRoute());
 			pPacket.clearDownRoute();
 		}
-		RoutingService tRs = mNode.getRoutingService();
+		RoutingService tRs = mEntity.getRoutingService();
 		Route tNewRoute = null;
 		Route tReturnRoute = null;
 		HorizontalGate tHorizontalGate = null;
@@ -1064,14 +1066,14 @@ public class Controller
 			Name destinationFromBroken = null;
 			int removeGatesFromRoute = 0;
 			if(tRerouteMethod == RerouteMethod.FROM_BROKEN) {
-				LinkedList<Name> tDestination = tRs.getIntermediateFNs(mNode.getCentralFN(), tOldRoute, true);
+				LinkedList<Name> tDestination = tRs.getIntermediateFNs(mEntity.getCentralFN(), tOldRoute, true);
 				if(tDestination.size() >= 1) {
 					destinationFromBroken = tDestination.get(0);
 					removeGatesFromRoute = -1;
 				} else {
 					mLogger.warn(this, "Rerouting method " +tRerouteMethod +", but destination is not known for route " +tOldRoute +". Fallback to last known FN of route.");
 					
-					LinkedList<Name> tHops = tRs.getIntermediateFNs(mNode.getCentralFN(), tOldRoute, false);
+					LinkedList<Name> tHops = tRs.getIntermediateFNs(mEntity.getCentralFN(), tOldRoute, false);
 					if(tHops.size() > 1) {
 						destinationFromBroken = tHops.getLast();
 						removeGatesFromRoute = tHops.size() -2;
@@ -1085,7 +1087,7 @@ public class Controller
 			// create rerouting gates
 			//
 			if (pType == BrokenType.NODE) {
-				LinkedList<Name> tHops = tRs.getIntermediateFNs(mNode.getCentralFN(), tOldRoute, false);
+				LinkedList<Name> tHops = tRs.getIntermediateFNs(mEntity.getCentralFN(), tOldRoute, false);
 				// remove first FN on peer node; since node is broken, FN should be not available, too
 				if((tHops.size() >= 2)) {
 					tRs.reportError(tHops.get(1));
@@ -1133,7 +1135,7 @@ public class Controller
 					// check whether we need to notify anyone about the loss of a neighbour connection
 					if (pFrom.getDescription() == null || pFrom.getDescription().isBestEffort()) {
 						// lost a best effort gate
-						mNode.getAS().getSimulation().publish(
+						mEntity.getNode().getAS().getSimulation().publish(
 								new Gate.GateNotification(Gate.GateNotification.LOST_BE_GATE, pFrom.getRemoteDestinationName()));
 					}
 				} else {
@@ -1143,7 +1145,7 @@ public class Controller
 						// check whether we need to notify anyone about the loss of a neighbour connection
 						if (pFrom.getDescription() == null || pFrom.getDescription().isBestEffort()) {
 							// lost a best effort gate
-							mNode.getAS().getSimulation().publish(
+							mEntity.getNode().getAS().getSimulation().publish(
 									new Gate.GateNotification(Gate.GateNotification.LOST_BE_GATE, pFrom.getRemoteDestinationName()));
 						}
 					} else {
@@ -1173,7 +1175,7 @@ public class Controller
 			}
 
 			// Send new packet along
-			mNode.getCentralFN().handlePacket(pPacket, null);
+			mEntity.getCentralFN().handlePacket(pPacket, null);
 		}
 		catch(Exception exc) {
 			mLogger.err(this, "Handle broken element failed at " + this, exc);
@@ -1186,7 +1188,7 @@ public class Controller
 
 	private ErrorReflectorGate createErrorReflectorGate()
 	{
-		ErrorReflectorGate tGate = new ErrorReflectorGate(mNode, null);
+		ErrorReflectorGate tGate = new ErrorReflectorGate(mEntity, null);
 		
 		tGate.initialise();
 		
@@ -1252,7 +1254,7 @@ public class Controller
 				if(!up) targetFN = null;
 				SocketPathParam pathParam = null;
 				
-				if(tBaseFN.getNode().equals(tCurrentFN.getNode())) {
+				if(tBaseFN.getEntity().equals(tCurrentFN.getEntity())) {
 					checkReUse = true;
 				} else {
 					checkReUse = false;
@@ -1363,7 +1365,7 @@ public class Controller
 			// CODE FROM REQU TO GATE MAPPING LANGUAGE
 			//
 			
-			RequirementsToGatesMapper mapper = RequirementsToGatesMapper.getInstance(mNode);
+			RequirementsToGatesMapper mapper = RequirementsToGatesMapper.getInstance(mEntity);
 			
 			Word solution = mapper.getSolutionFor(pDescription);
 			
@@ -1407,8 +1409,8 @@ public class Controller
 			HashMap<String, Serializable> tConfigDown = null;
 			SocketPathParam pathParamUp = null;
 			SocketPathParam pathParamDown = null;
-			Description capabilities = mNode.getCapabilities();
-			mLogger.trace(this, "Comparing required properties " + pDescription + " with following capabilities \"" + capabilities.toString() + "\"");
+			Description capabilities = mEntity.getNode().getCapabilities();
+			mLogger.trace(this, "Comparing required properties " + pDescription + " with following capabilities \"" + capabilities + "\"");
 			
 			tIntermediateRequirements = new Description();
 			
@@ -1451,8 +1453,13 @@ public class Controller
 								// non-functional requirements
 								tIntermediateRequirements.add(prop);
 							} else {
-								// requirement not classified
-								// -> ignore it
+								if(prop instanceof AbstractProperty) {
+									if(((AbstractProperty) prop).isIntermediateRequirement()) {
+										tIntermediateRequirements.add(prop);
+									}
+									// else: ignore it
+								}
+								// else: requirement not classified -> ignore it
 							}
 						}
 					}
@@ -1492,12 +1499,12 @@ public class Controller
 	public void updateFNsCapabilties(Description pCapabilities) 
 	{
 		// only update RS entry for the central FN of the current node
-		mNode.getTransferPlane().updateNode(mNode.getCentralFN(), pCapabilities);
+		mEntity.getTransferPlane().updateNode(mEntity.getCentralFN(), pCapabilities);
 	}
 
 	public String toString()
 	{
-		return "Controller@" +mNode;
+		return "Controller@" +mEntity;
 	}
 	
 	private class RepairEvent implements IEvent
@@ -1513,7 +1520,7 @@ public class Controller
 		{
 			mLogger.log(this, "Repair gates for interface " +mInterface);
 			
-			synchronized(mInterface.getNode()) {
+			synchronized(mInterface.getEntity()) {
 				// Search for rerouting gates and try to repair them
 				GateIterator tIter = mInterface.getMultiplexerGate().getIterator(ReroutingGate.class);
 				
@@ -1544,14 +1551,14 @@ public class Controller
 			if (mRepairCountdown == 0) {
 				mRepairCountdown = -1;
 				mLogger.info(this, "All gates repaired.");
-				mNode.getAS().getSimulation().publish(new NodeUp(mNode.getAS().getName()+":"+mNode.toString()));
+				mEntity.getNode().getAS().getSimulation().publish(new NodeUp(mEntity.getNode().getAS().getName()+":"+mEntity.toString()));
 			}
 		}
 	}
 	
 	private static int sName = 0;
 	
-	private Node mNode;
+	private FoGEntity mEntity;
 	private Logger mLogger;
 	private final LinkedList<NetworkInterface> buslist = new LinkedList<NetworkInterface>();
 	private int mRepairCountdown = -1;

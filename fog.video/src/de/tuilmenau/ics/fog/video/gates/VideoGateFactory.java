@@ -22,8 +22,8 @@ package de.tuilmenau.ics.fog.video.gates;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateFactory;
@@ -31,18 +31,18 @@ import de.tuilmenau.ics.fog.transfer.gates.GateFactory;
 public class VideoGateFactory implements GateFactory {
 
 	@Override
-	public AbstractGate createGate(String gateType, Node pNode, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
+	public AbstractGate createGate(String gateType, FoGEntity pEntity, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
 	{
-		pNode.getLogger().debug(this, "Have to create gate of type " + gateType);
+		pEntity.getLogger().debug(this, "Have to create gate of type " + gateType);
 		
 		if (VideoDecodingGate.class.getSimpleName().equals(gateType)) {
-			return new VideoDecodingGate(pNode, pNext, pConfigParams, pOwner);
+			return new VideoDecodingGate(pEntity, pNext, pConfigParams, pOwner);
 		}
 		else if (VideoTranscodingGate.class.getSimpleName().equals(gateType)) {
-			return new VideoTranscodingGate(pNode, pNext, pConfigParams, pOwner);
+			return new VideoTranscodingGate(pEntity, pNext, pConfigParams, pOwner);
 		}
 		else if (VideoBufferingGate.class.getSimpleName().equals(gateType)) {
-			return new VideoBufferingGate(pNode, pNext, pConfigParams, pOwner);
+			return new VideoBufferingGate(pEntity, pNext, pConfigParams, pOwner);
 		}
 		else {
 			return null;

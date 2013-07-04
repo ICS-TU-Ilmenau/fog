@@ -17,6 +17,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.views.contentoutline.ContentOutlinePage;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService;
 import de.tuilmenau.ics.fog.topology.IAutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -44,7 +45,7 @@ public class GraphContentOutlinePage extends ContentOutlinePage
 			}
 			else if(selection instanceof Node) {
 				Node node = (Node) selection;
-				map = (RoutableGraph) node.getTransferPlane().getGraph();
+				map = (RoutableGraph) ((FoGEntity)node.getLayer(FoGEntity.class)).getTransferPlane().getGraph();
 			}
 		}
 		catch(UnmarshalException tExc) {

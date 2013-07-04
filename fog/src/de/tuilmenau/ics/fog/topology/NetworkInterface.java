@@ -17,6 +17,7 @@ import java.rmi.RemoteException;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.application.util.LayerObserverCallback;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -38,9 +39,9 @@ public class NetworkInterface implements LayerObserverCallback
 	private static final double REATTACH_TIMER_SEC = 10.0d;
 	
 	
-	public NetworkInterface(ILowerLayer pLowerLayer, Node pNode)
+	public NetworkInterface(ILowerLayer pLowerLayer, FoGEntity pEntity)
 	{
-		mNode = pNode;
+		mEntity = pEntity;
 		mLowerLayer = pLowerLayer;
 		mAttached = false;
 		
@@ -70,12 +71,12 @@ public class NetworkInterface implements LayerObserverCallback
 				if(!Config.Routing.REDUCE_NUMBER_FNS) {
 					tFNName = Controller.generateRoutingServiceName();
 				}
-				mMultiplexer = new Multiplexer(mNode, tFNName, NamingLevel.NAMES, false, getNode().getIdentity(), mNode.getController());
+				mMultiplexer = new Multiplexer(mEntity, tFNName, NamingLevel.NAMES, false, getEntity().getIdentity(), mEntity.getController());
 			}
 			mMultiplexer.open();
 			
 			// create gates
-			mReceiveGate = new LowerLayerReceiveGate(mNode, this);
+			mReceiveGate = new LowerLayerReceiveGate(mEntity, this);
 					
 			try {
 				// synch is needed for blocking access to mLowerLayerID, which
@@ -90,10 +91,10 @@ public class NetworkInterface implements LayerObserverCallback
 				
 				if(mLowerLayerID != null) {
 					// inform RS about uplink (optional)
-					mNode.getTransferPlane().registerLink(mProxyForLL, mReceiveGate);
+					mEntity.getTransferPlane().registerLink(mProxyForLL, mReceiveGate);
 					
 					// link central multiplexer with multiplexer of interface
-					mMultiplexer.connectMultiplexer(mNode.getCentralFN());
+					mMultiplexer.connectMultiplexer(mEntity.getCentralFN());
 				
 					// Register for updates of neighbors in range of lower layer
 					mLowerLayer.registerObserverNeighborList(this);
@@ -101,13 +102,13 @@ public class NetworkInterface implements LayerObserverCallback
 					// Look for already known neighbors
 					updateNeighbors();
 				} else {
-					mNode.getLogger().err(this, "Did not get valid lower layer ID from " +mLowerLayer);
+					mEntity.getLogger().err(this, "Did not get valid lower layer ID from " +mLowerLayer);
 					detach();
 					return false;
 				}
 			}
 			catch(Exception tExc) {
-				mNode.getLogger().err(this, "Can not attach to lower layer " +mLowerLayer, tExc);
+				mEntity.getLogger().err(this, "Can not attach to lower layer " +mLowerLayer, tExc);
 				detach();
 				return false;
 			}
@@ -139,7 +140,7 @@ public class NetworkInterface implements LayerObserverCallback
 				return false;
 			}
 		} catch (RemoteException exc) {
-			mNode.getLogger().err(this, "Ignoring remote exception during updating of lower layer neighbors from '" +mLowerLayer +"'.", exc);
+			mEntity.getLogger().err(this, "Ignoring remote exception during updating of lower layer neighbors from '" +mLowerLayer +"'.", exc);
 			return false;
 		}
 	}
@@ -148,10 +149,10 @@ public class NetworkInterface implements LayerObserverCallback
 	public void neighborDiscovered(NeighborInformation newNeighbor)
 	{
 		if(mLowerLayerID != null) {
-			getNode().getController().addNeighbor(this, newNeighbor);
+			mEntity.getController().addNeighbor(this, newNeighbor);
 		} else {
 			// maybe we forgot to unregister the observer of the lower layer? 
-			mNode.getLogger().err(this, "Neighbor discovered was called, but interface is not connected. Ignoring call.");
+			mEntity.getLogger().err(this, "Neighbor discovered was called, but interface is not connected. Ignoring call.");
 		}
 	}
 	
@@ -159,10 +160,10 @@ public class NetworkInterface implements LayerObserverCallback
 	public void neighborDisappeared(NeighborInformation oldNeighbor)
 	{
 		if(mLowerLayerID != null) {
-			getNode().getController().delNeighbor(this, oldNeighbor);
+			mEntity.getController().delNeighbor(this, oldNeighbor);
 		} else {
 			// maybe we forgot to unregister the observer of the lower layer? 
-			mNode.getLogger().err(this, "Neighbor disappeared was called, but interface is not connected. Ignoring call.");
+			mEntity.getLogger().err(this, "Neighbor disappeared was called, but interface is not connected. Ignoring call.");
 		}
 	}
 	
@@ -185,7 +186,7 @@ public class NetworkInterface implements LayerObserverCallback
 			try {
 				mLowerLayer.unregisterObserverNeighborList(this);
 			} catch (RemoteException tExc) {
-				mNode.getLogger().err(this, "Error while unregistering from observer list.", tExc);
+				mEntity.getLogger().err(this, "Error while unregistering from observer list.", tExc);
 			}
 			
 			// close all down gates for this interface
@@ -196,20 +197,20 @@ public class NetworkInterface implements LayerObserverCallback
 			mDownGates.clear();
 			
 			// Unregister for msg from bus
-			mNode.getTransferPlane().unregisterLink(mProxyForLL, mReceiveGate);
+			mEntity.getTransferPlane().unregisterLink(mProxyForLL, mReceiveGate);
 			try {
 				mLowerLayer.detach(mReceiveGate);
 			}
 			catch(RemoteException tExc) {
-				mNode.getLogger().warn(this, "Ignoring remote exception during detaching from lower layer.", tExc);
+				mEntity.getLogger().warn(this, "Ignoring remote exception during detaching from lower layer.", tExc);
 			}
 			// do not inform receive gate about closing
 			// (this would result in an calling of detach
 			// again)
 			
 			// unlink central multiplexer with multiplexer of interface
-			mNode.getCentralFN().unregisterGatesTo(mMultiplexer);
-			mMultiplexer.unregisterGatesTo(mNode.getCentralFN());
+			mEntity.getCentralFN().unregisterGatesTo(mMultiplexer);
+			mMultiplexer.unregisterGatesTo(mEntity.getCentralFN());
 			mMultiplexer.close();
 			
 			// invalidating gates
@@ -239,10 +240,10 @@ public class NetworkInterface implements LayerObserverCallback
 				mMultiplexer.open();
 				
 				// re-link central multiplexer with multiplexer of interface
-				mNode.getCentralFN().unregisterGatesTo(mMultiplexer);
-				mMultiplexer.unregisterGatesTo(mNode.getCentralFN());
+				mEntity.getCentralFN().unregisterGatesTo(mMultiplexer);
+				mMultiplexer.unregisterGatesTo(mEntity.getCentralFN());
 
-				mMultiplexer.connectMultiplexer(mNode.getCentralFN());
+				mMultiplexer.connectMultiplexer(mEntity.getCentralFN());
 				
 				// refresh neighbors
 				updateNeighbors();
@@ -253,19 +254,19 @@ public class NetworkInterface implements LayerObserverCallback
 	
 	public void enableReattach()
 	{
-		mNode.getTimeBase().scheduleIn(REATTACH_TIMER_SEC, new IEvent() {
+		mEntity.getTimeBase().scheduleIn(REATTACH_TIMER_SEC, new IEvent() {
 			@Override
 			public void fire()
 			{
 				if(mAttached) {
 					// we are attached => check neighbors
 					if(!updateNeighbors()) {
-						mNode.getTimeBase().scheduleIn(REATTACH_TIMER_SEC, this);
+						mEntity.getTimeBase().scheduleIn(REATTACH_TIMER_SEC, this);
 					}
 				} else {
 					// we are not attached => try to attach again
 					if(!attach()) {
-						mNode.getTimeBase().scheduleIn(REATTACH_TIMER_SEC, this);
+						mEntity.getTimeBase().scheduleIn(REATTACH_TIMER_SEC, this);
 					}
 				}
 			}
@@ -279,8 +280,8 @@ public class NetworkInterface implements LayerObserverCallback
 	public void remove()
 	{
 		if(mAttached) {
-			if(mNode != null) {
-				mNode.detach(mLowerLayer);
+			if(mEntity != null) {
+				mEntity.getNode().detach(mLowerLayer);
 			}
 			
 			// invalidate link to lower layer
@@ -302,9 +303,9 @@ public class NetworkInterface implements LayerObserverCallback
 		return mMultiplexer;
 	}
 	
-	public Node getNode()
+	public FoGEntity getEntity()
 	{
-		return mNode;
+		return mEntity;
 	}
 	
 	public ILowerLayer getBus()
@@ -337,7 +338,7 @@ public class NetworkInterface implements LayerObserverCallback
 			res = mLowerLayer.sendPacketTo(destination, packet, mLowerLayerID);
 		}
 		catch(RemoteException tExc) {
-			mNode.getLogger().warn(this, "Remote exception during sending operation => lower layer broken", tExc);
+			mEntity.getLogger().warn(this, "Remote exception during sending operation => lower layer broken", tExc);
 			res = SendResult.LOWER_LAYER_BROKEN;
 		}
 		
@@ -378,7 +379,7 @@ public class NetworkInterface implements LayerObserverCallback
 	}
 
 
-	private Node mNode;
+	private FoGEntity mEntity;
 	private ILowerLayer mLowerLayer;
 	private NeighborInformation mLowerLayerID;
 	private ForwardingElement mProxyForLL;

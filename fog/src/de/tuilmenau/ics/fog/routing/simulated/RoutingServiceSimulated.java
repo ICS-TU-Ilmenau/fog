@@ -409,7 +409,7 @@ public class RoutingServiceSimulated implements RoutingService
 			tID.setDescr(pElement);
 			
 			// set first capabilities based on the node data
-			tID.setCaps(pElement.getNode().getCapabilities());
+			tID.setCaps(pElement.getEntity().getNode().getCapabilities());
 			
 			// register node with ID in list
 			synchronized (mRoutingIDs) {

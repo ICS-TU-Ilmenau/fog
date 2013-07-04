@@ -13,11 +13,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.gates;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.manager.Controller;
 import de.tuilmenau.ics.fog.ui.Viewable;
@@ -27,9 +27,9 @@ import de.tuilmenau.ics.fog.ui.Viewable;
  */
 public class ReroutingGate extends HorizontalGate
 {
-	public ReroutingGate(Node pNode, DownGate pInvalidGate, Identity pOwner, int pRemoveGatesFromRoute)
+	public ReroutingGate(FoGEntity pEntity, DownGate pInvalidGate, Identity pOwner, int pRemoveGatesFromRoute)
 	{
-		super(pNode, pNode.getCentralFN(), pOwner);
+		super(pEntity, pEntity.getCentralFN(), pOwner);
 		
 		mNeighborLLID = pInvalidGate.getToLowerLayerID();
 		mRemoveGatesFromRoute = pRemoveGatesFromRoute;

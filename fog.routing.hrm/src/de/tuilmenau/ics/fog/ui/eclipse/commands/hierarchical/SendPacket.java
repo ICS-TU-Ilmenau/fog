@@ -13,6 +13,7 @@ import java.util.LinkedList;
 
 import org.eclipse.ui.IWorkbenchPartSite;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.EnterStringDialog;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
@@ -42,6 +43,7 @@ import de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical.RegionLimitationDial
 /**
  * @author ossy
  *
+ * @deprecated Test should use official way to establish route via an application and "connect". 
  */
 public class SendPacket extends Command
 {
@@ -127,9 +129,11 @@ public class SendPacket extends Command
 						}
 					}
 					RoutingServiceAddress tGlobalTargetIdentification = null;
-					tGlobalTargetIdentification = (RoutingServiceAddress)tTargetNode.getRoutingService().getNameFor(tTargetNode.getCentralFN());
+					FoGEntity entity = (FoGEntity) tTargetNode.getHost().getLayer(FoGEntity.class);
+					
+					tGlobalTargetIdentification = (RoutingServiceAddress)entity.getRoutingService().getNameFor(entity.getCentralFN());
 					if(tTargetNode != null) {
-						Name tTargetName = tTargetNode.getCentralFN().getName();
+						Name tTargetName = entity.getCentralFN().getName();
 						for(NameMappingEntry tEntry : tNMS.getAddresses(tTargetName)) {
 							if(tEntry.getAddress() instanceof HRMID) {
 								tTargetAddress =  (HRMID) tEntry.getAddress();
@@ -182,9 +186,10 @@ public class SendPacket extends Command
 						if(tTargetNode != tSourceNode) {
 							HRMID tTargetAddress = null;
 							RoutingServiceAddress tGlobalTargetIdentification = null;
-							tGlobalTargetIdentification = (RoutingServiceAddress)tTargetNode.getRoutingService().getNameFor(tTargetNode.getCentralFN());
+							FoGEntity tEntity = (FoGEntity) tTargetNode.getHost().getLayer(FoGEntity.class);
+							tGlobalTargetIdentification = (RoutingServiceAddress)tEntity.getRoutingService().getNameFor(tEntity.getCentralFN());
 							if(tTargetNode != null) {
-								Name tTargetName = tTargetNode.getCentralFN().getName();
+								Name tTargetName = tEntity.getCentralFN().getName();
 								for(NameMappingEntry tEntry : tNMS.getAddresses(tTargetName)) {
 									if(tEntry.getAddress() instanceof HRMID) {
 										tTargetAddress =  (HRMID) tEntry.getAddress();

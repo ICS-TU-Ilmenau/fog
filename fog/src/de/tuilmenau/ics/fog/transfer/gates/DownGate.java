@@ -13,11 +13,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.gates;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.ui.Viewable;
 
@@ -35,9 +35,9 @@ abstract public class DownGate extends AbstractGate
 	private NetworkInterface networkInterface;
 	
 	
-	public DownGate(Node pNode, NetworkInterface pInterface, Description pDescription, Identity pOwner)
+	public DownGate(FoGEntity pEntity, NetworkInterface pInterface, Description pDescription, Identity pOwner)
 	{
-		super(pNode, pDescription, pOwner);
+		super(pEntity, pDescription, pOwner);
 		
 		networkInterface = pInterface;
 		

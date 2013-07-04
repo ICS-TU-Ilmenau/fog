@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.transfer.manager;
 import java.rmi.RemoteException;
 
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
@@ -27,7 +28,6 @@ import de.tuilmenau.ics.fog.packets.PleaseOpenDownGate;
 import de.tuilmenau.ics.fog.packets.SignallingRequest;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.DirectDownGate;
@@ -74,7 +74,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 		}
 		
 		Packet tPacket = new Packet(mRequest);
-		getBase().getNode().getAuthenticationService().sign(tPacket, getOwner());
+		getBase().getEntity().getAuthenticationService().sign(tPacket, getOwner());
 		mInterface.sendPacketTo(mLowerLayerID, tPacket, null);
 		
 		// event for re-send signaling message
@@ -96,7 +96,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 		getTimeBase().scheduleIn(Config.PROCESS_STD_TIMEOUT_SEC / (MAX_NUMBER_RETRIES_SIGNALING +1.0d), event);
 	}
 
-	protected AbstractGate newGate(Node pNode) throws NetworkException
+	protected AbstractGate newGate(FoGEntity entity) throws NetworkException
 	{
 		// Check capabilities of bus
 		try {
@@ -129,7 +129,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 		}
 
 		// Create gate
-		DirectDownGate tRes = new DirectDownGate(getID(), pNode, mInterface, mLowerLayerID, mRequirements, getOwner());
+		DirectDownGate tRes = new DirectDownGate(getID(), entity, mInterface, mLowerLayerID, mRequirements, getOwner());
 		
 		if(Config.Connection.TERMINATE_WHEN_IDLE) {
 			if(mRequirements != null) {

@@ -238,13 +238,13 @@ public class Network
 		
 		return node;
 	}
-	
+
+	/**
+	 * @return Reference to host or null
+	 */
 	public Host getHostByName(String name)
 	{
-		Node node = nodelist.get(name);
-		
-		if(node != null) return node.getHost();
-		else return null;
+		return nodelist.get(name);
 	}
 	
 	public synchronized ILowerLayer getBusByName(String name)

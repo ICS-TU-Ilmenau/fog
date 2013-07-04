@@ -28,17 +28,22 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
+import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
 import de.tuilmenau.ics.fog.topology.NeighborList;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.transfer.TransferPlane;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ClientFN;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ConnectionEndPoint;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ServerFN;
+import de.tuilmenau.ics.fog.transfer.manager.Controller;
 import de.tuilmenau.ics.fog.transfer.manager.Process;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessConnection;
+import de.tuilmenau.ics.fog.transfer.manager.ProcessRegister;
 import de.tuilmenau.ics.fog.util.EventSourceBase;
 import de.tuilmenau.ics.fog.util.Logger;
+import de.tuilmenau.ics.fog.util.SimpleName;
 
 
 /**
@@ -49,6 +54,14 @@ public class FoGEntity extends EventSourceBase implements Layer
 	public FoGEntity(Node pNode)
 	{
 		mNode = pNode;
+		ownIdentity = getAuthenticationService().createIdentity(toString());
+		
+		controlgate = new Controller(this);
+		transferPlane = new TransferPlane(getTimeBase(), getLogger());
+		
+		// Note: Do not create central FN here, because we do not have
+		//       a routing service available.
+		multiplexgate = null;
 	}
 	
 	@Override
@@ -58,12 +71,12 @@ public class FoGEntity extends EventSourceBase implements Layer
 		if(pDescription == null) pDescription = Description.createEmpty();
 		
 		// Create named server forwarding node
-		ServerFN tAppFN = new ServerFN(mNode, pName, NamingLevel.NAMES, pDescription, pIdentity);
+		ServerFN tAppFN = new ServerFN(this, pName, NamingLevel.NAMES, pDescription, pIdentity);
 		tAppFN.open();
 		
 		// TODO use pParentSocket to look at which multiplexer to add server
 		// insert new FN in transfer plane
-		tAppFN.connectMultiplexer(mNode.getCentralFN());
+		tAppFN.connectMultiplexer(getCentralFN());
 		
 		// add server to the internal list for being able to enumerate all server applications
 		synchronized(mRegisteredServers){
@@ -138,7 +151,7 @@ public class FoGEntity extends EventSourceBase implements Layer
 		}
 		
 		// check if name is known; otherwise we can skip the gate creation stuff
-		if(!mNode.getRoutingService().isKnown(pName)) {
+		if(!getRoutingService().isKnown(pName)) {
 			tCEP.setError(new NetworkException(this, "Name " +pName +" is not known to routing service."));
 			return tCEP;
 		}
@@ -148,12 +161,12 @@ public class FoGEntity extends EventSourceBase implements Layer
 		
 		// in which name do we start the creation and the signaling?
 		if(pRequester == null) {
-			pRequester = mNode.getIdentity();
+			pRequester = getIdentity();
 			getLogger().info(this, "Connect to " +pName +" in the name of the node " +mNode +" (=" +pRequester +")");
 		}
 		
 		// select FN the connection should be added to; default: central FN
-		Multiplexer tMultiplexer = mNode.getCentralFN();
+		Multiplexer tMultiplexer = getCentralFN();
 		
 		// Create constructing process.
 		ProcessConnection tProcess = new ProcessConnection(tMultiplexer, pName, pDescription, pRequester);
@@ -187,7 +200,7 @@ public class FoGEntity extends EventSourceBase implements Layer
 			 * Calculate route for intermediate functions
 			 */
 			Description tIntermediateDescr = tProcess.getIntermediateDescr();
-			Route tRoute = mNode.getTransferPlane().getRoute(tMultiplexer, pName, tIntermediateDescr, pRequester);
+			Route tRoute = getTransferPlane().getRoute(tMultiplexer, pName, tIntermediateDescr, pRequester);
 	
 			/*
 			 * Register for notification of state changes now, since "handlePacket" might cause it immediately.
@@ -262,7 +275,7 @@ public class FoGEntity extends EventSourceBase implements Layer
 	{
 		// do not start search without a usefull name
 		if(pName != null) {
-			return mNode.getRoutingService().isKnown(pName);
+			return getRoutingService().isKnown(pName);
 		} else {
 			return false;
 		}
@@ -276,30 +289,54 @@ public class FoGEntity extends EventSourceBase implements Layer
 		return mNode.getAuthenticationService();
 	}
 	
-	/**
-	 * Enables a local routing service entity to register itself at
-	 * a host.
-	 *  
-	 * @param pRS Local routing service entity
-	 */
-	public void registerRoutingService(RoutingService pRS)
+	public static boolean registerRoutingService(Host pHost, RoutingService pRS)
 	{
-		mNode.registerRoutingService(pRS);
+		FoGEntity layer = (FoGEntity) pHost.getLayer(FoGEntity.class);
+		
+		if(layer != null) {
+			layer.registerRoutingService(pRS);
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	/**
 	 * Helper function for registering routing service entity at a host.
 	 */
-	public static boolean registerRoutingService(Host pHost, RoutingService pRS)
+	public void registerRoutingService(RoutingService pRS)
 	{
-		FoGEntity layer = (FoGEntity) pHost.getLayer(FoGEntity.class);
-		if(layer != null) {
-			layer.registerRoutingService(pRS);
-			
-			return true;
+		if(routingService == null) {
+			routingService = pRS;
 		} else {
-			return false;
+			// check, if already a multiplexer available
+			if(routingService instanceof RoutingServiceMultiplexer) {
+				((RoutingServiceMultiplexer) routingService).add(pRS); 
+			} else {
+				// ... no -> create one and store old and new rs entities in it
+				RoutingService rs = routingService;
+				
+				RoutingServiceMultiplexer rsMult = new RoutingServiceMultiplexer(); 
+				rsMult.add(rs);
+				rsMult.add(pRS);
+				
+				// activate new RS multiplexer as new RS of node
+				routingService = rsMult;
+			}
 		}
+		
+		// inform transfer service about new routing service
+		transferPlane.setRoutingService(routingService);
+	}
+	
+	public boolean hasRoutingService()
+	{
+		return routingService != null;
+	}
+	
+	public RoutingService getRoutingService()
+	{
+		return routingService;
 	}
 	
 	/**
@@ -310,7 +347,19 @@ public class FoGEntity extends EventSourceBase implements Layer
 	 */
 	public boolean unregisterRoutingService(RoutingService pRS)
 	{
-		return mNode.unregisterRoutingService(pRS);
+		if(routingService != null) {
+			// check, if already a multiplexer available
+			if(routingService instanceof RoutingServiceMultiplexer) {
+				return ((RoutingServiceMultiplexer) routingService).remove(pRS); 
+			} else {
+				if(routingService == pRS) {
+					routingService = null;
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	public String toString()
@@ -339,13 +388,116 @@ public class FoGEntity extends EventSourceBase implements Layer
 		return false;
 	}
 	
-	private Logger getLogger()
+	/**
+	 * @return Reference to routing service of node (!= null)
+	 */
+	public TransferPlane getTransferPlane()
+	{
+		// Debug check: It should not happen, since a node gets at least one
+		//              routing service created by the RoutingServiceFactory.
+		if(transferPlane == null) throw new RuntimeException("Node " +this +" does not have a routing service.");
+			
+		return transferPlane;
+	}
+	
+	public ProcessRegister getProcessRegister()
+	{
+		if(processes == null) {
+			processes = new ProcessRegister();
+		}
+		
+		return processes; 
+	}
+	
+	public Controller getController()
+	{
+		return controlgate;
+	}
+	
+	/**
+	 * The main FN is just an implementation artifact. From the FoG concept, it is
+	 * not needed. It would be possible to use several FNs within a node (e.g. one connecting
+	 * the interfaces and one connecting the services). But a central one make debugging
+	 * much easier and simplifies the attachment question for elements of the transfer
+	 * service.
+	 * 
+	 * @return The main FN of a node, which connects all interfaces and services within a node.
+	 */
+	public Multiplexer getCentralFN()
+	{
+		if(multiplexgate == null) {
+			Name nameObj = null;
+			if(!Config.Routing.REDUCE_NUMBER_FNS) {
+				nameObj = new SimpleName(Node.NAMESPACE_HOST, mNode.getName());
+			}
+			// Register node in routing services at attaching the first interface.
+			// It is important, that it is registered before the interface is created.
+			// TODO name for multiplexer is not really needed => remove it when code finished
+			multiplexgate = new Multiplexer(this, nameObj, NamingLevel.NAMES, Config.Routing.ENABLE_NODE_RS_HIERARCHY_LEVEL, ownIdentity, controlgate);
+			multiplexgate.open();
+		}
+		
+		return multiplexgate;
+	}
+	
+	public Identity getIdentity()
+	{
+		return ownIdentity;
+	}
+	
+	public Logger getLogger()
 	{
 		return mNode.getLogger();
 	}
+	
+	public Node getNode()
+	{
+		return mNode; 
+	}
 
+	/**
+	 * @return Get time base for this node
+	 */
+	public EventHandler getTimeBase()
+	{
+		return mNode.getTimeBase();
+	}
 
+	/**
+	 * Informs node that it was deleted from the scenario.
+	 * Resets node and closes everything.
+	 */
+	public void deleted()
+	{
+		if(controlgate != null)
+			controlgate.closed();
+		
+		if(multiplexgate != null)
+			multiplexgate.close();
+		
+		if((routingService != null) && (routingService instanceof RoutingServiceMultiplexer)) {
+			((RoutingServiceMultiplexer) routingService).clear();
+		}
+		
+		routingService = null;
+		transferPlane = null;
+		ownIdentity	= null;
+		controlgate = null;
+		multiplexgate = null;
+	}
+
+	
 	private Node mNode;
+	private Identity ownIdentity;
+
+	private Controller controlgate;
+	private Multiplexer multiplexgate;
+	private TransferPlane transferPlane;
+	private RoutingService routingService;
+
+	private ProcessRegister processes;
+	
 	private LinkedList<Name> mRegisteredServers = new LinkedList<Name>();
+
 	
 }

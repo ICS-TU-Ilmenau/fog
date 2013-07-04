@@ -120,7 +120,7 @@ public class ReroutingTestAgent extends ExperimentAgent implements IPacketStatis
 		}
 		else if (pElement instanceof Multiplexer){
 			Multiplexer m = (Multiplexer)pElement;
-			mNodes.add(m.getNode().getCentralFN().getName().toString());
+			mNodes.add(m.getEntity().getCentralFN().getName().toString());
 			// Forwarding node
 		}
 			

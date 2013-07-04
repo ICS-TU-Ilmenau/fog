@@ -37,7 +37,7 @@ public class NodeConfiguratorHierarchicalRadiusOnly implements NodeConfigurator
 	{
 		HierarchicalRoutingService hRS = new HierarchicalRoutingService(pNode);
 		
-		FoGEntity.registerRoutingService(pNode.getHost(), hRS);
+		FoGEntity.registerRoutingService(pNode, hRS);
 		hRS.initiateCoordinator();
 		
 		if(HierarchicalConfig.Routing.ELECTION_BEGINS_IMMEDIATLY_AFTER_SETUP) {

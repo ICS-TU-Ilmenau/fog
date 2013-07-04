@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -24,7 +25,6 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ClientFN;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ConnectionEndPoint;
@@ -73,7 +73,7 @@ public class PleaseOpenConnection extends SignallingRequest
 			mSendersRouteUpToHisClient = pSendersProcess.getRouteUpToClient();
 			
 			ForwardingNode tFN = pSendersProcess.getBase(); 
-			mPeerRoutingName = tFN.getNode().getRoutingService().getNameFor(tFN);
+			mPeerRoutingName = tFN.getEntity().getRoutingService().getNameFor(tFN);
 		}
 		mToApplication = pToApplication;
 	}
@@ -103,7 +103,7 @@ public class PleaseOpenConnection extends SignallingRequest
 		mSendersRouteUpToHisClient = pSendersProcess.getRouteUpToClient();
 		
 		ForwardingNode tFN = pSendersProcess.getBase(); 
-		mPeerRoutingName = tFN.getNode().getRoutingService().getNameFor(tFN);
+		mPeerRoutingName = tFN.getEntity().getRoutingService().getNameFor(tFN);
 		setDescription(pDescription);
 	}
 	
@@ -142,7 +142,7 @@ public class PleaseOpenConnection extends SignallingRequest
 	@Override
 	public boolean execute(ForwardingNode pFN, Packet pPacket, Identity pRequester)
 	{
-		pFN.getNode().getLogger().log(this, "execute open connection request on " +pFN + " from reverse node process " +getSendersProcessNumber());
+		pFN.getEntity().getLogger().log(this, "execute open connection request on " +pFN + " from reverse node process " +getSendersProcessNumber());
 		
 		Process tProcess = null;
 		try {
@@ -158,7 +158,7 @@ public class PleaseOpenConnection extends SignallingRequest
 				throw new NetworkException("missing packet return route");
 			}
 			
-			tProcess = pFN.getNode().getProcessRegister().getProcess(pFN, pRequester, getReceiversProcessNumber());
+			tProcess = pFN.getEntity().getProcessRegister().getProcess(pFN, pRequester, getReceiversProcessNumber());
 			if(tProcess != null) {
 				// Returning (maybe requirement-changing) connection request.
 				
@@ -206,7 +206,7 @@ public class PleaseOpenConnection extends SignallingRequest
 							if(mNewBaseFN != null) {
 								pFN = mNewBaseFN;
 							} else {
-								pFN.getNode().getLogger().log(this, "can not redirect from server " +pFN + " to central multiplexer");
+								pFN.getEntity().getLogger().log(this, "can not redirect from server " +pFN + " to central multiplexer");
 							}
 							
 						}
@@ -221,7 +221,7 @@ public class PleaseOpenConnection extends SignallingRequest
 						}
 						
 						// inform app about new connection
-						ConnectionEndPoint tCEP = new ConnectionEndPoint(tServerFN.getName(), pFN.getNode().getLogger(), pPacket.getAuthentications());
+						ConnectionEndPoint tCEP = new ConnectionEndPoint(tServerFN.getName(), pFN.getEntity().getLogger(), pPacket.getAuthentications());
 						ClientFN tFN = tProcessConn.getEndForwardingNode();
 						
 						tCEP.setForwardingNode(tFN);
@@ -258,7 +258,7 @@ public class PleaseOpenConnection extends SignallingRequest
 		}
 		catch(NetworkException ne) {
 			// Log the error.
-			pFN.getNode().getLogger().err(this, "Error during execution of open request on " +pFN, ne);
+			pFN.getEntity().getLogger().err(this, "Error during execution of open request on " +pFN, ne);
 			
 			// send error reply back
 			if(pFN != null) {
@@ -390,7 +390,7 @@ public class PleaseOpenConnection extends SignallingRequest
 			
 			// Send an answer;
 			ForwardingNode tFN = pReceiversProcess.getBase(); 
-			Name tLocalServiceName = tFN.getNode().getRoutingService().getNameFor(tFN);
+			Name tLocalServiceName = tFN.getEntity().getRoutingService().getNameFor(tFN);
 			
 			Packet packet = new Packet(mReturnRouteFromBaseFN, new OpenConnectionResponse(this, pReceiversProcess, tLocalServiceName));
 			return packet;
@@ -419,17 +419,17 @@ public class PleaseOpenConnection extends SignallingRequest
 	 */
 	private Multiplexer redirectToMultiplexer(ForwardingNode mBaseFN)
 	{
-		Node tNode = mBaseFN.getNode();
-		Multiplexer tMux = tNode.getCentralFN();
+		FoGEntity tEntity = mBaseFN.getEntity();
+		Multiplexer tMux = tEntity.getCentralFN();
 		
 		if(tMux == mBaseFN) {
-			tNode.getLogger().debug(this, "server-self-redirection skipped");
+			tEntity.getLogger().debug(this, "server-self-redirection skipped");
 			return null;
 		}
 		
-		Name tMuxName = tMux.getNode().getRoutingService().getNameFor(tMux);
+		Name tMuxName = tMux.getEntity().getRoutingService().getNameFor(tMux);
 		if(tMux == mBaseFN) {
-			tNode.getLogger().warn(this, "unknown central multiplexer");
+			tEntity.getLogger().warn(this, "unknown central multiplexer");
 			return null;
 		}
 		
@@ -463,7 +463,7 @@ public class PleaseOpenConnection extends SignallingRequest
 		// Get to know the internal route from server to multiplexer.
 		Route tRouteToMux = null;
 		try {
-			tRouteToMux = mBaseFN.getNode().getTransferPlane().getRoute(mBaseFN, tMuxName, null, null);
+			tRouteToMux = mBaseFN.getEntity().getTransferPlane().getRoute(mBaseFN, tMuxName, null, null);
 		} catch (NetworkException e) {}
 		
 		if(tRouteToMux == null) {
