@@ -7,16 +7,14 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets.hierarchical;
-
-import java.io.Serializable;
+package de.tuilmenau.ics.fog.packets.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
 
 /**
  * PACKET: It is used when an election start is signaled.
  */
-public class BullyElect implements Serializable //TV
+public class BullyElect extends BullyMessage //TV
 {
 	private static final long serialVersionUID = -335936730603961378L;
 
@@ -28,8 +26,8 @@ public class BullyElect implements Serializable //TV
 	 */
 	public BullyElect(Name pSenderName, float pSenderPriority, int pHierarchyLevel)
 	{
+		super(pSenderName);
 		mSenderPriority = pSenderPriority;
-		mSenderName = pSenderName;
 		mHierarchyLevel = pHierarchyLevel;
 	}
 	
@@ -46,7 +44,7 @@ public class BullyElect implements Serializable //TV
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + ": Sender=" + mSenderName + ", Priority=" + mSenderPriority + ", Level=" + mHierarchyLevel;
+		return getClass().getSimpleName() + ": Sender=" + getSenderName() + ", Priority=" + mSenderPriority + ", Level=" + mHierarchyLevel;
 	}
 
 	// ########################################################################################################
@@ -54,11 +52,6 @@ public class BullyElect implements Serializable //TV
 	 * The priority of the sender for the BULLY election process.
 	 */
 	private float mSenderPriority = 0;
-	
-	/**
-	 * The name of the sender of this message. This is always a name of a physical node.
-	 */
-	private Name mSenderName = null;
 	
 	/**
 	 * The hierarchy level for this election.

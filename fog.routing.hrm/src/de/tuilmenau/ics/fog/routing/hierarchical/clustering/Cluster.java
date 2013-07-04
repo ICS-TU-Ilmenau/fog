@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
-import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
+import de.tuilmenau.ics.fog.packets.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.PriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
@@ -135,7 +135,7 @@ public class Cluster implements ICluster, IElementDecorator
 	public void interpretAnnouncement(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		setToken(pAnnounce.getToken());
-		setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getCoord(), pCEP.getPeerName());
+		setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pCEP.getPeerName());
 		getHRMController().addApprovedSignature(pAnnounce.getCoordSignature());
 		getHRMController().setClusterWithCoordinator(getLevel(), this);
 	}

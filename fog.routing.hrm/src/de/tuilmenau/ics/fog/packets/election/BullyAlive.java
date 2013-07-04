@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets.hierarchical;
+package de.tuilmenau.ics.fog.packets.election;
 
 import java.io.Serializable;
 
@@ -16,7 +16,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 /**
  * PACKET: It is used to signal that a peer is still alive.
  */
-public class BullyAlive implements Serializable
+public class BullyAlive extends BullyMessage
 {
 	private static final long serialVersionUID = 4870662765189881992L;
 	
@@ -26,7 +26,7 @@ public class BullyAlive implements Serializable
 	 */
 	public BullyAlive(Name pSenderName, Name pCoordinatorName)
 	{
-		mSenderName = pSenderName;
+		super(pSenderName);
 		mCoordinator = pCoordinatorName;
 	}
 	
@@ -41,21 +41,10 @@ public class BullyAlive implements Serializable
 		return mCoordinator;
 	}
 	
-	/**
-	 * Determine the name of the sender
-	 * 
-	 * @return name of the sender
-	 */
-	//TODO: not used until now, however, the function is maybe used in the future when BullyAlive will be parsed by the main packet processing CoordinatorCEPDemultiplexed
-	public Name getSenderName()
-	{
-		return mSenderName;
-	}
-	
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + ": Sender=" + mSenderName + ", Coordinator=" + mCoordinator;
+		return getClass().getSimpleName() + ": Sender=" + getSenderName() + ", Coordinator=" + mCoordinator;
 	}
 	
 	// ########################################################################################################
@@ -63,9 +52,4 @@ public class BullyAlive implements Serializable
 	 * coordinator name
 	 */
 	private Name mCoordinator = null;
-
-	/**
-	 * sender name
-	 */
-	private Name mSenderName=null;
 }

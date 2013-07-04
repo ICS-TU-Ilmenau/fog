@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets.hierarchical;
+package de.tuilmenau.ics.fog.packets.election;
 
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -18,7 +18,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 /**
  * PACKET: It is used when a new coordinator is signaled to all cluster members
  */
-public class BullyAnnounce implements Serializable
+public class BullyAnnounce extends BullyMessage
 {
 	private static final long serialVersionUID = 794175467972815277L;
 	/**
@@ -27,9 +27,9 @@ public class BullyAnnounce implements Serializable
 	 * @param pCoordinatorSignature is the signature of the coordinator - can be replaced by cryptographic identity
 	 * @param pToken is the active token that is used for the identification of the domain the coordinator is active in case no Cluster IDs can be provided a priori
 	 */
-	public BullyAnnounce(Name pCoord, float pBullyPriority, HRMSignature pCoordinatorSignature, int pToken)
+	public BullyAnnounce(Name pSenderName, float pBullyPriority, HRMSignature pCoordinatorSignature, int pToken)
 	{
-		mName = pCoord;
+		super(pSenderName);
 		mBullyPriority = pBullyPriority;
 		mCoordSignature = pCoordinatorSignature;
 		mToken = pToken;
@@ -43,14 +43,7 @@ public class BullyAnnounce implements Serializable
 	{
 		return mToken;
 	}
-	/**
-	 * 
-	 * @return name of the coordinator
-	 */
-	public Name getCoord()
-	{
-		return mName;
-	}
+
 	/**
 	 * 
 	 * @return priority of the coordinator
@@ -63,7 +56,7 @@ public class BullyAnnounce implements Serializable
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + ":" + mName + "(" + mBullyPriority + ")";
+		return getClass().getSimpleName() + ":" + getSenderName() + "(" + mBullyPriority + ")";
 	}
 	
 	/**
@@ -96,7 +89,6 @@ public class BullyAnnounce implements Serializable
 		return mCoveredNodes;
 	}
 	
-	private Name mName =null;
 	private float mBullyPriority = 0;
 	private HRMSignature mCoordSignature;
 	private int mToken;

@@ -20,10 +20,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
-import de.tuilmenau.ics.fog.packets.hierarchical.BullyAlive;
-import de.tuilmenau.ics.fog.packets.hierarchical.BullyAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.BullyElect;
-import de.tuilmenau.ics.fog.packets.hierarchical.BullyReply;
+import de.tuilmenau.ics.fog.packets.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
@@ -148,7 +145,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 					}
 				} else {
 					mPeerPriority = ((BullyElect)pData).getSenderPriority();
-					BullyReply tAnswer = new BullyReply(getCluster().getPriority(), tPhysicalNode.getCentralFN().getName());
+					BullyReply tAnswer = new BullyReply(tPhysicalNode.getCentralFN().getName(), getCluster().getPriority(), tPhysicalNode.getCentralFN().getName());
 					write(tAnswer);
 				}
 			}

@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets.hierarchical;
+package de.tuilmenau.ics.fog.packets.election;
 
 import java.io.Serializable;
 
@@ -16,7 +16,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 /**
  * PACKET: It is used when an answer to BullyElect is signaled.
  */
-public class BullyReply implements Serializable
+public class BullyReply  extends BullyMessage
 {
 	private static final long serialVersionUID = -4666721123778977947L;
 	
@@ -25,8 +25,9 @@ public class BullyReply implements Serializable
 	 * @param pBullyPriority is the priority of the node that generated the reply message
 	 * @param pInitiator is the initiator of this message
 	 */
-	public BullyReply (float pBullyPriority, Name pInitiator)
+	public BullyReply(Name pSenderName, float pBullyPriority, Name pInitiator)
 	{
+		super(pSenderName);
 		mBullyPriority = pBullyPriority;
 		mInitiator = pInitiator;
 	}

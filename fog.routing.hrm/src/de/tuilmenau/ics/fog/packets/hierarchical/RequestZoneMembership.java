@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical;
 import java.io.Serializable;
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.packets.election.BullyElect;
 //import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 
