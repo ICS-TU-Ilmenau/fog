@@ -465,7 +465,7 @@ public class HRMController extends Application implements IServerCallback
 				} catch (RoutingException tExc) {
 					mLogger.err(this, "Unable to resolve route to " + pName, tExc);
 				} catch (RequirementsException tExc) {
-					mLogger.err(this, "Unable to resolve route to " + pName, tExc);
+					mLogger.err(this, "Unable to fulfill requirements for a route to " + pName, tExc);
 				}
 				tCEP.setRouteToPeer(tRoute);
 				tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
