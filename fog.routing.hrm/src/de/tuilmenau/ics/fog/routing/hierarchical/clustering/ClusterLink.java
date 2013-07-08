@@ -10,53 +10,40 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.clustering;
 
 import java.io.Serializable;
-import java.util.Random;
 
 /**
  * Clusters are built up at bus level at the first hierarchical level. Clusters that are not physically connected to the node
  * are attached neighbor clusters. This class is used in order to determine the distance to a cluster.
  *  
  */
-public class NodeConnection implements Serializable
+public class ClusterLink implements Serializable
 {
 	private static final long serialVersionUID = 3333293111147481060L;
-	public enum ConnectionType {LOCAL, REMOTE};
+	public enum ClusterLinkType {PHYSICAL_LINK /* direct cluster neighbor */, LOGICAL_LINK /* distant cluster neighbor */};
 	
 	/**
 	 * Constructor of a node (cluster) connection
 	 * 
 	 * @param pType This is the type of the connection between the clusters
 	 */
-	public NodeConnection(ConnectionType pType)
+	public ClusterLink(ClusterLinkType pType)
 	{
-		mType = pType;
-		Random tRandom = new Random(System.currentTimeMillis());
-		mID = tRandom.nextInt();
+		mClusterLinkType = pType;
 	}
 	
 	/**
 	 * 
 	 * @return Return the type of the connection here.
 	 */
-	public ConnectionType getType()
+	public ClusterLinkType getLinkType()
 	{
-		return mType;
-	}
-	
-	/**
-	 * 
-	 * @param pType Set the type of the connection here.
-	 */
-	public void setConnectionType(ConnectionType pType)
-	{
-		mType = pType;
+		return mClusterLinkType;
 	}
 	
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(" + mType.toString() + "):" + mID;
+		return getClass().getSimpleName() + "(ClusterRelType=" + mClusterLinkType.toString() + ")";
 	}
 	
-	private ConnectionType mType;
-	private int mID = 0;
+	private ClusterLinkType mClusterLinkType;
 }

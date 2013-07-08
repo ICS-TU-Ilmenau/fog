@@ -383,11 +383,11 @@ public class Cluster implements ICluster, IElementDecorator
 		if(!tNeighbors.contains(pNeighbor))
 		{
 			if(pNeighbor instanceof Cluster) {
-				NodeConnection tLink = new NodeConnection(NodeConnection.ConnectionType.LOCAL);
-				getHRMController().getClusterMap().link(pNeighbor, this, tLink);
+				ClusterLink tLink = new ClusterLink(ClusterLink.ClusterLinkType.PHYSICAL_LINK);
+				getHRMController().getClusterMap().registerLink(pNeighbor, this, tLink);
 			} else {
-				NodeConnection tLink = new NodeConnection(NodeConnection.ConnectionType.REMOTE);
-				getHRMController().getClusterMap().link(pNeighbor, this, tLink);
+				ClusterLink tLink = new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK);
+				getHRMController().getClusterMap().registerLink(pNeighbor, this, tLink);
 			}
 			if(pNeighbor instanceof Cluster && !pNeighbor.isInterASCluster()) {
 				//TODO

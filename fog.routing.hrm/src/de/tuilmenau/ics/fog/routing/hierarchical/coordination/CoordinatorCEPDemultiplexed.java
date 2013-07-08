@@ -42,7 +42,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IVirtualNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NodeConnection;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterLink;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMIPMapper;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -68,7 +68,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
 	private Logger mLogger = Logging.getInstance();
-	private BFSDistanceLabeler<IVirtualNode, NodeConnection> mBreadthFirstSearch;
+	private BFSDistanceLabeler<IVirtualNode, ClusterLink> mBreadthFirstSearch;
 	private boolean mCrossLevelCEP = false;
 	
 	/**
@@ -463,7 +463,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				tEntry.setInterASCluster();
 			}
 			
-			List<NodeConnection> tClusterList = getHRMController().getClusterMap().getRoute(getCluster(), pCluster);
+			List<ClusterLink> tClusterList = getHRMController().getClusterMap().getRoute(getCluster(), pCluster);
 			if(!tClusterList.isEmpty()) {
 				ICluster tPredecessor = (ICluster) getHRMController().getClusterMap().getDest(pCluster, tClusterList.get(tClusterList.size()-1));
 				tEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getLevel()));
@@ -630,7 +630,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteCluster());
 			}
 			if(mBreadthFirstSearch == null ) {
-				mBreadthFirstSearch = new BFSDistanceLabeler<IVirtualNode, NodeConnection>();
+				mBreadthFirstSearch = new BFSDistanceLabeler<IVirtualNode, ClusterLink>();
 			}
 			mBreadthFirstSearch.labelDistances(getHRMController().getClusterMap().getGraphForGUI(), tSourceCluster);
 			List<IVirtualNode> tDiscoveryCandidates = mBreadthFirstSearch.getVerticesInOrderVisited();

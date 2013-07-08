@@ -54,7 +54,7 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 	 * @param pLinkValue link object
 	 */
 	@Override
-	public synchronized void link(NodeObject pFrom, NodeObject pTo, LinkObject pLinkValue)
+	public synchronized void registerLink(NodeObject pFrom, NodeObject pTo, LinkObject pLinkValue)
 	{
 		if((pFrom != null) && (pTo != null) && (pLinkValue != null)) {
 			// get equivalent object used for map for pFrom and pTo:

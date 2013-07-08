@@ -64,7 +64,7 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	private Node mPhysicalNode; //TV
 	private HierarchicalRoutingService mHRS = null;
-	private ClusterMap<IVirtualNode, NodeConnection> mClusterMap = new ClusterMap<IVirtualNode, NodeConnection>();
+	private ClusterMap<IVirtualNode, ClusterLink> mClusterMap = new ClusterMap<IVirtualNode, ClusterLink>();
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
@@ -268,7 +268,7 @@ public class HRMController extends Application implements IServerCallback
 								}
 							}
 						}
-						getClusterMap().link(tAttachedCluster, tCluster, new NodeConnection(NodeConnection.ConnectionType.REMOTE));
+						getClusterMap().registerLink(tAttachedCluster, tCluster, new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK));
 					}
 					for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
 						if(getSourceIntermediate(tCluster) != null) {
@@ -319,10 +319,10 @@ public class HRMController extends Application implements IServerCallback
 			((ICluster)pSourceCluster).getHRMController().getLogger().log("You did not provide clusters for path search: " + pSourceCluster + " to " + pTargetCluster);
 			return null;
 		}
-		ClusterMap<IVirtualNode, NodeConnection> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
-		List<NodeConnection> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
+		ClusterMap<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
+		List<ClusterLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		IVirtualNode tPredecessor=pSourceCluster;
-		for(NodeConnection tLink: tClusterConnection) {
+		for(ClusterLink tLink: tClusterConnection) {
 			if( ((ICluster)getClusterMap().getDest(tLink)).getNegotiatorCEP() != null && ((ICluster)getClusterMap().getDest(tLink)).getNegotiatorCEP().knowsCoordinator()) {
 				return tPredecessor;
 			} else if(((ICluster)getClusterMap().getDest(tLink)).getNegotiatorCEP() != null) {
@@ -345,11 +345,11 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "checking cluster route between null and null");
 			return false;
 		}
-		ClusterMap<IVirtualNode, NodeConnection> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
-		List<NodeConnection> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
+		ClusterMap<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
+		List<ClusterLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		String tCheckedClusters = new String();
 		boolean isCovered = false;
-		for(NodeConnection tConnection : tClusterConnection) {
+		for(ClusterLink tConnection : tClusterConnection) {
 			Collection<IVirtualNode> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
 			for(IVirtualNode tNode : tNodes) {
 				if(tNode instanceof ICluster) {
@@ -392,7 +392,7 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public int getClusterDistance(ICluster pCluster)
 	{
-		List<NodeConnection> tClusterRoute = null;
+		List<ClusterLink> tClusterRoute = null;
 		int tDistance = 0;
 		if(getSourceIntermediate(pCluster) == null || pCluster == null) {
 			mLogger.log(this, "source cluster for " + (pCluster instanceof NeighborCluster ? ((NeighborCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
@@ -400,8 +400,8 @@ public class HRMController extends Application implements IServerCallback
 		ICluster tIntermediate = getSourceIntermediate(pCluster);
 		tClusterRoute = getClusterMap().getRoute(tIntermediate, pCluster);
 		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
-			for(NodeConnection tConnection : tClusterRoute) {
-				if(tConnection.getType() == NodeConnection.ConnectionType.REMOTE) {
+			for(ClusterLink tConnection : tClusterRoute) {
+				if(tConnection.getLinkType() == ClusterLink.ClusterLinkType.LOGICAL_LINK) {
 					tDistance++;
 				}
 			}
@@ -653,7 +653,7 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @return cluster map that is actually the graph that represents the network
 	 */
-	public ClusterMap<IVirtualNode, NodeConnection> getClusterMap()
+	public ClusterMap<IVirtualNode, ClusterLink> getClusterMap()
 	{
 		return mClusterMap;
 	}
