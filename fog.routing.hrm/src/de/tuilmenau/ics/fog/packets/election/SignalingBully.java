@@ -9,13 +9,14 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.election;
 
-import java.io.Serializable;
-
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingHrm;
 
-public class BullyMessage implements Serializable
+public class SignalingBully extends SignalingHrm
 {
-	public BullyMessage(Name pSenderName, float pSenderPriority)
+	private static final long serialVersionUID = -7721094891385820251L;
+
+	public SignalingBully(Name pSenderName, float pSenderPriority)
 	{
 		mSenderName = pSenderName;
 	}

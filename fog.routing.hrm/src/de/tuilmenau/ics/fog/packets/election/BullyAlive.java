@@ -14,7 +14,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 /**
  * PACKET: It is used to signal that a peer is still alive.
  */
-public class BullyAlive extends BullyMessage
+public class BullyAlive extends SignalingBully
 {
 	private static final long serialVersionUID = 4870662765189881992L;
 	

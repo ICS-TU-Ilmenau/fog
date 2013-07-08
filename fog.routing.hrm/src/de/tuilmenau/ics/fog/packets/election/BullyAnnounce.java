@@ -17,7 +17,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 /**
  * PACKET: It is used when a new coordinator is signaled to all cluster members
  */
-public class BullyAnnounce extends BullyMessage
+public class BullyAnnounce extends SignalingBully
 {
 	private static final long serialVersionUID = 794175467972815277L;
 	/**
