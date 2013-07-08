@@ -32,16 +32,6 @@ public class TopologyData implements Serializable
 	private LinkedList<FIBEntry> mPushThrougs = null;
 	private LinkedList<HRMSignature> mApprovedSignatures = new LinkedList<HRMSignature>();
 	
-	/**
-	 * 
-	 * @param pHRMID constructor must contain an HRMID
-	 */
-	public TopologyData(HRMID pHRMID)
-	{
-		mHRMID = pHRMID;
-		mForwardingEntries = new LinkedList<FIBEntry>();
-	}
-	
 	public TopologyData()
 	{
 	}
@@ -61,7 +51,7 @@ public class TopologyData implements Serializable
 	
 	/**
 	 * 
-	 * @return list of approved signatures for this TopologyEnvelope
+	 * @return list of approved signatures
 	 */
 	public LinkedList<HRMSignature> getApprovedSignatures()
 	{
