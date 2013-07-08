@@ -26,6 +26,7 @@ import de.tuilmenau.ics.fog.facade.Layer;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
+import de.tuilmenau.ics.fog.packets.statistics.ReroutingExperiment;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
@@ -56,7 +57,6 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider
 	public FoGEntity(Node pNode)
 	{
 		mNode = pNode;
-		ownIdentity = getAuthenticationService().createIdentity(toString());
 		
 		controlgate = new Controller(this);
 		transferPlane = new TransferPlane(getTimeBase(), getLogger());
@@ -435,16 +435,24 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider
 			// Register node in routing services at attaching the first interface.
 			// It is important, that it is registered before the interface is created.
 			// TODO name for multiplexer is not really needed => remove it when code finished
-			multiplexgate = new Multiplexer(this, nameObj, NamingLevel.NAMES, Config.Routing.ENABLE_NODE_RS_HIERARCHY_LEVEL, ownIdentity, controlgate);
+			multiplexgate = new Multiplexer(this, nameObj, NamingLevel.NAMES, Config.Routing.ENABLE_NODE_RS_HIERARCHY_LEVEL, getIdentity(), controlgate);
 			multiplexgate.open();
 		}
 		
 		return multiplexgate;
 	}
 	
+	/**
+	 * FoG uses the same identity than the Node objects, since
+	 * there are some dependencies between the identity names
+	 * and the Node names. In particular, the rerouting experiment
+	 * uses the names in the signatures in order to determine the
+	 * Node that has to be set to broken.
+	 * (see {@link ReroutingExperiment#determineElementToBreak})
+	 */
 	public Identity getIdentity()
 	{
-		return ownIdentity;
+		return mNode.getIdentity();
 	}
 	
 	public Logger getLogger()
@@ -494,15 +502,12 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider
 		
 		routingService = null;
 		transferPlane = null;
-		ownIdentity	= null;
 		controlgate = null;
 		multiplexgate = null;
 	}
 
 	
 	private Node mNode;
-	private Identity ownIdentity;
-
 	private Controller controlgate;
 	private Multiplexer multiplexgate;
 	private TransferPlane transferPlane;

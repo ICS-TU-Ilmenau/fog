@@ -30,6 +30,7 @@ import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.authentication.IdentityManagement;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
+import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Layer;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
@@ -72,6 +73,7 @@ public class Node extends Observable implements Host, IElementDecorator
 		}
 		
 		authenticationService = IdentityManagement.getInstance(pAS, this);
+		ownIdentity = getAuthenticationService().createIdentity(toString());
 		mFoG = new FoGEntity(this);
 		
 		// TEST:
@@ -96,6 +98,14 @@ public class Node extends Observable implements Host, IElementDecorator
 	public IdentityManagement getAuthenticationService()
 	{
 		return authenticationService;
+	}
+	
+	/**
+	 * @return Identity of the node (independent of protocol entity)
+	 */
+	public Identity getIdentity()
+	{
+		return ownIdentity;
 	}
 	
 	@Override
@@ -453,6 +463,7 @@ public class Node extends Observable implements Host, IElementDecorator
 	private AutonomousSystem as;
 	private Logger logger;
 	private IdentityManagement authenticationService;
+	private Identity ownIdentity;
 	private Host host;
 	private Description capabilities;
 	private boolean isShuttingDown;
