@@ -260,7 +260,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 			 * TopologyData
 			 */
 			if(pData instanceof TopologyData) {
-				getCluster().handleTopologyEnvelope((TopologyData)pData);
+				getCluster().handleTopologyData((TopologyData)pData);
 			}/* else if (pData instanceof NestedDiscovery) {
 				NestedDiscovery tDiscovery = (NestedDiscovery) pData;
 				handleClusterDiscovery(tDiscovery);

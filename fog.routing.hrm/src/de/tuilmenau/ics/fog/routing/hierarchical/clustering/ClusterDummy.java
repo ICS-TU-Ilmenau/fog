@@ -271,7 +271,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public void handleTopologyEnvelope(TopologyData pEnvelope)
+	public void handleTopologyData(TopologyData pEnvelope)
 	{
 		
 	}

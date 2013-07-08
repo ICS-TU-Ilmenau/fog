@@ -872,7 +872,7 @@ public class Coordinator implements ICluster, Observer
 					tManagedClusterEnvelope.addApprovedSignature(tSignature);
 				}
 				tManagedClusterEnvelope.addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel));
-				mManagedCluster.handleTopologyEnvelope(tManagedClusterEnvelope);
+				mManagedCluster.handleTopologyData(tManagedClusterEnvelope);
 			}
 		
 		} catch (AuthenticationException tExc) {
@@ -1084,7 +1084,7 @@ public class Coordinator implements ICluster, Observer
 	}
 	
 	@Override
-	public void handleTopologyEnvelope(TopologyData pEnvelope)
+	public void handleTopologyData(TopologyData pEnvelope)
 	{
 		/*
 		 * this cluster manager only computes the FIB derived from Radius algorithm

@@ -465,7 +465,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 */
 	@Override
-	public void handleTopologyEnvelope(TopologyData pEnvelope)
+	public void handleTopologyData(TopologyData pEnvelope)
 	{
 		
 	}

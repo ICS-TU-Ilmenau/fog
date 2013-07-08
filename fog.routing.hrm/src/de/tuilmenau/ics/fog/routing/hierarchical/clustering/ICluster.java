@@ -287,10 +287,10 @@ public interface ICluster extends Serializable, IVirtualNode
 
 	/**
 	 * 
-	 * @param pEnvelope This object has to include the address that should be associated to the cluster along with several entries that
+	 * @param pData This object has to include the address that should be associated to the cluster along with several entries that
 	 * describe as to how that entity should be reached.
 	 */
-	public void handleTopologyEnvelope(TopologyData pEnvelope);
+	public void handleTopologyData(TopologyData pData);
 	
 	/**
 	 * It is possible, to address more than one destination within one packet - for that purpose a multiplexer is used.
