@@ -74,7 +74,7 @@ public class ElectionProcess extends Thread
 	}
 	
 	//TODO: really needed? otherwise delete it!
-	public HRMController getCoordinator()
+	public HRMController getHRMController()
 	{
 		return mHRMController;
 	}
@@ -170,7 +170,7 @@ public class ElectionProcess extends Thread
 			
 			pCluster.setCoordinatorCEP(null, pCluster.getHRMController().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), tReferenceNode.getCentralFN().getName(), (L2Address)tAddress);
 			if(pCluster.getHRMController().getIdentity() == null) {
-				pCluster.getHRMController().setIdentity(new HRMIdentity(getCoordinator().getPhysicalNode().getName(), pCluster.getLevel()));
+				pCluster.getHRMController().setIdentity(new HRMIdentity(getHRMController().getPhysicalNode().getName(), pCluster.getLevel()));
 			}
 			LinkedList<HRMSignature> tSignatures = tCoordinator.getApprovedSignatures();
 			tSignatures.add(tCoordinator.getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()));
