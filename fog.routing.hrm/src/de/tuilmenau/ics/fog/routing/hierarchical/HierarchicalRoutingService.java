@@ -106,7 +106,7 @@ public class HierarchicalRoutingService implements RoutingService
 		mReferenceNode.getHost().registerApp(mHRMController);
 	}
 
-	public HRMController getCoordinator()
+	public HRMController gettHRMController()
 	{
 		return mHRMController;
 	}
@@ -405,7 +405,7 @@ public class HierarchicalRoutingService implements RoutingService
 				}
 			}
 			
-			if(getCoordinator().containsIdentification((HRMID) pDestination)) {
+			if(gettHRMController().containsIdentification((HRMID) pDestination)) {
 				return new Route();
 			}
 			HRMID tTarget = (HRMID) pDestination;
@@ -427,7 +427,7 @@ public class HierarchicalRoutingService implements RoutingService
 				
 				if(tLimitation != null) {
 					RouteRequest tRequest = new RouteRequest(null, tTarget, pRequirements, mRandomGenerator.nextLong());
-					getCoordinator().queryRoute(tRequest);
+					gettHRMController().queryRoute(tRequest);
 					
 					for(RoutingServiceLinkVector tVector : tRequest.getRoutingVectors()) {
 						tRoute.addAll(tVector.getPath());
@@ -592,11 +592,11 @@ public class HierarchicalRoutingService implements RoutingService
 			Logging.log(this, "Not replacing " + tOldEntry.getDestination() + " with " + pEntry);
 			return false;
 		} else {
-			if(getCoordinator().getApprovedSignatures().contains(pEntry.getSignature())) {
+			if(gettHRMController().getApprovedSignatures().contains(pEntry.getSignature())) {
 				mHopByHopRoutingMap.remove(pRoutingID);
 			}
 		}
-		if(getCoordinator().getApprovedSignatures().contains(pEntry.getSignature())) {
+		if(gettHRMController().getApprovedSignatures().contains(pEntry.getSignature())) {
 			mHopByHopRoutingMap.put(pRoutingID, pEntry);
 			return true;
 		} else {
@@ -684,7 +684,7 @@ public class HierarchicalRoutingService implements RoutingService
 	{
 		if(mSourceIdentification == null) {
 			NameMappingEntry<Name> tAddresses[] = null;
-			tAddresses = mNameMapping.getAddresses(getCoordinator().getPhysicalNode().getCentralFN().getName());
+			tAddresses = mNameMapping.getAddresses(gettHRMController().getPhysicalNode().getCentralFN().getName());
 			for(NameMappingEntry<Name> tEntry : tAddresses) {
 				mSourceIdentification = tEntry.getAddress();
 			}

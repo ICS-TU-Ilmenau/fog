@@ -53,7 +53,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	protected HRMName mCoordAddress;
 	protected L2Address mNegotiatingHost;
 	protected Long mClusterID;
-	protected HRMController mCoordinatorInstance;
+	protected HRMController mHRMController;
 	protected CoordinatorCEP mCEP;
 	protected HRMSignature mCoordSignature;
 	protected Route mRouteToCoordinator;
@@ -83,7 +83,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		mCoordAddress = pAddress;
 		setCoordinatorName(pCoordName);
 		mClusterID = pClusterID;
-		mCoordinatorInstance = pResponsibleCoordinator;
+		mHRMController = pResponsibleCoordinator;
 		mCoordName = pCoordName;
 		mToken = pToken;
 		mLevel = pLevel;
@@ -215,7 +215,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 
 	@Override
 	public HRMController getHRMController() {
-		return mCoordinatorInstance;
+		return mHRMController;
 	}
 
 	@Override

@@ -71,7 +71,7 @@ public class HRMViewer extends EditorPart
 {
 	private static boolean DEBUG_HRM_VIEWER = false;
 	
-	private HRMController mCoordinator = null;
+	private HRMController mtHRMController = null;
     private Composite mShell = null;
     private ScrolledComposite mScroller = null;
     private Composite mContainer = null;
@@ -97,11 +97,11 @@ public class HRMViewer extends EditorPart
 		for(int i = 0; i <= HRMConfig.Hierarchy.HEIGHT; i++) {
 			
 			if (DEBUG_HRM_VIEWER)
-				Logging.log(this, "Amount of found clusters: " + mCoordinator.getClusters().size());
+				Logging.log(this, "Amount of found clusters: " + mtHRMController.getClusters().size());
 			
 			int j = -1;
 			
-			for (ICluster tEntry : mCoordinator.getClusters()) {
+			for (ICluster tEntry : mtHRMController.getClusters()) {
 				j++;
 				
 				if (tEntry.getLevel() == i) {
@@ -122,7 +122,7 @@ public class HRMViewer extends EditorPart
 		 * GUI part 2: 
 		 */
 		StyledText tSignaturesLabel = new StyledText(mContainer, SWT.BORDER);;
-		tSignaturesLabel.setText("Approved signatures: " + mCoordinator.getApprovedSignatures());
+		tSignaturesLabel.setText("Approved signatures: " + mtHRMController.getApprovedSignatures());
 		tSignaturesLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style2 = new StyleRange();
@@ -147,7 +147,7 @@ public class HRMViewer extends EditorPart
 		TableColumn tColumnOrigin = new TableColumn(tMappingTable, SWT.NONE, 5);
 		tColumnOrigin.setText("Origin");
 		
-		HierarchicalRoutingService tHRS = mCoordinator.getHRS();
+		HierarchicalRoutingService tHRS = mtHRMController.getHRS();
 		
 		if(tHRS.getRoutingTable() != null && !tHRS.getRoutingTable().isEmpty()) {
 			for(HRMID tHRMID : tHRS.getRoutingTable().keySet()) {
@@ -170,7 +170,7 @@ public class HRMViewer extends EditorPart
 				 * Column 2:  
 				 */
 				if (tHRS.getFIBEntry(tHRMID).getNextCluster() != null){
-					tRow.setText(2, mCoordinator.getCluster(tHRS.getFIBEntry(tHRMID).getNextCluster()).toString());
+					tRow.setText(2, mtHRMController.getCluster(tHRS.getFIBEntry(tHRMID).getNextCluster()).toString());
 				}else{
 					tRow.setText(2, "??");
 				}
@@ -179,7 +179,7 @@ public class HRMViewer extends EditorPart
 				 * Column 3:  
 				 */
 				if (tHRS.getFIBEntry(tHRMID).getFarthestClusterInDirection() != null){
-					tRow.setText(3,  mCoordinator.getCluster(tHRS.getFIBEntry(tHRMID).getFarthestClusterInDirection()).toString());
+					tRow.setText(3,  mtHRMController.getCluster(tHRS.getFIBEntry(tHRMID).getFarthestClusterInDirection()).toString());
 				}else{
 					tRow.setText(3, "??");
 				}
@@ -464,7 +464,7 @@ public class HRMViewer extends EditorPart
 					/**
 					 * Column 1:  
 					 */
-					tRow.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
+					tRow.setText(1, (tEntry.getNextCluster() != null && mtHRMController.getCluster(tEntry.getNextCluster()) != null ? mtHRMController.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
 					
 					/**
 					 * Column 2:  
@@ -472,7 +472,7 @@ public class HRMViewer extends EditorPart
 					ClusterDummy tDummy = tEntry.getFarthestClusterInDirection();
 					ICluster tFarthestCluster = null;
 					if(tDummy != null) {
-						tFarthestCluster = mCoordinator.getCluster(tEntry.getFarthestClusterInDirection());
+						tFarthestCluster = mtHRMController.getCluster(tEntry.getFarthestClusterInDirection());
 					}
 					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "UNKNOWN"));
 					
@@ -696,7 +696,7 @@ public class HRMViewer extends EditorPart
 				tTarget = tCEP.getPeerName();
 				if(tSource != null && tTarget != null) {
 					Node tNode = tCEP.getHRMController().getPhysicalNode();
-					tRoute = mCoordinator.getHRS().getRoute(tNode.getCentralFN(), tTarget, new Description(), tNode.getIdentity());
+					tRoute = mtHRMController.getHRS().getRoute(tNode.getCentralFN(), tTarget, new Description(), tNode.getIdentity());
 				} else {
 					tRoute = new Route();
 				}
@@ -840,7 +840,7 @@ public class HRMViewer extends EditorPart
 					/**
 					 * Column 1:  
 					 */
-					tRow.setText(1, (tEntry.getNextCluster() != null && mCoordinator.getCluster(tEntry.getNextCluster()) != null ? mCoordinator.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
+					tRow.setText(1, (tEntry.getNextCluster() != null && mtHRMController.getCluster(tEntry.getNextCluster()) != null ? mtHRMController.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
 					
 					/**
 					 * Column 2:  
@@ -848,7 +848,7 @@ public class HRMViewer extends EditorPart
 					ClusterDummy tDummy = tEntry.getFarthestClusterInDirection();
 					ICluster tFarthestCluster = null;
 					if(tDummy != null) {
-						tFarthestCluster = mCoordinator.getCluster(tEntry.getFarthestClusterInDirection());
+						tFarthestCluster = mtHRMController.getCluster(tEntry.getFarthestClusterInDirection());
 					}
 					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "UNKNOWN"));
 
@@ -907,13 +907,13 @@ public class HRMViewer extends EditorPart
 			setTitle(tInputObject.toString());
 
 			if(tInputObject instanceof HRMController) {
-				mCoordinator = (HRMController) tInputObject;				
+				mtHRMController = (HRMController) tInputObject;				
 			} else {
 				throw new PartInitException("Invalid input object " +tInputObject +". Bus expected.");
 			}
 			
 			// update name of editor part
-			setPartName(mCoordinator.toString());
+			setPartName(mtHRMController.toString());
 			
 		} else {
 			throw new PartInitException("No input for editor.");
@@ -957,7 +957,7 @@ public class HRMViewer extends EditorPart
 		if(res == null) {
 			res = Platform.getAdapterManager().getAdapter(this, required);
 			
-			if(res == null)	res = Platform.getAdapterManager().getAdapter(mCoordinator, required);
+			if(res == null)	res = Platform.getAdapterManager().getAdapter(mtHRMController, required);
 		}
 		
 		return res;

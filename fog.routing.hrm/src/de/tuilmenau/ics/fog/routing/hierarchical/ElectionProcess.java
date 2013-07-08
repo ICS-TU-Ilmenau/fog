@@ -142,8 +142,8 @@ public class ElectionProcess extends Thread
 	public void initiateCoordinatorFunctions(Cluster pCluster)
 	{
 		Random tRandom = new Random(System.currentTimeMillis());
-		HRMController tCoordinator = pCluster.getHRMController();
-		Node tNode = tCoordinator.getPhysicalNode();
+		HRMController tHRMController = pCluster.getHRMController();
+		Node tNode = tHRMController.getPhysicalNode();
 		int tToken = tRandom.nextInt();
 		
 		pCluster.setToken(tToken);
@@ -172,8 +172,8 @@ public class ElectionProcess extends Thread
 			if(pCluster.getHRMController().getIdentity() == null) {
 				pCluster.getHRMController().setIdentity(new HRMIdentity(getHRMController().getPhysicalNode().getName(), pCluster.getLevel()));
 			}
-			LinkedList<HRMSignature> tSignatures = tCoordinator.getApprovedSignatures();
-			tSignatures.add(tCoordinator.getIdentity().createSignature(tNode.toString(), null, pCluster.getLevel()));
+			LinkedList<HRMSignature> tSignatures = tHRMController.getApprovedSignatures();
+			tSignatures.add(tHRMController.getIdentity().createSignature(tNode.toString(), null, pCluster.getLevel()));
 			
 			if(mLevel > 0) {
 				pCluster.getHRMController().getLogger().log(pCluster, "has the coordinator and will now announce itself");

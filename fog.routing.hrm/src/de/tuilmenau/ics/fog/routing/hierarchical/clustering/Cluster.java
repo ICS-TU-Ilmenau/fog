@@ -67,7 +67,7 @@ public class Cluster implements ICluster, IElementDecorator
 	protected float mCoordinatorPriority;
 	protected Name mCoordName;
 	protected Name mCoordAddress;
-	protected HRMController mCoordinatorInstance;
+	protected HRMController mHRMController;
 	protected LinkedList<CoordinatorCEPDemultiplexed> mCEPs;
 	protected LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
 	protected LinkedList<NeighborClusterAnnounce> mSentAnnounces = null;
@@ -99,17 +99,17 @@ public class Cluster implements ICluster, IElementDecorator
 	 * 
 	 * @param pClusterID
 	 * @param pLevel
-	 * @param pCoordinatorInstance
+	 * @param ptHRMController
 	 * @param pLogger
 	 */
-	public Cluster(Long pClusterID, int pLevel, HRMController pCoordinatorInstance, Logger pLogger)
+	public Cluster(Long pClusterID, int pLevel, HRMController ptHRMController, Logger pLogger)
 	{
 		mClusterID = pClusterID;
 		mLevel = pLevel;
 		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mSentAnnounces = new LinkedList<NeighborClusterAnnounce>();
-		mCoordinatorInstance = pCoordinatorInstance;
+		mHRMController = ptHRMController;
 		mPriority = (float) getHRMController().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
 		getHRMController().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mLevel + " with priority " + mPriority);
 		mLevel = pLevel;
@@ -123,7 +123,7 @@ public class Cluster implements ICluster, IElementDecorator
 		}
 		ElectionProcess tProcess = ElectionManager.getElectionManager().addElection(mLevel, mClusterID, new ElectionProcess(mLevel));
 		tProcess.addElectingCluster(this);
-		mMux = new CoordinatorCEPMultiplexer(mCoordinatorInstance);
+		mMux = new CoordinatorCEPMultiplexer(mHRMController);
 		mMux.setCluster(this);
 	}
 	
@@ -470,7 +470,7 @@ public class Cluster implements ICluster, IElementDecorator
 	
 	public HRMController getHRMController()
 	{
-		return mCoordinatorInstance;
+		return mHRMController;
 	}
 	
 	public void setPriority(float pPriority)

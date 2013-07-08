@@ -59,8 +59,8 @@ public class CoordinatorCEP extends Session
 		super(false, Logging.getInstance(), null);
 		mHRMController = pHRMController;
 		
-			RoutingService tRS = (RoutingService)getCoordinator().getPhysicalNode().getRoutingService();
-			mSourceIdentification = (L2Address) tRS.getNameFor(getCoordinator().getPhysicalNode().getCentralFN());
+			RoutingService tRS = (RoutingService)getHRMController().getPhysicalNode().getRoutingService();
+			mSourceIdentification = (L2Address) tRS.getNameFor(getHRMController().getPhysicalNode().getCentralFN());
 		
 		getLogger().log(this, "Created");
 
@@ -78,7 +78,7 @@ public class CoordinatorCEP extends Session
 			if(mServerSide) {
 				Route tRouteToPeer = null;
 				try {
-					tRouteToPeer = getCoordinator().getHRS().getRoute(getCoordinator().getPhysicalNode().getCentralFN(), ((Tuple<HRMID, HRMID>)pData).getSecond(), new Description(), getCoordinator().getPhysicalNode().getIdentity());
+					tRouteToPeer = getHRMController().getHRS().getRoute(getHRMController().getPhysicalNode().getCentralFN(), ((Tuple<HRMID, HRMID>)pData).getSecond(), new Description(), getHRMController().getPhysicalNode().getIdentity());
 					mRouteToPeer = tRouteToPeer;
 				} catch (RoutingException tExc) {
 					getLogger().err(this, "Unable to find route to ", tExc);
@@ -87,7 +87,7 @@ public class CoordinatorCEP extends Session
 				}
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
 				if(mLevel == 0) {
-					getCoordinator().getHRS().registerRoute(mSourceIdentification, mPeerIdentification, mRouteToPeer);
+					getHRMController().getHRS().registerRoute(mSourceIdentification, mPeerIdentification, mRouteToPeer);
 				}
 				write(mSourceIdentification);
 			}
@@ -96,7 +96,7 @@ public class CoordinatorCEP extends Session
 			mPeerIdentification = (L2Address) pData;
 			if(mLevel == 0) {
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
-				getCoordinator().getHRS().registerRoute(mSourceIdentification, mPeerIdentification, mRouteToPeer);
+				getHRMController().getHRS().registerRoute(mSourceIdentification, mPeerIdentification, mRouteToPeer);
 			} else {
 				if(mServerSide) {
 					write(mSourceIdentification);
@@ -237,7 +237,7 @@ public class CoordinatorCEP extends Session
 	 * 
 	 * @return coordinator this connection end point is attached to
 	 */
-	public HRMController getCoordinator()
+	public HRMController getHRMController()
 	{
 		return mHRMController;
 	}
@@ -263,6 +263,6 @@ public class CoordinatorCEP extends Session
 
 	public Logger getLogger()
 	{
-		return getCoordinator().getLogger();
+		return getHRMController().getLogger();
 	}
 }
