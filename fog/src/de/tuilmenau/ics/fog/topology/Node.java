@@ -229,7 +229,7 @@ public class Node extends Observable implements Host, IElementDecorator
 		
 		// do not use list directly, because apps will remove themselves
 		// from the list, which invalidates iterators
-		LinkedList<Application> apps = new LinkedList<Application>(host.getApps());
+		LinkedList<Application> apps = new LinkedList<Application>(getApps());
 		
 		for(Application app : apps) {
 			app.exit();
@@ -249,7 +249,6 @@ public class Node extends Observable implements Host, IElementDecorator
 		shutdown(true);
 		
 		name = null;
-		host = null;
 		authenticationService = null;
 	}
 	
@@ -464,7 +463,6 @@ public class Node extends Observable implements Host, IElementDecorator
 	private Logger logger;
 	private IdentityManagement authenticationService;
 	private Identity ownIdentity;
-	private Host host;
 	private Description capabilities;
 	private boolean isShuttingDown;
     private Object mDecorationParameter=null;
