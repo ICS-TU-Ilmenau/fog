@@ -715,10 +715,15 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	public Number getRemainingTransferMetric()
 	{
 		if(Config.Transfer.USED_METRIC.equals(COST_METRIC.BANDWIDTH)) {
-			if(mBandwidth.floatValue() <= 0) {
-				return Float.POSITIVE_INFINITY;
+			if(mBandwidth.floatValue() < 0) {
+				// bandwidth is not limited
+				return 0;
 			} else {
-				return 1 / mBandwidth.floatValue();
+				if(mBandwidth.floatValue() == 0) {
+					return Float.POSITIVE_INFINITY;
+				} else {
+					return 1 / mBandwidth.floatValue();
+				}
 			}
 		}
 		
