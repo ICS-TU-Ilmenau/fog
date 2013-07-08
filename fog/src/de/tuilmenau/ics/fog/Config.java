@@ -49,7 +49,7 @@ public class Config
 	 * Indicates if some more extended GUI controls and behavior are enabled. 
 	 * Otherwise the simulator behaves in a more secured way for demo sessions.
 	 */
-	public static final boolean DEVELOPER_VERSION = true;
+	public static final boolean DEVELOPER_VERSION = false;
 	
 	/**
 	 * Configuration parameter for the simulator itself and not for
@@ -89,7 +89,7 @@ public class Config
 
 	public class Logging
 	{
-		public Level LOG_LEVEL = Level.WARN;
+		public Level LOG_LEVEL = Level.TRACE;
 		
 		/**
 		 * Indicates if Logging should print all messages to std out
@@ -99,7 +99,7 @@ public class Config
 		 * for std out. In special this enables the output of messages
 		 * to std out on start-up before such a logger can be registered.   
 		 */
-		public static final boolean LOG_ALWAYS_TO_STD_OUT = false;
+		public static final boolean LOG_ALWAYS_TO_STD_OUT = true;
 		
 		/**
 		 * Put date and time in front of log message
@@ -116,7 +116,7 @@ public class Config
 		 * Enables the logging of individual packets at several
 		 * measurement points in the simulation. 
 		 */
-		public static final boolean PACKET_LOGGER_ENABLED = false;
+		public static final boolean PACKET_LOGGER_ENABLED = true;
 		
 		/**
 		 * Defines after how many seconds packets are removed from
@@ -130,7 +130,7 @@ public class Config
 		 * Enables statistic files, which are logging all packets
 		 * transfered in the network.
 		 */
-		public static final boolean WRITE_PACKET_STATISTIC = true;
+		public static final boolean WRITE_PACKET_STATISTIC = false;
 		
 		/**
 		 * Requests packets to be authenticated - currently only used for registration of passed nodes,
@@ -187,6 +187,10 @@ public class Config
 		 */
 		public boolean DEFAULT_DELAY_CONSTANT = true;
 
+		/**
+		 * Enables import of delay and data rate values from
+		 * import graph descriptions
+		 */
 		public boolean USE_IMPORTED_DELAY_AND_BW = false;
 		
 		/**
