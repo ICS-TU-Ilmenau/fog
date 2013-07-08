@@ -13,6 +13,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.gates;
 
+import java.rmi.RemoteException;
+
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
@@ -61,6 +63,30 @@ abstract public class DownGate extends AbstractGate
 	public NetworkInterface getNetworkInterface()
 	{
 		return networkInterface;
+	}
+	
+	/**
+	 * Updates description to description of lower layer, if gate is a best effort gate.
+	 * 
+	 * @return true, if something changed; false, if everything constant
+	 */
+	public boolean refreshDescription()
+	{
+		if(getDescription().isBestEffort()) {
+			try {
+				setDescription(networkInterface.getBus().getDescription());
+				
+				return true;
+			}
+			catch(RemoteException exc) {
+				mLogger.err(this, "Can not refresh description from lower layer. State transition to ERROR.", exc);
+				switchToState(GateState.ERROR);
+			}
+			
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	@Override

@@ -120,6 +120,8 @@ public class ProcessDownGate extends ProcessGateConstruction
 					// reserve bandwidth
 					try {
 						mInterface.getBus().modifyBandwidth(-datarateUsage.getMax());
+						
+						mInterface.refreshGates();
 					}
 					catch(RemoteException exc) {
 						throw new NetworkException(this, "Can not reserve resources at lower layer.", exc);
@@ -154,6 +156,8 @@ public class ProcessDownGate extends ProcessGateConstruction
 					// free bandwidth
 					try {
 						mInterface.getBus().modifyBandwidth(+datarateUsage.getMax());
+						
+						mInterface.refreshGates();
 					}
 					catch(RemoteException exc) {
 						getLogger().err(this, "Can not free resources at lower layer.", exc);
@@ -164,7 +168,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 		
 		super.finished();
 	}
-
+	
 	private NetworkInterface mInterface;
 	private NeighborInformation mLowerLayerID;
 	private Description mRequirements;

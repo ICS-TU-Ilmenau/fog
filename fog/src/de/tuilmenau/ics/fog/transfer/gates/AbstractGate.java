@@ -33,7 +33,6 @@ import de.tuilmenau.ics.fog.util.Timer;
 
 public abstract class AbstractGate implements Gate, ForwardingElement
 {
-	private static final Number DEFAULT_GATE_COST = 1;
 	protected static final double UNUSED_TIMEOUT_SEC = Config.Transfer.GATE_UNUSED_TIMEOUT_SEC;
 	
 	
@@ -321,14 +320,6 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 		return false;
 	}
 
-	/**
-	 * @return Cost value for routing service
-	 */
-	public Number getCost()
-	{
-		return DEFAULT_GATE_COST;
-	}
-	
 	@Override
 	public int getNumberMessages(boolean reset)
 	{

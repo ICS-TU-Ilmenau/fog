@@ -21,6 +21,7 @@ import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.application.util.LayerObserverCallback;
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.topology.ILowerLayer.SendResult;
 import de.tuilmenau.ics.fog.transfer.DummyForwardingElement;
@@ -29,7 +30,9 @@ import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.transfer.gates.DirectDownGate;
+import de.tuilmenau.ics.fog.transfer.gates.DownGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
+import de.tuilmenau.ics.fog.transfer.gates.GateIterator;
 import de.tuilmenau.ics.fog.transfer.gates.LowerLayerReceiveGate;
 import de.tuilmenau.ics.fog.transfer.manager.Controller;
 
@@ -372,6 +375,28 @@ public class NetworkInterface implements LayerObserverCallback
 		mDownGates.add(gate);
 	}
 	
+	/**
+	 * Used to update description of best effort gates after a change of
+	 * the capacity of the lower layer.
+	 */
+	public void refreshGates()
+	{
+		GateIterator iter = mMultiplexer.getIterator(DownGate.class);
+		while(iter.hasNext()) {
+			DownGate gate = (DownGate) iter.next(); // valid cast due to iterator filter
+			
+			if(gate.refreshDescription()) {
+				// something changed -> inform routing service
+				try {
+					gate.getEntity().getTransferPlane().registerLink(mMultiplexer, gate);
+				}
+				catch (NetworkException exc) {
+					mEntity.getLogger().warn(this, "Can not update description of gate " +gate +" in routing service.", exc);
+				}
+			}
+		}
+	}
+
 	@Override
 	public String toString()
 	{

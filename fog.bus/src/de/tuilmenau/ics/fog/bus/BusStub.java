@@ -218,15 +218,6 @@ public class BusStub implements ILowerLayer, ForwardingElement
 		return mRemoteBus.getASName();
 	}
 	
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.topology.ILowerLayer#getRemainingTransferMetric()
-	 */
-	@Override
-	public Number getRemainingTransferMetric()
-	{
-		return mRemoteBus.getRemainingTransferMetric();
-	}
-	
 	private ILowerLayer mRemoteBus;
 	private Logger mLogger;
 	private EventHandler mTimeBase;

@@ -27,11 +27,13 @@ import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.IEventRef;
+import de.tuilmenau.ics.fog.Config.Transfer.COST_METRIC;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
+import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
 import de.tuilmenau.ics.fog.facade.properties.FunctionalRequirementProperty;
 import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -76,10 +78,45 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 		this.mLogger = new Logger(parentLogger);
 		
 		LinkTransformer<RoutingServiceLink> transformer = new LinkTransformer<RoutingServiceLink>() {
+			private float getBandwidth(RoutingServiceLink link)
+			{
+				Description descr = link.getDescription();
+				if(descr != null) {
+					DatarateProperty prop = (DatarateProperty) descr.get(DatarateProperty.class);
+					
+					if(prop != null) {
+						return prop.getMax();
+					}
+				}
+				
+				return Float.POSITIVE_INFINITY;
+			}
+			
 			@Override
 			public Number transform(RoutingServiceLink input)
 			{
-				return input.getCost();
+				if(input.isActive()) {
+					if(Config.Transfer.USED_METRIC.equals(COST_METRIC.BANDWIDTH)) {
+						float bandwidth = getBandwidth(input);
+						
+						if(bandwidth < 0) {
+							// bandwidth is not limited
+							return 0;
+						} else {
+							if(bandwidth == 0) {
+								return Float.POSITIVE_INFINITY;
+							} else {
+								return 1 / bandwidth;
+							}
+						}
+					}
+					
+					// Cost value equal to hop count
+					return 1;
+				} else {
+					// link is marked as deactivated -> use it only if no other option available
+					return Float.POSITIVE_INFINITY;
+				}
 			}
 		};
 		this.mMap = new RoutableGraph<RoutingServiceAddress, RoutingServiceLink>(transformer);
@@ -188,7 +225,7 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 				
 				for(RoutingServiceLink tOutEdge : tOutEdges) {
 					// mark link as "not usable" by setting cost to infinity
-					tOutEdge.setCost(RoutingServiceLink.INFINITE);
+					tOutEdge.setActive(false);
 				}
 				
 				// inform map about changed link weights
@@ -196,7 +233,7 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 				
 				// remove old node inclusive its links after a while
 				
-				CleanupEventNode tToCleanup = new CleanupEventNode(pNode, tOutEdges); 
+				CleanupEventNode tToCleanup = new CleanupEventNode(pNode); 
 				tToCleanup.schedule();
 				
 				return true;
@@ -215,12 +252,6 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 		public CleanupEventNode(RoutingServiceAddress node)
 		{
 			oldNode = node;
-		}
-		
-		public CleanupEventNode(RoutingServiceAddress node, LinkedList<RoutingServiceLink> pLinks)
-		{
-			oldNode = node;
-			mAffectedLinks = pLinks;
 		}
 		
 		public void schedule()
@@ -269,15 +300,14 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 		@Override
 		public String toString()
 		{
-			return this.getClass().getSimpleName() + ":" + oldNode + (mAffectedLinks != null ? "->AFFECTS:" + mAffectedLinks  : "");
+			return this.getClass().getSimpleName() + ":" + oldNode;
 		}
 		
 		private RoutingServiceAddress oldNode;
-		private LinkedList<RoutingServiceLink> mAffectedLinks;
 	}
 	
 	@Override
-	public Result registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription, Number pLinkCost) throws RemoteException 
+	public Result registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription) throws RemoteException 
 	{
 		Result didSomething;
 		boolean remoteLink = false;
@@ -304,7 +334,7 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 		}
 		
 		// do the actual linking if not already available
-		RoutingServiceLink newLink = new RoutingServiceLink(pGateID, pDescription, pLinkCost);
+		RoutingServiceLink newLink = new RoutingServiceLink(pGateID, pDescription);
 		
 		// check, if there is already a link
 		RoutingServiceLink currentLinkObj = mMap.getEdge(pFrom, pTo, newLink);
@@ -314,9 +344,10 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 		} else {
 			didSomething = Result.NOTHING;
 			
-			if(currentLinkObj.hasInfiniteCost()) {
+			if(!currentLinkObj.isActive()) {
 				mLogger.log(this, "Reactivating link " +currentLinkObj +" between " +pFrom +"->" +pTo);
-				currentLinkObj.setCost(pLinkCost);
+				currentLinkObj.setDescription(pDescription);
+				currentLinkObj.setActive(true);
 				
 				// cancel associated deletion timer
 				IEventRef tTimer = currentLinkObj.getEvent();
@@ -330,16 +361,14 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 				didSomething = Result.UPDATED;
 			} else {
 				mLogger.log(this, "Link " +currentLinkObj +" between " +pFrom +"->" +pTo +" is already known (" +currentLinkObj +")");
-
-				if(pLinkCost != null) {
-					// did the link cost changed?
-					if(!pLinkCost.equals(currentLinkObj.getCost())) {
-						mLogger.log(this, "Update link cost for " +currentLinkObj +" to " +pLinkCost);
-						// update link cost and inform map about it
-						currentLinkObj.setCost(pLinkCost);
-						mMap.edgeWeightChanged(currentLinkObj);
-						didSomething = Result.UPDATED;
-					}
+				
+				// did the link cost changed?
+				if(!currentLinkObj.descriptionEqualTo(pDescription)) {
+					mLogger.log(this, "Update link " +currentLinkObj +" to " +pDescription);
+					// update link cost and inform map about it
+					currentLinkObj.setDescription(pDescription);
+					mMap.edgeWeightChanged(currentLinkObj);
+					didSomething = Result.UPDATED;
 				}
 				// else: stick to old cost value
 			}
@@ -355,7 +384,7 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 					registerAtParent(pFrom, false, true);
 					
 					// register link itself
-					mParentRS.registerLink(pFrom, pTo, pGateID, pDescription, pLinkCost);
+					mParentRS.registerLink(pFrom, pTo, pGateID, pDescription);
 				} else {
 					mLogger.err(this, "remote link (" +pFrom +" to " +pTo +") registered without an gate number.");
 				}
@@ -384,7 +413,7 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 						if(pGateID.equals(link.getID())) {
 							mLogger.log(this, "Invalidating link " +pGateID +" from " +pFrom);
 							// mark link as "not usable" by setting cost to infinity
-							link.setCost(RoutingServiceLink.INFINITE);
+							link.setActive(false);
 							
 							// inform map about changed link weights
 							mMap.edgeWeightChanged(link);
@@ -419,13 +448,13 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 		{
 			oldLink = link;
 			
-			if(!oldLink.hasInfiniteCost()) mLogger.warn(this, "Link " +oldLink +" will only be removed if its cost is set to infinite during the next " +DELAYED_DELETION_TIMEOUT_SEC +" seconds.");
+			if(oldLink.isActive()) mLogger.warn(this, "Link " +oldLink +" will only be removed if its cost is set to infinite during the next " +DELAYED_DELETION_TIMEOUT_SEC +" seconds.");
 		}
 		
 		@Override
 		public void fire()
 		{
-			if(oldLink.hasInfiniteCost()) {
+			if(!oldLink.isActive()) {
 				mLogger.log(this, "Delayed removal of link " +oldLink);
 				mMap.unlink(oldLink);
 			} else {
@@ -543,8 +572,8 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 						int numberRouteSegmentAddresses = 0;
 						tRes = new Route();
 						for(RoutingServiceLink tLink : tPath) {
-							if(tLink.hasInfiniteCost()) {
-								mLogger.log(this, "Link " +tLink +" has infinite cost. Gates does not exist. There seems to be no other (cheaper) route.");
+							if(!tLink.isActive()) {
+								mLogger.log(this, "Link " +tLink +" is not active. Gates does not exist. There seems to be no other (cheaper) route.");
 								tRes = null;
 								break;
 							}
@@ -779,13 +808,13 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 				mAnnouncedAddresses.put(pNode, pBothDirections);
 				
 				mParentRS.registerNode(pNode, pGloballyImportant);
-				mParentRS.registerLink(mEntityAddress, pNode, null, null, RoutingServiceLink.DEFAULT);
+				mParentRS.registerLink(mEntityAddress, pNode, null, null);
 				bothDirectionsAnnounced = false;
 			}
 			
 			// only one direction announced but not we need both?
 			if(!bothDirectionsAnnounced && pBothDirections) {
-				mParentRS.registerLink(pNode, mEntityAddress, null, null, RoutingServiceLink.DEFAULT);
+				mParentRS.registerLink(pNode, mEntityAddress, null, null);
 				
 				mAnnouncedAddresses.put(pNode, true);
 			}

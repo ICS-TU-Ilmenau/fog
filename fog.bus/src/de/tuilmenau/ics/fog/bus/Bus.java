@@ -24,7 +24,6 @@ import de.tuilmenau.ics.CommonSim.datastream.annotations.AutoWire;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.DoubleNode;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.fog.Config;
-import de.tuilmenau.ics.fog.Config.Transfer.COST_METRIC;
 import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.Config.Simulator.SimulatorMode;
@@ -711,25 +710,6 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	private RateMeasurement mDatarateMeasurement = null;
 	
 	private RemoteMedium proxyForRemote = null;
-	
-	public Number getRemainingTransferMetric()
-	{
-		if(Config.Transfer.USED_METRIC.equals(COST_METRIC.BANDWIDTH)) {
-			if(mBandwidth.floatValue() < 0) {
-				// bandwidth is not limited
-				return 0;
-			} else {
-				if(mBandwidth.floatValue() == 0) {
-					return Float.POSITIVE_INFINITY;
-				} else {
-					return 1 / mBandwidth.floatValue();
-				}
-			}
-		}
-		
-		// Cost value equal to hop count
-		return 1;
-	}
 	
 	//
 	// QoS parameters for lower layer

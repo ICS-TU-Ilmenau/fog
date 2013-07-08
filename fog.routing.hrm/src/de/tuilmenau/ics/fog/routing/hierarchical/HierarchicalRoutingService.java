@@ -278,7 +278,7 @@ public class HierarchicalRoutingService implements RoutingService
 						List<RoutingServiceLink> tRes = new LinkedList<RoutingServiceLink>();
 						for(RouteSegmentPath tPath : (List<RouteSegmentPath>)tRoute) {
 							for(GateID tID : tPath) {
-								tRes.add(new RoutingServiceLink(tID, null, RoutingServiceLink.DEFAULT));
+								tRes.add(new RoutingServiceLink(tID, null));
 							}
 						}
 						return tRes;
@@ -788,7 +788,7 @@ public class HierarchicalRoutingService implements RoutingService
 	 * Informs routing service about new connection provided by a gate.
 	 * Might be called recursively.
 	 */
-	private void informRoutingService(ForwardingNode pFrom, ForwardingElement pTo, AbstractGate pGate, Name pRemoteDestinationName, Number pLinkCost) throws NetworkException
+	private void informRoutingService(ForwardingNode pFrom, ForwardingElement pTo, AbstractGate pGate, Name pRemoteDestinationName) throws NetworkException
 	{
 		// is it a local connection between two FNs?
 		if(pRemoteDestinationName == null) {
@@ -803,7 +803,7 @@ public class HierarchicalRoutingService implements RoutingService
 						mLogger.warn(this, "Destination node " +pTo +" in link " +pGate +" was not registered.");
 						registerNode((GateContainer)pTo, null, NamingLevel.NONE, null);
 					}
-					informRoutingService(pFrom, pTo, pGate, tAddress, pLinkCost);
+					informRoutingService(pFrom, pTo, pGate, tAddress);
 				}
 			}
 		} else {
@@ -842,7 +842,7 @@ public class HierarchicalRoutingService implements RoutingService
 			}
 		}
 		
-		informRoutingService((ForwardingNode)pFrom, pGate.getNextNode(), pGate, pGate.getRemoteDestinationName(), pGate.getCost());
+		informRoutingService((ForwardingNode)pFrom, pGate.getNextNode(), pGate, pGate.getRemoteDestinationName());
 		
 		L2Address tDestination = null;
 		
@@ -865,7 +865,7 @@ public class HierarchicalRoutingService implements RoutingService
 			throw new NetworkException("Either source or destination could not be registered before.");
 		}
 		
-		mRoutingMap.link(tSource, tDestination, new RoutingServiceLink(pGate.getGateID(), null, RoutingServiceLink.DEFAULT));
+		mRoutingMap.link(tSource, tDestination, new RoutingServiceLink(pGate.getGateID(), null));
 		
 		HRMName tThisHostAddress = null;
 		boolean tDontElect=false;

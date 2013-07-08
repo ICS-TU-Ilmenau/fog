@@ -35,7 +35,7 @@ public interface RemoteRoutingService extends Remote
 	public Result registerNode(RoutingServiceAddress pNode, boolean pGloballyImportant) throws RemoteException;
 	public boolean unregisterNode(RoutingServiceAddress pNode) throws RemoteException;
 	
-	public Result registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription, Number pLinkCost) throws RemoteException;
+	public Result registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription) throws RemoteException;
 	public boolean unregisterLink(RoutingServiceAddress pFrom, GateID pGateID) throws RemoteException;
 	
 	// Statistics
