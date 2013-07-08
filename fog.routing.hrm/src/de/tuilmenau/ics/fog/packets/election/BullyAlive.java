@@ -22,32 +22,14 @@ public class BullyAlive extends SignalingBully
 	 * @param pSenderName the sender's name 
 	 * @param pCoordinatorName the coordinator's name
 	 */
-	public BullyAlive(Name pSenderName, Name pCoordinatorName)
+	public BullyAlive(Name pSenderName)
 	{
 		super(pSenderName, -1 /* some value to signal "invalid priority */);
-		mCoordinator = pCoordinatorName;
-	}
-	
-	/**
-	 * Determine the name of the source coordinator
-	 * 
-	 * @return name of the coordinator that
-	 */
-	//TODO: not used until now, however, the function is maybe used in the future when BullyAlive will be parsed by the main packet processing CoordinatorCEPDemultiplexed
-	public Name getCoordinatorName()
-	{
-		return mCoordinator;
 	}
 	
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", Coordinator=" + mCoordinator + ")";
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ")";
 	}
-	
-	// ########################################################################################################
-	/**
-	 * coordinator name
-	 */
-	private Name mCoordinator = null;
 }

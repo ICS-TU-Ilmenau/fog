@@ -141,7 +141,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						}
 						write(tAnnounce);
 					} else {
-						write(new BullyAlive(tPhysicalNode.getCentralFN().getName(), getCluster().getCoordinatorName()));
+						write(new BullyAlive(tPhysicalNode.getCentralFN().getName()));
 						//TODO: packet is sent but never parsed or a timeout timer reset!!
 					}
 				} else {
