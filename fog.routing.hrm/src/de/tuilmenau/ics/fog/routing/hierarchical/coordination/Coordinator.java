@@ -920,11 +920,6 @@ public class Coordinator implements ICluster, Observer
 	}
 	
 	@Override
-	public Name retrieveName() {
-		return getHRMController().getPhysicalNode().getCentralFN().getName();
-	}
-	
-	@Override
 	public void setCoordinatorPriority(float pCoordinatorPriority) {
 		if(mCoordinatorCEP != null && mCoordinatorCEP.getPeerPriority() != pCoordinatorPriority) {
 			getLogger().info(this, "Tried to set a priority that does not correspond with the priority of the concurrent coordinator, wrong connection endpoint?");

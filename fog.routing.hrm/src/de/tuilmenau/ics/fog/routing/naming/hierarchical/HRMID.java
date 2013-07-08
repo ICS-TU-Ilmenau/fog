@@ -175,11 +175,6 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 	}
 	
 	@Override
-	public Name retrieveName() {
-		return null;
-	}
-	
-	@Override
 	public int compareTo(HRMID pCompareTo) {
 		return getLevelAddress(pCompareTo.getDescendingDifference(this)).subtract(pCompareTo.getLevelAddress(pCompareTo.getDescendingDifference(this))).intValue();
 	}

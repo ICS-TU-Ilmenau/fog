@@ -60,11 +60,6 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public Name retrieveName() {
-		return null;
-	}
-
-	@Override
 	public Namespace getNamespace() {
 		return null;
 	}

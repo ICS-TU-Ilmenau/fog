@@ -306,16 +306,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return mHRMID;
 	}
 
-	/**
-	 * Return the announcer of this cluster, so the next hop is determined
-	 * (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.routing.hierarchical.clustering.IVirtualNode#retrieveName()
-	 */
-	@Override
-	public Name retrieveName() {
-		return mAnnouncer;
-	}
-
 	@Override
 	public void setHighestPriority(float pHighestPriority) {
 		/*

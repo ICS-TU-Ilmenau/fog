@@ -27,10 +27,4 @@ public interface IVirtualNode extends Name
 	 * @return The address of that specific node can be returned here
 	 */
 	public HRMID retrieveAddress();
-	
-	/**
-	 * 
-	 * @return The name that was assigned to that node can be retried here. 
-	 */
-	public Name retrieveName();
 }

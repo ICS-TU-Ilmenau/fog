@@ -600,11 +600,6 @@ public class Cluster implements ICluster, IElementDecorator
 	}
 	
 	@Override
-	public Name retrieveName() {
-		return getHRMController().getPhysicalNode().getCentralFN().getName();
-	}
-	
-	@Override
 	public void setHighestPriority(float pHighestPriority) {
 		mHighestPriority = pHighestPriority;
 	}
