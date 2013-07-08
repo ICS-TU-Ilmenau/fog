@@ -278,7 +278,7 @@ public class Network
 		NetworkInterface interf = node.attach(lowerLayer);
 		
 		if(interf != null) {
-			mScenario.link(node, lowerLayer, interf);
+			mScenario.storeLink(node, lowerLayer, interf);
 			return true;
 		} else {
 			return false;
@@ -291,7 +291,7 @@ public class Network
 	 */
 	public boolean attach(RemoteRoutingService rsA, RemoteRoutingService rsB)
 	{
-		mScenario.link(rsA, rsB, "routing for " + rsA);
+		mScenario.storeLink(rsA, rsB, "routing for " + rsA);
 		return true;
 	}
 	

@@ -238,14 +238,14 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	}
 	
 	/**
-	 * Links two nodes. If nodes not exists, they will be created.
+	 * Links two nodes. If nodes don't exist, they will be created.
 	 * Method do NOT check, if link already exists.
 	 * 
 	 * @param pFrom link starts at
 	 * @param pTo links end at
 	 * @param pLinkValue link object
 	 */
-	public synchronized void link(NodeObject pFrom, NodeObject pTo, LinkObject pLinkValue)
+	public synchronized void storeLink(NodeObject pFrom, NodeObject pTo, LinkObject pLinkValue)
 	{
 		if((pFrom != null) && (pTo != null) && (pLinkValue != null)) {
 			// get equivalent object used for map for pFrom and pTo:

@@ -309,7 +309,7 @@ public class PartialRoutingService implements RemoteRoutingService
 		// check, if there is already a link
 		RoutingServiceLink currentLinkObj = mMap.getEdge(pFrom, pTo, newLink);
 		if(currentLinkObj == null) {
-			mMap.link(pFrom, pTo, newLink);
+			mMap.storeLink(pFrom, pTo, newLink);
 			didSomething = Result.INSERTED;
 		} else {
 			didSomething = Result.NOTHING;

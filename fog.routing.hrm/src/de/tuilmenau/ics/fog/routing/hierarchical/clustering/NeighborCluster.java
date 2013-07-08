@@ -180,7 +180,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 
 	public void addNeighborCluster(ICluster pNeighbor)
 	{
-		getHRMController().getClusterMap().registerLink(this,	pNeighbor, new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK));
+		getHRMController().getClusterMap().storeLink(this,	pNeighbor, new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK));
 	}
 
 	public void setRouteToCoordinator(Route pPath)

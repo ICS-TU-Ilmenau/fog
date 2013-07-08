@@ -151,7 +151,7 @@ public class HierarchicalRoutingService implements RoutingService
 			if(pPath != null) {
 				Route tPath = (Route)pPath.clone();
 				if(!mCoordinatorRoutingMap.isLinked(pFrom, pTo, tPath)) {
-					mCoordinatorRoutingMap.registerLink(pFrom, pTo, tPath);
+					mCoordinatorRoutingMap.storeLink(pFrom, pTo, tPath);
 				}
 			}
 		} else {
@@ -869,7 +869,7 @@ public class HierarchicalRoutingService implements RoutingService
 			throw new NetworkException("Either source or destination could not be registered before.");
 		}
 		
-		mRoutingMap.registerLink(tSource, tDestination, new RoutingServiceLink(pGate.getGateID(), null, RoutingServiceLink.DEFAULT));
+		mRoutingMap.storeLink(tSource, tDestination, new RoutingServiceLink(pGate.getGateID(), null, RoutingServiceLink.DEFAULT));
 		
 		HRMName tThisHostAddress = null;
 		boolean tDontElect=false;

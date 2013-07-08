@@ -313,7 +313,7 @@ public class TransferPlane implements TransferPlaneObserver
 			tTo = mDevNull;
 		}
 		
-		mMap.link(pFrom, tTo, pGate);
+		mMap.storeLink(pFrom, tTo, pGate);
 		
 		// should gate be reported to routing?
 		boolean isPrivate = pGate.isPrivateToTransfer();

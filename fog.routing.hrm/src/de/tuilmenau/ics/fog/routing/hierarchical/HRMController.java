@@ -268,7 +268,7 @@ public class HRMController extends Application implements IServerCallback
 								}
 							}
 						}
-						getClusterMap().registerLink(tAttachedCluster, tCluster, new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK));
+						getClusterMap().storeLink(tAttachedCluster, tCluster, new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK));
 					}
 					for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
 						if(getSourceIntermediate(tCluster) != null) {
