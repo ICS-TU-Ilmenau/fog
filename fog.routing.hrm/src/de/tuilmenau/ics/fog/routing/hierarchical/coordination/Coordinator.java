@@ -311,16 +311,6 @@ public class Coordinator implements ICluster, Observer
 						map(tID, tReceivingCEP.getRemoteCluster());
 					}
 					tEnvelope.setHRMID(tID);
-					
-					for(CoordinatorCEPDemultiplexed tCEP : mManagedCluster.getParticipatingCEPs()) {
-						try {
-							if(tCEP != tReceivingCEP) {
-								tEnvelope.addIgnoreEntry(tCEP.getPeerName());
-							}
-						} catch (NullPointerException tExc) {
-							getLogger().err(this, "Connection endpoint " + tReceivingCEP + " is gone or something else is wrong ");
-						}
-					}
 				} else {
 					getLogger().log(this, "Skipping " + tReceivingCEP + " in address distribution as it is a coordinator for another cluster on level " + mLevel);
 				}

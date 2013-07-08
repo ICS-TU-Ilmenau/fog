@@ -26,7 +26,6 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 public class TopologyData implements Serializable
 {
 	private static final long serialVersionUID = 8442835110014485795L;
-	private LinkedList<Name> mIgnoreList = null;
 	private HRMID mHRMID = null;
 	private LinkedList<FIBEntry> mForwardingEntries;
 	private LinkedList<FIBEntry> mPushThrougs = null;
@@ -65,29 +64,6 @@ public class TopologyData implements Serializable
 	public void setHRMID(HRMID pHRMID)
 	{
 		mHRMID = pHRMID;
-	}
-	
-	/**
-	 * 
-	 * @param pName entry that is supposed to be ignored on address distribution on cluster below in case two virtual nodes are neighbors 
-	 */
-	public void addIgnoreEntry(Name pName)
-	{
-		if(mIgnoreList == null) {
-			mIgnoreList = new LinkedList<Name>();
-		}
-		if(!mIgnoreList.contains(pName)) {
-			mIgnoreList.add(pName);
-		}
-	}
-	
-	/**
-	 * 
-	 * @return List of entries that should be skipped during address distribution
-	 */
-	public LinkedList<Name> getIgnoreEntries()
-	{
-		return mIgnoreList;
 	}
 	
 	/**
