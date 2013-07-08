@@ -167,14 +167,20 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 	
 	public Identity getOwner()
 	{
-		if(mOwner != null) return mOwner;
-		else return mNode.getIdentity();
+		if(mOwner != null) {
+			return mOwner;
+		}else{
+			return mNode.getIdentity();
+		}
 	}
 	
 	protected void setDescription(Description pNewDescr)
 	{
-		if(pNewDescr != null) mDescription = pNewDescr.clone();
-		else mDescription = null;
+		if (pNewDescr != null){
+			mDescription = pNewDescr.clone();
+		}else{
+			mDescription = null;
+		}
 	}
 	
 	@Override
