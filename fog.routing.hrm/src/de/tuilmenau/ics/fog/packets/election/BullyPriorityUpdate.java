@@ -7,39 +7,24 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets.hierarchical;
+package de.tuilmenau.ics.fog.packets.election;
 
-import java.io.Serializable;
+import de.tuilmenau.ics.fog.facade.Name;
 
 /**
- * 
- * If the priority of a node changes this object has to be used to inform other entities about the change
+ * PACKET: If the priority of a node changes this object has to be used to inform other cluster members about the change.
+ * The node itself will be identified by the connection.
  */
-public class PriorityUpdate implements Serializable
+public class BullyPriorityUpdate extends SignalingBully //TV
 {
 	private static final long serialVersionUID = -8819106581802846812L;
-	private float mPriority;
 	
 	/**
 	 * 
-	 * @param pPriority is the new priority - the node itself will be identified by the connection
+	 * @param pPriority the new priority
 	 */
-	public PriorityUpdate(float pPriority)
+	public BullyPriorityUpdate(Name pSenderName, float pSenderPriority)
 	{
-		mPriority = pPriority;
-	}
-	
-	/**
-	 * 
-	 * @return new priority of the node
-	 */
-	public float getPriority()
-	{
-		return mPriority;
-	}
-	
-	public String toString()
-	{
-		return getClass().getSimpleName() + ":" + Float.toString(mPriority);
+		super(pSenderName, pSenderPriority);
 	}
 }

@@ -41,6 +41,12 @@ public class SignalingBully extends SignalingHrm
 		return mSenderPriority;
 	}
 
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority() + ")";
+	}
+
 	/**
 	 * This is the Bully priority of the message sender.
 	 */

@@ -24,7 +24,6 @@ import de.tuilmenau.ics.fog.packets.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.PriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestZoneMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
@@ -124,6 +123,8 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				
 			}
 			
+			
+			
 			/**
 			 * BullyElect
 			 */
@@ -167,6 +168,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				 */
 				getCluster().interpretAnnouncement((BullyAnnounce)pData, this);
 			}
+			
 			
 			/**
 			 * NeighborZoneAnnounce
@@ -219,8 +221,8 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 			/**
 			 * PriorityUpdate
 			 */
-			if(pData instanceof PriorityUpdate) {
-				mPeerPriority = ((PriorityUpdate)pData).getPriority();
+			if(pData instanceof BullyPriorityUpdate) {
+				mPeerPriority = ((BullyPriorityUpdate)pData).getSenderPriority();
 			}
 			/**
 			 * TopologyData

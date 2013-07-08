@@ -18,8 +18,8 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.election.BullyAnnounce;
+import de.tuilmenau.ics.fog.packets.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.PriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
@@ -394,7 +394,7 @@ public class Cluster implements ICluster, IElementDecorator
 				mPriority *= 10;
 				if(!mInterASCluster) {
 					getHRMController().getLogger().log(this, "Informing " + getParticipatingCEPs() + " about change in priority and initiating new election");
-					sendClusterBroadcast(new PriorityUpdate(mPriority), (LinkedList<CoordinatorCEPDemultiplexed>)null);
+					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getPhysicalNode().getCentralFN().getName(), mPriority), (LinkedList<CoordinatorCEPDemultiplexed>)null);
 					getHRMController().getLogger().log(this, "Informed other clients about change of priority - it is now " + mPriority);
 				}
 			}
@@ -526,7 +526,7 @@ public class Cluster implements ICluster, IElementDecorator
 	
 	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPDemultiplexed> pAlreadyInformed)
 	{
-		if(pData instanceof PriorityUpdate)
+		if(pData instanceof BullyPriorityUpdate)
 		{
 			getHRMController().getLogger().log(this, "Will send priority update to" + mCEPs);
 		}
