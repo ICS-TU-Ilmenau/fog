@@ -27,9 +27,9 @@ import edu.uci.ics.jung.graph.util.EdgeType;
  * @param <NodeObject> This is a parameterized class - Define which objects are supposed to be nodes.
  * @param <LinkObject> This is a parameterized class - Define which objects are supposed to be links.
  */
-public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject, LinkObject>
+public class RoutableClusterGraph<NodeObject, LinkObject> extends RoutableGraph<NodeObject, LinkObject>
 {
-	public ClusterMap()
+	public RoutableClusterGraph()
 	{
 		super();
 		mNodes =  new UndirectedSparseGraph<NodeObject, LinkObject>(); 
@@ -82,7 +82,7 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 	{
 		List<LinkObject> tPath = null;
 		
-		//Logging.log(this, "Searching for a route fom " + (pFrom instanceof AttachedCluster ? ((AttachedCluster)pFrom).getClusterDescription() : pFrom ) + " to " + (pTo instanceof AttachedCluster ? ((AttachedCluster)pTo).getClusterDescription() : pTo));
+		//Logging.log(this, "Searching for a route from " + (pFrom instanceof AttachedCluster ? ((AttachedCluster)pFrom).getClusterDescription() : pFrom ) + " to " + (pTo instanceof AttachedCluster ? ((AttachedCluster)pTo).getClusterDescription() : pTo));
 		pFrom = containsVertex(pFrom);
 		pTo = containsVertex(pTo);
 
@@ -148,7 +148,7 @@ public class ClusterMap<NodeObject, LinkObject> extends RoutableGraph<NodeObject
 	{
 		List<LinkObject> tPath = null;
 		
-		//Logging.log(this, "Searching for a route fom " + (pFrom instanceof AttachedCluster ? ((AttachedCluster)pFrom).getClusterDescription() : pFrom ) + " to " + (pTo instanceof AttachedCluster ? ((AttachedCluster)pTo).getClusterDescription() : pTo));
+		//Logging.log(this, "Searching for a route from " + (pFrom instanceof AttachedCluster ? ((AttachedCluster)pFrom).getClusterDescription() : pFrom ) + " to " + (pTo instanceof AttachedCluster ? ((AttachedCluster)pTo).getClusterDescription() : pTo));
 		pFrom = containsVertex(pFrom);
 		pTo = containsVertex(pTo);
 

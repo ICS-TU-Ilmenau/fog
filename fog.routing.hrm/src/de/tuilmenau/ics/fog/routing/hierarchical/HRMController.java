@@ -64,7 +64,7 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	private Node mPhysicalNode; //TV
 	private HierarchicalRoutingService mHRS = null;
-	private ClusterMap<IVirtualNode, ClusterLink> mClusterMap = new ClusterMap<IVirtualNode, ClusterLink>();
+	private RoutableClusterGraph<IVirtualNode, ClusterLink> mClusterMap = new RoutableClusterGraph<IVirtualNode, ClusterLink>();
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
@@ -319,7 +319,7 @@ public class HRMController extends Application implements IServerCallback
 			((ICluster)pSourceCluster).getHRMController().getLogger().log("You did not provide clusters for path search: " + pSourceCluster + " to " + pTargetCluster);
 			return null;
 		}
-		ClusterMap<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
+		RoutableClusterGraph<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
 		List<ClusterLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		IVirtualNode tPredecessor=pSourceCluster;
 		for(ClusterLink tLink: tClusterConnection) {
@@ -345,7 +345,7 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "checking cluster route between null and null");
 			return false;
 		}
-		ClusterMap<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
+		RoutableClusterGraph<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
 		List<ClusterLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		String tCheckedClusters = new String();
 		boolean isCovered = false;
@@ -653,7 +653,7 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @return cluster map that is actually the graph that represents the network
 	 */
-	public ClusterMap<IVirtualNode, ClusterLink> getClusterMap()
+	public RoutableClusterGraph<IVirtualNode, ClusterLink> getClusterMap()
 	{
 		return mClusterMap;
 	}
