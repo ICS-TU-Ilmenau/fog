@@ -16,7 +16,7 @@ import de.tuilmenau.ics.fog.packets.election.BullyElect;
 //import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 
-public class RequestZoneMembership implements Serializable
+public class RequestClusterMembership implements Serializable
 {
 	/**
 	 * 
@@ -24,10 +24,9 @@ public class RequestZoneMembership implements Serializable
 	private static final long serialVersionUID = -4759949996098949362L;
 	
 	private BullyElect mElectionMessage;
-//	private boolean mAnswer;
 	private LinkedList<RoutingServiceLinkVector> mRouteToCoordinator;
 	
-	public RequestZoneMembership(BullyElect pElectionMessage)
+	public RequestClusterMembership(BullyElect pElectionMessage)
 	{
 		mElectionMessage = pElectionMessage;
 	}
