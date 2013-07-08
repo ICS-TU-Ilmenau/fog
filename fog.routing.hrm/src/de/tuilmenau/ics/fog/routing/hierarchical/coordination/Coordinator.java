@@ -30,7 +30,7 @@ import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
+import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest.ResultType;
@@ -94,7 +94,7 @@ public class Coordinator implements ICluster, Observer
 	private TopologyData mEnvelope = null;
 	private HashMap<HRMID, IVirtualNode> mAddressToClusterMapping = new HashMap<HRMID, IVirtualNode>();
 	private HashMap<HRMID, FIBEntry> mIDToFIBMapping = new HashMap<HRMID, FIBEntry>();
-	private LinkedList<NeighborZoneAnnounce> mReceivedAnnouncements;
+	private LinkedList<NeighborClusterAnnounce> mReceivedAnnouncements;
 	private LinkedList<HRMSignature> mSignatures = new LinkedList<HRMSignature>();
 //	private HashMap<CoordinatorCEPDemultiplexed, Integer> mCEPsToBGPRouters;
 	private HashMap<Long, CoordinatorCEPDemultiplexed> mRouteRequestDispatcher;
@@ -154,11 +154,11 @@ public class Coordinator implements ICluster, Observer
 		return pValue.shiftLeft(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * pLevel);
 	}
 	
-	public void storeAnnouncement(NeighborZoneAnnounce pAnnounce)
+	public void storeAnnouncement(NeighborClusterAnnounce pAnnounce)
 	{
 		getLogger().log(this, "Storing " + pAnnounce);
 		if(mReceivedAnnouncements == null) {
-			mReceivedAnnouncements = new LinkedList<NeighborZoneAnnounce>();
+			mReceivedAnnouncements = new LinkedList<NeighborClusterAnnounce>();
 		}
 		pAnnounce.setNegotiatorIdentification(ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getLevel()));
 		mReceivedAnnouncements.add(pAnnounce);
@@ -1165,7 +1165,7 @@ public class Coordinator implements ICluster, Observer
 							 * If this is a rejection the forwarding cluster as to be calculated by the receiver of this neighbor zone announcement
 							 */
 							
-							NeighborZoneAnnounce tOldCovered = new NeighborZoneAnnounce(getCoordinatorName(), getLevel(), getCoordinatorSignature(), getCoordinatorsAddress(),getToken(), getCoordinatorsAddress().getAddress().longValue());
+							NeighborClusterAnnounce tOldCovered = new NeighborClusterAnnounce(getCoordinatorName(), getLevel(), getCoordinatorSignature(), getCoordinatorsAddress(),getToken(), getCoordinatorsAddress().getAddress().longValue());
 							tOldCovered.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority());
 							tOldCovered.setNegotiatorIdentification(tDummy);
 							
@@ -1197,7 +1197,7 @@ public class Coordinator implements ICluster, Observer
 							 * now the old cluster is notified about the new cluster
 							 */
 							
-							NeighborZoneAnnounce tNewCovered = new NeighborZoneAnnounce(pAnnounce.getSenderName(), getLevel(), pAnnounce.getCoordSignature(), (HRMName)pCEP.getPeerName(), pAnnounce.getToken(), (((HRMName)pCEP.getPeerName()).getAddress().longValue()));
+							NeighborClusterAnnounce tNewCovered = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getLevel(), pAnnounce.getCoordSignature(), (HRMName)pCEP.getPeerName(), pAnnounce.getToken(), (((HRMName)pCEP.getPeerName()).getAddress().longValue()));
 							tNewCovered.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 							tNewCovered.setNegotiatorIdentification(tDummy);
 							DiscoveryEntry tCoveredEntry = new DiscoveryEntry(
@@ -1255,7 +1255,7 @@ public class Coordinator implements ICluster, Observer
 			 */
 			
 			ClusterDummy tDummy = ClusterDummy.compare(getManagedCluster().getClusterID(), getManagedCluster().getToken(), getManagedCluster().getLevel());
-			NeighborZoneAnnounce tUncoveredAnnounce = new NeighborZoneAnnounce(getCoordinatorName(), getLevel(), getCoordinatorSignature(), getCoordinatorsAddress(), getToken(), getCoordinatorsAddress().getAddress().longValue());
+			NeighborClusterAnnounce tUncoveredAnnounce = new NeighborClusterAnnounce(getCoordinatorName(), getLevel(), getCoordinatorSignature(), getCoordinatorsAddress(), getToken(), getCoordinatorsAddress().getAddress().longValue());
 			tUncoveredAnnounce.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority());
 			/*
 			 * the routing service address of the announcer is set once the neighbor zone announce arrives at the rejected coordinator because this
@@ -1287,7 +1287,7 @@ public class Coordinator implements ICluster, Observer
 			 * this part is for the acting coordinator, so NeighborZoneAnnounce is sent in order to announce the cluster that was just rejected
 			 */
 			
-			NeighborZoneAnnounce tCoveredAnnounce = new NeighborZoneAnnounce(pAnnounce.getSenderName(), getLevel(), pAnnounce.getCoordSignature(), pCEP.getPeerName(), pAnnounce.getToken(), (pCEP.getPeerName()).getAddress().longValue());
+			NeighborClusterAnnounce tCoveredAnnounce = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getLevel(), pAnnounce.getCoordSignature(), pCEP.getPeerName(), pAnnounce.getToken(), (pCEP.getPeerName()).getAddress().longValue());
 			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 			
 //			List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute(pCEP.getSourceName(), pCEP.getPeerName());
@@ -1316,7 +1316,7 @@ public class Coordinator implements ICluster, Observer
 		}
 	}
 	
-	public ICluster addAnnouncedCluster(NeighborZoneAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -1356,7 +1356,7 @@ public class Coordinator implements ICluster, Observer
 	}
 	
 	@Override
-	public void handleAnnouncement(NeighborZoneAnnounce	pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{		
 		if(pAnnounce.getCoveringClusterEntry() != null) {
 //			Cluster tForwardingCluster = null;
@@ -1416,7 +1416,7 @@ public class Coordinator implements ICluster, Observer
 					for(CoordinatorCEPDemultiplexed tCEP : mCEPs) {
 						if(((ICluster)tNode).getCoordinatorsAddress().equals(tCEP.getPeerName()) && !tCEP.isPartOfMyCluster()) {
 							getLogger().info(this, "Informing " + tCEP + " about existence of neighbor zone ");
-							NeighborZoneAnnounce tAnnounce = new NeighborZoneAnnounce(pCoordName, getLevel(), pCoordSignature, pAddress, getToken(), pAddress.getAddress().longValue());
+							NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, getLevel(), pCoordSignature, pAddress, getToken(), pAddress.getAddress().longValue());
 							tAnnounce.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority());
 							LinkedList<RoutingServiceLinkVector> tVectorList = tCEP.getPath(pAddress);
 							tAnnounce.setRoutingVectors(tVectorList);
@@ -1430,7 +1430,7 @@ public class Coordinator implements ICluster, Observer
 		}
 		getHRMController().addApprovedSignature(pCoordSignature);
 		if(mReceivedAnnouncements != null) {
-			for(NeighborZoneAnnounce tAnnounce : mReceivedAnnouncements) {
+			for(NeighborClusterAnnounce tAnnounce : mReceivedAnnouncements) {
 				pCoord.write(tAnnounce);
 			}
 		}

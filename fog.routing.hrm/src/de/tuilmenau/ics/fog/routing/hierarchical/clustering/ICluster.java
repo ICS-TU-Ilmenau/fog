@@ -14,7 +14,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.election.BullyAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
+import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 //import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -172,7 +172,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 * @param pAnnounce This is the message that contains important information about the neighbor zone.
 	 * @param pCEP This is the connection end point that is used to transfer data to the object that CEP governs
 	 */
-	public void handleAnnouncement(NeighborZoneAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP);
+	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP);
 	
 	/**
 	 * 

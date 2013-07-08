@@ -19,7 +19,7 @@ import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.election.BullyPriorityUpdate;
-import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
+import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
@@ -69,8 +69,8 @@ public class Cluster implements ICluster, IElementDecorator
 	protected Name mCoordAddress;
 	protected HRMController mCoordinatorInstance;
 	protected LinkedList<CoordinatorCEPDemultiplexed> mCEPs;
-	protected LinkedList<NeighborZoneAnnounce> mReceivedAnnounces = null;
-	protected LinkedList<NeighborZoneAnnounce> mSentAnnounces = null;
+	protected LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
+	protected LinkedList<NeighborClusterAnnounce> mSentAnnounces = null;
 	protected HRMSignature mCoordSignature;
 	protected Route mRouteToCoordinator;
 	protected boolean mInterASCluster = false;
@@ -107,8 +107,8 @@ public class Cluster implements ICluster, IElementDecorator
 		mClusterID = pClusterID;
 		mLevel = pLevel;
 		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
-		mReceivedAnnounces = new LinkedList<NeighborZoneAnnounce>();
-		mSentAnnounces = new LinkedList<NeighborZoneAnnounce>();
+		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
+		mSentAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mCoordinatorInstance = pCoordinatorInstance;
 		mPriority = (float) getHRMController().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
 		getHRMController().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mLevel + " with priority " + mPriority);
@@ -182,7 +182,7 @@ public class Cluster implements ICluster, IElementDecorator
 		for(ICluster tCluster : getNeighbors()) {
 			if(tCluster instanceof Cluster) {
 				getHRMController().getLogger().log(this, "Preparing neighbor zone announcement");
-				NeighborZoneAnnounce tAnnounce = new NeighborZoneAnnounce(pCoordName, mLevel, pCoordSignature, pAddress, getToken(), mClusterID);
+				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, mLevel, pCoordSignature, pAddress, getToken(), mClusterID);
 				tAnnounce.setCoordinatorsPriority(mPriority);
 				if(pCoord != null) {
 					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoord.getRouteToPeer(), pCoord.getSourceName(), pCoord.getPeerName()));
@@ -221,7 +221,7 @@ public class Cluster implements ICluster, IElementDecorator
 		}
 	}
 	
-	public ICluster addAnnouncedCluster(NeighborZoneAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -276,7 +276,7 @@ public class Cluster implements ICluster, IElementDecorator
 		return tCluster;
 	}
 	
-	public void handleAnnouncement(NeighborZoneAnnounce	pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		if(!pAnnounce.getCoordinatorName().equals(getHRMController().getPhysicalNode().getCentralFN().getName())) {
 			Logging.log(this, "Received announcement of foreign cluster");
@@ -407,7 +407,7 @@ public class Cluster implements ICluster, IElementDecorator
 		mRouteToCoordinator = pPath;
 	}
 	
-	public void announceNeighborCoord(NeighborZoneAnnounce pAnnouncement, CoordinatorCEPDemultiplexed pCEP)
+	public void announceNeighborCoord(NeighborClusterAnnounce pAnnouncement, CoordinatorCEPDemultiplexed pCEP)
 	{
 		getHRMController().getLogger().log(this, "Handling " + pAnnouncement);
 		if(mCoordName != null)

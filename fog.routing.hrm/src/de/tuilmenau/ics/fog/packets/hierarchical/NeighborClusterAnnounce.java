@@ -22,7 +22,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 /**
  * Once a newly discovered zone appears this object will be used to inform chosen entities about that fact.
  */
-public class NeighborZoneAnnounce implements Serializable
+public class NeighborClusterAnnounce implements Serializable
 {
 	private static final long serialVersionUID = -9188474878782673991L;
 	private Name mCoordinatorName;
@@ -49,7 +49,7 @@ public class NeighborZoneAnnounce implements Serializable
 	 * @param pToken token of the cluster that is announced
 	 * @param pClusterID identifier of the cluster
 	 */
-	public NeighborZoneAnnounce(Name pCoordinatorName, int pLevel, Signature pCoordSignature, HRMName pRoutingServiceAddress, int pToken, Long pClusterID)
+	public NeighborClusterAnnounce(Name pCoordinatorName, int pLevel, Signature pCoordSignature, HRMName pRoutingServiceAddress, int pToken, Long pClusterID)
 	{
 		mCoordinatorName = pCoordinatorName;
 		mCoordSignature = pCoordSignature;

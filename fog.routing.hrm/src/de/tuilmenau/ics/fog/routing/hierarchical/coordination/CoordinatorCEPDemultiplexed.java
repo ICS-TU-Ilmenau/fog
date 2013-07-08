@@ -23,7 +23,7 @@ import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.packets.hierarchical.NeighborZoneAnnounce;
+import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestZoneMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
@@ -173,8 +173,8 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 			/**
 			 * NeighborZoneAnnounce
 			 */
-			if(pData instanceof NeighborZoneAnnounce) {
-				NeighborZoneAnnounce tAnnounce = (NeighborZoneAnnounce)pData;
+			if(pData instanceof NeighborClusterAnnounce) {
+				NeighborClusterAnnounce tAnnounce = (NeighborClusterAnnounce)pData;
 
 				getHRMController().getLogger().log(this, "\n\n\nReceived " + tAnnounce + "\n\n\n");
 				
