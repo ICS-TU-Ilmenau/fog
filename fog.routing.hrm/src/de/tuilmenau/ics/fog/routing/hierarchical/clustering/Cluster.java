@@ -595,7 +595,7 @@ public class Cluster implements ICluster, IElementDecorator
 	}
 	
 	@Override
-	public HRMID retrieveAddress() {
+	public HRMID getHrmID() {
 		return mHRMID;
 	}
 	

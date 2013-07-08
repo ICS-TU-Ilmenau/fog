@@ -48,7 +48,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 	
 	
 	@Override
-	public HRMID retrieveAddress()
+	public HRMID getHrmID()
 	{
 		return this;
 	}

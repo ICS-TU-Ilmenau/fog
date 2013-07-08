@@ -209,7 +209,7 @@ public class ElectionProcess extends Thread
 				}
 			}
 			 */
-			mClusterManager = new Coordinator(pCluster, pCluster.getLevel()+1, pCluster.retrieveAddress());
+			mClusterManager = new Coordinator(pCluster, pCluster.getLevel()+1, pCluster.getHrmID());
 			pCluster.setClusterManager(mClusterManager);
 			pCluster.getHRMController().setSourceIntermediateCluster(mClusterManager, pCluster);
 			mClusterManager.setPriority(pCluster.getPriority());

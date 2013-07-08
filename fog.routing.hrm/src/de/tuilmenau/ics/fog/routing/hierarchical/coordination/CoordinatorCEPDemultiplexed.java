@@ -750,7 +750,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		return 0;
 	}
 	
-	public HRMID retrieveAddress()
+	public HRMID getHrmID()
 	{
 		return null;
 	}

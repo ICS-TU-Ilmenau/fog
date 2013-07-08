@@ -55,7 +55,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public HRMID retrieveAddress() {
+	public HRMID getHrmID() {
 		return null;
 	}
 

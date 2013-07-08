@@ -374,8 +374,8 @@ public class Coordinator implements ICluster, Observer
 						 * then: tell the cluster the next neighbor cluster that brings the packet to its target
 						 */
 						List<NodeConnection> tList = getHRMController().getClusterMap().getRoute(tSourceCEP.getRemoteCluster(), tDestinationCEP.getRemoteCluster());
-						HRMID tFrom = tSourceCEP.getRemoteCluster().retrieveAddress();
-						HRMID tTo   = tDestinationCEP.getRemoteCluster().retrieveAddress();
+						HRMID tFrom = tSourceCEP.getRemoteCluster().getHrmID();
+						HRMID tTo   = tDestinationCEP.getRemoteCluster().getHrmID();
 						
 						if(tFrom.equals(tTo)) {
 							continue;
@@ -412,7 +412,7 @@ public class Coordinator implements ICluster, Observer
 						 */
 						HRMName tNextHop  = null;
 						if(!tSourceCEP.getRemoteCluster().getCoordinatorsAddress().equals(tDestinationCEP.getRemoteCluster().getCoordinatorsAddress())) {
-							tNextHop = getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0)).retrieveAddress();
+							tNextHop = getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0)).getHrmID();
 						}
 						
 						FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, ClusterDummy.compare(
@@ -478,7 +478,7 @@ public class Coordinator implements ICluster, Observer
 					 * The host itself has to tell its client how to reach it: get the address providers address: retrieveAddress() and then give the clients the address of the address provider
 					 */
 					FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(
-							mManagedCluster.retrieveAddress(),
+							mManagedCluster.getHrmID(),
 							tSourceCEP.getSourceName(),
 							ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getLevel()),
 							getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel-1));
@@ -632,7 +632,7 @@ public class Coordinator implements ICluster, Observer
 								 * First check whether there exists a cluster connection from the source cluster to the forwarding cluster
 								 */
 								if(!tList.isEmpty()) {
-									tNextHop = getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0)).retrieveAddress();
+									tNextHop = getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0)).getHrmID();
 									tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, ClusterDummy.compare(
 											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getClusterID(),
 											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getToken(),
@@ -1445,7 +1445,7 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public HRMID retrieveAddress() {
+	public HRMID getHrmID() {
 		return mHRMID;
 	}
 	
@@ -1644,7 +1644,7 @@ public class Coordinator implements ICluster, Observer
 			public void run() {
 				int tDescendingDifference = 0;
 				if(tParameterRouteRequest.getTarget() instanceof HRMID) {
-					tDescendingDifference = (((HRMID)tParameterRouteRequest.getTarget())).getDescendingDifference(tSourceCluster.retrieveAddress());
+					tDescendingDifference = (((HRMID)tParameterRouteRequest.getTarget())).getDescendingDifference(tSourceCluster.getHrmID());
 				}
 				
 				/*

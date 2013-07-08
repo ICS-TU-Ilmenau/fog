@@ -856,7 +856,7 @@ public class HRMController extends Application implements IServerCallback
 		
 		for(ICluster tCandidate : tCandidates) {
 			for(HierarchyLevelLimitationEntry tEntry : pLimitation.getEntries()) {
-				HRMID tClustersAddress = tCandidate.retrieveAddress();
+				HRMID tClustersAddress = tCandidate.getHrmID();
 				HRMID tEntryAddress = null;
 				if(tEntry.getAddress() instanceof HRMID) {
 					tEntryAddress =  (HRMID) tEntry.getAddress();
