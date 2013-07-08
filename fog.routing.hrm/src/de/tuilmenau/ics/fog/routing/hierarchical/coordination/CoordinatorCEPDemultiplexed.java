@@ -94,7 +94,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	 */
 	public boolean receive(Serializable pData) throws NetworkException
 	{
-		Node tPhysicalNode = getHRMController().getPhysicalNode();
+		Node tNode = getHRMController().getPhysicalNode();
 		HierarchicalRoutingService tHRS = getHRMController().getHRS();
 		
 		/*
@@ -114,8 +114,8 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 			if(pData instanceof BullyElect)	{
 				if(getCluster().getCoordinatorCEP() != null && ((BullyElect)pData).getSenderPriority() < getCluster().getHighestPriority()) {
 					mPeerPriority = ((BullyElect)pData).getSenderPriority();
-					if(getCluster().getHRMController().equals(tPhysicalNode.getCentralFN().getName())) {
-						BullyAnnounce tAnnounce = new BullyAnnounce(tPhysicalNode.getCentralFN().getName(), getCluster().getPriority(), getHRMController().getIdentity().createSignature(tPhysicalNode.toString(), null, getCluster().getLevel()), getCluster().getToken());
+					if(getCluster().getHRMController().equals(tNode.getCentralFN().getName())) {
+						BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), getCluster().getPriority(), getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getLevel()), getCluster().getToken());
 						mLogger.log(this, " Sending bullyannounce because I have a coordinator: " + tAnnounce);
 						for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
 							tAnnounce.addCoveredNode(tCEP.getPeerName());
@@ -125,12 +125,12 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						}
 						write(tAnnounce);
 					} else {
-						write(new BullyAlive(tPhysicalNode.getCentralFN().getName()));
+						write(new BullyAlive(tNode.getCentralFN().getName()));
 						//TODO: packet is sent but never parsed or a timeout timer reset!!
 					}
 				} else {
 					mPeerPriority = ((BullyElect)pData).getSenderPriority();
-					BullyReply tAnswer = new BullyReply(tPhysicalNode.getCentralFN().getName(), getCluster().getPriority());
+					BullyReply tAnswer = new BullyReply(tNode.getCentralFN().getName(), getCluster().getPriority());
 					write(tAnswer);
 				}
 			}
@@ -162,8 +162,8 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				getHRMController().getLogger().log(this, "\n\n\nReceived " + tAnnounce + "\n\n\n");
 				
 				if(tAnnounce.isInterASAnnouncement()) {
-					Logging.log(tPhysicalNode.getAS().getName() + " received an announcement from " + tAnnounce.getASIdentification());
-					if(tPhysicalNode.getAS().getName().equals(tAnnounce.getASIdentification())) {
+					Logging.log(tNode.getAS().getName() + " received an announcement from " + tAnnounce.getASIdentification());
+					if(tNode.getAS().getName().equals(tAnnounce.getASIdentification())) {
 						if(!getSourceName().equals(getPeerName())) {
 							for(Route tPath : tHRS.getCoordinatorRoutingMap().getRoute((HRMName)getSourceName(), (HRMName)getPeerName())) {
 								tAnnounce.addRoutingVector(new RoutingServiceLinkVector(tPath, tHRS.getCoordinatorRoutingMap().getSource(tPath), tHRS.getCoordinatorRoutingMap().getDest(tPath)));
@@ -232,7 +232,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						for(IVirtualNode tCluster : getHRMController().getClusters(0)) {
 							FIBEntry tEntry = tHRS.getFIBEntry( (HRMID) tRequest.getTarget());
 							if(tCluster instanceof Cluster && tEntry != null && (tEntry.getFarthestClusterInDirection() == null || tEntry.getFarthestClusterInDirection().equals(tCluster))) {
-								Route tRoute = tHRS.getRoutePath( getSourceName(), tRequest.getTarget(), new Description(), tPhysicalNode.getIdentity());
+								Route tRoute = tHRS.getRoutePath( getSourceName(), tRequest.getTarget(), new Description(), tNode.getIdentity());
 								RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
 								HRMName tSource = null;
 								HRMName tTarget = null;
@@ -260,7 +260,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 							if(tIPAddresses != null) {
 								for(Name tTargetAddress : tIPAddresses) {
 									try {
-										tRoute = ((RoutingServiceMultiplexer)tPhysicalNode.getRoutingService()).getRoute(tPhysicalNode.getCentralFN(), tTargetAddress, ((RouteRequest)pData).getDescription(), null);
+										tRoute = ((RoutingServiceMultiplexer)tNode.getRoutingService()).getRoute(tNode.getCentralFN(), tTargetAddress, ((RouteRequest)pData).getDescription(), null);
 									} catch (NetworkException tExc) {
 										Logging.info(this, "BGP routing service did not find a route to " + tTargetAddress);
 									}
