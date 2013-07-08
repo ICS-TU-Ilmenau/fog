@@ -20,8 +20,10 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.application.util.Service;
 import de.tuilmenau.ics.fog.application.util.Session;
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
+import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
@@ -29,12 +31,15 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.events.ServiceDegradationEvent;
+import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
+import de.tuilmenau.ics.fog.facade.properties.MinMaxProperty.Limit;
+import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.statistics.ReroutingTestAgent;
 import de.tuilmenau.ics.fog.scripts.RerouteScript;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.RerouteMethod;
-import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.SimpleName;
+
 
 public class ReroutingExecutor extends Application
 {
@@ -47,6 +52,28 @@ public class ReroutingExecutor extends Application
 		super(pNode, pIdentity);
 	
 		mName = new SimpleName(new Namespace("rerouting"), pNode.toString());
+	}
+	
+	@Override
+	public Description getDescription()
+	{
+		Description tDescription = super.getDescription();
+		if(Config.Routing.REROUTING_EXECUTOR_ALLOCATES_BANDWIDTH) {
+			DatarateProperty tDatarateProperty = null;
+			if(tDescription.get(DatarateProperty.class) instanceof DatarateProperty) {
+				tDatarateProperty = (DatarateProperty) tDescription.get(DatarateProperty.class);
+			}
+			if(tDatarateProperty == null) {
+				tDatarateProperty = new DatarateProperty(2, Limit.MIN);
+			}
+			try {
+				tDescription.add(tDatarateProperty);
+			} catch (PropertyException tExc) {
+				mLogger.err(this, "Unable to add bandwidth requirement", tExc);
+			}
+		}
+		
+		return tDescription;
 	}
 	
 	@Override
@@ -123,9 +150,11 @@ public class ReroutingExecutor extends Application
 			return true;
 		}
 		
-		public void closed()
+		// called on error and normal shutdown
+		public void stop()
 		{
-			super.closed();
+			super.stop();
+			
 			if(mSessions != null) {
 				mSessions.remove(this);
 			}
@@ -140,7 +169,8 @@ public class ReroutingExecutor extends Application
 		protected void unknownEvent(Event event)
 		{
 			if(event instanceof ServiceDegradationEvent) {
-				Logging.log(this, "Received Service Degradation Event");
+				mLogger.log(this, "Received Service Degradation Event");
+				
 				ReroutingTestAgent tPacket = new ReroutingTestAgent();
 				tPacket.setSourceNode(RerouteScript.getCurrentInstance().getExperiment().getSource());
 				tPacket.setDestNode(RerouteScript.getCurrentInstance().getExperiment().getTarget());
@@ -160,7 +190,6 @@ public class ReroutingExecutor extends Application
 		public void connected()
 		{
 			mLogger.log(this, "Session is now connected");
-			super.connected();
 			try {
 				if(mSource) {
 					RerouteScript.getCurrentInstance().getExperiment().tell(null);

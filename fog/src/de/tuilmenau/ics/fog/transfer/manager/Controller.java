@@ -305,7 +305,7 @@ public class Controller
 		public void failure(Gate pGate, Exception pException)
 		{
 			mLogger.err(this, "Can not use new gate " +pGate +". Dropping packet " +mPacket, pException);
-			mPacket.droppingDetected(this);
+			mPacket.droppingDetected(this, mEntity.getNode().getAS().getSimulation());
 		}
 		
 		public Process getProcess()
@@ -967,8 +967,6 @@ public class Controller
 						if(tSpecialCase || pReverseGateNumber.equals(tGate.getReverseGateID())) {
 							if(checkGateDescr(tGate, pDescription)) {
 								return tGate;
-							} else {
-								mLogger.err(this, "Gate number for gate '" +tGate +"' matches but description " +pDescription +" not. ");
 							}
 						}
 					} else {
@@ -1050,13 +1048,10 @@ public class Controller
 			tOldRoute.addFirst(pPacket.getDownRoute());
 			pPacket.clearDownRoute();
 		}
+		
 		RoutingService tRs = mEntity.getRoutingService();
-		Route tNewRoute = null;
-		Route tReturnRoute = null;
-		HorizontalGate tHorizontalGate = null;
 
 		try {
-			Route tLastPartRoute = tOldRoute.clone();
 			Description tRouteRequirements = pFrom.getDescription();
 			ProcessRerouting tProcess = null;
 
@@ -1111,6 +1106,7 @@ public class Controller
 				if((tConfig.routing.REROUTE_USE_HORIZONTAL_GATES) && (tRerouteMethod != RerouteMethod.GLOBAL)) {
 					// setup backup gates with alternative routes
 					tProcess = new ProcessRerouting(pNetworkInterface, pFrom, removeGatesFromRoute, destinationFromBroken);
+					tProcess.storeAndForwardOnEstablishment(pPacket);
 					tProcess.start();
 				} else {
 					// do we send an error msg back?
@@ -1129,6 +1125,7 @@ public class Controller
 				if((tConfig.routing.REROUTE_USE_HORIZONTAL_GATES) && (tRerouteMethod != RerouteMethod.GLOBAL)) {
 					// setup backup gates with alternative routes
 					tProcess = new ProcessRerouting(pNetworkInterface, pFrom, removeGatesFromRoute, destinationFromBroken);
+					tProcess.storeAndForwardOnEstablishment(pPacket);
 					tProcess.start();
 					
 					pFrom.shutdown();
@@ -1179,13 +1176,10 @@ public class Controller
 		}
 		catch(Exception exc) {
 			mLogger.err(this, "Handle broken element failed at " + this, exc);
-			pPacket.droppingDetected(this);
+			pPacket.droppingDetected(this, mEntity.getNode().getAS().getSimulation());
 		}
 	}
 	
-
-	//private static void fillList(boolean up, IName pTargetName, Word solution, Description pDescription, LinkedList<SocketPathParam> pList, ForwardingNode pBaseFN, Controller pController)
-
 	private ErrorReflectorGate createErrorReflectorGate()
 	{
 		ErrorReflectorGate tGate = new ErrorReflectorGate(mEntity, null);

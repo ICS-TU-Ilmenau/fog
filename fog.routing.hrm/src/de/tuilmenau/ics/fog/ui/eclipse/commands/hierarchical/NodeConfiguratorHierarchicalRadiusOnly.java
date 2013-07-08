@@ -19,14 +19,15 @@ import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 
 
+/**
+ * This class is used to configure nodes that are newly created.
+ *
+ */
 public class NodeConfiguratorHierarchicalRadiusOnly implements NodeConfigurator
 {
 
 	public static final String NAME = "hierarchical";
 	
-	/**
-	 * 
-	 */
 	public NodeConfiguratorHierarchicalRadiusOnly()
 	{
 		

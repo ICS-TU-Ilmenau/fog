@@ -16,6 +16,8 @@ package de.tuilmenau.ics.fog.transfer.gates;
 import java.util.NoSuchElementException;
 
 import de.tuilmenau.ics.fog.FoGEntity;
+import de.tuilmenau.ics.fog.Config.Simulator.SimulatorMode;
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -44,6 +46,8 @@ public class DirectDownGate extends DownGate
 		mToLowerLayerID = toLowerLayerID;
 
 		networkInterface.attachDownGate(this);
+		
+		mCost = networkInterface.getBus().getRemainingTransferMetric();
 	}
 	
 	@Override
@@ -89,7 +93,13 @@ public class DirectDownGate extends DownGate
 			// Error during transmission?
 			// Do not do any recovery for invisible packets.
 			if((res != SendResult.OK) && !invisible) {
-				mEntity.getLogger().warn(this, "Cannot send packet " +packet +" to " +mToLowerLayerID +" due to " +res);
+				String msg = "Cannot send packet " +packet +" to " +mToLowerLayerID +" due to " +res;
+				if(Config.Simulator.MODE == SimulatorMode.FAST_SIM) {
+					// do not report it in batch mode as warning, since it might be intended by scenario
+					mLogger.log(this, msg);
+				} else {
+					mLogger.warn(this, msg);
+				}
 				
 				// maybe gate already closed during error recovery? 
 				if((getState() != GateState.SHUTDOWN) && (getState() != GateState.DELETED)) {
@@ -157,10 +167,19 @@ public class DirectDownGate extends DownGate
 			return BrokenType.UNKNOWN;
 		}
 	}
+	
+	@Override
+	public Number getCost()
+	{
+		return mCost;
+	}
 
 	@Viewable("Local process number")
 	private int mLocalProcessNumber = -1;
 	
 	@Viewable("Lower layer name")
 	private NeighborInformation mToLowerLayerID;
+	
+	@Viewable("Gate cost")
+	private Number mCost = 0;
 }

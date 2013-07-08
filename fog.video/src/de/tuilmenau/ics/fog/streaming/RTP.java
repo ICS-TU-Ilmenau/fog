@@ -22,7 +22,7 @@ package de.tuilmenau.ics.fog.streaming;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 public class RTP {
-	public static boolean RTP_SHORT_OUTPUTS = true;
+	public static boolean RTP_SHORT_OUTPUTS = false;
 
 	/*
 		union RtpHeader{
@@ -152,23 +152,35 @@ public class RTP {
 
 	public static void parsePacket(byte[] pData)
 	{
+		// interpret header in network byte order
+		
+		int tVersion = (pData[0] & 0xC0) >> 6;
 		int tPayloadType = toInt((byte)(pData[1] & 0x7F));
 		boolean tMarked =  ((pData[1] & 0x80) == 0x80);
 		int tSN = toInt(pData[3], pData[2]);
-		int tTimestamp = (int) (pData[4] + 256 * pData[5] + 256*256 * pData[6] + 256*256*256 * pData[7]); //TODO
-		int tSSRC = (int) (pData[8] + 256 * pData[9] + 256*256 * pData[10] + 256*256*256 * pData[11]); //TODO
-		int tCSRC = (int) (pData[12] + 256 * pData[13] + 256*256 * pData[14] + 256*256*256 * pData[15]); //TODO
+		int tCsrcCount = (pData[0] & 0x0F);
+		long tTimestamp = toInt(pData[7], pData[6]) + toInt(pData[5], pData[4]) * 256*256;
+		long tSSRC = toInt(pData[11], pData[10]) + toInt(pData[9], pData[8]) * 256*256;
 
 		if (RTP_SHORT_OUTPUTS) {
 			Logging.getInstance().log("Have seen RTP sequence number: " + tSN);
 		}
 		else{
-			Logging.getInstance().log("RTP-Sequence number: " + tSN);
-			Logging.getInstance().log("RTP-Payload type: " + tPayloadType);
-			Logging.getInstance().log("RTP-Marking bit: " + tMarked);
-			Logging.getInstance().log("RTP-Time stamp: " + tTimestamp);
-			Logging.getInstance().log("RTP-Synch. source ID: " + tSSRC);
-			Logging.getInstance().log("RTP-Contr. source ID: " + tCSRC);
+			Logging.getInstance().log("################## RTP header ########################");
+			Logging.getInstance().log("Version: " + tVersion);
+			Logging.getInstance().log("SSRC: " + tSSRC);
+			Logging.getInstance().log("CSRC count: " + tCsrcCount);
+			Logging.getInstance().log("Marked: " + tMarked);
+			Logging.getInstance().log("Payload type: " + tPayloadType);
+			Logging.getInstance().log("Sequence number: " + tSN);
+			Logging.getInstance().log("Timestamp: " + tTimestamp);
+		    StringBuilder tSb = new StringBuilder();
+		    if (pData.length > 15) {
+			    for (int i = 0; i < 16; i++) {
+			        tSb.append(String.format("%02X ", pData[i]));
+			    }
+			    Logging.getInstance().log("First bytes are " + tSb.toString());
+		    }
 		}
 	}
 	

@@ -30,6 +30,10 @@ import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressLimitationPro
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMIPMapper;
 
+/**
+ * This dialog allows you to create a list of nodes that are either allowed or not allowed for a route.
+ *
+ */
 public class RegionLimitationDialog extends Dialog
 {
 	private AddressLimitationProperty mAddressLimitation = null;

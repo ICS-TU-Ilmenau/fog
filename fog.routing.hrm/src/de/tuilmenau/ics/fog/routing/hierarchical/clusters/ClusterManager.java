@@ -530,9 +530,11 @@ public class ClusterManager implements Cluster, Observer
 								 */
 								LinkedList<RoutingServiceLinkVector> tPath = this.getPathFromHRMID(tHRMID);
 								if(!tPath.isEmpty()) {
-									while(!tPath.getFirst().equals(tNegotiator.getCoordinatorsAddress())) {
+									LinkedList<RoutingServiceLinkVector> tSavedPath = (LinkedList<RoutingServiceLinkVector>) tPath.clone();
+									while(!tPath.isEmpty() && !tPath.getFirst().equals(tNegotiator.getCoordinatorsAddress())) {
 										tPath.removeFirst();
 									}
+									getLogger().log(this, "Started with initial path " + tSavedPath + " and path is now " + tPath);
 								}
 								/*
 								 * that list is given to the chose node so he can continue in doing what this node currently does: push the route forward through the network
@@ -622,9 +624,10 @@ public class ClusterManager implements Cluster, Observer
 										);
 									if(tListToTarget != null) {
 										LinkedList<RoutingServiceLinkVector> tVectors = (LinkedList<RoutingServiceLinkVector>) tListToTarget.clone();
-										while(!tVectors.getFirst().equals(tSourceCEP.getPeerName())) {
+										while(!tVectors.isEmpty() && !tVectors.getFirst().equals(tSourceCEP.getPeerName())) {
 											tVectors.removeFirst();
 										}
+										getLogger().log(this, "Started with initial path " + tListToTarget + " while list is now " + tVectors);
 										// was tListToTarget before, change if something is wrong now
 										tEntry.setRoutingVectors(tVectors);
 										if(this.getSignatureOfPath(tHRMID) != null) {

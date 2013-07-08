@@ -83,10 +83,9 @@ public class HierarchicalRoutingService implements RoutingService
 	private HashMap<ForwardingElement, L2Address> mLocalNameMapping = new HashMap<ForwardingElement, L2Address>();
 	
 	/**
-	 * Creates a local routing service entity.
+	 * Create a routing service entity that is fed by the graph information gathered through the radius algorithm
 	 * 
-	 * @param pRS Reference to next higher layer routing service entity
-	 * @param pNameMapping Reference to name resolution
+	 * @param pReferenceNode This is the node the hierarchical routing service entity gathers and computes routing information for.
 	 */
 	public HierarchicalRoutingService(Node pReferenceNode)
 	{
@@ -896,12 +895,7 @@ public class HierarchicalRoutingService implements RoutingService
 					try {
 						tGate = mReferenceNode.getCentralFN().getGate(tContemporaryRoute.get(0).getID());
 					} catch (IndexOutOfBoundsException tExc) {
-						mLogger.err(this, "Unable to determine outgoing gate for connection to " + pGate, tExc);
-						Collection<RoutingServiceLink> tEdges = mRoutingMap.getGraphForGUI().getEdges();
-						for(RoutingServiceLink tLink : tEdges) {
-							mLogger.log(this, "Link " + tLink + " goes from " + mRoutingMap.getSource(tLink) + " to destination " + mRoutingMap.getDest(tLink));
-						}
-						tEdges = null;
+						mLogger.err(this, "Unable to determine outgoing gate for connection to " + pGate + " while contemporary route is " + tContemporaryRoute, tExc);
 					}
 					if(tGate == null) {
 						return;

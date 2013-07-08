@@ -117,7 +117,14 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
  			}
  		}
  		
- 		return mGraph.addEdge(nodeName1 +"-" +nodeName2, nodeName1, nodeName2);
+ 		boolean res = mGraph.addEdge(nodeName1 +"-" +nodeName2, nodeName1, nodeName2);
+ 		
+ 		// check, if negative result was caused by an already existing edge
+ 		if(!res) {
+ 			return mGraph.isNeighbor(nodeName1, nodeName2);
+ 		} else {
+ 			return res;
+ 		}
  	}
  	
 	public void close()
@@ -144,6 +151,9 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 			// debug check if the graph is connected
 			if(!checkIfConnected(mASGraph)) {
 	 			tLog.warn(this, "AS graph is not connected. Try to setup scenario but errors might happen.");
+			}
+			if(!checkIfConnected(mGraph)) {
+	 			tLog.warn(this, "Node graph is not connected. Try to setup scenario but errors might happen.");
 			}
 		}
 		
@@ -344,7 +354,6 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	{
 		HashMap<String, Boolean> visited = new HashMap<String, Boolean>();
 		LinkedList<String> pending = new LinkedList<String>();
-		boolean tRes = false;
 		final int numberNode = graph.getVertexCount();
 		
 		if(numberNode > 0) {

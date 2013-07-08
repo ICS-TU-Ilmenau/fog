@@ -35,7 +35,6 @@ import de.tuilmenau.ics.fog.topology.SimulationEventHandler;
 import de.tuilmenau.ics.fog.transfer.Gate;
 import de.tuilmenau.ics.fog.transfer.manager.NodeUp;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.RerouteMethod;
-import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.middleware.JiniHelper;
 
@@ -105,7 +104,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 		mRerouteMethod = RerouteMethod.LOCAL;
 		mFailedNeighbours = new LinkedList<Name>();
 		
-		mLogger = Logging.getInstance();
+		mLogger = pScript.getLogger();
 		
 		pScript.getAS().getSimulation().subscribe(this);
 	}
@@ -133,9 +132,8 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	
 	public void setCount(int pCount)
 	{	
-		getLogger().debug(this, "Reroute Script set Count Value");
 		mCount = pCount;
-		getLogger().err(this, "This is Rerouting Experiment Number " + this.mCount);
+		getLogger().info(this, "This is Rerouting Experiment Number " + this.mCount);
 	}
 	
 	/**
@@ -144,72 +142,52 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	@Override
 	public LinkedList<String> getStats()
 	{
-		getLogger().debug(this, "getting statistics");
-		getLogger().trace(this, "Creating Linked List");
+		getLogger().debug(this, "getting statistics (" +mConcurrentBrokenType +", " +mBrokenName +")");
+		
 		LinkedList<String> tStats = new LinkedList<String>();
-		getLogger().trace(this, "adding reroute method to statistics");
 		tStats.add(Integer.toString(mRerouteMethod.ordinal()));
+		
 		int tBrokenType;
-		getLogger().trace(this, "As this is first step, nothing is broken");
 		if (mStep==1) {
 			tBrokenType = BROKEN_TYPE_NOTHING;
 		} else {
 			tBrokenType = mConcurrentBrokenType;
 		}
-		getLogger().trace(this, "Adding borken type");
 		tStats.add(Integer.toString(tBrokenType));
-		getLogger().trace(this, "Adding broken name");
 		tStats.add(mBrokenName);
 		return tStats;
 	}
 	
 	public synchronized void reconstruct()
 	{
-		try {
-    		if (mConcurrentBrokenType == BROKEN_TYPE_NODE) {
-
-				if(JiniHelper.isEnabled()) {
-					((IAutonomousSystem)JiniHelper.getService(IAutonomousSystem.class, mNMS.getASNameByNode(mBrokenName))).executeCommand("time");
-				} else {
-					String tASName = mNMS.getASNameByNode(mBrokenName);
-					for(IAutonomousSystem tAS : mScript.getSimulation().getAS()) {
-						if(tAS.getName().equals(tASName)) {
-							tAS.executeCommand("time");
-						}
-					}
-				}
-				getLogger().warn(this, "Completed execution of necessary reconstruction steps");
-				sendPacket(true,false);
-			} else {
-				if(JiniHelper.isEnabled()) {
-					((IAutonomousSystem)JiniHelper.getService(
-							IAutonomousSystem.class,
-							((ILowerLayer)JiniHelper.getService(ILowerLayer.class, mBrokenName)).getASName())).executeCommand("time");
-				} else {
-					/*
-					 * in this case we do it in the simulation, so all autonomous systems execute dostep
-					 */
-					mScript.getSimulation().executeCommand("time");
-				}
-				getLogger().warn(this, "Maybe completed execution of necessary reconstruction steps");
-				sendPacket(true,false);
-			}
-		} catch (RemoteException e) {
-			getLogger().err(this, "error in reconstruction", e);
-		}
+		getLogger().log(this, "Completed execution of necessary reconstruction steps");
+		sendPacket(true,false);
+		return;
 	}
 	
 	public void executeNextStep()
 	{
 		ReroutingSession tSession = mConcurrentReroutingSession;
 		if(tSession == null) {
+			mLogger.log(this, "--------------------------ESTABLISHING CONNECTION------------------------");
 			try {
-				mLogger.log(this, "--------------------------ESTABLISHING CONNECTION------------------------");
 				mConcurrentReroutingSession = mScript.getSourceAS().establishConnection(mSource, mTarget);
 			}
 			catch(RemoteException exc) {
-				throw new RuntimeException(this +" - Can not establish connection.", exc);
+				mLogger.warn(this, "Can not establish connection because AS not reachable.", exc);
+				mConcurrentReroutingSession = null;
 			}
+			
+			// connection created?
+			if(mConcurrentReroutingSession == null) {
+				terminateFailedExperiment();
+			} else {
+				// connection failed?
+				if(mConcurrentReroutingSession.isStopped()) {
+					terminateFailedExperiment();
+				}
+			}
+			
 			mLogger.log(this, "Rerouting session is now " + mConcurrentReroutingSession);
 			return;
 		}
@@ -230,13 +208,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			case 2:
 				if(!determineElementToBreak()) {
 					// stop this experiment run as it is impossible
-					mScript.getAS().getSimulation().unsubscribe(this);
-					mScript.getAS().getSimulation().getTimeBase().scheduleIn(0.1, new IEvent() {
-						@Override
-						public void fire() {
-							mScript.getAS().getSimulation().publish(new ExperimentEvent(ExperimentEvent.IMPOSSIBLE));
-						}
-					});
+					terminateFailedExperiment();
 				} else {
 					mFailedNeighbours.clear();
 					breakElement();
@@ -404,30 +376,21 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 		packet.setCount(mCount);
 		packet.setDestNode(mTarget);
 		packet.setSourceNode(mSource);
-		if(!signal) {
-			try {
-				if(mCurrentlyReceived != null) {
-					getLogger().log(this, "Ordering AS " + mScript.getSourceAS().toString() + " to send reroute experiment " + " from " + mSource + " to " + mTarget + " (last route:" + mCurrentlyReceived.getAuthentications().toString() + ")");
-				}
-				mConcurrentReroutingSession.sendData(packet);
-			} catch (RemoteException rExc) {
-				getLogger().err(this, "Warning! Unable to send packet", rExc);
-			} catch (NetworkException rExc) {
-				getLogger().err(this, "Warning! Unable to send packet", rExc);
+		
+		try {
+			if(mCurrentlyReceived != null) {
+				getLogger().log(this, "Ordering AS " + mScript.getSourceAS().toString() + " to send reroute experiment from " + mSource + " to " + mTarget + " (last route:" + mCurrentlyReceived.getAuthentications().toString() + ")");
 			}
-		} else {
-			try {
-				if(mCurrentlyReceived != null) {
-					getLogger().warn(this, "Ordering AS " + mScript.getSourceAS().toString() + " to send signalling packet " + " from " + mSource + " to " + mTarget + " (last route:" + mCurrentlyReceived.getAuthentications().toString() + ")");
-				}
+			
+			if(signal) {
 				packet.dontLog();
-				mConcurrentReroutingSession.sendData(packet);
-			} catch (RemoteException rExc) {
-				getLogger().err(this, "Warning! Unable to send packet");
-			} catch (NetworkException rExc) {
-				getLogger().err(this, "Warning! Unable to send packet");
-
 			}
+			
+			mConcurrentReroutingSession.sendData(packet);
+		} catch(RemoteException rExc) {
+			getLogger().err(this, "Warning! Unable to send packet", rExc);
+		} catch(NetworkException rExc) {
+			getLogger().err(this, "Warning! Unable to send packet", rExc);
 		}
 	}
 
@@ -437,7 +400,13 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	 */
 	private boolean determineElementToBreak()
 	{
-		if (mConcurrentBrokenType == BROKEN_TYPE_NODE) {
+		mAssertPosition = -1;
+		mBrokenName = null;
+		
+		/**
+		 * --- BROKEN NODE ---
+		 */
+		if(mConcurrentBrokenType == BROKEN_TYPE_NODE) {
 			LinkedList<Signature> tNodes = new LinkedList<Signature>();
 			if(mCurrentlyReceived != null) {
 				for (Signature signature: mCurrentlyReceived.getAuthentications()) {
@@ -446,19 +415,19 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			} else {
 				return false;
 			}
-			for (Signature signature: tNodes) {
+			for(Signature signature: tNodes) {
 				mLogger.log(this, "may choose from node element " + signature.toString());
 			}
 			if(mPosition != 0) {
-				if ( (int)(tNodes.size() / mPosition) == 0 || (int)(tNodes.size() / mPosition) == tNodes.size() - 1) {
-					getLogger().warn(this, "Breaking node in the middle of the route");
-					getLogger().log(this, "values are " + tNodes.size() + " and " + (double)tNodes.size() /2 + " and " + Math.floor((double)tNodes.size() /2) + "  and " + ((int) Math.floor((double)tNodes.size() /2)));
+				if( (int)(tNodes.size() / mPosition) == 0 || (int)(tNodes.size() / mPosition) == tNodes.size() - 1) {
+					getLogger().log(this, "Breaking node in the middle of the route.");
 					mAssertPosition = (int) Math.floor((double)tNodes.size() /2);
 				} else {
 					mAssertPosition = (int) Math.floor(((double)tNodes.size()-1)/mPosition);
 				}
 				mBrokenName = tNodes.get(mAssertPosition).getIdentity().getName();
 			} else {
+				getLogger().log(this, "Breaking random node");
 				mBrokenName = tNodes.get(mRandomGenerator.nextInt(tNodes.size()-2)+1).getIdentity().getName();
 			}
 			if(mBrokenName.equals(mSource) || mBrokenName.equals(mTarget)) {
@@ -466,34 +435,38 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 				getLogger().err(this, "The position you specified would break source or destination, skipping");
 				return false;
 			}
-		} else if (mConcurrentBrokenType == BROKEN_TYPE_BUS) {
+		}
+		/**
+		 * --- BROKEN BUS ---
+		 */
+		else if(mConcurrentBrokenType == BROKEN_TYPE_BUS) {
 			LinkedList<String> tBusses = null;
 			if(mCurrentlyReceived != null) {
 				tBusses = mCurrentlyReceived.getBus();
 			} else {
 				return false;
 			}
-			//mPosition = (mPosition == 0) ? mPosition = randomGenerator.nextInt(tBusses.size()) + 1 : mPosition;
-			if(mPosition!=0) {
-				if ( (int)(tBusses.size() / mPosition) == 0 || (int)(tBusses.size() / mPosition) == tBusses.size() - 1) {
-					getLogger().warn(this, "Breaking bus in the middle of the route");
+			
+			if(mPosition != 0) {
+				if( (int)(tBusses.size() / mPosition) == 0 || (int)(tBusses.size() / mPosition) == tBusses.size() - 1) {
+					getLogger().log(this, "Breaking bus in the middle of the route");
 					mAssertPosition = tBusses.size()/2;
 				} else {
 					mAssertPosition = (int) ((tBusses.size()-1)/mPosition);
 				}
-				try {
-					mBrokenName = tBusses.get(mAssertPosition);
-				} catch (IndexOutOfBoundsException tExc) {
-					mLogger.warn(this, "Unable to determine element to break");
-				}
-				
 			} else {
-				/*
-				 *  every bus may break down because source or destination could have more than one link
-				 */
-				mBrokenName = tBusses.get(mRandomGenerator.nextInt(tBusses.size()));
+				// every bus may break down because source or destination could have more than one link
+				getLogger().log(this, "Breaking random bus");
+				mAssertPosition = mRandomGenerator.nextInt(tBusses.size());
+			}
+			
+			try {
+				mBrokenName = tBusses.get(mAssertPosition);
+			} catch (IndexOutOfBoundsException tExc) {
+				mLogger.warn(this, "Unable to determine element to break");
 			}
 		}
+		
 		getLogger().debug(this, "Determined element to break: " + mBrokenName);
 		return true;
 	}
@@ -553,6 +526,19 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			return true;
 		}
 	}
+	
+	private void terminateFailedExperiment()
+	{
+		mLogger.warn(this, "Terminate current experiment.");
+		
+		mScript.getAS().getSimulation().unsubscribe(this);
+		mScript.getAS().getSimulation().getTimeBase().scheduleIn(0.1, new IEvent() {
+			@Override
+			public void fire() {
+				mScript.getAS().getSimulation().publish(new ExperimentEvent(ExperimentEvent.IMPOSSIBLE));
+			}
+		});
+	}
 
 	public synchronized boolean queryValidExperiment()
 	{
@@ -580,9 +566,9 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	{
 		public ExperimentNotifier(int pStep)
 		{
-			getLogger().warn(this, "Registering next rerouting action at step " + pStep);
+			getLogger().debug(this, "Registering next rerouting action at step " + pStep);
 			if(pStep == 0) {
-				getLogger().warn(this, "Will now establish a connection");
+				getLogger().log(this, "Will now establish a connection");
 			}
 		}
 		

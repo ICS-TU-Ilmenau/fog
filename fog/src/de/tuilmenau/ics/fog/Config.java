@@ -89,7 +89,7 @@ public class Config
 
 	public class Logging
 	{
-		public Level LOG_LEVEL = Level.TRACE;
+		public Level LOG_LEVEL = Level.WARN;
 		
 		/**
 		 * Indicates if Logging should print all messages to std out
@@ -99,7 +99,7 @@ public class Config
 		 * for std out. In special this enables the output of messages
 		 * to std out on start-up before such a logger can be registered.   
 		 */
-		public static final boolean LOG_ALWAYS_TO_STD_OUT = true;
+		public static final boolean LOG_ALWAYS_TO_STD_OUT = false;
 		
 		/**
 		 * Put date and time in front of log message
@@ -116,7 +116,7 @@ public class Config
 		 * Enables the logging of individual packets at several
 		 * measurement points in the simulation. 
 		 */
-		public static final boolean PACKET_LOGGER_ENABLED = true;
+		public static final boolean PACKET_LOGGER_ENABLED = false;
 		
 		/**
 		 * Defines after how many seconds packets are removed from
@@ -187,6 +187,8 @@ public class Config
 		 */
 		public boolean DEFAULT_DELAY_CONSTANT = true;
 
+		public boolean USE_IMPORTED_DELAY_AND_BW = false;
+		
 		/**
 		 * Default value for loss probability of a packet transfered
 		 * via a link in %. Allowed are value between [0, 100].
@@ -266,6 +268,10 @@ public class Config
 		 * Amount of none acknowledged packets can be sent.  
 		 */
 		public static final int ACKNOWLEDGEMENT_WINDOW = 100;
+		
+		public enum COST_METRIC {DELAY, BANDWIDTH, HOP_COUNT};
+
+		public static final COST_METRIC USED_METRIC = COST_METRIC.BANDWIDTH;
 	}
 
 	/**
@@ -319,6 +325,12 @@ public class Config
 		 * alternative/backup route for relaying packets "around" an failed element.
 		 */
 		public static final boolean REROUTE_USE_HORIZONTAL_GATES = true;
+		
+		/**
+		 * Enable the following flag if you want the rerouting executor to establish connections that require a given bandwidth.
+		 * This can be used to simulate the routing of demands through the network.
+		 */
+		public static final boolean REROUTING_EXECUTOR_ALLOCATES_BANDWIDTH = false;
 		
 		/**
 		 * Activates for rerouting the automatic instantiation of a VideoTranscoding gate in case 
@@ -459,5 +471,10 @@ public class Config
 		 * Indicates if Non Functional Requirements should be considered! 
 		 */
 		public static final boolean OPTIMISATION_CRITERIONS_ACTIVATED = false;
+		
+		/**
+		 * Do not use intermediate description of gates but use requirement of applications
+		 */
+		public static final boolean DONT_USE_INTERMEDIATE_DESCRIPTION = false;
 	}
 }

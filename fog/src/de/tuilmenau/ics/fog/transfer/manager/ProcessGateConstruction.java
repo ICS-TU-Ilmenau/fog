@@ -75,7 +75,6 @@ public abstract class ProcessGateConstruction extends Process
 		
 		// start terminate timer for timeout till update
 		restartTimer();
-		
 		return mGate;
 	}
 	

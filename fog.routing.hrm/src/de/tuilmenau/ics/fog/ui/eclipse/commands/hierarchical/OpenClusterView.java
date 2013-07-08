@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Forwarding on Gates Simulator/Emulator - Eclipse
+ * Forwarding on Gates Simulator/Emulator - Hierarchical Routing Management
  * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * All rights reserved. This program and the accompanying materials
@@ -17,9 +17,8 @@ import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 
-
-public class OpenClusterView extends Command {
-
+public class OpenClusterView extends Command
+{
 	public OpenClusterView()
 	{
 		super();
@@ -41,37 +40,15 @@ public class OpenClusterView extends Command {
 	public void main() throws Exception
 	{
 		if((mNode != null) && (mSite != null)) {
-			/*
-			Coordinator tCoord = null;
-			*/
-			Object reference = mNode;
-			
 			MenuCreator menu = new MenuCreator(mSite);
-			ActionListener action = null;
+			Object obj = mNode.getCoordinator().getClusterMap();
 			
-			/* If one accidentally activates this item, the local routing service is displayed
-			 *
-			 * if(rs instanceof RoutingService) {
-				if(((RoutingService) rs).getRoutingService() instanceof HierarchicalRoutingService) {
-					tCoord = ((HierarchicalRoutingService)((RoutingService) rs).getRoutingService()).getCoordinator();
-					reference = tCoord;
-				
-				} else {
-					reference =rs;
-				
-				}
-				action = menu.getDefaultAction(reference);
-				
-			} else {
-				// Display local routing service instead to avoid null pointer exception
-				*/
-				action = menu.getDefaultAction(reference);
-			/*	
-			}*/
+			ActionListener action = menu.getDefaultAction(obj);
+			
 			if(action != null) {
 				action.actionPerformed(null);
 			} else {
-				throw new RuntimeException("No default action for " +reference +" available.");
+				throw new RuntimeException("No default action for " +obj +" available.");
 			}
 		}
 	}

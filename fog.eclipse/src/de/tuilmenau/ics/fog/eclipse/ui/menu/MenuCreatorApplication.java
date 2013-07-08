@@ -34,7 +34,7 @@ public class MenuCreatorApplication extends MenuCreator
 			LinkedList<Application> apps = host.getApps();
 			
 			if(apps.size() > 0) {
-				for(Application app : host.getApps()) {
+				for(Application app : apps) {
 					Menu submenu = new Menu(app.toString());
 					
 					super.fillMenu(app, submenu);

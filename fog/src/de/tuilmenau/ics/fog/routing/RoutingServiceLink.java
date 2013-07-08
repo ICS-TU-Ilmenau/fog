@@ -78,7 +78,7 @@ public class RoutingServiceLink
 	{
 		if(mCost == null) mCost = 1;
 		
-		return mCost;
+		return mCost.floatValue() < 0 ? mCost.floatValue() * -1 : mCost;
 	}
 	
 	public boolean hasInfiniteCost()

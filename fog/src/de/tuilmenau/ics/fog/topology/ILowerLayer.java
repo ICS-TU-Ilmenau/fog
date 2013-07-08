@@ -136,5 +136,10 @@ public interface ILowerLayer extends Remote
 	 * @return Proxy object for registration in JINI or null, if it is already a proxy.
 	 */
 	public RemoteMedium getProxy() throws RemoteException;
+	
+	/**
+	 * @return The amount of either occurring delay or bandwidth or whatever
+	 */
+	public Number getRemainingTransferMetric();
 }
 

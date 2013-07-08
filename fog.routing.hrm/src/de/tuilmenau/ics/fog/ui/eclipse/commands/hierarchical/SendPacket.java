@@ -32,6 +32,7 @@ import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
@@ -41,7 +42,10 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical.RegionLimitationDialog;
 
 /**
- * @author ossy
+ * In order to create simulations this class sends packets from one node to another randomly chosen node. Or from one 
+ * packets are sent to all other nodes within the network. The last case is to iteratively walk through the nodes of a network
+ * and send packets to all other nodes. In that case you can determine the stretch of your system.
+ *  
  *
  * @deprecated Test should use official way to establish route via an application and "connect". 
  */
@@ -50,9 +54,7 @@ public class SendPacket extends Command
 	private Node mNode;
 	private IWorkbenchPartSite mSite;
 
-	/**
-	 * 
-	 */
+
 	public SendPacket()
 	{
 		
@@ -128,10 +130,10 @@ public class SendPacket extends Command
 							}
 						}
 					}
-					RoutingServiceAddress tGlobalTargetIdentification = null;
-					FoGEntity entity = (FoGEntity) tTargetNode.getHost().getLayer(FoGEntity.class);
 					
-					tGlobalTargetIdentification = (RoutingServiceAddress)entity.getRoutingService().getNameFor(entity.getCentralFN());
+					L2Address tGlobalTargetIdentification = null;
+					tGlobalTargetIdentification = (L2Address)tTargetNode.getRoutingService().getNameFor(tTargetNode.getCentralFN());
+					
 					if(tTargetNode != null) {
 						Name tTargetName = entity.getCentralFN().getName();
 						for(NameMappingEntry tEntry : tNMS.getAddresses(tTargetName)) {
@@ -162,12 +164,14 @@ public class SendPacket extends Command
 						}
 					}
 					if(tCompareToRoutingService == 0) {
+						/*
 						RoutingServiceAddress tSource = (RoutingServiceAddress)mNode.getRoutingService().getNameFor(mNode.getCentralFN());
 						RemoteRoutingService tGRS = RoutingServiceInstanceRegister.getGlobalRoutingService(mNode.getAS().getSimulation());
 						Route tRoute = tGRS.getRoute(tSource, tGlobalTargetIdentification, null, null);
 						
 						mNode.getLogger().log(mNode, "Route to " + tGlobalTargetIdentification + " is " + tRoute);
 						sendHello(mNode, tRoute, tTargetNode);
+						*/
 					}
 				}
 			} else {

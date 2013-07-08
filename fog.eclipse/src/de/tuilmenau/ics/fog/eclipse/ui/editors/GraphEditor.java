@@ -166,17 +166,6 @@ public class GraphEditor extends EditorAWT implements IController
 			
 			menuCreator.fillMenu(inputObject, popup);
 		}
-		
-		//
-		// Special case Node -> Show entry for Host, too!
-		//
-		if(selection instanceof Node) {
-			if(popup.getItemCount() > 0) {
-				popup.addSeparator();
-			}
-			
-			menuCreator.fillMenu(((Node) selection), popup);
-		}
 	}
 	
 	

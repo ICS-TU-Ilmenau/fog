@@ -22,7 +22,6 @@ import de.tuilmenau.ics.fog.application.ReroutingExecutor;
 import de.tuilmenau.ics.fog.application.ReroutingExecutor.ReroutingSession;
 import de.tuilmenau.ics.fog.commands.CommandParsing;
 import de.tuilmenau.ics.fog.facade.Connection;
-import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
@@ -231,12 +230,15 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	public ReroutingSession establishConnection(String pSendingNode, String pTargetNode)
 	{
 		Node tNode = getNodeByName(pSendingNode);
-		Connection tConnection = null;
-		tConnection = tNode.getLayer(null).connect(new SimpleName(new Namespace("rerouting"), pTargetNode), Description.createBE(false), null);
-		
+
 		for(Application tApplication : tNode.getApps()) {
-			if(tApplication instanceof ReroutingExecutor) { 
-				ReroutingSession tSession = ((ReroutingExecutor)tApplication).new ReroutingSession(true);
+			if(tApplication instanceof ReroutingExecutor) {
+				ReroutingExecutor tExecutor = ((ReroutingExecutor)tApplication);
+				ReroutingSession tSession = tExecutor.new ReroutingSession(true);
+
+				Connection tConnection = null;
+				tConnection = tNode.getLayer(null).connect(new SimpleName(new Namespace("rerouting"), pTargetNode), tExecutor.getDescription(), null);
+
 				tSession.start(tConnection);
 				if(!JiniHelper.isEnabled()) {
 					return tSession;

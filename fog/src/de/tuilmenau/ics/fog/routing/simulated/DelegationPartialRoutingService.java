@@ -72,11 +72,11 @@ public class DelegationPartialRoutingService extends PartialRoutingService
 	// -------------- Routing Service Interface --------------
 	
 	@Override
-	public boolean registerNode(RoutingServiceAddress pNode, boolean pGloballyImportant) throws RemoteException
+	public Result registerNode(RoutingServiceAddress pNode, boolean pGloballyImportant) throws RemoteException
 	{
-		boolean res = super.registerNode(pNode, pGloballyImportant);
+		Result res = super.registerNode(pNode, pGloballyImportant);
 		
-		if(res && (delegationDestinations != null)) {
+		if((res != Result.NOTHING) && (delegationDestinations != null)) {
 			for(RemoteRoutingService rs : delegationDestinations) {
 				try {
 					rs.registerNode(pNode, pGloballyImportant);
@@ -110,11 +110,11 @@ public class DelegationPartialRoutingService extends PartialRoutingService
 	}
 
 	@Override
-	public boolean registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription, Number pLinkCost) throws RemoteException
+	public Result registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription, Number pLinkCost) throws RemoteException
 	{
-		boolean res = super.registerLink(pFrom, pTo, pGateID, pDescription, pLinkCost);
+		Result res = super.registerLink(pFrom, pTo, pGateID, pDescription, pLinkCost);
 		
-		if(res && (delegationDestinations != null)) {
+		if((res != Result.NOTHING) && (delegationDestinations != null)) {
 			for(RemoteRoutingService rs : delegationDestinations) {
 				try {
 					rs.registerLink(pFrom, pTo, pGateID, pDescription, pLinkCost);

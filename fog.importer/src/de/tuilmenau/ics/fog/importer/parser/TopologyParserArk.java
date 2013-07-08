@@ -121,7 +121,7 @@ public class TopologyParserArk extends TopologyParser
 	
 	private String getCurrentColumn(int column) throws IOException
 	{
-		return mReaders.get(mCurrentReaderIndex).get(column).trim().replaceAll(" ", "_");
+		return mReaders.get(mCurrentReaderIndex).get(column).trim().replaceAll(" ", "_").replaceAll("[.]", ":");
 	}
 	
 	@Override
@@ -259,5 +259,23 @@ public class TopologyParserArk extends TopologyParser
 	public Logger getLogger()
 	{
 		return mLogger;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.importer.ITopologyParser#getBandWidth()
+	 */
+	@Override
+	public float getBandWidth()
+	{
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.importer.ITopologyParser#getDelay()
+	 */
+	@Override
+	public float getDelay() 
+	{
+		return 0;
 	}
 }

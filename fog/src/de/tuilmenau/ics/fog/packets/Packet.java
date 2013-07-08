@@ -40,7 +40,7 @@ import de.tuilmenau.ics.fog.util.Size;
 public class Packet implements Serializable
 {
 	private static final long serialVersionUID = -4342798823284871078L;
-	private static final int PACKET_MAX_CHANGE_COUNTER = 50;
+	private static final int PACKET_MAX_CHANGE_COUNTER = 100;
 	
 	public Packet(Serializable data)
 	{
@@ -133,7 +133,7 @@ public class Packet implements Serializable
 		try {
 			Id = IDManager.getID();
 		} catch (RemoteException rExc) {
-			Logging.err(Packet.class, "No managagement of packet IDs available",rExc);
+			Logging.err(Packet.class, "No managagement of packet IDs available", rExc);
 			Id = lastUsedId++;
 		} 
 		return Id;
@@ -482,7 +482,7 @@ public class Packet implements Serializable
 		if(Config.Logging.WRITE_PACKET_STATISTIC) {
 			if(mPayload instanceof LoggableElement) {
 				if(!((LoggableElement)mPayload).logMe()) {
-					Logging.log(this, "Not logging me");
+					pSim.getLogger().trace(this, "Not logging me");
 					return;
 				}
 			}
@@ -500,7 +500,7 @@ public class Packet implements Serializable
 			if(mPayload instanceof LoggableElement)
 			{
 				if(!((LoggableElement)mPayload).logMe()) {
-					Logging.log(this, "Not logging me");
+					pSim.getLogger().trace(this, "Not logging me");
 					return;
 				}
 			}
@@ -547,7 +547,7 @@ public class Packet implements Serializable
 			}
 			// additional payload specific columns
 			if (mPayload instanceof IPacketStatistics) {
-				Logging.debug(this, "getting statistics from this packet");
+				pSim.getLogger().debug(this, "getting statistics from this packet");
 				tColumnList.addAll(((IPacketStatistics) mPayload).getStats());
 				// TODO: evtl. auf null testen
 			}
@@ -562,7 +562,7 @@ public class Packet implements Serializable
 //				}
 				Statistic.getInstance(pSim, Packet.class).log(tColumnList);
 			} catch(Exception e) {
-				Logging.err(this, "Can not write statistic log.", e);
+				pSim.getLogger().err(this, "Can not write statistic log.", e);
 			}
 		}
 	}
@@ -678,12 +678,12 @@ public class Packet implements Serializable
 	 * 
 	 * @param detector The node that detected the dropping of the packet.
 	 */
-	public void droppingDetected(Object detector)
+	public void droppingDetected(Object detector, Simulation simulation)
 	{
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(null, this);
 		}
-		this.logStats(null); // log statistics of this packet as it finished its way through the network		
+		this.logStats(simulation); // log statistics of this packet as it finished its way through the network		
 	}
 	
 	private Route mRoute = null;

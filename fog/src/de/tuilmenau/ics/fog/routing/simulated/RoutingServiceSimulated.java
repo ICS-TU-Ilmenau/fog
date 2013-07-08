@@ -17,8 +17,6 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
-import de.tuilmenau.ics.CommonSim.datastream.numeric.SumNode;
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
@@ -74,8 +72,6 @@ public class RoutingServiceSimulated implements RoutingService
 		mRoutingIDs = new HashMap<ForwardingNode, RoutingServiceAddress>();
 		mNameMapping = HierarchicalNameMappingService.getGlobalNameMappingService();
 		mLogger = pNode.getLogger();
-		
-		mCounterGetRouteFound = SumNode.openAsWriter(getClass().getName() +".route.number");
 	}
 	
 	@Override
@@ -588,11 +584,9 @@ public class RoutingServiceSimulated implements RoutingService
 				
 				if(!tQoSGate) {
 					try {
-						if(!mRS.registerLink(tFrom, tTo, pGate.getGateID(), pGate.getDescription(), pGate.getCost())) {
-							throw new NetworkException("Failed to register link " +pGate +": " +tFrom +"->" +tTo +" at higher entity.");
-						}
+						mRS.registerLink(tFrom, tTo, pGate.getGateID(), pGate.getDescription(), pGate.getCost());
 					} catch (RemoteException exc) {
-						throw new NetworkException("Failed to register link " +pGate, exc);
+						throw new NetworkException("Failed to register link " +pGate +": " +tFrom +"->" +tTo +" at higher entity.", exc);
 					}
 				}
 			} else {
@@ -723,13 +717,18 @@ public class RoutingServiceSimulated implements RoutingService
 		return null;
 	}
 	
+	@Override
+	public String toString()
+	{
+		if(mRS != null) {
+			return mRS.toString();
+		} else {
+			return super.toString();
+		}
+	}
+	
 	private RemoteRoutingService mRS = null;
 	private final HashMap<ForwardingNode, RoutingServiceAddress> mRoutingIDs;
 	private final NameMappingService<RoutingServiceAddress> mNameMapping;
 	private Logger mLogger;
-	
-	/**
-	 * Counter for calls to getRoute with a positive result.
-	 */
-	private IDoubleWriter mCounterGetRouteFound;
 }

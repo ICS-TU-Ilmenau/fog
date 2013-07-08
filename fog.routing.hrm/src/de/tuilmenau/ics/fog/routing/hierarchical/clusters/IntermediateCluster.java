@@ -441,6 +441,10 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		if(!mCEPs.contains(pParticipatingCEP)) {
 			mCEPs.add(pParticipatingCEP);
 			getCoordinator().getLogger().info(this, "Added " + pParticipatingCEP + " to participating CEPs");
+			if(mCEPs.size() > 1) {
+				getCoordinator().getLogger().info(this, "Adding second participating CEP " + pParticipatingCEP);
+			}
+			
 		}
 	}
 

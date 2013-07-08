@@ -20,6 +20,7 @@ import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.routing.simulated.DelegationPartialRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
+import de.tuilmenau.ics.fog.routing.simulated.RootRoutingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
@@ -27,8 +28,6 @@ import de.tuilmenau.ics.middleware.JiniHelper;
 
 public class RoutingServiceInstanceRegister
 {
-	private final static String GLOBAL_ROUTING_SERVICE_NAME = "FoG Routing Service";
-
 	public static RoutingServiceInstanceRegister getInstance()
 	{
 		if(sInstance == null) {
@@ -89,7 +88,7 @@ public class RoutingServiceInstanceRegister
 
 		// first try: local RS
 		if(tRS == null) {
-			tRS = (RemoteRoutingService) JiniHelper.getService(RemoteRoutingService.class, GLOBAL_ROUTING_SERVICE_NAME);
+			tRS = (RemoteRoutingService) JiniHelper.getService(RemoteRoutingService.class, RootRoutingService.ROOT_ROUTING_SERVICE_NAME);
 			
 			// no Jini available or no RS registered?
 			if(tRS == null) {
@@ -97,9 +96,9 @@ public class RoutingServiceInstanceRegister
 	
 				// create new one and try to register it
 				if(sSingletonRoutingService == null) {
-					sSingletonRoutingService = new PartialRoutingService(pSim.getTimeBase(), pSim.getLogger(), GLOBAL_ROUTING_SERVICE_NAME, null);
+					sSingletonRoutingService = new RootRoutingService(pSim);
 					
-					JiniHelper.registerService(RemoteRoutingService.class, sSingletonRoutingService, GLOBAL_ROUTING_SERVICE_NAME);
+					JiniHelper.registerService(RemoteRoutingService.class, sSingletonRoutingService, RootRoutingService.ROOT_ROUTING_SERVICE_NAME);
 				}
 				tRS = sSingletonRoutingService;
 			} else {
