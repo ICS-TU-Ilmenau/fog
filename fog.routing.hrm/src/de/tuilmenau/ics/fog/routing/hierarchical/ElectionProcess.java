@@ -143,21 +143,21 @@ public class ElectionProcess extends Thread
 	{
 		Random tRandom = new Random(System.currentTimeMillis());
 		HRMController tCoordinator = pCluster.getHRMController();
-		Node tReferenceNode = tCoordinator.getPhysicalNode();
+		Node tNode = tCoordinator.getPhysicalNode();
 		int tToken = tRandom.nextInt();
 		
 		pCluster.setToken(tToken);
 		pCluster.getHRMController().getLogger().log(pCluster, "generated token " + tToken);
 
 		if(pCluster.getHRMController().getIdentity() == null) {
-			String tName = tReferenceNode.getName();
+			String tName = tNode.getName();
 			HRMIdentity tIdentity= new HRMIdentity(tName, pCluster.getLevel());
 			pCluster.getHRMController().setIdentity(tIdentity);
 		}
 		
 		pCluster.getHRMController().getIdentity().setLevel(pCluster.getLevel());
 		try {
-			BullyAnnounce tAnnounce = new BullyAnnounce(tReferenceNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
+			BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
 			for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
 				tAnnounce.addCoveredNode(tCEP.getPeerName());
 			}
@@ -166,14 +166,14 @@ public class ElectionProcess extends Thread
 			}
 			pCluster.sendClusterBroadcast(tAnnounce, null);
 			
-			Name tAddress = tReferenceNode.getRoutingService().getNameFor(tReferenceNode.getCentralFN());; 
+			Name tAddress = tNode.getRoutingService().getNameFor(tNode.getCentralFN());; 
 			
-			pCluster.setCoordinatorCEP(null, pCluster.getHRMController().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), tReferenceNode.getCentralFN().getName(), (L2Address)tAddress);
+			pCluster.setCoordinatorCEP(null, pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getLevel()), tNode.getCentralFN().getName(), (L2Address)tAddress);
 			if(pCluster.getHRMController().getIdentity() == null) {
 				pCluster.getHRMController().setIdentity(new HRMIdentity(getHRMController().getPhysicalNode().getName(), pCluster.getLevel()));
 			}
 			LinkedList<HRMSignature> tSignatures = tCoordinator.getApprovedSignatures();
-			tSignatures.add(tCoordinator.getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()));
+			tSignatures.add(tCoordinator.getIdentity().createSignature(tNode.toString(), null, pCluster.getLevel()));
 			
 			if(mLevel > 0) {
 				pCluster.getHRMController().getLogger().log(pCluster, "has the coordinator and will now announce itself");
@@ -183,7 +183,7 @@ public class ElectionProcess extends Thread
 					 * OK: Because of the formerly sent 
 					 */
 					if(tToAnnounce instanceof NeighborCluster) {
-						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tReferenceNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tReferenceNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
+						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
 						for(CoordinatorCEPDemultiplexed tCEP: pCluster.getParticipatingCEPs()) {
 							tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
 						}
