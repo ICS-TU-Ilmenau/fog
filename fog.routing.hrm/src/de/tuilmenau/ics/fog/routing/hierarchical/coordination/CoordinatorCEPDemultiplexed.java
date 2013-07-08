@@ -25,7 +25,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscover
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
 import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest.ResultType;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
@@ -109,22 +108,6 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		 * main packet processing
 		 */
 		try {
-			
-			/**
-			 * RequestZoneMembership
-			 */
-			if(pData instanceof RequestClusterMembership) {
-				if(getCluster().getCoordinatorCEP() != null) {
-					Name tMyName = tPhysicalNode.getRoutingService().getNameFor(tPhysicalNode.getCentralFN());
-					if(getCluster().getCoordinatorName().equals(tMyName)) {
-						
-					}
-				}
-				
-			}
-			
-			
-			
 			/**
 			 * BullyElect
 			 */
