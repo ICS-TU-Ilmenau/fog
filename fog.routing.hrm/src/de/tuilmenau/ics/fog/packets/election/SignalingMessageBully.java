@@ -10,13 +10,13 @@
 package de.tuilmenau.ics.fog.packets.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.packets.hierarchical.SignalingHrm;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 
-public class SignalingBully extends SignalingHrm
+public class SignalingMessageBully extends SignalingMessageHrm
 {
 	private static final long serialVersionUID = -7721094891385820251L;
 
-	public SignalingBully(Name pSenderName, float pSenderPriority)
+	public SignalingMessageBully(Name pSenderName, float pSenderPriority)
 	{
 		mSenderName = pSenderName;
 	}

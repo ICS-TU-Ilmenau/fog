@@ -14,7 +14,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 /**
  * PACKET: It is used when an answer to BullyElect is signaled.
  */
-public class BullyReply  extends SignalingBully
+public class BullyReply  extends SignalingMessageBully
 {
 	private static final long serialVersionUID = -4666721123778977947L;
 	

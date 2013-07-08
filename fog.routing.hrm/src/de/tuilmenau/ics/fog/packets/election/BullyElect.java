@@ -14,7 +14,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 /**
  * PACKET: It is used when an election start is signaled.
  */
-public class BullyElect extends SignalingBully //TV
+public class BullyElect extends SignalingMessageBully //TV
 {
 	private static final long serialVersionUID = -335936730603961378L;
 

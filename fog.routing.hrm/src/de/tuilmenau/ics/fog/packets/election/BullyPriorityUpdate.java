@@ -15,7 +15,7 @@ import de.tuilmenau.ics.fog.facade.Name;
  * PACKET: If the priority of a node changes this object has to be used to inform other cluster members about the change.
  * The node itself will be identified by the connection.
  */
-public class BullyPriorityUpdate extends SignalingBully //TV
+public class BullyPriorityUpdate extends SignalingMessageBully //TV
 {
 	private static final long serialVersionUID = -8819106581802846812L;
 	

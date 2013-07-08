@@ -13,7 +13,7 @@ import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.packets.LoggableElement;
 
-public class SignalingHrm extends LoggableElement implements Serializable
+public class SignalingMessageHrm extends LoggableElement implements Serializable
 {
 
 	/**
