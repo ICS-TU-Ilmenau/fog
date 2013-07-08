@@ -320,6 +320,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		 */
 	}
 	
+	@SuppressWarnings("unused")
 	public String toString()
 	{
 		if(mHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
