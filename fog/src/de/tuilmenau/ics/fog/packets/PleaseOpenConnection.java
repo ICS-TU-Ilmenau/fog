@@ -39,7 +39,7 @@ import de.tuilmenau.ics.fog.ui.Viewable;
 
 
 /**
- * Used as payload in signalling messages to build up a connection.
+ * Used as payload in signaling messages to build up a connection.
  */
 public class PleaseOpenConnection extends SignallingRequest
 {
@@ -290,6 +290,7 @@ public class PleaseOpenConnection extends SignallingRequest
 	 * @return The created local connection process.
 	 * @throws NetworkException on error
 	 */
+	@SuppressWarnings("unused")
 	private ProcessConnection createAndStartConnectionProcess(ForwardingNode pBaseFN, Identity pRequester) throws NetworkException
 	{
 		// Create construction process.

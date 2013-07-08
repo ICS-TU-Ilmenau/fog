@@ -25,6 +25,8 @@ import de.tuilmenau.ics.fog.ui.MarkerContainer;
 
 public class InvisibleMarker implements Invisible
 {
+	private static final long serialVersionUID = 4749334391719395546L;
+	
 	public enum Operation { ADD, REMOVE }
 	
 	public InvisibleMarker(Marker pMarker, Operation pOperation)

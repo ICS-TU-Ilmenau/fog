@@ -25,6 +25,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 abstract public class SignallingNotification extends Signalling
 {
+	private static final long serialVersionUID = 6252157613694429006L;
+	
 	public SignallingNotification()
 	{
 		super();
