@@ -60,6 +60,11 @@ public abstract class ProcessGateConstruction extends Process
 				} else {
 					// init in order to be able to switch to delete
 					mGate.initialise();
+					mGate.shutdown();
+					mGate = null;
+					
+					// invalidate the process
+					mReplacementFor = null;
 					
 					throw new NetworkException(this, "Gate " +mReplacementFor +" that should be replaced is not operational. Terminating the construction of a replacement.");
 				}
