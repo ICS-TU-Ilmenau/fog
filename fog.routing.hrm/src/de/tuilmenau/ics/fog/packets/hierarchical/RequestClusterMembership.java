@@ -10,11 +10,8 @@
 package de.tuilmenau.ics.fog.packets.hierarchical;
 
 import java.io.Serializable;
-import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.packets.election.BullyElect;
-//import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 
 public class RequestClusterMembership implements Serializable
 {
@@ -24,7 +21,6 @@ public class RequestClusterMembership implements Serializable
 	private static final long serialVersionUID = -4759949996098949362L;
 	
 	private BullyElect mElectionMessage;
-	private LinkedList<RoutingServiceLinkVector> mRouteToCoordinator;
 	
 	public RequestClusterMembership(BullyElect pElectionMessage)
 	{
@@ -35,11 +31,4 @@ public class RequestClusterMembership implements Serializable
 	{
 		return mElectionMessage;
 	}
-	
-	public LinkedList<RoutingServiceLinkVector> getVectorsToCoordinator()
-	{
-		return mRouteToCoordinator;
-	}
-	
-	
 }
