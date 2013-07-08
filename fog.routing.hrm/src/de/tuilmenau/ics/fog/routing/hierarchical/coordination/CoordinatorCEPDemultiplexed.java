@@ -88,6 +88,92 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	
 	/**
 	 * 
+	 * @param pBullyPacket
+	 * @return true if the packet left the central multiplexer and the forwarding node that is attached to a direct down gate
+	 */
+	public boolean handleBullyPacket(SignalingMessageBully pPacketBully) throws NetworkException
+	{
+		Node tNode = getHRMController().getPhysicalNode();
+
+		/**
+		 * BullyElect
+		 */
+		if(pPacketBully instanceof BullyElect)	{
+			
+			// cast to Bully elect packet
+			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
+			
+			if ((getCluster().getCoordinatorCEP() != null) && (tPacketBullyElect.getSenderPriority() < getCluster().getHighestPriority())) {
+				
+				mPeerPriority = tPacketBullyElect.getSenderPriority();
+				
+				if (getCluster().getHRMController().equals(tNode.getCentralFN().getName())) {
+					BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), getCluster().getPriority(), getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getLevel()), getCluster().getToken());
+					
+					mLogger.log(this, " Sending Bullyannounce because I have a coordinator: " + tAnnounce);
+					
+					for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
+						tAnnounce.addCoveredNode(tCEP.getPeerName());
+					}
+					if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
+						getHRMController().getLogger().log(this, "Sending announce that does not cover anyhting");
+					}
+					write(tAnnounce);
+				} else {
+					write(new BullyAlive(tNode.getCentralFN().getName()));
+					//TODO: packet is sent but never parsed or a timeout timer reset!!
+				}
+			} else {
+				// store peer's Bully priority
+				mPeerPriority = tPacketBullyElect.getSenderPriority();
+				
+				// prepare a Bully answer
+				BullyReply tAnswer = new BullyReply(tNode.getCentralFN().getName(), getCluster().getPriority());
+				
+				// send the answer packet
+				write(tAnswer);
+			}
+		}
+		
+		/**
+		 * BullyReply
+		 */
+		if(pPacketBully instanceof BullyReply) {
+			
+			// cast to Bully replay packet
+			BullyReply tPacketBullyReply = (BullyReply)pPacketBully;
+
+			// store peer's Bully priority
+			mPeerPriority = tPacketBullyReply.getSenderPriority();
+		}
+		
+		/**
+		 * BullyAnnounce
+		 */
+		if(pPacketBully instanceof BullyAnnounce)  {
+			// cast to Bully replay packet
+			BullyAnnounce tPacketBullyAnnounce = (BullyAnnounce)pPacketBully;
+
+			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
+			getCluster().interpretAnnouncement(tPacketBullyAnnounce, this);
+		}
+
+		/**
+		 * BullyPriorityUpdate
+		 */
+		if(pPacketBully instanceof BullyPriorityUpdate) {
+			// cast to Bully replay packet
+			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
+
+			// store peer's Bully priority
+			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority();
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * 
 	 * @param pData is the data that should be sent to the receiver side of this connection end point
 	 * @return true if the packet left the central multiplexer and the forwarding node that is attached to a direct down gate
 	 * @throws NetworkException
@@ -108,53 +194,20 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		 * main packet processing
 		 */
 		try {
+			
 			/**
-			 * BullyElect
+			 * Bully signaling message
 			 */
-			if(pData instanceof BullyElect)	{
-				if(getCluster().getCoordinatorCEP() != null && ((BullyElect)pData).getSenderPriority() < getCluster().getHighestPriority()) {
-					mPeerPriority = ((BullyElect)pData).getSenderPriority();
-					if(getCluster().getHRMController().equals(tNode.getCentralFN().getName())) {
-						BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), getCluster().getPriority(), getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getLevel()), getCluster().getToken());
-						mLogger.log(this, " Sending bullyannounce because I have a coordinator: " + tAnnounce);
-						for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
-							tAnnounce.addCoveredNode(tCEP.getPeerName());
-						}
-						if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
-							getHRMController().getLogger().log(this, "Sending announce that does not cover anyhting");
-						}
-						write(tAnnounce);
-					} else {
-						write(new BullyAlive(tNode.getCentralFN().getName()));
-						//TODO: packet is sent but never parsed or a timeout timer reset!!
-					}
-				} else {
-					mPeerPriority = ((BullyElect)pData).getSenderPriority();
-					BullyReply tAnswer = new BullyReply(tNode.getCentralFN().getName(), getCluster().getPriority());
-					write(tAnswer);
-				}
+			if (pData instanceof SignalingMessageBully) {
+				// cast to a Bully signaling message
+				SignalingMessageBully tBullyMessage = (SignalingMessageBully)pData;
+			
+				// process Bully message
+				return handleBullyPacket(tBullyMessage);
 			}
 			
 			/**
-			 * BullyReply
-			 */
-			if(pData instanceof BullyReply) {
-				mPeerPriority = ((BullyReply)pData).getSenderPriority();
-			}
-			
-			/**
-			 * BullyAnnounce
-			 */
-			if(pData instanceof BullyAnnounce)  {
-				/*
-				 * Only an intermediate cluster on level 0 is able to store an announcement an forward it once a coordinator is set
-				 */
-				getCluster().interpretAnnouncement((BullyAnnounce)pData, this);
-			}
-			
-			
-			/**
-			 * NeighborZoneAnnounce
+			 * NeighborClusterAnnounce
 			 */
 			if(pData instanceof NeighborClusterAnnounce) {
 				NeighborClusterAnnounce tAnnounce = (NeighborClusterAnnounce)pData;
@@ -201,12 +254,8 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				}
 				Logging.log(this, "Received " + tAnnounce + " from remote cluster " + mRemoteCluster);
 			}
-			/**
-			 * PriorityUpdate
-			 */
-			if(pData instanceof BullyPriorityUpdate) {
-				mPeerPriority = ((BullyPriorityUpdate)pData).getSenderPriority();
-			}
+			
+			
 			/**
 			 * TopologyData
 			 */
@@ -216,6 +265,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				NestedDiscovery tDiscovery = (NestedDiscovery) pData;
 				handleClusterDiscovery(tDiscovery);
 			}*/
+			
 			
 			/**
 			 * RouteRequest
