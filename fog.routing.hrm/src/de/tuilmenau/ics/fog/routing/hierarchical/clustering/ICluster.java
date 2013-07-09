@@ -81,7 +81,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 * 
 	 * @return The hierarchical level the cluster acts on is returned here.
 	 */
-	public int getLevel();
+	public int getHierarchyLevel();
 	
 	/**
 	 * 

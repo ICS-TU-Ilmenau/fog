@@ -38,6 +38,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IVirtualNode;
@@ -82,7 +83,7 @@ public class Coordinator implements ICluster, Observer
 	private HRMSignature mCoordinatorSignature = null;
 	private Name mCoordinatorName = null;
 	private HRMName mCoordinatorAddress = null;
-	private float mPriority;
+	private BullyPriority mBullyPriority;
 	private int mToken;
 	private float mHighestPriority;
 	private BFSDistanceLabeler<IVirtualNode, ClusterLink> mBreadthFirstSearch = new BFSDistanceLabeler<IVirtualNode, ClusterLink>();
@@ -120,7 +121,7 @@ public class Coordinator implements ICluster, Observer
 		mManagedCluster = pCluster;
 		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
 		mManagedCluster.getHRMController().getClusterMap().addObserver(this);
-		mPriority = (float) getHRMController().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + mLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
+		mBullyPriority = new BullyPriority(getHRMController().getPhysicalNode(), mLevel);
 		getHRMController().registerClusterManager(this, mLevel);
 		
 		Logging.log(this, "Creating coordinator instance on hierarchy level " + mLevel);
@@ -161,7 +162,7 @@ public class Coordinator implements ICluster, Observer
 		if(mReceivedAnnouncements == null) {
 			mReceivedAnnouncements = new LinkedList<NeighborClusterAnnounce>();
 		}
-		pAnnounce.setNegotiatorIdentification(ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getLevel()));
+		pAnnounce.setNegotiatorIdentification(ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getHierarchyLevel()));
 		mReceivedAnnouncements.add(pAnnounce);
 	}
 	
@@ -195,7 +196,7 @@ public class Coordinator implements ICluster, Observer
 		for(int i = 1; i <= tRadius; i++) {
 			String tString = new String("Expanding in round " + i + ", possible clusters:");
 			for(ICluster tCluster : getHRMController().getClusters()) {
-				if(tCluster.getLevel() == getLevel() -1 && !(tCluster instanceof Coordinator)) {
+				if(tCluster.getHierarchyLevel() == getHierarchyLevel() -1 && !(tCluster instanceof Coordinator)) {
 					tString += "\n" + tCluster.toString();
 				}
 			}
@@ -409,13 +410,13 @@ public class Coordinator implements ICluster, Observer
 						FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, ClusterDummy.compare(
 								tNextCluster.getClusterID(),
 								tNextCluster.getToken(),
-								tNextCluster.getLevel()),
+								tNextCluster.getHierarchyLevel()),
 								getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel-1)
 								);
 						IVirtualNode tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteCluster(), tDestinationCEP.getRemoteCluster());
 						ClusterDummy tDummy = null;
 						if(tTargetNode instanceof ICluster) {
-							tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getLevel());
+							tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getHierarchyLevel());
 						}
 						tEntry.setFarthestClusterInDirection(tDummy);
 						/*
@@ -438,7 +439,7 @@ public class Coordinator implements ICluster, Observer
 						FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(
 								mAddressMapping.get(tDestinationCEP).getHRMID(),
 								(HRMName)tDestinationCEP.getPeerName(),
-								ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getLevel()),
+								ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getHierarchyLevel()),
 								getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel-1));
 						mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
 						LinkedList<RoutingServiceLinkVector> tPolygon = getPathToCoordinator(tSourceCEP.getRemoteCluster(), tDestinationCEP.getRemoteCluster()); 
@@ -457,7 +458,7 @@ public class Coordinator implements ICluster, Observer
 						IVirtualNode tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteCluster(), tDestinationCEP.getRemoteCluster());
 						ClusterDummy tDummy = null;
 						if(tTargetNode instanceof ICluster) {
-							tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getLevel());
+							tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getHierarchyLevel());
 						}
 						tEntry.setFarthestClusterInDirection(tDummy);
 					}
@@ -471,13 +472,13 @@ public class Coordinator implements ICluster, Observer
 					FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(
 							mManagedCluster.getHrmID(),
 							tSourceCEP.getSourceName(),
-							ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getLevel()),
+							ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getHierarchyLevel()),
 							getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel-1));
 					mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
 					IVirtualNode tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteCluster(), mManagedCluster);
 					ClusterDummy tDummy = null;
 					if(tTargetNode instanceof ICluster) {
-						tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getLevel());
+						tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getHierarchyLevel());
 					}
 					tEntry.setFarthestClusterInDirection(tDummy);
 					/*
@@ -486,13 +487,13 @@ public class Coordinator implements ICluster, Observer
 					FIBEntry tManagedEntry = tManagedClusterEnvelope.new FIBEntry(
 							mAddressMapping.get(tSourceCEP).getHRMID(),
 							tSourceCEP.getPeerName(),
-							ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getLevel()),
+							ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getHierarchyLevel()),
 							getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel));
 					tManagedClusterEnvelope.addForwardingentry(tManagedEntry);
 					IVirtualNode tPeerNode = getFarthestVirtualNodeInDirection(mManagedCluster, tSourceCEP.getRemoteCluster());
 					ClusterDummy tPeerDummy = null;
 					if(tTargetNode instanceof ICluster) {
-						tPeerDummy = ClusterDummy.compare(((ICluster)tPeerNode).getClusterID(), ((ICluster)tPeerNode).getToken(), ((ICluster)tPeerNode).getLevel());
+						tPeerDummy = ClusterDummy.compare(((ICluster)tPeerNode).getClusterID(), ((ICluster)tPeerNode).getToken(), ((ICluster)tPeerNode).getHierarchyLevel());
 					}
 					tEntry.setFarthestClusterInDirection(tPeerDummy);
 				}
@@ -565,7 +566,7 @@ public class Coordinator implements ICluster, Observer
 								}
 							}
 							
-							if(tNegotiator.getLevel() != tHRMIDMapping.getLevel()) {
+							if(tNegotiator.getHierarchyLevel() != tHRMIDMapping.getHierarchyLevel()) {
 								getLogger().err(this, "Searching for a route between clusters withing different levels");
 							}
 							
@@ -597,7 +598,7 @@ public class Coordinator implements ICluster, Observer
 								tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, ClusterDummy.compare(
 										tNegotiator.getClusterID(),
 										tNegotiator.getToken(),
-										tNegotiator.getLevel()),
+										tNegotiator.getHierarchyLevel()),
 										getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel - 1)
 								);
 								/*
@@ -613,7 +614,7 @@ public class Coordinator implements ICluster, Observer
 								IVirtualNode tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteCluster(), tSourceCEP.getRemoteCluster());
 								ClusterDummy tDummy = null;
 								if(tTargetNode instanceof ICluster) {
-									tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getLevel());
+									tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getHierarchyLevel());
 								}
 								tEntry.setFarthestClusterInDirection(tDummy);
 							} else {
@@ -627,7 +628,7 @@ public class Coordinator implements ICluster, Observer
 									tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, ClusterDummy.compare(
 											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getClusterID(),
 											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getToken(),
-											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getLevel()),
+											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getHierarchyLevel()),
 											getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel - 1)
 										);
 									if(tListToTarget != null) {
@@ -645,7 +646,7 @@ public class Coordinator implements ICluster, Observer
 									IVirtualNode tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteCluster(), tNegotiator);
 									ClusterDummy tDummy = null;
 									if(tTargetNode instanceof ICluster) {
-										tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getLevel());
+										tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getHierarchyLevel());
 									}
 									tEntry.setFarthestClusterInDirection(tDummy);
 								} else {
@@ -664,7 +665,7 @@ public class Coordinator implements ICluster, Observer
 									}
 									ClusterDummy tDummy = ClusterDummy.compare(tSourceCEP.getRemoteCluster().getClusterID(),
 											tSourceCEP.getRemoteCluster().getToken(),
-											tSourceCEP.getRemoteCluster().getLevel()
+											tSourceCEP.getRemoteCluster().getHierarchyLevel()
 											);
 									tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, null, tDummy,
 											getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel - 1)
@@ -764,7 +765,7 @@ public class Coordinator implements ICluster, Observer
 							FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(
 									tHRMID,
 									tDestination,
-									(tCluster != null ? ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getLevel()) : null),
+									(tCluster != null ? ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getHierarchyLevel()) : null),
 									getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel - 1));
 							mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
 							if(tPolygon != null && !tPolygon.isEmpty()) {
@@ -776,7 +777,7 @@ public class Coordinator implements ICluster, Observer
 							IVirtualNode tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteCluster(), tSourceCEP.getRemoteCluster());
 							ClusterDummy tDummy = null;
 							if(tTargetNode instanceof ICluster) {
-								tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getLevel());
+								tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getHierarchyLevel());
 							}
 							tEntry.setFarthestClusterInDirection(tDummy);
 						}
@@ -838,7 +839,7 @@ public class Coordinator implements ICluster, Observer
 					FIBEntry tEntry = tManagedClusterEnvelope.new FIBEntry(
 							tHRMID,
 							tNextHop,
-							ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getLevel()),
+							ClusterDummy.compare(mManagedCluster.getClusterID(), mManagedCluster.getToken(), mManagedCluster.getHierarchyLevel()),
 							getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel));
 					if(tPathToTarget != null && !tPathToTarget.isEmpty()) {
 						tEntry.setRoutingVectors(tPathToTarget);
@@ -849,7 +850,7 @@ public class Coordinator implements ICluster, Observer
 					IVirtualNode tTargetNode = getFarthestVirtualNodeInDirection(getManagedCluster(), tCluster);
 					ClusterDummy tDummy = null;
 					if(tTargetNode instanceof ICluster) {
-						tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getLevel());
+						tDummy = ClusterDummy.compare(((ICluster)tTargetNode).getClusterID(), ((ICluster)tTargetNode).getToken(), ((ICluster)tTargetNode).getHierarchyLevel());
 					}
 					tEntry.setFarthestClusterInDirection(tDummy);
 					tManagedClusterEnvelope.addForwardingentry(tEntry);
@@ -927,7 +928,7 @@ public class Coordinator implements ICluster, Observer
 
 	@Override
 	public void setPriority(float pPriority) {
-		mPriority = pPriority;
+		mBullyPriority = new BullyPriority(pPriority);
 	}
 
 	@Override
@@ -966,7 +967,7 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public int getLevel() {
+	public int getHierarchyLevel() {
 		return mLevel;
 	}
 
@@ -977,7 +978,7 @@ public class Coordinator implements ICluster, Observer
 
 	@Override
 	public float getPriority() {
-		return mPriority;
+		return mBullyPriority.getPriority();
 	}
 
 	@Override
@@ -1142,7 +1143,7 @@ public class Coordinator implements ICluster, Observer
 							}
 						} else {
 							
-							ClusterDummy tDummy = ClusterDummy.compare(getManagedCluster().getClusterID(), getManagedCluster().getToken(), getManagedCluster().getLevel());
+							ClusterDummy tDummy = ClusterDummy.compare(getManagedCluster().getClusterID(), getManagedCluster().getToken(), getManagedCluster().getHierarchyLevel());
 							
 							/*
 							 * This is for the new coordinator - he is being notified about the fact that this cluster belongs to another coordinator
@@ -1153,16 +1154,16 @@ public class Coordinator implements ICluster, Observer
 							 * If this is a rejection the forwarding cluster as to be calculated by the receiver of this neighbor zone announcement
 							 */
 							
-							NeighborClusterAnnounce tOldCovered = new NeighborClusterAnnounce(getCoordinatorName(), getLevel(), getCoordinatorSignature(), getCoordinatorsAddress(),getToken(), getCoordinatorsAddress().getAddress().longValue());
+							NeighborClusterAnnounce tOldCovered = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), getCoordinatorSignature(), getCoordinatorsAddress(),getToken(), getCoordinatorsAddress().getAddress().longValue());
 							tOldCovered.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority());
 							tOldCovered.setNegotiatorIdentification(tDummy);
 							
 							DiscoveryEntry tOldCoveredEntry = new DiscoveryEntry(
-									getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getToken(),
-									getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorName(),
-									getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorsAddress().getAddress().longValue(),
-									getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorsAddress(),
-									getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getLevel()
+									getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getToken(),
+									getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getCoordinatorName(),
+									getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getCoordinatorsAddress().getAddress().longValue(),
+									getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getCoordinatorsAddress(),
+									getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getHierarchyLevel()
 									);
 							/*
 							 * the forwarding cluster to the newly discovered cluster has to be one level lower so it is forwarded on the correct cluster
@@ -1172,10 +1173,10 @@ public class Coordinator implements ICluster, Observer
 							tClusterList = getHRMController().getClusterMap().getRoute(getManagedCluster(), getCoordinatorCEP().getRemoteCluster());
 							if(!tClusterList.isEmpty()) {
 								ICluster tPredecessor = (ICluster) getHRMController().getClusterMap().getDest(getManagedCluster(), tClusterList.get(0));
-								tOldCoveredEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getLevel()));
+								tOldCoveredEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
 							}
 							tOldCoveredEntry.setPriority(getNodePriority());
-							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorsAddress()));
+							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getCoordinatorsAddress()));
 							tOldCovered.setCoveringClusterEntry(tOldCoveredEntry);
 //							List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute((HRMName)pCEP.getSourceName(), getCoordinatorsAddress());
 							//tOldCovered.setAnnouncer(getCoordinator().getHRS().getCoordinatorRoutingMap().getDest(tPathToCoordinator.get(0)));
@@ -1185,7 +1186,7 @@ public class Coordinator implements ICluster, Observer
 							 * now the old cluster is notified about the new cluster
 							 */
 							
-							NeighborClusterAnnounce tNewCovered = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getLevel(), pAnnounce.getCoordSignature(), (HRMName)pCEP.getPeerName(), pAnnounce.getToken(), (((HRMName)pCEP.getPeerName()).getAddress().longValue()));
+							NeighborClusterAnnounce tNewCovered = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pAnnounce.getCoordSignature(), (HRMName)pCEP.getPeerName(), pAnnounce.getToken(), (((HRMName)pCEP.getPeerName()).getAddress().longValue()));
 							tNewCovered.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 							tNewCovered.setNegotiatorIdentification(tDummy);
 							DiscoveryEntry tCoveredEntry = new DiscoveryEntry(
@@ -1193,7 +1194,7 @@ public class Coordinator implements ICluster, Observer
 									pAnnounce.getSenderName(),
 									((HRMName)pCEP.getPeerName()).getAddress().longValue(),
 									(HRMName)pCEP.getPeerName(),
-									getLevel()
+									getHierarchyLevel()
 									);
 							tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerName()));
 							tNewCovered.setCoveringClusterEntry(tCoveredEntry);
@@ -1202,7 +1203,7 @@ public class Coordinator implements ICluster, Observer
 							List<ClusterLink> tClusters = getHRMController().getClusterMap().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
 							if(!tClusters.isEmpty()) {
 								ICluster tNewPredecessor = (ICluster) getHRMController().getClusterMap().getDest(getManagedCluster(), tClusters.get(0));
-								tCoveredEntry.setPredecessor(ClusterDummy.compare(tNewPredecessor.getClusterID(), tNewPredecessor.getToken(), tNewPredecessor.getLevel()));
+								tCoveredEntry.setPredecessor(ClusterDummy.compare(tNewPredecessor.getClusterID(), tNewPredecessor.getToken(), tNewPredecessor.getHierarchyLevel()));
 							}
 							getLogger().warn(this, "Rejecting " + (getCoordinatorCEP().getPeerName()).getDescr() + " in favor of " + pAnnounce.getSenderName());
 							tNewCovered.setRejection();
@@ -1217,7 +1218,7 @@ public class Coordinator implements ICluster, Observer
 							}
 							setToken(pAnnounce.getToken());
 							setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pCEP.getPeerName());
-							getHRMController().setClusterWithCoordinator(getLevel(), this);
+							getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 							getHRMController().addApprovedSignature(pAnnounce.getCoordSignature());
 							getCoordinatorCEP().write(tNewCovered);
 						}
@@ -1233,7 +1234,7 @@ public class Coordinator implements ICluster, Observer
 					}
 				}
 				setToken(pAnnounce.getToken());
-				getHRMController().setClusterWithCoordinator(getLevel(), this);
+				getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 				setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), (HRMName)pCEP.getPeerName());
 			}
 		} else {
@@ -1242,8 +1243,8 @@ public class Coordinator implements ICluster, Observer
 			 * the announcement that is just gained a neighbor zone
 			 */
 			
-			ClusterDummy tDummy = ClusterDummy.compare(getManagedCluster().getClusterID(), getManagedCluster().getToken(), getManagedCluster().getLevel());
-			NeighborClusterAnnounce tUncoveredAnnounce = new NeighborClusterAnnounce(getCoordinatorName(), getLevel(), getCoordinatorSignature(), getCoordinatorsAddress(), getToken(), getCoordinatorsAddress().getAddress().longValue());
+			ClusterDummy tDummy = ClusterDummy.compare(getManagedCluster().getClusterID(), getManagedCluster().getToken(), getManagedCluster().getHierarchyLevel());
+			NeighborClusterAnnounce tUncoveredAnnounce = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), getCoordinatorSignature(), getCoordinatorsAddress(), getToken(), getCoordinatorsAddress().getAddress().longValue());
 			tUncoveredAnnounce.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority());
 			/*
 			 * the routing service address of the announcer is set once the neighbor zone announce arrives at the rejected coordinator because this
@@ -1253,19 +1254,19 @@ public class Coordinator implements ICluster, Observer
 			tUncoveredAnnounce.setNegotiatorIdentification(tDummy);
 			
 			DiscoveryEntry tUncoveredEntry = new DiscoveryEntry(
-					getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getToken(),
-					getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorName(),
-					getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorsAddress().getAddress().longValue(),
-					getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorsAddress(),
-					getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getLevel()
+					getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getToken(),
+					getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getCoordinatorName(),
+					getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getCoordinatorsAddress().getAddress().longValue(),
+					getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getCoordinatorsAddress(),
+					getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getHierarchyLevel()
 					);
 			List<ClusterLink> tClusterList = getHRMController().getClusterMap().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
 			if(!tClusterList.isEmpty()) {
 				ICluster tPredecessor = (ICluster) getHRMController().getClusterMap().getDest(getManagedCluster(), tClusterList.get(0));
-				tUncoveredEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getLevel()));
+				tUncoveredEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
 			}
 			tUncoveredEntry.setPriority(getNodePriority());
-			tUncoveredEntry.setRoutingVectors(pCEP.getPath(getHRMController().getClusterWithCoordinatorOnLevel(getLevel()).getCoordinatorsAddress()));
+			tUncoveredEntry.setRoutingVectors(pCEP.getPath(getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getCoordinatorsAddress()));
 			tUncoveredAnnounce.setCoveringClusterEntry(tUncoveredEntry);
 			getLogger().warn(this, "Rejecting " + (getCoordinatorCEP().getPeerName()).getDescr() + " in favour of " + pAnnounce.getSenderName());
 			tUncoveredAnnounce.setRejection();
@@ -1275,7 +1276,7 @@ public class Coordinator implements ICluster, Observer
 			 * this part is for the acting coordinator, so NeighborZoneAnnounce is sent in order to announce the cluster that was just rejected
 			 */
 			
-			NeighborClusterAnnounce tCoveredAnnounce = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getLevel(), pAnnounce.getCoordSignature(), pCEP.getPeerName(), pAnnounce.getToken(), (pCEP.getPeerName()).getAddress().longValue());
+			NeighborClusterAnnounce tCoveredAnnounce = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pAnnounce.getCoordSignature(), pCEP.getPeerName(), pAnnounce.getToken(), (pCEP.getPeerName()).getAddress().longValue());
 			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 			
 //			List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute(pCEP.getSourceName(), pCEP.getPeerName());
@@ -1287,7 +1288,7 @@ public class Coordinator implements ICluster, Observer
 					pAnnounce.getSenderName(),
 					(pCEP.getPeerName()).getAddress().longValue(),
 					pCEP.getPeerName(),
-					getLevel()
+					getHierarchyLevel()
 					);
 			tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerName()));
 			tCoveredAnnounce.setCoveringClusterEntry(tCoveredEntry);
@@ -1297,7 +1298,7 @@ public class Coordinator implements ICluster, Observer
 			List<ClusterLink> tClusters = getHRMController().getClusterMap().getRoute(getManagedCluster(), getCoordinatorCEP().getRemoteCluster());
 			if(!tClusters.isEmpty()) {
 				ICluster tNewPredecessor = (ICluster) getHRMController().getClusterMap().getDest(getManagedCluster(), tClusters.get(0));
-				tUncoveredEntry.setPredecessor(ClusterDummy.compare(tNewPredecessor.getClusterID(), tNewPredecessor.getToken(), tNewPredecessor.getLevel()));
+				tUncoveredEntry.setPredecessor(ClusterDummy.compare(tNewPredecessor.getClusterID(), tNewPredecessor.getToken(), tNewPredecessor.getHierarchyLevel()));
 			}
 			getLogger().log(this, "Coordinator CEP is " + getCoordinatorCEP());
 			getCoordinatorCEP().write(tCoveredAnnounce);
@@ -1404,11 +1405,11 @@ public class Coordinator implements ICluster, Observer
 					for(CoordinatorCEPDemultiplexed tCEP : mCEPs) {
 						if(((ICluster)tNode).getCoordinatorsAddress().equals(tCEP.getPeerName()) && !tCEP.isPartOfMyCluster()) {
 							getLogger().info(this, "Informing " + tCEP + " about existence of neighbor zone ");
-							NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, getLevel(), pCoordSignature, pAddress, getToken(), pAddress.getAddress().longValue());
+							NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, getHierarchyLevel(), pCoordSignature, pAddress, getToken(), pAddress.getAddress().longValue());
 							tAnnounce.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority());
 							LinkedList<RoutingServiceLinkVector> tVectorList = tCEP.getPath(pAddress);
 							tAnnounce.setRoutingVectors(tVectorList);
-							tAnnounce.setNegotiatorIdentification(ClusterDummy.compare(getManagedCluster().getClusterID(), getManagedCluster().getToken(), getManagedCluster().getLevel()));
+							tAnnounce.setNegotiatorIdentification(ClusterDummy.compare(getManagedCluster().getClusterID(), getManagedCluster().getToken(), getManagedCluster().getHierarchyLevel()));
 							tCEP.write(tAnnounce);
 						}
 						getLogger().log(this, "Informed " + tCEP + " about new neighbor zone");
@@ -1500,9 +1501,9 @@ public class Coordinator implements ICluster, Observer
 			ICluster tCluster = (ICluster) pObj;
 			if(tCluster.getClusterID().equals(getClusterID()) &&
 					tCluster.getToken() == getToken() &&
-					tCluster.getLevel() == getLevel()) {
+					tCluster.getHierarchyLevel() == getHierarchyLevel()) {
 				return true;
-			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getLevel() == getLevel()) {
+			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
 				Logging.log(this, "compared to " + pObj + "is false");
 				return false;
 			} else if (tCluster.getClusterID().equals(getClusterID())) {
@@ -1687,7 +1688,7 @@ public class Coordinator implements ICluster, Observer
 					LinkedList<IVirtualNode> tNodesToIgnore = new LinkedList<IVirtualNode>();
 					
 					if(tLimitation.getType().equals(AddressLimitationProperty.LIST_TYPE.RESTRICTIVE)) {
-						tNodesToIgnore = getHRMController().getClusters(mManagedCluster.getLevel()-1);
+						tNodesToIgnore = getHRMController().getClusters(mManagedCluster.getHierarchyLevel()-1);
 					}
 					
 					for(HierarchyLevelLimitationEntry tEntry : tParameterRouteRequest.getLimitationProperty().getEntries()) {
@@ -1749,8 +1750,8 @@ public class Coordinator implements ICluster, Observer
 									if(tCEP.getRemoteCluster().equals(tLastCluster)) {
 										getLogger().log(tManager, "About to ask route from " + tLastCluster + " to " + tCluster);
 										Description tDescription = new Description();
-										HierarchyLevelLimitationEntry tSource = new HierarchyLevelLimitationEntry(tLastCluster.getCoordinatorsAddress(), true, tLastCluster.getLevel());
-										HierarchyLevelLimitationEntry tTarget = new HierarchyLevelLimitationEntry(tCluster.getCoordinatorsAddress(), true, tCluster.getLevel());
+										HierarchyLevelLimitationEntry tSource = new HierarchyLevelLimitationEntry(tLastCluster.getCoordinatorsAddress(), true, tLastCluster.getHierarchyLevel());
+										HierarchyLevelLimitationEntry tTarget = new HierarchyLevelLimitationEntry(tCluster.getCoordinatorsAddress(), true, tCluster.getHierarchyLevel());
 										
 										LinkedList<HierarchyLevelLimitationEntry> tEntries = new LinkedList<HierarchyLevelLimitationEntry>();
 										tEntries.add(tSource);
@@ -1762,7 +1763,7 @@ public class Coordinator implements ICluster, Observer
 											getLogger().err(this, "Unable to fulfill requirements", tExc);
 										}
 										RouteRequest tRequest = new RouteRequest(tLastCluster.getCoordinatorsAddress(), tCluster.getCoordinatorsAddress(), null, 0);
-										tRequest.addRequiredCluster(new ClusterDummy(tLastCluster.getToken(), tLastCluster.getClusterID(), tLastCluster.getLevel()));
+										tRequest.addRequiredCluster(new ClusterDummy(tLastCluster.getToken(), tLastCluster.getClusterID(), tLastCluster.getHierarchyLevel()));
 
 										tCEP.write(tRequest);
 										synchronized(tRequest) {

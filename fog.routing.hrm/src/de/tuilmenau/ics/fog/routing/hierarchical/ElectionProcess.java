@@ -124,7 +124,7 @@ public class ElectionProcess extends Thread
 				Logging.log(this, "Sending elections from " + tCluster);
 				for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
 					if(tCEP.getPeerPriority() == 0 && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
-						tCEP.write(new BullyElect(tCluster.getHRMController().getPhysicalNode().getCentralFN().getName(), tCluster.getPriority(), tCluster.getLevel()));
+						tCEP.write(new BullyElect(tCluster.getHRMController().getPhysicalNode().getCentralFN().getName(), tCluster.getPriority(), tCluster.getHierarchyLevel()));
 					}
 				}
 			}
@@ -151,13 +151,13 @@ public class ElectionProcess extends Thread
 
 		if(pCluster.getHRMController().getIdentity() == null) {
 			String tName = tNode.getName();
-			HRMIdentity tIdentity= new HRMIdentity(tName, pCluster.getLevel());
+			HRMIdentity tIdentity= new HRMIdentity(tName, pCluster.getHierarchyLevel());
 			pCluster.getHRMController().setIdentity(tIdentity);
 		}
 		
-		pCluster.getHRMController().getIdentity().setLevel(pCluster.getLevel());
+		pCluster.getHRMController().getIdentity().setLevel(pCluster.getHierarchyLevel());
 		try {
-			BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
+			BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
 			for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
 				tAnnounce.addCoveredNode(tCEP.getPeerName());
 			}
@@ -168,12 +168,12 @@ public class ElectionProcess extends Thread
 			
 			Name tAddress = tNode.getRoutingService().getNameFor(tNode.getCentralFN());; 
 			
-			pCluster.setCoordinatorCEP(null, pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getLevel()), tNode.getCentralFN().getName(), (L2Address)tAddress);
+			pCluster.setCoordinatorCEP(null, pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), tNode.getCentralFN().getName(), (L2Address)tAddress);
 			if(pCluster.getHRMController().getIdentity() == null) {
-				pCluster.getHRMController().setIdentity(new HRMIdentity(getHRMController().getPhysicalNode().getName(), pCluster.getLevel()));
+				pCluster.getHRMController().setIdentity(new HRMIdentity(getHRMController().getPhysicalNode().getName(), pCluster.getHierarchyLevel()));
 			}
 			LinkedList<HRMSignature> tSignatures = tHRMController.getApprovedSignatures();
-			tSignatures.add(tHRMController.getIdentity().createSignature(tNode.toString(), null, pCluster.getLevel()));
+			tSignatures.add(tHRMController.getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()));
 			
 			if(mLevel > 0) {
 				pCluster.getHRMController().getLogger().log(pCluster, "has the coordinator and will now announce itself");
@@ -183,7 +183,7 @@ public class ElectionProcess extends Thread
 					 * OK: Because of the formerly sent 
 					 */
 					if(tToAnnounce instanceof NeighborCluster) {
-						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getLevel()), pCluster.getToken());
+						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
 						for(CoordinatorCEPDemultiplexed tCEP: pCluster.getParticipatingCEPs()) {
 							tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
 						}
@@ -209,12 +209,12 @@ public class ElectionProcess extends Thread
 				}
 			}
 			 */
-			mClusterManager = new Coordinator(pCluster, pCluster.getLevel()+1, pCluster.getHrmID());
+			mClusterManager = new Coordinator(pCluster, pCluster.getHierarchyLevel()+1, pCluster.getHrmID());
 			pCluster.setClusterManager(mClusterManager);
 			pCluster.getHRMController().setSourceIntermediateCluster(mClusterManager, pCluster);
 			mClusterManager.setPriority(pCluster.getPriority());
 			pCluster.getHRMController().addCluster(mClusterManager);
-			if(pCluster.getLevel() +1 != HRMConfig.Hierarchy.HEIGHT) {
+			if(pCluster.getHierarchyLevel() +1 != HRMConfig.Hierarchy.HEIGHT) {
 				// stepwise hierarchy creation
 				Logging.log(this, "Will now wait because hierarchy build up is done stepwise");
 				mWillInitiateManager = true;
@@ -222,7 +222,7 @@ public class ElectionProcess extends Thread
 					Logging.log(this, "Trigger");
 				}
 				Logging.log(this, "Reevaluating whether other processes settled");
-				ElectionManager.getElectionManager().reevaluate(pCluster.getLevel());
+				ElectionManager.getElectionManager().reevaluate(pCluster.getHierarchyLevel());
 				synchronized(this) {
 					try {
 						wait();
@@ -230,7 +230,7 @@ public class ElectionProcess extends Thread
 						Logging.err(this, "Unable to fulfill stepwise hierarchy preparation", tExc);
 					}
 				}
-				mClusterManager.prepareAboveCluster(pCluster.getLevel() +1);
+				mClusterManager.prepareAboveCluster(pCluster.getHierarchyLevel() +1);
 			} else {
 				Logging.log(this, "Beginning address distribution");
 				try {
@@ -314,7 +314,7 @@ public class ElectionProcess extends Thread
 						/*
 						 * For loop can be ignored as this can only happen in case we are above level one
 						 */
-						while((tCluster.getHRMController().getClusterWithCoordinatorOnLevel(tCluster.getLevel()) == null)) {
+						while((tCluster.getHRMController().getClusterWithCoordinatorOnLevel(tCluster.getHierarchyLevel()) == null)) {
 							tCluster.setHighestPriority(tCluster.getPriority());
 							Logging.log(tCluster, " did not yet receive an announcement");
 							for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
@@ -356,7 +356,7 @@ public class ElectionProcess extends Thread
 								((Cluster)tCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPDemultiplexed>) tCluster.getLaggards().clone());
 								tCluster.getLaggards().clear();
 							}
-							if(tCluster.getHRMController().getClusterWithCoordinatorOnLevel(tCluster.getLevel()) == null) {
+							if(tCluster.getHRMController().getClusterWithCoordinatorOnLevel(tCluster.getHierarchyLevel()) == null) {
 								checkClustersForHighestPriority(true);
 							} else {
 								break;
@@ -372,7 +372,7 @@ public class ElectionProcess extends Thread
 			run();
 		}
 		mInProgress = false;
-		ElectionManager.getElectionManager().removeElection(mElectingClusters.get(0).getLevel(), mElectingClusters.get(0).getClusterID());
+		ElectionManager.getElectionManager().removeElection(mElectingClusters.get(0).getHierarchyLevel(), mElectingClusters.get(0).getClusterID());
 	}
 	
 	private void restart()

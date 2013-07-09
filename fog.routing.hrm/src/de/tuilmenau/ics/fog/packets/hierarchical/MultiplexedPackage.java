@@ -37,10 +37,10 @@ public class MultiplexedPackage implements Serializable, Name
 	 */
 	public MultiplexedPackage(ICluster pSourceCluster, LinkedList<ClusterDummy> pDestinationCluster, Serializable pData)
 	{
-		mSourceClusterIdentification = ClusterDummy.compare(pSourceCluster.getClusterID(), pSourceCluster.getToken(), pSourceCluster.getLevel());
+		mSourceClusterIdentification = ClusterDummy.compare(pSourceCluster.getClusterID(), pSourceCluster.getToken(), pSourceCluster.getHierarchyLevel());
 		mDestinationClusterIdentification = new LinkedList<ClusterDummy>();
 		for(ICluster tCluster : pDestinationCluster) {
-			mDestinationClusterIdentification.add(ClusterDummy.compare(tCluster.getClusterID(), tCluster.getToken(), tCluster.getLevel()));
+			mDestinationClusterIdentification.add(ClusterDummy.compare(tCluster.getClusterID(), tCluster.getToken(), tCluster.getHierarchyLevel()));
 		}
 		mData = pData;
 	}

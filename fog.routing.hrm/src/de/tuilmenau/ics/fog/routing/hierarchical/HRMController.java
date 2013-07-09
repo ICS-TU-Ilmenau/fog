@@ -171,7 +171,7 @@ public class HRMController extends Application implements IServerCallback
 
 				if(tJoin.getLevel() > 0) {
 					for(ICluster tVirtualNode : getClusters()) {
-						if(tVirtualNode.getLevel() == tJoin.getLevel() - 1 && !(tVirtualNode instanceof Coordinator || tVirtualNode instanceof NeighborCluster)) {
+						if(tVirtualNode.getHierarchyLevel() == tJoin.getLevel() - 1 && !(tVirtualNode instanceof Coordinator || tVirtualNode instanceof NeighborCluster)) {
 							tCluster.setPriority(tVirtualNode.getPriority());
 						}
 					}
@@ -212,7 +212,7 @@ public class HRMController extends Application implements IServerCallback
 				tNewlyCreatedClusters.put(tAttachedCluster, tParticipate.getPredecessor());
 				mLogger.log(this, "as joining cluster");
 				for(ICluster tCandidate : getClusters()) {
-					if(tCandidate instanceof Cluster && tCandidate.getLevel() == tAttachedCluster.getLevel()) {
+					if(tCandidate instanceof Cluster && tCandidate.getHierarchyLevel() == tAttachedCluster.getHierarchyLevel()) {
 						setSourceIntermediateCluster(tAttachedCluster, (Cluster)tCandidate);
 					}
 				}
@@ -250,7 +250,7 @@ public class HRMController extends Application implements IServerCallback
 							if(tEntry.isInterASCluster()) tCluster.setInterASCluster();
 							tNewlyCreatedClusters.put(tCluster, tEntry.getPredecessor());
 							for(ICluster tCandidate : getClusters()) {
-								if(tCandidate instanceof Cluster && tCluster.getLevel() == tCandidate.getLevel()) {
+								if(tCandidate instanceof Cluster && tCluster.getHierarchyLevel() == tCandidate.getHierarchyLevel()) {
 									setSourceIntermediateCluster(tCluster, (Cluster)tCandidate);
 									mLogger.log(this, "as joining neighbor");
 								}
@@ -829,7 +829,7 @@ public class HRMController extends Application implements IServerCallback
 	{
 		LinkedList<IVirtualNode> tClusters = new LinkedList<IVirtualNode>();
 		for(IVirtualNode tNode : getClusterMap().getVertices()) {
-			if(tNode instanceof ICluster && ((ICluster) tNode).getLevel() == pLevel) {
+			if(tNode instanceof ICluster && ((ICluster) tNode).getHierarchyLevel() == pLevel) {
 				tClusters.add((ICluster) tNode);
 			}
 		}

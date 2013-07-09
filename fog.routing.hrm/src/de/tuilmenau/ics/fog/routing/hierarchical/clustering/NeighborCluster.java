@@ -241,7 +241,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public int getLevel() {
+	public int getHierarchyLevel() {
 		return mLevel;
 	}
 
@@ -347,9 +347,9 @@ public class NeighborCluster implements ICluster, IElementDecorator
 			ICluster tCluster = (ICluster) pObj;
 			if(tCluster.getClusterID().equals(getClusterID()) &&
 					tCluster.getToken() == getToken() &&
-					tCluster.getLevel() == getLevel()) {
+					tCluster.getHierarchyLevel() == getHierarchyLevel()) {
 				return true;
-			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getLevel() == getLevel()) {
+			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
 				return false;
 			} else if (tCluster.getClusterID().equals(getClusterID())) {
 				return false;
@@ -403,7 +403,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		for(CoordinatorCEPDemultiplexed tCEP : mAnnouncedCEPs) {
 			ICluster tRemoteCluster = tCEP.getRemoteCluster();
 			tRemoteCluster = getHRMController().getCluster(tRemoteCluster) != null ? getHRMController().getCluster(tRemoteCluster) : tRemoteCluster;
-			if(pCluster.getLevel() == tRemoteCluster.getLevel()) {
+			if(pCluster.getHierarchyLevel() == tRemoteCluster.getHierarchyLevel()) {
 				List<ClusterLink> tConnection = getHRMController().getClusterMap().getRoute(pCluster, tRemoteCluster);
 				int tDistance = 0;
 				if(tConnection != null) {

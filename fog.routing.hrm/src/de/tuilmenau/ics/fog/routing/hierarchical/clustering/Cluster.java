@@ -59,11 +59,11 @@ public class Cluster implements ICluster, IElementDecorator
 	private Long mClusterID;
 	private float mHighestPriority;
 	private HRMID mHRMID = null;
-	protected int mLevel;
-	protected float mPriority;
+	protected int mHierarchyLevel;
 	protected float mCoordinatorPriority;
 	protected Name mCoordName;
 	protected Name mCoordAddress;
+	protected BullyPriority mBullyPriority = null;
 	protected HRMController mHRMController;
 	protected LinkedList<CoordinatorCEPDemultiplexed> mCEPs;
 	protected LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
@@ -102,23 +102,25 @@ public class Cluster implements ICluster, IElementDecorator
 	public Cluster(Long pClusterID, int pLevel, HRMController ptHRMController, Logger pLogger)
 	{
 		mClusterID = pClusterID;
-		mLevel = pLevel;
+		mHierarchyLevel = pLevel;
 		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mSentAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mHRMController = ptHRMController;
-		mPriority = (float) getHRMController().getPhysicalNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
-		getHRMController().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mLevel + " with priority " + mPriority);
-		mLevel = pLevel;
+		mBullyPriority = new BullyPriority(getHRMController().getPhysicalNode(), getHierarchyLevel());
+		getHRMController().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getPriority());
+		mHierarchyLevel = pLevel;
 		for(ICluster tCluster : getHRMController().getClusters())
 		{
-			if(tCluster.getLevel() == pLevel && !(tCluster == this))
+			if(tCluster.getHierarchyLevel() == pLevel && (tCluster != this))
 			{
 				tCluster.addNeighborCluster(this);
-				mPriority *=10;
+
+				// increase Bully priority because of changed connectivity (topology depending)
+				mBullyPriority.increaseConnectivity();
 			}
 		}
-		ElectionProcess tProcess = ElectionManager.getElectionManager().addElection(mLevel, mClusterID, new ElectionProcess(mLevel));
+		ElectionProcess tProcess = ElectionManager.getElectionManager().addElection(mHierarchyLevel, mClusterID, new ElectionProcess(mHierarchyLevel));
 		tProcess.addElectingCluster(this);
 		mMux = new CoordinatorCEPMultiplexer(mHRMController);
 		mMux.setCluster(this);
@@ -134,7 +136,7 @@ public class Cluster implements ICluster, IElementDecorator
 		setToken(pAnnounce.getToken());
 		setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pCEP.getPeerName());
 		getHRMController().addApprovedSignature(pAnnounce.getCoordSignature());
-		getHRMController().setClusterWithCoordinator(getLevel(), this);
+		getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
 	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
@@ -150,7 +152,7 @@ public class Cluster implements ICluster, IElementDecorator
 				notifyAll();
 			}
 			setCoordinatorPriority(getPriority());
-			getHRMController().getPhysicalNode().setDecorationParameter("L"+ (mLevel+1));
+			getHRMController().getPhysicalNode().setDecorationParameter("L"+ (mHierarchyLevel+1));
 			getHRMController().getPhysicalNode().setDecorationValue("(" + pCoordSignature + ")");
 		} else {
 			synchronized(this) {
@@ -179,8 +181,8 @@ public class Cluster implements ICluster, IElementDecorator
 		for(ICluster tCluster : getNeighbors()) {
 			if(tCluster instanceof Cluster) {
 				getHRMController().getLogger().log(this, "Preparing neighbor zone announcement");
-				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, mLevel, pCoordSignature, pAddress, getToken(), mClusterID);
-				tAnnounce.setCoordinatorsPriority(mPriority);
+				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, mHierarchyLevel, pCoordSignature, pAddress, getToken(), mClusterID);
+				tAnnounce.setCoordinatorsPriority(mBullyPriority.getPriority()); //TODO : ???
 				if(pCoord != null) {
 					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoord.getRouteToPeer(), pCoord.getSourceName(), pCoord.getPeerName()));
 				}
@@ -212,7 +214,7 @@ public class Cluster implements ICluster, IElementDecorator
 			for(IVirtualNode tNode : getHRMController().getClusterMap().getNeighbors(this)) {
 				if(tNode instanceof ICluster && ((ICluster) tNode).isInterASCluster()) {
 //					tIsEdgeRouter = true;
-					tInterASClusterIdentifications.add(ClusterDummy.compare(((ICluster)tNode).getClusterID(), ((ICluster)tNode).getToken(), ((ICluster)tNode).getLevel()));
+					tInterASClusterIdentifications.add(ClusterDummy.compare(((ICluster)tNode).getClusterID(), ((ICluster)tNode).getToken(), ((ICluster)tNode).getHierarchyLevel()));
 				}
 			}
 		}
@@ -232,7 +234,7 @@ public class Cluster implements ICluster, IElementDecorator
 					pAnnounce.getCoordinatorName(),
 					pAnnounce.getCoordAddress(),
 					pAnnounce.getToken(),
-					mLevel,
+					mHierarchyLevel,
 					getHRMController());
 			getHRMController().setSourceIntermediateCluster(tCluster, this);
 			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
@@ -279,7 +281,7 @@ public class Cluster implements ICluster, IElementDecorator
 			Logging.log(this, "Received announcement of foreign cluster");
 		}
 		
-		if(getLevel() < 1) {
+		if(getHierarchyLevel() < 1) {
 			if(pCEP != null) {
 				if(!pCEP.getSourceName().equals(pCEP.getPeerName()) && pCEP.getRouteToPeer() != null) {
 					RoutingServiceLinkVector tLink = new RoutingServiceLinkVector(pCEP.getRouteToPeer().clone(),  pCEP.getSourceName(), pCEP.getPeerName());
@@ -292,11 +294,11 @@ public class Cluster implements ICluster, IElementDecorator
 				pCEP.addAnnouncedCluster(addAnnouncedCluster(pAnnounce, pCEP), getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
 			}
 		} else {
-			if(getHRMController().getClusterWithCoordinatorOnLevel(mLevel) == null) {
+			if(getHRMController().getClusterWithCoordinatorOnLevel(mHierarchyLevel) == null) {
 				/*
 				 * no coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getClusterManagers(mLevel)) {
+				for(Coordinator tManager : getHRMController().getClusterManagers(mHierarchyLevel)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						tManager.storeAnnouncement(pAnnounce);
 					}
@@ -305,7 +307,7 @@ public class Cluster implements ICluster, IElementDecorator
 				/*
 				 * coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getClusterManagers(mLevel)) {
+				for(Coordinator tManager : getHRMController().getClusterManagers(mHierarchyLevel)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						if(tManager.getCoordinatorCEP() != null) {
 							tManager.getCoordinatorCEP().write(pAnnounce);
@@ -358,18 +360,18 @@ public class Cluster implements ICluster, IElementDecorator
 	public void initiateElection()
 	{
 		try {
-			if(!ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).isStarted() && ! ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).getState().equals(Thread.State.RUNNABLE)) {
-				getHRMController().getLogger().log(this, "Election " + ElectionManager.getElectionManager().getProcess(mLevel, mClusterID) + " is running? " + (ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).isAlive()));
-				ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).start();
+			if(!ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).isStarted() && ! ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState().equals(Thread.State.RUNNABLE)) {
+				getHRMController().getLogger().log(this, "Election " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID) + " is running? " + (ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).isAlive()));
+				ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).start();
 			} else {
-				ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).interrupt();
+				ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).interrupt();
 			}
 		} catch (IllegalStateException tExc) {
-			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).getState(), tExc);
+			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState(), tExc);
 		} catch (IllegalMonitorStateException tExc) {
-			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).getState(), tExc);
+			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState(), tExc);
 		} catch (IllegalThreadStateException tExc) {
-			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mLevel, mClusterID).getState(), tExc);
+			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState(), tExc);
 		}
 		
 	}
@@ -387,12 +389,16 @@ public class Cluster implements ICluster, IElementDecorator
 				getHRMController().getClusterMap().storeLink(pNeighbor, this, tLink);
 			}
 			if(pNeighbor instanceof Cluster && !pNeighbor.isInterASCluster()) {
-				//TODO
-				mPriority *= 10;
+				
+				// increase Bully priority because of changed connectivity (topology depending) 
+				mBullyPriority.increaseConnectivity();
+				
 				if(!mInterASCluster) {
 					getHRMController().getLogger().log(this, "Informing " + getParticipatingCEPs() + " about change in priority and initiating new election");
-					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getPhysicalNode().getCentralFN().getName(), mPriority), (LinkedList<CoordinatorCEPDemultiplexed>)null);
-					getHRMController().getLogger().log(this, "Informed other clients about change of priority - it is now " + mPriority);
+					
+					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getPhysicalNode().getCentralFN().getName(), mBullyPriority.getPriority()), (LinkedList<CoordinatorCEPDemultiplexed>)null);
+					
+					getHRMController().getLogger().log(this, "Informed other clients about change of priority - it is now " + mBullyPriority.getPriority());
 				}
 			}
 		}
@@ -472,7 +478,7 @@ public class Cluster implements ICluster, IElementDecorator
 	
 	public void setPriority(float pPriority)
 	{
-		mPriority = pPriority;
+		mBullyPriority = new BullyPriority(pPriority);
 	}
 	
 	public float getNodePriority()
@@ -550,12 +556,12 @@ public class Cluster implements ICluster, IElementDecorator
 	
 	public String getClusterDescription()
 	{
-		return getHRMController().getPhysicalNode() + ":" + mClusterID + "@" + mLevel + "(" + mCoordSignature + ")";
+		return getHRMController().getPhysicalNode() + ":" + mClusterID + "@" + mHierarchyLevel + "(" + mCoordSignature + ")";
 	}
 	
 	public float getPriority()
 	{
-		return mPriority;
+		return mBullyPriority.getPriority();
 	}
 	
 	public Name getCoordinatorName()
@@ -563,9 +569,9 @@ public class Cluster implements ICluster, IElementDecorator
 		return mCoordName;
 	}
 	
-	public int getLevel()
+	public int getHierarchyLevel()
 	{
-		return mLevel;
+		return mHierarchyLevel;
 	}
 	
 	public int getGUIClusterID()
@@ -573,12 +579,13 @@ public class Cluster implements ICluster, IElementDecorator
 		return mGUIClusterID;
 	}
 	
+	@SuppressWarnings("unused")
 	public String toString()
 	{
 		if(mHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
 			return mHRMID.toString();
 		} else {
-			return "Cluster " + mGUIClusterID + "@L" + mLevel + " (ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getPriority() + ", Coord.=" +  (getCoordinatorSignature() != null ? getCoordinatorSignature() : "-") + (mInterASCluster ? ":transit" : "") + ")";
+			return "Cluster " + mGUIClusterID + "@L" + mHierarchyLevel + " (ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getPriority() + ", Coord.=" +  (getCoordinatorSignature() != null ? getCoordinatorSignature() : "-") + (mInterASCluster ? ":transit" : "") + ")";
 
 		}
 	}
@@ -622,9 +629,9 @@ public class Cluster implements ICluster, IElementDecorator
 			ICluster tCluster = (ICluster) pObj;
 			if(tCluster.getClusterID().equals(getClusterID()) &&
 					tCluster.getToken() == getToken() &&
-					tCluster.getLevel() == getLevel()) {
+					tCluster.getHierarchyLevel() == getHierarchyLevel()) {
 				return true;
-			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getLevel() == getLevel()) {
+			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
 				return false;
 			} else if (tCluster.getClusterID().equals(getClusterID())) {
 				return false;

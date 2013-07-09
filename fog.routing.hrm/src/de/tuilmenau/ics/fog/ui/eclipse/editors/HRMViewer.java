@@ -103,7 +103,7 @@ public class HRMViewer extends EditorPart
 			for (ICluster tEntry : mtHRMController.getClusters()) {
 				j++;
 				
-				if (tEntry.getLevel() == i) {
+				if (tEntry.getHierarchyLevel() == i) {
 					if (tEntry instanceof Cluster){
 						// a cluster
 						printCluster(tEntry);
@@ -271,7 +271,7 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			ElectionManager.getElectionManager().getProcess(mCluster.getLevel(), mCluster.getClusterID()).start();
+			ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel(), mCluster.getClusterID()).start();
 		}
 		
 	}
@@ -297,7 +297,7 @@ public class HRMViewer extends EditorPart
 			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(tProcess.toString());
 			}
-			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getLevel())) {
+			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel())) {
 				boolean tStartProcess=true;
 				for(ICluster tCluster : tProcess.getParticipatingClusters()) {
 					for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
@@ -336,7 +336,7 @@ public class HRMViewer extends EditorPart
 			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(tProcess.toString());
 			}
-			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getLevel())) {
+			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel())) {
 				synchronized(tProcess) {
 					 tProcess.notifyAll();
 				}
@@ -362,8 +362,8 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			synchronized(ElectionManager.getElectionManager().getProcess(mCluster.getLevel(), mCluster.getClusterID())) {
-				ElectionManager.getElectionManager().getProcess(mCluster.getLevel(), mCluster.getClusterID()).notifyAll();
+			synchronized(ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel(), mCluster.getClusterID())) {
+				ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel(), mCluster.getClusterID()).notifyAll();
 			}
 		}		
 	}	
@@ -381,7 +381,7 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			final Coordinator tManager = new Coordinator(mCluster, mCluster.getLevel() + 1, new HRMID(0));
+			final Coordinator tManager = new Coordinator(mCluster, mCluster.getHierarchyLevel() + 1, new HRMID(0));
 			new Thread() {
 	        	public void run()
 	        	{
@@ -746,7 +746,7 @@ public class HRMViewer extends EditorPart
 		int j = 0;
 
 		// on which hierarchy level are we?
-		int tHierarchyLevel = pCluster.getLevel();
+		int tHierarchyLevel = pCluster.getHierarchyLevel();
 
 		// FIB topology data from the coordinator/cluster
 		LinkedList<FIBEntry> tTopologyData = null;
