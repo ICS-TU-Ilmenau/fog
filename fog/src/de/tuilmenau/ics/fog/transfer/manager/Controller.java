@@ -507,7 +507,9 @@ public class Controller
 				
 				if(newGate != null) {
 					// debug test
-					if(cont == null) throw new RuntimeException(this +" - Internal error: " +newGate +" defined but no continuation.");
+					if(cont == null){
+						throw new RuntimeException(this +" - Internal error: " +newGate +" defined but no continuation.");
+					}
 					
 					// wait until we can send along the packet
 					addContinuation(newGate, cont.getProcess(), cont);
