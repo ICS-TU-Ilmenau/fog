@@ -528,7 +528,7 @@ public class RoutingServiceSimulated implements RoutingService
 	{
 		RoutingServiceAddress tFrom = getNameFor((ForwardingNode) pFrom);
 		
-		if(tFrom != null) {
+		if(tFrom == null) {
 			mLogger.log(this, "Source node " +pFrom +" of link " +pGate +" not known. Register it implicitly.");
 			registerNode((ForwardingNode)pFrom, null, NamingLevel.NONE, null);
 			
