@@ -458,7 +458,7 @@ public class HRMViewer extends EditorPart
 					/**
 					 * Column 0:  
 					 */
-					tRow.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
+					tRow.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "??"));
 					
 					/**
 					 * Column 1:  
@@ -473,12 +473,12 @@ public class HRMViewer extends EditorPart
 					if(tDummy != null) {
 						tFarthestCluster = mtHRMController.getCluster(tEntry.getFarthestClusterInDirection());
 					}
-					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "UNKNOWN"));
+					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "??"));
 					
 					/**
 					 * Column 3:  
 					 */
-					tRow.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "UNKNOWN"));
+					tRow.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "??"));
 					
 					/**
 					 * Column 4:  
@@ -487,12 +487,12 @@ public class HRMViewer extends EditorPart
 					if(tTargetString == null) {
 						tTargetString = tCoordinator.getPathToCoordinator(tCoordinator.getManagedCluster(), tCoordinator.getHRMController().getCluster(tEntry.getNextCluster())).toString();
 					}
-					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "UNKNOWN"));
+					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "??"));
 					
 					/**
 					 * Column 5:  
 					 */
-					tRow.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "UNKNOWN"));
+					tRow.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "??"));
 					
 					j++;
 				}
@@ -553,7 +553,7 @@ public class HRMViewer extends EditorPart
 					if (tCoordinator.getPathFromHRMID(tHRMID) != null){
 						tRow.setText(2, tCoordinator.getPathFromHRMID(tHRMID).toString());
 					}else{
-						tRow.setText(2, "UNKNOWN");
+						tRow.setText(2, "??");
 					}
 					
 					/**
@@ -834,7 +834,7 @@ public class HRMViewer extends EditorPart
 					/**
 					 * Column 0:  
 					 */
-					tRow.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "UNKNOWN"));
+					tRow.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "??"));
 
 					/**
 					 * Column 1:  
@@ -849,22 +849,22 @@ public class HRMViewer extends EditorPart
 					if(tDummy != null) {
 						tFarthestCluster = mtHRMController.getCluster(tEntry.getFarthestClusterInDirection());
 					}
-					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "UNKNOWN"));
+					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "??"));
 
 					/**
 					 * Column 3:  
 					 */
-					tRow.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "UNKNOWN"));
+					tRow.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "??"));
 					
 					/**
 					 * Column 4:  
 					 */
-					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "UNKNOWN"));
+					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "??"));
 					
 					/**
 					 * Column 5:  
 					 */
-					tRow.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "UNKNOWN"));
+					tRow.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "??"));
 					
 					j++;
 				}
