@@ -19,8 +19,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
 /**
- * 
- * This object is used to distribute the Forwarding Information Base to the members of the cluster
+ * PACKET: This packet is used to share topology data with other members of a cluster.
  */
 public class TopologyData implements Serializable
 {
