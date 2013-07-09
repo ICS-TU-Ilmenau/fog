@@ -66,7 +66,7 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	private Node mPhysicalNode; //TV
 	private HierarchicalRoutingService mHRS = null;
-	private RoutableClusterGraph<IVirtualNode, ClusterLink> mRoutableClusterGraph = new RoutableClusterGraph<IVirtualNode, ClusterLink>();
+	private RoutableClusterGraph<IRoutableClusterGraphNode, ClusterLink> mRoutableClusterGraph = new RoutableClusterGraph<IRoutableClusterGraphNode, ClusterLink>();
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
@@ -341,19 +341,19 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pCEPsToEvaluate list of connection end points that have to be chosen to the target
 	 * @return true if the path contains a node that is covered by another coordinator
 	 */
-	public boolean checkPathToTargetContainsCovered(IVirtualNode pSourceCluster, IVirtualNode pTargetCluster, LinkedList<CoordinatorCEPDemultiplexed> pCEPsToEvaluate)
+	public boolean checkPathToTargetContainsCovered(IRoutableClusterGraphNode pSourceCluster, IRoutableClusterGraphNode pTargetCluster, LinkedList<CoordinatorCEPDemultiplexed> pCEPsToEvaluate)
 	{
 		if(pSourceCluster == null || pTargetCluster == null) {
 			Logging.log(this, "checking cluster route between null and null");
 			return false;
 		}
-		RoutableClusterGraph<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
+		RoutableClusterGraph<IRoutableClusterGraphNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
 		List<ClusterLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		String tCheckedClusters = new String();
 		boolean isCovered = false;
 		for(ClusterLink tConnection : tClusterConnection) {
-			Collection<IVirtualNode> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
-			for(IVirtualNode tNode : tNodes) {
+			Collection<IRoutableClusterGraphNode> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
+			for(IRoutableClusterGraphNode tNode : tNodes) {
 				if(tNode instanceof ICluster) {
 					CoordinatorCEPDemultiplexed tCEPLookingFor = null;
 					for(CoordinatorCEPDemultiplexed tCEP : pCEPsToEvaluate) {
@@ -645,7 +645,7 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "Amount of found routing targets: " + mRoutableClusterGraph.getVertices().size());
 		}
 		int j = -1;
-		for(IVirtualNode tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
+		for(IRoutableClusterGraphNode tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
 			if (tRoutableGraphNode instanceof Cluster) {
 				Cluster tCluster = (Cluster)tRoutableGraphNode;
 				j++;
@@ -674,7 +674,7 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "Amount of found routing targets: " + mRoutableClusterGraph.getVertices().size());
 		}
 		int j = -1;
-		for(IVirtualNode tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
+		for(IRoutableClusterGraphNode tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
 			ICluster tCluster = (ICluster)tRoutableGraphNode;
 			j++;
 		
@@ -692,7 +692,7 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @return cluster map that is actually the graph that represents the network
 	 */
-	public RoutableClusterGraph<IVirtualNode, ClusterLink> getRoutableClusterGraph()
+	public RoutableClusterGraph<IRoutableClusterGraphNode, ClusterLink> getRoutableClusterGraph()
 	{
 		return mRoutableClusterGraph;
 	}
@@ -864,10 +864,10 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pLevel is the level at which a search for clusters is done
 	 * @return all virtual nodes that appear at the specified hierarchical level
 	 */
-	public LinkedList<IVirtualNode> getClusters(int pLevel)
+	public LinkedList<IRoutableClusterGraphNode> getClusters(int pLevel)
 	{
-		LinkedList<IVirtualNode> tClusters = new LinkedList<IVirtualNode>();
-		for(IVirtualNode tNode : getRoutableClusterGraph().getVertices()) {
+		LinkedList<IRoutableClusterGraphNode> tClusters = new LinkedList<IRoutableClusterGraphNode>();
+		for(IRoutableClusterGraphNode tNode : getRoutableClusterGraph().getVertices()) {
 			if(tNode instanceof ICluster && ((ICluster) tNode).getHierarchyLevel() == pLevel) {
 				tClusters.add((ICluster) tNode);
 			}

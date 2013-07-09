@@ -39,7 +39,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IVirtualNode;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IRoutableClusterGraphNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterLink;
@@ -53,7 +53,7 @@ import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.graph.RoutableGraph;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
-public class CoordinatorCEPDemultiplexed implements IVirtualNode
+public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 {
 	private static final long serialVersionUID = -8290946480171751216L;
 	private ICluster mRemoteCluster;
@@ -68,7 +68,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
 	private Logger mLogger = Logging.getInstance();
-	private BFSDistanceLabeler<IVirtualNode, ClusterLink> mBreadthFirstSearch;
+	private BFSDistanceLabeler<IRoutableClusterGraphNode, ClusterLink> mBreadthFirstSearch;
 	private boolean mCrossLevelCEP = false;
 	
 	/**
@@ -290,7 +290,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						/*
 						 * Find out if route request can be solved by this entity without querying a higher coordinator
 						 */
-						for(IVirtualNode tCluster : getHRMController().getClusters(0)) {
+						for(IRoutableClusterGraphNode tCluster : getHRMController().getClusters(0)) {
 							FIBEntry tEntry = tHRS.getFIBEntry( (HRMID) tRequest.getTarget());
 							if(tCluster instanceof Cluster && tEntry != null && (tEntry.getFarthestClusterInDirection() == null || tEntry.getFarthestClusterInDirection().equals(tCluster))) {
 								Route tRoute = tHRS.getRoutePath( getSourceName(), tRequest.getTarget(), new Description(), tNode.getIdentity());
@@ -703,12 +703,12 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteCluster());
 			}
 			if(mBreadthFirstSearch == null ) {
-				mBreadthFirstSearch = new BFSDistanceLabeler<IVirtualNode, ClusterLink>();
+				mBreadthFirstSearch = new BFSDistanceLabeler<IRoutableClusterGraphNode, ClusterLink>();
 			}
 			mBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), tSourceCluster);
-			List<IVirtualNode> tDiscoveryCandidates = mBreadthFirstSearch.getVerticesInOrderVisited();
+			List<IRoutableClusterGraphNode> tDiscoveryCandidates = mBreadthFirstSearch.getVerticesInOrderVisited();
 			if(tSourceCluster != null) {
-				for(IVirtualNode tVirtualNode : tDiscoveryCandidates) {
+				for(IRoutableClusterGraphNode tVirtualNode : tDiscoveryCandidates) {
 					if(tVirtualNode instanceof ICluster) {
 						ICluster tCluster = (ICluster) tVirtualNode;
 						

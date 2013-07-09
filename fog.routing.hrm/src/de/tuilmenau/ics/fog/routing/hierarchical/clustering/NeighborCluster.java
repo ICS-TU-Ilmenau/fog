@@ -286,7 +286,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	@Override
 	public LinkedList<ICluster> getNeighbors() {
 		LinkedList<ICluster> tCluster = new LinkedList<ICluster>();
-		for(IVirtualNode tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
+		for(IRoutableClusterGraphNode tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
 			if(tNode instanceof ICluster) {
 				tCluster.add((ICluster) tNode);
 			}
