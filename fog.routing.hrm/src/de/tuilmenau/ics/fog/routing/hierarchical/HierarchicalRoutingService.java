@@ -106,11 +106,6 @@ public class HierarchicalRoutingService implements RoutingService
 		mReferenceNode.getHost().registerApp(mHRMController);
 	}
 
-	public HRMController gettHRMController()
-	{
-		return mHRMController;
-	}
-
 	public void registerNode(L2Address pAddress, boolean pGloballyImportant)
 	{
 		mRoutingMap.add(pAddress);
@@ -121,7 +116,7 @@ public class HierarchicalRoutingService implements RoutingService
 		mNameMapping.registerName(pName, pAddress, NamingLevel.NAMES);
 	}
 
-	public class CoordinatorConnectEvent implements IEvent
+	private class CoordinatorConnectEvent implements IEvent
 	{
 		public CoordinatorConnectEvent(Name pName, long pToClusterID, boolean pConnectionToOtherAS)
 		{
@@ -261,7 +256,7 @@ public class HierarchicalRoutingService implements RoutingService
 		return tForwarding;
 	}
 	
-	public <LinkType> List<RoutingServiceLink> getRoute(RoutableGraph pMap, HRMName pSource, HRMName pDestination)
+	private <LinkType> List<RoutingServiceLink> getRoute(RoutableGraph pMap, HRMName pSource, HRMName pDestination)
 	{		
 		if(pMap.contains(pSource) && pMap.contains(pDestination)) {
 			List<LinkType> tRoute = null;
@@ -293,7 +288,7 @@ public class HierarchicalRoutingService implements RoutingService
 		return null;
 	}
 	
-	public <LinkType> List<LinkType> getRoute(HRMName pSource, HRMName pDestination, Description pDescription, Identity pIdentity)
+	private <LinkType> List<LinkType> getRoute(HRMName pSource, HRMName pDestination, Description pDescription, Identity pIdentity)
 	{
 		if(mRoutingMap.contains(pSource) && mRoutingMap.contains(pDestination)) {
 			List<LinkType> tRes = (List<LinkType>) getRoute(mRoutingMap, pSource, pDestination);
@@ -405,7 +400,7 @@ public class HierarchicalRoutingService implements RoutingService
 				}
 			}
 			
-			if(gettHRMController().containsIdentification((HRMID) pDestination)) {
+			if(mHRMController.containsIdentification((HRMID) pDestination)) {
 				return new Route();
 			}
 			HRMID tTarget = (HRMID) pDestination;
@@ -427,7 +422,7 @@ public class HierarchicalRoutingService implements RoutingService
 				
 				if(tLimitation != null) {
 					RouteRequest tRequest = new RouteRequest(null, tTarget, pRequirements, mRandomGenerator.nextLong());
-					gettHRMController().queryRoute(tRequest);
+					mHRMController.queryRoute(tRequest);
 					
 					for(RoutingServiceLinkVector tVector : tRequest.getRoutingVectors()) {
 						tRoute.addAll(tVector.getPath());
@@ -592,11 +587,11 @@ public class HierarchicalRoutingService implements RoutingService
 			Logging.log(this, "Not replacing " + tOldEntry.getDestination() + " with " + pEntry);
 			return false;
 		} else {
-			if(gettHRMController().getApprovedSignatures().contains(pEntry.getSignature())) {
+			if(mHRMController.getApprovedSignatures().contains(pEntry.getSignature())) {
 				mHopByHopRoutingMap.remove(pRoutingID);
 			}
 		}
-		if(gettHRMController().getApprovedSignatures().contains(pEntry.getSignature())) {
+		if(mHRMController.getApprovedSignatures().contains(pEntry.getSignature())) {
 			mHopByHopRoutingMap.put(pRoutingID, pEntry);
 			return true;
 		} else {
@@ -633,7 +628,7 @@ public class HierarchicalRoutingService implements RoutingService
 		return 0;
 	}
 	
-	public boolean checkForEncapsulation(L2Address pAddress, AddressingType pType)
+	private boolean checkForEncapsulation(L2Address pAddress, AddressingType pType)
 	{
 		if(pAddress.getCaps() != null) {
 			for(Property tProp : pAddress.getCaps()) {
@@ -648,7 +643,7 @@ public class HierarchicalRoutingService implements RoutingService
 		return false;
 	}
 	
-	public boolean checkForInterAS(L2Address pOne, L2Address pTwo)
+	private boolean checkForInterAS(L2Address pOne, L2Address pTwo)
 	{
 		AddressingTypeProperty tAddressingPropOne = null;
 		AddressingTypeProperty tAddressingPropTwo = null;
@@ -668,7 +663,7 @@ public class HierarchicalRoutingService implements RoutingService
 		return !tAddressingPropOne.getAS().equals(tAddressingPropTwo.getAS());
 	}
 	
-	public boolean checkPairForEncapsulation(L2Address pAddressOne, L2Address pAddressTwo, AddressingType pType)
+	private boolean checkPairForEncapsulation(L2Address pAddressOne, L2Address pAddressTwo, AddressingType pType)
 	{
 		boolean tCompare = checkForEncapsulation(pAddressOne, pType) && checkForEncapsulation(pAddressTwo, pType);
 		
@@ -684,7 +679,7 @@ public class HierarchicalRoutingService implements RoutingService
 	{
 		if(mSourceIdentification == null) {
 			NameMappingEntry<Name> tAddresses[] = null;
-			tAddresses = mNameMapping.getAddresses(gettHRMController().getPhysicalNode().getCentralFN().getName());
+			tAddresses = mNameMapping.getAddresses(mHRMController.getPhysicalNode().getCentralFN().getName());
 			for(NameMappingEntry<Name> tEntry : tAddresses) {
 				mSourceIdentification = tEntry.getAddress();
 			}
