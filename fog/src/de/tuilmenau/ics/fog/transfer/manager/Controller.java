@@ -918,16 +918,24 @@ public class Controller
 	
 	public static boolean checkGateDescr(AbstractGate pGate, Description pRequirements)
 	{
-		if(pRequirements != null) {
-			Description tMyRequ = pGate.getDescription();
-			
-			if(tMyRequ != null) {
-				return tMyRequ.equals(pRequirements);
-			} else {
+		Description tMyRequ = pGate.getDescription();
+		boolean isBEGate = false;
+		
+		if(tMyRequ == null) isBEGate = true;
+		else {
+			isBEGate = tMyRequ.isBestEffort();
+		}
+		
+		if(isBEGate) {
+			// check them only in an abstract way
+			if(pRequirements != null) {
 				return pRequirements.isBestEffort();
+			} else {
+				return true;
 			}
 		} else {
-			return true;
+			// check the descr. point by point
+			return tMyRequ.equals(pRequirements);
 		}
 	}
 	

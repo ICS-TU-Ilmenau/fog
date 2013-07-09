@@ -361,11 +361,7 @@ public class Description implements Iterable<Property>, Serializable
 		// empty list is equal to no description (both best effort)
 		if(obj == null) return isBestEffort();
 		
-		if(obj instanceof Description) {
-			if(isBestEffort() && ((Description) obj).isBestEffort()) {
-				return true;
-			}
-			
+		if(obj instanceof Description) {			
 			Description descr = (Description) obj;
 			Iterator<Property> tIterator = iterator();
 			Iterator<Property> tNewIterator = descr.iterator();
