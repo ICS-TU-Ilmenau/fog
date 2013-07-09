@@ -194,13 +194,15 @@ public class Coordinator implements ICluster, Observer
 
 		Logging.log(this, "Radius is " + tRadius);
 		for(int i = 1; i <= tRadius; i++) {
-			String tString = new String("Expanding in round " + i + ", possible clusters:");
-			for(ICluster tCluster : getHRMController().getClusters()) {
-				if(tCluster.getHierarchyLevel() == getHierarchyLevel() -1 && !(tCluster instanceof Coordinator)) {
+			
+			String tString = new String(">>> Expanding to radius (" + i + "/" + tRadius + ", possible clusters:");
+			for(Cluster tCluster : getHRMController().getRoutingTargetClusters()) {
+				if(tCluster.getHierarchyLevel() == getHierarchyLevel() - 1) {
 					tString += "\n" + tCluster.toString();
 				}
 			}
 			getLogger().log(this, tString);
+			
 			mBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), mManagedCluster);
 			mClustersToNotify = mBreadthFirstSearch.getVerticesInOrderVisited();
 			List<IVirtualNode> tClustersToNotify = new LinkedList<IVirtualNode>(); 
@@ -908,7 +910,7 @@ public class Coordinator implements ICluster, Observer
 	public String toString()
 	{
 		//return getClass().getSimpleName() + (mManagedCluster != null ? "(" + mManagedCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;
-		return "Coordinator " + mGUICoordinatorID + "@L" + mLevel + " " + (mManagedCluster != null ? "(ManagedCluster=" + mManagedCluster.getGUIClusterID() + ", ": "(" ) + "Tok=" +mToken + ", CoordSign=" + mCoordinatorSignature + ")";
+		return "Coordinator " + mGUICoordinatorID + "@L" + (mLevel - 1) + " " + (mManagedCluster != null ? "(ManagedCluster=" + mManagedCluster.getGUIClusterID() + ", ": "(" ) + "Tok=" +mToken + ", CoordSign=" + mCoordinatorSignature + ")";
 	}
 	
 	@Override
