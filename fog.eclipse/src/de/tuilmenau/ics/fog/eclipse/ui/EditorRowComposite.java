@@ -9,9 +9,12 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.eclipse.ui;
 
+import java.awt.event.ActionListener;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
@@ -19,6 +22,9 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Slider;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.IWorkbenchPartSite;
+
+import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
 
 
 /**
@@ -51,6 +57,51 @@ public class EditorRowComposite
 		protected Text mText = null;
 	}
 	
+	/**
+	 * Button with default action registered for object pValue
+	 */
+	public Button createRow(String pKey, String pText, Object pValue, IWorkbenchPartSite pSite)
+	{
+		Label tLbKey = new Label(parent, SWT.NONE);
+		tLbKey.setText(pKey);		
+		
+		Button tButton = new Button(parent, SWT.NONE);
+		tButton.setText(pText);	
+	    GridData tGridData = new GridData();
+	    tGridData.horizontalAlignment = SWT.FILL;
+	    tGridData.grabExcessHorizontalSpace = true;
+	    tGridData.horizontalSpan = 2;
+	    tButton.setLayoutData(tGridData);
+	    tButton.addListener(SWT.Selection, new SelectionListener(pValue, pSite));
+	    
+	    return tButton;
+	}
+	
+	private class SelectionListener implements Listener
+	{
+		public SelectionListener(Object pValue, IWorkbenchPartSite pSite)
+		{
+			mValue = pValue;
+			mSite = pSite;
+		}
+		
+		@Override
+		public void handleEvent(Event pEvent)
+		{
+			MenuCreator tMenu = new MenuCreator(mSite);
+			ActionListener action = tMenu.getDefaultAction(mValue);
+			if(action != null) {
+				action.actionPerformed(null);
+			} else {
+				//Logging.warn(this, "No default action for " +mValue);
+			}
+			
+		}
+		
+		private Object mValue;
+		private IWorkbenchPartSite mSite;
+	}
+
 	public void createRow(String prefix, String text, String postfix, int from, int to, int current, boolean enabled, SliderChangeListener listerner)
 	{
 		Label tLbPrefix = new Label(parent, SWT.NONE);
@@ -92,9 +143,6 @@ public class EditorRowComposite
 		tSlider.addListener(SWT.Selection, listerner);
 	}
 	
-	private Group parent;
-
-
 	public Label createRow(String pKey, String pValue) 
 	{
 		Label tLbKey = new Label(parent, SWT.NONE);
@@ -110,5 +158,7 @@ public class EditorRowComposite
 	    
 	    return tLbValue;
 	}
+	
+	private Group parent;
 }
 

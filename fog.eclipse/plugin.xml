@@ -61,6 +61,13 @@
             id="de.tuilmenau.ics.fog.grapheditor"
             name="FoG Graph Editor">
       </editor>
+      <editor
+            class="de.tuilmenau.ics.fog.eclipse.ui.editors.NodeEditor"
+            icon="icons/de.tuilmenau.ics.fog.gif"
+            id="de.tuilmenau.ics.fog.nodeeditor"
+            name="FoG Node Editor">
+      </editor>
+      
    </extension>
    
    <extension
@@ -75,7 +82,7 @@
          point="de.tuilmenau.ics.fog.hostApplications">
       <editor
             name="Open"
-            editorID="de.tuilmenau.ics.fog.grapheditor"
+            editorID="de.tuilmenau.ics.fog.nodeeditor"
             filter="de.tuilmenau.ics.fog.topology.Node"
             default="true">
       </editor>
@@ -91,13 +98,14 @@
             filter="de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService"
             default="true">
       </editor>
-      
       <editor
             name="Open"
             editorID="de.tuilmenau.ics.fog.buseditor"
             filter="de.tuilmenau.ics.fog.topology.Bus"
             default="true">
       </editor>
+      
+      
       <editor
             name="Open browser"
             editorID="de.tuilmenau.ics.fog.browser"
