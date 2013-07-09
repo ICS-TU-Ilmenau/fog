@@ -792,7 +792,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			}
 			
 			((NeighborCluster)tNewCluster).addAnnouncedCEP(this);
-			((NeighborCluster)tNewCluster).setClusterHopsOnOpposite(pEntry.getClusterHops(), this);
+//			((NeighborCluster)tNewCluster).setClusterHopsOnOpposite(pEntry.getClusterHops(), this);
 		}
 		if(pEntry.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tLink : pEntry.getRoutingVectors()) {

@@ -26,7 +26,7 @@ public class TopologyData implements Serializable
 	private static final long serialVersionUID = 8442835110014485795L;
 	private HRMID mHRMID = null;
 	private LinkedList<FIBEntry> mForwardingEntries;
-	private LinkedList<FIBEntry> mPushThrougs = null;
+//	private LinkedList<FIBEntry> mPushThrougs = null;
 	private LinkedList<HRMSignature> mApprovedSignatures = new LinkedList<HRMSignature>();
 	
 	public TopologyData()
@@ -82,25 +82,26 @@ public class TopologyData implements Serializable
 		return mForwardingEntries;
 	}
 	
-	/**
-	 * @deprecated This is an old way of pushing paths from one node to another one
-	 * @return list of FIBEntries that are use for long node-to-coordinator communication - those FIBEntries contained long paths
-	 */
-	public LinkedList<FIBEntry> getPushThrougs()
-	{
-		return mPushThrougs;
-	}
-	/**
-	 * @deprecated This is an old way of pushing paths from one node to another one
-	 * @param pEntry is a FIBEntry that is used for long node-to-coordinator communication - those FIBEntries contained long paths
-	 */
-	public void addPushThrough(FIBEntry pEntry)
-	{
-		if(mPushThrougs == null) {
-			mPushThrougs = new LinkedList<FIBEntry>();
-		}
-		mPushThrougs.add(pEntry);
-	}
+//	/**
+//	 * @deprecated This is an old way of pushing paths from one node to another one
+//	 * @return list of FIBEntries that are use for long node-to-coordinator communication - those FIBEntries contained long paths
+//	 */
+//	public LinkedList<FIBEntry> getPushThrougs()
+//	{
+//		return mPushThrougs;
+//	}
+//	
+//	/**
+//	 * @deprecated This is an old way of pushing paths from one node to another one
+//	 * @param pEntry is a FIBEntry that is used for long node-to-coordinator communication - those FIBEntries contained long paths
+//	 */
+//	public void addPushThrough(FIBEntry pEntry)
+//	{
+//		if(mPushThrougs == null) {
+//			mPushThrougs = new LinkedList<FIBEntry>();
+//		}
+//		mPushThrougs.add(pEntry);
+//	}
 	
 	/**
 	 * 
@@ -252,17 +253,17 @@ public class TopologyData implements Serializable
 			mSignature = pSignature;
 		}
 		
-		/**
-		 * 
-		 * @param pLink routing vector to reach the target
-		 */
-		public void addRoutingVector(RoutingServiceLinkVector pLink)
-		{
-			if(mRoutingVectors == null) {
-				mRoutingVectors = new LinkedList<RoutingServiceLinkVector>();
-			}
-			mRoutingVectors.add(pLink);
-		}
+//		/**
+//		 * 
+//		 * @param pLink routing vector to reach the target
+//		 */
+//		public void addRoutingVector(RoutingServiceLinkVector pLink)
+//		{
+//			if(mRoutingVectors == null) {
+//				mRoutingVectors = new LinkedList<RoutingServiceLinkVector>();
+//			}
+//			mRoutingVectors.add(pLink);
+//		}
 		
 		/**
 		 * 

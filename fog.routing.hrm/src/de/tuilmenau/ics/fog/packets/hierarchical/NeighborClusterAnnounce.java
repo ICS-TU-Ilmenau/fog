@@ -87,14 +87,14 @@ public class NeighborClusterAnnounce implements Serializable
 		mAnnouncerHasAddress = pAnnouncerHasAddress; 
 	}
 	
-	/**
-	 * 
-	 * @return true if the announcer already received an address
-	 */
-	public boolean hasAnnouncerAddress()
-	{
-		return mAnnouncerHasAddress;
-	}
+//	/**
+//	 * 
+//	 * @return true if the announcer already received an address
+//	 */
+//	public boolean hasAnnouncerAddress()
+//	{
+//		return mAnnouncerHasAddress;
+//	}
 
 	@Override
 	public String toString()

@@ -256,7 +256,7 @@ public class HRMController extends Application implements IServerCallback
 							if(getSourceIntermediate(tAttachedCluster) == null) {
 								mLogger.err(this, "No source intermediate cluster for" + tCluster.getClusterDescription() + " found");
 							}
-							((NeighborCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
+//							((NeighborCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
 							((NeighborCluster)tCluster).addAnnouncedCEP(tCEP);
 							Logging.log(this, "Created " +tCluster);
 						} else {
@@ -948,7 +948,7 @@ public class HRMController extends Application implements IServerCallback
 	{
 		try {
 			HRMID tForwardingHRMID = getHRS().getForwardingHRMID( (HRMID) pRequest.getTarget());
-			ICluster tForwardingCluster = getCluster(getHRS().getFIBEntry(tForwardingHRMID).getNextCluster());
+//			ICluster tForwardingCluster = getCluster(getHRS().getFIBEntry(tForwardingHRMID).getNextCluster());
 			
 			LinkedList<ICluster> tAllowedClusters = null;//getAllowedCluster(tForwardingCluster, tLimitation);
 			LinkedList<RouteRequest> tResults = new LinkedList<RouteRequest>();

@@ -61,7 +61,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	private Cluster mSourceIntermediateCluster = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
 	private boolean mInterASCluster = false;
-	private HashMap<CoordinatorCEPDemultiplexed, Integer> mClustersOnOppositeCounter = new HashMap<CoordinatorCEPDemultiplexed, Integer>();
+//	private HashMap<CoordinatorCEPDemultiplexed, Integer> mClustersOnOppositeCounter = new HashMap<CoordinatorCEPDemultiplexed, Integer>();
 //	private StackTraceElement[] mStackTrace = null;
 	
 	/**
@@ -415,16 +415,16 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		mAnnouncer = pAnnouncer;
 	}
 	
-	public int getClusterHopsOnAnnouncer(CoordinatorCEP pCEP)
-	{
-		return mClustersOnOppositeCounter.get(pCEP);
-	}
+//	public int getClusterHopsOnAnnouncer(CoordinatorCEP pCEP)
+//	{
+//		return mClustersOnOppositeCounter.get(pCEP);
+//	}
 	
-	public void setClusterHopsOnOpposite(int pClustersOnOpposite, CoordinatorCEPDemultiplexed pCEP)
-	{
-		mClustersOnOppositeCounter.put(pCEP, pClustersOnOpposite);
-//		mClusterHopsOnOpposite = pClustersOnOpposite;
-	}
+//	public void setClusterHopsOnOpposite(int pClustersOnOpposite, CoordinatorCEPDemultiplexed pCEP)
+//	{
+//		mClustersOnOppositeCounter.put(pCEP, pClustersOnOpposite);
+////		mClusterHopsOnOpposite = pClustersOnOpposite;
+//	}
 	
 	public void setSourceIntermediate(Cluster pIntermediate)
 	{

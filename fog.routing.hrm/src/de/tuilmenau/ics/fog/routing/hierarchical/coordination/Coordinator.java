@@ -1043,13 +1043,14 @@ public class Coordinator implements ICluster, Observer
 		 */
 		Node tNode = getHRMController().getPhysicalNode();
 		
-		if(pTopologyData.getPushThrougs() != null && !pTopologyData.getPushThrougs().isEmpty()) {
-			for(FIBEntry tEntry : pTopologyData.getPushThrougs()) {
-				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null && !tEntry.getNextHop().equals(tNode.getRoutingService().getNameFor(tNode.getCentralFN()))) {
-					getHRMController().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
-				}
-			}
-		}
+//TODO: still needed here?
+//		if(pTopologyData.getPushThrougs() != null && !pTopologyData.getPushThrougs().isEmpty()) {
+//			for(FIBEntry tEntry : pTopologyData.getPushThrougs()) {
+//				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null && !tEntry.getNextHop().equals(tNode.getRoutingService().getNameFor(tNode.getCentralFN()))) {
+//					getHRMController().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
+//				}
+//			}
+//		}
 		
 		if(pTopologyData.getApprovedSignatures() != null) {
 			for(HRMSignature tSignature : pTopologyData.getApprovedSignatures()) {

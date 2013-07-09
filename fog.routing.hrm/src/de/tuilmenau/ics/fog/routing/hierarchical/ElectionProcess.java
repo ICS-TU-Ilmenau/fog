@@ -307,7 +307,7 @@ public class ElectionProcess extends Thread
 							tCluster.setHighestPriority(tCluster.getPriority());
 							Logging.log(tCluster, " did not yet receive an announcement");
 							for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
-								RequestCoordinator tRequest = new RequestCoordinator(false);
+								RequestCoordinator tRequest = new RequestCoordinator(/* false */);
 								tCEP.write(tRequest);
 								synchronized(tRequest) {
 									if(!tRequest.mWasNotified)

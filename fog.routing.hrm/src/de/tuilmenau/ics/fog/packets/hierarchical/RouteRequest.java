@@ -92,13 +92,13 @@ public class RouteRequest implements Serializable
 		return mRoute;
 	}
 	
-	/**
-	 * Use this method to allow the accumulation of a route
-	 */
-	public void setRouteAccumulation()
-	{
-		mRouteAccumulation = true;
-	}
+//	/**
+//	 * Use this method to allow the accumulation of a route
+//	 */
+//	public void setRouteAccumulation()
+//	{
+//		mRouteAccumulation = true;
+//	}
 
 	/**
 	 * 
