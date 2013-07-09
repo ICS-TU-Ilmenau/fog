@@ -44,10 +44,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 
 /**
- * This class represents clusters that are directly attached to a physical node. In contrast to this class
- * there also exists the "neighbor cluster". Such clusters are representatives of clusters that are not
- * directly connected to a physical node. There is always one intermediate cluster between an attached cluster
- * and a physical node. Only on an intermediate cluster may be managed by a ClusterManager.
+ * This class represents a clusters on a defined hierarchy level.
  * 
  */
 public class Cluster implements ICluster, IElementDecorator
