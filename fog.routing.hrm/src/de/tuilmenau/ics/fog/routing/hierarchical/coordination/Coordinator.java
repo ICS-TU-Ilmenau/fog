@@ -1431,6 +1431,7 @@ public class Coordinator implements ICluster, Observer
 		/*
 		 * cluster manager does not need neighbors
 		 */
+		//TODO: remove this
 	}
 
 	@Override
