@@ -35,15 +35,6 @@ public class RoutingServiceLinkVector implements Serializable
 		mDestinationAddress = pDestination;
 	}
 	
-	public RoutingServiceLinkVector(GateID pGateID, HRMID pSource, HRMID pDestination)
-	{
-		mSourceAddress = pSource;
-		mDestinationAddress = pDestination;
-		Route tRoute = new Route();
-		tRoute.add(new RouteSegmentPath(pGateID));
-		mPath = tRoute; ;
-	}
-
 	public HRMName getSource()
 	{
 		return mSourceAddress;

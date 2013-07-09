@@ -19,19 +19,16 @@ import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.RoutingException;
-import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressLimitationProperty;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
@@ -134,26 +131,13 @@ public class SendPacket extends Command
 							if(tEntry.getAddress() instanceof HRMID) {
 								tTargetAddress =  (HRMID) tEntry.getAddress();
 								Route tRoute = new Route();
-								try {
-									if(tDescription == null) {
-										tRoute.add(new RouteSegmentAddress(tTargetAddress));
-									} else {
-										for(Property tProperty : tDescription) {
-											if(tProperty instanceof AddressLimitationProperty) {
-												tRoute = mNode.getRoutingService().getRoute(mNode.getCentralFN(), tTargetAddress, tDescription, null);
-											}
-										}
-									}
-									
-									Logging.log("Sending packet from " + mNode + " to " + tTarget);
-									sendHello(mNode, tRoute, tTargetNode);
-									break;
-								} catch (RoutingException tExc) {
-									Logging.err(this, "Unable to send from " + mNode + " to " + tTargetAddress + " with requirements " + tDescription, tExc);
-									continue;
-								}
+								if(tDescription == null) {
+									tRoute.add(new RouteSegmentAddress(tTargetAddress));
+								} 
 								
-
+								Logging.log("Sending packet from " + mNode + " to " + tTarget);
+								sendHello(mNode, tRoute, tTargetNode);
+								break;
 							}
 						}
 					}

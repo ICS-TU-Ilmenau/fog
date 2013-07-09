@@ -17,7 +17,6 @@ import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressLimitationProperty;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -34,7 +33,7 @@ public class RouteRequest implements Serializable
 	private Description mDescription;
 	private HRMName mSource;
 	private HRMName mTarget;
-	boolean mAnswer = false;
+	private boolean mAnswer = false;
 	private long mSession;
 	private LinkedList<RoutingServiceLinkVector> mRouteToTarget = null;
 	private boolean mInterASRequest;
@@ -181,36 +180,11 @@ public class RouteRequest implements Serializable
 	
 	/**
 	 * 
-	 * @param pTarget is the target a route to should be provided
-	 * @param pSession is the session this RouteRequest belongs to
-	 */
-	public RouteRequest(HRMID pTarget, long pSession)
-	{
-		mTarget = pTarget;
-		mSession = pSession;
-	}
-	
-	/**
-	 * 
 	 * @return target to which a route should be provided
 	 */
 	public HRMName getTarget()
 	{
 		return mTarget;
-	}
-	
-	/**
-	 * 
-	 * @return a limitation on possible clusters or nodes that are allowed or prohibited for the route
-	 */
-	public AddressLimitationProperty getLimitationProperty()
-	{
-		for(Property tProperty : mDescription) {
-			if(tProperty instanceof AddressLimitationProperty) {
-				return (AddressLimitationProperty) tProperty;
-			}
-		}
-		return null;
 	}
 	
 	/**
@@ -222,13 +196,13 @@ public class RouteRequest implements Serializable
 		return mDescription;
 	}
 	
-	/**
-	 * state the fact that the result would traverse multiple autonomous systems
-	 */
-	public void setInterASResult()
-	{
-		mInterASRequest = true;
-	}
+//	/**
+//	 * state the fact that the result would traverse multiple autonomous systems
+//	 */
+//	public void setInterASResult()
+//	{
+//		mInterASRequest = true;
+//	}
 	
 	/**
 	 * 

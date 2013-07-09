@@ -59,23 +59,22 @@ public class Cluster implements ICluster, IElementDecorator
 	private Long mClusterID;
 	private long mHighestPriority;
 	private HRMID mHRMID = null;
-	protected int mHierarchyLevel;
-	protected long mCoordinatorPriority;
-	protected Name mCoordName;
-	protected Name mCoordAddress;
-	protected BullyPriority mBullyPriority = null;
-	protected HRMController mHRMController;
-	protected LinkedList<CoordinatorCEPDemultiplexed> mCEPs;
-	protected LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
-	protected LinkedList<NeighborClusterAnnounce> mSentAnnounces = null;
-	protected HRMSignature mCoordSignature;
-	protected Route mRouteToCoordinator;
-	protected boolean mInterASCluster = false;
+	private int mHierarchyLevel;
+	private long mCoordinatorPriority;
+	private Name mCoordName;
+	private Name mCoordAddress;
+	private BullyPriority mBullyPriority = null;
+	private HRMController mHRMController;
+	private LinkedList<CoordinatorCEPDemultiplexed> mCEPs;
+	private LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
+	private LinkedList<NeighborClusterAnnounce> mSentAnnounces = null;
+	private HRMSignature mCoordSignature;
+	private boolean mInterASCluster = false;
 	private int mToken;
 	private int mAnnoucementCounter = 0;
 	private LinkedList<CoordinatorCEPDemultiplexed> mLaggards;
 	private static final long serialVersionUID = -2087553402508167474L;
-	protected CoordinatorCEPDemultiplexed mNegotiator = null;
+	private CoordinatorCEPDemultiplexed mNegotiator = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
 	private TopologyData mEnvelope = null;
 	private CoordinatorCEPDemultiplexed mAnnouncer = null;
@@ -223,7 +222,7 @@ public class Cluster implements ICluster, IElementDecorator
 		}
 	}
 	
-	public ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -409,13 +408,7 @@ public class Cluster implements ICluster, IElementDecorator
 		}
 	}
 	
-	public void setRouteToCoordinator(Route pPath)
-	{
-		getHRMController().getLogger().log(this, "Route to coordinator is now " + pPath);
-		mRouteToCoordinator = pPath;
-	}
-	
-	public void announceNeighborCoord(NeighborClusterAnnounce pAnnouncement, CoordinatorCEPDemultiplexed pCEP)
+	private void announceNeighborCoord(NeighborClusterAnnounce pAnnouncement, CoordinatorCEPDemultiplexed pCEP)
 	{
 		getHRMController().getLogger().log(this, "Handling " + pAnnouncement);
 		if(mCoordName != null)
@@ -760,13 +753,6 @@ public class Cluster implements ICluster, IElementDecorator
 		mClusterManager = pManager;
 	}
 	
-	public void handleRouteRequest(RouteRequest pRequest)
-	{
-		/*
-		 * moved entirely to cluster manager: switch is implemented in CoordinatorCEPDemultiplexed
-		 */
-	}
-
 	@Override
 	public synchronized CoordinatorCEPMultiplexer getMultiplexer()
 	{

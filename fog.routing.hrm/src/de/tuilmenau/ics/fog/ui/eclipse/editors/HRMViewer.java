@@ -260,11 +260,11 @@ public class HRMViewer extends EditorPart
 	 * Listener for electing coordinator for this cluster.
 	 * 
 	 */
-	public class ListenerElectCoordinator implements Listener
+	private class ListenerElectCoordinator implements Listener
 	{
 		private Cluster mCluster = null;
 		
-		public ListenerElectCoordinator(Cluster pCluster)
+		private ListenerElectCoordinator(Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -282,11 +282,11 @@ public class HRMViewer extends EditorPart
 	 * Listener for electing coordinators for all clusters on this hierarchy level. 
 	 *
 	 */
-	public class ListenerElectHierarchyLevelCoordinators implements Listener
+	private class ListenerElectHierarchyLevelCoordinators implements Listener
 	{
 		private Cluster mCluster = null;
 		
-		public ListenerElectHierarchyLevelCoordinators(Cluster pCluster)
+		private ListenerElectHierarchyLevelCoordinators(Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -321,11 +321,11 @@ public class HRMViewer extends EditorPart
 	 * Listener for clustering the network on a defined hierarchy level. 
 	 *
 	 */
-	public class ListenerClusterHierarchyLevel implements Listener
+	private class ListenerClusterHierarchyLevel implements Listener
 	{
 		private Cluster mCluster = null;
 		
-		public ListenerClusterHierarchyLevel(Cluster pCluster)
+		private ListenerClusterHierarchyLevel(Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -351,11 +351,11 @@ public class HRMViewer extends EditorPart
 	 * Listener for clustering the network, including the current cluster's coordinator and its siblings. 
 	 *
 	 */
-	public class ListenerClusterHierarchy implements Listener
+	private class ListenerClusterHierarchy implements Listener
 	{
 		private Cluster mCluster = null;
 		
-		public ListenerClusterHierarchy(Cluster pCluster)
+		private ListenerClusterHierarchy(Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -370,11 +370,11 @@ public class HRMViewer extends EditorPart
 		}		
 	}	
 
-	public class AddressDistributionListener implements Listener
+	private class AddressDistributionListener implements Listener
 	{
 		private Cluster mCluster = null;
 		
-		public AddressDistributionListener(Cluster pCluster)
+		private AddressDistributionListener(Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
@@ -793,7 +793,7 @@ public class HRMViewer extends EditorPart
 			}
 		    
 		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem4.setText("[Cluster level " + tHierarchyLevel + " coordiantors]");
+		    toolItem4.setText("[Cluster all level " + tHierarchyLevel + " coordinators]");
 		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(tCluster));
 		    
 		    ToolItem toolItem5 = new ToolItem(tToolbar, SWT.PUSH);

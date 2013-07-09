@@ -45,7 +45,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IVirtualNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterLink;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressLimitationProperty;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMIPMapper;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -127,34 +126,34 @@ public class Coordinator implements ICluster, Observer
 		Logging.log(this, "Creating coordinator instance on hierarchy level " + mLevel);
 	}
 	
-	public void addIgnoreEntry(Name pEntry)
-	{
-		if(mIgnoreOnAddressDistribution == null) {
-			mIgnoreOnAddressDistribution = new LinkedList<Name>();
-			mIgnoreOnAddressDistribution.add(pEntry);
-		} else {
-			mIgnoreOnAddressDistribution.add(pEntry);
-		}
-	}
-	
-	public void addIgnoreEntries(Collection<Name> pEntries)
-	{
-		if(mIgnoreOnAddressDistribution == null ) {
-			mIgnoreOnAddressDistribution = new LinkedList<Name>();
-			if(pEntries != null) {
-				mIgnoreOnAddressDistribution.addAll(pEntries);
-			}
-		} else {
-			if(pEntries != null) {
-				mIgnoreOnAddressDistribution.addAll(pEntries);
-			}
-		}
-	}
-	
-	public static BigInteger generateAdress(int pLevel, BigInteger pValue)
-	{
-		return pValue.shiftLeft(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * pLevel);
-	}
+//	public void addIgnoreEntry(Name pEntry)
+//	{
+//		if(mIgnoreOnAddressDistribution == null) {
+//			mIgnoreOnAddressDistribution = new LinkedList<Name>();
+//			mIgnoreOnAddressDistribution.add(pEntry);
+//		} else {
+//			mIgnoreOnAddressDistribution.add(pEntry);
+//		}
+//	}
+//	
+//	public void addIgnoreEntries(Collection<Name> pEntries)
+//	{
+//		if(mIgnoreOnAddressDistribution == null ) {
+//			mIgnoreOnAddressDistribution = new LinkedList<Name>();
+//			if(pEntries != null) {
+//				mIgnoreOnAddressDistribution.addAll(pEntries);
+//			}
+//		} else {
+//			if(pEntries != null) {
+//				mIgnoreOnAddressDistribution.addAll(pEntries);
+//			}
+//		}
+//	}
+//	
+//	public static BigInteger generateAdress(int pLevel, BigInteger pValue)
+//	{
+//		return pValue.shiftLeft(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * pLevel);
+//	}
 	
 	public void storeAnnouncement(NeighborClusterAnnounce pAnnounce)
 	{
@@ -171,12 +170,12 @@ public class Coordinator implements ICluster, Observer
 		return mBouncedAnnounces;
 	}
 	
-	public void setHierarchicalLevelID(int pLevel, int pID)
-	{
-		mHRMID.setLevelAddress(pLevel, BigInteger.valueOf(pID));
-	}
+//	public void setHierarchicalLevelID(int pLevel, int pID)
+//	{
+//		mHRMID.setLevelAddress(pLevel, BigInteger.valueOf(pID));
+//	}
 	
-	public HRMID generateNextAddress()
+	private HRMID generateNextAddress()
 	{
 		HRMID tID = mHRMID.clone();
 		BigInteger tAddress = BigInteger.valueOf(++mLastUsedAddress);
@@ -246,14 +245,14 @@ public class Coordinator implements ICluster, Observer
 		return null;
 	}
 	
-	public void addApprovedSignature(HRMSignature pSignature)
+	private void addApprovedSignature(HRMSignature pSignature)
 	{
 		if(!mSignatures.contains(pSignature)) {
 			mSignatures.add(pSignature);
 		}
 	}
 	
-	public IVirtualNode getFarthestVirtualNodeInDirection(IVirtualNode pSource, IVirtualNode pTarget)
+	private IVirtualNode getFarthestVirtualNodeInDirection(IVirtualNode pSource, IVirtualNode pTarget)
 	{
 		List<ClusterLink> tList = getHRMController().getRoutableClusterGraph().getRoute(pSource, pTarget);
 
@@ -874,7 +873,7 @@ public class Coordinator implements ICluster, Observer
 		}
 	}
 	
-	public boolean connectToNeighbors(int radius)
+	private boolean connectToNeighbors(int radius)
 	{
 		for(IVirtualNode tNode : mClustersToNotify) {
 			if(tNode instanceof ICluster && !((ICluster) tNode).isInterASCluster()) {
@@ -1030,7 +1029,7 @@ public class Coordinator implements ICluster, Observer
 		return mCoordinatorSignature;
 	}
 	
-	public void registerFIBEntry(FIBEntry pEntry)
+	private void registerFIBEntry(FIBEntry pEntry)
 	{
 		mIDToFIBMapping.put(pEntry.getDestination(), pEntry);
 		ICluster tTargetCluster = null;
@@ -1307,7 +1306,7 @@ public class Coordinator implements ICluster, Observer
 		}
 	}
 	
-	public ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -1446,12 +1445,12 @@ public class Coordinator implements ICluster, Observer
 		return mHRMID;
 	}
 	
-	public void includeCluster(NeighborCluster pAttached)
-	{
-		if(!mTokens.contains(pAttached.getToken())) {
-			mTokens.add(pAttached.getToken());
-		}
-	}
+//	public void includeCluster(NeighborCluster pAttached)
+//	{
+//		if(!mTokens.contains(pAttached.getToken())) {
+//			mTokens.add(pAttached.getToken());
+//		}
+//	}
 
 	@Override
 	public void update(Observable pO, Object pArg) {
@@ -1563,15 +1562,15 @@ public class Coordinator implements ICluster, Observer
 		return mEnvelope;
 	}
 	
-	public int getBorderToken(HRMID pHRMID)
-	{
-		if(mIDToFIBMapping.containsKey(pHRMID)) {
-			return mIDToFIBMapping.get(pHRMID).getBorderIdentification();
-		}
-		return 0;
-	}
-	
-	public HRMSignature getSignatureOfPath(HRMID tHRMID)
+//	public int getBorderToken(HRMID pHRMID)
+//	{
+//		if(mIDToFIBMapping.containsKey(pHRMID)) {
+//			return mIDToFIBMapping.get(pHRMID).getBorderIdentification();
+//		}
+//		return 0;
+//	}
+//	
+	private HRMSignature getSignatureOfPath(HRMID tHRMID)
 	{
 		if(mIDToFIBMapping.containsKey(tHRMID) && mIDToFIBMapping.get(tHRMID).getSignature() != null) {
 			return mIDToFIBMapping.get(tHRMID).getSignature();
@@ -1592,7 +1591,7 @@ public class Coordinator implements ICluster, Observer
 			}
 	}
 	
-	public void map(HRMID pHRMID, IVirtualNode pToVirtualNode)
+	private void map(HRMID pHRMID, IVirtualNode pToVirtualNode)
 	{
 		getLogger().log(this, "Mapping HRMID " + pHRMID + " to " + pToVirtualNode);
 		// Check if this is safe
@@ -1682,7 +1681,6 @@ public class Coordinator implements ICluster, Observer
 					/*
 					 * end of the recursion
 					 */
-					AddressLimitationProperty tLimitation = tParameterRouteRequest.getLimitationProperty();
 					getLogger().log(tManager, "Reached highest cluster");
 					final HRMID tLocalTarget = ((HRMID) (tParameterRouteRequest.getTarget())).clone();
 					for(int i = 0; i < mLevel-1; i++) {
@@ -1690,27 +1688,6 @@ public class Coordinator implements ICluster, Observer
 					}
 					LinkedList<IVirtualNode> tNodesToIgnore = new LinkedList<IVirtualNode>();
 					
-					if(tLimitation.getType().equals(AddressLimitationProperty.LIST_TYPE.RESTRICTIVE)) {
-						tNodesToIgnore = getHRMController().getClusters(mManagedCluster.getHierarchyLevel()-1);
-					}
-					
-					for(HierarchyLevelLimitationEntry tEntry : tParameterRouteRequest.getLimitationProperty().getEntries()) {
-						if(tEntry.getAddress() instanceof HRMID) {
-							HRMID tNodeToIgnore =  (HRMID) tEntry.getAddress();
-							
-							if(getVirtualNodeFromHRMID(tNodeToIgnore) != null && tLimitation.getType().equals(AddressLimitationProperty.LIST_TYPE.OBSTRUCTIVE)) {
-								if(getVirtualNodeFromHRMID(tNodeToIgnore) instanceof ICluster) {
-									ICluster tToIngore = (ICluster) getVirtualNodeFromHRMID(tNodeToIgnore);
-									tNodesToIgnore.add(tToIngore);
-								}
-							} else if(getVirtualNodeFromHRMID(tNodeToIgnore) != null && tLimitation.getType().equals(AddressLimitationProperty.LIST_TYPE.RESTRICTIVE)) {
-								if(getVirtualNodeFromHRMID(tNodeToIgnore) instanceof ICluster) {
-									ICluster tNotToIngore = (ICluster) getVirtualNodeFromHRMID(tNodeToIgnore);
-									tNodesToIgnore.remove(tNotToIngore);
-								}
-							}
-						}
-					}
 					List<ClusterLink> tClusterConnection = null;; 
 					try {
 						Logging.log(tManager, "Invalidating nodes " + tNodesToIgnore);
@@ -1752,19 +1729,6 @@ public class Coordinator implements ICluster, Observer
 								for(CoordinatorCEPDemultiplexed tCEP : getManagedCluster().getParticipatingCEPs()) {
 									if(tCEP.getRemoteCluster().equals(tLastCluster)) {
 										getLogger().log(tManager, "About to ask route from " + tLastCluster + " to " + tCluster);
-										Description tDescription = new Description();
-										HierarchyLevelLimitationEntry tSource = new HierarchyLevelLimitationEntry(tLastCluster.getCoordinatorsAddress(), true, tLastCluster.getHierarchyLevel());
-										HierarchyLevelLimitationEntry tTarget = new HierarchyLevelLimitationEntry(tCluster.getCoordinatorsAddress(), true, tCluster.getHierarchyLevel());
-										
-										LinkedList<HierarchyLevelLimitationEntry> tEntries = new LinkedList<HierarchyLevelLimitationEntry>();
-										tEntries.add(tSource);
-										tEntries.add(tTarget);
-										AddressLimitationProperty tLimitationProperty = new AddressLimitationProperty(tEntries, tParameterRouteRequest.getLimitationProperty().getType());
-										try {
-											tDescription.add(tLimitationProperty);
-										} catch (PropertyException tExc) {
-											getLogger().err(this, "Unable to fulfill requirements", tExc);
-										}
 										RouteRequest tRequest = new RouteRequest(tLastCluster.getCoordinatorsAddress(), tCluster.getCoordinatorsAddress(), null, 0);
 										tRequest.addRequiredCluster(new ClusterDummy(tLastCluster.getToken(), tLastCluster.getClusterID(), tLastCluster.getHierarchyLevel()));
 

@@ -34,10 +34,10 @@ public class HRMName implements Name
 	/**
 	 * This description includes the requirements given by the FoG system. 
 	 */
-	protected Description mDescription;
+	private Description mDescription;
 	
 	private static final long serialVersionUID = 6612145890128148511L;
-	public static final Namespace NAMESPACE_HRM = new Namespace("HRM");
+	private static final Namespace NAMESPACE_HRM = new Namespace("HRM");
 	
 	/**
 	 * 
@@ -46,17 +46,6 @@ public class HRMName implements Name
 	public HRMName(BigInteger pAddress)
 	{
 		mAddress = pAddress;
-	}
-	
-	/**
-	 * Use this if you have to use the addresses twice.
-	 * 
-	 * @param pName
-	 */
-	public HRMName(HRMName pName)
-	{
-		mAddress = pName.mAddress;
-		mOptionalDescr = pName.mOptionalDescr;
 	}
 	
 	/**

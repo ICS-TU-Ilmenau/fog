@@ -199,31 +199,31 @@ public class HierarchicalRoutingService implements RoutingService
 		return tIntermediateNodes;
 	}
 	
-	public HRMID getMostSimilarForwardingEntry(HRMID pToCompare) throws RemoteException
-	{
-		/*
-		 * find first segment where source address differs from destination address
-		 */
-		NameMappingService tNMS = null;
-		try {
-			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(mReferenceNode.getAS().getSimulation());
-			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-		}
-		
-		HRMID tMyIdentification = null;
-		int tHighestDescendingDifference = HRMConfig.Hierarchy.HEIGHT - 1;
-		
-		for(NameMappingEntry tEntry : tNMS.getAddresses(mReferenceNode.getCentralFN().getName())) {
-			if(((HRMID)tEntry.getAddress()).getDescendingDifference(pToCompare) < tHighestDescendingDifference) {
-				tHighestDescendingDifference = ((HRMID)tEntry.getAddress()).getDescendingDifference(pToCompare);
-				tMyIdentification = ((HRMID)tEntry.getAddress()).clone();
-			}
-		}
-		return tMyIdentification;
-	}
-	
+//	public HRMID getMostSimilarForwardingEntry(HRMID pToCompare) throws RemoteException
+//	{
+//		/*
+//		 * find first segment where source address differs from destination address
+//		 */
+//		NameMappingService tNMS = null;
+//		try {
+//			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
+//		} catch (RuntimeException tExc) {
+//			HierarchicalNameMappingService.createGlobalNameMappingService(mReferenceNode.getAS().getSimulation());
+//			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
+//		}
+//		
+//		HRMID tMyIdentification = null;
+//		int tHighestDescendingDifference = HRMConfig.Hierarchy.HEIGHT - 1;
+//		
+//		for(NameMappingEntry tEntry : tNMS.getAddresses(mReferenceNode.getCentralFN().getName())) {
+//			if(((HRMID)tEntry.getAddress()).getDescendingDifference(pToCompare) < tHighestDescendingDifference) {
+//				tHighestDescendingDifference = ((HRMID)tEntry.getAddress()).getDescendingDifference(pToCompare);
+//				tMyIdentification = ((HRMID)tEntry.getAddress()).clone();
+//			}
+//		}
+//		return tMyIdentification;
+//	}
+//	
 	public HRMID getForwardingHRMID(HRMID pTarget) throws RemoteException
 	{
 		/*
@@ -391,15 +391,6 @@ public class HierarchicalRoutingService implements RoutingService
 				}
 			}
 			
-			AddressLimitationProperty tLimitation = null;
-			if(pRequirements != null) {
-				for(Property tProperty : pRequirements) {
-					if(tProperty instanceof AddressLimitationProperty) {
-						tLimitation = (AddressLimitationProperty) tProperty;
-					}
-				}
-			}
-			
 			if(mHRMController.containsIdentification((HRMID) pDestination)) {
 				return new Route();
 			}
@@ -418,20 +409,6 @@ public class HierarchicalRoutingService implements RoutingService
 				HRMName tForwardingEntity = null;
 				if(tFIBEntry != null) {
 					tForwardingEntity = tFIBEntry.getNextHop();
-				}
-				
-				if(tLimitation != null) {
-					RouteRequest tRequest = new RouteRequest(null, tTarget, pRequirements, mRandomGenerator.nextLong());
-					mHRMController.queryRoute(tRequest);
-					
-					for(RoutingServiceLinkVector tVector : tRequest.getRoutingVectors()) {
-						tRoute.addAll(tVector.getPath());
-					}
-					if(tRequest.getResult().equals(ResultType.SUCCESS)) {
-						return tRoute;
-					} else {
-						throw new RoutingException("Unable to calculate route from " + pSource + " to " + pDestination + " with requirements " + pRequirements);
-					}
 				}
 				
 				List<Route> tPath = getCoordinatorRoutingMap().getRoute(tSource, tForwardingEntity);
@@ -488,36 +465,6 @@ public class HierarchicalRoutingService implements RoutingService
 		return tRes;
 	}
 
-	public class ForwardingEntry implements Serializable
-	{
-		private static final long serialVersionUID = -5489168095604421455L;
-		public ForwardingEntry(int pLevel, Name pNextHop, int pHierarchicalIdentifier)
-		{
-			mLevel = pLevel;
-			mNextHop = pNextHop;
-			mHierarchicalIdentifier = pHierarchicalIdentifier;
-		}
-		
-		public int getLevel()
-		{
-			return mLevel;
-		}
-		
-		public Name getForwarder()
-		{
-			return mNextHop;
-		}
-		
-		public int getHierarchicalIdentifier()
-		{
-			return mHierarchicalIdentifier;
-		}
-		
-		private int mLevel;
-		private Name mNextHop;
-		private int mHierarchicalIdentifier;
-	}
-		
 	public RoutableGraph<HRMName, Route> getCoordinatorRoutingMap()
 	{
 		return mCoordinatorRoutingMap;
@@ -605,11 +552,11 @@ public class HierarchicalRoutingService implements RoutingService
 		return mHopByHopRoutingMap;
 	}
 	
-	public void deleteRoutingEntry(HRMID pRoutingID)
-	{
-		mHopByHopRoutingMap.remove(pRoutingID);
-	}
-	
+//	public void deleteRoutingEntry(HRMID pRoutingID)
+//	{
+//		mHopByHopRoutingMap.remove(pRoutingID);
+//	}
+//	
 	@Override
 	public int getNumberVertices()
 	{

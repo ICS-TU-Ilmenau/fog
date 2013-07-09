@@ -26,18 +26,6 @@ public class AddressingTypeProperty extends AbstractProperty
 	 * 
 	 */
 	private static final long serialVersionUID = 1582901513075074005L;
-	/**
-	 * Please provide the type of the address that can be either AddressingType.DataLinkLayer, AddressingType.Hierarchical
-	 * or AddressingType.IP.
-	 * 
-	 * @param pType Fill in the type of the address you are about to provide here.
-	 * @param pAddress 
-	 */
-	public AddressingTypeProperty(AddressingType pType, Name pAddress)
-	{
-		mType = pType;
-		mAddress = pAddress;
-	}
 
 	/**
 	 * 

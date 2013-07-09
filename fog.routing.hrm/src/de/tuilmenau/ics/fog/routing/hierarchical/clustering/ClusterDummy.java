@@ -160,18 +160,6 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public void initiateElection()
-	{
-		
-	}
-
-	@Override
-	public void interruptElection()
-	{
-		
-	}
-
-	@Override
 	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 	}

@@ -45,22 +45,20 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	private static final long serialVersionUID = -8746079632866375924L;
 //	private LinkedList<RoutingServiceLinkVector> mVectors;
 	private int mToken;
-	protected int mLevel;
-	protected long mPriority;
-	protected long mHighestPriority;
-	protected long mCoordinatorPriority;
-	protected Name mCoordName;
-	protected HRMName mCoordAddress;
-	protected L2Address mNegotiatingHost;
-	protected Long mClusterID;
-	protected HRMController mHRMController;
-	protected CoordinatorCEP mCEP;
-	protected HRMSignature mCoordSignature;
-	protected Route mRouteToCoordinator;
-	protected HRMID mHRMID;
-	protected Name mAnnouncer;
-	protected LinkedList<CoordinatorCEPDemultiplexed> mAnnouncedCEPs;
-	protected CoordinatorCEPDemultiplexed mNegotiator=null;
+	private int mLevel;
+	private long mPriority;
+	private long mCoordinatorPriority;
+	private Name mCoordName;
+	private HRMName mCoordAddress;
+	private Long mClusterID;
+	private HRMController mHRMController;
+	//protected CoordinatorCEP mCEP;
+	private HRMSignature mCoordSignature;
+	//protected Route mRouteToCoordinator;
+	private HRMID mHRMID;
+	private Name mAnnouncer;
+	private LinkedList<CoordinatorCEPDemultiplexed> mAnnouncedCEPs;
+	private CoordinatorCEPDemultiplexed mNegotiator = null;
 //	private int mClusterHopsOnOpposite;
 	private Cluster mSourceIntermediateCluster = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
@@ -183,10 +181,10 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		getHRMController().getRoutableClusterGraph().storeLink(this,	pNeighbor, new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK));
 	}
 
-	public void setRouteToCoordinator(Route pPath)
-	{
-		mRouteToCoordinator = pPath;
-	}
+//	public void setRouteToCoordinator(Route pPath)
+//	{
+//		mRouteToCoordinator = pPath;
+//	}
 
 	public void setHRMID(HRMID pHRMID)
 	{

@@ -91,7 +91,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	 * @param pBullyPacket
 	 * @return true if the packet left the central multiplexer and the forwarding node that is attached to a direct down gate
 	 */
-	public boolean handleBullyPacket(SignalingMessageBully pPacketBully) throws NetworkException
+	private boolean handleBullyPacket(SignalingMessageBully pPacketBully) throws NetworkException
 	{
 		Node tNode = getHRMController().getPhysicalNode();
 
@@ -480,14 +480,14 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		return true;
 	}
 	
-	/**
-	 * @deprecated
-	 * If this CEP is used for communication between different hierarchical levels: for use of HRM+BGP
-	 */
-	public void setCrossLayerCEP()
-	{
-		mCrossLevelCEP = true;
-	}
+//	/**
+//	 * @deprecated
+//	 * If this CEP is used for communication between different hierarchical levels: for use of HRM+BGP
+//	 */
+//	public void setCrossLayerCEP()
+//	{
+//		mCrossLevelCEP = true;
+//	}
 	
 	/**
 	 * 
@@ -525,7 +525,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	 * @throws NetworkException 
 	 * @throws PropertyException in case the requirements to the target coordinator can not be fulfilled
 	 */
-	public void getPathTo(NestedDiscovery pDiscovery, ICluster pCluster) throws NetworkException, PropertyException
+	private void getPathTo(NestedDiscovery pDiscovery, ICluster pCluster) throws NetworkException, PropertyException
 	{
 		if(pCluster.getCoordinatorName() != null) {
 			DiscoveryEntry tEntry = new DiscoveryEntry(pCluster.getToken(), pCluster.getCoordinatorName(), pCluster.getClusterID(), pCluster.getCoordinatorsAddress(), pCluster.getHierarchyLevel());
@@ -806,12 +806,12 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	{
 		return getClass().getSimpleName()/* + "(" + mIdentification + ")"*/ + "@" + getCluster().getClusterDescription() +  (getPeerName() != null ? "->" + ((HRMName)getPeerName()).getDescr() + ":PR(" + mPeerPriority + ")" : "") + (mIsEdgeRouter ? "|INTER" : "|INTRA");
 	}
-	
-	public boolean hasRequestedCoordinator()
-	{
-		return mRequestedCoordinator;
-	}
-	
+//	
+//	public boolean hasRequestedCoordinator()
+//	{
+//		return mRequestedCoordinator;
+//	}
+//	
 	public Route getRouteToPeer()
 	{
 		return getMultiplexer().getRouteToPeer(this);
@@ -827,11 +827,11 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	{
 		return null;
 	}
-	
-	public Name retrieveName()
-	{
-		return null;
-	}
+//	
+//	public Name retrieveName()
+//	{
+//		return null;
+//	}
 
 	@Override
 	public Namespace getNamespace()
@@ -839,7 +839,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		return null;
 	}
 	
-	protected CoordinatorCEPMultiplexer getMultiplexer()
+	private CoordinatorCEPMultiplexer getMultiplexer()
 	{
 		return getCluster().getMultiplexer();
 	}

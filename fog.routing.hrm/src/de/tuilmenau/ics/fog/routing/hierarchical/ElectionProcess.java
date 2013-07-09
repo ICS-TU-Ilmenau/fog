@@ -47,7 +47,6 @@ public class ElectionProcess extends Thread
 	private Coordinator mClusterManager=null;
 	private LinkedList<Cluster> mElectingClusters = new LinkedList<Cluster>();
 	private boolean mInProgress = false;
-	private HRMController mHRMController = null;
 	private int mLevel = 0;	
 	private boolean mWillInitiateManager = false;
 	private boolean mLostElection = false;
@@ -58,26 +57,20 @@ public class ElectionProcess extends Thread
 		return getClass().getSimpleName() /*+ "(TS:" + mTimeStamp + ")"*/ + (mElectingClusters.isEmpty() ? "" : "@" + mElectingClusters.get(FIRST_ELECTING_CLUSTER).getClusterID()) + "@" + mLevel;
 	}
 	
-	public void interruptElection()
-	{
-		Logging.log(this, "Interruped: will notify in case an election was running");
-		synchronized(mPleaseInterrupt) {
-			mPleaseInterrupt = true;
-			mPleaseInterrupt.notifyAll();
-		}
-	}
-	
-	public boolean isElecting(ICluster pCluster)
-	{
-		Logging.log(this, "does " + (mElectingClusters.contains(pCluster) ? "contain " : "not contain ") + pCluster);
-		return (mElectingClusters.contains(pCluster));
-	}
-	
-	//TODO: really needed? otherwise delete it!
-	public HRMController getHRMController()
-	{
-		return mHRMController;
-	}
+//	public void interruptElection()
+//	{
+//		Logging.log(this, "Interruped: will notify in case an election was running");
+//		synchronized(mPleaseInterrupt) {
+//			mPleaseInterrupt = true;
+//			mPleaseInterrupt.notifyAll();
+//		}
+//	}
+//	
+//	public boolean isElecting(ICluster pCluster)
+//	{
+//		Logging.log(this, "does " + (mElectingClusters.contains(pCluster) ? "contain " : "not contain ") + pCluster);
+//		return (mElectingClusters.contains(pCluster));
+//	}
 	
 	public ElectionProcess(int pLevel)
 	{
@@ -116,7 +109,7 @@ public class ElectionProcess extends Thread
 		}
 	}
 
-	public void sendElections()
+	private void sendElections()
 	{
 		try {
 			for(ICluster tCluster : mElectingClusters)
@@ -139,7 +132,7 @@ public class ElectionProcess extends Thread
 		return mInProgress;
 	}
 	
-	public void initiateCoordinatorFunctions(Cluster pCluster)
+	private void initiateCoordinatorFunctions(Cluster pCluster)
 	{
 		Random tRandom = new Random(System.currentTimeMillis());
 		HRMController tHRMController = pCluster.getHRMController();
@@ -151,11 +144,10 @@ public class ElectionProcess extends Thread
 
 		if(pCluster.getHRMController().getIdentity() == null) {
 			String tName = tNode.getName();
-			HRMIdentity tIdentity= new HRMIdentity(tName, pCluster.getHierarchyLevel());
+			HRMIdentity tIdentity= new HRMIdentity(tName);
 			pCluster.getHRMController().setIdentity(tIdentity);
 		}
 		
-		pCluster.getHRMController().getIdentity().setLevel(pCluster.getHierarchyLevel());
 		try {
 			BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
 			for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
@@ -169,9 +161,6 @@ public class ElectionProcess extends Thread
 			Name tAddress = tNode.getRoutingService().getNameFor(tNode.getCentralFN());; 
 			
 			pCluster.setCoordinatorCEP(null, pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), tNode.getCentralFN().getName(), (L2Address)tAddress);
-			if(pCluster.getHRMController().getIdentity() == null) {
-				pCluster.getHRMController().setIdentity(new HRMIdentity(getHRMController().getPhysicalNode().getName(), pCluster.getHierarchyLevel()));
-			}
 			LinkedList<HRMSignature> tSignatures = tHRMController.getApprovedSignatures();
 			tSignatures.add(tHRMController.getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()));
 			
@@ -252,7 +241,7 @@ public class ElectionProcess extends Thread
 		}	
 	}
 	
-	public void checkClustersForHighestPriority(boolean pVerbose)
+	private void checkClustersForHighestPriority(boolean pVerbose)
 	{
 		long tPriority = 0;
 		String tOutput = new String();
@@ -381,7 +370,7 @@ public class ElectionProcess extends Thread
 		run();
 	}
 	
-	public void checkWait(long pReference, long pCompare)
+	private void checkWait(long pReference, long pCompare)
 	{
 		synchronized(mPleaseInterrupt) {
 			if(pReference >= pCompare || mPleaseInterrupt) {
@@ -511,7 +500,7 @@ public class ElectionProcess extends Thread
 			return tElections;
 		}
 		
-		public void reevaluate(int pLevel)
+		private void reevaluate(int pLevel)
 		{
 			if(HRMConfig.Hierarchy.BUILD_AUTOMATICALLY) {
 				boolean tWontBeginDistribution = false;
@@ -563,7 +552,7 @@ public class ElectionProcess extends Thread
 		}
 	}
 	
-	public boolean aboutToContinue()
+	private boolean aboutToContinue()
 	{
 		return mWillInitiateManager || mLostElection;
 	}

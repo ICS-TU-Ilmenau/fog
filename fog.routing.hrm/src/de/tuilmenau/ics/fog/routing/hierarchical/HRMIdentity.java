@@ -15,21 +15,14 @@ import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 public class HRMIdentity extends SimpleIdentity
 {
 	private static final long serialVersionUID = -1773497102949450924L;
-	int mLevel = 0;
 	
-	public HRMIdentity(String pName, int pLevel)
+	public HRMIdentity(String pName)
 	{
 		super(pName);
-		mLevel = pLevel;
 	}
 	
 	public HRMSignature createSignature(Object pOrigin, byte[] pData, int pLevel) throws AuthenticationException
 	{
 		return new HRMSignature(this, pOrigin, pData, pLevel);
-	}
-	
-	public void setLevel(int pLevel)
-	{
-		mLevel = pLevel;
 	}
 }

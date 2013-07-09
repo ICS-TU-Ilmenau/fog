@@ -28,16 +28,6 @@ public class L2Address extends HRMName
 		super(BigInteger.valueOf(pAddress));
 	}
 
-	/**
-	 * Create an address that is used to identify a node at the MAC layer.
-	 * 
-	 * @param pAddress This can be an object that takes a long value.
-	 */
-	public L2Address(BigInteger pAddress)
-	{
-		super(pAddress);
-	}
-
 	public void setCaps(Description pDescription)
 	{
 		super.setCaps(pDescription);

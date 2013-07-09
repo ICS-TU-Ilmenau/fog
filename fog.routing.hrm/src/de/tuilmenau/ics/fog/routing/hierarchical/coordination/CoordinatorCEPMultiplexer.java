@@ -320,7 +320,7 @@ public class CoordinatorCEPMultiplexer
 		addDemultiplex(pConnection, pMultiplexedConnection);
 	}
 	
-	public void addDemultiplex(CoordinatorCEP pCEP, CoordinatorCEPDemultiplexed pDemux)
+	private void addDemultiplex(CoordinatorCEP pCEP, CoordinatorCEPDemultiplexed pDemux)
 	{
 		getLogger().log(this, "Registering demultiplexing from " + pCEP + " to " + pDemux);
 		if(mDemux.get(pCEP) == null) {
@@ -380,7 +380,7 @@ public class CoordinatorCEPMultiplexer
 		mClusterToCEPMapping.put(new Tuple<Long, Long>(pSourceClusterID, pTargetClusterID), pCEP);
 	}
 	
-	public CoordinatorCEPDemultiplexed getDemultiplex(Tuple<Long, Long> pPair)
+	private CoordinatorCEPDemultiplexed getDemultiplex(Tuple<Long, Long> pPair)
 	{
 		return mClusterToCEPMapping.get(pPair);
 	}
@@ -390,7 +390,7 @@ public class CoordinatorCEPMultiplexer
 		return mHRMController.getLogger();
 	}
 	
-	public boolean isClusterMultiplexed(Tuple<Long, Long> pPair)
+	private boolean isClusterMultiplexed(Tuple<Long, Long> pPair)
 	{
 		if(pPair == null) return false;
 		for(Tuple<Long, Long> tTuple : mClusterToCEPMapping.keySet()) {

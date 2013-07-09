@@ -146,16 +146,16 @@ public interface ICluster extends Serializable, IVirtualNode
 	 */
 	public long getHighestPriority();
 	
-	/**
-	 * Initiate the election. However this function was only implemented for the intermediate cluster because
-	 * of synchronization .
-	 */
-	public void initiateElection();
-	
-	/**
-	 * Interrupt a running election. 
-	 */
-	public void interruptElection();
+//	/**
+//	 * Initiate the election. However this function was only implemented for the intermediate cluster because
+//	 * of synchronization .
+//	 */
+//	public void initiateElection();
+//	
+//	/**
+//	 * Interrupt a running election. 
+//	 */
+//	public void interruptElection();
 	
 	/**
 	 * Once a connection end point receives an announcement it calls this method.

@@ -30,7 +30,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 	 * 
 	 * @param pAddress Provide a BigInteger that will be used as address, here.
 	 */
-	public HRMID(BigInteger pAddress)
+	private HRMID(BigInteger pAddress)
 	{
 		super(pAddress);
 	}
@@ -122,30 +122,30 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IVirtualNode
 		return tID;
 	}
 	
-	/**
-	 * Use this method to find out the ascending difference in relation to another address. 
-	 * 
-	 * @param pAddressToCompare Provide the address that should be compared to this entity, here.
-	 * @return The first occurrence at which a difference was found will be returned.
-	 */
-	public int getAscendingDifference(HRMID pAddressToCompare)
-	{
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++) {
-			BigInteger tOtherAddress = pAddressToCompare.getLevelAddress(i);
-			BigInteger tMyAddress = getLevelAddress(i);
-			if(tOtherAddress.equals(tMyAddress)) {
-				/*
-				 * Do nothing, just continue
-				 */
-			} else {
-				/*
-				 * return value where addresses differ
-				 */
-				return i;
-			}
-		}
-		return HRMConfig.Hierarchy.HEIGHT;
-	}
+//	/**
+//	 * Use this method to find out the ascending difference in relation to another address. 
+//	 * 
+//	 * @param pAddressToCompare Provide the address that should be compared to this entity, here.
+//	 * @return The first occurrence at which a difference was found will be returned.
+//	 */
+//	public int getAscendingDifference(HRMID pAddressToCompare)
+//	{
+//		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++) {
+//			BigInteger tOtherAddress = pAddressToCompare.getLevelAddress(i);
+//			BigInteger tMyAddress = getLevelAddress(i);
+//			if(tOtherAddress.equals(tMyAddress)) {
+//				/*
+//				 * Do nothing, just continue
+//				 */
+//			} else {
+//				/*
+//				 * return value where addresses differ
+//				 */
+//				return i;
+//			}
+//		}
+//		return HRMConfig.Hierarchy.HEIGHT;
+//	}
 	
 	/**
 	 * Use this method to find out the descending difference in relation to another address.
