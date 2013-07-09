@@ -57,7 +57,8 @@ public class ReroutingExecutor extends Application
 	@Override
 	public Description getDescription()
 	{
-		Description tDescription = super.getDescription();
+		Description tDescription = Description.createBE(false);
+		
 		if(Config.Routing.REROUTING_EXECUTOR_ALLOCATES_BANDWIDTH) {
 			DatarateProperty tDatarateProperty = null;
 			if(tDescription.get(DatarateProperty.class) instanceof DatarateProperty) {
