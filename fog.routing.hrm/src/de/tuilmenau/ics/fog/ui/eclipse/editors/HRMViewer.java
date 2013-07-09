@@ -68,7 +68,9 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class HRMViewer extends EditorPart
 {
-	private static boolean DEBUG_HRM_VIEWER = false;
+	private static boolean HRM_VIEWER_DEBUGGING = false;
+	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = false;
+	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS = false;
 	
 	private HRMController mtHRMController = null;
     private Composite mShell = null;
@@ -95,7 +97,7 @@ public class HRMViewer extends EditorPart
 		 */
 		for(int i = 0; i <= HRMConfig.Hierarchy.HEIGHT; i++) {
 			
-			if (DEBUG_HRM_VIEWER)
+			if (HRM_VIEWER_DEBUGGING)
 				Logging.log(this, "Amount of found clusters: " + mtHRMController.getClusters().size());
 			
 			int j = -1;
@@ -420,7 +422,7 @@ public class HRMViewer extends EditorPart
 			}
 		}
 
-		if (DEBUG_HRM_VIEWER)
+		if (HRM_VIEWER_DEBUGGING)
 			Logging.log(this, "Printing coordinator \"" + tCoordinator.toString() +"\"");
 
 		/**
@@ -620,10 +622,10 @@ public class HRMViewer extends EditorPart
 		tTable.setLinesVisible(true);
 		
 		int j = 0;
-		if (DEBUG_HRM_VIEWER)
+		if (HRM_VIEWER_DEBUGGING)
 			Logging.log(this, "Amount of participating CEPs is " + pCluster.getParticipatingCEPs().size());
 		for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
-			if (DEBUG_HRM_VIEWER)
+			if (HRM_VIEWER_DEBUGGING)
 				Logging.log(this, "Updating table item number " + j);
 			
 			// table row
@@ -760,7 +762,7 @@ public class HRMViewer extends EditorPart
 			}
 		}
 		
-		if (DEBUG_HRM_VIEWER)
+		if (HRM_VIEWER_DEBUGGING)
 			Logging.log(this, "Printing cluster \"" + tCluster.toString() +"\"");
 
 		/**
@@ -773,28 +775,31 @@ public class HRMViewer extends EditorPart
 		 */
 		if(tCluster != null) {
 			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
-			
-			ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem1.setText("[Elect coordinator]");
+
+			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS){
+				ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
+			    toolItem1.setText("[Elect coordinator]");
+			    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(tCluster));
+			}
 
 		    ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem2.setText("[Elect all level " + tHierarchyLevel + " coordinators]");
+		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(tCluster));
 		    
-		    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem3.setText("[Cluster with siblings]");
+			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS){
+			    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
+			    toolItem3.setText("[Cluster with siblings]");
+			    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(tCluster));
+			}
 		    
 		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem4.setText("[Cluster level " + tHierarchyLevel + " coordiantors]");
+		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(tCluster));
 		    
 		    ToolItem toolItem5 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem5.setText("[Distribute addresses]");
-		    
-		    
-		    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(tCluster));
-		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(tCluster));
-		    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(tCluster));
-		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(tCluster));
 		    toolItem5.addListener(SWT.Selection, new AddressDistributionListener(tCluster));
+		    
 		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
 		
@@ -898,7 +903,7 @@ public class HRMViewer extends EditorPart
 		} else {
 			tInputObject = null;
 		}
-		if (DEBUG_HRM_VIEWER)
+		if (HRM_VIEWER_DEBUGGING)
 			Logging.log(this, "Initiating HRM viewer " + tInputObject + " (class=" + tInputObject.getClass() +")");
 		
 		if(tInputObject != null) {
