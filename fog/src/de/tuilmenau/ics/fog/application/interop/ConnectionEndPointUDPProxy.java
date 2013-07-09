@@ -401,7 +401,6 @@ public class ConnectionEndPointUDPProxy extends Session
 		@Override
 		public void connected()
 		{
-			// TODO Auto-generated method stub
 		}
 
 		@Override
