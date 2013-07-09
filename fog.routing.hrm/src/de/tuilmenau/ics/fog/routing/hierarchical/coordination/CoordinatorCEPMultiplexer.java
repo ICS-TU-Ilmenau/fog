@@ -27,6 +27,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscover
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
@@ -84,7 +85,7 @@ public class CoordinatorCEPMultiplexer
 				} else {
 					NestedParticipation tParticipate = tParticipationProperty.new NestedParticipation(pTargetCluster.getClusterID(), pTargetCluster.getToken());
 					tParticipationProperty.addNestedparticipation(tParticipate);
-					tParticipate.setSourcePriority(tManager.getManagedCluster().getPriority());
+					tParticipate.setSenderPriority(tManager.getManagedCluster().getPriority());
 //					tAddress = pTargetCluster.getCoordinatorsAddress().getAddress().longValue();
 					
 					tParticipate.setSourceClusterID(tManager.getManagedCluster().getClusterID());
@@ -202,8 +203,8 @@ public class CoordinatorCEPMultiplexer
 					}
 					for(NestedDiscovery tDiscovery : tBigDiscovery.getDiscoveries()) {
 						String tClusters = new String();
-						for(ICluster tCandidates : mHRMController.getClusters()) {
-							tClusters += tCandidates + "\n";
+						for(Cluster tCluster : mHRMController.getRoutingTargetClusters()) {
+							tClusters += tCluster + "\n";
 						}
 						String tDiscoveries = new String();
 						for(DiscoveryEntry tEntry : tDiscovery.getDiscoveryEntries()) {
@@ -218,7 +219,7 @@ public class CoordinatorCEPMultiplexer
 										tFirstCluster.addNeighborCluster(tSecondCluster);
 										getLogger().log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);
 									} else {
-										getLogger().warn(this, "Unable find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of " + tClusters + " while cluster discovery contained " + tDiscoveries + " and CEP is " + tCEP);
+										getLogger().warn(this, "Unable to find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of " + tClusters + " while cluster discovery contained " + tDiscoveries + " and CEP is " + tCEP);
 									}
 								}
 							}
@@ -270,13 +271,18 @@ public class CoordinatorCEPMultiplexer
 	public boolean write(Serializable pData, CoordinatorCEPDemultiplexed pDemux, ICluster pTargetCluster)
 	{	
 		getLogger().log(this, "Writing " + pData + " from " + pDemux.getCluster() + " to the demultiplexed target cluster " + pTargetCluster);
+
 		LinkedList<ClusterDummy> tList = new LinkedList<ClusterDummy>();
 		ClusterDummy tSource = ClusterDummy.compare(pDemux.getCluster().getClusterID(), pDemux.getCluster().getToken(), pDemux.getCluster().getHierarchyLevel());
 		ClusterDummy tTarget = ClusterDummy.compare(pTargetCluster.getClusterID(), pTargetCluster.getToken(), pTargetCluster.getHierarchyLevel());
+		
 		tList.add(tTarget);
+		
 		MultiplexedPackage tMuxPackage = new MultiplexedPackage(tSource, tList, pData);
 		CoordinatorCEP tCEP = mMultiplexer.get(pDemux);
 		getLogger().log(this, "Sending " + tMuxPackage);
+		
+		// send packet
 		return tCEP.write(tMuxPackage);
 	}
 	

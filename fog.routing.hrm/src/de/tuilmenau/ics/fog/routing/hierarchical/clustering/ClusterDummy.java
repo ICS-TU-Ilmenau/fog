@@ -70,16 +70,16 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public void setCoordinatorPriority(float pCoordinatorPriority) {		
+	public void setCoordinatorPriority(long pCoordinatorPriority) {		
 	}
 
 	@Override
-	public float getNodePriority() {
+	public long getNodePriority() {
 		return 0;
 	}
 
 	@Override
-	public void setPriority(float pPriority) {
+	public void setPriority(long pPriority) {
 		
 	}
 
@@ -114,7 +114,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public float getPriority() {
+	public long getPriority() {
 		return 0;
 	}
 
@@ -154,7 +154,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public float getHighestPriority()
+	public long getHighestPriority()
 	{
 		return 0;
 	}
@@ -201,7 +201,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public void setHighestPriority(float pHighestPriority) {
+	public void setHighestPriority(long pHighestPriority) {
 		
 	}
 

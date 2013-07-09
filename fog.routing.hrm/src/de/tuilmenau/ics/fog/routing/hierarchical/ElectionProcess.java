@@ -254,7 +254,7 @@ public class ElectionProcess extends Thread
 	
 	public void checkClustersForHighestPriority(boolean pVerbose)
 	{
-		float tPriority = 0;
+		long tPriority = 0;
 		String tOutput = new String();
 		for(ICluster tCluster : mElectingClusters) {
 			for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {

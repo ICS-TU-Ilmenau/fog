@@ -33,21 +33,21 @@ public interface ICluster extends Serializable, IVirtualNode
 	 * 
 	 * @param pCoordinatorPriority is the priority of the entity
 	 */
-	public void setCoordinatorPriority(float pCoordinatorPriority);
+	public void setCoordinatorPriority(long pCoordinatorPriority);
 	
 	/**
 	 * Get the priority of the currently acting coordinator
 	 * 
 	 * @return priority of the acting coordinator
 	 */
-	public float getNodePriority();
+	public long getNodePriority();
 	
 	/**
 	 * Set the priority the reference node has in this cluster
 	 * 
 	 * @param pPriority
 	 */
-	public void setPriority(float pPriority);
+	public void setPriority(long pPriority);
 	
 	/**
 	 *  
@@ -93,7 +93,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 * 
 	 * @return The priority of the node that is associated to this cluster is return here
 	 */
-	public float getPriority();
+	public long getPriority();
 	
 	/**
 	 * 
@@ -104,7 +104,7 @@ public interface ICluster extends Serializable, IVirtualNode
 
 	/**
 	 * 
-	 * @param pCoordName This is the name of the coordinator that is repsonsible for this cluster
+	 * @param pCoordName This is the name of the coordinator that is responsible for this cluster
 	 */
 	public void setCoordinatorName(Name pCoordName);
 	
@@ -144,7 +144,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 * @return The concurrently known highest priority of all priorities provided by the connection end points
 	 * is provided here.
 	 */
-	public float getHighestPriority();
+	public long getHighestPriority();
 	
 	/**
 	 * Initiate the election. However this function was only implemented for the intermediate cluster because
@@ -186,7 +186,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 * 
 	 * @param pCoord Provide the connection end point that leads to the coordinator here.
 	 * @param pCoordSignature Provide the signature you received from the coordinator here.
-	 * @param pCoordName Set the name of the coordiinator here.
+	 * @param pCoordName Set the name of the coordinator here.
 	 * @param pAddress The address of the coordinator can be set here. It can be either an OSI Layer 2 address or a HRMID. However using the last type as address
 	 * was not implemented. 
 	 */
@@ -209,7 +209,7 @@ public interface ICluster extends Serializable, IVirtualNode
 	 * 
 	 * @param pHighestPriority This is the highest priority that was found for the set of participating node.
 	 */
-	public void setHighestPriority(float pHighestPriority);
+	public void setHighestPriority(long pHighestPriority);
 	
 	/**
 	 * 

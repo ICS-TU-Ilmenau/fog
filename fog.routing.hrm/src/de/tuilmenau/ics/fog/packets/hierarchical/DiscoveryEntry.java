@@ -29,7 +29,7 @@ public class DiscoveryEntry implements Serializable
 	private int mToken;
 	private Long mClusterID;
 	private HRMName mCoordinatorRoutingAddress;
-	private float mPriority =0;
+	private long mPriority = 0;
 	private int mLevel=0;
 	private int mClusterHops;
 	private ClusterDummy mPredecessor;
@@ -100,7 +100,7 @@ public class DiscoveryEntry implements Serializable
 	 * 
 	 * @param pPriority is the priority of the coordinator that represents the target cluster
 	 */
-	public void setPriority(float pPriority)
+	public void setPriority(long pPriority)
 	{
 		mPriority = pPriority;
 	}
@@ -109,7 +109,7 @@ public class DiscoveryEntry implements Serializable
 	 * 
 	 * @return priority of the coordinator that represents the target cluster
 	 */
-	public float getPriority()
+	public long getPriority()
 	{
 		return mPriority;
 	}

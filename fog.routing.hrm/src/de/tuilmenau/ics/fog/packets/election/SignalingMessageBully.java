@@ -16,7 +16,7 @@ public class SignalingMessageBully extends SignalingMessageHrm
 {
 	private static final long serialVersionUID = -7721094891385820251L;
 
-	public SignalingMessageBully(Name pSenderName, float pSenderPriority)
+	public SignalingMessageBully(Name pSenderName, long pSenderPriority)
 	{
 		mSenderName = pSenderName;
 	}
@@ -36,7 +36,7 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 * 
 	 * @return the priority of the message sender
 	 */
-	public float getSenderPriority()
+	public long getSenderPriority()
 	{
 		return mSenderPriority;
 	}
@@ -50,7 +50,7 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	/**
 	 * This is the Bully priority of the message sender.
 	 */
-	private float mSenderPriority = 0;
+	private long mSenderPriority = 0;
 	
 	/**
 	 * The name of the sender of this message. This is always a name of a physical node.

@@ -58,7 +58,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 	private static final long serialVersionUID = -8290946480171751216L;
 	private ICluster mRemoteCluster;
 	private ICluster mCluster;
-	private float mPeerPriority = -1;
+	private long mPeerPriority = -1;
 	private boolean mReceivedBorderNodeAnnouncement = false;
 	private boolean mPeerIsCoordinatorForNeighborZone = false;
 	private boolean mIsEdgeRouter = false;
@@ -118,8 +118,13 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 					if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
 						getHRMController().getLogger().log(this, "Sending announce that does not cover anyhting");
 					}
+
+					// send packet
 					write(tAnnounce);
+					
 				} else {
+
+					// send packet
 					write(new BullyAlive(tNode.getCentralFN().getName()));
 					//TODO: packet is sent but never parsed or a timeout timer reset!!
 				}
@@ -225,7 +230,10 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
 							boolean tWroteAnnouncement = false;
 							if(tCEP.isEdgeCEP()) {
+								
+								// send packet
 								tCEP.write(tAnnounce);
+
 								tWroteAnnouncement = true;
 							}
 							Logging.log(this, "Testing " + tCEP + " whether it is an inter as link:" + tWroteAnnouncement);
@@ -239,7 +247,10 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 							for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
 								boolean tWroteAnnouncement = false;
 								if(tCEP.getRemoteCluster().getHierarchyLevel() -1 == tAnnounce.getLevel()) {
+									
+									// send packet
 									tCEP.write(tAnnounce);
+									
 									tWroteAnnouncement = true;
 								}
 								Logging.log(this, "Testing " + tCEP + " whether it leads to the clusters coordinator: " + tWroteAnnouncement);
@@ -296,7 +307,10 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 								tRequest.addRoutingVector(new RoutingServiceLinkVector(tRoute, tSource, tTarget));
 								tRequest.setAnswer();
 								tRequest.setResult(ResultType.SUCCESS);
+
+								// send packet
 								write(tRequest);
+								
 								return true;
 							}
 						}
@@ -322,7 +336,10 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 							if(tRoute != null) {
 								tRequest.setAnswer();
 								tRequest.setRoute(tRoute);
+								
+								// send packet
 								write(tRequest);
+								
 							}
 						} 
 						return true;
@@ -395,7 +412,10 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						}
 					}
 					tRequest.setAnswer();
+					
+					// send packet
 					write(tRequest);
+					
 				} else if(tRequest.getTarget() instanceof HRMID && tRequest.isAnswer()) {
 					synchronized (tRequest) {
 						tRequest.notifyAll();
@@ -430,7 +450,10 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 						tRequest.setCoordinatorKnown(false);
 						tRequest.setAnswer();
 					}
+					
+					// send packet
 					write(tRequest);
+					
 				} else {
 					if(tRequest.isCoordinatorKnown()) {
 						mKnowsCoordinator = true;
@@ -579,7 +602,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		return mKnowsCoordinator;
 	}
 	
-	public void setPeerPriority(float pPeerPriority)
+	public void setPeerPriority(long pPeerPriority)
 	{
 		mPeerPriority = pPeerPriority;
 	}
@@ -608,7 +631,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		}
 	}
 	
-	public float getPeerPriority()
+	public long getPeerPriority()
 	{
 		return mPeerPriority;
 	}
@@ -736,7 +759,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 		getHRMController().getLogger().trace(this, "Handling " + pEntry);
 		ICluster tNewCluster = getHRMController().getCluster(ClusterDummy.compare(pEntry.getClusterID(), pEntry.getToken(), pEntry.getLevel()));
 		if(tNewCluster == null) {
-			for(ICluster tCluster : getHRMController().getClusters()) {
+			for(ICluster tCluster : getHRMController().getRoutingTargetClusters()) {
 				if(tCluster.equals(ClusterDummy.compare(pEntry.getClusterID(), pEntry.getToken(), getCluster().getHierarchyLevel() - 1))) {
 					tNewCluster = tCluster;
 					if(tNewCluster instanceof NeighborCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {

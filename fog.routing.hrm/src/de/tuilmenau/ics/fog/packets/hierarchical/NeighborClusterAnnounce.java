@@ -31,7 +31,7 @@ public class NeighborClusterAnnounce implements Serializable
 	private HRMName mCoordAddress;
 	private boolean mAnnouncerHasAddress = false;;
 	private LinkedList<RoutingServiceLinkVector> mRoutingLinks;
-	private float mClusterCoordinatorPriority;
+	private long mClusterCoordinatorPriority;
 	private int mToken;
 	private Long mClusterID;
 	private boolean mReject = false;
@@ -64,7 +64,7 @@ public class NeighborClusterAnnounce implements Serializable
 	 * 
 	 * @param pPriority is the priority of the coordinator in the new zone
 	 */
-	public void setCoordinatorsPriority(float pPriority)
+	public void setCoordinatorsPriority(long pPriority)
 	{
 		mClusterCoordinatorPriority = pPriority;
 	}
@@ -73,7 +73,7 @@ public class NeighborClusterAnnounce implements Serializable
 	 * 
 	 * @return priority of the node that is coordinator in the new zone
 	 */
-	public float getCoordinatorsPriority()
+	public long getCoordinatorsPriority()
 	{
 		return mClusterCoordinatorPriority;
 	}

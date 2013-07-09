@@ -23,7 +23,7 @@ public class BullyPriorityUpdate extends SignalingMessageBully //TV
 	 * 
 	 * @param pPriority the new priority
 	 */
-	public BullyPriorityUpdate(Name pSenderName, float pSenderPriority)
+	public BullyPriorityUpdate(Name pSenderName, long pSenderPriority)
 	{
 		super(pSenderName, pSenderPriority);
 	}

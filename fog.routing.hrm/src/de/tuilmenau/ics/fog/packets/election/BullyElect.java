@@ -24,7 +24,7 @@ public class BullyElect extends SignalingMessageBully //TV
 	 * @param pSenderPriority senders priority for the election
 	 * @param pHierarchyLevel hierarchy level for this election
 	 */
-	public BullyElect(Name pSenderName, float pSenderPriority, int pHierarchyLevel)
+	public BullyElect(Name pSenderName, long pSenderPriority, int pHierarchyLevel)
 	{
 		super(pSenderName, pSenderPriority);
 		mHierarchyLevel = pHierarchyLevel;

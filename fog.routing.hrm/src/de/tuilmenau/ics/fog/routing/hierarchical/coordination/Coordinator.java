@@ -85,7 +85,7 @@ public class Coordinator implements ICluster, Observer
 	private HRMName mCoordinatorAddress = null;
 	private BullyPriority mBullyPriority;
 	private int mToken;
-	private float mHighestPriority;
+	private long mHighestPriority;
 	private BFSDistanceLabeler<IVirtualNode, ClusterLink> mBreadthFirstSearch = new BFSDistanceLabeler<IVirtualNode, ClusterLink>();
 	private List<IVirtualNode> mClustersToNotify;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
@@ -914,14 +914,14 @@ public class Coordinator implements ICluster, Observer
 	}
 	
 	@Override
-	public void setCoordinatorPriority(float pCoordinatorPriority) {
+	public void setCoordinatorPriority(long pCoordinatorPriority) {
 		if(mCoordinatorCEP != null && mCoordinatorCEP.getPeerPriority() != pCoordinatorPriority) {
 			getLogger().info(this, "Tried to set a priority that does not correspond with the priority of the concurrent coordinator, wrong connection endpoint?");
 		}
 	}
 
 	@Override
-	public float getNodePriority() {
+	public long getNodePriority() {
 		if(mCoordinatorCEP != null) {
 			return mCoordinatorCEP.getPeerPriority();
 		}
@@ -929,7 +929,7 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public void setPriority(float pPriority) {
+	public void setPriority(long pPriority) {
 		mBullyPriority = new BullyPriority(pPriority);
 	}
 
@@ -979,7 +979,7 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public float getPriority() {
+	public long getPriority() {
 		return mBullyPriority.getPriority();
 	}
 
@@ -1089,7 +1089,7 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public float getHighestPriority() {
+	public long getHighestPriority() {
 		return mHighestPriority;
 	}
 	
@@ -1458,7 +1458,7 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public void setHighestPriority(float pHighestPriority) {
+	public void setHighestPriority(long pHighestPriority) {
 		mHighestPriority = pHighestPriority;
 	}
 

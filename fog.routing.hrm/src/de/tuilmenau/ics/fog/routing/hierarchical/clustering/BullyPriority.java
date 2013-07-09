@@ -21,13 +21,26 @@ public class BullyPriority
 	/**
 	 * The value defines the prefix for the node specific configuration parameters for Bully algorithm.
 	 */
-	private String NODE_PARAMETER_PREFIX = "BULLY_PRIORITY_LEVEL_";
+	private static String NODE_PARAMETER_PREFIX = "BULLY_PRIORITY_LEVEL_";
 	
 	/**
 	 * This value is used when the connectivity changes.
 	 */
 	private int OFFSET_FOR_CONNECTIVITY = 100;
 	
+	/**
+	 * @param pNode
+	 */
+	public static void configureNode(Node pNode)
+	{
+		long tNodePriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
+		
+		// set the Bully priority 
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++) {
+			pNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX + i, tNodePriority);
+		}
+	}
+
 	/**
 	 * Constructor
 	 * Initializes the Bully priority for the Cluster depending on the node configuration and the hierarchy level.
@@ -40,7 +53,8 @@ public class BullyPriority
 			Logging.log(this,  "Invalid reference to the physical node found");
 			return;
 		}
-		mPriority = (float) pNode.getParameter().get(NODE_PARAMETER_PREFIX + pHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
+		mPriority = (long) pNode.getParameter().get(NODE_PARAMETER_PREFIX + pHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
+		Logging.log(this,  "Created Bully priority object (initial priority is " + mPriority + ")");
 	}
 	
 	/**
@@ -49,9 +63,10 @@ public class BullyPriority
 	 * @param pCluster the cluster to which this Bully priority belongs to.
 	 * @param pPriority the defined Bully priority
 	 */
-	public BullyPriority(float pPriority)
+	public BullyPriority(long pPriority)
 	{
 		mPriority = pPriority;
+		Logging.log(this,  "Created Bully priority object (explicit priority is " + pPriority + ")");
 	}
 
 	/**
@@ -59,7 +74,7 @@ public class BullyPriority
 	 * 
 	 * @return Bully priority
 	 */
-	public float getPriority()
+	public long getPriority()
 	{
 		return mPriority;
 	}
@@ -72,6 +87,6 @@ public class BullyPriority
 		mPriority += OFFSET_FOR_CONNECTIVITY;
 	}
 	
-	private float mPriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
+	private long mPriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
 
 }

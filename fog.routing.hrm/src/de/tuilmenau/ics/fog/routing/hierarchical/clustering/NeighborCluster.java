@@ -46,9 +46,9 @@ public class NeighborCluster implements ICluster, IElementDecorator
 //	private LinkedList<RoutingServiceLinkVector> mVectors;
 	private int mToken;
 	protected int mLevel;
-	protected float mPriority;
-	protected float mHighestPriority;
-	protected float mCoordinatorPriority;
+	protected long mPriority;
+	protected long mHighestPriority;
+	protected long mCoordinatorPriority;
 	protected Name mCoordName;
 	protected HRMName mCoordAddress;
 	protected L2Address mNegotiatingHost;
@@ -104,7 +104,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return getHRMController().getClusterDistance(this);
 	}
 
-	public float getHighestPriority()
+	public long getHighestPriority()
 	{
 		return getPriority();
 	}
@@ -194,7 +194,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void setCoordinatorPriority(float pCoordinatorPriority)
+	public void setCoordinatorPriority(long pCoordinatorPriority)
 	{
 		/*
 		 * not needed, this is just a dummy for topology
@@ -202,13 +202,13 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public float getNodePriority()
+	public long getNodePriority()
 	{
 		return mCoordinatorPriority;
 	}
 
 	@Override
-	public void setPriority(float pPriority)
+	public void setPriority(long pPriority)
 	{
 		mPriority = pPriority;
 	}
@@ -252,7 +252,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public float getPriority()
+	public long getPriority()
 	{
 		return mPriority;
 	}
@@ -307,7 +307,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void setHighestPriority(float pHighestPriority) {
+	public void setHighestPriority(long pHighestPriority) {
 		/*
 		 * not needed, this is just a dummy for topology
 		 */

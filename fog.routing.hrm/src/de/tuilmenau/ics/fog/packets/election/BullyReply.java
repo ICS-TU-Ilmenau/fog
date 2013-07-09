@@ -23,7 +23,7 @@ public class BullyReply  extends SignalingMessageBully
 	 * @param pSenderName sender's identification
 	 * @param pSenderPriority senders priority for the election
 	 */
-	public BullyReply(Name pSenderName, float pSenderPriority)
+	public BullyReply(Name pSenderName, long pSenderPriority)
 	{
 		super(pSenderName, pSenderPriority);
 	}

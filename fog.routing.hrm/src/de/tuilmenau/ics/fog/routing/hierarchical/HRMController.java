@@ -58,6 +58,8 @@ import de.tuilmenau.ics.fog.util.Tuple;
  */
 public class HRMController extends Application implements IServerCallback
 {
+	private boolean HRM_CONTROLLER_DEBUGGING = false;
+	
 	private SimpleName mName = null;
 	/**
 	 * Reference to physical node.
@@ -135,9 +137,9 @@ public class HRMController extends Application implements IServerCallback
 			CoordinatorCEPDemultiplexed tCEP = null;
 			boolean tClusterFound = false;
 			ICluster tFoundCluster = null;
-			for(ICluster tCluster : getClusters())
+			for(Cluster tCluster : getRoutingTargetClusters())
 			{
-				if(tCluster.equals(ClusterDummy.compare(tJoin.getTargetClusterID(), 0, tJoin.getLevel())) && !(tCluster instanceof Coordinator) || tJoin.getTargetToken() != 0 && tCluster.equals(ClusterDummy.compare(tJoin.getTargetClusterID(), tJoin.getTargetToken(), tJoin.getLevel() )))	{
+				if(tCluster.equals(ClusterDummy.compare(tJoin.getTargetClusterID(), 0, tJoin.getLevel())) || tJoin.getTargetToken() != 0 && tCluster.equals(ClusterDummy.compare(tJoin.getTargetClusterID(), tJoin.getTargetToken(), tJoin.getLevel() )))	{
 					if(tConnection == null) {
 						tConnection = new CoordinatorCEP(mLogger, this, true, tJoin.getLevel(), tCluster.getMultiplexer());
 					}
@@ -170,8 +172,8 @@ public class HRMController extends Application implements IServerCallback
 				}
 
 				if(tJoin.getLevel() > 0) {
-					for(ICluster tVirtualNode : getClusters()) {
-						if(tVirtualNode.getHierarchyLevel() == tJoin.getLevel() - 1 && !(tVirtualNode instanceof Coordinator || tVirtualNode instanceof NeighborCluster)) {
+					for(ICluster tVirtualNode : getRoutingTargetClusters()) {
+						if(tVirtualNode.getHierarchyLevel() == tJoin.getLevel() - 1) {
 							tCluster.setPriority(tVirtualNode.getPriority());
 						}
 					}
@@ -193,7 +195,7 @@ public class HRMController extends Application implements IServerCallback
 				tFoundCluster = tCluster;
 			}
 			tFoundCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnection);
-			for(ICluster tNegotiatingCluster : getClusters()) {
+			for(ICluster tNegotiatingCluster : getRoutingTargetClusters()) {
 				if(tNegotiatingCluster.equals(ClusterDummy.compare(tParticipate.getSourceClusterID(), tParticipate.getSourceToken(), (tJoin.getLevel() - 1 > 0 ? tJoin.getLevel() - 1 : 0 )))) {
 					tCEP.setRemoteCluster(getCluster(ClusterDummy.compare(tParticipate.getSourceClusterID(), tParticipate.getSourceToken(), (tJoin.getLevel() - 1 > 0 ? tJoin.getLevel() - 1 : 0 ))));
 				}
@@ -201,7 +203,7 @@ public class HRMController extends Application implements IServerCallback
 			if(tCEP.getRemoteCluster() == null && tJoin.getLevel() > 0) {
 				HashMap<ICluster, ClusterDummy> tNewlyCreatedClusters = new HashMap<ICluster, ClusterDummy>(); 
 				NeighborCluster tAttachedCluster = new NeighborCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), tJoin.getLevel() -1, this);
-				tAttachedCluster.setPriority(tParticipate.getSourcePriority());
+				tAttachedCluster.setPriority(tParticipate.getSenderPriority());
 				if(tAttachedCluster.getCoordinatorName() != null) {
 					try {
 						getHRS().registerNode(tAttachedCluster.getCoordinatorName(), tAttachedCluster.getCoordinatorsAddress());
@@ -211,7 +213,7 @@ public class HRMController extends Application implements IServerCallback
 				}
 				tNewlyCreatedClusters.put(tAttachedCluster, tParticipate.getPredecessor());
 				mLogger.log(this, "as joining cluster");
-				for(ICluster tCandidate : getClusters()) {
+				for(ICluster tCandidate : getRoutingTargetClusters()) {
 					if(tCandidate instanceof Cluster && tCandidate.getHierarchyLevel() == tAttachedCluster.getHierarchyLevel()) {
 						setSourceIntermediateCluster(tAttachedCluster, (Cluster)tCandidate);
 					}
@@ -233,7 +235,7 @@ public class HRMController extends Application implements IServerCallback
 							for(RoutingServiceLinkVector tVector : tEntry.getRoutingVectors())
 							getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 						}
-						if(!getClusters().contains(ClusterDummy.compare(tEntry.getClusterID(), tEntry.getToken(), tEntry.getLevel()))) {
+						if(!getRoutingTargetClusters().contains(ClusterDummy.compare(tEntry.getClusterID(), tEntry.getToken(), tEntry.getLevel()))) {
 							tCluster = new NeighborCluster(tEntry.getClusterID(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken(), tEntry.getLevel(), this);
 							tCluster.setPriority(tEntry.getPriority());
 							if(tEntry.isInterASCluster()) {
@@ -249,7 +251,7 @@ public class HRMController extends Application implements IServerCallback
 							
 							if(tEntry.isInterASCluster()) tCluster.setInterASCluster();
 							tNewlyCreatedClusters.put(tCluster, tEntry.getPredecessor());
-							for(ICluster tCandidate : getClusters()) {
+							for(ICluster tCandidate : getRoutingTargetClusters()) {
 								if(tCandidate instanceof Cluster && tCluster.getHierarchyLevel() == tCandidate.getHierarchyLevel()) {
 									setSourceIntermediateCluster(tCluster, (Cluster)tCandidate);
 									mLogger.log(this, "as joining neighbor");
@@ -262,7 +264,7 @@ public class HRMController extends Application implements IServerCallback
 							((NeighborCluster)tCluster).addAnnouncedCEP(tCEP);
 							Logging.log(this, "Created " +tCluster);
 						} else {
-							for(ICluster tPossibleCandidate : getClusters()) {
+							for(ICluster tPossibleCandidate : getRoutingTargetClusters()) {
 								if(tPossibleCandidate.equals(ClusterDummy.compare(tEntry.getClusterID(), tEntry.getToken(), tEntry.getLevel()))) {
 									tCluster = tPossibleCandidate;
 								}
@@ -288,7 +290,7 @@ public class HRMController extends Application implements IServerCallback
 				mLogger.err(this, "Unable to set remote cluster");
 				tCEP.setRemoteCluster(ClusterDummy.compare(tParticipate.getSourceClusterID(), tParticipate.getSourceToken(), tParticipate.getLevel()));
 			}
-			tCEP.setPeerPriority(tParticipate.getSourcePriority());
+			tCEP.setPeerPriority(tParticipate.getSenderPriority());
 			mLogger.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);
 		}
 		
@@ -377,8 +379,8 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public ICluster getCluster(ICluster pCluster)
 	{
-		for(ICluster tCluster : getClusters()) {
-			if(tCluster.equals(pCluster) && !(tCluster instanceof Coordinator)) {
+		for(Cluster tCluster : getRoutingTargetClusters()) {
+			if (tCluster.equals(pCluster)) {
 				return tCluster;
 			}
 		}
@@ -455,7 +457,7 @@ public class HRMController extends Application implements IServerCallback
 		CoordinatorCEPDemultiplexed tDemux = null;
 		
 		boolean tClusterFound = false;
-		for(ICluster tCluster : getClusters())
+		for(ICluster tCluster : getRoutingTargetClusters())
 		{
 			if(tCluster.getClusterID().equals(pToClusterID)) {
 				tCEP = new CoordinatorCEP(mLogger, this, false, pLevel, tCluster.getMultiplexer());
@@ -631,24 +633,61 @@ public class HRMController extends Application implements IServerCallback
 	}
 	
 	/**
+	 * Calculates the clusters which are known to the local routing database (graph)
 	 * 
-	 * @return list of all known clusters
+	 * @return list of all known clusters from the local routing database (graph)
 	 */
-	public synchronized LinkedList<ICluster> getClusters()
+	public synchronized LinkedList<Cluster> getRoutingTargetClusters()
 	{
-		Logging.log(this, "Amount of found clusters: " + mRoutableClusterGraph.getVertices().size());
+		LinkedList<Cluster> tResult = new LinkedList<Cluster>();
+
+		if (HRM_CONTROLLER_DEBUGGING) {
+			Logging.log(this, "Amount of found routing targets: " + mRoutableClusterGraph.getVertices().size());
+		}
 		int j = -1;
-		LinkedList<ICluster> tList = new LinkedList<ICluster>();
-		for(IVirtualNode tNode : mRoutableClusterGraph.getVertices()) {
-			j++;
-			Logging.log(this, "Returning cluster map entry " + j + " : " + tNode.toString());
-			if(tNode instanceof ICluster) {
-				tList.add((ICluster)tNode);
+		for(IVirtualNode tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
+			if (tRoutableGraphNode instanceof Cluster) {
+				Cluster tCluster = (Cluster)tRoutableGraphNode;
+				j++;
+			
+				if (HRM_CONTROLLER_DEBUGGING) {
+					Logging.log(this, "Returning routing target cluster " + j + ": " + tRoutableGraphNode.toString());
+				}
+				
+				tResult.add(tCluster);
 			}
 		}
-		return tList;
+		
+		return tResult;
 	}
 	
+	/**
+	 * Calculates the clusters which are known to the local routing database (graph)
+	 * 
+	 * @return list of all known clusters from the local routing database (graph)
+	 */
+	public synchronized LinkedList<ICluster> getRoutingTargets()
+	{
+		LinkedList<ICluster> tResult = new LinkedList<ICluster>();
+
+		if (HRM_CONTROLLER_DEBUGGING) {
+			Logging.log(this, "Amount of found routing targets: " + mRoutableClusterGraph.getVertices().size());
+		}
+		int j = -1;
+		for(IVirtualNode tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
+			ICluster tCluster = (ICluster)tRoutableGraphNode;
+			j++;
+		
+			if (HRM_CONTROLLER_DEBUGGING) {
+				Logging.log(this, "Returning routing target " + j + ": " + tRoutableGraphNode.toString());
+			}
+			
+			tResult.add(tCluster);
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * 
 	 * @return cluster map that is actually the graph that represents the network

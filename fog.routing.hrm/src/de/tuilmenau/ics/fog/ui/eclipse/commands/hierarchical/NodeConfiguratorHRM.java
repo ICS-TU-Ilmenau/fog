@@ -13,6 +13,7 @@ import java.util.Random;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.BullyPriority;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -55,11 +56,8 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 			}
 		}
 
-		Random tRandomGenerator = new Random(System.currentTimeMillis());
-		float tCurrentRandomNumber = tRandomGenerator.nextFloat();
+		// set the Bully priority 
+		BullyPriority.configureNode(pNode);
 		
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++) {
-			pNode.getParameter().put("BULLY_PRIORITY_LEVEL_" + i, ( HRMConfig.Election.INHERIT_L0_PRIORITY_TO_HIGHER_LEVELS ? tCurrentRandomNumber : tRandomGenerator.nextFloat()));
-		}
 	}
 }

@@ -26,7 +26,7 @@ public class BullyAnnounce extends SignalingMessageBully
 	 * @param pCoordinatorSignature is the signature of the coordinator - can be replaced by cryptographic identity
 	 * @param pToken is the active token that is used for the identification of the domain the coordinator is active in case no Cluster IDs can be provided a priori
 	 */
-	public BullyAnnounce(Name pSenderName, float pSenderPriority, HRMSignature pCoordinatorSignature, int pToken)
+	public BullyAnnounce(Name pSenderName, long pSenderPriority, HRMSignature pCoordinatorSignature, int pToken)
 	{
 		super(pSenderName, pSenderPriority);
 		mCoordSignature = pCoordinatorSignature;

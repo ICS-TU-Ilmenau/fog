@@ -57,10 +57,10 @@ public class Cluster implements ICluster, IElementDecorator
 
 	private CoordinatorCEPDemultiplexed mCoordinator;
 	private Long mClusterID;
-	private float mHighestPriority;
+	private long mHighestPriority;
 	private HRMID mHRMID = null;
 	protected int mHierarchyLevel;
-	protected float mCoordinatorPriority;
+	protected long mCoordinatorPriority;
 	protected Name mCoordName;
 	protected Name mCoordAddress;
 	protected BullyPriority mBullyPriority = null;
@@ -108,10 +108,11 @@ public class Cluster implements ICluster, IElementDecorator
 		mSentAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mHRMController = ptHRMController;
 		mBullyPriority = new BullyPriority(getHRMController().getPhysicalNode(), getHierarchyLevel());
-		getHRMController().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getPriority());
+		getHRMController().getLogger().log(this, "CLUSTER - created " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getPriority());
 		mHierarchyLevel = pLevel;
-		for(ICluster tCluster : getHRMController().getClusters())
+		for(ICluster tCluster : getHRMController().getRoutingTargets())
 		{
+			getHRMController().getLogger().log(this, "CLUSTER - found already known neighbor: " + tCluster);
 			if(tCluster.getHierarchyLevel() == pLevel && (tCluster != this))
 			{
 				tCluster.addNeighborCluster(this);
@@ -180,6 +181,8 @@ public class Cluster implements ICluster, IElementDecorator
 		getHRMController().getLogger().log(this, "This cluster has the following neighbors: " + getNeighbors());
 		for(ICluster tCluster : getNeighbors()) {
 			if(tCluster instanceof Cluster) {
+				getHRMController().getLogger().log(this, "CLUSTER-CEP - found already known neighbor cluster: " + tCluster);
+
 				getHRMController().getLogger().log(this, "Preparing neighbor zone announcement");
 				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, mHierarchyLevel, pCoordSignature, pAddress, getToken(), mClusterID);
 				tAnnounce.setCoordinatorsPriority(mBullyPriority.getPriority()); //TODO : ???
@@ -390,13 +393,15 @@ public class Cluster implements ICluster, IElementDecorator
 			}
 			if(pNeighbor instanceof Cluster && !pNeighbor.isInterASCluster()) {
 				
+				getHRMController().getLogger().log(this, "CLUSTER - adding neighbor cluster: " + pNeighbor);
+
 				// increase Bully priority because of changed connectivity (topology depending) 
 				mBullyPriority.increaseConnectivity();
 				
 				if(!mInterASCluster) {
 					getHRMController().getLogger().log(this, "Informing " + getParticipatingCEPs() + " about change in priority and initiating new election");
 					
-					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getPhysicalNode().getCentralFN().getName(), mBullyPriority.getPriority()), (LinkedList<CoordinatorCEPDemultiplexed>)null);
+					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getPhysicalNode().getCentralFN().getName(), mBullyPriority.getPriority()), null);
 					
 					getHRMController().getLogger().log(this, "Informed other clients about change of priority - it is now " + mBullyPriority.getPriority());
 				}
@@ -434,7 +439,7 @@ public class Cluster implements ICluster, IElementDecorator
 		mHRMID = pHRMID;
 	}
 	
-	public float getHighestPriority()
+	public long getHighestPriority()
 	{
 		return mHighestPriority;
 	}
@@ -476,17 +481,19 @@ public class Cluster implements ICluster, IElementDecorator
 		return mHRMController;
 	}
 	
-	public void setPriority(float pPriority)
+	public void setPriority(long pPriority)
 	{
+		BullyPriority tBullyPriority = mBullyPriority;
 		mBullyPriority = new BullyPriority(pPriority);
+		getHRMController().getLogger().info(this, "Setting Bully priority for cluster " + toString() + " from " + tBullyPriority.getPriority() + " to " + mBullyPriority.getPriority());
 	}
 	
-	public float getNodePriority()
+	public long getNodePriority()
 	{
 		return mCoordinatorPriority;
 	}
 	
-	public void setCoordinatorPriority(float pCoordinatorPriority)
+	public void setCoordinatorPriority(long pCoordinatorPriority)
 	{
 		mCoordinatorPriority = pCoordinatorPriority;
 	}
@@ -559,7 +566,7 @@ public class Cluster implements ICluster, IElementDecorator
 		return getHRMController().getPhysicalNode() + ":" + mClusterID + "@" + mHierarchyLevel + "(" + mCoordSignature + ")";
 	}
 	
-	public float getPriority()
+	public long getPriority()
 	{
 		return mBullyPriority.getPriority();
 	}
@@ -604,7 +611,7 @@ public class Cluster implements ICluster, IElementDecorator
 	}
 	
 	@Override
-	public void setHighestPriority(float pHighestPriority) {
+	public void setHighestPriority(long pHighestPriority) {
 		mHighestPriority = pHighestPriority;
 	}
 	

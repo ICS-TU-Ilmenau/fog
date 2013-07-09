@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
 /**
  * This class is used for meta information that is used for the establishment of connections. The connections in that
- * case lead from one (potential) cluster participant to a potential coordinator. 
+ * case lead from one (potential) cluster member to a potential coordinator. 
  * 
  */
 public class ClusterParticipationProperty extends AbstractProperty
@@ -165,7 +165,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		private LinkedList<DiscoveryEntry> mDiscoveries;
 		private boolean mInterASCluster = false;
 		private int mLevel;
-		private float mPriority;
+		private long mSenderPriority;
 		
 		/**
 		 * 
@@ -180,22 +180,22 @@ public class ClusterParticipationProperty extends AbstractProperty
 		
 		/**
 		 * 
-		 * @param pPriority This is the priority of the cluster participant. It is transmitted already here to
+		 * @param pPriority This is the priority of the cluster member. It is transmitted already here to
 		 * decrease communication complexity.
 		 */
-		public void setSourcePriority(float pPriority)
+		public void setSenderPriority(long pPriority)
 		{
-			mPriority = pPriority;
+			mSenderPriority = pPriority;
 		}
 		
 		/**
 		 * 
-		 * @return This is the priority of the cluster participant. It is already here transmitted to
+		 * @return This is the priority of the cluster member. It is already here transmitted to
 		 * decrease communication complexity.
 		 */
-		public float getSourcePriority()
+		public long getSenderPriority()
 		{
-			return mPriority;
+			return mSenderPriority;
 		}
 		
 		/**

@@ -128,8 +128,6 @@ public class SendPacket extends Command
 							}
 						}
 					}
-					L2Address tGlobalTargetIdentification = null;
-					tGlobalTargetIdentification = (L2Address)tTargetNode.getRoutingService().getNameFor(tTargetNode.getCentralFN());
 					if(tTargetNode != null) {
 						Name tTargetName = tTargetNode.getCentralFN().getName();
 						for(NameMappingEntry tEntry : tNMS.getAddresses(tTargetName)) {
