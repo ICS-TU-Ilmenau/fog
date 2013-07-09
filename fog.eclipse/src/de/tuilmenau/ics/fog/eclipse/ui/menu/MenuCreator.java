@@ -32,6 +32,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
 
 public class MenuCreator implements IMenuCreator
 {
+	private static boolean LOG_INHERITANCE_PROBLEMS = false;
+	
 	public static final String applicationID = "de.tuilmenau.ics.fog.hostApplications";	
 	
 	private static final String ENTRY_NAME = "name";
@@ -102,7 +104,9 @@ public class MenuCreator implements IMenuCreator
 							if(!sInheritanceErrorReports.containsKey(filterClassName)) {
 								sInheritanceErrorReports.put(filterClassName, true);
 								
-								Logging.err(this, "Can not check for inheritance because class " +filterClassName +" not found. Maybe extension class defined in not-loaded plug-in. This message appears only once and will be suppressed in the future.");
+								if (LOG_INHERITANCE_PROBLEMS){
+									Logging.err(this, "Can not check for inheritance because class " +filterClassName +" not found. Maybe extension class defined in not-loaded plug-in. This message appears only once and will be suppressed in the future.");
+								}
 							}
 						}
 					}
