@@ -13,7 +13,7 @@ import java.util.Random;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
