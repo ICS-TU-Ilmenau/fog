@@ -120,7 +120,7 @@ public class Coordinator implements ICluster, Observer
 		mAddressMapping = new HashMap<CoordinatorCEPDemultiplexed, TopologyData>();
 		mManagedCluster = pCluster;
 		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
-		mManagedCluster.getHRMController().getClusterMap().addObserver(this);
+		mManagedCluster.getHRMController().getRoutableClusterGraph().addObserver(this);
 		mBullyPriority = new BullyPriority(getHRMController().getPhysicalNode(), mLevel);
 		getHRMController().registerClusterManager(this, mLevel);
 		
@@ -201,7 +201,7 @@ public class Coordinator implements ICluster, Observer
 				}
 			}
 			getLogger().log(this, tString);
-			mBreadthFirstSearch.labelDistances(getHRMController().getClusterMap().getGraphForGUI(), mManagedCluster);
+			mBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), mManagedCluster);
 			mClustersToNotify = mBreadthFirstSearch.getVerticesInOrderVisited();
 			List<IVirtualNode> tClustersToNotify = new LinkedList<IVirtualNode>(); 
 			getLogger().log(this, "Clusters remembered for notification: " + mClustersToNotify);
@@ -253,7 +253,7 @@ public class Coordinator implements ICluster, Observer
 	
 	public IVirtualNode getFarthestVirtualNodeInDirection(IVirtualNode pSource, IVirtualNode pTarget)
 	{
-		List<ClusterLink> tList = getHRMController().getClusterMap().getRoute(pSource, pTarget);
+		List<ClusterLink> tList = getHRMController().getRoutableClusterGraph().getRoute(pSource, pTarget);
 
 		//ICluster tFarthestCluster = null;
 		IVirtualNode tTransitiveElement = pSource;
@@ -261,7 +261,7 @@ public class Coordinator implements ICluster, Observer
 			int tDistance = 0;
 			if(tList.size() > HRMConfig.Routing.EXPANSION_RADIUS) {
 				while(tDistance != HRMConfig.Routing.EXPANSION_RADIUS) {
-					tTransitiveElement = getHRMController().getClusterMap().getDest(tTransitiveElement, tList.get(0));
+					tTransitiveElement = getHRMController().getRoutableClusterGraph().getDest(tTransitiveElement, tList.get(0));
 					tList.remove(0);
 					tDistance++;
 				}
@@ -365,7 +365,7 @@ public class Coordinator implements ICluster, Observer
 						 * 
 						 * then: tell the cluster the next neighbor cluster that brings the packet to its target
 						 */
-						List<ClusterLink> tList = getHRMController().getClusterMap().getRoute(tSourceCEP.getRemoteCluster(), tDestinationCEP.getRemoteCluster());
+						List<ClusterLink> tList = getHRMController().getRoutableClusterGraph().getRoute(tSourceCEP.getRemoteCluster(), tDestinationCEP.getRemoteCluster());
 						HRMID tFrom = tSourceCEP.getRemoteCluster().getHrmID();
 						HRMID tTo   = tDestinationCEP.getRemoteCluster().getHrmID();
 						
@@ -381,7 +381,7 @@ public class Coordinator implements ICluster, Observer
 						
 						ICluster tNextCluster = null;
 						try {
-							tNextCluster = (ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0));
+							tNextCluster = (ICluster)getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteCluster(), tList.get(0));
 						} catch (IndexOutOfBoundsException tExc) {
 							getLogger().err(this, "Unable to calculate nex hop for " + tFrom + " to " + tTo);
 							
@@ -395,7 +395,7 @@ public class Coordinator implements ICluster, Observer
 						 * if the coordinator address of the forwarding cluster equals the address of the source coordinator address, take the next cluster
 						 */
 						if(tNextCluster.getCoordinatorsAddress().equals(tSourceCEP.getRemoteCluster().getCoordinatorsAddress()) && tList.size() > 1) {
-							tNextCluster = (ICluster)getHRMController().getClusterMap().getDest(tNextCluster, tList.get(1));
+							tNextCluster = (ICluster)getHRMController().getRoutableClusterGraph().getDest(tNextCluster, tList.get(1));
 						}
 						
 						/*
@@ -404,7 +404,7 @@ public class Coordinator implements ICluster, Observer
 						 */
 						HRMName tNextHop  = null;
 						if(!tSourceCEP.getRemoteCluster().getCoordinatorsAddress().equals(tDestinationCEP.getRemoteCluster().getCoordinatorsAddress())) {
-							tNextHop = getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0)).getHrmID();
+							tNextHop = getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteCluster(), tList.get(0)).getHrmID();
 						}
 						
 						FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, ClusterDummy.compare(
@@ -576,7 +576,7 @@ public class Coordinator implements ICluster, Observer
 							 * Get the cluster connection list from the source to the cluster that is able to forward the specified HRMID
 							 */
 							
-							List<ClusterLink> tList = getHRMController().getClusterMap().getRoute(tNegotiator, tHRMIDMapping);
+							List<ClusterLink> tList = getHRMController().getRoutableClusterGraph().getRoute(tNegotiator, tHRMIDMapping);
 							getLogger().log(this, "Cluster route from " + tNegotiator + " to " + tHRMIDMapping + " is " + tList);
 							
 							/*
@@ -624,11 +624,11 @@ public class Coordinator implements ICluster, Observer
 								 * First check whether there exists a cluster connection from the source cluster to the forwarding cluster
 								 */
 								if(!tList.isEmpty()) {
-									tNextHop = getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0)).getHrmID();
+									tNextHop = getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteCluster(), tList.get(0)).getHrmID();
 									tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, ClusterDummy.compare(
-											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getClusterID(),
-											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getToken(),
-											((ICluster)getHRMController().getClusterMap().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getHierarchyLevel()),
+											((ICluster)getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getClusterID(),
+											((ICluster)getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getToken(),
+											((ICluster)getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteCluster(), tList.get(0))).getHierarchyLevel()),
 											getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel - 1)
 										);
 									if(tListToTarget != null) {
@@ -1128,16 +1128,16 @@ public class Coordinator implements ICluster, Observer
 					 * 
 					 * find the route from the managed cluster to the cluster this entity got to know the higher cluster
 					 */
-					List<ClusterLink> tClusterList = getHRMController().getClusterMap().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
+					List<ClusterLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
 					if(tClusterList.size() > 0) {
-						if(getHRMController().getClusterMap().getDest(pCEP.getRemoteCluster(), tClusterList.get(tClusterList.size() - 1)) instanceof Cluster) {
+						if(getHRMController().getRoutableClusterGraph().getDest(pCEP.getRemoteCluster(), tClusterList.get(tClusterList.size() - 1)) instanceof Cluster) {
 							getLogger().warn(this, "Not sending neighbor zone announce because another intermediate cluster has a shorter route to target");
 							if(tClusterList != null) {
 								String tClusterRoute = new String();
 								IVirtualNode tTransitiveElement = getManagedCluster();
 								for(ClusterLink tConnection : tClusterList) {
 									tClusterRoute += tTransitiveElement + "\n";
-									tTransitiveElement = getHRMController().getClusterMap().getDest(tTransitiveElement, tConnection);
+									tTransitiveElement = getHRMController().getRoutableClusterGraph().getDest(tTransitiveElement, tConnection);
 								}
 								getLogger().log(this, "cluster route to other entity:\n" + tClusterRoute);
 							}
@@ -1170,9 +1170,9 @@ public class Coordinator implements ICluster, Observer
 							 * 
 							 * calculation of the predecessor is because the cluster identification on the remote site is multiplexed
 							 */
-							tClusterList = getHRMController().getClusterMap().getRoute(getManagedCluster(), getCoordinatorCEP().getRemoteCluster());
+							tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getManagedCluster(), getCoordinatorCEP().getRemoteCluster());
 							if(!tClusterList.isEmpty()) {
-								ICluster tPredecessor = (ICluster) getHRMController().getClusterMap().getDest(getManagedCluster(), tClusterList.get(0));
+								ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getDest(getManagedCluster(), tClusterList.get(0));
 								tOldCoveredEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
 							}
 							tOldCoveredEntry.setPriority(getNodePriority());
@@ -1200,9 +1200,9 @@ public class Coordinator implements ICluster, Observer
 							tNewCovered.setCoveringClusterEntry(tCoveredEntry);
 							tCoveredEntry.setPriority( pAnnounce.getSenderPriority());
 							
-							List<ClusterLink> tClusters = getHRMController().getClusterMap().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
+							List<ClusterLink> tClusters = getHRMController().getRoutableClusterGraph().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
 							if(!tClusters.isEmpty()) {
-								ICluster tNewPredecessor = (ICluster) getHRMController().getClusterMap().getDest(getManagedCluster(), tClusters.get(0));
+								ICluster tNewPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getDest(getManagedCluster(), tClusters.get(0));
 								tCoveredEntry.setPredecessor(ClusterDummy.compare(tNewPredecessor.getClusterID(), tNewPredecessor.getToken(), tNewPredecessor.getHierarchyLevel()));
 							}
 							getLogger().warn(this, "Rejecting " + (getCoordinatorCEP().getPeerName()).getDescr() + " in favor of " + pAnnounce.getSenderName());
@@ -1260,9 +1260,9 @@ public class Coordinator implements ICluster, Observer
 					getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getCoordinatorsAddress(),
 					getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel()).getHierarchyLevel()
 					);
-			List<ClusterLink> tClusterList = getHRMController().getClusterMap().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
+			List<ClusterLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
 			if(!tClusterList.isEmpty()) {
-				ICluster tPredecessor = (ICluster) getHRMController().getClusterMap().getDest(getManagedCluster(), tClusterList.get(0));
+				ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getDest(getManagedCluster(), tClusterList.get(0));
 				tUncoveredEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
 			}
 			tUncoveredEntry.setPriority(getNodePriority());
@@ -1295,9 +1295,9 @@ public class Coordinator implements ICluster, Observer
 			tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
 			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 			
-			List<ClusterLink> tClusters = getHRMController().getClusterMap().getRoute(getManagedCluster(), getCoordinatorCEP().getRemoteCluster());
+			List<ClusterLink> tClusters = getHRMController().getRoutableClusterGraph().getRoute(getManagedCluster(), getCoordinatorCEP().getRemoteCluster());
 			if(!tClusters.isEmpty()) {
-				ICluster tNewPredecessor = (ICluster) getHRMController().getClusterMap().getDest(getManagedCluster(), tClusters.get(0));
+				ICluster tNewPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getDest(getManagedCluster(), tClusters.get(0));
 				tUncoveredEntry.setPredecessor(ClusterDummy.compare(tNewPredecessor.getClusterID(), tNewPredecessor.getToken(), tNewPredecessor.getHierarchyLevel()));
 			}
 			getLogger().log(this, "Coordinator CEP is " + getCoordinatorCEP());
@@ -1400,7 +1400,7 @@ public class Coordinator implements ICluster, Observer
 		getHRMController().getPhysicalNode().setDecorationValue("(" + pCoordSignature + ")");
 //		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
 		if(pCoordSignature != null) {
-			for(IVirtualNode tNode: getHRMController().getClusterMap().getNeighbors(getManagedCluster())) {
+			for(IVirtualNode tNode: getHRMController().getRoutableClusterGraph().getNeighbors(getManagedCluster())) {
 				if(tNode instanceof ICluster && !((ICluster) tNode).isInterASCluster()) {
 					for(CoordinatorCEPDemultiplexed tCEP : mCEPs) {
 						if(((ICluster)tNode).getCoordinatorsAddress().equals(tCEP.getPeerName()) && !tCEP.isPartOfMyCluster()) {
@@ -1711,13 +1711,13 @@ public class Coordinator implements ICluster, Observer
 					List<ClusterLink> tClusterConnection = null;; 
 					try {
 						Logging.log(tManager, "Invalidating nodes " + tNodesToIgnore);
-						tClusterConnection = getHRMController().getClusterMap().getRouteWithInvalidatedNodes(tSourceCluster, getVirtualNodeFromHRMID(tLocalTarget), tNodesToIgnore);
+						tClusterConnection = getHRMController().getRoutableClusterGraph().getRouteWithInvalidatedNodes(tSourceCluster, getVirtualNodeFromHRMID(tLocalTarget), tNodesToIgnore);
 						LinkedList<ICluster> tClusters = new LinkedList<ICluster>();
 						ICluster tLastCluster = (ICluster) tSourceCluster;
 						if(tClusterConnection != null && !tClusterConnection.isEmpty()) {
 							for(ClusterLink tConnection : tClusterConnection) {
 								tClusters.add(tLastCluster);
-								tLastCluster = (ICluster) getHRMController().getClusterMap().getDest(tLastCluster, tConnection);
+								tLastCluster = (ICluster) getHRMController().getRoutableClusterGraph().getDest(tLastCluster, tConnection);
 							}
 						} else {
 							tParameterRouteRequest.setResult(ResultType.UNFEASIBLE);

@@ -52,12 +52,12 @@ public class OpenClusterView extends Command
 			}
 
 			MenuCreator tMenu = new MenuCreator(mSite);
-			ActionListener tAction = tMenu.getDefaultAction(tHRMController.getClusterMap());
+			ActionListener tAction = tMenu.getDefaultAction(tHRMController.getRoutableClusterGraph());
 			
 			if(tAction != null) {
 				tAction.actionPerformed(null);
 			} else {
-				throw new RuntimeException("No default action for " + tHRMController.getClusterMap() +" available.");
+				throw new RuntimeException("No default action for " + tHRMController.getRoutableClusterGraph() +" available.");
 			}
 		}
 	}

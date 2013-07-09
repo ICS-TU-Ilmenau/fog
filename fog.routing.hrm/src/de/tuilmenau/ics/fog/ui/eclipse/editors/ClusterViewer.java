@@ -68,7 +68,7 @@ public class ClusterViewer extends EditorAWT implements IController
 		if(mEditorParameter != null) {
 			if(mEditorParameter instanceof HRMController) {
 				GraphViewer<RoutingServiceAddress,RoutingServiceLink> tViewer = new GraphViewer<RoutingServiceAddress,RoutingServiceLink>(this);
-				tViewer.init((RoutableGraph)((HRMController) mEditorParameter).getClusterMap());
+				tViewer.init((RoutableGraph)((HRMController) mEditorParameter).getRoutableClusterGraph());
 				setView(tViewer.getComponent());
 			}
 			else {

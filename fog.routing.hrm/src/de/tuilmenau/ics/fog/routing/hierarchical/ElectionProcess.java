@@ -342,7 +342,7 @@ public class ElectionProcess extends Thread
 								for(CoordinatorCEPDemultiplexed tCEP: tCluster.getParticipatingCEPs()) {
 									if(! tCEP.knowsCoordinator()) {
 										if(!tCluster.getHRMController().checkPathToTargetContainsCovered(tCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster(), tCEPs)) {
-											tCluster.getHRMController().getLogger().log(tCluster, "adding laggard " + tCEP + " while clusters between are " + tCluster.getHRMController().getClusterMap().getIntermediateNodes(tCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster()));
+											tCluster.getHRMController().getLogger().log(tCluster, "adding laggard " + tCEP + " while clusters between are " + tCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(tCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster()));
 											tCluster.addLaggard(tCEP);
 										} else {
 											tCluster.getHRMController().getLogger().info(tCluster, "not adding laggard " + tCEP);

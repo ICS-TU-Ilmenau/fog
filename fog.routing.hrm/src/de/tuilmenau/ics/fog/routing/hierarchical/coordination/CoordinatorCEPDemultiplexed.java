@@ -513,9 +513,9 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 				tEntry.setInterASCluster();
 			}
 			
-			List<ClusterLink> tClusterList = getHRMController().getClusterMap().getRoute(getCluster(), pCluster);
+			List<ClusterLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getCluster(), pCluster);
 			if(!tClusterList.isEmpty()) {
-				ICluster tPredecessor = (ICluster) getHRMController().getClusterMap().getDest(pCluster, tClusterList.get(tClusterList.size()-1));
+				ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getDest(pCluster, tClusterList.get(tClusterList.size()-1));
 				tEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
 			}
 			
@@ -682,7 +682,7 @@ public class CoordinatorCEPDemultiplexed implements IVirtualNode
 			if(mBreadthFirstSearch == null ) {
 				mBreadthFirstSearch = new BFSDistanceLabeler<IVirtualNode, ClusterLink>();
 			}
-			mBreadthFirstSearch.labelDistances(getHRMController().getClusterMap().getGraphForGUI(), tSourceCluster);
+			mBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), tSourceCluster);
 			List<IVirtualNode> tDiscoveryCandidates = mBreadthFirstSearch.getVerticesInOrderVisited();
 			if(tSourceCluster != null) {
 				for(IVirtualNode tVirtualNode : tDiscoveryCandidates) {

@@ -64,7 +64,7 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	private Node mPhysicalNode; //TV
 	private HierarchicalRoutingService mHRS = null;
-	private RoutableClusterGraph<IVirtualNode, ClusterLink> mClusterMap = new RoutableClusterGraph<IVirtualNode, ClusterLink>();
+	private RoutableClusterGraph<IVirtualNode, ClusterLink> mRoutableClusterGraph = new RoutableClusterGraph<IVirtualNode, ClusterLink>();
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
@@ -268,7 +268,7 @@ public class HRMController extends Application implements IServerCallback
 								}
 							}
 						}
-						getClusterMap().storeLink(tAttachedCluster, tCluster, new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK));
+						getRoutableClusterGraph().storeLink(tAttachedCluster, tCluster, new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK));
 					}
 					for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
 						if(getSourceIntermediate(tCluster) != null) {
@@ -319,14 +319,14 @@ public class HRMController extends Application implements IServerCallback
 			((ICluster)pSourceCluster).getHRMController().getLogger().log("You did not provide clusters for path search: " + pSourceCluster + " to " + pTargetCluster);
 			return null;
 		}
-		RoutableClusterGraph<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
+		RoutableClusterGraph<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
 		List<ClusterLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		IVirtualNode tPredecessor=pSourceCluster;
 		for(ClusterLink tLink: tClusterConnection) {
-			if( ((ICluster)getClusterMap().getDest(tLink)).getNegotiatorCEP() != null && ((ICluster)getClusterMap().getDest(tLink)).getNegotiatorCEP().knowsCoordinator()) {
+			if( ((ICluster)getRoutableClusterGraph().getDest(tLink)).getNegotiatorCEP() != null && ((ICluster)getRoutableClusterGraph().getDest(tLink)).getNegotiatorCEP().knowsCoordinator()) {
 				return tPredecessor;
-			} else if(((ICluster)getClusterMap().getDest(tLink)).getNegotiatorCEP() != null) {
-				tPredecessor = ((ICluster)getClusterMap().getDest(tLink));
+			} else if(((ICluster)getRoutableClusterGraph().getDest(tLink)).getNegotiatorCEP() != null) {
+				tPredecessor = ((ICluster)getRoutableClusterGraph().getDest(tLink));
 			}
 		}
 		return pTargetCluster;
@@ -345,7 +345,7 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "checking cluster route between null and null");
 			return false;
 		}
-		RoutableClusterGraph<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getClusterMap();
+		RoutableClusterGraph<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
 		List<ClusterLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		String tCheckedClusters = new String();
 		boolean isCovered = false;
@@ -398,7 +398,7 @@ public class HRMController extends Application implements IServerCallback
 			mLogger.log(this, "source cluster for " + (pCluster instanceof NeighborCluster ? ((NeighborCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
 		}
 		ICluster tIntermediate = getSourceIntermediate(pCluster);
-		tClusterRoute = getClusterMap().getRoute(tIntermediate, pCluster);
+		tClusterRoute = getRoutableClusterGraph().getRoute(tIntermediate, pCluster);
 		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
 			for(ClusterLink tConnection : tClusterRoute) {
 				if(tConnection.getLinkType() == ClusterLink.ClusterLinkType.LOGICAL_LINK) {
@@ -407,7 +407,7 @@ public class HRMController extends Application implements IServerCallback
 			}
 		} else {
 			Logging.log(this, "No cluster route available");
-			tClusterRoute = getClusterMap().getRoute(tIntermediate, pCluster);
+			tClusterRoute = getRoutableClusterGraph().getRoute(tIntermediate, pCluster);
 		}
 		return tDistance;
 	}
@@ -625,8 +625,8 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public synchronized void addCluster(ICluster pCluster)
 	{
-		if(!mClusterMap.contains(pCluster)) {
-			mClusterMap.add(pCluster);
+		if(!mRoutableClusterGraph.contains(pCluster)) {
+			mRoutableClusterGraph.add(pCluster);
 		}
 	}
 	
@@ -636,10 +636,10 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public synchronized LinkedList<ICluster> getClusters()
 	{
-		Logging.log(this, "Amount of found clusters: " + mClusterMap.getVertices().size());
+		Logging.log(this, "Amount of found clusters: " + mRoutableClusterGraph.getVertices().size());
 		int j = -1;
 		LinkedList<ICluster> tList = new LinkedList<ICluster>();
-		for(IVirtualNode tNode : mClusterMap.getVertices()) {
+		for(IVirtualNode tNode : mRoutableClusterGraph.getVertices()) {
 			j++;
 			Logging.log(this, "Returning cluster map entry " + j + " : " + tNode.toString());
 			if(tNode instanceof ICluster) {
@@ -653,9 +653,9 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @return cluster map that is actually the graph that represents the network
 	 */
-	public RoutableClusterGraph<IVirtualNode, ClusterLink> getClusterMap()
+	public RoutableClusterGraph<IVirtualNode, ClusterLink> getRoutableClusterGraph()
 	{
-		return mClusterMap;
+		return mRoutableClusterGraph;
 	}
 	
 	/**
@@ -828,7 +828,7 @@ public class HRMController extends Application implements IServerCallback
 	public LinkedList<IVirtualNode> getClusters(int pLevel)
 	{
 		LinkedList<IVirtualNode> tClusters = new LinkedList<IVirtualNode>();
-		for(IVirtualNode tNode : getClusterMap().getVertices()) {
+		for(IVirtualNode tNode : getRoutableClusterGraph().getVertices()) {
 			if(tNode instanceof ICluster && ((ICluster) tNode).getHierarchyLevel() == pLevel) {
 				tClusters.add((ICluster) tNode);
 			}

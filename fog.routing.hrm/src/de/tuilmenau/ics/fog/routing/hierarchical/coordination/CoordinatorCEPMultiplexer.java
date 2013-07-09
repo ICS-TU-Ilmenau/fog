@@ -92,12 +92,12 @@ public class CoordinatorCEPMultiplexer
 					tParticipate.setSourceName(mHRMController.getPhysicalNode().getCentralFN().getName());
 					tParticipate.setSourceRoutingServiceAddress(tCEP.getSourceRoutingServiceAddress());
 					
-					List<ClusterLink> tClusterListToRemote = mHRMController.getClusterMap().getRoute(tManager.getManagedCluster(), pTargetCluster);
+					List<ClusterLink> tClusterListToRemote = mHRMController.getRoutableClusterGraph().getRoute(tManager.getManagedCluster(), pTargetCluster);
 					if(!tClusterListToRemote.isEmpty()) {
 						/*
 						 * we need the last hop in direct to the neighbor
 						 */
-						ICluster tPredecessorToRemote = (ICluster) mHRMController.getClusterMap().getDest(pTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
+						ICluster tPredecessorToRemote = (ICluster) mHRMController.getRoutableClusterGraph().getDest(pTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
 						tParticipate.setPredecessor(ClusterDummy.compare(tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getToken(), tPredecessorToRemote.getHierarchyLevel()));
 						getLogger().log(this, "Successfully set predecessor for " + pTargetCluster + ":" + tPredecessorToRemote);
 					} else {
@@ -128,12 +128,12 @@ public class CoordinatorCEPMultiplexer
 						if(tNeighbor.isInterASCluster()) {
 							tEntry.setInterASCluster();
 						}
-						List<ClusterLink> tClusterList = mHRMController.getClusterMap().getRoute(tManager.getManagedCluster(), tNeighbor);
+						List<ClusterLink> tClusterList = mHRMController.getRoutableClusterGraph().getRoute(tManager.getManagedCluster(), tNeighbor);
 						/*
 						 * the predecessor has to be the next hop
 						 */
 						if(!tClusterList.isEmpty()) {
-							ICluster tPredecessor = (ICluster) mHRMController.getClusterMap().getDest(tNeighbor, tClusterList.get(tClusterList.size()-1));
+							ICluster tPredecessor = (ICluster) mHRMController.getRoutableClusterGraph().getDest(tNeighbor, tClusterList.get(tClusterList.size()-1));
 							tEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
 							getLogger().log(this, "Successfully set predecessor for " + tNeighbor + ":" + tPredecessor);
 						} else {
@@ -211,7 +211,7 @@ public class CoordinatorCEPMultiplexer
 						}
 						if(tDiscovery.getNeighborRelations() != null) {
 							for(Tuple<ClusterDummy, ClusterDummy> tTuple : tDiscovery.getNeighborRelations()) {
-								if(!mHRMController.getClusterMap().isLinked(tTuple.getFirst(), tTuple.getSecond())) {
+								if(!mHRMController.getRoutableClusterGraph().isLinked(tTuple.getFirst(), tTuple.getSecond())) {
 									ICluster tFirstCluster = mHRMController.getCluster(tTuple.getFirst());
 									ICluster tSecondCluster = mHRMController.getCluster(tTuple.getSecond());
 									if(tFirstCluster != null && tSecondCluster != null ) {

@@ -211,7 +211,7 @@ public class Cluster implements ICluster, IElementDecorator
 //			boolean tIsEdgeRouter = false;
 			LinkedList<ClusterDummy> tInterASClusterIdentifications = new LinkedList<ClusterDummy>();
 
-			for(IVirtualNode tNode : getHRMController().getClusterMap().getNeighbors(this)) {
+			for(IVirtualNode tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
 				if(tNode instanceof ICluster && ((ICluster) tNode).isInterASCluster()) {
 //					tIsEdgeRouter = true;
 					tInterASClusterIdentifications.add(ClusterDummy.compare(((ICluster)tNode).getClusterID(), ((ICluster)tNode).getToken(), ((ICluster)tNode).getHierarchyLevel()));
@@ -383,10 +383,10 @@ public class Cluster implements ICluster, IElementDecorator
 		{
 			if(pNeighbor instanceof Cluster) {
 				ClusterLink tLink = new ClusterLink(ClusterLink.ClusterLinkType.PHYSICAL_LINK);
-				getHRMController().getClusterMap().storeLink(pNeighbor, this, tLink);
+				getHRMController().getRoutableClusterGraph().storeLink(pNeighbor, this, tLink);
 			} else {
 				ClusterLink tLink = new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK);
-				getHRMController().getClusterMap().storeLink(pNeighbor, this, tLink);
+				getHRMController().getRoutableClusterGraph().storeLink(pNeighbor, this, tLink);
 			}
 			if(pNeighbor instanceof Cluster && !pNeighbor.isInterASCluster()) {
 				
@@ -504,7 +504,7 @@ public class Cluster implements ICluster, IElementDecorator
 	public LinkedList<ICluster> getNeighbors()
 	{
 		LinkedList<ICluster> tList = new LinkedList<ICluster>();
-		for(IVirtualNode tNode : getHRMController().getClusterMap().getNeighbors(this)) {
+		for(IVirtualNode tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
 			if(tNode instanceof ICluster) {
 				tList.add((ICluster)tNode);
 			}
