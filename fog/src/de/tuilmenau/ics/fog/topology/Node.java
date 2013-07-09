@@ -50,7 +50,7 @@ import de.tuilmenau.ics.fog.util.ParameterMap;
  * and authentication service. Furthermore, it can be attached to lower
  * layers providing connectivity to other nodes.
  */
-public class Node extends Observable implements Host, IElementDecorator
+public class Node extends Observable implements Host, IElementDecorator, SimulationElement
 {
 	public Node(String pName, AutonomousSystem pAS, ParameterMap pParameters)
 	{
@@ -244,9 +244,13 @@ public class Node extends Observable implements Host, IElementDecorator
 	 * Informs node that it was deleted from the scenario.
 	 * Resets node and closes everything.
 	 */
+	@Override
 	public void deleted()
 	{
 		shutdown(true);
+		
+		mFoG.deleted();
+		mFoG = null;
 		
 		name = null;
 		authenticationService = null;

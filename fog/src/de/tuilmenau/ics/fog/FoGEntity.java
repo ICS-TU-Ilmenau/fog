@@ -32,6 +32,7 @@ import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
 import de.tuilmenau.ics.fog.topology.NeighborList;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.topology.SimulationElement;
 import de.tuilmenau.ics.fog.transfer.TransferPlane;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ClientFN;
@@ -52,7 +53,7 @@ import de.tuilmenau.ics.graph.RoutableGraph;
 /**
  * A FoGEntity represents an instance of a FoG layer on a node.
  */
-public class FoGEntity extends EventSourceBase implements Layer, GraphProvider
+public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, SimulationElement
 {
 	public FoGEntity(Node pNode)
 	{
@@ -483,11 +484,9 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider
 	}
 
 	/**
-	 * Informs node that it was deleted from the scenario.
-	 * Resets node and closes everything.
-	 * 
-	 * TODO use method
+	 * Informs FoG entity that it was deleted from the scenario.
 	 */
+	@Override
 	public void deleted()
 	{
 		if(controlgate != null)
