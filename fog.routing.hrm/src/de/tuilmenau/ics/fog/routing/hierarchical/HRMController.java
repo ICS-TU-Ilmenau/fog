@@ -9,7 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
-import java.math.BigInteger;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,13 +36,10 @@ import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
-import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
-import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
-import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -70,7 +66,7 @@ public class HRMController extends Application implements IServerCallback
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
-	private HashMap<Long, RouteRequest> mSessionToRequest = null;
+//	private HashMap<Long, RouteRequest> mSessionToRequest = null;
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
 	private LinkedList<LinkedList<Coordinator>> mClusterManagers;
 	private LinkedList<HRMSignature> mApprovedSignatures;

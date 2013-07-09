@@ -64,7 +64,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	private boolean mIsEdgeRouter = false;
 	private boolean mKnowsCoordinator = false;
 	private HashMap<ICluster, ICluster> mAnnouncerMapping;
-	private boolean mRequestedCoordinator = false;
+//	private boolean mRequestedCoordinator = false;
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
 	private Logger mLogger = Logging.getInstance();
@@ -652,7 +652,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	public boolean write(Serializable pData)
 	{
 		if(pData instanceof RequestCoordinator) {
-			mRequestedCoordinator = true;
+//			mRequestedCoordinator = true;
 			getHRMController().getLogger().log(this, "Sending " + pData);
 		}
 		if(getCluster() instanceof Coordinator && !mCrossLevelCEP) {

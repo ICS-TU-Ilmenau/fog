@@ -347,35 +347,35 @@ public class Cluster implements ICluster, IElementDecorator
 		return mCoordinator;
 	}
 	
-	public synchronized void interruptElection()
-	{
-		/*if(getCoordinator().getReferenceNode().getAS().getSimulation().getElectionProcess(mClusterID) != null)
-		{
-			getCoordinator().getLogger().log(this, "interrupting election " + getCoordinator().getReferenceNode().getAS().getSimulation().getElectionProcess(mClusterID));
-			mClusterBuffer = getCoordinator().getReferenceNode().getAS().getSimulation().getElectionProcess(mClusterID).getParticipatingClusters();
-			getCoordinator().getReferenceNode().getAS().getSimulation().getElectionProcess(mClusterID).interrupt();
-			getCoordinator().getReferenceNode().getAS().getSimulation().removeElection(mClusterID);
-		}*/
-	}
-	
-	public void initiateElection()
-	{
-		try {
-			if(!ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).isStarted() && ! ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState().equals(Thread.State.RUNNABLE)) {
-				getHRMController().getLogger().log(this, "Election " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID) + " is running? " + (ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).isAlive()));
-				ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).start();
-			} else {
-				ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).interrupt();
-			}
-		} catch (IllegalStateException tExc) {
-			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState(), tExc);
-		} catch (IllegalMonitorStateException tExc) {
-			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState(), tExc);
-		} catch (IllegalThreadStateException tExc) {
-			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState(), tExc);
-		}
-		
-	}
+//	public synchronized void interruptElection()
+//	{
+//		/*if(getCoordinator().getReferenceNode().getAS().getSimulation().getElectionProcess(mClusterID) != null)
+//		{
+//			getCoordinator().getLogger().log(this, "interrupting election " + getCoordinator().getReferenceNode().getAS().getSimulation().getElectionProcess(mClusterID));
+//			mClusterBuffer = getCoordinator().getReferenceNode().getAS().getSimulation().getElectionProcess(mClusterID).getParticipatingClusters();
+//			getCoordinator().getReferenceNode().getAS().getSimulation().getElectionProcess(mClusterID).interrupt();
+//			getCoordinator().getReferenceNode().getAS().getSimulation().removeElection(mClusterID);
+//		}*/
+//	}
+//	
+//	public void initiateElection()
+//	{
+//		try {
+//			if(!ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).isStarted() && ! ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState().equals(Thread.State.RUNNABLE)) {
+//				getHRMController().getLogger().log(this, "Election " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID) + " is running? " + (ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).isAlive()));
+//				ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).start();
+//			} else {
+//				ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).interrupt();
+//			}
+//		} catch (IllegalStateException tExc) {
+//			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState(), tExc);
+//		} catch (IllegalMonitorStateException tExc) {
+//			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState(), tExc);
+//		} catch (IllegalThreadStateException tExc) {
+//			getHRMController().getLogger().err(this, "Error while trying to start or restart: " + ElectionManager.getElectionManager().getProcess(mHierarchyLevel, mClusterID).getState(), tExc);
+//		}
+//		
+//	}
 	
 	public void addNeighborCluster(ICluster pNeighbor)
 	{

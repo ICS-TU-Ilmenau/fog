@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.routing.hierarchical.coordination;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.rmi.RemoteException;
-import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -21,7 +20,6 @@ import java.util.Observable;
 import java.util.Observer;
 
 import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
-import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
@@ -67,7 +65,7 @@ public class Coordinator implements ICluster, Observer
 	/*
 	 * List for identification of clusters
 	 */
-	private LinkedList<Integer> mTokens = new LinkedList<Integer>();
+//	private LinkedList<Integer> mTokens = new LinkedList<Integer>();
 	/*
 	 * List for identification of entities this cluster manager is connected to
 	 */
@@ -1092,26 +1090,26 @@ public class Coordinator implements ICluster, Observer
 		return mHighestPriority;
 	}
 	
-	public synchronized void interruptElection()
-	{/*
-		if(mElection != null)
-		{
-			Logging.log(this, "interrupting election " + mElection);
-			mElection.interrupt();
-			mElection=null;
-		}
-	*/}
-	
-	public void initiateElection()
-	{/*
-		Logging.log(this, "Initiated election.");
-		if(!electionInProgress()) {
-			mElection = new ElectionProcess(new LinkedList<ICluster>());
-			mElection.start();
-		} else {
-			Logging.log(this, "There is currently an election in progress, please interrupt before starting a new one");
-		}
-	*/}
+//	public synchronized void interruptElection()
+//	{/*
+//		if(mElection != null)
+//		{
+//			Logging.log(this, "interrupting election " + mElection);
+//			mElection.interrupt();
+//			mElection=null;
+//		}
+//	*/}
+//	
+//	public void initiateElection()
+//	{/*
+//		Logging.log(this, "Initiated election.");
+//		if(!electionInProgress()) {
+//			mElection = new ElectionProcess(new LinkedList<ICluster>());
+//			mElection.start();
+//		} else {
+//			Logging.log(this, "There is currently an election in progress, please interrupt before starting a new one");
+//		}
+//	*/}
 
 	public void interpretAnnouncement(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{

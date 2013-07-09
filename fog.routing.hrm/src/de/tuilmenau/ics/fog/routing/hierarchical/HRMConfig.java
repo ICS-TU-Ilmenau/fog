@@ -9,8 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
-
-
 public class HRMConfig
 {
 	public class Hierarchy

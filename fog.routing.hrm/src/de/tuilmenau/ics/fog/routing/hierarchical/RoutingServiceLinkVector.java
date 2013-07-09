@@ -15,8 +15,6 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
-import de.tuilmenau.ics.fog.transfer.gates.GateID;
-
 
 public class RoutingServiceLinkVector implements Serializable
 {

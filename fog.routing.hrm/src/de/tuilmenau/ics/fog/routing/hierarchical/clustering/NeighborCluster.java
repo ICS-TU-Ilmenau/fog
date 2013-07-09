@@ -20,7 +20,6 @@ import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
-import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -31,7 +30,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemu
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
@@ -105,20 +103,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	public long getHighestPriority()
 	{
 		return getPriority();
-	}
-
-	public void initiateElection()
-	{
-		/*
-		 * not needed, this is just a dummy for topology
-		 */
-	}
-
-	public void interruptElection()
-	{
-		/*
-		 * not needed, this is just a dummy for topology
-		 */
 	}
 
 	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)

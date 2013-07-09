@@ -100,11 +100,7 @@ public class HRMViewer extends EditorPart
 			if (HRM_VIEWER_DEBUGGING)
 				Logging.log(this, "Amount of found clusters: " + mtHRMController.getRoutingTargetClusters().size());
 			
-			int j = -1;
-			
 			for (ICluster tEntry : mtHRMController.getRoutingTargets()) {
-				j++;
-				
 				if (tEntry.getHierarchyLevel() == i) {
 					if (tEntry instanceof Cluster){
 						// a cluster

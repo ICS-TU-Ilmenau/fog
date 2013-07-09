@@ -9,7 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
-import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,8 +26,6 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.facade.properties.IgnoreDestinationProperty;
-import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
-import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest.ResultType;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
