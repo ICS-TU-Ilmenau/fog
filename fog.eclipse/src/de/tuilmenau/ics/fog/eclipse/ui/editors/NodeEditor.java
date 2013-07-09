@@ -22,6 +22,8 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
 
 import de.tuilmenau.ics.fog.eclipse.ui.EditorRowComposite;
+import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
+import de.tuilmenau.ics.fog.eclipse.utils.Action;
 import de.tuilmenau.ics.fog.facade.Layer;
 import de.tuilmenau.ics.fog.topology.Node;
 
@@ -41,6 +43,7 @@ public class NodeEditor extends EditorPart
 	@Override
 	public void createPartControl(Composite parent)
 	{
+		MenuCreator mMenuCreator = new MenuCreator(getSite());
 		mDisplay = Display.getCurrent();
 		mSelectionCache = new SelectionProvider(mDisplay);
 		getSite().setSelectionProvider(mSelectionCache);
@@ -51,7 +54,8 @@ public class NodeEditor extends EditorPart
 		tGrp.createRow("Layer entities:", Integer.toString(layers.length));
 		
 		for(Layer layer : layers) {
-			tGrp.createRow(layer.toString(), "Open", layer, getSite());
+			LinkedList<Action> actions = mMenuCreator.getActions(layer);
+			tGrp.createRow(layer.toString(), actions, layer, getSite());
 		}
 	}
 

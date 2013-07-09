@@ -15,6 +15,7 @@ import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -25,6 +26,7 @@ import org.eclipse.ui.handlers.IHandlerService;
 import de.tuilmenau.ics.fog.eclipse.ui.commands.CmdOpenEditor;
 import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
 import de.tuilmenau.ics.fog.eclipse.ui.commands.SelectionEvent;
+import de.tuilmenau.ics.fog.eclipse.utils.Action;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 
@@ -118,7 +120,7 @@ public class MenuCreator implements IMenuCreator
 		return accept;
 	}
 	
-	private boolean isDefault(IConfigurationElement element)
+	private static boolean isDefault(IConfigurationElement element)
 	{
 		String defaultStr = element.getAttribute(ENTRY_DEFAULT);
 		
@@ -129,23 +131,23 @@ public class MenuCreator implements IMenuCreator
 		}
 	}
 	
-	private boolean allowsMultiple(IConfigurationElement element)
+	private static boolean allowsMultiple(IConfigurationElement element)
 	{
 		String allowMultiple = element.getAttribute(ENTRY_ALLOW_MULTIPLE);
 		
 		return "true".equalsIgnoreCase(allowMultiple);
 	}
 
-	private ActionListener createAction(Object pContext, IConfigurationElement element)
+	private Action createAction(Object pContext, IConfigurationElement element)
 	{
 		if(EXTENSION_TYPE_EDITOR.equals(element.getName())) {
-			return new ActionEventSWTCmd(CmdOpenEditor.ID, pContext, element.getAttribute(ENTRY_EDITOR_ID), allowsMultiple(element));
+			return new ActionEventSWTCmd(CmdOpenEditor.ID, pContext, element.getAttribute(ENTRY_NAME), element.getAttribute(ENTRY_EDITOR_ID), allowsMultiple(element));
 		}
 		else if(EXTENSION_TYPE_PLUGIN.equals(element.getName())) {
 			return new ActionEventLoadPlugin(element, pContext);
 		}
 		else {
-			Logging.warn(this, "Unknown extension type " +element.getName());
+			Logging.warn(MenuCreator.class, "Unknown extension type " +element.getName());
 		}
 		
 		return null;
@@ -194,9 +196,9 @@ public class MenuCreator implements IMenuCreator
 							//
 							// Construct menu item
 							//
-							item = new MenuItem(element.getAttribute(ENTRY_NAME));
-
-							ActionListener action = createAction(pContext, element);	
+							Action action = createAction(pContext, element);
+							
+							item = new MenuItem(action.getName());
 							item.addActionListener(action);
 							
 							if(isDefault(element)) {
@@ -223,7 +225,7 @@ public class MenuCreator implements IMenuCreator
 		}
 	}
 
-	public ActionListener getDefaultAction(Object pObj)
+	public Action getDefaultAction(Object pObj)
 	{
 		Logging.debug(this, "Getting default action for: " +pObj);
 
@@ -248,6 +250,36 @@ public class MenuCreator implements IMenuCreator
 		return null;
 	}
 
+	/**
+	 * @param pObj Object for that the actions should be retrieved
+	 * @return List with all actions for the element (!= null)
+	 */
+	public LinkedList<Action> getActions(Object pObj)
+	{
+		LinkedList<Action> actions = new LinkedList<Action>();
+		IConfigurationElement[] config = Platform.getExtensionRegistry().getConfigurationElementsFor(applicationID);
+
+		for(IConfigurationElement element : config) {
+			if(checkFilter(element.getAttribute(ENTRY_FILTER), pObj)) {
+				try {
+					Action action = createAction(pObj, element);
+					
+					if(action != null) {
+						if(!EXTENSION_TYPE_SUBENTRY.equals(element.getName())) {
+							actions.addLast(action);
+						}
+					}
+				}
+				catch(Exception exc) {
+					Logging.err(this, "Error while action " +element +" for " +pObj, exc);
+				}
+			}
+			// else: Ignore it
+		} // rof
+		
+		return actions;
+	}
+
 	public ActionListener getCreationAction(Object pNewElement)
 	{
 		Logging.debug(this, "Create creation action for: " +pNewElement);
@@ -265,7 +297,7 @@ public class MenuCreator implements IMenuCreator
 					if(EXTENSION_TYPE_EDITOR.equals(element.getName())) {
 						// Check if element is accepted by the filter
 						if(checkFilter(element.getAttribute(ENTRY_FILTER), pNewElement)) {
-							return new ActionEventSWTCmd(CmdOpenEditor.ID, pNewElement, element.getAttribute(ENTRY_EDITOR_ID), allowsMultiple(element));
+							return new ActionEventSWTCmd(CmdOpenEditor.ID, pNewElement, element.getAttribute(ENTRY_NAME), element.getAttribute(ENTRY_EDITOR_ID), allowsMultiple(element));
 						}
 					}
 				}
@@ -282,12 +314,19 @@ public class MenuCreator implements IMenuCreator
 	 * Eclipse command extension executed by an AWT event.
 	 * The Eclipse IHandlerServer extension must be registered under <code>cmdID</code>. 
 	 */
-	private class ActionEventSWTCmd implements ActionListener
+	private class ActionEventSWTCmd implements Action
 	{
-		public ActionEventSWTCmd(String cmdID, Object host, String editorID, boolean allowMultiple)
+		public ActionEventSWTCmd(String cmdID, Object host, String name, String editorID, boolean allowMultiple)
 		{
 			this.cmdID = cmdID;
+			this.name = name;
 			event = new SelectionEvent(host, editorID, allowMultiple);
+		}
+		
+		@Override
+		public String getName()
+		{
+			return name;
 		}
 		
 		@Override
@@ -303,6 +342,7 @@ public class MenuCreator implements IMenuCreator
 		}
 		
 		private String cmdID;
+		private String name;
 		private SelectionEvent event;
 	}
 	
@@ -310,12 +350,18 @@ public class MenuCreator implements IMenuCreator
 	 * Simulator command executed based on an AWT event.
 	 * The command is loaded via its class name specified by the extension.
 	 */
-	private class ActionEventLoadPlugin implements ActionListener
+	private class ActionEventLoadPlugin implements Action
 	{
 		public ActionEventLoadPlugin(IConfigurationElement element, Object selection)
 		{
 			this.element = element;
 			this.selection = selection;
+		}
+		
+		@Override
+		public String getName()
+		{
+			return element.getAttribute(ENTRY_NAME);
 		}
 		
 		@Override

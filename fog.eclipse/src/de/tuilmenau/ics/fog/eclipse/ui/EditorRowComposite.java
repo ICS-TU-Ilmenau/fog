@@ -9,7 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.eclipse.ui;
 
-import java.awt.event.ActionListener;
+import java.util.LinkedList;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -24,7 +24,7 @@ import org.eclipse.swt.widgets.Slider;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbenchPartSite;
 
-import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
+import de.tuilmenau.ics.fog.eclipse.utils.Action;
 
 
 /**
@@ -58,48 +58,44 @@ public class EditorRowComposite
 	}
 	
 	/**
-	 * Button with default action registered for object pValue
+	 * Row with a button for each action
 	 */
-	public Button createRow(String pKey, String pText, Object pValue, IWorkbenchPartSite pSite)
+	public void createRow(String pKey, LinkedList<Action> pActions, Object pValue, IWorkbenchPartSite pSite)
 	{
 		Label tLbKey = new Label(parent, SWT.NONE);
-		tLbKey.setText(pKey);		
+		tLbKey.setText(pKey);
+		Group tComp = new Group(parent, SWT.NONE);
+		tComp.setLayout(new GridLayout(pActions.size(), false));
 		
-		Button tButton = new Button(parent, SWT.NONE);
-		tButton.setText(pText);	
 	    GridData tGridData = new GridData();
 	    tGridData.horizontalAlignment = SWT.FILL;
 	    tGridData.grabExcessHorizontalSpace = true;
 	    tGridData.horizontalSpan = 2;
-	    tButton.setLayoutData(tGridData);
-	    tButton.addListener(SWT.Selection, new SelectionListener(pValue, pSite));
-	    
-	    return tButton;
+	    tComp.setLayoutData(tGridData);
+
+	    for(Action tAction : pActions) {
+			Button tButton = new Button(tComp, SWT.NONE);
+			tButton.setText(tAction.getName());	
+		    tButton.addListener(SWT.Selection, new SelectionListener(tAction));
+	    }
 	}
 	
 	private class SelectionListener implements Listener
 	{
-		public SelectionListener(Object pValue, IWorkbenchPartSite pSite)
+		public SelectionListener(Action pAction)
 		{
-			mValue = pValue;
-			mSite = pSite;
+			mAction = pAction;
 		}
 		
 		@Override
 		public void handleEvent(Event pEvent)
 		{
-			MenuCreator tMenu = new MenuCreator(mSite);
-			ActionListener action = tMenu.getDefaultAction(mValue);
-			if(action != null) {
-				action.actionPerformed(null);
-			} else {
-				//Logging.warn(this, "No default action for " +mValue);
+			if(mAction != null) {
+				mAction.actionPerformed(null);
 			}
-			
 		}
 		
-		private Object mValue;
-		private IWorkbenchPartSite mSite;
+		private Action mAction;
 	}
 
 	public void createRow(String prefix, String text, String postfix, int from, int to, int current, boolean enabled, SliderChangeListener listerner)

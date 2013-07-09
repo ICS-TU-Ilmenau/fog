@@ -36,15 +36,17 @@
             filter="de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService"
             name="Send packet">
       </plugin>
-      <plugin
-            name="Open Cluster View"
-            class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenClusterView"
-            filter="de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService">
-      </plugin>
       <editor
             editorID="de.tuilmenau.ics.fog.clusterviewer"
             filter="de.tuilmenau.ics.fog.routing.hierarchical.Coordinator"
-            name="Cluster View">
+            name="Cluster View"
+            default="true">
+      </editor>
+      <editor
+            editorID="de.tuilmenau.ics.fog.clusterviewer"
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService"
+            name="Cluster View"
+            default="true">
       </editor>
    </extension>
 
