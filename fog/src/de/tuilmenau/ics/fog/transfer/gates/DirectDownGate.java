@@ -134,10 +134,12 @@ public class DirectDownGate extends DownGate
 		if(ll != null) {
 			Name addr = mEntity.getRoutingService().getNameFor(ll.getMultiplexerGate());
 			
-			Packet tReq = new Packet(new PleaseOpenDownGate(mLocalProcessNumber, getGateID(), addr, Description.createBE(false)));
-			getEntity().getAuthenticationService().sign(tReq, getOwner());
-			
-			handlePacket(tReq, null);
+			Packet tReq = new Packet(new PleaseOpenDownGate(mLocalProcessNumber, getGateID(), addr, getDescription()));
+			if(getEntity().getAuthenticationService().sign(tReq, getEntity().getIdentity())) {
+				handlePacket(tReq, null);
+			} else {
+				mLogger.err(this, "Can not send refresh signaling message since signature for " +getEntity().getIdentity() +" can not be created. (owner of gate = " +getOwner() +")");
+			}
 		} else {
 			delete();
 		}

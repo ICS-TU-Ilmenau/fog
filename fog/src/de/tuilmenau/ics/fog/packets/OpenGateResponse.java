@@ -66,7 +66,12 @@ public class OpenGateResponse extends SignallingAnswer
 			else if(process instanceof ProcessGateConstruction) {
 				ProcessGateConstruction constrProcess = (ProcessGateConstruction) process;
 				
-				constrProcess.update(peerOutgoingNumber, peerBaseRoutingName, responder);
+				try {
+					constrProcess.update(peerOutgoingNumber, peerBaseRoutingName, responder);
+				}
+				catch (NetworkException exc) {
+					constrProcess.getLogger().err(this, "Error while updating process " +constrProcess, exc);
+				}
 			}
 			else if(process instanceof ProcessRerouting) {
 				Signature signature = packet.getSenderAuthentication();

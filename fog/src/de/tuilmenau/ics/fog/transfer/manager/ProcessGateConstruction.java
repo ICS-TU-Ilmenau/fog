@@ -83,17 +83,23 @@ public abstract class ProcessGateConstruction extends Process
 		return mGate;
 	}
 	
-	public void update(GateID reverseGateNumberAtPeer, Name peerNodeRoutingName, Identity peerIdentity)
+	public void update(GateID reverseGateNumberAtPeer, Name peerNodeRoutingName, Identity peerIdentity) throws NetworkException
 	{
 		FoGEntity tNode = getBase().getEntity();
 		
 		// check access permissions
 		if(mPeerIdentity == null) {
-			mPeerIdentity = peerIdentity;
+			if(peerIdentity != null) {
+				// check for impossible identity
+				if(peerIdentity.equals(getBase().getEntity().getIdentity())) {
+					throw new NetworkException(this, "Can not set peer " +peerIdentity +", since it is equal to node itself. Maybe peer did not sign message?");
+				} else {
+					mPeerIdentity = peerIdentity;
+				}
+			}
 		} else {
 			if(!mPeerIdentity.equals(peerIdentity)) {
-				mLogger.err(this, "Access not permitted for " +peerIdentity +". Peer identity is " +mPeerIdentity +".");
-				return;
+				throw new NetworkException(this, "Access not permitted for " +peerIdentity +". Peer identity is " +mPeerIdentity +".");
 			}
 		}
 		
@@ -105,8 +111,7 @@ public abstract class ProcessGateConstruction extends Process
 				create();
 			}
 			catch (NetworkException tExc) {
-				mLogger.err(this, "Can not create the gate implicitly. Abording update call.", tExc);
-				return;
+				throw new NetworkException(this, "Can not create the gate implicitly. Abording update call.", tExc);
 			}
 		}
 		
@@ -127,6 +132,9 @@ public abstract class ProcessGateConstruction extends Process
 			}
 			catch (NetworkException exc) {
 				mLogger.err(this, "Failed to register link " +mGate +" at " +getBase() +" at routing service.", exc);
+				
+				// Do not throw it again, because informing the routing
+				// service might not be required.
 			}
 		}
 		// else: hidden gate; do not inform RS
@@ -135,11 +143,18 @@ public abstract class ProcessGateConstruction extends Process
 	@Override
 	public boolean isChangableBy(Identity changer)
 	{
+		// check, if owner is requesting change
 		boolean allowed = super.isChangableBy(changer);
 		
 		if(!allowed) {
+			// check, if peer is requesting change
 			if(mPeerIdentity != null) {
 				allowed = mPeerIdentity.equals(changer);
+				
+				if(!allowed) {
+					// admin rights of function provider itself
+					allowed = mPeerIdentity.equals(mGate.getEntity().getIdentity());
+				}
 			} else {
 				allowed = true;
 			}
