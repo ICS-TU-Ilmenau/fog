@@ -109,13 +109,7 @@ public class SendPacket extends Command
 				tCompleteSimulation = true;
 			}
 			
-			NameMappingService tNMS = null;
-			try {
-				tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-			} catch (RuntimeException tExc) {
-				HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
-			}
-			
+			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(mNode.getAS().getSimulation());
 			if(!tCompleteSimulation) {	
 				for(String tTarget : tTargets) {
 					HRMID tTargetAddress = null;

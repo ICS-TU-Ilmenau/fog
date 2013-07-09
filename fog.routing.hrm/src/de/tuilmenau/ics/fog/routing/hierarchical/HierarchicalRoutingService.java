@@ -95,7 +95,7 @@ public class HierarchicalRoutingService implements RoutingService
 			throw new RuntimeException("No FoG layer available for " +mReferenceNode);
 		}
 
-		mNameMapping = new HierarchicalNameMappingService(HierarchicalNameMappingService.getGlobalNameMappingService(), pReferenceNode.getLogger());
+		mNameMapping = new HierarchicalNameMappingService(HierarchicalNameMappingService.getGlobalNameMappingService(pReferenceNode.getAS().getSimulation()), pReferenceNode.getLogger());
 		Logging.log("Constructor: Using name mapping service " + mNameMapping.toString());
 		mRandomGenerator = new Random(System.currentTimeMillis());
 		mRoutingMap = new RoutableGraph<HRMName, RoutingServiceLink>();
@@ -204,19 +204,12 @@ public class HierarchicalRoutingService implements RoutingService
 		return tIntermediateNodes;
 	}
 	
+	/**
+	 * find first segment where source address differs from destination address
+	 */
 	public HRMID getMostSimilarForwardingEntry(HRMID pToCompare) throws RemoteException
 	{
-		/*
-		 * find first segment where source address differs from destination address
-		 */
-		NameMappingService tNMS = null;
-		try {
-			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(mReferenceNode.getNode().getAS().getSimulation());
-			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-		}
-		
+		NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(mReferenceNode.getNode().getAS().getSimulation());
 		HRMID tMyIdentification = null;
 		int tHighestDescendingDifference = HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT-1;
 		
@@ -231,26 +224,14 @@ public class HierarchicalRoutingService implements RoutingService
 	
 	public HRMID getForwardingHRMID(HRMID pTarget) throws RemoteException
 	{
-		/*
-		 * find first segment where source address differs from destination address
-		 */
-		NameMappingService tNMS = null;
-		try {
-			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(mReferenceNode.getNode().getAS().getSimulation());
-			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-		}
-		
-		HRMID tMyIdentification = null;
+		NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(mReferenceNode.getNode().getAS().getSimulation());		
+		HRMID tMyIdentification = getMostSimilarForwardingEntry(pTarget);
 		int tHighestDescendingDifference = HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT-1;
 		
-		for(NameMappingEntry tEntry : tNMS.getAddresses(mReferenceNode.getCentralFN().getName())) {
-			if(((HRMID)tEntry.getAddress()).getDescendingDifference(pTarget) < tHighestDescendingDifference) {
-				tHighestDescendingDifference = ((HRMID)tEntry.getAddress()).getDescendingDifference(pTarget);
-				tMyIdentification = ((HRMID)tEntry.getAddress()).clone();
-			}
+		if(tMyIdentification != null) {
+			tHighestDescendingDifference = tMyIdentification.getDescendingDifference(pTarget);
 		}
+		
 		HRMID tForwarding=new HRMID(0);
 		HRMID tForwardingEntry = new HRMID(0);
 		for(int i =  HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i >= tHighestDescendingDifference ; i--) {
@@ -465,7 +446,7 @@ public class HierarchicalRoutingService implements RoutingService
 		}
 		
 		if(tLinks == null || tLinks.isEmpty()) {
-			throw(new RoutingException("This hierarchical entity is unable to determine a route to the given address"));
+			throw(new RoutingException(this, "Unable to determine a route from " +tSource +" to " +tDestination));
 		} else {
 			Description tFuncReq = pRequirements.getNonFunctional();
 			// cut was necessary to fulfill requested requirements

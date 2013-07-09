@@ -97,7 +97,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	
 	public ReroutingExperiment(RerouteScript pScript, String pSource, String pTarget)
 	{
-		mNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
+		mNMS = HierarchicalNameMappingService.getGlobalNameMappingService(pScript.getSimulation());
 		mScript = pScript;
 		mSource = pSource;
 		mTarget = pTarget;

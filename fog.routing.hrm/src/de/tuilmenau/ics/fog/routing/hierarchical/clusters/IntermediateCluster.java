@@ -35,6 +35,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
+import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -677,19 +678,21 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 			}
 		}
 		mEnvelope = pEnvelope;
-		HierarchicalNameMappingService<HRMID> tNMS = null;
+		
 		try {
-			tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
-		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(getCoordinator().getReferenceNode().getAS().getSimulation());
+			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(getCoordinator().getReferenceNode().getAS().getSimulation());
+			tNMS.registerName(getCoordinator().getName(), pEnvelope.getHRMID(), NamingLevel.NAMES);
+			
+			String tString = new String();
+			for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(getCoordinator().getName())) {
+				tString += tEntry + " ";
+			}
+			getCoordinator().getLogger().log(this, "Currently registered names: " + tString);
 		}
-		tNMS.registerName(getCoordinator().getName(), pEnvelope.getHRMID(), NamingLevel.NAMES);
-		String tString = new String();
-		for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(getCoordinator().getName())) {
-			tString += tEntry + " ";
+		catch(RemoteException exc) {
+			getCoordinator().getLogger().err(this, "Can not interact with name mapping.", exc);
 		}
-		getCoordinator().getLogger().log(this, "Currently registered names: " + tString);
-
+		
 		setHRMID(pEnvelope.getHRMID());
 		
 		getCoordinator().getReferenceNode().setDecorationValue(getCoordinator().getReferenceNode().getDecorationValue() + " " + pEnvelope.getHRMID().toString() + ",");

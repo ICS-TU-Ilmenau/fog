@@ -70,7 +70,7 @@ public class RoutingServiceSimulated implements RoutingService
 		}
 		
 		mRoutingIDs = new HashMap<ForwardingNode, RoutingServiceAddress>();
-		mNameMapping = HierarchicalNameMappingService.getGlobalNameMappingService();
+		mNameMapping = HierarchicalNameMappingService.getGlobalNameMappingService(pNode.getAS().getSimulation());
 		mLogger = pNode.getLogger();
 	}
 	

@@ -54,7 +54,7 @@ public class TopologyDistributor
 		
 		checkWorkerNumberJini();
 		
-		mNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
+		mNMS = HierarchicalNameMappingService.getGlobalNameMappingService(sim);
 		
 		createAS(DEFAULT_AS_NAME);
 		switchAS(DEFAULT_AS_NAME);
