@@ -384,10 +384,10 @@ public class Cluster implements ICluster, IElementDecorator
 		if(!tNeighbors.contains(pNeighbor))
 		{
 			if(pNeighbor instanceof Cluster) {
-				ClusterLink tLink = new ClusterLink(ClusterLink.ClusterLinkType.PHYSICAL_LINK);
+				RoutableClusterGraphLink tLink = new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.PHYSICAL_LINK);
 				getHRMController().getRoutableClusterGraph().storeLink(pNeighbor, this, tLink);
 			} else {
-				ClusterLink tLink = new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK);
+				RoutableClusterGraphLink tLink = new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK);
 				getHRMController().getRoutableClusterGraph().storeLink(pNeighbor, this, tLink);
 			}
 			if(pNeighbor instanceof Cluster && !pNeighbor.isInterASCluster()) {

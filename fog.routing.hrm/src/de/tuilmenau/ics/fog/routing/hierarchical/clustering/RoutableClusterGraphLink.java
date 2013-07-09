@@ -16,34 +16,34 @@ import java.io.Serializable;
  * are attached neighbor clusters. This class is used in order to determine the distance to a cluster.
  *  
  */
-public class ClusterLink implements Serializable
+public class RoutableClusterGraphLink implements Serializable
 {
 	private static final long serialVersionUID = 3333293111147481060L;
-	public enum ClusterLinkType {PHYSICAL_LINK /* direct cluster neighbor */, LOGICAL_LINK /* distant cluster neighbor */};
+	public enum LinkType {PHYSICAL_LINK /* direct cluster neighbor */, LOGICAL_LINK /* distant cluster neighbor */};
 	
 	/**
 	 * Constructor of a node (cluster) connection
 	 * 
 	 * @param pType This is the type of the connection between the clusters
 	 */
-	public ClusterLink(ClusterLinkType pType)
+	public RoutableClusterGraphLink(LinkType pLinkType)
 	{
-		mClusterLinkType = pType;
+		mLinkType = pLinkType;
 	}
 	
 	/**
 	 * 
 	 * @return Return the type of the connection here.
 	 */
-	public ClusterLinkType getLinkType()
+	public LinkType getLinkType()
 	{
-		return mClusterLinkType;
+		return mLinkType;
 	}
 	
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(ClusterRelType=" + mClusterLinkType.toString() + ")";
+		return getClass().getSimpleName() + "(ClusterRelType=" + mLinkType.toString() + ")";
 	}
 	
-	private ClusterLinkType mClusterLinkType;
+	private LinkType mLinkType;
 }

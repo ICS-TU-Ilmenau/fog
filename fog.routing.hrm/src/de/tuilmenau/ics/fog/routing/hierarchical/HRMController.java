@@ -66,7 +66,7 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	private Node mPhysicalNode; //TV
 	private HierarchicalRoutingService mHRS = null;
-	private RoutableClusterGraph<IRoutableClusterGraphNode, ClusterLink> mRoutableClusterGraph = new RoutableClusterGraph<IRoutableClusterGraphNode, ClusterLink>();
+	private RoutableClusterGraph<IRoutableClusterGraphNode, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<IRoutableClusterGraphNode, RoutableClusterGraphLink>();
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
@@ -270,7 +270,7 @@ public class HRMController extends Application implements IServerCallback
 								}
 							}
 						}
-						getRoutableClusterGraph().storeLink(tAttachedCluster, tCluster, new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK));
+						getRoutableClusterGraph().storeLink(tAttachedCluster, tCluster, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
 					}
 					for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
 						if(getSourceIntermediate(tCluster) != null) {
@@ -347,11 +347,11 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "checking cluster route between null and null");
 			return false;
 		}
-		RoutableClusterGraph<IRoutableClusterGraphNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
-		List<ClusterLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
+		RoutableClusterGraph<IRoutableClusterGraphNode, RoutableClusterGraphLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
+		List<RoutableClusterGraphLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		String tCheckedClusters = new String();
 		boolean isCovered = false;
-		for(ClusterLink tConnection : tClusterConnection) {
+		for(RoutableClusterGraphLink tConnection : tClusterConnection) {
 			Collection<IRoutableClusterGraphNode> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
 			for(IRoutableClusterGraphNode tNode : tNodes) {
 				if(tNode instanceof ICluster) {
@@ -394,7 +394,7 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public int getClusterDistance(ICluster pCluster)
 	{
-		List<ClusterLink> tClusterRoute = null;
+		List<RoutableClusterGraphLink> tClusterRoute = null;
 		int tDistance = 0;
 		if(getSourceIntermediate(pCluster) == null || pCluster == null) {
 			mLogger.log(this, "source cluster for " + (pCluster instanceof NeighborCluster ? ((NeighborCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
@@ -402,8 +402,8 @@ public class HRMController extends Application implements IServerCallback
 		ICluster tIntermediate = getSourceIntermediate(pCluster);
 		tClusterRoute = getRoutableClusterGraph().getRoute(tIntermediate, pCluster);
 		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
-			for(ClusterLink tConnection : tClusterRoute) {
-				if(tConnection.getLinkType() == ClusterLink.ClusterLinkType.LOGICAL_LINK) {
+			for(RoutableClusterGraphLink tConnection : tClusterRoute) {
+				if(tConnection.getLinkType() == RoutableClusterGraphLink.LinkType.LOGICAL_LINK) {
 					tDistance++;
 				}
 			}
@@ -692,7 +692,7 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @return cluster map that is actually the graph that represents the network
 	 */
-	public RoutableClusterGraph<IRoutableClusterGraphNode, ClusterLink> getRoutableClusterGraph()
+	public RoutableClusterGraph<IRoutableClusterGraphNode, RoutableClusterGraphLink> getRoutableClusterGraph()
 	{
 		return mRoutableClusterGraph;
 	}

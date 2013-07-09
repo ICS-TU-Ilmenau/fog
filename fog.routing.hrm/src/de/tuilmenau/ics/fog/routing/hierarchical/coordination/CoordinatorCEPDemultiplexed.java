@@ -42,7 +42,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IRoutableClusterGraphNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterLink;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMIPMapper;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -68,7 +68,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
 	private Logger mLogger = Logging.getInstance();
-	private BFSDistanceLabeler<IRoutableClusterGraphNode, ClusterLink> mBreadthFirstSearch;
+	private BFSDistanceLabeler<IRoutableClusterGraphNode, RoutableClusterGraphLink> mBreadthFirstSearch;
 	private boolean mCrossLevelCEP = false;
 	
 	/**
@@ -536,7 +536,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 				tEntry.setInterASCluster();
 			}
 			
-			List<ClusterLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getCluster(), pCluster);
+			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getCluster(), pCluster);
 			if(!tClusterList.isEmpty()) {
 				ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getDest(pCluster, tClusterList.get(tClusterList.size()-1));
 				tEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
@@ -703,7 +703,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteCluster());
 			}
 			if(mBreadthFirstSearch == null ) {
-				mBreadthFirstSearch = new BFSDistanceLabeler<IRoutableClusterGraphNode, ClusterLink>();
+				mBreadthFirstSearch = new BFSDistanceLabeler<IRoutableClusterGraphNode, RoutableClusterGraphLink>();
 			}
 			mBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), tSourceCluster);
 			List<IRoutableClusterGraphNode> tDiscoveryCandidates = mBreadthFirstSearch.getVerticesInOrderVisited();

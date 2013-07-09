@@ -178,7 +178,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 
 	public void addNeighborCluster(ICluster pNeighbor)
 	{
-		getHRMController().getRoutableClusterGraph().storeLink(this,	pNeighbor, new ClusterLink(ClusterLink.ClusterLinkType.LOGICAL_LINK));
+		getHRMController().getRoutableClusterGraph().storeLink(this,	pNeighbor, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
 	}
 
 //	public void setRouteToCoordinator(Route pPath)
@@ -402,7 +402,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 			ICluster tRemoteCluster = tCEP.getRemoteCluster();
 			tRemoteCluster = getHRMController().getCluster(tRemoteCluster) != null ? getHRMController().getCluster(tRemoteCluster) : tRemoteCluster;
 			if(pCluster.getHierarchyLevel() == tRemoteCluster.getHierarchyLevel()) {
-				List<ClusterLink> tConnection = getHRMController().getRoutableClusterGraph().getRoute(pCluster, tRemoteCluster);
+				List<RoutableClusterGraphLink> tConnection = getHRMController().getRoutableClusterGraph().getRoute(pCluster, tRemoteCluster);
 				int tDistance = 0;
 				if(tConnection != null) {
 					tDistance = tConnection.size();

@@ -31,7 +31,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterLink;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -93,7 +93,7 @@ public class CoordinatorCEPMultiplexer
 					tParticipate.setSourceName(mHRMController.getPhysicalNode().getCentralFN().getName());
 					tParticipate.setSourceRoutingServiceAddress(tCEP.getSourceRoutingServiceAddress());
 					
-					List<ClusterLink> tClusterListToRemote = mHRMController.getRoutableClusterGraph().getRoute(tManager.getManagedCluster(), pTargetCluster);
+					List<RoutableClusterGraphLink> tClusterListToRemote = mHRMController.getRoutableClusterGraph().getRoute(tManager.getManagedCluster(), pTargetCluster);
 					if(!tClusterListToRemote.isEmpty()) {
 						/*
 						 * we need the last hop in direct to the neighbor
@@ -129,7 +129,7 @@ public class CoordinatorCEPMultiplexer
 						if(tNeighbor.isInterASCluster()) {
 							tEntry.setInterASCluster();
 						}
-						List<ClusterLink> tClusterList = mHRMController.getRoutableClusterGraph().getRoute(tManager.getManagedCluster(), tNeighbor);
+						List<RoutableClusterGraphLink> tClusterList = mHRMController.getRoutableClusterGraph().getRoute(tManager.getManagedCluster(), tNeighbor);
 						/*
 						 * the predecessor has to be the next hop
 						 */
