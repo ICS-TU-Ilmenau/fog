@@ -65,7 +65,7 @@ public class BullyPriority
 	}
 	
 	/**
-	 * The function is called if a neighbor cluster/node is found. It increase the Bully value by a fixed value	 * 
+	 * The function is called if a neighbor cluster/node is found. It increase the Bully value by a fixed value. 
 	 */
 	public void increaseConnectivity()
 	{

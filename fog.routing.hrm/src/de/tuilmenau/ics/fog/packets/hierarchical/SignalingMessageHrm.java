@@ -20,5 +20,4 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	 * 
 	 */
 	private static final long serialVersionUID = 7253912074438961613L;
-
 }
