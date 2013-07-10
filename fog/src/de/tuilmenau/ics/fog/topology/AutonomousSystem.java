@@ -44,7 +44,7 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	private final static boolean ENABLE_SYNCHRONIZED_COMMAND_EXECUTION = true;
 	
 	
-	public AutonomousSystem(String pName, Simulation pSimulation, Boolean pPartialRouting, String pPartialRoutingServiceName)
+	public AutonomousSystem(String pName, Simulation pSimulation, boolean pPartialRouting, String pPartialRoutingServiceName)
 	{	
 		super(pName, new Logger(pSimulation.getLogger()), pSimulation.getTimeBase());
 		
@@ -53,13 +53,8 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		
 		RemoteRoutingService tGrs = RoutingServiceInstanceRegister.getGlobalRoutingService(mSim);
 		
-		mLogger.log(tGrs.toString());
-		
-		// Show it in the graph for making it clickable 
-		getGraph().add(tGrs);
-		
 		if(pPartialRouting) {
-			RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance();
+			RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance(pSimulation);
 			
 			if(pPartialRoutingServiceName != null) {
 				mRoutingService = register.get(pPartialRoutingServiceName);
@@ -72,9 +67,7 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 			}
 			
 			if(mRoutingService == null) {
-				mRoutingService = register.create(mSim.getTimeBase(), mLogger, pPartialRoutingServiceName, tGrs);
-	
-				attach(mRoutingService, tGrs);
+				mRoutingService = register.create(mSim, mSim.getTimeBase(), mLogger, pPartialRoutingServiceName, tGrs);
 			}
 		} else {
 			mRoutingService = tGrs;
@@ -82,24 +75,6 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		
 		JiniHelper.registerService(IAutonomousSystem.class, this, mName);
 		mLogger.debug(this, "Registered Autonomous System with " + JiniHelper.getService(IAutonomousSystem.class, mName) );
-	}
-	
-	@Override
-	public boolean addNode(Node newNode)
-	{
-		boolean tRes = super.addNode(newNode);
-
-		if(tRes) {
-			// TODO Link is needed for routing service showing up in the graph.
-			//      Just inserting the node seems not to be sufficient.
-			//      Bug in JUNG?
-//			getGraph().link(newNode, mRoutingService, "routing for " +newNode);
-			getGraph().add(mRoutingService);
-			// link will be deleted automatically when <code>Network</code> deletes
-			// the node
-		}
-		
-		return tRes;
 	}
 	
 	public RemoteRoutingService getRoutingService()

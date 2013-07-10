@@ -40,7 +40,8 @@ public class RSLoggingSimulationObserver extends FileLogObserver implements Simu
 	@Override
 	public void created(Simulation sim)
 	{
-		timeBase = sim.getTimeBase();
+		this.sim = sim;
+		this.timeBase = sim.getTimeBase();
 		
 		try {
 			open(sim.getBaseDirectory(), null);
@@ -66,7 +67,7 @@ public class RSLoggingSimulationObserver extends FileLogObserver implements Simu
 	@Override
 	public void ended()
 	{
-		Collection<RemoteRoutingService> allRS = RoutingServiceInstanceRegister.getInstance().getAll();
+		Collection<RemoteRoutingService> allRS = RoutingServiceInstanceRegister.getInstance(sim).getAll();
 		int sumVertices = 0;
 		int sumEdges = 0;
 		int sumSize = 0;
@@ -115,5 +116,6 @@ public class RSLoggingSimulationObserver extends FileLogObserver implements Simu
 	{
 	}
 	
+	private Simulation sim;
 	private EventHandler timeBase;
 }

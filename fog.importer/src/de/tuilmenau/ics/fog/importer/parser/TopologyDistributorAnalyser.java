@@ -275,7 +275,7 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	private int decideAboutDelegation()
 	{
 		// switch to delegation routing service
-		RoutingServiceInstanceRegister.getInstance().setRoutingServiceType(true);
+		RoutingServiceInstanceRegister.getInstance(getSim()).setRoutingServiceType(true);
 		
 		// create ASs in order to create RS entities
 		Collection<String> asSet = mASGraph.getVertices();
@@ -305,7 +305,7 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	
 	private void delegateFrom(String as, String neighbor)
 	{
-		RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance();
+		RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance(getSim());
 		DelegationPartialRoutingService rsFrom = (DelegationPartialRoutingService) register.get(as);
 		DelegationPartialRoutingService rsTo   = (DelegationPartialRoutingService) register.get(neighbor);
 		

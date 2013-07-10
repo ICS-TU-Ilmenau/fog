@@ -24,17 +24,26 @@ import de.tuilmenau.ics.fog.routing.simulated.RootRoutingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
+import de.tuilmenau.ics.graph.GraphProvider;
+import de.tuilmenau.ics.graph.RoutableGraph;
 import de.tuilmenau.ics.middleware.JiniHelper;
 
-public class RoutingServiceInstanceRegister
+
+public class RoutingServiceInstanceRegister implements GraphProvider
 {
-	public static RoutingServiceInstanceRegister getInstance()
+	/**
+	 * @return Global register for simulation (!= null)
+	 */
+	public static RoutingServiceInstanceRegister getInstance(Simulation sim)
 	{
-		if(sInstance == null) {
-			sInstance = new RoutingServiceInstanceRegister();
+		RoutingServiceInstanceRegister global = (RoutingServiceInstanceRegister) sim.getGlobalObject(RoutingServiceInstanceRegister.class);
+		if(global == null) {
+			global = new RoutingServiceInstanceRegister();
+			
+			sim.setGlobalObject(RoutingServiceInstanceRegister.class, global);
 		}
 		
-		return sInstance;
+		return global;
 	}
 	
 	/**
@@ -54,6 +63,8 @@ public class RoutingServiceInstanceRegister
 	public void put(String name, RemoteRoutingService rs)
 	{
 		sRoutingServiceInstances.put(name, rs);
+		
+		routingServiceEntityGraph.add(rs);
 	}
 	
 	/**
@@ -72,13 +83,26 @@ public class RoutingServiceInstanceRegister
 		return sRoutingServiceInstances.values();
 	}
 	
-	public RemoteRoutingService create(EventHandler timeBase, Logger parentLogger, String name, RemoteRoutingService parentRS)
+	public void link(RemoteRoutingService rs, RemoteRoutingService parent)
+	{
+		if((rs != null) && (parent != null)) {
+			routingServiceEntityGraph.link(parent, rs, "routing for " +rs);
+		}
+	}
+	
+	public RemoteRoutingService create(Simulation sim, EventHandler timeBase, Logger parentLogger, String name, RemoteRoutingService parentRS)
 	{
 		if(useDelegationType) {
-			return new DelegationPartialRoutingService(timeBase, parentLogger, name, parentRS);
+			return new DelegationPartialRoutingService(sim, timeBase, parentLogger, name, parentRS);
 		} else {
-			return new PartialRoutingService(timeBase, parentLogger, name, parentRS);
+			return new PartialRoutingService(sim, timeBase, parentLogger, name, parentRS);
 		}
+	}
+	
+	@Override
+	public RoutableGraph getGraph()
+	{
+		return routingServiceEntityGraph;
 	}
 	
 	public static RemoteRoutingService getGlobalRoutingService(Simulation pSim)
@@ -109,9 +133,9 @@ public class RoutingServiceInstanceRegister
 		return tRS;
 	}
 
-	private static RoutingServiceInstanceRegister sInstance = null;
 	private static PartialRoutingService sSingletonRoutingService = null;
 	
 	private boolean useDelegationType = false;
 	private HashMap<String, RemoteRoutingService> sRoutingServiceInstances = new HashMap<String, RemoteRoutingService>();
+	private RoutableGraph<RemoteRoutingService, Object> routingServiceEntityGraph = new RoutableGraph<RemoteRoutingService, Object>();	
 }

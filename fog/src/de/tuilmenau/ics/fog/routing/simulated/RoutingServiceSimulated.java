@@ -64,7 +64,7 @@ public class RoutingServiceSimulated implements RoutingService
 	public RoutingServiceSimulated(RemoteRoutingService pRoutingService, String pName, Node pNode)
 	{
 		if(Config.Routing.ENABLE_NODE_RS_HIERARCHY_LEVEL) {
-			mRS = new PartialRoutingService(pNode.getTimeBase(), pNode.getLogger(), "RS@" +pName +"@" +pNode.getAS(), pRoutingService);
+			mRS = new PartialRoutingService(pNode.getAS().getSimulation(), pNode.getTimeBase(), pNode.getLogger(), "RS@" +pName +"@" +pNode.getAS(), pRoutingService);
 		} else {
 			mRS = pRoutingService;
 		}

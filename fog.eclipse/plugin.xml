@@ -122,6 +122,11 @@
             filter="de.tuilmenau.ics.fog.FoGEntity">
       </plugin>
       <plugin
+            name="Show routing service entity graph"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenRoutingServiceEntityGraph"
+            filter="de.tuilmenau.ics.fog.topology.AutonomousSystem">
+      </plugin>
+      <plugin
             name="Toggle broken flag"
             class="de.tuilmenau.ics.fog.eclipse.ui.commands.ToggleBrokenFlag"
             filter="de.tuilmenau.ics.fog.topology.Node">

@@ -44,6 +44,7 @@ import de.tuilmenau.ics.fog.routing.RouteSegmentMissingPart;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.graph.GraphProvider;
@@ -70,7 +71,7 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 	 * @param name Name of the instance
 	 * @param parentRS Parent RS or null if there is no parent
 	 */
-	public PartialRoutingService(EventHandler timeBase, Logger parentLogger, String name, RemoteRoutingService parentRS)
+	public PartialRoutingService(Simulation sim, EventHandler timeBase, Logger parentLogger, String name, RemoteRoutingService parentRS)
 	{
 		this.mName = name;
 		this.mParentRS = parentRS;
@@ -145,7 +146,12 @@ public class PartialRoutingService implements RemoteRoutingService, GraphProvide
 		mCounterRouteLength = SumNode.openAsWriter(getClass().getCanonicalName() +".route.length");
 		mCounterRouteSegments = SumNode.openAsWriter(getClass().getCanonicalName() +".route.segments");
 		
-		RoutingServiceInstanceRegister.getInstance().put(mName, this);
+		// administrative issues
+		RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance(sim);
+		register.put(mName, this);
+		if(parentRS != null) {
+			register.link(this, parentRS);
+		}
 	}
 	
 	@Override

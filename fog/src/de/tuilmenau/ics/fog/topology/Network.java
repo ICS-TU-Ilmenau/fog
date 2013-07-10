@@ -285,17 +285,7 @@ public class Network implements GraphProvider
 			return false;
 		}
 	}
-	
-	/*
-	 * @param rsA partial RoutingService
-	 * @param rsB global/upper RoutingService
-	 */
-	public boolean attach(RemoteRoutingService rsA, RemoteRoutingService rsB)
-	{
-		mScenario.link(rsA, rsB, "routing for " + rsA);
-		return true;
-	}
-	
+		
 	public boolean detach(Node node, ILowerLayer lowerLayer)
 	{
 		NetworkInterface interf = node.detach(lowerLayer);
