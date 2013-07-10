@@ -94,7 +94,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	private void handleSignalingMessageBully(SignalingMessageBully pPacketBully) throws NetworkException
 	{
 		Node tNode = getHRMController().getPhysicalNode();
-		boolean BULLY_STATE_MACHINE_DEBUGGING = true;
+		boolean BULLY_SIGNALING_DEBUGGING = true;
 
 		/**
 		 * BullyElect
@@ -104,8 +104,8 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			// cast to Bully elect packet
 			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
 			
-			if (BULLY_STATE_MACHINE_DEBUGGING)
-				mLogger.log(this, "BULLY-received from " + mPeerCluster + "an ELECT: " + tPacketBullyElect);
+			if (BULLY_SIGNALING_DEBUGGING)
+				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"an ELECT: " + tPacketBullyElect);
 
 			if ((getCluster().getCoordinatorCEP() != null) && (tPacketBullyElect.getSenderPriority() < getCluster().getHighestPriority())) {
 				
@@ -123,8 +123,8 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 					}
 
 					// send packet
-					if (BULLY_STATE_MACHINE_DEBUGGING)
-						mLogger.log(this, "BULLY-sending to " + mPeerCluster + "an ANNOUNCE: " + tAnnouncePacket);
+					if (BULLY_SIGNALING_DEBUGGING)
+						mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\"an ANNOUNCE: " + tAnnouncePacket);
 					sendPacket(tAnnouncePacket);
 					
 				} else {
@@ -132,8 +132,8 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 					BullyAlive tAlivePacket = new BullyAlive(tNode.getCentralFN().getName());
 					
 					// send packet
-					if (BULLY_STATE_MACHINE_DEBUGGING)
-						mLogger.log(this, "BULLY-sending to " + mPeerCluster + "an ALIVE: " + tAlivePacket);
+					if (BULLY_SIGNALING_DEBUGGING)
+						mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\"an ALIVE: " + tAlivePacket);
 					sendPacket(tAlivePacket);
 					//TODO: packet is sent but never parsed or a timeout timer reset!!
 				}
@@ -146,8 +146,8 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 				BullyReply tReplyPacket = new BullyReply(tNode.getCentralFN().getName(), getCluster().getPriority());
 				
 				// send the answer packet
-				if (BULLY_STATE_MACHINE_DEBUGGING)
-					mLogger.log(this, "BULLY-sending to " + mPeerCluster + "a REPLY: " + tReplyPacket);
+				if (BULLY_SIGNALING_DEBUGGING)
+					mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\"a REPLY: " + tReplyPacket);
 				sendPacket(tReplyPacket);
 			}
 		}
@@ -160,8 +160,8 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			// cast to Bully replay packet
 			BullyReply tReplyPacket = (BullyReply)pPacketBully;
 
-			if (BULLY_STATE_MACHINE_DEBUGGING)
-				mLogger.log(this, "BULLY-received from " + mPeerCluster + "a REPLY: " + tReplyPacket);
+			if (BULLY_SIGNALING_DEBUGGING)
+				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"a REPLY: " + tReplyPacket);
 
 			// store peer's Bully priority
 			//TODO: peer prio direkt mal abspeichern und auf größte checken!
@@ -175,8 +175,8 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			// cast to Bully replay packet
 			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
 
-			if (BULLY_STATE_MACHINE_DEBUGGING)
-				mLogger.log(this, "BULLY-received from " + mPeerCluster + "an ANNOUNCE: " + tAnnouncePacket);
+			if (BULLY_SIGNALING_DEBUGGING)
+				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"an ANNOUNCE: " + tAnnouncePacket);
 
 			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
 			getCluster().interpretAnnouncement(tAnnouncePacket, this);
@@ -189,8 +189,8 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			// cast to Bully replay packet
 			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
 
-			if (BULLY_STATE_MACHINE_DEBUGGING)
-				mLogger.log(this, "BULLY-received from " + mPeerCluster + "a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
+			if (BULLY_SIGNALING_DEBUGGING)
+				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
 
 			// store peer's Bully priority
 			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority();
@@ -205,6 +205,8 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	 */
 	public boolean receive(Serializable pData) throws NetworkException
 	{
+		boolean CHANNEL_SIGNALING_DEBUGGING = true;
+
 		Node tNode = getHRMController().getPhysicalNode();
 		HierarchicalRoutingService tHRS = getHRMController().getHRS();
 		
@@ -212,6 +214,9 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 		 * Invalid data
 		 */
 		if(pData == null) {
+			if (CHANNEL_SIGNALING_DEBUGGING)
+				mLogger.log("Node " + tNode + ": CHANNEL-received from \"" + mPeerCluster + "\" invalid data");
+
 			throw new NetworkException("Received invalid null pointer as data");
 		}
 
@@ -237,16 +242,17 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			 * NeighborClusterAnnounce
 			 */
 			if(pData instanceof NeighborClusterAnnounce) {
-				NeighborClusterAnnounce tAnnounce = (NeighborClusterAnnounce)pData;
+				NeighborClusterAnnounce tAnnouncePacket = (NeighborClusterAnnounce)pData;
 
-				getHRMController().getLogger().log(this, "\n\n\nReceived " + tAnnounce + "\n\n\n");
-				
-				if(tAnnounce.isInterASAnnouncement()) {
-					Logging.log(tNode.getAS().getName() + " received an announcement from " + tAnnounce.getASIdentification());
-					if(tNode.getAS().getName().equals(tAnnounce.getASIdentification())) {
+				if (CHANNEL_SIGNALING_DEBUGGING)
+					mLogger.log("Node " + tNode + ": CHANNEL-received from \"" + mPeerCluster + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
+
+				if(tAnnouncePacket.isInterASAnnouncement()) {
+					Logging.log(tNode.getAS().getName() + " received an announcement from " + tAnnouncePacket.getASIdentification());
+					if(tNode.getAS().getName().equals(tAnnouncePacket.getASIdentification())) {
 						if(!getSourceName().equals(getPeerName())) {
 							for(Route tPath : tHRS.getCoordinatorRoutingMap().getRoute((HRMName)getSourceName(), (HRMName)getPeerName())) {
-								tAnnounce.addRoutingVector(new RoutingServiceLinkVector(tPath, tHRS.getCoordinatorRoutingMap().getSource(tPath), tHRS.getCoordinatorRoutingMap().getDest(tPath)));
+								tAnnouncePacket.addRoutingVector(new RoutingServiceLinkVector(tPath, tHRS.getCoordinatorRoutingMap().getSource(tPath), tHRS.getCoordinatorRoutingMap().getDest(tPath)));
 							}
 						}
 						for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
@@ -254,7 +260,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 							if(tCEP.isEdgeCEP()) {
 								
 								// send packet
-								tCEP.sendPacket(tAnnounce);
+								tCEP.sendPacket(tAnnouncePacket);
 
 								tWroteAnnouncement = true;
 							}
@@ -264,28 +270,28 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 						if(getCluster() instanceof Cluster) {
 							if(!getSourceName().equals(getPeerName())) {
 								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), (HRMName)getSourceName(), (HRMName)getPeerName());
-								tAnnounce.addRoutingVector(tVector);
+								tAnnouncePacket.addRoutingVector(tVector);
 							}
 							for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
 								boolean tWroteAnnouncement = false;
-								if(tCEP.getRemoteCluster().getHierarchyLevel() -1 == tAnnounce.getLevel()) {
+								if(tCEP.getRemoteCluster().getHierarchyLevel() -1 == tAnnouncePacket.getLevel()) {
 									
 									// send packet
-									tCEP.sendPacket(tAnnounce);
+									tCEP.sendPacket(tAnnouncePacket);
 									
 									tWroteAnnouncement = true;
 								}
 								Logging.log(this, "Testing " + tCEP + " whether it leads to the clusters coordinator: " + tWroteAnnouncement);
 							}
 						} else if(getCluster() instanceof Coordinator) {
-							Logging.log(this, "Inter AS announcement " + tAnnounce + " is handled by " + getCluster() + " whether it leads to the clusters coordinator");
-							((Coordinator)getCluster()).getManagedCluster().handleAnnouncement(tAnnounce, this);
+							Logging.log(this, "Inter AS announcement " + tAnnouncePacket + " is handled by " + getCluster() + " whether it leads to the clusters coordinator");
+							((Coordinator)getCluster()).getManagedCluster().handleAnnouncement(tAnnouncePacket, this);
 						}
 					}
 				} else {
-					getCluster().handleAnnouncement(tAnnounce, this);
+					getCluster().handleAnnouncement(tAnnouncePacket, this);
 				}
-				Logging.log(this, "Received " + tAnnounce + " from remote cluster " + mRemoteCluster);
+				Logging.log(this, "Received " + tAnnouncePacket + " from remote cluster " + mRemoteCluster);
 			}
 			
 			
@@ -293,7 +299,12 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			 * TopologyData
 			 */
 			if(pData instanceof TopologyData) {
-				getCluster().handleTopologyData((TopologyData)pData);
+				TopologyData tTopologyPacket = (TopologyData)pData;
+				
+				if (CHANNEL_SIGNALING_DEBUGGING)
+					mLogger.log("Node " + tNode + ":  CHANNEL-received from \"" + mPeerCluster + "\" TOPOLOGY DATA: " + tTopologyPacket);
+
+				getCluster().handleTopologyData(tTopologyPacket);
 			}/* else if (pData instanceof NestedDiscovery) {
 				NestedDiscovery tDiscovery = (NestedDiscovery) pData;
 				handleClusterDiscovery(tDiscovery);
@@ -304,18 +315,22 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			 * RouteRequest
 			 */
 			if(pData instanceof RouteRequest) {
-				RouteRequest tRequest = (RouteRequest) pData;
-				if(tRequest.getTarget() instanceof HRMID) {
-					HRMName tRequestAddress = tRequest.getSource();
+				RouteRequest tRouteRequestPacket = (RouteRequest) pData;
+				
+				if (CHANNEL_SIGNALING_DEBUGGING)
+					mLogger.log("Node " + tNode + ":  CHANNEL-received from \"" + mPeerCluster + "\" ROUTE REQUEST: " + tRouteRequestPacket);
+
+				if(tRouteRequestPacket.getTarget() instanceof HRMID) {
+					HRMName tRequestAddress = tRouteRequestPacket.getSource();
 					HRMName tDestinationAddress = getSourceName();
-					if(!tRequest.isAnswer() && tHRS.getFIBEntry( (HRMID) tRequest.getTarget()) != null && tRequestAddress != null && tRequestAddress.equals(tDestinationAddress)) {
+					if(!tRouteRequestPacket.isAnswer() && tHRS.getFIBEntry( (HRMID) tRouteRequestPacket.getTarget()) != null && tRequestAddress != null && tRequestAddress.equals(tDestinationAddress)) {
 						/*
 						 * Find out if route request can be solved by this entity without querying a higher coordinator
 						 */
 						for(IRoutableClusterGraphNode tCluster : getHRMController().getClusters(0)) {
-							FIBEntry tEntry = tHRS.getFIBEntry( (HRMID) tRequest.getTarget());
+							FIBEntry tEntry = tHRS.getFIBEntry( (HRMID) tRouteRequestPacket.getTarget());
 							if(tCluster instanceof Cluster && tEntry != null && (tEntry.getFarthestClusterInDirection() == null || tEntry.getFarthestClusterInDirection().equals(tCluster))) {
-								Route tRoute = tHRS.getRoutePath( getSourceName(), tRequest.getTarget(), new Description(), tNode.getIdentity());
+								Route tRoute = tHRS.getRoutePath( getSourceName(), tRouteRequestPacket.getTarget(), new Description(), tNode.getIdentity());
 								RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
 								HRMName tSource = null;
 								HRMName tTarget = null;
@@ -326,21 +341,21 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 										 break;
 									}
 								}
-								tRequest.addRoutingVector(new RoutingServiceLinkVector(tRoute, tSource, tTarget));
-								tRequest.setAnswer();
-								tRequest.setResult(ResultType.SUCCESS);
+								tRouteRequestPacket.addRoutingVector(new RoutingServiceLinkVector(tRoute, tSource, tTarget));
+								tRouteRequestPacket.setAnswer();
+								tRouteRequestPacket.setResult(ResultType.SUCCESS);
 
 								// send packet
-								sendPacket(tRequest);
+								sendPacket(tRouteRequestPacket);
 								
 								return true;
 							}
 						}
 					}
 					
-					if(!tRequest.isAnswer() && tRequest.isRouteAccumulation()) {
+					if(!tRouteRequestPacket.isAnswer() && tRouteRequestPacket.isRouteAccumulation()) {
 						if(getRemoteCluster().getHierarchyLevel() != getCluster().getHierarchyLevel() && getCluster().isInterASCluster()) {
-							HRMID tAddress =  (HRMID) tRequest.getTarget();
+							HRMID tAddress =  (HRMID) tRouteRequestPacket.getTarget();
 							LinkedList<Name> tIPAddresses = HRMIPMapper.getHRMIPMapper().getIPFromHRMID(tAddress);
 							Route tRoute = null;
 							if(tIPAddresses != null) {
@@ -356,28 +371,28 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 								getHRMController().getLogger().err(this, "Unable to distribute addresses because no IP address is available");
 							}
 							if(tRoute != null) {
-								tRequest.setAnswer();
-								tRequest.setRoute(tRoute);
+								tRouteRequestPacket.setAnswer();
+								tRouteRequestPacket.setRoute(tRoute);
 								
 								// send packet
-								sendPacket(tRequest);
+								sendPacket(tRouteRequestPacket);
 								
 							}
 						} 
 						return true;
-					} else if(tRequest.isAnswer()) {
+					} else if(tRouteRequestPacket.isAnswer()) {
 						/*
 						 * In this case normally someone is waiting for this packet to arrive, therefore is not handled by any cluster and you only get a notification.
 						 */
-						synchronized(tRequest) {
-							tRequest.notifyAll();
+						synchronized(tRouteRequestPacket) {
+							tRouteRequestPacket.notifyAll();
 						}
 						return true;
 					}
 					if(getCluster() instanceof Cluster) {
 						Coordinator tManager = ((Cluster)getCluster()).getClusterManager();
 						tManager.handleRouteRequest((RouteRequest) pData, getRemoteCluster());
-						tManager.registerRouteRequest(tRequest.getSession(), this);
+						tManager.registerRouteRequest(tRouteRequestPacket.getSession(), this);
 					} else if (getCluster() instanceof Coordinator) {
 						/*
 						 * Normally that case should not appear ...
@@ -393,13 +408,13 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 				/**
 				 * HRMID
 				 */
-				if(tRequest.getTarget() instanceof HRMID && !tRequest.isAnswer()) {
-					List<Route> tFinalPath = tHRS.getCoordinatorRoutingMap().getRoute(tRequest.getSource(), tRequest.getTarget());
-					if(tRequest.getRequiredClusters() != null) {
+				if(tRouteRequestPacket.getTarget() instanceof HRMID && !tRouteRequestPacket.isAnswer()) {
+					List<Route> tFinalPath = tHRS.getCoordinatorRoutingMap().getRoute(tRouteRequestPacket.getSource(), tRouteRequestPacket.getTarget());
+					if(tRouteRequestPacket.getRequiredClusters() != null) {
 
-						for(ICluster tDummy : tRequest.getRequiredClusters()) {
+						for(ICluster tDummy : tRouteRequestPacket.getRequiredClusters()) {
 							tFinalPath = null;
-							List<Route> tPath = tHRS.getCoordinatorRoutingMap().getRoute(tRequest.getSource(), tRequest.getTarget());
+							List<Route> tPath = tHRS.getCoordinatorRoutingMap().getRoute(tRouteRequestPacket.getSource(), tRouteRequestPacket.getTarget());
 							
 							ICluster tCluster = getHRMController().getCluster(tDummy);
 							LinkedList<HRMName> tAddressesOfCluster = new LinkedList<HRMName>();
@@ -414,10 +429,10 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 							} else {
 								for(HRMName tCandidate : tAddressesOfCluster) {
 									List<Route> tOldPath = tPath;
-									tPath = tHRS.getCoordinatorRoutingMap().getRoute(tCandidate, tRequest.getTarget());
+									tPath = tHRS.getCoordinatorRoutingMap().getRoute(tCandidate, tRouteRequestPacket.getTarget());
 									
 									if(tPath.size() < tOldPath.size()) {
-										List<Route> tFirstPart = tHRS.getCoordinatorRoutingMap().getRoute(tRequest.getSource(), tCandidate); 
+										List<Route> tFirstPart = tHRS.getCoordinatorRoutingMap().getRoute(tRouteRequestPacket.getSource(), tCandidate); 
 										Route tSegment = (tFirstPart.size() > 0 ? tFirstPart.get(0) : null);
 										if(tSegment != null) {
 											tPath.add(0, tSegment);
@@ -430,17 +445,17 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 					}
 					if(tFinalPath != null && !tFinalPath.isEmpty()) {
 						for(Route tSegment : tFinalPath) {
-							tRequest.addRoutingVector(new RoutingServiceLinkVector(tSegment, tHRS.getCoordinatorRoutingMap().getSource(tSegment), tHRS.getCoordinatorRoutingMap().getDest(tSegment)));
+							tRouteRequestPacket.addRoutingVector(new RoutingServiceLinkVector(tSegment, tHRS.getCoordinatorRoutingMap().getSource(tSegment), tHRS.getCoordinatorRoutingMap().getDest(tSegment)));
 						}
 					}
-					tRequest.setAnswer();
+					tRouteRequestPacket.setAnswer();
 					
 					// send packet
-					sendPacket(tRequest);
+					sendPacket(tRouteRequestPacket);
 					
-				} else if(tRequest.getTarget() instanceof HRMID && tRequest.isAnswer()) {
-					synchronized (tRequest) {
-						tRequest.notifyAll();
+				} else if(tRouteRequestPacket.getTarget() instanceof HRMID && tRouteRequestPacket.isAnswer()) {
+					synchronized (tRouteRequestPacket) {
+						tRouteRequestPacket.notifyAll();
 					}
 				}
 			}
@@ -449,9 +464,12 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			 * RequestCoordinator
 			 */
 			if (pData instanceof RequestCoordinator) {
-				getHRMController().getLogger().log(this, "Received " + pData);
-				RequestCoordinator tRequest = (RequestCoordinator) pData;
-				if(!tRequest.isAnswer()) {
+				RequestCoordinator tRequestCoordinatorPacket = (RequestCoordinator) pData;
+				
+				if (CHANNEL_SIGNALING_DEBUGGING)
+					mLogger.log("Node " + tNode + ":  CHANNEL-received from \"" + mPeerCluster + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
+
+				if(!tRequestCoordinatorPacket.isAnswer()) {
 					if(getCluster().getCoordinatorCEP() != null) {
 						ICluster tCluster = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getHierarchyLevel());
 						Logging.log(this, "Name of coordinator is " + tCluster.getCoordinatorName());
@@ -465,34 +483,34 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 						DiscoveryEntry tEntry = new DiscoveryEntry(tToken, tCoordinatorName, tCoordinatorAddress, tL2Address, tLevel);
 						tEntry.setPriority(getCluster().getNodePriority());
 						tEntry.setRoutingVectors(getPath(tCluster.getCoordinatorsAddress()));
-						tRequest.addDiscoveryEntry(tEntry);
-						tRequest.setCoordinatorKnown(true);
-						tRequest.setAnswer();
+						tRequestCoordinatorPacket.addDiscoveryEntry(tEntry);
+						tRequestCoordinatorPacket.setCoordinatorKnown(true);
+						tRequestCoordinatorPacket.setAnswer();
 					} else {
-						tRequest.setCoordinatorKnown(false);
-						tRequest.setAnswer();
+						tRequestCoordinatorPacket.setCoordinatorKnown(false);
+						tRequestCoordinatorPacket.setAnswer();
 					}
 					
 					// send packet
-					sendPacket(tRequest);
+					sendPacket(tRequestCoordinatorPacket);
 					
 				} else {
-					if(tRequest.isCoordinatorKnown()) {
+					if(tRequestCoordinatorPacket.isCoordinatorKnown()) {
 						mKnowsCoordinator = true;
 					} else {
 						mKnowsCoordinator = false;
 					}
-					if(tRequest.getDiscoveryEntries() != null) {
-						for(DiscoveryEntry tEntry : tRequest.getDiscoveryEntries()) {
+					if(tRequestCoordinatorPacket.getDiscoveryEntries() != null) {
+						for(DiscoveryEntry tEntry : tRequestCoordinatorPacket.getDiscoveryEntries()) {
 							ClusterDummy tDummy = handleDiscoveryEntry(tEntry);
 							getCluster().getHRMController().getCluster(ClusterDummy.compare((((HRMName)getSourceName()).getAddress().longValue()), getCluster().getToken(), getCluster().getHierarchyLevel())).addNeighborCluster(getCluster().getHRMController().getCluster(tDummy));
 							addAnnouncedCluster(getHRMController().getCluster(tDummy), getRemoteCluster());
 						}
 					}
-					synchronized(tRequest) {
-						Logging.log(this, "Received answer to " + tRequest + ", notifying");
-						tRequest.mWasNotified = true;
-						tRequest.notifyAll();
+					synchronized(tRequestCoordinatorPacket) {
+						Logging.log(this, "Received answer to " + tRequestCoordinatorPacket + ", notifying");
+						tRequestCoordinatorPacket.mWasNotified = true;
+						tRequestCoordinatorPacket.notifyAll();
 					}
 				}
 			}

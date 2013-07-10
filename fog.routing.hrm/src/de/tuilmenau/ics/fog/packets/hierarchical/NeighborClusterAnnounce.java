@@ -99,7 +99,7 @@ public class NeighborClusterAnnounce implements Serializable
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(COORDINATOR:" + mCoordinatorName.toString() + ",ID:" + mClusterID + ")@L(" + mLevel + ")VECTORS(" + mRoutingLinks + ")|" + (mReject ? ("(REJECT)") : "") + (mForeignAnnouncement ? "|FOREIGN" : "");
+		return getClass().getSimpleName() + "(Coord.=" + mCoordinatorName.toString() + ", Cluster=" + mClusterID + ", HierLevel=" + mLevel + ", RoutingLinks=" + mRoutingLinks + ", Reject=" + mReject + ", Foreign=" + mForeignAnnouncement + ")";
 	}
 	
 	/**
