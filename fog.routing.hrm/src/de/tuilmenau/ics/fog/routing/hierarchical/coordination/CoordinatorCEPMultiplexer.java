@@ -206,11 +206,11 @@ public class CoordinatorCEPMultiplexer
 					for(NestedDiscovery tDiscovery : tBigDiscovery.getDiscoveries()) {
 						String tClusters = new String();
 						for(Cluster tCluster : mHRMController.getRoutingTargetClusters()) {
-							tClusters += tCluster + "\n";
+							tClusters += tCluster + ", ";
 						}
 						String tDiscoveries = new String();
 						for(DiscoveryEntry tEntry : tDiscovery.getDiscoveryEntries()) {
-							tDiscoveries += "\n" + tEntry;
+							tDiscoveries += ", " + tEntry;
 						}
 						if(tDiscovery.getNeighborRelations() != null) {
 							for(Tuple<ClusterDummy, ClusterDummy> tTuple : tDiscovery.getNeighborRelations()) {
@@ -221,7 +221,7 @@ public class CoordinatorCEPMultiplexer
 										tFirstCluster.addNeighborCluster(tSecondCluster);
 										getLogger().log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);
 									} else {
-										getLogger().warn(this, "Unable to find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of " + tClusters + " while cluster discovery contained " + tDiscoveries + " and CEP is " + tCEP);
+										getLogger().warn(this, "Unable to find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of \"" + tClusters + "\", cluster discovery contained " + tDiscoveries + " and CEP is " + tCEP);
 									}
 								}
 							}
@@ -343,12 +343,12 @@ public class CoordinatorCEPMultiplexer
 				if(tCEP.getCluster().getClusterID().equals(pCluster.getClusterID())) {
 					Tuple<Long, Long> tTuple = new Tuple<Long, Long>(pSource.getClusterID(), pCluster.getClusterID());
 					boolean tSourceIsContained = isClusterMultiplexed(tTuple);
-					getLogger().log(this, "Comparing " + tCEP + "\n" + (tSourceIsContained ? getDemultiplex(tTuple) : "") + "\n" + tCEP.getRemoteCluster() + "\n" + (tSourceIsContained ? getDemultiplex(tTuple).getRemoteCluster() : "" ));
+					getLogger().log(this, "Comparing \"" + tCEP + "\" and \"" + (tSourceIsContained ? getDemultiplex(tTuple) : "") + "\" " + tCEP.getRemoteCluster() + ", " + (tSourceIsContained ? getDemultiplex(tTuple).getRemoteCluster() : "" ));
 					if(tSourceIsContained && getDemultiplex(tTuple) == tCEP) {
 						getLogger().log(this, "Returning " + tCEP + " for request on cluster " + pCluster);
 						return tCEP;
 					} else {
-						getLogger().log("\nSource is " + pSource + "\nwhile target is\n" + pCluster+ "\ndemultiplex of source is\n" + getDemultiplex(tTuple) + "\nand currently evaluated CEP is\n" + tCEP);
+						getLogger().log(this, "Source is \"" + pSource + "\", target is \"" + pCluster+ "\", DEMUXER of source is \"" + getDemultiplex(tTuple) + "\", currently evaluated CEP is \"" + tCEP + "\"");
 					}
 					if(!isClusterMultiplexed(tTuple) && tCEP.getCluster().getClusterID().equals(pCluster.getClusterID())) {
 						getLogger().log(this, "Returning " + tCEP + " for request on cluster " + pCluster);
