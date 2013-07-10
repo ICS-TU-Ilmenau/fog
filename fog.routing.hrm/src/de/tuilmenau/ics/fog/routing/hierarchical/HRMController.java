@@ -939,50 +939,50 @@ public class HRMController extends Application implements IServerCallback
 //		return tPossibleClusters;
 //	}
 //	
-	/**
-	 * Query route to a target that has to be specified in the object RouteRequest
-	 * 
-	 * @param pRequest contains the target of the request and restrictions regarding the route that has to be chosen
-	 */
-	public void queryRoute(RouteRequest pRequest)
-	{
-		try {
-			HRMID tForwardingHRMID = getHRS().getForwardingHRMID( (HRMID) pRequest.getTarget());
-//			ICluster tForwardingCluster = getCluster(getHRS().getFIBEntry(tForwardingHRMID).getNextCluster());
-			
-			LinkedList<ICluster> tAllowedClusters = null;//getAllowedCluster(tForwardingCluster, tLimitation);
-			LinkedList<RouteRequest> tResults = new LinkedList<RouteRequest>();
-			
-			for(ICluster tCandidate : tAllowedClusters) {
-				if(tCandidate.getCoordinatorCEP() != null) {
-					if(pRequest.getRoute() == null) {
-						//Route tRoute = new Route();
-						//tRoute.add(tCandidate.getCoordinatorCEP().getRouteToPeer());
-						pRequest.addRoutingVector(new RoutingServiceLinkVector(tCandidate.getCoordinatorCEP().getRouteToPeer(), tCandidate.getCoordinatorCEP().getSourceName(), tCandidate.getCoordinatorCEP().getPeerName()));
-					}
-					tCandidate.getCoordinatorCEP().sendPacket(pRequest);
-					synchronized(pRequest) {
-						if(!pRequest.isAnswer()) {
-							pRequest.wait();
-						}
-					}
-					if(pRequest.getResult().equals(RouteRequest.ResultType.SUCCESS)) {
-						break;
-					} else {
-						tResults.add(pRequest);
-						pRequest = pRequest.clone();
-					}
-				} else {
-					((Cluster)tCandidate).getClusterManager().handleRouteRequest(pRequest, tCandidate);
-				}
-			}
-		} catch (RemoteException tExc) {
-			Logging.err(this, "Error when trying to determine region limited route", tExc);
-		} catch (InterruptedException tExc) {
-			Logging.err(this, "Error occured when waiting for route request", tExc);
-		}
-	}
-	
+//	/**
+//	 * Query route to a target that has to be specified in the object RouteRequest
+//	 * 
+//	 * @param pRequest contains the target of the request and restrictions regarding the route that has to be chosen
+//	 */
+//	public void queryRoute(RouteRequest pRequest)
+//	{
+//		try {
+//			HRMID tForwardingHRMID = getHRS().getForwardingHRMID( (HRMID) pRequest.getTarget());
+////			ICluster tForwardingCluster = getCluster(getHRS().getFIBEntry(tForwardingHRMID).getNextCluster());
+//			
+//			LinkedList<ICluster> tAllowedClusters = null;//getAllowedCluster(tForwardingCluster, tLimitation);
+//			LinkedList<RouteRequest> tResults = new LinkedList<RouteRequest>();
+//			
+//			for(ICluster tCandidate : tAllowedClusters) {
+//				if(tCandidate.getCoordinatorCEP() != null) {
+//					if(pRequest.getRoute() == null) {
+//						//Route tRoute = new Route();
+//						//tRoute.add(tCandidate.getCoordinatorCEP().getRouteToPeer());
+//						pRequest.addRoutingVector(new RoutingServiceLinkVector(tCandidate.getCoordinatorCEP().getRouteToPeer(), tCandidate.getCoordinatorCEP().getSourceName(), tCandidate.getCoordinatorCEP().getPeerName()));
+//					}
+//					tCandidate.getCoordinatorCEP().sendPacket(pRequest);
+//					synchronized(pRequest) {
+//						if(!pRequest.isAnswer()) {
+//							pRequest.wait();
+//						}
+//					}
+//					if(pRequest.getResult().equals(RouteRequest.ResultType.SUCCESS)) {
+//						break;
+//					} else {
+//						tResults.add(pRequest);
+//						pRequest = pRequest.clone();
+//					}
+//				} else {
+//					((Cluster)tCandidate).getClusterManager().handleRouteRequest(pRequest, tCandidate);
+//				}
+//			}
+//		} catch (RemoteException tExc) {
+//			Logging.err(this, "Error when trying to determine region limited route", tExc);
+//		} catch (InterruptedException tExc) {
+//			Logging.err(this, "Error occured when waiting for route request", tExc);
+//		}
+//	}
+//	
 //	/**
 //	 * Find an appropriate route request in order to put together the pieces.
 //	 * 

@@ -296,13 +296,13 @@ public class NeighborClusterAnnounce implements Serializable
 		return mASIdentification;
 	}
 	
-	/**
-	 * define the target cluster as one that connects two different autonomous systems
-	 */
-	public void setInterASCluster()
-	{
-		mInterASCluster = true;
-	}
+//	/**
+//	 * define the target cluster as one that connects two different autonomous systems
+//	 */
+//	public void setInterASCluster()
+//	{
+//		mInterASCluster = true;
+//	}
 	
 	/**
 	 * 
