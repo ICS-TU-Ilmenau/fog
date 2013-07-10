@@ -960,7 +960,7 @@ public class HRMController extends Application implements IServerCallback
 						//tRoute.add(tCandidate.getCoordinatorCEP().getRouteToPeer());
 						pRequest.addRoutingVector(new RoutingServiceLinkVector(tCandidate.getCoordinatorCEP().getRouteToPeer(), tCandidate.getCoordinatorCEP().getSourceName(), tCandidate.getCoordinatorCEP().getPeerName()));
 					}
-					tCandidate.getCoordinatorCEP().write(pRequest);
+					tCandidate.getCoordinatorCEP().sendPacket(pRequest);
 					synchronized(pRequest) {
 						if(!pRequest.isAnswer()) {
 							pRequest.wait();

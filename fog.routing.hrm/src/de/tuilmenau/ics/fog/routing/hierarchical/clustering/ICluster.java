@@ -51,7 +51,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	
 	/**
 	 *  
-	 * @return Return the coordinator object of a node that is used for cluster handling etc.
+	 * @return Return the HRM controller of a node that is used for cluster handling etc.
 	 */
 	public HRMController getHRMController();
 	

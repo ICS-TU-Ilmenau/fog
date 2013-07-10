@@ -57,7 +57,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 {
 	private static final long serialVersionUID = -8290946480171751216L;
 	private ICluster mRemoteCluster;
-	private ICluster mCluster;
+	private ICluster mPeerCluster;
 	private long mPeerPriority = -1;
 	private boolean mReceivedBorderNodeAnnouncement = false;
 	private boolean mPeerIsCoordinatorForNeighborZone = false;
@@ -75,25 +75,26 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	 * 
 	 * @param pLogger Logger that should be used
 	 * @param pHRMController is the coordinator of a node
-	 * @param pCluster is the cluster this connection end point serves
+	 * @param pPeerCluster is the cluster this connection end point serves
 	 */
-	public CoordinatorCEPDemultiplexed(Logger pLogger, HRMController pHRMController, ICluster pCluster)
+	public CoordinatorCEPDemultiplexed(Logger pLogger, HRMController pHRMController, ICluster pPeerCluster)
 	{
 		mHRMController = pHRMController;
-		mCluster = pCluster;
+		mPeerCluster = pPeerCluster;
 		mLogger = pLogger;
 		mLogger.log(this, "Created");
-		getHRMController().getLogger().log(this, "Created for " + mCluster);
+		getHRMController().getLogger().log(this, "Created for " + mPeerCluster);
 	}
 	
 	/**
+	 * Handles a Bully signaling packet.
 	 * 
-	 * @param pBullyPacket
-	 * @return true if the packet left the central multiplexer and the forwarding node that is attached to a direct down gate
+	 * @param pBullyPacket the Bully signaling packet
 	 */
-	private boolean handleBullyPacket(SignalingMessageBully pPacketBully) throws NetworkException
+	private void handleSignalingMessageBully(SignalingMessageBully pPacketBully) throws NetworkException
 	{
 		Node tNode = getHRMController().getPhysicalNode();
+		boolean BULLY_STATE_MACHINE_DEBUGGING = true;
 
 		/**
 		 * BullyElect
@@ -103,40 +104,51 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			// cast to Bully elect packet
 			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
 			
+			if (BULLY_STATE_MACHINE_DEBUGGING)
+				mLogger.log(this, "BULLY-received from " + mPeerCluster + "an ELECT: " + tPacketBullyElect);
+
 			if ((getCluster().getCoordinatorCEP() != null) && (tPacketBullyElect.getSenderPriority() < getCluster().getHighestPriority())) {
 				
 				mPeerPriority = tPacketBullyElect.getSenderPriority();
 				
 				if (getCluster().getHRMController().equals(tNode.getCentralFN().getName())) {
-					BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), getCluster().getPriority(), getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getHierarchyLevel()), getCluster().getToken());
-					
-					mLogger.log(this, " Sending Bullyannounce because I have a coordinator: " + tAnnounce);
+					// create ANNOUNCE packet
+					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tNode.getCentralFN().getName(), getCluster().getPriority(), getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getHierarchyLevel()), getCluster().getToken());
 					
 					for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
-						tAnnounce.addCoveredNode(tCEP.getPeerName());
+						tAnnouncePacket.addCoveredNode(tCEP.getPeerName());
 					}
-					if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
-						getHRMController().getLogger().log(this, "Sending announce that does not cover anyhting");
+					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
+						mLogger.log(this, "Sending announce that does not cover anyhting");
 					}
 
 					// send packet
-					write(tAnnounce);
+					if (BULLY_STATE_MACHINE_DEBUGGING)
+						mLogger.log(this, "BULLY-sending to " + mPeerCluster + "an ANNOUNCE: " + tAnnouncePacket);
+					sendPacket(tAnnouncePacket);
 					
 				} else {
-
+					// create ALIVE packet
+					BullyAlive tAlivePacket = new BullyAlive(tNode.getCentralFN().getName());
+					
 					// send packet
-					write(new BullyAlive(tNode.getCentralFN().getName()));
+					if (BULLY_STATE_MACHINE_DEBUGGING)
+						mLogger.log(this, "BULLY-sending to " + mPeerCluster + "an ALIVE: " + tAlivePacket);
+					sendPacket(tAlivePacket);
 					//TODO: packet is sent but never parsed or a timeout timer reset!!
 				}
 			} else {
 				// store peer's Bully priority
+				//TODO: peer prio direkt mal abspeichern und auf größte checken!
 				mPeerPriority = tPacketBullyElect.getSenderPriority();
 				
-				// prepare a Bully answer
-				BullyReply tAnswer = new BullyReply(tNode.getCentralFN().getName(), getCluster().getPriority());
+				// create REPLY packet
+				BullyReply tReplyPacket = new BullyReply(tNode.getCentralFN().getName(), getCluster().getPriority());
 				
 				// send the answer packet
-				write(tAnswer);
+				if (BULLY_STATE_MACHINE_DEBUGGING)
+					mLogger.log(this, "BULLY-sending to " + mPeerCluster + "a REPLY: " + tReplyPacket);
+				sendPacket(tReplyPacket);
 			}
 		}
 		
@@ -146,10 +158,14 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 		if(pPacketBully instanceof BullyReply) {
 			
 			// cast to Bully replay packet
-			BullyReply tPacketBullyReply = (BullyReply)pPacketBully;
+			BullyReply tReplyPacket = (BullyReply)pPacketBully;
+
+			if (BULLY_STATE_MACHINE_DEBUGGING)
+				mLogger.log(this, "BULLY-received from " + mPeerCluster + "a REPLY: " + tReplyPacket);
 
 			// store peer's Bully priority
-			mPeerPriority = tPacketBullyReply.getSenderPriority();
+			//TODO: peer prio direkt mal abspeichern und auf größte checken!
+			mPeerPriority = tReplyPacket.getSenderPriority();
 		}
 		
 		/**
@@ -157,10 +173,13 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 		 */
 		if(pPacketBully instanceof BullyAnnounce)  {
 			// cast to Bully replay packet
-			BullyAnnounce tPacketBullyAnnounce = (BullyAnnounce)pPacketBully;
+			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
+
+			if (BULLY_STATE_MACHINE_DEBUGGING)
+				mLogger.log(this, "BULLY-received from " + mPeerCluster + "an ANNOUNCE: " + tAnnouncePacket);
 
 			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
-			getCluster().interpretAnnouncement(tPacketBullyAnnounce, this);
+			getCluster().interpretAnnouncement(tAnnouncePacket, this);
 		}
 
 		/**
@@ -170,11 +189,12 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			// cast to Bully replay packet
 			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
 
+			if (BULLY_STATE_MACHINE_DEBUGGING)
+				mLogger.log(this, "BULLY-received from " + mPeerCluster + "a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
+
 			// store peer's Bully priority
 			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority();
 		}
-		
-		return true;
 	}
 	
 	/**
@@ -208,7 +228,9 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 				SignalingMessageBully tBullyMessage = (SignalingMessageBully)pData;
 			
 				// process Bully message
-				return handleBullyPacket(tBullyMessage);
+				handleSignalingMessageBully(tBullyMessage);
+				
+				return true;
 			}
 			
 			/**
@@ -232,7 +254,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 							if(tCEP.isEdgeCEP()) {
 								
 								// send packet
-								tCEP.write(tAnnounce);
+								tCEP.sendPacket(tAnnounce);
 
 								tWroteAnnouncement = true;
 							}
@@ -249,7 +271,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 								if(tCEP.getRemoteCluster().getHierarchyLevel() -1 == tAnnounce.getLevel()) {
 									
 									// send packet
-									tCEP.write(tAnnounce);
+									tCEP.sendPacket(tAnnounce);
 									
 									tWroteAnnouncement = true;
 								}
@@ -309,7 +331,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 								tRequest.setResult(ResultType.SUCCESS);
 
 								// send packet
-								write(tRequest);
+								sendPacket(tRequest);
 								
 								return true;
 							}
@@ -338,7 +360,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 								tRequest.setRoute(tRoute);
 								
 								// send packet
-								write(tRequest);
+								sendPacket(tRequest);
 								
 							}
 						} 
@@ -414,7 +436,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 					tRequest.setAnswer();
 					
 					// send packet
-					write(tRequest);
+					sendPacket(tRequest);
 					
 				} else if(tRequest.getTarget() instanceof HRMID && tRequest.isAnswer()) {
 					synchronized (tRequest) {
@@ -452,7 +474,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 					}
 					
 					// send packet
-					write(tRequest);
+					sendPacket(tRequest);
 					
 				} else {
 					if(tRequest.isCoordinatorKnown()) {
@@ -554,7 +576,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	 */
 	public ICluster getCluster()
 	{
-		return mCluster;
+		return mPeerCluster;
 	}
 	
 	/**
@@ -649,7 +671,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 		return getMultiplexer();
 	}
 	
-	public boolean write(Serializable pData)
+	public boolean sendPacket(Serializable pData)
 	{
 		if(pData instanceof RequestCoordinator) {
 //			mRequestedCoordinator = true;

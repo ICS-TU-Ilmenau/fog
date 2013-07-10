@@ -117,7 +117,7 @@ public class ElectionProcess extends Thread
 				Logging.log(this, "Sending elections from " + tCluster);
 				for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
 					if(tCEP.getPeerPriority() == 0 && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
-						tCEP.write(new BullyElect(tCluster.getHRMController().getPhysicalNode().getCentralFN().getName(), tCluster.getPriority(), tCluster.getHierarchyLevel()));
+						tCEP.sendPacket(new BullyElect(tCluster.getHRMController().getPhysicalNode().getCentralFN().getName(), tCluster.getPriority(), tCluster.getHierarchyLevel()));
 					}
 				}
 			}
@@ -177,7 +177,7 @@ public class ElectionProcess extends Thread
 							tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
 						}
 						for(CoordinatorCEPDemultiplexed tCEP : ((NeighborCluster)tToAnnounce).getAnnouncedCEPs()) {
-							tCEP.write(tBullyAnnounce);
+							tCEP.sendPacket(tBullyAnnounce);
 						}
 					}
 				}
@@ -308,7 +308,7 @@ public class ElectionProcess extends Thread
 							Logging.log(tCluster, " did not yet receive an announcement");
 							for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
 								RequestCoordinator tRequest = new RequestCoordinator(/* false */);
-								tCEP.write(tRequest);
+								tCEP.sendPacket(tRequest);
 								synchronized(tRequest) {
 									if(!tRequest.mWasNotified)
 									tRequest.wait(10000);

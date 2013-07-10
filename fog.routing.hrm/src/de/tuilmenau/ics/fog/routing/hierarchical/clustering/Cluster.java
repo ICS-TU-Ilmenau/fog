@@ -199,7 +199,7 @@ public class Cluster implements ICluster, IElementDecorator
 				if(mCoordinator != null)
 				{
 					// OK, we have to notify the other node via socket communication, so this cluster has to be at least one hop away
-					mCoordinator.write(mReceivedAnnounces.removeFirst());
+					mCoordinator.sendPacket(mReceivedAnnounces.removeFirst());
 				} else {
 					/*
 					 * in this case this announcement came from a neighbor intermediate cluster
@@ -311,7 +311,7 @@ public class Cluster implements ICluster, IElementDecorator
 				for(Coordinator tManager : getHRMController().getClusterManagers(mHierarchyLevel)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						if(tManager.getCoordinatorCEP() != null) {
-							tManager.getCoordinatorCEP().write(pAnnounce);
+							tManager.getCoordinatorCEP().sendPacket(pAnnounce);
 						}
 					}
 				}
@@ -416,7 +416,7 @@ public class Cluster implements ICluster, IElementDecorator
 			{
 				handleAnnouncement(pAnnouncement, pCEP);
 			} else {
-				mCoordinator.write(pAnnouncement);
+				mCoordinator.sendPacket(pAnnouncement);
 			}
 		} else {
 			mReceivedAnnounces.add(pAnnouncement);
@@ -543,7 +543,7 @@ public class Cluster implements ICluster, IElementDecorator
 			{
 				if(!tInformedCEPs.contains(tCEP))
 				{
-					tCEP.write(pData);
+					tCEP.sendPacket(pData);
 					tInformedCEPs.add(tCEP);
 				}
 			}

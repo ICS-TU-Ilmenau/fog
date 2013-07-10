@@ -788,7 +788,7 @@ public class Coordinator implements ICluster, Observer
 					}
 				}
 				mAddressMapping.get(tSourceCEP).addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mLevel - 1));
-				tSourceCEP.write(mAddressMapping.get(tSourceCEP));
+				tSourceCEP.sendPacket(mAddressMapping.get(tSourceCEP));
 			}
 			if(mHigherHRMIDs != null) {
 				for(HRMID tHRMID : mHigherHRMIDs) {
@@ -1180,7 +1180,7 @@ public class Coordinator implements ICluster, Observer
 							tOldCovered.setCoveringClusterEntry(tOldCoveredEntry);
 //							List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute((HRMName)pCEP.getSourceName(), getCoordinatorsAddress());
 							//tOldCovered.setAnnouncer(getCoordinator().getHRS().getCoordinatorRoutingMap().getDest(tPathToCoordinator.get(0)));
-							pCEP.write(tOldCovered);
+							pCEP.sendPacket(tOldCovered);
 							
 							/*
 							 * now the old cluster is notified about the new cluster
@@ -1207,7 +1207,7 @@ public class Coordinator implements ICluster, Observer
 							}
 							getLogger().warn(this, "Rejecting " + (getCoordinatorCEP().getPeerName()).getDescr() + " in favor of " + pAnnounce.getSenderName());
 							tNewCovered.setRejection();
-							getCoordinatorCEP().write(tNewCovered);
+							getCoordinatorCEP().sendPacket(tNewCovered);
 							for(CoordinatorCEPDemultiplexed tCEP : getParticipatingCEPs()) {
 								if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerName())) {
 									tCEP.setAsParticipantOfMyCluster(true);
@@ -1220,7 +1220,7 @@ public class Coordinator implements ICluster, Observer
 							setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pCEP.getPeerName());
 							getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 							getHRMController().addApprovedSignature(pAnnounce.getCoordSignature());
-							getCoordinatorCEP().write(tNewCovered);
+							getCoordinatorCEP().sendPacket(tNewCovered);
 						}
 					}
 				}
@@ -1270,7 +1270,7 @@ public class Coordinator implements ICluster, Observer
 			tUncoveredAnnounce.setCoveringClusterEntry(tUncoveredEntry);
 			getLogger().warn(this, "Rejecting " + (getCoordinatorCEP().getPeerName()).getDescr() + " in favour of " + pAnnounce.getSenderName());
 			tUncoveredAnnounce.setRejection();
-			pCEP.write(tUncoveredAnnounce);
+			pCEP.sendPacket(tUncoveredAnnounce);
 			
 			/*
 			 * this part is for the acting coordinator, so NeighborZoneAnnounce is sent in order to announce the cluster that was just rejected
@@ -1301,7 +1301,7 @@ public class Coordinator implements ICluster, Observer
 				tUncoveredEntry.setPredecessor(ClusterDummy.compare(tNewPredecessor.getClusterID(), tNewPredecessor.getToken(), tNewPredecessor.getHierarchyLevel()));
 			}
 			getLogger().log(this, "Coordinator CEP is " + getCoordinatorCEP());
-			getCoordinatorCEP().write(tCoveredAnnounce);
+			getCoordinatorCEP().sendPacket(tCoveredAnnounce);
 		}
 	}
 	
@@ -1410,7 +1410,7 @@ public class Coordinator implements ICluster, Observer
 							LinkedList<RoutingServiceLinkVector> tVectorList = tCEP.getPath(pAddress);
 							tAnnounce.setRoutingVectors(tVectorList);
 							tAnnounce.setNegotiatorIdentification(ClusterDummy.compare(getManagedCluster().getClusterID(), getManagedCluster().getToken(), getManagedCluster().getHierarchyLevel()));
-							tCEP.write(tAnnounce);
+							tCEP.sendPacket(tAnnounce);
 						}
 						getLogger().log(this, "Informed " + tCEP + " about new neighbor zone");
 					}
@@ -1420,7 +1420,7 @@ public class Coordinator implements ICluster, Observer
 		getHRMController().addApprovedSignature(pCoordSignature);
 		if(mReceivedAnnouncements != null) {
 			for(NeighborClusterAnnounce tAnnounce : mReceivedAnnouncements) {
-				pCoord.write(tAnnounce);
+				pCoord.sendPacket(tAnnounce);
 			}
 		}
 		
@@ -1477,7 +1477,7 @@ public class Coordinator implements ICluster, Observer
 			{
 				if(!tInformedCEPs.contains(tCEP))
 				{
-					tCEP.write(pData);
+					tCEP.sendPacket(pData);
 					tInformedCEPs.add(tCEP);
 				}
 			}
@@ -1631,7 +1631,7 @@ public class Coordinator implements ICluster, Observer
 		if(pRequest.getResult() != null && pRequest.getResult().equals(ResultType.UNFEASIBLE)) {
 			CoordinatorCEPDemultiplexed tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
 			tParameterRouteRequest.setAnswer();
-			tCEP.write(tParameterRouteRequest);
+			tCEP.sendPacket(tParameterRouteRequest);
 			return;
 		}
 		
@@ -1647,7 +1647,7 @@ public class Coordinator implements ICluster, Observer
 				 */
 				if(tDescendingDifference >= mLevel) {
 					RouteRequest tRequest = tParameterRouteRequest.clone();
-					getCoordinatorCEP().write(tRequest);
+					getCoordinatorCEP().sendPacket(tRequest);
 					synchronized(tRequest) {
 						try {
 							tRequest.wait();
@@ -1675,7 +1675,7 @@ public class Coordinator implements ICluster, Observer
 					tParameterRouteRequest.setAnswer();
 					tParameterRouteRequest.setResult(tRequest.getResult());
 					CoordinatorCEPDemultiplexed tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
-					tCEP.write(tParameterRouteRequest);
+					tCEP.sendPacket(tParameterRouteRequest);
 				} else {
 					/*
 					 * end of the recursion
@@ -1701,7 +1701,7 @@ public class Coordinator implements ICluster, Observer
 						} else {
 							tParameterRouteRequest.setResult(ResultType.UNFEASIBLE);
 							CoordinatorCEPDemultiplexed tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
-							tCEP.write(tParameterRouteRequest);
+							tCEP.sendPacket(tParameterRouteRequest);
 							return;
 						}
 						
@@ -1731,7 +1731,7 @@ public class Coordinator implements ICluster, Observer
 										RouteRequest tRequest = new RouteRequest(tLastCluster.getCoordinatorsAddress(), tCluster.getCoordinatorsAddress(), null, 0);
 										tRequest.addRequiredCluster(new ClusterDummy(tLastCluster.getToken(), tLastCluster.getClusterID(), tLastCluster.getHierarchyLevel()));
 
-										tCEP.write(tRequest);
+										tCEP.sendPacket(tRequest);
 										synchronized(tRequest) {
 											if(!tRequest.isAnswer()) {
 												try {
@@ -1756,7 +1756,7 @@ public class Coordinator implements ICluster, Observer
 						if(((HRMID)tParameterRouteRequest.getTarget()).getLevelAddress(mLevel -1 ) != BigInteger.valueOf(0)) {
 							CoordinatorCEPDemultiplexed tCEP = mManagedCluster.getCEPOfCluster((ICluster) getVirtualNodeFromHRMID(tLocalTarget));
 							RouteRequest tRequest = new RouteRequest(tCEP.getPeerName(), tParameterRouteRequest.getTarget(), tParameterRouteRequest.getDescription(), tParameterRouteRequest.getSession());
-							tCEP.write(tRequest);
+							tCEP.sendPacket(tRequest);
 							synchronized(tRequest) {
 								try {
 									tRequest.wait();
@@ -1780,7 +1780,7 @@ public class Coordinator implements ICluster, Observer
 						}
 						CoordinatorCEPDemultiplexed tCEP = mRouteRequestDispatcher.get(tRequestSession);
 						tParameterRouteRequest.setAnswer();
-						tCEP.write(tParameterRouteRequest);
+						tCEP.sendPacket(tParameterRouteRequest);
 					} catch (NullPointerException tExc) {
 						Logging.err(tManager, "Error when trying to calculate route with invalidated node", tExc);
 					}
