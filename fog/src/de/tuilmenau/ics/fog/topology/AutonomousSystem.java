@@ -51,11 +51,10 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		mName = pName;
 		mSim = pSimulation;
 		
-		RemoteRoutingService tGrs = RoutingServiceInstanceRegister.getGlobalRoutingService(mSim);
+		RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance(pSimulation);
+		RemoteRoutingService tGrs = register.getGlobalRoutingService(mSim);
 		
 		if(pPartialRouting) {
-			RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance(pSimulation);
-			
 			if(pPartialRoutingServiceName != null) {
 				mRoutingService = register.get(pPartialRoutingServiceName);
 				

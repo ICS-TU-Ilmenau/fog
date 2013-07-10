@@ -62,7 +62,7 @@ public class RoutingServiceInstanceRegister implements GraphProvider
 	 */
 	public void put(String name, RemoteRoutingService rs)
 	{
-		sRoutingServiceInstances.put(name, rs);
+		routingServiceInstances.put(name, rs);
 		
 		routingServiceEntityGraph.add(rs);
 	}
@@ -75,12 +75,12 @@ public class RoutingServiceInstanceRegister implements GraphProvider
 	 */
 	public RemoteRoutingService get(String name)
 	{
-		return sRoutingServiceInstances.get(name);
+		return routingServiceInstances.get(name);
 	}
 	
 	public Collection<RemoteRoutingService> getAll()
 	{
-		return sRoutingServiceInstances.values();
+		return routingServiceInstances.values();
 	}
 	
 	public void link(RemoteRoutingService rs, RemoteRoutingService parent)
@@ -105,10 +105,10 @@ public class RoutingServiceInstanceRegister implements GraphProvider
 		return routingServiceEntityGraph;
 	}
 	
-	public static RemoteRoutingService getGlobalRoutingService(Simulation pSim)
+	public RemoteRoutingService getGlobalRoutingService(Simulation pSim)
 	{
 		Logger tLogger = Logging.getInstance();
-		RemoteRoutingService tRS = sSingletonRoutingService;
+		RemoteRoutingService tRS = singletonRoutingService;
 
 		// first try: local RS
 		if(tRS == null) {
@@ -119,12 +119,12 @@ public class RoutingServiceInstanceRegister implements GraphProvider
 				tLogger.log("No IRoutingServices available from JINI: Creating local one.");
 	
 				// create new one and try to register it
-				if(sSingletonRoutingService == null) {
-					sSingletonRoutingService = new RootRoutingService(pSim);
+				if(singletonRoutingService == null) {
+					singletonRoutingService = new RootRoutingService(pSim);
 					
-					JiniHelper.registerService(RemoteRoutingService.class, sSingletonRoutingService, RootRoutingService.ROOT_ROUTING_SERVICE_NAME);
+					JiniHelper.registerService(RemoteRoutingService.class, singletonRoutingService, RootRoutingService.ROOT_ROUTING_SERVICE_NAME);
 				}
-				tRS = sSingletonRoutingService;
+				tRS = singletonRoutingService;
 			} else {
 				tLogger.log("Using RoutingService provided via Jini");
 			}
@@ -133,9 +133,8 @@ public class RoutingServiceInstanceRegister implements GraphProvider
 		return tRS;
 	}
 
-	private static PartialRoutingService sSingletonRoutingService = null;
-	
+	private PartialRoutingService singletonRoutingService = null;	
 	private boolean useDelegationType = false;
-	private HashMap<String, RemoteRoutingService> sRoutingServiceInstances = new HashMap<String, RemoteRoutingService>();
+	private HashMap<String, RemoteRoutingService> routingServiceInstances = new HashMap<String, RemoteRoutingService>();
 	private RoutableGraph<RemoteRoutingService, Object> routingServiceEntityGraph = new RoutableGraph<RemoteRoutingService, Object>();	
 }
