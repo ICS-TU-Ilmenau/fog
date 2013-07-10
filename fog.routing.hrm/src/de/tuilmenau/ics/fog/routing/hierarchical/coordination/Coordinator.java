@@ -995,6 +995,7 @@ public class Coordinator implements ICluster, Observer
 		synchronized(this) {
 			while(mCoordinatorAddress == null) {
 				try {
+					Logging.log(this, "ACTIVE WAITING");
 					wait(1000);
 				} catch (InterruptedException tExc) {
 					getLogger().err(this, "Error while waiting for address", tExc);

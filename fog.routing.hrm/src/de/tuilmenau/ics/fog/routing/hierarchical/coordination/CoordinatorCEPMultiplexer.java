@@ -35,6 +35,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraph
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.Tuple;
 
@@ -197,6 +198,7 @@ public class CoordinatorCEPMultiplexer
 					synchronized(tBigDiscovery) {
 						getLogger().log(this, "Waiting for come back of " + tBigDiscovery);
 						if(!tBigDiscovery.isDealtWith()) {
+							Logging.log(this, "ACTIVE WAITING");
 							tBigDiscovery.wait(10000);
 						}
 						getLogger().log(this, "come back of: " + tBigDiscovery);
