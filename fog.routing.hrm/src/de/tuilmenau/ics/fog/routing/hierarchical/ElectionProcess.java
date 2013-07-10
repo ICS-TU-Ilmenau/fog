@@ -225,7 +225,7 @@ public class ElectionProcess extends Thread
 				try {
 					mClusterManager.setHRMID(new HRMID(0));
 					synchronized(mPleaseInterrupt) {
-						Logging.log(this, "ACTIVE WAITING");
+						Logging.log(this, "ACTIVE WAITING (init) - " + WAIT_BEFORE_ADDRESS_DISTRIBUTION);
 						mPleaseInterrupt.wait(WAIT_BEFORE_ADDRESS_DISTRIBUTION);
 					}
 					mClusterManager.distributeAddresses();
@@ -312,7 +312,7 @@ public class ElectionProcess extends Thread
 								tCEP.sendPacket(tRequest);
 								synchronized(tRequest) {
 									if(!tRequest.mWasNotified){
-										Logging.log(this, "ACTIVE WAITING");
+										Logging.log(this, "ACTIVE WAITING (run)");
 										tRequest.wait(10000);
 									}
 									if(!tRequest.mWasNotified) {
@@ -385,7 +385,7 @@ public class ElectionProcess extends Thread
 				}
 				if(tWaitTime ==0 || mPleaseInterrupt) return;
 				try	{
-					Logging.log(this, "ACTIVE WAITING");
+					Logging.log(this, "ACTIVE WAITING (checkWait) - " + tWaitTime);
 					mPleaseInterrupt.wait(tWaitTime);
 				} catch (InterruptedException tExc) {
 					Logging.trace(this, "was interrupted");
