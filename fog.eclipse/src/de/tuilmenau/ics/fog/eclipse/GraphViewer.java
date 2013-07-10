@@ -16,6 +16,7 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Image;
+import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.Paint;
 import java.awt.PopupMenu;
@@ -33,6 +34,7 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -50,7 +52,6 @@ import de.tuilmenau.ics.fog.eclipse.utils.SWTAWTConverter;
 import de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
-import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -59,6 +60,8 @@ import de.tuilmenau.ics.fog.transfer.DummyForwardingElement;
 import de.tuilmenau.ics.fog.transfer.Gate;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
+import de.tuilmenau.ics.fog.ui.Decoration;
+import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Marker;
 import de.tuilmenau.ics.fog.ui.MarkerContainer;
@@ -276,10 +279,22 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 	    	Point2D tNodePos = pLayout.transform(pNode);
 	    	tNodePos = pRc.getMultiLayerTransformer().transform(Layer.LAYOUT, tNodePos);
 
-	    	if(pNode instanceof IElementDecorator) {
-
-	    		if(((IElementDecorator)pNode).getDecorationValue() != null && ((IElementDecorator)pNode).getDecorationValue() instanceof String) {
-	    			pLabel += ((Node)pNode).getDecorationValue();
+	    	// does the node itself contain decoration information?
+	    	if(pNode instanceof Decorator) {
+	    		String tAddLabel = ((Decorator) pNode).getText();
+	    		if(tAddLabel != null) {
+	    			pLabel += " " +tAddLabel;
+	    		}
+	    	}
+	    	
+	    	// is there a decoration container with some additional information?
+	    	if(mDecoration != null) {
+	    		Decorator tDec = mDecoration.getDecorator(pNode);
+	    		if(tDec != null) {
+	    			String tAddLabel = tDec.getText();
+	    			if(tAddLabel != null) {
+	    				pLabel += " " +tAddLabel;
+	    			}
 	    		}
 	    	}
 	    	
@@ -311,13 +326,26 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 		if(pObj instanceof DummyForwardingElement) {
 			pObj = ((DummyForwardingElement) pObj).getObject();
 		}
-		if(pObj instanceof IElementDecorator) {
-			if(((IElementDecorator)pObj).getDecorationParameter() instanceof String) {
-				String tImageString = pObj.getClass().getCanonicalName() + (  ((IElementDecorator)pObj).getDecorationParameter() != null ? ((IElementDecorator)pObj).getDecorationParameter() : "")+".gif";
-				return loadImage(tImageString);
+		
+		String imageName = pObj.getClass().getCanonicalName() +".gif";
+		
+		// is there a different name given by a decorator?
+		if(pObj instanceof Decorator) {
+			String decorationImageName = ((Decorator) pObj).getImageName();
+			if(decorationImageName != null) imageName = decorationImageName;
+		} else {
+			if(mDecoration != null) {
+				Decorator decorator = mDecoration.getDecorator(pObj);
+				if(decorator != null) {
+					String decorationImageName = decorator.getImageName();
+					if(decorationImageName != null) {
+						imageName = decorationImageName;
+					}
+				}
 			}
 		}
-		return loadImage(pObj.getClass().getCanonicalName() +".gif");
+		
+		return loadImage(imageName);
 	}
 	
 	private Image loadImage(String pFile)
@@ -417,13 +445,23 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 				if (i instanceof RemoteRoutingService) return colorBlue;
 				if (i instanceof RoutingServiceAddress) return colorBlue;
 				
-				if(i instanceof IElementDecorator && ((IElementDecorator)i).getDecorationParameter() != null && ((IElementDecorator)i).getDecorationParameter() instanceof IElementDecorator.Color) {
-					IElementDecorator tDecorator = (IElementDecorator)i;
-					Color tColor = null;
-					if(tDecorator.getDecorationParameter() == IElementDecorator.Color.GREEN) tColor =  new Color(0, (Float)tDecorator.getDecorationValue(), 0);
-					if(tDecorator.getDecorationParameter() == IElementDecorator.Color.RED) tColor =  new Color((Float)tDecorator.getDecorationValue(), 0, 0);
-					if(tDecorator.getDecorationParameter() == IElementDecorator.Color.BLUE) tColor =  new Color(0, 0, (Float)tDecorator.getDecorationValue());
-					return tColor;
+				// does the object define its color by itself?
+				if(i instanceof Decorator) {
+					Color decColor = ((Decorator) i).getColor();
+					if(decColor != null) {
+						return decColor;
+					}
+				}
+				
+				// is there an external decorator for the object?
+				if(mDecoration != null) {
+					Decorator decorator = mDecoration.getDecorator(i);
+					if(decorator != null) {
+						Color decColor = decorator.getColor();
+						if(decColor != null) {
+							return decColor;
+						}
+					}
 				}
 				
 				return Color.WHITE;
@@ -780,6 +818,36 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 			}
 		});
 		popup.add(mi);
+		
+		//
+		// Add decorator selection menu
+		//
+		Menu decMenu = new Menu("Decoration types");
+		popup.add(decMenu);
+		
+		mi = new MenuItem("None");
+		mi.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				mDecoration = null;
+				update(null, null);
+			}
+		});
+		decMenu.add(mi);
+		
+		Set<String> decorationTypes = Decoration.getTypes();
+		for(String decType : decorationTypes) {
+			mi = new MenuItem(decType);
+			mi.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					String decType = e.getActionCommand();
+					mDecoration = Decoration.getInstance(decType);
+					update(null, null);
+				}
+			});
+			decMenu.add(mi);
+		}
 	}
 
 	/**
@@ -797,11 +865,11 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 		}
 	}
 
-	
 	private Layout<NodeObject, LinkObject> mLayout;
 	private VisualizationViewer<NodeObject, LinkObject> mViewer;
 	private boolean mViewUpdateRunning = false;
 	private IController mController;
+	private Decoration mDecoration = null;
 	private DefaultModalGraphMouse mMouse;
 	private HashMap<String, BufferedImage> mIcons = new HashMap<String, BufferedImage>();
 }

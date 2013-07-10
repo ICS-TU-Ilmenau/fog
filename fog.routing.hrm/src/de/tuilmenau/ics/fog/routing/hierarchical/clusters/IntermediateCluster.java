@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.clusters;
 
+import java.awt.Color;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ConcurrentModificationException;
@@ -39,8 +40,9 @@ import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
+import de.tuilmenau.ics.fog.ui.Decoration;
+import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -51,7 +53,7 @@ import de.tuilmenau.ics.fog.util.Logger;
  * and a physical node. Only on an intermediate cluster may be managed by a ClusterManager.
  * 
  */
-public class IntermediateCluster implements Cluster, IElementDecorator
+public class IntermediateCluster implements Cluster, Decorator
 {
 	private CoordinatorCEPDemultiplexed mCoordinator;
 	private Long mClusterID;
@@ -115,6 +117,8 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		tProcess.addElectingCluster(this);
 		mMux = new CoordinatorCEPMultiplexer(mCoordinatorInstance);
 		mMux.setCluster(this);
+		
+		Decoration.getInstance(IntermediateCluster.class.toString()).setDecorator(mCoordinatorInstance.getReferenceNode(), this);
 	}
 	
 	public void setAnnouncedCEP(CoordinatorCEPDemultiplexed pCEP)
@@ -143,14 +147,11 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 				notifyAll();
 			}
 			setCoordinatorPriority(getPriority());
-			getCoordinator().getReferenceNode().setDecorationParameter("L"+ (mLevel+1));
-			getCoordinator().getReferenceNode().setDecorationValue("(" + pCoordSignature + ")");
 		} else {
 			synchronized(this) {
 				mCoordAddress = pAddress;
 				notifyAll();
 			}
-			getCoordinator().getReferenceNode().setDecorationValue("(" + pCoordSignature + ")");
 			setCoordinatorPriority(pCoord.getPeerPriority());
 			try {
 				getCoordinator().getHRS().registerNode(pCoordName, pAddress);
@@ -168,6 +169,10 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 			
 			/*getCoordinator().getReferenceNode().setDecorationParameter(null);*/
 		}
+		
+		// inform GUI about new decorations
+		getCoordinator().getReferenceNode().notifyObservers();
+		
 		getCoordinator().getLogger().log(this, "This cluster has the following neighbors: " + getNeighbors());
 		for(Cluster tCluster : getNeighbors()) {
 			if(tCluster instanceof IntermediateCluster) {
@@ -695,8 +700,10 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		
 		setHRMID(pEnvelope.getHRMID());
 		
-		getCoordinator().getReferenceNode().setDecorationValue(getCoordinator().getReferenceNode().getDecorationValue() + " " + pEnvelope.getHRMID().toString() + ",");
+		// update node and inform GUI about update
 		getCoordinator().addIdentification(pEnvelope.getHRMID());
+		getCoordinator().getReferenceNode().notifyObservers();
+		
 		if(mEnvelope.getEntries() != null) {
 			for(FIBEntry tEntry : mEnvelope.getEntries()) {
 				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null) {
@@ -766,32 +773,26 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	}
 	
 	@Override
-	public Object getDecorationParameter()
+	public String getText()
 	{
-		return IElementDecorator.Color.GREEN;
-
+		return String.valueOf(mCoordSignature) +" prio=" +mCoordinatorPriority;
 	}
-
+	
 	@Override
-	public void setDecorationParameter(Object pDecoration)
+	public Color getColor()
 	{
-		
+		return new Color(0, 0.6f, 0);
 	}
-
+	
 	@Override
-	public Object getDecorationValue()
+	public String getImageName()
 	{
-		return Float.valueOf(0.8f);
+		return "L"+ (mLevel+1);
 	}
-
+	
 	public int hashCode()
 	{
 		return mClusterID.intValue() * 1;
 	}
 	
-	@Override
-	public void setDecorationValue(Object tLabal)
-	{
-		
-	}
 }

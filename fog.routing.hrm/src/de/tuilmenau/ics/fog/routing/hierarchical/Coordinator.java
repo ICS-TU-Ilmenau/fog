@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
+import java.awt.Color;
 import java.math.BigInteger;
 import java.rmi.RemoteException;
 import java.util.Collection;
@@ -58,6 +59,8 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
+import de.tuilmenau.ics.fog.ui.Decoration;
+import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.ParameterMap;
@@ -68,7 +71,7 @@ import de.tuilmenau.ics.fog.util.Tuple;
  * 
  * This object delegates functions that are necessary to build up the hierarchical structure - every node contains such an object
  */
-public class Coordinator extends Application implements ServerCallback
+public class Coordinator extends Application implements ServerCallback, Decorator
 {
 	private Namespace mNamespace = null;
 	private SimpleName mName = null;
@@ -111,6 +114,8 @@ public class Coordinator extends Application implements ServerCallback
 		
 		mHRS = pHRS;
 		mApprovedSignatures = new LinkedList<HierarchicalSignature>();
+		
+		Decoration.getInstance(Coordinator.class.toString()).setDecorator(pNode.getNode(), this);
 	}
 
 	@Override
@@ -829,6 +834,9 @@ public class Coordinator extends Application implements ServerCallback
 	{
 		if(!mIdentifications.contains(pIdentification)) {
 			mIdentifications.add(pIdentification);
+			
+			// inform GUI about update of decoration
+			mReferenceNode.getNode().notifyObservers();
 		}
 	}
 	
@@ -1028,5 +1036,33 @@ public class Coordinator extends Application implements ServerCallback
 			Logging.log(this, "Created new Multiplexer " + tMux + " for cluster managers on level " + pLevel);
 		}
 		return mMuxOnLevel.get(pLevel);
+	}
+
+	@Override
+	public String getText()
+	{
+		StringBuffer buffer = new StringBuffer();
+		boolean first = true;
+		
+		for(HRMID id : mIdentifications) {
+			if(first) first = false;
+			else buffer.append(", ");
+			
+			buffer.append(id);
+		}
+		
+		return buffer.toString();
+	}
+
+	@Override
+	public Color getColor()
+	{
+		return null;
+	}
+
+	@Override
+	public String getImageName()
+	{
+		return null;
 	}
 }

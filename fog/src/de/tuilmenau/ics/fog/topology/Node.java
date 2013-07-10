@@ -50,7 +50,7 @@ import de.tuilmenau.ics.fog.util.ParameterMap;
  * and authentication service. Furthermore, it can be attached to lower
  * layers providing connectivity to other nodes.
  */
-public class Node extends Observable implements Host, IElementDecorator, SimulationElement
+public class Node extends Observable implements Host, SimulationElement
 {
 	public Node(String pName, AutonomousSystem pAS, ParameterMap pParameters)
 	{
@@ -428,31 +428,6 @@ public class Node extends Observable implements Host, IElementDecorator, Simulat
 	}
 	
 	@Override
-	public String getDecorationParameter()
-	{
-		return (String) mDecorationParameter;
-	}
-	
-	@Override
-	public void setDecorationParameter(Object pDecorationParameter)
-	{
-		mDecorationParameter = pDecorationParameter;
-		notifyObservers();
-	}
-	
-	@Override
-	public Object getDecorationValue()
-	{
-		return mLabel;
-	}
-
-	@Override
-	public void setDecorationValue(Object pLabel)
-	{
-		mLabel = pLabel;
-	}
-	
-	@Override
 	public synchronized void notifyObservers(Object pEvent)
 	{
 		setChanged();
@@ -469,8 +444,6 @@ public class Node extends Observable implements Host, IElementDecorator, Simulat
 	private Identity ownIdentity;
 	private Description capabilities;
 	private boolean isShuttingDown;
-    private Object mDecorationParameter=null;
-    private Object mLabel;
     private String countPrefixCache;
 	public static final Namespace NAMESPACE_HOST = new Namespace("host");
 	private ParameterMap parameters;

@@ -1046,7 +1046,6 @@ public class ClusterManager implements Cluster, Observer
 		}
 		getLogger().log(this, "Received "+ pEnvelope);
 		mEnvelope = pEnvelope;
-		getCoordinator().getReferenceNode().setDecorationValue(getCoordinator().getReferenceNode().getDecorationValue() + "," + pEnvelope.getHRMID());
 		getCoordinator().addIdentification(pEnvelope.getHRMID());
 		if(pEnvelope.getEntries() != null && !pEnvelope.getEntries().isEmpty()) {
 			if(this.mHigherHRMIDs == null) mHigherHRMIDs = new LinkedList<HRMID>();
@@ -1389,7 +1388,7 @@ public class ClusterManager implements Cluster, Observer
 			mCoordinatorAddress = pAddress;
 			this.notifyAll();
 		}
-		getCoordinator().getReferenceNode().setDecorationValue("(" + pCoordSignature + ")");
+		
 		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
 		if(pCoordSignature != null) {
 			for(VirtualNode tNode: getCoordinator().getClusterMap().getNeighbors(getManagedCluster())) {
