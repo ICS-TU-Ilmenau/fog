@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets.election;
+package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import java.util.LinkedList;
 

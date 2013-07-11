@@ -7,25 +7,30 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets.election;
+package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 
 /**
- * PACKET: If the priority of a node changes this object has to be used to inform other cluster members about the change.
- * The node itself will be identified by the connection.
+ * PACKET: It is used to signal that a peer is still alive.
  */
-public class BullyPriorityUpdate extends SignalingMessageBully //TV
+public class BullyAlive extends SignalingMessageBully
 {
-	private static final long serialVersionUID = -8819106581802846812L;
+	private static final long serialVersionUID = 4870662765189881992L;
 	
 	/**
-	 * 
-	 * @param pPriority the new priority
+	 * @param pSenderName the sender's name 
+	 * @param pCoordinatorName the coordinator's name
 	 */
-	public BullyPriorityUpdate(Name pSenderName, BullyPriority pBullyPriority)
+	public BullyAlive(Name pSenderName)
 	{
-		super(pSenderName, pBullyPriority);
+		super(pSenderName);
+	}
+	
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ")";
 	}
 }
