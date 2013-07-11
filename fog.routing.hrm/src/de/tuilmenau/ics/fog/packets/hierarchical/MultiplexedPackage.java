@@ -25,8 +25,8 @@ public class MultiplexedPackage implements Serializable, Name
 {
 	private static final long serialVersionUID = 5178731557132270381L;
 	
-	private ClusterDummy mSourceClusterIdentification;
-	private LinkedList<ClusterDummy> mDestinationClusterIdentification;
+	private ClusterDummy mSourceCluster;
+	private ClusterDummy mDestinationCluster;
 	private Serializable mData = null;
 
 	/**
@@ -35,13 +35,10 @@ public class MultiplexedPackage implements Serializable, Name
 	 * @param pDestinationCluster is a list of the targets of this packet
 	 * @param pData contains some kind of serializable data
 	 */
-	public MultiplexedPackage(ICluster pSourceCluster, LinkedList<ClusterDummy> pDestinationCluster, Serializable pData)
+	public MultiplexedPackage(ClusterDummy pSourceCluster, ClusterDummy pDestinationCluster, Serializable pData)
 	{
-		mSourceClusterIdentification = ClusterDummy.compare(pSourceCluster.getClusterID(), pSourceCluster.getToken(), pSourceCluster.getHierarchyLevel());
-		mDestinationClusterIdentification = new LinkedList<ClusterDummy>();
-		for(ICluster tCluster : pDestinationCluster) {
-			mDestinationClusterIdentification.add(ClusterDummy.compare(tCluster.getClusterID(), tCluster.getToken(), tCluster.getHierarchyLevel()));
-		}
+		mSourceCluster = pSourceCluster;
+		mDestinationCluster = pDestinationCluster;
 		mData = pData;
 	}
 	
@@ -51,21 +48,21 @@ public class MultiplexedPackage implements Serializable, Name
 	 */
 	public ICluster getSourceCluster()
 	{
-		return mSourceClusterIdentification;
+		return mSourceCluster;
 	}
 	
 	/**
 	 * 
 	 * @return List of clusters that are supposed to receive the data of this packet
 	 */
-	public LinkedList<ClusterDummy> getDestinationCluster()
+	public ClusterDummy getDestinationCluster()
 	{
-		return mDestinationClusterIdentification;
+		return mDestinationCluster;
 	}
 	
 	public String toString()
 	{
-		return getClass().getSimpleName() + mSourceClusterIdentification + " to " + mDestinationClusterIdentification + ":\n" + mData;
+		return getClass().getSimpleName() + mSourceCluster + " to " + mDestinationCluster + ":\n" + mData;
 	}
 	
 	/**

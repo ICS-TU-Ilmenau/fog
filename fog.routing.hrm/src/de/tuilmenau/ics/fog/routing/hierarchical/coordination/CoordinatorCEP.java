@@ -104,18 +104,18 @@ public class CoordinatorCEP extends Session
 			}
 		} else if (pData instanceof MultiplexedPackage) {
 			MultiplexedPackage tPackage = (MultiplexedPackage) pData;
-			for(ClusterDummy tTarget : tPackage.getDestinationCluster()) {
-				try {
-					CoordinatorCEPDemultiplexed tCEP = mMux.getDemuxedCEP(this, (ClusterDummy)tPackage.getSourceCluster(), tTarget);
-					if(tCEP != null) {
-						getLogger().log(this, "Forwarding " + tPackage.getData() + " from " + tPackage.getSourceCluster() + " to " + tPackage.getDestinationCluster() + " with " + tCEP);
-						tCEP.receive(tPackage.getData());
-					} else {
-						getLogger().warn(this, "No demultiplexed connection available ");
-					}
-				} catch (NetworkException tExc) {
-					getLogger().err(this, "Unable to forward data", tExc);
+			ClusterDummy tTargetCluster = tPackage.getDestinationCluster();
+			
+			try {
+				CoordinatorCEPDemultiplexed tCEP = mMux.getDemuxedCEP(this, (ClusterDummy)tPackage.getSourceCluster(), tTargetCluster);
+				if(tCEP != null) {
+					getLogger().log(this, "Forwarding " + tPackage.getData() + " from " + tPackage.getSourceCluster() + " to " + tPackage.getDestinationCluster() + " with " + tCEP);
+					tCEP.receive(tPackage.getData());
+				} else {
+					getLogger().warn(this, "No demultiplexed connection available ");
 				}
+			} catch (NetworkException tExc) {
+				getLogger().err(this, "Unable to forward data", tExc);
 			}
 		} else if(pData instanceof ClusterDiscovery) {
 			getLogger().log(this, "Received " + pData);
@@ -181,7 +181,7 @@ public class CoordinatorCEP extends Session
 	public boolean write(Serializable pData)
 	{
 		if(pData instanceof MultiplexedPackage && ((MultiplexedPackage)pData).getData() instanceof TopologyData) {
-			Logging.log(this, "Sending topology envelope to " + ((MultiplexedPackage)pData).getDestinationCluster().getFirst().getClusterID());
+			Logging.log(this, "Sending topology data to " + ((MultiplexedPackage)pData).getDestinationCluster().getClusterID());
 		}
 		if(getConnection() != null && getConnection().isConnected()) {
 			try	{
