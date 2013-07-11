@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.packets.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 
 /**
  * PACKET: It is used to signal that a peer is still alive.
@@ -24,7 +25,7 @@ public class BullyAlive extends SignalingMessageBully
 	 */
 	public BullyAlive(Name pSenderName)
 	{
-		super(pSenderName, -1 /* some value to signal "invalid priority */);
+		super(pSenderName);
 	}
 	
 	@Override

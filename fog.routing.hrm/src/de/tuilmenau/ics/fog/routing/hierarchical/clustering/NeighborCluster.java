@@ -102,7 +102,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 
 	public long getHighestPriority()
 	{
-		return getPriority();
+		return getBullyPriority();
 	}
 
 	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
@@ -234,7 +234,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public long getPriority()
+	public long getBullyPriority()
 	{
 		return mPriority;
 	}

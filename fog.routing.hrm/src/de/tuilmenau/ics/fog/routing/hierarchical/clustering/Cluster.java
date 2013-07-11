@@ -106,7 +106,7 @@ public class Cluster implements ICluster, IElementDecorator
 		mSentAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mHRMController = ptHRMController;
 		mBullyPriority = new BullyPriority(getHRMController().getPhysicalNode(), getHierarchyLevel());
-		getHRMController().getLogger().log(this, "CLUSTER - created " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getPriority());
+		getHRMController().getLogger().log(this, "CLUSTER - created " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getValue());
 		mHierarchyLevel = pLevel;
 		for(ICluster tCluster : getHRMController().getRoutingTargets())
 		{
@@ -150,7 +150,7 @@ public class Cluster implements ICluster, IElementDecorator
 				mCoordAddress = getHRMController().getPhysicalNode().getRoutingService().getNameFor(getHRMController().getPhysicalNode().getCentralFN());
 				notifyAll();
 			}
-			setCoordinatorPriority(getPriority());
+			setCoordinatorPriority(getBullyPriority());
 			getHRMController().getPhysicalNode().setDecorationParameter("L"+ (mHierarchyLevel+1));
 			getHRMController().getPhysicalNode().setDecorationValue("(" + pCoordSignature + ")");
 		} else {
@@ -183,7 +183,7 @@ public class Cluster implements ICluster, IElementDecorator
 
 				getHRMController().getLogger().log(this, "Preparing neighbor zone announcement");
 				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, mHierarchyLevel, pCoordSignature, pAddress, getToken(), mClusterID);
-				tAnnounce.setCoordinatorsPriority(mBullyPriority.getPriority()); //TODO : ???
+				tAnnounce.setCoordinatorsPriority(mBullyPriority.getValue()); //TODO : ???
 				if(pCoord != null) {
 					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoord.getRouteToPeer(), pCoord.getSourceName(), pCoord.getPeerName()));
 				}
@@ -399,9 +399,9 @@ public class Cluster implements ICluster, IElementDecorator
 				if(!mInterASCluster) {
 					getHRMController().getLogger().log(this, "Informing " + getParticipatingCEPs() + " about change in priority and initiating new election");
 					
-					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getPhysicalNode().getCentralFN().getName(), mBullyPriority.getPriority()), null);
+					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getPhysicalNode().getCentralFN().getName(), mBullyPriority), null);
 					
-					getHRMController().getLogger().log(this, "Informed other clients about change of priority - it is now " + mBullyPriority.getPriority());
+					getHRMController().getLogger().log(this, "Informed other clients about change of priority - it is now " + mBullyPriority.getValue());
 				}
 			}
 		}
@@ -477,7 +477,7 @@ public class Cluster implements ICluster, IElementDecorator
 	{
 		BullyPriority tBullyPriority = mBullyPriority;
 		mBullyPriority = new BullyPriority(pPriority);
-		getHRMController().getLogger().info(this, "Setting Bully priority for cluster " + toString() + " from " + tBullyPriority.getPriority() + " to " + mBullyPriority.getPriority());
+		getHRMController().getLogger().info(this, "Setting Bully priority for cluster " + toString() + " from " + tBullyPriority.getValue() + " to " + mBullyPriority.getValue());
 	}
 	
 	public long getNodePriority()
@@ -558,9 +558,9 @@ public class Cluster implements ICluster, IElementDecorator
 		return getHRMController().getPhysicalNode() + ":" + mClusterID + "@" + mHierarchyLevel + "(" + mCoordSignature + ")";
 	}
 	
-	public long getPriority()
+	public long getBullyPriority()
 	{
-		return mBullyPriority.getPriority();
+		return mBullyPriority.getValue();
 	}
 	
 	public Name getCoordinatorName()
@@ -584,7 +584,7 @@ public class Cluster implements ICluster, IElementDecorator
 		if(mHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
 			return mHRMID.toString();
 		} else {
-			return "Cluster " + mGUIClusterID + "@L" + mHierarchyLevel + " (ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getPriority() + ", Coord.=" +  (getCoordinatorSignature() != null ? getCoordinatorSignature() : "-") + (mInterASCluster ? ":transit" : "") + ")";
+			return "Cluster " + mGUIClusterID + "@L" + mHierarchyLevel + " (ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getBullyPriority() + ", Coord.=" +  (getCoordinatorSignature() != null ? getCoordinatorSignature() : "-") + (mInterASCluster ? ":transit" : "") + ")";
 
 		}
 	}

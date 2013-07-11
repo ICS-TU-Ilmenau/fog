@@ -29,6 +29,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -120,7 +121,7 @@ public class ElectionProcess extends Thread
 						
 						Logging.log("Node " + tNode + ": Sending elections from " + tCluster);
 
-						tCEP.sendPacket(new BullyElect(tNode.getCentralFN().getName(), tCluster.getPriority(), tCluster.getHierarchyLevel()));
+						tCEP.sendPacket(new BullyElect(tNode.getCentralFN().getName(), new BullyPriority(tCluster.getBullyPriority()), tCluster.getHierarchyLevel()));
 					}
 				}
 			}
@@ -152,7 +153,7 @@ public class ElectionProcess extends Thread
 		}
 		
 		try {
-			BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
+			BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), new BullyPriority(pCluster.getBullyPriority()), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
 			for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
 				tAnnounce.addCoveredNode(tCEP.getPeerName());
 			}
@@ -175,7 +176,7 @@ public class ElectionProcess extends Thread
 					 * OK: Because of the formerly sent 
 					 */
 					if(tToAnnounce instanceof NeighborCluster) {
-						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
+						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), new BullyPriority(pCluster.getBullyPriority()), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
 						for(CoordinatorCEPDemultiplexed tCEP: pCluster.getParticipatingCEPs()) {
 							tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
 						}
@@ -204,7 +205,7 @@ public class ElectionProcess extends Thread
 			mClusterManager = new Coordinator(pCluster, pCluster.getHierarchyLevel()+1, pCluster.getHrmID());
 			pCluster.setClusterManager(mClusterManager);
 			pCluster.getHRMController().setSourceIntermediateCluster(mClusterManager, pCluster);
-			mClusterManager.setPriority(pCluster.getPriority());
+			mClusterManager.setPriority(pCluster.getBullyPriority());
 			pCluster.getHRMController().addCluster(mClusterManager);
 			if(pCluster.getHierarchyLevel() +1 != HRMConfig.Hierarchy.HEIGHT) {
 				// stepwise hierarchy creation
@@ -256,14 +257,14 @@ public class ElectionProcess extends Thread
 				if(tPriority >= tCluster.getHighestPriority()) {
 					tCluster.setHighestPriority(tPriority);
 				} else {
-					if(pVerbose) tCluster.getHRMController().getLogger().log(tCluster, "has lower priority than " + tCEP + " while mine is " + tCluster.getPriority());
+					if(pVerbose) tCluster.getHRMController().getLogger().log(tCluster, "has lower priority than " + tCEP + " while mine is " + tCluster.getBullyPriority());
 				}
 			}
 		}
 		Cluster tNodessClusterForCoordinator = null;
 		for(Cluster tCluster : mElectingClusters) {
 			Logging.log(this, "Checking cluster " + tCluster);
-			if(tCluster.getHighestPriority() <= tCluster.getPriority())	{
+			if(tCluster.getHighestPriority() <= tCluster.getBullyPriority())	{
 				tNodessClusterForCoordinator = tCluster;
 			}
 		}
@@ -308,7 +309,7 @@ public class ElectionProcess extends Thread
 						 * For loop can be ignored as this can only happen in case we are above level one
 						 */
 						while((tCluster.getHRMController().getClusterWithCoordinatorOnLevel(tCluster.getHierarchyLevel()) == null)) {
-							tCluster.setHighestPriority(tCluster.getPriority());
+							tCluster.setHighestPriority(tCluster.getBullyPriority());
 							Logging.log(tCluster, " did not yet receive an announcement");
 							for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
 								RequestCoordinator tRequest = new RequestCoordinator(/* false */);

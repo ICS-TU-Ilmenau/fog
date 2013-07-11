@@ -70,7 +70,7 @@ public class CoordinatorCEPMultiplexer
 			
 			for(Coordinator tManager : mHRMController.getClusterManagers(pSourceCluster.getHierarchyLevel()+1)) {
 				tCEPDemultiplexed = new CoordinatorCEPDemultiplexed(getLogger(), mHRMController, tManager);
-				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getPriority());
+				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getBullyPriority());
 				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
 				tCEP.getMultiplexer().addDemultiplex(tCEP, tCEPDemultiplexed);
 				synchronized(mClusterToCEPMapping) {
@@ -86,7 +86,7 @@ public class CoordinatorCEPMultiplexer
 				} else {
 					NestedParticipation tParticipate = tParticipationProperty.new NestedParticipation(pTargetCluster.getClusterID(), pTargetCluster.getToken());
 					tParticipationProperty.addNestedparticipation(tParticipate);
-					tParticipate.setSenderPriority(tManager.getManagedCluster().getPriority());
+					tParticipate.setSenderPriority(tManager.getManagedCluster().getBullyPriority());
 //					tAddress = pTargetCluster.getCoordinatorsAddress().getAddress().longValue();
 					
 					tParticipate.setSourceClusterID(tManager.getManagedCluster().getClusterID());
@@ -126,7 +126,7 @@ public class CoordinatorCEPMultiplexer
 							continue;
 						}
 						DiscoveryEntry tEntry = new DiscoveryEntry(tNeighbor.getToken(), tNeighbor.getCoordinatorName(), tNeighbor.getClusterID(), tNeighbor.getCoordinatorsAddress(), tNeighbor.getHierarchyLevel());
-						tEntry.setPriority(tNeighbor.getPriority());
+						tEntry.setPriority(tNeighbor.getBullyPriority());
 						if(tNeighbor.isInterASCluster()) {
 							tEntry.setInterASCluster();
 						}

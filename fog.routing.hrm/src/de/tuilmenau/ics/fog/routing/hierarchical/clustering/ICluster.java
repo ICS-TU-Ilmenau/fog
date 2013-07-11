@@ -93,7 +93,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @return The priority of the node that is associated to this cluster is return here
 	 */
-	public long getPriority();
+	public long getBullyPriority();
 	
 	/**
 	 * 

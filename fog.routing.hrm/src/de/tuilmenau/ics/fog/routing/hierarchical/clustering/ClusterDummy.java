@@ -114,7 +114,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public long getPriority() {
+	public long getBullyPriority() {
 		return 0;
 	}
 

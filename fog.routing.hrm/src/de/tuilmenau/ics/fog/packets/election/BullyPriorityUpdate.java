@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.packets.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 
 /**
  * PACKET: If the priority of a node changes this object has to be used to inform other cluster members about the change.
@@ -23,8 +24,8 @@ public class BullyPriorityUpdate extends SignalingMessageBully //TV
 	 * 
 	 * @param pPriority the new priority
 	 */
-	public BullyPriorityUpdate(Name pSenderName, long pSenderPriority)
+	public BullyPriorityUpdate(Name pSenderName, BullyPriority pBullyPriority)
 	{
-		super(pSenderName, pSenderPriority);
+		super(pSenderName, pBullyPriority);
 	}
 }

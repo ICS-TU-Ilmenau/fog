@@ -976,8 +976,8 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public long getPriority() {
-		return mBullyPriority.getPriority();
+	public long getBullyPriority() {
+		return mBullyPriority.getValue();
 	}
 
 	@Override
@@ -1118,7 +1118,7 @@ public class Coordinator implements ICluster, Observer
 		/*
 		 * check whether old priority was lower than new priority
 		 */
-		if(getNodePriority() <= pAnnounce.getSenderPriority()) {
+		if(getNodePriority() <= pAnnounce.getSenderPriority().getValue()) {
 			/*
 			 * check whether a coordinator is already set
 			 */
@@ -1188,7 +1188,7 @@ public class Coordinator implements ICluster, Observer
 							 */
 							
 							NeighborClusterAnnounce tNewCovered = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pAnnounce.getCoordSignature(), (HRMName)pCEP.getPeerName(), pAnnounce.getToken(), (((HRMName)pCEP.getPeerName()).getAddress().longValue()));
-							tNewCovered.setCoordinatorsPriority(pAnnounce.getSenderPriority());
+							tNewCovered.setCoordinatorsPriority(pAnnounce.getSenderPriority().getValue());
 							tNewCovered.setNegotiatorIdentification(tDummy);
 							DiscoveryEntry tCoveredEntry = new DiscoveryEntry(
 									pAnnounce.getToken(),
@@ -1199,7 +1199,7 @@ public class Coordinator implements ICluster, Observer
 									);
 							tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerName()));
 							tNewCovered.setCoveringClusterEntry(tCoveredEntry);
-							tCoveredEntry.setPriority( pAnnounce.getSenderPriority());
+							tCoveredEntry.setPriority(pAnnounce.getSenderPriority().getValue());
 							
 							List<RoutableClusterGraphLink> tClusters = getHRMController().getRoutableClusterGraph().getRoute(getManagedCluster(), pCEP.getRemoteCluster());
 							if(!tClusters.isEmpty()) {
@@ -1278,7 +1278,7 @@ public class Coordinator implements ICluster, Observer
 			 */
 			
 			NeighborClusterAnnounce tCoveredAnnounce = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pAnnounce.getCoordSignature(), pCEP.getPeerName(), pAnnounce.getToken(), (pCEP.getPeerName()).getAddress().longValue());
-			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
+			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority().getValue());
 			
 //			List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute(pCEP.getSourceName(), pCEP.getPeerName());
 			
@@ -1293,8 +1293,8 @@ public class Coordinator implements ICluster, Observer
 					);
 			tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerName()));
 			tCoveredAnnounce.setCoveringClusterEntry(tCoveredEntry);
-			tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
-			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
+			tCoveredEntry.setPriority(pAnnounce.getSenderPriority().getValue());
+			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority().getValue());
 			
 			List<RoutableClusterGraphLink> tClusters = getHRMController().getRoutableClusterGraph().getRoute(getManagedCluster(), getCoordinatorCEP().getRemoteCluster());
 			if(!tClusters.isEmpty()) {

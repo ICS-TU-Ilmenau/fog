@@ -170,7 +170,7 @@ public class HRMController extends Application implements IServerCallback
 				if(tJoin.getLevel() > 0) {
 					for(ICluster tVirtualNode : getRoutingTargetClusters()) {
 						if(tVirtualNode.getHierarchyLevel() == tJoin.getLevel() - 1) {
-							tCluster.setPriority(tVirtualNode.getPriority());
+							tCluster.setPriority(tVirtualNode.getBullyPriority());
 						}
 					}
 				}

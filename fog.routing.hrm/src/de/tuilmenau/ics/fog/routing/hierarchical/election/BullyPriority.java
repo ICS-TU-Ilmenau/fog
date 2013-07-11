@@ -74,7 +74,7 @@ public class BullyPriority
 	 * 
 	 * @return Bully priority
 	 */
-	public long getPriority()
+	public long getValue()
 	{
 		return mPriority;
 	}

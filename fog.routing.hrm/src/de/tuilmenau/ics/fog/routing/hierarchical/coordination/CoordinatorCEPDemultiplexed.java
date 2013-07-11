@@ -43,6 +43,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IRoutableClusterGrap
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMIPMapper;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -107,13 +108,13 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			if (BULLY_SIGNALING_DEBUGGING)
 				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"an ELECT: " + tPacketBullyElect);
 
-			if ((getCluster().getCoordinatorCEP() != null) && (tPacketBullyElect.getSenderPriority() < getCluster().getHighestPriority())) {
+			if ((getCluster().getCoordinatorCEP() != null) && (tPacketBullyElect.getSenderPriority().getValue() < getCluster().getHighestPriority())) {
 				
-				mPeerPriority = tPacketBullyElect.getSenderPriority();
+				mPeerPriority = tPacketBullyElect.getSenderPriority().getValue();
 				
 				if (getCluster().getHRMController().equals(tNode.getCentralFN().getName())) {
 					// create ANNOUNCE packet
-					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tNode.getCentralFN().getName(), getCluster().getPriority(), getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getHierarchyLevel()), getCluster().getToken());
+					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tNode.getCentralFN().getName(), new BullyPriority(getCluster().getBullyPriority()), getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getHierarchyLevel()), getCluster().getToken());
 					
 					for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
 						tAnnouncePacket.addCoveredNode(tCEP.getPeerName());
@@ -140,10 +141,10 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			} else {
 				// store peer's Bully priority
 				//TODO: peer prio direkt mal abspeichern und auf größte checken!
-				mPeerPriority = tPacketBullyElect.getSenderPriority();
+				mPeerPriority = tPacketBullyElect.getSenderPriority().getValue();
 				
 				// create REPLY packet
-				BullyReply tReplyPacket = new BullyReply(tNode.getCentralFN().getName(), getCluster().getPriority());
+				BullyReply tReplyPacket = new BullyReply(tNode.getCentralFN().getName(), new BullyPriority(getCluster().getBullyPriority()));
 				
 				// send the answer packet
 				if (BULLY_SIGNALING_DEBUGGING)
@@ -165,7 +166,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 
 			// store peer's Bully priority
 			//TODO: peer prio direkt mal abspeichern und auf größte checken!
-			mPeerPriority = tReplyPacket.getSenderPriority();
+			mPeerPriority = tReplyPacket.getSenderPriority().getValue();
 		}
 		
 		/**
@@ -193,7 +194,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
 
 			// store peer's Bully priority
-			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority();
+			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority().getValue();
 		}
 	}
 	
@@ -570,7 +571,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 		if(pCluster.getCoordinatorName() != null) {
 			DiscoveryEntry tEntry = new DiscoveryEntry(pCluster.getToken(), pCluster.getCoordinatorName(), pCluster.getClusterID(), pCluster.getCoordinatorsAddress(), pCluster.getHierarchyLevel());
 			tEntry.setClusterHops(getCluster().getHRMController().getClusterDistance(pCluster));
-			tEntry.setPriority(pCluster.getPriority());
+			tEntry.setPriority(pCluster.getBullyPriority());
 			tEntry.setRoutingVectors(getPath(pCluster.getCoordinatorsAddress()));
 			if(pCluster.isInterASCluster()) {
 				tEntry.setInterASCluster();

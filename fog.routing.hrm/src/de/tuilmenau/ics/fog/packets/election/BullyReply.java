@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.packets.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 
 /**
  * PACKET: It is used when an answer to BullyElect is signaled.
@@ -23,7 +24,7 @@ public class BullyReply  extends SignalingMessageBully
 	 * @param pSenderName sender's identification
 	 * @param pSenderPriority senders priority for the election
 	 */
-	public BullyReply(Name pSenderName, long pSenderPriority)
+	public BullyReply(Name pSenderName, BullyPriority pSenderPriority)
 	{
 		super(pSenderName, pSenderPriority);
 	}
