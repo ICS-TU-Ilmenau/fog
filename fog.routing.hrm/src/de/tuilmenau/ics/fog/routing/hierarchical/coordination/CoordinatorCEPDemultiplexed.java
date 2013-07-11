@@ -106,7 +106,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
 			
 			if (BULLY_SIGNALING_DEBUGGING)
-				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"an ELECT: " + tPacketBullyElect);
+				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\" an ELECT: " + tPacketBullyElect);
 
 			if ((getCluster().getCoordinatorCEP() != null) && (tPacketBullyElect.getSenderPriority().getValue() < getCluster().getHighestPriority())) {
 				
@@ -125,7 +125,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 
 					// send packet
 					if (BULLY_SIGNALING_DEBUGGING)
-						mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\"an ANNOUNCE: " + tAnnouncePacket);
+						mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\" an ANNOUNCE: " + tAnnouncePacket);
 					sendPacket(tAnnouncePacket);
 					
 				} else {
@@ -134,7 +134,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 					
 					// send packet
 					if (BULLY_SIGNALING_DEBUGGING)
-						mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\"an ALIVE: " + tAlivePacket);
+						mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\" an ALIVE: " + tAlivePacket);
 					sendPacket(tAlivePacket);
 					//TODO: packet is sent but never parsed or a timeout timer reset!!
 				}
@@ -148,7 +148,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 				
 				// send the answer packet
 				if (BULLY_SIGNALING_DEBUGGING)
-					mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\"a REPLY: " + tReplyPacket);
+					mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\" a REPLY: " + tReplyPacket);
 				sendPacket(tReplyPacket);
 			}
 		}
@@ -162,7 +162,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			BullyReply tReplyPacket = (BullyReply)pPacketBully;
 
 			if (BULLY_SIGNALING_DEBUGGING)
-				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"a REPLY: " + tReplyPacket);
+				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\" a REPLY: " + tReplyPacket);
 
 			// store peer's Bully priority
 			//TODO: peer prio direkt mal abspeichern und auf größte checken!
@@ -177,7 +177,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
 
 			if (BULLY_SIGNALING_DEBUGGING)
-				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"an ANNOUNCE: " + tAnnouncePacket);
+				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\" an ANNOUNCE: " + tAnnouncePacket);
 
 			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
 			getCluster().handleBullyAnnounce(tAnnouncePacket, this);
@@ -191,7 +191,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
 
 			if (BULLY_SIGNALING_DEBUGGING)
-				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
+				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
 
 			// store peer's Bully priority
 			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority().getValue();

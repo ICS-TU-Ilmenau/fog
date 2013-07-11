@@ -60,7 +60,7 @@ public class BullyPriority
 			return;
 		}
 		mPriority = (long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
-		Logging.log(this,  "Created Bully priority object (initial priority is " + mPriority + ")");
+		Logging.log("Created Bully priority object (initial priority is " + mPriority + ") for " + pCluster);
 	}
 	
 	/**
@@ -78,7 +78,7 @@ public class BullyPriority
 			return;
 		}
 		mPriority = (long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
-		Logging.log(this,  "Created Bully priority object (initial priority is " + mPriority + ")");
+		Logging.log("Created Bully priority object (initial priority is " + mPriority + ") for " + pCoordinator);
 	}
 
 	/**

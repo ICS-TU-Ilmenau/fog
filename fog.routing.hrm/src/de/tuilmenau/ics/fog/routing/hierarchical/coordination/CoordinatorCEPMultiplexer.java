@@ -272,7 +272,7 @@ public class CoordinatorCEPMultiplexer
 	
 	public boolean write(Serializable pData, CoordinatorCEPDemultiplexed pDemux, ICluster pTargetCluster)
 	{	
-		getLogger().log(this, "Writing " + pData + " from " + pDemux.getCluster() + " to the demultiplexed target cluster " + pTargetCluster);
+		getLogger().log(this, "Writing " + pData + " from " + pDemux.getCluster() + " to target cluster " + pTargetCluster);
 
 		LinkedList<ClusterDummy> tList = new LinkedList<ClusterDummy>();
 		ClusterDummy tSource = ClusterDummy.compare(pDemux.getCluster().getClusterID(), pDemux.getCluster().getToken(), pDemux.getCluster().getHierarchyLevel());
