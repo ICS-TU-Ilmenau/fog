@@ -35,7 +35,7 @@ public class BullyElect extends SignalingMessageBully //TV
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority() + ", Level=" + mHierarchyLevel + ")";
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority().getValue() + ", Level=" + mHierarchyLevel + ")";
 	}
 
 	
