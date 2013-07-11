@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.eclipse.ui.editors;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Panel;
@@ -78,7 +79,7 @@ public abstract class EditorAWT extends EditorPart
 			throw new RuntimeException("Can not init " +this, tExc);
 		}
 		
-		Frame tFrame = SWT_AWT.new_Frame(mRootComp);
+		mFrame = SWT_AWT.new_Frame(mRootComp);
 		
 		try {
 			Panel tRootPanel = new Panel(new BorderLayout()) {
@@ -92,7 +93,7 @@ public abstract class EditorAWT extends EditorPart
 			tRootPanel.add(tScroll);
 //			tRootPanel.add(mGraphView);
 			
-			tFrame.add(tRootPanel);
+			mFrame.add(tRootPanel);
 		
 /*			JRootPane tRoot = new JRootPane();
 			tRootPanel.add(tRoot, BorderLayout.CENTER);
@@ -127,6 +128,35 @@ public abstract class EditorAWT extends EditorPart
 	}
 
 	/**
+	 * Remove created SWT and SWT/AWT parts
+	 */
+	public void dispose()
+	{
+		if(mFrame != null) {
+			try {
+				// switch from SWT thread (since dispose was called) to AWT thread
+				EventQueue.invokeAndWait(new Runnable () {
+					public void run () {
+						mFrame.dispose();
+					}
+				});
+			}
+			catch (Exception exc) {
+				// ignore it
+			}
+			
+			mFrame = null;
+		}
+		
+		if(mRootComp != null) {
+			mRootComp.dispose();
+			mRootComp = null;
+		}
+		
+		super.dispose();
+	}
+	
+	/**
 	 * Updates title of editor
 	 */
 	protected void setTitle(String newTitle)
@@ -151,6 +181,7 @@ public abstract class EditorAWT extends EditorPart
 	}
 
 	private String    mTitle;
+	private Frame     mFrame;
 	private Composite mRootComp;
 	private Component mView;
 	private Display   mDisplay;
