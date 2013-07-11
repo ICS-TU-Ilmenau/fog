@@ -120,13 +120,12 @@ public class ClusterDiscovery implements Serializable
 		private int mDistance = 0;
 		private int mToken;
 		private int mLevel;
-		//private boolean mRequest = false;
 		private Long mTargetClusterID;
 		private Long mOriginClusterID;
 		
 		/**
 		 * 
-		 * @param pTokens inclues all tokens that are ALREADY KNOWN to the coordinator that emits this discovery request
+		 * @param pTokens includes all tokens that are ALREADY KNOWN to the coordinator that emits this discovery request
 		 * @param pSourceClusterID is the Cluster ID of the initiator of this message
 		 * @param pToken is the token that is used to identify the cluster this discovery request comes from
 		 * @param pLevel is the level at which other clusters should be discovered
