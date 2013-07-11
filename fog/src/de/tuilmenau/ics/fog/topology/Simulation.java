@@ -309,6 +309,11 @@ public class Simulation
 	public boolean executeCommand(String pCmd)
 	{
 		boolean tOk = false;
+
+		// return immediately if there is no command given
+		if (pCmd.length() == 0){
+			return true;
+		}
 		
 		mLogger.info(this, pCmd);
 		
