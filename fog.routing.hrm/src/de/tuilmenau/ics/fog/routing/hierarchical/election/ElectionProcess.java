@@ -412,7 +412,7 @@ public class ElectionProcess extends Thread
 	{
 		private HashMap<Integer, HashMap<Long, ElectionProcess>>mElections = null;
 		private static ElectionManager mManager = null;
-		private ElectionNotification mNotification;
+		private ElectionEventNotification mNotification;
 		
 		public ElectionManager()
 		{
@@ -528,7 +528,7 @@ public class ElectionProcess extends Thread
 					Logging.log(this, "Not notifying other election processes because of " + tWaitingFor + " (reporting only last process)");
 				} else {
 					if(mNotification == null) {
-						mNotification = new ElectionNotification(mElections.get(pLevel).values());
+						mNotification = new ElectionEventNotification(mElections.get(pLevel).values());
 						for(ElectionProcess tProcess : mElections.get(pLevel).values()) {
 							tProcess.mElectingClusters.getFirst().getHRMController().getPhysicalNode().getAS().getSimulation().getTimeBase().scheduleIn(5, mNotification);
 							break;
@@ -542,11 +542,11 @@ public class ElectionProcess extends Thread
 			}
 		}
 		
-		private class ElectionNotification implements IEvent
+		private class ElectionEventNotification implements IEvent
 		{
 			private Collection<ElectionProcess> mElectionsToNotify = null;
 			
-			public ElectionNotification(Collection<ElectionProcess> pElections)
+			public ElectionEventNotification(Collection<ElectionProcess> pElections)
 			{
 				mElectionsToNotify = pElections;
 			}
