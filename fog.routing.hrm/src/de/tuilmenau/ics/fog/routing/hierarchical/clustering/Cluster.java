@@ -560,7 +560,11 @@ public class Cluster implements ICluster, IElementDecorator
 	
 	public long getBullyPriority()
 	{
-		return mBullyPriority.getValue();
+		if (mBullyPriority != null){
+			return mBullyPriority.getValue();
+		}else{
+			return 0;
+		}
 	}
 	
 	public Name getCoordinatorName()
