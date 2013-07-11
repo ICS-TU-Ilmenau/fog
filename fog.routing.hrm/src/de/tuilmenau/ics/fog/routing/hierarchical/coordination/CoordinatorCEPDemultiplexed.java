@@ -800,7 +800,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 		getHRMController().getLogger().trace(this, "Handling " + pEntry);
 		ICluster tNewCluster = getHRMController().getCluster(ClusterDummy.compare(pEntry.getClusterID(), pEntry.getToken(), pEntry.getLevel()));
 		if(tNewCluster == null) {
-			for(ICluster tCluster : getHRMController().getRoutingTargetClusters()) {
+			for(Cluster tCluster : getHRMController().getRoutingTargetClusters()) {
 				if(tCluster.equals(ClusterDummy.compare(pEntry.getClusterID(), pEntry.getToken(), getCluster().getHierarchyLevel() - 1))) {
 					tNewCluster = tCluster;
 					if(tNewCluster instanceof NeighborCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {

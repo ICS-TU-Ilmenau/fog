@@ -453,7 +453,7 @@ public class HRMController extends Application implements IServerCallback
 		CoordinatorCEPDemultiplexed tDemux = null;
 		
 		boolean tClusterFound = false;
-		for(ICluster tCluster : getRoutingTargetClusters())
+		for(Cluster tCluster : getRoutingTargetClusters())
 		{
 			if(tCluster.getClusterID().equals(pToClusterID)) {
 				tCEP = new CoordinatorCEP(mLogger, this, false, pLevel, tCluster.getMultiplexer());
@@ -467,7 +467,7 @@ public class HRMController extends Application implements IServerCallback
 				}
 				tCEP.setRouteToPeer(tRoute);
 				tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
-				((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
+				tCluster.getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
 				
 				tCluster.addParticipatingCEP(tDemux);
 				tFoundCluster = tCluster;
@@ -481,7 +481,7 @@ public class HRMController extends Application implements IServerCallback
 			addCluster(tCluster);
 			tCEP = new CoordinatorCEP(mLogger, this, false, pLevel, tCluster.getMultiplexer());
 			tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
-			((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
+			tCluster.getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
 			
 			tCluster.addParticipatingCEP(tDemux);
 			tFoundCluster = tCluster;
