@@ -606,7 +606,7 @@ public class HRMViewer extends EditorPart
 		TableColumn tColumnPeerPriority = new TableColumn(tTable, SWT.NONE, 4);
 		tColumnPeerPriority.setText("Peer Priority");
 		TableColumn tColumnNegotiator = new TableColumn(tTable, SWT.NONE, 5);
-		tColumnNegotiator.setText("Negotiatoting Cluster");
+		tColumnNegotiator.setText("Peer");
 		TableColumn tColumnAnnouncerNegotiator = new TableColumn(tTable, SWT.NONE, 6);
 		tColumnAnnouncerNegotiator.setText("Announcers negotiator");
 		TableColumn tColumnRoute = new TableColumn(tTable, SWT.NONE, 7);
