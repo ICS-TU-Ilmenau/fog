@@ -59,12 +59,9 @@ import de.tuilmenau.ics.graph.RoutableGraph;
  */
 public class HierarchicalRoutingService implements RoutingService
 {
-//	private final String HIERARCHICAL_ROUTING_SERVICE_NAME = "Hierarchical Routing Service";
-	
 	private final RoutableGraph<HRMName, RoutingServiceLink> mRoutingMap;
 	private final RoutableGraph<HRMName, Route> mCoordinatorRoutingMap;
 	private LinkedList<HRMID> mUsedAddresses = new LinkedList<HRMID>();
-//	List<RememberFN> mNeighborRoutes = new LinkedList<RememberFN>();
 	private HierarchicalNameMappingService<Name> mNameMapping=null;
 	private Node mReferenceNode = null;
 	private static Random mRandomGenerator = null; //singleton needed, otherwise parallel number generators might be initialized with the same seed
@@ -151,24 +148,6 @@ public class HierarchicalRoutingService implements RoutingService
 		}
 		return true;
 	}
-
-	/*
-	private class RememberFN
-	{
-		private List<RoutingServiceLink> mRoute = null;
-//		private Name mDestination = null;
-		public RememberFN(List<RoutingServiceLink> pRoute, Name pDestination)
-		{
-			mRoute = pRoute;
-//			mDestination = pDestination;
-		}
-		
-		public List<RoutingServiceLink> getRoute()
-		{
-			return mRoute;
-		}
-	}
-	*/
 	
 	public LinkedList<Name> getIntermediateNodes(Name pSource, HRMName pTarget) throws RoutingException
 	{
@@ -196,31 +175,6 @@ public class HierarchicalRoutingService implements RoutingService
 		return tIntermediateNodes;
 	}
 	
-//	public HRMID getMostSimilarForwardingEntry(HRMID pToCompare) throws RemoteException
-//	{
-//		/*
-//		 * find first segment where source address differs from destination address
-//		 */
-//		NameMappingService tNMS = null;
-//		try {
-//			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-//		} catch (RuntimeException tExc) {
-//			HierarchicalNameMappingService.createGlobalNameMappingService(mReferenceNode.getAS().getSimulation());
-//			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-//		}
-//		
-//		HRMID tMyIdentification = null;
-//		int tHighestDescendingDifference = HRMConfig.Hierarchy.HEIGHT - 1;
-//		
-//		for(NameMappingEntry tEntry : tNMS.getAddresses(mReferenceNode.getCentralFN().getName())) {
-//			if(((HRMID)tEntry.getAddress()).getDescendingDifference(pToCompare) < tHighestDescendingDifference) {
-//				tHighestDescendingDifference = ((HRMID)tEntry.getAddress()).getDescendingDifference(pToCompare);
-//				tMyIdentification = ((HRMID)tEntry.getAddress()).clone();
-//			}
-//		}
-//		return tMyIdentification;
-//	}
-//	
 	public HRMID getForwardingHRMID(HRMID pTarget) throws RemoteException
 	{
 		/*
@@ -234,7 +188,6 @@ public class HierarchicalRoutingService implements RoutingService
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
 		}
 		
-//		HRMID tMyIdentification = null;
 		int tHighestDescendingDifference = HRMConfig.Hierarchy.HEIGHT - 1;
 		
 		for(NameMappingEntry tEntry : tNMS.getAddresses(mReferenceNode.getCentralFN().getName())) {
@@ -244,7 +197,6 @@ public class HierarchicalRoutingService implements RoutingService
 			}
 		}
 		HRMID tForwarding=new HRMID(0);
-//		HRMID tForwardingEntry = new HRMID(0);
 		for(int i =  HRMConfig.Hierarchy.HEIGHT; i >= tHighestDescendingDifference ; i--) {
 			tForwarding.setLevelAddress(i, pTarget.getLevelAddress(i));
 		}
@@ -362,7 +314,6 @@ public class HierarchicalRoutingService implements RoutingService
 		
 		if(mCoordinatorRoutingMap.contains(tSource) && mCoordinatorRoutingMap.contains(tDestination)) {
 			Route tRoute = new Route();
-//			Description tFuncReq = pRequirements.getNonFunctional();
 			List<Route> tSegmentPaths = null;
 			tSegmentPaths = mCoordinatorRoutingMap.getRoute(tSource, tDestination);
 			Logging.log(this, "route from " + pSource + " to " + pDestination + " is " + tSegmentPaths);
@@ -370,7 +321,6 @@ public class HierarchicalRoutingService implements RoutingService
 			for(Route tPath : tSegmentPaths) {
 				tRoute.addAll(tPath.clone());
 			}
-			//tRoute.add(new RouteSegmentAddress(new Name(Coordinator.CoordinatorNamespace)));
 			return tRoute;
 		}
 		
@@ -487,23 +437,6 @@ public class HierarchicalRoutingService implements RoutingService
 		return mRoutingMap.getVertices().toString();
 	}
 	
-	
-//	private Name getNameForRSA(HRMID pAddress)
-//	{
-//		if(mReferenceNode.getRoutingService() instanceof RoutingService)
-//		{
-//			Name[] tNames = null;
-//			tNames = mNameMapping.getNames(pAddress);
-//			if(tNames != null) {
-//				/*
-//				 * return only the first name found for the provided address
-//				 */
-//				return tNames[0];
-//			}
-//		}
-//		return null;
-//	}
-	
 	public FIBEntry getFIBEntry(HRMID pHRMID)
 	{
 		return mHopByHopRoutingMap.get(pHRMID);
@@ -549,11 +482,6 @@ public class HierarchicalRoutingService implements RoutingService
 		return mHopByHopRoutingMap;
 	}
 	
-//	public void deleteRoutingEntry(HRMID pRoutingID)
-//	{
-//		mHopByHopRoutingMap.remove(pRoutingID);
-//	}
-//	
 	@Override
 	public int getNumberVertices()
 	{
@@ -920,7 +848,6 @@ public class HierarchicalRoutingService implements RoutingService
 	@Override
 	public LinkedList<Name> getIntermediateFNs(ForwardingNode pSource,	Route pRoute, boolean pOnlyDestination)
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 

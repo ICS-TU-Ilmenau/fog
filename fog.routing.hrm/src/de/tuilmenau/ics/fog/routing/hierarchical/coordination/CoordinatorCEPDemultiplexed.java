@@ -65,7 +65,6 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	private boolean mIsEdgeRouter = false;
 	private boolean mKnowsCoordinator = false;
 	private HashMap<ICluster, ICluster> mAnnouncerMapping;
-//	private boolean mRequestedCoordinator = false;
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
 	private Logger mLogger = Logging.getInstance();
@@ -521,15 +520,6 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 		return true;
 	}
 	
-//	/**
-//	 * @deprecated
-//	 * If this CEP is used for communication between different hierarchical levels: for use of HRM+BGP
-//	 */
-//	public void setCrossLayerCEP()
-//	{
-//		mCrossLevelCEP = true;
-//	}
-	
 	/**
 	 * 
 	 * @param pTarget is the target to which routing service link vectors should be generated
@@ -849,12 +839,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	{
 		return getClass().getSimpleName()/* + "(" + mIdentification + ")"*/ + "@" + getCluster().getClusterDescription() +  (getPeerName() != null ? "->" + ((HRMName)getPeerName()).getDescr() + ":PR(" + mPeerPriority + ")" : "") + (mIsEdgeRouter ? "|INTER" : "|INTRA");
 	}
-//	
-//	public boolean hasRequestedCoordinator()
-//	{
-//		return mRequestedCoordinator;
-//	}
-//	
+
 	public Route getRouteToPeer()
 	{
 		return getMultiplexer().getRouteToPeer(this);
@@ -870,11 +855,6 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	{
 		return null;
 	}
-//	
-//	public Name retrieveName()
-//	{
-//		return null;
-//	}
 
 	@Override
 	public Namespace getNamespace()

@@ -87,15 +87,6 @@ public class NeighborClusterAnnounce implements Serializable
 		mAnnouncerHasAddress = pAnnouncerHasAddress; 
 	}
 	
-//	/**
-//	 * 
-//	 * @return true if the announcer already received an address
-//	 */
-//	public boolean hasAnnouncerAddress()
-//	{
-//		return mAnnouncerHasAddress;
-//	}
-
 	@Override
 	public String toString()
 	{
@@ -295,14 +286,6 @@ public class NeighborClusterAnnounce implements Serializable
 	{
 		return mASIdentification;
 	}
-	
-//	/**
-//	 * define the target cluster as one that connects two different autonomous systems
-//	 */
-//	public void setInterASCluster()
-//	{
-//		mInterASCluster = true;
-//	}
 	
 	/**
 	 * 

@@ -63,10 +63,6 @@ public class Coordinator implements ICluster, Observer
 	private static int sGUICoordinatorID = 0;
 	
 	/*
-	 * List for identification of clusters
-	 */
-//	private LinkedList<Integer> mTokens = new LinkedList<Integer>();
-	/*
 	 * List for identification of entities this cluster manager is connected to
 	 */
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
@@ -95,7 +91,6 @@ public class Coordinator implements ICluster, Observer
 	private HashMap<HRMID, FIBEntry> mIDToFIBMapping = new HashMap<HRMID, FIBEntry>();
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnouncements;
 	private LinkedList<HRMSignature> mSignatures = new LinkedList<HRMSignature>();
-//	private HashMap<CoordinatorCEPDemultiplexed, Integer> mCEPsToBGPRouters;
 	private HashMap<Long, CoordinatorCEPDemultiplexed> mRouteRequestDispatcher;
 	private HashMap<HRMID, LinkedList<RoutingServiceLinkVector>> mAddressToPathMapping;
 	
@@ -124,35 +119,6 @@ public class Coordinator implements ICluster, Observer
 		Logging.log(this, "Creating coordinator instance on hierarchy level " + mLevel);
 	}
 	
-//	public void addIgnoreEntry(Name pEntry)
-//	{
-//		if(mIgnoreOnAddressDistribution == null) {
-//			mIgnoreOnAddressDistribution = new LinkedList<Name>();
-//			mIgnoreOnAddressDistribution.add(pEntry);
-//		} else {
-//			mIgnoreOnAddressDistribution.add(pEntry);
-//		}
-//	}
-//	
-//	public void addIgnoreEntries(Collection<Name> pEntries)
-//	{
-//		if(mIgnoreOnAddressDistribution == null ) {
-//			mIgnoreOnAddressDistribution = new LinkedList<Name>();
-//			if(pEntries != null) {
-//				mIgnoreOnAddressDistribution.addAll(pEntries);
-//			}
-//		} else {
-//			if(pEntries != null) {
-//				mIgnoreOnAddressDistribution.addAll(pEntries);
-//			}
-//		}
-//	}
-//	
-//	public static BigInteger generateAdress(int pLevel, BigInteger pValue)
-//	{
-//		return pValue.shiftLeft(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * pLevel);
-//	}
-	
 	public void storeAnnouncement(NeighborClusterAnnounce pAnnounce)
 	{
 		getLogger().log(this, "Storing " + pAnnounce);
@@ -167,11 +133,6 @@ public class Coordinator implements ICluster, Observer
 	{
 		return mBouncedAnnounces;
 	}
-	
-//	public void setHierarchicalLevelID(int pLevel, int pID)
-//	{
-//		mHRMID.setLevelAddress(pLevel, BigInteger.valueOf(pID));
-//	}
 	
 	private HRMID generateNextAddress()
 	{
@@ -1092,27 +1053,6 @@ public class Coordinator implements ICluster, Observer
 		return mHighestPriority;
 	}
 	
-//	public synchronized void interruptElection()
-//	{/*
-//		if(mElection != null)
-//		{
-//			Logging.log(this, "interrupting election " + mElection);
-//			mElection.interrupt();
-//			mElection=null;
-//		}
-//	*/}
-//	
-//	public void initiateElection()
-//	{/*
-//		Logging.log(this, "Initiated election.");
-//		if(!electionInProgress()) {
-//			mElection = new ElectionProcess(new LinkedList<ICluster>());
-//			mElection.start();
-//		} else {
-//			Logging.log(this, "There is currently an election in progress, please interrupt before starting a new one");
-//		}
-//	*/}
-
 	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		/*
@@ -1445,13 +1385,6 @@ public class Coordinator implements ICluster, Observer
 		return mHRMID;
 	}
 	
-//	public void includeCluster(NeighborCluster pAttached)
-//	{
-//		if(!mTokens.contains(pAttached.getToken())) {
-//			mTokens.add(pAttached.getToken());
-//		}
-//	}
-
 	@Override
 	public void update(Observable pO, Object pArg) {
 	}
@@ -1562,14 +1495,6 @@ public class Coordinator implements ICluster, Observer
 		return mEnvelope;
 	}
 	
-//	public int getBorderToken(HRMID pHRMID)
-//	{
-//		if(mIDToFIBMapping.containsKey(pHRMID)) {
-//			return mIDToFIBMapping.get(pHRMID).getBorderIdentification();
-//		}
-//		return 0;
-//	}
-//	
 	private HRMSignature getSignatureOfPath(HRMID tHRMID)
 	{
 		if(mIDToFIBMapping.containsKey(tHRMID) && mIDToFIBMapping.get(tHRMID).getSignature() != null) {

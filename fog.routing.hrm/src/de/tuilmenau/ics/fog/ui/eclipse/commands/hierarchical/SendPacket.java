@@ -34,7 +34,6 @@ import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.IAutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
-//import de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical.RegionLimitationDialog;
 
 /**
  * In order to create simulations this class sends packets from one node to another randomly chosen node. Or from one 

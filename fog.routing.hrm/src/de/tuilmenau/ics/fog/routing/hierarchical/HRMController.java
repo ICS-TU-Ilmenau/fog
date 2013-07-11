@@ -66,7 +66,6 @@ public class HRMController extends Application implements IServerCallback
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
-//	private HashMap<Long, RouteRequest> mSessionToRequest = null;
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
 	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators;
 	private LinkedList<HRMSignature> mApprovedSignatures;
@@ -304,32 +303,6 @@ public class HRMController extends Application implements IServerCallback
 		return "HRM controller@" + getPhysicalNode();
 	}
 	
-//	/**
-//	 * This function returns the last cluster is known as covered by another coordinator
-//	 * 
-//	 * @param pSourceCluster as cluster from which an uncovered node is propagated
-//	 * @param pTargetCluster as target cluster to which the first uncovered node has to be found
-//	 * @return first uncovered node - that node is the "outgoing interface of the cluster"
-//	 */
-//	public IVirtualNode getLastUncovered(IVirtualNode pSourceCluster, IVirtualNode pTargetCluster)
-//	{	
-//		if(pSourceCluster == null || pTargetCluster == null) {
-//			((ICluster)pSourceCluster).getHRMController().getLogger().log("You did not provide clusters for path search: " + pSourceCluster + " to " + pTargetCluster);
-//			return null;
-//		}
-//		RoutableClusterGraph<IVirtualNode, ClusterLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
-//		List<ClusterLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
-//		IVirtualNode tPredecessor=pSourceCluster;
-//		for(ClusterLink tLink: tClusterConnection) {
-//			if( ((ICluster)getRoutableClusterGraph().getDest(tLink)).getNegotiatorCEP() != null && ((ICluster)getRoutableClusterGraph().getDest(tLink)).getNegotiatorCEP().knowsCoordinator()) {
-//				return tPredecessor;
-//			} else if(((ICluster)getRoutableClusterGraph().getDest(tLink)).getNegotiatorCEP() != null) {
-//				tPredecessor = ((ICluster)getRoutableClusterGraph().getDest(tLink));
-//			}
-//		}
-//		return pTargetCluster;
-//	}
-//	
 	/**
 	 * 
 	 * @param pSourceCluster source cluster
@@ -554,38 +527,6 @@ public class HRMController extends Application implements IServerCallback
 		tThread.start();
 	}
 	
-//	/**
-//	 * 
-//	 * @deprecated This function is for the old infrastructure in which BGP and HRM was mixed quite unorthodox
-//	 * @param pNamespace is the namespace that defines which routing identity is wished
-//	 * @return name of the central FN according to the routing service that was specified
-//	 */
-//	public Name getCentralFNAddress(Namespace pNamespace)
-//	{
-//		if(getPhysicalNode().getRoutingService() instanceof RoutingServiceMultiplexer) {
-//			for(NameMappingService tNMS : ((RoutingServiceMultiplexer)getPhysicalNode().getRoutingService()).getNameMappingServices()) {
-//				NameMappingEntry[] tEntries;
-//				try {
-//					tEntries = tNMS.getAddresses(getPhysicalNode().getCentralFN().getName());
-//					if(tEntries != null) {
-//						for(NameMappingEntry tEntry : tEntries) {
-//							if( ((Name)tEntry.getAddress()).getNamespace().equals(pNamespace)) {
-//								return (Name)tEntry.getAddress();
-//							}
-//						}
-//					}
-//				} catch (RemoteException tExc) {
-//					mLogger.err(this, "Unable to determine name for " + getPhysicalNode().getName(), tExc);
-//				}
-//				
-//			}
-//		} else {
-//			return getHRS().getSourceIdentification();
-//		}
-//		return null;
-//	}
-//	
-	
 	@Override
 	protected void started() {
 		;
@@ -692,20 +633,6 @@ public class HRMController extends Application implements IServerCallback
 	{
 		return mRoutableClusterGraph;
 	}
-	
-//	/**
-//	 * 
-//	 * @param pName name that should be registered for the address given as parameter two
-//	 * @param pAddress address that should be registered for the name given as parameter one
-//	 */
-//	public void registerNode(Name pName, HRMName pAddress)
-//	{
-//		try {
-//			getHRS().registerNode(pName, pAddress);
-//		} catch (RemoteException tExc) {
-//			mLogger.err(this, "Unable to fulfill requirements", tExc);
-//		}
-//	}
 	
 	/**
 	 * 
@@ -821,15 +748,6 @@ public class HRMController extends Application implements IServerCallback
 		}
 	}
 	
-//	/**
-//	 * 
-//	 * @param pSignature is the signature of a coordinator that is not longer supposed to be authorized for the creation of FIB entries
-//	 */
-//	public void deleteApprovedSignature(Signature pSignature)
-//	{
-//		mApprovedSignatures.removeFirstOccurrence(pSignature);
-//	}
-	
 	/**
 	 * 
 	 * @param pIdentity is the identity that is supposed to be used for signing FIB entries
@@ -880,129 +798,6 @@ public class HRMController extends Application implements IServerCallback
 		}
 		return tClusters;
 	}
-	
-//	/**
-//	 * In case the first hop is either required or not allowed, the following function finds candidates that allow routing from this
-//	 * entity to the next hop. 
-//	 * @param pSource 
-//	 * @param pLimitation contains restrictions regarding the allowed clusters, however the clusters have to be addressed by the given HRMID
-//	 * @return a list of allowed cluster
-//	 */
-//	private LinkedList<ICluster> getAllowedCluster(ICluster pSource, AddressLimitationProperty pLimitation)
-//	{
-//		LinkedList<ICluster> tPossibleClusters = new LinkedList<ICluster>();
-//		LinkedList<ICluster> tCandidates = new LinkedList<ICluster>();
-//		tCandidates.add(pSource);
-//		for(ICluster tCandidate : pSource.getNeighbors()) {
-//			if(tCandidate instanceof Cluster) {
-//				tCandidates.add(tCandidate);
-//			}
-//		}
-//		
-//		for(ICluster tCandidate : tCandidates) {
-//			for(HierarchyLevelLimitationEntry tEntry : pLimitation.getEntries()) {
-//				HRMID tClustersAddress = tCandidate.getHrmID();
-//				HRMID tEntryAddress = null;
-//				if(tEntry.getAddress() instanceof HRMID) {
-//					tEntryAddress =  (HRMID) tEntry.getAddress();
-//				} else {
-//					continue;
-//				}
-//				
-//				int tLowestDifference = tClustersAddress.getDescendingDifference(tEntryAddress);
-//				HRMID tComparison = new HRMID(0);
-//				for(int i = HRMConfig.Hierarchy.HEIGHT -1; i >= tLowestDifference; i--) {
-//					BigInteger tEntryLevelAddress = tEntryAddress.getLevelAddress(i);
-//					if(tEntryLevelAddress.equals(BigInteger.valueOf(0))) {
-//						tComparison.setLevelAddress(i, BigInteger.valueOf(0));
-//						for(int j = 0; j >=0 ; j--) {
-//							tComparison.setLevelAddress(j, BigInteger.valueOf(0));
-//						}
-//					} else {
-//						tComparison.setLevelAddress(i, tClustersAddress.getLevelAddress(i));
-//					}
-//				}
-//				if(tComparison.getAddress() != BigInteger.ZERO) {
-//					if(pLimitation.getType().equals(AddressLimitationProperty.LIST_TYPE.OBSTRUCTIVE)) {
-//						/*
-//						 * If it is obstructive, the entries tell which clusters are not allowed to be used
-//						 */
-//						if(!tComparison.equals(tEntry.getAddress())) {
-//							tPossibleClusters.add(tCandidate);
-//						} else {
-//							if(tPossibleClusters.contains(tCandidate)) {
-//								tPossibleClusters.remove(tCandidate);
-//							}
-//						}
-//					} else if(pLimitation.getType().equals(AddressLimitationProperty.LIST_TYPE.RESTRICTIVE)) {
-//						/*
-//						 * If it is restrictive we allow the cluster to be taken if it appears in the list of possible HRMIDs
-//						 */
-//						if(tComparison.equals(tEntry.getAddress())) {
-//							tPossibleClusters.add(tCandidate);
-//						}
-//					}
-//				}
-//			}
-//		}
-//		
-//		return tPossibleClusters;
-//	}
-//	
-//	/**
-//	 * Query route to a target that has to be specified in the object RouteRequest
-//	 * 
-//	 * @param pRequest contains the target of the request and restrictions regarding the route that has to be chosen
-//	 */
-//	public void queryRoute(RouteRequest pRequest)
-//	{
-//		try {
-//			HRMID tForwardingHRMID = getHRS().getForwardingHRMID( (HRMID) pRequest.getTarget());
-////			ICluster tForwardingCluster = getCluster(getHRS().getFIBEntry(tForwardingHRMID).getNextCluster());
-//			
-//			LinkedList<ICluster> tAllowedClusters = null;//getAllowedCluster(tForwardingCluster, tLimitation);
-//			LinkedList<RouteRequest> tResults = new LinkedList<RouteRequest>();
-//			
-//			for(ICluster tCandidate : tAllowedClusters) {
-//				if(tCandidate.getCoordinatorCEP() != null) {
-//					if(pRequest.getRoute() == null) {
-//						//Route tRoute = new Route();
-//						//tRoute.add(tCandidate.getCoordinatorCEP().getRouteToPeer());
-//						pRequest.addRoutingVector(new RoutingServiceLinkVector(tCandidate.getCoordinatorCEP().getRouteToPeer(), tCandidate.getCoordinatorCEP().getSourceName(), tCandidate.getCoordinatorCEP().getPeerName()));
-//					}
-//					tCandidate.getCoordinatorCEP().sendPacket(pRequest);
-//					synchronized(pRequest) {
-//						if(!pRequest.isAnswer()) {
-//							pRequest.wait();
-//						}
-//					}
-//					if(pRequest.getResult().equals(RouteRequest.ResultType.SUCCESS)) {
-//						break;
-//					} else {
-//						tResults.add(pRequest);
-//						pRequest = pRequest.clone();
-//					}
-//				} else {
-//					((Cluster)tCandidate).getClusterManager().handleRouteRequest(pRequest, tCandidate);
-//				}
-//			}
-//		} catch (RemoteException tExc) {
-//			Logging.err(this, "Error when trying to determine region limited route", tExc);
-//		} catch (InterruptedException tExc) {
-//			Logging.err(this, "Error occured when waiting for route request", tExc);
-//		}
-//	}
-//	
-//	/**
-//	 * Find an appropriate route request in order to put together the pieces.
-//	 * 
-//	 * @param pSession is the identification of the session that has to be found
-//	 * @return
-//	 */
-//	public RouteRequest getRouteRequest(Integer pSession)
-//	{
-//		return mSessionToRequest.get(pSession);
-//	}
 	
 	/**
 	 * Find out whether this object is an edge router

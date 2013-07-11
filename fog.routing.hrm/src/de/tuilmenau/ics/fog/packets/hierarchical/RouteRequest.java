@@ -92,14 +92,6 @@ public class RouteRequest implements Serializable
 		return mRoute;
 	}
 	
-//	/**
-//	 * Use this method to allow the accumulation of a route
-//	 */
-//	public void setRouteAccumulation()
-//	{
-//		mRouteAccumulation = true;
-//	}
-
 	/**
 	 * 
 	 * @param pDummy is a cluster that is required to lie in the route to the target
@@ -194,14 +186,6 @@ public class RouteRequest implements Serializable
 	{
 		return mDescription;
 	}
-	
-//	/**
-//	 * state the fact that the result would traverse multiple autonomous systems
-//	 */
-//	public void setInterASResult()
-//	{
-//		mInterASRequest = true;
-//	}
 	
 	/**
 	 * 

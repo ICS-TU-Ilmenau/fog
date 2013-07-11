@@ -32,19 +32,6 @@ public class HRMIPMapper
 		return sHRMIPMapperSingleton;
 	}
 	
-//	public void registerIPAddressForCluster(ICluster pCluster, Name pIP)
-//	{
-//		if(mClusterToIPMapper.get(pCluster) == null) {
-//			mClusterToIPMapper.put(pCluster, new LinkedList<Name>());
-//		}
-//		if(!mClusterToIPMapper.get(pCluster).contains(pIP)) {
-//			mClusterToIPMapper.get(pCluster).add(pIP);
-//		}
-//		for(ICluster tCluster : mClusterToIPMapper.keySet()) {
-//			Logging.log(this, tCluster + " consists of " + mClusterToIPMapper.get(tCluster));
-//		}
-//	}
-	
 	public LinkedList<Name> getIPFromHRMID(HRMID pHRMID)
 	{
 		Logging.log(this, "Requesting IP from HRMID:\n " +pHRMID + ":\n " + mHRMIDToCluster.get(pHRMID) + "\n" + mClusterToIPMapper.get(mHRMIDToCluster.get(pHRMID)));
@@ -59,14 +46,6 @@ public class HRMIPMapper
 		return mClusterToIPMapper.get(mHRMIDToCluster.get(pHRMID));
 	}
 	
-//	public void registerHRMIDForCluster(ICluster pCluster, HRMID pHRMID)
-//	{
-//		mHRMIDToCluster.put(pHRMID, pCluster);
-//		for(HRMID tValue: mHRMIDToCluster.keySet()) {
-//			Logging.log(this, tValue + " consists of " + mHRMIDToCluster.get(tValue));
-//		}
-//	}
-	
 	public String toString()
 	{
 		return getClass().getSimpleName();
@@ -78,8 +57,4 @@ public class HRMIPMapper
 		Logging.log("Registered " + pHRMID + " for region limitation");
 	}
 	
-//	public static LinkedList<HRMID> getHRMIDs()
-//	{
-//		return mHRMIDs;
-//	}
 }

@@ -16,15 +16,12 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
-//import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
-//import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-
 
 public interface ICluster extends Serializable, IRoutableClusterGraphNode
 {
@@ -145,17 +142,6 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * is provided here.
 	 */
 	public long getHighestPriority();
-	
-//	/**
-//	 * Initiate the election. However this function was only implemented for the intermediate cluster because
-//	 * of synchronization .
-//	 */
-//	public void initiateElection();
-//	
-//	/**
-//	 * Interrupt a running election. 
-//	 */
-//	public void interruptElection();
 	
 	/**
 	 * Once a connection end point receives an announcement it calls this method.

@@ -70,7 +70,4 @@ public class HRMConfig
 		 */
 		public static final long DEFAULT_BULLY_PRIORITY = 1; //TV
 	}
-	
-//    public static final int MAXIMUM_BULLY_PRIORITY = 90;
-
 }

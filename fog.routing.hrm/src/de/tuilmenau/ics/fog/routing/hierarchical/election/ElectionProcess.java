@@ -44,7 +44,6 @@ public class ElectionProcess extends Thread
 	private static final int FIRST_ELECTING_CLUSTER = 0; //TV
 
 	private Boolean mPleaseInterrupt = false;
-	//private long mTimeStamp = System.currentTimeMillis();
 	private long TIMEOUT_FOR_PEERS = 1000;
 	private long WAIT_BEFORE_ADDRESS_DISTRIBUTION = 5000;
 	private long TIMEOUT_FOR_ANNOUNCEMENT=5000;
@@ -59,23 +58,8 @@ public class ElectionProcess extends Thread
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() /*+ "(TS:" + mTimeStamp + ")"*/ + "(Cluster=" + (mElectingClusters.isEmpty() ? "" : mElectingClusters.get(FIRST_ELECTING_CLUSTER).getClusterID()) + ", HierLevel=" + mLevel + ")";
+		return getClass().getSimpleName() + "(Cluster=" + (mElectingClusters.isEmpty() ? "" : mElectingClusters.get(FIRST_ELECTING_CLUSTER).getClusterID()) + ", HierLevel=" + mLevel + ")";
 	}
-	
-//	public void interruptElection()
-//	{
-//		Logging.log(this, "Interruped: will notify in case an election was running");
-//		synchronized(mPleaseInterrupt) {
-//			mPleaseInterrupt = true;
-//			mPleaseInterrupt.notifyAll();
-//		}
-//	}
-//	
-//	public boolean isElecting(ICluster pCluster)
-//	{
-//		Logging.log(this, "does " + (mElectingClusters.contains(pCluster) ? "contain " : "not contain ") + pCluster);
-//		return (mElectingClusters.contains(pCluster));
-//	}
 	
 	public ElectionProcess(int pLevel)
 	{

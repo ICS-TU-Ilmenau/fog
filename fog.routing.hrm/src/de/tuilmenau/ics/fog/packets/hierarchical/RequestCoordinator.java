@@ -24,7 +24,6 @@ public class RequestCoordinator implements Serializable
 	private LinkedList<DiscoveryEntry> mEntries;
 	private boolean mIsAnswer=false;
 	private boolean mKnowCoordinator = false;
-//	private boolean mReportStatusOnly = false;
 	private int mRandomNumber = 0;
 	public boolean mWasNotified = false;
 	
@@ -32,21 +31,11 @@ public class RequestCoordinator implements Serializable
 	 * 
 	 * @param pReportStatusOnly set to true in case you just wish to get to know the status of all other nodes within the range
 	 */
-	public RequestCoordinator(/* boolean pReportStatusOnly */)
+	public RequestCoordinator()
 	{
-//		mReportStatusOnly = pReportStatusOnly;
 		Random tRandom = new Random(System.currentTimeMillis());
 		mRandomNumber = tRandom.nextInt();
 	}
-	
-//	/**
-//	 * 
-//	 * @return true if only the status should be conveyed
-//	 */
-//	public boolean toReportStatusOnly()
-//	{
-//		return mReportStatusOnly;
-//	}
 	
 	/**
 	 * 

@@ -110,8 +110,13 @@ public class HRMName implements Name
 	
 	public boolean equals(Object pObj)
 	{
-		if(pObj == null) return false;
-		if(pObj == this) return true;
+		if(pObj == null){
+			return false;
+		}
+		
+		if(pObj == this){
+			return true;
+		}
 		
 		if(pObj instanceof RoutingServiceAddress) {
 			return ((RoutingServiceAddress) pObj).getAddress() == mAddress.longValue();

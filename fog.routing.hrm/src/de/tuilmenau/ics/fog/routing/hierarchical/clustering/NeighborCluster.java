@@ -11,7 +11,6 @@ package de.tuilmenau.ics.fog.routing.hierarchical.clustering;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -25,7 +24,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEP;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -41,7 +39,6 @@ import de.tuilmenau.ics.fog.util.Logger;
 public class NeighborCluster implements ICluster, IElementDecorator
 {
 	private static final long serialVersionUID = -8746079632866375924L;
-//	private LinkedList<RoutingServiceLinkVector> mVectors;
 	private int mToken;
 	private int mLevel;
 	private long mPriority;
@@ -50,19 +47,14 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	private HRMName mCoordAddress;
 	private Long mClusterID;
 	private HRMController mHRMController;
-	//protected CoordinatorCEP mCEP;
 	private HRMSignature mCoordSignature;
-	//protected Route mRouteToCoordinator;
 	private HRMID mHRMID;
 	private Name mAnnouncer;
 	private LinkedList<CoordinatorCEPDemultiplexed> mAnnouncedCEPs;
 	private CoordinatorCEPDemultiplexed mNegotiator = null;
-//	private int mClusterHopsOnOpposite;
 	private Cluster mSourceIntermediateCluster = null;
 	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
 	private boolean mInterASCluster = false;
-//	private HashMap<CoordinatorCEPDemultiplexed, Integer> mClustersOnOppositeCounter = new HashMap<CoordinatorCEPDemultiplexed, Integer>();
-//	private StackTraceElement[] mStackTrace = null;
 	
 	/**
 	 * 
@@ -83,7 +75,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		mCoordName = pCoordName;
 		mToken = pToken;
 		mLevel = pLevel;
-//		mStackTrace = Thread.currentThread().getStackTrace();
 	}
 	
 	public void addAnnouncedCEP(CoordinatorCEPDemultiplexed pCEP)
@@ -164,11 +155,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	{
 		getHRMController().getRoutableClusterGraph().storeLink(this,	pNeighbor, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
 	}
-
-//	public void setRouteToCoordinator(Route pPath)
-//	{
-//		mRouteToCoordinator = pPath;
-//	}
 
 	public void setHRMID(HRMID pHRMID)
 	{
@@ -415,17 +401,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		mAnnouncer = pAnnouncer;
 	}
 	
-//	public int getClusterHopsOnAnnouncer(CoordinatorCEP pCEP)
-//	{
-//		return mClustersOnOppositeCounter.get(pCEP);
-//	}
-	
-//	public void setClusterHopsOnOpposite(int pClustersOnOpposite, CoordinatorCEPDemultiplexed pCEP)
-//	{
-//		mClustersOnOppositeCounter.put(pCEP, pClustersOnOpposite);
-////		mClusterHopsOnOpposite = pClustersOnOpposite;
-//	}
-	
 	public void setSourceIntermediate(Cluster pIntermediate)
 	{
 		mSourceIntermediateCluster = pIntermediate;
@@ -435,18 +410,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	{
 		return mSourceIntermediateCluster;
 	}
-/*
-	public void setNegotiatingHost(RoutingServiceAddress pAddress)
-	{
-		getLogger().log("Negotiating host is" + pAddress);
-		mNegotiatingHost = pAddress;
-	}
-	
-	public RoutingServiceAddress getNegotiatingHost()
-	{
-		return mNegotiatingHost;
-	}
-*/
+
 	@Override
 	public void handleTopologyData(TopologyData pEnvelope)
 	{
