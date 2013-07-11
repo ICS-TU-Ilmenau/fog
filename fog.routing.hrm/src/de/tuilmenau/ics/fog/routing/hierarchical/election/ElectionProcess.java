@@ -45,7 +45,7 @@ public class ElectionProcess extends Thread
 
 	private Boolean mPleaseInterrupt = false;
 	//private long mTimeStamp = System.currentTimeMillis();
-	private long TIMEOUT_FOR_PEERS = 5000;
+	private long TIMEOUT_FOR_PEERS = 1000;
 	private long WAIT_BEFORE_ADDRESS_DISTRIBUTION = 5000;
 	private long TIMEOUT_FOR_ANNOUNCEMENT=5000;
 	
@@ -59,7 +59,7 @@ public class ElectionProcess extends Thread
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() /*+ "(TS:" + mTimeStamp + ")"*/ + (mElectingClusters.isEmpty() ? "" : "@" + mElectingClusters.get(FIRST_ELECTING_CLUSTER).getClusterID()) + "@" + mLevel;
+		return getClass().getSimpleName() /*+ "(TS:" + mTimeStamp + ")"*/ + "(Cluster=" + (mElectingClusters.isEmpty() ? "" : mElectingClusters.get(FIRST_ELECTING_CLUSTER).getClusterID()) + ", HierLevel=" + mLevel + ")";
 	}
 	
 //	public void interruptElection()
