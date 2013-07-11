@@ -46,7 +46,7 @@ public class BullyAnnounce extends SignalingMessageBully
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority().getValue() + ", SenderPrio=" + getSenderPriority() + ")";
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority().getValue() + ")";
 	}
 	
 	/**
