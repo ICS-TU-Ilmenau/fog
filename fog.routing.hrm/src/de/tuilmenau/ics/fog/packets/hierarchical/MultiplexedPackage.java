@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
  * 
  * An object that contains payload data that will be sent to more than one cluster
  */
-public class MultiplexedPackage implements Serializable, Name
+public class MultiplexedPackage implements Serializable
 {
 	private static final long serialVersionUID = 5178731557132270381L;
 	
@@ -71,17 +71,5 @@ public class MultiplexedPackage implements Serializable, Name
 	public Serializable getData()
 	{
 		return mData;
-	}
-
-	@Override
-	public Namespace getNamespace()
-	{
-		return new Namespace(mData.getClass().getSimpleName());
-	}
-
-	@Override
-	public int getSerialisedSize()
-	{
-		return 0;
 	}
 }
