@@ -10,11 +10,13 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.election;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class is used for a Cluster in order to encapsulate the Bully priority computation and all needed adaption in case of topology changes.
+ * This class is used for a cluster in order to encapsulate the Bully priority computation and all needed adaption in case of topology changes.
  */
 public class BullyPriority
 {
@@ -29,7 +31,9 @@ public class BullyPriority
 	private int OFFSET_FOR_CONNECTIVITY = 100;
 	
 	/**
-	 * @param pNode
+	 * Service function for the node configurator
+	 * 
+	 * @param pNode the node which should be configured
 	 */
 	public static void configureNode(Node pNode)
 	{
@@ -42,21 +46,41 @@ public class BullyPriority
 	}
 
 	/**
-	 * Constructor
-	 * Initializes the Bully priority for the Cluster depending on the node configuration and the hierarchy level.
+	 * Constructor: initializes the Bully priority for a cluster depending on the node configuration and the hierarchy level.
 	 * 
-	 * @param pNode the cluster to which this Bully priority belongs to.
+	 * @param pCluster the cluster to which this Bully priority belongs to.
 	 */
-	public BullyPriority(Node pNode, int pHierarchyLevel)
+	public BullyPriority(Cluster pCluster)
 	{
-		if (pNode == null) {
+		Node tNode = pCluster.getHRMController().getPhysicalNode();
+		int tHierarchyLevel = pCluster.getHierarchyLevel();
+		
+		if (tNode == null) {
 			Logging.log(this,  "Invalid reference to the physical node found");
 			return;
 		}
-		mPriority = (long) pNode.getParameter().get(NODE_PARAMETER_PREFIX + pHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
+		mPriority = (long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
 		Logging.log(this,  "Created Bully priority object (initial priority is " + mPriority + ")");
 	}
 	
+	/**
+	 * Constructor: initializes the Bully priority for a coordinator depending on the node configuration and the hierarchy level.
+	 * 
+	 * @param pCluster the cluster to which this Bully priority belongs to.
+	 */
+	public BullyPriority(Coordinator pCoordinator)
+	{
+		Node tNode = pCoordinator.getHRMController().getPhysicalNode();
+		int tHierarchyLevel = pCoordinator.getHierarchyLevel();
+		
+		if (tNode == null) {
+			Logging.log(this,  "Invalid reference to the physical node found");
+			return;
+		}
+		mPriority = (long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
+		Logging.log(this,  "Created Bully priority object (initial priority is " + mPriority + ")");
+	}
+
 	/**
 	 * Constructor
 	 * 
@@ -77,6 +101,25 @@ public class BullyPriority
 	public long getValue()
 	{
 		return mPriority;
+	}
+
+	/**
+	 * 
+	 * Compares and sets the Bully priority of another candidate
+	 * 
+	 * @param pCandidatesPriority the Bully priority of the other candidate
+	 * @return true if the priority of the candidate is set as new one
+	 */
+	public boolean compareAndSetCandidate(BullyPriority pCandidatesPriority)
+	{
+		boolean tNewPrioritySet = false;
+		
+		if (pCandidatesPriority.getValue() > getValue()){
+			mPriority = pCandidatesPriority.getValue();
+			tNewPrioritySet = true;
+		}
+		
+		return tNewPrioritySet;
 	}
 	
 	/**
