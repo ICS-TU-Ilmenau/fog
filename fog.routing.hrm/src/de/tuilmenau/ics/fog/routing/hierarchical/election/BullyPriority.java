@@ -17,6 +17,12 @@ import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This class is used for a cluster in order to encapsulate the Bully priority computation and all needed adaption in case of topology changes.
+ * 
+ * In general, a node has a Bully priority for each hierarchy level. In the beginning, each of those values is 1. However, the administrator of a local
+ * broadcast domain is allowed to use a different value than 1 as initialization value. The highest allowed initialization value is 99.
+ * 
+ * During the neighbor discovery phase, the Bully priority is increased by 100 for each detected (logical) link to a neighbor.
+ * 
  */
 public class BullyPriority
 {
