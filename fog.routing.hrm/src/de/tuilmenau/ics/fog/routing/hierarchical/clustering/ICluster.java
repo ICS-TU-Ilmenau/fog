@@ -163,7 +163,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * @param pAnnounce This is the announcement from which relevant information has to be extracted.
 	 * @param pCEP This is the connection from which necessary information will be extracted as well.
 	 */
-	public void interpretAnnouncement(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP);
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP);
 	
 	/**
 	 * This method has to be called by an connection end point once it receives the announcement about the existence

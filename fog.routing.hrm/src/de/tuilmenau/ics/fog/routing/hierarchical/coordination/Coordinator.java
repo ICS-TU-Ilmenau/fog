@@ -118,8 +118,8 @@ public class Coordinator implements ICluster, Observer
 		mManagedCluster = pCluster;
 		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
 		mManagedCluster.getHRMController().getRoutableClusterGraph().addObserver(this);
-		mBullyPriority = new BullyPriority(getHRMController().getPhysicalNode(), mLevel);
-		getHRMController().registerClusterManager(this, mLevel);
+		mBullyPriority = new BullyPriority(this);
+		getHRMController().registerCoordinator(this, mLevel);
 		
 		Logging.log(this, "Creating coordinator instance on hierarchy level " + mLevel);
 	}
@@ -1113,7 +1113,7 @@ public class Coordinator implements ICluster, Observer
 //		}
 //	*/}
 
-	public void interpretAnnouncement(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		/*
 		 * check whether old priority was lower than new priority

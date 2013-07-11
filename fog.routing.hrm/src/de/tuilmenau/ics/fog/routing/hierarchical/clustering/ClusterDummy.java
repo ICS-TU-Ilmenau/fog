@@ -265,7 +265,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 	
 	@Override
-	public void interpretAnnouncement(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		
 	}

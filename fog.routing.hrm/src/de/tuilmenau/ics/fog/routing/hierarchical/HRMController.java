@@ -68,7 +68,7 @@ public class HRMController extends Application implements IServerCallback
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 //	private HashMap<Long, RouteRequest> mSessionToRequest = null;
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
-	private LinkedList<LinkedList<Coordinator>> mClusterManagers;
+	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators;
 	private LinkedList<HRMSignature> mApprovedSignatures;
 	private HRMIdentity mIdentity;
 	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
@@ -757,35 +757,45 @@ public class HRMController extends Application implements IServerCallback
 	}
 	
 	/**
+	 * Determines the coordinator for a given hierarchy level.
 	 * 
-	 * @param pLevel level for which all cluster managers should be provided
+	 * @param pHierarchyLevel level for which all cluster managers should be provided
 	 * @return list of managers at the level
 	 */
-	public LinkedList<Coordinator> getClusterManagers(int pLevel)
+	public LinkedList<Coordinator> getCoordinator(int pHierarchyLevel)
 	{
-		if(mClusterManagers.size() < pLevel) {
+		if(mRegisteredCoordinators.size() < pHierarchyLevel) {
 			return null;
 		} else {
-			return mClusterManagers.get(pLevel);
+			return mRegisteredCoordinators.get(pHierarchyLevel);
 		}
 	}
 	
 	/**
+	 * Registers a coordinator for a defined hierarchy level.
 	 * 
-	 * @param pCoordinator is the entity that manages a cluster
-	 * @param pLevel is the level at which the manager is registered
+	 * @param pCoordinator the coordinator for a defined cluster
+	 * @param pHierarchyLevel the hierarchy level at which the coordinator is located
 	 */
-	public void registerClusterManager(Coordinator pCoordinator, int pLevel)
+	public void registerCoordinator(Coordinator pCoordinator, int pHierarchyLevel)
 	{
-		if(mClusterManagers == null) {
-			mClusterManagers = new LinkedList<LinkedList<Coordinator>>();
+		// make sure we have a valid linked list object
+		if(mRegisteredCoordinators == null) {
+			mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
 		}
-		if(mClusterManagers.size() <= pLevel) {
-			for(int i = mClusterManagers.size() - 1; i <= pLevel ; i++) {
-				mClusterManagers.add(new LinkedList<Coordinator>());
+		
+		if(mRegisteredCoordinators.size() <= pHierarchyLevel) {
+			for(int i = mRegisteredCoordinators.size() - 1; i <= pHierarchyLevel ; i++) {
+				mRegisteredCoordinators.add(new LinkedList<Coordinator>());
 			}
 		}
-		mClusterManagers.get(pLevel).add(pCoordinator);
+		
+		// store the new coordinator
+		if (mRegisteredCoordinators.get(pHierarchyLevel).size() > 0)
+		{
+			getLogger().log("#### Got more than one coordinator at level " + pHierarchyLevel + ", already known: " + mRegisteredCoordinators.get(pHierarchyLevel).get(0) + ", new one: " + pCoordinator);
+		}
+		mRegisteredCoordinators.get(pHierarchyLevel).add(pCoordinator);
 	}
 	
 	/**

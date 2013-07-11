@@ -68,7 +68,7 @@ public class CoordinatorCEPMultiplexer
 			CoordinatorCEP tCEP = new CoordinatorCEP(getLogger(), mHRMController, false, pSourceCluster.getHierarchyLevel() + 1, mHRMController.getMultiplexerOnLevel(pSourceCluster.getHierarchyLevel() + 1));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getPhysicalNode().getCentralFN().getName());
 			
-			for(Coordinator tManager : mHRMController.getClusterManagers(pSourceCluster.getHierarchyLevel()+1)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel()+1)) {
 				tCEPDemultiplexed = new CoordinatorCEPDemultiplexed(getLogger(), mHRMController, tManager);
 				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getBullyPriority());
 				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
@@ -80,7 +80,7 @@ public class CoordinatorCEPMultiplexer
 				tCEPDemultiplexed.setRemoteCluster(pTargetCluster);
 			}
 			
-			for(Coordinator tManager : mHRMController.getClusterManagers(pSourceCluster.getHierarchyLevel()+1)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel()+1)) {
 				if(pTargetCluster.getCoordinatorsAddress() == null) {
 					getLogger().err(this, "Error on trying to contact other clusters, as name is set please check its address");
 				} else {
@@ -166,7 +166,7 @@ public class CoordinatorCEPMultiplexer
 				getLogger().err(this, "Unable to connect to " + tName, tExc);
 			}
 
-			for(Coordinator tManager : mHRMController.getClusterManagers(pSourceCluster.getHierarchyLevel() + 1)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel() + 1)) {
 				LinkedList<Integer> tTokens = new LinkedList<Integer>();
 				for(ICluster tClusterForToken : tManager.getManagedCluster().getNeighbors()) {
 					if(tClusterForToken.getHierarchyLevel() == tManager.getHierarchyLevel() - 1) {

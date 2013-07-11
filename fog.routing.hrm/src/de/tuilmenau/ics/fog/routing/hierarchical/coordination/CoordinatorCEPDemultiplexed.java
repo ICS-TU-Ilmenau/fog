@@ -180,7 +180,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\"an ANNOUNCE: " + tAnnouncePacket);
 
 			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
-			getCluster().interpretAnnouncement(tAnnouncePacket, this);
+			getCluster().handleBullyAnnounce(tAnnouncePacket, this);
 		}
 
 		/**

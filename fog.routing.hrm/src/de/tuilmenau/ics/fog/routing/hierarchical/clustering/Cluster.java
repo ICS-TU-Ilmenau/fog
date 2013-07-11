@@ -105,7 +105,7 @@ public class Cluster implements ICluster, IElementDecorator
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mSentAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mHRMController = ptHRMController;
-		mBullyPriority = new BullyPriority(getHRMController().getPhysicalNode(), getHierarchyLevel());
+		mBullyPriority = new BullyPriority(this);
 		getHRMController().getLogger().log(this, "CLUSTER - created " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getValue());
 		mHierarchyLevel = pLevel;
 		for(ICluster tCluster : getHRMController().getRoutingTargets())
@@ -130,7 +130,7 @@ public class Cluster implements ICluster, IElementDecorator
 		mAnnouncer = pCEP;
 	}
 	
-	public void interpretAnnouncement(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
 		setToken(pAnnounce.getToken());
 		setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pCEP.getPeerName());
@@ -299,7 +299,7 @@ public class Cluster implements ICluster, IElementDecorator
 				/*
 				 * no coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getClusterManagers(mHierarchyLevel)) {
+				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						tManager.storeAnnouncement(pAnnounce);
 					}
@@ -308,7 +308,7 @@ public class Cluster implements ICluster, IElementDecorator
 				/*
 				 * coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getClusterManagers(mHierarchyLevel)) {
+				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						if(tManager.getCoordinatorCEP() != null) {
 							tManager.getCoordinatorCEP().sendPacket(pAnnounce);
