@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
-import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscovery;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
@@ -692,6 +692,8 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	
 	public boolean sendPacket(Serializable pData)
 	{
+		mLogger.log(this, "Sending to \"" + getRemoteCluster() + "\" the packet " + pData);
+		
 		if(pData instanceof RequestCoordinator) {
 //			mRequestedCoordinator = true;
 			getHRMController().getLogger().log(this, "Sending " + pData);
