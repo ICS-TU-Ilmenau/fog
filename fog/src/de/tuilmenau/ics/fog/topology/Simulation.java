@@ -311,14 +311,13 @@ public class Simulation
 		boolean tOk = false;
 
 		// return immediately if there is no command given
-		if (pCmd.length() == 0){
+		if ((pCmd == null) || (pCmd.length() == 0)){
 			return true;
 		}
 		
 		mLogger.info(this, pCmd);
 		
 		// ignore empty commands
-		if (pCmd == null) return true;
 		if (pCmd.equals("")) return true;
 		
 		String[] tParts = pCmd.split(" ");
