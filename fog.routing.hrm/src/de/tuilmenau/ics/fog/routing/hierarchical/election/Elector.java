@@ -198,13 +198,13 @@ public class Elector extends Thread
 					}
 					mClusterManager.distributeAddresses();
 				} catch (RemoteException tExc) {
-					Logging.err(this, "Error when trying to distribute addresses", tExc);
+					Logging.err(this, "Remoe problem - error when trying to distribute addresses", tExc);
 				} catch (RoutingException tExc) {
-					Logging.err(this, "Error when trying to distribute addresses", tExc);
+					Logging.err(this, "Routing problem - error when trying to distribute addresses", tExc);
 				} catch (RequirementsException tExc) {
-					Logging.err(this, "Error when trying to distribute addresses", tExc);
+					Logging.err(this, "Requirements problem - error when trying to distribute addresses", tExc);
 				} catch (InterruptedException tExc) {
-					Logging.err(this, "Error when trying to distribute addresses", tExc);
+					Logging.err(this, "interrupt problem - error when trying to distribute addresses", tExc);
 				}
 			}
 		}	
