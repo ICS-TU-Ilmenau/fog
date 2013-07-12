@@ -175,7 +175,7 @@ public class HierarchicalRoutingService implements RoutingService
 		return tIntermediateNodes;
 	}
 	
-	public HRMID getForwardingHRMID(HRMID pTarget) throws RemoteException
+	private HRMID getForwardingHRMID(HRMID pTarget) throws RemoteException
 	{
 		/*
 		 * find first segment where source address differs from destination address

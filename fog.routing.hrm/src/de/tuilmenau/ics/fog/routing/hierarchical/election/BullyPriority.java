@@ -34,7 +34,7 @@ public class BullyPriority
 	/**
 	 * This value represents an undefined priority.
 	 */
-	public static long UNDEFINED_PRIORITY = -1;
+	private static long UNDEFINED_PRIORITY = -1;
 	
 	/**
 	 * This value is used when the connectivity changes.
