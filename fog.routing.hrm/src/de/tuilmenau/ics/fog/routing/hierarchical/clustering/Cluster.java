@@ -26,8 +26,8 @@ import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionProcess;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionProcess.ElectionManager;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector.ElectionManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
@@ -119,7 +119,7 @@ public class Cluster implements ICluster, IElementDecorator
 				mBullyPriority.increaseConnectivity();
 			}
 		}
-		ElectionProcess tProcess = ElectionManager.getElectionManager().addElection(mHierarchyLevel, mClusterID, new ElectionProcess(this));
+		Elector tProcess = ElectionManager.getElectionManager().addElection(mHierarchyLevel, mClusterID, new Elector(this));
 		mMux = new CoordinatorCEPMultiplexer(mHRMController);
 		mMux.setCluster(this);
 	}

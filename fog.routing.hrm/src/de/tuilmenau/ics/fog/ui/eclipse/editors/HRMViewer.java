@@ -55,8 +55,8 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionProcess;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionProcess.ElectionManager;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector.ElectionManager;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -294,10 +294,10 @@ public class HRMViewer extends EditorPart
 		public void handleEvent(Event event)
 		{
 			Logging.log("Available Election Processes: ");
-			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getAllElections()) {
+			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(tProcess.toString());
 			}
-			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel())) {
+			for(Elector tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel())) {
 				boolean tStartProcess=true;
 				Cluster tCluster = tProcess.getCluster();
 				for(CoordinatorCEPChannel tCEP : tCluster.getParticipatingCEPs()) {
@@ -332,10 +332,10 @@ public class HRMViewer extends EditorPart
 		public void handleEvent(Event event)
 		{
 			Logging.log("Available Election Processes: ");
-			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getAllElections()) {
+			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(tProcess.toString());
 			}
-			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel())) {
+			for(Elector tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel())) {
 				synchronized(tProcess) {
 					 tProcess.notifyAll();
 				}

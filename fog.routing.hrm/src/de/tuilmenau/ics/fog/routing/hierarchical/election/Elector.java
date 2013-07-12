@@ -38,7 +38,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
-public class ElectionProcess extends Thread
+public class Elector extends Thread
 {
 	private Boolean mPleaseInterrupt = false;
 	private long TIMEOUT_FOR_PEERS = 1000;
@@ -58,7 +58,7 @@ public class ElectionProcess extends Thread
 		return getClass().getSimpleName() + "(Cluster=" + (mElectingCluster != null ? "" : mElectingCluster.getClusterID()) + ", HierLevel=" + mHierarchyLevel + ")";
 	}
 	
-	public ElectionProcess(Cluster pCluster)
+	public Elector(Cluster pCluster)
 	{
 		mHierarchyLevel = pCluster.getHierarchyLevel();
 		mElectingCluster = pCluster;
@@ -368,13 +368,13 @@ public class ElectionProcess extends Thread
 	
 	public static class ElectionManager
 	{
-		private HashMap<Integer, HashMap<Long, ElectionProcess>>mElections = null;
+		private HashMap<Integer, HashMap<Long, Elector>>mElections = null;
 		private static ElectionManager mManager = null;
 		private ElectionEventNotification mNotification;
 		
 		public ElectionManager()
 		{
-			mElections = new HashMap<Integer, HashMap<Long, ElectionProcess>>();
+			mElections = new HashMap<Integer, HashMap<Long, Elector>>();
 		}
 		
 		public static ElectionManager getElectionManager()
@@ -393,7 +393,7 @@ public class ElectionProcess extends Thread
 		 * @param pClusterID
 		 * @return
 		 */
-		public synchronized ElectionProcess getProcess(int pLevel, Long pClusterID)
+		public synchronized Elector getProcess(int pLevel, Long pClusterID)
 		{
 			if(mElections.containsKey(pLevel)) {
 				if(mElections.containsKey(pLevel) && mElections.get(pLevel).containsKey(pClusterID)) {
@@ -410,19 +410,19 @@ public class ElectionProcess extends Thread
 		 * @param pLevel
 		 * @return
 		 */
-		public Collection<ElectionProcess> getProcesses(int pLevel)
+		public Collection<Elector> getProcesses(int pLevel)
 		{
 			try {
 				return mElections.get(pLevel).values();
 			} catch (NullPointerException tExc) {
-				return new LinkedList<ElectionProcess>();
+				return new LinkedList<Elector>();
 			}
 		}
 		
-		public ElectionProcess addElection(int pLevel, Long pClusterID, ElectionProcess pElection)
+		public Elector addElection(int pLevel, Long pClusterID, Elector pElection)
 		{
 			if(!mElections.containsKey(pLevel)) {
-				mElections.put(pLevel, new HashMap<Long, ElectionProcess>());
+				mElections.put(pLevel, new HashMap<Long, Elector>());
 				mElections.get(pLevel).put(pClusterID, pElection);
 				return pElection;
 			} else {
@@ -445,7 +445,7 @@ public class ElectionProcess extends Thread
 					}
 					Logging.log(this, "No more elections available, preparing next cluster");
 					if(mElections.containsKey(pLevel + 1)) {
-						for(ElectionProcess tProcess : mElections.get(Integer.valueOf(pLevel + 1)).values()) {
+						for(Elector tProcess : mElections.get(Integer.valueOf(pLevel + 1)).values()) {
 							tProcess.start();
 						}
 					}
@@ -455,9 +455,9 @@ public class ElectionProcess extends Thread
 			}
 		}
 		
-		public LinkedList<ElectionProcess> getAllElections()
+		public LinkedList<Elector> getAllElections()
 		{
-			LinkedList<ElectionProcess> tElections = new LinkedList<ElectionProcess>();
+			LinkedList<Elector> tElections = new LinkedList<Elector>();
 			for(Integer tLevel: mElections.keySet()) {
 				if(mElections.get(tLevel) != null) {
 					for(Long tID : mElections.get(tLevel).keySet()) {
@@ -474,8 +474,8 @@ public class ElectionProcess extends Thread
 		{
 			if(HRMConfig.Hierarchy.BUILD_AUTOMATICALLY) {
 				boolean tWontBeginDistribution = false;
-				ElectionProcess tWaitingFor = null;
-				for(ElectionProcess tProcess : mElections.get(pLevel).values()) {
+				Elector tWaitingFor = null;
+				for(Elector tProcess : mElections.get(pLevel).values()) {
 					Logging.log(tProcess + " is " + (tProcess.aboutToContinue() ? " about to " : "not about to ") + "initialize its Cluster Manager");
 					if(!tProcess.aboutToContinue()) {
 						tWontBeginDistribution = true;
@@ -487,7 +487,7 @@ public class ElectionProcess extends Thread
 				} else {
 					if(mNotification == null) {
 						mNotification = new ElectionEventNotification(mElections.get(pLevel).values());
-						for(ElectionProcess tProcess : mElections.get(pLevel).values()) {
+						for(Elector tProcess : mElections.get(pLevel).values()) {
 							tProcess.mElectingCluster.getHRMController().getPhysicalNode().getAS().getSimulation().getTimeBase().scheduleIn(5, mNotification);
 							break;
 						}
@@ -502,9 +502,9 @@ public class ElectionProcess extends Thread
 		
 		private class ElectionEventNotification implements IEvent
 		{
-			private Collection<ElectionProcess> mElectionsToNotify = null;
+			private Collection<Elector> mElectionsToNotify = null;
 			
-			public ElectionEventNotification(Collection<ElectionProcess> pElections)
+			public ElectionEventNotification(Collection<Elector> pElections)
 			{
 				mElectionsToNotify = pElections;
 			}
@@ -512,7 +512,7 @@ public class ElectionProcess extends Thread
 			@Override
 			public void fire()
 			{
-				for(ElectionProcess tProcess : mElectionsToNotify) {
+				for(Elector tProcess : mElectionsToNotify) {
 					synchronized(tProcess) {
 						tProcess.notifyAll();
 					}
