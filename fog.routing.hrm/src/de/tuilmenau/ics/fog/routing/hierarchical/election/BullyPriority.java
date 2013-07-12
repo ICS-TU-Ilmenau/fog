@@ -32,6 +32,11 @@ public class BullyPriority
 	private static String NODE_PARAMETER_PREFIX = "BULLY_PRIORITY_LEVEL_";
 	
 	/**
+	 * This value represents an undefined priority.
+	 */
+	public static long UNDEFINED_PRIORITY = -1;
+	
+	/**
 	 * This value is used when the connectivity changes.
 	 */
 	private int OFFSET_FOR_CONNECTIVITY = 100;
@@ -100,6 +105,14 @@ public class BullyPriority
 	}
 
 	/**
+	 * Constructor
+	 */
+	public BullyPriority()
+	{
+		mPriority = UNDEFINED_PRIORITY;
+	}
+	
+	/**
 	 * Returns the Bully priority value.
 	 * 
 	 * @return Bully priority
@@ -109,6 +122,16 @@ public class BullyPriority
 		return mPriority;
 	}
 
+	/**
+	 * Check if the priority is still undefined.
+	 * 
+	 * @return true if this Bully priority is undefined.
+	 */
+	public boolean isUndefined()
+	{
+		return (mPriority == UNDEFINED_PRIORITY);
+	}
+	
 	/**
 	 * 
 	 * Compares and sets the Bully priority of another candidate

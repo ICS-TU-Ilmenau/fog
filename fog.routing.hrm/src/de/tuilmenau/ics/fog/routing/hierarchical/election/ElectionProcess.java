@@ -41,8 +41,6 @@ import de.tuilmenau.ics.fog.ui.Logging;
 
 public class ElectionProcess extends Thread
 {
-	private static final int FIRST_ELECTING_CLUSTER = 0; //TV
-
 	private Boolean mPleaseInterrupt = false;
 	private long TIMEOUT_FOR_PEERS = 1000;
 	private long WAIT_BEFORE_ADDRESS_DISTRIBUTION = 5000;
@@ -83,8 +81,11 @@ public class ElectionProcess extends Thread
 
 	private void sendElections()
 	{
+		Logging.log("SENDELECTIONS()-START, electing cluster is " + mElectingCluster);
+		Logging.log("SENDELECTIONS()-CEPs: " + mElectingCluster.getParticipatingCEPs().size());
+
 		for(CoordinatorCEPDemultiplexed tCEP : mElectingCluster.getParticipatingCEPs()) {
-			if(tCEP.getPeerPriority() == 0 && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
+			if(tCEP.getPeerPriority() == BullyPriority.UNDEFINED_PRIORITY && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
 				Node tNode = mElectingCluster.getHRMController().getPhysicalNode();
 				
 				Logging.log("Node " + tNode + ": Sending elections from " + mElectingCluster);
@@ -92,6 +93,7 @@ public class ElectionProcess extends Thread
 				tCEP.sendPacket(new BullyElect(tNode.getCentralFN().getName(), new BullyPriority(mElectingCluster.getBullyPriority()), mElectingCluster.getHierarchyLevel()));
 			}
 		}
+		Logging.log("SENDELECTIONS()-END");
 	}
 	
 	public synchronized boolean isStarted()
@@ -107,7 +109,7 @@ public class ElectionProcess extends Thread
 		int tToken = tRandom.nextInt();
 		
 		pCluster.setToken(tToken);
-		pCluster.getHRMController().getLogger().log(pCluster, "generated token " + tToken);
+		pCluster.getHRMController().getLogger().log(pCluster, "Initiating coordinator functions...");
 
 		if(pCluster.getHRMController().getIdentity() == null) {
 			String tName = tNode.getName();
@@ -253,10 +255,12 @@ public class ElectionProcess extends Thread
 		try {
 			mInProgress = true;
 			long tTimeWaitUntil=0;
+			
 			sendElections();
+			
 			tTimeWaitUntil=System.currentTimeMillis()+TIMEOUT_FOR_PEERS;
 			checkWait(System.currentTimeMillis(), tTimeWaitUntil);
-			Logging.log(this, "Sent elections");
+			Logging.log(this, "Sending elections..");
 			if(!mPleaseInterrupt) {
 				checkClustersForHighestPriority(false);
 				/*

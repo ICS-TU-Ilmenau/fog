@@ -59,7 +59,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	private static final long serialVersionUID = -8290946480171751216L;
 	private ICluster mRemoteCluster;
 	private ICluster mPeerCluster;
-	private long mPeerPriority = -1;
+	private long mPeerPriority = BullyPriority.UNDEFINED_PRIORITY;
 	private boolean mReceivedBorderNodeAnnouncement = false;
 	private boolean mPeerIsCoordinatorForNeighborZone = false;
 	private boolean mIsEdgeRouter = false;
