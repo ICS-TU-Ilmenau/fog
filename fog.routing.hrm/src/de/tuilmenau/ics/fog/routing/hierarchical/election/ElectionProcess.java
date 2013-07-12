@@ -85,7 +85,7 @@ public class ElectionProcess extends Thread
 		Logging.log("SENDELECTIONS()-CEPs: " + mElectingCluster.getParticipatingCEPs().size());
 
 		for(CoordinatorCEPDemultiplexed tCEP : mElectingCluster.getParticipatingCEPs()) {
-			if(tCEP.getPeerPriority() == BullyPriority.UNDEFINED_PRIORITY && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
+			if(tCEP.getPeerPriority().isUndefined() && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
 				Node tNode = mElectingCluster.getHRMController().getPhysicalNode();
 				
 				Logging.log("Node " + tNode + ": Sending elections from " + mElectingCluster);
@@ -216,7 +216,7 @@ public class ElectionProcess extends Thread
 		long tPriority = 0;
 		String tOutput = new String();
 		for(CoordinatorCEPDemultiplexed tCEP : mElectingCluster.getParticipatingCEPs()) {
-			tPriority = tCEP.getPeerPriority(); 
+			tPriority = tCEP.getPeerPriority().getValue(); 
 			tOutput +=  (tOutput.equals("") ? "" : ", ") +  tPriority;
 			if(tPriority >= mElectingCluster.getHighestPriority()) {
 				mElectingCluster.setHighestPriority(tPriority);

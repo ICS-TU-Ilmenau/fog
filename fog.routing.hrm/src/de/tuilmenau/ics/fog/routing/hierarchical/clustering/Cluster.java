@@ -158,7 +158,7 @@ public class Cluster implements ICluster, IElementDecorator
 				notifyAll();
 			}
 			getHRMController().getPhysicalNode().setDecorationValue("(" + pCoordSignature + ")");
-			setCoordinatorPriority(pCoordinatorChannel.getPeerPriority());
+			setCoordinatorPriority(pCoordinatorChannel.getPeerPriority().getValue());
 			try {
 				getHRMController().getHRS().registerNode(pCoordName, pAddress);
 			} catch (RemoteException tExc) {

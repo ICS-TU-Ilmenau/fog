@@ -32,6 +32,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -70,7 +71,7 @@ public class CoordinatorCEPMultiplexer
 			
 			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel()+1)) {
 				tCEPDemultiplexed = new CoordinatorCEPDemultiplexed(getLogger(), mHRMController, tManager);
-				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getBullyPriority());
+				tCEPDemultiplexed.setPeerPriority(new BullyPriority(pTargetCluster.getBullyPriority()));
 				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
 				tCEP.getMultiplexer().addDemultiplex(tCEP, tCEPDemultiplexed);
 				synchronized(mClusterToCEPMapping) {

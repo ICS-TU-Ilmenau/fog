@@ -38,6 +38,7 @@ import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.*;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -285,7 +286,7 @@ public class HRMController extends Application implements IServerCallback
 				mLogger.err(this, "Unable to set remote cluster");
 				tCEP.setRemoteCluster(ClusterDummy.compare(tParticipate.getSourceClusterID(), tParticipate.getSourceToken(), tParticipate.getLevel()));
 			}
-			tCEP.setPeerPriority(tParticipate.getSenderPriority());
+			tCEP.setPeerPriority(new BullyPriority(tParticipate.getSenderPriority()));
 			mLogger.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);
 		}
 		

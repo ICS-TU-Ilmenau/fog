@@ -59,7 +59,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	private static final long serialVersionUID = -8290946480171751216L;
 	private ICluster mRemoteCluster;
 	private ICluster mPeerCluster;
-	private long mPeerPriority = BullyPriority.UNDEFINED_PRIORITY;
+	private BullyPriority mPeerPriority = null;
 	private boolean mReceivedBorderNodeAnnouncement = false;
 	private boolean mPeerIsCoordinatorForNeighborZone = false;
 	private boolean mIsEdgeRouter = false;
@@ -83,6 +83,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 		mPeerCluster = pPeerCluster;
 		mLogger = pLogger;
 		mLogger.log(this, "Created");
+		mPeerPriority = new BullyPriority();
 		getHRMController().getLogger().log(this, "Created for " + mPeerCluster);
 	}
 	
@@ -109,7 +110,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 
 			if ((getCluster().getCoordinatorCEP() != null) && (tPacketBullyElect.getSenderPriority().getValue() < getCluster().getHighestPriority())) {
 				
-				mPeerPriority = tPacketBullyElect.getSenderPriority().getValue();
+				mPeerPriority = tPacketBullyElect.getSenderPriority();
 				
 				if (getCluster().getHRMController().equals(tNode.getCentralFN().getName())) {
 					// create ANNOUNCE packet
@@ -140,7 +141,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 			} else {
 				// store peer's Bully priority
 				//TODO: peer prio direkt mal abspeichern und auf größte checken!
-				mPeerPriority = tPacketBullyElect.getSenderPriority().getValue();
+				mPeerPriority = tPacketBullyElect.getSenderPriority();
 				
 				// create REPLY packet
 				BullyReply tReplyPacket = new BullyReply(tNode.getCentralFN().getName(), new BullyPriority(getCluster().getBullyPriority()));
@@ -165,7 +166,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 
 			// store peer's Bully priority
 			//TODO: peer prio direkt mal abspeichern und auf größte checken!
-			mPeerPriority = tReplyPacket.getSenderPriority().getValue();
+			mPeerPriority = tReplyPacket.getSenderPriority();
 		}
 		
 		/**
@@ -193,7 +194,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
 
 			// store peer's Bully priority
-			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority().getValue();
+			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority();
 		}
 	}
 	
@@ -633,7 +634,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 		return mKnowsCoordinator;
 	}
 	
-	public void setPeerPriority(long pPeerPriority)
+	public void setPeerPriority(BullyPriority pPeerPriority)
 	{
 		mPeerPriority = pPeerPriority;
 	}
@@ -662,7 +663,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 		}
 	}
 	
-	public long getPeerPriority()
+	public BullyPriority getPeerPriority()
 	{
 		return mPeerPriority;
 	}

@@ -873,7 +873,7 @@ public class Coordinator implements ICluster, Observer
 	
 	@Override
 	public void setCoordinatorPriority(long pCoordinatorPriority) {
-		if(mCoordinatorCEP != null && mCoordinatorCEP.getPeerPriority() != pCoordinatorPriority) {
+		if(mCoordinatorCEP != null && mCoordinatorCEP.getPeerPriority().getValue() != pCoordinatorPriority) {
 			getLogger().info(this, "Tried to set a priority that does not correspond with the priority of the concurrent coordinator, wrong connection endpoint?");
 		}
 	}
@@ -881,7 +881,7 @@ public class Coordinator implements ICluster, Observer
 	@Override
 	public long getNodePriority() {
 		if(mCoordinatorCEP != null) {
-			return mCoordinatorCEP.getPeerPriority();
+			return mCoordinatorCEP.getPeerPriority().getValue();
 		}
 		return 0;
 	}
@@ -1096,7 +1096,7 @@ public class Coordinator implements ICluster, Observer
 							 */
 							
 							NeighborClusterAnnounce tOldCovered = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), getCoordinatorSignature(), getCoordinatorsAddress(),getToken(), getCoordinatorsAddress().getAddress().longValue());
-							tOldCovered.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority());
+							tOldCovered.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority().getValue());
 							tOldCovered.setNegotiatorIdentification(tDummy);
 							
 							DiscoveryEntry tOldCoveredEntry = new DiscoveryEntry(
@@ -1186,7 +1186,7 @@ public class Coordinator implements ICluster, Observer
 			
 			ClusterDummy tDummy = ClusterDummy.compare(getManagedCluster().getClusterID(), getManagedCluster().getToken(), getManagedCluster().getHierarchyLevel());
 			NeighborClusterAnnounce tUncoveredAnnounce = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), getCoordinatorSignature(), getCoordinatorsAddress(), getToken(), getCoordinatorsAddress().getAddress().longValue());
-			tUncoveredAnnounce.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority());
+			tUncoveredAnnounce.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority().getValue());
 			/*
 			 * the routing service address of the announcer is set once the neighbor zone announce arrives at the rejected coordinator because this
 			 * entity is already covered
@@ -1347,7 +1347,7 @@ public class Coordinator implements ICluster, Observer
 						if(((ICluster)tNode).getCoordinatorsAddress().equals(tCEP.getPeerName()) && !tCEP.isPartOfMyCluster()) {
 							getLogger().info(this, "Informing " + tCEP + " about existence of neighbor zone ");
 							NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, getHierarchyLevel(), pCoordSignature, pAddress, getToken(), pAddress.getAddress().longValue());
-							tAnnounce.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority());
+							tAnnounce.setCoordinatorsPriority(getCoordinatorCEP().getPeerPriority().getValue());
 							LinkedList<RoutingServiceLinkVector> tVectorList = tCEP.getPath(pAddress);
 							tAnnounce.setRoutingVectors(tVectorList);
 							tAnnounce.setNegotiatorIdentification(ClusterDummy.compare(getManagedCluster().getClusterID(), getManagedCluster().getToken(), getManagedCluster().getHierarchyLevel()));

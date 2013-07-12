@@ -665,7 +665,7 @@ public class HRMViewer extends EditorPart
 			/**
 			 * Column 4:  
 			 */
-			tRow.setText(4, Float.toString(tCEP.getPeerPriority()));
+			tRow.setText(4, Float.toString(tCEP.getPeerPriority().getValue()));
 			
 			/**
 			 * Column 5:  
