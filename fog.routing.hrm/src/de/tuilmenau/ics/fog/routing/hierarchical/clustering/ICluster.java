@@ -18,7 +18,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -57,14 +57,14 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * @return Provide list of connection end points that are connected to this cluster - the other connection end point
 	 * governs the cluster it is associated to
 	 */
-	public LinkedList<CoordinatorCEPDemultiplexed> getParticipatingCEPs();
+	public LinkedList<CoordinatorCEPChannel> getParticipatingCEPs();
 	
 	/**
 	 * 
 	 * @param pParticipatingCEP This is one connection end point that is used to communicate with the remote
 	 * connection end points that govern the clusters they are associated to.
 	 */
-	public void addParticipatingCEP(CoordinatorCEPDemultiplexed pParticipatingCEP);
+	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP);
 	
 	public String toString();
 	
@@ -149,7 +149,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * @param pAnnounce This is the announcement from which relevant information has to be extracted.
 	 * @param pCEP This is the connection from which necessary information will be extracted as well.
 	 */
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP);
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP);
 	
 	/**
 	 * This method has to be called by an connection end point once it receives the announcement about the existence
@@ -158,13 +158,13 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * @param pAnnounce This is the message that contains important information about the neighbor zone.
 	 * @param pCEP This is the connection end point that is used to transfer data to the object that CEP governs
 	 */
-	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP);
+	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP);
 	
 	/**
 	 * 
 	 * @return Return null in case the node is coordinator itself, otherwise the connection end point that leads to the coordinator is returned. 
 	 */
-	public CoordinatorCEPDemultiplexed getCoordinatorCEP();
+	public CoordinatorCEPChannel getCoordinatorCEP();
 	
 	/**
 	 * Once an announcement was received, the coordinator is set via this method. However this function does not have to be necessarily called
@@ -176,7 +176,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * @param pAddress The address of the coordinator can be set here. It can be either an OSI Layer 2 address or a HRMID. However using the last type as address
 	 * was not implemented. 
 	 */
-	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress);
+	public void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress);
 	
 	/**
 	 * 
@@ -204,7 +204,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * @param pAlreadyInformed Please provide a list that saves entities that were already informed - this is used to have a workaround
 	 * for the ConcurrentModificationException.
 	 */
-	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPDemultiplexed> pAlreadyInformed);
+	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed);
 	
 	/**
 	 * 
@@ -234,7 +234,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @return Return the list of laggards that were not covered by a coordinator either. 
 	 */
-	public LinkedList<CoordinatorCEPDemultiplexed> getLaggards();
+	public LinkedList<CoordinatorCEPChannel> getLaggards();
 	
 	
 	/**
@@ -244,7 +244,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @param pCEP Add one connection end point as laggard here.
 	 */
-	public void addLaggard(CoordinatorCEPDemultiplexed pCEP);
+	public void addLaggard(CoordinatorCEPChannel pCEP);
 	
 	/**
 	 * HRM was implemented as distributed system. If a cluster is notified about the existence of a nother cluster it remembers which
@@ -253,7 +253,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @return Return the connection end point that announced this cluster via NeighborZoneAnnounce to another connection end point. 
 	 */
-	public CoordinatorCEPDemultiplexed getNegotiatorCEP();
+	public CoordinatorCEPChannel getNegotiatorCEP();
 	
 	/**
 	 * HRM was implemented as distributed system. If a cluster is notified about the existence of a nother cluster it remembers which
@@ -262,7 +262,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @param pCEP Set the connection end point that announced this cluster via NeighborZoneAnnounce to another connection end point. 
 	 */
-	public void setNegotiatorCEP(CoordinatorCEPDemultiplexed pCEP);
+	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP);
 	
 	/**
 	 * TODO

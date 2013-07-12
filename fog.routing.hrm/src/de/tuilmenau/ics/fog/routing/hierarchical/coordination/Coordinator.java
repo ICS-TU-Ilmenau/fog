@@ -70,9 +70,9 @@ public class Coordinator implements ICluster, Observer
 	private int mLevel;
 	private int mLastUsedAddress;
 	private Cluster mManagedCluster;
-	private HashMap<CoordinatorCEPDemultiplexed, TopologyData> mAddressMapping = null;
-	private LinkedList<CoordinatorCEPDemultiplexed> mCEPs = null;
-	private CoordinatorCEPDemultiplexed mCoordinatorCEP = null;
+	private HashMap<CoordinatorCEPChannel, TopologyData> mAddressMapping = null;
+	private LinkedList<CoordinatorCEPChannel> mCEPs = null;
+	private CoordinatorCEPChannel mCoordinatorCEP = null;
 	private HRMSignature mCoordinatorSignature = null;
 	private Name mCoordinatorName = null;
 	private HRMName mCoordinatorAddress = null;
@@ -91,7 +91,7 @@ public class Coordinator implements ICluster, Observer
 	private HashMap<HRMID, FIBEntry> mIDToFIBMapping = new HashMap<HRMID, FIBEntry>();
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnouncements;
 	private LinkedList<HRMSignature> mSignatures = new LinkedList<HRMSignature>();
-	private HashMap<Long, CoordinatorCEPDemultiplexed> mRouteRequestDispatcher;
+	private HashMap<Long, CoordinatorCEPChannel> mRouteRequestDispatcher;
 	private HashMap<HRMID, LinkedList<RoutingServiceLinkVector>> mAddressToPathMapping;
 	
 	/**
@@ -109,9 +109,9 @@ public class Coordinator implements ICluster, Observer
 		mLevel = pLevel;
 		mClusterID = pCluster.getClusterID();
 		mLastUsedAddress = 0;
-		mAddressMapping = new HashMap<CoordinatorCEPDemultiplexed, TopologyData>();
+		mAddressMapping = new HashMap<CoordinatorCEPChannel, TopologyData>();
 		mManagedCluster = pCluster;
-		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
+		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		mManagedCluster.getHRMController().getRoutableClusterGraph().addObserver(this);
 		mBullyPriority = new BullyPriority(this);
 		getHRMController().registerCoordinator(this, mLevel);
@@ -256,7 +256,7 @@ public class Coordinator implements ICluster, Observer
 		 * level one : map addresses to connection end points, later retrieveAddress() is used in order to distribute the next hop entry
 		 */
 		getLogger().log(this, "available clients for address distribution: " + mManagedCluster.getParticipatingCEPs());
-		for(CoordinatorCEPDemultiplexed tReceivingCEP : mManagedCluster.getParticipatingCEPs()) {
+		for(CoordinatorCEPChannel tReceivingCEP : mManagedCluster.getParticipatingCEPs()) {
 			HRMID tID = null;
 			TopologyData tEnvelope = new TopologyData();
 			try {
@@ -304,12 +304,12 @@ public class Coordinator implements ICluster, Observer
 		
 		try {
 		
-			for(CoordinatorCEPDemultiplexed tSourceCEP : mAddressMapping.keySet()) {
+			for(CoordinatorCEPChannel tSourceCEP : mAddressMapping.keySet()) {
 				
 				/*
 				 * inner loop: these are the target we mapped an address to, earlier
 				 */
-				for(CoordinatorCEPDemultiplexed tDestinationCEP: mAddressMapping.keySet()) {
+				for(CoordinatorCEPChannel tDestinationCEP: mAddressMapping.keySet()) {
 					if(tSourceCEP == tDestinationCEP) {
 						continue;
 					}
@@ -478,7 +478,7 @@ public class Coordinator implements ICluster, Observer
 							ICluster tHRMIDMapping = null;
 							if(tRelevant instanceof NeighborCluster) {
 								NeighborCluster tNewRelevant = (NeighborCluster)tRelevant;
-								CoordinatorCEPDemultiplexed tNewRelevantCEP = tNewRelevant.getAnnouncedCEP(tSourceCEP.getRemoteCluster());
+								CoordinatorCEPChannel tNewRelevantCEP = tNewRelevant.getAnnouncedCEP(tSourceCEP.getRemoteCluster());
 								tHRMIDMapping = tNewRelevantCEP.getNegotiator(tRelevant);
 								
 							} else {
@@ -711,7 +711,7 @@ public class Coordinator implements ICluster, Observer
 								if(tSourceCEP.getPeerName().equals(tAddress) && tPath.size() > 1) {
 									tDestination = getHRMController().getHRS().getCoordinatorRoutingMap().getDest(tPath.get(1));
 								} else if(tPath != null && !tPath.isEmpty()) {
-									for(CoordinatorCEPDemultiplexed tCEP : mManagedCluster.getParticipatingCEPs()) {
+									for(CoordinatorCEPChannel tCEP : mManagedCluster.getParticipatingCEPs()) {
 										if(tCEP.getPeerName().equals(tAddress)) {
 											tDestination = tCEP.getPeerName();
 										}
@@ -782,7 +782,7 @@ public class Coordinator implements ICluster, Observer
 								}
 							}
 						}
-						for(CoordinatorCEPDemultiplexed tCEP : mManagedCluster.getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCEP : mManagedCluster.getParticipatingCEPs()) {
 							if(tCEP.getPeerName().equals(tPolygon.getFirst().getDestination())) {
 								tNextHop = tPolygon.getFirst().getDestination();
 								tPathToTarget = tPolygon;
@@ -856,7 +856,7 @@ public class Coordinator implements ICluster, Observer
 					 * was it really this cluster? -> reevaluate
 					 */
 					getLogger().log(this, " L" + mLevel + "-adding connection to " + tName + " for cluster " + tNode);
-					CoordinatorCEPDemultiplexed tCEP = getMultiplexer().addConnection(tCluster, mManagedCluster);
+					CoordinatorCEPChannel tCEP = getMultiplexer().addConnection(tCluster, mManagedCluster);
 					//new CoordinatorCEP(mManagedCluster.getCoordinator().getLogger(), mManagedCluster.getCoordinator(), this, false);
 					mConnectedEntities.add(tName);
 				}
@@ -897,7 +897,7 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPDemultiplexed> getParticipatingCEPs() {
+	public LinkedList<CoordinatorCEPChannel> getParticipatingCEPs() {
 		return mCEPs;
 	}
 
@@ -906,18 +906,18 @@ public class Coordinator implements ICluster, Observer
 		return mHigherHRMIDs;
 	}
 	
-	public HashMap<CoordinatorCEPDemultiplexed, TopologyData> getAddressMapping()
+	public HashMap<CoordinatorCEPChannel, TopologyData> getAddressMapping()
 	{
 		return mAddressMapping;
 	}
 	
-	public LinkedList<CoordinatorCEPDemultiplexed> getLowerCEPs()
+	public LinkedList<CoordinatorCEPChannel> getLowerCEPs()
 	{
 		return mManagedCluster.getParticipatingCEPs();
 	}
 	
 	@Override
-	public void addParticipatingCEP(CoordinatorCEPDemultiplexed pParticipatingCEP) {
+	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP) {
 		mCEPs.add(pParticipatingCEP);
 	}
 
@@ -1053,7 +1053,7 @@ public class Coordinator implements ICluster, Observer
 		return mHighestPriority;
 	}
 	
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		/*
 		 * check whether old priority was lower than new priority
@@ -1149,7 +1149,7 @@ public class Coordinator implements ICluster, Observer
 							getLogger().warn(this, "Rejecting " + (getCoordinatorCEP().getPeerName()).getDescr() + " in favor of " + pAnnounce.getSenderName());
 							tNewCovered.setRejection();
 							getCoordinatorCEP().sendPacket(tNewCovered);
-							for(CoordinatorCEPDemultiplexed tCEP : getParticipatingCEPs()) {
+							for(CoordinatorCEPChannel tCEP : getParticipatingCEPs()) {
 								if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerName())) {
 									tCEP.setAsParticipantOfMyCluster(true);
 								} else {
@@ -1167,7 +1167,7 @@ public class Coordinator implements ICluster, Observer
 				}
 				
 			} else {
-				for(CoordinatorCEPDemultiplexed tCEP : getParticipatingCEPs()) {
+				for(CoordinatorCEPChannel tCEP : getParticipatingCEPs()) {
 					if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerName())) {
 						tCEP.setAsParticipantOfMyCluster(true);
 					} else {
@@ -1246,7 +1246,7 @@ public class Coordinator implements ICluster, Observer
 		}
 	}
 	
-	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -1286,7 +1286,7 @@ public class Coordinator implements ICluster, Observer
 	}
 	
 	@Override
-	public void handleAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPChannel pCEP)
 	{		
 		if(pAnnounce.getCoveringClusterEntry() != null) {
 //			Cluster tForwardingCluster = null;
@@ -1323,12 +1323,12 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public CoordinatorCEPDemultiplexed getCoordinatorCEP() {
+	public CoordinatorCEPChannel getCoordinatorCEP() {
 		return mCoordinatorCEP;
 	}
 
 	@Override
-	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress) {
+	public void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress) {
 		Logging.log(this, "announcement number " + (++mReceivedAnnounces) + ": Setting Coordinator " + pCoord + " with name " + pCoordName + " with routing address " + pAddress);
 		Logging.log(this, "previous coordinator was " + mCoordinatorCEP + " with name " + mCoordinatorName);
 		mCoordinatorCEP = pCoord;
@@ -1343,7 +1343,7 @@ public class Coordinator implements ICluster, Observer
 		if(pCoordSignature != null) {
 			for(IRoutableClusterGraphNode tNode: getHRMController().getRoutableClusterGraph().getNeighbors(getManagedCluster())) {
 				if(tNode instanceof ICluster && !((ICluster) tNode).isInterASCluster()) {
-					for(CoordinatorCEPDemultiplexed tCEP : mCEPs) {
+					for(CoordinatorCEPChannel tCEP : mCEPs) {
 						if(((ICluster)tNode).getCoordinatorsAddress().equals(tCEP.getPeerName()) && !tCEP.isPartOfMyCluster()) {
 							getLogger().info(this, "Informing " + tCEP + " about existence of neighbor zone ");
 							NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, getHierarchyLevel(), pCoordSignature, pAddress, getToken(), pAddress.getAddress().longValue());
@@ -1394,20 +1394,20 @@ public class Coordinator implements ICluster, Observer
 		mHighestPriority = pHighestPriority;
 	}
 
-	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPDemultiplexed> pAlreadyInformed)
+	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed)
 	{
 		if(pData instanceof BullyPriorityUpdate)
 		{
 			Logging.log(this, "Will send priority update to" + mCEPs);
 		}
-		LinkedList<CoordinatorCEPDemultiplexed> tInformedCEPs = null;
+		LinkedList<CoordinatorCEPChannel> tInformedCEPs = null;
 		if(pAlreadyInformed != null) {
 			tInformedCEPs= pAlreadyInformed;
 		} else {
-			tInformedCEPs = new LinkedList<CoordinatorCEPDemultiplexed>(); 
+			tInformedCEPs = new LinkedList<CoordinatorCEPChannel>(); 
 		}
 		try {
-			for(CoordinatorCEPDemultiplexed tCEP : mCEPs)
+			for(CoordinatorCEPChannel tCEP : mCEPs)
 			{
 				if(!tInformedCEPs.contains(tCEP))
 				{
@@ -1461,25 +1461,25 @@ public class Coordinator implements ICluster, Observer
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPDemultiplexed> getLaggards()
+	public LinkedList<CoordinatorCEPChannel> getLaggards()
 	{
 		return null;
 	}
 
 	@Override
-	public void addLaggard(CoordinatorCEPDemultiplexed pCEP) 
+	public void addLaggard(CoordinatorCEPChannel pCEP) 
 	{
 		
 	}
 
 	@Override
-	public CoordinatorCEPDemultiplexed getNegotiatorCEP()
+	public CoordinatorCEPChannel getNegotiatorCEP()
 	{
 		return null;
 	}
 
 	@Override
-	public void setNegotiatorCEP(CoordinatorCEPDemultiplexed pCEP)
+	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
 	{
 		
 	}
@@ -1555,7 +1555,7 @@ public class Coordinator implements ICluster, Observer
 		final Coordinator tManager = this;
 		
 		if(pRequest.getResult() != null && pRequest.getResult().equals(ResultType.UNFEASIBLE)) {
-			CoordinatorCEPDemultiplexed tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
+			CoordinatorCEPChannel tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
 			tParameterRouteRequest.setAnswer();
 			tCEP.sendPacket(tParameterRouteRequest);
 			return;
@@ -1600,7 +1600,7 @@ public class Coordinator implements ICluster, Observer
 					
 					tParameterRouteRequest.setAnswer();
 					tParameterRouteRequest.setResult(tRequest.getResult());
-					CoordinatorCEPDemultiplexed tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
+					CoordinatorCEPChannel tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
 					tCEP.sendPacket(tParameterRouteRequest);
 				} else {
 					/*
@@ -1626,7 +1626,7 @@ public class Coordinator implements ICluster, Observer
 							}
 						} else {
 							tParameterRouteRequest.setResult(ResultType.UNFEASIBLE);
-							CoordinatorCEPDemultiplexed tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
+							CoordinatorCEPChannel tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
 							tCEP.sendPacket(tParameterRouteRequest);
 							return;
 						}
@@ -1651,7 +1651,7 @@ public class Coordinator implements ICluster, Observer
 								}
 							} else if(tPath.isEmpty() && !tLastCluster.getCoordinatorsAddress().equals(tCluster.getCoordinatorsAddress()) || !tPath.isEmpty() && tPath.size() > 1 && !tLastCluster.getCoordinatorsAddress().equals(tCluster.getCoordinatorsAddress())) {
 								Logging.err(tManager, "Unable to calculate a route segment path from " + tLastCluster.getCoordinatorsAddress() + " to " + tCluster.getCoordinatorsAddress());
-								for(CoordinatorCEPDemultiplexed tCEP : getManagedCluster().getParticipatingCEPs()) {
+								for(CoordinatorCEPChannel tCEP : getManagedCluster().getParticipatingCEPs()) {
 									if(tCEP.getRemoteCluster().equals(tLastCluster)) {
 										getLogger().log(tManager, "About to ask route from " + tLastCluster + " to " + tCluster);
 										RouteRequest tRequest = new RouteRequest(tLastCluster.getCoordinatorsAddress(), tCluster.getCoordinatorsAddress(), null, 0);
@@ -1680,7 +1680,7 @@ public class Coordinator implements ICluster, Observer
 						}
 						Logging.log(tManager, "Concurrent route request is " + tParameterRouteRequest);
 						if(((HRMID)tParameterRouteRequest.getTarget()).getLevelAddress(mLevel -1 ) != BigInteger.valueOf(0)) {
-							CoordinatorCEPDemultiplexed tCEP = mManagedCluster.getCEPOfCluster((ICluster) getVirtualNodeFromHRMID(tLocalTarget));
+							CoordinatorCEPChannel tCEP = mManagedCluster.getCEPOfCluster((ICluster) getVirtualNodeFromHRMID(tLocalTarget));
 							RouteRequest tRequest = new RouteRequest(tCEP.getPeerName(), tParameterRouteRequest.getTarget(), tParameterRouteRequest.getDescription(), tParameterRouteRequest.getSession());
 							tCEP.sendPacket(tRequest);
 							synchronized(tRequest) {
@@ -1704,7 +1704,7 @@ public class Coordinator implements ICluster, Observer
 						for(Long tLong : mRouteRequestDispatcher.keySet()) {
 							Logging.log(tLong + " is pointing at " + mRouteRequestDispatcher.get(tLong));
 						}
-						CoordinatorCEPDemultiplexed tCEP = mRouteRequestDispatcher.get(tRequestSession);
+						CoordinatorCEPChannel tCEP = mRouteRequestDispatcher.get(tRequestSession);
 						tParameterRouteRequest.setAnswer();
 						tCEP.sendPacket(tParameterRouteRequest);
 					} catch (NullPointerException tExc) {
@@ -1726,10 +1726,10 @@ public class Coordinator implements ICluster, Observer
 		return getHRMController().getMultiplexerOnLevel(mLevel);
 	}
 
-	public void registerRouteRequest(Long pSession, CoordinatorCEPDemultiplexed pCEP)
+	public void registerRouteRequest(Long pSession, CoordinatorCEPChannel pCEP)
 	{
 		if( mRouteRequestDispatcher == null ) {
-			mRouteRequestDispatcher = new HashMap<Long, CoordinatorCEPDemultiplexed>();
+			mRouteRequestDispatcher = new HashMap<Long, CoordinatorCEPChannel>();
 		}
 		Logging.log(this, "registered " + pSession + " with " + pCEP);
 		mRouteRequestDispatcher.put(pSession, pCEP);

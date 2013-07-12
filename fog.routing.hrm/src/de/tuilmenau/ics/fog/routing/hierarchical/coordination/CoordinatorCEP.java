@@ -104,7 +104,7 @@ public class CoordinatorCEP extends Session
 			ClusterDummy tTargetCluster = tPackage.getDestinationCluster();
 			
 			try {
-				CoordinatorCEPDemultiplexed tCEP = mMux.getDemuxedCEP(this, (ClusterDummy)tPackage.getSourceCluster(), tTargetCluster);
+				CoordinatorCEPChannel tCEP = mMux.getDemuxedCEP(this, (ClusterDummy)tPackage.getSourceCluster(), tTargetCluster);
 				if(tCEP != null) {
 					getLogger().log(this, "Forwarding " + tPackage.getData() + " from " + tPackage.getSourceCluster() + " to " + tPackage.getDestinationCluster() + " with " + tCEP);
 					tCEP.receive(tPackage.getData());
@@ -121,7 +121,7 @@ public class CoordinatorCEP extends Session
 					boolean tWasDelivered = false;
 
 					String tAnalyzedClusters = new String("");
-					for(CoordinatorCEPDemultiplexed tCEP: mMux.getDemuxCEPs(this)) {
+					for(CoordinatorCEPChannel tCEP: mMux.getDemuxCEPs(this)) {
 						tAnalyzedClusters += tCEP.getCluster() + "\n";
 						if(tCEP.getCluster().getClusterID().equals(tNestedDiscovery.getTargetClusterID())) {
 							try {
@@ -143,7 +143,7 @@ public class CoordinatorCEP extends Session
 				for(NestedDiscovery tNestedDiscovery : ((ClusterDiscovery)pData).getDiscoveries()) {
 					boolean tWasDelivered = false;
 					String tAnalyzedClusters = new String("");
-					for(CoordinatorCEPDemultiplexed tCEP: mMux.getDemuxCEPs(this)) {
+					for(CoordinatorCEPChannel tCEP: mMux.getDemuxCEPs(this)) {
 						tAnalyzedClusters += tCEP.getCluster() + "\n";
 
 						if(tCEP.getCluster().getClusterID().equals(tNestedDiscovery.getOrigin())) {

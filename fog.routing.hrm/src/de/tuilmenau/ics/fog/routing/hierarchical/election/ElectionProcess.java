@@ -33,7 +33,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -84,7 +84,7 @@ public class ElectionProcess extends Thread
 		Logging.log("SENDELECTIONS()-START, electing cluster is " + mElectingCluster);
 		Logging.log("SENDELECTIONS()-CEPs: " + mElectingCluster.getParticipatingCEPs().size());
 
-		for(CoordinatorCEPDemultiplexed tCEP : mElectingCluster.getParticipatingCEPs()) {
+		for(CoordinatorCEPChannel tCEP : mElectingCluster.getParticipatingCEPs()) {
 			if(tCEP.getPeerPriority().isUndefined() && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
 				Node tNode = mElectingCluster.getHRMController().getPhysicalNode();
 				
@@ -119,7 +119,7 @@ public class ElectionProcess extends Thread
 		
 		try {
 			BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), new BullyPriority(pCluster.getBullyPriority()), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
-			for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
+			for(CoordinatorCEPChannel tCEP : pCluster.getParticipatingCEPs()) {
 				tAnnounce.addCoveredNode(tCEP.getPeerName());
 			}
 			if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
@@ -142,10 +142,10 @@ public class ElectionProcess extends Thread
 					 */
 					if(tToAnnounce instanceof NeighborCluster) {
 						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), new BullyPriority(pCluster.getBullyPriority()), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
-						for(CoordinatorCEPDemultiplexed tCEP: pCluster.getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCEP: pCluster.getParticipatingCEPs()) {
 							tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
 						}
-						for(CoordinatorCEPDemultiplexed tCEP : ((NeighborCluster)tToAnnounce).getAnnouncedCEPs()) {
+						for(CoordinatorCEPChannel tCEP : ((NeighborCluster)tToAnnounce).getAnnouncedCEPs()) {
 							tCEP.sendPacket(tBullyAnnounce);
 						}
 					}
@@ -215,7 +215,7 @@ public class ElectionProcess extends Thread
 	{
 		long tPriority = 0;
 		String tOutput = new String();
-		for(CoordinatorCEPDemultiplexed tCEP : mElectingCluster.getParticipatingCEPs()) {
+		for(CoordinatorCEPChannel tCEP : mElectingCluster.getParticipatingCEPs()) {
 			tPriority = tCEP.getPeerPriority().getValue(); 
 			tOutput +=  (tOutput.equals("") ? "" : ", ") +  tPriority;
 			if(tPriority >= mElectingCluster.getHighestPriority()) {
@@ -275,7 +275,7 @@ public class ElectionProcess extends Thread
 					while((mElectingCluster.getHRMController().getClusterWithCoordinatorOnLevel(mElectingCluster.getHierarchyLevel()) == null)) {
 						mElectingCluster.setHighestPriority(mElectingCluster.getBullyPriority());
 						Logging.log(mElectingCluster, " did not yet receive an announcement");
-						for(CoordinatorCEPDemultiplexed tCEP : mElectingCluster.getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCEP : mElectingCluster.getParticipatingCEPs()) {
 							RequestCoordinator tRequest = new RequestCoordinator(/* false */);
 							tCEP.sendPacket(tRequest);
 							synchronized(tRequest) {
@@ -294,12 +294,12 @@ public class ElectionProcess extends Thread
 						checkWait(System.currentTimeMillis(), tTimeWaitUntil);
 						*/
 						try {
-							LinkedList<CoordinatorCEPDemultiplexed> tCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
+							LinkedList<CoordinatorCEPChannel> tCEPs = new LinkedList<CoordinatorCEPChannel>();
 							tCEPs.addAll(mElectingCluster.getParticipatingCEPs());
 							if(mElectingCluster.getOldParticipatingCEPs() != null) {
 								tCEPs.addAll(mElectingCluster.getOldParticipatingCEPs());
 							}
-							for(CoordinatorCEPDemultiplexed tCEP: mElectingCluster.getParticipatingCEPs()) {
+							for(CoordinatorCEPChannel tCEP: mElectingCluster.getParticipatingCEPs()) {
 								if(! tCEP.knowsCoordinator()) {
 									if(!mElectingCluster.getHRMController().checkPathToTargetContainsCovered(mElectingCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster(), tCEPs)) {
 										mElectingCluster.getHRMController().getLogger().log(mElectingCluster, "adding laggard " + tCEP + " while clusters between are " + mElectingCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(mElectingCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster()));
@@ -313,7 +313,7 @@ public class ElectionProcess extends Thread
 							Logging.err(this, "Error when looking for uncovered clusters", tExc);
 						}
 						if(mElectingCluster.getLaggards() != null) {
-							((Cluster)mElectingCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPDemultiplexed>) mElectingCluster.getLaggards().clone());
+							((Cluster)mElectingCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPChannel>) mElectingCluster.getLaggards().clone());
 							mElectingCluster.getLaggards().clear();
 						}
 						if(mElectingCluster.getHRMController().getClusterWithCoordinatorOnLevel(mElectingCluster.getHierarchyLevel()) == null) {

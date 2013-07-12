@@ -42,9 +42,9 @@ import de.tuilmenau.ics.fog.util.Tuple;
 
 public class CoordinatorCEPMultiplexer
 {
-	private HashMap<CoordinatorCEPDemultiplexed, CoordinatorCEP> mMultiplexer;
-	private HashMap<CoordinatorCEP, LinkedList<CoordinatorCEPDemultiplexed>> mDemux;
-	private HashMap<Tuple<Long, Long>, CoordinatorCEPDemultiplexed> mClusterToCEPMapping;
+	private HashMap<CoordinatorCEPChannel, CoordinatorCEP> mMultiplexer;
+	private HashMap<CoordinatorCEP, LinkedList<CoordinatorCEPChannel>> mDemux;
+	private HashMap<Tuple<Long, Long>, CoordinatorCEPChannel> mClusterToCEPMapping;
 	private HRMController mHRMController = null;
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
 	private ICluster mCluster;
@@ -52,15 +52,15 @@ public class CoordinatorCEPMultiplexer
 	public CoordinatorCEPMultiplexer(HRMController pHRMController)
 	{
 		mHRMController = pHRMController;
-		mMultiplexer = new HashMap<CoordinatorCEPDemultiplexed, CoordinatorCEP>();
-		mDemux = new HashMap<CoordinatorCEP, LinkedList<CoordinatorCEPDemultiplexed>>();
-		mClusterToCEPMapping = new HashMap<Tuple<Long, Long>, CoordinatorCEPDemultiplexed>();
+		mMultiplexer = new HashMap<CoordinatorCEPChannel, CoordinatorCEP>();
+		mDemux = new HashMap<CoordinatorCEP, LinkedList<CoordinatorCEPChannel>>();
+		mClusterToCEPMapping = new HashMap<Tuple<Long, Long>, CoordinatorCEPChannel>();
 	}
 	
-	public CoordinatorCEPDemultiplexed addConnection(ICluster pTargetCluster, ICluster pSourceCluster)
+	public CoordinatorCEPChannel addConnection(ICluster pTargetCluster, ICluster pSourceCluster)
 	{
 		Name tName = pTargetCluster.getCoordinatorName();
-		CoordinatorCEPDemultiplexed tCEPDemultiplexed = null;
+		CoordinatorCEPChannel tCEPDemultiplexed = null;
 //		long tAddress=0;
 
 		if(!mConnectedEntities.contains(pTargetCluster.getCoordinatorName())) {
@@ -70,7 +70,7 @@ public class CoordinatorCEPMultiplexer
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getPhysicalNode().getCentralFN().getName());
 			
 			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel()+1)) {
-				tCEPDemultiplexed = new CoordinatorCEPDemultiplexed(getLogger(), mHRMController, tManager);
+				tCEPDemultiplexed = new CoordinatorCEPChannel(getLogger(), mHRMController, tManager);
 				tCEPDemultiplexed.setPeerPriority(new BullyPriority(pTargetCluster.getBullyPriority()));
 				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
 				tCEP.getMultiplexer().addDemultiplex(tCEP, tCEPDemultiplexed);
@@ -120,7 +120,7 @@ public class CoordinatorCEPMultiplexer
 					
 					for(ICluster tNeighbor: tManager.getManagedCluster().getNeighbors()) {
 						boolean tBreak = false;
-						for(CoordinatorCEPDemultiplexed tCheckForEdgeCluster : tNeighbor.getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCheckForEdgeCluster : tNeighbor.getParticipatingCEPs()) {
 							if(tCheckForEdgeCluster != null && tCheckForEdgeCluster.isEdgeCEP()) tBreak = true;
 						}
 						if(tBreak) {
@@ -271,7 +271,7 @@ public class CoordinatorCEPMultiplexer
 		return tCEPDemultiplexed;
 	}
 	
-	public boolean write(Serializable pData, CoordinatorCEPDemultiplexed pDemux, ICluster pTargetCluster)
+	public boolean write(Serializable pData, CoordinatorCEPChannel pDemux, ICluster pTargetCluster)
 	{	
 		getLogger().log(this, "Sending " + pData + " from " + pDemux.getCluster() + " to target cluster " + pTargetCluster);
 
@@ -286,7 +286,7 @@ public class CoordinatorCEPMultiplexer
 		return tCEP.write(tMuxPackage);
 	}
 	
-	public HRMName getSourceRoutingServiceAddress(CoordinatorCEPDemultiplexed pCEP)
+	public HRMName getSourceRoutingServiceAddress(CoordinatorCEPChannel pCEP)
 	{
 		if(mMultiplexer.containsKey(pCEP)) {
 			return mMultiplexer.get(pCEP).getSourceRoutingServiceAddress();
@@ -294,7 +294,7 @@ public class CoordinatorCEPMultiplexer
 		return null;
 	}
 	
-	public HRMName getPeerRoutingServiceAddress(CoordinatorCEPDemultiplexed pCEP)
+	public HRMName getPeerRoutingServiceAddress(CoordinatorCEPChannel pCEP)
 	{
 		if(mMultiplexer.containsKey(pCEP)) {
 			return mMultiplexer.get(pCEP).getPeerRoutingServiceAddress();
@@ -302,7 +302,7 @@ public class CoordinatorCEPMultiplexer
 		return null;
 	}
 	
-	public Route getRouteToPeer(CoordinatorCEPDemultiplexed pCEP)
+	public Route getRouteToPeer(CoordinatorCEPChannel pCEP)
 	{
 		if(mMultiplexer.containsKey(pCEP)) {
 			return mMultiplexer.get(pCEP).getRouteToPeer();
@@ -310,34 +310,34 @@ public class CoordinatorCEPMultiplexer
 		return null;
 	}
 	
-	public synchronized void addMultiplexedConnection(CoordinatorCEPDemultiplexed pMultiplexedConnection, CoordinatorCEP pConnection)
+	public synchronized void addMultiplexedConnection(CoordinatorCEPChannel pMultiplexedConnection, CoordinatorCEP pConnection)
 	{
 		getLogger().log(this, "Registering multiplexed connection from " + pMultiplexedConnection + " to " + pConnection);
 		mMultiplexer.put(pMultiplexedConnection, pConnection);
-		for(CoordinatorCEPDemultiplexed tCEP : mMultiplexer.keySet()) {
+		for(CoordinatorCEPChannel tCEP : mMultiplexer.keySet()) {
 			getLogger().log(this, tCEP + "->" + mMultiplexer.get(tCEP));
 		}
 		addDemultiplex(pConnection, pMultiplexedConnection);
 	}
 	
-	private void addDemultiplex(CoordinatorCEP pCEP, CoordinatorCEPDemultiplexed pDemux)
+	private void addDemultiplex(CoordinatorCEP pCEP, CoordinatorCEPChannel pDemux)
 	{
 		getLogger().log(this, "Registering demultiplexing from " + pCEP + " to " + pDemux);
 		if(mDemux.get(pCEP) == null) {
-			mDemux.put(pCEP, new LinkedList<CoordinatorCEPDemultiplexed>());
+			mDemux.put(pCEP, new LinkedList<CoordinatorCEPChannel>());
 		}
 		mDemux.get(pCEP).add(pDemux);
 	}
 	
-	public LinkedList<CoordinatorCEPDemultiplexed> getDemuxCEPs(CoordinatorCEP pCEP)
+	public LinkedList<CoordinatorCEPChannel> getDemuxCEPs(CoordinatorCEP pCEP)
 	{
 		return mDemux.get(pCEP);
 	}
 	
-	public CoordinatorCEPDemultiplexed getDemuxedCEP(CoordinatorCEP pCEP, ClusterDummy pSource, ClusterDummy pCluster) throws NetworkException
+	public CoordinatorCEPChannel getDemuxedCEP(CoordinatorCEP pCEP, ClusterDummy pSource, ClusterDummy pCluster) throws NetworkException
 	{
 		if(mDemux.containsKey(pCEP)) {
-			for(CoordinatorCEPDemultiplexed tCEP : mDemux.get(pCEP)) {
+			for(CoordinatorCEPChannel tCEP : mDemux.get(pCEP)) {
 				if(tCEP.getCluster().getClusterID().equals(pCluster.getClusterID())) {
 					Tuple<Long, Long> tTuple = new Tuple<Long, Long>(pSource.getClusterID(), pCluster.getClusterID());
 					boolean tSourceIsContained = isClusterMultiplexed(tTuple);
@@ -374,13 +374,13 @@ public class CoordinatorCEPMultiplexer
 		mCluster = pCluster;
 	}
 	
-	public void registerDemultiplex(Long pSourceClusterID, Long pTargetClusterID, CoordinatorCEPDemultiplexed pCEP)
+	public void registerDemultiplex(Long pSourceClusterID, Long pTargetClusterID, CoordinatorCEPChannel pCEP)
 	{
 		getLogger().log(this, "Registering demultiplex for Cluster ID" + pSourceClusterID + " to " + pTargetClusterID + " via " + pCEP);
 		mClusterToCEPMapping.put(new Tuple<Long, Long>(pSourceClusterID, pTargetClusterID), pCEP);
 	}
 	
-	private CoordinatorCEPDemultiplexed getDemultiplex(Tuple<Long, Long> pPair)
+	private CoordinatorCEPChannel getDemultiplex(Tuple<Long, Long> pPair)
 	{
 		return mClusterToCEPMapping.get(pPair);
 	}

@@ -130,7 +130,7 @@ public class HRMController extends Application implements IServerCallback
 		}
 					
 		for(NestedParticipation tParticipate : tJoin.getNestedParticipations()) {
-			CoordinatorCEPDemultiplexed tCEP = null;
+			CoordinatorCEPChannel tCEP = null;
 			boolean tClusterFound = false;
 			ICluster tFoundCluster = null;
 			for(Cluster tCluster : getRoutingTargetClusters())
@@ -140,7 +140,7 @@ public class HRMController extends Application implements IServerCallback
 						tConnection = new CoordinatorCEP(mLogger, this, true, tJoin.getLevel(), tCluster.getMultiplexer());
 					}
 					
-					tCEP = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
+					tCEP = new CoordinatorCEPChannel(mLogger, this, tCluster);
 					((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tCEP, tConnection);
 					if(tJoin.getLevel() > 0) {
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
@@ -174,7 +174,7 @@ public class HRMController extends Application implements IServerCallback
 						}
 					}
 				}
-				tCEP = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
+				tCEP = new CoordinatorCEPChannel(mLogger, this, tCluster);
 				if(tJoin.getLevel() > 0) {
 					((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 				} else {
@@ -311,7 +311,7 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pCEPsToEvaluate list of connection end points that have to be chosen to the target
 	 * @return true if the path contains a node that is covered by another coordinator
 	 */
-	public boolean checkPathToTargetContainsCovered(IRoutableClusterGraphNode pSourceCluster, IRoutableClusterGraphNode pTargetCluster, LinkedList<CoordinatorCEPDemultiplexed> pCEPsToEvaluate)
+	public boolean checkPathToTargetContainsCovered(IRoutableClusterGraphNode pSourceCluster, IRoutableClusterGraphNode pTargetCluster, LinkedList<CoordinatorCEPChannel> pCEPsToEvaluate)
 	{
 		if(pSourceCluster == null || pTargetCluster == null) {
 			Logging.log(this, "checking cluster route between null and null");
@@ -325,8 +325,8 @@ public class HRMController extends Application implements IServerCallback
 			Collection<IRoutableClusterGraphNode> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
 			for(IRoutableClusterGraphNode tNode : tNodes) {
 				if(tNode instanceof ICluster) {
-					CoordinatorCEPDemultiplexed tCEPLookingFor = null;
-					for(CoordinatorCEPDemultiplexed tCEP : pCEPsToEvaluate) {
+					CoordinatorCEPChannel tCEPLookingFor = null;
+					for(CoordinatorCEPChannel tCEP : pCEPsToEvaluate) {
 						if(tCEP.getRemoteCluster().equals(tNode)) {
 							tCEPLookingFor = tCEP;
 						}
@@ -424,7 +424,7 @@ public class HRMController extends Application implements IServerCallback
 		
 		CoordinatorCEP tCEP = null;
 		ICluster tFoundCluster = null;
-		CoordinatorCEPDemultiplexed tDemux = null;
+		CoordinatorCEPChannel tDemux = null;
 		
 		boolean tClusterFound = false;
 		for(Cluster tCluster : getRoutingTargetClusters())
@@ -440,7 +440,7 @@ public class HRMController extends Application implements IServerCallback
 					mLogger.err(this, "Unable to fulfill requirements for a route to " + pName, tExc);
 				}
 				tCEP.setRouteToPeer(tRoute);
-				tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
+				tDemux = new CoordinatorCEPChannel(mLogger, this, tCluster);
 				tCluster.getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
 				
 				tCluster.addParticipatingCEP(tDemux);
@@ -454,7 +454,7 @@ public class HRMController extends Application implements IServerCallback
 			setSourceIntermediateCluster(tCluster, tCluster);
 			addCluster(tCluster);
 			tCEP = new CoordinatorCEP(mLogger, this, false, pLevel, tCluster.getMultiplexer());
-			tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
+			tDemux = new CoordinatorCEPChannel(mLogger, this, tCluster);
 			tCluster.getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
 			
 			tCluster.addParticipatingCEP(tDemux);
@@ -474,7 +474,7 @@ public class HRMController extends Application implements IServerCallback
 		
 		final Name tName = pName;
 		final CoordinatorCEP tConnectionCEP = tCEP;
-		final CoordinatorCEPDemultiplexed tDemultiplexed = tDemux;
+		final CoordinatorCEPChannel tDemultiplexed = tDemux;
 		final ICluster tClusterToAdd = tFoundCluster;
 		
 		Thread tThread = new Thread() {

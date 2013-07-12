@@ -24,7 +24,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -50,10 +50,10 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	private HRMSignature mCoordSignature;
 	private HRMID mHRMID;
 	private Name mAnnouncer;
-	private LinkedList<CoordinatorCEPDemultiplexed> mAnnouncedCEPs;
-	private CoordinatorCEPDemultiplexed mNegotiator = null;
+	private LinkedList<CoordinatorCEPChannel> mAnnouncedCEPs;
+	private CoordinatorCEPChannel mNegotiator = null;
 	private Cluster mSourceIntermediateCluster = null;
-	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
+	private LinkedList<CoordinatorCEPChannel> mNegotiators= new LinkedList<CoordinatorCEPChannel>();
 	private boolean mInterASCluster = false;
 	
 	/**
@@ -77,10 +77,10 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		mLevel = pLevel;
 	}
 	
-	public void addAnnouncedCEP(CoordinatorCEPDemultiplexed pCEP)
+	public void addAnnouncedCEP(CoordinatorCEPChannel pCEP)
 	{
 		if(mAnnouncedCEPs == null) {
-			mAnnouncedCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
+			mAnnouncedCEPs = new LinkedList<CoordinatorCEPChannel>();
 		}
 		Logging.log(getClusterDescription(), "Adding announcer " + pCEP);
 		mAnnouncedCEPs.add(pCEP);
@@ -96,7 +96,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return getBullyPriority();
 	}
 
-	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -140,12 +140,12 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		pCEP.addAnnouncedCluster(tCluster, this);
 	}
 
-	public CoordinatorCEPDemultiplexed getCoordinatorCEP()
+	public CoordinatorCEPChannel getCoordinatorCEP()
 	{
 		return null;
 	}
 
-	public synchronized void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
+	public synchronized void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
 	{
 		mCoordAddress = pAddress;
 		mCoordName = pCoordName;
@@ -187,15 +187,15 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPDemultiplexed> getParticipatingCEPs()
+	public LinkedList<CoordinatorCEPChannel> getParticipatingCEPs()
 	{
-		LinkedList<CoordinatorCEPDemultiplexed> tCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
+		LinkedList<CoordinatorCEPChannel> tCEPs = new LinkedList<CoordinatorCEPChannel>();
 		//tCEPs.add(mCEP);
 		return tCEPs;
 	}
 
 	@Override
-	public void addParticipatingCEP(CoordinatorCEPDemultiplexed pParticipatingCEP)
+	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP)
 	{
 		/*
 		 * not needed, this is just a dummy for topology
@@ -282,7 +282,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPDemultiplexed> pAlreadyInformed) {
+	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed) {
 		/*
 		 * not needed, this is just a dummy for topology
 		 */
@@ -339,36 +339,36 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPDemultiplexed> getLaggards()
+	public LinkedList<CoordinatorCEPChannel> getLaggards()
 	{
 		return null;
 	}
 
 	@Override
-	public void addLaggard(CoordinatorCEPDemultiplexed pCEP)
+	public void addLaggard(CoordinatorCEPChannel pCEP)
 	{
 		
 	}
 
 	@Override
-	public CoordinatorCEPDemultiplexed getNegotiatorCEP()
+	public CoordinatorCEPChannel getNegotiatorCEP()
 	{
 		return mNegotiator;
 	}
 
 	@Override
-	public void setNegotiatorCEP(CoordinatorCEPDemultiplexed pCEP)
+	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
 	{
 		getLogger().log(getClusterDescription(), "Setting " + pCEP + " as  negotiating CEP");
 		if(!mNegotiators.contains(pCEP)) mNegotiators.add(pCEP);
 		mNegotiator = pCEP;
 	}
 
-	public CoordinatorCEPDemultiplexed getAnnouncedCEP(ICluster pCluster)
+	public CoordinatorCEPChannel getAnnouncedCEP(ICluster pCluster)
 	{
 		int tClosestCluster = Integer.MAX_VALUE;
-		CoordinatorCEPDemultiplexed tClosest = null;
-		for(CoordinatorCEPDemultiplexed tCEP : mAnnouncedCEPs) {
+		CoordinatorCEPChannel tClosest = null;
+		for(CoordinatorCEPChannel tCEP : mAnnouncedCEPs) {
 			ICluster tRemoteCluster = tCEP.getRemoteCluster();
 			tRemoteCluster = getHRMController().getCluster(tRemoteCluster) != null ? getHRMController().getCluster(tRemoteCluster) : tRemoteCluster;
 			if(pCluster.getHierarchyLevel() == tRemoteCluster.getHierarchyLevel()) {
@@ -390,7 +390,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return tClosest;
 	}
 	
-	public LinkedList<CoordinatorCEPDemultiplexed> getAnnouncedCEPs()
+	public LinkedList<CoordinatorCEPChannel> getAnnouncedCEPs()
 	{
 		return mAnnouncedCEPs;
 	}
@@ -418,7 +418,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		
 	}

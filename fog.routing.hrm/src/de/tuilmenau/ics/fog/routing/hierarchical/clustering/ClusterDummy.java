@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 //import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -89,12 +89,12 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPDemultiplexed> getParticipatingCEPs() {
+	public LinkedList<CoordinatorCEPChannel> getParticipatingCEPs() {
 		return null;
 	}
 
 	@Override
-	public void addParticipatingCEP(CoordinatorCEPDemultiplexed pParticipatingCEP) {
+	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP) {
 		
 	}
 
@@ -160,18 +160,18 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 	}
 
 	@Override
-	public CoordinatorCEPDemultiplexed getCoordinatorCEP()
+	public CoordinatorCEPChannel getCoordinatorCEP()
 	{
 		return null;
 	}
 
 	@Override
-	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
+	public void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
 	{
 		
 	}
@@ -194,7 +194,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPDemultiplexed> pAlreadyInformed)
+	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed)
 	{
 		
 	}
@@ -235,25 +235,25 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPDemultiplexed> getLaggards()
+	public LinkedList<CoordinatorCEPChannel> getLaggards()
 	{
 		return null;
 	}
 
 	@Override
-	public void addLaggard(CoordinatorCEPDemultiplexed pCEP)
+	public void addLaggard(CoordinatorCEPChannel pCEP)
 	{
 		
 	}
 
 	@Override
-	public CoordinatorCEPDemultiplexed getNegotiatorCEP()
+	public CoordinatorCEPChannel getNegotiatorCEP()
 	{
 		return null;
 	}
 
 	@Override
-	public void setNegotiatorCEP(CoordinatorCEPDemultiplexed pCEP)
+	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
 	{
 		
 	}
@@ -265,7 +265,7 @@ public class ClusterDummy implements Serializable, ICluster
 	}
 	
 	@Override
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		
 	}

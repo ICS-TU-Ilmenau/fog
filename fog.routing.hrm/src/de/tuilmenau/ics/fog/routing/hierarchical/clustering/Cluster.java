@@ -23,7 +23,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionProcess;
@@ -54,7 +54,7 @@ public class Cluster implements ICluster, IElementDecorator
 	 */
 	private static int sGUIClusterID = 0;
 
-	private CoordinatorCEPDemultiplexed mCoordinator;
+	private CoordinatorCEPChannel mCoordinator;
 	private Long mClusterID;
 	private long mHighestPriority;
 	private HRMID mHRMID = null;
@@ -64,20 +64,20 @@ public class Cluster implements ICluster, IElementDecorator
 	private Name mCoordAddress;
 	private BullyPriority mBullyPriority = null;
 	private HRMController mHRMController;
-	private LinkedList<CoordinatorCEPDemultiplexed> mCEPs;
+	private LinkedList<CoordinatorCEPChannel> mCEPs;
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
 	private LinkedList<NeighborClusterAnnounce> mSentAnnounces = null;
 	private HRMSignature mCoordSignature;
 	private boolean mInterASCluster = false;
 	private int mToken;
 	private int mAnnoucementCounter = 0;
-	private LinkedList<CoordinatorCEPDemultiplexed> mLaggards;
+	private LinkedList<CoordinatorCEPChannel> mLaggards;
 	private static final long serialVersionUID = -2087553402508167474L;
-	private CoordinatorCEPDemultiplexed mNegotiator = null;
-	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
+	private CoordinatorCEPChannel mNegotiator = null;
+	private LinkedList<CoordinatorCEPChannel> mNegotiators= new LinkedList<CoordinatorCEPChannel>();
 	private TopologyData mEnvelope = null;
-	private CoordinatorCEPDemultiplexed mAnnouncer = null;
-	private LinkedList<CoordinatorCEPDemultiplexed> mOldParticipatingCEPs;
+	private CoordinatorCEPChannel mAnnouncer = null;
+	private LinkedList<CoordinatorCEPChannel> mOldParticipatingCEPs;
 	private Coordinator mClusterManager = null;
 	private CoordinatorCEPMultiplexer mMux = null;
 	
@@ -101,7 +101,7 @@ public class Cluster implements ICluster, IElementDecorator
 	{
 		mClusterID = pClusterID;
 		mHierarchyLevel = pLevel;
-		mCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
+		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mSentAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mHRMController = ptHRMController;
@@ -124,12 +124,12 @@ public class Cluster implements ICluster, IElementDecorator
 		mMux.setCluster(this);
 	}
 	
-	public void setAnnouncedCEP(CoordinatorCEPDemultiplexed pCEP)
+	public void setAnnouncedCEP(CoordinatorCEPChannel pCEP)
 	{
 		mAnnouncer = pCEP;
 	}
 	
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		setToken(pAnnounce.getToken());
 		setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pCEP.getPeerName());
@@ -137,7 +137,7 @@ public class Cluster implements ICluster, IElementDecorator
 		getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
-	public void setCoordinatorCEP(CoordinatorCEPDemultiplexed pCoordinatorChannel, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
+	public void setCoordinatorCEP(CoordinatorCEPChannel pCoordinatorChannel, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
 	{
 		getHRMController().getLogger().log(this, "announcement number " + (++mAnnoucementCounter) + ": Setting Coordinator " + pCoordinatorChannel + " with signature " + pCoordSignature + " with routing address " + pAddress + " and priority ");
 		getHRMController().getLogger().log(this, "previous coordinator was " + mCoordinator + " with name " + mCoordName);
@@ -220,7 +220,7 @@ public class Cluster implements ICluster, IElementDecorator
 		}
 	}
 	
-	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -275,7 +275,7 @@ public class Cluster implements ICluster, IElementDecorator
 		return tCluster;
 	}
 	
-	public void handleAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPDemultiplexed pCEP)
+	public void handleAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		if(!pAnnounce.getCoordinatorName().equals(getHRMController().getPhysicalNode().getCentralFN().getName())) {
 			Logging.log(this, "Received announcement of foreign cluster");
@@ -341,7 +341,7 @@ public class Cluster implements ICluster, IElementDecorator
 		}
 	}
 	
-	public CoordinatorCEPDemultiplexed getCoordinatorCEP()
+	public CoordinatorCEPChannel getCoordinatorCEP()
 	{
 		return mCoordinator;
 	}
@@ -376,7 +376,7 @@ public class Cluster implements ICluster, IElementDecorator
 		}
 	}
 	
-	private void announceNeighborCoord(NeighborClusterAnnounce pAnnouncement, CoordinatorCEPDemultiplexed pCEP)
+	private void announceNeighborCoord(NeighborClusterAnnounce pAnnouncement, CoordinatorCEPChannel pCEP)
 	{
 		getHRMController().getLogger().log(this, "Handling " + pAnnouncement);
 		if(mCoordName != null)
@@ -405,19 +405,19 @@ public class Cluster implements ICluster, IElementDecorator
 		return mHighestPriority;
 	}
 	
-	public LinkedList<CoordinatorCEPDemultiplexed> getOldParticipatingCEPs()
+	public LinkedList<CoordinatorCEPChannel> getOldParticipatingCEPs()
 	{
 		return mOldParticipatingCEPs;
 	}
 	
-	public void setParticipatingCEPs(LinkedList<CoordinatorCEPDemultiplexed> pCEPs)
+	public void setParticipatingCEPs(LinkedList<CoordinatorCEPChannel> pCEPs)
 	{
 		mOldParticipatingCEPs = mCEPs;
 		getHRMController().getLogger().log(this, "Setting participating CEPs to " + pCEPs);
 		mCEPs = pCEPs;
 	}
 	
-	public void addParticipatingCEP(CoordinatorCEPDemultiplexed pParticipatingCEP)
+	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP)
 	{
 		if(!mCEPs.contains(pParticipatingCEP)) {
 			mCEPs.add(pParticipatingCEP);
@@ -432,7 +432,7 @@ public class Cluster implements ICluster, IElementDecorator
 		}
 	}
 
-	public LinkedList<CoordinatorCEPDemultiplexed> getParticipatingCEPs()
+	public LinkedList<CoordinatorCEPChannel> getParticipatingCEPs()
 	{
 		return mCEPs;
 	}
@@ -495,20 +495,20 @@ public class Cluster implements ICluster, IElementDecorator
 		mCoordName = pCoordName;
 	}
 	
-	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPDemultiplexed> pAlreadyInformed)
+	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed)
 	{
 		if(pData instanceof BullyPriorityUpdate)
 		{
 			getHRMController().getLogger().log(this, "Will send priority update to" + mCEPs);
 		}
-		LinkedList<CoordinatorCEPDemultiplexed> tInformedCEPs = null;
+		LinkedList<CoordinatorCEPChannel> tInformedCEPs = null;
 		if(pAlreadyInformed != null) {
 			tInformedCEPs= pAlreadyInformed;
 		} else {
-			tInformedCEPs = new LinkedList<CoordinatorCEPDemultiplexed>(); 
+			tInformedCEPs = new LinkedList<CoordinatorCEPChannel>(); 
 		}
 		try {
-			for(CoordinatorCEPDemultiplexed tCEP : mCEPs)
+			for(CoordinatorCEPChannel tCEP : mCEPs)
 			{
 				if(!tInformedCEPs.contains(tCEP))
 				{
@@ -625,16 +625,16 @@ public class Cluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPDemultiplexed> getLaggards()
+	public LinkedList<CoordinatorCEPChannel> getLaggards()
 	{
 		return mLaggards;
 	}
 
 	@Override
-	public void addLaggard(CoordinatorCEPDemultiplexed pCEP)
+	public void addLaggard(CoordinatorCEPChannel pCEP)
 	{
 		if(mLaggards == null) {
-			mLaggards = new LinkedList<CoordinatorCEPDemultiplexed>();
+			mLaggards = new LinkedList<CoordinatorCEPChannel>();
 			mLaggards.add(pCEP);
 		} else {
 			mLaggards.add(pCEP);
@@ -642,19 +642,19 @@ public class Cluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public CoordinatorCEPDemultiplexed getNegotiatorCEP()
+	public CoordinatorCEPChannel getNegotiatorCEP()
 	{
 		return mNegotiator;
 	}
 
 	@Override
-	public void setNegotiatorCEP(CoordinatorCEPDemultiplexed pCEP)
+	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
 	{
 		if(!mNegotiators.contains(pCEP)) mNegotiators.add(pCEP);
 		mNegotiator = pCEP;	
 	}
 	
-	public CoordinatorCEPDemultiplexed getAnnouncedCEP()
+	public CoordinatorCEPChannel getAnnouncedCEP()
 	{
 		return mAnnouncer;
 	}
@@ -737,9 +737,9 @@ public class Cluster implements ICluster, IElementDecorator
 	 * @param pCluster
 	 * @return
 	 */
-	public CoordinatorCEPDemultiplexed getCEPOfCluster(ICluster pCluster)
+	public CoordinatorCEPChannel getCEPOfCluster(ICluster pCluster)
 	{
-		for(CoordinatorCEPDemultiplexed tCEP : getParticipatingCEPs()) {
+		for(CoordinatorCEPChannel tCEP : getParticipatingCEPs()) {
 			if(tCEP.getRemoteCluster().equals(pCluster)) {
 				return tCEP;
 			}

@@ -54,7 +54,7 @@ import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.graph.RoutableGraph;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
-public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
+public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 {
 	private static final long serialVersionUID = -8290946480171751216L;
 	private ICluster mRemoteCluster;
@@ -77,7 +77,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 	 * @param pHRMController is the coordinator of a node
 	 * @param pPeerCluster is the cluster this connection end point serves
 	 */
-	public CoordinatorCEPDemultiplexed(Logger pLogger, HRMController pHRMController, ICluster pPeerCluster)
+	public CoordinatorCEPChannel(Logger pLogger, HRMController pHRMController, ICluster pPeerCluster)
 	{
 		mHRMController = pHRMController;
 		mPeerCluster = pPeerCluster;
@@ -116,7 +116,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 					// create ANNOUNCE packet
 					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tNode.getCentralFN().getName(), new BullyPriority(getCluster().getBullyPriority()), getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getHierarchyLevel()), getCluster().getToken());
 					
-					for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
+					for(CoordinatorCEPChannel tCEP : getCluster().getParticipatingCEPs()) {
 						tAnnouncePacket.addCoveredNode(tCEP.getPeerName());
 					}
 					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
@@ -256,7 +256,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 								tAnnouncePacket.addRoutingVector(new RoutingServiceLinkVector(tPath, tHRS.getCoordinatorRoutingMap().getSource(tPath), tHRS.getCoordinatorRoutingMap().getDest(tPath)));
 							}
 						}
-						for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCEP : getCluster().getParticipatingCEPs()) {
 							boolean tWroteAnnouncement = false;
 							if(tCEP.isEdgeCEP()) {
 								
@@ -273,7 +273,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), (HRMName)getSourceName(), (HRMName)getPeerName());
 								tAnnouncePacket.addRoutingVector(tVector);
 							}
-							for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
+							for(CoordinatorCEPChannel tCEP : getCluster().getParticipatingCEPs()) {
 								boolean tWroteAnnouncement = false;
 								if(tCEP.getRemoteCluster().getHierarchyLevel() -1 == tAnnouncePacket.getLevel()) {
 									
@@ -421,7 +421,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 							LinkedList<HRMName> tAddressesOfCluster = new LinkedList<HRMName>();
 							
 							if( tCluster instanceof Cluster ) {
-								for(CoordinatorCEPDemultiplexed tCEP : ((Cluster)tCluster).getParticipatingCEPs()) {
+								for(CoordinatorCEPChannel tCEP : ((Cluster)tCluster).getParticipatingCEPs()) {
 									tAddressesOfCluster.add(tCEP.getPeerName());
 								}
 							}
@@ -751,7 +751,7 @@ public class CoordinatorCEPDemultiplexed implements IRoutableClusterGraphNode
 						
 						if(tCluster instanceof NeighborCluster && ((NeighborCluster)tCluster).getClustersToTarget() + pDiscovery.getDistance() > tRadius) continue;
 						boolean tBreak=false;
-						for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCEP : tCluster.getParticipatingCEPs()) {
 							if(tCEP.isEdgeCEP()) tBreak = true;
 						}
 						if(tBreak) {

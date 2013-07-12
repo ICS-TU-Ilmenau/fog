@@ -47,7 +47,7 @@ import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPDemultiplexed;
+import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
@@ -300,7 +300,7 @@ public class HRMViewer extends EditorPart
 			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel())) {
 				boolean tStartProcess=true;
 				Cluster tCluster = tProcess.getCluster();
-				for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
+				for(CoordinatorCEPChannel tCEP : tCluster.getParticipatingCEPs()) {
 					if(tCEP.isEdgeCEP()) {
 						tStartProcess = false;
 					}
@@ -621,7 +621,7 @@ public class HRMViewer extends EditorPart
 		int j = 0;
 		if (HRM_VIEWER_DEBUGGING)
 			Logging.log(this, "Amount of participating CEPs is " + pCluster.getParticipatingCEPs().size());
-		for(CoordinatorCEPDemultiplexed tCEP : pCluster.getParticipatingCEPs()) {
+		for(CoordinatorCEPChannel tCEP : pCluster.getParticipatingCEPs()) {
 			if (HRM_VIEWER_DEBUGGING)
 				Logging.log(this, "Updating table item number " + j);
 			
