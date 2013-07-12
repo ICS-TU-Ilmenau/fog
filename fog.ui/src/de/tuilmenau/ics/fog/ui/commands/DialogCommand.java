@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Forwarding on Gates Simulator/Emulator - Eclipse
+ * Forwarding on Gates Simulator/Emulator - User Interface
  * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * All rights reserved. This program and the accompanying materials
@@ -7,20 +7,29 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.eclipse.ui.commands;
+package de.tuilmenau.ics.fog.ui.commands;
 
-import org.eclipse.ui.IWorkbenchPartSite;
+import java.awt.Frame;
 
 /**
- * Base class for a command, which does not need the GUI.
+ * Command that requires a dialog for its execution.
+ * The dialog is an AWT dialog.
  */
-public abstract class SilentCommand extends Command
+public abstract class DialogCommand implements Command
 {
-	public abstract void init(Object object);
-	
-	@Override
-	public void init(IWorkbenchPartSite site, Object object)
+	/**
+	 * Called before the command is executed in order to
+	 * initialize the GUI. 
+	 */
+	public void init(Frame frame)
 	{
-		init(object);
+		this.frame = frame;
 	}
+	
+	protected Frame getFrame()
+	{
+		return frame;
+	}
+	
+	private Frame frame;
 }

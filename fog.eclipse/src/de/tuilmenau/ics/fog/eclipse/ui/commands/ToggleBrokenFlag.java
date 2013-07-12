@@ -15,28 +15,22 @@ import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.topology.ILowerLayerReceive.Status;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
 
-public class ToggleBrokenFlag extends SilentCommand
+public class ToggleBrokenFlag implements Command
 {
-
-	public ToggleBrokenFlag()
-	{
-		super();
-	}
-	
 	@Override
-	public void init(Object object)
+	public void execute(Object object)
 	{
+		Node node = null;
+		ILowerLayer bus = null;
+		
 		if(object instanceof Node) node = (Node) object; 
 		if(object instanceof ILowerLayer) bus = (ILowerLayer) object; 
 			
 		if((node == null) && (bus == null)) throw new RuntimeException(this +" requires a Node or Bus object to proceed. Instead of " +object +".");
-	}
-
-	@Override
-	public void main()
-	{
+	
 		if(node != null) {
 			node.setBroken(node.isBroken() == Status.OK, Config.Routing.ERROR_TYPE_VISIBLE);
 		}
@@ -48,8 +42,4 @@ public class ToggleBrokenFlag extends SilentCommand
 			}
 		}
 	}
-
-	
-	private Node node;
-	private ILowerLayer bus;
 }

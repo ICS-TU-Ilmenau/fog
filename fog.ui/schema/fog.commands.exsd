@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="de.tuilmenau.ics.fog.eclipse" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="de.tuilmenau.ics.fog.ui" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="de.tuilmenau.ics.fog.eclipse" id="de.tuilmenau.ics.fog.eclipse.hostApplications" name="de.tuilmenau.ics.fog.eclipse.hostApplications"/>
+         <meta.schema plugin="de.tuilmenau.ics.fog.ui" id="de.tuilmenau.ics.fog.ui.commands" name="de.tuilmenau.ics.fog.ui.commands"/>
       </appinfo>
       <documentation>
          [Enter description of this extension point.]

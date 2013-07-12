@@ -14,34 +14,27 @@ import java.rmi.RemoteException;
 import de.tuilmenau.ics.fog.topology.IAutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
 
-public class DoStep extends SilentCommand
+public class DoStep implements Command
 {
-	public DoStep()
-	{
-	}
-
 	@Override
-	public void init(Object object)
+	public void execute(Object object) throws RemoteException
 	{
+		IAutonomousSystem as = null;
+		
 		if(object instanceof Node) {
 			as = ((Node) object).getAS();
 		}
 		else if(object instanceof IAutonomousSystem) {
 			as = (IAutonomousSystem) object;
 		}
-	}
-
-	@Override
-	public void main() throws RemoteException
-	{
+		
 		if(as != null) {
 			as.executeCommand("time");
 		} else {
 			Logging.err(this, "No link to an autonomous system. Can not run 'time' command.");
 		}
 	}
-
-	private IAutonomousSystem as;
 }

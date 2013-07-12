@@ -9,32 +9,39 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.eclipse.ui.menu;
 
+import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.LinkedList;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.awt.SWT_AWT;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.handlers.IHandlerService;
 
 import de.tuilmenau.ics.fog.eclipse.ui.commands.CmdOpenEditor;
-import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.commands.SelectionEvent;
 import de.tuilmenau.ics.fog.eclipse.utils.Action;
 import de.tuilmenau.ics.fog.ui.Logging;
-
-
+import de.tuilmenau.ics.fog.ui.commands.Command;
+import de.tuilmenau.ics.fog.ui.commands.DialogCommand;
 
 
 public class MenuCreator implements IMenuCreator
 {
-	public static final String applicationID = "de.tuilmenau.ics.fog.hostApplications";	
+	public static final String applicationID = "de.tuilmenau.ics.fog.commands";	
 	
 	private static final String ENTRY_NAME = "name";
 	private static final String ENTRY_CLASS = "class";
@@ -371,27 +378,92 @@ public class MenuCreator implements IMenuCreator
 				final Object obj = element.createExecutableExtension("class");
 				
 				if(obj instanceof Command) {
-					Thread commandThread = new Thread() {
-						@Override
-						public void run()
-						{
-							try {
-								((Command) obj).init(mSite, selection);
-								((Command) obj).main();
+					if(obj instanceof EclipseCommand) {
+						//
+						// Switch to SWT event thread for execution of command that might interact with SWT
+						//
+						Runnable commandThread = new Runnable() {
+							@Override
+							public void run()
+							{
+								try {
+									((EclipseCommand) obj).init(mSite);							
+									((Command) obj).execute(selection);
+								}
+								catch(Exception exception) {
+									Logging.err(this, "Exception '" +exception +"' while running command for Eclipse '" +obj +"'.", exception);
+								}
 							}
-							catch(Exception exception) {
-								Logging.err(this, "Exception '" +exception +"' while running command '" +obj +"'.", exception);
-							}
+						};
+						
+						// are we already the SWT thread?
+						if(Thread.currentThread().equals(mSite.getShell().getDisplay().getThread())) {
+							commandThread.run();
+						} else {
+							// do not block here since we might be in the main thread
+							mSite.getShell().getDisplay().asyncExec(commandThread);
 						}
-					};
-					
-					commandThread.start();
+					}
+					else if(obj instanceof DialogCommand) {
+						// create frame for switch from SWT to AWT
+						if(frame == null) {
+							Runnable commandThread = new Runnable() {
+								@Override
+								public void run()
+								{
+									Composite comp = new Composite(mSite.getShell(), SWT.EMBEDDED);
+									frame = SWT_AWT.new_Frame(comp);
+								}
+							};
+							
+							// wait till frame is created
+							mSite.getShell().getDisplay().syncExec(commandThread);
+						}
+						
+						//
+						// Switch to AWT event thread for execution of command that might interact with AWT
+						//
+						Runnable commandThread = new Runnable() {
+							@Override
+							public void run()
+							{
+								try {
+									((DialogCommand) obj).init(frame);
+									((Command) obj).execute(selection);
+								}
+								catch(Exception exception) {
+									Logging.err(this, "Exception '" +exception +"' while running command with dialog '" +obj +"'.", exception);
+								}
+							}
+						};
+						
+						if(EventQueue.isDispatchThread()) {
+							commandThread.run();
+						} else {
+							// do not block here, because we might be the main thread or the SWT thread
+							EventQueue.invokeLater(commandThread);
+						}
+					}
+					else {
+						//
+						// No thread change for command without GUI
+						//
+						try {
+							((Command) obj).execute(selection);
+						}
+						catch(Exception exception) {
+							Logging.err(this, "Exception '" +exception +"' while running command '" +obj +"'.", exception);
+						}
+					}
 				} else {
 					Logging.err(this, "Invalid base class for extension class " +obj);
 				}
 			}
 			catch(CoreException exception) {
-				Logging.err(this, "Can not create executable extension for " +element);
+				Logging.err(this, "Can not create executable extension for " +element, exception);
+			}
+			catch(Exception exception) {
+				Logging.err(this, "Exception while executing command for " +element, exception);
 			}
 		}
 		
@@ -401,4 +473,5 @@ public class MenuCreator implements IMenuCreator
 
 	
 	private IWorkbenchPartSite mSite;
+	private Frame frame = null;
 }

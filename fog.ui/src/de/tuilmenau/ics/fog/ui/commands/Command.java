@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Forwarding on Gates Simulator/Emulator - Eclipse
+ * Forwarding on Gates Simulator/Emulator - User Interface
  * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * All rights reserved. This program and the accompanying materials
@@ -7,19 +7,18 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.eclipse.ui.commands;
+package de.tuilmenau.ics.fog.ui.commands;
 
-import org.eclipse.ui.IWorkbenchPartSite;
-
-
-
-public abstract class Command
+/**
+ * Interface for a command that can be executed for an object.
+ */
+public interface Command
 {
-	public Command()
-	{
-	}
-	
-	public abstract void init(IWorkbenchPartSite site, Object object);
-	
-	public abstract void main() throws Exception;	
+	/**
+	 * Execute command in the context of an object.
+	 * 
+	 * @param object Object the command is executed for
+	 * @throws Exception On error
+	 */
+	public void execute(Object object) throws Exception;	
 }

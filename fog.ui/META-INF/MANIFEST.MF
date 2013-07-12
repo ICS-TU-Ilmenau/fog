@@ -1,28 +1,15 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: FoG main Eclipse GUI extensions
-Bundle-SymbolicName: de.tuilmenau.ics.fog.eclipse;singleton:=true
+Bundle-Name: FoG general GUI extensions
+Bundle-SymbolicName: de.tuilmenau.ics.fog.ui;singleton:=true
 Bundle-Version: 1.0.2.qualifier
 Bundle-Vendor: ICS group of TU Ilmenau
 Bundle-License: http://www.eclipse.org/legal/epl-v10.html
-Bundle-Activator: de.tuilmenau.ics.fog.eclipse.ui.Activator
-Require-Bundle: org.eclipse.ui,
- org.eclipse.core.runtime,
- org.eclipse.debug.ui;bundle-version="3.5.1",
- de.tuilmenau.ics.fog;bundle-version="1.0.2",
- de.tuilmenau.ics.fog.launcher;bundle-version="1.0.2",
- de.tuilmenau.ics.fog.ui;bundle-version="1.0.2"
+Require-Bundle: de.tuilmenau.ics.fog;bundle-version="1.0.2",
+ de.tuilmenau.ics.fog.launcher;bundle-version="1.0.2"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: de.tuilmenau.ics.fog.eclipse,
- de.tuilmenau.ics.fog.eclipse.ui,
- de.tuilmenau.ics.fog.eclipse.ui.commands,
- de.tuilmenau.ics.fog.eclipse.ui.dialogs,
- de.tuilmenau.ics.fog.eclipse.ui.editors,
- de.tuilmenau.ics.fog.eclipse.ui.menu,
- de.tuilmenau.ics.fog.eclipse.ui.views,
- de.tuilmenau.ics.fog.eclipse.utils,
- de.tuilmenau.ics.fog.eclipse.widget
+Export-Package: de.tuilmenau.ics.fog.ui.commands
 Import-Package: de.tuilmenau.ics.graph,
  edu.uci.ics.jung.algorithms.layout,
  edu.uci.ics.jung.algorithms.layout.util,

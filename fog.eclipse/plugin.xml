@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-   <extension-point id="de.tuilmenau.ics.fog.hostApplications" name="Host Applications" schema="schema/fog.hostApplications.exsd"/>
    <extension-point id="de.tuilmenau.ics.fog.requirement.gui" name="Requirement GUI" schema="schema/fog.requirementGUI.exsd"/>
 
    <extension
@@ -79,7 +78,7 @@
    </extension>
 
    <extension
-         point="de.tuilmenau.ics.fog.hostApplications">
+         point="de.tuilmenau.ics.fog.commands">
       <editor
             name="Show layer entities"
             editorID="de.tuilmenau.ics.fog.nodeeditor"

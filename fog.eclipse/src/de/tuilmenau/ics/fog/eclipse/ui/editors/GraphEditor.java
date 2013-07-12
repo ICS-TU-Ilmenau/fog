@@ -22,7 +22,6 @@ import org.eclipse.ui.PartInitException;
 import de.tuilmenau.ics.fog.IController;
 import de.tuilmenau.ics.fog.eclipse.GraphViewer;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.GraphProvider;
 
@@ -167,7 +166,6 @@ public class GraphEditor extends EditorAWT implements IController
 			menuCreator.fillMenu(inputObject, popup);
 		}
 	}
-	
 	
 	private Object inputObject = null;
 	private SelectionProvider selectionCache = null;

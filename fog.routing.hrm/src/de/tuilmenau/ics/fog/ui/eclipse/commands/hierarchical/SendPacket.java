@@ -14,7 +14,7 @@ import java.util.LinkedList;
 import org.eclipse.ui.IWorkbenchPartSite;
 
 import de.tuilmenau.ics.fog.FoGEntity;
-import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.EnterStringDialog;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -49,39 +49,28 @@ import de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical.RegionLimitationDial
  *
  * @deprecated Test should use official way to establish route via an application and "connect". 
  */
-public class SendPacket extends Command
+public class SendPacket extends EclipseCommand
 {
 	private Node mNode;
-	private IWorkbenchPartSite mSite;
 
-
-	public SendPacket()
-	{
-		
-	}
 
 	@Override
-	public void init(IWorkbenchPartSite site, Object object)
+	public void execute(Object object) throws Exception
 	{
-		mSite = site;
 		if(object instanceof Node) {
 			mNode = (Node) object;
 		} else if(object instanceof Coordinator) {
 			mNode = ((Coordinator)object).getReferenceNode();
 		}
-	}
-
-	@Override
-	public void main() throws Exception
-	{
+		
 		if(mNode != null) {
 			LinkedList<String> tTargets = new LinkedList<String>();
 			
-			String tDestination = EnterStringDialog.open(mSite.getShell(), "Target of packet", "Please enter a target:", mNode.getName(), null);
+			String tDestination = EnterStringDialog.open(getShell(), "Target of packet", "Please enter a target:", mNode.getName(), null);
 			
 			Description tDescription = new Description();
 			if(HierarchicalConfig.Routing.ENABLE_REGION_LIMITATION) {
-				AddressLimitationProperty tProperty = RegionLimitationDialog.open(mSite.getShell());
+				AddressLimitationProperty tProperty = RegionLimitationDialog.open(getShell());
 				if(tProperty != null) {
 					tDescription.add(tProperty);
 				}
@@ -91,7 +80,7 @@ public class SendPacket extends Command
 			LinkedList<String> tPossibilities = new LinkedList<String>();
 			tPossibilities.add("YES");
 			tPossibilities.add("NO");
-			int tCompareToRoutingService = SelectFromListDialog.open(mSite.getShell(), "Comparisson run?", "Do you want to send a reference packet?", 1, tPossibilities);
+			int tCompareToRoutingService = SelectFromListDialog.open(getShell(), "Comparisson run?", "Do you want to send a reference packet?", 1, tPossibilities);
 			Logging.log(this, "You chose option " + tCompareToRoutingService);
 			LinkedList<String> tPosibilities = new LinkedList<String>();
 			for(String tTarget : mNode.getAS().getNodelist().keySet()) {

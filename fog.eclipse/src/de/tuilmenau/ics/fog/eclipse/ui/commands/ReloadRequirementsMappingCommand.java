@@ -14,41 +14,30 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.properties.InvalidProperty;
 import de.tuilmenau.ics.fog.transfer.manager.RequirementsToGatesMapper;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
 
-public class ReloadRequirementsMappingCommand extends SilentCommand
+public class ReloadRequirementsMappingCommand implements Command
 {
-
-	public ReloadRequirementsMappingCommand()
-	{
-		super();
-	}
-	
 	@Override
-	public void init(Object object)
+	public void execute(Object object)
 	{
-		if(object instanceof FoGEntity) entity = (FoGEntity) object; 
+		if(object instanceof FoGEntity) {
+			RequirementsToGatesMapper mapper = RequirementsToGatesMapper.getInstance((FoGEntity) object);
+	
+			// reload, if file had been changed during testing
+			mapper.init();
 			
-		if(entity == null) throw new RuntimeException(this +" requires a FoG entity to proceed. Instead of " +object +".");
-	}
-	
-	@Override
-	public void main()
-	{
-		RequirementsToGatesMapper mapper = RequirementsToGatesMapper.getInstance(entity);
-
-		// reload, if file had been changed during testing
-		mapper.init();
-		
-//TODO:		
-//		Description requ = new Description();
-//		requ.set(new VirusScanProperty());
-//		Logging.info(this, "TEST: Solution for " +requ +" = " +mapper.getSolutionFor(requ));
-		
-		Description requ2 = new Description();
-		requ2.set(new InvalidProperty());
-		Logging.info(this, "TEST: Solution for " +requ2 +" = " +mapper.getSolutionFor(requ2));
-	}
-
-	private FoGEntity entity;
+	//TODO:		
+	//		Description requ = new Description();
+	//		requ.set(new VirusScanProperty());
+	//		Logging.info(this, "TEST: Solution for " +requ +" = " +mapper.getSolutionFor(requ));
+			
+			Description requ2 = new Description();
+			requ2.set(new InvalidProperty());
+			Logging.info(this, "TEST: Solution for " +requ2 +" = " +mapper.getSolutionFor(requ2));
+		} else {
+			throw new RuntimeException(this +" requires a FoG entity to proceed. Instead of " +object +".");
+		}
+}
 }

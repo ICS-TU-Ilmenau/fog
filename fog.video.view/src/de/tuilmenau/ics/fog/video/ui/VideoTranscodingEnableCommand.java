@@ -9,36 +9,23 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.video.ui;
 
-import de.tuilmenau.ics.fog.eclipse.ui.commands.SilentCommand;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.facade.properties.PropertyFactoryContainer;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
 
-public class VideoTranscodingEnableCommand extends SilentCommand
+public class VideoTranscodingEnableCommand implements Command
 {
-	private Host host;
-
-	public VideoTranscodingEnableCommand()
-	{
-		super();
-	}
-	
 	@Override
-	public void init(Object object)
+	public void execute(Object object)
 	{
-		if(object instanceof Host) host = (Host) object; 
-	}
-
-	@Override
-	public void main()
-	{
-		if (host != null) {
+		if(object instanceof Host) {
 			try {
-				host.registerCapability(PropertyFactoryContainer.getInstance().createProperty(ConfigVideoViews.PROP_VIDEO_TRANSCODING, null));
-			}catch(PropertyException tExc)
-			{
+				((Host) object).registerCapability(PropertyFactoryContainer.getInstance().createProperty(ConfigVideoViews.PROP_VIDEO_TRANSCODING, null));
+			}
+			catch(PropertyException tExc) {
 				Logging.warn(this, "Can not instantiate video transcoding property.", tExc);
 			}
 		}

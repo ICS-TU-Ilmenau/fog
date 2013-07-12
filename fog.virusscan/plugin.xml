@@ -26,7 +26,7 @@
    </extension>
    
    <extension
-         point="de.tuilmenau.ics.fog.hostApplications">
+         point="de.tuilmenau.ics.fog.commands">
       <plugin
             name="Enable virus scan support"
             class="de.tuilmenau.ics.fog.virusscan.VirusScanEnableCommand"

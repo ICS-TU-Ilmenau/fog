@@ -11,14 +11,12 @@ package de.tuilmenau.ics.fog.eclipse.ui.commands;
 
 import java.awt.event.ActionListener;
 
-import org.eclipse.ui.IWorkbenchPartSite;
-
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 
-public abstract class HostApplication extends Command
+public abstract class HostApplication extends EclipseCommand
 {
 	public HostApplication()
 	{
@@ -26,23 +24,23 @@ public abstract class HostApplication extends Command
 	}
 	
 	@Override
-	public void init(IWorkbenchPartSite site, Object object)
+	public final void execute(Object object) throws Exception
 	{
 		if(!(object instanceof Host)) throw new RuntimeException(this +" requires a Host object to proceed.");
 		if(host != null) throw new RuntimeException("Host already set for " +this);
 		
 		host = (Host) object;
-		this.site = site;
+		main();
 	}
 	
-	public Host getHost()
+	/**
+	 * Real work of application.
+	 */
+	protected abstract void main() throws Exception;
+	
+	protected Host getHost()
 	{
 		return host;
-	}
-	
-	protected IWorkbenchPartSite getSite()
-	{
-		return site;
 	}
 	
 	public String toString()
@@ -58,7 +56,7 @@ public abstract class HostApplication extends Command
 	{
 		Logging.log(this, "Starting the \"onCreation\" action");
 		if(menuCreator == null) {
-			menuCreator = new MenuCreator(site);
+			menuCreator = new MenuCreator(getSite());
 		}
 		
 		ActionListener action = menuCreator.getCreationAction(newElement);
@@ -68,8 +66,5 @@ public abstract class HostApplication extends Command
 	}
 	
 	private MenuCreator menuCreator = null;
-
-	
-	private IWorkbenchPartSite site;
 	private Host host;
 }
