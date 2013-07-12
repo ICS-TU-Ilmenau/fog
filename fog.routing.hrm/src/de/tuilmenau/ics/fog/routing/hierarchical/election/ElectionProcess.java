@@ -28,7 +28,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMIdentity;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig.Hierarchy;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;

@@ -82,8 +82,8 @@ public class Coordinator implements ICluster, Observer
 	private BFSDistanceLabeler<IRoutableClusterGraphNode, RoutableClusterGraphLink> mBreadthFirstSearch = new BFSDistanceLabeler<IRoutableClusterGraphNode, RoutableClusterGraphLink>();
 	private List<IRoutableClusterGraphNode> mClustersToNotify;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
-	private int mReceivedAnnounces=0;
-	private LinkedList<Name> mIgnoreOnAddressDistribution=null;
+	private int mReceivedAnnounces = 0;
+	private LinkedList<Name> mIgnoreOnAddressDistribution = null;
 	private Long mClusterID;
 	private LinkedList<HRMID> mHigherHRMIDs = null;
 	private TopologyData mEnvelope = null;
