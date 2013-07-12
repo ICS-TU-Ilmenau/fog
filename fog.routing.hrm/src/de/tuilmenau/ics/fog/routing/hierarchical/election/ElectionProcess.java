@@ -49,39 +49,22 @@ public class ElectionProcess extends Thread
 	private long TIMEOUT_FOR_ANNOUNCEMENT=5000;
 	
 	private Coordinator mClusterManager=null;
-	private LinkedList<Cluster> mElectingClusters = new LinkedList<Cluster>();
+	private Cluster mElectingCluster = null;
 	private boolean mInProgress = false;
-	private int mLevel = 0;	
+	private int mHierarchyLevel = 0;	
 	private boolean mWillInitiateManager = false;
 	private boolean mLostElection = false;
 	
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Cluster=" + (mElectingClusters.isEmpty() ? "" : mElectingClusters.get(FIRST_ELECTING_CLUSTER).getClusterID()) + ", HierLevel=" + mLevel + ")";
+		return getClass().getSimpleName() + "(Cluster=" + (mElectingCluster != null ? "" : mElectingCluster.getClusterID()) + ", HierLevel=" + mHierarchyLevel + ")";
 	}
 	
-	public ElectionProcess(int pLevel)
+	public ElectionProcess(Cluster pCluster)
 	{
-		mLevel = pLevel;
-	}
-	
-	//TV: checked
-	public void addElectingCluster(Cluster pCluster)
-	{
-		boolean tClusterIsAlreadyKnown = false;
-		
-		// avoid duplicates: iterate over all already known clusters and check if pCluster is already contained
-		for(ICluster tCluster : mElectingClusters) {
-			if(tCluster.getHRMController().getPhysicalNode().getName().equals(pCluster.getHRMController().getPhysicalNode().getName())) {
-				tClusterIsAlreadyKnown = true;
-			}
-		}
-		
-		// add cluster to the list of known clusters which needs an election
-		if(!tClusterIsAlreadyKnown) {
-			mElectingClusters.add(pCluster);
-		}
+		mHierarchyLevel = pCluster.getHierarchyLevel();
+		mElectingCluster = pCluster;
 
 		// update the thread name
 		updateThreadName();
@@ -100,22 +83,14 @@ public class ElectionProcess extends Thread
 
 	private void sendElections()
 	{
-		try {
-			for(ICluster tCluster : mElectingClusters)
-			{
-				for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
-					if(tCEP.getPeerPriority() == 0 && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
-						Node tNode = tCluster.getHRMController().getPhysicalNode();
-						
-						Logging.log("Node " + tNode + ": Sending elections from " + tCluster);
+		for(CoordinatorCEPDemultiplexed tCEP : mElectingCluster.getParticipatingCEPs()) {
+			if(tCEP.getPeerPriority() == 0 && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
+				Node tNode = mElectingCluster.getHRMController().getPhysicalNode();
+				
+				Logging.log("Node " + tNode + ": Sending elections from " + mElectingCluster);
 
-						tCEP.sendPacket(new BullyElect(tNode.getCentralFN().getName(), new BullyPriority(tCluster.getBullyPriority()), tCluster.getHierarchyLevel()));
-					}
-				}
+				tCEP.sendPacket(new BullyElect(tNode.getCentralFN().getName(), new BullyPriority(mElectingCluster.getBullyPriority()), mElectingCluster.getHierarchyLevel()));
 			}
-		} catch (ConcurrentModificationException tExc) {
-			Logging.log(this, "Resending elections");
-			sendElections();
 		}
 	}
 	
@@ -156,7 +131,7 @@ public class ElectionProcess extends Thread
 			LinkedList<HRMSignature> tSignatures = tHRMController.getApprovedSignatures();
 			tSignatures.add(tHRMController.getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()));
 			
-			if(mLevel > 0) {
+			if(mHierarchyLevel > 0) {
 				pCluster.getHRMController().getLogger().log(pCluster, "has the coordinator and will now announce itself");
 				for(ICluster tToAnnounce : pCluster.getNeighbors()) {
 //					List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);
@@ -199,7 +174,7 @@ public class ElectionProcess extends Thread
 				// stepwise hierarchy creation
 				Logging.log(this, "Will now wait because hierarchy build up is done stepwise");
 				mWillInitiateManager = true;
-				if(mLevel == 1) {
+				if(mHierarchyLevel == 1) {
 					Logging.log(this, "Trigger");
 				}
 				Logging.log(this, "Reevaluating whether other processes settled");
@@ -238,24 +213,22 @@ public class ElectionProcess extends Thread
 	{
 		long tPriority = 0;
 		String tOutput = new String();
-		for(ICluster tCluster : mElectingClusters) {
-			for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
-				tPriority = tCEP.getPeerPriority(); 
-				tOutput +=  (tOutput.equals("") ? "" : ", ") +  tPriority;
-				if(tPriority >= tCluster.getHighestPriority()) {
-					tCluster.setHighestPriority(tPriority);
-				} else {
-					if(pVerbose) tCluster.getHRMController().getLogger().log(tCluster, "has lower priority than " + tCEP + " while mine is " + tCluster.getBullyPriority());
-				}
+		for(CoordinatorCEPDemultiplexed tCEP : mElectingCluster.getParticipatingCEPs()) {
+			tPriority = tCEP.getPeerPriority(); 
+			tOutput +=  (tOutput.equals("") ? "" : ", ") +  tPriority;
+			if(tPriority >= mElectingCluster.getHighestPriority()) {
+				mElectingCluster.setHighestPriority(tPriority);
+			} else {
+				if(pVerbose) mElectingCluster.getHRMController().getLogger().log(mElectingCluster, "has lower priority than " + tCEP + " while mine is " + mElectingCluster.getBullyPriority());
 			}
 		}
+
 		Cluster tNodessClusterForCoordinator = null;
-		for(Cluster tCluster : mElectingClusters) {
-			Logging.log(this, "Checking cluster " + tCluster);
-			if(tCluster.getHighestPriority() <= tCluster.getBullyPriority())	{
-				tNodessClusterForCoordinator = tCluster;
-			}
+		Logging.log(this, "Checking cluster " + mElectingCluster);
+		if(mElectingCluster.getHighestPriority() <= mElectingCluster.getBullyPriority())	{
+			tNodessClusterForCoordinator = mElectingCluster;
 		}
+	
 		if(tNodessClusterForCoordinator != null) {
 			if(!mPleaseInterrupt) {
 				initiateCoordinatorFunctions(tNodessClusterForCoordinator);
@@ -291,60 +264,58 @@ public class ElectionProcess extends Thread
 				 */
 				tTimeWaitUntil = System.currentTimeMillis() + TIMEOUT_FOR_ANNOUNCEMENT;
 				checkWait(System.currentTimeMillis(), tTimeWaitUntil);
-				if(mLevel > 0) {
-					for(ICluster tCluster : mElectingClusters) { 
+				if(mHierarchyLevel > 0) {
+					/*
+					 * For loop can be ignored as this can only happen in case we are above level one
+					 */
+					while((mElectingCluster.getHRMController().getClusterWithCoordinatorOnLevel(mElectingCluster.getHierarchyLevel()) == null)) {
+						mElectingCluster.setHighestPriority(mElectingCluster.getBullyPriority());
+						Logging.log(mElectingCluster, " did not yet receive an announcement");
+						for(CoordinatorCEPDemultiplexed tCEP : mElectingCluster.getParticipatingCEPs()) {
+							RequestCoordinator tRequest = new RequestCoordinator(/* false */);
+							tCEP.sendPacket(tRequest);
+							synchronized(tRequest) {
+								if(!tRequest.mWasNotified){
+									Logging.log(this, "ACTIVE WAITING (run)");
+									tRequest.wait(10000);
+								}
+								if(!tRequest.mWasNotified) {
+									Logging.log(this, "Was still waiting for " + tRequest);
+									tRequest.wait();
+								}
+							}
+						}
 						/*
-						 * For loop can be ignored as this can only happen in case we are above level one
-						 */
-						while((tCluster.getHRMController().getClusterWithCoordinatorOnLevel(tCluster.getHierarchyLevel()) == null)) {
-							tCluster.setHighestPriority(tCluster.getBullyPriority());
-							Logging.log(tCluster, " did not yet receive an announcement");
-							for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
-								RequestCoordinator tRequest = new RequestCoordinator(/* false */);
-								tCEP.sendPacket(tRequest);
-								synchronized(tRequest) {
-									if(!tRequest.mWasNotified){
-										Logging.log(this, "ACTIVE WAITING (run)");
-										tRequest.wait(10000);
+						tTimeWaitUntil = System.currentTimeMillis()+TIMEOUT_FOR_LAGGARDS;
+						checkWait(System.currentTimeMillis(), tTimeWaitUntil);
+						*/
+						try {
+							LinkedList<CoordinatorCEPDemultiplexed> tCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
+							tCEPs.addAll(mElectingCluster.getParticipatingCEPs());
+							if(mElectingCluster.getOldParticipatingCEPs() != null) {
+								tCEPs.addAll(mElectingCluster.getOldParticipatingCEPs());
+							}
+							for(CoordinatorCEPDemultiplexed tCEP: mElectingCluster.getParticipatingCEPs()) {
+								if(! tCEP.knowsCoordinator()) {
+									if(!mElectingCluster.getHRMController().checkPathToTargetContainsCovered(mElectingCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster(), tCEPs)) {
+										mElectingCluster.getHRMController().getLogger().log(mElectingCluster, "adding laggard " + tCEP + " while clusters between are " + mElectingCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(mElectingCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster()));
+										mElectingCluster.addLaggard(tCEP);
+									} else {
+										mElectingCluster.getHRMController().getLogger().info(mElectingCluster, "not adding laggard " + tCEP);
 									}
-									if(!tRequest.mWasNotified) {
-										Logging.log(this, "Was still waiting for " + tRequest);
-										tRequest.wait();
-									}
-								}
+								} 
 							}
-							/*
-							tTimeWaitUntil = System.currentTimeMillis()+TIMEOUT_FOR_LAGGARDS;
-							checkWait(System.currentTimeMillis(), tTimeWaitUntil);
-							*/
-							try {
-								LinkedList<CoordinatorCEPDemultiplexed> tCEPs = new LinkedList<CoordinatorCEPDemultiplexed>();
-								tCEPs.addAll(tCluster.getParticipatingCEPs());
-								if(((Cluster)tCluster).getOldParticipatingCEPs() != null) {
-									tCEPs.addAll(((Cluster)tCluster).getOldParticipatingCEPs());
-								}
-								for(CoordinatorCEPDemultiplexed tCEP: tCluster.getParticipatingCEPs()) {
-									if(! tCEP.knowsCoordinator()) {
-										if(!tCluster.getHRMController().checkPathToTargetContainsCovered(tCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster(), tCEPs)) {
-											tCluster.getHRMController().getLogger().log(tCluster, "adding laggard " + tCEP + " while clusters between are " + tCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(tCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster()));
-											tCluster.addLaggard(tCEP);
-										} else {
-											tCluster.getHRMController().getLogger().info(tCluster, "not adding laggard " + tCEP);
-										}
-									} 
-								}
-							} catch (ConcurrentModificationException tExc) {
-								Logging.err(this, "Error when looking for uncovered clusters", tExc);
-							}
-							if(tCluster.getLaggards() != null) {
-								((Cluster)tCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPDemultiplexed>) tCluster.getLaggards().clone());
-								tCluster.getLaggards().clear();
-							}
-							if(tCluster.getHRMController().getClusterWithCoordinatorOnLevel(tCluster.getHierarchyLevel()) == null) {
-								checkClustersForHighestPriority(true);
-							} else {
-								break;
-							}
+						} catch (ConcurrentModificationException tExc) {
+							Logging.err(this, "Error when looking for uncovered clusters", tExc);
+						}
+						if(mElectingCluster.getLaggards() != null) {
+							((Cluster)mElectingCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPDemultiplexed>) mElectingCluster.getLaggards().clone());
+							mElectingCluster.getLaggards().clear();
+						}
+						if(mElectingCluster.getHRMController().getClusterWithCoordinatorOnLevel(mElectingCluster.getHierarchyLevel()) == null) {
+							checkClustersForHighestPriority(true);
+						} else {
+							break;
 						}
 					}
 				}
@@ -356,7 +327,7 @@ public class ElectionProcess extends Thread
 			run();
 		}
 		mInProgress = false;
-		ElectionManager.getElectionManager().removeElection(mElectingClusters.get(0).getHierarchyLevel(), mElectingClusters.get(0).getClusterID());
+		ElectionManager.getElectionManager().removeElection(mElectingCluster.getHierarchyLevel(), mElectingCluster.getClusterID());
 	}
 	
 	private void restart()
@@ -387,9 +358,9 @@ public class ElectionProcess extends Thread
 		}
 	}
 	
-	public LinkedList<Cluster> getParticipatingClusters()
+	public Cluster getCluster()
 	{
-		return mElectingClusters;
+		return mElectingCluster;
 	}
 	
 	public static class ElectionManager
@@ -514,7 +485,7 @@ public class ElectionProcess extends Thread
 					if(mNotification == null) {
 						mNotification = new ElectionEventNotification(mElections.get(pLevel).values());
 						for(ElectionProcess tProcess : mElections.get(pLevel).values()) {
-							tProcess.mElectingClusters.getFirst().getHRMController().getPhysicalNode().getAS().getSimulation().getTimeBase().scheduleIn(5, mNotification);
+							tProcess.mElectingCluster.getHRMController().getPhysicalNode().getAS().getSimulation().getTimeBase().scheduleIn(5, mNotification);
 							break;
 						}
 					} else {

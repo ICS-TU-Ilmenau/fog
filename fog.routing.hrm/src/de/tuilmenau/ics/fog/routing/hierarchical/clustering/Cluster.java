@@ -119,8 +119,7 @@ public class Cluster implements ICluster, IElementDecorator
 				mBullyPriority.increaseConnectivity();
 			}
 		}
-		ElectionProcess tProcess = ElectionManager.getElectionManager().addElection(mHierarchyLevel, mClusterID, new ElectionProcess(mHierarchyLevel));
-		tProcess.addElectingCluster(this);
+		ElectionProcess tProcess = ElectionManager.getElectionManager().addElection(mHierarchyLevel, mClusterID, new ElectionProcess(this));
 		mMux = new CoordinatorCEPMultiplexer(mHRMController);
 		mMux.setCluster(this);
 	}

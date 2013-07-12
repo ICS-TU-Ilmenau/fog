@@ -299,11 +299,10 @@ public class HRMViewer extends EditorPart
 			}
 			for(ElectionProcess tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel())) {
 				boolean tStartProcess=true;
-				for(ICluster tCluster : tProcess.getParticipatingClusters()) {
-					for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
-						if(tCEP.isEdgeCEP()) {
-							tStartProcess = false;
-						}
+				Cluster tCluster = tProcess.getCluster();
+				for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
+					if(tCEP.isEdgeCEP()) {
+						tStartProcess = false;
 					}
 				}
 				if(tStartProcess) {
