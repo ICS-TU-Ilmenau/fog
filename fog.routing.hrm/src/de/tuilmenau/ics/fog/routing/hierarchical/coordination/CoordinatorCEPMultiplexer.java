@@ -101,7 +101,7 @@ public class CoordinatorCEPMultiplexer
 						 * we need the last hop in direct to the neighbor
 						 */
 						ICluster tPredecessorToRemote = (ICluster) mHRMController.getRoutableClusterGraph().getDest(pTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
-						tParticipate.setPredecessor(ClusterName.create(tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getToken(), tPredecessorToRemote.getHierarchyLevel()));
+						tParticipate.setPredecessor(new ClusterName(tPredecessorToRemote.getToken(), tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getHierarchyLevel()));
 						getLogger().log(this, "Successfully set predecessor for " + pTargetCluster + ":" + tPredecessorToRemote);
 					} else {
 						getLogger().log(this, "Unable to set predecessor for " + pTargetCluster + ":");
@@ -137,7 +137,7 @@ public class CoordinatorCEPMultiplexer
 						 */
 						if(!tClusterList.isEmpty()) {
 							ICluster tPredecessor = (ICluster) mHRMController.getRoutableClusterGraph().getDest(tNeighbor, tClusterList.get(tClusterList.size()-1));
-							tEntry.setPredecessor(ClusterName.create(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
+							tEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
 							getLogger().log(this, "Successfully set predecessor for " + tNeighbor + ":" + tPredecessor);
 						} else {
 							getLogger().log(this, "Unable to set predecessor for " + tNeighbor);
@@ -271,14 +271,13 @@ public class CoordinatorCEPMultiplexer
 		return tCEPDemultiplexed;
 	}
 	
-	public boolean write(Serializable pData, CoordinatorCEPChannel pDemux, ICluster pTargetCluster)
+	public boolean write(Serializable pData, CoordinatorCEPChannel pDemux, ClusterName pTargetCluster)
 	{	
 		getLogger().log(this, "Sending " + pData + " from " + pDemux.getCluster() + " to target cluster " + pTargetCluster);
 
-		ClusterName tSource = ClusterName.create(pDemux.getCluster().getClusterID(), pDemux.getCluster().getToken(), pDemux.getCluster().getHierarchyLevel());
-		ClusterName tTarget = ClusterName.create(pTargetCluster.getClusterID(), pTargetCluster.getToken(), pTargetCluster.getHierarchyLevel());
+		ClusterName tSource = new ClusterName(pDemux.getCluster().getToken(), pDemux.getCluster().getClusterID(), pDemux.getCluster().getHierarchyLevel());
 	
-		MultiplexedPackage tMuxPackage = new MultiplexedPackage(tSource, tTarget, pData);
+		MultiplexedPackage tMuxPackage = new MultiplexedPackage(tSource, pTargetCluster, pData);
 		CoordinatorCEP tCEP = mMultiplexer.get(pDemux);
 		getLogger().log(this, "Sending " + tMuxPackage);
 		

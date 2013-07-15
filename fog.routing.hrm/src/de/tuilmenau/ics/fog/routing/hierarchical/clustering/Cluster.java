@@ -213,8 +213,9 @@ public class Cluster implements ICluster, IElementDecorator
 
 			for(IRoutableClusterGraphNode tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
 				if(tNode instanceof ICluster && ((ICluster) tNode).isInterASCluster()) {
+					ICluster tCluster = (ICluster)tNode;
 //					tIsEdgeRouter = true;
-					tInterASClusterIdentifications.add(ClusterName.create(((ICluster)tNode).getClusterID(), ((ICluster)tNode).getToken(), ((ICluster)tNode).getHierarchyLevel()));
+					tInterASClusterIdentifications.add(new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel()));
 				}
 			}
 		}
@@ -227,7 +228,7 @@ public class Cluster implements ICluster, IElementDecorator
 				getHRMController().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		ICluster tCluster = getHRMController().getCluster(ClusterName.create(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
+		ICluster tCluster = getHRMController().getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
 		if(tCluster == null) {
 			tCluster = new NeighborCluster(
 					pAnnounce.getClusterID(),
@@ -573,6 +574,11 @@ public class Cluster implements ICluster, IElementDecorator
 	@Override
 	public HRMID getHrmID() {
 		return mHRMID;
+	}
+	
+	public ClusterName createClusterName()
+	{
+		return new ClusterName(getToken(), getClusterID(), getHierarchyLevel());		
 	}
 	
 	@Override

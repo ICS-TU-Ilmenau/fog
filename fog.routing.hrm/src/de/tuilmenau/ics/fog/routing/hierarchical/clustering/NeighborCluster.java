@@ -103,16 +103,10 @@ public class NeighborCluster implements ICluster, IElementDecorator
 				getHRMController().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		ICluster tCluster = getHRMController().getCluster(ClusterName.create(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
+		ICluster tCluster = getHRMController().getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
 		if(tCluster == null)
 		{
-			tCluster = new NeighborCluster(
-					pAnnounce.getClusterID(),
-					pAnnounce.getCoordinatorName(),
-					pAnnounce.getCoordAddress(),
-					pAnnounce.getToken(),
-					mLevel,
-					getHRMController());
+			tCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), mLevel,	getHRMController());
 			getHRMController().setSourceIntermediateCluster(tCluster, getHRMController().getSourceIntermediate(this));
 			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());

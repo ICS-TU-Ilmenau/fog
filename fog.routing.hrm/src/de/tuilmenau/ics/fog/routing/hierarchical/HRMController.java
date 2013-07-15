@@ -135,7 +135,10 @@ public class HRMController extends Application implements IServerCallback
 			ICluster tFoundCluster = null;
 			for(Cluster tCluster : getRoutingTargetClusters())
 			{
-				if(tCluster.equals(ClusterName.create(tJoin.getTargetClusterID(), 0, tJoin.getLevel())) || tJoin.getTargetToken() != 0 && tCluster.equals(ClusterName.create(tJoin.getTargetClusterID(), tJoin.getTargetToken(), tJoin.getLevel() )))	{
+				ClusterName tJoinClusterName = new ClusterName(tJoin.getTargetToken(), tJoin.getTargetClusterID(), tJoin.getLevel());
+				ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getTargetClusterID(), tJoin.getLevel());
+				
+				if(tCluster.equals(tJoinClusterNameTok0) || tJoin.getTargetToken() != 0 && tCluster.equals(tJoinClusterName))	{
 					if(tConnection == null) {
 						tConnection = new CoordinatorCEP(mLogger, this, true, tJoin.getLevel(), tCluster.getMultiplexer());
 					}
@@ -192,8 +195,9 @@ public class HRMController extends Application implements IServerCallback
 			}
 			tFoundCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnection);
 			for(ICluster tNegotiatingCluster : getRoutingTargetClusters()) {
-				if(tNegotiatingCluster.equals(ClusterName.create(tParticipate.getSourceClusterID(), tParticipate.getSourceToken(), (tJoin.getLevel() - 1 > 0 ? tJoin.getLevel() - 1 : 0 )))) {
-					tCEP.setRemoteClusterName(new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), (tJoin.getLevel() - 1 > 0 ? tJoin.getLevel() - 1 : 0 )));
+				ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), (tJoin.getLevel() - 1 > 0 ? tJoin.getLevel() - 1 : 0 ));
+				if(tNegotiatingCluster.equals(tNegClusterName)) {
+					tCEP.setRemoteClusterName(tNegClusterName);
 				}
 			}
 			if(tCEP.getRemoteClusterName() == null && tJoin.getLevel() > 0) {
@@ -226,12 +230,19 @@ public class HRMController extends Application implements IServerCallback
 				if(tParticipate.getNeighbors() != null && !tParticipate.getNeighbors().isEmpty()) {
 					Logging.log(this, "Working on neighbors " + tParticipate.getNeighbors());
 					for(DiscoveryEntry tEntry : tParticipate.getNeighbors()) {
+						
+						/**
+						 * Create a ClusterName object from this entry
+						 */
+						ClusterName tEntryClusterName = new ClusterName(tEntry.getToken(), tEntry.getClusterID(), tEntry.getLevel());
+						
+						
 						ICluster tCluster = null;
 						if(tEntry.getRoutingVectors()!= null) {
 							for(RoutingServiceLinkVector tVector : tEntry.getRoutingVectors())
 							getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 						}
-						if(!getRoutingTargetClusters().contains(ClusterName.create(tEntry.getClusterID(), tEntry.getToken(), tEntry.getLevel()))) {
+						if(!getRoutingTargetClusters().contains(tEntryClusterName)) {
 							tCluster = new NeighborCluster(tEntry.getClusterID(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken(), tEntry.getLevel(), this);
 							tCluster.setPriority(tEntry.getPriority());
 							if(tEntry.isInterASCluster()) {
@@ -261,7 +272,7 @@ public class HRMController extends Application implements IServerCallback
 							Logging.log(this, "Created " +tCluster);
 						} else {
 							for(ICluster tPossibleCandidate : getRoutingTargetClusters()) {
-								if(tPossibleCandidate.equals(ClusterName.create(tEntry.getClusterID(), tEntry.getToken(), tEntry.getLevel()))) {
+								if(tPossibleCandidate.equals(tEntryClusterName)) {
 									tCluster = tPossibleCandidate;
 								}
 							}
@@ -284,7 +295,9 @@ public class HRMController extends Application implements IServerCallback
 			}
 			if(tCEP.getRemoteClusterName() == null) {
 				mLogger.err(this, "Unable to set remote cluster");
-				tCEP.setRemoteClusterName(ClusterName.create(tParticipate.getSourceClusterID(), tParticipate.getSourceToken(), tParticipate.getLevel()));
+				ClusterName tRemoteClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), tParticipate.getLevel());
+						
+				tCEP.setRemoteClusterName(tRemoteClusterName);
 			}
 			tCEP.setPeerPriority(new BullyPriority(tParticipate.getSenderPriority()));
 			mLogger.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);

@@ -51,7 +51,7 @@ public class ClusterName implements Serializable, ICluster
 	@Override
 	public String toString()
 	{
-		return "ID(" + mClusterID + ")" + "TK(" + mToken + ")LEVEL(" + mLevel + ")"; 
+		return "ClusterName(ClusterId=" + mClusterID + ", Tok=" + mToken + ", HierLvl.=" + mLevel + ")"; 
 	}
 
 	@Override
@@ -229,19 +229,6 @@ public class ClusterName implements Serializable, ICluster
 		return false;
 	}
 	
-	/**
-	 * Factory function for creating an object.
-	 * 
-	 * @param pClusterID the cluster ID 
-	 * @param pToken the token
-	 * @param pLevel the hierarchy level
-	 * @return the created object
-	 */
-	public static ClusterName create(Long pClusterID, int pToken, int pLevel)
-	{
-		return new ClusterName(pToken, pClusterID, pLevel);
-	}
-
 	@Override
 	public LinkedList<CoordinatorCEPChannel> getLaggards()
 	{
