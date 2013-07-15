@@ -121,7 +121,7 @@ public class Coordinator implements ICluster, Observer
 		mBullyPriority = new BullyPriority(this);
 		getHRMController().registerCoordinator(this, mHierarchyLevel);
 		
-		Logging.log(this, "Creating coordinator instance on hierarchy level " + mHierarchyLevel);
+		Logging.log("Coordinator@" + getHRMController().getPhysicalNode().getName() + "@" + mHierarchyLevel + ": INSTANCE created");
 	}
 	
 	public void storeAnnouncement(NeighborClusterAnnounce pAnnounce)
