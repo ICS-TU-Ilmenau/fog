@@ -242,9 +242,9 @@ public class CoordinatorCEP extends Session
 	public String toString()
 	{
 		if(mPeerIdentification != null ) {
-			return getClass().getSimpleName() + "@" + mSourceIdentification + "->" + mPeerIdentification;
+			return getClass().getSimpleName() + "@" + mHRMController.getPhysicalNode().getName() + "(Source=" + mSourceIdentification + ", Peer=" + mPeerIdentification + ")";
 		} else {
-			return getClass().getSimpleName() + "@" + mSourceIdentification;
+			return getClass().getSimpleName() + "@" + mHRMController.getPhysicalNode().getName() + "(Source=" + mSourceIdentification + ")";
 		}
 		 
 	}
