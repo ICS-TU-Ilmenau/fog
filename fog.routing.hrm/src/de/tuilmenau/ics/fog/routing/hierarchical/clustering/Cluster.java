@@ -54,7 +54,7 @@ public class Cluster implements ICluster, IElementDecorator
 	 */
 	private static int sGUIClusterID = 0;
 
-	private CoordinatorCEPChannel mCoordinatorCEPChannel;
+	private CoordinatorCEPChannel mChannelToCoordinator = null;
 	private Long mClusterID;
 	private long mHighestPriority;
 	private HRMID mHRMID = null;
@@ -107,7 +107,6 @@ public class Cluster implements ICluster, IElementDecorator
 		mHRMController = ptHRMController;
 		mBullyPriority = new BullyPriority(this);
 		getHRMController().getLogger().log(this, "CLUSTER - created " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getValue());
-		mHierarchyLevel = pLevel;
 		for(ICluster tCluster : getHRMController().getRoutingTargets())
 		{
 			getHRMController().getLogger().log(this, "CLUSTER - found already known neighbor: " + tCluster);
@@ -140,17 +139,17 @@ public class Cluster implements ICluster, IElementDecorator
 	public void setCoordinatorCEP(CoordinatorCEPChannel pCoordinatorChannel, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
 	{
 		getHRMController().getLogger().log(this, "announcement number " + (++mAnnoucementCounter) + ": Setting Coordinator " + pCoordinatorChannel + " with signature " + pCoordSignature + " with routing address " + pAddress + " and priority ");
-		getHRMController().getLogger().log(this, "previous coordinator was " + mCoordinatorCEPChannel + " with name " + mCoordName);
-		mCoordinatorCEPChannel = pCoordinatorChannel;
+		getHRMController().getLogger().log(this, "previous channel to coordinator was " + mChannelToCoordinator + " for coordinator " + mCoordName);
+		mChannelToCoordinator = pCoordinatorChannel;
 		mCoordSignature = pCoordSignature;
 		mCoordName = pCoordName;
-		if(mCoordinatorCEPChannel == null) {
+		if(mChannelToCoordinator == null) {
 			synchronized(this) {
 				mCoordAddress = getHRMController().getPhysicalNode().getRoutingService().getNameFor(getHRMController().getPhysicalNode().getCentralFN());
 				notifyAll();
 			}
 			setCoordinatorPriority(getBullyPriority());
-			getHRMController().getPhysicalNode().setDecorationParameter("HierLvl.="+ (mHierarchyLevel + 1));
+			getHRMController().getPhysicalNode().setDecorationParameter("L"+ (mHierarchyLevel+1));
 			getHRMController().getPhysicalNode().setDecorationValue("(CoordSign.=" + pCoordSignature + ")");
 		} else {
 			synchronized(this) {
@@ -195,10 +194,10 @@ public class Cluster implements ICluster, IElementDecorator
 		} else {
 			getHRMController().getLogger().log(this, "sending old announces");
 			while(!mReceivedAnnounces.isEmpty()) {
-				if(mCoordinatorCEPChannel != null)
+				if(mChannelToCoordinator != null)
 				{
 					// OK, we have to notify the other node via socket communication, so this cluster has to be at least one hop away
-					mCoordinatorCEPChannel.sendPacket(mReceivedAnnounces.removeFirst());
+					mChannelToCoordinator.sendPacket(mReceivedAnnounces.removeFirst());
 				} else {
 					/*
 					 * in this case this announcement came from a neighbor intermediate cluster
@@ -293,7 +292,7 @@ public class Cluster implements ICluster, IElementDecorator
 				/*
 				 * no coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel)) {
+				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel + 1)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						tManager.storeAnnouncement(pAnnounce);
 					}
@@ -302,7 +301,7 @@ public class Cluster implements ICluster, IElementDecorator
 				/*
 				 * coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel)) {
+				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel + 1)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						if(tManager.getCoordinatorCEP() != null) {
 							tManager.getCoordinatorCEP().sendPacket(pAnnounce);
@@ -338,7 +337,7 @@ public class Cluster implements ICluster, IElementDecorator
 	
 	public CoordinatorCEPChannel getCoordinatorCEP()
 	{
-		return mCoordinatorCEPChannel;
+		return mChannelToCoordinator;
 	}
 	
 	public void addNeighborCluster(ICluster pNeighbor)
@@ -380,7 +379,7 @@ public class Cluster implements ICluster, IElementDecorator
 			{
 				handleAnnouncement(pAnnouncement, pCEP);
 			} else {
-				mCoordinatorCEPChannel.sendPacket(pAnnouncement);
+				mChannelToCoordinator.sendPacket(pAnnouncement);
 			}
 		} else {
 			mReceivedAnnounces.add(pAnnouncement);

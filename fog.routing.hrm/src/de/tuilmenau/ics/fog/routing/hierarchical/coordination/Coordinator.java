@@ -119,7 +119,7 @@ public class Coordinator implements ICluster, Observer
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		mManagedCluster.getHRMController().getRoutableClusterGraph().addObserver(this);
 		mBullyPriority = new BullyPriority(this);
-		getHRMController().registerCoordinator(this, mHierarchyLevel);
+		getHRMController().registerCoordinator(this, mHierarchyLevel + 1);
 		
 		Logging.log("Coordinator@" + getHRMController().getPhysicalNode().getName() + "@" + mHierarchyLevel + ": INSTANCE created");
 	}
