@@ -45,7 +45,6 @@ public class Elector extends Thread
 	private long WAIT_BEFORE_ADDRESS_DISTRIBUTION = 5000;
 	private long TIMEOUT_FOR_ANNOUNCEMENT=5000;
 	
-	private Coordinator mClusterManager=null;
 	private Cluster mElectingCluster = null;
 	private boolean mInProgress = false;
 	private int mHierarchyLevel = 0;	
@@ -166,11 +165,15 @@ public class Elector extends Thread
 				}
 			}
 			 */
-			mClusterManager = new Coordinator(pCluster, pCluster.getHierarchyLevel()+1, pCluster.getHrmID());
-			pCluster.setClusterManager(mClusterManager);
-			pCluster.getHRMController().setSourceIntermediateCluster(mClusterManager, pCluster);
-			mClusterManager.setPriority(pCluster.getBullyPriority());
-			pCluster.getHRMController().addCluster(mClusterManager);
+			
+			
+			Coordinator tElectedCoordinator = new Coordinator(pCluster, pCluster.getHierarchyLevel() + 1, pCluster.getHrmID());
+			
+			
+			pCluster.setClusterManager(tElectedCoordinator);
+			pCluster.getHRMController().setSourceIntermediateCluster(tElectedCoordinator, pCluster);
+			tElectedCoordinator.setPriority(pCluster.getBullyPriority());
+			pCluster.getHRMController().addCluster(tElectedCoordinator);
 			if(pCluster.getHierarchyLevel() +1 != HRMConfig.Hierarchy.HEIGHT) {
 				// stepwise hierarchy creation
 				Logging.log(this, "Will now wait because hierarchy build up is done stepwise");
@@ -187,16 +190,16 @@ public class Elector extends Thread
 						Logging.err(this, "Unable to fulfill stepwise hierarchy preparation", tExc);
 					}
 				}
-				mClusterManager.prepareAboveCluster(pCluster.getHierarchyLevel() +1);
+				tElectedCoordinator.prepareAboveCluster(pCluster.getHierarchyLevel() +1);
 			} else {
 				Logging.log(this, "Beginning address distribution");
 				try {
-					mClusterManager.setHRMID(new HRMID(0));
+					tElectedCoordinator.setHRMID(new HRMID(0));
 					synchronized(mPleaseInterrupt) {
 						Logging.log(this, "ACTIVE WAITING (init) - " + WAIT_BEFORE_ADDRESS_DISTRIBUTION);
 						mPleaseInterrupt.wait(WAIT_BEFORE_ADDRESS_DISTRIBUTION);
 					}
-					mClusterManager.distributeAddresses();
+					tElectedCoordinator.distributeAddresses();
 				} catch (RemoteException tExc) {
 					Logging.err(this, "Remoe problem - error when trying to distribute addresses", tExc);
 				} catch (RoutingException tExc) {
