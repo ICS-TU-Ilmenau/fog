@@ -170,7 +170,7 @@ public class Elector extends Thread
 			Coordinator tElectedCoordinator = new Coordinator(pCluster, pCluster.getHierarchyLevel() + 1, pCluster.getHrmID());
 			
 			
-			pCluster.setClusterManager(tElectedCoordinator);
+			pCluster.setCoordinator(tElectedCoordinator);
 			pCluster.getHRMController().setSourceIntermediateCluster(tElectedCoordinator, pCluster);
 			tElectedCoordinator.setPriority(pCluster.getBullyPriority());
 			pCluster.getHRMController().addCluster(tElectedCoordinator);

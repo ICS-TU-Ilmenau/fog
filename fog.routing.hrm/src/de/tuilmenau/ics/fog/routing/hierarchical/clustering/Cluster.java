@@ -54,7 +54,7 @@ public class Cluster implements ICluster, IElementDecorator
 	 */
 	private static int sGUIClusterID = 0;
 
-	private CoordinatorCEPChannel mCoordinator;
+	private CoordinatorCEPChannel mCoordinatorCEPChannel;
 	private Long mClusterID;
 	private long mHighestPriority;
 	private HRMID mHRMID = null;
@@ -75,10 +75,10 @@ public class Cluster implements ICluster, IElementDecorator
 	private static final long serialVersionUID = -2087553402508167474L;
 	private CoordinatorCEPChannel mNegotiator = null;
 	private LinkedList<CoordinatorCEPChannel> mNegotiators= new LinkedList<CoordinatorCEPChannel>();
-	private TopologyData mEnvelope = null;
+	private TopologyData mTopologyData = null;
 	private CoordinatorCEPChannel mAnnouncer = null;
 	private LinkedList<CoordinatorCEPChannel> mOldParticipatingCEPs;
-	private Coordinator mClusterManager = null;
+	private Coordinator mCoordinator = null;
 	private CoordinatorCEPMultiplexer mMux = null;
 	
 	/**
@@ -140,11 +140,11 @@ public class Cluster implements ICluster, IElementDecorator
 	public void setCoordinatorCEP(CoordinatorCEPChannel pCoordinatorChannel, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
 	{
 		getHRMController().getLogger().log(this, "announcement number " + (++mAnnoucementCounter) + ": Setting Coordinator " + pCoordinatorChannel + " with signature " + pCoordSignature + " with routing address " + pAddress + " and priority ");
-		getHRMController().getLogger().log(this, "previous coordinator was " + mCoordinator + " with name " + mCoordName);
-		mCoordinator = pCoordinatorChannel;
+		getHRMController().getLogger().log(this, "previous coordinator was " + mCoordinatorCEPChannel + " with name " + mCoordName);
+		mCoordinatorCEPChannel = pCoordinatorChannel;
 		mCoordSignature = pCoordSignature;
 		mCoordName = pCoordName;
-		if(mCoordinator == null) {
+		if(mCoordinatorCEPChannel == null) {
 			synchronized(this) {
 				mCoordAddress = getHRMController().getPhysicalNode().getRoutingService().getNameFor(getHRMController().getPhysicalNode().getCentralFN());
 				notifyAll();
@@ -195,10 +195,10 @@ public class Cluster implements ICluster, IElementDecorator
 		} else {
 			getHRMController().getLogger().log(this, "sending old announces");
 			while(!mReceivedAnnounces.isEmpty()) {
-				if(mCoordinator != null)
+				if(mCoordinatorCEPChannel != null)
 				{
 					// OK, we have to notify the other node via socket communication, so this cluster has to be at least one hop away
-					mCoordinator.sendPacket(mReceivedAnnounces.removeFirst());
+					mCoordinatorCEPChannel.sendPacket(mReceivedAnnounces.removeFirst());
 				} else {
 					/*
 					 * in this case this announcement came from a neighbor intermediate cluster
@@ -344,7 +344,7 @@ public class Cluster implements ICluster, IElementDecorator
 	
 	public CoordinatorCEPChannel getCoordinatorCEP()
 	{
-		return mCoordinator;
+		return mCoordinatorCEPChannel;
 	}
 	
 	public void addNeighborCluster(ICluster pNeighbor)
@@ -386,7 +386,7 @@ public class Cluster implements ICluster, IElementDecorator
 			{
 				handleAnnouncement(pAnnouncement, pCEP);
 			} else {
-				mCoordinator.sendPacket(pAnnouncement);
+				mCoordinatorCEPChannel.sendPacket(pAnnouncement);
 			}
 		} else {
 			mReceivedAnnounces.add(pAnnouncement);
@@ -673,7 +673,7 @@ public class Cluster implements ICluster, IElementDecorator
 				getHRMController().addApprovedSignature(tSignature);
 			}
 		}
-		mEnvelope = pEnvelope;
+		mTopologyData = pEnvelope;
 		HierarchicalNameMappingService<HRMID> tNMS = null;
 		try {
 			tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
@@ -691,8 +691,8 @@ public class Cluster implements ICluster, IElementDecorator
 		
 		getHRMController().getPhysicalNode().setDecorationValue(getHRMController().getPhysicalNode().getDecorationValue() + " " + pEnvelope.getHRMID().toString() + ",");
 		getHRMController().addIdentification(pEnvelope.getHRMID());
-		if(mEnvelope.getEntries() != null) {
-			for(FIBEntry tEntry : mEnvelope.getEntries()) {
+		if(mTopologyData.getEntries() != null) {
+			for(FIBEntry tEntry : mTopologyData.getEntries()) {
 				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null) {
 					/*if(!getCoordinator().getHRS().getRoutingTable().containsKey(tEntry.getDestination())) {
 						getCoordinator().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
@@ -713,7 +713,7 @@ public class Cluster implements ICluster, IElementDecorator
 	@Override
 	public TopologyData getTopologyData()
 	{
-		return mEnvelope;
+		return mTopologyData;
 	}
 	
 	/**
@@ -721,14 +721,14 @@ public class Cluster implements ICluster, IElementDecorator
 	 * @return Return the cluster manager that is associated to this intermediate cluster. However it is only initialized if this
 	 * node really had the highest priority.
 	 */
-	public Coordinator getClusterManager()
+	public Coordinator getCoordinator()
 	{
-		return mClusterManager;
+		return mCoordinator;
 	}
 	
-	public void setClusterManager(Coordinator pManager)
+	public void setCoordinator(Coordinator pCoordinator)
 	{
-		mClusterManager = pManager;
+		mCoordinator = pCoordinator;
 	}
 	
 	@Override

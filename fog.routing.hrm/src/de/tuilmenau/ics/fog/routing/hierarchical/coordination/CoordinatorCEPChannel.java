@@ -391,7 +391,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 						return true;
 					}
 					if(getCluster() instanceof Cluster) {
-						Coordinator tManager = ((Cluster)getCluster()).getClusterManager();
+						Coordinator tManager = ((Cluster)getCluster()).getCoordinator();
 						tManager.handleRouteRequest((RouteRequest) pData, getRemoteClusterName());
 						tManager.registerRouteRequest(tRouteRequestPacket.getSession(), this);
 					} else if (getCluster() instanceof Coordinator) {
