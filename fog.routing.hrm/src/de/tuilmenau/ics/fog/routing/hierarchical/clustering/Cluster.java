@@ -740,7 +740,7 @@ public class Cluster implements ICluster, IElementDecorator
 	public CoordinatorCEPChannel getCEPOfCluster(ICluster pCluster)
 	{
 		for(CoordinatorCEPChannel tCEP : getParticipatingCEPs()) {
-			if(tCEP.getRemoteCluster().equals(pCluster)) {
+			if(tCEP.getRemoteClusterName().equals(pCluster)) {
 				return tCEP;
 			}
 		}

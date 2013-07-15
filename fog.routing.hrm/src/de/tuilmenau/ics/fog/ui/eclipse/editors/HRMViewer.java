@@ -596,22 +596,31 @@ public class HRMViewer extends EditorPart
 	public void printCEPs(ICluster pCluster)
 	{
 		Table tTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+		
 		TableColumn tColumnCoordinator = new TableColumn(tTable, SWT.NONE, 0);
 		tColumnCoordinator.setText("Coordinator");
+		
 		TableColumn tColumnCEP = new TableColumn(tTable, SWT.NONE, 1);
 		tColumnCEP.setText("CEP");
+		
 		TableColumn tColumnTargetCovered = new TableColumn(tTable, SWT.NONE, 2);
 		tColumnTargetCovered.setText("Target Covered");
+		
 		TableColumn tColumnPartofCluster = new TableColumn(tTable, SWT.NONE, 3);
 		tColumnPartofCluster.setText("Knows coord.");
+		
 		TableColumn tColumnPeerPriority = new TableColumn(tTable, SWT.NONE, 4);
 		tColumnPeerPriority.setText("Peer Priority");
+		
 		TableColumn tColumnNegotiator = new TableColumn(tTable, SWT.NONE, 5);
-		tColumnNegotiator.setText("Peer");
+		tColumnNegotiator.setText("Content");
+		
 		TableColumn tColumnAnnouncerNegotiator = new TableColumn(tTable, SWT.NONE, 6);
 		tColumnAnnouncerNegotiator.setText("Announcers negotiator");
+		
 		TableColumn tColumnRoute = new TableColumn(tTable, SWT.NONE, 7);
 		tColumnRoute.setText("Route");
+		
 		TableColumn tColumnBorder = new TableColumn(tTable, SWT.NONE, 8);
 		tColumnBorder.setText("BNA");
 		
@@ -670,8 +679,8 @@ public class HRMViewer extends EditorPart
 			/**
 			 * Column 5:  
 			 */
-			if (tCEP.getRemoteCluster() != null){
-				tRow.setText(5, tCEP.getRemoteCluster().toString());
+			if (tCEP.getRemoteClusterName() != null){
+				tRow.setText(5, tCEP.getRemoteClusterName().toString());
 			}else{
 				tRow.setText(5, "??");
 			}
@@ -679,8 +688,8 @@ public class HRMViewer extends EditorPart
 			/**
 			 * Column 6:  
 			 */
-			if(tCEP.getRemoteCluster() != null && tCEP.getRemoteCluster() instanceof NeighborCluster && ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()) != null && ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster() != null) {
-				tRow.setText(6, ((NeighborCluster)tCEP.getRemoteCluster()).getAnnouncedCEP(tCEP.getRemoteCluster()).getRemoteCluster().toString());
+			if(tCEP.getRemoteClusterName() != null){ //&& tCEP.getRemoteClusterName() instanceof NeighborCluster && ((NeighborCluster)tCEP.getRemoteClusterName()).getAnnouncedCEP(tCEP.getRemoteClusterName()) != null && ((NeighborCluster)tCEP.getRemoteClusterName()).getAnnouncedCEP(tCEP.getRemoteClusterName()).getRemoteClusterName() != null) {
+				tRow.setText(6, tCEP.getRemoteClusterName().toString());
 			}
 
 			/**

@@ -78,7 +78,7 @@ public class CoordinatorCEPMultiplexer
 					getLogger().log(this, "Registering multiplex" + tManager.getClusterID() + " to " + pTargetCluster.getClusterID() + " with connection endpoint " + tCEPDemultiplexed);
 					mClusterToCEPMapping.put(new Tuple<Long, Long>(tManager.getClusterID(), pTargetCluster.getClusterID()), tCEPDemultiplexed);
 				}
-				tCEPDemultiplexed.setRemoteCluster(pTargetCluster);
+				tCEPDemultiplexed.setRemoteClusterName(new ClusterName(pTargetCluster.getToken(), pTargetCluster.getClusterID(), pTargetCluster.getHierarchyLevel()));
 			}
 			
 			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel()+1)) {
@@ -341,7 +341,7 @@ public class CoordinatorCEPMultiplexer
 				if(tCEP.getCluster().getClusterID().equals(pCluster.getClusterID())) {
 					Tuple<Long, Long> tTuple = new Tuple<Long, Long>(pSource.getClusterID(), pCluster.getClusterID());
 					boolean tSourceIsContained = isClusterMultiplexed(tTuple);
-					getLogger().log(this, "Comparing \"" + tCEP + "\" and \"" + (tSourceIsContained ? getDemultiplex(tTuple) : "") + "\" " + tCEP.getRemoteCluster() + ", " + (tSourceIsContained ? getDemultiplex(tTuple).getRemoteCluster() : "" ));
+					getLogger().log(this, "Comparing \"" + tCEP + "\" and \"" + (tSourceIsContained ? getDemultiplex(tTuple) : "") + "\" " + tCEP.getRemoteClusterName() + ", " + (tSourceIsContained ? getDemultiplex(tTuple).getRemoteClusterName() : "" ));
 					if(tSourceIsContained && getDemultiplex(tTuple) == tCEP) {
 						getLogger().log(this, "Returning " + tCEP + " for request on cluster " + pCluster);
 						return tCEP;

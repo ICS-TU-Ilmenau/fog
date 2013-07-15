@@ -300,8 +300,8 @@ public class Elector extends Thread
 							}
 							for(CoordinatorCEPChannel tCEP: mElectingCluster.getParticipatingCEPs()) {
 								if(! tCEP.knowsCoordinator()) {
-									if(!mElectingCluster.getHRMController().checkPathToTargetContainsCovered(mElectingCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster(), tCEPs)) {
-										mElectingCluster.getHRMController().getLogger().log(mElectingCluster, "adding laggard " + tCEP + " while clusters between are " + mElectingCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(mElectingCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteCluster()), tCEP.getRemoteCluster()));
+									if(!mElectingCluster.getHRMController().checkPathToTargetContainsCovered(mElectingCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName(), tCEPs)) {
+										mElectingCluster.getHRMController().getLogger().log(mElectingCluster, "adding laggard " + tCEP + " while clusters between are " + mElectingCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(mElectingCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName()));
 										mElectingCluster.addLaggard(tCEP);
 									} else {
 										mElectingCluster.getHRMController().getLogger().info(mElectingCluster, "not adding laggard " + tCEP);
