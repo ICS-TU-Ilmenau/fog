@@ -103,7 +103,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 				getHRMController().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		ICluster tCluster = getHRMController().getCluster(ClusterDummy.compare(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
+		ICluster tCluster = getHRMController().getCluster(ClusterName.create(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
 		if(tCluster == null)
 		{
 			tCluster = new NeighborCluster(

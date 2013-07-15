@@ -14,7 +14,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
@@ -134,8 +134,8 @@ public class TopologyData implements Serializable
 		private static final long serialVersionUID = 2270983044012996054L;
 		private HRMID mDestination;
 		private HRMName mNextHop;
-		private ClusterDummy mNextCluster;
-		private ClusterDummy mFartestClusterInDirection;
+		private ClusterName mNextCluster;
+		private ClusterName mFartestClusterInDirection;
 //		private boolean mWriteProtected;
 		private HRMSignature mSignature;
 		private LinkedList<RoutingServiceLinkVector> mRoutingVectors;
@@ -148,7 +148,7 @@ public class TopologyData implements Serializable
 		 * @param pNextCluster as the cluster that is forwarding that entry
 		 * @param pSignature is the signature of the router that produced this entry
 		 */
-		public FIBEntry(HRMID pDestination, HRMName pNextHop, ClusterDummy pNextCluster, HRMSignature pSignature)
+		public FIBEntry(HRMID pDestination, HRMName pNextHop, ClusterName pNextCluster, HRMSignature pSignature)
 		{
 			mNextHop = pNextHop;
 			mDestination = pDestination;
@@ -160,7 +160,7 @@ public class TopologyData implements Serializable
 		 * 
 		 * @param pDummy is the cluster in direction to the target that is still known to the node due to the chosen radius
 		 */
-		public void setFarthestClusterInDirection(ClusterDummy pDummy)
+		public void setFarthestClusterInDirection(ClusterName pDummy)
 		{
 			mFartestClusterInDirection = pDummy;
 		}
@@ -169,7 +169,7 @@ public class TopologyData implements Serializable
 		 * 
 		 * @return the cluster in direction to the target that is still known to the node due to the chosen radius
 		 */
-		public ClusterDummy getFarthestClusterInDirection()
+		public ClusterName getFarthestClusterInDirection()
 		{
 			return mFartestClusterInDirection;
 		}
@@ -215,7 +215,7 @@ public class TopologyData implements Serializable
 		 * 
 		 * @param pNextCluster is the supernode that represents the "outgoing interface" to forward the packet towards it target
 		 */
-		public void setNextCluster(ClusterDummy pNextCluster)
+		public void setNextCluster(ClusterName pNextCluster)
 		{
 			mNextCluster = pNextCluster;
 		}
@@ -224,7 +224,7 @@ public class TopologyData implements Serializable
 		 * 
 		 * @return next cluster hop that forwards the packet in direction of the destination
 		 */
-		public ClusterDummy getNextCluster()
+		public ClusterName getNextCluster()
 		{
 			return mNextCluster;
 		}

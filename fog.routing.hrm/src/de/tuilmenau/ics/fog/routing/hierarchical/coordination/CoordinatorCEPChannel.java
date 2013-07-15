@@ -36,7 +36,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IRoutableClusterGraphNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
@@ -503,8 +503,8 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 					}
 					if(tRequestCoordinatorPacket.getDiscoveryEntries() != null) {
 						for(DiscoveryEntry tEntry : tRequestCoordinatorPacket.getDiscoveryEntries()) {
-							ClusterDummy tDummy = handleDiscoveryEntry(tEntry);
-							getCluster().getHRMController().getCluster(ClusterDummy.compare((((HRMName)getSourceName()).getAddress().longValue()), getCluster().getToken(), getCluster().getHierarchyLevel())).addNeighborCluster(getCluster().getHRMController().getCluster(tDummy));
+							ClusterName tDummy = handleDiscoveryEntry(tEntry);
+							getCluster().getHRMController().getCluster(ClusterName.create((((HRMName)getSourceName()).getAddress().longValue()), getCluster().getToken(), getCluster().getHierarchyLevel())).addNeighborCluster(getCluster().getHRMController().getCluster(tDummy));
 							addAnnouncedCluster(getHRMController().getCluster(tDummy), getRemoteCluster());
 						}
 					}
@@ -571,7 +571,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getCluster(), pCluster);
 			if(!tClusterList.isEmpty()) {
 				ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getDest(pCluster, tClusterList.get(tClusterList.size()-1));
-				tEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
+				tEntry.setPredecessor(ClusterName.create(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
 			}
 			
 			pDiscovery.addDiscoveryEntry(tEntry);
@@ -596,7 +596,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	public ICluster getRemoteCluster()
 	{
 		ICluster tCluster = null;
-		if(mRemoteCluster instanceof ClusterDummy) {
+		if(mRemoteCluster instanceof ClusterName) {
 			tCluster = getHRMController().getCluster(mRemoteCluster);
 		}
 		if(getCluster().getHierarchyLevel() == 0) {
@@ -690,7 +690,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 			getHRMController().getLogger().log(this, "Sending " + pData);
 		}
 		if(getCluster() instanceof Coordinator && !mCrossLevelCEP) {
-			getCEPMultiplexer().write(pData, this, ClusterDummy.compare(((L2Address)getPeerName()).getAddress().longValue(), getCluster().getToken(), getCluster().getHierarchyLevel()));
+			getCEPMultiplexer().write(pData, this, ClusterName.create(((L2Address)getPeerName()).getAddress().longValue(), getCluster().getToken(), getCluster().getHierarchyLevel()));
 		} else {
 			getCEPMultiplexer().write(pData, this, getRemoteCluster());
 		}
@@ -732,7 +732,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	{
 		if(pRequest){
 			ICluster tSourceCluster=null;
-			tSourceCluster = getHRMController().getCluster(ClusterDummy.compare(pDiscovery.getSourceClusterID(), pDiscovery.getToken(), pDiscovery.getLevel()));
+			tSourceCluster = getHRMController().getCluster(ClusterName.create(pDiscovery.getSourceClusterID(), pDiscovery.getToken(), pDiscovery.getLevel()));
 			if(tSourceCluster == null) {
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteCluster());
 			}
@@ -765,7 +765,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 							}
 							getPathTo(pDiscovery, tCluster);
 							for(ICluster tNeighbor : tCluster.getNeighbors()) {
-								pDiscovery.addNeighborRelation(ClusterDummy.compare(tCluster.getClusterID(), tCluster.getToken(), tCluster.getHierarchyLevel()), ClusterDummy.compare(tNeighbor.getClusterID(), tNeighbor.getToken(), tNeighbor.getHierarchyLevel()));
+								pDiscovery.addNeighborRelation(ClusterName.create(tCluster.getClusterID(), tCluster.getToken(), tCluster.getHierarchyLevel()), ClusterName.create(tNeighbor.getClusterID(), tNeighbor.getToken(), tNeighbor.getHierarchyLevel()));
 							}
 						} else {
 							/*
@@ -777,24 +777,24 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 			}
 		} else {
 			if(pDiscovery.getDiscoveryEntries() != null) {
-				HashMap<ClusterDummy, ClusterDummy> tToSetNegotiator = new HashMap<ClusterDummy, ClusterDummy>();
+				HashMap<ClusterName, ClusterName> tToSetNegotiator = new HashMap<ClusterName, ClusterName>();
 				for(DiscoveryEntry tEntry : pDiscovery.getDiscoveryEntries()) {
 					tToSetNegotiator.put(handleDiscoveryEntry(tEntry), tEntry.getPredecessor());
 				}
-				for(ClusterDummy tDummy : tToSetNegotiator.keySet()) {
+				for(ClusterName tDummy : tToSetNegotiator.keySet()) {
 					addAnnouncedCluster(getHRMController().getCluster(tDummy), getHRMController().getCluster(tToSetNegotiator.get(tDummy)));
 				}
 			}
 		}
 	}
 	
-	public ClusterDummy handleDiscoveryEntry(DiscoveryEntry pEntry) throws PropertyException
+	public ClusterName handleDiscoveryEntry(DiscoveryEntry pEntry) throws PropertyException
 	{
 		getHRMController().getLogger().trace(this, "Handling " + pEntry);
-		ICluster tNewCluster = getHRMController().getCluster(ClusterDummy.compare(pEntry.getClusterID(), pEntry.getToken(), pEntry.getLevel()));
+		ICluster tNewCluster = getHRMController().getCluster(ClusterName.create(pEntry.getClusterID(), pEntry.getToken(), pEntry.getLevel()));
 		if(tNewCluster == null) {
 			for(Cluster tCluster : getHRMController().getRoutingTargetClusters()) {
-				if(tCluster.equals(ClusterDummy.compare(pEntry.getClusterID(), pEntry.getToken(), getCluster().getHierarchyLevel() - 1))) {
+				if(tCluster.equals(ClusterName.create(pEntry.getClusterID(), pEntry.getToken(), getCluster().getHierarchyLevel() - 1))) {
 					tNewCluster = tCluster;
 					if(tNewCluster instanceof NeighborCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {
 						getHRMController().getLogger().log(this, "Filling required information into " + tNewCluster);
@@ -833,7 +833,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				getHRMController().getHRS().registerRoute(tLink.getSource(), tLink.getDestination(), tLink.getPath());
 			}
 		}
-		return ClusterDummy.compare(tNewCluster.getClusterID(), tNewCluster.getToken(), tNewCluster.getHierarchyLevel());
+		return ClusterName.create(tNewCluster.getClusterID(), tNewCluster.getToken(), tNewCluster.getHierarchyLevel());
 	}
 	
 	public String toString()

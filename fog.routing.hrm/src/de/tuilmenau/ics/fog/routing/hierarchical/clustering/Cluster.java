@@ -209,12 +209,12 @@ public class Cluster implements ICluster, IElementDecorator
 		}
 		if(pCoordinatorChannel == null) {
 //			boolean tIsEdgeRouter = false;
-			LinkedList<ClusterDummy> tInterASClusterIdentifications = new LinkedList<ClusterDummy>();
+			LinkedList<ClusterName> tInterASClusterIdentifications = new LinkedList<ClusterName>();
 
 			for(IRoutableClusterGraphNode tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
 				if(tNode instanceof ICluster && ((ICluster) tNode).isInterASCluster()) {
 //					tIsEdgeRouter = true;
-					tInterASClusterIdentifications.add(ClusterDummy.compare(((ICluster)tNode).getClusterID(), ((ICluster)tNode).getToken(), ((ICluster)tNode).getHierarchyLevel()));
+					tInterASClusterIdentifications.add(ClusterName.create(((ICluster)tNode).getClusterID(), ((ICluster)tNode).getToken(), ((ICluster)tNode).getHierarchyLevel()));
 				}
 			}
 		}
@@ -227,7 +227,7 @@ public class Cluster implements ICluster, IElementDecorator
 				getHRMController().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		ICluster tCluster = getHRMController().getCluster(ClusterDummy.compare(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
+		ICluster tCluster = getHRMController().getCluster(ClusterName.create(pAnnounce.getClusterID(), pAnnounce.getToken(), pAnnounce.getLevel()));
 		if(tCluster == null) {
 			tCluster = new NeighborCluster(
 					pAnnounce.getClusterID(),

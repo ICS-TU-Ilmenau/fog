@@ -15,7 +15,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -37,7 +37,7 @@ public class NeighborClusterAnnounce implements Serializable
 	private boolean mReject = false;
 	private boolean mForeignAnnouncement;
 	private DiscoveryEntry mCoveringCluster;
-	private ClusterDummy mNegotiatorIdentification;
+	private ClusterName mNegotiatorIdentification;
 	private String mASIdentification;
 	private boolean mInterASCluster = false;
 	/**
@@ -237,7 +237,7 @@ public class NeighborClusterAnnounce implements Serializable
 	 * 
 	 * @param pDummy as cluster identification of a super-node that has to be used to reach the target cluster
 	 */
-	public void setNegotiatorIdentification(ClusterDummy pDummy)
+	public void setNegotiatorIdentification(ClusterName pDummy)
 	{
 		mNegotiatorIdentification = pDummy;
 	}
@@ -246,7 +246,7 @@ public class NeighborClusterAnnounce implements Serializable
 	 * 
 	 * @return cluster identification of a super-node that has to be used to reach the target cluster
 	 */
-	public ClusterDummy getNegotiatorIdentification()
+	public ClusterName getNegotiatorIdentification()
 	{
 		return mNegotiatorIdentification;
 	}

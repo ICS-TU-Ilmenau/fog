@@ -51,7 +51,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChan
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
@@ -467,7 +467,7 @@ public class HRMViewer extends EditorPart
 					/**
 					 * Column 2:  
 					 */
-					ClusterDummy tDummy = tEntry.getFarthestClusterInDirection();
+					ClusterName tDummy = tEntry.getFarthestClusterInDirection();
 					ICluster tFarthestCluster = null;
 					if(tDummy != null) {
 						tFarthestCluster = mtHRMController.getCluster(tEntry.getFarthestClusterInDirection());
@@ -846,7 +846,7 @@ public class HRMViewer extends EditorPart
 					/**
 					 * Column 2:  
 					 */
-					ClusterDummy tDummy = tEntry.getFarthestClusterInDirection();
+					ClusterName tDummy = tEntry.getFarthestClusterInDirection();
 					ICluster tFarthestCluster = null;
 					if(tDummy != null) {
 						tFarthestCluster = mtHRMController.getCluster(tEntry.getFarthestClusterInDirection());

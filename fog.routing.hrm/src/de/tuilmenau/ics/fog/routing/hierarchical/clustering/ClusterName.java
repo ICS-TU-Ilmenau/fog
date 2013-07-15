@@ -25,7 +25,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMult
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
-public class ClusterDummy implements Serializable, ICluster
+public class ClusterName implements Serializable, ICluster
 {
 	/**
 	 * 
@@ -41,7 +41,7 @@ public class ClusterDummy implements Serializable, ICluster
 	 * @param pClusterID ID of the cluster
 	 * @param pLevel level of the cluster
 	 */
-	public ClusterDummy(int pToken, Long pClusterID, int pLevel)
+	public ClusterName(int pToken, Long pClusterID, int pLevel)
 	{
 		mClusterID = pClusterID;
 		mToken = pToken;
@@ -229,9 +229,17 @@ public class ClusterDummy implements Serializable, ICluster
 		return false;
 	}
 	
-	public static ClusterDummy compare(Long pClusterID, int pToken, int pLevel)
+	/**
+	 * Factory function for creating an object.
+	 * 
+	 * @param pClusterID the cluster ID 
+	 * @param pToken the token
+	 * @param pLevel the hierarchy level
+	 * @return the created object
+	 */
+	public static ClusterName create(Long pClusterID, int pToken, int pLevel)
 	{
-		return new ClusterDummy(pToken, pClusterID, pLevel);
+		return new ClusterName(pToken, pClusterID, pLevel);
 	}
 
 	@Override

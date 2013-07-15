@@ -24,7 +24,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -101,10 +101,10 @@ public class CoordinatorCEP extends Session
 			}
 		} else if (pData instanceof MultiplexedPackage) {
 			MultiplexedPackage tPackage = (MultiplexedPackage) pData;
-			ClusterDummy tTargetCluster = tPackage.getDestinationCluster();
+			ClusterName tTargetCluster = tPackage.getDestinationCluster();
 			
 			try {
-				CoordinatorCEPChannel tCEP = mMux.getDemuxedCEP(this, (ClusterDummy)tPackage.getSourceCluster(), tTargetCluster);
+				CoordinatorCEPChannel tCEP = mMux.getDemuxedCEP(this, (ClusterName)tPackage.getSourceCluster(), tTargetCluster);
 				if(tCEP != null) {
 					getLogger().log(this, "Forwarding " + tPackage.getData() + " from " + tPackage.getSourceCluster() + " to " + tPackage.getDestinationCluster() + " with " + tCEP);
 					tCEP.receive(tPackage.getData());

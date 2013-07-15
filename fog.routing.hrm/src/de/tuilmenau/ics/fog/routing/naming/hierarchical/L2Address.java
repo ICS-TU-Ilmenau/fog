@@ -49,6 +49,6 @@ public class L2Address extends HRMName
 	
 	public String toString()
 	{
-		return mOptionalDescr + "(" + mAddress + ")";
+		return mOptionalDescr + "(addr.=" + mAddress + ")";
 	}
 }

@@ -14,7 +14,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
 /**
@@ -32,7 +32,7 @@ public class DiscoveryEntry implements Serializable
 	private long mPriority = 0;
 	private int mLevel=0;
 	private int mClusterHops;
-	private ClusterDummy mPredecessor;
+	private ClusterName mPredecessor;
 	private boolean mIsInterASCluster = false;
 	
 	/**
@@ -55,7 +55,7 @@ public class DiscoveryEntry implements Serializable
 	 * 
 	 * @param pDummy contains cluster identification of the first cluster along the path to the entity that sent the discovery request
 	 */
-	public void setPredecessor(ClusterDummy pDummy)
+	public void setPredecessor(ClusterName pDummy)
 	{
 		mPredecessor = pDummy;
 	}
@@ -64,7 +64,7 @@ public class DiscoveryEntry implements Serializable
 	 * 
 	 * @return cluster identification of the first cluster along the path to the entity that sent the discovery request
 	 */
-	public ClusterDummy getPredecessor()
+	public ClusterName getPredecessor()
 	{
 		return mPredecessor;
 	}

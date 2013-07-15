@@ -15,7 +15,7 @@ import java.util.Random;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.util.Tuple;
 
 /**
@@ -115,7 +115,7 @@ public class ClusterDiscovery implements Serializable
 		private static final long serialVersionUID = -781019033813113905L;
 		private LinkedList<DiscoveryEntry> mDiscoveryEntries = null;
 		private LinkedList<Integer> mTokens = null;
-		private LinkedList<Tuple<ClusterDummy, ClusterDummy>> mNeighbors = null;
+		private LinkedList<Tuple<ClusterName, ClusterName>> mNeighbors = null;
 		private Long mSourceClusterID;
 		private int mDistance = 0;
 		private int mToken;
@@ -236,16 +236,16 @@ public class ClusterDiscovery implements Serializable
 		 * @param pFirst is the beginning of the undirected edge that represents a connection between the two clusters
 		 * @param pSecond is the end of the undirected edge that represents a connection between the two clusters
 		 */
-		public void addNeighborRelation(ClusterDummy pFirst, ClusterDummy pSecond)
+		public void addNeighborRelation(ClusterName pFirst, ClusterName pSecond)
 		{
 			if(mNeighbors == null) {
-				mNeighbors = new LinkedList<Tuple<ClusterDummy, ClusterDummy>>();
-				mNeighbors.add(new Tuple<ClusterDummy, ClusterDummy>(pFirst, pSecond));
+				mNeighbors = new LinkedList<Tuple<ClusterName, ClusterName>>();
+				mNeighbors.add(new Tuple<ClusterName, ClusterName>(pFirst, pSecond));
 			} else {
-				if(mNeighbors.contains(new Tuple<ClusterDummy, ClusterDummy>(pFirst, pSecond)) || mNeighbors.contains(new Tuple<ClusterDummy, ClusterDummy>(pSecond, pFirst))) {
+				if(mNeighbors.contains(new Tuple<ClusterName, ClusterName>(pFirst, pSecond)) || mNeighbors.contains(new Tuple<ClusterName, ClusterName>(pSecond, pFirst))) {
 					//don't add
 				} else {
-					mNeighbors.add(new Tuple<ClusterDummy, ClusterDummy>(pFirst, pSecond));
+					mNeighbors.add(new Tuple<ClusterName, ClusterName>(pFirst, pSecond));
 				}
 				
 			}
@@ -255,7 +255,7 @@ public class ClusterDiscovery implements Serializable
 		 * 
 		 * @return a list of neighbor relations: connection between clusters
 		 */
-		public LinkedList<Tuple<ClusterDummy, ClusterDummy>> getNeighborRelations()
+		public LinkedList<Tuple<ClusterName, ClusterName>> getNeighborRelations()
 		{
 			return mNeighbors;
 		}

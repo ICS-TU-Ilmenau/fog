@@ -15,7 +15,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
 /**
@@ -161,7 +161,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		private static final long serialVersionUID = -6712697028015706544L;
 		private Long mSourceClusterID;
 		private int mSourceToken;
-		private ClusterDummy mPredecessor;
+		private ClusterName mPredecessor;
 		private LinkedList<DiscoveryEntry> mDiscoveries;
 		private boolean mInterASCluster = false;
 		private int mLevel;
@@ -236,7 +236,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		 * that cluster it knows which "outgoing" cluster should be used. in order to reach the node that generated the participation
 		 * property.
 		 */
-		public void setPredecessor(ClusterDummy pPredecessor)
+		public void setPredecessor(ClusterName pPredecessor)
 		{
 			mPredecessor = pPredecessor;
 		}
@@ -248,7 +248,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		 * property.
 		 * 
 		 */
-		public ClusterDummy getPredecessor()
+		public ClusterName getPredecessor()
 		{
 			return mPredecessor;
 		}

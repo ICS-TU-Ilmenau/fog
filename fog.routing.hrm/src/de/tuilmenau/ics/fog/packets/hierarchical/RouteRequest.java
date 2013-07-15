@@ -15,7 +15,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -39,7 +39,7 @@ public class RouteRequest implements Serializable
 	private boolean mRouteAccumulation = false;
 	private Route mRoute = null;
 	private ResultType mResult = null;
-	private LinkedList<ClusterDummy> mRequiredClusters;
+	private LinkedList<ClusterName> mRequiredClusters;
 	
 	/**
 	 * 
@@ -96,10 +96,10 @@ public class RouteRequest implements Serializable
 	 * 
 	 * @param pDummy is a cluster that is required to lie in the route to the target
 	 */
-	public void addRequiredCluster(ClusterDummy pDummy)
+	public void addRequiredCluster(ClusterName pDummy)
 	{
 		if(mRequiredClusters == null) {
-			mRequiredClusters = new LinkedList<ClusterDummy>();
+			mRequiredClusters = new LinkedList<ClusterName>();
 		}
 		if(!mRequiredClusters.contains(pDummy)) {
 			mRequiredClusters.add(pDummy);
@@ -110,16 +110,16 @@ public class RouteRequest implements Serializable
 	 * 
 	 * @param pRequiredClusters set clusters that are required to lie along the route to the target
 	 */
-	public void setRequiredClusters(LinkedList<ClusterDummy> pRequiredClusters)
+	public void setRequiredClusters(LinkedList<ClusterName> pRequiredClusters)
 	{
-		mRequiredClusters = (LinkedList<ClusterDummy>) pRequiredClusters.clone();
+		mRequiredClusters = (LinkedList<ClusterName>) pRequiredClusters.clone();
 	}
 	
 	/**
 	 * 
 	 * @return get to know clusters that are required to lie along the route 
 	 */
-	public LinkedList<ClusterDummy> getRequiredClusters()
+	public LinkedList<ClusterName> getRequiredClusters()
 	{
 		return mRequiredClusters;
 	}

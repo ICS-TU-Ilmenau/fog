@@ -13,7 +13,7 @@ import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 
 /**
@@ -24,8 +24,8 @@ public class MultiplexedPackage implements Serializable
 {
 	private static final long serialVersionUID = 5178731557132270381L;
 	
-	private ClusterDummy mSourceCluster;
-	private ClusterDummy mDestinationCluster;
+	private ClusterName mSourceCluster;
+	private ClusterName mDestinationCluster;
 	private Serializable mData = null;
 
 	/**
@@ -34,7 +34,7 @@ public class MultiplexedPackage implements Serializable
 	 * @param pDestinationCluster is a list of the targets of this packet
 	 * @param pData contains some kind of serializable data
 	 */
-	public MultiplexedPackage(ClusterDummy pSourceCluster, ClusterDummy pDestinationCluster, Serializable pData)
+	public MultiplexedPackage(ClusterName pSourceCluster, ClusterName pDestinationCluster, Serializable pData)
 	{
 		mSourceCluster = pSourceCluster;
 		mDestinationCluster = pDestinationCluster;
@@ -54,7 +54,7 @@ public class MultiplexedPackage implements Serializable
 	 * 
 	 * @return List of clusters that are supposed to receive the data of this packet
 	 */
-	public ClusterDummy getDestinationCluster()
+	public ClusterName getDestinationCluster()
 	{
 		return mDestinationCluster;
 	}

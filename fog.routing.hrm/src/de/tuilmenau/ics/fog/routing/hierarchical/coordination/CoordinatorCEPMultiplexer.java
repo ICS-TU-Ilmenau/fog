@@ -28,7 +28,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterDummy;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
@@ -101,7 +101,7 @@ public class CoordinatorCEPMultiplexer
 						 * we need the last hop in direct to the neighbor
 						 */
 						ICluster tPredecessorToRemote = (ICluster) mHRMController.getRoutableClusterGraph().getDest(pTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
-						tParticipate.setPredecessor(ClusterDummy.compare(tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getToken(), tPredecessorToRemote.getHierarchyLevel()));
+						tParticipate.setPredecessor(ClusterName.create(tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getToken(), tPredecessorToRemote.getHierarchyLevel()));
 						getLogger().log(this, "Successfully set predecessor for " + pTargetCluster + ":" + tPredecessorToRemote);
 					} else {
 						getLogger().log(this, "Unable to set predecessor for " + pTargetCluster + ":");
@@ -137,7 +137,7 @@ public class CoordinatorCEPMultiplexer
 						 */
 						if(!tClusterList.isEmpty()) {
 							ICluster tPredecessor = (ICluster) mHRMController.getRoutableClusterGraph().getDest(tNeighbor, tClusterList.get(tClusterList.size()-1));
-							tEntry.setPredecessor(ClusterDummy.compare(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
+							tEntry.setPredecessor(ClusterName.create(tPredecessor.getClusterID(), tPredecessor.getToken(), tPredecessor.getHierarchyLevel()));
 							getLogger().log(this, "Successfully set predecessor for " + tNeighbor + ":" + tPredecessor);
 						} else {
 							getLogger().log(this, "Unable to set predecessor for " + tNeighbor);
@@ -214,7 +214,7 @@ public class CoordinatorCEPMultiplexer
 							tDiscoveries += ", " + tEntry;
 						}
 						if(tDiscovery.getNeighborRelations() != null) {
-							for(Tuple<ClusterDummy, ClusterDummy> tTuple : tDiscovery.getNeighborRelations()) {
+							for(Tuple<ClusterName, ClusterName> tTuple : tDiscovery.getNeighborRelations()) {
 								if(!mHRMController.getRoutableClusterGraph().isLinked(tTuple.getFirst(), tTuple.getSecond())) {
 									ICluster tFirstCluster = mHRMController.getCluster(tTuple.getFirst());
 									ICluster tSecondCluster = mHRMController.getCluster(tTuple.getSecond());
@@ -275,8 +275,8 @@ public class CoordinatorCEPMultiplexer
 	{	
 		getLogger().log(this, "Sending " + pData + " from " + pDemux.getCluster() + " to target cluster " + pTargetCluster);
 
-		ClusterDummy tSource = ClusterDummy.compare(pDemux.getCluster().getClusterID(), pDemux.getCluster().getToken(), pDemux.getCluster().getHierarchyLevel());
-		ClusterDummy tTarget = ClusterDummy.compare(pTargetCluster.getClusterID(), pTargetCluster.getToken(), pTargetCluster.getHierarchyLevel());
+		ClusterName tSource = ClusterName.create(pDemux.getCluster().getClusterID(), pDemux.getCluster().getToken(), pDemux.getCluster().getHierarchyLevel());
+		ClusterName tTarget = ClusterName.create(pTargetCluster.getClusterID(), pTargetCluster.getToken(), pTargetCluster.getHierarchyLevel());
 	
 		MultiplexedPackage tMuxPackage = new MultiplexedPackage(tSource, tTarget, pData);
 		CoordinatorCEP tCEP = mMultiplexer.get(pDemux);
@@ -334,7 +334,7 @@ public class CoordinatorCEPMultiplexer
 		return mDemux.get(pCEP);
 	}
 	
-	public CoordinatorCEPChannel getDemuxedCEP(CoordinatorCEP pCEP, ClusterDummy pSource, ClusterDummy pCluster) throws NetworkException
+	public CoordinatorCEPChannel getDemuxedCEP(CoordinatorCEP pCEP, ClusterName pSource, ClusterName pCluster) throws NetworkException
 	{
 		if(mDemux.containsKey(pCEP)) {
 			for(CoordinatorCEPChannel tCEP : mDemux.get(pCEP)) {
