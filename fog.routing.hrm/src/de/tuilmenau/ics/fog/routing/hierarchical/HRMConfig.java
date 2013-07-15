@@ -31,7 +31,12 @@ public class HRMConfig
 		/**
 		 * Defines if the election process begins immediately after node is configured (inside NodeConfiguratorHRM).
 		 */
-		public static final boolean BUILD_STARTS_AFTER_NODE_CONFIGURATION = false;		
+		public static final boolean BUILD_STARTS_AFTER_NODE_CONFIGURATION = false;
+
+		/**
+		 * Identifies the base level of the hierarchy.
+		 */
+		public static final int BASE_LEVEL = 0;		
 	}
 	
 	/**

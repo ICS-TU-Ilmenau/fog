@@ -124,7 +124,7 @@ public class HierarchicalRoutingService implements RoutingService
 		public void fire()
 		{
 			Logging.log(this, "Opening connection to " + mConnectTo);
-			mHRMController.addConnection(mConnectTo, 0, mToClusterID, mConnectionToOtherAS);
+			mHRMController.addConnection(mConnectTo, HRMConfig.Hierarchy.BASE_LEVEL, mToClusterID, mConnectionToOtherAS);
 		}
 		
 		private Name mConnectTo;
