@@ -69,7 +69,7 @@ public class CoordinatorCEPMultiplexer
 			CoordinatorCEP tCEP = new CoordinatorCEP(getLogger(), mHRMController, false, pSourceCluster.getHierarchyLevel() + 1, mHRMController.getMultiplexerOnLevel(pSourceCluster.getHierarchyLevel() + 1));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getPhysicalNode().getCentralFN().getName());
 			
-			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel()+1)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel())) {
 				tCEPDemultiplexed = new CoordinatorCEPChannel(getLogger(), mHRMController, tManager);
 				tCEPDemultiplexed.setPeerPriority(new BullyPriority(pTargetCluster.getBullyPriority()));
 				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
@@ -81,7 +81,7 @@ public class CoordinatorCEPMultiplexer
 				tCEPDemultiplexed.setRemoteClusterName(new ClusterName(pTargetCluster.getToken(), pTargetCluster.getClusterID(), pTargetCluster.getHierarchyLevel()));
 			}
 			
-			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel()+1)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel())) {
 				if(pTargetCluster.getCoordinatorsAddress() == null) {
 					getLogger().err(this, "Error on trying to contact other clusters, as name is set please check its address");
 				} else {
