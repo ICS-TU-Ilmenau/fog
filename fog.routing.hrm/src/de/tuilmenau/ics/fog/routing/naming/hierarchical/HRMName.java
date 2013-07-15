@@ -29,7 +29,7 @@ public class HRMName implements Name
 	 * Optional parameter just for making a human readable name.
 	 * This is mainly used for the GUI.
 	 */
-	protected transient Object mOptionalDescr;
+	protected String mOptionalDescr;
 	
 	/**
 	 * This description includes the requirements given by the FoG system. 
@@ -94,7 +94,7 @@ public class HRMName implements Name
 	 * 
 	 * @param pDescr
 	 */
-	public void setDescr(Object pDescr)
+	public void setDescr(String pDescr)
 	{
 		mOptionalDescr = pDescr;
 	}
@@ -103,7 +103,7 @@ public class HRMName implements Name
 	 * 
 	 * @return The object used for description is returned.
 	 */
-	public Object getDescr()
+	public String getDescr()
 	{
 		return mOptionalDescr;
 	}
