@@ -146,14 +146,14 @@ public class TopologyData implements Serializable
 		 * @param pDestination: destination that can be reached with this entry
 		 * @param pNextHop the next hop that has to taken in order to reach that destination
 		 * @param pNextCluster as the cluster that is forwarding that entry
-		 * @param pSignature is the signature of the router that produced this entry
+		 * @param pSourceSignature is the signature of the router that produced this entry
 		 */
-		public FIBEntry(HRMID pDestination, HRMName pNextHop, ClusterName pNextCluster, HRMSignature pSignature)
+		public FIBEntry(HRMID pDestination, HRMName pNextHop, ClusterName pNextCluster, HRMSignature pSourceSignature)
 		{
 			mNextHop = pNextHop;
 			mDestination = pDestination;
 			mNextCluster = pNextCluster;
-			mSignature = pSignature;
+			mSignature = pSourceSignature;
 		}
 		
 		/**
