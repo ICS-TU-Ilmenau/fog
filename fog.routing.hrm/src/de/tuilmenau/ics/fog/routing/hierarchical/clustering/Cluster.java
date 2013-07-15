@@ -150,8 +150,8 @@ public class Cluster implements ICluster, IElementDecorator
 				notifyAll();
 			}
 			setCoordinatorPriority(getBullyPriority());
-			getHRMController().getPhysicalNode().setDecorationParameter("L"+ (mHierarchyLevel+1));
-			getHRMController().getPhysicalNode().setDecorationValue("(" + pCoordSignature + ")");
+			getHRMController().getPhysicalNode().setDecorationParameter("HierLvl.="+ (mHierarchyLevel + 1));
+			getHRMController().getPhysicalNode().setDecorationValue("(CoordSign.=" + pCoordSignature + ")");
 		} else {
 			synchronized(this) {
 				mCoordAddress = pAddress;
@@ -230,13 +230,7 @@ public class Cluster implements ICluster, IElementDecorator
 		}
 		ICluster tCluster = getHRMController().getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
 		if(tCluster == null) {
-			tCluster = new NeighborCluster(
-					pAnnounce.getClusterID(),
-					pAnnounce.getCoordinatorName(),
-					pAnnounce.getCoordAddress(),
-					pAnnounce.getToken(),
-					mHierarchyLevel,
-					getHRMController());
+			tCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), mHierarchyLevel, getHRMController());
 			getHRMController().setSourceIntermediateCluster(tCluster, this);
 			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			((NeighborCluster)tCluster).setSourceIntermediate(this);
@@ -680,9 +674,11 @@ public class Cluster implements ICluster, IElementDecorator
 		} catch (RuntimeException tExc) {
 			HierarchicalNameMappingService.createGlobalNameMappingService(getHRMController().getPhysicalNode().getAS().getSimulation());
 		}
-		tNMS.registerName(getHRMController().getPhysicalNode().getCentralFN().getName(), pEnvelope.getHRMID(), NamingLevel.NAMES);
+		Name tLocalRouterName = getHRMController().getPhysicalNode().getCentralFN().getName();
+		
+		tNMS.registerName(tLocalRouterName, pEnvelope.getHRMID(), NamingLevel.NAMES);
 		String tString = new String();
-		for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(getHRMController().getPhysicalNode().getCentralFN().getName())) {
+		for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
 			tString += tEntry + " ";
 		}
 		getHRMController().getLogger().log(this, "Currently registered names: " + tString);
@@ -774,7 +770,7 @@ public class Cluster implements ICluster, IElementDecorator
 
 	public int hashCode()
 	{
-		return mClusterID.intValue() * 1;
+		return mClusterID.intValue();
 	}
 	
 	@Override
