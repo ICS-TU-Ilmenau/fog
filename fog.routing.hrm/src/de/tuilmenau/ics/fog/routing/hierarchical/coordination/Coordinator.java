@@ -230,8 +230,8 @@ public class Coordinator implements ICluster, Observer
 			} else {
 				return pTarget;
 			}
-		} catch (IndexOutOfBoundsException tExc) {
-			Logging.err(this, "Unable to determine cluster that is farthest in direction to target");
+		} catch (Exception tExc) {
+			Logging.err(this, "Unable to determine cluster that is farthest in direction from " + pSource + " to target " + pTarget);
 			return null;
 		}
 	}
@@ -308,7 +308,7 @@ public class Coordinator implements ICluster, Observer
 				if(tReceivingCEP.getRemoteClusterName() != null && mLevel != 1) {
 					tReceivingCEP.getRemoteClusterName().setHRMID(tID);
 				} else {
-					getLogger().log(this, "unable to find remote cluster for " + tReceivingCEP);
+					getLogger().log(this, "Unable to find remote cluster for " + tReceivingCEP);
 				}
 			} catch (NullPointerException tExc) {
 				getLogger().err(this, "Connection endpoint " + tReceivingCEP + " is gone ");
