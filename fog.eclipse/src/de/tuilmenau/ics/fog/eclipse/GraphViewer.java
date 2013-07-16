@@ -797,6 +797,10 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 		}
 	}
 
+	public String toString()
+	{
+		return getClass().getSimpleName();
+	}
 	
 	private Layout<NodeObject, LinkObject> mLayout;
 	private VisualizationViewer<NodeObject, LinkObject> mViewer;
