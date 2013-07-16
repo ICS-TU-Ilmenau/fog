@@ -51,7 +51,7 @@ public class CoordinatorCEP extends Session
 	 * @param pMux is the multiplexer to use
 	 * 
 	 */
-	public CoordinatorCEP(Logger pLogger, HRMController pHRMController, boolean pServerSide, int pLevel, CoordinatorCEPMultiplexer pMux)
+	public CoordinatorCEP(HRMController pHRMController, boolean pServerSide, int pLevel, CoordinatorCEPMultiplexer pMux)
 	{
 		super(false, Logging.getInstance(), null);
 		mHRMController = pHRMController;
@@ -242,7 +242,7 @@ public class CoordinatorCEP extends Session
 	public String toString()
 	{
 		if(mPeerIdentification != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getPhysicalNode().getName() + "(Source=" + mSourceIdentification + ", Peer=" + mPeerIdentification + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getPhysicalNode().getName() + "@" + getMultiplexer() + "(Source=" + mSourceIdentification + ", Peer=" + mPeerIdentification + ")";
 		} else {
 			return getClass().getSimpleName() + "@" + mHRMController.getPhysicalNode().getName() + "(Source=" + mSourceIdentification + ")";
 		}
@@ -256,10 +256,5 @@ public class CoordinatorCEP extends Session
 	public CoordinatorCEPMultiplexer getMultiplexer()
 	{
 		return mMux;
-	}
-
-	public Logger getLogger()
-	{
-		return getHRMController().getLogger();
 	}
 }

@@ -22,6 +22,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
@@ -51,7 +52,7 @@ public class ClusterName implements Serializable, ICluster
 	@Override
 	public String toString()
 	{
-		return "ClusterName(ClusterId=" + mClusterID + ", Tok=" + mToken + ", HierLvl.=" + mLevel + ")"; 
+		return "Cluster(ID=" + mClusterID + ", Tok=" + mToken + ", HierLvl.=" + mLevel + ")"; 
 	}
 
 	@Override
@@ -70,16 +71,16 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void setCoordinatorPriority(long pCoordinatorPriority) {		
+	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority) {		
 	}
 
 	@Override
-	public long getNodePriority() {
-		return 0;
+	public BullyPriority getNodePriority() {
+		return null;
 	}
 
 	@Override
-	public void setPriority(long pPriority) {
+	public void setPriority(BullyPriority pPriority) {
 		
 	}
 
@@ -114,8 +115,8 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public long getBullyPriority() {
-		return 0;
+	public BullyPriority getBullyPriority() {
+		return null;
 	}
 
 	@Override
@@ -154,9 +155,9 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public long getHighestPriority()
+	public BullyPriority getHighestPriority()
 	{
-		return 0;
+		return null;
 	}
 
 	@Override
@@ -189,7 +190,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void setHighestPriority(long pHighestPriority) {
+	public void setHighestPriority(BullyPriority pHighestPriority) {
 		
 	}
 

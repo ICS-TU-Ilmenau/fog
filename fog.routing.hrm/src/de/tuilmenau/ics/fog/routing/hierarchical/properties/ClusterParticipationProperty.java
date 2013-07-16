@@ -16,7 +16,9 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This class is used for meta information that is used for the establishment of connections. The connections in that
@@ -165,7 +167,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		private LinkedList<DiscoveryEntry> mDiscoveries;
 		private boolean mInterASCluster = false;
 		private int mLevel;
-		private long mSenderPriority;
+		private BullyPriority mSenderPriority = null;
 		
 		/**
 		 * 
@@ -183,8 +185,9 @@ public class ClusterParticipationProperty extends AbstractProperty
 		 * @param pPriority This is the priority of the cluster member. It is transmitted already here to
 		 * decrease communication complexity.
 		 */
-		public void setSenderPriority(long pPriority)
+		public void setSenderPriority(BullyPriority pPriority)
 		{
+			Logging.log(this, "Setting sender priority to " + pPriority);
 			mSenderPriority = pPriority;
 		}
 		
@@ -193,7 +196,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		 * @return This is the priority of the cluster member. It is already here transmitted to
 		 * decrease communication complexity.
 		 */
-		public long getSenderPriority()
+		public BullyPriority getSenderPriority()
 		{
 			return mSenderPriority;
 		}

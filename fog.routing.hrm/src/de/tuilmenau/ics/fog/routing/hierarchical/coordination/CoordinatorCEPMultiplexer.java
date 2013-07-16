@@ -55,6 +55,7 @@ public class CoordinatorCEPMultiplexer
 		mMultiplexer = new HashMap<CoordinatorCEPChannel, CoordinatorCEP>();
 		mDemux = new HashMap<CoordinatorCEP, LinkedList<CoordinatorCEPChannel>>();
 		mClusterToCEPMapping = new HashMap<Tuple<Long, Long>, CoordinatorCEPChannel>();
+		Logging.log(this, "CREATED for " + pHRMController);
 	}
 	
 	public CoordinatorCEPChannel addConnection(ICluster pTargetCluster, ICluster pSourceCluster)
@@ -66,16 +67,16 @@ public class CoordinatorCEPMultiplexer
 		if(!mConnectedEntities.contains(pTargetCluster.getCoordinatorName())) {
 			mConnectedEntities.add(pTargetCluster.getCoordinatorName());
 			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(pTargetCluster.getCoordinatorsAddress().getAddress().longValue(), pTargetCluster.getHierarchyLevel() + 1, pTargetCluster.getToken());
-			CoordinatorCEP tCEP = new CoordinatorCEP(getLogger(), mHRMController, false, pSourceCluster.getHierarchyLevel() + 1, mHRMController.getMultiplexerOnLevel(pSourceCluster.getHierarchyLevel() + 1));
+			CoordinatorCEP tCEP = new CoordinatorCEP(mHRMController, false, pSourceCluster.getHierarchyLevel() + 1, mHRMController.getMultiplexerOnLevel(pSourceCluster.getHierarchyLevel() + 1));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getPhysicalNode().getCentralFN().getName());
 			
 			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel() + 1)) {
-				tCEPDemultiplexed = new CoordinatorCEPChannel(getLogger(), mHRMController, tManager);
-				tCEPDemultiplexed.setPeerPriority(new BullyPriority(pTargetCluster.getBullyPriority()));
+				tCEPDemultiplexed = new CoordinatorCEPChannel(mHRMController, tManager);
+				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getBullyPriority());
 				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
 				tCEP.getMultiplexer().addDemultiplex(tCEP, tCEPDemultiplexed);
 				synchronized(mClusterToCEPMapping) {
-					getLogger().log(this, "Registering multiplex" + tManager.getClusterID() + " to " + pTargetCluster.getClusterID() + " with connection endpoint " + tCEPDemultiplexed);
+					Logging.log(this, "Registering multiplex" + tManager.getClusterID() + " to " + pTargetCluster.getClusterID() + " with connection endpoint " + tCEPDemultiplexed);
 					mClusterToCEPMapping.put(new Tuple<Long, Long>(tManager.getClusterID(), pTargetCluster.getClusterID()), tCEPDemultiplexed);
 				}
 				tCEPDemultiplexed.setRemoteClusterName(new ClusterName(pTargetCluster.getToken(), pTargetCluster.getClusterID(), pTargetCluster.getHierarchyLevel()));
@@ -83,7 +84,7 @@ public class CoordinatorCEPMultiplexer
 			
 			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel() + 1)) {
 				if(pTargetCluster.getCoordinatorsAddress() == null) {
-					getLogger().err(this, "Error on trying to contact other clusters, as name is set please check its address");
+					Logging.err(this, "Error on trying to contact other clusters, as name is set please check its address");
 				} else {
 					NestedParticipation tParticipate = tParticipationProperty.new NestedParticipation(pTargetCluster.getClusterID(), pTargetCluster.getToken());
 					tParticipationProperty.addNestedparticipation(tParticipate);
@@ -102,9 +103,9 @@ public class CoordinatorCEPMultiplexer
 						 */
 						ICluster tPredecessorToRemote = (ICluster) mHRMController.getRoutableClusterGraph().getDest(pTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
 						tParticipate.setPredecessor(new ClusterName(tPredecessorToRemote.getToken(), tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getHierarchyLevel()));
-						getLogger().log(this, "Successfully set predecessor for " + pTargetCluster + ":" + tPredecessorToRemote);
+						Logging.log(this, "Successfully set predecessor for " + pTargetCluster + ":" + tPredecessorToRemote);
 					} else {
-						getLogger().log(this, "Unable to set predecessor for " + pTargetCluster + ":");
+						Logging.log(this, "Unable to set predecessor for " + pTargetCluster + ":");
 					}
 					
 	
@@ -113,7 +114,7 @@ public class CoordinatorCEPMultiplexer
 							tParticipationProperty.addAddressToTarget(tIntermediateAddress);
 						}
 					} catch (RoutingException tExc) {
-						getLogger().err(this, "Unable to find names", tExc);
+						Logging.err(this, "Unable to find names", tExc);
 						return null;
 					}
 					
@@ -138,9 +139,9 @@ public class CoordinatorCEPMultiplexer
 						if(!tClusterList.isEmpty()) {
 							ICluster tPredecessor = (ICluster) mHRMController.getRoutableClusterGraph().getDest(tNeighbor, tClusterList.get(tClusterList.size()-1));
 							tEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
-							getLogger().log(this, "Successfully set predecessor for " + tNeighbor + ":" + tPredecessor);
+							Logging.log(this, "Successfully set predecessor for " + tNeighbor + ":" + tPredecessor);
 						} else {
-							getLogger().log(this, "Unable to set predecessor for " + tNeighbor);
+							Logging.log(this, "Unable to set predecessor for " + tNeighbor);
 						}
 						if(!tManager.getManagedCluster().isInterASCluster() && ! tNeighbor.isInterASCluster() && tManager.getPathToCoordinator(tManager.getManagedCluster(), tNeighbor) != null) {
 							for(RoutingServiceLinkVector tVector : tManager.getPathToCoordinator(tManager.getManagedCluster(), tNeighbor)) {
@@ -157,14 +158,14 @@ public class CoordinatorCEPMultiplexer
 			
 			Identity tIdentity = mHRMController.getPhysicalNode().getIdentity();
 			Description tConnectDescription = mHRMController.getConnectDescription(tParticipationProperty);
-			getLogger().log(this, "Connecting to " + pTargetCluster);
+			Logging.log(this, "Connecting to " + pTargetCluster);
 			Connection tConn = null;;
 			try {
 				tConn = pSourceCluster.getHRMController().getHost().connectBlock(tName, tConnectDescription, tIdentity);
 				tCEP.start(tConn);
 				tCEP.write(tCEP.getSourceRoutingServiceAddress());
 			} catch (NetworkException tExc) {
-				getLogger().err(this, "Unable to connect to " + tName, tExc);
+				Logging.err(this, "Unable to connect to " + tName, tExc);
 			}
 
 			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel() + 1)) {
@@ -185,9 +186,9 @@ public class CoordinatorCEPMultiplexer
 							pTargetCluster.getHierarchyLevel(),
 							(pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClustersToTarget() : 0));
 					if(pTargetCluster instanceof NeighborCluster && ((NeighborCluster)pTargetCluster).getClustersToTarget() == 0) {
-						getLogger().warn(this, "Set 0 as hop count to target " + pTargetCluster);
+						Logging.warn(this, "Set 0 as hop count to target " + pTargetCluster);
 					}
-					getLogger().log(this, "Created " + tDiscovery + " for " + pTargetCluster);
+					Logging.log(this, "Created " + tDiscovery + " for " + pTargetCluster);
 					tDiscovery.setOrigin(tManager.getClusterID());
 					tDiscovery.setTargetClusterID(pTargetCluster.getCoordinatorsAddress().getAddress().longValue());
 					tBigDiscovery.addNestedDiscovery(tDiscovery);
@@ -197,12 +198,12 @@ public class CoordinatorCEPMultiplexer
 			if(tAbleToWrite) {
 				try {
 					synchronized(tBigDiscovery) {
-						getLogger().log(this, "Waiting for come back of " + tBigDiscovery);
+						Logging.log(this, "Waiting for come back of " + tBigDiscovery);
 						if(!tBigDiscovery.isDealtWith()) {
 							Logging.log(this, "ACTIVE WAITING");
 							tBigDiscovery.wait(10000);
 						}
-						getLogger().log(this, "come back of: " + tBigDiscovery);
+						Logging.log(this, "come back of: " + tBigDiscovery);
 					}
 					for(NestedDiscovery tDiscovery : tBigDiscovery.getDiscoveries()) {
 						String tClusters = new String();
@@ -220,25 +221,25 @@ public class CoordinatorCEPMultiplexer
 									ICluster tSecondCluster = mHRMController.getCluster(tTuple.getSecond());
 									if(tFirstCluster != null && tSecondCluster != null ) {
 										tFirstCluster.addNeighborCluster(tSecondCluster);
-										getLogger().log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);
+										Logging.log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);
 									} else {
-										getLogger().warn(this, "Unable to find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of \"" + tClusters + "\", cluster discovery contained " + tDiscoveries + " and CEP is " + tCEP);
+										Logging.warn(this, "Unable to find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of \"" + tClusters + "\", cluster discovery contained " + tDiscoveries + " and CEP is " + tCEP);
 									}
 								}
 							}
 						} else {
-							getLogger().warn(this, tDiscovery + "does not contain any neighbor relations");
+							Logging.warn(this, tDiscovery + "does not contain any neighbor relations");
 						}
 					}
 				} catch (InterruptedException tExc ) {
-					getLogger().err(this, "Error when waiting for come back of " + tBigDiscovery, tExc);
+					Logging.err(this, "Error when waiting for come back of " + tBigDiscovery, tExc);
 				}
 			} else {
 				if(!tAbleToWrite) {
-					getLogger().err(this, "Unable to discover " + tName + " because " + (tAbleToWrite ? " CEP is not connected " : ""));
+					Logging.err(this, "Unable to discover " + tName + " because " + (tAbleToWrite ? " CEP is not connected " : ""));
 				}
 				if(tBigDiscovery.getDiscoveries().isEmpty()) {
-					getLogger().err(this, "Unable to discover " + tName + " because " + (tBigDiscovery.getDiscoveries().isEmpty() ? " no discovery entries were inserted." : ""));
+					Logging.err(this, "Unable to discover " + tName + " because " + (tBigDiscovery.getDiscoveries().isEmpty() ? " no discovery entries were inserted." : ""));
 				}
 			}
 			synchronized(mClusterToCEPMapping) {
@@ -252,34 +253,34 @@ public class CoordinatorCEPMultiplexer
 			if(tCEPDemultiplexed == null) {
 				synchronized(mClusterToCEPMapping) {
 					try {
-						getLogger().log(this, pSourceCluster + " is waiting because establishment of connection to " + pTargetCluster + " did not yet take place");
+						Logging.log(this, pSourceCluster + " is waiting because establishment of connection to " + pTargetCluster + " did not yet take place");
 						mClusterToCEPMapping.wait(10000);
 						tCEPDemultiplexed = mClusterToCEPMapping.get(new Tuple<Long, Long>(pSourceCluster.getClusterID(), pTargetCluster.getClusterID()));
 						//mClusterToCEPMapping.remove(pSourceCluster.getClusterID());
 					} catch (IllegalMonitorStateException tExc) {
-						getLogger().err(this, "Error when establishing connection", tExc);
+						Logging.err(this, "Error when establishing connection", tExc);
 					} catch (InterruptedException tExc) {
-						getLogger().err(this, "Error when establishing connection", tExc);
+						Logging.err(this, "Error when establishing connection", tExc);
 
 					}
 				}
 			}
 		}
 		
-		getLogger().log(this, "Returning " + tCEPDemultiplexed + " for " + pSourceCluster + " and target " + pTargetCluster);
+		Logging.log(this, "Returning " + tCEPDemultiplexed + " for " + pSourceCluster + " and target " + pTargetCluster);
 		
 		return tCEPDemultiplexed;
 	}
 	
 	public boolean write(Serializable pData, CoordinatorCEPChannel pDemux, ClusterName pTargetCluster)
 	{	
-		getLogger().log(this, "Sending " + pData + " from " + pDemux.getCluster() + " to target cluster " + pTargetCluster);
+		Logging.log(this, "Sending " + pData + " from " + pDemux.getCluster() + " to target cluster " + pTargetCluster);
 
 		ClusterName tSource = new ClusterName(pDemux.getCluster().getToken(), pDemux.getCluster().getClusterID(), pDemux.getCluster().getHierarchyLevel());
 	
 		MultiplexedPackage tMuxPackage = new MultiplexedPackage(tSource, pTargetCluster, pData);
 		CoordinatorCEP tCEP = mMultiplexer.get(pDemux);
-		getLogger().log(this, "Sending " + tMuxPackage);
+		Logging.log(this, "Sending " + tMuxPackage);
 		
 		// send packet
 		return tCEP.write(tMuxPackage);
@@ -311,17 +312,17 @@ public class CoordinatorCEPMultiplexer
 	
 	public synchronized void addMultiplexedConnection(CoordinatorCEPChannel pMultiplexedConnection, CoordinatorCEP pConnection)
 	{
-		getLogger().log(this, "Registering multiplexed connection from " + pMultiplexedConnection + " to " + pConnection);
+		Logging.log(this, "Registering multiplexed connection from " + pMultiplexedConnection + " to " + pConnection);
 		mMultiplexer.put(pMultiplexedConnection, pConnection);
 		for(CoordinatorCEPChannel tCEP : mMultiplexer.keySet()) {
-			getLogger().log(this, tCEP + "->" + mMultiplexer.get(tCEP));
+			Logging.log(this, tCEP + "->" + mMultiplexer.get(tCEP));
 		}
 		addDemultiplex(pConnection, pMultiplexedConnection);
 	}
 	
 	private void addDemultiplex(CoordinatorCEP pCEP, CoordinatorCEPChannel pDemux)
 	{
-		getLogger().log(this, "Registering demultiplexing from " + pCEP + " to " + pDemux);
+		Logging.log(this, "Registering demultiplexing from " + pCEP + " to " + pDemux);
 		if(mDemux.get(pCEP) == null) {
 			mDemux.put(pCEP, new LinkedList<CoordinatorCEPChannel>());
 		}
@@ -340,24 +341,24 @@ public class CoordinatorCEPMultiplexer
 				if(tCEP.getCluster().getClusterID().equals(pCluster.getClusterID())) {
 					Tuple<Long, Long> tTuple = new Tuple<Long, Long>(pSource.getClusterID(), pCluster.getClusterID());
 					boolean tSourceIsContained = isClusterMultiplexed(tTuple);
-					getLogger().log(this, "Comparing \"" + tCEP + "\" and \"" + (tSourceIsContained ? getDemultiplex(tTuple) : "") + "\" " + tCEP.getRemoteClusterName() + ", " + (tSourceIsContained ? getDemultiplex(tTuple).getRemoteClusterName() : "" ));
+					Logging.log(this, "Comparing \"" + tCEP + "\" and \"" + (tSourceIsContained ? getDemultiplex(tTuple) : "") + "\" " + tCEP.getRemoteClusterName() + ", " + (tSourceIsContained ? getDemultiplex(tTuple).getRemoteClusterName() : "" ));
 					if(tSourceIsContained && getDemultiplex(tTuple) == tCEP) {
-						getLogger().log(this, "Returning " + tCEP + " for request on cluster " + pCluster);
+						Logging.log(this, "Returning " + tCEP + " for request on cluster " + pCluster);
 						return tCEP;
 					} else {
-						getLogger().log(this, "Source is \"" + pSource + "\", target is \"" + pCluster+ "\", DEMUXER of source is \"" + getDemultiplex(tTuple) + "\", currently evaluated CEP is \"" + tCEP + "\"");
+						Logging.log(this, "Source is \"" + pSource + "\", target is \"" + pCluster+ "\", DEMUXER of source is \"" + getDemultiplex(tTuple) + "\", currently evaluated CEP is \"" + tCEP + "\"");
 					}
 					if(!isClusterMultiplexed(tTuple) && tCEP.getCluster().getClusterID().equals(pCluster.getClusterID())) {
-						getLogger().log(this, "Returning " + tCEP + " for request on cluster " + pCluster);
+						Logging.log(this, "Returning " + tCEP + " for request on cluster " + pCluster);
 						return tCEP;
 					}
 				}
 			}
 		}
 		
-		getLogger().log(this, "Unable to find demultiplexed coonection endpoint for " + pCEP + " and target cluster " + pCluster.getClusterID());
+		Logging.log(this, "Unable to find demultiplexed coonection endpoint for " + pCEP + " and target cluster " + pCluster.getClusterID());
 		for(CoordinatorCEP tCEP : mDemux.keySet()) {
-			getLogger().log(tCEP + " to " + mDemux.get(tCEP));
+			Logging.log(tCEP + " to " + mDemux.get(tCEP));
 		}
 
 		throw new NetworkException("No demultiplexed CEP found for " + pCEP + " and target cluster " + pCluster);
@@ -365,7 +366,7 @@ public class CoordinatorCEPMultiplexer
 	
 	public String toString()
 	{
-		return "CEPMultiplexer" + "@" + mHRMController.getPhysicalNode() + ( mCluster != null ? "@L" + mCluster.getHierarchyLevel() : "");
+		return "CoordinatorCEPMultiplexer" + "@" + mHRMController.getPhysicalNode() + (mCluster != null ? "@" + mCluster.getHierarchyLevel() + " (Cluster=" + mCluster + ")" : "");
 	}
 	
 	public void setCluster(ICluster pCluster)
@@ -375,18 +376,13 @@ public class CoordinatorCEPMultiplexer
 	
 	public void registerDemultiplex(Long pSourceClusterID, Long pTargetClusterID, CoordinatorCEPChannel pCEP)
 	{
-		getLogger().log(this, "Registering demultiplex for Cluster ID" + pSourceClusterID + " to " + pTargetClusterID + " via " + pCEP);
+		Logging.log(this, "Registering demultiplex for Cluster ID" + pSourceClusterID + " to " + pTargetClusterID + " via " + pCEP);
 		mClusterToCEPMapping.put(new Tuple<Long, Long>(pSourceClusterID, pTargetClusterID), pCEP);
 	}
 	
 	private CoordinatorCEPChannel getDemultiplex(Tuple<Long, Long> pPair)
 	{
 		return mClusterToCEPMapping.get(pPair);
-	}
-	
-	public Logger getLogger()
-	{
-		return mHRMController.getLogger();
 	}
 	
 	private boolean isClusterMultiplexed(Tuple<Long, Long> pPair)

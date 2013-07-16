@@ -10,7 +10,9 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.election;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -133,25 +135,6 @@ public class BullyPriority
 	}
 	
 	/**
-	 * 
-	 * Compares and sets the Bully priority of another candidate
-	 * 
-	 * @param pCandidatesPriority the Bully priority of the other candidate
-	 * @return true if the priority of the candidate is set as new one
-	 */
-	public boolean compareAndSetCandidate(BullyPriority pCandidatesPriority)
-	{
-		boolean tNewPrioritySet = false;
-		
-		if (pCandidatesPriority.getValue() > getValue()){
-			mPriority = pCandidatesPriority.getValue();
-			tNewPrioritySet = true;
-		}
-		
-		return tNewPrioritySet;
-	}
-	
-	/**
 	 * The function is called if a neighbor cluster/node is found. It increase the Bully value by a fixed value. 
 	 */
 	public void increaseConnectivity()
@@ -159,6 +142,59 @@ public class BullyPriority
 		mPriority += OFFSET_FOR_CONNECTIVITY;
 	}
 	
-	private long mPriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
+	/**
+	 * Check if the Bully priority if higher than the other given one.
+	 * 
+	 * @param pHighestPriority the other given priority
+	 * @return return "true" if the Bully priority if higher than the other one, otherwise return "false"
+	 */
+	public boolean isHigher(Object pCheckLocation, BullyPriority pOtherPriority)
+	{
+		String pLocationDescription = pCheckLocation.getClass().getSimpleName();
+		if (pCheckLocation instanceof HRMEntity){
+			HRMEntity tHRMEntity = (HRMEntity)pCheckLocation;
+			pLocationDescription = tHRMEntity.toLocation();
+		}
 
+		if (pOtherPriority == null){
+			Logging.log(pLocationDescription + ": COMPARING BULLY priority " + mPriority + " with NULL POINTER, returning always \"true\" for isHigher()");
+			return true;
+		}
+		
+		Logging.log(pLocationDescription + ": COMPARING BULLY priority " + mPriority + " with alternative " + pOtherPriority.getValue());
+		
+		// if the priority values are equal, we return "true"
+		if (mPriority > pOtherPriority.getValue()){
+			return true;
+		}
+		
+		// otherwise always "false"
+		return false;
+	}
+
+	@Override
+	public boolean equals(Object pObj)
+	{
+		// do we have another Bully priority object?
+		if(pObj instanceof BullyPriority) {
+			
+			// cast to BullyPriority object
+			BullyPriority tOtherPrio = (BullyPriority) pObj;
+			
+			// if the priority values are equal, we return "true"
+			if (tOtherPrio.getValue() == mPriority){
+				return true;
+			}
+		}
+		
+		// otherwise always "false"
+		return false;
+	}
+
+	public String toString()
+	{
+		return "BullyPriority(Prio=" + Long.toString(getValue()) + ")";
+	}
+	
+	private long mPriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
 }

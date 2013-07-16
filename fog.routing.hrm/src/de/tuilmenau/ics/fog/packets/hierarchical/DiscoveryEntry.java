@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
 /**
@@ -29,7 +30,7 @@ public class DiscoveryEntry implements Serializable
 	private int mToken;
 	private Long mClusterID;
 	private HRMName mCoordinatorRoutingAddress;
-	private long mPriority = 0;
+	private BullyPriority mPriority = new BullyPriority();
 	private int mLevel=0;
 	private int mClusterHops;
 	private ClusterName mPredecessor;
@@ -100,7 +101,7 @@ public class DiscoveryEntry implements Serializable
 	 * 
 	 * @param pPriority is the priority of the coordinator that represents the target cluster
 	 */
-	public void setPriority(long pPriority)
+	public void setPriority(BullyPriority pPriority)
 	{
 		mPriority = pPriority;
 	}
@@ -109,7 +110,7 @@ public class DiscoveryEntry implements Serializable
 	 * 
 	 * @return priority of the coordinator that represents the target cluster
 	 */
-	public long getPriority()
+	public BullyPriority getPriority()
 	{
 		return mPriority;
 	}

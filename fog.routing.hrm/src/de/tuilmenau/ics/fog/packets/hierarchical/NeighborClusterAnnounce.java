@@ -16,6 +16,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -31,7 +32,7 @@ public class NeighborClusterAnnounce implements Serializable
 	private HRMName mCoordAddress;
 	private boolean mAnnouncerHasAddress = false;;
 	private LinkedList<RoutingServiceLinkVector> mRoutingLinks;
-	private long mClusterCoordinatorPriority;
+	private BullyPriority mClusterCoordinatorPriority = null;
 	private int mToken;
 	private Long mClusterID;
 	private boolean mReject = false;
@@ -64,7 +65,7 @@ public class NeighborClusterAnnounce implements Serializable
 	 * 
 	 * @param pPriority is the priority of the coordinator in the new zone
 	 */
-	public void setCoordinatorsPriority(long pPriority)
+	public void setCoordinatorsPriority(BullyPriority pPriority)
 	{
 		mClusterCoordinatorPriority = pPriority;
 	}
@@ -73,7 +74,7 @@ public class NeighborClusterAnnounce implements Serializable
 	 * 
 	 * @return priority of the node that is coordinator in the new zone
 	 */
-	public long getCoordinatorsPriority()
+	public BullyPriority getCoordinatorsPriority()
 	{
 		return mClusterCoordinatorPriority;
 	}

@@ -20,6 +20,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
@@ -30,21 +31,21 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @param pCoordinatorPriority is the priority of the entity
 	 */
-	public void setCoordinatorPriority(long pCoordinatorPriority);
+	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority);
 	
 	/**
 	 * Get the priority of the currently acting coordinator
 	 * 
 	 * @return priority of the acting coordinator
 	 */
-	public long getNodePriority();
+	public BullyPriority getNodePriority();
 	
 	/**
 	 * Set the priority the reference node has in this cluster
 	 * 
 	 * @param pPriority
 	 */
-	public void setPriority(long pPriority);
+	public void setPriority(BullyPriority pPriority);
 	
 	/**
 	 *  
@@ -90,7 +91,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @return The priority of the node that is associated to this cluster is return here
 	 */
-	public long getBullyPriority();
+	public BullyPriority getBullyPriority();
 	
 	/**
 	 * 
@@ -138,10 +139,16 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	
 	/**
 	 * 
+	 * @param pHighestPriority This is the highest priority that was found for the set of participating node.
+	 */
+	public void setHighestPriority(BullyPriority pHighestPriority);
+
+	/**
+	 * 
 	 * @return The concurrently known highest priority of all priorities provided by the connection end points
 	 * is provided here.
 	 */
-	public long getHighestPriority();
+	public BullyPriority getHighestPriority();
 	
 	/**
 	 * Once a connection end point receives an announcement it calls this method.
@@ -190,12 +197,6 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * parts of that address might be zero.
 	 */
 	public void setHRMID(HRMID pHRMID);
-	
-	/**
-	 * 
-	 * @param pHighestPriority This is the highest priority that was found for the set of participating node.
-	 */
-	public void setHighestPriority(long pHighestPriority);
 	
 	/**
 	 * 

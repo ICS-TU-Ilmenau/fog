@@ -34,6 +34,7 @@ import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
@@ -50,10 +51,13 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.graph.RoutableGraph;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
+/**
+ * The class is used for the communication between a cluster and its coordinator.
+ * For this purpose, both the cluster object and the coordinator object have a reference to this object. 
+ */
 public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 {
 	private static final long serialVersionUID = -8290946480171751216L;
@@ -67,7 +71,6 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	private HashMap<ICluster, ICluster> mAnnouncerMapping;
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
-	private Logger mLogger = Logging.getInstance();
 	private BFSDistanceLabeler<IRoutableClusterGraphNode, RoutableClusterGraphLink> mBreadthFirstSearch;
 	private boolean mCrossLevelCEP = false;
 	
@@ -77,14 +80,12 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	 * @param pHRMController is the coordinator of a node
 	 * @param pPeerCluster is the cluster this connection end point serves
 	 */
-	public CoordinatorCEPChannel(Logger pLogger, HRMController pHRMController, ICluster pPeerCluster)
+	public CoordinatorCEPChannel(HRMController pHRMController, ICluster pPeerCluster)
 	{
 		mHRMController = pHRMController;
 		mPeerCluster = pPeerCluster;
-		mLogger = pLogger;
-		mLogger.log(this, "Created");
 		mPeerPriority = new BullyPriority();
-		getHRMController().getLogger().log(this, "Created for " + mPeerCluster);
+		Logging.log(this, "CREATED for " + mPeerCluster);
 	}
 	
 	/**
@@ -95,6 +96,8 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	private void handleSignalingMessageBully(SignalingMessageBully pPacketBully) throws NetworkException
 	{
 		Node tNode = getHRMController().getPhysicalNode();
+		Name tLocalNodeName = tNode.getCentralFN().getName(); 
+				
 		boolean BULLY_SIGNALING_DEBUGGING = true;
 
 		/**
@@ -106,35 +109,37 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
 			
 			if (BULLY_SIGNALING_DEBUGGING)
-				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\" an ELECT: " + tPacketBullyElect);
+				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" an ELECT: " + tPacketBullyElect);
 
-			if ((getCluster().getCoordinatorCEP() != null) && (tPacketBullyElect.getSenderPriority().getValue() < getCluster().getHighestPriority())) {
+			if ((getCluster().getCoordinatorCEP() != null) && (getCluster().getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
 				
 				mPeerPriority = tPacketBullyElect.getSenderPriority();
 				
-				if (getCluster().getHRMController().equals(tNode.getCentralFN().getName())) {
+				if (getCluster().getHRMController().equals(tLocalNodeName)) {
 					// create ANNOUNCE packet
-					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tNode.getCentralFN().getName(), new BullyPriority(getCluster().getBullyPriority()), getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getHierarchyLevel()), getCluster().getToken());
+					HRMSignature tSignature = getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getHierarchyLevel());
+					
+					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, getCluster().getBullyPriority(), tSignature, getCluster().getToken());
 					
 					for(CoordinatorCEPChannel tCEP : getCluster().getParticipatingCEPs()) {
 						tAnnouncePacket.addCoveredNode(tCEP.getPeerName());
 					}
 					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
-						mLogger.log(this, "Sending announce that does not cover anyhting");
+						Logging.log(this, "Sending announce that does not cover anyhting");
 					}
 
 					// send packet
 					if (BULLY_SIGNALING_DEBUGGING)
-						mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\" an ANNOUNCE: " + tAnnouncePacket);
+						Logging.log(this, "BULLY-sending to \"" + mPeerCluster + "\" an ANNOUNCE: " + tAnnouncePacket);
 					sendPacket(tAnnouncePacket);
 					
 				} else {
 					// create ALIVE packet
-					BullyAlive tAlivePacket = new BullyAlive(tNode.getCentralFN().getName());
+					BullyAlive tAlivePacket = new BullyAlive(tLocalNodeName);
 					
 					// send packet
 					if (BULLY_SIGNALING_DEBUGGING)
-						mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\" an ALIVE: " + tAlivePacket);
+						Logging.log(this, "BULLY-sending to \"" + mPeerCluster + "\" an ALIVE: " + tAlivePacket);
 					sendPacket(tAlivePacket);
 					//TODO: packet is sent but never parsed or a timeout timer reset!!
 				}
@@ -144,11 +149,11 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				mPeerPriority = tPacketBullyElect.getSenderPriority();
 				
 				// create REPLY packet
-				BullyReply tReplyPacket = new BullyReply(tNode.getCentralFN().getName(), new BullyPriority(getCluster().getBullyPriority()));
+				BullyReply tReplyPacket = new BullyReply(tLocalNodeName, getCluster().getBullyPriority());
 				
 				// send the answer packet
 				if (BULLY_SIGNALING_DEBUGGING)
-					mLogger.log("Node " + tNode + ": BULLY-sending to \"" + mPeerCluster + "\" a REPLY: " + tReplyPacket);
+					Logging.log(this, "BULLY-sending to \"" + mPeerCluster + "\" a REPLY: " + tReplyPacket);
 				sendPacket(tReplyPacket);
 			}
 		}
@@ -162,7 +167,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 			BullyReply tReplyPacket = (BullyReply)pPacketBully;
 
 			if (BULLY_SIGNALING_DEBUGGING)
-				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\" a REPLY: " + tReplyPacket);
+				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" a REPLY: " + tReplyPacket);
 
 			// store peer's Bully priority
 			//TODO: peer prio direkt mal abspeichern und auf größte checken!
@@ -177,7 +182,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
 
 			if (BULLY_SIGNALING_DEBUGGING)
-				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\" an ANNOUNCE: " + tAnnouncePacket);
+				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" an ANNOUNCE: " + tAnnouncePacket);
 
 			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
 			getCluster().handleBullyAnnounce(tAnnouncePacket, this);
@@ -191,7 +196,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
 
 			if (BULLY_SIGNALING_DEBUGGING)
-				mLogger.log("Node " + tNode + ": BULLY-received from \"" + mPeerCluster + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
+				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
 
 			// store peer's Bully priority
 			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority();
@@ -216,7 +221,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 		 */
 		if(pData == null) {
 			if (CHANNEL_SIGNALING_DEBUGGING)
-				mLogger.log("Node " + tNode + ": CHANNEL-received from \"" + mPeerCluster + "\" invalid data");
+				Logging.log(this, "received from \"" + mPeerCluster + "\" invalid data");
 
 			throw new NetworkException("Received invalid null pointer as data");
 		}
@@ -246,7 +251,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				NeighborClusterAnnounce tAnnouncePacket = (NeighborClusterAnnounce)pData;
 
 				if (CHANNEL_SIGNALING_DEBUGGING)
-					mLogger.log("Node " + tNode + ": CHANNEL-received from \"" + mPeerCluster + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
+					Logging.log(this, "NEIGHBOR received from \"" + mPeerCluster + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
 
 				if(tAnnouncePacket.isInterASAnnouncement()) {
 					Logging.log(tNode.getAS().getName() + " received an announcement from " + tAnnouncePacket.getASIdentification());
@@ -303,7 +308,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				TopologyData tTopologyPacket = (TopologyData)pData;
 				
 				if (CHANNEL_SIGNALING_DEBUGGING)
-					mLogger.log("Node " + tNode + ":  CHANNEL-received from \"" + mPeerCluster + "\" TOPOLOGY DATA: " + tTopologyPacket);
+					Logging.log(this, "TOPOLOGY-received from \"" + mPeerCluster + "\" TOPOLOGY DATA: " + tTopologyPacket);
 
 				getCluster().handleTopologyData(tTopologyPacket);
 			}/* else if (pData instanceof NestedDiscovery) {
@@ -319,7 +324,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				RouteRequest tRouteRequestPacket = (RouteRequest) pData;
 				
 				if (CHANNEL_SIGNALING_DEBUGGING)
-					mLogger.log("Node " + tNode + ":  CHANNEL-received from \"" + mPeerCluster + "\" ROUTE REQUEST: " + tRouteRequestPacket);
+					Logging.log(this, " ROUTE-received from \"" + mPeerCluster + "\" ROUTE REQUEST: " + tRouteRequestPacket);
 
 				if(tRouteRequestPacket.getTarget() instanceof HRMID) {
 					HRMName tRequestAddress = tRouteRequestPacket.getSource();
@@ -369,7 +374,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 									Logging.log(this, "Interop: Route to "+ tAddress + " with IP address " + tTargetAddress + " is " + tRoute);
 								}
 							} else {
-								getHRMController().getLogger().err(this, "Unable to distribute addresses because no IP address is available");
+								Logging.err(this, "Unable to distribute addresses because no IP address is available");
 							}
 							if(tRoute != null) {
 								tRouteRequestPacket.setAnswer();
@@ -468,7 +473,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				RequestCoordinator tRequestCoordinatorPacket = (RequestCoordinator) pData;
 				
 				if (CHANNEL_SIGNALING_DEBUGGING)
-					mLogger.log("Node " + tNode + ":  CHANNEL-received from \"" + mPeerCluster + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
+					Logging.log(this, "CHANNEL-received from \"" + mPeerCluster + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
 
 				if(!tRequestCoordinatorPacket.isAnswer()) {
 					if(getCluster().getCoordinatorCEP() != null) {
@@ -636,14 +641,28 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 		return mKnowsCoordinator;
 	}
 	
+	public BullyPriority getPeerPriority()
+	{
+		if (mPeerPriority == null){
+			mPeerPriority = new BullyPriority();
+		}
+			
+		return mPeerPriority;
+	}
+
 	public void setPeerPriority(BullyPriority pPeerPriority)
 	{
+		if (pPeerPriority == null){
+			Logging.warn(this, "Trying to set NULL POINTER as Bully priority, ignoring this request");
+			return;
+		}
+			
 		mPeerPriority = pPeerPriority;
 	}
 	
 	public void addAnnouncedCluster(ICluster pAnnounced, ICluster pNegotiate)
 	{
-		mLogger.log(this, "Cluster " + pAnnounced + " as announced by " + pNegotiate);
+		Logging.log(this, "Cluster " + pAnnounced + " as announced by " + pNegotiate);
 		if(pNegotiate == null) {
 			return;
 		}
@@ -653,26 +672,21 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 		if(!mAnnouncerMapping.containsKey(pAnnounced)) {
 			mAnnouncerMapping.put(pAnnounced, pNegotiate);
 		} else {
-			getHRMController().getLogger().log(this, "comparing " + pNegotiate + " to " + mAnnouncerMapping.get(pAnnounced));
+			Logging.log(this, "comparing " + pNegotiate + " to " + mAnnouncerMapping.get(pAnnounced));
 			if(pNegotiate.getHierarchyLevel() < mAnnouncerMapping.get(pAnnounced).getHierarchyLevel()) {
 				mAnnouncerMapping.remove(pAnnounced);
 				mAnnouncerMapping.put(pAnnounced, pNegotiate);
 			} else if (pNegotiate instanceof NeighborCluster && mAnnouncerMapping.get(pAnnounced) instanceof NeighborCluster && ((NeighborCluster)pNegotiate).getClustersToTarget() < ((NeighborCluster)mAnnouncerMapping.get(pAnnounced)).getClustersToTarget()) {
-				getCluster().getHRMController().getLogger().log(this, "replacing negotiating cluster of " + pAnnounced + ": " + mAnnouncerMapping.get(pAnnounced) + " with " + pNegotiate);
+				Logging.log(this, "replacing negotiating cluster of " + pAnnounced + ": " + mAnnouncerMapping.get(pAnnounced) + " with " + pNegotiate);
 				mAnnouncerMapping.remove(pAnnounced);
 				mAnnouncerMapping.put(pAnnounced, pNegotiate);
 			}
 		}
 	}
 	
-	public BullyPriority getPeerPriority()
-	{
-		return mPeerPriority;
-	}
-	
 	public void setRemoteClusterName(ClusterName pClusterName)
 	{
-		mLogger.log("CoordinatorCEPChannel for peer " + mPeerCluster + "-setting remote/peer cluster \"" + pClusterName + "\"");
+		Logging.log(this, "Setting remote/peer cluster \"" + pClusterName + "\"");
 		mRemoteCluster = pClusterName;
 	}
 
@@ -683,11 +697,11 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	
 	public boolean sendPacket(Serializable pData)
 	{
-		mLogger.log(this, "Sending to \"" + getRemoteClusterName() + "\" the packet " + pData);
+		Logging.log(this, "Sending to \"" + getRemoteClusterName() + "\" the packet " + pData);
 		
 		if(pData instanceof RequestCoordinator) {
 //			mRequestedCoordinator = true;
-			getHRMController().getLogger().log(this, "Sending " + pData);
+			Logging.log(this, "Sending " + pData);
 		}
 		if(getCluster() instanceof Coordinator && !mCrossLevelCEP) {
 			getCEPMultiplexer().write(pData, this, new ClusterName(getCluster().getToken(), ((L2Address)getPeerName()).getAddress().longValue(), getCluster().getHierarchyLevel()));
@@ -760,7 +774,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 						int tToken = tCluster.getToken();
 						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
 							if(tCluster instanceof NeighborCluster) {
-								getHRMController().getLogger().log(this, "Reporting " + tCluster + " to " + ((HRMName)getPeerName()).getDescr() + " because " + pDiscovery.getDistance() + " + " + ((NeighborCluster)tCluster).getClustersToTarget() + "=" + (pDiscovery.getDistance() + ((NeighborCluster)tCluster).getClustersToTarget()));
+								Logging.log(this, "Reporting " + tCluster + " to " + ((HRMName)getPeerName()).getDescr() + " because " + pDiscovery.getDistance() + " + " + ((NeighborCluster)tCluster).getClustersToTarget() + "=" + (pDiscovery.getDistance() + ((NeighborCluster)tCluster).getClustersToTarget()));
 								Logging.log(this, "token list was " + pDiscovery.getTokens());
 							}
 							getPathTo(pDiscovery, tCluster);
@@ -792,14 +806,14 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	
 	public ClusterName handleDiscoveryEntry(DiscoveryEntry pEntry) throws PropertyException
 	{
-		getHRMController().getLogger().trace(this, "Handling " + pEntry);
+		Logging.trace(this, "Handling " + pEntry);
 		ICluster tNewCluster = getHRMController().getCluster(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), pEntry.getLevel()));
 		if(tNewCluster == null) {
 			for(Cluster tCluster : getHRMController().getRoutingTargetClusters()) {
 				if(tCluster.equals(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), getCluster().getHierarchyLevel() - 1))) {
 					tNewCluster = tCluster;
 					if(tNewCluster instanceof NeighborCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {
-						getHRMController().getLogger().log(this, "Filling required information into " + tNewCluster);
+						Logging.log(this, "Filling required information into " + tNewCluster);
 						tNewCluster.setCoordinatorCEP(null, null, pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress());
 						if(pEntry.isInterASCluster()) tNewCluster.setInterASCluster();
 					}
@@ -822,9 +836,9 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				try {
 					getHRMController().getHRS().registerNode(tNewCluster.getCoordinatorName(), tNewCluster.getCoordinatorsAddress());
 				} catch (RemoteException tExc) {
-					getHRMController().getLogger().err(this, "Unable to register " + tNewCluster.getCoordinatorName(), tExc);
+					Logging.err(this, "Unable to register " + tNewCluster.getCoordinatorName(), tExc);
 				}
-				getHRMController().getLogger().log(this, "Created " + tNewCluster);
+				Logging.log(this, "Created " + tNewCluster);
 			}
 			
 			((NeighborCluster)tNewCluster).addAnnouncedCEP(this);
@@ -838,11 +852,6 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 		return new ClusterName(tNewCluster.getToken(), tNewCluster.getClusterID(), tNewCluster.getHierarchyLevel());
 	}
 	
-	public String toString()
-	{
-		return getClass().getSimpleName()/* + "(" + mIdentification + ")"*/ + "@" + getCluster().getClusterDescription() +  (getPeerName() != null ? "->" + ((HRMName)getPeerName()).getDescr() + ":PR(" + mPeerPriority + ")" : "") + (mIsEdgeRouter ? "|INTER" : "|INTRA");
-	}
-
 	public Route getRouteToPeer()
 	{
 		return getMultiplexer().getRouteToPeer(this);
@@ -868,5 +877,10 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	private CoordinatorCEPMultiplexer getMultiplexer()
 	{
 		return getCluster().getMultiplexer();
+	}
+
+	public String toString()
+	{
+		return getClass().getSimpleName() + "@" + getCluster().getClusterDescription() +  "(PeerPrio=" + mPeerPriority.getValue() + (getPeerName() != null ? ", Peer=" + getPeerName().getDescr() : "") + "EdgeRouter=" + (mIsEdgeRouter ? "yes" : "no") + ")";
 	}
 }

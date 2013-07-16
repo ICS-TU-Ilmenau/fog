@@ -26,6 +26,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.topology.IElementDecorator;
@@ -41,8 +42,8 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	private static final long serialVersionUID = -8746079632866375924L;
 	private int mToken;
 	private int mLevel;
-	private long mPriority;
-	private long mCoordinatorPriority;
+	private BullyPriority mPriority;
+	private BullyPriority mCoordinatorPriority;
 	private Name mCoordName;
 	private HRMName mCoordAddress;
 	private Long mClusterID;
@@ -91,7 +92,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return getHRMController().getClusterDistance(this);
 	}
 
-	public long getHighestPriority()
+	public BullyPriority getHighestPriority()
 	{
 		return getBullyPriority();
 	}
@@ -112,7 +113,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			tCluster.setToken(pAnnounce.getToken());
 		} else {
-			getLogger().log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
+			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
 		}
 		//((AttachedCluster)tCluster).setNegotiatingHost(pAnnounce.getAnnouncersAddress());
 
@@ -127,7 +128,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 				try {
 					getHRMController().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 				} catch (RemoteException tExc) {
-					getLogger().err(this, "Unable to register " + pAnnounce.getCoordinatorName() + " at name mapping service", tExc);
+					Logging.err(this, "Unable to register " + pAnnounce.getCoordinatorName() + " at name mapping service", tExc);
 				}
 			}
 		}
@@ -156,7 +157,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void setCoordinatorPriority(long pCoordinatorPriority)
+	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority)
 	{
 		/*
 		 * not needed, this is just a dummy for topology
@@ -164,13 +165,13 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public long getNodePriority()
+	public BullyPriority getNodePriority()
 	{
 		return mCoordinatorPriority;
 	}
 
 	@Override
-	public void setPriority(long pPriority)
+	public void setPriority(BullyPriority pPriority)
 	{
 		mPriority = pPriority;
 	}
@@ -214,7 +215,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public long getBullyPriority()
+	public BullyPriority getBullyPriority()
 	{
 		return mPriority;
 	}
@@ -269,7 +270,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void setHighestPriority(long pHighestPriority) {
+	public void setHighestPriority(BullyPriority pHighestPriority) {
 		/*
 		 * not needed, this is just a dummy for topology
 		 */
@@ -353,7 +354,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	@Override
 	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
 	{
-		getLogger().log(getClusterDescription(), "Setting " + pCEP + " as  negotiating CEP");
+		Logging.log(getClusterDescription(), "Setting " + pCEP + " as  negotiating CEP");
 		if(!mNegotiators.contains(pCEP)) mNegotiators.add(pCEP);
 		mNegotiator = pCEP;
 	}
@@ -378,7 +379,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 			}
 		}
 		if(tClosest == null) {
-			getLogger().err(this, "Would return no announced CEP");
+			Logging.err(this, "Would return no announced CEP");
 			tClosest = mAnnouncedCEPs.getFirst();
 		}
 		return tClosest;
@@ -448,11 +449,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		
 	}
 
-	public Logger getLogger()
-	{
-		return getHRMController().getLogger();
-	}
-	
 	public int hashCode()
 	{
 		return mClusterID.intValue() * 1;
