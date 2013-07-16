@@ -386,7 +386,7 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 		
 		double tWidth = tRectangle.width * 0.4;
 		double tHeight = tRectangle.height*0.4;
-		Logging.log(this, "Old size was " + tRectangle.width + "x" + tRectangle.height + " while new size will be " + tWidth + "x" + tHeight);
+		//Logging.log(this, "Old size was " + tRectangle.width + "x" + tRectangle.height + " while new size will be " + tWidth + "x" + tHeight);
 		
 		mLayout.setSize(new Dimension((int)tWidth, (int)tHeight));
 		

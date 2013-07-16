@@ -978,6 +978,11 @@ public class SocketPathCreator {
 		return null;
 	}
 	
+	public String toString()
+	{
+		return getClass().getSimpleName();
+	}
+
 	/** Exception for errors occurred during remove-methods. */
 	private static class RemoveException extends CreationException {
 		private static final long serialVersionUID = 2106388607204980577L;

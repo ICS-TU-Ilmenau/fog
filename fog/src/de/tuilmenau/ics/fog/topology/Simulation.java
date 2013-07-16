@@ -522,6 +522,11 @@ public class Simulation
 		mExitObserver.add(exitObserver);
 	}
 	
+	public String toString()
+	{
+		return getClass().getSimpleName();
+	}
+
 	private EventHandler mTimeBase;
 	private Logger mLogger;
 	
