@@ -111,6 +111,7 @@ public class Config
 		
 		/**
 		 * Reduces the log output by printing only simple class names.
+		 * However, this is only applied if toString() isn't implemented in the class.
 		 */
 		public static final boolean LOG_SIMPLE_CLASS_NAMES = true;
 		
