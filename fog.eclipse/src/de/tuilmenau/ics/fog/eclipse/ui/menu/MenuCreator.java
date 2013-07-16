@@ -77,6 +77,11 @@ public class MenuCreator implements IMenuCreator
 		mSite = pSite;
 	}
 	
+	public String toString()
+	{
+		return getClass().getSimpleName();
+	}
+
 	protected boolean checkFilter(String filterClassName, Object pContext)
 	{
 		boolean accept = true;

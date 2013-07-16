@@ -54,4 +54,10 @@ public class MenuCreatorApplication extends MenuCreator
 		pMenu.add(ENTRY_NONE);
 		
 	}
+
+	public String toString()
+	{
+		return getClass().getSimpleName();
+	}
+
 }
