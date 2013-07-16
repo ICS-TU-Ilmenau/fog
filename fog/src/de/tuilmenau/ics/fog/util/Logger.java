@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.util;
 
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 
@@ -164,8 +165,25 @@ public class Logger
 		buf.append(" - ");
 		if (object != null) {
 			if (Config.Logging.LOG_SIMPLE_CLASS_NAMES){
-				buf.append(object.getClass().getSimpleName());
+				Method tToStringMethod = null;
+				try {
+					// check if the class object has an implemented toString() function
+					//TODO: check if toString() is implemented in the class and doesn't represent the default toString() version
+					tToStringMethod = object.getClass().getMethod("toString", (Class<?>[]) null);
+				} catch (Exception tExc) {
+					tToStringMethod = null;
+				}
+				
+				// have we found a toString() function?
+				if (tToStringMethod != null){
+					// use the toString() function
+					buf.append(object);
+				}else{
+					// use the simple class name
+					buf.append(object.getClass().getSimpleName());
+				}
 			}else{
+				// use the toString() function
 				buf.append(object);
 			}
 			buf.append(": ");
