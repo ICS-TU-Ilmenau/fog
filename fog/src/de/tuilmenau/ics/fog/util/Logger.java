@@ -163,7 +163,11 @@ public class Logger
 		}
 		buf.append(" - ");
 		if (object != null) {
-			buf.append(object);
+			if (Config.Logging.LOG_SIMPLE_CLASS_NAMES){
+				buf.append(object.getClass().getSimpleName());
+			}else{
+				buf.append(object);
+			}
 			buf.append(": ");
 		}
 		buf.append(message);

@@ -110,6 +110,11 @@ public class Config
 		public static final int LOG_WITH_DATE_AND_TIME = 1;
 		
 		/**
+		 * Reduces the log output by printing only simple class names.
+		 */
+		public static final boolean LOG_SIMPLE_CLASS_NAMES = true;
+		
+		/**
 		 * Enable logging via Eclipse in full mode. If disabled, not all
 		 * consoles are created or turned on.
 		 */
