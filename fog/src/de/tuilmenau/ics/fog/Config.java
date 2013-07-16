@@ -102,9 +102,12 @@ public class Config
 		public static final boolean LOG_ALWAYS_TO_STD_OUT = true;
 		
 		/**
-		 * Put date and time in front of log message
+		 * Put date and time in front of log message?
+		 * 0 - disabled
+		 * 1 - with time
+		 * 2 - with time and date
 		 */
-		public static final boolean LOG_WITH_DATE_AND_TIME = true;
+		public static final int LOG_WITH_DATE_AND_TIME = 2;
 		
 		/**
 		 * Enable logging via Eclipse in full mode. If disabled, not all

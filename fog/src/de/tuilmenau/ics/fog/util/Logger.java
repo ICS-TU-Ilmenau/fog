@@ -27,8 +27,10 @@ public class Logger
 	private LinkedList<LogObserver> mLogObserver = null;
 	private Level mLevel = Level.TRACE;
 	
-	private static final String DATE_FORMAT_NOW = "yyyy-MM-dd HH:mm:ss";
-	private static SimpleDateFormat sdf = null;
+	private static final String TIME_FORMAT_STRING_WITH_DATE = "yyyy-MM-dd HH:mm:ss";
+	private static final String TIME_FORMAT_STRING_WITHOUT_DATE = "HH:mm:ss";
+	private static SimpleDateFormat TIME_FORMAT_WITH_DATE = null;
+	private static SimpleDateFormat TIME_FORMAT_WITHOUT_DATE = null;
 	
 	/**
 	 * Constructor for the root instance of
@@ -36,9 +38,8 @@ public class Logger
 	 */
 	public Logger()
 	{
-		if(Config.Logging.LOG_WITH_DATE_AND_TIME){
-			sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
-		}
+		TIME_FORMAT_WITH_DATE = new SimpleDateFormat(TIME_FORMAT_STRING_WITH_DATE);
+		TIME_FORMAT_WITHOUT_DATE = new SimpleDateFormat(TIME_FORMAT_STRING_WITHOUT_DATE);
 		
 		mParentLogger = null;
 	}
@@ -125,8 +126,17 @@ public class Logger
 	public static String formatLog(Level level, Object object, String message)
 	{
 		StringBuffer buf = new StringBuffer();
-		if(Config.Logging.LOG_WITH_DATE_AND_TIME){
-			buf.append(sdf.format(System.currentTimeMillis()) + " ");
+		switch(Config.Logging.LOG_WITH_DATE_AND_TIME)
+		{
+			case 0:
+					break;
+			case 1:
+					buf.append(TIME_FORMAT_WITHOUT_DATE.format(System.currentTimeMillis()) + " ");
+					break;
+			case 2:
+			default:
+					buf.append(TIME_FORMAT_WITH_DATE.format(System.currentTimeMillis()) + " ");
+					break;
 		}
 		switch(level){
 				case ERROR:
