@@ -125,7 +125,9 @@ public class Logger
 	public static String formatLog(Level level, Object object, String message)
 	{
 		StringBuffer buf = new StringBuffer();
-		if(Config.Logging.LOG_WITH_DATE_AND_TIME) buf.append(sdf.format(System.currentTimeMillis()) + " ");
+		if(Config.Logging.LOG_WITH_DATE_AND_TIME){
+			buf.append(sdf.format(System.currentTimeMillis()) + " ");
+		}
 		buf.append(level);
 		buf.append(" - ");
 		if (object != null) {
