@@ -107,7 +107,7 @@ public class Config
 		 * 1 - with time
 		 * 2 - with time and date
 		 */
-		public static final int LOG_WITH_DATE_AND_TIME = 2;
+		public static final int LOG_WITH_DATE_AND_TIME = 1;
 		
 		/**
 		 * Enable logging via Eclipse in full mode. If disabled, not all
