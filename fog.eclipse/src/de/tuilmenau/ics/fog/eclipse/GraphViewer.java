@@ -92,7 +92,7 @@ import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 /**
  * Class for displaying a graph in an AWT window.
  * 
- * @param <NodeObject> Class for the vertice objects of the graph 
+ * @param <NodeObject> Class for the vertices objects of the graph 
  * @param <LinkObject> Class for the edge objects of the graph
  */
 public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
