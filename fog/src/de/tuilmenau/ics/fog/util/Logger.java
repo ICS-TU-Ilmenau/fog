@@ -128,7 +128,29 @@ public class Logger
 		if(Config.Logging.LOG_WITH_DATE_AND_TIME){
 			buf.append(sdf.format(System.currentTimeMillis()) + " ");
 		}
-		buf.append(level);
+		switch(level){
+				case ERROR:
+					buf.append("ERROR");
+					break;
+				case WARN:
+					buf.append("WARN ");
+					break;
+				case INFO:
+					buf.append("INFO ");
+					break;
+				case LOG:
+					buf.append("LOG  ");
+					break;
+				case DEBUG:
+					buf.append("DEBUG");
+					break;
+				case TRACE:
+					buf.append("TRACE");
+					break;
+				default: 
+					buf.append(level);
+					break;
+		}
 		buf.append(" - ");
 		if (object != null) {
 			buf.append(object);
