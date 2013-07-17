@@ -143,7 +143,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		HRMID tID = mHRMID.clone();
 		BigInteger tAddress = BigInteger.valueOf(++mLastUsedAddress);
 		tID.setLevelAddress(mHierarchyLevel, tAddress);
-		if(mHierarchyLevel != 0) {
+		if(mHierarchyLevel != HRMConfig.Hierarchy.BASE_LEVEL) {
 			HRMIPMapper.registerHRMID(tID);
 		}
 		return tID;
@@ -173,7 +173,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				if(!((ICluster)tNode).isInterASCluster()) {
 					if(tNode instanceof Cluster && i == 1) {
 						tClustersToNotify.add(tNode);
-					} else if (tNode instanceof NeighborCluster && ((NeighborCluster)tNode).getClustersToTarget() <= i && ((NeighborCluster)tNode).getClustersToTarget() != 0 && !mConnectedEntities.contains(((NeighborCluster)tNode).getCoordinatorName())) {
+					} else if (tNode instanceof NeighborCluster && ((NeighborCluster)tNode).getClusterDistanceToTarget() <= i && ((NeighborCluster)tNode).getClusterDistanceToTarget() != 0 && !mConnectedEntities.contains(((NeighborCluster)tNode).getCoordinatorName())) {
 						tClustersToNotify.add(tNode);					
 					}
 				}
@@ -269,7 +269,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		
 		TopologyData tManagedClusterEnvelope = new TopologyData();
 		Logging.log(this, "Will now distribute addresses to entities on level 0");
-		if(mHierarchyLevel == 0) {
+		if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
 			HRMID tSelf = generateNextAddress();
 			tManagedClusterEnvelope.setHRMID(tSelf);
 			mManagedCluster.setHRMID(tSelf);
@@ -290,7 +290,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 					 */
 					tID = generateNextAddress();
 					
-					if(mHierarchyLevel == 0) {
+					if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
 						map(tID, tReceivingCEP);
 					} else {
 						map(tID, tReceivingCEP.getRemoteClusterName());
@@ -308,7 +308,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				 * for identification, the cluster gets its generated HRMID
 				 */
 				
-				if(tReceivingCEP.getRemoteClusterName() != null && mHierarchyLevel != 0) {
+				if(tReceivingCEP.getRemoteClusterName() != null && mHierarchyLevel != HRMConfig.Hierarchy.BASE_LEVEL) {
 					tReceivingCEP.getRemoteClusterName().setHRMID(tID);
 				} else {
 					Logging.log(this, "Unable to find remote cluster for " + tReceivingCEP);
@@ -346,7 +346,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 					 */
 					
 					// are we on a higher hierarchy level?
-					if(mHierarchyLevel > 0) {
+					if(mHierarchyLevel > HRMConfig.Hierarchy.BASE_LEVEL) {
 						/*
 						 * calculate entire cluster route from source to target
 						 * 
@@ -447,7 +447,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				}
 				
 				// are we on basic level?
-				if(mHierarchyLevel == 0) {
+				if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
 					/*
 					 * The host itself has to tell its client how to reach it: get the address providers address: retrieveAddress() and then give the clients the address of the address provider
 					 */
@@ -482,7 +482,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				
 				if(mHigherHRMIDs != null) {
 					// are we on a higher hierarchy level?
-					if(mHierarchyLevel > 0) {
+					if(mHierarchyLevel > HRMConfig.Hierarchy.BASE_LEVEL) {
 						for(HRMID tHRMID : mHigherHRMIDs) {
 							/*
 							 * tNegotiator is the source cluster
@@ -827,7 +827,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 			}
 			
 			// are we at base level?
-			if(mHierarchyLevel == 0) {
+			if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
 				
 				for(HRMSignature tSignature : mSignatures) {
 					tManagedClusterEnvelope.addApprovedSignature(tSignature);

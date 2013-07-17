@@ -69,7 +69,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableCluste
 	 */
 	public void setLevelAddress(int pLevel, BigInteger pAddress)
 	{
-		if(pLevel != 0) {
+		if(pLevel != HRMConfig.Hierarchy.BASE_LEVEL) {
 			BigInteger tValue = getLevelAddress(pLevel);
 			if(!tValue.equals(BigInteger.valueOf(0))) {
 				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)).divide(BigInteger.valueOf(pLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));

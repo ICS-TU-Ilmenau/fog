@@ -23,6 +23,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RoutingService;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -37,7 +38,7 @@ public class CoordinatorSession extends Session
 	private boolean mServerSide = false;
 	private L2Address mSourceIdentification = null;
 	private L2Address mPeerIdentification = null;
-	private int mLevel = 0;
+	private int mHierarchyLevel = 0;
 	private CoordinatorCEPMultiplexer mMux;
 	private Route mRouteToPeer;
 	
@@ -61,7 +62,7 @@ public class CoordinatorSession extends Session
 		getLogger().log(this, "Created");
 
 		mServerSide = pServerSide;
-		mLevel = pLevel;
+		mHierarchyLevel = pLevel;
 		mMux = pMux;
 	}
 	
@@ -82,7 +83,7 @@ public class CoordinatorSession extends Session
 					getLogger().err(this, "Unable to fulfill requirements ", tExc);
 				}
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
-				if(mLevel == 0) {
+				if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
 					getHRMController().getHRS().registerRoute(mSourceIdentification, mPeerIdentification, mRouteToPeer);
 				}
 				write(mSourceIdentification);
@@ -90,7 +91,7 @@ public class CoordinatorSession extends Session
 
 		} else if (pData instanceof L2Address) {
 			mPeerIdentification = (L2Address) pData;
-			if(mLevel == 0) {
+			if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
 				getHRMController().getHRS().registerRoute(mSourceIdentification, mPeerIdentification, mRouteToPeer);
 			} else {

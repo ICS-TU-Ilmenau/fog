@@ -186,8 +186,8 @@ public class CoordinatorCEPMultiplexer
 							pTargetCluster.getClusterID(),
 							pTargetCluster.getToken(),
 							pTargetCluster.getHierarchyLevel(),
-							(pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClustersToTarget() : 0));
-					if(pTargetCluster instanceof NeighborCluster && ((NeighborCluster)pTargetCluster).getClustersToTarget() == 0) {
+							(pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() : 0));
+					if(pTargetCluster instanceof NeighborCluster && ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() == 0) {
 						Logging.warn(this, "Set 0 as hop count to target " + pTargetCluster);
 					}
 					Logging.log(this, "Created " + tDiscovery + " for " + pTargetCluster);

@@ -137,17 +137,17 @@ public class HRMController extends Application implements IServerCallback
 			ICluster tFoundCluster = null;
 			for(Cluster tCluster : getRoutingTargetClusters())
 			{
-				ClusterName tJoinClusterName = new ClusterName(tJoin.getTargetToken(), tJoin.getTargetClusterID(), tJoin.getLevel());
-				ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getTargetClusterID(), tJoin.getLevel());
+				ClusterName tJoinClusterName = new ClusterName(tJoin.getTargetToken(), tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
+				ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
 				
 				if(tCluster.equals(tJoinClusterNameTok0) || tJoin.getTargetToken() != 0 && tCluster.equals(tJoinClusterName))	{
 					if(tConnectionSession == null) {
-						tConnectionSession = new CoordinatorSession(this, true, tJoin.getLevel(), tCluster.getMultiplexer());
+						tConnectionSession = new CoordinatorSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
 					}
 					
 					tCEP = new CoordinatorCEPChannel(this, tCluster);
 					((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
-					if(tJoin.getLevel() > 0) {
+					if(tJoin.getHierarchyLevel() > HRMConfig.Hierarchy.BASE_LEVEL) {
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 					} else {
 						if(tParticipate.isInterASCluster()) {
@@ -162,25 +162,25 @@ public class HRMController extends Application implements IServerCallback
 			}
 			if(!tClusterFound)
 			{
-				Cluster tCluster = new Cluster(new Long(tJoin.getTargetClusterID()), tJoin.getLevel(), this);
+				Cluster tCluster = new Cluster(new Long(tJoin.getTargetClusterID()), tJoin.getHierarchyLevel(), this);
 				if(tParticipate.isInterASCluster()) {
 					tCluster.setInterASCluster();
 					setSourceIntermediateCluster(tCluster, tCluster);
 				}
 				setSourceIntermediateCluster(tCluster, tCluster);
 				if(tConnectionSession == null) {
-					tConnectionSession = new CoordinatorSession(this, true, tJoin.getLevel(), tCluster.getMultiplexer());
+					tConnectionSession = new CoordinatorSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
 				}
 
-				if(tJoin.getLevel() > 0) {
+				if(tJoin.getHierarchyLevel() > HRMConfig.Hierarchy.BASE_LEVEL) {
 					for(ICluster tVirtualNode : getRoutingTargetClusters()) {
-						if(tVirtualNode.getHierarchyLevel() == tJoin.getLevel() - 1) {
+						if(tVirtualNode.getHierarchyLevel() == tJoin.getHierarchyLevel() - 1) {
 							tCluster.setPriority(tVirtualNode.getBullyPriority());
 						}
 					}
 				}
 				tCEP = new CoordinatorCEPChannel(this, tCluster);
-				if(tJoin.getLevel() > 0) {
+				if(tJoin.getHierarchyLevel() > HRMConfig.Hierarchy.BASE_LEVEL) {
 					((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 				} else {
 					if(tParticipate.isInterASCluster()) {
@@ -197,14 +197,14 @@ public class HRMController extends Application implements IServerCallback
 			}
 			tFoundCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
 			for(ICluster tNegotiatingCluster : getRoutingTargetClusters()) {
-				ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), (tJoin.getLevel() - 1 > 0 ? tJoin.getLevel() - 1 : 0 ));
+				ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), (tJoin.getHierarchyLevel() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel() - 1 : 0 ));
 				if(tNegotiatingCluster.equals(tNegClusterName)) {
 					tCEP.setRemoteClusterName(tNegClusterName);
 				}
 			}
-			if(tCEP.getRemoteClusterName() == null && tJoin.getLevel() > 0) {
+			if(tCEP.getRemoteClusterName() == null && tJoin.getHierarchyLevel() > HRMConfig.Hierarchy.BASE_LEVEL) {
 				HashMap<ICluster, ClusterName> tNewlyCreatedClusters = new HashMap<ICluster, ClusterName>(); 
-				NeighborCluster tAttachedCluster = new NeighborCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), tJoin.getLevel() -1, this);
+				NeighborCluster tAttachedCluster = new NeighborCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), tJoin.getHierarchyLevel() -1, this);
 				tAttachedCluster.setPriority(tParticipate.getSenderPriority());
 				if(tAttachedCluster.getCoordinatorName() != null) {
 					try {
@@ -406,7 +406,7 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public Description getConnectDescription(ClusterParticipationProperty pParticipationProperty)
 	{
-		mLogger.log(this, "Creating a cluster participation property for level " + pParticipationProperty.getLevel());
+		mLogger.log(this, "Creating a cluster participation property for level " + pParticipationProperty.getHierarchyLevel());
 		Description tDescription = new Description();
 		//try {
 		tDescription.set(new ContactDestinationApplication(null, HRMController.ROUTING_NAMESPACE));

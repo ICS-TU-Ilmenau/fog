@@ -126,7 +126,7 @@ public class Elector extends Thread implements HRMEntity
 		pCluster.setCoordinatorCEP(null, tSignature, tNode.getCentralFN().getName(), (L2Address)tAddress);
 		LinkedList<HRMSignature> tSignatures = tHRMController.getApprovedSignatures();
 		tSignatures.add(tSignature);
-		if(mHierarchyLevel > 0) {
+		if(mHierarchyLevel > HRMConfig.Hierarchy.BASE_LEVEL) {
 			pCluster.getHRMController().getLogger().log(pCluster, "has the coordinator and will now announce itself");
 			for(ICluster tToAnnounce : pCluster.getNeighbors()) {
 //					List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);

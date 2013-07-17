@@ -27,7 +27,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class ClusterParticipationProperty extends AbstractProperty
 {
-	private int mLevel;
+	private int mHierarchyLevel;
 	private Long mTargetClusterID;
 	private int mTargetToken;
 	private Name mSourceName;
@@ -45,7 +45,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 	public ClusterParticipationProperty(Long pTargetClusterID, int pLevel, int pTargetToken)
 	{
 		mTargetClusterID = pTargetClusterID;
-		mLevel = pLevel;
+		mHierarchyLevel = pLevel;
 		mTargetToken = pTargetToken;
 	}
 	
@@ -119,9 +119,9 @@ public class ClusterParticipationProperty extends AbstractProperty
 	 * 
 	 * @return Return the level the source cluster is associated to.
 	 */
-	public int getLevel()
+	public int getHierarchyLevel()
 	{
-		return mLevel;
+		return mHierarchyLevel;
 	}
 	
 	/**

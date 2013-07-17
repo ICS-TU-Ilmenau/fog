@@ -605,7 +605,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 //		if(mRemoteCluster instanceof ClusterName) {
 //			tCluster = getHRMController().getCluster(mRemoteCluster);
 //		}
-//		if(getCluster().getHierarchyLevel() == 0) {
+//		if(getCluster().getHierarchyLevel() == HRMConfig.Hierarchy.BASE_LEVEL) {
 //			return getCluster();
 //		}
 //		return (tCluster == null ? mRemoteCluster : tCluster);
@@ -676,7 +676,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 			if(pNegotiate.getHierarchyLevel() < mAnnouncerMapping.get(pAnnounced).getHierarchyLevel()) {
 				mAnnouncerMapping.remove(pAnnounced);
 				mAnnouncerMapping.put(pAnnounced, pNegotiate);
-			} else if (pNegotiate instanceof NeighborCluster && mAnnouncerMapping.get(pAnnounced) instanceof NeighborCluster && ((NeighborCluster)pNegotiate).getClustersToTarget() < ((NeighborCluster)mAnnouncerMapping.get(pAnnounced)).getClustersToTarget()) {
+			} else if (pNegotiate instanceof NeighborCluster && mAnnouncerMapping.get(pAnnounced) instanceof NeighborCluster && ((NeighborCluster)pNegotiate).getClusterDistanceToTarget() < ((NeighborCluster)mAnnouncerMapping.get(pAnnounced)).getClusterDistanceToTarget()) {
 				Logging.log(this, "replacing negotiating cluster of " + pAnnounced + ": " + mAnnouncerMapping.get(pAnnounced) + " with " + pNegotiate);
 				mAnnouncerMapping.remove(pAnnounced);
 				mAnnouncerMapping.put(pAnnounced, pNegotiate);
@@ -763,7 +763,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 						int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 						Logging.log(this, "Radius is " + tRadius);
 						
-						if(tCluster instanceof NeighborCluster && ((NeighborCluster)tCluster).getClustersToTarget() + pDiscovery.getDistance() > tRadius) continue;
+						if(tCluster instanceof NeighborCluster && ((NeighborCluster)tCluster).getClusterDistanceToTarget() + pDiscovery.getDistance() > tRadius) continue;
 						boolean tBreak=false;
 						for(CoordinatorCEPChannel tCEP : tCluster.getParticipatingCEPs()) {
 							if(tCEP.isEdgeCEP()) tBreak = true;
@@ -774,7 +774,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 						int tToken = tCluster.getToken();
 						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
 							if(tCluster instanceof NeighborCluster) {
-								Logging.log(this, "Reporting " + tCluster + " to " + ((HRMName)getPeerName()).getDescr() + " because " + pDiscovery.getDistance() + " + " + ((NeighborCluster)tCluster).getClustersToTarget() + "=" + (pDiscovery.getDistance() + ((NeighborCluster)tCluster).getClustersToTarget()));
+								Logging.log(this, "Reporting " + tCluster + " to " + ((HRMName)getPeerName()).getDescr() + " because " + pDiscovery.getDistance() + " + " + ((NeighborCluster)tCluster).getClusterDistanceToTarget() + "=" + (pDiscovery.getDistance() + ((NeighborCluster)tCluster).getClusterDistanceToTarget()));
 								Logging.log(this, "token list was " + pDiscovery.getTokens());
 							}
 							getPathTo(pDiscovery, tCluster);

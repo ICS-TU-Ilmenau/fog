@@ -87,7 +87,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		mAnnouncedCEPs.add(pCEP);
 	}
 	
-	public int getClustersToTarget()
+	public int getClusterDistanceToTarget()
 	{
 		return getHRMController().getClusterDistance(this);
 	}
