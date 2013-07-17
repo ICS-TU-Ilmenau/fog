@@ -55,15 +55,24 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	private static int sGUIClusterID = 0;
 
+	/**
+	 * Stores the Bully priority of this node for this cluster.
+	 * The value is also used inside the Elector of this cluster. TODO: elector sollte die bullyprio. von hier nutzen und keine eigene besitzen
+	 */
+	private BullyPriority mBullyPriority = null;
+
+	/**
+	 * Stored the hierarchy level of this cluster.
+	 */
+	private HierarchyLevel mHierarchyLevel;
+
 	private CoordinatorCEPChannel mChannelToCoordinator = null;
 	private Long mClusterID;
 	private BullyPriority mHighestPriority = null;
 	private HRMID mHRMID = null;
-	private int mHierarchyLevel;
 	private BullyPriority mCoordinatorPriority;
 	private Name mCoordName;
 	private Name mCoordAddress;
-	private BullyPriority mBullyPriority = null;
 	private HRMController mHRMController;
 	private LinkedList<CoordinatorCEPChannel> mCEPs;
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
@@ -98,10 +107,10 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 * @param ptHRMController
 	 * @param pLogger
 	 */
-	public Cluster(Long pClusterID, int pLevel, HRMController ptHRMController)
+	public Cluster(Long pClusterID, int pHierarchyLevelValue, HRMController ptHRMController)
 	{
 		mClusterID = pClusterID;
-		mHierarchyLevel = pLevel;
+		mHierarchyLevel = new HierarchyLevel(pHierarchyLevelValue);
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mSentAnnounces = new LinkedList<NeighborClusterAnnounce>();
@@ -111,7 +120,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		for(ICluster tCluster : getHRMController().getRoutingTargets())
 		{
 			Logging.log(this, "CLUSTER - found already known neighbor: " + tCluster);
-			if(tCluster.getHierarchyLevel() == pLevel && (tCluster != this))
+			if(tCluster.getHierarchyLevel() == pHierarchyLevelValue && (tCluster != this))
 			{
 				tCluster.addNeighborCluster(this);
 
@@ -119,7 +128,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				mBullyPriority.increaseConnectivity();
 			}
 		}
-		Elector tProcess = ElectionManager.getElectionManager().addElection(mHierarchyLevel, mClusterID, new Elector(this));
+		Elector tProcess = ElectionManager.getElectionManager().addElection(mHierarchyLevel.getValue(), mClusterID, new Elector(this));
 		mMux = new CoordinatorCEPMultiplexer(mHRMController);
 		mMux.setCluster(this);
 	}
@@ -150,7 +159,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				notifyAll();
 			}
 			setCoordinatorPriority(getBullyPriority());
-			getHRMController().getPhysicalNode().setDecorationParameter("L"+ (mHierarchyLevel+1));
+			getHRMController().getPhysicalNode().setDecorationParameter("L"+ (mHierarchyLevel.getValue() + 1));
 			getHRMController().getPhysicalNode().setDecorationValue("(CoordSign.=" + pCoordSignature + ")");
 		} else {
 			synchronized(this) {
@@ -181,7 +190,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				Logging.log(this, "CLUSTER-CEP - found already known neighbor cluster: " + tCluster);
 
 				Logging.log(this, "Preparing neighbor zone announcement");
-				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, mHierarchyLevel, pCoordSignature, pAddress, getToken(), mClusterID);
+				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, mHierarchyLevel.getValue(), pCoordSignature, pAddress, getToken(), mClusterID);
 				tAnnounce.setCoordinatorsPriority(mBullyPriority); //TODO : ???
 				if(pCoordinatorChannel != null) {
 					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorChannel.getRouteToPeer(), pCoordinatorChannel.getSourceName(), pCoordinatorChannel.getPeerName()));
@@ -230,7 +239,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 		ICluster tCluster = getHRMController().getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
 		if(tCluster == null) {
-			tCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), mHierarchyLevel, getHRMController());
+			tCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), mHierarchyLevel.getValue(), getHRMController());
 			getHRMController().setSourceIntermediateCluster(tCluster, this);
 			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			((NeighborCluster)tCluster).setSourceIntermediate(this);
@@ -289,11 +298,11 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				pCEP.addAnnouncedCluster(addAnnouncedCluster(pAnnounce, pCEP), getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
 			}
 		} else {
-			if(getHRMController().getClusterWithCoordinatorOnLevel(mHierarchyLevel) == null) {
+			if(getHRMController().getClusterWithCoordinatorOnLevel(mHierarchyLevel.getValue()) == null) {
 				/*
 				 * no coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel + 1)) {
+				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel.getValue() + 1)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						tManager.storeAnnouncement(pAnnounce);
 					}
@@ -302,7 +311,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				/*
 				 * coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel + 1)) {
+				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel.getValue() + 1)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						if(tManager.getCoordinatorCEP() != null) {
 							tManager.getCoordinatorCEP().sendPacket(pAnnounce);
@@ -546,7 +555,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	
 	public int getHierarchyLevel()
 	{
-		return mHierarchyLevel;
+		return mHierarchyLevel.getValue();
 	}
 	
 	public int getGUIClusterID()
