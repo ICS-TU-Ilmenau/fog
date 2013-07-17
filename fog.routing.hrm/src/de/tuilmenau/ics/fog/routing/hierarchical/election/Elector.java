@@ -51,7 +51,6 @@ public class Elector extends Thread implements HRMEntity
 	private long WAIT_BEFORE_ADDRESS_DISTRIBUTION = 5000;
 	private long TIMEOUT_FOR_ANNOUNCEMENT=5000;
 	
-	private boolean mInProgress = false;
 	private int mHierarchyLevel = 0;	
 	private boolean mWillInitiateManager = false;
 	private boolean mLostElection = false;
@@ -60,23 +59,12 @@ public class Elector extends Thread implements HRMEntity
 	{
 		mHierarchyLevel = pCluster.getHierarchyLevel();
 		mElectingCluster = pCluster;
-
-		// update the thread name
-		updateThreadName();
 	}
 	
 	/**
-	 * 
+	 * Starts an election by signaling BULLY ELECT to all cluster members
 	 */
-	//TV: checked
-	private void updateThreadName()
-	{
-		if(!getName().equals(toString())) {
-			setName(toString());
-		}
-	}
-
-	private void sendElections()
+	private void signalElectionStart()
 	{
 		Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mElectingCluster);
 		Logging.log(this, "SENDELECTIONS()-CEPs: " + mElectingCluster.getParticipatingCEPs().size());
@@ -91,12 +79,11 @@ public class Elector extends Thread implements HRMEntity
 		Logging.log(this, "SENDELECTIONS()-END");
 	}
 	
-	public synchronized boolean isStarted()
-	{
-		return mInProgress;
-	}
-	
-	private void createCoordinator(Cluster pCluster)
+	/**
+	 * Signals to all cluster members that we are coordinator and creates coordinator instance. 
+	 * @param pCluster the cluster for which the coordinator was elected
+	 */
+	private void signalAndCreateCoordinator(Cluster pCluster)
 	{
 		Random tRandom = new Random(System.currentTimeMillis());
 		HRMController tHRMController = pCluster.getHRMController();
@@ -112,42 +99,49 @@ public class Elector extends Thread implements HRMEntity
 			pCluster.getHRMController().setIdentity(tIdentity);
 		}
 		
+
+		/**
+		 * Create signature of cluster
+		 */
+		HRMSignature tSignature = null;
 		try {
-			BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getBullyPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
-			for(CoordinatorCEPChannel tCEP : pCluster.getParticipatingCEPs()) {
-				tAnnounce.addCoveredNode(tCEP.getPeerName());
-			}
-			if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
-				pCluster.getHRMController().getLogger().log(this, "Sending announce that does not cover anyhting");
-			}
-			pCluster.sendClusterBroadcast(tAnnounce, null);
-			
-			Name tAddress = tNode.getRoutingService().getNameFor(tNode.getCentralFN());; 
-			
-			pCluster.setCoordinatorCEP(null, pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), tNode.getCentralFN().getName(), (L2Address)tAddress);
-			LinkedList<HRMSignature> tSignatures = tHRMController.getApprovedSignatures();
-			tSignatures.add(tHRMController.getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()));
-			
-			if(mHierarchyLevel > 0) {
-				pCluster.getHRMController().getLogger().log(pCluster, "has the coordinator and will now announce itself");
-				for(ICluster tToAnnounce : pCluster.getNeighbors()) {
+			tSignature = tHRMController.getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel());
+		} catch (AuthenticationException tExc) {
+			pCluster.getHRMController().getLogger().err(this, "Unable to create signature for coordinator", tExc);
+		}
+		
+		/**
+		 * Send BULLY ANNOUNCE in order to signal that we are the coordinator
+		 */
+		BullyAnnounce tAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getBullyPriority(), tSignature, pCluster.getToken());
+		for(CoordinatorCEPChannel tCEP : pCluster.getParticipatingCEPs()) {
+			tAnnounce.addCoveredNode(tCEP.getPeerName());
+		}
+		if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
+			pCluster.getHRMController().getLogger().log(this, "Sending announce that does not cover anyhting");
+		}
+		pCluster.sendClusterBroadcast(tAnnounce, null);
+		Name tAddress = tNode.getRoutingService().getNameFor(tNode.getCentralFN());; 
+		pCluster.setCoordinatorCEP(null, tSignature, tNode.getCentralFN().getName(), (L2Address)tAddress);
+		LinkedList<HRMSignature> tSignatures = tHRMController.getApprovedSignatures();
+		tSignatures.add(tSignature);
+		if(mHierarchyLevel > 0) {
+			pCluster.getHRMController().getLogger().log(pCluster, "has the coordinator and will now announce itself");
+			for(ICluster tToAnnounce : pCluster.getNeighbors()) {
 //					List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);
-					/*
-					 * OK: Because of the formerly sent 
-					 */
-					if(tToAnnounce instanceof NeighborCluster) {
-						BullyAnnounce tBullyAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getBullyPriority(), pCluster.getHRMController().getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel()), pCluster.getToken());
-						for(CoordinatorCEPChannel tCEP: pCluster.getParticipatingCEPs()) {
-							tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
-						}
-						for(CoordinatorCEPChannel tCEP : ((NeighborCluster)tToAnnounce).getAnnouncedCEPs()) {
-							tCEP.sendPacket(tBullyAnnounce);
-						}
+				/*
+				 * OK: Because of the formerly sent 
+				 */
+				if(tToAnnounce instanceof NeighborCluster) {
+					BullyAnnounce tBullyAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), pCluster.getBullyPriority(), tSignature, pCluster.getToken());
+					for(CoordinatorCEPChannel tCEP: pCluster.getParticipatingCEPs()) {
+						tBullyAnnounce.addCoveredNode(tCEP.getPeerName());
+					}
+					for(CoordinatorCEPChannel tCEP : ((NeighborCluster)tToAnnounce).getAnnouncedCEPs()) {
+						tCEP.sendPacket(tBullyAnnounce);
 					}
 				}
 			}
-		} catch (AuthenticationException tExc) {
-			pCluster.getHRMController().getLogger().err(this, "Unable to create signature for coordinator", tExc);
 		}
 		
 		
@@ -175,9 +169,6 @@ public class Elector extends Thread implements HRMEntity
 				// stepwise hierarchy creation
 				Logging.log(this, "Will now wait because hierarchy build up is done stepwise");
 				mWillInitiateManager = true;
-				if(mHierarchyLevel == 1) {
-					Logging.log(this, "Trigger");
-				}
 				Logging.log(this, "Reevaluating whether other processes settled");
 				ElectionManager.getElectionManager().reevaluate(pCluster.getHierarchyLevel());
 				synchronized(this) {
@@ -242,7 +233,7 @@ public class Elector extends Thread implements HRMEntity
 	
 		if(tNodessClusterForCoordinator != null) {
 			if(!mPleaseInterrupt) {
-				createCoordinator(tNodessClusterForCoordinator);
+				signalAndCreateCoordinator(tNodessClusterForCoordinator);
 			} else {
 				Logging.err(this, "I had the highest priority, but election was cancelled");
 				restart();
@@ -262,10 +253,9 @@ public class Elector extends Thread implements HRMEntity
 	public void run()
 	{
 		try {
-			mInProgress = true;
 			long tTimeWaitUntil = 0;
 			
-			sendElections();
+			signalElectionStart();
 			
 			tTimeWaitUntil = System.currentTimeMillis() + TIMEOUT_FOR_PEERS;
 			checkWait(System.currentTimeMillis(), tTimeWaitUntil);
@@ -339,7 +329,6 @@ public class Elector extends Thread implements HRMEntity
 			Logging.warn(this, "Election interrupted", tExc);
 			run();
 		}
-		mInProgress = false;
 		ElectionManager.getElectionManager().removeElection(mElectingCluster.getHierarchyLevel(), mElectingCluster.getClusterID());
 	}
 	

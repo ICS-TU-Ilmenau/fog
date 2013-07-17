@@ -692,7 +692,7 @@ public class HierarchicalRoutingService implements RoutingService
 			}
 			
 			if(tTo == null) {
-				mLogger.log(this, "Trigger");
+				mLogger.warn(this, "Target is still null");
 			}
 		}
 	}
