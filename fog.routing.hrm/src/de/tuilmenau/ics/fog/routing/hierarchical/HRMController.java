@@ -128,7 +128,7 @@ public class HRMController extends Application implements IServerCallback
 		try {
 			tJoin = (ClusterParticipationProperty) tRequirements.get(ClusterParticipationProperty.class);
 		} catch (ClassCastException tExc) {
-			mLogger.err(this, "Unable to find the information which cluster should be attached.", tExc);
+			Logging.err(this, "Unable to find the information which cluster should be attached.", tExc);
 		}
 					
 		for(NestedParticipation tParticipate : tJoin.getNestedParticipations()) {
@@ -214,14 +214,14 @@ public class HRMController extends Application implements IServerCallback
 					}
 				}
 				tNewlyCreatedClusters.put(tAttachedCluster, tParticipate.getPredecessor());
-				mLogger.log(this, "as joining cluster");
+				Logging.log(this, "as joining cluster");
 				for(ICluster tCandidate : getRoutingTargetClusters()) {
 					if((tCandidate instanceof Cluster) && (tCandidate.getHierarchyLevel().equals(tAttachedCluster.getHierarchyLevel()))) {
 						setSourceIntermediateCluster(tAttachedCluster, (Cluster)tCandidate);
 					}
 				}
 				if(getSourceIntermediate(tAttachedCluster) == null) {
-					mLogger.err(this, "No source intermediate cluster for" + tAttachedCluster.getClusterDescription() + " found");
+					Logging.err(this, "No source intermediate cluster for" + tAttachedCluster.getClusterDescription() + " found");
 				}
 				
 				Logging.log(this, "Created " + tAttachedCluster);
@@ -263,11 +263,11 @@ public class HRMController extends Application implements IServerCallback
 							for(ICluster tCandidate : getRoutingTargetClusters()) {
 								if(tCandidate instanceof Cluster && tCluster.getHierarchyLevel() == tCandidate.getHierarchyLevel()) {
 									setSourceIntermediateCluster(tCluster, (Cluster)tCandidate);
-									mLogger.log(this, "as joining neighbor");
+									Logging.log(this, "as joining neighbor");
 								}
 							}
 							if(getSourceIntermediate(tAttachedCluster) == null) {
-								mLogger.err(this, "No source intermediate cluster for" + tCluster.getClusterDescription() + " found");
+								Logging.err(this, "No source intermediate cluster for" + tCluster.getClusterDescription() + " found");
 							}
 //							((NeighborCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
 							((NeighborCluster)tCluster).addAnnouncedCEP(tCEP);
@@ -293,16 +293,16 @@ public class HRMController extends Application implements IServerCallback
 					tCEP.addAnnouncedCluster(tEveluateNegotiator, getCluster(tNewlyCreatedClusters.get(tEveluateNegotiator)));
 				}
 			} else {
-				mLogger.trace(this, "remote cluster was set earlier");
+				Logging.trace(this, "remote cluster was set earlier");
 			}
 			if(tCEP.getRemoteClusterName() == null) {
-				mLogger.err(this, "Unable to set remote cluster");
+				Logging.err(this, "Unable to set remote cluster");
 				ClusterName tRemoteClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), tParticipate.getLevel());
 						
 				tCEP.setRemoteClusterName(tRemoteClusterName);
 			}
 			tCEP.setPeerPriority(tParticipate.getSenderPriority());
-			mLogger.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);
+			Logging.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);
 		}
 		
 		tConnectionSession.start(pConnection);
@@ -382,7 +382,7 @@ public class HRMController extends Application implements IServerCallback
 		List<RoutableClusterGraphLink> tClusterRoute = null;
 		int tDistance = 0;
 		if(getSourceIntermediate(pCluster) == null || pCluster == null) {
-			mLogger.log(this, "source cluster for " + (pCluster instanceof NeighborCluster ? ((NeighborCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
+			Logging.log(this, "source cluster for " + (pCluster instanceof NeighborCluster ? ((NeighborCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
 		}
 		ICluster tIntermediate = getSourceIntermediate(pCluster);
 		tClusterRoute = getRoutableClusterGraph().getRoute(tIntermediate, pCluster);
@@ -406,18 +406,18 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public Description getConnectDescription(ClusterParticipationProperty pParticipationProperty)
 	{
-		mLogger.log(this, "Creating a cluster participation property for level " + pParticipationProperty.getHierarchyLevel());
+		Logging.log(this, "Creating a cluster participation property for level " + pParticipationProperty.getHierarchyLevel());
 		Description tDescription = new Description();
 		//try {
 		tDescription.set(new ContactDestinationApplication(null, HRMController.ROUTING_NAMESPACE));
 		//} catch (PropertyException tExc) {
-		//	mLogger.err(this, "Unable to fulfill requirements given by ContactDestinationProperty", tExc);
+		//	Logging.err(this, "Unable to fulfill requirements given by ContactDestinationProperty", tExc);
 		//}
 
 		try {
 			tDescription.add(pParticipationProperty);
 		} catch (PropertyException tExc) {
-			mLogger.err(this, "Unable to match property that wants us to participate in a cluster", tExc);
+			Logging.err(this, "Unable to match property that wants us to participate in a cluster", tExc);
 		}
 		return tDescription;
 	}
@@ -448,9 +448,9 @@ public class HRMController extends Application implements IServerCallback
 				try {
 					tRoute = getHRS().getRoute(getPhysicalNode().getCentralFN(), pName, new Description(), getPhysicalNode().getIdentity());
 				} catch (RoutingException tExc) {
-					mLogger.err(this, "Unable to resolve route to " + pName, tExc);
+					Logging.err(this, "Unable to resolve route to " + pName, tExc);
 				} catch (RequirementsException tExc) {
-					mLogger.err(this, "Unable to fulfill requirements for a route to " + pName, tExc);
+					Logging.err(this, "Unable to fulfill requirements for a route to " + pName, tExc);
 				}
 				tCEP.setRouteToPeer(tRoute);
 				tDemux = new CoordinatorCEPChannel(this, tCluster);
@@ -500,7 +500,7 @@ public class HRMController extends Application implements IServerCallback
 					Logging.err(this, "Unable to connecto to " + tName, tExc);
 				}
 				if(tConn != null) {
-					mLogger.log(this, "Sending source routing service address " + tConnectionCEP.getSourceRoutingServiceAddress() + " for connection number " + (++mConnectionCounter));
+					Logging.log(this, "Sending source routing service address " + tConnectionCEP.getSourceRoutingServiceAddress() + " for connection number " + (++mConnectionCounter));
 					tConnectionCEP.start(tConn);
 					
 					HRMName tMyAddress = tConnectionCEP.getSourceRoutingServiceAddress();
@@ -655,7 +655,7 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public void setClusterWithCoordinator(HierarchyLevel pLevel, ICluster pCluster)
 	{
-		mLogger.log(this, "Setting " + pCluster + " as cluster that has a connection to a coordinator at level " + pLevel.getValue());
+		Logging.log(this, "Setting " + pCluster + " as cluster that has a connection to a coordinator at level " + pLevel.getValue());
 		mLevelToCluster.put(Integer.valueOf(pLevel.getValue()), pCluster);
 	}
 	
@@ -677,7 +677,7 @@ public class HRMController extends Application implements IServerCallback
 	public void setSourceIntermediateCluster(ICluster pCluster, Cluster pIntermediate)
 	{
 		if(pIntermediate == null) {
-			mLogger.err(this, "Setting " + pIntermediate + " as source intermediate for " + pCluster);
+			Logging.err(this, "Setting " + pIntermediate + " as source intermediate for " + pCluster);
 		}
 		mIntermediateMapping.put(pCluster, pIntermediate);
 	}
