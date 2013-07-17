@@ -147,7 +147,7 @@ public class HRMController extends Application implements IServerCallback
 					
 					tCEP = new CoordinatorCEPChannel(this, tCluster);
 					((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
-					if(tJoin.getHierarchyLevel() > HRMConfig.Hierarchy.BASE_LEVEL) {
+					if(tJoin.getHierarchyLevel().isHigherLevel()) {
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 					} else {
 						if(tParticipate.isInterASCluster()) {
@@ -172,15 +172,15 @@ public class HRMController extends Application implements IServerCallback
 					tConnectionSession = new CoordinatorSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
 				}
 
-				if(tJoin.getHierarchyLevel() > HRMConfig.Hierarchy.BASE_LEVEL) {
+				if(tJoin.getHierarchyLevel().isHigherLevel()) {
 					for(ICluster tVirtualNode : getRoutingTargetClusters()) {
-						if(tVirtualNode.getHierarchyLevel() == tJoin.getHierarchyLevel() - 1) {
+						if(tVirtualNode.getHierarchyLevel().getValue() == tJoin.getHierarchyLevel().getValue() - 1) {
 							tCluster.setPriority(tVirtualNode.getBullyPriority());
 						}
 					}
 				}
 				tCEP = new CoordinatorCEPChannel(this, tCluster);
-				if(tJoin.getHierarchyLevel() > HRMConfig.Hierarchy.BASE_LEVEL) {
+				if(tJoin.getHierarchyLevel().isHigherLevel()) {
 					((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 				} else {
 					if(tParticipate.isInterASCluster()) {
@@ -197,14 +197,14 @@ public class HRMController extends Application implements IServerCallback
 			}
 			tFoundCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
 			for(ICluster tNegotiatingCluster : getRoutingTargetClusters()) {
-				ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), (tJoin.getHierarchyLevel() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel() - 1 : 0 ));
+				ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel().getValue() - 1 : 0 ));
 				if(tNegotiatingCluster.equals(tNegClusterName)) {
 					tCEP.setRemoteClusterName(tNegClusterName);
 				}
 			}
-			if(tCEP.getRemoteClusterName() == null && tJoin.getHierarchyLevel() > HRMConfig.Hierarchy.BASE_LEVEL) {
+			if(tCEP.getRemoteClusterName() == null && tJoin.getHierarchyLevel().isHigherLevel()) {
 				HashMap<ICluster, ClusterName> tNewlyCreatedClusters = new HashMap<ICluster, ClusterName>(); 
-				NeighborCluster tAttachedCluster = new NeighborCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), tJoin.getHierarchyLevel() -1, this);
+				NeighborCluster tAttachedCluster = new NeighborCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1), this);
 				tAttachedCluster.setPriority(tParticipate.getSenderPriority());
 				if(tAttachedCluster.getCoordinatorName() != null) {
 					try {
@@ -216,7 +216,7 @@ public class HRMController extends Application implements IServerCallback
 				tNewlyCreatedClusters.put(tAttachedCluster, tParticipate.getPredecessor());
 				mLogger.log(this, "as joining cluster");
 				for(ICluster tCandidate : getRoutingTargetClusters()) {
-					if(tCandidate instanceof Cluster && tCandidate.getHierarchyLevel() == tAttachedCluster.getHierarchyLevel()) {
+					if((tCandidate instanceof Cluster) && (tCandidate.getHierarchyLevel().equals(tAttachedCluster.getHierarchyLevel()))) {
 						setSourceIntermediateCluster(tAttachedCluster, (Cluster)tCandidate);
 					}
 				}
@@ -431,7 +431,7 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pToClusterID is the identity of the cluster a connection will be added to
 	 * @param pConnectionToOtherAS says whether the connection leads to another autonomous system
 	 */
-	public void addConnection(Name pName, int pLevel, Long pToClusterID, boolean pConnectionToOtherAS)
+	public void addConnection(Name pName, HierarchyLevel pLevel, Long pToClusterID, boolean pConnectionToOtherAS)
 	{
 		Logging.log(this, "ADDING CONNECTION to " + pName + "(ClusterID=" + pToClusterID + ", interAS=" + pConnectionToOtherAS + " on hier. level " + pLevel);
 
@@ -653,10 +653,10 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pLevel as level at which a a coordinator will be set
 	 * @param pCluster is the cluster that has set a coordinator
 	 */
-	public void setClusterWithCoordinator(int pLevel, ICluster pCluster)
+	public void setClusterWithCoordinator(HierarchyLevel pLevel, ICluster pCluster)
 	{
-		mLogger.log(this, "Setting " + pCluster + " as cluster that has a connection to a coordinator at level " + pLevel);
-		mLevelToCluster.put(Integer.valueOf(pLevel), pCluster);
+		mLogger.log(this, "Setting " + pCluster + " as cluster that has a connection to a coordinator at level " + pLevel.getValue());
+		mLevelToCluster.put(Integer.valueOf(pLevel.getValue()), pCluster);
 	}
 	
 	/**
@@ -703,12 +703,17 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pHierarchyLevel level for which all cluster managers should be provided
 	 * @return list of managers at the level
 	 */
-	public LinkedList<Coordinator> getCoordinator(int pHierarchyLevel)
+	public LinkedList<Coordinator> getCoordinator(HierarchyLevel pHierarchyLevel)
 	{
-		if(mRegisteredCoordinators.size() < pHierarchyLevel) {
+		if (pHierarchyLevel.isUndefined()){
+			Logging.warn(this, "Cannot determine coordinator on an undefined hierachy level, return null");
+			return null;
+		}
+		
+		if(mRegisteredCoordinators.size() < pHierarchyLevel.getValue()) {
 			return null;
 		} else {
-			return mRegisteredCoordinators.get(pHierarchyLevel);
+			return mRegisteredCoordinators.get(pHierarchyLevel.getValue());
 		}
 	}
 	
@@ -806,7 +811,7 @@ public class HRMController extends Application implements IServerCallback
 	{
 		LinkedList<IRoutableClusterGraphNode> tClusters = new LinkedList<IRoutableClusterGraphNode>();
 		for(IRoutableClusterGraphNode tNode : getRoutableClusterGraph().getVertices()) {
-			if(tNode instanceof ICluster && ((ICluster) tNode).getHierarchyLevel() == pLevel) {
+			if(tNode instanceof ICluster && ((ICluster) tNode).getHierarchyLevel().getValue() == pLevel) {
 				tClusters.add((ICluster) tNode);
 			}
 		}

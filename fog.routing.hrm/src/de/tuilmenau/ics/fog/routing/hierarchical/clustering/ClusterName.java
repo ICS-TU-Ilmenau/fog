@@ -34,7 +34,7 @@ public class ClusterName implements Serializable, ICluster
 	private static final long serialVersionUID = 3027076881853652810L;
 	private int mToken;
 	private Long mClusterID;
-	private int mLevel;
+	private HierarchyLevel mHierarchyLevel = null;
 	
 	/**
 	 * 
@@ -42,17 +42,17 @@ public class ClusterName implements Serializable, ICluster
 	 * @param pClusterID ID of the cluster
 	 * @param pLevel level of the cluster
 	 */
-	public ClusterName(int pToken, Long pClusterID, int pLevel)
+	public ClusterName(int pToken, Long pClusterID, HierarchyLevel pLevel)
 	{
 		mClusterID = pClusterID;
 		mToken = pToken;
-		mLevel = pLevel;
+		mHierarchyLevel = pLevel;
 	}
 	
 	@Override
 	public String toString()
 	{
-		return "Cluster(ID=" + mClusterID + ", Tok=" + mToken + ", HierLvl.=" + mLevel + ")"; 
+		return "Cluster(ID=" + mClusterID + ", Tok=" + mToken + (mHierarchyLevel != null ? ", HierLvl.=" + mHierarchyLevel.getValue() : "") + ")"; 
 	}
 
 	@Override
@@ -105,8 +105,8 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public int getHierarchyLevel() {
-		return mLevel;
+	public HierarchyLevel getHierarchyLevel() {
+		return mHierarchyLevel;
 	}
 
 	@Override

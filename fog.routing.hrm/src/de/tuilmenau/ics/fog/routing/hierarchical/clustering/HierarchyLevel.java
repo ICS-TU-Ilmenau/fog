@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.clustering;
 
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -32,21 +33,22 @@ public class HierarchyLevel
 	 * 
 	 * @param pHierarchyLevelValue the defined new hierarchy level value
 	 */
-	public HierarchyLevel(int pHierarchyLevelValue)
+	public HierarchyLevel(Object pParent, int pHierarchyLevelValue)
 	{
+		if ((pParent instanceof Integer) || (pParent instanceof Long)){
+			Logging.warn(this, "The parent object is an Integer/Long class, this often means a wrong call");
+		}
+		
 		mLevel = pHierarchyLevelValue;
-		Logging.log(this,  "Created object (explicit level is " + pHierarchyLevelValue + ")");
+		
+		/**
+		 * HINT: Be aware of recursion here. The Bully priority is very often used inside toString(). For example, this would lead 
+		 * to recursive calls caused by getBullyPriority in the Cluster/Coordinator class. 
+		 */
+		
+		Logging.log(this,  "Created object (explicit level is " + pHierarchyLevelValue + ") for class \"" + pParent.getClass().getSimpleName() + "\"");
 	}
 
-	/**
-	 * Constructor: initializes the hierarchy level with "undefined"
-	 */
-	public HierarchyLevel()
-	{
-		mLevel = UNDEFINED_LEVEL;
-		Logging.log(this,  "Created object (undefined level)");
-	}
-	
 	/**
 	 * Returns the hierarchy level value.
 	 * 
@@ -87,5 +89,75 @@ public class HierarchyLevel
 		return (mLevel > BASE_LEVEL);
 	}
 
+	/**
+	 * Check if the hierarchy level is higher than the other given one.
+	 * 
+	 * @param pCheckLocation a reference to the origin object from where the call comes from
+	 * @param pOtherLevel the other given hierarchy level
+	 * @return return "true" if the hierarchy level is higher than the other one, otherwise return "false"
+	 */
+	public boolean isHigher(Object pCheckLocation, HierarchyLevel pOtherLevel)
+	{
+		String pLocationDescription = pCheckLocation.getClass().getSimpleName();
+		if (pCheckLocation instanceof HRMEntity){
+			HRMEntity tHRMEntity = (HRMEntity)pCheckLocation;
+			pLocationDescription = tHRMEntity.toLocation();
+		}
+
+		if (pOtherLevel == null){
+			Logging.log(pLocationDescription + ": COMPARING HIERARCHY LEVEL " + mLevel + " with NULL POINTER, returning always \"true\" for isHigher()");
+			return true;
+		}
+		
+		Logging.log(pLocationDescription + ": COMPARING HIERARCHY LEVEL " + mLevel + " with alternative " + pOtherLevel.getValue());
+		
+		// if the priority values are equal, we return "true"
+		if (mLevel > pOtherLevel.getValue()){
+			return true;
+		}
+		
+		// otherwise always "false"
+		return false;
+	}
+
+	@Override
+	public boolean equals(Object pObj)
+	{
+		// do we have another HierarchyLevel object?
+		if(pObj instanceof HierarchyLevel) {
+			
+			// cast to HierarchyLevel object
+			HierarchyLevel tOtherLevel = (HierarchyLevel) pObj;
+			
+			// if the level values are equal, we return "true"
+			if (tOtherLevel.getValue() == mLevel){
+				return true;
+			}
+		}
+		
+		// otherwise always "false"
+		return false;
+	}
+
+	/**
+	 * Factory function for a new object indexing the hierarchy base level.
+	 * 
+	 * @return returns a new object for the base hierarchy level
+	 */
+	public static HierarchyLevel createBaseLevel()
+	{
+		return new HierarchyLevel(BASE_LEVEL);
+	}	
+
+	private HierarchyLevel(int pLevel)
+	{
+		mLevel = pLevel;
+	}
+	
+	public String toString()
+	{
+		return "HierLevel(Lvl=" + Long.toString(getValue()) + ")";
+	}
+	
 	private int mLevel = UNDEFINED_LEVEL;
 }

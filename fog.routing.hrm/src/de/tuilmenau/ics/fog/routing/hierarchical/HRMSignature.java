@@ -13,13 +13,14 @@ import de.tuilmenau.ics.fog.authentication.SimpleSignature;
 import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 
 public class HRMSignature extends SimpleSignature
 {
 	private static final long serialVersionUID = 4847037702247056096L;
-	private int mLevel = 0;
+	private HierarchyLevel mLevel = null;
 	
-	public HRMSignature(Identity pIdentity, Object pOrigin, byte[] pSignature, int pLevel) throws AuthenticationException
+	public HRMSignature(Identity pIdentity, Object pOrigin, byte[] pSignature, HierarchyLevel pLevel) throws AuthenticationException
 	{
 		super(pIdentity);
 		mLevel = pLevel;
@@ -30,14 +31,14 @@ public class HRMSignature extends SimpleSignature
 		}
 	}
 	
-	public int getLevel()
+	public HierarchyLevel getLevel()
 	{
 		return mLevel;
 	}
 	
 	public String toString()
 	{
-		return mOrigin + "@" + mLevel;
+		return getClass().getSimpleName() + "(Origin=" + mOrigin + ", HierLvl.=" + mLevel.getValue() + ")";
 	}
 	
 	public boolean equals(Object pObj)

@@ -16,6 +16,7 @@ import java.util.Random;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.util.Tuple;
 
 /**
@@ -119,7 +120,7 @@ public class ClusterDiscovery implements Serializable
 		private Long mSourceClusterID;
 		private int mDistance = 0;
 		private int mToken;
-		private int mLevel;
+		private HierarchyLevel mLevel;
 		private Long mTargetClusterID;
 		private Long mOriginClusterID;
 		
@@ -131,7 +132,7 @@ public class ClusterDiscovery implements Serializable
 		 * @param pLevel is the level at which other clusters should be discovered
 		 * @param pDistance is the maximum distance at which other clusters are wished to be known by the initiator of this message
 		 */
-		public NestedDiscovery(LinkedList<Integer> pTokens, Long pSourceClusterID, int pToken, int pLevel, int pDistance)
+		public NestedDiscovery(LinkedList<Integer> pTokens, Long pSourceClusterID, int pToken, HierarchyLevel pLevel, int pDistance)
 		{
 			setTokens(pTokens);
 			mSourceClusterID = pSourceClusterID;
@@ -273,7 +274,7 @@ public class ClusterDiscovery implements Serializable
 		 * 
 		 * @return level at which cluster is located
 		 */
-		public int getLevel()
+		public HierarchyLevel getLevel()
 		{
 			return mLevel;
 		}

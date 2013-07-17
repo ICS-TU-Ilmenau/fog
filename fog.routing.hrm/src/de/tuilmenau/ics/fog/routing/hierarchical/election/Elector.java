@@ -26,6 +26,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMIdentity;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
@@ -45,21 +46,19 @@ public class Elector extends Thread implements HRMEntity
 	/**
 	 * Pointer to the parent cluster, which owns this elector
 	 */
-	private Cluster mElectingCluster = null;
+	private Cluster mParentCluster = null;
 	
 	private Boolean mPleaseInterrupt = false;
 	private long TIMEOUT_FOR_PEERS = 1000;
 	private long WAIT_BEFORE_ADDRESS_DISTRIBUTION = 5000;
 	private long TIMEOUT_FOR_ANNOUNCEMENT=5000;
 	
-	private int mHierarchyLevel = 0;	
 	private boolean mWillInitiateManager = false;
 	private boolean mLostElection = false;
 	
 	public Elector(Cluster pCluster)
 	{
-		mHierarchyLevel = pCluster.getHierarchyLevel();
-		mElectingCluster = pCluster;
+		mParentCluster = pCluster;
 	}
 	
 	/**
@@ -67,15 +66,15 @@ public class Elector extends Thread implements HRMEntity
 	 */
 	private void signalElectionStart()
 	{
-		Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mElectingCluster);
-		Logging.log(this, "SENDELECTIONS()-CEPs: " + mElectingCluster.getParticipatingCEPs().size());
+		Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParentCluster);
+		Logging.log(this, "SENDELECTIONS()-CEPs: " + mParentCluster.getParticipatingCEPs().size());
 
-		for(CoordinatorCEPChannel tCEP : mElectingCluster.getParticipatingCEPs()) {
+		for(CoordinatorCEPChannel tCEP : mParentCluster.getParticipatingCEPs()) {
 			//TODO: enforce sending of BullyElect in any case
 			if(tCEP.getPeerPriority().isUndefined() && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
-				Node tNode = mElectingCluster.getHRMController().getPhysicalNode();
+				Node tNode = mParentCluster.getHRMController().getPhysicalNode();
 				
-				tCEP.sendPacket(new BullyElect(tNode.getCentralFN().getName(), mElectingCluster.getBullyPriority(), mElectingCluster.getHierarchyLevel()));
+				tCEP.sendPacket(new BullyElect(tNode.getCentralFN().getName(), mParentCluster.getBullyPriority()));
 			}
 		}
 		Logging.log(this, "SENDELECTIONS()-END");
@@ -127,7 +126,7 @@ public class Elector extends Thread implements HRMEntity
 		pCluster.setCoordinatorCEP(null, tSignature, tNode.getCentralFN().getName(), (L2Address)tAddress);
 		LinkedList<HRMSignature> tSignatures = tHRMController.getApprovedSignatures();
 		tSignatures.add(tSignature);
-		if(mHierarchyLevel > HRMConfig.Hierarchy.BASE_LEVEL) {
+		if(getHierarchLevel().isHigherLevel()) {
 			pCluster.getHRMController().getLogger().log(pCluster, "has the coordinator and will now announce itself");
 			for(ICluster tToAnnounce : pCluster.getNeighbors()) {
 //					List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);
@@ -161,18 +160,18 @@ public class Elector extends Thread implements HRMEntity
 			
 			
 			Coordinator tElectedCoordinator = new Coordinator(pCluster, pCluster.getHierarchyLevel(), pCluster.getHrmID());
-			
+			int tClusterHierLvl = pCluster.getHierarchyLevel().getValue() + 1;
 			
 			pCluster.setCoordinator(tElectedCoordinator);
 			pCluster.getHRMController().setSourceIntermediateCluster(tElectedCoordinator, pCluster);
 			tElectedCoordinator.setPriority(pCluster.getBullyPriority());
 			pCluster.getHRMController().addCluster(tElectedCoordinator);
-			if(pCluster.getHierarchyLevel() +1 != HRMConfig.Hierarchy.HEIGHT) {
+			if(tClusterHierLvl != HRMConfig.Hierarchy.HEIGHT) {
 				// stepwise hierarchy creation
 				Logging.log(this, "Will now wait because hierarchy build up is done stepwise");
 				mWillInitiateManager = true;
 				Logging.log(this, "Reevaluating whether other processes settled");
-				ElectionManager.getElectionManager().reevaluate(pCluster.getHierarchyLevel());
+				ElectionManager.getElectionManager().reevaluate(pCluster.getHierarchyLevel().getValue());
 				synchronized(this) {
 					try {
 						wait();
@@ -180,7 +179,7 @@ public class Elector extends Thread implements HRMEntity
 						Logging.err(this, "Unable to fulfill stepwise hierarchy preparation", tExc);
 					}
 				}
-				tElectedCoordinator.prepareAboveCluster(pCluster.getHierarchyLevel() +1);
+				tElectedCoordinator.prepareAboveCluster(tClusterHierLvl);
 			} else {
 				Logging.log(this, "Beginning address distribution");
 				try {
@@ -206,30 +205,30 @@ public class Elector extends Thread implements HRMEntity
 	private void checkClustersForHighestPriority()
 	{
 		String tOutput = new String();
-		for(CoordinatorCEPChannel tCEP : mElectingCluster.getParticipatingCEPs()) {
+		for(CoordinatorCEPChannel tCEP : mParentCluster.getParticipatingCEPs()) {
 			BullyPriority tPriority = tCEP.getPeerPriority(); 
 			tOutput +=  (tOutput.equals("") ? "" : ", ") +  tPriority;
 			
-			Logging.log(this, "Comparing found Bully priority \"" + tPriority.getValue() + "\" with known highest value \"" + mElectingCluster.getHighestPriority().getValue() + "\", found priority belongs to " + tCEP); 
+			Logging.log(this, "Comparing found Bully priority \"" + tPriority.getValue() + "\" with known highest value \"" + mParentCluster.getHighestPriority().getValue() + "\", found priority belongs to " + tCEP); 
 					
-			if(tPriority.isHigher(this, mElectingCluster.getHighestPriority())) {
-				mElectingCluster.setHighestPriority(tPriority);
+			if(tPriority.isHigher(this, mParentCluster.getHighestPriority())) {
+				mParentCluster.setHighestPriority(tPriority);
 			} else {
-				Logging.log(this, "Cluster " + mElectingCluster + " has priority " + mElectingCluster.getBullyPriority().getValue() + ", which is lower than " + tCEP.getPeerPriority().getValue() + " of " + tCEP);
+				Logging.log(this, "Cluster " + mParentCluster + " has priority " + mParentCluster.getBullyPriority().getValue() + ", which is lower than " + tCEP.getPeerPriority().getValue() + " of " + tCEP);
 			}
 		}
 
 		Cluster tNodessClusterForCoordinator = null;
 		
-		Logging.log(this, "COMPARING prio " + mElectingCluster.getBullyPriority().getValue() + " and prio " + mElectingCluster.getHighestPriority().getValue());
+		Logging.log(this, "COMPARING prio " + mParentCluster.getBullyPriority().getValue() + " and prio " + mParentCluster.getHighestPriority().getValue());
 		
-		if(mElectingCluster.getBullyPriority().isHigher(this, mElectingCluster.getHighestPriority()))	{
-			tNodessClusterForCoordinator = mElectingCluster;
+		if(mParentCluster.getBullyPriority().isHigher(this, mParentCluster.getHighestPriority()))	{
+			tNodessClusterForCoordinator = mParentCluster;
 		}else{
-			if (mElectingCluster.getBullyPriority().equals(mElectingCluster.getHighestPriority())){
+			if (mParentCluster.getBullyPriority().equals(mParentCluster.getHighestPriority())){
 				Logging.warn(this, "Peers have SAME BULLY PRIORITY");
 				//TODO: rework signaling and calculate random number which has to be communicated to peers!
-				tNodessClusterForCoordinator = mElectingCluster;				
+				tNodessClusterForCoordinator = mParentCluster;				
 			}
 		}
 	
@@ -269,14 +268,14 @@ public class Elector extends Thread implements HRMEntity
 				 */
 				tTimeWaitUntil = System.currentTimeMillis() + TIMEOUT_FOR_ANNOUNCEMENT;
 				checkWait(System.currentTimeMillis(), tTimeWaitUntil);
-				if(mHierarchyLevel > HRMConfig.Hierarchy.BASE_LEVEL) {
+				if(getHierarchLevel().isHigherLevel()) {
 					/*
 					 * For loop can be ignored as this can only happen in case we are above level one
 					 */
-					while((mElectingCluster.getHRMController().getClusterWithCoordinatorOnLevel(mElectingCluster.getHierarchyLevel()) == null)) {
-						mElectingCluster.setHighestPriority(mElectingCluster.getBullyPriority());
-						Logging.log(mElectingCluster, " did not yet receive an announcement");
-						for(CoordinatorCEPChannel tCEP : mElectingCluster.getParticipatingCEPs()) {
+					while((mParentCluster.getHRMController().getClusterWithCoordinatorOnLevel(mParentCluster.getHierarchyLevel().getValue()) == null)) {
+						mParentCluster.setHighestPriority(mParentCluster.getBullyPriority());
+						Logging.log(mParentCluster, " did not yet receive an announcement");
+						for(CoordinatorCEPChannel tCEP : mParentCluster.getParticipatingCEPs()) {
 							RequestCoordinator tRequest = new RequestCoordinator(/* false */);
 							tCEP.sendPacket(tRequest);
 							synchronized(tRequest) {
@@ -296,28 +295,28 @@ public class Elector extends Thread implements HRMEntity
 						*/
 						try {
 							LinkedList<CoordinatorCEPChannel> tCEPs = new LinkedList<CoordinatorCEPChannel>();
-							tCEPs.addAll(mElectingCluster.getParticipatingCEPs());
-							if(mElectingCluster.getOldParticipatingCEPs() != null) {
-								tCEPs.addAll(mElectingCluster.getOldParticipatingCEPs());
+							tCEPs.addAll(mParentCluster.getParticipatingCEPs());
+							if(mParentCluster.getOldParticipatingCEPs() != null) {
+								tCEPs.addAll(mParentCluster.getOldParticipatingCEPs());
 							}
-							for(CoordinatorCEPChannel tCEP: mElectingCluster.getParticipatingCEPs()) {
+							for(CoordinatorCEPChannel tCEP: mParentCluster.getParticipatingCEPs()) {
 								if(! tCEP.knowsCoordinator()) {
-									if(!mElectingCluster.getHRMController().checkPathToTargetContainsCovered(mElectingCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName(), tCEPs)) {
-										Logging.log(mElectingCluster, "adding laggard " + tCEP + " while clusters between are " + mElectingCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(mElectingCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName()));
-										mElectingCluster.addLaggard(tCEP);
+									if(!mParentCluster.getHRMController().checkPathToTargetContainsCovered(mParentCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName(), tCEPs)) {
+										Logging.log(mParentCluster, "adding laggard " + tCEP + " while clusters between are " + mParentCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(mParentCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName()));
+										mParentCluster.addLaggard(tCEP);
 									} else {
-										Logging.info(mElectingCluster, "not adding laggard " + tCEP);
+										Logging.info(mParentCluster, "not adding laggard " + tCEP);
 									}
 								} 
 							}
 						} catch (ConcurrentModificationException tExc) {
 							Logging.err(this, "Error when looking for uncovered clusters", tExc);
 						}
-						if(mElectingCluster.getLaggards() != null) {
-							((Cluster)mElectingCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPChannel>) mElectingCluster.getLaggards().clone());
-							mElectingCluster.getLaggards().clear();
+						if(mParentCluster.getLaggards() != null) {
+							((Cluster)mParentCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPChannel>) mParentCluster.getLaggards().clone());
+							mParentCluster.getLaggards().clear();
 						}
-						if(mElectingCluster.getHRMController().getClusterWithCoordinatorOnLevel(mElectingCluster.getHierarchyLevel()) == null) {
+						if(mParentCluster.getHRMController().getClusterWithCoordinatorOnLevel(mParentCluster.getHierarchyLevel().getValue()) == null) {
 							checkClustersForHighestPriority();
 						} else {
 							break;
@@ -331,7 +330,7 @@ public class Elector extends Thread implements HRMEntity
 			Logging.warn(this, "Election interrupted", tExc);
 			run();
 		}
-		ElectionManager.getElectionManager().removeElection(mElectingCluster.getHierarchyLevel(), mElectingCluster.getClusterID());
+		ElectionManager.getElectionManager().removeElection(mParentCluster.getHierarchyLevel().getValue(), mParentCluster.getClusterID());
 	}
 	
 	private void restart()
@@ -368,7 +367,7 @@ public class Elector extends Thread implements HRMEntity
 	 */
 	public Cluster getCluster()
 	{
-		return mElectingCluster;
+		return mParentCluster;
 	}
 	
 	public boolean aboutToContinue()
@@ -379,7 +378,7 @@ public class Elector extends Thread implements HRMEntity
 	@Override
 	public String toString()
 	{
-		return toLocation() + "(Cluster=" + (mElectingCluster != null ? "(Cluster=" + mElectingCluster.getClusterID() + ")" : "");
+		return toLocation() + "(Cluster=" + (mParentCluster != null ? "(Cluster=" + mParentCluster.getClusterID() + ")" : "");
 	}
 
 	@Override
@@ -389,4 +388,9 @@ public class Elector extends Thread implements HRMEntity
 		
 		return tResult;
 	}
+
+	private HierarchyLevel getHierarchLevel()
+	{
+		return mParentCluster.getHierarchyLevel();	
+	}	
 }

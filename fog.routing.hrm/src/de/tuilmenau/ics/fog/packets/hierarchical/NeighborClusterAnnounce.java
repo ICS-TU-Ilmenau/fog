@@ -16,6 +16,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -28,7 +29,7 @@ public class NeighborClusterAnnounce implements Serializable
 	private static final long serialVersionUID = -9188474878782673991L;
 	private Name mCoordinatorName;
 	private Signature mCoordSignature;
-	private int mLevel;
+	private HierarchyLevel mLevel;
 	private HRMName mCoordAddress;
 	private boolean mAnnouncerHasAddress = false;;
 	private LinkedList<RoutingServiceLinkVector> mRoutingLinks;
@@ -50,7 +51,7 @@ public class NeighborClusterAnnounce implements Serializable
 	 * @param pToken token of the cluster that is announced
 	 * @param pClusterID identifier of the cluster
 	 */
-	public NeighborClusterAnnounce(Name pCoordinatorName, int pLevel, Signature pCoordSignature, HRMName pRoutingServiceAddress, int pToken, Long pClusterID)
+	public NeighborClusterAnnounce(Name pCoordinatorName, HierarchyLevel pLevel, Signature pCoordSignature, HRMName pRoutingServiceAddress, int pToken, Long pClusterID)
 	{
 		mCoordinatorName = pCoordinatorName;
 		mCoordSignature = pCoordSignature;
@@ -229,7 +230,7 @@ public class NeighborClusterAnnounce implements Serializable
 	 * 
 	 * @return level of the cluster that is reported
 	 */
-	public int getLevel()
+	public HierarchyLevel getLevel()
 	{
 		return mLevel;
 	}

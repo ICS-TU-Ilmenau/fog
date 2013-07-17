@@ -36,7 +36,7 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 */
 	public SignalingMessageBully(Name pSenderName)
 	{
-		mSenderPriority = new BullyPriority(-1 /* some value to signal "invalid priority */);
+		mSenderPriority = new BullyPriority(this);
 		mSenderName = pSenderName;
 	}
 

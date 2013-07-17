@@ -31,7 +31,6 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Logger;
 
 /**
  * This class is used when a layer 0 neighbor cluster is detected. 
@@ -41,7 +40,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 {
 	private static final long serialVersionUID = -8746079632866375924L;
 	private int mToken;
-	private int mLevel;
+	private HierarchyLevel mHierarchyLevel = null;
 	private BullyPriority mPriority;
 	private BullyPriority mCoordinatorPriority;
 	private Name mCoordName;
@@ -66,7 +65,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	 * @param pLevel is the level this cluster is related to
 	 * @param pResponsibleCoordinator as the coordinator this cluster works on (local)
 	 */
-	public NeighborCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, int pLevel, HRMController pResponsibleCoordinator)
+	public NeighborCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, HierarchyLevel pLevel, HRMController pResponsibleCoordinator)
 	{	
 		mAnnouncer = pResponsibleCoordinator.getPhysicalNode().getCentralFN().getName();
 		mCoordAddress = pAddress;
@@ -75,7 +74,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		mHRMController = pResponsibleCoordinator;
 		mCoordName = pCoordName;
 		mToken = pToken;
-		mLevel = pLevel;
+		mHierarchyLevel = pLevel;
 	}
 	
 	public void addAnnouncedCEP(CoordinatorCEPChannel pCEP)
@@ -107,7 +106,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		ICluster tCluster = getHRMController().getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
 		if(tCluster == null)
 		{
-			tCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), mLevel,	getHRMController());
+			tCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), mHierarchyLevel,	getHRMController());
 			getHRMController().setSourceIntermediateCluster(tCluster, getHRMController().getSourceIntermediate(this));
 			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
@@ -204,8 +203,8 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public int getHierarchyLevel() {
-		return mLevel;
+	public HierarchyLevel getHierarchyLevel() {
+		return mHierarchyLevel;
 	}
 
 	@Override
@@ -223,7 +222,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	@Override
 	public String getClusterDescription()
 	{
-		return getClass().getSimpleName() + "(" + mAnnouncer + "->" + mCoordName + ")"+"PR" + "(" + mPriority + ")" + "ID(" + mClusterID + ")TK(" + mToken + ")@" + mLevel;
+		return getClass().getSimpleName() + "(" + mAnnouncer + "->" + mCoordName + ")"+"PR" + "(" + mPriority + ")" + "ID(" + mClusterID + ")TK(" + mToken + ")@" + mHierarchyLevel;
 	}
 
 	@Override

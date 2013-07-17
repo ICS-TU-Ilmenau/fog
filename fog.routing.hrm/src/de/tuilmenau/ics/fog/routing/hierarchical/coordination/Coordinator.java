@@ -38,6 +38,7 @@ import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IRoutableClusterGraphNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
@@ -65,7 +66,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	/**
 	 * The hierarchy level on which this coordinator is located.
 	 */
-	private int mHierarchyLevel;
+	private HierarchyLevel mHierarchyLevel;
 
 	/*
 	 * List for identification of entities this cluster manager is connected to
@@ -107,7 +108,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	 * 
 	 */
 	private static final long serialVersionUID = 6824959379284820010L;
-	public Coordinator(Cluster pCluster, int pLevel, HRMID pInitialAddress)
+	public Coordinator(Cluster pCluster, HierarchyLevel pLevel, HRMID pInitialAddress)
 	{
 		mHRMID =  pInitialAddress;
 		mHierarchyLevel = pLevel;
@@ -117,8 +118,8 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		mManagedCluster = pCluster;
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		mManagedCluster.getHRMController().getRoutableClusterGraph().addObserver(this);
-		mBullyPriority = new BullyPriority(this);
-		getHRMController().registerCoordinator(this, mHierarchyLevel + 1);
+		mBullyPriority = BullyPriority.createForCoordinator(this);
+		getHRMController().registerCoordinator(this, mHierarchyLevel.getValue() + 1);
 		
 		Logging.log("Coordinator@" + getHRMController().getPhysicalNode().getName() + "@" + mHierarchyLevel + ": INSTANCE created");
 	}
@@ -143,7 +144,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		HRMID tID = mHRMID.clone();
 		BigInteger tAddress = BigInteger.valueOf(++mLastUsedAddress);
 		tID.setLevelAddress(mHierarchyLevel, tAddress);
-		if(mHierarchyLevel != HRMConfig.Hierarchy.BASE_LEVEL) {
+		if(mHierarchyLevel.isHigherLevel()) {
 			HRMIPMapper.registerHRMID(tID);
 		}
 		return tID;
@@ -159,7 +160,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 			
 			String tString = new String(">>> Expanding to radius (" + i + "/" + tRadius + ", possible clusters:");
 			for(Cluster tCluster : getHRMController().getRoutingTargetClusters()) {
-				if(tCluster.getHierarchyLevel() == getHierarchyLevel() - 1) {
+				if(tCluster.getHierarchyLevel().getValue() == getHierarchyLevel().getValue() - 1) {
 					tString += "\n" + tCluster.toString();
 				}
 			}
@@ -269,7 +270,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		
 		TopologyData tManagedClusterEnvelope = new TopologyData();
 		Logging.log(this, "Will now distribute addresses to entities on level 0");
-		if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
+		if(mHierarchyLevel.isBaseLevel()) {
 			HRMID tSelf = generateNextAddress();
 			tManagedClusterEnvelope.setHRMID(tSelf);
 			mManagedCluster.setHRMID(tSelf);
@@ -290,7 +291,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 					 */
 					tID = generateNextAddress();
 					
-					if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
+					if(mHierarchyLevel.isBaseLevel()) {
 						map(tID, tReceivingCEP);
 					} else {
 						map(tID, tReceivingCEP.getRemoteClusterName());
@@ -308,7 +309,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				 * for identification, the cluster gets its generated HRMID
 				 */
 				
-				if(tReceivingCEP.getRemoteClusterName() != null && mHierarchyLevel != HRMConfig.Hierarchy.BASE_LEVEL) {
+				if ((tReceivingCEP.getRemoteClusterName() != null) && (mHierarchyLevel.isHigherLevel())) {
 					tReceivingCEP.getRemoteClusterName().setHRMID(tID);
 				} else {
 					Logging.log(this, "Unable to find remote cluster for " + tReceivingCEP);
@@ -346,7 +347,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 					 */
 					
 					// are we on a higher hierarchy level?
-					if(mHierarchyLevel > HRMConfig.Hierarchy.BASE_LEVEL) {
+					if(mHierarchyLevel.isHigherLevel()) {
 						/*
 						 * calculate entire cluster route from source to target
 						 * 
@@ -447,7 +448,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				}
 				
 				// are we on basic level?
-				if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
+				if(mHierarchyLevel.isBaseLevel()) {
 					/*
 					 * The host itself has to tell its client how to reach it: get the address providers address: retrieveAddress() and then give the clients the address of the address provider
 					 */
@@ -482,7 +483,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				
 				if(mHigherHRMIDs != null) {
 					// are we on a higher hierarchy level?
-					if(mHierarchyLevel > HRMConfig.Hierarchy.BASE_LEVEL) {
+					if(mHierarchyLevel.isHigherLevel()) {
 						for(HRMID tHRMID : mHigherHRMIDs) {
 							/*
 							 * tNegotiator is the source cluster
@@ -827,12 +828,12 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 			}
 			
 			// are we at base level?
-			if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
+			if(mHierarchyLevel.isBaseLevel()) {
 				
 				for(HRMSignature tSignature : mSignatures) {
 					tManagedClusterEnvelope.addApprovedSignature(tSignature);
 				}
-				tManagedClusterEnvelope.addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mHierarchyLevel + 1));
+				tManagedClusterEnvelope.addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, new HierarchyLevel(this, mHierarchyLevel.getValue() + 1)));
 				mManagedCluster.handleTopologyData(tManagedClusterEnvelope);
 			}
 		
@@ -933,8 +934,8 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	}
 
 	@Override
-	public int getHierarchyLevel() {
-		return mHierarchyLevel + 1;
+	public HierarchyLevel getHierarchyLevel() {
+		return new HierarchyLevel(this, mHierarchyLevel.getValue() + 1);
 	}
 
 	@Override
@@ -1064,7 +1065,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		/**
 		 * Stores the local cluster, which corresponds to the correct hierarchy level
 		 */
-		ICluster tLocalCluster = getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel());		
+		ICluster tLocalCluster = getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel().getValue());		
 		if (mManagedCluster != tLocalCluster){
 			Logging.err(this,  "################## WE SHOULD NEVER REACH THIS HERE: " + mManagedCluster + "::" + tLocalCluster);
 		}
@@ -1138,10 +1139,10 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 							 * now the old cluster is notified about the new cluster
 							 */
 							
-							NeighborClusterAnnounce tNewCovered = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pAnnounce.getCoordSignature(), (HRMName)pCEP.getPeerName(), pAnnounce.getToken(), (((HRMName)pCEP.getPeerName()).getAddress().longValue()));
+							NeighborClusterAnnounce tNewCovered = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pAnnounce.getCoordSignature(), pCEP.getPeerName(), pAnnounce.getToken(), (((HRMName)pCEP.getPeerName()).getAddress().longValue()));
 							tNewCovered.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 							tNewCovered.setNegotiatorIdentification(tLocalManagedClusterName);
-							DiscoveryEntry tCoveredEntry = new DiscoveryEntry(pAnnounce.getToken(),	pAnnounce.getSenderName(), ((HRMName)pCEP.getPeerName()).getAddress().longValue(), (HRMName)pCEP.getPeerName(),	getHierarchyLevel());
+							DiscoveryEntry tCoveredEntry = new DiscoveryEntry(pAnnounce.getToken(),	pAnnounce.getSenderName(), (pCEP.getPeerName()).getAddress().longValue(), pCEP.getPeerName(),	getHierarchyLevel());
 							tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerName()));
 							tNewCovered.setCoveringClusterEntry(tCoveredEntry);
 							tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
@@ -1248,7 +1249,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		NeighborCluster tCluster = null;
 		if(pAnnounce.isAnnouncementFromForeign())
 		{
-			tCluster = new NeighborCluster(pAnnounce.getCoordAddress().getAddress().longValue(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), mHierarchyLevel + 2,	mManagedCluster.getHRMController());
+			tCluster = new NeighborCluster(pAnnounce.getCoordAddress().getAddress().longValue(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), new HierarchyLevel(this, mHierarchyLevel.getValue() + 2),	mManagedCluster.getHRMController());
 			getHRMController().setSourceIntermediateCluster(tCluster, getHRMController().getSourceIntermediate(this));
 			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			tCluster.setToken(pAnnounce.getToken());
@@ -1567,7 +1568,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				/*
 				 * Beginning of the recursion
 				 */
-				if(tDescendingDifference >= mHierarchyLevel + 1) {
+				if(tDescendingDifference > mHierarchyLevel.getValue()) {
 					RouteRequest tRequest = tParameterRouteRequest.clone();
 					getCoordinatorCEP().sendPacket(tRequest);
 					synchronized(tRequest) {
@@ -1604,8 +1605,8 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 					 */
 					Logging.log(tManager, "Reached highest cluster");
 					final HRMID tLocalTarget = ((HRMID) (tParameterRouteRequest.getTarget())).clone();
-					for(int i = 0; i < mHierarchyLevel; i++) {
-						tLocalTarget.setLevelAddress(i, BigInteger.valueOf(0));
+					for(int i = 0; i < mHierarchyLevel.getValue(); i++) {
+						tLocalTarget.setLevelAddress(new HierarchyLevel(this, i), BigInteger.valueOf(0));
 					}
 					LinkedList<IRoutableClusterGraphNode> tNodesToIgnore = new LinkedList<IRoutableClusterGraphNode>();
 					
@@ -1675,7 +1676,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 							tLastCluster = tCluster;
 						}
 						Logging.log(tManager, "Concurrent route request is " + tParameterRouteRequest);
-						if(((HRMID)tParameterRouteRequest.getTarget()).getLevelAddress(mHierarchyLevel) != BigInteger.valueOf(0)) {
+						if(((HRMID)tParameterRouteRequest.getTarget()).getLevelAddress(mHierarchyLevel.getValue()) != BigInteger.valueOf(0)) {
 							CoordinatorCEPChannel tCEP = mManagedCluster.getCEPOfCluster((ICluster) getVirtualNodeFromHRMID(tLocalTarget));
 							RouteRequest tRequest = new RouteRequest(tCEP.getPeerName(), tParameterRouteRequest.getTarget(), tParameterRouteRequest.getDescription(), tParameterRouteRequest.getSession());
 							tCEP.sendPacket(tRequest);
@@ -1719,7 +1720,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 
 	@Override
 	public CoordinatorCEPMultiplexer getMultiplexer() {
-		return getHRMController().getMultiplexerOnLevel(mHierarchyLevel + 1);
+		return getHRMController().getMultiplexerOnLevel(mHierarchyLevel.getValue() + 1);
 	}
 
 	public void registerRouteRequest(Long pSession, CoordinatorCEPChannel pCEP)

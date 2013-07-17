@@ -52,6 +52,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
@@ -72,7 +73,7 @@ public class HRMViewer extends EditorPart
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = false;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS = false;
 	
-	private HRMController mtHRMController = null;
+	private HRMController mHRMController = null;
     private Composite mShell = null;
     private ScrolledComposite mScroller = null;
     private Composite mContainer = null;
@@ -95,15 +96,13 @@ public class HRMViewer extends EditorPart
 		/**
 		 * GUI part 0: cluster information
 		 */
+		if (HRM_VIEWER_DEBUGGING){
+			Logging.log(this, "Amount of found routing targets: " + mHRMController.getRoutingTargets().size());
+			Logging.log(this, "              ...found clusters: " + mHRMController.getRoutingTargetClusters().size());
+		}
 		for(int i = 0; i <= HRMConfig.Hierarchy.HEIGHT; i++) {
-			
-			if (HRM_VIEWER_DEBUGGING){
-				Logging.log(this, "Amount of found routing targets: " + mtHRMController.getRoutingTargets().size());
-				Logging.log(this, "              ...found clusters: " + mtHRMController.getRoutingTargetClusters().size());
-			}
-			
-			for (ICluster tEntry : mtHRMController.getRoutingTargets()) {
-				if (tEntry.getHierarchyLevel() == i) {
+			for (ICluster tEntry : mHRMController.getRoutingTargets()) {
+				if (tEntry.getHierarchyLevel().getValue() == i) {
 					if (tEntry instanceof Cluster){
 						// a cluster
 						printCluster(tEntry);
@@ -113,7 +112,12 @@ public class HRMViewer extends EditorPart
 					}else if(tEntry instanceof NeighborCluster) {
 						// neighbor cluster
 					}
+				}else{
+					if (HRM_VIEWER_DEBUGGING){
+						Logging.log(this, "              ...ignoring on lvl. " + i + " the lvl " + tEntry.getHierarchyLevel().getValue()+ " entry " + tEntry);
+					}					
 				}
+					
 			}
 		}
 		
@@ -121,7 +125,7 @@ public class HRMViewer extends EditorPart
 		 * GUI part 2: 
 		 */
 		StyledText tSignaturesLabel = new StyledText(mContainer, SWT.BORDER);;
-		tSignaturesLabel.setText("Approved signatures: " + mtHRMController.getApprovedSignatures());
+		tSignaturesLabel.setText("Approved signatures: " + mHRMController.getApprovedSignatures());
 		tSignaturesLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style2 = new StyleRange();
@@ -146,7 +150,7 @@ public class HRMViewer extends EditorPart
 		TableColumn tColumnOrigin = new TableColumn(tMappingTable, SWT.NONE, 5);
 		tColumnOrigin.setText("Origin");
 		
-		HierarchicalRoutingService tHRS = mtHRMController.getHRS();
+		HierarchicalRoutingService tHRS = mHRMController.getHRS();
 		
 		if(tHRS.getRoutingTable() != null && !tHRS.getRoutingTable().isEmpty()) {
 			for(HRMID tHRMID : tHRS.getRoutingTable().keySet()) {
@@ -169,7 +173,7 @@ public class HRMViewer extends EditorPart
 				 * Column 2:  
 				 */
 				if (tHRS.getFIBEntry(tHRMID).getNextCluster() != null){
-					tRow.setText(2, mtHRMController.getCluster(tHRS.getFIBEntry(tHRMID).getNextCluster()).toString());
+					tRow.setText(2, mHRMController.getCluster(tHRS.getFIBEntry(tHRMID).getNextCluster()).toString());
 				}else{
 					tRow.setText(2, "??");
 				}
@@ -178,7 +182,7 @@ public class HRMViewer extends EditorPart
 				 * Column 3:  
 				 */
 				if (tHRS.getFIBEntry(tHRMID).getFarthestClusterInDirection() != null){
-					tRow.setText(3,  mtHRMController.getCluster(tHRS.getFIBEntry(tHRMID).getFarthestClusterInDirection()).toString());
+					tRow.setText(3,  mHRMController.getCluster(tHRS.getFIBEntry(tHRMID).getFarthestClusterInDirection()).toString());
 				}else{
 					tRow.setText(3, "??");
 				}
@@ -271,7 +275,7 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel(), mCluster.getClusterID()).start();
+			ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).start();
 		}
 		
 	}
@@ -297,7 +301,7 @@ public class HRMViewer extends EditorPart
 			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(tProcess.toString());
 			}
-			for(Elector tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel())) {
+			for(Elector tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel().getValue())) {
 				boolean tStartProcess=true;
 				Cluster tCluster = tProcess.getCluster();
 				for(CoordinatorCEPChannel tCEP : tCluster.getParticipatingCEPs()) {
@@ -335,7 +339,7 @@ public class HRMViewer extends EditorPart
 			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(tProcess.toString());
 			}
-			for(Elector tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel())) {
+			for(Elector tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel().getValue())) {
 				synchronized(tProcess) {
 					 tProcess.notifyAll();
 				}
@@ -361,8 +365,8 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			synchronized(ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel(), mCluster.getClusterID())) {
-				ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel(), mCluster.getClusterID()).notifyAll();
+			synchronized(ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID())) {
+				ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).notifyAll();
 			}
 		}		
 	}	
@@ -380,7 +384,7 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			final Coordinator tManager = new Coordinator(mCluster, mCluster.getHierarchyLevel() + 1, new HRMID(0));
+			final Coordinator tManager = new Coordinator(mCluster, new HierarchyLevel(this, mCluster.getHierarchyLevel().getValue() + 1), new HRMID(0));
 			new Thread() {
 	        	public void run()
 	        	{
@@ -462,7 +466,7 @@ public class HRMViewer extends EditorPart
 					/**
 					 * Column 1:  
 					 */
-					tRow.setText(1, (tEntry.getNextCluster() != null && mtHRMController.getCluster(tEntry.getNextCluster()) != null ? mtHRMController.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
+					tRow.setText(1, (tEntry.getNextCluster() != null && mHRMController.getCluster(tEntry.getNextCluster()) != null ? mHRMController.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
 					
 					/**
 					 * Column 2:  
@@ -470,7 +474,7 @@ public class HRMViewer extends EditorPart
 					ClusterName tDummy = tEntry.getFarthestClusterInDirection();
 					ICluster tFarthestCluster = null;
 					if(tDummy != null) {
-						tFarthestCluster = mtHRMController.getCluster(tEntry.getFarthestClusterInDirection());
+						tFarthestCluster = mHRMController.getCluster(tEntry.getFarthestClusterInDirection());
 					}
 					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "??"));
 					
@@ -703,7 +707,7 @@ public class HRMViewer extends EditorPart
 				tTarget = tCEP.getPeerName();
 				if(tSource != null && tTarget != null) {
 					Node tNode = tCEP.getHRMController().getPhysicalNode();
-					tRoute = mtHRMController.getHRS().getRoute(tNode.getCentralFN(), tTarget, new Description(), tNode.getIdentity());
+					tRoute = mHRMController.getHRS().getRoute(tNode.getCentralFN(), tTarget, new Description(), tNode.getIdentity());
 				} else {
 					tRoute = new Route();
 				}
@@ -754,7 +758,7 @@ public class HRMViewer extends EditorPart
 		int j = 0;
 
 		// on which hierarchy level are we?
-		int tHierarchyLevel = pCluster.getHierarchyLevel();
+		int tHierarchyLevel = pCluster.getHierarchyLevel().getValue();
 
 		// FIB topology data from the coordinator/cluster
 		LinkedList<FIBEntry> tTopologyData = null;
@@ -850,7 +854,7 @@ public class HRMViewer extends EditorPart
 					/**
 					 * Column 1:  
 					 */
-					tRow.setText(1, (tEntry.getNextCluster() != null && mtHRMController.getCluster(tEntry.getNextCluster()) != null ? mtHRMController.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
+					tRow.setText(1, (tEntry.getNextCluster() != null && mHRMController.getCluster(tEntry.getNextCluster()) != null ? mHRMController.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
 					
 					/**
 					 * Column 2:  
@@ -858,7 +862,7 @@ public class HRMViewer extends EditorPart
 					ClusterName tDummy = tEntry.getFarthestClusterInDirection();
 					ICluster tFarthestCluster = null;
 					if(tDummy != null) {
-						tFarthestCluster = mtHRMController.getCluster(tEntry.getFarthestClusterInDirection());
+						tFarthestCluster = mHRMController.getCluster(tEntry.getFarthestClusterInDirection());
 					}
 					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "??"));
 
@@ -917,13 +921,13 @@ public class HRMViewer extends EditorPart
 			setTitle(tInputObject.toString());
 
 			if(tInputObject instanceof HRMController) {
-				mtHRMController = (HRMController) tInputObject;				
+				mHRMController = (HRMController) tInputObject;				
 			} else {
 				throw new PartInitException("Invalid input object " +tInputObject +". Bus expected.");
 			}
 			
 			// update name of editor part
-			setPartName(mtHRMController.toString());
+			setPartName(toString());
 			
 		} else {
 			throw new PartInitException("No input for editor.");
@@ -967,14 +971,14 @@ public class HRMViewer extends EditorPart
 		if(res == null) {
 			res = Platform.getAdapterManager().getAdapter(this, required);
 			
-			if(res == null)	res = Platform.getAdapterManager().getAdapter(mtHRMController, required);
+			if(res == null)	res = Platform.getAdapterManager().getAdapter(mHRMController, required);
 		}
 		
 		return res;
 	}
 
 	public String toString()
-	{
-		return "HRM viewer@" + hashCode();
+	{		
+		return "HRM viewer" + (mHRMController != null ? "@" + mHRMController.getPhysicalNode().getName() : "");
 	}
 }

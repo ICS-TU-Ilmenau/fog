@@ -79,7 +79,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @return The hierarchical level the cluster acts on is returned here.
 	 */
-	public int getHierarchyLevel();
+	public HierarchyLevel getHierarchyLevel();
 	
 	/**
 	 * 

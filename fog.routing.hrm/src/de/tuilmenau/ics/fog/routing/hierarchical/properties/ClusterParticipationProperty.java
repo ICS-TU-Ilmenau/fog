@@ -16,6 +16,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -27,7 +28,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class ClusterParticipationProperty extends AbstractProperty
 {
-	private int mHierarchyLevel;
+	private HierarchyLevel mHierarchyLevel = null;
 	private Long mTargetClusterID;
 	private int mTargetToken;
 	private Name mSourceName;
@@ -42,7 +43,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 	 * @param pClusterHops amount of hops to the target
 	 * @param pTargetToken token of the cluster this request comes from
 	 */
-	public ClusterParticipationProperty(Long pTargetClusterID, int pLevel, int pTargetToken)
+	public ClusterParticipationProperty(Long pTargetClusterID, HierarchyLevel pLevel, int pTargetToken)
 	{
 		mTargetClusterID = pTargetClusterID;
 		mHierarchyLevel = pLevel;
@@ -119,7 +120,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 	 * 
 	 * @return Return the level the source cluster is associated to.
 	 */
-	public int getHierarchyLevel()
+	public HierarchyLevel getHierarchyLevel()
 	{
 		return mHierarchyLevel;
 	}
@@ -166,7 +167,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		private ClusterName mPredecessor;
 		private LinkedList<DiscoveryEntry> mDiscoveries;
 		private boolean mInterASCluster = false;
-		private int mLevel;
+		private HierarchyLevel mLevel = null;
 		private BullyPriority mSenderPriority = null;
 		
 		/**
@@ -207,7 +208,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		 * the cluster that should be joined. So the level of this nested exception is below the level of the
 		 * ClusterParticipationProperty this nested participation is part of.
 		 */
-		public void setLevel(int pLevel)
+		public void setLevel(HierarchyLevel pLevel)
 		{
 			mLevel = pLevel;
 		}
@@ -219,7 +220,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		 * 
 		 * @return The level of the cluster that should participate is returned.
 		 */
-		public int getLevel()
+		public HierarchyLevel getLevel()
 		{
 			return mLevel;
 		}

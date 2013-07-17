@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
@@ -30,8 +31,8 @@ public class DiscoveryEntry implements Serializable
 	private int mToken;
 	private Long mClusterID;
 	private HRMName mCoordinatorRoutingAddress;
-	private BullyPriority mPriority = new BullyPriority();
-	private int mLevel=0;
+	private BullyPriority mPriority = null;
+	private HierarchyLevel mLevel = null;
 	private int mClusterHops;
 	private ClusterName mPredecessor;
 	private boolean mIsInterASCluster = false;
@@ -43,13 +44,14 @@ public class DiscoveryEntry implements Serializable
 	 * @param pClusterID is the cluster ID of the cluster that will be reported
 	 * @param pCoordinatorAddress is the address of the coordinator
 	 */
-	public DiscoveryEntry(int pToken, Name pCoordinatorName, Long pClusterID, HRMName pCoordinatorAddress, int pLevel)
+	public DiscoveryEntry(int pToken, Name pCoordinatorName, Long pClusterID, HRMName pCoordinatorAddress, HierarchyLevel pLevel)
 	{
 		setToken(pToken);
 		setCoordinatorName(pCoordinatorName);
 		setClusterID(pClusterID);
 		setCoordinatorRoutingAddress(pCoordinatorAddress);
 		mLevel = pLevel;
+		mPriority = new BullyPriority(this);
 	}
 	
 	/**
@@ -92,7 +94,7 @@ public class DiscoveryEntry implements Serializable
 	 * 
 	 * @return level at which discovered cluster is found
 	 */
-	public int getLevel()
+	public HierarchyLevel getLevel()
 	{
 		return mLevel;
 	}

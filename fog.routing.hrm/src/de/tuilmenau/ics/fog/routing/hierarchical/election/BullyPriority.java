@@ -63,17 +63,19 @@ public class BullyPriority
 	 * 
 	 * @param pCluster the cluster to which this Bully priority belongs to.
 	 */
-	public BullyPriority(Cluster pCluster)
+	public static BullyPriority createForCluster(Cluster pCluster)
 	{
 		Node tNode = pCluster.getHRMController().getPhysicalNode();
-		int tHierarchyLevel = pCluster.getHierarchyLevel();
+		int tHierarchyLevel = pCluster.getHierarchyLevel().getValue();
 		
 		if (tNode == null) {
-			Logging.log(this,  "Invalid reference to the physical node found");
-			return;
+			Logging.log(pCluster, "Cannot create Bully priority, invalid reference to physical node found");
+			return null;
 		}
-		mPriority = (long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
-		Logging.log("Created Bully priority object (initial priority is " + mPriority + ") for " + pCluster);
+
+		BullyPriority tResult = new BullyPriority((long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY));
+		Logging.log(pCluster, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
+		return tResult;
 	}
 	
 	/**
@@ -81,17 +83,19 @@ public class BullyPriority
 	 * 
 	 * @param pCluster the cluster to which this Bully priority belongs to.
 	 */
-	public BullyPriority(Coordinator pCoordinator)
+	public static BullyPriority createForCoordinator(Coordinator pCoordinator)
 	{
 		Node tNode = pCoordinator.getHRMController().getPhysicalNode();
-		int tHierarchyLevel = pCoordinator.getHierarchyLevel();
+		int tHierarchyLevel = pCoordinator.getHierarchyLevel().getValue();
 		
 		if (tNode == null) {
-			Logging.log(this,  "Invalid reference to the physical node found");
-			return;
+			Logging.log(pCoordinator, "Cannot create Bully priority, invalid reference to the physical node found");
+			return null;
 		}
-		mPriority = (long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
-		Logging.log(this, "Created object (initial priority is " + mPriority + ") for " + pCoordinator);
+
+		BullyPriority tResult = new BullyPriority((long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY));
+		Logging.log(pCoordinator, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
+		return tResult;
 	}
 
 	/**
@@ -99,19 +103,29 @@ public class BullyPriority
 	 * 
 	 * @param pPriority the defined new Bully priority value
 	 */
-	public BullyPriority(long pPriority)
+	public BullyPriority(Object pParent, long pPriority)
 	{
 		mPriority = pPriority;
-		Logging.log(this,  "Created object (explicit priority is " + pPriority + ")");
+		Logging.log(this,  "Created object (explicit priority is " + pPriority + ") for object \"" + pParent + "\"");
 	}
 
 	/**
 	 * Constructor: initializes the Bully priority with "undefined"
 	 */
-	public BullyPriority()
+	public BullyPriority(Object pParent)
 	{
+		if ((pParent instanceof Integer) || (pParent instanceof Long)){
+			Logging.warn(this, "The parent object is an Integer/Long class, this often means a wrong call");
+		}
+
 		mPriority = UNDEFINED_PRIORITY;
-		Logging.log(this,  "Created object (undefined priority)");
+
+		/**
+		 * HINT: Be aware of recursion here. The Bully priority is very often used inside toString(). For example, this would lead 
+		 * to recursive calls caused by getBullyPriority in the Cluster/Coordinator class. 
+		 */
+		
+		Logging.log(this,  "Created object (undefined priority) for class \"" + pParent.getClass().getSimpleName() + "\"");
 	}
 	
 	/**
@@ -143,10 +157,11 @@ public class BullyPriority
 	}
 	
 	/**
-	 * Check if the Bully priority if higher than the other given one.
+	 * Check if the Bully priority is higher than the other given one.
 	 * 
-	 * @param pHighestPriority the other given priority
-	 * @return return "true" if the Bully priority if higher than the other one, otherwise return "false"
+	 * @param pCheckLocation a reference to the origin object from where the call comes from
+	 * @param pOtherPriority the other given priority
+	 * @return return "true" if the Bully priority is higher than the other one, otherwise return "false"
 	 */
 	public boolean isHigher(Object pCheckLocation, BullyPriority pOtherPriority)
 	{
@@ -189,6 +204,11 @@ public class BullyPriority
 		
 		// otherwise always "false"
 		return false;
+	}
+
+	private BullyPriority(long pPriority)
+	{
+		mPriority = pPriority;
 	}
 
 	public String toString()

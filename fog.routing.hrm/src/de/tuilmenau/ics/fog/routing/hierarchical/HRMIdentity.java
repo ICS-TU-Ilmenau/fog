@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import de.tuilmenau.ics.fog.authentication.SimpleIdentity;
 import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 
 public class HRMIdentity extends SimpleIdentity
 {
@@ -21,7 +22,7 @@ public class HRMIdentity extends SimpleIdentity
 		super(pName);
 	}
 	
-	public HRMSignature createSignature(Object pOrigin, byte[] pData, int pLevel) throws AuthenticationException
+	public HRMSignature createSignature(Object pOrigin, byte[] pData, HierarchyLevel pLevel) throws AuthenticationException
 	{
 		return new HRMSignature(this, pOrigin, pData, pLevel);
 	}

@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 
 /**
@@ -23,24 +24,16 @@ public class BullyElect extends SignalingMessageBully //TV
 	 * 
 	 * @param pSenderName sender's identification
 	 * @param pSenderPriority senders priority for the election
-	 * @param pHierarchyLevel hierarchy level for this election
 	 */
-	public BullyElect(Name pSenderName, BullyPriority pSenderPriority, int pHierarchyLevel)
+	public BullyElect(Name pSenderName, BullyPriority pSenderPriority)
 	{
 		super(pSenderName, pSenderPriority);
-		mHierarchyLevel = pHierarchyLevel;
 	}
 	
 
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority().getValue() + ", Level=" + mHierarchyLevel + ")";
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority().getValue() + ")";
 	}
-
-	
-	/**
-	 * The hierarchy level for this election.
-	 */
-	private int mHierarchyLevel = 0;
 }

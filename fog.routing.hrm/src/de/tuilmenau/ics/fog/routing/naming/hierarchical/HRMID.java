@@ -13,6 +13,7 @@ import java.math.BigInteger;
 
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IRoutableClusterGraphNode;
 
 /**
@@ -67,21 +68,21 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableCluste
 	 * @param pLevel Specify the level you wish to set the address for, here.
 	 * @param pAddress Please provide a BigInteger that should be used as address for the specific hierarchical level.
 	 */
-	public void setLevelAddress(int pLevel, BigInteger pAddress)
+	public void setLevelAddress(HierarchyLevel pLevel, BigInteger pAddress)
 	{
-		if(pLevel != HRMConfig.Hierarchy.BASE_LEVEL) {
-			BigInteger tValue = getLevelAddress(pLevel);
+		if(pLevel.isHigherLevel()) {
+			BigInteger tValue = getLevelAddress(pLevel.getValue());
 			if(!tValue.equals(BigInteger.valueOf(0))) {
-				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)).divide(BigInteger.valueOf(pLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
+				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel.getValue() + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)).divide(BigInteger.valueOf(pLevel.getValue() * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
 			}
 		} else {
-			BigInteger tValue = getLevelAddress(pLevel);
+			BigInteger tValue = getLevelAddress(pLevel.getValue());
 			if(!tValue.equals(BigInteger.valueOf(0))) {
-				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
+				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel.getValue() + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
 			}
 		}		
 		
-		mAddress = mAddress.add(pAddress.shiftLeft(pLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
+		mAddress = mAddress.add(pAddress.shiftLeft(pLevel.getValue() * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
 	}
 	
 	/**

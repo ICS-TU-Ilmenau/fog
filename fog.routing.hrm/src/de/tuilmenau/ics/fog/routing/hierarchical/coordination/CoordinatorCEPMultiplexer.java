@@ -29,6 +29,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
@@ -60,17 +61,20 @@ public class CoordinatorCEPMultiplexer
 	
 	public CoordinatorCEPChannel addConnection(ICluster pTargetCluster, ICluster pSourceCluster)
 	{
+		HierarchyLevel tSourceClusterHierLvl = new HierarchyLevel(this, pSourceCluster.getHierarchyLevel().getValue() + 1);
+		HierarchyLevel tTargetClusterHierLvl = new HierarchyLevel(this, pTargetCluster.getHierarchyLevel().getValue() + 1);
+
 		Name tName = pTargetCluster.getCoordinatorName();
 		CoordinatorCEPChannel tCEPDemultiplexed = null;
 //		long tAddress=0;
 
 		if(!mConnectedEntities.contains(pTargetCluster.getCoordinatorName())) {
 			mConnectedEntities.add(pTargetCluster.getCoordinatorName());
-			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(pTargetCluster.getCoordinatorsAddress().getAddress().longValue(), pTargetCluster.getHierarchyLevel() + 1, pTargetCluster.getToken());
-			CoordinatorSession tCEP = new CoordinatorSession(mHRMController, false, pSourceCluster.getHierarchyLevel() + 1, mHRMController.getMultiplexerOnLevel(pSourceCluster.getHierarchyLevel() + 1));
+			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(pTargetCluster.getCoordinatorsAddress().getAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getToken());
+			CoordinatorSession tCEP = new CoordinatorSession(mHRMController, false, tSourceClusterHierLvl, mHRMController.getMultiplexerOnLevel(tSourceClusterHierLvl.getValue()));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getPhysicalNode().getCentralFN().getName());
 			
-			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel() + 1)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(tSourceClusterHierLvl)) {
 				tCEPDemultiplexed = new CoordinatorCEPChannel(mHRMController, tManager);
 				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getBullyPriority());
 				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
@@ -82,7 +86,7 @@ public class CoordinatorCEPMultiplexer
 				tCEPDemultiplexed.setRemoteClusterName(new ClusterName(pTargetCluster.getToken(), pTargetCluster.getClusterID(), pTargetCluster.getHierarchyLevel()));
 			}
 			
-			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel() + 1)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(tSourceClusterHierLvl)) {
 				if(pTargetCluster.getCoordinatorsAddress() == null) {
 					Logging.err(this, "Error on trying to contact other clusters, as name is set please check its address");
 				} else {
@@ -170,10 +174,10 @@ public class CoordinatorCEPMultiplexer
 				Logging.err(this, "Unable to connect to " + tName, tExc);
 			}
 
-			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel() + 1)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(tSourceClusterHierLvl)) {
 				LinkedList<Integer> tTokens = new LinkedList<Integer>();
 				for(ICluster tClusterForToken : tManager.getManagedCluster().getNeighbors()) {
-					if(tClusterForToken.getHierarchyLevel() == tManager.getHierarchyLevel() - 1) {
+					if(tClusterForToken.getHierarchyLevel().getValue() == tManager.getHierarchyLevel().getValue() - 1) {
 						tTokens.add((tClusterForToken.getToken()));
 					}
 				}
@@ -181,12 +185,8 @@ public class CoordinatorCEPMultiplexer
 				pTargetCluster.setNegotiatorCEP(tCEPDemultiplexed);
 				tManager.getParticipatingCEPs().add(tCEPDemultiplexed);
 				if(!pTargetCluster.getCoordinatorName().equals(mHRMController.getPhysicalNode().getCentralFN().getName())) {
-					NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(
-							tTokens,
-							pTargetCluster.getClusterID(),
-							pTargetCluster.getToken(),
-							pTargetCluster.getHierarchyLevel(),
-							(pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() : 0));
+					int tDistance = (pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() : 0); 
+					NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tTokens, pTargetCluster.getClusterID(), pTargetCluster.getToken(), pTargetCluster.getHierarchyLevel(), tDistance);
 					if(pTargetCluster instanceof NeighborCluster && ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() == 0) {
 						Logging.warn(this, "Set 0 as hop count to target " + pTargetCluster);
 					}

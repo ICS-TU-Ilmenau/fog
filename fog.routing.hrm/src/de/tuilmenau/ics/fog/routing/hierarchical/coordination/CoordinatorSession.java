@@ -26,6 +26,7 @@ import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -38,7 +39,7 @@ public class CoordinatorSession extends Session
 	private boolean mServerSide = false;
 	private L2Address mSourceIdentification = null;
 	private L2Address mPeerIdentification = null;
-	private int mHierarchyLevel = 0;
+	private HierarchyLevel mHierarchyLevel = null;
 	private CoordinatorCEPMultiplexer mMux;
 	private Route mRouteToPeer;
 	
@@ -51,7 +52,7 @@ public class CoordinatorSession extends Session
 	 * @param pMux is the multiplexer to use
 	 * 
 	 */
-	public CoordinatorSession(HRMController pHRMController, boolean pServerSide, int pLevel, CoordinatorCEPMultiplexer pMux)
+	public CoordinatorSession(HRMController pHRMController, boolean pServerSide, HierarchyLevel pLevel, CoordinatorCEPMultiplexer pMux)
 	{
 		super(false, Logging.getInstance(), null);
 		mHRMController = pHRMController;
@@ -83,7 +84,7 @@ public class CoordinatorSession extends Session
 					getLogger().err(this, "Unable to fulfill requirements ", tExc);
 				}
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
-				if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
+				if(mHierarchyLevel.isBaseLevel()) {
 					getHRMController().getHRS().registerRoute(mSourceIdentification, mPeerIdentification, mRouteToPeer);
 				}
 				write(mSourceIdentification);
@@ -91,7 +92,7 @@ public class CoordinatorSession extends Session
 
 		} else if (pData instanceof L2Address) {
 			mPeerIdentification = (L2Address) pData;
-			if(mHierarchyLevel == HRMConfig.Hierarchy.BASE_LEVEL) {
+			if(mHierarchyLevel.isBaseLevel()) {
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
 				getHRMController().getHRS().registerRoute(mSourceIdentification, mPeerIdentification, mRouteToPeer);
 			} else {
