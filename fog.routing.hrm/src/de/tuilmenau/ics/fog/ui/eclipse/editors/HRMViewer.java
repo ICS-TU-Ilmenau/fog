@@ -371,37 +371,6 @@ public class HRMViewer extends EditorPart
 		}		
 	}	
 
-	private class AddressDistributionListener implements Listener
-	{
-		private Cluster mCluster = null;
-		
-		private AddressDistributionListener(Cluster pCluster)
-		{
-			super();
-			mCluster = pCluster;
-		}
-		
-		@Override
-		public void handleEvent(Event event)
-		{
-			final Coordinator tManager = new Coordinator(mCluster, new HierarchyLevel(this, mCluster.getHierarchyLevel().getValue() + 1), new HRMID(0));
-			new Thread() {
-	        	public void run()
-	        	{
-	        		try {
-						tManager.distributeAddresses();
-					} catch (RoutingException e) {
-						e.printStackTrace();
-					} catch (RequirementsException e) {
-						e.printStackTrace();
-					} catch (RemoteException e) {
-						e.printStackTrace();
-					}
-	        	}
-	    	}.start();
-		}	
-	}
-	
 	/**
 	 * Draws GUI elements for depicting coordinator information.
 	 * 
@@ -805,10 +774,6 @@ public class HRMViewer extends EditorPart
 		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem4.setText("[Cluster all level " + tHierarchyLevel + " coordinators]");
 		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(tCluster));
-		    
-		    ToolItem toolItem5 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem5.setText("[Distribute addresses]");
-		    toolItem5.addListener(SWT.Selection, new AddressDistributionListener(tCluster));
 		    
 		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
