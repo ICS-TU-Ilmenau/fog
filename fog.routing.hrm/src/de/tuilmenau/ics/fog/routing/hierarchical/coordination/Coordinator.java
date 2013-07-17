@@ -999,8 +999,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	private void registerFIBEntry(FIBEntry pEntry)
 	{
 		mIDToFIBMapping.put(pEntry.getDestination(), pEntry);
-		ICluster tTargetCluster = null;
-		tTargetCluster = getHRMController().getCluster(pEntry.getNextCluster());
+		Cluster tTargetCluster = getHRMController().getCluster(pEntry.getNextCluster());
 		map(pEntry.getDestination(), tTargetCluster);
 	}
 	

@@ -362,7 +362,7 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pCluster cluster identification
 	 * @return local object that holds meta information about the specified entity
 	 */
-	public ICluster getCluster(ICluster pCluster)
+	public Cluster getCluster(ICluster pCluster)
 	{
 		for(Cluster tCluster : getRoutingTargetClusters()) {
 			if (tCluster.equals(pCluster)) {

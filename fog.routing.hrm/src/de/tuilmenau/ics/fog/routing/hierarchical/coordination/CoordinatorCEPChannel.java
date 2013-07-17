@@ -423,13 +423,11 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 							tFinalPath = null;
 							List<Route> tPath = tHRS.getCoordinatorRoutingMap().getRoute(tRouteRequestPacket.getSource(), tRouteRequestPacket.getTarget());
 							
-							ICluster tCluster = getHRMController().getCluster(tDummy);
+							Cluster tCluster = getHRMController().getCluster(tDummy);
 							LinkedList<HRMName> tAddressesOfCluster = new LinkedList<HRMName>();
 							
-							if( tCluster instanceof Cluster ) {
-								for(CoordinatorCEPChannel tCEP : ((Cluster)tCluster).getParticipatingCEPs()) {
-									tAddressesOfCluster.add(tCEP.getPeerName());
-								}
+							for(CoordinatorCEPChannel tCEP : tCluster.getParticipatingCEPs()) {
+								tAddressesOfCluster.add(tCEP.getPeerName());
 							}
 							if( tAddressesOfCluster.contains(tHRS.getCoordinatorRoutingMap().getDest(tPath.get(0))) ) {
 								tFinalPath = tPath;
@@ -744,8 +742,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	public void handleClusterDiscovery(NestedDiscovery pDiscovery, boolean pRequest) throws PropertyException, NetworkException
 	{
 		if(pRequest){
-			ICluster tSourceCluster=null;
-			tSourceCluster = getHRMController().getCluster(new ClusterName(pDiscovery.getToken(), pDiscovery.getSourceClusterID(), pDiscovery.getLevel()));
+			Cluster tSourceCluster = getHRMController().getCluster(new ClusterName(pDiscovery.getToken(), pDiscovery.getSourceClusterID(), pDiscovery.getLevel()));
 			if(tSourceCluster == null) {
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteClusterName());
 			}

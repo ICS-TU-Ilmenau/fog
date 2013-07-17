@@ -598,15 +598,23 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		if(pObj instanceof Coordinator) {
 			return false;
 		}
-		if(pObj instanceof ICluster) {
+		if(pObj instanceof Cluster) {
 			ICluster tCluster = (ICluster) pObj;
-			if(tCluster.getClusterID().equals(getClusterID()) &&
-					tCluster.getToken() == getToken() &&
-					tCluster.getHierarchyLevel() == getHierarchyLevel()) {
+			if (tCluster.getClusterID().equals(getClusterID()) && (tCluster.getToken() == getToken()) && (tCluster.getHierarchyLevel() == getHierarchyLevel())) {
 				return true;
 			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
 				return false;
 			} else if (tCluster.getClusterID().equals(getClusterID())) {
+				return false;
+			}
+		}
+		if(pObj instanceof ClusterName) {
+			ClusterName tClusterName = (ClusterName) pObj;
+			if (tClusterName.getClusterID().equals(getClusterID()) && (tClusterName.getToken() == getToken()) && (tClusterName.getHierarchyLevel() == getHierarchyLevel())) {
+				return true;
+			} else if(tClusterName.getClusterID().equals(getClusterID()) && tClusterName.getHierarchyLevel() == getHierarchyLevel()) {
+				return false;
+			} else if (tClusterName.getClusterID().equals(getClusterID())) {
 				return false;
 			}
 		}

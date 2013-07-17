@@ -219,8 +219,8 @@ public class CoordinatorCEPMultiplexer
 						if(tDiscovery.getNeighborRelations() != null) {
 							for(Tuple<ClusterName, ClusterName> tTuple : tDiscovery.getNeighborRelations()) {
 								if(!mHRMController.getRoutableClusterGraph().isLinked(tTuple.getFirst(), tTuple.getSecond())) {
-									ICluster tFirstCluster = mHRMController.getCluster(tTuple.getFirst());
-									ICluster tSecondCluster = mHRMController.getCluster(tTuple.getSecond());
+									Cluster tFirstCluster = mHRMController.getCluster(tTuple.getFirst());
+									Cluster tSecondCluster = mHRMController.getCluster(tTuple.getSecond());
 									if(tFirstCluster != null && tSecondCluster != null ) {
 										tFirstCluster.addNeighborCluster(tSecondCluster);
 										Logging.log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);

@@ -363,8 +363,8 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		int tClosestCluster = Integer.MAX_VALUE;
 		CoordinatorCEPChannel tClosest = null;
 		for(CoordinatorCEPChannel tCEP : mAnnouncedCEPs) {
-			ICluster tRemoteCluster = tCEP.getRemoteClusterName();
-			tRemoteCluster = getHRMController().getCluster(tRemoteCluster) != null ? getHRMController().getCluster(tRemoteCluster) : tRemoteCluster;
+			ClusterName tClusterName = tCEP.getRemoteClusterName();
+			ICluster tRemoteCluster = getHRMController().getCluster(tClusterName) != null ? getHRMController().getCluster(tClusterName) : tClusterName;
 			if(pCluster.getHierarchyLevel() == tRemoteCluster.getHierarchyLevel()) {
 				List<RoutableClusterGraphLink> tConnection = getHRMController().getRoutableClusterGraph().getRoute(pCluster, tRemoteCluster);
 				int tDistance = 0;
