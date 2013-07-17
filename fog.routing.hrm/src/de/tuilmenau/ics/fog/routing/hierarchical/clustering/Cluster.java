@@ -159,14 +159,11 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				notifyAll();
 			}
 			setCoordinatorPriority(getBullyPriority());
-			getHRMController().getPhysicalNode().setDecorationParameter("L"+ (mHierarchyLevel.getValue() + 1));
-			getHRMController().getPhysicalNode().setDecorationValue("(CoordSign.=" + pCoordSignature + ")");
 		} else {
 			synchronized(this) {
 				mCoordAddress = pAddress;
 				notifyAll();
 			}
-			getHRMController().getPhysicalNode().setDecorationValue("(" + pCoordSignature + ")");
 			setCoordinatorPriority(pCoordinatorChannel.getPeerPriority());
 			try {
 				getHRMController().getHRS().registerNode(pCoordName, pAddress);
@@ -181,8 +178,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				
 				getHRMController().getHRS().registerRoute(pCoordinatorChannel.getSourceName(), pCoordinatorChannel.getPeerName(), pCoordinatorChannel.getRouteToPeer());
 			}
-			
-			/*getCoordinator().getReferenceNode().setDecorationParameter(null);*/
 		}
 		Logging.log(this, "This cluster has the following neighbors: " + getNeighbors());
 		for(ICluster tCluster : getNeighbors()) {
