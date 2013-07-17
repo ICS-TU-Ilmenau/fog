@@ -349,7 +349,7 @@ public class Elector extends Thread implements HRMEntity
 				if(mPleaseInterrupt) {
 					Logging.log(this, "Election was interrupted, not waiting for settlement of peer responses");
 				}
-				if(tWaitTime ==0 || mPleaseInterrupt) return;
+				if(tWaitTime == 0 || mPleaseInterrupt) return;
 				try	{
 					Logging.log(this, "ACTIVE WAITING (checkWait) - " + tWaitTime);
 					mPleaseInterrupt.wait(tWaitTime);
