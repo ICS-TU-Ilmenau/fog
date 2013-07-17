@@ -91,27 +91,27 @@ public class BullyPriority
 			return;
 		}
 		mPriority = (long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
-		Logging.log("Created Bully priority object (initial priority is " + mPriority + ") for " + pCoordinator);
+		Logging.log(this, "Created object (initial priority is " + mPriority + ") for " + pCoordinator);
 	}
 
 	/**
-	 * Constructor
+	 * Constructor: initializes the Bully priority with the given value.
 	 * 
-	 * @param pCluster the cluster to which this Bully priority belongs to.
-	 * @param pPriority the defined Bully priority
+	 * @param pPriority the defined new Bully priority value
 	 */
 	public BullyPriority(long pPriority)
 	{
 		mPriority = pPriority;
-		Logging.log(this,  "Created Bully priority object (explicit priority is " + pPriority + ")");
+		Logging.log(this,  "Created object (explicit priority is " + pPriority + ")");
 	}
 
 	/**
-	 * Constructor
+	 * Constructor: initializes the Bully priority with "undefined"
 	 */
 	public BullyPriority()
 	{
 		mPriority = UNDEFINED_PRIORITY;
+		Logging.log(this,  "Created object (undefined priority)");
 	}
 	
 	/**
