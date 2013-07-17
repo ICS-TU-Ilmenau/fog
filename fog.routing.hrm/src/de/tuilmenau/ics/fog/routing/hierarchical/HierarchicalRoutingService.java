@@ -90,10 +90,10 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	}
 
 	/**
-	 * Separate INIT function for the coordinator. It is needed because it uses a server FN, which registers a node and links at the local routing service.
-	 * However, this demands for an already registered routing service. This step should be done between the constructor call and the call to this function.
+	 * This function creates the local HRM controller application instance
+	 * The HRS has to be already registered because a server FN is used, which registers a node and links at the local routing service.
 	 */
-	public void initiateCoordinator() //TV
+	public void createHRMControllerApp() //TV
 	{
 		mHRMController = new HRMController(mReferenceNode.getHost(), mReferenceNode.getLogger(), mReferenceNode.getIdentity(), mReferenceNode, this);
 		mReferenceNode.getHost().registerApp(mHRMController);
