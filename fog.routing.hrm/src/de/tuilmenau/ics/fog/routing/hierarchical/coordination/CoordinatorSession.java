@@ -29,10 +29,9 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.Tuple;
 
-public class CoordinatorCEP extends Session
+public class CoordinatorSession extends Session
 {
 	private HRMController mHRMController = null;
 	private boolean mServerSide = false;
@@ -51,7 +50,7 @@ public class CoordinatorCEP extends Session
 	 * @param pMux is the multiplexer to use
 	 * 
 	 */
-	public CoordinatorCEP(HRMController pHRMController, boolean pServerSide, int pLevel, CoordinatorCEPMultiplexer pMux)
+	public CoordinatorSession(HRMController pHRMController, boolean pServerSide, int pLevel, CoordinatorCEPMultiplexer pMux)
 	{
 		super(false, Logging.getInstance(), null);
 		mHRMController = pHRMController;

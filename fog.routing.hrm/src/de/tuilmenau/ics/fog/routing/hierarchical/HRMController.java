@@ -115,7 +115,7 @@ public class HRMController extends Application implements IServerCallback
 		Logging.log(this, "NEW CONNECTION " + pConnection);
 
 		//long tClusterID = 0;
-		CoordinatorCEP tConnection = null;
+		CoordinatorSession tConnectionSession = null;
 		
 		ClusterParticipationProperty tJoin = null;
 		Description tRequirements = pConnection.getRequirements();
@@ -141,12 +141,12 @@ public class HRMController extends Application implements IServerCallback
 				ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getTargetClusterID(), tJoin.getLevel());
 				
 				if(tCluster.equals(tJoinClusterNameTok0) || tJoin.getTargetToken() != 0 && tCluster.equals(tJoinClusterName))	{
-					if(tConnection == null) {
-						tConnection = new CoordinatorCEP(this, true, tJoin.getLevel(), tCluster.getMultiplexer());
+					if(tConnectionSession == null) {
+						tConnectionSession = new CoordinatorSession(this, true, tJoin.getLevel(), tCluster.getMultiplexer());
 					}
 					
 					tCEP = new CoordinatorCEPChannel(this, tCluster);
-					((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tCEP, tConnection);
+					((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
 					if(tJoin.getLevel() > 0) {
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 					} else {
@@ -168,8 +168,8 @@ public class HRMController extends Application implements IServerCallback
 					setSourceIntermediateCluster(tCluster, tCluster);
 				}
 				setSourceIntermediateCluster(tCluster, tCluster);
-				if(tConnection == null) {
-					tConnection = new CoordinatorCEP(this, true, tJoin.getLevel(), tCluster.getMultiplexer());
+				if(tConnectionSession == null) {
+					tConnectionSession = new CoordinatorSession(this, true, tJoin.getLevel(), tCluster.getMultiplexer());
 				}
 
 				if(tJoin.getLevel() > 0) {
@@ -188,14 +188,14 @@ public class HRMController extends Application implements IServerCallback
 						mIsEdgeRouter = true;
 					}
 				}
-				tCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnection);
+				tCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
 				tCluster.addParticipatingCEP(tCEP);
 				tCluster.setAnnouncedCEP(tCEP);
 				tCEP.addAnnouncedCluster(tCluster, tCluster);
 				addCluster(tCluster);
 				tFoundCluster = tCluster;
 			}
-			tFoundCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnection);
+			tFoundCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
 			for(ICluster tNegotiatingCluster : getRoutingTargetClusters()) {
 				ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), (tJoin.getLevel() - 1 > 0 ? tJoin.getLevel() - 1 : 0 ));
 				if(tNegotiatingCluster.equals(tNegClusterName)) {
@@ -305,7 +305,7 @@ public class HRMController extends Application implements IServerCallback
 			mLogger.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);
 		}
 		
-		tConnection.start(pConnection);
+		tConnectionSession.start(pConnection);
 	}
 	
 	@Override
@@ -435,7 +435,7 @@ public class HRMController extends Application implements IServerCallback
 	{
 		Logging.log(this, "ADDING CONNECTION to " + pName + "(ClusterID=" + pToClusterID + ", interAS=" + pConnectionToOtherAS + " on hier. level " + pLevel);
 
-		CoordinatorCEP tCEP = null;
+		CoordinatorSession tCEP = null;
 		ICluster tFoundCluster = null;
 		CoordinatorCEPChannel tDemux = null;
 		
@@ -443,7 +443,7 @@ public class HRMController extends Application implements IServerCallback
 		for(Cluster tCluster : getRoutingTargetClusters())
 		{
 			if(tCluster.getClusterID().equals(pToClusterID)) {
-				tCEP = new CoordinatorCEP(this, false, pLevel, tCluster.getMultiplexer());
+				tCEP = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
 				Route tRoute = null;
 				try {
 					tRoute = getHRS().getRoute(getPhysicalNode().getCentralFN(), pName, new Description(), getPhysicalNode().getIdentity());
@@ -466,7 +466,7 @@ public class HRMController extends Application implements IServerCallback
 			Cluster tCluster = new Cluster(new Long(pToClusterID), pLevel, this);
 			setSourceIntermediateCluster(tCluster, tCluster);
 			addCluster(tCluster);
-			tCEP = new CoordinatorCEP(this, false, pLevel, tCluster.getMultiplexer());
+			tCEP = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
 			tDemux = new CoordinatorCEPChannel(this, tCluster);
 			tCluster.getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
 			
@@ -486,7 +486,7 @@ public class HRMController extends Application implements IServerCallback
 		tParticipate.setSourceClusterID(pToClusterID);
 		
 		final Name tName = pName;
-		final CoordinatorCEP tConnectionCEP = tCEP;
+		final CoordinatorSession tConnectionCEP = tCEP;
 		final CoordinatorCEPChannel tDemultiplexed = tDemux;
 		final ICluster tClusterToAdd = tFoundCluster;
 		

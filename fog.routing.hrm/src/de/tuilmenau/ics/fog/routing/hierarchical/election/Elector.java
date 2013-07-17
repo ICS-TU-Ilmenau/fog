@@ -10,13 +10,10 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.election;
 
 import java.rmi.RemoteException;
-import java.util.Collection;
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 
-import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
@@ -39,6 +36,10 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
+/**
+ * This class is responsible for coordinator elections. It is instantiated per cluster. 
+ *
+ */
 public class Elector extends Thread implements HRMEntity
 {
 	/**

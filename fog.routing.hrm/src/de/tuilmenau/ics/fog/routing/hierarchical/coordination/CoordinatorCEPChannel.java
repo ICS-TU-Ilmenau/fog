@@ -101,7 +101,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 		boolean BULLY_SIGNALING_DEBUGGING = true;
 
 		/**
-		 * BullyElect
+		 * ELECT
 		 */
 		if(pPacketBully instanceof BullyElect)	{
 			
@@ -159,7 +159,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 		}
 		
 		/**
-		 * BullyReply
+		 * REPLY
 		 */
 		if(pPacketBully instanceof BullyReply) {
 			
@@ -175,7 +175,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 		}
 		
 		/**
-		 * BullyAnnounce
+		 * ANNOUNCE
 		 */
 		if(pPacketBully instanceof BullyAnnounce)  {
 			// cast to Bully replay packet
@@ -189,7 +189,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 		}
 
 		/**
-		 * BullyPriorityUpdate
+		 * PRIORITY UPDATE
 		 */
 		if(pPacketBully instanceof BullyPriorityUpdate) {
 			// cast to Bully replay packet

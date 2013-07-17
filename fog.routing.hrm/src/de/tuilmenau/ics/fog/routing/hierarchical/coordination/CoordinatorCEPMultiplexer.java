@@ -42,8 +42,8 @@ import de.tuilmenau.ics.fog.util.Tuple;
 
 public class CoordinatorCEPMultiplexer
 {
-	private HashMap<CoordinatorCEPChannel, CoordinatorCEP> mMultiplexer;
-	private HashMap<CoordinatorCEP, LinkedList<CoordinatorCEPChannel>> mDemux;
+	private HashMap<CoordinatorCEPChannel, CoordinatorSession> mMultiplexer;
+	private HashMap<CoordinatorSession, LinkedList<CoordinatorCEPChannel>> mDemux;
 	private HashMap<Tuple<Long, Long>, CoordinatorCEPChannel> mClusterToCEPMapping;
 	private HRMController mHRMController = null;
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
@@ -52,8 +52,8 @@ public class CoordinatorCEPMultiplexer
 	public CoordinatorCEPMultiplexer(HRMController pHRMController)
 	{
 		mHRMController = pHRMController;
-		mMultiplexer = new HashMap<CoordinatorCEPChannel, CoordinatorCEP>();
-		mDemux = new HashMap<CoordinatorCEP, LinkedList<CoordinatorCEPChannel>>();
+		mMultiplexer = new HashMap<CoordinatorCEPChannel, CoordinatorSession>();
+		mDemux = new HashMap<CoordinatorSession, LinkedList<CoordinatorCEPChannel>>();
 		mClusterToCEPMapping = new HashMap<Tuple<Long, Long>, CoordinatorCEPChannel>();
 		Logging.log(this, "CREATED for " + pHRMController);
 	}
@@ -67,7 +67,7 @@ public class CoordinatorCEPMultiplexer
 		if(!mConnectedEntities.contains(pTargetCluster.getCoordinatorName())) {
 			mConnectedEntities.add(pTargetCluster.getCoordinatorName());
 			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(pTargetCluster.getCoordinatorsAddress().getAddress().longValue(), pTargetCluster.getHierarchyLevel() + 1, pTargetCluster.getToken());
-			CoordinatorCEP tCEP = new CoordinatorCEP(mHRMController, false, pSourceCluster.getHierarchyLevel() + 1, mHRMController.getMultiplexerOnLevel(pSourceCluster.getHierarchyLevel() + 1));
+			CoordinatorSession tCEP = new CoordinatorSession(mHRMController, false, pSourceCluster.getHierarchyLevel() + 1, mHRMController.getMultiplexerOnLevel(pSourceCluster.getHierarchyLevel() + 1));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getPhysicalNode().getCentralFN().getName());
 			
 			for(Coordinator tManager : mHRMController.getCoordinator(pSourceCluster.getHierarchyLevel() + 1)) {
@@ -122,7 +122,9 @@ public class CoordinatorCEPMultiplexer
 					for(ICluster tNeighbor: tManager.getManagedCluster().getNeighbors()) {
 						boolean tBreak = false;
 						for(CoordinatorCEPChannel tCheckForEdgeCluster : tNeighbor.getParticipatingCEPs()) {
-							if(tCheckForEdgeCluster != null && tCheckForEdgeCluster.isEdgeCEP()) tBreak = true;
+							if(tCheckForEdgeCluster != null && tCheckForEdgeCluster.isEdgeCEP()){
+								tBreak = true;
+							}
 						}
 						if(tBreak) {
 							continue;
@@ -279,7 +281,7 @@ public class CoordinatorCEPMultiplexer
 		ClusterName tSource = new ClusterName(pDemux.getCluster().getToken(), pDemux.getCluster().getClusterID(), pDemux.getCluster().getHierarchyLevel());
 	
 		MultiplexedPackage tMuxPackage = new MultiplexedPackage(tSource, pTargetCluster, pData);
-		CoordinatorCEP tCEP = mMultiplexer.get(pDemux);
+		CoordinatorSession tCEP = mMultiplexer.get(pDemux);
 		Logging.log(this, "Sending " + tMuxPackage);
 		
 		// send packet
@@ -310,7 +312,7 @@ public class CoordinatorCEPMultiplexer
 		return null;
 	}
 	
-	public synchronized void addMultiplexedConnection(CoordinatorCEPChannel pMultiplexedConnection, CoordinatorCEP pConnection)
+	public synchronized void addMultiplexedConnection(CoordinatorCEPChannel pMultiplexedConnection, CoordinatorSession pConnection)
 	{
 		Logging.log(this, "Registering multiplexed connection from " + pMultiplexedConnection + " to " + pConnection);
 		mMultiplexer.put(pMultiplexedConnection, pConnection);
@@ -320,7 +322,7 @@ public class CoordinatorCEPMultiplexer
 		addDemultiplex(pConnection, pMultiplexedConnection);
 	}
 	
-	private void addDemultiplex(CoordinatorCEP pCEP, CoordinatorCEPChannel pDemux)
+	private void addDemultiplex(CoordinatorSession pCEP, CoordinatorCEPChannel pDemux)
 	{
 		Logging.log(this, "Registering demultiplexing from " + pCEP + " to " + pDemux);
 		if(mDemux.get(pCEP) == null) {
@@ -329,12 +331,12 @@ public class CoordinatorCEPMultiplexer
 		mDemux.get(pCEP).add(pDemux);
 	}
 	
-	public LinkedList<CoordinatorCEPChannel> getDemuxCEPs(CoordinatorCEP pCEP)
+	public LinkedList<CoordinatorCEPChannel> getDemuxCEPs(CoordinatorSession pCEP)
 	{
 		return mDemux.get(pCEP);
 	}
 	
-	public CoordinatorCEPChannel getDemuxedCEP(CoordinatorCEP pCEP, ClusterName pSource, ClusterName pCluster) throws NetworkException
+	public CoordinatorCEPChannel getDemuxedCEP(CoordinatorSession pCEP, ClusterName pSource, ClusterName pCluster) throws NetworkException
 	{
 		if(mDemux.containsKey(pCEP)) {
 			for(CoordinatorCEPChannel tCEP : mDemux.get(pCEP)) {
@@ -357,7 +359,7 @@ public class CoordinatorCEPMultiplexer
 		}
 		
 		Logging.log(this, "Unable to find demultiplexed coonection endpoint for " + pCEP + " and target cluster " + pCluster.getClusterID());
-		for(CoordinatorCEP tCEP : mDemux.keySet()) {
+		for(CoordinatorSession tCEP : mDemux.keySet()) {
 			Logging.log(tCEP + " to " + mDemux.get(tCEP));
 		}
 
