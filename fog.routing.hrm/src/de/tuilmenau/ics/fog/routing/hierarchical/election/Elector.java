@@ -71,6 +71,7 @@ public class Elector extends Thread implements HRMEntity
 		Logging.log(this, "SENDELECTIONS()-CEPs: " + mElectingCluster.getParticipatingCEPs().size());
 
 		for(CoordinatorCEPChannel tCEP : mElectingCluster.getParticipatingCEPs()) {
+			//TODO: enforce sending of BullyElect in any case
 			if(tCEP.getPeerPriority().isUndefined() && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
 				Node tNode = mElectingCluster.getHRMController().getPhysicalNode();
 				
