@@ -11,8 +11,6 @@ package de.tuilmenau.ics.fog.packets.hierarchical;
 
 import java.io.Serializable;
 
-import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 

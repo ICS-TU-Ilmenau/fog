@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionEventNotification;
 import de.tuilmenau.ics.fog.ui.Logging;

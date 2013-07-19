@@ -243,9 +243,9 @@ public class CoordinatorSession extends Session
 	public String toString()
 	{
 		if(mPeerIdentification != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getNode().getName() + "@" + getMultiplexer() + "(Source=" + mSourceIdentification + ", Peer=" + mPeerIdentification + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getMultiplexer() + "(Source=" + mSourceIdentification + ", Peer=" + mPeerIdentification + ")";
 		} else {
-			return getClass().getSimpleName() + "@" + mHRMController.getNode().getName() + "(Source=" + mSourceIdentification + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Source=" + mSourceIdentification + ")";
 		}
 		 
 	}

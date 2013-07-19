@@ -121,7 +121,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		mBullyPriority = BullyPriority.createForCoordinator(this);
 		getHRMController().registerCoordinator(this, mHierarchyLevel.getValue() + 1);
 		
-		Logging.log("Coordinator@" + getHRMController().getNode().getName() + "@" + mHierarchyLevel + ": INSTANCE created");
+		Logging.log(this, "CREATED");
 	}
 	
 	public void storeAnnouncement(NeighborClusterAnnounce pAnnounce)
@@ -1728,7 +1728,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + mGUICoordinatorID + "@" + getHRMController().getNode().getName() + "@" + getHierarchyLevel();
+		String tResult = getClass().getSimpleName() + mGUICoordinatorID + "@" + getHRMController().getNodeGUIName() + "@" + getHierarchyLevel();
 		
 		return tResult;
 	}

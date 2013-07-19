@@ -32,13 +32,11 @@ import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.packets.hierarchical.RouteRequest;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.*;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -571,6 +569,16 @@ public class HRMController extends Application implements IServerCallback
 	{
 		return mPhysicalNode;
 	}
+	
+	/**
+	 * Return the actual GUI name description of the physical node;
+     * However, this function should only be used for debug outputs, e.g., GUI outputs.
+	 * @return the GUI name
+	 */
+	public String getNodeGUIName()
+	{
+		return mPhysicalNode.getName();
+	}	
 	
 	/**
 	 * 

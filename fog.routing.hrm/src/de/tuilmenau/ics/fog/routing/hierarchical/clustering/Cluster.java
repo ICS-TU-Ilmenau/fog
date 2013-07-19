@@ -781,7 +781,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + mGUIClusterID + "@" + getHRMController().getNode().getName() + "@" + getHierarchyLevel().getValue();
+		String tResult = getClass().getSimpleName() + mGUIClusterID + "@" + getHRMController().getNodeGUIName() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
 	}

@@ -95,7 +95,7 @@ public class Elector extends Thread implements HRMEntity
 		Logging.log(this, "INIT COORDINATOR functions for cluster " + pCluster);
 
 		if(pCluster.getHRMController().getIdentity() == null) {
-			String tName = tNode.getName();
+			String tName = tHRMController.getNodeGUIName();
 			HRMIdentity tIdentity= new HRMIdentity(tName);
 			pCluster.getHRMController().setIdentity(tIdentity);
 		}
@@ -384,7 +384,7 @@ public class Elector extends Thread implements HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + "@" + getCluster().getHRMController().getNode().getName() + "@" + getCluster().getHierarchyLevel().getValue();
+		String tResult = getClass().getSimpleName() + "@" + getCluster().getHRMController().getNodeGUIName() + "@" + getCluster().getHierarchyLevel().getValue();
 		
 		return tResult;
 	}
