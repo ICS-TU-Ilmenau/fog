@@ -16,8 +16,6 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 
 import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -55,7 +53,7 @@ import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 /**
  * This class is used for a coordinator instance and can be used on all hierarchy levels.
  */
-public class Coordinator implements ICluster, Observer, HRMEntity
+public class Coordinator implements ICluster, HRMEntity
 {
 	/**
 	 * This is the GUI specific cluster counter, which allows for globally unique cluster IDs.
@@ -68,12 +66,17 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	 */
 	private HierarchyLevel mHierarchyLevel;
 
-	/*
+	/**
 	 * List for identification of entities this cluster manager is connected to
 	 */
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
+	
+	/**
+	 * The following value is used in order to create each turn a monotonously growing address.
+	 */
+	private int mLastCreatedAddress;
+
 	private HRMID mHRMID = null;
-	private int mLastUsedAddress;
 	private Cluster mManagedCluster;
 	private HashMap<CoordinatorCEPChannel, TopologyData> mAddressMapping = null;
 	private LinkedList<CoordinatorCEPChannel> mCEPs = null;
@@ -84,7 +87,6 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	private BullyPriority mBullyPriority;
 	private int mToken;
 	private BullyPriority mHighestPriority = null;
-	private BFSDistanceLabeler<IRoutableClusterGraphNode, RoutableClusterGraphLink> mBreadthFirstSearch = new BFSDistanceLabeler<IRoutableClusterGraphNode, RoutableClusterGraphLink>();
 	private List<IRoutableClusterGraphNode> mClustersToNotify;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
 	private int mReceivedAnnounces = 0;
@@ -113,11 +115,10 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		mHRMID =  pInitialAddress;
 		mHierarchyLevel = pLevel;
 		mClusterID = pCluster.getClusterID();
-		mLastUsedAddress = 0;
+		mLastCreatedAddress = 0;
 		mAddressMapping = new HashMap<CoordinatorCEPChannel, TopologyData>();
 		mManagedCluster = pCluster;
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
-		mManagedCluster.getHRMController().getRoutableClusterGraph().addObserver(this);
 		mBullyPriority = BullyPriority.createForCoordinator(this);
 		getHRMController().registerCoordinator(this, mHierarchyLevel.getValue() + 1);
 		
@@ -139,23 +140,28 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		return mBouncedAnnounces;
 	}
 	
-	private HRMID generateNextAddress()
+	private HRMID createOwnAddress()
 	{
 		HRMID tID = mHRMID.clone();
-		BigInteger tAddress = BigInteger.valueOf(++mLastUsedAddress);
+		BigInteger tAddress = BigInteger.valueOf(++mLastCreatedAddress);
 		tID.setLevelAddress(mHierarchyLevel, tAddress);
 		if(mHierarchyLevel.isHigherLevel()) {
 			HRMIPMapper.registerHRMID(tID);
 		}
+		Logging.log(this, "Created new own HRM ID " + tID);
+		
 		return tID;
 	}
 	
-	public boolean prepareAboveCluster(int pLevel)
+	public boolean clusterCoordinators(int pLevel)
 	{
 		Logging.log(this, "Preparing cluster on level "  +pLevel + ":I will connect to " + mManagedCluster.getNeighbors());
 		int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 
 		Logging.log(this, "Radius is " + tRadius);
+
+		BFSDistanceLabeler<IRoutableClusterGraphNode, RoutableClusterGraphLink> tBreadthFirstSearch = new BFSDistanceLabeler<IRoutableClusterGraphNode, RoutableClusterGraphLink>();
+
 		for(int i = 1; i <= tRadius; i++) {
 			
 			String tString = new String(">>> Expanding to radius (" + i + "/" + tRadius + ", possible clusters:");
@@ -166,8 +172,10 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 			}
 			Logging.log(this, tString);
 			
-			mBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), mManagedCluster);
-			mClustersToNotify = mBreadthFirstSearch.getVerticesInOrderVisited();
+			// compute the distances of all the node from the managed cluster
+			tBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), mManagedCluster);
+			
+			mClustersToNotify = tBreadthFirstSearch.getVerticesInOrderVisited();
 			List<IRoutableClusterGraphNode> tClustersToNotify = new LinkedList<IRoutableClusterGraphNode>(); 
 			Logging.log(this, "Clusters remembered for notification: " + mClustersToNotify);
 			for(IRoutableClusterGraphNode tNode : mClustersToNotify) {
@@ -207,13 +215,6 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 			return tVectorList;
 		}
 		return null;
-	}
-	
-	private void addApprovedSignature(HRMSignature pSignature)
-	{
-		if(!mSignatures.contains(pSignature)) {
-			mSignatures.add(pSignature);
-		}
 	}
 	
 	private IRoutableClusterGraphNode getFarthestVirtualNodeInDirection(IRoutableClusterGraphNode pSource, IRoutableClusterGraphNode pTarget)
@@ -271,9 +272,9 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		TopologyData tManagedClusterTopologyData = new TopologyData();
 		Logging.log(this, "Will now distribute addresses to entities on level 0");
 		if(mHierarchyLevel.isBaseLevel()) {
-			HRMID tSelf = generateNextAddress();
-			tManagedClusterTopologyData.setHRMID(tSelf);
-			mManagedCluster.setHRMID(tSelf);
+			HRMID tOwnAddress = createOwnAddress();
+			tManagedClusterTopologyData.setHRMID(tOwnAddress);
+			mManagedCluster.setHRMID(tOwnAddress);
 		}
 		/*
 		 * in this part the addresses are mapped either to CEPs or clusters
@@ -289,7 +290,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 					/*
 					 * generate next address and map it to a CEP in case we are on level one, or to a cluster in case we are in a level higher than 1
 					 */
-					tID = generateNextAddress();
+					tID = createOwnAddress();
 					
 					if(mHierarchyLevel.isBaseLevel()) {
 						map(tID, tReceivingCEP);
@@ -1022,7 +1023,9 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		
 		if(pTopologyData.getApprovedSignatures() != null) {
 			for(HRMSignature tSignature : pTopologyData.getApprovedSignatures()) {
-				addApprovedSignature(tSignature);
+				if(!mSignatures.contains(tSignature)) {
+					mSignatures.add(tSignature);
+				}
 			}
 		}
 		
@@ -1376,10 +1379,6 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		return mHRMID;
 	}
 	
-	@Override
-	public void update(Observable pO, Object pArg) {
-	}
-
 	@Override
 	public void setHighestPriority(BullyPriority pHighestPriority) {
 		mHighestPriority = pHighestPriority;

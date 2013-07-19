@@ -179,7 +179,7 @@ public class Elector extends Thread implements HRMEntity
 						Logging.err(this, "Unable to fulfill stepwise hierarchy preparation", tExc);
 					}
 				}
-				tElectedCoordinator.prepareAboveCluster(tClusterHierLvl);
+				tElectedCoordinator.clusterCoordinators(tClusterHierLvl);
 			} else {
 				Logging.log(this, "Beginning address distribution");
 				try {
