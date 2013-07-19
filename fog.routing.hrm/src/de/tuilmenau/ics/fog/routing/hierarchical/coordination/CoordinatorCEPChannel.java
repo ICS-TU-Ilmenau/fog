@@ -814,7 +814,9 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 					if(tNewCluster instanceof NeighborCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {
 						Logging.log(this, "Filling required information into " + tNewCluster);
 						tNewCluster.setCoordinatorCEP(null, null, pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress());
-						if(pEntry.isInterASCluster()) tNewCluster.setInterASCluster();
+						if(pEntry.isInterASCluster()){
+							tNewCluster.setInterASCluster();
+						}
 					}
 				}
 			}
