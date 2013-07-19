@@ -201,7 +201,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 					/*
 					 * in this case this announcement came from a neighbor intermediate cluster
 					 */
-					handleAnnouncement(mReceivedAnnounces.removeFirst(), pCoordinatorChannel);
+					handleNeighborAnnouncement(mReceivedAnnounces.removeFirst(), pCoordinatorChannel);
 				}
 			}
 		}
@@ -268,7 +268,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return tCluster;
 	}
 	
-	public void handleAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPChannel pCEP)
+	public void handleNeighborAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		if(!pAnnounce.getCoordinatorName().equals(getHRMController().getNode().getCentralFN().getName())) {
 			Logging.log(this, "Received announcement of foreign cluster");
@@ -376,7 +376,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		{
 			if(getHRMController().getNode().getCentralFN().getName().equals(mCoordName))
 			{
-				handleAnnouncement(pAnnouncement, pCEP);
+				handleNeighborAnnouncement(pAnnouncement, pCEP);
 			} else {
 				mChannelToCoordinator.sendPacket(pAnnouncement);
 			}

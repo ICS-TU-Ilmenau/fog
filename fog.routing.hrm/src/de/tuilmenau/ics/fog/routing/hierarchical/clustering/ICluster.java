@@ -48,6 +48,12 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	public void setPriority(BullyPriority pPriority);
 	
 	/**
+	 * 
+	 * @return The priority of the node that is associated to this cluster is return here
+	 */
+	public BullyPriority getBullyPriority();
+
+	/**
 	 *  
 	 * @return Return the HRM controller of a node that is used for cluster handling etc.
 	 */
@@ -67,8 +73,6 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 */
 	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP);
 	
-	public String toString();
-	
 	/**
 	 * 
 	 * @return The ID of the cluster is returned here.
@@ -86,12 +90,6 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * @return The name of the coordinator that is responsible for this cluster is return here.
 	 */
 	public Name getCoordinatorName();
-	
-	/**
-	 * 
-	 * @return The priority of the node that is associated to this cluster is return here
-	 */
-	public BullyPriority getBullyPriority();
 	
 	/**
 	 * 
@@ -165,7 +163,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * @param pAnnounce This is the message that contains important information about the neighbor zone.
 	 * @param pCEP This is the connection end point that is used to transfer data to the object that CEP governs
 	 */
-	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP);
+	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP);
 	
 	/**
 	 * 

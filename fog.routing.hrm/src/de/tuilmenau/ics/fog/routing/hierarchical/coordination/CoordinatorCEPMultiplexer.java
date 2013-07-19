@@ -275,9 +275,9 @@ public class CoordinatorCEPMultiplexer
 	
 	public boolean write(Serializable pData, CoordinatorCEPChannel pDemux, ClusterName pTargetCluster)
 	{	
-		Logging.log(this, "Sending " + pData + " from " + pDemux.getCluster() + " to target cluster " + pTargetCluster);
+		Logging.log(this, "Sending " + pData + " from " + pDemux.getPeer() + " to target cluster " + pTargetCluster);
 
-		ClusterName tSource = new ClusterName(pDemux.getCluster().getToken(), pDemux.getCluster().getClusterID(), pDemux.getCluster().getHierarchyLevel());
+		ClusterName tSource = new ClusterName(pDemux.getPeer().getToken(), pDemux.getPeer().getClusterID(), pDemux.getPeer().getHierarchyLevel());
 	
 		MultiplexedPackage tMuxPackage = new MultiplexedPackage(tSource, pTargetCluster, pData);
 		CoordinatorSession tCEP = mMultiplexer.get(pDemux);
@@ -339,7 +339,7 @@ public class CoordinatorCEPMultiplexer
 	{
 		if(mDemux.containsKey(pCEP)) {
 			for(CoordinatorCEPChannel tCEP : mDemux.get(pCEP)) {
-				if(tCEP.getCluster().getClusterID().equals(pCluster.getClusterID())) {
+				if(tCEP.getPeer().getClusterID().equals(pCluster.getClusterID())) {
 					Tuple<Long, Long> tTuple = new Tuple<Long, Long>(pSource.getClusterID(), pCluster.getClusterID());
 					boolean tSourceIsContained = isClusterMultiplexed(tTuple);
 					Logging.log(this, "Comparing \"" + tCEP + "\" and \"" + (tSourceIsContained ? getDemultiplex(tTuple) : "") + "\" " + tCEP.getRemoteClusterName() + ", " + (tSourceIsContained ? getDemultiplex(tTuple).getRemoteClusterName() : "" ));
@@ -349,7 +349,7 @@ public class CoordinatorCEPMultiplexer
 					} else {
 						Logging.log(this, "Source is \"" + pSource + "\", target is \"" + pCluster+ "\", DEMUXER of source is \"" + getDemultiplex(tTuple) + "\", currently evaluated CEP is \"" + tCEP + "\"");
 					}
-					if(!isClusterMultiplexed(tTuple) && tCEP.getCluster().getClusterID().equals(pCluster.getClusterID())) {
+					if(!isClusterMultiplexed(tTuple) && tCEP.getPeer().getClusterID().equals(pCluster.getClusterID())) {
 						Logging.log(this, "Returning " + tCEP + " for request on cluster " + pCluster);
 						return tCEP;
 					}

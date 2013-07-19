@@ -161,7 +161,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void handleAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
+	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 	}
 

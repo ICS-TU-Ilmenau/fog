@@ -123,8 +123,8 @@ public class CoordinatorSession extends Session
 
 					String tAnalyzedClusters = new String("");
 					for(CoordinatorCEPChannel tCEP: mMux.getDemuxCEPs(this)) {
-						tAnalyzedClusters += tCEP.getCluster() + "\n";
-						if(tCEP.getCluster().getClusterID().equals(tNestedDiscovery.getTargetClusterID())) {
+						tAnalyzedClusters += tCEP.getPeer() + "\n";
+						if(tCEP.getPeer().getClusterID().equals(tNestedDiscovery.getTargetClusterID())) {
 							try {
 								tCEP.handleClusterDiscovery(tNestedDiscovery, true);
 								tWasDelivered = true;
@@ -145,9 +145,9 @@ public class CoordinatorSession extends Session
 					boolean tWasDelivered = false;
 					String tAnalyzedClusters = new String("");
 					for(CoordinatorCEPChannel tCEP: mMux.getDemuxCEPs(this)) {
-						tAnalyzedClusters += tCEP.getCluster() + "\n";
+						tAnalyzedClusters += tCEP.getPeer() + "\n";
 
-						if(tCEP.getCluster().getClusterID().equals(tNestedDiscovery.getOrigin())) {
+						if(tCEP.getPeer().getClusterID().equals(tNestedDiscovery.getOrigin())) {
 							try {
 								tCEP.handleClusterDiscovery(tNestedDiscovery, false);
 								tWasDelivered = true;

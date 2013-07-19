@@ -79,7 +79,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	 * 
 	 * @param pLogger Logger that should be used
 	 * @param pHRMController is the coordinator of a node
-	 * @param pPeerCluster is the cluster this connection end point serves
+	 * @param pPeerCluster is the peer cluster/coordinator
 	 */
 	public CoordinatorCEPChannel(HRMController pHRMController, ICluster pPeerCluster)
 	{
@@ -112,17 +112,17 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 			if (BULLY_SIGNALING_DEBUGGING)
 				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" an ELECT: " + tPacketBullyElect);
 
-			if ((getCluster().getCoordinatorCEP() != null) && (getCluster().getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
+			if ((getPeer().getCoordinatorCEP() != null) && (getPeer().getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
 				
 				mPeerPriority = tPacketBullyElect.getSenderPriority();
 				
-				if (getCluster().getHRMController().equals(tLocalNodeName)) {
+				if (getPeer().getHRMController().equals(tLocalNodeName)) {
 					// create ANNOUNCE packet
-					HRMSignature tSignature = getHRMController().getIdentity().createSignature(tNode.toString(), null, getCluster().getHierarchyLevel());
+					HRMSignature tSignature = getHRMController().getIdentity().createSignature(tNode.toString(), null, getPeer().getHierarchyLevel());
 					
-					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, getCluster().getBullyPriority(), tSignature, getCluster().getToken());
+					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, getPeer().getBullyPriority(), tSignature, getPeer().getToken());
 					
-					for(CoordinatorCEPChannel tCEP : getCluster().getParticipatingCEPs()) {
+					for(CoordinatorCEPChannel tCEP : getPeer().getParticipatingCEPs()) {
 						tAnnouncePacket.addCoveredNode(tCEP.getPeerName());
 					}
 					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
@@ -150,7 +150,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				mPeerPriority = tPacketBullyElect.getSenderPriority();
 				
 				// create REPLY packet
-				BullyReply tReplyPacket = new BullyReply(tLocalNodeName, getCluster().getBullyPriority());
+				BullyReply tReplyPacket = new BullyReply(tLocalNodeName, getPeer().getBullyPriority());
 				
 				// send the answer packet
 				if (BULLY_SIGNALING_DEBUGGING)
@@ -186,7 +186,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" an ANNOUNCE: " + tAnnouncePacket);
 
 			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
-			getCluster().handleBullyAnnounce(tAnnouncePacket, this);
+			getPeer().handleBullyAnnounce(tAnnouncePacket, this);
 		}
 
 		/**
@@ -262,7 +262,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 								tAnnouncePacket.addRoutingVector(new RoutingServiceLinkVector(tPath, tHRS.getCoordinatorRoutingMap().getSource(tPath), tHRS.getCoordinatorRoutingMap().getDest(tPath)));
 							}
 						}
-						for(CoordinatorCEPChannel tCEP : getCluster().getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCEP : getPeer().getParticipatingCEPs()) {
 							boolean tWroteAnnouncement = false;
 							if(tCEP.isEdgeCEP()) {
 								
@@ -274,12 +274,12 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 							Logging.log(this, "Testing " + tCEP + " whether it is an inter as link:" + tWroteAnnouncement);
 						}
 					} else {
-						if(getCluster() instanceof Cluster) {
+						if(getPeer() instanceof Cluster) {
 							if(!getSourceName().equals(getPeerName())) {
 								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), getSourceName(), getPeerName());
 								tAnnouncePacket.addRoutingVector(tVector);
 							}
-							for(CoordinatorCEPChannel tCEP : getCluster().getParticipatingCEPs()) {
+							for(CoordinatorCEPChannel tCEP : getPeer().getParticipatingCEPs()) {
 								boolean tWroteAnnouncement = false;
 								if(tCEP.getRemoteClusterName().getHierarchyLevel().getValue() - 1 == tAnnouncePacket.getLevel().getValue()) {
 									
@@ -290,13 +290,16 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 								}
 								Logging.log(this, "Testing " + tCEP + " whether it leads to the clusters coordinator: " + tWroteAnnouncement);
 							}
-						} else if(getCluster() instanceof Coordinator) {
-							Logging.log(this, "Inter AS announcement " + tAnnouncePacket + " is handled by " + getCluster() + " whether it leads to the clusters coordinator");
-							((Coordinator)getCluster()).getManagedCluster().handleAnnouncement(tAnnouncePacket, this);
+						} else if(getPeer() instanceof Coordinator) {
+							Logging.log(this, "Inter AS announcement " + tAnnouncePacket + " is handled by " + getPeer() + " whether it leads to the clusters coordinator");
+							((Coordinator)getPeer()).getManagedCluster().handleNeighborAnnouncement(tAnnouncePacket, this);
 						}
 					}
 				} else {
-					getCluster().handleAnnouncement(tAnnouncePacket, this);
+					if (!(getPeer() instanceof Cluster)){
+						Logging.err(this, "Peer should be a cluster here");
+					}
+					getPeer().handleNeighborAnnouncement(tAnnouncePacket, this);
 				}
 				Logging.log(this, "Received " + tAnnouncePacket + " from remote cluster " + mRemoteCluster);
 			}
@@ -311,7 +314,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				if (CHANNEL_SIGNALING_DEBUGGING)
 					Logging.log(this, "TOPOLOGY-received from \"" + mPeerCluster + "\" TOPOLOGY DATA: " + tTopologyPacket);
 
-				getCluster().handleTopologyData(tTopologyPacket);
+				getPeer().handleTopologyData(tTopologyPacket);
 			}/* else if (pData instanceof NestedDiscovery) {
 				NestedDiscovery tDiscovery = (NestedDiscovery) pData;
 				handleClusterDiscovery(tDiscovery);
@@ -361,7 +364,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 					}
 					
 					if(!tRouteRequestPacket.isAnswer() && tRouteRequestPacket.isRouteAccumulation()) {
-						if(getRemoteClusterName().getHierarchyLevel() != getCluster().getHierarchyLevel() && getCluster().isInterASCluster()) {
+						if(getRemoteClusterName().getHierarchyLevel() != getPeer().getHierarchyLevel() && getPeer().isInterASCluster()) {
 							HRMID tAddress =  (HRMID) tRouteRequestPacket.getTarget();
 							LinkedList<Name> tIPAddresses = HRMIPMapper.getHRMIPMapper().getIPFromHRMID(tAddress);
 							Route tRoute = null;
@@ -396,15 +399,15 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 						}
 						return true;
 					}
-					if(getCluster() instanceof Cluster) {
-						Coordinator tManager = ((Cluster)getCluster()).getCoordinator();
+					if(getPeer() instanceof Cluster) {
+						Coordinator tManager = ((Cluster)getPeer()).getCoordinator();
 						tManager.handleRouteRequest((RouteRequest) pData, getRemoteClusterName());
 						tManager.registerRouteRequest(tRouteRequestPacket.getSession(), this);
-					} else if (getCluster() instanceof Coordinator) {
+					} else if (getPeer() instanceof Coordinator) {
 						/*
 						 * Normally that case should not appear ...
 						 */
-						((Coordinator)getCluster()).handleRouteRequest((RouteRequest) pData, this);
+						((Coordinator)getPeer()).handleRouteRequest((RouteRequest) pData, this);
 					}
 					/*
 					 * This comment relates to the following else if statement: use routing service address as last instance because it is the default and all
@@ -475,8 +478,8 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 					Logging.log(this, "CHANNEL-received from \"" + mPeerCluster + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
 
 				if(!tRequestCoordinatorPacket.isAnswer()) {
-					if(getCluster().getCoordinatorCEP() != null) {
-						ICluster tCluster = getCluster().getHRMController().getClusterWithCoordinatorOnLevel(getCluster().getHierarchyLevel().getValue());
+					if(getPeer().getCoordinatorCEP() != null) {
+						ICluster tCluster = getPeer().getHRMController().getClusterWithCoordinatorOnLevel(getPeer().getHierarchyLevel().getValue());
 						Logging.log(this, "Name of coordinator is " + tCluster.getCoordinatorName());
 						
 						int tToken = tCluster.getToken();
@@ -484,7 +487,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 						long tCoordinatorAddress = tCluster.getCoordinatorsAddress().getAddress().longValue();
 						HRMName tL2Address = tCluster.getCoordinatorsAddress();
 						DiscoveryEntry tEntry = new DiscoveryEntry(tToken, tCoordinatorName, tCoordinatorAddress, tL2Address, tCluster.getHierarchyLevel());
-						tEntry.setPriority(getCluster().getCoordinatorPriority());
+						tEntry.setPriority(getPeer().getCoordinatorPriority());
 						tEntry.setRoutingVectors(getPath(tCluster.getCoordinatorsAddress()));
 						tRequestCoordinatorPacket.addDiscoveryEntry(tEntry);
 						tRequestCoordinatorPacket.setCoordinatorKnown(true);
@@ -506,7 +509,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 					if(tRequestCoordinatorPacket.getDiscoveryEntries() != null) {
 						for(DiscoveryEntry tEntry : tRequestCoordinatorPacket.getDiscoveryEntries()) {
 							ClusterName tDummy = handleDiscoveryEntry(tEntry);
-							getCluster().getHRMController().getCluster(new ClusterName(getCluster().getToken(), ((getSourceName()).getAddress().longValue()), getCluster().getHierarchyLevel())).addNeighborCluster(getCluster().getHRMController().getCluster(tDummy));
+							getPeer().getHRMController().getCluster(new ClusterName(getPeer().getToken(), ((getSourceName()).getAddress().longValue()), getPeer().getHierarchyLevel())).addNeighborCluster(getPeer().getHRMController().getCluster(tDummy));
 							addAnnouncedCluster(getHRMController().getCluster(tDummy), getRemoteClusterName());
 						}
 					}
@@ -563,14 +566,14 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	{
 		if(pCluster.getCoordinatorName() != null) {
 			DiscoveryEntry tEntry = new DiscoveryEntry(pCluster.getToken(), pCluster.getCoordinatorName(), pCluster.getClusterID(), pCluster.getCoordinatorsAddress(), pCluster.getHierarchyLevel());
-			tEntry.setClusterHops(getCluster().getHRMController().getClusterDistance(pCluster));
+			tEntry.setClusterHops(getPeer().getHRMController().getClusterDistance(pCluster));
 			tEntry.setPriority(pCluster.getBullyPriority());
 			tEntry.setRoutingVectors(getPath(pCluster.getCoordinatorsAddress()));
 			if(pCluster.isInterASCluster()) {
 				tEntry.setInterASCluster();
 			}
 			
-			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getCluster(), pCluster);
+			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getPeer(), pCluster);
 			if(!tClusterList.isEmpty()) {
 				ICluster tPredecessorCluster = (ICluster) getHRMController().getRoutableClusterGraph().getDest(pCluster, tClusterList.get(tClusterList.size()-1));
 				ClusterName tPredecessorClusterName = new ClusterName(tPredecessorCluster.getToken(), tPredecessorCluster.getClusterID(), tPredecessorCluster.getHierarchyLevel());
@@ -587,7 +590,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	 * @return As one node may be associated to more than one cluster you can use this method to find out
 	 * which cluster is controlled by this connection end point.
 	 */
-	public ICluster getCluster()
+	public ICluster getPeer()
 	{
 		return mPeerCluster;
 	}
@@ -700,8 +703,8 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 //			mRequestedCoordinator = true;
 			Logging.log(this, "Sending " + pData);
 		}
-		if(getCluster() instanceof Coordinator && !mCrossLevelCEP) {
-			getCEPMultiplexer().write(pData, this, new ClusterName(getCluster().getToken(), ((L2Address)getPeerName()).getAddress().longValue(), getCluster().getHierarchyLevel()));
+		if(getPeer() instanceof Coordinator && !mCrossLevelCEP) {
+			getCEPMultiplexer().write(pData, this, new ClusterName(getPeer().getToken(), ((L2Address)getPeerName()).getAddress().longValue(), getPeer().getHierarchyLevel()));
 		} else {
 			getCEPMultiplexer().write(pData, this, getRemoteClusterName());
 		}
@@ -735,7 +738,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	
 	public void setEdgeCEP()
 	{
-		ElectionManager.getElectionManager().removeElection(getCluster().getHierarchyLevel().getValue(), getCluster().getClusterID());
+		ElectionManager.getElectionManager().removeElection(getPeer().getHierarchyLevel().getValue(), getPeer().getClusterID());
 		mIsEdgeRouter = true;
 	}
 	
@@ -806,7 +809,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 		ICluster tNewCluster = getHRMController().getCluster(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), pEntry.getLevel()));
 		if(tNewCluster == null) {
 			for(Cluster tCluster : getHRMController().getRoutingTargetClusters()) {
-				if(tCluster.equals(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), new HierarchyLevel(this, getCluster().getHierarchyLevel().getValue() - 1)))) {
+				if(tCluster.equals(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), new HierarchyLevel(this, getPeer().getHierarchyLevel().getValue() - 1)))) {
 					tNewCluster = tCluster;
 					if(tNewCluster instanceof NeighborCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {
 						Logging.log(this, "Filling required information into " + tNewCluster);
@@ -821,7 +824,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				 */
 				tNewCluster = new NeighborCluster(pEntry.getClusterID(), pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress(), pEntry.getToken(), pEntry.getLevel(), getHRMController());
 				
-				getCluster().getHRMController().setSourceIntermediateCluster(tNewCluster, getCluster().getHRMController().getSourceIntermediate(getCluster()));
+				getPeer().getHRMController().setSourceIntermediateCluster(tNewCluster, getPeer().getHRMController().getSourceIntermediate(getPeer()));
 				((NeighborCluster)tNewCluster).addAnnouncedCEP(this);
 				tNewCluster.setToken(pEntry.getToken());
 				tNewCluster.setPriority(pEntry.getPriority());
@@ -872,11 +875,11 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	
 	private CoordinatorCEPMultiplexer getMultiplexer()
 	{
-		return getCluster().getMultiplexer();
+		return getPeer().getMultiplexer();
 	}
 
 	public String toString()
 	{
-		return getClass().getSimpleName() + "@" + getCluster().getClusterDescription() +  "(PeerPrio=" + mPeerPriority.getValue() + (getPeerName() != null ? ", Peer=" + getPeerName().getDescr() : "") + "EdgeRouter=" + (mIsEdgeRouter ? "yes" : "no") + ")";
+		return getClass().getSimpleName() + "@" + getPeer().getClusterDescription() +  "(PeerPrio=" + mPeerPriority.getValue() + (getPeerName() != null ? ", Peer=" + getPeerName().getDescr() : "") + "EdgeRouter=" + (mIsEdgeRouter ? "yes" : "no") + ")";
 	}
 }
