@@ -162,7 +162,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public BullyPriority getNodePriority()
+	public BullyPriority getCoordinatorPriority()
 	{
 		return mCoordinatorPriority;
 	}

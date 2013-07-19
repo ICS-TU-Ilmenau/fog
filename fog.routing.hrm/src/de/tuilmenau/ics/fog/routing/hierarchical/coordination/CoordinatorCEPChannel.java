@@ -484,7 +484,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 						long tCoordinatorAddress = tCluster.getCoordinatorsAddress().getAddress().longValue();
 						HRMName tL2Address = tCluster.getCoordinatorsAddress();
 						DiscoveryEntry tEntry = new DiscoveryEntry(tToken, tCoordinatorName, tCoordinatorAddress, tL2Address, tCluster.getHierarchyLevel());
-						tEntry.setPriority(getCluster().getNodePriority());
+						tEntry.setPriority(getCluster().getCoordinatorPriority());
 						tEntry.setRoutingVectors(getPath(tCluster.getCoordinatorsAddress()));
 						tRequestCoordinatorPacket.addDiscoveryEntry(tEntry);
 						tRequestCoordinatorPacket.setCoordinatorKnown(true);

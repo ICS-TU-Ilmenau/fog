@@ -886,7 +886,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	}
 
 	@Override
-	public BullyPriority getNodePriority() {
+	public BullyPriority getCoordinatorPriority() {
 		if(mCoordinatorCEP != null) {
 			return mCoordinatorCEP.getPeerPriority();
 		}
@@ -1077,7 +1077,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		/*
 		 * check whether old priority was lower than new priority
 		 */
-		if(pAnnounce.getSenderPriority().isHigher(this, getNodePriority())) {
+		if(pAnnounce.getSenderPriority().isHigher(this, getCoordinatorPriority())) {
 			/*
 			 * check whether a coordinator is already set
 			 */
@@ -1127,7 +1127,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 								ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getDest(mManagedCluster, tClusterList.get(0));
 								tOldCoveredEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
 							}
-							tOldCoveredEntry.setPriority(getNodePriority());
+							tOldCoveredEntry.setPriority(getCoordinatorPriority());
 							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(tLocalCluster.getCoordinatorsAddress()));
 							tOldCovered.setCoveringClusterEntry(tOldCoveredEntry);
 //							List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute((HRMName)pCEP.getSourceName(), getCoordinatorsAddress());
@@ -1204,7 +1204,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getDest(mManagedCluster, tClusterList.get(0));
 				tUncoveredEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
 			}
-			tUncoveredEntry.setPriority(getNodePriority());
+			tUncoveredEntry.setPriority(getCoordinatorPriority());
 			tUncoveredEntry.setRoutingVectors(pCEP.getPath(tLocalCluster.getCoordinatorsAddress()));
 			tUncoveredAnnounce.setCoveringClusterEntry(tUncoveredEntry);
 			Logging.warn(this, "Rejecting " + (getCoordinatorCEP().getPeerName()).getDescr() + " in favour of " + pAnnounce.getSenderName());

@@ -38,7 +38,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @return priority of the acting coordinator
 	 */
-	public BullyPriority getNodePriority();
+	public BullyPriority getCoordinatorPriority();
 	
 	/**
 	 * Set the priority the reference node has in this cluster

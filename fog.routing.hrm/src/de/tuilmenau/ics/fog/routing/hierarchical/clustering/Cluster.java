@@ -75,7 +75,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private HRMController mHRMController;
 	private LinkedList<CoordinatorCEPChannel> mCEPs;
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
-	private LinkedList<NeighborClusterAnnounce> mSentAnnounces = null;
 	private HRMSignature mCoordSignature;
 	private boolean mInterASCluster = false;
 	private int mToken;
@@ -110,7 +109,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		mHierarchyLevel = pHierarchyLevelValue;
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
-		mSentAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mHRMController = ptHRMController;
 		mBullyPriority = BullyPriority.createForCluster(this);
 		Logging.log(this, "CREATED CLUSTER " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getValue());
@@ -187,7 +185,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				if(pCoordinatorChannel != null) {
 					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorChannel.getRouteToPeer(), pCoordinatorChannel.getSourceName(), pCoordinatorChannel.getPeerName()));
 				}
-				mSentAnnounces.add(tAnnounce);
 				((Cluster)tCluster).announceNeighborCoord(tAnnounce, pCoordinatorChannel);
 			}
 		}
@@ -449,7 +446,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		Logging.info(this, "Setting Bully priority for cluster " + toString() + " from " + tBullyPriority.getValue() + " to " + mBullyPriority.getValue());
 	}
 	
-	public BullyPriority getNodePriority()
+	public BullyPriority getCoordinatorPriority()
 	{
 		return mCoordinatorPriority;
 	}
