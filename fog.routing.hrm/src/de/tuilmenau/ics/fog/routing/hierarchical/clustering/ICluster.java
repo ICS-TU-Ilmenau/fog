@@ -254,7 +254,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @return Return the connection end point that announced this cluster via NeighborZoneAnnounce to another connection end point. 
 	 */
-	public CoordinatorCEPChannel getNegotiatorCEP();
+//	public CoordinatorCEPChannel getNegotiatorCEP();
 	
 	/**
 	 * HRM was implemented as distributed system. If a cluster is notified about the existence of a nother cluster it remembers which
@@ -263,7 +263,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * 
 	 * @param pCEP Set the connection end point that announced this cluster via NeighborZoneAnnounce to another connection end point. 
 	 */
-	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP);
+//	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP);
 	
 	/**
 	 * TODO

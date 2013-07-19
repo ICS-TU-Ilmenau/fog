@@ -1463,18 +1463,6 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		
 	}
 
-	@Override
-	public CoordinatorCEPChannel getNegotiatorCEP()
-	{
-		return null;
-	}
-
-	@Override
-	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
-	{
-		
-	}
-	
 	public Cluster getManagedCluster()
 	{
 		return mManagedCluster;

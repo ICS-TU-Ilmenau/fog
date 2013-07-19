@@ -51,9 +51,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	private HRMID mHRMID;
 	private Name mAnnouncer;
 	private LinkedList<CoordinatorCEPChannel> mAnnouncedCEPs;
-	private CoordinatorCEPChannel mNegotiator = null;
 	private Cluster mSourceIntermediateCluster = null;
-	private LinkedList<CoordinatorCEPChannel> mNegotiators= new LinkedList<CoordinatorCEPChannel>();
 	private boolean mInterASCluster = false;
 	
 	/**
@@ -344,19 +342,19 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		
 	}
 
-	@Override
-	public CoordinatorCEPChannel getNegotiatorCEP()
-	{
-		return mNegotiator;
-	}
-
-	@Override
-	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
-	{
-		Logging.log(getClusterDescription(), "Setting " + pCEP + " as  negotiating CEP");
-		if(!mNegotiators.contains(pCEP)) mNegotiators.add(pCEP);
-		mNegotiator = pCEP;
-	}
+//	@Override
+//	public CoordinatorCEPChannel getNegotiatorCEP()
+//	{
+//		return mNegotiator;
+//	}
+//
+//	@Override
+//	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
+//	{
+//		Logging.log(getClusterDescription(), "Setting " + pCEP + " as  negotiating CEP");
+//		if(!mNegotiators.contains(pCEP)) mNegotiators.add(pCEP);
+//		mNegotiator = pCEP;
+//	}
 
 	public CoordinatorCEPChannel getAnnouncedCEP(ICluster pCluster)
 	{

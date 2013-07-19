@@ -182,7 +182,6 @@ public class CoordinatorCEPMultiplexer
 					}
 				}
 				tTokens.add(tManager.getManagedCluster().getToken());
-				pTargetCluster.setNegotiatorCEP(tCEPDemultiplexed);
 				tManager.getParticipatingCEPs().add(tCEPDemultiplexed);
 				if(!pTargetCluster.getCoordinatorName().equals(mHRMController.getPhysicalNode().getCentralFN().getName())) {
 					int tDistance = (pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() : 0); 

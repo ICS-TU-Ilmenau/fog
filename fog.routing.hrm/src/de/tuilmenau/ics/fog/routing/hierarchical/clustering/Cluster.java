@@ -41,7 +41,6 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Logger;
 
 /**
  * This class represents a clusters on a defined hierarchy level.
@@ -83,8 +82,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private int mAnnoucementCounter = 0;
 	private LinkedList<CoordinatorCEPChannel> mLaggards;
 	private static final long serialVersionUID = -2087553402508167474L;
-	private CoordinatorCEPChannel mNegotiator = null;
-	private LinkedList<CoordinatorCEPChannel> mNegotiators= new LinkedList<CoordinatorCEPChannel>();
 	private TopologyData mTopologyData = null;
 	private CoordinatorCEPChannel mAnnouncer = null;
 	private LinkedList<CoordinatorCEPChannel> mOldParticipatingCEPs;
@@ -645,19 +642,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 	}
 
-	@Override
-	public CoordinatorCEPChannel getNegotiatorCEP()
-	{
-		return mNegotiator;
-	}
-
-	@Override
-	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
-	{
-		if(!mNegotiators.contains(pCEP)) mNegotiators.add(pCEP);
-		mNegotiator = pCEP;	
-	}
-	
 	public CoordinatorCEPChannel getAnnouncedCEP()
 	{
 		return mAnnouncer;

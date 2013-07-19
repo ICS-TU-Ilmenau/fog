@@ -243,18 +243,6 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public CoordinatorCEPChannel getNegotiatorCEP()
-	{
-		return null;
-	}
-
-	@Override
-	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
-	{
-		
-	}
-
-	@Override
 	public void handleTopologyData(TopologyData pEnvelope)
 	{
 		
