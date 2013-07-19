@@ -91,7 +91,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	private LinkedList<Name> mIgnoreOnAddressDistribution = null;
 	private Long mClusterID;
 	private LinkedList<HRMID> mHigherHRMIDs = null;
-	private TopologyData mEnvelope = null;
+	private TopologyData mTopologyData = null;
 	private HashMap<HRMID, IRoutableClusterGraphNode> mAddressToClusterMapping = new HashMap<HRMID, IRoutableClusterGraphNode>();
 	private HashMap<HRMID, FIBEntry> mIDToFIBMapping = new HashMap<HRMID, FIBEntry>();
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnouncements;
@@ -268,11 +268,11 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		 */
 		RoutableGraph<HRMName, Route> tLocalRoutingDB = getHRMController().getHRS().getCoordinatorRoutingMap();
 		
-		TopologyData tManagedClusterEnvelope = new TopologyData();
+		TopologyData tManagedClusterTopologyData = new TopologyData();
 		Logging.log(this, "Will now distribute addresses to entities on level 0");
 		if(mHierarchyLevel.isBaseLevel()) {
 			HRMID tSelf = generateNextAddress();
-			tManagedClusterEnvelope.setHRMID(tSelf);
+			tManagedClusterTopologyData.setHRMID(tSelf);
 			mManagedCluster.setHRMID(tSelf);
 		}
 		/*
@@ -283,7 +283,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		Logging.log(this, "available clients for address distribution: " + mManagedCluster.getParticipatingCEPs());
 		for(CoordinatorCEPChannel tReceivingCEP : mManagedCluster.getParticipatingCEPs()) {
 			HRMID tID = null;
-			TopologyData tEnvelope = new TopologyData();
+			TopologyData tTopologyData = new TopologyData();
 			try {
 				if(!tReceivingCEP.isPeerCoordinatorForNeighborZone() || (mIgnoreOnAddressDistribution != null && mIgnoreOnAddressDistribution.contains(tReceivingCEP.getPeerName()))) {
 					/*
@@ -296,14 +296,14 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 					} else {
 						map(tID, tReceivingCEP.getRemoteClusterName());
 					}
-					tEnvelope.setHRMID(tID);
+					tTopologyData.setHRMID(tID);
 				} else {
 					Logging.log(this, "Skipping " + tReceivingCEP + " in address distribution as it is a coordinator for another cluster on level " + mHierarchyLevel);
 				}
 				/*
 				 * Collect all forwarding entries for connection end point tReceivingCEP, afterwards routes to supernodes are calculated
 				 */
-				mAddressMapping.put(tReceivingCEP, tEnvelope);
+				mAddressMapping.put(tReceivingCEP, tTopologyData);
 				
 				/*
 				 * for identification, the cluster gets its generated HRMID
@@ -465,8 +465,8 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 					/*
 					 * Now the managed cluster needs the information on how to reach the next hop
 					 */
-					FIBEntry tManagedEntry = tManagedClusterEnvelope.new FIBEntry(mAddressMapping.get(tSourceCEP).getHRMID(), tSourceCEP.getPeerName(),	tLocalManagedClusterName, tLocalRouterSignature);
-					tManagedClusterEnvelope.addForwardingentry(tManagedEntry);
+					FIBEntry tManagedEntry = tManagedClusterTopologyData.new FIBEntry(mAddressMapping.get(tSourceCEP).getHRMID(), tSourceCEP.getPeerName(),	tLocalManagedClusterName, tLocalRouterSignature);
+					tManagedClusterTopologyData.addForwardingentry(tManagedEntry);
 					IRoutableClusterGraphNode tPeerNode = getFarthestVirtualNodeInDirection(mManagedCluster, tSourceCEP.getRemoteClusterName());
 
 					tNameFarthestClusterInDirection = null;
@@ -809,7 +809,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 						tNextHop = tLocalRoutingDB.getDest(tRoute.get(0));
 					}
 					
-					FIBEntry tEntry = tManagedClusterEnvelope.new FIBEntry(tHRMID, tNextHop, tLocalManagedClusterName, tLocalRouterSignature);
+					FIBEntry tEntry = tManagedClusterTopologyData.new FIBEntry(tHRMID, tNextHop, tLocalManagedClusterName, tLocalRouterSignature);
 					if(tPathToTarget != null && !tPathToTarget.isEmpty()) {
 						tEntry.setRoutingVectors(tPathToTarget);
 						if(getSignatureOfPath(tHRMID) != null) {
@@ -823,7 +823,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 						tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
 					}
 					tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
-					tManagedClusterEnvelope.addForwardingentry(tEntry);
+					tManagedClusterTopologyData.addForwardingentry(tEntry);
 				}
 			}
 			
@@ -831,10 +831,10 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 			if(mHierarchyLevel.isBaseLevel()) {
 				
 				for(HRMSignature tSignature : mSignatures) {
-					tManagedClusterEnvelope.addApprovedSignature(tSignature);
+					tManagedClusterTopologyData.addApprovedSignature(tSignature);
 				}
-				tManagedClusterEnvelope.addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getNode().toString(), null, new HierarchyLevel(this, mHierarchyLevel.getValue() + 1)));
-				mManagedCluster.handleTopologyData(tManagedClusterEnvelope);
+				tManagedClusterTopologyData.addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getNode().toString(), null, new HierarchyLevel(this, mHierarchyLevel.getValue() + 1)));
+				mManagedCluster.handleTopologyData(tManagedClusterTopologyData);
 			}
 		
 		} catch (AuthenticationException tExc) {
@@ -1027,7 +1027,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		}
 		
 		Logging.log(this, "Received topology data: " + pTopologyData);
-		mEnvelope = pTopologyData;
+		mTopologyData = pTopologyData;
 		
 		// update the node's label within GUI
 		tNode.setDecorationValue(tNode.getDecorationValue() + "," + pTopologyData.getHRMID());
@@ -1459,7 +1459,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	@Override
 	public TopologyData getTopologyData()
 	{
-		return mEnvelope;
+		return mTopologyData;
 	}
 	
 	private HRMSignature getSignatureOfPath(HRMID tHRMID)
