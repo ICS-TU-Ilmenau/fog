@@ -384,7 +384,7 @@ public class Elector extends Thread implements HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + "@" + getCluster().getHRMController().getPhysicalNode().getName() + "@" + getCluster().getHierarchyLevel();
+		String tResult = getClass().getSimpleName() + "@" + getCluster().getHRMController().getPhysicalNode().getName() + "@" + getCluster().getHierarchyLevel().getValue();
 		
 		return tResult;
 	}

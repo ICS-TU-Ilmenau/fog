@@ -683,7 +683,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	
 	public void setRemoteClusterName(ClusterName pClusterName)
 	{
-		Logging.log(this, "Setting remote/peer cluster \"" + pClusterName + "\"");
+		Logging.log(this, "Setting remote/peer cluster " + pClusterName);
 		mRemoteCluster = pClusterName;
 	}
 

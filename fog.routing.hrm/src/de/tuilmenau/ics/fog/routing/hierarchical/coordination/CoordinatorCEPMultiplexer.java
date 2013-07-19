@@ -368,7 +368,7 @@ public class CoordinatorCEPMultiplexer
 	
 	public String toString()
 	{
-		return "CoordinatorCEPMultiplexer" + "@" + mHRMController.getPhysicalNode() + (mCluster != null ? "@" + mCluster.getHierarchyLevel() + " (Cluster=" + mCluster + ")" : "");
+		return "CoordinatorCEPMultiplexer" + "@" + mHRMController.getPhysicalNode() + (mCluster != null ? "@" + mCluster.getHierarchyLevel().getValue() + " (Cluster=" + mCluster + ")" : "");
 	}
 	
 	public void setCluster(ICluster pCluster)

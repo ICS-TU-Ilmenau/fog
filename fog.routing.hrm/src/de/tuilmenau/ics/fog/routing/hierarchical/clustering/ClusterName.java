@@ -52,7 +52,7 @@ public class ClusterName implements Serializable, ICluster
 	@Override
 	public String toString()
 	{
-		return "Cluster(ID=" + mClusterID + ", Tok=" + mToken + (mHierarchyLevel != null ? ", HierLvl.=" + mHierarchyLevel.getValue() : "") + ")"; 
+		return "\"(ID=" + mClusterID + ", Tok=" + mToken + (mHierarchyLevel != null ? ", HierLvl.=" + mHierarchyLevel.getValue() : "") + ")\""; 
 	}
 
 	@Override
