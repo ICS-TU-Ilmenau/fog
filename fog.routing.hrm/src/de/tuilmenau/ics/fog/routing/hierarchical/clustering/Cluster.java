@@ -56,7 +56,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 
 	/**
 	 * Stores the Bully priority of this node for this cluster.
-	 * The value is also used inside the Elector of this cluster. TODO: elector sollte die bullyprio. von hier nutzen und keine eigene besitzen
+	 * The value is also used inside the Elector of this cluster.
 	 */
 	private BullyPriority mBullyPriority = null;
 
