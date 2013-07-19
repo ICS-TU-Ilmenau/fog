@@ -675,7 +675,7 @@ public class HRMViewer extends EditorPart
 				tSource = tCEP.getSourceName();
 				tTarget = tCEP.getPeerName();
 				if(tSource != null && tTarget != null) {
-					Node tNode = tCEP.getHRMController().getPhysicalNode();
+					Node tNode = tCEP.getHRMController().getNode();
 					tRoute = mHRMController.getHRS().getRoute(tNode.getCentralFN(), tTarget, new Description(), tNode.getIdentity());
 				} else {
 					tRoute = new Route();
@@ -944,6 +944,6 @@ public class HRMViewer extends EditorPart
 
 	public String toString()
 	{		
-		return "HRM viewer" + (mHRMController != null ? "@" + mHRMController.getPhysicalNode().getName() : "");
+		return "HRM viewer" + (mHRMController != null ? "@" + mHRMController.getNode().getName() : "");
 	}
 }

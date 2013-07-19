@@ -57,8 +57,8 @@ public class CoordinatorSession extends Session
 		super(false, Logging.getInstance(), null);
 		mHRMController = pHRMController;
 		
-			RoutingService tRS = (RoutingService)getHRMController().getPhysicalNode().getRoutingService();
-			mSourceIdentification = (L2Address) tRS.getNameFor(getHRMController().getPhysicalNode().getCentralFN());
+			RoutingService tRS = (RoutingService)getHRMController().getNode().getRoutingService();
+			mSourceIdentification = (L2Address) tRS.getNameFor(getHRMController().getNode().getCentralFN());
 		
 		getLogger().log(this, "Created");
 
@@ -76,7 +76,7 @@ public class CoordinatorSession extends Session
 			if(mServerSide) {
 				Route tRouteToPeer = null;
 				try {
-					tRouteToPeer = getHRMController().getHRS().getRoute(getHRMController().getPhysicalNode().getCentralFN(), ((Tuple<HRMID, HRMID>)pData).getSecond(), new Description(), getHRMController().getPhysicalNode().getIdentity());
+					tRouteToPeer = getHRMController().getHRS().getRoute(getHRMController().getNode().getCentralFN(), ((Tuple<HRMID, HRMID>)pData).getSecond(), new Description(), getHRMController().getNode().getIdentity());
 					mRouteToPeer = tRouteToPeer;
 				} catch (RoutingException tExc) {
 					getLogger().err(this, "Unable to find route to ", tExc);
@@ -243,9 +243,9 @@ public class CoordinatorSession extends Session
 	public String toString()
 	{
 		if(mPeerIdentification != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getPhysicalNode().getName() + "@" + getMultiplexer() + "(Source=" + mSourceIdentification + ", Peer=" + mPeerIdentification + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNode().getName() + "@" + getMultiplexer() + "(Source=" + mSourceIdentification + ", Peer=" + mPeerIdentification + ")";
 		} else {
-			return getClass().getSimpleName() + "@" + mHRMController.getPhysicalNode().getName() + "(Source=" + mSourceIdentification + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNode().getName() + "(Source=" + mSourceIdentification + ")";
 		}
 		 
 	}

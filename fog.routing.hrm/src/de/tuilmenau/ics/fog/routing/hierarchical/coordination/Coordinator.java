@@ -121,7 +121,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		mBullyPriority = BullyPriority.createForCoordinator(this);
 		getHRMController().registerCoordinator(this, mHierarchyLevel.getValue() + 1);
 		
-		Logging.log("Coordinator@" + getHRMController().getPhysicalNode().getName() + "@" + mHierarchyLevel + ": INSTANCE created");
+		Logging.log("Coordinator@" + getHRMController().getNode().getName() + "@" + mHierarchyLevel + ": INSTANCE created");
 	}
 	
 	public void storeAnnouncement(NeighborClusterAnnounce pAnnounce)
@@ -253,7 +253,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		 */
 		HRMSignature tLocalRouterSignature = null;
 		try {
-			tLocalRouterSignature = getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mHierarchyLevel);
+			tLocalRouterSignature = getHRMController().getIdentity().createSignature(getHRMController().getNode().toString(), null, mHierarchyLevel);
 		} catch (AuthenticationException tExc) {
 			Logging.err(this, "Cannot create signature for local router", tExc);
 		}
@@ -760,7 +760,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 						mAddressMapping.get(tSourceCEP).addApprovedSignature(tSignature);
 					}
 				}
-				mAddressMapping.get(tSourceCEP).addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, mHierarchyLevel));
+				mAddressMapping.get(tSourceCEP).addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getNode().toString(), null, mHierarchyLevel));
 				tSourceCEP.sendPacket(mAddressMapping.get(tSourceCEP));
 			}
 			if(mHigherHRMIDs != null) {
@@ -772,7 +772,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 					 */
 					
 					ICluster tDestinationCluster = (ICluster)getVirtualNodeFromHRMID(tHRMID);
-					HRMName tRouteSource = (HRMName) getHRMController().getPhysicalNode().getRoutingService().getNameFor(getHRMController().getPhysicalNode().getCentralFN()); 
+					HRMName tRouteSource = (HRMName) getHRMController().getNode().getRoutingService().getNameFor(getHRMController().getNode().getCentralFN()); 
 					
 					List<Route> tRoute = tLocalRoutingDB.getRoute((HRMName) tRouteSource, tDestinationCluster.getCoordinatorsAddress());
 					HRMName tNextHop=null;
@@ -833,7 +833,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				for(HRMSignature tSignature : mSignatures) {
 					tManagedClusterEnvelope.addApprovedSignature(tSignature);
 				}
-				tManagedClusterEnvelope.addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getPhysicalNode().toString(), null, new HierarchyLevel(this, mHierarchyLevel.getValue() + 1)));
+				tManagedClusterEnvelope.addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getNode().toString(), null, new HierarchyLevel(this, mHierarchyLevel.getValue() + 1)));
 				mManagedCluster.handleTopologyData(tManagedClusterEnvelope);
 			}
 		
@@ -1009,7 +1009,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		/*
 		 * this cluster manager only computes the FIB derived from Radius algorithm
 		 */
-		Node tNode = getHRMController().getPhysicalNode();
+		Node tNode = getHRMController().getNode();
 		
 //TODO: still needed here?
 //		if(pTopologyData.getPushThrougs() != null && !pTopologyData.getPushThrougs().isEmpty()) {
@@ -1258,7 +1258,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
 		}
 		if(pAnnounce.getCoordinatorName() != null) {
-			RoutingService tRS = (RoutingService)getHRMController().getPhysicalNode().getRoutingService();
+			RoutingService tRS = (RoutingService)getHRMController().getNode().getRoutingService();
 			if(! tRS.isKnown(pAnnounce.getCoordinatorName())) {
 				try {
 					getHRMController().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
@@ -1285,7 +1285,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 				getParticipatingCEPs().remove(this);
 			}
 			if(pAnnounce.getCoordinatorName() != null) {
-				RoutingService tRS = (RoutingService)getHRMController().getPhysicalNode().getRoutingService();
+				RoutingService tRS = (RoutingService)getHRMController().getNode().getRoutingService();
 				if(! tRS.isKnown(pAnnounce.getCoordinatorName())) {
 					
 					try {
@@ -1329,7 +1329,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 			mCoordinatorAddress = pAddress;
 			notifyAll();
 		}
-		getHRMController().getPhysicalNode().setDecorationValue("(" + pCoordSignature + ")");
+		getHRMController().getNode().setDecorationValue("(" + pCoordSignature + ")");
 //		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
 		if(pCoordSignature != null) {
 			for(IRoutableClusterGraphNode tNode: getHRMController().getRoutableClusterGraph().getNeighbors(mManagedCluster)) {
@@ -1728,7 +1728,7 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + mGUICoordinatorID + "@" + getHRMController().getPhysicalNode().getName() + "@" + getHierarchyLevel();
+		String tResult = getClass().getSimpleName() + mGUICoordinatorID + "@" + getHRMController().getNode().getName() + "@" + getHierarchyLevel();
 		
 		return tResult;
 	}

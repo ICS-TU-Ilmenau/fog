@@ -96,7 +96,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	 */
 	private void handleSignalingMessageBully(SignalingMessageBully pPacketBully) throws NetworkException
 	{
-		Node tNode = getHRMController().getPhysicalNode();
+		Node tNode = getHRMController().getNode();
 		Name tLocalNodeName = tNode.getCentralFN().getName(); 
 				
 		boolean BULLY_SIGNALING_DEBUGGING = true;
@@ -214,7 +214,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	{
 		boolean CHANNEL_SIGNALING_DEBUGGING = true;
 
-		Node tNode = getHRMController().getPhysicalNode();
+		Node tNode = getHRMController().getNode();
 		HierarchicalRoutingService tHRS = getHRMController().getHRS();
 		
 		/*

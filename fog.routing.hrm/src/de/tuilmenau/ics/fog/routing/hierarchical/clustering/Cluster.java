@@ -152,7 +152,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		mCoordName = pCoordName;
 		if(mChannelToCoordinator == null) {
 			synchronized(this) {
-				mCoordAddress = getHRMController().getPhysicalNode().getRoutingService().getNameFor(getHRMController().getPhysicalNode().getCentralFN());
+				mCoordAddress = getHRMController().getNode().getRoutingService().getNameFor(getHRMController().getNode().getCentralFN());
 				notifyAll();
 			}
 			setCoordinatorPriority(getBullyPriority());
@@ -273,7 +273,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	
 	public void handleAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPChannel pCEP)
 	{
-		if(!pAnnounce.getCoordinatorName().equals(getHRMController().getPhysicalNode().getCentralFN().getName())) {
+		if(!pAnnounce.getCoordinatorName().equals(getHRMController().getNode().getCentralFN().getName())) {
 			Logging.log(this, "Received announcement of foreign cluster");
 		}
 		
@@ -364,7 +364,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				if(!mInterASCluster) {
 					Logging.log(this, "Informing " + getParticipatingCEPs() + " about change in priority and initiating new election");
 					
-					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getPhysicalNode().getCentralFN().getName(), mBullyPriority), null);
+					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNode().getCentralFN().getName(), mBullyPriority), null);
 					
 					Logging.log(this, "Informed other clients about change of priority - it is now " + mBullyPriority.getValue());
 				}
@@ -377,7 +377,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		Logging.log(this, "Handling " + pAnnouncement);
 		if(mCoordName != null)
 		{
-			if(getHRMController().getPhysicalNode().getCentralFN().getName().equals(mCoordName))
+			if(getHRMController().getNode().getCentralFN().getName().equals(mCoordName))
 			{
 				handleAnnouncement(pAnnouncement, pCEP);
 			} else {
@@ -660,9 +660,9 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		try {
 			tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
 		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(getHRMController().getPhysicalNode().getAS().getSimulation());
+			HierarchicalNameMappingService.createGlobalNameMappingService(getHRMController().getNode().getAS().getSimulation());
 		}
-		Name tLocalRouterName = getHRMController().getPhysicalNode().getCentralFN().getName();
+		Name tLocalRouterName = getHRMController().getNode().getCentralFN().getName();
 		
 		tNMS.registerName(tLocalRouterName, pEnvelope.getHRMID(), NamingLevel.NAMES);
 		String tString = new String();
@@ -673,7 +673,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 
 		setHRMID(pEnvelope.getHRMID());
 		
-		getHRMController().getPhysicalNode().setDecorationValue(getHRMController().getPhysicalNode().getDecorationValue() + " " + pEnvelope.getHRMID().toString() + ",");
+		getHRMController().getNode().setDecorationValue(getHRMController().getNode().getDecorationValue() + " " + pEnvelope.getHRMID().toString() + ",");
 		getHRMController().addIdentification(pEnvelope.getHRMID());
 		if(mTopologyData.getEntries() != null) {
 			for(FIBEntry tEntry : mTopologyData.getEntries()) {
@@ -781,7 +781,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + mGUIClusterID + "@" + getHRMController().getPhysicalNode().getName() + "@" + getHierarchyLevel().getValue();
+		String tResult = getClass().getSimpleName() + mGUIClusterID + "@" + getHRMController().getNode().getName() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
 	}

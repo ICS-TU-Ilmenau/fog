@@ -60,7 +60,7 @@ public class SendPacket extends Command
 		if(object instanceof Node) {
 			mNode = (Node) object;
 		} else if(object instanceof HRMController) {
-			mNode = ((HRMController)object).getPhysicalNode();
+			mNode = ((HRMController)object).getNode();
 		}
 	}
 

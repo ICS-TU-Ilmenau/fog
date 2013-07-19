@@ -72,7 +72,7 @@ public class Elector extends Thread implements HRMEntity
 		for(CoordinatorCEPChannel tCEP : mParentCluster.getParticipatingCEPs()) {
 			//TODO: enforce sending of BullyElect in any case
 			if(tCEP.getPeerPriority().isUndefined() && ! tCEP.isEdgeCEP()/* || tCEP.getPeerPriority() > tCluster.getPriority()*/) {
-				Node tNode = mParentCluster.getHRMController().getPhysicalNode();
+				Node tNode = mParentCluster.getHRMController().getNode();
 				
 				tCEP.sendPacket(new BullyElect(tNode.getCentralFN().getName(), mParentCluster.getBullyPriority()));
 			}
@@ -88,7 +88,7 @@ public class Elector extends Thread implements HRMEntity
 	{
 		Random tRandom = new Random(System.currentTimeMillis());
 		HRMController tHRMController = pCluster.getHRMController();
-		Node tNode = tHRMController.getPhysicalNode();
+		Node tNode = tHRMController.getNode();
 		int tToken = tRandom.nextInt();
 		
 		pCluster.setToken(tToken);
@@ -384,7 +384,7 @@ public class Elector extends Thread implements HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + "@" + getCluster().getHRMController().getPhysicalNode().getName() + "@" + getCluster().getHierarchyLevel().getValue();
+		String tResult = getClass().getSimpleName() + "@" + getCluster().getHRMController().getNode().getName() + "@" + getCluster().getHierarchyLevel().getValue();
 		
 		return tResult;
 	}

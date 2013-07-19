@@ -65,7 +65,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	 */
 	public NeighborCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, HierarchyLevel pLevel, HRMController pResponsibleCoordinator)
 	{	
-		mAnnouncer = pResponsibleCoordinator.getPhysicalNode().getCentralFN().getName();
+		mAnnouncer = pResponsibleCoordinator.getNode().getCentralFN().getName();
 		mCoordAddress = pAddress;
 		setCoordinatorName(pCoordName);
 		mClusterID = pClusterID;
@@ -120,7 +120,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		addNeighborCluster(tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
-			RoutingService tRS = (RoutingService)getHRMController().getPhysicalNode().getRoutingService();
+			RoutingService tRS = (RoutingService)getHRMController().getNode().getRoutingService();
 			if(! tRS.isKnown(pAnnounce.getCoordinatorName())) {
 				try {
 					getHRMController().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());

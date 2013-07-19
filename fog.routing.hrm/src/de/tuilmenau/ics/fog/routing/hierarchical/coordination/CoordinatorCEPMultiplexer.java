@@ -72,7 +72,7 @@ public class CoordinatorCEPMultiplexer
 			mConnectedEntities.add(pTargetCluster.getCoordinatorName());
 			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(pTargetCluster.getCoordinatorsAddress().getAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getToken());
 			CoordinatorSession tCEP = new CoordinatorSession(mHRMController, false, tSourceClusterHierLvl, mHRMController.getMultiplexerOnLevel(tSourceClusterHierLvl.getValue()));
-			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getPhysicalNode().getCentralFN().getName());
+			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNode().getCentralFN().getName());
 			
 			for(Coordinator tManager : mHRMController.getCoordinator(tSourceClusterHierLvl)) {
 				tCEPDemultiplexed = new CoordinatorCEPChannel(mHRMController, tManager);
@@ -97,7 +97,7 @@ public class CoordinatorCEPMultiplexer
 					
 					tParticipate.setSourceClusterID(tManager.getManagedCluster().getClusterID());
 					tParticipate.setSourceToken(tManager.getManagedCluster().getToken());
-					tParticipate.setSourceName(mHRMController.getPhysicalNode().getCentralFN().getName());
+					tParticipate.setSourceName(mHRMController.getNode().getCentralFN().getName());
 					tParticipate.setSourceRoutingServiceAddress(tCEP.getSourceRoutingServiceAddress());
 					
 					List<RoutableClusterGraphLink> tClusterListToRemote = mHRMController.getRoutableClusterGraph().getRoute(tManager.getManagedCluster(), pTargetCluster);
@@ -114,7 +114,7 @@ public class CoordinatorCEPMultiplexer
 					
 	
 					try {
-						for(Name tIntermediateAddress : mHRMController.getHRS().getIntermediateNodes(mHRMController.getPhysicalNode().getRoutingService().getNameFor(mHRMController.getPhysicalNode().getCentralFN()), pTargetCluster.getCoordinatorsAddress())) {
+						for(Name tIntermediateAddress : mHRMController.getHRS().getIntermediateNodes(mHRMController.getNode().getRoutingService().getNameFor(mHRMController.getNode().getCentralFN()), pTargetCluster.getCoordinatorsAddress())) {
 							tParticipationProperty.addAddressToTarget(tIntermediateAddress);
 						}
 					} catch (RoutingException tExc) {
@@ -162,7 +162,7 @@ public class CoordinatorCEPMultiplexer
 				}
 			}
 			
-			Identity tIdentity = mHRMController.getPhysicalNode().getIdentity();
+			Identity tIdentity = mHRMController.getNode().getIdentity();
 			Description tConnectDescription = mHRMController.getConnectDescription(tParticipationProperty);
 			Logging.log(this, "Connecting to " + pTargetCluster);
 			Connection tConn = null;;
@@ -183,7 +183,7 @@ public class CoordinatorCEPMultiplexer
 				}
 				tTokens.add(tManager.getManagedCluster().getToken());
 				tManager.getParticipatingCEPs().add(tCEPDemultiplexed);
-				if(!pTargetCluster.getCoordinatorName().equals(mHRMController.getPhysicalNode().getCentralFN().getName())) {
+				if(!pTargetCluster.getCoordinatorName().equals(mHRMController.getNode().getCentralFN().getName())) {
 					int tDistance = (pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() : 0); 
 					NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tTokens, pTargetCluster.getClusterID(), pTargetCluster.getToken(), pTargetCluster.getHierarchyLevel(), tDistance);
 					if(pTargetCluster instanceof NeighborCluster && ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() == 0) {
@@ -367,7 +367,7 @@ public class CoordinatorCEPMultiplexer
 	
 	public String toString()
 	{
-		return "CoordinatorCEPMultiplexer" + "@" + mHRMController.getPhysicalNode() + (mCluster != null ? "@" + mCluster.getHierarchyLevel().getValue() + " (Cluster=" + mCluster + ")" : "");
+		return "CoordinatorCEPMultiplexer" + "@" + mHRMController.getNode() + (mCluster != null ? "@" + mCluster.getHierarchyLevel().getValue() + " (Cluster=" + mCluster + ")" : "");
 	}
 	
 	public void setCluster(ICluster pCluster)

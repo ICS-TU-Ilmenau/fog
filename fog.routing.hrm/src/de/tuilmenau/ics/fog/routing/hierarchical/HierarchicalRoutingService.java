@@ -545,7 +545,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	{
 		if(mSourceIdentification == null) {
 			NameMappingEntry<Name> tAddresses[] = null;
-			tAddresses = mNameMapping.getAddresses(mHRMController.getPhysicalNode().getCentralFN().getName());
+			tAddresses = mNameMapping.getAddresses(mHRMController.getNode().getCentralFN().getName());
 			for(NameMappingEntry<Name> tEntry : tAddresses) {
 				mSourceIdentification = tEntry.getAddress();
 			}

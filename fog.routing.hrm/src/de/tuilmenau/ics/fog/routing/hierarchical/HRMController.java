@@ -316,7 +316,7 @@ public class HRMController extends Application implements IServerCallback
 	
 	public String toString()
 	{
-		return "HRM controller@" + getPhysicalNode();
+		return "HRM controller@" + getNode();
 	}
 	
 	/**
@@ -446,7 +446,7 @@ public class HRMController extends Application implements IServerCallback
 				tCEP = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
 				Route tRoute = null;
 				try {
-					tRoute = getHRS().getRoute(getPhysicalNode().getCentralFN(), pName, new Description(), getPhysicalNode().getIdentity());
+					tRoute = getHRS().getRoute(getNode().getCentralFN(), pName, new Description(), getNode().getIdentity());
 				} catch (RoutingException tExc) {
 					Logging.err(this, "Unable to resolve route to " + pName, tExc);
 				} catch (RequirementsException tExc) {
@@ -495,7 +495,7 @@ public class HRMController extends Application implements IServerCallback
 			{
 				Connection tConn = null;
 				try {
-					tConn = mHost.connectBlock(tName, getConnectDescription(tProperty), getPhysicalNode().getIdentity());
+					tConn = mHost.connectBlock(tName, getConnectDescription(tProperty), getNode().getIdentity());
 				} catch (NetworkException tExc) {
 					Logging.err(this, "Unable to connecto to " + tName, tExc);
 				}
@@ -507,7 +507,7 @@ public class HRMController extends Application implements IServerCallback
 
 					Route tRoute = null;
 					try {
-						tRoute = getHRS().getRoute(getPhysicalNode().getCentralFN(), tName, new Description(), getPhysicalNode().getIdentity());
+						tRoute = getHRS().getRoute(getNode().getCentralFN(), tName, new Description(), getNode().getIdentity());
 					} catch (RoutingException tExc) {
 						Logging.err(this, "Unable to find route to " + tName, tExc);
 					} catch (RequirementsException tExc) {
@@ -567,7 +567,7 @@ public class HRMController extends Application implements IServerCallback
 	/**
 	 * @return the physical node running this coordinator
 	 */
-	public Node getPhysicalNode() //TV
+	public Node getNode() //TV
 	{
 		return mPhysicalNode;
 	}
@@ -745,7 +745,7 @@ public class HRMController extends Application implements IServerCallback
 		
 		// update GUI: image for node object 
 		//TODO: check and be aware of topology dynamics
-		getPhysicalNode().setDecorationParameter("L"+ pHierarchyLevel);
+		getNode().setDecorationParameter("L"+ pHierarchyLevel);
 	}
 	
 	public void unregisterCoordinator(Coordinator pCoordiantor)

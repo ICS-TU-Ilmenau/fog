@@ -65,7 +65,7 @@ public class BullyPriority
 	 */
 	public static BullyPriority createForCluster(Cluster pCluster)
 	{
-		Node tNode = pCluster.getHRMController().getPhysicalNode();
+		Node tNode = pCluster.getHRMController().getNode();
 		int tHierarchyLevel = pCluster.getHierarchyLevel().getValue();
 		
 		if (tNode == null) {
@@ -85,7 +85,7 @@ public class BullyPriority
 	 */
 	public static BullyPriority createForCoordinator(Coordinator pCoordinator)
 	{
-		Node tNode = pCoordinator.getHRMController().getPhysicalNode();
+		Node tNode = pCoordinator.getHRMController().getNode();
 		int tHierarchyLevel = pCoordinator.getHierarchyLevel().getValue();
 		
 		if (tNode == null) {

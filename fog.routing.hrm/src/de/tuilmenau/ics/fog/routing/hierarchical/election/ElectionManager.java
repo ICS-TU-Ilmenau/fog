@@ -140,7 +140,7 @@ public class ElectionManager
 				if(mNotification == null) {
 					mNotification = new ElectionEventNotification(mElections.get(pLevel).values());
 					for(Elector tProcess : mElections.get(pLevel).values()) {
-						tProcess.getCluster().getHRMController().getPhysicalNode().getAS().getSimulation().getTimeBase().scheduleIn(5, mNotification);
+						tProcess.getCluster().getHRMController().getNode().getAS().getSimulation().getTimeBase().scheduleIn(5, mNotification);
 						break;
 					}
 				} else {
