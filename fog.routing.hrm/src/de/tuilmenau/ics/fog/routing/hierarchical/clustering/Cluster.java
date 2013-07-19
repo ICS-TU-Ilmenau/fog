@@ -79,7 +79,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private boolean mInterASCluster = false;
 	private int mToken;
 	private int mAnnoucementCounter = 0;
-	private LinkedList<CoordinatorCEPChannel> mLaggards;
+	private LinkedList<CoordinatorCEPChannel> mLaggards; // only used by the Elector
 	private static final long serialVersionUID = -2087553402508167474L;
 	private TopologyData mTopologyData = null;
 	private CoordinatorCEPChannel mAnnouncer = null;
@@ -622,13 +622,25 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		mInterASCluster = true;
 	}
 
-	@Override
+	/**
+	 * As the implemented version of HRM uses a fully distributed algorithm for signaling it is possible that some nodes are not
+	 * associated to a coordinator because they were not covered. In that case such a node sends RequestCoordinator messages to 
+	 * the neighbors. If a neighbor is not covered by a coordinator either, it is added as laggard.
+	 * 
+	 * @return Return the list of laggards that were not covered by a coordinator either. 
+	 */
 	public LinkedList<CoordinatorCEPChannel> getLaggards()
 	{
 		return mLaggards;
 	}
 
-	@Override
+	/**
+	 * As the implemented version of HRM uses a fully distributed algorithm for signaling it is possible that some nodes are not
+	 * associated to a coordinator because they were not covered. In that case such a node sends RequestCoordinator messages to
+	 * the neighbors. If a neighbor is not covered by a coordinator either, it is aded as laggard.
+	 * 
+	 * @param pCEP Add one connection end point as laggard here.
+	 */
 	public void addLaggard(CoordinatorCEPChannel pCEP)
 	{
 		if(mLaggards == null) {

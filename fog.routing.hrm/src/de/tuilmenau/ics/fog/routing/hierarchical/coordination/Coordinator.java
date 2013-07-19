@@ -1451,18 +1451,6 @@ public class Coordinator implements ICluster, Observer, HRMEntity
 		
 	}
 
-	@Override
-	public LinkedList<CoordinatorCEPChannel> getLaggards()
-	{
-		return null;
-	}
-
-	@Override
-	public void addLaggard(CoordinatorCEPChannel pCEP) 
-	{
-		
-	}
-
 	public Cluster getManagedCluster()
 	{
 		return mManagedCluster;

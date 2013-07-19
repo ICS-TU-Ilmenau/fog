@@ -229,18 +229,6 @@ public class ClusterName implements Serializable, ICluster
 		}
 		return false;
 	}
-	
-	@Override
-	public LinkedList<CoordinatorCEPChannel> getLaggards()
-	{
-		return null;
-	}
-
-	@Override
-	public void addLaggard(CoordinatorCEPChannel pCEP)
-	{
-		
-	}
 
 	@Override
 	public void handleTopologyData(TopologyData pEnvelope)

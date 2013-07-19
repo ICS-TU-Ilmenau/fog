@@ -227,25 +227,6 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	public void setInterASCluster();
 	
 	/**
-	 * As the implemented version of HRM uses a fully distributed algorithm for signaling it is possible that some nodes are not
-	 * associated to a coordinator because they were not covered. In that case such a node sends RequestCoordinator messages to 
-	 * the neighbors. If a neighbor is not covered by a coordinator either, it is added as laggard.
-	 * 
-	 * @return Return the list of laggards that were not covered by a coordinator either. 
-	 */
-	public LinkedList<CoordinatorCEPChannel> getLaggards();
-	
-	
-	/**
-	 * As the implemented version of HRM uses a fully distributed algorithm for signaling it is possible that some nodes are not
-	 * associated to a coordinator because they were not covered. In that case such a node sends RequestCoordinator messages to
-	 * the neighbors. If a neighbor is not covered by a coordinator either, it is aded as laggard.
-	 * 
-	 * @param pCEP Add one connection end point as laggard here.
-	 */
-	public void addLaggard(CoordinatorCEPChannel pCEP);
-	
-	/**
 	 * HRM was implemented as distributed system. If a cluster is notified about the existence of a nother cluster it remembers which
 	 * connection end point announced that cluster. The implementation expects that in order to route to that cluster it has
 	 * to reach the announcer first. However the announcer can be updated in case a shorter route to the target cluster is found. 

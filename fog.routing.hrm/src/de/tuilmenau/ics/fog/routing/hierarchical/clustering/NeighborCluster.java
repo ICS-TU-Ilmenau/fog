@@ -330,18 +330,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		mInterASCluster = true;
 	}
 
-	@Override
-	public LinkedList<CoordinatorCEPChannel> getLaggards()
-	{
-		return null;
-	}
-
-	@Override
-	public void addLaggard(CoordinatorCEPChannel pCEP)
-	{
-		
-	}
-
 //	@Override
 //	public CoordinatorCEPChannel getNegotiatorCEP()
 //	{
