@@ -190,7 +190,7 @@ public class HRMController extends Application implements IServerCallback
 				tCluster.addParticipatingCEP(tCEP);
 				tCluster.setAnnouncedCEP(tCEP);
 				tCEP.addAnnouncedCluster(tCluster, tCluster);
-				addCluster(tCluster);
+				addRoutableTarget(tCluster);
 				tFoundCluster = tCluster;
 			}
 			tFoundCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
@@ -226,7 +226,7 @@ public class HRMController extends Application implements IServerCallback
 				
 				tCEP.setRemoteClusterName(new ClusterName(tAttachedCluster.getToken(), tAttachedCluster.getClusterID(), tAttachedCluster.getHierarchyLevel()));
 				tAttachedCluster.addAnnouncedCEP(tCEP);
-				addCluster(tAttachedCluster);
+				addRoutableTarget(tAttachedCluster);
 				if(tParticipate.getNeighbors() != null && !tParticipate.getNeighbors().isEmpty()) {
 					Logging.log(this, "Working on neighbors " + tParticipate.getNeighbors());
 					for(DiscoveryEntry tEntry : tParticipate.getNeighbors()) {
@@ -463,7 +463,7 @@ public class HRMController extends Application implements IServerCallback
 		{
 			Cluster tCluster = new Cluster(new Long(pToClusterID), pLevel, this);
 			setSourceIntermediateCluster(tCluster, tCluster);
-			addCluster(tCluster);
+			addRoutableTarget(tCluster);
 			tCEP = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
 			tDemux = new CoordinatorCEPChannel(this, tCluster);
 			tCluster.getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
@@ -584,7 +584,7 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @param pCluster is the cluster to be added to the local cluster map
 	 */
-	public synchronized void addCluster(ICluster pCluster)
+	public synchronized void addRoutableTarget(ICluster pCluster)
 	{
 		if(!mRoutableClusterGraph.contains(pCluster)) {
 			mRoutableClusterGraph.add(pCluster);

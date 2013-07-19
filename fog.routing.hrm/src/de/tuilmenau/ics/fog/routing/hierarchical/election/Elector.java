@@ -165,7 +165,9 @@ public class Elector extends Thread implements HRMEntity
 			pCluster.setCoordinator(tElectedCoordinator);
 			pCluster.getHRMController().setSourceIntermediateCluster(tElectedCoordinator, pCluster);
 			tElectedCoordinator.setPriority(pCluster.getBullyPriority());
-			pCluster.getHRMController().addCluster(tElectedCoordinator);
+			
+			pCluster.getHRMController().addRoutableTarget(tElectedCoordinator);
+			
 			if(tClusterHierLvl != HRMConfig.Hierarchy.HEIGHT) {
 				// stepwise hierarchy creation
 				Logging.log(this, "Will now wait because hierarchy build up is done stepwise");

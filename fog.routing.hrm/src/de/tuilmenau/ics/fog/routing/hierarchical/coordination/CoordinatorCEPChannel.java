@@ -830,7 +830,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 				((NeighborCluster)tNewCluster).addAnnouncedCEP(this);
 				tNewCluster.setToken(pEntry.getToken());
 				tNewCluster.setPriority(pEntry.getPriority());
-				getHRMController().addCluster(tNewCluster);
+				getHRMController().addRoutableTarget(tNewCluster);
 				if(pEntry.isInterASCluster()) {
 					tNewCluster.setInterASCluster();
 				}

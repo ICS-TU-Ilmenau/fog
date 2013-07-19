@@ -80,7 +80,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private int mToken;
 	private int mAnnoucementCounter = 0;
 	private LinkedList<CoordinatorCEPChannel> mLaggards; // only used by the Elector
-	private static final long serialVersionUID = -2087553402508167474L;
 	private TopologyData mTopologyData = null;
 	private CoordinatorCEPChannel mAnnouncer = null;
 	private LinkedList<CoordinatorCEPChannel> mOldParticipatingCEPs;
