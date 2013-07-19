@@ -614,6 +614,8 @@ public class HRMController extends Application implements IServerCallback
 				}
 				
 				tResult.add(tCluster);
+			}else if (tRoutableGraphNode instanceof NeighborCluster){
+				Logging.warn(this, "Ignoring routing target " + tRoutableGraphNode);
 			}
 		}
 		

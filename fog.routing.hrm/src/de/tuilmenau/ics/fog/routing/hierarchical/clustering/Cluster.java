@@ -114,9 +114,12 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		Logging.log(this, "CREATED CLUSTER " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getValue());
 		for(ICluster tCluster : getHRMController().getRoutingTargets())
 		{
-			Logging.log(this, "CLUSTER - found already known neighbor: " + tCluster);
+			Logging.log(this, "Found already known neighbor: " + tCluster);
 			if ((tCluster.getHierarchyLevel().equals(pHierarchyLevelValue)) && (tCluster != this))
 			{
+				if (!(tCluster instanceof Cluster)){
+					Logging.err(this, "Routing target should be a cluster, but it is " + tCluster);
+				}
 				tCluster.addNeighborCluster(this);
 
 				// increase Bully priority because of changed connectivity (topology depending)
@@ -756,7 +759,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	@Override
 	public void setDecorationParameter(Object pDecoration)
 	{
-		
+		// not used, but have to be implemented for implementing interface IElementDecorator
 	}
 
 	@Override
@@ -765,17 +768,17 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return Float.valueOf(0.8f);
 	}
 
+	@Override
+	public void setDecorationValue(Object tLabal)
+	{
+		// not used, but have to be implemented for implementing interface IElementDecorator
+	}
+
 	public int hashCode()
 	{
 		return mClusterID.intValue();
 	}
 	
-	@Override
-	public void setDecorationValue(Object tLabal)
-	{
-		
-	}
-
 	@SuppressWarnings("unused")
 	public String toString()
 	{

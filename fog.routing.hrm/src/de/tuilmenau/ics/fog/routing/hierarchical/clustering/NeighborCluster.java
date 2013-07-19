@@ -145,7 +145,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 
 	public void addNeighborCluster(ICluster pNeighbor)
 	{
-		getHRMController().getRoutableClusterGraph().storeLink(this,	pNeighbor, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
+		getHRMController().getRoutableClusterGraph().storeLink(this, pNeighbor, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
 	}
 
 	public void setHRMID(HRMID pHRMID)
