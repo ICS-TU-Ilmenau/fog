@@ -80,10 +80,10 @@ public interface TransferPlaneObserver
 	/**
 	 * Unregister a link from a forwarding node.
 	 * 
-	 * @param pNode Forwarding node, from which the gate is starting.
+	 * @param pFrom Forwarding node, from which the gate is starting.
 	 * @param pGate Gate to delete
 	 * @return true==success; false==link was not known
 	 */
-	public boolean unregisterLink(ForwardingElement pNode, AbstractGate pGate); 
+	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate); 
 }
 
