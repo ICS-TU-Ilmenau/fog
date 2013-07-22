@@ -40,8 +40,8 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		// register HRM instance as routing service for the current node
 		pNode.getHost().registerRoutingService(tHRS);
 
-		// call the delayed INIT function
-		tHRS.createHRMControllerApp();
+		// create the node local HRM controller
+		tHRS.createHRMController();
 
 		// start coordinator election for the created HRM instance if desired
 		if(HRMConfig.Hierarchy.BUILD_STARTS_AFTER_NODE_CONFIGURATION) {

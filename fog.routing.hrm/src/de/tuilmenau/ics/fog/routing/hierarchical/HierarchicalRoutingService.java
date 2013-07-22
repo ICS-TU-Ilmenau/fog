@@ -94,10 +94,10 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	}
 
 	/**
-	 * This function creates the local HRM controller application instance
+	 * This function creates the local HRM controller instance
 	 * The HRS has to be already registered because a server FN is used, which registers a node and links at the local routing service.
 	 */
-	public void createHRMControllerApp() //TV
+	public void createHRMController() //TV
 	{
 		mHRMController = new HRMController(mNode.getHost(), mNode.getLogger(), mNode.getIdentity(), mNode, this);
 		mNode.getHost().registerApp(mHRMController);
