@@ -25,7 +25,7 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 */
 	public SignalingMessageBully(Name pSenderName, BullyPriority pSenderPriority)
 	{
-		mSenderName = pSenderName;
+		super(pSenderName);
 		mSenderPriority = pSenderPriority;
 	}
 	
@@ -36,18 +36,8 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 */
 	public SignalingMessageBully(Name pSenderName)
 	{
+		super(pSenderName);
 		mSenderPriority = new BullyPriority(this);
-		mSenderName = pSenderName;
-	}
-
-	/**
-	 * Determine the name of the message sender
-	 * 
-	 * @return name of the sender
-	 */
-	public Name getSenderName()
-	{
-		return mSenderName;
 	}
 
 	/**
@@ -70,9 +60,4 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 * This is the Bully priority of the message sender.
 	 */
 	private BullyPriority mSenderPriority = null;
-	
-	/**
-	 * The name of the sender of this message. This is always a name of a physical node.
-	 */
-	private Name mSenderName = null;
 }
