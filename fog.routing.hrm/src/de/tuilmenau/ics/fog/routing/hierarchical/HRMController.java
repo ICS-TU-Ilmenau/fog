@@ -461,6 +461,7 @@ public class HRMController extends Application implements IServerCallback
 		}
 		if(!tClusterFound)
 		{
+			Logging.log(this, "Cluster is new, creating objects...");
 			Cluster tCluster = new Cluster(new Long(pToClusterID), pLevel, this);
 			setSourceIntermediateCluster(tCluster, tCluster);
 			addRoutableTarget(tCluster);
@@ -493,6 +494,7 @@ public class HRMController extends Application implements IServerCallback
 			{
 				Connection tConn = null;
 				try {
+					Logging.log(this, "CREATING CONNECTION to " + tName);
 					tConn = mHost.connectBlock(tName, getConnectDescription(tProperty), getNode().getIdentity());
 				} catch (NetworkException tExc) {
 					Logging.err(this, "Unable to connecto to " + tName, tExc);

@@ -167,6 +167,7 @@ public class CoordinatorCEPMultiplexer
 			Logging.log(this, "Connecting to " + pTargetCluster);
 			Connection tConn = null;;
 			try {
+				Logging.log(this, "CREATING CONNECTION to " + tName);
 				tConn = pSourceCluster.getHRMController().getHost().connectBlock(tName, tConnectDescription, tIdentity);
 				tCEP.start(tConn);
 				tCEP.write(tCEP.getSourceRoutingServiceAddress());

@@ -556,10 +556,12 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public void registerNode(ForwardingNode pElement, Name pName, NamingLevel pLevel, Description pDescription)
 	{	
+		Logging.log(this, "REGISTERING NODE " + pElement + " with name " + pName + " on naming level " + pLevel + " with description " + pDescription);
+		
 		NameMappingEntry<Name> [] tEntries = null;
 		tEntries = mNameMapping.getAddresses(pName);
 		L2Address tAddress = null;
-		Logging.log(this, "Found name " + (tEntries != null && tEntries.length > 0 ? tEntries[0].getAddress() : tEntries ) + " for " + pElement);
+		Logging.log(this, "Found name " + (tEntries != null && tEntries.length > 0 ? tEntries[0].getAddress().toString() : tEntries ) + " for " + pElement);
 		if(!mLocalNameMapping.containsKey(pElement)) {
 			long tRandomNumber = mRandomGenerator.nextLong();
 			Logging.log(this, "Generated for L2 address the long value " + tRandomNumber);
@@ -603,6 +605,8 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public void updateNode(ForwardingNode pElement, Description pCapabilities)
 	{
+		Logging.log(this, "UPDATING NODE " + pElement + " with capabilities " + pCapabilities);
+
 		/*
 		 * do nothing here
 		 */
@@ -635,6 +639,8 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public boolean unregisterNode(ForwardingNode pElement)
 	{
+		Logging.log(this, "UNREGISTERING NODE " + pElement);
+
 		L2Address tLookedUp = mLocalNameMapping.get(pElement);
 		
 		if(mRoutingMap.contains(tLookedUp)) {
@@ -693,6 +699,8 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public void registerLink(ForwardingElement pFrom, AbstractGate pGate) throws NetworkException
 	{
+		Logging.log(this, "REGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
+
 		HRMName tFrom = getNameFor((ForwardingNode) pFrom);
 		
 		if(tFrom != null) {
@@ -806,6 +814,8 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public boolean unregisterLink(ForwardingElement pNode, AbstractGate pGate)
 	{
+		Logging.log(this, "REGISTERING LINK from " + pNode + " to " + pGate.getNextNode() + ", gate " + pGate);
+
 		L2Address tSource = mLocalNameMapping.get(pNode);
 //		L2Address tDestination = mLocalNameMapping.get(pGate.getNextNode());
 		
