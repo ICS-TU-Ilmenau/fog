@@ -185,7 +185,7 @@ public class Elector extends Thread implements HRMEntity
 			} else {
 				Logging.log(this, "Beginning address distribution");
 				try {
-					tElectedCoordinator.setHRMID(new HRMID(0));
+					//tElectedCoordinator.setHRMID(this, new HRMID(0));
 					synchronized(mPleaseInterrupt) {
 						Logging.log(this, "ACTIVE WAITING (init) - " + WAIT_BEFORE_ADDRESS_DISTRIBUTION);
 						mPleaseInterrupt.wait(WAIT_BEFORE_ADDRESS_DISTRIBUTION);

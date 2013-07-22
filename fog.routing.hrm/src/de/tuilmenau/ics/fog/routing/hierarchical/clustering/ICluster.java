@@ -194,7 +194,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphNode
 	 * @param pHRMID This is the HRMID that identifies this cluster. Depending on the hierarchical level of this cluster the last
 	 * parts of that address might be zero.
 	 */
-	public void setHRMID(HRMID pHRMID);
+	public void setHRMID(Object pCaller, HRMID pHRMID);
 	
 	/**
 	 * 

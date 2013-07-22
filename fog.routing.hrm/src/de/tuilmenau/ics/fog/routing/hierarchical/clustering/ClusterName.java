@@ -184,7 +184,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void setHRMID(HRMID pHRMID)
+	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
 		
 	}

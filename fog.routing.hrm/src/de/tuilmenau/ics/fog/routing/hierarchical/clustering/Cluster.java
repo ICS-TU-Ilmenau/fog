@@ -390,8 +390,9 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	/**
 	 * @param pHRMID identification of this cluster
 	 */
-	public void setHRMID(HRMID pHRMID)
+	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
+		Logging.log(this, "Setting HRM ID: \"" + pHRMID + "\", triggered from " + pCaller);
 		mHRMID = pHRMID;
 	}
 	
@@ -682,7 +683,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 		Logging.log(this, "Currently registered names: " + tString);
 
-		setHRMID(pEnvelope.getHRMID());
+		setHRMID(this, pEnvelope.getHRMID());
 		
 		getHRMController().getNode().setDecorationValue(getHRMController().getNode().getDecorationValue() + " " + pEnvelope.getHRMID().toString() + ",");
 		getHRMController().addIdentification(pEnvelope.getHRMID());

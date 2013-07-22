@@ -249,6 +249,9 @@ public class Coordinator implements ICluster, HRMEntity
 	 */
 	public void distributeAddresses() throws RoutingException, RequirementsException, RemoteException
 	{
+		// reseting HRM ID, TODO: needed here?
+		setHRMID(this, new HRMID(0));
+		
 		/**
 		 * the HRM signature of the local router
 		 */
@@ -274,7 +277,7 @@ public class Coordinator implements ICluster, HRMEntity
 		if(mHierarchyLevel.isBaseLevel()) {
 			HRMID tOwnAddress = createOwnAddress();
 			tManagedClusterTopologyData.setHRMID(tOwnAddress);
-			mManagedCluster.setHRMID(tOwnAddress);
+			mManagedCluster.setHRMID(this, tOwnAddress);
 		}
 		/*
 		 * in this part the addresses are mapped either to CEPs or clusters
@@ -311,7 +314,7 @@ public class Coordinator implements ICluster, HRMEntity
 				 */
 				
 				if ((tReceivingCEP.getRemoteClusterName() != null) && (mHierarchyLevel.isHigherLevel())) {
-					tReceivingCEP.getRemoteClusterName().setHRMID(tID);
+					tReceivingCEP.getRemoteClusterName().setHRMID(this, tID);
 				} else {
 					Logging.log(this, "Unable to find remote cluster for " + tReceivingCEP);
 				}
@@ -1044,8 +1047,8 @@ public class Coordinator implements ICluster, HRMEntity
 			}
 			Logging.log(this, "Have to provide FEs for " + mHigherHRMIDs);
 		}
-		setHRMID(pTopologyData.getHRMID());
-		mManagedCluster.setHRMID(pTopologyData.getHRMID());
+		setHRMID(this, pTopologyData.getHRMID());
+		mManagedCluster.setHRMID(this, pTopologyData.getHRMID());
 		try {
 			distributeAddresses();
 		} catch (RoutingException tExc) {
@@ -1370,7 +1373,8 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 
 	@Override
-	public void setHRMID(HRMID pHRMID) {
+	public void setHRMID(Object pCaller, HRMID pHRMID) {
+		Logging.log(this, "Setting HRM ID: \"" + pHRMID + "\", triggered from " + pCaller);
 		mHRMID = pHRMID;
 	}
 

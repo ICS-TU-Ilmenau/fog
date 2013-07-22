@@ -148,8 +148,9 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		getHRMController().getRoutableClusterGraph().storeLink(this, pNeighbor, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
 	}
 
-	public void setHRMID(HRMID pHRMID)
+	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
+		Logging.log(this, "Setting HRM ID: \"" + pHRMID + "\", triggered from " + pCaller);
 		mHRMID = pHRMID;
 	}
 
