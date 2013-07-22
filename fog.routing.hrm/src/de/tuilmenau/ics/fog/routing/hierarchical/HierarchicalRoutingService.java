@@ -66,7 +66,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 
 	private final RoutableGraph<HRMName, RoutingServiceLink> mRoutingMap;
 	private final RoutableGraph<HRMName, Route> mCoordinatorRoutingMap;
-	private LinkedList<HRMID> mUsedAddresses = new LinkedList<HRMID>();
 	private HierarchicalNameMappingService<Name> mNameMapping = null;
 	private static Random mRandomGenerator = null; //singleton needed, otherwise parallel number generators might be initialized with the same seed
 	private HRMController mHRMController = null;
@@ -730,14 +729,11 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		boolean tDontElect=false;
 		
 		tThisHostAddress = getNameFor(mNode.getCentralFN());
-		if(!mUsedAddresses.contains(pFrom)) {
-			Logging.warn(this, "From address " +pFrom +" is not known as local address.");
-		}
 		
 		/**
 		 * Have we got a link registration for a new neighbor?
 		 */
-		if(pGate instanceof DirectDownGate && !mUsedAddresses.contains(tDestination)) {
+		if(pGate instanceof DirectDownGate) {
 			Logging.info(this, "Add link to external " +tDestination);
 			
 			double waitTime = 0.1;//(mRandomGenerator.nextDouble()*5)+2; //TODO: check if event handler still drops events which have a time in the past or the very near future
