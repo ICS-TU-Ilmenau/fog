@@ -238,7 +238,11 @@ public class HierarchicalNameMappingService<Address extends Serializable> implem
 		return mASToNode.containsValue(rAddress);
 	}
 
-
+	public String toString()
+	{
+		return getClass().getSimpleName();		
+	}
+	
 	private HashMap<Name, LinkedList<NameMappingEntry<Address>>> mDNS = new HashMap<Name, LinkedList<NameMappingEntry<Address>>>();	
 	private HashMap<String, String> mASToNode = new HashMap<String,String>();
 	protected NameMappingService<Address> mParentNameMappingService = null;
