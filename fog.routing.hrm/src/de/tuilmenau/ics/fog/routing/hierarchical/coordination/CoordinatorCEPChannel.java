@@ -77,7 +77,6 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 	
 	/**
 	 * 
-	 * @param pLogger Logger that should be used
 	 * @param pHRMController is the coordinator of a node
 	 * @param pPeerCluster is the peer cluster/coordinator
 	 */
@@ -255,7 +254,7 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 					Logging.log(this, "NEIGHBOR received from \"" + mPeerCluster + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
 
 				if(tAnnouncePacket.isInterASAnnouncement()) {
-					Logging.log(tNode.getAS().getName() + " received an announcement from " + tAnnouncePacket.getASIdentification());
+					Logging.log(this, tNode.getAS().getName() + " received an announcement from " + tAnnouncePacket.getASIdentification());
 					if(tNode.getAS().getName().equals(tAnnouncePacket.getASIdentification())) {
 						if(!getSourceName().equals(getPeerName())) {
 							for(Route tPath : tHRS.getCoordinatorRoutingMap().getRoute(getSourceName(), getPeerName())) {

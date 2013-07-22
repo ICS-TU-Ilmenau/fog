@@ -1677,7 +1677,7 @@ public class Coordinator implements ICluster, HRMEntity
 						long tRequestSession = tParameterRouteRequest.getSession();
 						Logging.log(tManager, "registered requests for " + mRouteRequestDispatcher + ": ");
 						for(Long tLong : mRouteRequestDispatcher.keySet()) {
-							Logging.log(tLong + " is pointing at " + mRouteRequestDispatcher.get(tLong));
+							Logging.log(this, tLong + " is pointing on " + mRouteRequestDispatcher.get(tLong));
 						}
 						CoordinatorCEPChannel tCEP = mRouteRequestDispatcher.get(tRequestSession);
 						tParameterRouteRequest.setAnswer();

@@ -133,7 +133,7 @@ public class SendPacket extends Command
 									tRoute.add(new RouteSegmentAddress(tTargetAddress));
 								} 
 								
-								Logging.log("Sending packet from " + mNode + " to " + tTarget);
+								Logging.log(this, "Sending packet from " + mNode + " to " + tTarget);
 								sendHello(mNode, tRoute, tTargetNode);
 								break;
 							}

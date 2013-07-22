@@ -52,7 +52,7 @@ public class AddressingTypeProperty extends AbstractProperty
 	public void setAS(String pAS)
 	{
 		if(mAddress.toString().contains("@32") && pAS.contains("1")); {
-			Logging.log("Setting " + pAS + " as autonomous system for " + mAddress);
+			Logging.log(this, "Setting " + pAS + " as autonomous system for " + mAddress);
 		}
 		mAS = pAS;
 	}

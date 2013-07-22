@@ -16,6 +16,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionEvent;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This class is used to configure nodes that are newly created.
@@ -34,6 +35,10 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 	@Override
 	public void configure(String pName, AutonomousSystem pAS, Node pNode)
 	{
+		mNode = pNode;
+		
+		Logging.log(this, "###### CONFIGURING NODE " + pName + " -START ###### ");
+		
 		// create a new HRM instance for this node
 		HierarchicalRoutingService tHRS = new HierarchicalRoutingService(pNode);
 		
@@ -57,6 +62,16 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 
 		// set the Bully priority 
 		BullyPriority.configureNode(pNode);
-		
+
+		Logging.log(this, "###### CONFIGURING NODE " + pName + " -END ###### ");
 	}
+
+	public String toString()
+	{
+		String tResult = getClass().getSimpleName() + (mNode != null ? "@" + mNode.toString() : "");
+		
+		return tResult;
+	}
+	
+	private Node mNode = null;
 }

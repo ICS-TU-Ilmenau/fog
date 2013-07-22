@@ -100,7 +100,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 * @param pClusterID
 	 * @param pLevel
 	 * @param ptHRMController
-	 * @param pLogger
 	 */
 	public Cluster(Long pClusterID, HierarchyLevel pHierarchyLevelValue, HRMController ptHRMController)
 	{

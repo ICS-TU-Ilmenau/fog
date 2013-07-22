@@ -108,7 +108,7 @@ public class Elector extends Thread implements HRMEntity
 		try {
 			tSignature = tHRMController.getIdentity().createSignature(tNode.toString(), null, pCluster.getHierarchyLevel());
 		} catch (AuthenticationException tExc) {
-			pCluster.getHRMController().getLogger().err(this, "Unable to create signature for coordinator", tExc);
+			Logging.err(this, "Unable to create signature for coordinator", tExc);
 		}
 		
 		/**
@@ -119,7 +119,7 @@ public class Elector extends Thread implements HRMEntity
 			tAnnounce.addCoveredNode(tCEP.getPeerName());
 		}
 		if(tAnnounce.getCoveredNodes() == null || (tAnnounce.getCoveredNodes() != null && tAnnounce.getCoveredNodes().isEmpty())) {
-			pCluster.getHRMController().getLogger().log(this, "Sending announce that does not cover anyhting");
+			Logging.log(this, "Sending announce that does not cover anyhting");
 		}
 		pCluster.sendClusterBroadcast(tAnnounce, null);
 		Name tAddress = tNode.getRoutingService().getNameFor(tNode.getCentralFN());; 
@@ -127,7 +127,7 @@ public class Elector extends Thread implements HRMEntity
 		LinkedList<HRMSignature> tSignatures = tHRMController.getApprovedSignatures();
 		tSignatures.add(tSignature);
 		if(getHierarchLevel().isHigherLevel()) {
-			pCluster.getHRMController().getLogger().log(pCluster, "has the coordinator and will now announce itself");
+			Logging.log(this, "has the coordinator and will now announce itself");
 			for(ICluster tToAnnounce : pCluster.getNeighbors()) {
 //					List<VirtualNode> tNodesBetween = pCluster.getCoordinator().getClusterMap().getIntermediateNodes(pCluster, tToAnnounce);
 				/*
@@ -276,7 +276,7 @@ public class Elector extends Thread implements HRMEntity
 					 */
 					while((mParentCluster.getHRMController().getClusterWithCoordinatorOnLevel(mParentCluster.getHierarchyLevel().getValue()) == null)) {
 						mParentCluster.setHighestPriority(mParentCluster.getBullyPriority());
-						Logging.log(mParentCluster, " did not yet receive an announcement");
+						Logging.log(this, mParentCluster + " didn't yet receive an announcement");
 						for(CoordinatorCEPChannel tCEP : mParentCluster.getParticipatingCEPs()) {
 							RequestCoordinator tRequest = new RequestCoordinator(/* false */);
 							tCEP.sendPacket(tRequest);
@@ -304,10 +304,10 @@ public class Elector extends Thread implements HRMEntity
 							for(CoordinatorCEPChannel tCEP: mParentCluster.getParticipatingCEPs()) {
 								if(! tCEP.knowsCoordinator()) {
 									if(!mParentCluster.getHRMController().checkPathToTargetContainsCovered(mParentCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName(), tCEPs)) {
-										Logging.log(mParentCluster, "adding laggard " + tCEP + " while clusters between are " + mParentCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(mParentCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName()));
+										Logging.log(this, mParentCluster + " is adding laggard " + tCEP + " while clusters between are " + mParentCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(mParentCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName()));
 										mParentCluster.addLaggard(tCEP);
 									} else {
-										Logging.info(mParentCluster, "not adding laggard " + tCEP);
+										Logging.info(this, mParentCluster + " doesn't add laggard " + tCEP);
 									}
 								} 
 							}

@@ -127,7 +127,7 @@ public class ElectionManager
 			boolean tWontBeginDistribution = false;
 			Elector tWaitingFor = null;
 			for(Elector tProcess : mElections.get(pLevel).values()) {
-				Logging.log(tProcess + " is " + (tProcess.aboutToContinue() ? " about to " : "not about to ") + "initialize its Cluster Manager");
+				Logging.log(this, tProcess + " is " + (tProcess.aboutToContinue() ? " about to " : "not about to ") + "initialize its Cluster Manager");
 				if(!tProcess.aboutToContinue()) {
 					tWontBeginDistribution = true;
 					tWaitingFor = tProcess;

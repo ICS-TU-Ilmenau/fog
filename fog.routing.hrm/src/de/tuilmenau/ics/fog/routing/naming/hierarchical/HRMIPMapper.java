@@ -53,6 +53,7 @@ public class HRMIPMapper
 	
 	public static void registerHRMID(HRMID pHRMID)
 	{
+		//TODO: remove this !
 		mHRMIDs.add(pHRMID);
 		Logging.log("Registered " + pHRMID + " for region limitation");
 	}

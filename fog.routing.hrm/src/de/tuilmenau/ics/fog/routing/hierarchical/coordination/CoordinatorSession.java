@@ -23,7 +23,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RoutingService;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
@@ -45,7 +44,6 @@ public class CoordinatorSession extends Session
 	
 	/**
 	 * 
-	 * @param pLogger
 	 * @param pHRMController is the coordinator this connection end point is associated to
 	 * @param pServerSide indicates whether this connection end point is the origin of a server or not
 	 * @param pLevel is the level this connection end point is located at
@@ -60,7 +58,7 @@ public class CoordinatorSession extends Session
 			RoutingService tRS = (RoutingService)getHRMController().getNode().getRoutingService();
 			mSourceIdentification = (L2Address) tRS.getNameFor(getHRMController().getNode().getCentralFN());
 		
-		getLogger().log(this, "Created");
+		Logging.log(this, "Created");
 
 		mServerSide = pServerSide;
 		mHierarchyLevel = pLevel;
@@ -79,9 +77,9 @@ public class CoordinatorSession extends Session
 					tRouteToPeer = getHRMController().getHRS().getRoute(getHRMController().getNode().getCentralFN(), ((Tuple<HRMID, HRMID>)pData).getSecond(), new Description(), getHRMController().getNode().getIdentity());
 					mRouteToPeer = tRouteToPeer;
 				} catch (RoutingException tExc) {
-					getLogger().err(this, "Unable to find route to ", tExc);
+					Logging.err(this, "Unable to find route to ", tExc);
 				} catch (RequirementsException tExc) {
-					getLogger().err(this, "Unable to fulfill requirements ", tExc);
+					Logging.err(this, "Unable to fulfill requirements ", tExc);
 				}
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
 				if(mHierarchyLevel.isBaseLevel()) {
@@ -107,16 +105,16 @@ public class CoordinatorSession extends Session
 			try {
 				CoordinatorCEPChannel tCEP = mMux.getDemuxedCEP(this, (ClusterName)tPackage.getSourceCluster(), tTargetCluster);
 				if(tCEP != null) {
-					getLogger().log(this, "Forwarding " + tPackage.getData() + " from " + tPackage.getSourceCluster() + " to " + tPackage.getDestinationCluster() + " with " + tCEP);
+					Logging.log(this, "Forwarding " + tPackage.getData() + " from " + tPackage.getSourceCluster() + " to " + tPackage.getDestinationCluster() + " with " + tCEP);
 					tCEP.receive(tPackage.getData());
 				} else {
-					getLogger().warn(this, "No demultiplexed connection available ");
+					Logging.warn(this, "No demultiplexed connection available ");
 				}
 			} catch (NetworkException tExc) {
-				getLogger().err(this, "Unable to forward data", tExc);
+				Logging.err(this, "Unable to forward data", tExc);
 			}
 		} else if(pData instanceof ClusterDiscovery) {
-			getLogger().log(this, "Received " + pData);
+			Logging.log(this, "Received " + pData);
 			if(((ClusterDiscovery)pData).isRequest()) {
 				for(NestedDiscovery tNestedDiscovery : ((ClusterDiscovery)pData).getDiscoveries()) {
 					boolean tWasDelivered = false;
@@ -129,12 +127,12 @@ public class CoordinatorSession extends Session
 								tCEP.handleClusterDiscovery(tNestedDiscovery, true);
 								tWasDelivered = true;
 							} catch (NetworkException tExc) {
-								getLogger().err(this, "Error when forwarding nested discovery to clusters ",  tExc);
+								Logging.err(this, "Error when forwarding nested discovery to clusters ",  tExc);
 							}
 						}
 					}
 					if(!tWasDelivered) {
-						getLogger().log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mMux.getDemuxCEPs(this));
+						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mMux.getDemuxCEPs(this));
 					}
 				}
 				((ClusterDiscovery)pData).isAnswer();
@@ -152,12 +150,12 @@ public class CoordinatorSession extends Session
 								tCEP.handleClusterDiscovery(tNestedDiscovery, false);
 								tWasDelivered = true;
 							} catch (NetworkException tExc) {
-								getLogger().err(this, "Error when forwarding nested discovery",  tExc);
+								Logging.err(this, "Error when forwarding nested discovery",  tExc);
 							}
 						}
 					}
 					if(!tWasDelivered) {
-						getLogger().log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mMux.getDemuxCEPs(this));
+						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mMux.getDemuxCEPs(this));
 					}
 				}
 				((ClusterDiscovery)pData).completed();
@@ -185,11 +183,11 @@ public class CoordinatorSession extends Session
 			try	{
 				getConnection().write(pData);
 			} catch (NetworkException e) {
-				getLogger().err(this, "Error while writing to socket", e);
+				Logging.err(this, "Error while writing to socket", e);
 				return false;
 			}
 		} else {
-			getLogger().err(this, "Unable to send " + pData + " because socket is not connected");
+			Logging.err(this, "Unable to send " + pData + " because socket is not connected");
 			return false;
 		}
 		return true;

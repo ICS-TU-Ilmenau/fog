@@ -67,12 +67,12 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	private final RoutableGraph<HRMName, RoutingServiceLink> mRoutingMap;
 	private final RoutableGraph<HRMName, Route> mCoordinatorRoutingMap;
 	private LinkedList<HRMID> mUsedAddresses = new LinkedList<HRMID>();
-	private HierarchicalNameMappingService<Name> mNameMapping=null;
+	private HierarchicalNameMappingService<Name> mNameMapping = null;
 	private static Random mRandomGenerator = null; //singleton needed, otherwise parallel number generators might be initialized with the same seed
 	private HRMController mHRMController = null;
 	private HashMap<HRMID, FIBEntry> mHopByHopRoutingMap = new HashMap<HRMID, FIBEntry>();
 	private Name mSourceIdentification = null;
-	private HashMap<ForwardingElement, L2Address> mLocalNameMapping = new HashMap<ForwardingElement, L2Address>();
+	private HashMap<ForwardingElement, L2Address> mLayer2NameMapping = new HashMap<ForwardingElement, L2Address>();
 	
 	/**
 	 * Creates a local HRS instance for a node.
@@ -85,8 +85,9 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		
 		mNode = pNode;
 		
-		mNameMapping = new HierarchicalNameMappingService(HierarchicalNameMappingService.getGlobalNameMappingService(), pNode.getLogger());
-		Logging.log("Constructor: Using name mapping service " + mNameMapping.toString());
+		mNameMapping = new HierarchicalNameMappingService(HierarchicalNameMappingService.getGlobalNameMappingService(), null);
+		Logging.log(this, "Using name mapping service " + mNameMapping.toString());
+		
 		if (mRandomGenerator == null)
 			mRandomGenerator = new Random(System.currentTimeMillis());
 		mRoutingMap = new RoutableGraph<HRMName, RoutingServiceLink>();
@@ -99,7 +100,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 */
 	public void createHRMController() //TV
 	{
-		mHRMController = new HRMController(mNode.getHost(), mNode.getLogger(), mNode.getIdentity(), mNode, this);
+		mHRMController = new HRMController(mNode.getHost(), mNode.getIdentity(), mNode, this);
 		mNode.getHost().registerApp(mHRMController);
 	}
 
@@ -254,7 +255,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 
 		NameMappingEntry<Name> [] tEntries = mNameMapping.getAddresses(pDestination);
 		
-		L2Address tSource = mLocalNameMapping.get(pSource);
+		L2Address tSource = mLayer2NameMapping.get(pSource);
 		L2Address tDestination = null;
 		
 		if( pDestination instanceof L2Address ) {
@@ -539,13 +540,16 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public void registerNode(ForwardingNode pElement, Name pName, NamingLevel pLevel, Description pDescription)
 	{	
-		Logging.log(this, "REGISTERING NODE " + pElement + " with name " + pName + " on naming level " + pLevel + " with description " + pDescription);
+		Logging.log(this, "REGISTERING NODE " + pElement + " with name " + pName + (pLevel != NamingLevel.NONE ? " on naming level " + pLevel : "") + " with description " + pDescription);
 		
 		NameMappingEntry<Name> [] tEntries = null;
 		tEntries = mNameMapping.getAddresses(pName);
 		L2Address tAddress = null;
-		Logging.log(this, "Found name " + (tEntries != null && tEntries.length > 0 ? tEntries[0].getAddress().toString() : tEntries ) + " for " + pElement);
-		if(!mLocalNameMapping.containsKey(pElement)) {
+		
+		if ((tEntries != null) && (tEntries.length > 0))
+			Logging.log(this, "Found name " + tEntries[0].getAddress().toString() + " for " + pElement);
+		
+		if(!mLayer2NameMapping.containsKey(pElement)) {
 			long tRandomNumber = mRandomGenerator.nextLong();
 			Logging.log(this, "Generated for L2 address the long value " + tRandomNumber);
 			
@@ -555,7 +559,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			mNameMapping.registerName(pName, tAddress, pLevel);
 		}
 		if(tAddress instanceof L2Address) {
-			mLocalNameMapping.put(pElement, tAddress);
+			mLayer2NameMapping.put(pElement, tAddress);
 		}
 	}
 	
@@ -624,7 +628,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	{
 		Logging.log(this, "UNREGISTERING NODE " + pElement);
 
-		L2Address tLookedUp = mLocalNameMapping.get(pElement);
+		L2Address tLookedUp = mLayer2NameMapping.get(pElement);
 		
 		if(mRoutingMap.contains(tLookedUp)) {
 			mRoutingMap.remove(tLookedUp);
@@ -707,11 +711,11 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			return;
 		} else if(!(pGate instanceof DirectDownGate)) {
 			ForwardingElement tForwarder = pGate.getNextNode();
-			tDestination = mLocalNameMapping.get(tForwarder);
+			tDestination = mLayer2NameMapping.get(tForwarder);
 			if(tDestination == null) {
 				registerNode((ForwardingNode)tForwarder, null, NamingLevel.NONE, null);
 			}
-			tDestination = mLocalNameMapping.get(tForwarder);
+			tDestination = mLayer2NameMapping.get(tForwarder);
 		}
 		
 		L2Address tSource = (L2Address) getNameFor((ForwardingNode) pFrom);
@@ -802,7 +806,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	{
 		Logging.log(this, "UNREGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
 
-		L2Address tSource = mLocalNameMapping.get(pFrom);
+		L2Address tSource = mLayer2NameMapping.get(pFrom);
 //		L2Address tDestination = mLocalNameMapping.get(pGate.getNextNode());
 		
 		Collection<RoutingServiceLink> tCandidateLinks = mRoutingMap.getOutEdges(tSource);
@@ -821,8 +825,8 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	public ForwardingNode getLocalElement(Name pDestination)
 	{
 		if(pDestination != null) {
-			for(ForwardingElement tElement : mLocalNameMapping.keySet()) {
-				L2Address tAddr = mLocalNameMapping.get(tElement) ;
+			for(ForwardingElement tElement : mLayer2NameMapping.keySet()) {
+				L2Address tAddr = mLayer2NameMapping.get(tElement) ;
 				
 				if(pDestination.equals(tAddr)) {
 					if(tElement instanceof ForwardingNode) {
@@ -843,7 +847,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public HRMName getNameFor(ForwardingNode pNode)
 	{
-		return mLocalNameMapping.get(pNode);
+		return mLayer2NameMapping.get(pNode);
 	}
 
 	@Override
@@ -861,7 +865,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public boolean unregisterName(ForwardingNode pElement, Name pName)
 	{
-		L2Address tAddress = mLocalNameMapping.get(pElement);
+		L2Address tAddress = mLayer2NameMapping.get(pElement);
 		
 		return mNameMapping.unregisterName(pName, tAddress);
 	}
@@ -872,7 +876,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		
 	}
 
-	@SuppressWarnings("unused")
 	public String toString()
 	{
 		return toLocation();

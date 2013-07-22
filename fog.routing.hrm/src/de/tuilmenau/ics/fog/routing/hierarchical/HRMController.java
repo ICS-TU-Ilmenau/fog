@@ -80,14 +80,13 @@ public class HRMController extends Application implements IServerCallback
 	
 	/**
 	 * @param pHost is the hosts that runs the coordinator
-	 * @param pParentLogger is the logger that is used for log output
 	 * @param pIdentity is the identity of the hosts that runs the coordinator
 	 * @param pNode is the node running the coordinator
 	 * @param pHRS is the hierarchical routing service that should be used
 	 */
-	public HRMController(Host pHost, Logger pParentLogger, Identity pIdentity, Node pNode, HierarchicalRoutingService pHRS)
+	public HRMController(Host pHost, Identity pIdentity, Node pNode, HierarchicalRoutingService pHRS)
 	{
-		super(pHost, pParentLogger, pIdentity);
+		super(pHost, null, pIdentity);
 		mName = new SimpleName(ROUTING_NAMESPACE, null);
 		mHost = pHost;
 		mPhysicalNode = pNode;
@@ -749,7 +748,7 @@ public class HRMController extends Application implements IServerCallback
 		}
 		
 		if (mRegisteredCoordinators.get(pHierarchyLevel).size() > 0){
-			Logging.log("#### Got more than one coordinator at level " + pHierarchyLevel + ", already known: " + mRegisteredCoordinators.get(pHierarchyLevel).get(0) + ", new one: " + pCoordinator);
+			Logging.log(this, "#### Got more than one coordinator at level " + pHierarchyLevel + ", already known: " + mRegisteredCoordinators.get(pHierarchyLevel).get(0) + ", new one: " + pCoordinator);
 		}
 		
 		// store the new coordinator

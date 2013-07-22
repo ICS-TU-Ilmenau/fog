@@ -295,9 +295,9 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			Logging.log("Available Election Processes: ");
+			Logging.log(this, "Available Election Processes: ");
 			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
-				Logging.log(tProcess.toString());
+				Logging.log(this, tProcess.toString());
 			}
 			for(Elector tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel().getValue())) {
 				boolean tStartProcess=true;
@@ -333,7 +333,7 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			Logging.log("Available Election Processes: ");
+			Logging.log(this, "Available Election Processes: ");
 			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(tProcess.toString());
 			}
