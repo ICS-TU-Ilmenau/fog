@@ -59,11 +59,15 @@ import de.tuilmenau.ics.graph.RoutableGraph;
  */
 public class HierarchicalRoutingService implements RoutingService, HRMEntity
 {
+	/**
+	 * The physical node on which this routing service instance is running.
+	 */
+	private Node mNode = null;
+
 	private final RoutableGraph<HRMName, RoutingServiceLink> mRoutingMap;
 	private final RoutableGraph<HRMName, Route> mCoordinatorRoutingMap;
 	private LinkedList<HRMID> mUsedAddresses = new LinkedList<HRMID>();
 	private HierarchicalNameMappingService<Name> mNameMapping=null;
-	private Node mReferenceNode = null;
 	private static Random mRandomGenerator = null; //singleton needed, otherwise parallel number generators might be initialized with the same seed
 	private HRMController mHRMController = null;
 	private HashMap<HRMID, FIBEntry> mHopByHopRoutingMap = new HashMap<HRMID, FIBEntry>();
@@ -71,16 +75,17 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	private HashMap<ForwardingElement, L2Address> mLocalNameMapping = new HashMap<ForwardingElement, L2Address>();
 	
 	/**
-	 * Creates a local routing service entity.
+	 * Creates a local HRS instance for a node.
 	 * 
-	 * @param pRS Reference to next higher layer routing service entity
-	 * @param pNameMapping Reference to name resolution
+	 * @param pNode the node on which this routing service instance is created on
 	 */
-	public HierarchicalRoutingService(Node pReferenceNode)
+	public HierarchicalRoutingService(Node pNode)
 	{
-		mReferenceNode = pReferenceNode;
+		Logging.log(this, "CREATED ON " + pNode);
 		
-		mNameMapping = new HierarchicalNameMappingService(HierarchicalNameMappingService.getGlobalNameMappingService(), pReferenceNode.getLogger());
+		mNode = pNode;
+		
+		mNameMapping = new HierarchicalNameMappingService(HierarchicalNameMappingService.getGlobalNameMappingService(), pNode.getLogger());
 		Logging.log("Constructor: Using name mapping service " + mNameMapping.toString());
 		if (mRandomGenerator == null)
 			mRandomGenerator = new Random(System.currentTimeMillis());
@@ -94,8 +99,8 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 */
 	public void createHRMControllerApp() //TV
 	{
-		mHRMController = new HRMController(mReferenceNode.getHost(), mReferenceNode.getLogger(), mReferenceNode.getIdentity(), mReferenceNode, this);
-		mReferenceNode.getHost().registerApp(mHRMController);
+		mHRMController = new HRMController(mNode.getHost(), mNode.getLogger(), mNode.getIdentity(), mNode, this);
+		mNode.getHost().registerApp(mHRMController);
 	}
 
 	public void registerNode(L2Address pAddress, boolean pGloballyImportant)
@@ -106,28 +111,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	public void registerNode(Name pName, Name pAddress) throws RemoteException
 	{
 		mNameMapping.registerName(pName, pAddress, NamingLevel.NAMES);
-	}
-
-	private class EventNewClusterMemberDetected implements IEvent
-	{
-		public EventNewClusterMemberDetected(Name pName, long pToClusterID, boolean pConnectionToOtherAS)
-		{
-			super();
-			mConnectTo = pName;
-			mToClusterID = pToClusterID;
-			mConnectionToOtherAS = pConnectionToOtherAS;
-		}
-		
-		@Override
-		public void fire()
-		{
-			Logging.log(this, "Opening connection to " + mConnectTo);
-			mHRMController.addConnection(mConnectTo, HierarchyLevel.createBaseLevel(), mToClusterID, mConnectionToOtherAS);
-		}
-		
-		private Name mConnectTo;
-		private long mToClusterID = 0;
-		private boolean mConnectionToOtherAS;
 	}
 
 	public boolean registerRoute(HRMName pFrom, HRMName pTo, Route pPath)
@@ -182,13 +165,13 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		try {
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
 		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(mReferenceNode.getAS().getSimulation());
+			HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
 		}
 		
 		int tHighestDescendingDifference = HRMConfig.Hierarchy.HEIGHT - 1;
 		
-		for(NameMappingEntry tEntry : tNMS.getAddresses(mReferenceNode.getCentralFN().getName())) {
+		for(NameMappingEntry tEntry : tNMS.getAddresses(mNode.getCentralFN().getName())) {
 			if(((HRMID)tEntry.getAddress()).getDescendingDifference(pTarget) < tHighestDescendingDifference) {
 				tHighestDescendingDifference = ((HRMID)tEntry.getAddress()).getDescendingDifference(pTarget);
 //				tMyIdentification = ((HRMID)tEntry.getAddress()).clone();
@@ -567,7 +550,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			Logging.log(this, "Generated for L2 address the long value " + tRandomNumber);
 			
 			tAddress = new L2Address(tRandomNumber);
-			tAddress.setCaps(mReferenceNode.getCapabilities());
+			tAddress.setCaps(mNode.getCapabilities());
 			tAddress.setDescr(pElement.toString());
 			mNameMapping.registerName(pName, tAddress, pLevel);
 		}
@@ -742,11 +725,14 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		HRMName tThisHostAddress = null;
 		boolean tDontElect=false;
 		
-		tThisHostAddress = getNameFor(mReferenceNode.getCentralFN());
+		tThisHostAddress = getNameFor(mNode.getCentralFN());
 		if(!mUsedAddresses.contains(pFrom)) {
 			Logging.warn(this, "From address " +pFrom +" is not known as local address.");
 		}
 		
+		/**
+		 * Have we got a link registration for a new neighbor?
+		 */
 		if(pGate instanceof DirectDownGate && !mUsedAddresses.contains(tDestination)) {
 			Logging.info(this, "Add link to external " +tDestination);
 			
@@ -772,7 +758,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 					}
 					AbstractGate tGate = null;
 					try {
-						tGate = mReferenceNode.getCentralFN().getGate(tContemporaryRoute.get(0).getID());
+						tGate = mNode.getCentralFN().getGate(tContemporaryRoute.get(0).getID());
 					} catch (IndexOutOfBoundsException tExc) {
 						Logging.err(this, "Unable to determine outgoing gate for connection to " + pGate + " while contemporary route is " + tContemporaryRoute, tExc);
 					}
@@ -802,7 +788,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 							Logging.log(this, "Pair " + tSource.getDescr() + ", " + tDestination.getDescr() + " scheduled for election");
 						}
 						EventNewClusterMemberDetected tConnectEvent = new EventNewClusterMemberDetected(tDestination, tClusterID, tDontElect);
-						mReferenceNode.getHost().getTimeBase().scheduleIn(waitTime, tConnectEvent);
+						mNode.getHost().getTimeBase().scheduleIn(waitTime, tConnectEvent);
 					}
 				}
 			}
@@ -895,8 +881,30 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + "@" + mReferenceNode.toString();
+		String tResult = getClass().getSimpleName() + "@" + mNode.toString();
 		
 		return tResult;
+	}
+	
+	private class EventNewClusterMemberDetected implements IEvent
+	{
+		public EventNewClusterMemberDetected(Name pName, long pToClusterID, boolean pConnectionToOtherAS)
+		{
+			super();
+			mConnectTo = pName;
+			mToClusterID = pToClusterID;
+			mConnectionToOtherAS = pConnectionToOtherAS;
+		}
+		
+		@Override
+		public void fire()
+		{
+			Logging.log(this, "Opening connection to " + mConnectTo);
+			mHRMController.addConnection(mConnectTo, HierarchyLevel.createBaseLevel(), mToClusterID, mConnectionToOtherAS);
+		}
+		
+		private Name mConnectTo;
+		private long mToClusterID = 0;
+		private boolean mConnectionToOtherAS;
 	}
 }
