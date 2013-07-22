@@ -881,7 +881,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + "@" + mNode.toString();
+		String tResult = getClass().getSimpleName() + (mNode != null ? "@" + mNode.toString() : "");
 		
 		return tResult;
 	}
