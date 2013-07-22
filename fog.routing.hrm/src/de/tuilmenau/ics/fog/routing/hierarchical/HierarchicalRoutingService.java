@@ -814,7 +814,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate)
 	{
-		Logging.log(this, "REGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
+		Logging.log(this, "UNREGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
 
 		L2Address tSource = mLocalNameMapping.get(pFrom);
 //		L2Address tDestination = mLocalNameMapping.get(pGate.getNextNode());
