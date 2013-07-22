@@ -115,8 +115,14 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 
 	public boolean registerRoute(HRMName pFrom, HRMName pTo, Route pPath)
 	{
-		if(!mCoordinatorRoutingMap.contains(pFrom)) mCoordinatorRoutingMap.add(pFrom);
-		if(!mCoordinatorRoutingMap.contains(pTo)) mCoordinatorRoutingMap.add(pTo);
+		if(!mCoordinatorRoutingMap.contains(pFrom)){
+			mCoordinatorRoutingMap.add(pFrom);
+		}
+		
+		if(!mCoordinatorRoutingMap.contains(pTo)){
+			mCoordinatorRoutingMap.add(pTo);
+		}
+		
 		if(!mCoordinatorRoutingMap.isLinked(pFrom, pTo, pPath)) {
 			if(pPath != null) {
 				Route tPath = (Route)pPath.clone();
@@ -125,7 +131,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 				}
 			}
 		} else {
-			Logging.trace(this, "Omitting new link between " + pFrom + " and " + pTo);
+			Logging.trace(this, "Link is already known (from " + pFrom + " to " + pTo + ")");
 		}
 		return true;
 	}
