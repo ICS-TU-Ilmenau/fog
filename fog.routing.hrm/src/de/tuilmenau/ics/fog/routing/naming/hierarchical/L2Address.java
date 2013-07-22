@@ -35,12 +35,26 @@ public class L2Address extends HRMName
 	
 	public boolean equals(Object pObj)
 	{
-		if(pObj == null) return false;
-		if(pObj == this) return true;
+		if(pObj == null){
+			return false;
+		}
 		
+		//TODO: remove this
+		if(pObj == this){
+			return true;
+		}
+		
+		/**
+		 * L2Address
+		 */
 		if(pObj instanceof L2Address) {
 			return (((L2Address) pObj).mAddress.equals(mAddress));
-		} else if (pObj instanceof RoutingServiceLinkVector) {
+		} 
+		
+		/**
+		 * RoutingServiceLinkVector
+		 */
+		if (pObj instanceof RoutingServiceLinkVector) {
 			return ( ((RoutingServiceLinkVector)pObj).getSource() != null && ((RoutingServiceLinkVector)pObj).getSource().equals(this)) || (((RoutingServiceLinkVector)pObj).getDestination() != null && ((RoutingServiceLinkVector)pObj).getDestination().equals(this) ) ;
 		}
 		
@@ -49,6 +63,6 @@ public class L2Address extends HRMName
 	
 	public String toString()
 	{
-		return mOptionalDescr + "(addr.=" + mAddress + ")";
+		return getClass().getSimpleName() + "(name=\"" + mOptionalDescr + "\", addr.=" + mAddress + ")";
 	}
 }
