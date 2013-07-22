@@ -551,7 +551,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		
 		if(!mLayer2NameMapping.containsKey(pElement)) {
 			long tRandomNumber = mRandomGenerator.nextLong();
-			Logging.log(this, "Generated for L2 address the long value " + tRandomNumber);
+			Logging.log(this, "Generated as L2 address the long value " + tRandomNumber + " for " + pName);
 			
 			tAddress = new L2Address(tRandomNumber);
 			tAddress.setCaps(mNode.getCapabilities());
