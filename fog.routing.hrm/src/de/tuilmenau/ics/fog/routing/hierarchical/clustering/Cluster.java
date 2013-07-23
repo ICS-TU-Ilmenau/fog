@@ -61,10 +61,15 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private BullyPriority mBullyPriority = null;
 
 	/**
-	 * Stored the hierarchy level of this cluster.
+	 * Stores the hierarchy level of this cluster.
 	 */
 	private HierarchyLevel mHierarchyLevel;
 
+	/**
+	 * Stores the elector which is responsible for coordinator elections for this cluster.
+	 */
+	private Elector mElector = null;
+	
 	private CoordinatorCEPChannel mChannelToCoordinator = null;
 	private Long mClusterID;
 	private BullyPriority mHighestPriority = null;
@@ -124,7 +129,12 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				mBullyPriority.increaseConnectivity();
 			}
 		}
-		Elector tProcess = ElectionManager.getElectionManager().addElection(mHierarchyLevel.getValue(), mClusterID, new Elector(this));
+
+		// creates new elector object, which is responsible for Bully based election processes
+		mElector = new Elector(this);
+		
+		ElectionManager.getElectionManager().addElection(mHierarchyLevel.getValue(), mClusterID, mElector);
+		
 		mMux = new CoordinatorCEPMultiplexer(mHRMController);
 		mMux.setCluster(this);
 	}
