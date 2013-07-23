@@ -107,8 +107,9 @@ public class HRMViewer extends EditorPart
 					}else if(tEntry instanceof Coordinator) {
 						// a coordinator
 						printCoordinator(tEntry);
-					}else if(tEntry instanceof NeighborCluster) {
-						// neighbor cluster
+					}else {
+						// neighbor cluster?
+						Logging.warn(this, "Got an unsupported routing target type: " + tEntry.getClass().getSimpleName());
 					}
 				}else{
 					if (HRM_VIEWER_DEBUGGING){
