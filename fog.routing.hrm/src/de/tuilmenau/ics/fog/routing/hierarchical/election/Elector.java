@@ -32,7 +32,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -59,6 +58,11 @@ public class Elector extends Thread implements HRMEntity
 	public Elector(Cluster pCluster)
 	{
 		mParentCluster = pCluster;
+		
+		// start coordinator election for the created HRM instance if desired
+		if(HRMConfig.Hierarchy.BUILD_AUTOMATICALLY) {
+			signalElectionStart();
+		}
 	}
 	
 	/**
