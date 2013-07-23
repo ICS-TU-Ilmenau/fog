@@ -37,6 +37,7 @@ import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.*;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -79,16 +80,13 @@ public class HRMController extends Application implements IServerCallback
 	private int mConnectionCounter = 0;
 	
 	/**
-	 * @param pHost is the hosts that runs the coordinator
-	 * @param pIdentity is the identity of the hosts that runs the coordinator
-	 * @param pNode is the node running the coordinator
+	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
 	 */
-	public HRMController(Host pHost, Identity pIdentity, Node pNode, HierarchicalRoutingService pHRS)
+	public HRMController(Node pNode, HierarchicalRoutingService pHRS)
 	{
-		super(pHost, null, pIdentity);
+		super(pNode.getHost(), null, pNode.getIdentity());
 		mName = new SimpleName(ROUTING_NAMESPACE, null);
-		mHost = pHost;
 		mPhysicalNode = pNode;
 		Logging.log(this, "created");
 		Binding serverSocket=null;
@@ -100,7 +98,10 @@ public class HRMController extends Application implements IServerCallback
 			Logging.err(this, "Unable to bind to hosts application interface", tExc);
 		}
 		mHRS = pHRS;
-		mApprovedSignatures = new LinkedList<HRMSignature>();
+		mApprovedSignatures = new LinkedList<HRMSignature>();		
+		
+		// set the Bully priority 
+		BullyPriority.configureNode(pNode);
 	}
 
 	/**
@@ -494,7 +495,7 @@ public class HRMController extends Application implements IServerCallback
 				Connection tConn = null;
 				try {
 					Logging.log(this, "CREATING CONNECTION to " + tName);
-					tConn = mHost.connectBlock(tName, getConnectDescription(tProperty), getNode().getIdentity());
+					tConn = getHost().connectBlock(tName, getConnectDescription(tProperty), getNode().getIdentity());
 				} catch (NetworkException tExc) {
 					Logging.err(this, "Unable to connecto to " + tName, tExc);
 				}

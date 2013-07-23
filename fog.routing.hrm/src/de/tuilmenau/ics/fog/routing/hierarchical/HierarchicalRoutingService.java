@@ -33,6 +33,7 @@ import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressingTypeProperty.AddressingType;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
@@ -68,7 +69,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	private final RoutableGraph<HRMName, Route> mCoordinatorRoutingMap;
 	private HierarchicalNameMappingService<Name> mNameMapping = null;
 	private static Random mRandomGenerator = null; //singleton needed, otherwise parallel number generators might be initialized with the same seed
-	private HRMController mHRMController = null;
+	private HRMController mHRMController = null; //TODO: getRoute und co abfangen, wenn HRMController nocht nicht gestartet ist
 	private HashMap<HRMID, FIBEntry> mHopByHopRoutingMap = new HashMap<HRMID, FIBEntry>();
 	private Name mSourceIdentification = null;
 	private HashMap<ForwardingElement, L2Address> mLayer2NameMapping = new HashMap<ForwardingElement, L2Address>();
@@ -97,9 +98,15 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * This function creates the local HRM controller instance
 	 * The HRS has to be already registered because a server FN is used, which registers a node and links at the local routing service.
 	 */
-	public void createHRMController() //TV
+	@Override
+	public void registered()
 	{
-		mHRMController = new HRMController(mNode.getHost(), mNode.getIdentity(), mNode, this);
+		Logging.log(this, "Got event \"ROUTING SERVICE REGISTERED\"");
+		
+		// create HRM controller instance 
+		mHRMController = new HRMController(mNode, this);
+		
+		// register the HRM controller instance as application at the local host
 		mNode.getHost().registerApp(mHRMController);
 	}
 
@@ -905,6 +912,10 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		public void fire()
 		{
 			Logging.log(this, "Opening connection to " + mConnectTo);
+			if (mHRMController == null){
+				Logging.err(this, "HRM controller is invalid, skipping connect request");
+				return;
+			}
 			mHRMController.addConnection(mConnectTo, HierarchyLevel.createBaseLevel(), mToClusterID, mConnectionToOtherAS);
 		}
 		

@@ -45,9 +45,6 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		// register HRM instance as routing service for the current node
 		pNode.getHost().registerRoutingService(tHRS);
 
-		// create the node local HRM controller
-		tHRS.createHRMController();
-
 		// start coordinator election for the created HRM instance if desired
 		if(HRMConfig.Hierarchy.BUILD_STARTS_AFTER_NODE_CONFIGURATION) {
 			if(pAS.getSimulation().getPendingEvents() == null) {
@@ -59,9 +56,6 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 				 */
 			}
 		}
-
-		// set the Bully priority 
-		BullyPriority.configureNode(pNode);
 
 		Logging.log(this, "###### CONFIGURING NODE " + pName + " -END ###### ");
 	}
