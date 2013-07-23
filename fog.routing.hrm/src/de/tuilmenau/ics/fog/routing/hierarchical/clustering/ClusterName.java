@@ -90,7 +90,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPChannel> getParticipatingCEPs() {
+	public LinkedList<CoordinatorCEPChannel> getClusterMembers() {
 		return null;
 	}
 
@@ -172,7 +172,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
+	public void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, int pCoordToken, HRMName pAddress)
 	{
 		
 	}

@@ -137,7 +137,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return null;
 	}
 
-	public synchronized void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
+	public synchronized void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, int pCoordToken, HRMName pAddress)
 	{
 		mCoordAddress = pAddress;
 		mCoordName = pCoordName;
@@ -180,7 +180,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPChannel> getParticipatingCEPs()
+	public LinkedList<CoordinatorCEPChannel> getClusterMembers()
 	{
 		LinkedList<CoordinatorCEPChannel> tCEPs = new LinkedList<CoordinatorCEPChannel>();
 		//tCEPs.add(mCEP);

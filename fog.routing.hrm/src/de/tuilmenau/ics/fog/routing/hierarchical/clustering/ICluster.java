@@ -64,7 +64,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphTargetName
 	 * @return Provide list of connection end points that are connected to this cluster - the other connection end point
 	 * governs the cluster it is associated to
 	 */
-	public LinkedList<CoordinatorCEPChannel> getParticipatingCEPs();
+	public LinkedList<CoordinatorCEPChannel> getClusterMembers();
 	
 	/**
 	 * 
@@ -181,7 +181,7 @@ public interface ICluster extends Serializable, IRoutableClusterGraphTargetName
 	 * @param pAddress The address of the coordinator can be set here. It can be either an OSI Layer 2 address or a HRMID. However using the last type as address
 	 * was not implemented. 
 	 */
-	public void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress);
+	public void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, int pCoordToken, HRMName pAddress);
 	
 	/**
 	 * 
