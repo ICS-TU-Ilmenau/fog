@@ -22,7 +22,7 @@ public class BullyAlive extends SignalingMessageBully
 	 * @param pSenderName the sender's name 
 	 * @param pCoordinatorName the coordinator's name
 	 */
-	public BullyAlive(Name pSenderName)
+	public BullyAlive(Name pSenderName) //TODO: ev. sollte hier auch die Prio. übermittelt werden, so dass man nicht immer erst auf das BullyElect warten muss
 	{
 		super(pSenderName);
 	}
