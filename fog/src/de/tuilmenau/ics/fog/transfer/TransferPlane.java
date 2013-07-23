@@ -266,6 +266,12 @@ public class TransferPlane implements TransferPlaneObserver
 	}
 
 	@Override
+	public void eventRoutingServiceRegistered(RoutingService pNewRS) 
+	{
+		mRS.eventRoutingServiceRegistered(pNewRS);
+	}
+
+	@Override
 	public void updateNode(ForwardingNode pElement, Description pCapabilities) 
 	{
 		if(!mMap.contains(pElement)) {

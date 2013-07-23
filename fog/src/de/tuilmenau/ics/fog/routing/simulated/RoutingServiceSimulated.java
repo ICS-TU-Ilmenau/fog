@@ -444,6 +444,11 @@ public class RoutingServiceSimulated implements RoutingService
 		}
 	}
 
+	public void eventRoutingServiceRegistered(RoutingService pNewRS) 
+	{
+		// nothing has to be done here, event isn't interesting
+	}
+
 	/**
 	 * Method created a new address, which can than be used for a new forwarding
 	 * node in the transfer plane.

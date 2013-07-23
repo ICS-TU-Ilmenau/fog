@@ -236,6 +236,14 @@ public class RoutingServiceMultiplexer implements RoutingService
 	}
 
 	@Override
+	public void eventRoutingServiceRegistered(RoutingService pNewRS) 
+	{
+		for(RoutingService rs : routingServices) {
+			rs.eventRoutingServiceRegistered(pNewRS);
+		}
+	}
+
+	@Override
 	public int getNumberVertices()
 	{
 		int tNumber = 0;

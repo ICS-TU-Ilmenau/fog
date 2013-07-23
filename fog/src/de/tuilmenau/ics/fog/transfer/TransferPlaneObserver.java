@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.transfer;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
@@ -84,6 +85,15 @@ public interface TransferPlaneObserver
 	 * @param pGate Gate to delete
 	 * @return true==success; false==link was not known
 	 */
-	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate); 
+	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate);
+	
+	/**
+	 * Event: Informs the observer about a new routing service registration. This
+	 * 		  method is similar to the function started() from the application interface.
+	 * 		  The mechanism is mainly useful for the HRM routing service.
+	 * 
+	 * @param pNewRS the new routing service
+	 */
+	public void eventRoutingServiceRegistered(RoutingService pNewRS);	
 }
 
