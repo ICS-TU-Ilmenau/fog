@@ -755,7 +755,7 @@ public class HRMController extends Application implements IServerCallback
 		}
 		
 		if (mRegisteredCoordinators.get(tLevel).size() > 0){
-			Logging.log(this, "#### Got more than one coordinator at level " + pHierarchyLevel + ", already known (0): " + mRegisteredCoordinators.get(tLevel).get(0) + ", new one: " + pCoordinator);
+			Logging.log(this, "#### Got more than one coordinator at level " + tLevel + ", already known (0): " + mRegisteredCoordinators.get(tLevel).get(0) + ", new one: " + pCoordinator);
 		}
 		
 		// store the new coordinator
@@ -763,7 +763,7 @@ public class HRMController extends Application implements IServerCallback
 		
 		// update GUI: image for node object 
 		//TODO: check and be aware of topology dynamics
-		getNode().setDecorationParameter("L"+ pHierarchyLevel);
+		getNode().setDecorationParameter("L"+ tLevel);
 	}
 	
 	public void unregisterCoordinator(Coordinator pCoordiantor)
