@@ -91,6 +91,10 @@ public class CoordinatorCEPChannel
 				
 		boolean BULLY_SIGNALING_DEBUGGING = true;
 
+		if (getPeer() == null){
+			Logging.warn(this, "Peer is still invalid!");
+		}
+		
 		/**
 		 * ELECT
 		 */
@@ -112,7 +116,7 @@ public class CoordinatorCEPChannel
 					
 					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, getPeer().getBullyPriority(), tSignature, getPeer().getToken());
 					
-					for(CoordinatorCEPChannel tCEP : getPeer().getParticipatingCEPs()) {
+					for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
 						tAnnouncePacket.addCoveredNode(tCEP.getPeerName());
 					}
 					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
@@ -252,7 +256,7 @@ public class CoordinatorCEPChannel
 								tAnnouncePacket.addRoutingVector(new RoutingServiceLinkVector(tPath, tHRS.getCoordinatorRoutingMap().getSource(tPath), tHRS.getCoordinatorRoutingMap().getDest(tPath)));
 							}
 						}
-						for(CoordinatorCEPChannel tCEP : getPeer().getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
 							boolean tWroteAnnouncement = false;
 							if(tCEP.isEdgeCEP()) {
 								
@@ -269,7 +273,7 @@ public class CoordinatorCEPChannel
 								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), getSourceName(), getPeerName());
 								tAnnouncePacket.addRoutingVector(tVector);
 							}
-							for(CoordinatorCEPChannel tCEP : getPeer().getParticipatingCEPs()) {
+							for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
 								boolean tWroteAnnouncement = false;
 								if(tCEP.getRemoteClusterName().getHierarchyLevel().getValue() - 1 == tAnnouncePacket.getLevel().getValue()) {
 									
@@ -728,7 +732,7 @@ public class CoordinatorCEPChannel
 	
 	public void setEdgeCEP()
 	{
-		ElectionManager.getElectionManager().removeElection(getPeer().getHierarchyLevel().getValue(), getPeer().getClusterID());
+//TODO		ElectionManager.getElectionManager().removeElection(getPeer().getHierarchyLevel().getValue(), getPeer().getClusterID());
 		mIsEdgeRouter = true;
 	}
 	
@@ -754,7 +758,7 @@ public class CoordinatorCEPChannel
 						
 						if(tCluster instanceof NeighborCluster && ((NeighborCluster)tCluster).getClusterDistanceToTarget() + pDiscovery.getDistance() > tRadius) continue;
 						boolean tBreak=false;
-						for(CoordinatorCEPChannel tCEP : tCluster.getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCEP : tCluster.getClusterMembers()) {
 							if(tCEP.isEdgeCEP()) tBreak = true;
 						}
 						if(tBreak) {
@@ -803,7 +807,7 @@ public class CoordinatorCEPChannel
 					tNewCluster = tCluster;
 					if(tNewCluster instanceof NeighborCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {
 						Logging.log(this, "Filling required information into " + tNewCluster);
-						tNewCluster.setCoordinatorCEP(null, null, pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress());
+						tNewCluster.setCoordinatorCEP(null, null, pEntry.getCoordinatorName(), pEntry.getToken(), pEntry.getCoordinatorRoutingAddress());
 						if(pEntry.isInterASCluster()){
 							tNewCluster.setInterASCluster();
 						}

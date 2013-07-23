@@ -70,5 +70,10 @@ public class HRMConfig
 		 * Default priority for election process. This value is used when no value is explicitly defined for a node.
 		 */
 		public static final long DEFAULT_BULLY_PRIORITY = 1; //TV
+		
+		/**
+		 * (De-)activate sending of BullyAlive messages in order to detect dead cluster members.
+		 */
+		public static final boolean SEND_BULLY_ALIVES = true;
 	}
 }

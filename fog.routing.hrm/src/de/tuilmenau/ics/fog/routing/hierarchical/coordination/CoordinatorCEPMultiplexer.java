@@ -123,7 +123,7 @@ public class CoordinatorCEPMultiplexer
 					
 					for(ICluster tNeighbor: tManager.getManagedCluster().getNeighbors()) {
 						boolean tBreak = false;
-						for(CoordinatorCEPChannel tCheckForEdgeCluster : tNeighbor.getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCheckForEdgeCluster : tNeighbor.getClusterMembers()) {
 							if(tCheckForEdgeCluster != null && tCheckForEdgeCluster.isEdgeCEP()){
 								tBreak = true;
 							}
@@ -181,7 +181,7 @@ public class CoordinatorCEPMultiplexer
 					}
 				}
 				tTokens.add(tManager.getManagedCluster().getToken());
-				tManager.getParticipatingCEPs().add(tCEPDemultiplexed);
+				tManager.getClusterMembers().add(tCEPDemultiplexed);
 				if(!pTargetCluster.getCoordinatorName().equals(mHRMController.getNode().getCentralFN().getName())) {
 					int tDistance = (pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() : 0); 
 					NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tTokens, pTargetCluster.getClusterID(), pTargetCluster.getToken(), pTargetCluster.getHierarchyLevel(), tDistance);

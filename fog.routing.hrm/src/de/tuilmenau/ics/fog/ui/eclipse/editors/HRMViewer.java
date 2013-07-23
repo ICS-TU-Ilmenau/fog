@@ -274,7 +274,7 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).start();
+			ElectionManager.getElectionManager().getElector(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).startElection();
 		}
 		
 	}
@@ -296,21 +296,21 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			Logging.log(this, "Available Election Processes: ");
+			Logging.log(this, "Available Elector instances: ");
 			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(this, tProcess.toString());
 			}
-			for(Elector tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel().getValue())) {
-				boolean tStartProcess=true;
-				Cluster tCluster = tProcess.getCluster();
-				for(CoordinatorCEPChannel tCEP : tCluster.getParticipatingCEPs()) {
-					if(tCEP.isEdgeCEP()) {
-						tStartProcess = false;
-					}
-				}
-				if(tStartProcess) {
-					tProcess.start();
-				}
+			for(Elector tElector : ElectionManager.getElectionManager().getElectors(mCluster.getHierarchyLevel().getValue())) {
+//				boolean tStartProcess=true;
+//				Cluster tCluster = tElector.getCluster();
+//				for(CoordinatorCEPChannel tCEP : tCluster.getClusterMembers()) {
+//					if(tCEP.isEdgeCEP()) {
+//						tStartProcess = false;
+//					}
+//				}
+//				if(tStartProcess) {
+					tElector.startElection();
+//				}
 			}
 			
 		}
@@ -338,10 +338,8 @@ public class HRMViewer extends EditorPart
 			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
 				Logging.log(tProcess.toString());
 			}
-			for(Elector tProcess : ElectionManager.getElectionManager().getProcesses(mCluster.getHierarchyLevel().getValue())) {
-				synchronized(tProcess) {
-					 tProcess.notifyAll();
-				}
+			for(Elector tElector : ElectionManager.getElectionManager().getElectors(mCluster.getHierarchyLevel().getValue())) {
+				tElector.startClustering();
 			}
 		}
 		
@@ -364,9 +362,7 @@ public class HRMViewer extends EditorPart
 		@Override
 		public void handleEvent(Event event)
 		{
-			synchronized(ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID())) {
-				ElectionManager.getElectionManager().getProcess(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).notifyAll();
-			}
+			ElectionManager.getElectionManager().getElector(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).startClustering();
 		}		
 	}	
 
@@ -601,8 +597,8 @@ public class HRMViewer extends EditorPart
 		
 		int j = 0;
 		if (HRM_VIEWER_DEBUGGING)
-			Logging.log(this, "Amount of participating CEPs is " + pCluster.getParticipatingCEPs().size());
-		for(CoordinatorCEPChannel tCEP : pCluster.getParticipatingCEPs()) {
+			Logging.log(this, "Amount of participating CEPs is " + pCluster.getClusterMembers().size());
+		for(CoordinatorCEPChannel tCEP : pCluster.getClusterMembers()) {
 			if (HRM_VIEWER_DEBUGGING)
 				Logging.log(this, "Updating table item number " + j);
 			

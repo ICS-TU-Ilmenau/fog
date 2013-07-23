@@ -147,8 +147,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		// creates new elector object, which is responsible for Bully based election processes
 		mElector = new Elector(this);
 		
-		ElectionManager.getElectionManager().addElection(mHierarchyLevel.getValue(), mClusterID, mElector);
-		
 		mMux = new CoordinatorCEPMultiplexer(mHRMController);
 		mMux.setCluster(this);
 	}
@@ -170,14 +168,15 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	
 	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
-		setToken(pAnnounce.getToken());
-		setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pCEP.getPeerName());
+		setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerName());
 		getHRMController().addApprovedSignature(pAnnounce.getCoordSignature());
 		getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
-	public void setCoordinatorCEP(CoordinatorCEPChannel pCoordinatorChannel, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress)
+	public void setCoordinatorCEP(CoordinatorCEPChannel pCoordinatorChannel, HRMSignature pCoordSignature, Name pCoordName, int pCoordToken, HRMName pAddress)
 	{
+		setToken(pCoordToken);
+		
 		Logging.log(this, "announcement number " + (++mAnnoucementCounter) + ": Setting Coordinator " + pCoordinatorChannel + " with signature " + pCoordSignature + " with routing address " + pAddress + " and priority ");
 		Logging.log(this, "previous channel to coordinator was " + mChannelToCoordinator + " for coordinator " + mCoordName);
 		mChannelToCoordinator = pCoordinatorChannel;
@@ -353,7 +352,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 //					tForwardingCluster = (Cluster) ((Cluster) getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster()) == null ? pCEP.getRemoteCluster() : getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster())) ;
 					//pAnnounce.setAnnouncer( (tForwardingCluster.getCoordinatorsAddress() != null ? tForwardingCluster.getCoordinatorsAddress() : null ));
 					Logging.log(this, "Removing " + this + " as participating CEP from " + this);
-					getParticipatingCEPs().remove(this);
+					getClusterMembers().remove(this);
 				}
 				try {
 					addNeighborCluster(getHRMController().getCluster(pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
@@ -394,7 +393,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				mBullyPriority.increaseConnectivity();
 				
 				if(!mInterASCluster) {
-					Logging.log(this, "Informing " + getParticipatingCEPs() + " about change in priority and initiating new election");
+					Logging.log(this, "Informing " + getClusterMembers() + " about change in priority and initiating new election");
 					
 					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNode().getCentralFN().getName(), mBullyPriority), null);
 					
@@ -465,7 +464,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 	}
 
-	public LinkedList<CoordinatorCEPChannel> getParticipatingCEPs()
+	public LinkedList<CoordinatorCEPChannel> getClusterMembers()
 	{
 		return mCEPs;
 	}
@@ -527,6 +526,23 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	{
 		mCoordName = pCoordName;
 	}
+
+	/**
+	 * Sends a packet as broadcast to call cluster members
+	 * 
+	 * @param pPacket the packet which has to be broadcasted
+	 */
+	public void sendPacketBroadcast(Serializable pPacket)
+	{
+		Logging.log(this, "Sending CLUSTER BROADCAST " + pPacket);
+		
+		for(CoordinatorCEPChannel tClusterMember : getClusterMembers()) {			
+			Logging.log(this, "       ..to " + tClusterMember);
+			
+			// send the packet to one of the possible cluster members
+			tClusterMember.sendPacket(pPacket);
+		}
+	}
 	
 	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed)
 	{
@@ -543,13 +559,13 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 			tInformedCEPs = new LinkedList<CoordinatorCEPChannel>(); 
 		}
 		try {
-			for(CoordinatorCEPChannel tCEP : mCEPs)
+			for(CoordinatorCEPChannel tClusterMember : mCEPs)
 			{
-				if(!tInformedCEPs.contains(tCEP))
+				if(!tInformedCEPs.contains(tClusterMember))
 				{
-					Logging.log(this, "   BROADCAST TO " + tCEP);
-					tCEP.sendPacket(pData);
-					tInformedCEPs.add(tCEP);
+					Logging.log(this, "   BROADCAST TO " + tClusterMember);
+					tClusterMember.sendPacket(pData);
+					tInformedCEPs.add(tClusterMember);
 				}
 			}
 		} catch (ConcurrentModificationException tExc) {
@@ -590,9 +606,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	
 	@Override
 	public void setToken(int pToken) {
-		if(mToken != 0) {
-			Logging.log(this, "Updating token");
-		}
+		Logging.log(this, "Updating token from " + mToken + " to " + pToken);
 		mToken = pToken;
 	}
 	
@@ -746,17 +760,23 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	}
 	
 	/**
+	 * Determines the coordinator of this cluster. It is "null" if the election was lost or hasn't finished yet. 
 	 * 
-	 * @return Return the cluster manager that is associated to this intermediate cluster. However it is only initialized if this
-	 * node really had the highest priority.
+	 * @return the cluster's coordinator
 	 */
 	public Coordinator getCoordinator()
 	{
 		return mCoordinator;
 	}
 	
+	/**
+	 * Set the new coordinator, which was elected by the Elector instance.
+	 * 
+	 * @param pCoordinator the new coordinator
+	 */
 	public void setCoordinator(Coordinator pCoordinator)
 	{
+		Logging.log(this, "Updating the coordinator from " + mCoordinator + " to " + pCoordinator);
 		mCoordinator = pCoordinator;
 	}
 	

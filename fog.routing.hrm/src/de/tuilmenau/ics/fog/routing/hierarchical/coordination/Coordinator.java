@@ -124,6 +124,15 @@ public class Coordinator implements ICluster, HRMEntity
 		// creates the coordinator signature
 		mSignature = getHRMController().createCoordinatorSignature(this);
 
+		// updating the Bully priority
+		setPriority(mManagedCluster.getBullyPriority());
+
+		// register itself as coordinator for the managed cluster
+		mManagedCluster.setCoordinator(this);
+
+		// register itself as addressable target at the local HRMController instance
+		mManagedCluster.getHRMController().addRoutableTarget(this);
+
 		Logging.log(this, "CREATED");
 	}
 	
@@ -165,9 +174,10 @@ public class Coordinator implements ICluster, HRMEntity
 		return tID;
 	}
 	
-	public boolean clusterCoordinators(int pLevel)
+	public boolean clusterCoordinators()
 	{
-		Logging.log(this, "Preparing cluster on level "  +pLevel + ":I will connect to " + mManagedCluster.getNeighbors());
+		Logging.log(this, "CLUSTERING STARTED, will connect to " + mManagedCluster.getNeighbors());
+		
 		int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 
 		Logging.log(this, "Radius is " + tRadius);
@@ -259,7 +269,7 @@ public class Coordinator implements ICluster, HRMEntity
 	 * @throws RequirementsException 
 	 * @throws RoutingException 
 	 */
-	public void distributeAddresses() throws RoutingException, RequirementsException, RemoteException
+	public void signalAddresses() throws RoutingException, RequirementsException, RemoteException
 	{
 		// reseting HRM ID, TODO: needed here?
 		setHRMID(this, new HRMID(0));
@@ -286,8 +296,8 @@ public class Coordinator implements ICluster, HRMEntity
 		 * 
 		 * level one : map addresses to connection end points, later retrieveAddress() is used in order to distribute the next hop entry
 		 */
-		Logging.log(this, "available clients for address distribution: " + mManagedCluster.getParticipatingCEPs());
-		for(CoordinatorCEPChannel tReceivingCEP : mManagedCluster.getParticipatingCEPs()) {
+		Logging.log(this, "available clients for address distribution: " + mManagedCluster.getClusterMembers());
+		for(CoordinatorCEPChannel tReceivingCEP : mManagedCluster.getClusterMembers()) {
 			HRMID tID = null;
 			TopologyData tTopologyData = new TopologyData();
 			try {
@@ -731,7 +741,7 @@ public class Coordinator implements ICluster, HRMEntity
 								if(tSourceCEP.getPeerName().equals(tAddress) && tPath.size() > 1) {
 									tDestination = tLocalRoutingDB.getDest(tPath.get(1));
 								} else if(tPath != null && !tPath.isEmpty()) {
-									for(CoordinatorCEPChannel tCEP : mManagedCluster.getParticipatingCEPs()) {
+									for(CoordinatorCEPChannel tCEP : mManagedCluster.getClusterMembers()) {
 										if(tCEP.getPeerName().equals(tAddress)) {
 											tDestination = tCEP.getPeerName();
 										}
@@ -801,7 +811,7 @@ public class Coordinator implements ICluster, HRMEntity
 								}
 							}
 						}
-						for(CoordinatorCEPChannel tCEP : mManagedCluster.getParticipatingCEPs()) {
+						for(CoordinatorCEPChannel tCEP : mManagedCluster.getClusterMembers()) {
 							if(tCEP.getPeerName().equals(tPolygon.getFirst().getDestination())) {
 								tNextHop = tPolygon.getFirst().getDestination();
 								tPathToTarget = tPolygon;
@@ -900,7 +910,9 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 
 	@Override
-	public void setPriority(BullyPriority pPriority) {
+	public void setPriority(BullyPriority pPriority) 
+	{
+		Logging.log(this, "Updating the Bully priority from " + mBullyPriority + " to " + pPriority);
 		mBullyPriority = pPriority;
 	}
 
@@ -910,7 +922,7 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPChannel> getParticipatingCEPs() {
+	public LinkedList<CoordinatorCEPChannel> getClusterMembers() {
 		return mCEPs;
 	}
 
@@ -926,7 +938,7 @@ public class Coordinator implements ICluster, HRMEntity
 	
 	public LinkedList<CoordinatorCEPChannel> getLowerCEPs()
 	{
-		return mManagedCluster.getParticipatingCEPs();
+		return mManagedCluster.getClusterMembers();
 	}
 	
 	@Override
@@ -1052,7 +1064,7 @@ public class Coordinator implements ICluster, HRMEntity
 		setHRMID(this, pTopologyData.getHRMID());
 		mManagedCluster.setHRMID(this, pTopologyData.getHRMID());
 		try {
-			distributeAddresses();
+			signalAddresses();
 		} catch (RoutingException tExc) {
 			Logging.err(this, "Error-got routing exception when trying to distribute addresses", tExc);
 		} catch (RequirementsException tExc) {
@@ -1146,7 +1158,7 @@ public class Coordinator implements ICluster, HRMEntity
 							 * now the old cluster is notified about the new cluster
 							 */
 							
-							NeighborClusterAnnounce tNewCovered = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pAnnounce.getCoordSignature(), pCEP.getPeerName(), pAnnounce.getToken(), (((HRMName)pCEP.getPeerName()).getAddress().longValue()));
+							NeighborClusterAnnounce tNewCovered = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pAnnounce.getCoordSignature(), pCEP.getPeerName(), pAnnounce.getToken(), pCEP.getPeerName().getAddress().longValue());
 							tNewCovered.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 							tNewCovered.setNegotiatorIdentification(tLocalManagedClusterName);
 							DiscoveryEntry tCoveredEntry = new DiscoveryEntry(pAnnounce.getToken(),	pAnnounce.getSenderName(), (pCEP.getPeerName()).getAddress().longValue(), pCEP.getPeerName(),	getHierarchyLevel());
@@ -1162,7 +1174,7 @@ public class Coordinator implements ICluster, HRMEntity
 							Logging.warn(this, "Rejecting " + (getCoordinatorCEP().getPeerName()).getDescr() + " in favor of " + pAnnounce.getSenderName());
 							tNewCovered.setRejection();
 							getCoordinatorCEP().sendPacket(tNewCovered);
-							for(CoordinatorCEPChannel tCEP : getParticipatingCEPs()) {
+							for(CoordinatorCEPChannel tCEP : getClusterMembers()) {
 								if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerName())) {
 									tCEP.setAsParticipantOfMyCluster(true);
 								} else {
@@ -1171,7 +1183,7 @@ public class Coordinator implements ICluster, HRMEntity
 								}
 							}
 							setToken(pAnnounce.getToken());
-							setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pCEP.getPeerName());
+							setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(),pAnnounce.getToken(),  pCEP.getPeerName());
 							getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 							getHRMController().addApprovedSignature(pAnnounce.getCoordSignature());
 							getCoordinatorCEP().sendPacket(tNewCovered);
@@ -1180,7 +1192,7 @@ public class Coordinator implements ICluster, HRMEntity
 				}
 				
 			} else {
-				for(CoordinatorCEPChannel tCEP : getParticipatingCEPs()) {
+				for(CoordinatorCEPChannel tCEP : getClusterMembers()) {
 					if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerName())) {
 						tCEP.setAsParticipantOfMyCluster(true);
 					} else {
@@ -1189,7 +1201,7 @@ public class Coordinator implements ICluster, HRMEntity
 				}
 				setToken(pAnnounce.getToken());
 				getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
-				setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), (HRMName)pCEP.getPeerName());
+				setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerName());
 			}
 		} else {
 			/*
@@ -1290,7 +1302,7 @@ public class Coordinator implements ICluster, HRMEntity
 //				tForwardingCluster = (Cluster) ((Cluster) getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster()) == null ? pCEP.getRemoteCluster() : getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster())) ;
 				//pAnnounce.setAnnouncer( (tForwardingCluster.getCoordinatorsAddress() != null ? tForwardingCluster.getCoordinatorsAddress() : null ));
 				Logging.log(this, "Removing " + this + " as participating CEP from " + this);
-				getParticipatingCEPs().remove(this);
+				getClusterMembers().remove(this);
 			}
 			if(pAnnounce.getCoordinatorName() != null) {
 				RoutingService tRS = (RoutingService)getHRMController().getNode().getRoutingService();
@@ -1322,12 +1334,13 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 
 	@Override
-	public void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, HRMName pAddress) {
+	public void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, int pCoordToken, HRMName pAddress) {
 		/**
 		 * the name of the cluster, which is managed by this coordinator
 		 */
 		ClusterName tLocalManagedClusterName = new ClusterName(mManagedCluster.getToken(), mManagedCluster.getClusterID(), mManagedCluster.getHierarchyLevel());
-
+		setToken(pCoordToken);
+		
 		Logging.log(this, "announcement number " + (++mReceivedAnnounces) + ": Setting Coordinator " + pCoord + " with name " + pCoordName + " with routing address " + pAddress);
 		Logging.log(this, "previous coordinator was " + mCoordinatorCEP + " with name " + mCoordinatorName);
 		mCoordinatorCEP = pCoord;
