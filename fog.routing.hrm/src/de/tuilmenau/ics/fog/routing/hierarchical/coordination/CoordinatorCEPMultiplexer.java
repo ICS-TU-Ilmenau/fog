@@ -173,7 +173,7 @@ public class CoordinatorCEPMultiplexer
 				Logging.err(this, "Unable to connect to " + tName, tExc);
 			}
 
-			for(Coordinator tManager : mHRMController.getCoordinator(tSourceClusterHierLvl)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
 				LinkedList<Integer> tTokens = new LinkedList<Integer>();
 				for(ICluster tClusterForToken : tManager.getManagedCluster().getNeighbors()) {
 					if(tClusterForToken.getHierarchyLevel().getValue() == tManager.getHierarchyLevel().getValue() - 1) {
