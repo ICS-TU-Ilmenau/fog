@@ -421,11 +421,11 @@ public class CoordinatorCEPChannel implements IRoutableClusterGraphNode
 					List<Route> tFinalPath = tHRS.getCoordinatorRoutingMap().getRoute(tRouteRequestPacket.getSource(), tRouteRequestPacket.getTarget());
 					if(tRouteRequestPacket.getRequiredClusters() != null) {
 
-						for(ICluster tDummy : tRouteRequestPacket.getRequiredClusters()) {
+						for(ClusterName tClusterName : tRouteRequestPacket.getRequiredClusters()) {
 							tFinalPath = null;
 							List<Route> tPath = tHRS.getCoordinatorRoutingMap().getRoute(tRouteRequestPacket.getSource(), tRouteRequestPacket.getTarget());
 							
-							Cluster tCluster = getHRMController().getCluster(tDummy);
+							Cluster tCluster = getHRMController().getCluster(tClusterName);
 							LinkedList<HRMName> tAddressesOfCluster = new LinkedList<HRMName>();
 							
 							for(CoordinatorCEPChannel tCEP : tCluster.getParticipatingCEPs()) {
