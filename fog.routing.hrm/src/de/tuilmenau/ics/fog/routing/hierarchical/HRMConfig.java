@@ -24,15 +24,11 @@ public class HRMConfig
 		public static final int USED_BITS_PER_LEVEL = 8; //TV
 
 		/**
-		 * specifies whether the hierarchy is created automatically if the process is once started
+		 * specifies whether the hierarchy is created automatically,
+		 * otherwise it is done step by step
 		 */
 		public static final boolean BUILD_AUTOMATICALLY = false; //TV
 		
-		/**
-		 * Defines if the election process begins immediately after node is configured (inside NodeConfiguratorHRM).
-		 */
-		public static final boolean BUILD_STARTS_AFTER_NODE_CONFIGURATION = false;
-
 		/**
 		 * Identifies the base level of the hierarchy.
 		 */
