@@ -134,6 +134,9 @@ public class Node extends Observable implements IElementDecorator
 		
 		// inform transfer service about new routing service
 		transferPlane.setRoutingService(routingService);
+		
+		// send event "registered"
+		pRS.registered();
 	}
 	
 	/**

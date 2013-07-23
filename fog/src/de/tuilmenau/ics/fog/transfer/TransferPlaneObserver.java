@@ -86,14 +86,5 @@ public interface TransferPlaneObserver
 	 * @return true==success; false==link was not known
 	 */
 	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate);
-	
-	/**
-	 * Event: Informs the observer about a new routing service registration. This
-	 * 		  method is similar to the function started() from the application interface.
-	 * 		  The mechanism is mainly useful for the HRM routing service.
-	 * 
-	 * @param pNewRS the new routing service
-	 */
-	public void eventRoutingServiceRegistered(RoutingService pNewRS);	
 }
 

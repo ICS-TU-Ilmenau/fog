@@ -236,11 +236,10 @@ public class RoutingServiceMultiplexer implements RoutingService
 	}
 
 	@Override
-	public void eventRoutingServiceRegistered(RoutingService pNewRS) 
+	public void registered()
 	{
-		for(RoutingService rs : routingServices) {
-			rs.eventRoutingServiceRegistered(pNewRS);
-		}
+		// nothing has to be done here
+		// assumption: this method is only called if the RS multiplexer is registered - not in case an inferior RS is registered
 	}
 
 	@Override

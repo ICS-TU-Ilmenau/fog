@@ -444,7 +444,7 @@ public class RoutingServiceSimulated implements RoutingService
 		}
 	}
 
-	public void eventRoutingServiceRegistered(RoutingService pNewRS) 
+	public void registered() 
 	{
 		// nothing has to be done here, event isn't interesting
 	}

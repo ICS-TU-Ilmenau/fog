@@ -288,7 +288,7 @@ public class RoutingServiceIP implements RoutingService
 	}
 
 	@Override
-	public void eventRoutingServiceRegistered(RoutingService pNewRS) 
+	public void registered() 
 	{
 		// nothing should be done here, event isn't interesting
 	}
