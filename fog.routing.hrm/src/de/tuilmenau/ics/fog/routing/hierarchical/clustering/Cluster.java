@@ -225,7 +225,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 //			boolean tIsEdgeRouter = false;
 			LinkedList<ClusterName> tInterASClusterIdentifications = new LinkedList<ClusterName>();
 
-			for(IRoutableClusterGraphNode tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
+			for(IRoutableClusterGraphTargetName tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
 				if(tNode instanceof ICluster && ((ICluster) tNode).isInterASCluster()) {
 					ICluster tCluster = (ICluster)tNode;
 //					tIsEdgeRouter = true;
@@ -486,7 +486,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	public LinkedList<ICluster> getNeighbors()
 	{
 		LinkedList<ICluster> tList = new LinkedList<ICluster>();
-		for(IRoutableClusterGraphNode tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
+		for(IRoutableClusterGraphTargetName tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
 			if(tNode instanceof ICluster) {
 				tList.add((ICluster)tNode);
 			}
@@ -753,15 +753,15 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 * @param pCluster
 	 * @return
 	 */
-	public CoordinatorCEPChannel getCEPOfCluster(ICluster pCluster)
-	{
-		for(CoordinatorCEPChannel tCEP : getParticipatingCEPs()) {
-			if(tCEP.getRemoteClusterName().equals(pCluster)) {
-				return tCEP;
-			}
-		}
-		return null;
-	}
+//	public CoordinatorCEPChannel getCEPOfCluster(ICluster pCluster)
+//	{
+//		for(CoordinatorCEPChannel tCEP : getParticipatingCEPs()) {
+//			if(tCEP.getRemoteClusterName().equals(pCluster)) {
+//				return tCEP;
+//			}
+//		}
+//		return null;
+//	}
 	
 	@Override
 	public Object getDecorationParameter()

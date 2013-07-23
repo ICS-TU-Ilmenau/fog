@@ -24,7 +24,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
-public interface ICluster extends Serializable, IRoutableClusterGraphNode
+public interface ICluster extends Serializable, IRoutableClusterGraphTargetName
 {
 	/**
 	 * Sets the priority of the currently acting coordinator of this cluster.

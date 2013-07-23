@@ -62,7 +62,7 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	private Node mPhysicalNode; //TV
 	private HierarchicalRoutingService mHRS = null;
-	private RoutableClusterGraph<IRoutableClusterGraphNode, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<IRoutableClusterGraphNode, RoutableClusterGraphLink>();
+	private RoutableClusterGraph<IRoutableClusterGraphTargetName, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<IRoutableClusterGraphTargetName, RoutableClusterGraphLink>();
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
@@ -324,19 +324,19 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pCEPsToEvaluate list of connection end points that have to be chosen to the target
 	 * @return true if the path contains a node that is covered by another coordinator
 	 */
-	public boolean checkPathToTargetContainsCovered(IRoutableClusterGraphNode pSourceCluster, IRoutableClusterGraphNode pTargetCluster, LinkedList<CoordinatorCEPChannel> pCEPsToEvaluate)
+	public boolean checkPathToTargetContainsCovered(IRoutableClusterGraphTargetName pSourceCluster, IRoutableClusterGraphTargetName pTargetCluster, LinkedList<CoordinatorCEPChannel> pCEPsToEvaluate)
 	{
 		if(pSourceCluster == null || pTargetCluster == null) {
 			Logging.log(this, "checking cluster route between null and null");
 			return false;
 		}
-		RoutableClusterGraph<IRoutableClusterGraphNode, RoutableClusterGraphLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
+		RoutableClusterGraph<IRoutableClusterGraphTargetName, RoutableClusterGraphLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
 		List<RoutableClusterGraphLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		String tCheckedClusters = new String();
 		boolean isCovered = false;
 		for(RoutableClusterGraphLink tConnection : tClusterConnection) {
-			Collection<IRoutableClusterGraphNode> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
-			for(IRoutableClusterGraphNode tNode : tNodes) {
+			Collection<IRoutableClusterGraphTargetName> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
+			for(IRoutableClusterGraphTargetName tNode : tNodes) {
 				if(tNode instanceof ICluster) {
 					CoordinatorCEPChannel tCEPLookingFor = null;
 					for(CoordinatorCEPChannel tCEP : pCEPsToEvaluate) {
@@ -606,7 +606,7 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "Amount of found routing targets: " + mRoutableClusterGraph.getVertices().size());
 		}
 		int j = -1;
-		for(IRoutableClusterGraphNode tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
+		for(IRoutableClusterGraphTargetName tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
 			if (tRoutableGraphNode instanceof Cluster) {
 				Cluster tCluster = (Cluster)tRoutableGraphNode;
 				j++;
@@ -637,7 +637,7 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "Amount of found routing targets: " + mRoutableClusterGraph.getVertices().size());
 		}
 		int j = -1;
-		for(IRoutableClusterGraphNode tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
+		for(IRoutableClusterGraphTargetName tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
 			ICluster tCluster = (ICluster)tRoutableGraphNode;
 			j++;
 		
@@ -655,7 +655,7 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @return cluster map that is actually the graph that represents the network
 	 */
-	public RoutableClusterGraph<IRoutableClusterGraphNode, RoutableClusterGraphLink> getRoutableClusterGraph()
+	public RoutableClusterGraph<IRoutableClusterGraphTargetName, RoutableClusterGraphLink> getRoutableClusterGraph()
 	{
 		return mRoutableClusterGraph;
 	}
@@ -834,17 +834,17 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pLevel is the level at which a search for clusters is done
 	 * @return all virtual nodes that appear at the specified hierarchical level
 	 */
-	public LinkedList<IRoutableClusterGraphNode> getClusters(int pLevel)
-	{
-		LinkedList<IRoutableClusterGraphNode> tClusters = new LinkedList<IRoutableClusterGraphNode>();
-		for(IRoutableClusterGraphNode tNode : getRoutableClusterGraph().getVertices()) {
-			if(tNode instanceof ICluster && ((ICluster) tNode).getHierarchyLevel().getValue() == pLevel) {
-				tClusters.add((ICluster) tNode);
-			}
-		}
-		return tClusters;
-	}
-	
+//	public LinkedList<IRoutableClusterGraphTargetName> getClusters(int pLevel)
+//	{
+//		LinkedList<IRoutableClusterGraphTargetName> tClusters = new LinkedList<IRoutableClusterGraphTargetName>();
+//		for(IRoutableClusterGraphTargetName tNode : getRoutableClusterGraph().getVertices()) {
+//			if(tNode instanceof ICluster && ((ICluster) tNode).getHierarchyLevel().getValue() == pLevel) {
+//				tClusters.add((ICluster) tNode);
+//			}
+//		}
+//		return tClusters;
+//	}
+//	
 	/**
 	 * Find out whether this object is an edge router
 	 * 

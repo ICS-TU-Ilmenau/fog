@@ -168,39 +168,39 @@ public class RoutableClusterGraph<NodeObject, LinkObject> extends RoutableGraph<
 	 * @param pIgnoredNodes Please provide a set of nodes that are not allowed to be used for route determination.
 	 * @return
 	 */
-	public List<LinkObject> getRouteWithInvalidatedNodes(NodeObject pSource, NodeObject pTarget, LinkedList<NodeObject> pIgnoredNodes)
-	{
-		HashMap<NodeObject, Collection<LinkObject>> tLinksOnIgnoredNode = new HashMap<NodeObject, Collection<LinkObject>>();
-		HashMap<NodeObject, LinkedList<Tuple<NodeObject, NodeObject>>> tNeighborsOfIgnoredNode = new HashMap<NodeObject, LinkedList<Tuple<NodeObject, NodeObject>>>();
-		
-		for(NodeObject tNode : pIgnoredNodes) {
-			LinkedList<LinkObject> tLinks = new LinkedList<LinkObject>();
-			for(LinkObject tLink : mNodes.getIncidentEdges(tNode)) {
-				tLinks.add(tLink);
-			}
-			tLinksOnIgnoredNode.put(tNode, tLinks);
-			LinkedList<Tuple<NodeObject, NodeObject>> tPairs = new LinkedList<Tuple<NodeObject, NodeObject>>();
-			tNeighborsOfIgnoredNode.put(tNode, tPairs);
-			for(LinkObject tLink : tLinks) {
-				tPairs.add(new Tuple<NodeObject, NodeObject>(tNode, mNodes.getOpposite(tNode, tLink)));
-				Logging.log(this, "Removed connection between " + tNode + " and " + mNodes.getOpposite(tNode, tLink));
-				mNodes.removeEdge(tLink);
-			}
-			mNodes.removeVertex(tNode);
-			Logging.log(this, "Removed node " + tNode);
-		}
-		
-		List<LinkObject> tPath = getRoute(pSource, pTarget);
-		Logging.log(this, "Calculated restricted route " + tPath + " which is from " + pSource + " to " + pTarget);
-		
-		for(NodeObject tNode : pIgnoredNodes) {
-			add(tNode);
-			for(LinkObject tLink : tLinksOnIgnoredNode.get(tNode)) {
-				mNodes.addEdge(tLink, tNeighborsOfIgnoredNode.get(tNode).getFirst().getFirst(), tNeighborsOfIgnoredNode.get(tNode).getFirst().getSecond(), EdgeType.UNDIRECTED);
-				tNeighborsOfIgnoredNode.get(tNode).removeFirst();
-			}
-		}
-		
-		return tPath;
-	}
+//	public List<LinkObject> getRouteWithInvalidatedNodes(NodeObject pSource, NodeObject pTarget, LinkedList<NodeObject> pIgnoredNodes)
+//	{
+//		HashMap<NodeObject, Collection<LinkObject>> tLinksOnIgnoredNode = new HashMap<NodeObject, Collection<LinkObject>>();
+//		HashMap<NodeObject, LinkedList<Tuple<NodeObject, NodeObject>>> tNeighborsOfIgnoredNode = new HashMap<NodeObject, LinkedList<Tuple<NodeObject, NodeObject>>>();
+//		
+//		for(NodeObject tNode : pIgnoredNodes) {
+//			LinkedList<LinkObject> tLinks = new LinkedList<LinkObject>();
+//			for(LinkObject tLink : mNodes.getIncidentEdges(tNode)) {
+//				tLinks.add(tLink);
+//			}
+//			tLinksOnIgnoredNode.put(tNode, tLinks);
+//			LinkedList<Tuple<NodeObject, NodeObject>> tPairs = new LinkedList<Tuple<NodeObject, NodeObject>>();
+//			tNeighborsOfIgnoredNode.put(tNode, tPairs);
+//			for(LinkObject tLink : tLinks) {
+//				tPairs.add(new Tuple<NodeObject, NodeObject>(tNode, mNodes.getOpposite(tNode, tLink)));
+//				Logging.log(this, "Removed connection between " + tNode + " and " + mNodes.getOpposite(tNode, tLink));
+//				mNodes.removeEdge(tLink);
+//			}
+//			mNodes.removeVertex(tNode);
+//			Logging.log(this, "Removed node " + tNode);
+//		}
+//		
+//		List<LinkObject> tPath = getRoute(pSource, pTarget);
+//		Logging.log(this, "Calculated restricted route " + tPath + " which is from " + pSource + " to " + pTarget);
+//		
+//		for(NodeObject tNode : pIgnoredNodes) {
+//			add(tNode);
+//			for(LinkObject tLink : tLinksOnIgnoredNode.get(tNode)) {
+//				mNodes.addEdge(tLink, tNeighborsOfIgnoredNode.get(tNode).getFirst().getFirst(), tNeighborsOfIgnoredNode.get(tNode).getFirst().getSecond(), EdgeType.UNDIRECTED);
+//				tNeighborsOfIgnoredNode.get(tNode).removeFirst();
+//			}
+//		}
+//		
+//		return tPath;
+//	}
 }

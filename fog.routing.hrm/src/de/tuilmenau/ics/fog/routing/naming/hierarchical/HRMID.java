@@ -14,13 +14,13 @@ import java.math.BigInteger;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IRoutableClusterGraphNode;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IRoutableClusterGraphTargetName;
 
 /**
  * This identifies either physical nodes or clusters within the HRM system.
  *
  */
-public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableClusterGraphNode
+public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableClusterGraphTargetName
 {
 	private static final long serialVersionUID = -8441496024628988477L;
 	public static Namespace HRMNamespace = new Namespace("HRM", false);

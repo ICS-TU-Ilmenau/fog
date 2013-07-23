@@ -246,18 +246,18 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		return null;
 	}
 	
-	public Route getRoutePath(HRMName pHrmName, HRMName pHrmName2, Description pDescription, Identity pIdentity)
-	{
-		if(mCoordinatorRoutingMap.contains(pHrmName) && mCoordinatorRoutingMap.contains(pHrmName2)) {
-			List<Route> tPath = mCoordinatorRoutingMap.getRoute(pHrmName, pHrmName2);
-			Route tRoute = new Route();
-			for(Route tRouteSegment : tPath) {
-				tRoute.addAll(tRouteSegment.clone());
-			}
-			return tRoute;
-		}
-		return null;
-	}
+//	public Route getRoutePath(HRMName pHrmName, HRMName pHrmName2, Description pDescription, Identity pIdentity)
+//	{
+//		if(mCoordinatorRoutingMap.contains(pHrmName) && mCoordinatorRoutingMap.contains(pHrmName2)) {
+//			List<Route> tPath = mCoordinatorRoutingMap.getRoute(pHrmName, pHrmName2);
+//			Route tRoute = new Route();
+//			for(Route tRouteSegment : tPath) {
+//				tRoute.addAll(tRouteSegment.clone());
+//			}
+//			return tRoute;
+//		}
+//		return null;
+//	}
 	
 	@Override
 	public Route getRoute(ForwardingNode pSource, Name pDestination, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException
