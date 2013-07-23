@@ -19,6 +19,11 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class HierarchyLevel
 {
 	/**
+	 * Allow for a better debugging based on messages each time such an object is created.
+	 */
+	private static boolean DEBUG_CREATION = false;
+	
+	/**
 	 * This value represents an undefined level.
 	 */
 	private static int UNDEFINED_LEVEL = -1;
@@ -46,7 +51,9 @@ public class HierarchyLevel
 		 * to recursive calls caused by getBullyPriority in the Cluster/Coordinator class. 
 		 */
 		
-		Logging.log(this,  "Created object (explicit level is " + pHierarchyLevelValue + ") for class \"" + pParent.getClass().getSimpleName() + "\"");
+		if (DEBUG_CREATION){
+			Logging.log(this,  "Created object (explicit level is " + pHierarchyLevelValue + ") for class \"" + pParent.getClass().getSimpleName() + "\"");
+		}
 	}
 
 	/**

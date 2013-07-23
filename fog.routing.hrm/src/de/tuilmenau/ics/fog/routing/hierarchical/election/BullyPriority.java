@@ -28,6 +28,11 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class BullyPriority
 {
 	/**
+	 * Allow for a better debugging based on messages each time such an object is created.
+	 */
+	private static boolean DEBUG_CREATION = false;
+	
+	/**
 	 * The value defines the prefix for the node specific configuration parameters for Bully algorithm.
 	 */
 	private static String NODE_PARAMETER_PREFIX = "BULLY_PRIORITY_LEVEL_";
@@ -73,7 +78,11 @@ public class BullyPriority
 		}
 
 		BullyPriority tResult = new BullyPriority((long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY));
-		Logging.log(pCluster, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
+		
+		if (DEBUG_CREATION){
+			Logging.log(pCluster, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
+		}
+		
 		return tResult;
 	}
 	
@@ -93,7 +102,11 @@ public class BullyPriority
 		}
 
 		BullyPriority tResult = new BullyPriority((long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY));
-		Logging.log(pCoordinator, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
+		
+		if (DEBUG_CREATION){
+			Logging.log(pCoordinator, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
+		}
+		
 		return tResult;
 	}
 
@@ -105,7 +118,9 @@ public class BullyPriority
 	public BullyPriority(Object pParent, long pPriority)
 	{
 		mPriority = pPriority;
-		Logging.log(this,  "Created object (explicit priority is " + pPriority + ") for object \"" + pParent + "\"");
+		if (DEBUG_CREATION){
+			Logging.log(this,  "Created object (explicit priority is " + pPriority + ") for object \"" + pParent + "\"");
+		}
 	}
 
 	/**
@@ -124,7 +139,9 @@ public class BullyPriority
 		 * to recursive calls caused by getBullyPriority in the Cluster/Coordinator class. 
 		 */
 		
-		Logging.log(this,  "Created object (undefined priority) for class \"" + pParent.getClass().getSimpleName() + "\"");
+		if (DEBUG_CREATION){
+			Logging.log(this,  "Created object (undefined priority) for class \"" + pParent.getClass().getSimpleName() + "\"");
+		}
 	}
 	
 	/**
