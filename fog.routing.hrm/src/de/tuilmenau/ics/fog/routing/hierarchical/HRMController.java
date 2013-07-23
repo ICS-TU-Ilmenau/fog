@@ -100,6 +100,9 @@ public class HRMController extends Application implements IServerCallback
 		mHRS = pHRS;
 		mApprovedSignatures = new LinkedList<HRMSignature>();		
 		
+		// create the identity, which is later used for creating sigantures of calusters
+		mIdentity = new HRMIdentity(getNodeGUIName());
+
 		// set the Bully priority 
 		BullyPriority.configureNode(pNode);
 	}
@@ -792,15 +795,6 @@ public class HRMController extends Application implements IServerCallback
 		if(!mApprovedSignatures.contains(pSignature)) {
 			mApprovedSignatures.add(pSignature);
 		}
-	}
-	
-	/**
-	 * 
-	 * @param pIdentity is the identity that is supposed to be used for signing FIB entries
-	 */
-	public void setIdentity(HRMIdentity pIdentity)
-	{
-		mIdentity = pIdentity;
 	}
 
 	public HRMIdentity getIdentity()
