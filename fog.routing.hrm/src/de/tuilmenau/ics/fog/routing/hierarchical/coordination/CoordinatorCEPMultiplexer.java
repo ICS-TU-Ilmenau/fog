@@ -72,7 +72,7 @@ public class CoordinatorCEPMultiplexer
 			CoordinatorSession tCEP = new CoordinatorSession(mHRMController, false, tSourceClusterHierLvl, mHRMController.getMultiplexerOnLevel(tSourceClusterHierLvl.getValue()));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNode().getCentralFN().getName());
 			
-			for(Coordinator tManager : mHRMController.getCoordinator(tSourceClusterHierLvl)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
 				tCEPDemultiplexed = new CoordinatorCEPChannel(mHRMController, tManager);
 				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getBullyPriority());
 				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
@@ -84,7 +84,7 @@ public class CoordinatorCEPMultiplexer
 				tCEPDemultiplexed.setRemoteClusterName(new ClusterName(pTargetCluster.getToken(), pTargetCluster.getClusterID(), pTargetCluster.getHierarchyLevel()));
 			}
 			
-			for(Coordinator tManager : mHRMController.getCoordinator(tSourceClusterHierLvl)) {
+			for(Coordinator tManager : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
 				if(pTargetCluster.getCoordinatorsAddress() == null) {
 					Logging.err(this, "Error on trying to contact other clusters, as name is set please check its address");
 				} else {

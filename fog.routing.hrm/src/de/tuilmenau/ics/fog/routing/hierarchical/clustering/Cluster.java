@@ -49,6 +49,11 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class Cluster implements ICluster, IElementDecorator, HRMEntity
 {
 	/**
+	 * For using this class within (de-)serialization.
+	 */
+	private static final long serialVersionUID = -7486131336574637721L;
+
+	/**
 	 * This is the GUI specific cluster counter, which allows for globally unique cluster IDs.
 	 * It's only used within the GUI. 	
 	 */
@@ -302,7 +307,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				/*
 				 * no coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getCoordinator(new HierarchyLevel(this, mHierarchyLevel.getValue() + 1))) {
+				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						tManager.storeAnnouncement(pAnnounce);
 					}
@@ -311,7 +316,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				/*
 				 * coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getCoordinator(new HierarchyLevel(this, mHierarchyLevel.getValue() + 1))) {
+				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						if(tManager.getCoordinatorCEP() != null) {
 							tManager.getCoordinatorCEP().sendPacket(pAnnounce);

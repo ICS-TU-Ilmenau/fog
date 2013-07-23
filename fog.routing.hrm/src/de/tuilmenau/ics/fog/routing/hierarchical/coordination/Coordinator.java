@@ -120,7 +120,7 @@ public class Coordinator implements ICluster, HRMEntity
 		mManagedCluster = pCluster;
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		mBullyPriority = BullyPriority.createForCoordinator(this);
-		getHRMController().registerCoordinator(this, mHierarchyLevel.getValue() + 1);
+		getHRMController().registerCoordinator(this, mHierarchyLevel);
 		
 		Logging.log(this, "CREATED");
 	}

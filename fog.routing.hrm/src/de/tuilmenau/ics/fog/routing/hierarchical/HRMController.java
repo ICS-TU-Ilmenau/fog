@@ -717,14 +717,18 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public LinkedList<Coordinator> getCoordinator(HierarchyLevel pHierarchyLevel)
 	{
+		// is the given hierarchy level valid?
 		if (pHierarchyLevel.isUndefined()){
 			Logging.warn(this, "Cannot determine coordinator on an undefined hierachy level, return null");
 			return null;
 		}
-		
-		if(mRegisteredCoordinators.size() < pHierarchyLevel.getValue()) {
+
+		// check of we know the search coordinator
+		if(mRegisteredCoordinators.size() - 1 < pHierarchyLevel.getValue()) {
+			// we don't know a valid coordinator
 			return null;
 		} else {
+			// we have found the searched coordinator
 			return mRegisteredCoordinators.get(pHierarchyLevel.getValue());
 		}
 	}
@@ -735,25 +739,27 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pCoordinator the coordinator for a defined cluster
 	 * @param pHierarchyLevel the hierarchy level at which the coordinator is located
 	 */
-	public void registerCoordinator(Coordinator pCoordinator, int pHierarchyLevel)
+	public void registerCoordinator(Coordinator pCoordinator, HierarchyLevel pHierarchyLevel)
 	{
+		int tLevel = pHierarchyLevel.getValue();
+		
 		// make sure we have a valid linked list object
 		if(mRegisteredCoordinators == null) {
 			mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
 		}
 		
-		if(mRegisteredCoordinators.size() <= pHierarchyLevel) {
-			for(int i = mRegisteredCoordinators.size() - 1; i <= pHierarchyLevel ; i++) {
+		if(mRegisteredCoordinators.size() <= tLevel) {
+			for(int i = mRegisteredCoordinators.size() - 1; i <= tLevel ; i++) {
 				mRegisteredCoordinators.add(new LinkedList<Coordinator>());
 			}
 		}
 		
-		if (mRegisteredCoordinators.get(pHierarchyLevel).size() > 0){
-			Logging.log(this, "#### Got more than one coordinator at level " + pHierarchyLevel + ", already known: " + mRegisteredCoordinators.get(pHierarchyLevel).get(0) + ", new one: " + pCoordinator);
+		if (mRegisteredCoordinators.get(tLevel).size() > 0){
+			Logging.log(this, "#### Got more than one coordinator at level " + pHierarchyLevel + ", already known (0): " + mRegisteredCoordinators.get(tLevel).get(0) + ", new one: " + pCoordinator);
 		}
 		
 		// store the new coordinator
-		mRegisteredCoordinators.get(pHierarchyLevel).add(pCoordinator);
+		mRegisteredCoordinators.get(tLevel).add(pCoordinator);
 		
 		// update GUI: image for node object 
 		//TODO: check and be aware of topology dynamics
