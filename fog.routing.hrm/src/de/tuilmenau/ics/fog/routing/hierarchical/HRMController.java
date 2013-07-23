@@ -17,12 +17,11 @@ import java.util.List;
 
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.Service;
+import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
-import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.IServerCallback;
-import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
@@ -45,7 +44,6 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.Tuple;
 
@@ -56,7 +54,13 @@ public class HRMController extends Application implements IServerCallback
 {
 	private boolean HRM_CONTROLLER_DEBUGGING = false;
 	
+	/**
+	 * Stored the local HRM specific identity of the physical node (router)
+	 */
+	private HRMIdentity mIdentity = null;
+	
 	private SimpleName mName = null;
+	
 	/**
 	 * Reference to physical node.
 	 */
@@ -69,7 +73,6 @@ public class HRMController extends Application implements IServerCallback
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
 	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators;
 	private LinkedList<HRMSignature> mApprovedSignatures;
-	private HRMIdentity mIdentity;
 	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
 	/**
@@ -100,7 +103,7 @@ public class HRMController extends Application implements IServerCallback
 		mHRS = pHRS;
 		mApprovedSignatures = new LinkedList<HRMSignature>();		
 		
-		// create the identity, which is later used for creating sigantures of calusters
+		// create the identity of this node, which is later used for creating the signatures of clusters
 		mIdentity = new HRMIdentity(getNodeGUIName());
 
 		// set the Bully priority 
@@ -775,6 +778,52 @@ public class HRMController extends Application implements IServerCallback
 	}
 	
 	/**
+	 * Returns the local node (router) specific HRMIdentity
+	 */
+	public HRMIdentity getIdentity()
+	{
+		return mIdentity;
+	}
+
+	/**
+	 * Creates a cluster specific signature
+	 * 
+	 * @param pCluster the cluster for which the signature should be created.
+	 * @return the signature
+	 */
+	public HRMSignature createClusterSignature(Cluster pCluster)
+	{
+		HRMSignature tResult = null;
+		
+		try {
+			tResult = mIdentity.createSignature(getNode().toString(), null, pCluster.getHierarchyLevel());
+		} catch (AuthenticationException tExc) {
+			Logging.err(this,  "Wasn't able to create cluster signature for " + pCluster, tExc);
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Creates a coordinator specific signature
+	 * 
+	 * @param pCluster the cluster for which the signature should be created.
+	 * @return the signature
+	 */
+	public HRMSignature createCoordinatorSignature(Coordinator pCoordinator)
+	{
+		HRMSignature tResult = null;
+		
+		try {
+			tResult = mIdentity.createSignature(getNode().toString(), null, pCoordinator.getHierarchyLevel());
+		} catch (AuthenticationException tExc) {
+			Logging.err(this,  "Wasn't able to create coordinator signature for " + pCoordinator, tExc);
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * 
 	 * @return list of all signatures that were already approved
 	 */
@@ -797,11 +846,6 @@ public class HRMController extends Application implements IServerCallback
 		}
 	}
 
-	public HRMIdentity getIdentity()
-	{
-		return mIdentity;
-	}
-	
 	/**
 	 * 
 	 * @param pIdentification is one more identification the physical node may have because it can be either coordinator of different hierarchical levels or attached to different clusters

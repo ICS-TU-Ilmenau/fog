@@ -14,6 +14,7 @@ import java.rmi.RemoteException;
 import java.util.ConcurrentModificationException;
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
@@ -75,6 +76,11 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	private Elector mElector = null;
 	
+	/**
+	 * Stores the HRMSignature of this cluster.
+	 */
+	private HRMSignature mSignature = null;
+
 	private CoordinatorCEPChannel mChannelToCoordinator = null;
 	private Long mClusterID;
 	private BullyPriority mHighestPriority = null;
@@ -111,13 +117,13 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 * @param pLevel
 	 * @param ptHRMController
 	 */
-	public Cluster(Long pClusterID, HierarchyLevel pHierarchyLevelValue, HRMController ptHRMController)
+	public Cluster(Long pClusterID, HierarchyLevel pHierarchyLevelValue, HRMController pHRMController)
 	{
 		mClusterID = pClusterID;
 		mHierarchyLevel = pHierarchyLevelValue;
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
-		mHRMController = ptHRMController;
+		mHRMController = pHRMController;
 		mBullyPriority = BullyPriority.createForCluster(this);
 		Logging.log(this, "CREATED CLUSTER " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getValue());
 		for(ICluster tCluster : getHRMController().getRoutingTargets())
@@ -135,6 +141,9 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 			}
 		}
 
+		// creates the cluster signature
+		mSignature = getHRMController().createClusterSignature(this);
+
 		// creates new elector object, which is responsible for Bully based election processes
 		mElector = new Elector(this);
 		
@@ -142,6 +151,16 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		
 		mMux = new CoordinatorCEPMultiplexer(mHRMController);
 		mMux.setCluster(this);
+	}
+	
+	/**
+	 * Returns the cluster HRMSignature
+	 * 
+	 * @return the signature
+	 */
+	public HRMSignature getSignature()
+	{
+		return mSignature;
 	}
 	
 	public void setAnnouncedCEP(CoordinatorCEPChannel pCEP)

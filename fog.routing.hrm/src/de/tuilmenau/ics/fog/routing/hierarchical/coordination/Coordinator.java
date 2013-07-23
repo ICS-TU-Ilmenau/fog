@@ -73,6 +73,8 @@ public class Coordinator implements ICluster, HRMEntity
 	 */
 	private int mLastCreatedAddress;
 
+	private HRMSignature mSignature = null;
+	
 	private HRMID mHRMID = null;
 	private Cluster mManagedCluster;
 	private HashMap<CoordinatorCEPChannel, TopologyData> mAddressMapping = null;
@@ -118,10 +120,23 @@ public class Coordinator implements ICluster, HRMEntity
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		mBullyPriority = BullyPriority.createForCoordinator(this);
 		getHRMController().registerCoordinator(this, mHierarchyLevel);
-		
+
+		// creates the coordinator signature
+		mSignature = getHRMController().createCoordinatorSignature(this);
+
 		Logging.log(this, "CREATED");
 	}
 	
+	/**
+	 * Returns the coordinator HRMSignature
+	 * 
+	 * @return the signature
+	 */
+	public HRMSignature getSignature()
+	{
+		return mSignature;
+	}
+
 	public void storeAnnouncement(NeighborClusterAnnounce pAnnounce)
 	{
 		Logging.log(this, "Storing " + pAnnounce);
@@ -249,16 +264,6 @@ public class Coordinator implements ICluster, HRMEntity
 		// reseting HRM ID, TODO: needed here?
 		setHRMID(this, new HRMID(0));
 		
-		/**
-		 * the HRM signature of the local router
-		 */
-		HRMSignature tLocalRouterSignature = null;
-		try {
-			tLocalRouterSignature = getHRMController().getIdentity().createSignature(getHRMController().getNode().toString(), null, mHierarchyLevel);
-		} catch (AuthenticationException tExc) {
-			Logging.err(this, "Cannot create signature for local router", tExc);
-		}
-
 		/**
 		 * the name of the cluster, which is managed by this coordinator
 		 */
@@ -398,7 +403,7 @@ public class Coordinator implements ICluster, HRMEntity
 						
 						ClusterName tFibEntryClusterName = new ClusterName(tNextCluster.getToken(), tNextCluster.getClusterID(), tNextCluster.getHierarchyLevel());
 						
-						FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, tFibEntryClusterName, tLocalRouterSignature);
+						FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, tFibEntryClusterName, getSignature());
 						
 						IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName());
 						if(tTargetNode instanceof ICluster) {
@@ -418,12 +423,12 @@ public class Coordinator implements ICluster, HRMEntity
 					} else {
 						/*
 						 * At level one:
-						 * In this case the HRMID is mapped to a connection endpoint, not to a cluster like before
+						 * In this case the HRMID is mapped to a connection end point, not to a cluster like before
 						 * In that case the address is a direct neighbor. So we use the peer routing service address what is supposed to be the logical link layer address
 						 * 
 						 */
 						
-						FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(mAddressMapping.get(tDestinationCEP).getHRMID(), tDestinationCEP.getPeerName(), tLocalManagedClusterName, tLocalRouterSignature);
+						FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(mAddressMapping.get(tDestinationCEP).getHRMID(), tDestinationCEP.getPeerName(), tLocalManagedClusterName, getSignature());
 						
 						mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
 						LinkedList<RoutingServiceLinkVector> tPolygon = getPathToCoordinator(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName()); 
@@ -453,7 +458,7 @@ public class Coordinator implements ICluster, HRMEntity
 					/*
 					 * The host itself has to tell its client how to reach it: get the address providers address: retrieveAddress() and then give the clients the address of the address provider
 					 */
-					FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(mManagedCluster.getHrmID(), tSourceCEP.getSourceName(), tLocalManagedClusterName, tLocalRouterSignature);
+					FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(mManagedCluster.getHrmID(), tSourceCEP.getSourceName(), tLocalManagedClusterName, getSignature());
 					
 					mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
 					IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), mManagedCluster);
@@ -466,7 +471,7 @@ public class Coordinator implements ICluster, HRMEntity
 					/*
 					 * Now the managed cluster needs the information on how to reach the next hop
 					 */
-					FIBEntry tManagedEntry = tManagedClusterTopologyData.new FIBEntry(mAddressMapping.get(tSourceCEP).getHRMID(), tSourceCEP.getPeerName(),	tLocalManagedClusterName, tLocalRouterSignature);
+					FIBEntry tManagedEntry = tManagedClusterTopologyData.new FIBEntry(mAddressMapping.get(tSourceCEP).getHRMID(), tSourceCEP.getPeerName(),	tLocalManagedClusterName, getSignature());
 					tManagedClusterTopologyData.addForwardingentry(tManagedEntry);
 					IRoutableClusterGraphTargetName tPeerNode = getFarthestVirtualNodeInDirection(mManagedCluster, tSourceCEP.getRemoteClusterName());
 
@@ -578,7 +583,7 @@ public class Coordinator implements ICluster, HRMEntity
 								
 								ClusterName tFibEntryClusterName = new ClusterName(tNegotiator.getToken(), tNegotiator.getClusterID(), tNegotiator.getHierarchyLevel());
 
-								tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, tFibEntryClusterName, tLocalRouterSignature);
+								tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, tFibEntryClusterName, getSignature());
 								
 								/*
 								 * As the cluster probably does not know to which node it has to forward that packet,
@@ -609,7 +614,7 @@ public class Coordinator implements ICluster, HRMEntity
 
 									ClusterName tFibEntryClusterName = new ClusterName(tNextCluster.getToken(), tNextCluster.getClusterID(), tNextCluster.getHierarchyLevel());
 
-									tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, tFibEntryClusterName, tLocalRouterSignature);
+									tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, tNextHop, tFibEntryClusterName, getSignature());
 									if(tListToTarget != null) {
 										LinkedList<RoutingServiceLinkVector> tVectors = (LinkedList<RoutingServiceLinkVector>) tListToTarget.clone();
 										while(!tVectors.isEmpty() && !tVectors.getFirst().equals(tSourceCEP.getPeerName())) {
@@ -644,7 +649,7 @@ public class Coordinator implements ICluster, HRMEntity
 										}
 									}
 									tNameFarthestClusterInDirection = tSourceCEP.getRemoteClusterName();
-									tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, null, tNameFarthestClusterInDirection, tLocalRouterSignature);
+									tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tTo, null, tNameFarthestClusterInDirection, getSignature());
 									if(tVectors != null) {
 										tEntry.setRoutingVectors(tVectors);
 										if(getSignatureOfPath(tHRMID) != null) {
@@ -737,7 +742,7 @@ public class Coordinator implements ICluster, HRMEntity
 								}
 							}
 							
-							FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tHRMID, tDestination, (tTargetCluster != null ? tLocalManagedClusterName : null), tLocalRouterSignature);
+							FIBEntry tEntry = mAddressMapping.get(tSourceCEP).new FIBEntry(tHRMID, tDestination, (tTargetCluster != null ? tLocalManagedClusterName : null), getSignature());
 							
 							mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
 							if(tPolygon != null && !tPolygon.isEmpty()) {
@@ -761,7 +766,7 @@ public class Coordinator implements ICluster, HRMEntity
 						mAddressMapping.get(tSourceCEP).addApprovedSignature(tSignature);
 					}
 				}
-				mAddressMapping.get(tSourceCEP).addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getNode().toString(), null, mHierarchyLevel));
+				mAddressMapping.get(tSourceCEP).addApprovedSignature(getSignature());
 				tSourceCEP.sendPacket(mAddressMapping.get(tSourceCEP));
 			}
 			if(mHigherHRMIDs != null) {
@@ -810,7 +815,7 @@ public class Coordinator implements ICluster, HRMEntity
 						tNextHop = tLocalRoutingDB.getDest(tRoute.get(0));
 					}
 					
-					FIBEntry tEntry = tManagedClusterTopologyData.new FIBEntry(tHRMID, tNextHop, tLocalManagedClusterName, tLocalRouterSignature);
+					FIBEntry tEntry = tManagedClusterTopologyData.new FIBEntry(tHRMID, tNextHop, tLocalManagedClusterName, getSignature());
 					if(tPathToTarget != null && !tPathToTarget.isEmpty()) {
 						tEntry.setRoutingVectors(tPathToTarget);
 						if(getSignatureOfPath(tHRMID) != null) {
