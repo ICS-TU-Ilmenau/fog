@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionEvent;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -44,18 +43,6 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		
 		// register HRM instance as routing service for the current node
 		pNode.getHost().registerRoutingService(tHRS);
-
-		// start coordinator election for the created HRM instance if desired
-		if(HRMConfig.Hierarchy.BUILD_STARTS_AFTER_NODE_CONFIGURATION) {
-			if(pAS.getSimulation().getPendingEvents() == null) {
-				pAS.getSimulation().addEvent(new ElectionEvent());
-			} else if (pAS.getSimulation().getPendingEvents().contains(new ElectionEvent())) {
-				/*
-				 * hashCode of ElectionEvent always returns 0 because it is only needed once
-				 * So do nothing now!
-				 */
-			}
-		}
 
 		Logging.log(this, "###### CONFIGURING NODE " + pName + " -END ###### ");
 	}
