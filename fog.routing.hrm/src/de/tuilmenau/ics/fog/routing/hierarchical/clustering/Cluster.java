@@ -151,7 +151,13 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		mElector = new Elector(this);
 		
 		mMux = new CoordinatorCEPMultiplexer(mHRMController);
+		
 		mMux.setCluster(this);
+		
+		// register at HRMController's internal database
+		getHRMController().registerCluster(this);
+
+		Logging.log(this, "CREATED");
 	}
 	
 	/**

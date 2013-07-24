@@ -779,15 +779,16 @@ public class HRMController extends Application implements IServerCallback
 	}
 	
 	/**
-	 * Registers a coordinator for a defined hierarchy level.
+	 * Registers a coordinator at the local database.
 	 * 
 	 * @param pCoordinator the coordinator for a defined cluster
-	 * @param pHierarchyLevel the hierarchy level at which the coordinator is located
 	 */
-	public void registerCoordinator(Coordinator pCoordinator, HierarchyLevel pHierarchyLevel)
+	public void registerCoordinator(Coordinator pCoordinator)
 	{
-		int tLevel = pHierarchyLevel.getValue();
-		
+		Logging.log(this, "Registering coordinator " + pCoordinator);
+
+		int tLevel = pCoordinator.getHierarchyLevel().getValue();
+			
 		// make sure we have a valid linked list object
 		if(mRegisteredCoordinators == null) {
 			mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
@@ -806,14 +807,62 @@ public class HRMController extends Application implements IServerCallback
 		// store the new coordinator
 		mRegisteredCoordinators.get(tLevel).add(pCoordinator);
 		
+		// register coordinator as addressable target
+		addRoutableTarget(pCoordinator);
+
 		// update GUI: image for node object 
 		//TODO: check and be aware of topology dynamics
 		getNode().setDecorationParameter("L"+ tLevel);
+		
+		// it's time to update the GUI
+		notifyGUI(pCoordinator);
 	}
 	
-	public void unregisterCoordinator(Coordinator pCoordiantor)
+	/**
+	 * Unregisters a coordinator from the internal database.
+	 * 
+	 * @param pCoordinator the coordinator which should be unregistered
+	 */
+	public void unregisterCoordinator(Coordinator pCoordinator)
 	{
+		Logging.log(this, "Unegistering coordinator " + pCoordinator);
+
 		//TODO: implement this
+
+		// it's time to update the GUI
+		notifyGUI(pCoordinator);
+	}
+	
+	/**
+	 * Registers a cluster at the local database.
+	 * 
+	 * @param pCluster the cluster which should be registered
+	 */
+	public void registerCluster(Cluster pCluster)
+	{
+		Logging.log(this, "Registering cluster " + pCluster);
+
+		int tLevel = pCluster.getHierarchyLevel().getValue();
+
+		//TODO: store a database about registered clusters
+		
+		// it's time to update the GUI
+		notifyGUI(pCluster);
+	}
+	
+	/**
+	 * Unregisters a cluster from the local database.
+	 * 
+	 * @param pCluster the cluster which should be unregistered.
+	 */
+	public void unregisterCluster(Cluster pCluster)
+	{
+		Logging.log(this, "Unegistering coordinator " + pCluster);
+
+		//TODO: implement this
+		
+		// it's time to update the GUI
+		notifyGUI(pCluster);
 	}
 	
 	/**

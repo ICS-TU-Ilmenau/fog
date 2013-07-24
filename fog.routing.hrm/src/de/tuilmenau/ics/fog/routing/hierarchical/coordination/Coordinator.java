@@ -49,6 +49,7 @@ import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
 /**
  * This class is used for a coordinator instance and can be used on all hierarchy levels.
+ * A cluster's elector instance is responsible for creating instances of this class.
  */
 public class Coordinator implements ICluster, HRMEntity
 {
@@ -61,7 +62,7 @@ public class Coordinator implements ICluster, HRMEntity
 	/**
 	 * The hierarchy level on which this coordinator is located.
 	 */
-	private HierarchyLevel mHierarchyLevel;
+	private HierarchyLevel mHierarchyLevel; //TODO: remove and use the level from the cluster instance
 
 	/**
 	 * List for identification of entities this cluster manager is connected to
@@ -89,7 +90,7 @@ public class Coordinator implements ICluster, HRMEntity
 	private List<IRoutableClusterGraphTargetName> mClustersToNotify;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
 	private int mReceivedAnnounces = 0;
-	private LinkedList<Name> mIgnoreOnAddressDistribution = null;
+//	private LinkedList<Name> mIgnoreOnAddressDistribution = null;
 	private Long mClusterID;
 	private LinkedList<HRMID> mHigherHRMIDs = null;
 	private TopologyData mTopologyData = null;
@@ -97,7 +98,7 @@ public class Coordinator implements ICluster, HRMEntity
 	private HashMap<HRMID, FIBEntry> mIDToFIBMapping = new HashMap<HRMID, FIBEntry>();
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnouncements;
 	private LinkedList<HRMSignature> mSignatures = new LinkedList<HRMSignature>();
-	private HashMap<Long, CoordinatorCEPChannel> mRouteRequestDispatcher;
+//	private HashMap<Long, CoordinatorCEPChannel> mRouteRequestDispatcher;
 	private HashMap<HRMID, LinkedList<RoutingServiceLinkVector>> mAddressToPathMapping;
 	
 	/**
@@ -109,17 +110,25 @@ public class Coordinator implements ICluster, HRMEntity
 	 * 
 	 */
 	private static final long serialVersionUID = 6824959379284820010L;
+	
+	/**
+	 * The constructor for a cluster object. Usually, it is called by a cluster's elector instance
+	 * 
+	 * @param pCluster the parent cluster instance
+	 * @param pLevel the addressed hierarchy level
+	 * @param pInitialAddress the initial HRMID of this coordinator
+	 */
 	public Coordinator(Cluster pCluster, HierarchyLevel pLevel, HRMID pInitialAddress)
 	{
+		mManagedCluster = pCluster;
 		mHRMID =  pInitialAddress;
 		mHierarchyLevel = pLevel;
 		mClusterID = pCluster.getClusterID();
 		mLastCreatedAddress = 0;
 		mAddressMapping = new HashMap<CoordinatorCEPChannel, TopologyData>();
-		mManagedCluster = pCluster;
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
+		
 		mBullyPriority = BullyPriority.createForCoordinator(this);
-		getHRMController().registerCoordinator(this, mHierarchyLevel);
 
 		// creates the coordinator signature
 		mSignature = getHRMController().createCoordinatorSignature(this);
@@ -130,8 +139,8 @@ public class Coordinator implements ICluster, HRMEntity
 		// register itself as coordinator for the managed cluster
 		mManagedCluster.setCoordinator(this);
 
-		// register itself as addressable target at the local HRMController instance
-		mManagedCluster.getHRMController().addRoutableTarget(this);
+		// register at HRMController's internal database
+		getHRMController().registerCoordinator(this);
 
 		Logging.log(this, "CREATED");
 	}

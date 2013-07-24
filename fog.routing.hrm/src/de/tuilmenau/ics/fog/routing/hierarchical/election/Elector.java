@@ -288,9 +288,6 @@ public class Elector implements HRMEntity
 				Logging.err(this, "Requirements problem - error when trying to distribute addresses", tExc);
 			}
 		}
-
-		// it's time to update the GUI
-		notifyGUI();
 	}
 	
 	private void eventAllPrioritiesReceived()
@@ -342,21 +339,6 @@ public class Elector implements HRMEntity
 	
 		// mark as election loser
 		mElectionWon = false;
-		
-		// it's time to update the GUI
-		notifyGUI();
-	}
-	
-	/**
-	 * Notifies the GUI about essential updates within the HRM system
-	 */
-	private void notifyGUI()
-	{
-		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
-			Logging.log(this, "Updating GUI");
-		}
-		
-		mParentCluster.getHRMController().notifyGUI(this);
 	}
 	
 	/**
