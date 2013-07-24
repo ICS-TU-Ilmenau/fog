@@ -11,6 +11,13 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 public class HRMConfig
 {
+	public class DebugOutput
+	{
+		/** 
+		 * Show debug outputs about observable/observer construct, which is used to inform GUIs about HRMController internal changes.
+		 */
+		public static final boolean GUI_NOTIFICATIONS = false; 
+	}
 	public class Hierarchy
 	{
 		/**

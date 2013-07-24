@@ -12,6 +12,8 @@ package de.tuilmenau.ics.fog.ui.eclipse.editors;
 import java.text.Collator;
 import java.util.LinkedList;
 import java.util.Locale;
+import java.util.Observable;
+import java.util.Observer;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
@@ -53,7 +55,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionManager;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -65,7 +66,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * The HRM viewer, which depicts all information from an HRM controller.
  * 
  */
-public class HRMViewer extends EditorPart
+public class HRMViewer extends EditorPart implements Observer
 {
 	private static boolean HRM_VIEWER_DEBUGGING = false;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = false;
@@ -78,6 +79,7 @@ public class HRMViewer extends EditorPart
 	
 	public HRMViewer()
 	{
+		
 	}
 	
 	@Override
@@ -884,8 +886,27 @@ public class HRMViewer extends EditorPart
 		} else {
 			throw new PartInitException("No input for editor.");
 		}
+		
+		// register this GUI at the corresponding HRMController
+		if (mHRMController != null){
+			mHRMController.registerGUI(this);
+		}
 	}
 	
+	/**
+	 * overloaded dispose() function for unregistering from the HRMController instance
+	 */
+	public void dispose()
+	{
+		// unregister this GUI at the corresponding HRMController
+		if (mHRMController != null){
+			mHRMController.unregisterGUI(this);
+		}
+		
+		// call the original implementation
+		super.dispose();
+	}
+
 	@Override
 	public void doSave(IProgressMonitor arg0)
 	{
@@ -932,5 +953,17 @@ public class HRMViewer extends EditorPart
 	public String toString()
 	{		
 		return "HRM viewer" + (mHRMController != null ? "@" + mHRMController.getNodeGUIName() : "");
+	}
+
+	/**
+	 * Function for receiving notifications about changes in the corresponding HRMController instance
+	 */
+	@Override
+	public void update(Observable pSource, Object pArgument)
+	{
+		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
+			Logging.log(this, "Got notification from " + pSource + " with argument " + pArgument);
+		}
+		
 	}
 }

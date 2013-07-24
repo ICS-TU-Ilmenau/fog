@@ -117,9 +117,9 @@ public class Elector implements HRMEntity
 		// start the clustering of this cluster's coordinator and its neighbors
 		mParentCluster.getCoordinator().clusterCoordinators();
 	}
-	
+
 	/**
-	 * Set the current elector state
+	 * Sets the current elector state
 	 * 
 	 * @param pNewState the new state
 	 */
@@ -352,9 +352,11 @@ public class Elector implements HRMEntity
 	 */
 	private void notifyGUI()
 	{
-		Logging.log(this, "Updating GUI");
+		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
+			Logging.log(this, "Updating GUI");
+		}
 		
-		//TODO: update GUI via an observer?
+		mParentCluster.getHRMController().notifyGUI(this);
 	}
 	
 	/**

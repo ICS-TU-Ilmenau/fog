@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Observer;
 
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.Service;
@@ -55,9 +56,14 @@ public class HRMController extends Application implements IServerCallback
 	private boolean HRM_CONTROLLER_DEBUGGING = false;
 	
 	/**
-	 * Stored the local HRM specific identity of the physical node (router)
+	 * Stores the local HRM specific identity of the physical node (router)
 	 */
 	private HRMIdentity mIdentity = null;
+	
+	/**
+	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance
+	 */
+	private HRMControllerObservable mGUIInformer = null;
 	
 	private SimpleName mName = null;
 	
@@ -90,6 +96,7 @@ public class HRMController extends Application implements IServerCallback
 	{
 		super(pNode.getHost(), null, pNode.getIdentity());
 		mName = new SimpleName(ROUTING_NAMESPACE, null);
+		mGUIInformer = new HRMControllerObservable(this);
 		mPhysicalNode = pNode;
 		Logging.log(this, "created");
 		Binding serverSocket=null;
@@ -108,6 +115,39 @@ public class HRMController extends Application implements IServerCallback
 
 		// set the Bully priority 
 		BullyPriority.configureNode(pNode);
+	}
+
+	/**
+	 * Notifies the GUI about essential updates within the HRM system
+	 */
+	public void notifyGUI(Object pArgument)
+	{
+		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
+			Logging.log(this, "Got notification with argument " + pArgument);
+		}
+		mGUIInformer.notifyObservers(pArgument);
+	}
+
+	/**
+	 * Registers a GUI for being notified about HRMController internal changes. 
+	 */
+	public void registerGUI(Observer pGUI)
+	{
+		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
+			Logging.log(this, "Registering GUI " + pGUI);
+		}
+		mGUIInformer.addObserver(pGUI);
+	}
+	
+	/**
+	 * Unregisters a GUI for being notified about HRMController internal changes. 
+	 */
+	public void unregisterGUI(Observer pGUI)
+	{
+		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
+			Logging.log(this, "Unregistering GUI " + pGUI);
+		}
+		mGUIInformer.deleteObserver(pGUI);
 	}
 
 	/**
