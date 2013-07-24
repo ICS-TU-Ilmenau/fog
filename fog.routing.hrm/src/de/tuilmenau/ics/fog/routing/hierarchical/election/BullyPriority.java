@@ -87,30 +87,6 @@ public class BullyPriority
 	}
 	
 	/**
-	 * Constructor: initializes the Bully priority for a coordinator depending on the node configuration and the hierarchy level.
-	 * 
-	 * @param pCluster the cluster to which this Bully priority belongs to.
-	 */
-	public static BullyPriority createForCoordinator(Coordinator pCoordinator)
-	{
-		Node tNode = pCoordinator.getHRMController().getNode();
-		int tHierarchyLevel = pCoordinator.getHierarchyLevel().getValue();
-		
-		if (tNode == null) {
-			Logging.log(pCoordinator, "Cannot create Bully priority, invalid reference to the physical node found");
-			return null;
-		}
-
-		BullyPriority tResult = new BullyPriority((long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY));
-		
-		if (DEBUG_CREATION){
-			Logging.log(pCoordinator, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
-		}
-		
-		return tResult;
-	}
-
-	/**
 	 * Constructor: initializes the Bully priority with the given value.
 	 * 
 	 * @param pPriority the defined new Bully priority value

@@ -84,7 +84,6 @@ public class Coordinator implements ICluster, HRMEntity
 	private HRMSignature mCoordinatorSignature = null;
 	private Name mCoordinatorName = null;
 	private HRMName mCoordinatorAddress = null;
-	private BullyPriority mBullyPriority;
 	private int mToken;
 	private BullyPriority mHighestPriority = null;
 	private List<IRoutableClusterGraphTargetName> mClustersToNotify;
@@ -115,26 +114,19 @@ public class Coordinator implements ICluster, HRMEntity
 	 * The constructor for a cluster object. Usually, it is called by a cluster's elector instance
 	 * 
 	 * @param pCluster the parent cluster instance
-	 * @param pLevel the addressed hierarchy level
-	 * @param pInitialAddress the initial HRMID of this coordinator
 	 */
-	public Coordinator(Cluster pCluster, HierarchyLevel pLevel, HRMID pInitialAddress)
+	public Coordinator(Cluster pCluster)
 	{
 		mManagedCluster = pCluster;
-		mHRMID =  pInitialAddress;
-		mHierarchyLevel = pLevel;
+		mHRMID =  mManagedCluster.getHrmID();
+		mHierarchyLevel = mManagedCluster.getHierarchyLevel();
 		mClusterID = pCluster.getClusterID();
 		mLastCreatedAddress = 0;
 		mAddressMapping = new HashMap<CoordinatorCEPChannel, TopologyData>();
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		
-		mBullyPriority = BullyPriority.createForCoordinator(this);
-
 		// creates the coordinator signature
 		mSignature = getHRMController().createCoordinatorSignature(this);
-
-		// updating the Bully priority
-		setPriority(mManagedCluster.getBullyPriority());
 
 		// register itself as coordinator for the managed cluster
 		mManagedCluster.setCoordinator(this);
@@ -917,8 +909,11 @@ public class Coordinator implements ICluster, HRMEntity
 	@Override
 	public void setPriority(BullyPriority pPriority) 
 	{
-		Logging.log(this, "Updating the Bully priority from " + mBullyPriority + " to " + pPriority);
-		mBullyPriority = pPriority;
+		if (!getBullyPriority().equals(pPriority)){
+			Logging.err(this, "############# Trying to update Bully priority from " + getBullyPriority() + " to " + pPriority);
+		}
+
+		//TODO: remove this function
 	}
 
 	@Override
@@ -967,8 +962,10 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 
 	@Override
-	public BullyPriority getBullyPriority() {
-		return mBullyPriority;
+	public BullyPriority getBullyPriority() 
+	{
+		// return the Bully priority of the managed cluster object
+		return mManagedCluster.getBullyPriority();
 	}
 
 	@Override

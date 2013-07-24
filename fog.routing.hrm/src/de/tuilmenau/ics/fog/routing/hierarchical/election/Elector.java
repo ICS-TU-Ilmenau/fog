@@ -264,7 +264,7 @@ public class Elector implements HRMEntity
 		tHRMController.getApprovedSignatures().add(mParentCluster.getSignature());
 
 		// create new coordinator instance
-		Coordinator tElectedCoordinator = new Coordinator(mParentCluster, mParentCluster.getHierarchyLevel(), mParentCluster.getHrmID());
+		Coordinator tElectedCoordinator = new Coordinator(mParentCluster);
 	
 		//TODO: ??
 		mParentCluster.getHRMController().setSourceIntermediateCluster(tElectedCoordinator, mParentCluster);
