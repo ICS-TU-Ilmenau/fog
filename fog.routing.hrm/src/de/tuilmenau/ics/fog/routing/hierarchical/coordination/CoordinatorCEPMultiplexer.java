@@ -253,7 +253,7 @@ public class CoordinatorCEPMultiplexer
 			if(tCEPDemultiplexed == null) {
 				synchronized(mClusterToCEPMapping) {
 					try {
-						Logging.log(this, pSourceCluster + " is waiting because establishment of connection to " + pTargetCluster + " did not yet take place");
+						Logging.log(this, "ACTIVE WAITING - " + pSourceCluster + " is waiting because establishment of connection to " + pTargetCluster + " did not yet take place");
 						mClusterToCEPMapping.wait(10000);
 						tCEPDemultiplexed = mClusterToCEPMapping.get(new Tuple<Long, Long>(pSourceCluster.getClusterID(), pTargetCluster.getClusterID()));
 						//mClusterToCEPMapping.remove(pSourceCluster.getClusterID());
