@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog;
 
 import java.awt.PopupMenu;
 
+//TODO: rename to something with "graph" and "viewer"
 public interface IController
 {
 	public void selected(Object pSelection, boolean pByDefaultButton, int clickCount);
