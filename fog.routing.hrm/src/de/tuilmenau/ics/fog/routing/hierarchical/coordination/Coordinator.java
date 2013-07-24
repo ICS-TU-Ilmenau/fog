@@ -301,7 +301,6 @@ public class Coordinator implements ICluster, HRMEntity
 			HRMID tID = null;
 			TopologyData tTopologyData = new TopologyData();
 			try {
-				if(!tReceivingCEP.isPeerCoordinatorForNeighborZone() || (mIgnoreOnAddressDistribution != null && mIgnoreOnAddressDistribution.contains(tReceivingCEP.getPeerName()))) {
 					/*
 					 * generate next address and map it to a CEP in case we are on level one, or to a cluster in case we are in a level higher than 1
 					 */
@@ -313,9 +312,6 @@ public class Coordinator implements ICluster, HRMEntity
 						map(tID, tReceivingCEP.getRemoteClusterName());
 //					}
 					tTopologyData.setHRMID(tID);
-				} else {
-					Logging.log(this, "Skipping " + tReceivingCEP + " in address distribution as it is a coordinator for another cluster on level " + mHierarchyLevel);
-				}
 				/*
 				 * Collect all forwarding entries for connection end point tReceivingCEP, afterwards routes to supernodes are calculated
 				 */

@@ -57,7 +57,6 @@ public class CoordinatorCEPChannel
 	private ICluster mPeerCluster;
 	private BullyPriority mPeerPriority = null;
 	private boolean mReceivedBorderNodeAnnouncement = false;
-	private boolean mPeerIsCoordinatorForNeighborZone = false;
 	private boolean mIsEdgeRouter = false;
 	private boolean mKnowsCoordinator = false;
 	private HashMap<ICluster, ICluster> mAnnouncerMapping;
@@ -713,11 +712,6 @@ public class CoordinatorCEPChannel
 	public HRMName getSourceName()
 	{
 		return getMultiplexer().getSourceRoutingServiceAddress(this);
-	}
-	
-	public boolean isPeerCoordinatorForNeighborZone()
-	{
-		return mPeerIsCoordinatorForNeighborZone;
 	}
 	
 	public boolean isPartOfMyCluster()
