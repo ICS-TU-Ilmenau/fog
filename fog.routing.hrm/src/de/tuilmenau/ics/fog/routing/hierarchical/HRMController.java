@@ -111,7 +111,7 @@ public class HRMController extends Application implements IServerCallback
 		mApprovedSignatures = new LinkedList<HRMSignature>();		
 		
 		// create the identity of this node, which is later used for creating the signatures of clusters
-		mIdentity = new HRMIdentity(getNodeGUIName());
+		mIdentity = new HRMIdentity(this);
 
 		// set the Bully priority 
 		BullyPriority.configureNode(pNode);

@@ -13,13 +13,17 @@ import de.tuilmenau.ics.fog.authentication.SimpleIdentity;
 import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 
+/**
+ * This class is used for the HRMController instances for representing their identity credential.
+ *
+ */
 public class HRMIdentity extends SimpleIdentity
 {
 	private static final long serialVersionUID = -1773497102949450924L;
 	
-	public HRMIdentity(String pName)
+	public HRMIdentity(HRMController pHRMController)
 	{
-		super(pName);
+		super(pHRMController.getNodeGUIName());
 	}
 	
 	public HRMSignature createSignature(Object pOrigin, byte[] pData, HierarchyLevel pLevel) throws AuthenticationException
