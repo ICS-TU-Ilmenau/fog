@@ -81,6 +81,11 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	private HRMSignature mSignature = null;
 
+	/**
+	 * This is the GUI specific cluster ID. It is used to allow for an easier debugging.
+	 */
+	private int mGUIClusterID = sGUIClusterID++;
+
 	private CoordinatorCEPChannel mChannelToCoordinator = null;
 	private Long mClusterID;
 	private BullyPriority mHighestPriority = null;
@@ -101,11 +106,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private LinkedList<CoordinatorCEPChannel> mOldParticipatingCEPs;
 	private Coordinator mCoordinator = null;
 	private CoordinatorCEPMultiplexer mMux = null;
-	
-	/**
-	 * This is the GUI specific cluster ID. It is used to allow for an easier debugging.
-	 */
-	private int mGUIClusterID = sGUIClusterID++;
 	
 	/**
 	 * This is the constructor of an intermediate cluster. At first such a cluster is identified by its cluster
@@ -159,6 +159,16 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	public HRMSignature getSignature()
 	{
 		return mSignature;
+	}
+	
+	/**
+	 * Returns the elector of this cluster
+	 * 
+	 * @return the elector
+	 */
+	public Elector getElector()
+	{
+		return mElector;
 	}
 	
 	public void setAnnouncedCEP(CoordinatorCEPChannel pCEP)
