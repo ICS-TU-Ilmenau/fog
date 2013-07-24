@@ -589,9 +589,6 @@ public class HRMViewer extends EditorPart
 		TableColumn tColumnRoute = new TableColumn(tTable, SWT.NONE, 7);
 		tColumnRoute.setText("Route");
 		
-		TableColumn tColumnBorder = new TableColumn(tTable, SWT.NONE, 8);
-		tColumnBorder.setText("BNA");
-		
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
 		
@@ -685,11 +682,6 @@ public class HRMViewer extends EditorPart
 			}else{
 				tRow.setText(7, "??");
 			}
-			
-			/**
-			 * Column 8:  
-			 */
-			tRow.setText(8, Boolean.toString(tCEP.receivedBorderNodeAnnouncement()));
 			
 			j++;
 		}

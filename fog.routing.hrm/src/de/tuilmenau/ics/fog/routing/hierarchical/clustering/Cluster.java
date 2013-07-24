@@ -106,7 +106,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private int mToken;
 	private LinkedList<CoordinatorCEPChannel> mLaggards; // only used by the Elector
 	private TopologyData mTopologyData = null;
-	private CoordinatorCEPChannel mAnnouncer = null;
 	private LinkedList<CoordinatorCEPChannel> mOldParticipatingCEPs;
 	private Coordinator mCoordinator = null;
 	private CoordinatorCEPMultiplexer mMux = null;
@@ -183,11 +182,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return mHRMController;
 	}
 
-	public void setAnnouncedCEP(CoordinatorCEPChannel pCEP)
-	{
-		mAnnouncer = pCEP;
-	}
-	
 	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerName());
@@ -717,11 +711,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		} else {
 			mLaggards.add(pCEP);
 		}
-	}
-
-	public CoordinatorCEPChannel getAnnouncedCEP()
-	{
-		return mAnnouncer;
 	}
 
 	@Override

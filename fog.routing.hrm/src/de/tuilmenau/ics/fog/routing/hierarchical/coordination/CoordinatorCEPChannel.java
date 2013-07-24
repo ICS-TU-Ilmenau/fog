@@ -56,14 +56,12 @@ public class CoordinatorCEPChannel
 	private ClusterName mRemoteCluster;
 	private ICluster mPeerCluster;
 	private BullyPriority mPeerPriority = null;
-	private boolean mReceivedBorderNodeAnnouncement = false;
 	private boolean mIsEdgeRouter = false;
 	private boolean mKnowsCoordinator = false;
 	private HashMap<ICluster, ICluster> mAnnouncerMapping;
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
 	private BFSDistanceLabeler<IRoutableClusterGraphTargetName, RoutableClusterGraphLink> mBreadthFirstSearch;
-	private boolean mCrossLevelCEP = false;
 	
 	/**
 	 * 
@@ -615,11 +613,6 @@ public class CoordinatorCEPChannel
 		mPartOfCluster = pPartOfMyCluster;
 	}
 	
-	public boolean receivedBorderNodeAnnouncement()
-	{
-		return mReceivedBorderNodeAnnouncement;
-	}
-	
 	public ICluster getNegotiator(ICluster pCluster)
 	{
 		if(mAnnouncerMapping == null) {
@@ -696,7 +689,7 @@ public class CoordinatorCEPChannel
 //			mRequestedCoordinator = true;
 			Logging.log(this, "Sending " + pData);
 		}
-		if(getPeer() instanceof Coordinator && !mCrossLevelCEP) {
+		if(getPeer() instanceof Coordinator) {
 			getCEPMultiplexer().write(pData, this, new ClusterName(getPeer().getToken(), ((L2Address)getPeerName()).getAddress().longValue(), getPeer().getHierarchyLevel()));
 		} else {
 			getCEPMultiplexer().write(pData, this, getRemoteClusterName());

@@ -194,7 +194,6 @@ public class HRMController extends Application implements IServerCallback
 				}
 				tCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
 				tCluster.addParticipatingCEP(tCEP);
-				tCluster.setAnnouncedCEP(tCEP);
 				tCEP.addAnnouncedCluster(tCluster, tCluster);
 				addRoutableTarget(tCluster);
 				tFoundCluster = tCluster;
