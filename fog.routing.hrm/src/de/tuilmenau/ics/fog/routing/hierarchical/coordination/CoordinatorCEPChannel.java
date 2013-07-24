@@ -683,7 +683,7 @@ public class CoordinatorCEPChannel
 	
 	public boolean sendPacket(Serializable pData)
 	{
-		Logging.log(this, "Sending to \"" + getRemoteClusterName() + "\" the packet " + pData);
+		Logging.log(this, "Sending to " + getRemoteClusterName() + " the packet " + pData);
 		
 		if(pData instanceof RequestCoordinator) {
 //			mRequestedCoordinator = true;
