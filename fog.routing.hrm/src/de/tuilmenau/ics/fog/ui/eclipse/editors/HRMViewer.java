@@ -959,10 +959,10 @@ public class HRMViewer extends EditorPart implements Observer
 	 * Function for receiving notifications about changes in the corresponding HRMController instance
 	 */
 	@Override
-	public void update(Observable pSource, Object pArgument)
+	public void update(Observable pSource, Object pReason)
 	{
 		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
-			Logging.log(this, "Got notification from " + pSource + " with argument " + pArgument);
+			Logging.log(this, "Got notification from " + pSource + " because of \"" + pReason + "\"");
 		}
 		
 	}
