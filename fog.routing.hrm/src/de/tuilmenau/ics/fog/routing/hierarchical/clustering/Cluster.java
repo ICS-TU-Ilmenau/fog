@@ -86,6 +86,11 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	private int mGUIClusterID = sGUIClusterID++;
 
+	/**
+	 * Counter about how many times a coordinator was defined
+	 */
+	private int mCoordinatorUpdateCounter = 0;
+
 	private CoordinatorCEPChannel mChannelToCoordinator = null;
 	private Long mClusterID;
 	private BullyPriority mHighestPriority = null;
@@ -99,7 +104,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private HRMSignature mCoordSignature;
 	private boolean mInterASCluster = false;
 	private int mToken;
-	private int mAnnoucementCounter = 0;
 	private LinkedList<CoordinatorCEPChannel> mLaggards; // only used by the Elector
 	private TopologyData mTopologyData = null;
 	private CoordinatorCEPChannel mAnnouncer = null;
@@ -171,6 +175,14 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return mElector;
 	}
 	
+	/** 
+	 * Returns the reference to the node local HRMController instance 
+	 */
+	public HRMController getHRMController()
+	{
+		return mHRMController;
+	}
+
 	public void setAnnouncedCEP(CoordinatorCEPChannel pCEP)
 	{
 		mAnnouncer = pCEP;
@@ -187,7 +199,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	{
 		setToken(pCoordToken);
 		
-		Logging.log(this, "announcement number " + (++mAnnoucementCounter) + ": Setting Coordinator " + pCoordinatorChannel + " with signature " + pCoordSignature + " with routing address " + pAddress + " and priority ");
+		Logging.log(this, "announcement number " + (++mCoordinatorUpdateCounter) + ": Setting Coordinator " + pCoordinatorChannel + " with signature " + pCoordSignature + " with routing address " + pAddress + " and priority ");
 		Logging.log(this, "previous channel to coordinator was " + mChannelToCoordinator + " for coordinator " + mCoordName);
 		mChannelToCoordinator = pCoordinatorChannel;
 		mCoordSignature = pCoordSignature;
@@ -479,11 +491,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return mCEPs;
 	}
 	
-	public HRMController getHRMController()
-	{
-		return mHRMController;
-	}
-	
+
 	public void setPriority(BullyPriority pPriority)
 	{
 		BullyPriority tBullyPriority = mBullyPriority;
