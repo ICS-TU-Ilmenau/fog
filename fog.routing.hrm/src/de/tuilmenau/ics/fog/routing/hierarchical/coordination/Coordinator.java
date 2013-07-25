@@ -911,6 +911,8 @@ public class Coordinator implements ICluster, HRMEntity
 	{
 		if (!getBullyPriority().equals(pPriority)){
 			Logging.err(this, "############# Trying to update Bully priority from " + getBullyPriority() + " to " + pPriority);
+		}else{
+			Logging.log(this, "############# Trying to set same Bully priority " + getBullyPriority());
 		}
 
 		//TODO: remove this function

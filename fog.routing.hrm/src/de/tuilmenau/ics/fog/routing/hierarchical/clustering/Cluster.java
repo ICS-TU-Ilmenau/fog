@@ -496,7 +496,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	{
 		BullyPriority tBullyPriority = mBullyPriority;
 		mBullyPriority = pPriority;
-		Logging.info(this, "Setting Bully priority for cluster " + toString() + " from " + tBullyPriority.getValue() + " to " + mBullyPriority.getValue());
+		Logging.log(this, "######## Setting Bully priority for cluster " + toString() + " from " + tBullyPriority.getValue() + " to " + mBullyPriority.getValue());
 	}
 	
 	public BullyPriority getCoordinatorPriority()
