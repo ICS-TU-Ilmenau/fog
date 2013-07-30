@@ -785,10 +785,10 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public void registerCoordinator(Coordinator pCoordinator)
 	{
-		Logging.log(this, "Registering coordinator " + pCoordinator);
+		int tLevel = pCoordinator.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
 
-		int tLevel = pCoordinator.getHierarchyLevel().getValue();
-			
+		Logging.log(this, "Registering coordinator " + pCoordinator + " at level " + tLevel);
+
 		// make sure we have a valid linked list object
 		if(mRegisteredCoordinators == null) {
 			mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
@@ -840,9 +840,9 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	public void registerCluster(Cluster pCluster)
 	{
-		Logging.log(this, "Registering cluster " + pCluster);
-
 		int tLevel = pCluster.getHierarchyLevel().getValue();
+
+		Logging.log(this, "Registering cluster " + pCluster + " at level " + tLevel);
 
 		//TODO: store a database about registered clusters
 		
