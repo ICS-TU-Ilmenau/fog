@@ -446,7 +446,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
-		Logging.log(this, "Setting HRM ID: \"" + pHRMID + "\", triggered from " + pCaller);
+		Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (caller=" + pCaller + ")");
 		mHRMID = pHRMID;
 	}
 	

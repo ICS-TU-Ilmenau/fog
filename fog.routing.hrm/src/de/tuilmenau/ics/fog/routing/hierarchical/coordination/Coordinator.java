@@ -170,7 +170,7 @@ public class Coordinator implements ICluster, HRMEntity
 //		if(mHierarchyLevel.isHigherLevel()) {
 //			HRMIPMapper.registerHRMID(tID);
 //		}
-		Logging.log(this, "Created new own HRM ID " + tID);
+		Logging.log(this, "NEW HRMID=" + tID);
 		
 		return tID;
 	}
@@ -289,7 +289,7 @@ public class Coordinator implements ICluster, HRMEntity
 		Logging.log(this, "Will now distribute addresses to entities on level 0");
 		if(mHierarchyLevel.isBaseLevel()) {
 			HRMID tOwnAddress = createOwnAddress();
-			tManagedClusterTopologyData.setHRMID(tOwnAddress);
+			tManagedClusterTopologyData.assignHRMID(tOwnAddress);
 			mManagedCluster.setHRMID(this, tOwnAddress);
 		}
 		/*
@@ -312,7 +312,7 @@ public class Coordinator implements ICluster, HRMEntity
 //					} else {
 						map(tID, tReceivingCEP.getRemoteClusterName());
 //					}
-					tTopologyData.setHRMID(tID);
+					tTopologyData.assignHRMID(tID);
 				/*
 				 * Collect all forwarding entries for connection end point tReceivingCEP, afterwards routes to supernodes are calculated
 				 */

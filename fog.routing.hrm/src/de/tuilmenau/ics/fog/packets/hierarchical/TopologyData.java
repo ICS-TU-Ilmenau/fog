@@ -17,6 +17,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This packet is used to share topology data with other members of a cluster.
@@ -58,8 +59,9 @@ public class TopologyData implements Serializable
 	 * 
 	 * @param pHRMID is the HRMID the receiver of this packet has to choose
 	 */
-	public void setHRMID(HRMID pHRMID)
+	public void assignHRMID(HRMID pHRMID)
 	{
+		Logging.log(this, "ASSIGN HRMID=" + pHRMID);
 		mHRMID = pHRMID;
 	}
 	

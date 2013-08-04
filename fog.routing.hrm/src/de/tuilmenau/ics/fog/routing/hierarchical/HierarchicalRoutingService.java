@@ -552,8 +552,8 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public void registerNode(ForwardingNode pElement, Name pName, NamingLevel pLevel, Description pDescription)
 	{	
-		Logging.log(this, "REGISTERING NODE " + pElement + " with name " + pName + (pLevel != NamingLevel.NONE ? " on naming level " + pLevel : "") + " with description " + pDescription);
-		
+		Logging.log(this, "REGISTERING NODE: " + pElement + " with name " + pName + (pLevel != NamingLevel.NONE ? " on naming level " + pLevel : "") + " with description " + pDescription);
+
 		NameMappingEntry<Name> [] tEntries = null;
 		tEntries = mNameMapping.getAddresses(pName);
 		L2Address tAddress = null;
@@ -698,7 +698,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public void registerLink(ForwardingElement pFrom, AbstractGate pGate) throws NetworkException
 	{
-		Logging.log(this, "REGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
+		Logging.log(this, "REGISTERING LINK: source=" + pFrom + ", dest.=" + pGate.getNextNode() + ", attr.=" + pGate.getDescription() + ", gate=" + pGate);
 
 		HRMName tFrom = getNameFor((ForwardingNode) pFrom);
 		
