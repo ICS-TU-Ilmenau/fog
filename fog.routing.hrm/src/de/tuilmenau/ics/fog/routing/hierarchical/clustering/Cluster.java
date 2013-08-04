@@ -89,10 +89,14 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	private int mCoordinatorUpdateCounter = 0;
 
+	/**
+	 * The HRM ID of this cluster.
+	 */
+	private HRMID mHRMID = null;
+
 	private CoordinatorCEPChannel mChannelToCoordinator = null;
 	private Long mClusterID;
 	private BullyPriority mHighestPriority = null;
-	private HRMID mHRMID = null;
 	private BullyPriority mCoordinatorPriority;
 	private Name mCoordName;
 	private Name mCoordAddress;
@@ -843,7 +847,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		if(mHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
 			return mHRMID.toString();
 		} else {
-			return toLocation() + " (ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getBullyPriority().getValue() +  (getCoordinatorSignature() != null ? ", Coord.=" + getCoordinatorSignature() : "") + (mInterASCluster ? ", TRANSIT" : "") + ")";
+			return toLocation() + " (" + idToString() + ")";
 
 		}
 	}
@@ -854,5 +858,14 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		String tResult = getClass().getSimpleName() + mGUIClusterID + "@" + getHRMController().getNodeGUIName() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
+	}
+	
+	private String idToString()
+	{
+		if (getHrmID() == null){
+			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getBullyPriority().getValue() +  (getCoordinatorSignature() != null ? ", Coord.=" + getCoordinatorSignature() : "") + (mInterASCluster ? ", TRANSIT" : "");
+		}else{
+			return "HRMID=" + getHrmID().toString();
+		}
 	}
 }

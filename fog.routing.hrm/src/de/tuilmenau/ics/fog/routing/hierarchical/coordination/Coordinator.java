@@ -981,7 +981,7 @@ public class Coordinator implements ICluster, HRMEntity
 	@Override
 	public void setToken(int pToken) {
 		if(mToken != 0) {
-			Logging.log(this, "Updating token");
+			Logging.log(this, "######################### Updating token to " + pToken);
 		}
 		mToken = pToken;
 	}
@@ -1709,7 +1709,7 @@ public class Coordinator implements ICluster, HRMEntity
 	public String toString()
 	{
 		//return getClass().getSimpleName() + (mManagedCluster != null ? "(" + mManagedCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;
-		return toLocation() + " " + (mManagedCluster != null ? "(ManagedCluster=" + mManagedCluster.getGUIClusterID() + ", ": "(" ) + "Tok=" +mToken + ", CoordSign=" + mCoordinatorSignature + ")";
+		return toLocation() + " (" + (mManagedCluster != null ? "Cluster=" + mManagedCluster.getGUIClusterID() + ", " : "") + idToString() + ")";
 	}
 
 	@Override
@@ -1719,4 +1719,13 @@ public class Coordinator implements ICluster, HRMEntity
 		
 		return tResult;
 	}
+	private String idToString()
+	{
+		if (getHrmID() == null){
+			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getBullyPriority().getValue() +  (getCoordinatorSignature() != null ? ", Coord.=" + getCoordinatorSignature() : "");
+		}else{
+			return "HRMID=" + getHrmID().toString();
+		}
+	}
+
 }
