@@ -78,7 +78,6 @@ public class HRMController extends Application implements IServerCallback
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
 	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators;
-	private LinkedList<HRMSignature> mApprovedSignatures;
 	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
 	/**
@@ -108,7 +107,6 @@ public class HRMController extends Application implements IServerCallback
 			Logging.err(this, "Unable to bind to hosts application interface", tExc);
 		}
 		mHRS = pHRS;
-		mApprovedSignatures = new LinkedList<HRMSignature>();		
 		
 		// create the identity of this node, which is later used for creating the signatures of clusters
 		mIdentity = new HRMIdentity(this);
@@ -909,29 +907,6 @@ public class HRMController extends Application implements IServerCallback
 		}
 		
 		return tResult;
-	}
-
-	/**
-	 * 
-	 * @return list of all signatures that were already approved
-	 */
-	public LinkedList<HRMSignature> getApprovedSignatures()
-	{
-		return mApprovedSignatures;
-	}
-	
-	/**
-	 * 
-	 * @param pSignature is a signature that validates a FIB entry.
-	 */
-	public void addApprovedSignature(HRMSignature pSignature)
-	{
-		if(mApprovedSignatures == null) {
-			mApprovedSignatures = new LinkedList<HRMSignature>();
-		}
-		if(!mApprovedSignatures.contains(pSignature)) {
-			mApprovedSignatures.add(pSignature);
-		}
 	}
 
 	/**

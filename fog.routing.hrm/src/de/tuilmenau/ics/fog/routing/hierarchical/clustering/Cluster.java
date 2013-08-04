@@ -189,7 +189,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerName());
-		getHRMController().addApprovedSignature(pAnnounce.getCoordSignature());
 		getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
@@ -718,14 +717,9 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	}
 
 	@Override
-	public void handleTopologyData(TopologyData pEnvelope)
+	public void handleTopologyData(TopologyData pTopologyData)
 	{
-		if(pEnvelope.getApprovedSignatures() != null) {
-			for(HRMSignature tSignature : pEnvelope.getApprovedSignatures()) {
-				getHRMController().addApprovedSignature(tSignature);
-			}
-		}
-		mTopologyData = pEnvelope;
+		mTopologyData = pTopologyData;
 		HierarchicalNameMappingService<HRMID> tNMS = null;
 		try {
 			tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
@@ -734,17 +728,17 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 		Name tLocalRouterName = getHRMController().getNode().getCentralFN().getName();
 		
-		tNMS.registerName(tLocalRouterName, pEnvelope.getHRMID(), NamingLevel.NAMES);
+		tNMS.registerName(tLocalRouterName, pTopologyData.getHRMID(), NamingLevel.NAMES);
 		String tString = new String();
 		for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
 			tString += tEntry + " ";
 		}
 		Logging.log(this, "Currently registered names: " + tString);
 
-		setHRMID(this, pEnvelope.getHRMID());
+		setHRMID(this, pTopologyData.getHRMID());
 		
-		getHRMController().getNode().setDecorationValue(getHRMController().getNode().getDecorationValue() + " " + pEnvelope.getHRMID().toString() + ",");
-		getHRMController().addIdentification(pEnvelope.getHRMID());
+		getHRMController().getNode().setDecorationValue(getHRMController().getNode().getDecorationValue() + " " + pTopologyData.getHRMID().toString() + ",");
+		getHRMController().addIdentification(pTopologyData.getHRMID());
 		if(mTopologyData.getEntries() != null) {
 			for(FIBEntry tEntry : mTopologyData.getEntries()) {
 				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null) {

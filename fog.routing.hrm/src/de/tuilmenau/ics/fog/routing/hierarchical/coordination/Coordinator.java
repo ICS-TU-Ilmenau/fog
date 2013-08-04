@@ -96,7 +96,6 @@ public class Coordinator implements ICluster, HRMEntity
 	private HashMap<HRMID, IRoutableClusterGraphTargetName> mAddressToClusterMapping = new HashMap<HRMID, IRoutableClusterGraphTargetName>();
 	private HashMap<HRMID, FIBEntry> mIDToFIBMapping = new HashMap<HRMID, FIBEntry>();
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnouncements;
-	private LinkedList<HRMSignature> mSignatures = new LinkedList<HRMSignature>();
 //	private HashMap<Long, CoordinatorCEPChannel> mRouteRequestDispatcher;
 	private HashMap<HRMID, LinkedList<RoutingServiceLinkVector>> mAddressToPathMapping;
 	
@@ -340,420 +339,263 @@ public class Coordinator implements ICluster, HRMEntity
 		 * outer loop: for every source the target is calculated
 		 */
 		
-		try {
-			ClusterName tNameFarthestClusterInDirection = null;
+		ClusterName tNameFarthestClusterInDirection = null;
 
-			for(CoordinatorCEPChannel tSourceCEP : mAddressMapping.keySet()) {
+		for(CoordinatorCEPChannel tSourceCEP : mAddressMapping.keySet()) {
+			
+			/*
+			 * inner loop: these are the target we mapped an address to, earlier
+			 */
+			for(CoordinatorCEPChannel tDestinationCEP: mAddressMapping.keySet()) {
+				if(tSourceCEP == tDestinationCEP) {
+					continue;
+				}
+				
+				tNameFarthestClusterInDirection = null;
 				
 				/*
-				 * inner loop: these are the target we mapped an address to, earlier
+				 * if cluster managers level is above one, HRMIDs are mapped to clusters
 				 */
-				for(CoordinatorCEPChannel tDestinationCEP: mAddressMapping.keySet()) {
-					if(tSourceCEP == tDestinationCEP) {
+				
+				// are we on a higher hierarchy level?
+				if(mHierarchyLevel.isHigherLevel()) {
+					/*
+					 * calculate entire cluster route from source to target
+					 * 
+					 * then: tell the cluster the next neighbor cluster that brings the packet to its target
+					 */
+					List<RoutableClusterGraphLink> tList = getHRMController().getRoutableClusterGraph().getRoute(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName());
+					HRMID tFrom = tSourceCEP.getRemoteClusterName().getHrmID();
+					HRMID tTo   = tDestinationCEP.getRemoteClusterName().getHrmID();
+					
+					if(tFrom.equals(tTo)) {
 						continue;
 					}
 					
-					tNameFarthestClusterInDirection = null;
-					
 					/*
-					 * if cluster managers level is above one, HRMIDs are mapped to clusters
+					 * Probably that cluster only knows the route to its neighbors, so the route to the next cluster has to be provided
+					 * 
+					 * As  two clusters can have the same coordinator, we provide the cluster that differs in the address of the coordinator
 					 */
 					
-					// are we on a higher hierarchy level?
-					if(mHierarchyLevel.isHigherLevel()) {
-						/*
-						 * calculate entire cluster route from source to target
-						 * 
-						 * then: tell the cluster the next neighbor cluster that brings the packet to its target
-						 */
-						List<RoutableClusterGraphLink> tList = getHRMController().getRoutableClusterGraph().getRoute(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName());
-						HRMID tFrom = tSourceCEP.getRemoteClusterName().getHrmID();
-						HRMID tTo   = tDestinationCEP.getRemoteClusterName().getHrmID();
-						
-						if(tFrom.equals(tTo)) {
-							continue;
-						}
+					ICluster tNextCluster = null;
+					try {
+						tNextCluster = (ICluster)getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteClusterName(), tList.get(0));
+					} catch (IndexOutOfBoundsException tExc) {
+						Logging.err(this, "Unable to calculate nex hop for " + tFrom + " to " + tTo);
 						
 						/*
-						 * Probably that cluster only knows the route to its neighbors, so the route to the next cluster has to be provided
-						 * 
-						 * As  two clusters can have the same coordinator, we provide the cluster that differs in the address of the coordinator
+						 * If no cluster neighbor was calculated, the source cluster is provided
 						 */
 						
-						ICluster tNextCluster = null;
-						try {
-							tNextCluster = (ICluster)getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteClusterName(), tList.get(0));
-						} catch (IndexOutOfBoundsException tExc) {
-							Logging.err(this, "Unable to calculate nex hop for " + tFrom + " to " + tTo);
-							
-							/*
-							 * If no cluster neighbor was calculated, the source cluster is provided
-							 */
-							
-							tNextCluster = tSourceCEP.getRemoteClusterName();
-						}
-						/*
-						 * if the coordinator address of the forwarding cluster equals the address of the source coordinator address, take the next cluster
-						 */
-						if(tNextCluster.getCoordinatorsAddress().equals(tSourceCEP.getRemoteClusterName().getCoordinatorsAddress()) && tList.size() > 1) {
-							tNextCluster = (ICluster)getHRMController().getRoutableClusterGraph().getDest(tNextCluster, tList.get(1));
-						}
-						
-						/*
-						 * The address of the next hop has to be found out.
-						 * Cluster managers above cluster one do not forward by Logical Link Layer addresses, but by HRMIDs that are later on mapped to the next physical router
-						 */
-						HRMName tNextHop  = null;
-						if(!tSourceCEP.getRemoteClusterName().getCoordinatorsAddress().equals(tDestinationCEP.getRemoteClusterName().getCoordinatorsAddress())) {
-							tNextHop = getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteClusterName(), tList.get(0)).getHrmID();
-						}
-						
-						ClusterName tFibEntryClusterName = new ClusterName(tNextCluster.getToken(), tNextCluster.getClusterID(), tNextCluster.getHierarchyLevel());
-						
-						FIBEntry tEntry = new FIBEntry(tTo, tNextHop, tFibEntryClusterName, getSignature());
-						
-						IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName());
-						if(tTargetNode instanceof ICluster) {
-							ICluster tCluster = (ICluster)tTargetNode;
-							tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
-						}
-						tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
-						/*
-						 * In this case the routes are calculated directly and not mapped to the responding nodes
-						 */
-						LinkedList<RoutingServiceLinkVector> tPolygon = null;
-						tPolygon = getPathToCoordinator(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName()); 
-						if(tPolygon != null && !tPolygon.isEmpty()) {
-							tEntry.setRoutingVectors(tPolygon);
-						}
-						mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
-					} else {
-						/*
-						 * At level one:
-						 * In this case the HRMID is mapped to a connection end point, not to a cluster like before
-						 * In that case the address is a direct neighbor. So we use the peer routing service address what is supposed to be the logical link layer address
-						 * 
-						 */
-						
-						FIBEntry tEntry = new FIBEntry(mAddressMapping.get(tDestinationCEP).getHRMID(), tDestinationCEP.getPeerName(), tLocalManagedClusterName, getSignature());
-						
-						mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
-						LinkedList<RoutingServiceLinkVector> tPolygon = getPathToCoordinator(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName()); 
-						if(!tPolygon.isEmpty()) {
-							/*
-							 * Here was a strange error, twist while and setting of the routing vector if fowarding is broken
-							 */
-							while(!tPolygon.getFirst().equals(tSourceCEP.getPeerName())) {
-								tPolygon.removeFirst();
-								if(tPolygon.isEmpty()) {
-									break;
-								}
-							}
-							tEntry.setRoutingVectors(tPolygon);
-						}
-						IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName());
-						if(tTargetNode instanceof ICluster) {
-							ICluster tCluster = (ICluster)tTargetNode;
-							tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
-						}
-						tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
+						tNextCluster = tSourceCEP.getRemoteClusterName();
 					}
-				}
-				
-				// are we on basic level?
-				if(mHierarchyLevel.isBaseLevel()) {
 					/*
-					 * The host itself has to tell its client how to reach it: get the address providers address: retrieveAddress() and then give the clients the address of the address provider
+					 * if the coordinator address of the forwarding cluster equals the address of the source coordinator address, take the next cluster
 					 */
-					FIBEntry tEntry = new FIBEntry(mManagedCluster.getHrmID(), tSourceCEP.getSourceName(), tLocalManagedClusterName, getSignature());
+					if(tNextCluster.getCoordinatorsAddress().equals(tSourceCEP.getRemoteClusterName().getCoordinatorsAddress()) && tList.size() > 1) {
+						tNextCluster = (ICluster)getHRMController().getRoutableClusterGraph().getDest(tNextCluster, tList.get(1));
+					}
+					
+					/*
+					 * The address of the next hop has to be found out.
+					 * Cluster managers above cluster one do not forward by Logical Link Layer addresses, but by HRMIDs that are later on mapped to the next physical router
+					 */
+					HRMName tNextHop  = null;
+					if(!tSourceCEP.getRemoteClusterName().getCoordinatorsAddress().equals(tDestinationCEP.getRemoteClusterName().getCoordinatorsAddress())) {
+						tNextHop = getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteClusterName(), tList.get(0)).getHrmID();
+					}
+					
+					ClusterName tFibEntryClusterName = new ClusterName(tNextCluster.getToken(), tNextCluster.getClusterID(), tNextCluster.getHierarchyLevel());
+					
+					FIBEntry tEntry = new FIBEntry(tTo, tNextHop, tFibEntryClusterName, getSignature());
+					
+					IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName());
+					if(tTargetNode instanceof ICluster) {
+						ICluster tCluster = (ICluster)tTargetNode;
+						tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
+					}
+					tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
+					/*
+					 * In this case the routes are calculated directly and not mapped to the responding nodes
+					 */
+					LinkedList<RoutingServiceLinkVector> tPolygon = null;
+					tPolygon = getPathToCoordinator(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName()); 
+					if(tPolygon != null && !tPolygon.isEmpty()) {
+						tEntry.setRoutingVectors(tPolygon);
+					}
+					mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
+				} else {
+					/*
+					 * At level one:
+					 * In this case the HRMID is mapped to a connection end point, not to a cluster like before
+					 * In that case the address is a direct neighbor. So we use the peer routing service address what is supposed to be the logical link layer address
+					 * 
+					 */
+					
+					FIBEntry tEntry = new FIBEntry(mAddressMapping.get(tDestinationCEP).getHRMID(), tDestinationCEP.getPeerName(), tLocalManagedClusterName, getSignature());
 					
 					mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
-					IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), mManagedCluster);
-					tNameFarthestClusterInDirection = null;
-					if(tTargetNode instanceof ICluster) {
-						ICluster tCluster = ((ICluster)tTargetNode);
-						tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
+					LinkedList<RoutingServiceLinkVector> tPolygon = getPathToCoordinator(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName()); 
+					if(!tPolygon.isEmpty()) {
+						/*
+						 * Here was a strange error, twist while and setting of the routing vector if fowarding is broken
+						 */
+						while(!tPolygon.getFirst().equals(tSourceCEP.getPeerName())) {
+							tPolygon.removeFirst();
+							if(tPolygon.isEmpty()) {
+								break;
+							}
+						}
+						tEntry.setRoutingVectors(tPolygon);
 					}
-					tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
-					/*
-					 * Now the managed cluster needs the information on how to reach the next hop
-					 */
-					FIBEntry tManagedEntry = new FIBEntry(mAddressMapping.get(tSourceCEP).getHRMID(), tSourceCEP.getPeerName(),	tLocalManagedClusterName, getSignature());
-					tManagedClusterTopologyData.addForwardingentry(tManagedEntry);
-					IRoutableClusterGraphTargetName tPeerNode = getFarthestVirtualNodeInDirection(mManagedCluster, tSourceCEP.getRemoteClusterName());
-
-					tNameFarthestClusterInDirection = null;
-					if(tPeerNode instanceof ICluster) {
-						ICluster tCluster = (ICluster)tPeerNode;
+					IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), tDestinationCEP.getRemoteClusterName());
+					if(tTargetNode instanceof ICluster) {
+						ICluster tCluster = (ICluster)tTargetNode;
 						tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
 					}
 					tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
 				}
-				
+			}
+			
+			// are we on basic level?
+			if(mHierarchyLevel.isBaseLevel()) {
 				/*
-				 * Here starts distribution of the HRMIDs provided by higher coordinators
+				 * The host itself has to tell its client how to reach it: get the address providers address: retrieveAddress() and then give the clients the address of the address provider
 				 */
+				FIBEntry tEntry = new FIBEntry(mManagedCluster.getHrmID(), tSourceCEP.getSourceName(), tLocalManagedClusterName, getSignature());
 				
-				if(mHigherHRMIDs != null) {
-					// are we on a higher hierarchy level?
-					if(mHierarchyLevel.isHigherLevel()) {
-						for(HRMID tHRMID : mHigherHRMIDs) {
-							/*
-							 * tNegotiator is the source cluster
-							 * tRelevant is the super node that provides the possibility to route the packet to its destination
-							 * tHRMIDMapping gets the cluster of the connection end point that announced that cluster.
-							 * 
-							 * special treatment is used if the negotiator equals the HRMID mapping: we have to tell that cluster how to reach the destination via a routing service link
-							 */
-							ICluster tNegotiator = tSourceCEP.getRemoteClusterName();
-							ICluster tRelevant = ((ICluster)getVirtualNodeFromHRMID(tHRMID));
-							ICluster tHRMIDMapping = null;
-							if(tRelevant instanceof NeighborCluster) {
-								NeighborCluster tNewRelevant = (NeighborCluster)tRelevant;
-								CoordinatorCEPChannel tNewRelevantCEP = tNewRelevant.getAnnouncedCEP(tSourceCEP.getRemoteClusterName());
-								tHRMIDMapping = tNewRelevantCEP.getNegotiator(tRelevant);
-								
-							} else {
-								//tHRMIDMapping = ((IntermediateCluster)tRelevant).getAnnouncedCEP().getNegotiator(tRelevant);
-								tHRMIDMapping = tRelevant;
-							}
-							
-							if(tHRMIDMapping == null) {
-								throw new RoutingException("Unable to find forwarding cluster for HRMID " + tHRMID + " while forwarding cluster was " + tRelevant);
-							}
-							
-							LinkedList<RoutingServiceLinkVector> tListToTarget = null;
-							
-							if(getPathFromHRMID(tHRMID) != null && !getPathFromHRMID(tHRMID).isEmpty() && getPathFromHRMID(tHRMID).contains(tNegotiator.getCoordinatorsAddress())) {
-								/*
-								 * If a path was provided, we get it and trim it until the entry for the chosen node is found:
-								 * For this to work, HRMID and RoutingServiceLinkVector can be compared and are true if the source of the
-								 * routing service link equals the routing service address
-								 */
-								LinkedList<RoutingServiceLinkVector> tPath = getPathFromHRMID(tHRMID);
-								if(!tPath.isEmpty()) {
-									LinkedList<RoutingServiceLinkVector> tSavedPath = (LinkedList<RoutingServiceLinkVector>) tPath.clone();
-									while(!tPath.isEmpty() && !tPath.getFirst().equals(tNegotiator.getCoordinatorsAddress())) {
-										tPath.removeFirst();
-									}
-									Logging.log(this, "Started with initial path " + tSavedPath + " and path is now " + tPath);
-								}
-								/*
-								 * that list is given to the chose node so he can continue in doing what this node currently does: push the route forward through the network
-								 */
-								tListToTarget = tPath;
-							} else {
-								/*
-								 * If no list is found, we calculate a new route again
-								 * getPathToCoordinator calculates the path from a source clusters coordinator to a target coordinator
-								 */
-								LinkedList<RoutingServiceLinkVector> tRouteToCoordinator = getPathToCoordinator(tNegotiator, tRelevant);
-								/*
-								 * If we can give that node a route to the target from this point we do so.
-								 */
-								if(!tRouteToCoordinator.isEmpty()) {
-									tListToTarget = tRouteToCoordinator;
-								} else {
-									tListToTarget = null;
-								}
-							}
-							
-							if(tNegotiator.getHierarchyLevel() != tHRMIDMapping.getHierarchyLevel()) {
-								Logging.err(this, "Searching for a route between clusters withing different levels");
-							}
-							
-							/*
-							 * Calculate forwarding supernodes
-							 * 
-							 * Get the cluster connection list from the source to the cluster that is able to forward the specified HRMID
-							 */
-							
-							List<RoutableClusterGraphLink> tList = getHRMController().getRoutableClusterGraph().getRoute(tNegotiator, tHRMIDMapping);
-							Logging.log(this, "Cluster route from " + tNegotiator + " to " + tHRMIDMapping + " is " + tList);
-							
-							/*
-							 * forwarding is done based on HRMIDs, for a target HRMID the next hop (an HRMID) has to be calculated
-							 */
-							
-							//HRMID tFrom =  tSourceCEP.getRemoteCluster().retrieveAddress();
-							HRMID tTo   = tHRMID;
-							HRMName tNextHop = null;
-							FIBEntry tEntry = null;
-							if(tNegotiator.equals(tHRMIDMapping)) {
-								/*
-								 * Well, in this case, we are just giving the "forwarding cluster" the information, that is has to forward all
-								 * entries for the given higher HRMID
-								 * 
-								 * Furthermore it is not necessary to set the farthest cluster for that entry
-								 */
-								tNextHop = tHRMID;
-								
-								ClusterName tFibEntryClusterName = new ClusterName(tNegotiator.getToken(), tNegotiator.getClusterID(), tNegotiator.getHierarchyLevel());
+				mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
+				IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), mManagedCluster);
+				tNameFarthestClusterInDirection = null;
+				if(tTargetNode instanceof ICluster) {
+					ICluster tCluster = ((ICluster)tTargetNode);
+					tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
+				}
+				tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
+				/*
+				 * Now the managed cluster needs the information on how to reach the next hop
+				 */
+				FIBEntry tManagedEntry = new FIBEntry(mAddressMapping.get(tSourceCEP).getHRMID(), tSourceCEP.getPeerName(),	tLocalManagedClusterName, getSignature());
+				tManagedClusterTopologyData.addForwardingentry(tManagedEntry);
+				IRoutableClusterGraphTargetName tPeerNode = getFarthestVirtualNodeInDirection(mManagedCluster, tSourceCEP.getRemoteClusterName());
 
-								tEntry = new FIBEntry(tTo, tNextHop, tFibEntryClusterName, getSignature());
-								
-								/*
-								 * As the cluster probably does not know to which node it has to forward that packet,
-								 * the route to the coordinator of the target cluster is chosen.
-								 */
-								if(tListToTarget != null) {
-									tEntry.setRoutingVectors(tListToTarget);
-									if(getSignatureOfPath(tHRMID) != null) {
-										tEntry.setSignature(getSignatureOfPath(tHRMID));
-									}
-								}
-								IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), tSourceCEP.getRemoteClusterName());
-								tNameFarthestClusterInDirection = null;
-								if(tTargetNode instanceof ICluster) {
-									ICluster tCluster = (ICluster)tTargetNode;
-									tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
-								}
-								tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
-							} else {
-								/*
-								 * In that case the cluster has to be told to which cluster is has to forward that packet
-								 * 
-								 * First check whether there exists a cluster connection from the source cluster to the forwarding cluster
-								 */
-								if(!tList.isEmpty()) {
-									tNextHop = getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteClusterName(), tList.get(0)).getHrmID();
-									ICluster tNextCluster = (ICluster)tNextHop; 
-
-									ClusterName tFibEntryClusterName = new ClusterName(tNextCluster.getToken(), tNextCluster.getClusterID(), tNextCluster.getHierarchyLevel());
-
-									tEntry = new FIBEntry(tTo, tNextHop, tFibEntryClusterName, getSignature());
-									if(tListToTarget != null) {
-										LinkedList<RoutingServiceLinkVector> tVectors = (LinkedList<RoutingServiceLinkVector>) tListToTarget.clone();
-										while(!tVectors.isEmpty() && !tVectors.getFirst().equals(tSourceCEP.getPeerName())) {
-											tVectors.removeFirst();
-										}
-										Logging.log(this, "Started with initial path " + tListToTarget + " while list is now " + tVectors);
-										// was tListToTarget before, change if something is wrong now
-										tEntry.setRoutingVectors(tVectors);
-										if(getSignatureOfPath(tHRMID) != null) {
-											tEntry.setSignature(getSignatureOfPath(tHRMID));
-										}
-									}
-									IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), tNegotiator);
-									tNameFarthestClusterInDirection = null;
-									if(tTargetNode instanceof ICluster) {
-										ICluster tCluster = (ICluster)tTargetNode;
-										tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
-									}
-								} else {
-									/*
-									 * That should only happen accidentally. the list to the target cluster does not exist,
-									 * so the source cluster stays where it is.
-									 * 
-									 * If however, a route between the coordinators was calculated, we provide the next hop to that cluster
-									 */
-									LinkedList<RoutingServiceLinkVector> tVectors = null;
-									if(tListToTarget != null && !tListToTarget.isEmpty()) {
-										tVectors = (LinkedList<RoutingServiceLinkVector>) tListToTarget.clone();
-										while(!tVectors.getFirst().equals(tSourceCEP.getPeerName())) {
-											tVectors.removeFirst();
-										}
-									}
-									tNameFarthestClusterInDirection = tSourceCEP.getRemoteClusterName();
-									tEntry = new FIBEntry(tTo, null, tNameFarthestClusterInDirection, getSignature());
-									if(tVectors != null) {
-										tEntry.setRoutingVectors(tVectors);
-										if(getSignatureOfPath(tHRMID) != null) {
-											tEntry.setSignature(getSignatureOfPath(tHRMID));
-										}
-									}
-								}
-								
-								tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
-							}
-							/*
-							 * Now that forwarding entry is saved inside the clients forwarding table
-							 */
-							mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
-						}
-					} else {
+				tNameFarthestClusterInDirection = null;
+				if(tPeerNode instanceof ICluster) {
+					ICluster tCluster = (ICluster)tPeerNode;
+					tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
+				}
+				tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
+			}
+			
+			/*
+			 * Here starts distribution of the HRMIDs provided by higher coordinators
+			 */
+			
+			if(mHigherHRMIDs != null) {
+				// are we on a higher hierarchy level?
+				if(mHierarchyLevel.isHigherLevel()) {
+					for(HRMID tHRMID : mHigherHRMIDs) {
 						/*
-						 * We are at level one, so now the real forwarding table is calculated
+						 * tNegotiator is the source cluster
+						 * tRelevant is the super node that provides the possibility to route the packet to its destination
+						 * tHRMIDMapping gets the cluster of the connection end point that announced that cluster.
+						 * 
+						 * special treatment is used if the negotiator equals the HRMID mapping: we have to tell that cluster how to reach the destination via a routing service link
 						 */
-						Logging.log(this, "Would now distribute addresses for higher clusters");
-						for(HRMID tHRMID : mHigherHRMIDs) {
+						ICluster tNegotiator = tSourceCEP.getRemoteClusterName();
+						ICluster tRelevant = ((ICluster)getVirtualNodeFromHRMID(tHRMID));
+						ICluster tHRMIDMapping = null;
+						if(tRelevant instanceof NeighborCluster) {
+							NeighborCluster tNewRelevant = (NeighborCluster)tRelevant;
+							CoordinatorCEPChannel tNewRelevantCEP = tNewRelevant.getAnnouncedCEP(tSourceCEP.getRemoteClusterName());
+							tHRMIDMapping = tNewRelevantCEP.getNegotiator(tRelevant);
+							
+						} else {
+							//tHRMIDMapping = ((IntermediateCluster)tRelevant).getAnnouncedCEP().getNegotiator(tRelevant);
+							tHRMIDMapping = tRelevant;
+						}
+						
+						if(tHRMIDMapping == null) {
+							throw new RoutingException("Unable to find forwarding cluster for HRMID " + tHRMID + " while forwarding cluster was " + tRelevant);
+						}
+						
+						LinkedList<RoutingServiceLinkVector> tListToTarget = null;
+						
+						if(getPathFromHRMID(tHRMID) != null && !getPathFromHRMID(tHRMID).isEmpty() && getPathFromHRMID(tHRMID).contains(tNegotiator.getCoordinatorsAddress())) {
 							/*
-							 * Find out to which cluster the HRMID is mapped to
+							 * If a path was provided, we get it and trim it until the entry for the chosen node is found:
+							 * For this to work, HRMID and RoutingServiceLinkVector can be compared and are true if the source of the
+							 * routing service link equals the routing service address
 							 */
-							Logging.log(this, tHRMID + " is mapped to " + (ICluster)getVirtualNodeFromHRMID(tHRMID));
+							LinkedList<RoutingServiceLinkVector> tPath = getPathFromHRMID(tHRMID);
+							if(!tPath.isEmpty()) {
+								LinkedList<RoutingServiceLinkVector> tSavedPath = (LinkedList<RoutingServiceLinkVector>) tPath.clone();
+								while(!tPath.isEmpty() && !tPath.getFirst().equals(tNegotiator.getCoordinatorsAddress())) {
+									tPath.removeFirst();
+								}
+								Logging.log(this, "Started with initial path " + tSavedPath + " and path is now " + tPath);
+							}
 							/*
-							 * Get that cluster for route calculation
+							 * that list is given to the chose node so he can continue in doing what this node currently does: push the route forward through the network
 							 */
-							ICluster tTargetCluster = (ICluster)getVirtualNodeFromHRMID(tHRMID);
+							tListToTarget = tPath;
+						} else {
 							/*
-							 * As we are on level one, we have to find out, to which node tSourceCEP has to forward the packets for the 
-							 * given higher HRMID
+							 * If no list is found, we calculate a new route again
+							 * getPathToCoordinator calculates the path from a source clusters coordinator to a target coordinator
+							 */
+							LinkedList<RoutingServiceLinkVector> tRouteToCoordinator = getPathToCoordinator(tNegotiator, tRelevant);
+							/*
+							 * If we can give that node a route to the target from this point we do so.
+							 */
+							if(!tRouteToCoordinator.isEmpty()) {
+								tListToTarget = tRouteToCoordinator;
+							} else {
+								tListToTarget = null;
+							}
+						}
+						
+						if(tNegotiator.getHierarchyLevel() != tHRMIDMapping.getHierarchyLevel()) {
+							Logging.err(this, "Searching for a route between clusters withing different levels");
+						}
+						
+						/*
+						 * Calculate forwarding supernodes
+						 * 
+						 * Get the cluster connection list from the source to the cluster that is able to forward the specified HRMID
+						 */
+						
+						List<RoutableClusterGraphLink> tList = getHRMController().getRoutableClusterGraph().getRoute(tNegotiator, tHRMIDMapping);
+						Logging.log(this, "Cluster route from " + tNegotiator + " to " + tHRMIDMapping + " is " + tList);
+						
+						/*
+						 * forwarding is done based on HRMIDs, for a target HRMID the next hop (an HRMID) has to be calculated
+						 */
+						
+						//HRMID tFrom =  tSourceCEP.getRemoteCluster().retrieveAddress();
+						HRMID tTo   = tHRMID;
+						HRMName tNextHop = null;
+						FIBEntry tEntry = null;
+						if(tNegotiator.equals(tHRMIDMapping)) {
+							/*
+							 * Well, in this case, we are just giving the "forwarding cluster" the information, that is has to forward all
+							 * entries for the given higher HRMID
 							 * 
-							 * if one of the clients has the given address, the packet has to be forwarded to that client
+							 * Furthermore it is not necessary to set the farthest cluster for that entry
 							 */
-							List<Route> tPath=null;
-							if(tTargetCluster!= null) {
-								 tPath = tLocalRoutingDB.getRoute(tSourceCEP.getSourceName(), tTargetCluster.getCoordinatorsAddress());
-							}
+							tNextHop = tHRMID;
 							
-							HRMName tDestination = null;
-							/*
-							 * Find out to which routing service address the packet has to be forwarded to
-							 */
-							HRMName tAddress = null;
+							ClusterName tFibEntryClusterName = new ClusterName(tNegotiator.getToken(), tNegotiator.getClusterID(), tNegotiator.getHierarchyLevel());
+
+							tEntry = new FIBEntry(tTo, tNextHop, tFibEntryClusterName, getSignature());
 							
 							/*
-							 * First try: find out if a path was provided
+							 * As the cluster probably does not know to which node it has to forward that packet,
+							 * the route to the coordinator of the target cluster is chosen.
 							 */
-							
-							LinkedList<RoutingServiceLinkVector> tPolygon = null;
-							if(getPathFromHRMID(tHRMID) != null && !getPathFromHRMID(tHRMID).isEmpty()) {
-								/*
-								 * Nice.
-								 * Get the path the higher entity provided
-								 * 
-								 * Cut it until the path from the node we calculate the route for is reached
-								 */
-								tPolygon = (LinkedList<RoutingServiceLinkVector>) getPathFromHRMID(tHRMID).clone();
-								while(!tPolygon.getFirst().equals(tSourceCEP.getPeerName())) {
-									tPolygon.removeFirst();
-									if(tPolygon.isEmpty()) {
-										break;
-									}
-								}
-								if(!tPolygon.isEmpty()) {
-									tDestination = tPolygon.getFirst().getDestination();
-								}
-							}
-							
-							/*
-							 * Second try: calculate the path ourselves
-							 */
-							
-							if(tDestination == null) {
-								tAddress = (tPath != null && tPath.size() > 0 ? tLocalRoutingDB.getDest(tPath.get(0)) :  tSourceCEP.getSourceName());
-							}
-							
-							if(tAddress != null) {
-								if(tSourceCEP.getPeerName().equals(tAddress) && tPath.size() > 1) {
-									tDestination = tLocalRoutingDB.getDest(tPath.get(1));
-								} else if(tPath != null && !tPath.isEmpty()) {
-									for(CoordinatorCEPChannel tCEP : mManagedCluster.getClusterMembers()) {
-										if(tCEP.getPeerName().equals(tAddress)) {
-											tDestination = tCEP.getPeerName();
-										}
-									}
-								}
-								if(tDestination == null) {
-									tDestination = tSourceCEP.getSourceName();
-								}
-							}
-							
-							FIBEntry tEntry = new FIBEntry(tHRMID, tDestination, (tTargetCluster != null ? tLocalManagedClusterName : null), getSignature());
-							
-							mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
-							if(tPolygon != null && !tPolygon.isEmpty()) {
-								tEntry.setRoutingVectors(tPolygon);
+							if(tListToTarget != null) {
+								tEntry.setRoutingVectors(tListToTarget);
 								if(getSignatureOfPath(tHRMID) != null) {
 									tEntry.setSignature(getSignatureOfPath(tHRMID));
 								}
@@ -765,93 +607,234 @@ public class Coordinator implements ICluster, HRMEntity
 								tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
 							}
 							tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
-						}
-					}
-				}
-				if(mSignatures!= null && !mSignatures.isEmpty()) {
-					for(HRMSignature tSignature : mSignatures) {
-						mAddressMapping.get(tSourceCEP).addApprovedSignature(tSignature);
-					}
-				}
-				mAddressMapping.get(tSourceCEP).addApprovedSignature(getSignature());
-				tSourceCEP.sendPacket(mAddressMapping.get(tSourceCEP));
-			}
-			if(mHigherHRMIDs != null) {
-				for(HRMID tHRMID : mHigherHRMIDs) {
-	
-					/*
-					 * Now the forwarding entry for the cluster itself is generated:
-					 * Tell the cluster how to reach the given destination
-					 */
-					
-					ICluster tDestinationCluster = (ICluster)getVirtualNodeFromHRMID(tHRMID);
-					HRMName tRouteSource = (HRMName) getHRMController().getNode().getRoutingService().getNameFor(getHRMController().getNode().getCentralFN()); 
-					
-					List<Route> tRoute = tLocalRoutingDB.getRoute((HRMName) tRouteSource, tDestinationCluster.getCoordinatorsAddress());
-					HRMName tNextHop=null;
-					LinkedList<RoutingServiceLinkVector> tPathToTarget = null;
-					if(getPathFromHRMID(tHRMID) != null && !getPathFromHRMID(tHRMID).isEmpty() && getPathFromHRMID(tHRMID).contains(tRouteSource)) {
-						
-						LinkedList<RoutingServiceLinkVector> tPolygon = (LinkedList<RoutingServiceLinkVector>) getPathFromHRMID(tHRMID).clone();
-						while(!tPolygon.getFirst().equals(tRouteSource)) {
-							tPolygon.removeFirst();
-							if(tPolygon.isEmpty()) {
-								break;
-							}
-						}
-						if(tPolygon.isEmpty()) {
-							Logging.err(this, "Tried to calculate next hop directly, but no entry found");
-							if(!tRoute.isEmpty()) {
-								tNextHop = tLocalRoutingDB.getDest(tRoute.get(0));
-								for(Route tPolygonPath : tRoute) {
-									tPolygon.add(new RoutingServiceLinkVector(tPolygonPath, tLocalRoutingDB.getSource(tPolygonPath), tLocalRoutingDB.getDest(tPolygonPath)));
+						} else {
+							/*
+							 * In that case the cluster has to be told to which cluster is has to forward that packet
+							 * 
+							 * First check whether there exists a cluster connection from the source cluster to the forwarding cluster
+							 */
+							if(!tList.isEmpty()) {
+								tNextHop = getHRMController().getRoutableClusterGraph().getDest(tSourceCEP.getRemoteClusterName(), tList.get(0)).getHrmID();
+								ICluster tNextCluster = (ICluster)tNextHop; 
+
+								ClusterName tFibEntryClusterName = new ClusterName(tNextCluster.getToken(), tNextCluster.getClusterID(), tNextCluster.getHierarchyLevel());
+
+								tEntry = new FIBEntry(tTo, tNextHop, tFibEntryClusterName, getSignature());
+								if(tListToTarget != null) {
+									LinkedList<RoutingServiceLinkVector> tVectors = (LinkedList<RoutingServiceLinkVector>) tListToTarget.clone();
+									while(!tVectors.isEmpty() && !tVectors.getFirst().equals(tSourceCEP.getPeerName())) {
+										tVectors.removeFirst();
+									}
+									Logging.log(this, "Started with initial path " + tListToTarget + " while list is now " + tVectors);
+									// was tListToTarget before, change if something is wrong now
+									tEntry.setRoutingVectors(tVectors);
+									if(getSignatureOfPath(tHRMID) != null) {
+										tEntry.setSignature(getSignatureOfPath(tHRMID));
+									}
+								}
+								IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), tNegotiator);
+								tNameFarthestClusterInDirection = null;
+								if(tTargetNode instanceof ICluster) {
+									ICluster tCluster = (ICluster)tTargetNode;
+									tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
+								}
+							} else {
+								/*
+								 * That should only happen accidentally. the list to the target cluster does not exist,
+								 * so the source cluster stays where it is.
+								 * 
+								 * If however, a route between the coordinators was calculated, we provide the next hop to that cluster
+								 */
+								LinkedList<RoutingServiceLinkVector> tVectors = null;
+								if(tListToTarget != null && !tListToTarget.isEmpty()) {
+									tVectors = (LinkedList<RoutingServiceLinkVector>) tListToTarget.clone();
+									while(!tVectors.getFirst().equals(tSourceCEP.getPeerName())) {
+										tVectors.removeFirst();
+									}
+								}
+								tNameFarthestClusterInDirection = tSourceCEP.getRemoteClusterName();
+								tEntry = new FIBEntry(tTo, null, tNameFarthestClusterInDirection, getSignature());
+								if(tVectors != null) {
+									tEntry.setRoutingVectors(tVectors);
+									if(getSignatureOfPath(tHRMID) != null) {
+										tEntry.setSignature(getSignatureOfPath(tHRMID));
+									}
 								}
 							}
+							
+							tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
 						}
-						for(CoordinatorCEPChannel tCEP : mManagedCluster.getClusterMembers()) {
-							if(tCEP.getPeerName().equals(tPolygon.getFirst().getDestination())) {
-								tNextHop = tPolygon.getFirst().getDestination();
-								tPathToTarget = tPolygon;
+						/*
+						 * Now that forwarding entry is saved inside the clients forwarding table
+						 */
+						mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
+					}
+				} else {
+					/*
+					 * We are at level one, so now the real forwarding table is calculated
+					 */
+					Logging.log(this, "Would now distribute addresses for higher clusters");
+					for(HRMID tHRMID : mHigherHRMIDs) {
+						/*
+						 * Find out to which cluster the HRMID is mapped to
+						 */
+						Logging.log(this, tHRMID + " is mapped to " + (ICluster)getVirtualNodeFromHRMID(tHRMID));
+						/*
+						 * Get that cluster for route calculation
+						 */
+						ICluster tTargetCluster = (ICluster)getVirtualNodeFromHRMID(tHRMID);
+						/*
+						 * As we are on level one, we have to find out, to which node tSourceCEP has to forward the packets for the 
+						 * given higher HRMID
+						 * 
+						 * if one of the clients has the given address, the packet has to be forwarded to that client
+						 */
+						List<Route> tPath=null;
+						if(tTargetCluster!= null) {
+							 tPath = tLocalRoutingDB.getRoute(tSourceCEP.getSourceName(), tTargetCluster.getCoordinatorsAddress());
+						}
+						
+						HRMName tDestination = null;
+						/*
+						 * Find out to which routing service address the packet has to be forwarded to
+						 */
+						HRMName tAddress = null;
+						
+						/*
+						 * First try: find out if a path was provided
+						 */
+						
+						LinkedList<RoutingServiceLinkVector> tPolygon = null;
+						if(getPathFromHRMID(tHRMID) != null && !getPathFromHRMID(tHRMID).isEmpty()) {
+							/*
+							 * Nice.
+							 * Get the path the higher entity provided
+							 * 
+							 * Cut it until the path from the node we calculate the route for is reached
+							 */
+							tPolygon = (LinkedList<RoutingServiceLinkVector>) getPathFromHRMID(tHRMID).clone();
+							while(!tPolygon.getFirst().equals(tSourceCEP.getPeerName())) {
+								tPolygon.removeFirst();
+								if(tPolygon.isEmpty()) {
+									break;
+								}
+							}
+							if(!tPolygon.isEmpty()) {
+								tDestination = tPolygon.getFirst().getDestination();
 							}
 						}
-						if(tNextHop == null && tPolygon != null && !tPolygon.isEmpty()) {
-							tNextHop = tPolygon.getFirst().getDestination();
+						
+						/*
+						 * Second try: calculate the path ourselves
+						 */
+						
+						if(tDestination == null) {
+							tAddress = (tPath != null && tPath.size() > 0 ? tLocalRoutingDB.getDest(tPath.get(0)) :  tSourceCEP.getSourceName());
 						}
-						tPathToTarget = tPolygon;
-					} else if(!tRoute.isEmpty()) {
-						tNextHop = tLocalRoutingDB.getDest(tRoute.get(0));
-					}
-					
-					FIBEntry tEntry = new FIBEntry(tHRMID, tNextHop, tLocalManagedClusterName, getSignature());
-					if(tPathToTarget != null && !tPathToTarget.isEmpty()) {
-						tEntry.setRoutingVectors(tPathToTarget);
-						if(getSignatureOfPath(tHRMID) != null) {
-							tEntry.setSignature(getSignatureOfPath(tHRMID));
+						
+						if(tAddress != null) {
+							if(tSourceCEP.getPeerName().equals(tAddress) && tPath.size() > 1) {
+								tDestination = tLocalRoutingDB.getDest(tPath.get(1));
+							} else if(tPath != null && !tPath.isEmpty()) {
+								for(CoordinatorCEPChannel tCEP : mManagedCluster.getClusterMembers()) {
+									if(tCEP.getPeerName().equals(tAddress)) {
+										tDestination = tCEP.getPeerName();
+									}
+								}
+							}
+							if(tDestination == null) {
+								tDestination = tSourceCEP.getSourceName();
+							}
 						}
+						
+						FIBEntry tEntry = new FIBEntry(tHRMID, tDestination, (tTargetCluster != null ? tLocalManagedClusterName : null), getSignature());
+						
+						mAddressMapping.get(tSourceCEP).addForwardingentry(tEntry);
+						if(tPolygon != null && !tPolygon.isEmpty()) {
+							tEntry.setRoutingVectors(tPolygon);
+							if(getSignatureOfPath(tHRMID) != null) {
+								tEntry.setSignature(getSignatureOfPath(tHRMID));
+							}
+						}
+						IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(tSourceCEP.getRemoteClusterName(), tSourceCEP.getRemoteClusterName());
+						tNameFarthestClusterInDirection = null;
+						if(tTargetNode instanceof ICluster) {
+							ICluster tCluster = (ICluster)tTargetNode;
+							tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
+						}
+						tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
 					}
-					IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(mManagedCluster, tDestinationCluster);
-					tNameFarthestClusterInDirection = null;
-					if(tTargetNode instanceof ICluster) {
-						ICluster tCluster = (ICluster)tTargetNode;
-						tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
-					}
-					tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
-					tManagedClusterTopologyData.addForwardingentry(tEntry);
 				}
 			}
-			
-			// are we at base level?
-			if(mHierarchyLevel.isBaseLevel()) {
+			tSourceCEP.sendPacket(mAddressMapping.get(tSourceCEP));
+		}
+		if(mHigherHRMIDs != null) {
+			for(HRMID tHRMID : mHigherHRMIDs) {
+
+				/*
+				 * Now the forwarding entry for the cluster itself is generated:
+				 * Tell the cluster how to reach the given destination
+				 */
 				
-				for(HRMSignature tSignature : mSignatures) {
-					tManagedClusterTopologyData.addApprovedSignature(tSignature);
+				ICluster tDestinationCluster = (ICluster)getVirtualNodeFromHRMID(tHRMID);
+				HRMName tRouteSource = (HRMName) getHRMController().getNode().getRoutingService().getNameFor(getHRMController().getNode().getCentralFN()); 
+				
+				List<Route> tRoute = tLocalRoutingDB.getRoute((HRMName) tRouteSource, tDestinationCluster.getCoordinatorsAddress());
+				HRMName tNextHop=null;
+				LinkedList<RoutingServiceLinkVector> tPathToTarget = null;
+				if(getPathFromHRMID(tHRMID) != null && !getPathFromHRMID(tHRMID).isEmpty() && getPathFromHRMID(tHRMID).contains(tRouteSource)) {
+					
+					LinkedList<RoutingServiceLinkVector> tPolygon = (LinkedList<RoutingServiceLinkVector>) getPathFromHRMID(tHRMID).clone();
+					while(!tPolygon.getFirst().equals(tRouteSource)) {
+						tPolygon.removeFirst();
+						if(tPolygon.isEmpty()) {
+							break;
+						}
+					}
+					if(tPolygon.isEmpty()) {
+						Logging.err(this, "Tried to calculate next hop directly, but no entry found");
+						if(!tRoute.isEmpty()) {
+							tNextHop = tLocalRoutingDB.getDest(tRoute.get(0));
+							for(Route tPolygonPath : tRoute) {
+								tPolygon.add(new RoutingServiceLinkVector(tPolygonPath, tLocalRoutingDB.getSource(tPolygonPath), tLocalRoutingDB.getDest(tPolygonPath)));
+							}
+						}
+					}
+					for(CoordinatorCEPChannel tCEP : mManagedCluster.getClusterMembers()) {
+						if(tCEP.getPeerName().equals(tPolygon.getFirst().getDestination())) {
+							tNextHop = tPolygon.getFirst().getDestination();
+							tPathToTarget = tPolygon;
+						}
+					}
+					if(tNextHop == null && tPolygon != null && !tPolygon.isEmpty()) {
+						tNextHop = tPolygon.getFirst().getDestination();
+					}
+					tPathToTarget = tPolygon;
+				} else if(!tRoute.isEmpty()) {
+					tNextHop = tLocalRoutingDB.getDest(tRoute.get(0));
 				}
-				tManagedClusterTopologyData.addApprovedSignature(getHRMController().getIdentity().createSignature(getHRMController().getNode().toString(), null, new HierarchyLevel(this, mHierarchyLevel.getValue() + 1)));
-				mManagedCluster.handleTopologyData(tManagedClusterTopologyData);
+				
+				FIBEntry tEntry = new FIBEntry(tHRMID, tNextHop, tLocalManagedClusterName, getSignature());
+				if(tPathToTarget != null && !tPathToTarget.isEmpty()) {
+					tEntry.setRoutingVectors(tPathToTarget);
+					if(getSignatureOfPath(tHRMID) != null) {
+						tEntry.setSignature(getSignatureOfPath(tHRMID));
+					}
+				}
+				IRoutableClusterGraphTargetName tTargetNode = getFarthestVirtualNodeInDirection(mManagedCluster, tDestinationCluster);
+				tNameFarthestClusterInDirection = null;
+				if(tTargetNode instanceof ICluster) {
+					ICluster tCluster = (ICluster)tTargetNode;
+					tNameFarthestClusterInDirection = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel());
+				}
+				tEntry.setFarthestClusterInDirection(tNameFarthestClusterInDirection);
+				tManagedClusterTopologyData.addForwardingentry(tEntry);
 			}
+		}
 		
-		} catch (AuthenticationException tExc) {
-			Logging.err(this, "Unable to create signatures, maybe this entity is not allowed to?", tExc);
+		// are we at base level?
+		if(mHierarchyLevel.isBaseLevel()) {
+			mManagedCluster.handleTopologyData(tManagedClusterTopologyData);
 		}
 	}
 	
@@ -1042,14 +1025,6 @@ public class Coordinator implements ICluster, HRMEntity
 //			}
 //		}
 		
-		if(pTopologyData.getApprovedSignatures() != null) {
-			for(HRMSignature tSignature : pTopologyData.getApprovedSignatures()) {
-				if(!mSignatures.contains(tSignature)) {
-					mSignatures.add(tSignature);
-				}
-			}
-		}
-		
 		Logging.log(this, "Received topology data: " + pTopologyData);
 		mTopologyData = pTopologyData;
 		
@@ -1189,7 +1164,6 @@ public class Coordinator implements ICluster, HRMEntity
 							setToken(pAnnounce.getToken());
 							setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(),pAnnounce.getToken(),  pCEP.getPeerName());
 							getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
-							getHRMController().addApprovedSignature(pAnnounce.getCoordSignature());
 							getCoordinatorCEP().sendPacket(tNewCovered);
 						}
 					}
@@ -1374,7 +1348,6 @@ public class Coordinator implements ICluster, HRMEntity
 				}
 			}
 		}
-		getHRMController().addApprovedSignature(pCoordSignature);
 		if(mReceivedAnnouncements != null) {
 			for(NeighborClusterAnnounce tAnnounce : mReceivedAnnouncements) {
 				pCoord.sendPacket(tAnnounce);
@@ -1531,10 +1504,14 @@ public class Coordinator implements ICluster, HRMEntity
 			/*
 			 * OK: node was found
 			 */
+			return tNode;
 		} else {
-			tNode = mIDToFIBMapping.get(pHRMID).getNextCluster();
+			FIBEntry tFIBEntry = mIDToFIBMapping.get(pHRMID);
+			if (tFIBEntry != null){
+				return tFIBEntry.getNextCluster();
+			}			
 		}
-		return tNode;
+		return null;
 	}
 	
 //	public void handleRouteRequest(RouteRequest pRequest, IRoutableClusterGraphTargetName pSourceCluster)

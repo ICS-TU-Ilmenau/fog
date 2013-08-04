@@ -65,12 +65,16 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 */
 	private Node mNode = null;
 
+	/**
+	 * The main HRM routing database for hop-by-hop routing.
+	 */
+	private HashMap<HRMID, FIBEntry> mHopByHopRoutingMap = new HashMap<HRMID, FIBEntry>();
+
 	private final RoutableGraph<HRMName, RoutingServiceLink> mRoutingMap;
 	private final RoutableGraph<HRMName, Route> mCoordinatorRoutingMap;
 	private HierarchicalNameMappingService<Name> mNameMapping = null;
 	private static Random mRandomGenerator = null; //singleton needed, otherwise parallel number generators might be initialized with the same seed
 	private HRMController mHRMController = null; //TODO: getRoute und co abfangen, wenn HRMController nocht nicht gestartet ist
-	private HashMap<HRMID, FIBEntry> mHopByHopRoutingMap = new HashMap<HRMID, FIBEntry>();
 	private Name mSourceIdentification = null;
 	private HashMap<ForwardingElement, L2Address> mLayer2NameMapping = new HashMap<ForwardingElement, L2Address>();
 	
@@ -448,22 +452,24 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 				Logging.log(this, "Signature " + pEntry.getSignature() + " is not contained in " + getCoordinator().getApprovedSignatures());
 			}
 		}*/
-		FIBEntry tOldEntry = (mHopByHopRoutingMap.containsKey(pRoutingID) ? mHopByHopRoutingMap.get(pRoutingID) : null);
-		if(tOldEntry != null && tOldEntry.getSignature().getLevel().isHigher(this, pEntry.getSignature().getLevel())) {
-			Logging.log(this, "Not replacing " + tOldEntry.getDestination() + " with " + pEntry);
-			return false;
-		} else {
-			if(mHRMController.getApprovedSignatures().contains(pEntry.getSignature())) {
-				mHopByHopRoutingMap.remove(pRoutingID);
-			}
-		}
-		if(mHRMController.getApprovedSignatures().contains(pEntry.getSignature())) {
-			mHopByHopRoutingMap.put(pRoutingID, pEntry);
-			return true;
-		} else {
-			Logging.log(this, "Dropping\n" + pEntry + "\nin favour of\n" + mHopByHopRoutingMap.get(pRoutingID));
-			return false;
-		}
+//		FIBEntry tOldEntry = (mHopByHopRoutingMap.containsKey(pRoutingID) ? mHopByHopRoutingMap.get(pRoutingID) : null);
+//		if((tOldEntry != null) && (tOldEntry.getSignature().getLevel().isHigher(this, pEntry.getSignature().getLevel()))) {
+//			Logging.log(this, "Not replacing " + tOldEntry.getDestination() + " with " + pEntry);
+//			return false;
+//		} else {
+//			if(mHRMController.getApprovedSignatures().contains(pEntry.getSignature())) {
+//				mHopByHopRoutingMap.remove(pRoutingID);
+//			}
+//		}
+//		if(mHRMController.getApprovedSignatures().contains(pEntry.getSignature())) {
+//			mHopByHopRoutingMap.put(pRoutingID, pEntry);
+//			return true;
+//		} else {
+//			Logging.log(this, "Dropping\n" + pEntry + "\nin favour of\n" + mHopByHopRoutingMap.get(pRoutingID));
+//			return false;
+//		}
+		
+		return true;
 	}
 	
 	public HashMap<HRMID, FIBEntry> getRoutingTable()

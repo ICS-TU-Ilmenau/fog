@@ -126,7 +126,7 @@ public class HRMViewer extends EditorPart implements Observer
 		 * GUI part 2: 
 		 */
 		StyledText tSignaturesLabel = new StyledText(mContainer, SWT.BORDER);;
-		tSignaturesLabel.setText("Approved signatures: " + mHRMController.getApprovedSignatures());
+		tSignaturesLabel.setText("HRM Routing Table - Node " + mHRMController.getNodeGUIName());
 		tSignaturesLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style2 = new StyleRange();
@@ -135,11 +135,10 @@ public class HRMViewer extends EditorPart implements Observer
 	    style2.fontStyle = SWT.BOLD;
 	    tSignaturesLabel.setStyleRange(style2);
 	    
-		int j = 0;
 		final Table tMappingTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		
 		TableColumn tColumnHRMID = new TableColumn(tMappingTable, SWT.NONE, 0);
-		tColumnHRMID.setText("HRMID");
+		tColumnHRMID.setText("Destination");
 		TableColumn tColumnNextHop = new TableColumn(tMappingTable, SWT.NONE, 1);
 		tColumnNextHop.setText("Next hop");
 		TableColumn tColumnNextCluster = new TableColumn(tMappingTable, SWT.NONE, 2);
@@ -153,60 +152,62 @@ public class HRMViewer extends EditorPart implements Observer
 		
 		HierarchicalRoutingService tHRS = mHRMController.getHRS();
 		
-		if(tHRS.getRoutingTable() != null && !tHRS.getRoutingTable().isEmpty()) {
+		if ((tHRS.getRoutingTable() != null) && (!tHRS.getRoutingTable().isEmpty())) {
+			int tRowNumber = 0;
 			for(HRMID tHRMID : tHRS.getRoutingTable().keySet()) {
-				TableItem tRow = new TableItem(tMappingTable, SWT.NONE, j);
+				FIBEntry tFIBEntry =  tHRS.getFIBEntry(tHRMID);
+				TableItem tTableRow = new TableItem(tMappingTable, SWT.NONE, tRowNumber);
 				/**
 				 * Column 0:  
 				 */
-				tRow.setText(0, tHRMID != null ? tHRMID.toString() : "");
+				tTableRow.setText(0, tHRMID != null ? tHRMID.toString() : "");
 
 				/**
 				 * Column 1:  
 				 */
-				if (tHRS.getFIBEntry(tHRMID).getNextHop() != null) {
-					tRow.setText(1, tHRS.getFIBEntry(tHRMID).getNextHop().toString());
+				if (tFIBEntry.getNextHop() != null) {
+					tTableRow.setText(1, tFIBEntry.getNextHop().toString());
 				}else{
-					tRow.setText(1, "??");
+					tTableRow.setText(1, "??");
 				}
 				
 				/**
 				 * Column 2:  
 				 */
-				if (tHRS.getFIBEntry(tHRMID).getNextCluster() != null){
-					tRow.setText(2, mHRMController.getCluster(tHRS.getFIBEntry(tHRMID).getNextCluster()).toString());
+				if (tFIBEntry.getNextCluster() != null){
+					tTableRow.setText(2, mHRMController.getCluster(tFIBEntry.getNextCluster()).toString());
 				}else{
-					tRow.setText(2, "??");
+					tTableRow.setText(2, "??");
 				}
 				
 				/**
 				 * Column 3:  
 				 */
-				if (tHRS.getFIBEntry(tHRMID).getFarthestClusterInDirection() != null){
-					tRow.setText(3,  mHRMController.getCluster(tHRS.getFIBEntry(tHRMID).getFarthestClusterInDirection()).toString());
+				if (tFIBEntry.getFarthestClusterInDirection() != null){
+					tTableRow.setText(3,  mHRMController.getCluster(tFIBEntry.getFarthestClusterInDirection()).toString());
 				}else{
-					tRow.setText(3, "??");
+					tTableRow.setText(3, "??");
 				}
 				
 				/**
 				 * Column 4:  
 				 */
-				if (tHRS.getFIBEntry(tHRMID).getRouteToTarget() != null){					
-					tRow.setText(4, tHRS.getFIBEntry(tHRMID).getRouteToTarget().toString());
+				if (tFIBEntry.getRouteToTarget() != null){					
+					tTableRow.setText(4, tFIBEntry.getRouteToTarget().toString());
 				}else{
-					tRow.setText(4, "??");
+					tTableRow.setText(4, "??");
 				}
 				
 				/**
 				 * Column 5:  
 				 */
-				if (tHRS.getFIBEntry(tHRMID).getSignature() != null){
-					tRow.setText(5, tHRS.getFIBEntry(tHRMID).getSignature().toString());				
+				if (tFIBEntry.getSignature() != null){
+					tTableRow.setText(5, tFIBEntry.getSignature().toString());				
 				}else{
-					tRow.setText(5, "??");
+					tTableRow.setText(5, "??");
 				}
 				
-				j++;
+				tRowNumber++;
 			}
 		}
 		

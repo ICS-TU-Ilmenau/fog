@@ -261,7 +261,6 @@ public class Elector implements HRMEntity
 		
 		Name tNodeName = tNode.getRoutingService().getNameFor(tNode.getCentralFN());
 		mParentCluster.setCoordinatorCEP(null, mParentCluster.getSignature(), tNode.getCentralFN().getName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), (L2Address)tNodeName);
-		tHRMController.getApprovedSignatures().add(mParentCluster.getSignature());
 
 		// create new coordinator instance
 		Coordinator tElectedCoordinator = new Coordinator(mParentCluster);

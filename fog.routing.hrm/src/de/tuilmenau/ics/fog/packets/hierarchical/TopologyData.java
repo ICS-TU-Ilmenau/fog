@@ -27,32 +27,9 @@ public class TopologyData implements Serializable
 	private static final long serialVersionUID = 8442835110014485795L;
 	private HRMID mHRMID = null;
 	private LinkedList<FIBEntry> mForwardingEntries;
-	private LinkedList<HRMSignature> mApprovedSignatures = new LinkedList<HRMSignature>();
 	
 	public TopologyData()
 	{
-	}
-	
-	/**
-	 * 
-	 * @param pSignature is used to sign FIBEntries so the entity may decide whether
-	 *  (1) the coordinator is reliable for that route
-	 *  (2) FIBEntries could be signed
-	 */
-	public void addApprovedSignature(HRMSignature pSignature)
-	{
-		if(!mApprovedSignatures.contains(pSignature)) {
-			mApprovedSignatures.add(pSignature);
-		}
-	}
-	
-	/**
-	 * 
-	 * @return list of approved signatures
-	 */
-	public LinkedList<HRMSignature> getApprovedSignatures()
-	{
-		return mApprovedSignatures;
 	}
 	
 	/**
