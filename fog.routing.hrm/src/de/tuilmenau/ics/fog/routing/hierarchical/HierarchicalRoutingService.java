@@ -26,7 +26,7 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.facade.properties.IgnoreDestinationProperty;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData.FIBEntry;
+import de.tuilmenau.ics.fog.packets.hierarchical.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;

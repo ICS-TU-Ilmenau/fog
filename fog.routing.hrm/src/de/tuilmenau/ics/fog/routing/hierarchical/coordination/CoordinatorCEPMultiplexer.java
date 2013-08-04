@@ -57,7 +57,7 @@ public class CoordinatorCEPMultiplexer
 		Logging.log(this, "CREATED for " + pHRMController);
 	}
 	
-	public CoordinatorCEPChannel addConnection(ICluster pTargetCluster, ICluster pSourceCluster)
+	public void addConnection(ICluster pTargetCluster, ICluster pSourceCluster)
 	{
 		HierarchyLevel tSourceClusterHierLvl = new HierarchyLevel(this, pSourceCluster.getHierarchyLevel().getValue() + 1);
 		HierarchyLevel tTargetClusterHierLvl = new HierarchyLevel(this, pTargetCluster.getHierarchyLevel().getValue() + 1);
@@ -117,7 +117,7 @@ public class CoordinatorCEPMultiplexer
 						}
 					} catch (RoutingException tExc) {
 						Logging.err(this, "Unable to find names", tExc);
-						return null;
+						return;
 					}
 					
 					
@@ -268,8 +268,7 @@ public class CoordinatorCEPMultiplexer
 		}
 		
 		Logging.log(this, "Returning " + tCEPDemultiplexed + " for " + pSourceCluster + " and target " + pTargetCluster);
-		
-		return tCEPDemultiplexed;
+
 	}
 	
 	public boolean write(Serializable pData, CoordinatorCEPChannel pDemux, ClusterName pTargetCluster)
