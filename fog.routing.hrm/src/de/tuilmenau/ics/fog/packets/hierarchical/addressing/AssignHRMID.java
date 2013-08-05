@@ -16,14 +16,14 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 /**
  * PACKET: This packet is used to assign a new address. Such packets are sent from a coordinator to all cluster members.
  */
-public class AddressAssignment  extends SignalingMessageHrm
+public class AssignHRMID  extends SignalingMessageHrm
 {
 	/**
 	 * For using the class within (de-)serialization processes.  
 	 */
 	private static final long serialVersionUID = -1674381264586284319L;
 
-	public AddressAssignment(Name pSenderName, HRMID pAssignedHRMID)
+	public AssignHRMID(Name pSenderName, HRMID pAssignedHRMID)
 	{
 		super(pSenderName);
 		mHRMID = pAssignedHRMID;
