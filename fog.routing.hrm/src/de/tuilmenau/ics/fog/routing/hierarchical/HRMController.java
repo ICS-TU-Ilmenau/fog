@@ -127,7 +127,7 @@ public class HRMController extends Application implements IServerCallback
 	/**
 	 * Notifies the GUI about essential updates within the HRM system
 	 */
-	public void notifyGUI(Object pArgument)
+	private void notifyGUI(Object pArgument)
 	{
 		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
 			Logging.log(this, "Got notification with argument " + pArgument);
