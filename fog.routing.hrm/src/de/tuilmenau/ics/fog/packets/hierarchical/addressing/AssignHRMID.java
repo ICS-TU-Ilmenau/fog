@@ -19,6 +19,11 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 public class AssignHRMID  extends SignalingMessageHrm
 {
 	/**
+	 * Stores the HRMID which was assign to the target of this packet.
+	 */
+	private HRMID mHRMID = null;
+
+	/**
 	 * For using the class within (de-)serialization processes.  
 	 */
 	private static final long serialVersionUID = -1674381264586284319L;
@@ -33,6 +38,4 @@ public class AssignHRMID  extends SignalingMessageHrm
 	{
 		return mHRMID;
 	}
-	
-	private HRMID mHRMID = null;
 }
