@@ -39,7 +39,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionManager;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -65,6 +65,11 @@ public class CoordinatorCEPChannel
 	private BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink> mBreadthFirstSearch;
 	
 	/**
+	 * For COORDINATORS: Stores the HRMID under which the corresponding peer cluster member is addressable.
+	 */
+	private HRMID mPeerClusterMemberHRMID = null;
+	
+	/**
 	 * 
 	 * @param pHRMController is the coordinator of a node
 	 * @param pPeerCluster is the peer cluster/coordinator
@@ -75,6 +80,26 @@ public class CoordinatorCEPChannel
 		mPeerCluster = pPeerCluster;
 		mPeerPriority = new BullyPriority(this);
 		Logging.log(this, "CREATED for " + mPeerCluster);
+	}
+	
+	/**
+	 * Defines the HRMID of the peer which is a cluster member.
+	 * 
+	 * @param pHRMID the new HRMID under which the peer is addressable
+	 */
+	public void setPeerClusterMemberHRMID(HRMID pHRMID)
+	{
+		mPeerClusterMemberHRMID = pHRMID.clone();		
+	}
+	
+	/**
+	 * Determines the address of the peer cluster member.
+	 * 
+	 * @return the HRMID of the peer cluster member or "null"
+	 */
+	public HRMID getPeerClusterMemberHRMID()
+	{
+		return mPeerClusterMemberHRMID;
 	}
 	
 	/**

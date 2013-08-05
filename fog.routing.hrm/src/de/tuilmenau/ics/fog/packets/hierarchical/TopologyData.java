@@ -12,11 +12,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical;
 import java.io.Serializable;
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -30,25 +26,6 @@ public class TopologyData implements Serializable
 	
 	public TopologyData()
 	{
-	}
-	
-	/**
-	 * 
-	 * @param pHRMID is the HRMID the receiver of this packet has to choose
-	 */
-	public void assignHRMID(HRMID pHRMID)
-	{
-		Logging.log(this, "ASSIGN HRMID=" + pHRMID);
-		mHRMID = pHRMID;
-	}
-	
-	/**
-	 * 
-	 * @return HRMID of the receiver of this packet
-	 */
-	public HRMID getHRMID()
-	{
-		return mHRMID;
 	}
 	
 	/**
@@ -80,12 +57,15 @@ public class TopologyData implements Serializable
 	public String toString()
 	{
 		String tString = new String();
-		tString += getClass().getSimpleName() + ":" + mHRMID;
+		tString += getClass().getSimpleName() + "(HRMID=" + mHRMID;
 		if(mForwardingEntries != null) {
+			int i = 0;
 			for(FIBEntry tEntry : mForwardingEntries) {
-				tString += "\n" + tEntry.toString();
+				tString += "\n RIB entry " + i + ": " + tEntry.toString();
+				i++;
 			}
 		}
+		tString += ")";
 		return tString;  
 	}
 	
@@ -95,9 +75,8 @@ public class TopologyData implements Serializable
 	@Override
 	public boolean equals(Object pObj)
 	{
-		if(pObj instanceof TopologyData) {
-			return mHRMID.equals(((TopologyData)pObj).getHRMID());
-		}
-		return false;
+		Logging.warn(this, "#### Implement equals in a better way!");
+		
+		return super.equals(pObj);
 	}
 }
