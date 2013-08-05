@@ -29,7 +29,7 @@ public class AddressAssignment  extends SignalingMessageHrm
 		mHRMID = pAssignedHRMID;
 	}
 	
-	public HRMID getAssignedHRMID()
+	public HRMID getHRMID()
 	{
 		return mHRMID;
 	}
