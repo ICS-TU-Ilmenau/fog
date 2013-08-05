@@ -19,7 +19,6 @@ import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
-import de.tuilmenau.ics.fog.packets.hierarchical.FIBEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
@@ -33,13 +32,10 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
-import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.IElementDecorator;
-import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -110,7 +106,12 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private LinkedList<CoordinatorCEPChannel> mLaggards; // only used by the Elector
 	private TopologyData mTopologyData = null;
 	private LinkedList<CoordinatorCEPChannel> mOldParticipatingCEPs;
+
+	/**
+	 * Stores a reference to the local coordinator instance if the local router is also the coordinator for this cluster
+	 */
 	private Coordinator mCoordinator = null;
+	
 	private CoordinatorCEPMultiplexer mMux = null;
 	
 	/**
@@ -780,6 +781,11 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return mCoordinator;
 	}
 	
+	public boolean hasLocalCoordinator()
+	{
+		return (mCoordinator != null);
+	}
+	
 	/**
 	 * Set the new coordinator, which was elected by the Elector instance.
 	 * 
@@ -879,17 +885,30 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	public void handleAssignHRMIDForPhysicalNode(AssignHRMID pAssignHRMIDPacket)
 	{
+		// extract the HRMID from the packet 
+		HRMID tHRMID = pAssignHRMIDPacket.getHRMID();
+		
+		Logging.log(this, "Handling AssignHRMID with assigned HRMID " + tHRMID.toString());
+
 		// we process such packets only on base hierarchy level, on higher hierarchy levels coordinators should be the only target for such packets
 		if (getHierarchyLevel().isBaseLevel()){
-			// extract the HRMID from the packet 
-			HRMID tHRMID = pAssignHRMIDPacket.getHRMID();
-			
-			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + tHRMID.toString());
+			Logging.log(this, "     ..setting assigned HRMID " + tHRMID.toString());
 			
 			// update the local HRMID
 			setHRMID(this, tHRMID);
 		}else{
-			Logging.warn(this, "Ignoring AssignHRMID packet because we are at the higher hierachy level " + getHierarchyLevel().getValue());
+			Logging.warn(this, "     ..ignoring AssignHRMID packet because we are at the higher hierachy level " + getHierarchyLevel().getValue());
+		}
+
+		// the local router has also the coordinator instance for this cluster?
+		if (hasLocalCoordinator()){
+			// we should automatically continue the address distribution?
+			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+				Logging.log(this, "     ..continuing the address distribution process via the coordinator " + getCoordinator());
+				getCoordinator().signalAddressDistribution();				
+			}			
+		}else{
+			Logging.log(this, "     ..stopping address propagation here because node " + getHRMController().getNodeGUIName() + " is only a cluster member");
 		}
 	}
 }

@@ -19,8 +19,6 @@ import java.util.List;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.facade.RequirementsException;
-import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
@@ -42,9 +40,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.graph.RoutableGraph;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
 /**
@@ -69,11 +65,6 @@ public class Coordinator implements ICluster, HRMEntity
 	 */
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
 	
-	/**
-	 * The following value is used in order to create each turn a monotonously growing address.
-	 */
-	private int mLastCreatedAddress = 0;
-
 	private HRMSignature mSignature = null;
 	
 	private HRMID mHRMID = null;
@@ -113,6 +104,7 @@ public class Coordinator implements ICluster, HRMEntity
 	 * 
 	 * @param pCluster the parent cluster instance
 	 */
+	@SuppressWarnings("unused")
 	public Coordinator(Cluster pCluster)
 	{
 		mManagedCluster = pCluster;
@@ -122,7 +114,6 @@ public class Coordinator implements ICluster, HRMEntity
 		
 		mHierarchyLevel = mManagedCluster.getHierarchyLevel();
 		mClusterID = pCluster.getClusterID();
-		mLastCreatedAddress = 0;
 		mAddressMapping = new HashMap<CoordinatorCEPChannel, TopologyData>();
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		
@@ -136,19 +127,13 @@ public class Coordinator implements ICluster, HRMEntity
 		getHRMController().registerCoordinator(this);
 
 		Logging.log(this, "CREATED");
+
+		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+			Logging.log(this, "   ..starting address distribution");
+			signalAddressDistribution();
+		}
 	}
 	
-	private HRMID createClusterMemberAddress()
-	{
-		HRMID tID = mHRMID.clone();
-		BigInteger tAddress = BigInteger.valueOf(++mLastCreatedAddress);
-		tID.setLevelAddress(mHierarchyLevel, tAddress);
-
-		Logging.log(this, "NEW HRMID=" + tID + ", last created addr.=" + mLastCreatedAddress);
-		
-		return tID;
-	}
-
 	/**
 	 * Returns the coordinator HRMSignature
 	 * 
@@ -269,15 +254,42 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 	
 	/**
-	 * This function is called for distributing HRMIDs among the cluster members.
+	 * Creates a new HRMID for a cluster member depending on the given member number.
 	 * 
-	 * @throws RemoteException 
-	 * @throws RequirementsException 
-	 * @throws RoutingException 
+	 * @param pMemberNumber the member number
+	 * @return the new HRMID for the cluster member
 	 */
-	public void signalAddressDistribution() throws RoutingException, RequirementsException, RemoteException
+	private HRMID createClusterMemberAddress(int pMemberNumber)
 	{
-		Logging.log(this, "Will now distribute addresses to entities on level " + getHierarchyLevel().getValue());
+		HRMID tHRMID = mHRMID.clone();
+		
+		// transform the member number to a BigInteger
+		BigInteger tAddress = BigInteger.valueOf(pMemberNumber);
+
+		// set the member number for the given hierarchy level
+		tHRMID.setLevelAddress(mHierarchyLevel, tAddress);
+
+		// some debug outputs
+		if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+			Logging.log(this, "Set " + tAddress + " on hierarchy level " + mHierarchyLevel.getValue() + " for HRMID " + tHRMID.toString());
+			Logging.log(this, "Created for a cluster member the NEW HRMID=" + tHRMID.toString());
+		}
+		
+		return tHRMID;
+	}
+
+	/**
+	 * This function is called for distributing HRMIDs among the cluster members.
+	 */
+	public void signalAddressDistribution()
+	{
+		/**
+		 * The following value is used to assign monotonously growing addresses to all cluster members.
+		 * The addressing has to start with "1".
+		 */
+		int tNextClusterMemberAddress = 1;
+
+		Logging.log(this, "DISTRIBUTING ADDRESSES to entities on level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
 		
 		/**
 		 * Assign ourself an HRMID address
@@ -286,8 +298,13 @@ public class Coordinator implements ICluster, HRMEntity
 		if(mHierarchyLevel.isBaseLevel()) {
 			
 			// create new HRMID for ourself
-			HRMID tOwnAddress = createClusterMemberAddress();
+			HRMID tOwnAddress = createClusterMemberAddress(tNextClusterMemberAddress++);
 
+			Logging.log(this, "    ..setting local HRMID " + tOwnAddress.toString());
+
+			// update the HRMID of this coordinator
+			setHRMID(this,  tOwnAddress);
+			
 			// update the HRMID of the managed cluster
 			mManagedCluster.setHRMID(this, tOwnAddress);
 		}
@@ -295,22 +312,22 @@ public class Coordinator implements ICluster, HRMEntity
 		/**
 		 * Distribute AssignHRMID packets among the cluster members 
 		 */
-		Logging.log(this, "Distributing HRMIDs among cluster members: " + mManagedCluster.getClusterMembers());
+		Logging.log(this, "    ..distributing HRMIDs among cluster members: " + mManagedCluster.getClusterMembers());
 		for(CoordinatorCEPChannel tClusterMember : mManagedCluster.getClusterMembers()) {
 
 			//TODO: don't send this update in a loop to ourself!
 			//TODO: check if cluster members already have an address and distribute only free addresses here
 			
 			// create new HRMID for cluster member
-			HRMID tHRMID = createClusterMemberAddress();
+			HRMID tHRMID = createClusterMemberAddress(tNextClusterMemberAddress++);
 
 			// store the HRMID under which the peer will be addressable from now 
 			tClusterMember.setPeerClusterMemberHRMID(tHRMID);
 			
-			if (tClusterMember.getPeerClusterMemberHRMID() != null){
-				Logging.log(this, "Replace HRMID " + tClusterMember.getPeerClusterMemberHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
+			if ((tClusterMember.getPeerClusterMemberHRMID() != null) && (!tClusterMember.getPeerClusterMemberHRMID().equals(tHRMID))){
+				Logging.log(this, "    ..replacing HRMID " + tClusterMember.getPeerClusterMemberHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
 			}else
-				Logging.log(this, "Assign new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
+				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
 
 			// create new AssignHRMID packet for the cluster member
 			AssignHRMID tAssignHRMID = new AssignHRMID(getHRMController().getNode().getCentralFN().getName(), tHRMID);
@@ -486,7 +503,6 @@ public class Coordinator implements ICluster, HRMEntity
 	private void registerFIBEntry(FIBEntry pEntry)
 	{
 		mIDToFIBMapping.put(pEntry.getDestination(), pEntry);
-		Cluster tTargetCluster = getHRMController().getCluster(pEntry.getNextCluster());
 	}
 	
 	/**
@@ -503,6 +519,14 @@ public class Coordinator implements ICluster, HRMEntity
 		
 		// update the local HRMID
 		setHRMID(this, tHRMID);
+		
+		// we should automatically continue the address distribution?
+		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+			Logging.log(this, "     ..continuing the address distribution process for this coordiantor");
+			signalAddressDistribution();				
+		}else{
+			Logging.log(this, "     ..stopping address propagation here because address distribution is done in step-by-step mode");
+		}
 	}
 
 	
@@ -533,15 +557,6 @@ public class Coordinator implements ICluster, HRMEntity
 			}
 			Logging.log(this, "Have to provide FEs for " + mHigherHRMIDs);
 		}
-		try {
-			signalAddressDistribution();
-		} catch (RoutingException tExc) {
-			Logging.err(this, "Error-got routing exception when trying to distribute addresses", tExc);
-		} catch (RequirementsException tExc) {
-			Logging.err(this, "Error-got requirements exception when trying to distribute addresses", tExc);
-		} catch (RemoteException tExc) {
-			Logging.err(this, "Error-got remote exception when trying to distribute addresses", tExc);
-		}
 	}
 
 	@Override
@@ -555,7 +570,7 @@ public class Coordinator implements ICluster, HRMEntity
 		 * Stores the local cluster, which corresponds to the correct hierarchy level
 		 */
 		ICluster tLocalCluster = getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel().getValue());		
-		if (mManagedCluster != tLocalCluster){
+		if ((tLocalCluster != null) && (mManagedCluster != tLocalCluster)){
 			Logging.err(this,  "################## WE SHOULD NEVER REACH HERE, clusters differ from each other: " + mManagedCluster + " != " + tLocalCluster);
 		}
 
@@ -661,11 +676,13 @@ public class Coordinator implements ICluster, HRMEntity
 				}
 				
 			} else {
-				for(CoordinatorCEPChannel tCEP : getClusterMembers()) {
-					if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerName())) {
-						tCEP.setAsParticipantOfMyCluster(true);
-					} else {
-						tCEP.setAsParticipantOfMyCluster(false);
+				if (pAnnounce.getCoveredNodes() != null){
+					for(CoordinatorCEPChannel tCEP : getClusterMembers()) {
+						if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerName())) {
+							tCEP.setAsParticipantOfMyCluster(true);
+						} else {
+							tCEP.setAsParticipantOfMyCluster(false);
+						}
 					}
 				}
 				setToken(pAnnounce.getToken());
@@ -1185,7 +1202,7 @@ public class Coordinator implements ICluster, HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + mGUICoordinatorID + "@" + getHRMController().getNodeGUIName() + "@" + getHierarchyLevel().getValue();
+		String tResult = getClass().getSimpleName() + mGUICoordinatorID + "@" + getHRMController().getNodeGUIName() + "@" + (getHierarchyLevel().getValue() - 1);
 		
 		return tResult;
 	}

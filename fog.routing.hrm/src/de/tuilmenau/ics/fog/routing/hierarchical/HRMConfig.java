@@ -28,6 +28,16 @@ public class HRMConfig
 		 */
 		public static final boolean GUI_HRMID_UPDATES = false;
 	}
+	
+	public class Addressing
+	{
+		/**
+		 * Specifies whether the address are assigned automatically,
+		 * otherwise it has to be triggered step by step via the GUI.
+		 */
+		public static final boolean ASSIGN_AUTOMATICALLY = true;
+	}
+	
 	public class Hierarchy
 	{
 		/**
