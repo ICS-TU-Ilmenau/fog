@@ -109,6 +109,7 @@ public class Elector implements HRMEntity
 			return;
 		}
 		
+		// does the parent cluster have a coordinator, so we can start clustering of it and its siblings? 
 		if (mParentCluster.getCoordinator() == null){
 			Logging.warn(this, "Parent cluster doesn't have a coordinator yet, skipping clustering request");
 			return;
