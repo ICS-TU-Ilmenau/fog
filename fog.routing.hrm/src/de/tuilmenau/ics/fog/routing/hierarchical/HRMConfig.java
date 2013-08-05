@@ -27,6 +27,11 @@ public class HRMConfig
 		 * Show debug outputs about HRMID updates for nodes.
 		 */
 		public static final boolean GUI_HRMID_UPDATES = false;
+
+		/**
+		 * Show relative addresses in the GUI? (e.g., "0.0.1")
+		 */
+		public static final boolean GUI_SHOW_RELATIVE_ADDRESSES = false;
 	}
 	
 	public class Addressing

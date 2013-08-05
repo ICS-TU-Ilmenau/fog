@@ -859,9 +859,12 @@ public class HRMController extends Application implements IServerCallback
 			// register the new HRMID
 			mRegisteredHRMIDs.add(tHRMID);
 
-			// update node label within GUI
-			String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
-			getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
+			// filter relative HRMIDs
+			if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
+				// update node label within GUI
+				String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
+				getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
+			}
 		}else{
 			Logging. warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCoordinator);
 		}
@@ -923,9 +926,12 @@ public class HRMController extends Application implements IServerCallback
 				// register the new HRMID
 				mRegisteredHRMIDs.add(tHRMID);
 				
-				// update node label within GUI
-				String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
-				getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
+				// filter relative HRMIDs
+				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
+					// update node label within GUI
+					String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
+					getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
+				}
 				
 				/**
 				 * Register the HRMID in the DNS for the local router 
