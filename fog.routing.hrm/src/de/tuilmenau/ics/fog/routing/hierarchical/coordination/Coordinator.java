@@ -172,10 +172,16 @@ public class Coordinator implements ICluster, HRMEntity
 		return mBouncedAnnounces;
 	}
 	
-	public boolean clusterCoordinators()
+	public void clusterCoordinators()
 	{
-		Logging.log(this, "CLUSTERING STARTED, will connect to " + mManagedCluster.getNeighbors());
+		Logging.log(this, "CLUSTERING STARTED on hierarchy level " + getHierarchyLevel().getValue() + ", will connect to " + mManagedCluster.getNeighbors());
 		
+		// are we already at the highest hierarchy level?
+		if (getHierarchyLevel().isHighest()){
+			Logging.warn(this,  "CLUSTERING SKIPPED, no clustering on highest hierarchy level " + getHierarchyLevel().getValue() + " needed");
+			return;
+		}
+			
 		int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 
 		Logging.log(this, "Radius is " + tRadius);
@@ -217,7 +223,6 @@ public class Coordinator implements ICluster, HRMEntity
 		}
 		*/
 		Logging.log(this, "has a total of the following connections to higher candidates" + mCEPs);
-		return true;
 	}
 	
 	public LinkedList<RoutingServiceLinkVector> getPathToCoordinator(ICluster pSourceCluster, ICluster pDestinationCluster)
