@@ -302,10 +302,9 @@ public class Coordinator implements ICluster, HRMEntity
 
 			Logging.log(this, "    ..setting local HRMID " + tOwnAddress.toString());
 
-			// update the HRMID of this coordinator
-			setHRMID(this,  tOwnAddress);
+			//HINT: don't update the HRMID of the coordinator here!
 			
-			// update the HRMID of the managed cluster
+			// update the HRMID of the managed cluster by direct call and avoid additional communication overhead
 			mManagedCluster.setHRMID(this, tOwnAddress);
 		}
 
