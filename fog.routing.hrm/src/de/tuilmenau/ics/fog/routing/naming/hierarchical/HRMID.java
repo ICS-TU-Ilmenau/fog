@@ -167,6 +167,15 @@ public class HRMID extends HRMName implements Comparable<HRMID>, HRMGraphNodeNam
 	}
 
 	/**
+	 * Determines if this HRMID has a valid prefix, e.g., "1.3.0"
+	 */
+	public boolean isRelativeAddress()
+	{
+		// true if the first character is a leading zero
+		return toString().startsWith("0");
+	}
+	
+	/**
 	 * Generate an HRMID output, e.g., "4.7.2.3"
 	 */
 	@Override
