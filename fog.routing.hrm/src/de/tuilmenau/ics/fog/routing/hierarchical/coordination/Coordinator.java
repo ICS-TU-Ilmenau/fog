@@ -72,7 +72,7 @@ public class Coordinator implements ICluster, HRMEntity
 	/**
 	 * The following value is used in order to create each turn a monotonously growing address.
 	 */
-	private int mLastCreatedAddress;
+	private int mLastCreatedAddress = 0;
 
 	private HRMSignature mSignature = null;
 	
@@ -136,6 +136,17 @@ public class Coordinator implements ICluster, HRMEntity
 		Logging.log(this, "CREATED");
 	}
 	
+	private HRMID createOwnAddress()
+	{
+		HRMID tID = mHRMID.clone();
+		BigInteger tAddress = BigInteger.valueOf(++mLastCreatedAddress);
+		tID.setLevelAddress(mHierarchyLevel, tAddress);
+
+		Logging.log(this, "NEW HRMID=" + tID + ", last created addr.=" + mLastCreatedAddress);
+		
+		return tID;
+	}
+
 	/**
 	 * Returns the coordinator HRMSignature
 	 * 
@@ -159,19 +170,6 @@ public class Coordinator implements ICluster, HRMEntity
 	public LinkedList<Long> getBounces()
 	{
 		return mBouncedAnnounces;
-	}
-	
-	private HRMID createOwnAddress()
-	{
-		HRMID tID = mHRMID.clone();
-		BigInteger tAddress = BigInteger.valueOf(++mLastCreatedAddress);
-		tID.setLevelAddress(mHierarchyLevel, tAddress);
-//		if(mHierarchyLevel.isHigherLevel()) {
-//			HRMIPMapper.registerHRMID(tID);
-//		}
-		Logging.log(this, "NEW HRMID=" + tID);
-		
-		return tID;
 	}
 	
 	public boolean clusterCoordinators()
@@ -264,7 +262,8 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 	
 	/**
-	 * This is the function the highest coordinator calls in order to distribute all addresses to its clients
+	 * This function is called for distributing HRMIDs among the cluster members.
+	 * 
 	 * @throws RemoteException 
 	 * @throws RequirementsException 
 	 * @throws RoutingException 
@@ -286,6 +285,8 @@ public class Coordinator implements ICluster, HRMEntity
 		
 		TopologyData tManagedClusterTopologyData = new TopologyData();
 		Logging.log(this, "Will now distribute addresses to entities on level 0");
+		
+		
 		if(mHierarchyLevel.isBaseLevel()) {
 			HRMID tOwnAddress = createOwnAddress();
 			tManagedClusterTopologyData.assignHRMID(tOwnAddress);
@@ -305,6 +306,8 @@ public class Coordinator implements ICluster, HRMEntity
 					 * generate next address and map it to a CEP in case we are on level one, or to a cluster in case we are in a level higher than 1
 					 */
 					tID = createOwnAddress();
+					
+					//TODO: AddressAssignment
 					
 //TODO: TV			if(mHierarchyLevel.isBaseLevel()) {
 //						map(tID, tReceivingCEP);
@@ -1715,7 +1718,7 @@ public class Coordinator implements ICluster, HRMEntity
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + mGUICoordinatorID + "@" + getHRMController().getNodeGUIName() + "@" + getHierarchyLevel();
+		String tResult = getClass().getSimpleName() + mGUICoordinatorID + "@" + getHRMController().getNodeGUIName() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
 	}
