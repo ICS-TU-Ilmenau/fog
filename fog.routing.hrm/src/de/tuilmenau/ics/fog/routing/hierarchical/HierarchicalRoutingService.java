@@ -336,9 +336,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 				}
 			}
 			
-			if(mHRMController.containsIdentification((HRMID) pDestination)) {
-				return new Route();
-			}
 			HRMID tTarget = (HRMID) pDestination;
 			
 			HRMID tForwarding = null;

@@ -124,6 +124,9 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	public Cluster(Long pClusterID, HierarchyLevel pHierarchyLevelValue, HRMController pHRMController)
 	{
+		// initialize the HRMID of the cluster to ".0.0.0"
+		mHRMID = new HRMID(0);
+		
 		mClusterID = pClusterID;
 		mHierarchyLevel = pHierarchyLevelValue;
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
@@ -266,7 +269,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 //			boolean tIsEdgeRouter = false;
 			LinkedList<ClusterName> tInterASClusterIdentifications = new LinkedList<ClusterName>();
 
-			for(IRoutableClusterGraphTargetName tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
+			for(HRMGraphNodeName tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
 				if(tNode instanceof ICluster && ((ICluster) tNode).isInterASCluster()) {
 					ICluster tCluster = (ICluster)tNode;
 //					tIsEdgeRouter = true;
@@ -443,12 +446,23 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	}
 	
 	/**
-	 * @param pHRMID identification of this cluster
+	 * Assign new HRMID for being addressable as cluster member.
+	 *  
+	 * @param pCaller the caller who assigns the new HRMID
+	 * @param pHRMID the new HRMID
 	 */
 	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
 		Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (caller=" + pCaller + ")");
+
+		// update the HRMID
 		mHRMID = pHRMID;
+		
+		// inform HRM controller about the change if we are at base hierarchy level
+		// otherwise the HRM controller will receive the same update from the correspondign coordinator instance
+		if (getHierarchyLevel().isBaseLevel()){
+			getHRMController().updateClusterAddress(this);
+		}
 	}
 	
 	public BullyPriority getHighestPriority()
@@ -523,7 +537,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	public LinkedList<ICluster> getNeighbors()
 	{
 		LinkedList<ICluster> tList = new LinkedList<ICluster>();
-		for(IRoutableClusterGraphTargetName tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
+		for(HRMGraphNodeName tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
 			if(tNode instanceof ICluster) {
 				tList.add((ICluster)tNode);
 			}
@@ -630,7 +644,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	}
 	
 	@Override
-	public HRMID getHrmID() {
+	public HRMID getHRMID() {
 		return mHRMID;
 	}
 	
@@ -741,8 +755,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 
 		setHRMID(this, pTopologyData.getHRMID());
 		
-		getHRMController().getNode().setDecorationValue(getHRMController().getNode().getDecorationValue() + " " + pTopologyData.getHRMID().toString() + ",");
-		getHRMController().addIdentification(pTopologyData.getHRMID());
 		if(mTopologyData.getEntries() != null) {
 			for(FIBEntry tEntry : mTopologyData.getEntries()) {
 				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null) {
@@ -862,10 +874,10 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	
 	private String idToString()
 	{
-		if (getHrmID() == null){
+		if (getHRMID() == null){
 			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getBullyPriority().getValue() +  (getCoordinatorSignature() != null ? ", Coord.=" + getCoordinatorSignature() : "") + (mInterASCluster ? ", TRANSIT" : "");
 		}else{
-			return "HRMID=" + getHrmID().toString();
+			return "HRMID=" + getHRMID().toString();
 		}
 	}
 }

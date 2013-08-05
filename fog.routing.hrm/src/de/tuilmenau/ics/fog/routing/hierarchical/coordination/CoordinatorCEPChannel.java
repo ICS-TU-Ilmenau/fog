@@ -33,7 +33,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IRoutableClusterGraphTargetName;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HRMGraphNodeName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
@@ -61,7 +61,7 @@ public class CoordinatorCEPChannel
 	private HashMap<ICluster, ICluster> mAnnouncerMapping;
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
-	private BFSDistanceLabeler<IRoutableClusterGraphTargetName, RoutableClusterGraphLink> mBreadthFirstSearch;
+	private BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink> mBreadthFirstSearch;
 	
 	/**
 	 * 
@@ -731,12 +731,12 @@ public class CoordinatorCEPChannel
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteClusterName());
 			}
 			if(mBreadthFirstSearch == null ) {
-				mBreadthFirstSearch = new BFSDistanceLabeler<IRoutableClusterGraphTargetName, RoutableClusterGraphLink>();
+				mBreadthFirstSearch = new BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink>();
 			}
 			mBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), tSourceCluster);
-			List<IRoutableClusterGraphTargetName> tDiscoveryCandidates = mBreadthFirstSearch.getVerticesInOrderVisited();
+			List<HRMGraphNodeName> tDiscoveryCandidates = mBreadthFirstSearch.getVerticesInOrderVisited();
 			if(tSourceCluster != null) {
-				for(IRoutableClusterGraphTargetName tVirtualNode : tDiscoveryCandidates) {
+				for(HRMGraphNodeName tVirtualNode : tDiscoveryCandidates) {
 					if(tVirtualNode instanceof ICluster) {
 						ICluster tCluster = (ICluster) tVirtualNode;
 						

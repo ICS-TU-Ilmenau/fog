@@ -249,7 +249,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	@Override
 	public LinkedList<ICluster> getNeighbors() {
 		LinkedList<ICluster> tCluster = new LinkedList<ICluster>();
-		for(IRoutableClusterGraphTargetName tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
+		for(HRMGraphNodeName tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
 			if(tNode instanceof ICluster) {
 				tCluster.add((ICluster) tNode);
 			}
@@ -263,7 +263,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public HRMID getHrmID() {
+	public HRMID getHRMID() {
 		return mHRMID;
 	}
 

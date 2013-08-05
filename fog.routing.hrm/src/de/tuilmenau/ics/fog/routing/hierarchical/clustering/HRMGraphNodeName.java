@@ -17,11 +17,11 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
  * to which addresses are assigned, or for a CEP that is associated to members of a clusters at the lowest hierarchical level. 
  * It can be either a physical node or a logical node (a cluster) that aggregates multiple physical nodes. 
  */
-public interface IRoutableClusterGraphTargetName extends Name
+public interface HRMGraphNodeName extends Name
 {
 	/**
 	 * 
 	 * @return The address of that specific node can be returned here
 	 */
-	public HRMID getHrmID();
+	public HRMID getHRMID();
 }

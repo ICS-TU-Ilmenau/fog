@@ -71,14 +71,20 @@ public class HRMController extends Application implements IServerCallback
 	 * Reference to physical node.
 	 */
 	private Node mPhysicalNode; //TV
+	
+	/**
+	 * Stores the registered HRMIDs in order to show them within the GUI
+	 */
+	private LinkedList<HRMID> mRegisteredHRMIDs = new LinkedList<HRMID>();
+
 	private HierarchicalRoutingService mHRS = null;
-	private RoutableClusterGraph<IRoutableClusterGraphTargetName, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<IRoutableClusterGraphTargetName, RoutableClusterGraphLink>();
+	private RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink>();
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
 	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators;
-	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
+//	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
 	/**
 	 * The global name space which is used to identify the HRM instances on neighbor nodes. //TV
@@ -367,19 +373,19 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pCEPsToEvaluate list of connection end points that have to be chosen to the target
 	 * @return true if the path contains a node that is covered by another coordinator
 	 */
-	public boolean checkPathToTargetContainsCovered(IRoutableClusterGraphTargetName pSourceCluster, IRoutableClusterGraphTargetName pTargetCluster, LinkedList<CoordinatorCEPChannel> pCEPsToEvaluate)
+	public boolean checkPathToTargetContainsCovered(HRMGraphNodeName pSourceCluster, HRMGraphNodeName pTargetCluster, LinkedList<CoordinatorCEPChannel> pCEPsToEvaluate)
 	{
 		if(pSourceCluster == null || pTargetCluster == null) {
 			Logging.log(this, "checking cluster route between null and null");
 			return false;
 		}
-		RoutableClusterGraph<IRoutableClusterGraphTargetName, RoutableClusterGraphLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
+		RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
 		List<RoutableClusterGraphLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
 		String tCheckedClusters = new String();
 		boolean isCovered = false;
 		for(RoutableClusterGraphLink tConnection : tClusterConnection) {
-			Collection<IRoutableClusterGraphTargetName> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
-			for(IRoutableClusterGraphTargetName tNode : tNodes) {
+			Collection<HRMGraphNodeName> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
+			for(HRMGraphNodeName tNode : tNodes) {
 				if(tNode instanceof ICluster) {
 					CoordinatorCEPChannel tCEPLookingFor = null;
 					for(CoordinatorCEPChannel tCEP : pCEPsToEvaluate) {
@@ -649,7 +655,7 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "Amount of found routing targets: " + mRoutableClusterGraph.getVertices().size());
 		}
 		int j = -1;
-		for(IRoutableClusterGraphTargetName tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
+		for(HRMGraphNodeName tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
 			if (tRoutableGraphNode instanceof Cluster) {
 				Cluster tCluster = (Cluster)tRoutableGraphNode;
 				j++;
@@ -680,7 +686,7 @@ public class HRMController extends Application implements IServerCallback
 			Logging.log(this, "Amount of found routing targets: " + mRoutableClusterGraph.getVertices().size());
 		}
 		int j = -1;
-		for(IRoutableClusterGraphTargetName tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
+		for(HRMGraphNodeName tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
 			ICluster tCluster = (ICluster)tRoutableGraphNode;
 			j++;
 		
@@ -698,7 +704,7 @@ public class HRMController extends Application implements IServerCallback
 	 * 
 	 * @return cluster map that is actually the graph that represents the network
 	 */
-	public RoutableClusterGraph<IRoutableClusterGraphTargetName, RoutableClusterGraphLink> getRoutableClusterGraph()
+	public RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> getRoutableClusterGraph()
 	{
 		return mRoutableClusterGraph;
 	}
@@ -832,6 +838,33 @@ public class HRMController extends Application implements IServerCallback
 	}
 	
 	/**
+	 * Updates the registered HRMID for a defined coordinator.
+	 * 
+	 * @param pCluster the cluster whose HRMID is updated
+	 */
+	@SuppressWarnings("unused")
+	public void updateCoordinatorAddress(Coordinator pCoordinator)
+	{
+		HRMID tHRMID = pCoordinator.getHRMID();
+		
+		if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
+			
+			if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+				Logging.log(this, "Updating the HRMID to " + pCoordinator.getHRMID().toString() + " for " + pCoordinator);
+			}
+
+			// register the new HRMID
+			mRegisteredHRMIDs.add(tHRMID);
+
+			// update node label within GUI
+			getNode().setDecorationValue(getNode().getDecorationValue() + ", " + pCoordinator.getHRMID().toString());
+		}else{
+			Logging. warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCoordinator);
+		}
+			
+	}
+
+	/**
 	 * Registers a cluster at the local database.
 	 * 
 	 * @param pCluster the cluster which should be registered
@@ -863,6 +896,37 @@ public class HRMController extends Application implements IServerCallback
 		notifyGUI(pCluster);
 	}
 	
+	/**
+	 * Updates the registered HRMID for a defined cluster.
+	 * 
+	 * @param pCluster the cluster whose HRMID is updated
+	 */
+	@SuppressWarnings("unused")
+	public void updateClusterAddress(Cluster pCluster)
+	{
+		HRMID tHRMID = pCluster.getHRMID();
+
+		if (pCluster.getHierarchyLevel().isBaseLevel()){
+			if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
+				
+				if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+					Logging.log(this, "Updating the HRMID to " + pCluster.getHRMID().toString() + " for " + pCluster);
+				}
+				
+				// register the new HRMID
+				mRegisteredHRMIDs.add(tHRMID);
+				
+				// update node label within GUI
+				getNode().setDecorationValue(getNode().getDecorationValue() + ", " + tHRMID.toString());			
+			}else{
+				Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCluster);
+			}
+		}else{
+			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
+			Logging.warn(this, "Skipping HRMID registration " + tHRMID.toString() + " for " + pCluster);
+		}
+	}
+
 	/**
 	 * Returns the local node (router) specific HRMIdentity
 	 */
@@ -909,27 +973,6 @@ public class HRMController extends Application implements IServerCallback
 		return tResult;
 	}
 
-	/**
-	 * 
-	 * @param pIdentification is one more identification the physical node may have because it can be either coordinator of different hierarchical levels or attached to different clusters
-	 */
-	public void addIdentification(HRMID pIdentification)
-	{
-		if(!mIdentifications.contains(pIdentification)) {
-			mIdentifications.add(pIdentification);
-		}
-	}
-	
-	/**
-	 * 
-	 * @param pIdentification is one HRMID that is checked against the identifications of the node owning the coordinator object
-	 * @return
-	 */
-	public boolean containsIdentification(HRMID pIdentification)
-	{
-		return mIdentifications.contains(pIdentification);
-	}
-	
 	/**
 	 * 
 	 * @param pLevel is the level at which a search for clusters is done

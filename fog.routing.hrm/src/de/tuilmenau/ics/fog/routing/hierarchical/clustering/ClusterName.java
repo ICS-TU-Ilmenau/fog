@@ -56,7 +56,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public HRMID getHrmID() {
+	public HRMID getHRMID() {
 		return null;
 	}
 

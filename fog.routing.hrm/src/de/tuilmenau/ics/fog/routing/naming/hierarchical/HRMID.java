@@ -14,22 +14,25 @@ import java.math.BigInteger;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.IRoutableClusterGraphTargetName;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HRMGraphNodeName;
 
 /**
- * This identifies either physical nodes or clusters within the HRM system.
- *
+ * This class is used to identify a node in the HRM graph.
+ * 
+ * An HRMID can identify:
+ * 	1.) a physical node, e.g., "1.1.5"
+ *  2.) a coordinator or a cluster as a whole, e.g., "1.1.0" *
  */
-public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableClusterGraphTargetName
+public class HRMID extends HRMName implements Comparable<HRMID>, HRMGraphNodeName
 {
 	private static final long serialVersionUID = -8441496024628988477L;
+
 	public static Namespace HRMNamespace = new Namespace("HRM", false);
 	
 	/**
-	 * Because HRM system neither limits the amount of hierarchical levels nor the amount of nodes per hierarchical level,
-	 * you have to use BigInteger for addressing.
+	 * Create an HRMID instance based on a BigInteger value.
 	 * 
-	 * @param pAddress Provide a BigInteger that will be used as address, here.
+	 * @param pAddress the BigInteger value which is used for HRMID address generation.
 	 */
 	private HRMID(BigInteger pAddress)
 	{
@@ -37,8 +40,9 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableCluste
 	}
 	
 	/**
+	 * Create an HRMID instance based on a long value.
 	 * 
-	 * @param pAddress It is possible to use a long type in order to generate an address.
+	 * @param pAddress the long value which used for HRMID address generation.
 	 */
 	public HRMID(long pAddress)
 	{
@@ -46,87 +50,69 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableCluste
 	}
 	
 	
+	/** 
+	 * Determine the HRMID.
+	 * 
+	 * @return the HRMID
+	 */
 	@Override
-	public HRMID getHrmID()
+	public HRMID getHRMID()
 	{
 		return this;
 	}
 	
 	/**
-	 * Someone might be interested in the address of a specific hierarchical level.
+	 * Determine the address part at a specific hierarchical level.
 	 * 
-	 * @param pLevel Specify the hierarchical level you wish to know the address for, here.
-	 * @return The address of the specified hierarchical level will be returned.
+	 * @param pHierarchyLevel the hierarchy level
+	 * 
+	 * @return the determined address of the specified hierarchical level
 	 */
-	public BigInteger getLevelAddress(int pLevel)
+	public BigInteger getLevelAddress(int pHierarchyLevel)
 	{
-		return (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pLevel + 1) ) ).shiftRight(( HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pLevel)) ) );
+		return (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pHierarchyLevel + 1))).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pHierarchyLevel))));
 	}
 	
 	/**
+	 * Set the address part for a specific hierarchy level.
 	 * 
-	 * @param pLevel Specify the level you wish to set the address for, here.
-	 * @param pAddress Please provide a BigInteger that should be used as address for the specific hierarchical level.
+	 * @param pHierarchyLevel the hierarchy level
+	 * @param pAddress the address part for the given hierarchy level
 	 */
-	public void setLevelAddress(HierarchyLevel pLevel, BigInteger pAddress)
+	public void setLevelAddress(HierarchyLevel pHierarchyLevel, BigInteger pAddress)
 	{
-		if(pLevel.isHigherLevel()) {
-			BigInteger tValue = getLevelAddress(pLevel.getValue());
+		int tLevel = pHierarchyLevel.getValue();
+		
+		if(pHierarchyLevel.isHigherLevel()) {
+			BigInteger tValue = getLevelAddress(tLevel);
 			if(!tValue.equals(BigInteger.valueOf(0))) {
-				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel.getValue() + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)).divide(BigInteger.valueOf(pLevel.getValue() * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
+				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((tLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)).divide(BigInteger.valueOf(tLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
 			}
 		} else {
-			BigInteger tValue = getLevelAddress(pLevel.getValue());
+			BigInteger tValue = getLevelAddress(tLevel);
 			if(!tValue.equals(BigInteger.valueOf(0))) {
-				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((pLevel.getValue() + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
+				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((tLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
 			}
 		}		
 		
-		mAddress = mAddress.add(pAddress.shiftLeft(pLevel.getValue() * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
+		mAddress = mAddress.add(pAddress.shiftLeft(tLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
 	}
 	
-	/**
-	 * You may set a description of that address. 
-	 * 
-	 * @param pInfo This has to be of the type string.
-	 */
-	public void setDescr(String pInfo)
-	{
-		mDescr = pInfo;
-	}
-	
-	/**
-	 * Generates an HRMID output, e.g., "4.7.2.3".
-	 */
-	@Override
-	public String toString()
-	{
-		String tOutput = new String();
-		
-		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i > 0; i--){
-			tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (i + 1))).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * i))).toString();
-			tOutput += ".";
-		}
-		
-		tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 1)).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 0))).toString();
-		
-		if(mDescr != null) {
-			tOutput += "(" +Long.toString(mAddress.longValue()) +")";
-		}
-		
-		return tOutput;
-	}
-	
+	//TODO
 	@Override
 	public int getSerialisedSize()
 	{
 		return mAddress.bitLength();
 	}
 	
+	/**
+	 * Creates an instance clone with the same adress.
+	 */
 	public HRMID clone()
 	{
+		// create new instance with the same address
 		HRMID tID = new HRMID(mAddress);
-		tID.setDescr(getDescr());
+
 		return tID;
 	}
 	
@@ -136,6 +122,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableCluste
 	 * @param pAddressToCompare Provide the address that should be compared to this entity, here.
 	 * @return The first occurrence at which a difference was found will be returned.
 	 */
+	//TODO
 	public int getDescendingDifference(HRMID pAddressToCompare)
 	{
 		for(int i = HRMConfig.Hierarchy.HEIGHT; i >= 0; i--) {
@@ -156,6 +143,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableCluste
 	}
 	
 	@Override
+	//TODO
 	public int compareTo(HRMID pCompareTo) {
 		return getLevelAddress(pCompareTo.getDescendingDifference(this)).subtract(pCompareTo.getLevelAddress(pCompareTo.getDescendingDifference(this))).intValue();
 	}
@@ -165,15 +153,35 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableCluste
 	{
 		return HRMNamespace;
 	}
-	
+
+	/**
+	 * Compares the address value of both class instances and return true if they are equal to each other.
+	 */
 	@Override
 	public boolean equals(Object pObj)
 	{
 		if(pObj instanceof HRMID) {
-			return getAddress().equals(((HRMID) pObj).getAddress());
+			// compare the addresses by the help of getAddress()
+			return getAddress().equals(((HRMID)pObj).getAddress());
 		}
 		return false;
 	}
-	
-	private String mDescr;
+
+	/**
+	 * Generate an HRMID output, e.g., "4.7.2.3"
+	 */
+	@Override
+	public String toString()
+	{
+		String tOutput = new String();
+		
+		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i > 0; i--){
+			tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (i + 1))).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * i))).toString();
+			tOutput += ".";
+		}
+		
+		tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 1)).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 0))).toString();
+		
+		return tOutput;
+	}
 }

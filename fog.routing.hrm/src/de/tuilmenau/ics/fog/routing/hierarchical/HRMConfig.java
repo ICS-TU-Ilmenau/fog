@@ -17,6 +17,16 @@ public class HRMConfig
 		 * Show debug outputs about observable/observer construct, which is used to inform GUIs about HRMController internal changes.
 		 */
 		public static final boolean GUI_NOTIFICATIONS = false; 
+		
+		/**
+		 * Avoid duplicated HRMIDs in GUI
+		 */
+		public static final boolean GUI_AVOID_HRMID_DUPLICATES = true;
+
+		/** 
+		 * Show debug outputs about HRMID updates for nodes.
+		 */
+		public static final boolean GUI_HRMID_UPDATES = false;
 	}
 	public class Hierarchy
 	{
