@@ -276,17 +276,6 @@ public class Elector implements HRMEntity
 				// start the clustering of this cluster's coordinator and its neighbors
 				startClustering();
 			}
-		} else {
-			Logging.log(this, "ELECTION WON - beginning address distribution");
-			try {
-				tElectedCoordinator.signalAddressDistribution();
-			} catch (RemoteException tExc) {
-				Logging.err(this, "Remote problem - error when trying to distribute addresses", tExc);
-			} catch (RoutingException tExc) {
-				Logging.err(this, "Routing problem - error when trying to distribute addresses", tExc);
-			} catch (RequirementsException tExc) {
-				Logging.err(this, "Requirements problem - error when trying to distribute addresses", tExc);
-			}
 		}
 	}
 	
