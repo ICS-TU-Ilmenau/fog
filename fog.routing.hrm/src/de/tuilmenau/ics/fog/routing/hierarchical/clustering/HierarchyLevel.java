@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.clustering;
 
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -94,6 +95,16 @@ public class HierarchyLevel
 	public boolean isHigherLevel()
 	{
 		return (mLevel > BASE_LEVEL);
+	}
+
+	/**
+	 * Check if the hierarchy level is the highest one.
+	 * 
+	 * @return return true if the highest possible hierarchy level is used
+	 */
+	public boolean isHighest()
+	{
+		return (mLevel > HRMConfig.Hierarchy.HEIGHT - 1);
 	}
 
 	/**
