@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets.hierarchical.clustering;
+package de.tuilmenau.ics.fog.packets.hierarchical.addressing;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
@@ -16,14 +16,14 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 /**
  * PACKET: This packet is used to assign a new address. Such packets are sent from a coordinator to all cluster members.
  */
-public class AddressAnnounce  extends SignalingMessageHrm
+public class AddressAssignment  extends SignalingMessageHrm
 {
 	/**
 	 * For using the class within (de-)serialization processes.  
 	 */
 	private static final long serialVersionUID = -1674381264586284319L;
 
-	public AddressAnnounce(Name pSenderName, HRMID pAssignedHRMID)
+	public AddressAssignment(Name pSenderName, HRMID pAssignedHRMID)
 	{
 		super(pSenderName);
 		mHRMID = pAssignedHRMID;
