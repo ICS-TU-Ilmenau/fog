@@ -231,12 +231,6 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void handleTopologyData(TopologyData pEnvelope)
-	{
-		
-	}
-	
-	@Override
 	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		

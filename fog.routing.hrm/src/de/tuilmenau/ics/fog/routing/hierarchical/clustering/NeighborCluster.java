@@ -393,12 +393,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void handleTopologyData(TopologyData pEnvelope)
-	{
-		
-	}
-
-	@Override
 	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
 		

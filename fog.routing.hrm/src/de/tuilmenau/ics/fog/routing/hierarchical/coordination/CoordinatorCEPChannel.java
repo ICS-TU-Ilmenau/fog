@@ -18,6 +18,7 @@ import java.util.List;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
@@ -295,6 +296,23 @@ public class CoordinatorCEPChannel
 				Logging.log(this, "Received " + tAnnouncePacket + " from remote cluster " + mRemoteCluster);
 			}
 			
+			/**
+			 * AssignHRMID
+			 */
+			if(pData instanceof AssignHRMID) {
+				AssignHRMID tAssignHRMIDPacket = (AssignHRMID)pData;
+
+				if (CHANNEL_SIGNALING_DEBUGGING)
+					Logging.log(this, "ASSIGN_HRMID-received from \"" + mPeerCluster + "\" assigned HRMID: " + tAssignHRMIDPacket.getHRMID().toString());
+
+				if (getPeer() instanceof Coordinator){
+					Coordinator tCoordinator = (Coordinator)getPeer();
+					tCoordinator.handleAssignHRMID(tAssignHRMIDPacket);
+				} else if (getPeer() instanceof Cluster){
+					Cluster tCluster = (Cluster)getPeer();
+					tCluster.handleAssignHRMIDForPhysicalNode(tAssignHRMIDPacket);
+				} 
+			}
 			
 			/**
 			 * TopologyData
@@ -305,7 +323,10 @@ public class CoordinatorCEPChannel
 				if (CHANNEL_SIGNALING_DEBUGGING)
 					Logging.log(this, "TOPOLOGY-received from \"" + mPeerCluster + "\" TOPOLOGY DATA: " + tTopologyPacket);
 
-				getPeer().handleTopologyData(tTopologyPacket);
+				if (getPeer() instanceof Coordinator){
+					Coordinator tCoordinator = (Coordinator)getPeer();
+					tCoordinator.handleSharedTopologyData(tTopologyPacket);
+				}
 			}/* else if (pData instanceof NestedDiscovery) {
 				NestedDiscovery tDiscovery = (NestedDiscovery) pData;
 				handleClusterDiscovery(tDiscovery);

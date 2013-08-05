@@ -279,7 +279,7 @@ public class Elector implements HRMEntity
 		} else {
 			Logging.log(this, "ELECTION WON - beginning address distribution");
 			try {
-				tElectedCoordinator.signalAddresses();
+				tElectedCoordinator.signalAddressDistribution();
 			} catch (RemoteException tExc) {
 				Logging.err(this, "Remote problem - error when trying to distribute addresses", tExc);
 			} catch (RoutingException tExc) {

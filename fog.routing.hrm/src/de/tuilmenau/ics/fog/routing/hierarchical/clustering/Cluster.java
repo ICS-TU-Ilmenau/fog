@@ -20,6 +20,7 @@ import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.FIBEntry;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
@@ -456,7 +457,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (caller=" + pCaller + ")");
 
 		// update the HRMID
-		mHRMID = pHRMID;
+		mHRMID = pHRMID.clone();
 		
 		// inform HRM controller about the change if we are at base hierarchy level
 		// otherwise the HRM controller will receive the same update from the correspondign coordinator instance
@@ -720,7 +721,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	/**
 	 * As the implemented version of HRM uses a fully distributed algorithm for signaling it is possible that some nodes are not
 	 * associated to a coordinator because they were not covered. In that case such a node sends RequestCoordinator messages to
-	 * the neighbors. If a neighbor is not covered by a coordinator either, it is aded as laggard.
+	 * the neighbors. If a neighbor is not covered by a coordinator either, it is added as laggard.
 	 * 
 	 * @param pCEP Add one connection end point as laggard here.
 	 */
@@ -734,45 +735,34 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 	}
 
-	@Override
-	public void handleTopologyData(TopologyData pTopologyData)
-	{
-		mTopologyData = pTopologyData;
-		HierarchicalNameMappingService<HRMID> tNMS = null;
-		try {
-			tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
-		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(getHRMController().getNode().getAS().getSimulation());
-		}
-		Name tLocalRouterName = getHRMController().getNode().getCentralFN().getName();
+//	public void handleTopologyData(TopologyData pTopologyData)
+//	{
+//		Logging.err(this, "Ignoring topology data for HRMID " + pTopologyData.getHRMID().toString() + " and topology data " + pTopologyData);
+//		Logging.err(this, "Continuing");
 		
-		tNMS.registerName(tLocalRouterName, pTopologyData.getHRMID(), NamingLevel.NAMES);
-		String tString = new String();
-		for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
-			tString += tEntry + " ";
-		}
-		Logging.log(this, "Currently registered names: " + tString);
-
-		setHRMID(this, pTopologyData.getHRMID());
-		
-		if(mTopologyData.getEntries() != null) {
-			for(FIBEntry tEntry : mTopologyData.getEntries()) {
-				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null) {
-					/*if(!getCoordinator().getHRS().getRoutingTable().containsKey(tEntry.getDestination())) {
-						getCoordinator().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
-					} else {
-						if(getCoordinator().getHRS().getFIBEntry(tEntry.getDestination()).isWriteProtected()) {
-							getCoordinator().getLogger().log(this, "Not replacing " + getCoordinator().getHRS().getFIBEntry(tEntry.getDestination()) + " with " + tEntry);
-						} else {
-							getCoordinator().getHRS().getRoutingTable().remove(tEntry.getDestination());
-							getCoordinator().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
-						}
-					}*/
-					getHRMController().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
-				}
-			}
-		}
-	}
+//		mTopologyData = pTopologyData;
+//
+//		setHRMID(this, pTopologyData.getHRMID());
+//		
+//		if(mTopologyData.getEntries() != null) {
+//			for(FIBEntry tEntry : mTopologyData.getEntries()) {
+//				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null) {
+//					/*if(!getCoordinator().getHRS().getRoutingTable().containsKey(tEntry.getDestination())) {
+//						getCoordinator().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
+//					} else {
+//						if(getCoordinator().getHRS().getFIBEntry(tEntry.getDestination()).isWriteProtected()) {
+//							getCoordinator().getLogger().log(this, "Not replacing " + getCoordinator().getHRS().getFIBEntry(tEntry.getDestination()) + " with " + tEntry);
+//						} else {
+//							getCoordinator().getHRS().getRoutingTable().remove(tEntry.getDestination());
+//							getCoordinator().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
+//						}
+//					}*/
+//					getHRMController().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
+//				}
+//			}
+//		}
+		// TODO: der koordinator soltle die routing-updates vornehmen, was wenn baselevel 0 ist? dann doch cluster?
+//	}
 	
 	@Override
 	public TopologyData getTopologyData()
@@ -878,6 +868,28 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getBullyPriority().getValue() +  (getCoordinatorSignature() != null ? ", Coord.=" + getCoordinatorSignature() : "") + (mInterASCluster ? ", TRANSIT" : "");
 		}else{
 			return "HRMID=" + getHRMID().toString();
+		}
+	}
+
+	/**
+	 * Handles packet type "AssignHRMID".
+     * The function is called when an address update for the physical node (hierarchy level 0) was received.
+	 * 
+	 * @param pAssignHRMIDPacket the received packet with the new hierarchy level 0 address
+	 */
+	public void handleAssignHRMIDForPhysicalNode(AssignHRMID pAssignHRMIDPacket)
+	{
+		// we process such packets only on base hierarchy level, on higher hierarchy levels coordinators should be the only target for such packets
+		if (getHierarchyLevel().isBaseLevel()){
+			// extract the HRMID from the packet 
+			HRMID tHRMID = pAssignHRMIDPacket.getHRMID();
+			
+			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + tHRMID.toString());
+			
+			// update the local HRMID
+			setHRMID(this, tHRMID);
+		}else{
+			Logging.warn(this, "Ignoring AssignHRMID packet because we are at the higher hierachy level " + getHierarchyLevel().getValue());
 		}
 	}
 }
