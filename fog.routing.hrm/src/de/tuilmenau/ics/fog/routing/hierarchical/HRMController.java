@@ -40,9 +40,12 @@ import de.tuilmenau.ics.fog.routing.hierarchical.coordination.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
+import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
+import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.SimpleName;
@@ -850,14 +853,15 @@ public class HRMController extends Application implements IServerCallback
 		if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
 			
 			if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-				Logging.log(this, "Updating the HRMID to " + pCoordinator.getHRMID().toString() + " for " + pCoordinator);
+				Logging.log(this, "Updating the HRMID to " + tHRMID.toString() + " for " + pCoordinator);
 			}
 
 			// register the new HRMID
 			mRegisteredHRMIDs.add(tHRMID);
 
 			// update node label within GUI
-			getNode().setDecorationValue(getNode().getDecorationValue() + ", " + pCoordinator.getHRMID().toString());
+			String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
+			getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
 		}else{
 			Logging. warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCoordinator);
 		}
@@ -909,6 +913,9 @@ public class HRMController extends Application implements IServerCallback
 		if (pCluster.getHierarchyLevel().isBaseLevel()){
 			if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
 				
+				/**
+				 * Update the local DB with the given HRMID
+				 */
 				if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
 					Logging.log(this, "Updating the HRMID to " + pCluster.getHRMID().toString() + " for " + pCluster);
 				}
@@ -917,7 +924,36 @@ public class HRMController extends Application implements IServerCallback
 				mRegisteredHRMIDs.add(tHRMID);
 				
 				// update node label within GUI
-				getNode().setDecorationValue(getNode().getDecorationValue() + ", " + tHRMID.toString());			
+				String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
+				getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
+				
+				/**
+				 * Register the HRMID in the DNS for the local router 
+				 */
+				// register the HRMID in the hierarchical DNS for the local router
+				HierarchicalNameMappingService<HRMID> tNMS = null;
+				try {
+					tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
+				} catch (RuntimeException tExc) {
+					HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
+				}
+				
+				// get the local router's human readable name (= DNS name)
+				Name tLocalRouterName = getNode().getCentralFN().getName();
+				
+				// register HRMID for the given DNS name
+				tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);
+				
+				// give some debug output about the current DNS state
+				String tString = new String();
+				for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
+					if (!tString.isEmpty()){
+						tString += ", ";
+					}
+					tString += tEntry;
+				}
+				Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
+
 			}else{
 				Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCluster);
 			}
