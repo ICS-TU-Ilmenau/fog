@@ -106,7 +106,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, HRMGraphNodeNam
 	}
 	
 	/**
-	 * Creates an instance clone with the same adress.
+	 * Creates an instance clone with the same address.
 	 */
 	public HRMID clone()
 	{
