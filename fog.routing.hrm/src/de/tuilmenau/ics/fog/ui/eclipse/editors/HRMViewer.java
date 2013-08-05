@@ -327,11 +327,13 @@ public class HRMViewer extends EditorPart implements Observer
 	private class ListenerClusterHierarchyLevel implements Listener
 	{
 		private Cluster mCluster = null;
+		private HRMViewer mHRMViewer = null;
 		
-		private ListenerClusterHierarchyLevel(Cluster pCluster)
+		private ListenerClusterHierarchyLevel(HRMViewer pHRMViewer, Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
+			mHRMViewer = pHRMViewer;
 		}
 		
 		@Override
@@ -346,6 +348,10 @@ public class HRMViewer extends EditorPart implements Observer
 			}
 		}
 		
+		public String toString()
+		{
+			return mHRMViewer.toString() + "@" + getClass().getSimpleName(); 
+		}
 	}
 	
 	/**
@@ -355,11 +361,13 @@ public class HRMViewer extends EditorPart implements Observer
 	private class ListenerClusterHierarchy implements Listener
 	{
 		private Cluster mCluster = null;
+		private HRMViewer mHRMViewer = null;
 		
-		private ListenerClusterHierarchy(Cluster pCluster)
+		private ListenerClusterHierarchy(HRMViewer pHRMViewer, Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
+			mHRMViewer = pHRMViewer;
 		}
 		
 		@Override
@@ -367,6 +375,10 @@ public class HRMViewer extends EditorPart implements Observer
 		{
 			ElectionManager.getElectionManager().getElector(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).startClustering();
 		}		
+		public String toString()
+		{
+			return mHRMViewer.toString() + "@" + getClass().getSimpleName(); 
+		}
 	}	
 
 	/**
@@ -678,12 +690,12 @@ public class HRMViewer extends EditorPart implements Observer
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS){
 			    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
 			    toolItem3.setText("[Cluster with siblings]");
-			    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(tCluster));
+			    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(this, tCluster));
 			}
 		    
 		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem4.setText("[Cluster all level " + tHierarchyLevel + " coordinators]");
-		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(tCluster));
+		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(this, tCluster));
 		    
 		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
