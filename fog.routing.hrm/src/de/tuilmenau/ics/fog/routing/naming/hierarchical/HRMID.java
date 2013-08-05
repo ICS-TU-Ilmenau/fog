@@ -95,18 +95,25 @@ public class HRMID extends HRMName implements Comparable<HRMID>, IRoutableCluste
 		mDescr = pInfo;
 	}
 	
+	/**
+	 * Generates an HRMID output, e.g., "4.7.2.3".
+	 */
 	@Override
 	public String toString()
 	{
 		String tOutput = new String();
-		for(int i = HRMConfig.Hierarchy.HEIGHT -1; i > 0  ; i--) {
-			tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (i + 1) ) ).shiftRight(( HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * i) ) ).toString();
+		
+		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i > 0; i--){
+			tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (i + 1))).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * i))).toString();
 			tOutput += ".";
 		}
-		tOutput += (mAddress.mod( (BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 1 ) ).shiftRight(( HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 0) ) ).toString();
+		
+		tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 1)).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 0))).toString();
+		
 		if(mDescr != null) {
-			return tOutput +"(" +Long.toString(mAddress.longValue()) +")";
+			tOutput += "(" +Long.toString(mAddress.longValue()) +")";
 		}
+		
 		return tOutput;
 	}
 	
