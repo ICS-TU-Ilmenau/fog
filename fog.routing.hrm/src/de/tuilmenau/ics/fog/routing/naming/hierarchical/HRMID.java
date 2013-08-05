@@ -82,15 +82,14 @@ public class HRMID extends HRMName implements Comparable<HRMID>, HRMGraphNodeNam
 	public void setLevelAddress(HierarchyLevel pHierarchyLevel, BigInteger pAddress)
 	{
 		int tLevel = pHierarchyLevel.getValue();
+		BigInteger tLevelAddr = getLevelAddress(tLevel);
 		
-		if(pHierarchyLevel.isHigherLevel()) {
-			BigInteger tValue = getLevelAddress(tLevel);
-			if(!tValue.equals(BigInteger.valueOf(0))) {
+		if(pHierarchyLevel.isHigherLevel()) { // higher hierarchy level
+			if(!tLevelAddr.equals(BigInteger.valueOf(0))) {
 				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((tLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)).divide(BigInteger.valueOf(tLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
 			}
-		} else {
-			BigInteger tValue = getLevelAddress(tLevel);
-			if(!tValue.equals(BigInteger.valueOf(0))) {
+		} else {// base hierarchy level
+			if(!tLevelAddr.equals(BigInteger.valueOf(0))) {
 				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((tLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
 			}
 		}		
