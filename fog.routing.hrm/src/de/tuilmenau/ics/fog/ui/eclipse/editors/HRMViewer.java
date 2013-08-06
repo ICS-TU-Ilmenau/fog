@@ -25,6 +25,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -44,7 +45,6 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
-import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.packets.hierarchical.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
@@ -66,7 +66,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * The HRM viewer, which depicts all information from an HRM controller.
  * 
  */
-public class HRMViewer extends EditorPart implements Observer
+public class HRMViewer extends EditorPart implements Observer, Runnable
 {
 	private static boolean HRM_VIEWER_DEBUGGING = false;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = false;
@@ -76,18 +76,31 @@ public class HRMViewer extends EditorPart implements Observer
     private Composite mShell = null;
     private ScrolledComposite mScroller = null;
     private Composite mContainer = null;
+    private Display mDisplay = null;
 	
 	public HRMViewer()
 	{
 		
 	}
 	
-	@Override
-	public void createPartControl(Composite parent)
+	private void destroyPartControl()
 	{
-		mShell = parent;
+		mContainer.dispose();
+
+		//HINT: don't dispose the mScroller object here, this would lead to GUI display problems
+		
+		mShell.redraw();
+	}
+	
+	@Override
+	public void createPartControl(Composite pParent)
+	{
+		mShell = pParent;
+		mDisplay = pParent.getDisplay();
 		mShell.setLayout(new FillLayout());
-		mScroller = new ScrolledComposite(mShell, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+		if (mScroller == null){
+			mScroller = new ScrolledComposite(mShell, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+		}
 		mContainer = new Composite(mScroller, SWT.NONE);
 		mScroller.setContent(mContainer);
 		GridLayout tLayout = new GridLayout(1, true);
@@ -100,26 +113,21 @@ public class HRMViewer extends EditorPart implements Observer
 			Logging.log(this, "Amount of found routing targets: " + mHRMController.getRoutingTargets().size());
 			Logging.log(this, "              ...found clusters: " + mHRMController.getRoutingTargetClusters().size());
 		}
-		for(int i = 0; i <= HRMConfig.Hierarchy.HEIGHT; i++) {
-			for (ICluster tEntry : mHRMController.getRoutingTargets()) {
-				if (tEntry.getHierarchyLevel().getValue() == i) {
-					if (tEntry instanceof Cluster){
-						// a cluster
-						printCluster(tEntry);
-					}else if(tEntry instanceof Coordinator) {
-						// a coordinator
-						printCoordinator(tEntry);
-					}else {
-						// neighbor cluster?
-						Logging.warn(this, "Got an unsupported routing target type: " + tEntry.getClass().getSimpleName());
-					}
-				}else{
-					if (HRM_VIEWER_DEBUGGING){
-						Logging.log(this, "              ...ignoring on lvl. " + i + " the lvl " + tEntry.getHierarchyLevel().getValue()+ " entry " + tEntry);
-					}					
-				}
-					
-			}
+		
+		/**
+		 * List clusters
+		 */
+		for (Cluster tCluster: mHRMController.listKnownClusters()) {
+			// print info. about cluster
+			printCluster(tCluster);
+
+		/**
+		 * List coordinators
+		 */
+		}
+		for (Coordinator tCoordinator: mHRMController.listKnownCoordinators()) {
+			// print info. about cluster
+			printCoordinator(tCoordinator);
 		}
 		
 		/**
@@ -883,11 +891,33 @@ public class HRMViewer extends EditorPart implements Observer
 		return res;
 	}
 
-	public String toString()
-	{		
-		return "HRM viewer" + (mHRMController != null ? "@" + mHRMController.getNodeGUIName() : "");
+	/**
+	 * Thread main function, which is used if an asynchronous GUI update is needed.
+	 * In this case, the GUI update has to be delayed in order to do it within the main GUI thread.
+	 */
+	@Override
+	public void run()
+	{
+		resetGUI();
 	}
 
+	/**
+	 * Resets the GUI and updates everything in this EditorPart
+	 */
+	private void resetGUI()
+	{
+		if(!mDisplay.isDisposed()) {
+			if(Thread.currentThread() != mDisplay.getThread()) {
+				//switches to different thread
+				mDisplay.asyncExec(this);
+			} else {
+				destroyPartControl();
+				
+				createPartControl(mShell);
+			}
+		}
+	}
+	
 	/**
 	 * Function for receiving notifications about changes in the corresponding HRMController instance
 	 */
@@ -897,6 +927,12 @@ public class HRMViewer extends EditorPart implements Observer
 		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
 			Logging.log(this, "Got notification from " + pSource + " because of \"" + pReason + "\"");
 		}
-		
+
+		resetGUI();
+	}
+	
+	public String toString()
+	{		
+		return "HRM viewer" + (mHRMController != null ? "@" + mHRMController.getNodeGUIName() : "");
 	}
 }

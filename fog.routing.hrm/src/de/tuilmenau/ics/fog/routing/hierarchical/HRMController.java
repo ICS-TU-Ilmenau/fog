@@ -76,9 +76,21 @@ public class HRMController extends Application implements IServerCallback
 	private Node mPhysicalNode; //TV
 	
 	/**
-	 * Stores the registered HRMIDs in order to show them within the GUI
+	 * Stores the registered HRMIDs in order to show them within the GUI.
 	 */
 	private LinkedList<HRMID> mRegisteredHRMIDs = new LinkedList<HRMID>();
+
+	/**
+	 * Stores a database about all registered coordinators.
+	 * For example, this list is used for the GUI.
+	 */
+	private LinkedList<Coordinator> mKnownCoordinators = new LinkedList<Coordinator>();
+
+	/**
+	 * Stores a database about all registered clusters.
+	 * For example, this list is used for the GUI.
+	 */
+	private LinkedList<Cluster> mKnownClusters = new LinkedList<Cluster>();
 
 	private HierarchicalRoutingService mHRS = null;
 	private RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink>();
@@ -87,6 +99,8 @@ public class HRMController extends Application implements IServerCallback
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
 	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators;
+	
+	
 //	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
 	/**
@@ -817,6 +831,9 @@ public class HRMController extends Application implements IServerCallback
 		// register coordinator as addressable target
 		addRoutableTarget(pCoordinator);
 
+		// register as known coordinator
+		mKnownCoordinators.add(pCoordinator);
+		
 		// update GUI: image for node object 
 		//TODO: check and be aware of topology dynamics
 		getNode().setDecorationParameter("L"+ tLevel);
@@ -834,7 +851,8 @@ public class HRMController extends Application implements IServerCallback
 	{
 		Logging.log(this, "Unegistering coordinator " + pCoordinator);
 
-		//TODO: implement this
+		// unregister from list of known coordinators
+		mKnownCoordinators.remove(pCoordinator);
 
 		// it's time to update the GUI
 		notifyGUI(pCoordinator);
@@ -865,12 +883,25 @@ public class HRMController extends Application implements IServerCallback
 				String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
 				getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
 			}
+			
+			// it's time to update the GUI
+			notifyGUI(pCoordinator);
 		}else{
 			Logging. warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCoordinator);
 		}
 			
 	}
 
+	/**
+	 * Returns a list of known coordinators.
+	 * 
+	 * @return the list of known coordinators
+	 */
+	public LinkedList<Coordinator> listKnownCoordinators()
+	{
+		return mKnownCoordinators;
+	}
+	
 	/**
 	 * Registers a cluster at the local database.
 	 * 
@@ -882,7 +913,8 @@ public class HRMController extends Application implements IServerCallback
 
 		Logging.log(this, "Registering cluster " + pCluster + " at level " + tLevel);
 
-		//TODO: store a database about registered clusters
+		// register as known cluster
+		mKnownClusters.add(pCluster);
 		
 		// it's time to update the GUI
 		notifyGUI(pCluster);
@@ -897,7 +929,8 @@ public class HRMController extends Application implements IServerCallback
 	{
 		Logging.log(this, "Unegistering coordinator " + pCluster);
 
-		//TODO: implement this
+		// unregister from list of known clusters
+		mKnownClusters.remove(pCluster);
 		
 		// it's time to update the GUI
 		notifyGUI(pCluster);
@@ -959,7 +992,9 @@ public class HRMController extends Application implements IServerCallback
 					tString += tEntry;
 				}
 				Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
-
+				
+				// it's time to update the GUI
+				notifyGUI(pCluster);
 			}else{
 				Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCluster);
 			}
@@ -967,6 +1002,16 @@ public class HRMController extends Application implements IServerCallback
 			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
 			Logging.warn(this, "Skipping HRMID registration " + tHRMID.toString() + " for " + pCluster);
 		}
+	}
+
+	/**
+	 * Returns a list of known clusters.
+	 * 
+	 * @return the list of known clusters
+	 */
+	public LinkedList<Cluster> listKnownClusters()
+	{
+		return mKnownClusters;
 	}
 
 	/**
