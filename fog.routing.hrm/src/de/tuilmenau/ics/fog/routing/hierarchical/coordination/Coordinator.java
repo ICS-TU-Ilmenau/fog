@@ -1195,7 +1195,7 @@ public class Coordinator implements ICluster, HRMEntity
 	public String toString()
 	{
 		//return getClass().getSimpleName() + (mManagedCluster != null ? "(" + mManagedCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;
-		return toLocation() + " (" + (mManagedCluster != null ? "Cluster=" + mManagedCluster.getGUIClusterID() + ", " : "") + idToString() + ")";
+		return toLocation() + " (" + (mManagedCluster != null ? "Cluster" + mManagedCluster.getGUIClusterID() + ", " : "") + idToString() + ")";
 	}
 
 	@Override
