@@ -24,15 +24,26 @@
    </extension>
    <extension
          point="de.tuilmenau.ics.fog.hostApplications">
+       <plugin
+            name="Create node"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateNode"
+            filter="de.tuilmenau.ics.fog.topology.IAutonomousSystem">
+      </plugin>
+      <plugin
+            name="Create link to.."
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateLinkTo"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+         
       <editor
             editorID="de.tuilmenau.ics.fog.hrmviewer"
             filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
             name="HRM viewer">
       </editor>
-      <plugin
+<!--      <plugin
             class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.SendPacket"
             name="Send packet">
-      </plugin>
+      </plugin> -->
       <editor
             editorID="de.tuilmenau.ics.fog.clusterviewer"
             filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
