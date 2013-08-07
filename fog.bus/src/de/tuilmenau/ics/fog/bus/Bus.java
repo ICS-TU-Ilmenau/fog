@@ -120,6 +120,11 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		init();
 	}
 
+	public AutonomousSystem getAS()
+	{
+		return mAS;
+	}
+	
 	public String getASName()
 	{
 		return mAS.getName();
