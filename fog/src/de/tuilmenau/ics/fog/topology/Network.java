@@ -21,6 +21,7 @@ import java.util.Iterator;
 import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.graph.RoutableGraph;
 import de.tuilmenau.ics.middleware.JiniHelper;
@@ -49,7 +50,9 @@ public class Network
 		
 			mScenario.add(newNode);
 			tOk = true;
-		}			
+		}else{
+			Logging.err(this, "A node with name " + name + " already exists");
+		}
 		
 		return tOk;
 	}
