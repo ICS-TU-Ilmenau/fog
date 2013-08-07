@@ -37,6 +37,8 @@ public class LinkToBus extends Command
 	@Override
 	public void init(IWorkbenchPartSite pSite, Object pObject)
 	{
+		Logging.log(this, "INIT - object parameter is " + pObject);
+
 		mSite = pSite;
 		if(pObject instanceof Node) {
 			mSourceNode = (Node) pObject;

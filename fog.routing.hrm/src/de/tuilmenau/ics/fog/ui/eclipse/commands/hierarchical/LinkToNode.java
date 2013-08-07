@@ -32,7 +32,6 @@ public class LinkToNode extends Command
 	private AutonomousSystem mAs = null;
 	private IWorkbenchPartSite mSite = null;
 	private static String sLastSelectedNodeName = null;
-	private ILowerLayer mCreatedBus = null;
 	private Description mCreatedBusAttributes = null;
 	
 	public LinkToNode()
@@ -42,6 +41,8 @@ public class LinkToNode extends Command
 	@Override
 	public void init(IWorkbenchPartSite pSite, Object pObject)
 	{
+		Logging.log(this, "INIT - object parameter is " + pObject);
+
 		mSite = pSite;
 		if(pObject instanceof Node) {
 			mSourceNode = (Node) pObject;
