@@ -18,13 +18,24 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 {
 
 	/**
+	 * The name of the message sender. This is always a name of a physical node.
+	 */
+	private Name mSenderName = null;
+	
+	/**
+	 * The name of the message receiver. This always a name of a physical node. 
+	 */
+	private Name mReceiverName = null;
+
+	/**
 	 * For using the class within (de-)serialization. 
 	 */
 	private static final long serialVersionUID = 7253912074438961613L;
 	
-	public SignalingMessageHrm(Name pSenderName)
+	public SignalingMessageHrm(Name pSenderName, Name pReceiverName)
 	{
 		mSenderName = pSenderName;
+		mReceiverName = pReceiverName;
 	}
 	
 	/**
@@ -38,7 +49,23 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	}
 
 	/**
-	 * The name of the sender of this message. This is always a name of a physical node.
+	 * Determine the name of the message sender
+	 * 
+	 * @return name of the sender
 	 */
-	private Name mSenderName = null;
+	public Name getReceiverName()
+	{
+		return mReceiverName;
+	}
+	
+	/**
+	 * Returns an object describing string
+	 * 
+	 *  @return the describing string
+	 */
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ")";
+	}
 }

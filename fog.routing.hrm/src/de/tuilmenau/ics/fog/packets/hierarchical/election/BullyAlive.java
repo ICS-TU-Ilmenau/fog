@@ -10,26 +10,34 @@
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
 /**
  * PACKET: It is used to signal that a peer is still alive.
+ * 		   The packet has to be send as broadcast.
  */
 public class BullyAlive extends SignalingMessageBully
 {
 	private static final long serialVersionUID = 4870662765189881992L;
 	
 	/**
-	 * @param pSenderName the sender's name 
-	 * @param pCoordinatorName the coordinator's name
+	 * Constructor
+	 * 
+	 * @param pSenderName the name of the message sender
 	 */
 	public BullyAlive(Name pSenderName) //TODO: ev. sollte hier auch die Prio. übermittelt werden, so dass man nicht immer erst auf das BullyElect warten muss
 	{
-		super(pSenderName);
+		super(pSenderName, HRMID.createBroadcast());
 	}
-	
+
+	/**
+	 * Returns a describing string
+	 * 
+	 * @return the describing string
+	 */
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ")";
+		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ")";
 	}
 }

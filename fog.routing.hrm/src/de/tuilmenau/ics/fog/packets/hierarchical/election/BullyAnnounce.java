@@ -14,22 +14,31 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
 /**
- * PACKET: It is used when a new coordinator is signaled to all cluster members
+ * PACKET: It is used when a new coordinator is signaled to all cluster members.
+ * 		   The packet has to be send as broadcast.
  */
 public class BullyAnnounce extends SignalingMessageBully
 {
 	private static final long serialVersionUID = 794175467972815277L;
+
+	private HRMSignature mCoordSignature;
+	private int mToken;
+	private LinkedList<Name> mCoveredNodes = null;
+
 	/**
-	 * @param pCoord Name (IName) of the coordinator that is announcing itself
-	 * @param pSenderPriority is the priority the coordinator was elected with
+	 * Constructor
+	 * 
+	 * @param pSenderName the name of the message sender (the coordinator)
+	 * @param pSenderPriority the priority of the message sender (coordinator)
 	 * @param pCoordinatorSignature is the signature of the coordinator - can be replaced by cryptographic identity
 	 * @param pToken is the active token that is used for the identification of the domain the coordinator is active in case no Cluster IDs can be provided a priori
 	 */
 	public BullyAnnounce(Name pSenderName, BullyPriority pSenderPriority, HRMSignature pCoordinatorSignature, int pToken)
 	{
-		super(pSenderName, pSenderPriority);
+		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordSignature = pCoordinatorSignature;
 		mToken = pToken;
 	}
@@ -43,12 +52,6 @@ public class BullyAnnounce extends SignalingMessageBully
 		return mToken;
 	}
 
-	@Override
-	public String toString()
-	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority().getValue() + ")";
-	}
-	
 	/**
 	 * 
 	 * @return the signature of the coordinator - can be replaced by cryptographic identity
@@ -78,8 +81,4 @@ public class BullyAnnounce extends SignalingMessageBully
 	{
 		return mCoveredNodes;
 	}
-	
-	private HRMSignature mCoordSignature;
-	private int mToken;
-	private LinkedList<Name> mCoveredNodes = null;
 }

@@ -41,6 +41,11 @@ public class HRMConfig
 		 * otherwise it has to be triggered step by step via the GUI.
 		 */
 		public static final boolean ASSIGN_AUTOMATICALLY = true;
+		
+		/**
+		 * Defines the address which is used for cluster broadcasts
+		 */
+		public static final long BROADCAST_ADDRESS = 0;
 	}
 	
 	public class Hierarchy

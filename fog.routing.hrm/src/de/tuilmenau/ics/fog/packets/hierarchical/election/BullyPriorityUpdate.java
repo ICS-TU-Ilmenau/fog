@@ -11,21 +11,24 @@ package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
 /**
  * PACKET: If the priority of a node changes this object has to be used to inform other cluster members about the change.
- * The node itself will be identified by the connection.
+ * 		   The packet has to be send as broadcast.
  */
 public class BullyPriorityUpdate extends SignalingMessageBully //TV
 {
 	private static final long serialVersionUID = -8819106581802846812L;
 	
 	/**
+	 * Constructor
 	 * 
-	 * @param pPriority the new priority
+	 * @param pSenderName the name of the message sender
+	 * @param pSenderPriroity the Bully priority of the message sender
 	 */
-	public BullyPriorityUpdate(Name pSenderName, BullyPriority pBullyPriority)
+	public BullyPriorityUpdate(Name pSenderName, BullyPriority pSenderPriroity)
 	{
-		super(pSenderName, pBullyPriority);
+		super(pSenderName, HRMID.createBroadcast(), pSenderPriroity);
 	}
 }

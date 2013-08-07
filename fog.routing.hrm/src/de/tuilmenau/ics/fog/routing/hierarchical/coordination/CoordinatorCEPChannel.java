@@ -67,7 +67,7 @@ public class CoordinatorCEPChannel
 	/**
 	 * For COORDINATORS: Stores the HRMID under which the corresponding peer cluster member is addressable.
 	 */
-	private HRMID mPeerClusterMemberHRMID = null;
+	private HRMID mPeerHRMID = null;
 	
 	/**
 	 * 
@@ -87,19 +87,19 @@ public class CoordinatorCEPChannel
 	 * 
 	 * @param pHRMID the new HRMID under which the peer is addressable
 	 */
-	public void setPeerClusterMemberHRMID(HRMID pHRMID)
+	public void setPeerHRMID(HRMID pHRMID)
 	{
-		mPeerClusterMemberHRMID = pHRMID.clone();		
+		mPeerHRMID = pHRMID.clone();		
 	}
 	
 	/**
-	 * Determines the address of the peer cluster member.
+	 * Determines the address of the peer (e.g., a cluster member).
 	 * 
-	 * @return the HRMID of the peer cluster member or "null"
+	 * @return the HRMID of the peer or "null"
 	 */
-	public HRMID getPeerClusterMemberHRMID()
+	public HRMID getPeerHRMID()
 	{
-		return mPeerClusterMemberHRMID;
+		return mPeerHRMID;
 	}
 	
 	/**
@@ -162,17 +162,21 @@ public class CoordinatorCEPChannel
 					//TODO: packet is sent but never parsed or a timeout timer reset!!
 				}
 			} else {
-				// store peer's Bully priority
-				//TODO: peer prio direkt mal abspeichern und auf größte checken!
-				mPeerPriority = tPacketBullyElect.getSenderPriority();
-				
-				// create REPLY packet
-				BullyReply tReplyPacket = new BullyReply(tLocalNodeName, getPeer().getBullyPriority());
-				
-				// send the answer packet
-				if (BULLY_SIGNALING_DEBUGGING)
-					Logging.log(this, "BULLY-sending to \"" + mPeerCluster + "\" a REPLY: " + tReplyPacket);
-				sendPacket(tReplyPacket);
+				if (getPeer() instanceof Cluster){
+					// store peer's Bully priority
+					//TODO: peer prio direkt mal abspeichern und auf größte checken!
+					mPeerPriority = tPacketBullyElect.getSenderPriority();
+					
+					// create REPLY packet
+					BullyReply tReplyPacket = new BullyReply(tLocalNodeName, getPeerHRMID(), getPeer().getBullyPriority());
+					
+					// send the answer packet
+					if (BULLY_SIGNALING_DEBUGGING)
+						Logging.log(this, "BULLY-sending to \"" + mPeerCluster + "\" a REPLY: " + tReplyPacket);
+					sendPacket(tReplyPacket);
+				}else{
+					Logging.err(this, "Peer is not a cluster, skipping BullyReply message, peer is " + getPeer());
+				}
 			}
 		}
 		

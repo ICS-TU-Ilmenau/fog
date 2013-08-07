@@ -50,6 +50,16 @@ public class HRMID extends HRMName implements Comparable<HRMID>, HRMGraphNodeNam
 	}
 	
 	
+	/**
+	 * Factory function: create an HRMID for broadcasts.
+	 * 
+	 * @return the new HRMID for broadcasts
+	 */
+	public static HRMID createBroadcast()
+	{
+		return new HRMID(HRMConfig.Addressing.BROADCAST_ADDRESS);
+	}
+	
 	/** 
 	 * Determine the HRMID.
 	 * 

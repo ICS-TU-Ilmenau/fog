@@ -28,14 +28,37 @@ public class AssignHRMID  extends SignalingMessageHrm
 	 */
 	private static final long serialVersionUID = -1674381264586284319L;
 
-	public AssignHRMID(Name pSenderName, HRMID pAssignedHRMID)
+	/**
+	 * Constructor
+	 * 
+	 * @param pSenderName the name of the message sender
+	 * @param pReceiverName the name of the message receiver
+	 * @param pAssignedHRMID the assigned new HRMID for the receiver
+	 */
+	public AssignHRMID(Name pSenderName, Name pReceiverName, HRMID pAssignedHRMID)
 	{
-		super(pSenderName);
+		super(pSenderName, pReceiverName);
 		mHRMID = pAssignedHRMID;
 	}
 	
+	/**
+	 * Returns the assigned new HRMID
+	 *  
+	 * @return the new assigned HRMID
+	 */
 	public HRMID getHRMID()
 	{
 		return mHRMID;
+	}
+
+	/**
+	 * Returns an object describing string
+	 * 
+	 *  @return the describing string
+	 */
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", newHRMID=" + getHRMID() + ")";
 	}
 }

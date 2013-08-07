@@ -321,15 +321,15 @@ public class Coordinator implements ICluster, HRMEntity
 			HRMID tHRMID = createClusterMemberAddress(tNextClusterMemberAddress++);
 
 			// store the HRMID under which the peer will be addressable from now 
-			tClusterMember.setPeerClusterMemberHRMID(tHRMID);
+			tClusterMember.setPeerHRMID(tHRMID);
 			
-			if ((tClusterMember.getPeerClusterMemberHRMID() != null) && (!tClusterMember.getPeerClusterMemberHRMID().equals(tHRMID))){
-				Logging.log(this, "    ..replacing HRMID " + tClusterMember.getPeerClusterMemberHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
+			if ((tClusterMember.getPeerHRMID() != null) && (!tClusterMember.getPeerHRMID().equals(tHRMID))){
+				Logging.log(this, "    ..replacing HRMID " + tClusterMember.getPeerHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
 			}else
 				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
 
 			// create new AssignHRMID packet for the cluster member
-			AssignHRMID tAssignHRMID = new AssignHRMID(getHRMController().getNode().getCentralFN().getName(), tHRMID);
+			AssignHRMID tAssignHRMID = new AssignHRMID(getHRMController().getNode().getCentralFN().getName(), tClusterMember.getPeerHRMID(), tHRMID);
 			
 			// send the packet
 			tClusterMember.sendPacket(tAssignHRMID);

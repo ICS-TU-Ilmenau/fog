@@ -11,28 +11,24 @@ package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
 /**
  * PACKET: It is used when an election start is signaled.
+ *         The packet has to be send as broadcast.
  */
 public class BullyElect extends SignalingMessageBully //TV
 {
 	private static final long serialVersionUID = -335936730603961378L;
 
 	/**
+	 * Constructor
 	 * 
-	 * @param pSenderName sender's identification
-	 * @param pSenderPriority senders priority for the election
+	 * @param pSenderName the name of the message sender
+	 * @param pSenderPriority the Bully priority of the message sender
 	 */
 	public BullyElect(Name pSenderName, BullyPriority pSenderPriority)
 	{
-		super(pSenderName, pSenderPriority);
-	}
-	
-
-	@Override
-	public String toString()
-	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority().getValue() + ")";
+		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 	}
 }

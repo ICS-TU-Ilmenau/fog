@@ -20,18 +20,14 @@ public class BullyReply  extends SignalingMessageBully
 	private static final long serialVersionUID = -4666721123778977947L;
 	
 	/**
+	 * Constructor
 	 * 
-	 * @param pSenderName sender's identification
-	 * @param pSenderPriority senders priority for the election
+	 * @param pSenderName the name of the message sender
+	 * @param pReceiverName the name of the message receiver
+	 * @param pSenderPriority the Bully priority of the message sender
 	 */
-	public BullyReply(Name pSenderName, BullyPriority pSenderPriority)
+	public BullyReply(Name pSenderName, Name pReceiverName, BullyPriority pSenderPriority)
 	{
-		super(pSenderName, pSenderPriority);
-	}
-	
-	@Override
-	public String toString()
-	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority().getValue() + ")";
+		super(pSenderName, pReceiverName, pSenderPriority);
 	}
 }

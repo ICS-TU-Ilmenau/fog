@@ -18,14 +18,20 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	private static final long serialVersionUID = -7721094891385820251L;
 
 	/**
+	 * This is the Bully priority of the message sender.
+	 */
+	private BullyPriority mSenderPriority = null;
+
+	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pSenderPriority the Bully priority of the message sender
+	 * @param pReceiverName the name of the message receiver
 	 */
-	public SignalingMessageBully(Name pSenderName, BullyPriority pSenderPriority)
+	public SignalingMessageBully(Name pSenderName, Name pReceiverName, BullyPriority pSenderPriority)
 	{
-		super(pSenderName);
+		super(pSenderName, pReceiverName);
 		mSenderPriority = pSenderPriority;
 	}
 	
@@ -33,10 +39,11 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
+	 * @param pReceiverName the name of the message receiver
 	 */
-	public SignalingMessageBully(Name pSenderName)
+	public SignalingMessageBully(Name pSenderName, Name pReceiverName)
 	{
-		super(pSenderName);
+		super(pSenderName, pReceiverName);
 		mSenderPriority = new BullyPriority(this);
 	}
 
@@ -50,14 +57,14 @@ public class SignalingMessageBully extends SignalingMessageHrm
 		return mSenderPriority;
 	}
 
+	/**
+	 * Returns an object describing string
+	 * 
+	 *  @return the describing string
+	 */
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", SenderPrio=" + getSenderPriority().getValue() + ")";
+		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ")";
 	}
-
-	/**
-	 * This is the Bully priority of the message sender.
-	 */
-	private BullyPriority mSenderPriority = null;
 }
