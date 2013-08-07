@@ -59,21 +59,30 @@ public class HRMController extends Application implements IServerCallback
 	private boolean HRM_CONTROLLER_DEBUGGING = false;
 	
 	/**
+	 * The global name space which is used to identify the HRM instances on nodes.
+	 */
+	private final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
+
+	
+	/**
 	 * Stores the local HRM specific identity of the physical node (router)
 	 */
 	private HRMIdentity mIdentity = null;
 	
 	/**
-	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance
+	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance.
 	 */
 	private HRMControllerObservable mGUIInformer = null;
 	
-	private SimpleName mName = null;
+	/**
+	 * The name under which the HRMController application is registered on the local node.
+	 */
+	private SimpleName mApplicationName = null;
 	
 	/**
 	 * Reference to physical node.
 	 */
-	private Node mPhysicalNode; //TV
+	private Node mNode;
 	
 	/**
 	 * Stores the registered HRMIDs in order to show them within the GUI.
@@ -92,7 +101,11 @@ public class HRMController extends Application implements IServerCallback
 	 */
 	private LinkedList<Cluster> mKnownClusters = new LinkedList<Cluster>();
 
-	private HierarchicalRoutingService mHRS = null;
+	/**
+	 * Stores a reference to the local instance of the hierarchical routing service.
+	 */
+	private HierarchicalRoutingService mHierarchicalRoutingService = null;
+	
 	private RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink>();
 	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
@@ -103,10 +116,6 @@ public class HRMController extends Application implements IServerCallback
 	
 //	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
-	/**
-	 * The global name space which is used to identify the HRM instances on neighbor nodes. //TV
-	 */
-	private final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
 	
 	private int mConnectionCounter = 0;
 	
@@ -114,29 +123,76 @@ public class HRMController extends Application implements IServerCallback
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
 	 */
-	public HRMController(Node pNode, HierarchicalRoutingService pHRS)
+	public HRMController(Node pNode, HierarchicalRoutingService pHierarchicalRoutingService)
 	{
+		// initialize the application context
 		super(pNode.getHost(), null, pNode.getIdentity());
-		mName = new SimpleName(ROUTING_NAMESPACE, null);
+
+		// define the local name "routing://"
+		mApplicationName = new SimpleName(ROUTING_NAMESPACE, null);
+
+		// the observable, e.g., it is used to delegate update notifications to the GUI
 		mGUIInformer = new HRMControllerObservable(this);
-		mPhysicalNode = pNode;
-		Logging.log(this, "created");
-		Binding serverSocket=null;
+		
+		// reference to the physical node
+		mNode = pNode;
+		
+		/**
+		 * Create a local CEP
+		 */
+		// bind the HRMController application to a local socket
+		Binding tServerSocket=null;
 		try {
-			serverSocket = getHost().bind(null, mName, getDescription(), getIdentity());
-			Service service = new Service(false, this);
-			service.start(serverSocket);
+			tServerSocket = getHost().bind(null, mApplicationName, getDescription(), getIdentity());
 		} catch (NetworkException tExc) {
 			Logging.err(this, "Unable to bind to hosts application interface", tExc);
 		}
-		mHRS = pHRS;
+		// create and start the socket service
+		Service tService = new Service(false, this);
+		tService.start(tServerSocket);
+		
+		// store the reference to the local instance of hierarchical routing service
+		mHierarchicalRoutingService = pHierarchicalRoutingService;
 		
 		// create the identity of this node, which is later used for creating the signatures of clusters
 		mIdentity = new HRMIdentity(this);
 
 		// set the Bully priority 
 		BullyPriority.configureNode(pNode);
+
+		Logging.log(this, "CREATED");
 	}
+
+	/**
+	 * Returns the local instance of the hierarchical routing service
+	 * 
+	 * @return hierarchical routing service of this entity
+	 */
+	public HierarchicalRoutingService getHRS()
+	{
+		return mHierarchicalRoutingService;
+	}
+	
+	/**
+	 * Returns the local physical node object.
+	 * 
+	 * @return the physical node running this coordinator
+	 */
+	public Node getNode()
+	{
+		return mNode;
+	}
+	
+	/**
+	 * Return the actual GUI name description of the physical node;
+     * However, this function should only be used for debug outputs, e.g., GUI outputs.
+     * 
+	 * @return the GUI name
+	 */
+	public String getNodeGUIName()
+	{
+		return mNode.getName();
+	}	
 
 	/**
 	 * Notifies the GUI about essential updates within the HRM system
@@ -171,6 +227,233 @@ public class HRMController extends Application implements IServerCallback
 		mGUIInformer.deleteObserver(pGUI);
 	}
 
+	/**
+	 * Registers a coordinator at the local database.
+	 * 
+	 * @param pCoordinator the coordinator for a defined cluster
+	 */
+	public void registerCoordinator(Coordinator pCoordinator)
+	{
+		int tLevel = pCoordinator.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
+
+		Logging.log(this, "Registering coordinator " + pCoordinator + " at level " + tLevel);
+
+		// make sure we have a valid linked list object
+		if(mRegisteredCoordinators == null) {
+			mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
+		}
+		
+		if(mRegisteredCoordinators.size() <= tLevel) {
+			for(int i = mRegisteredCoordinators.size() - 1; i <= tLevel ; i++) {
+				mRegisteredCoordinators.add(new LinkedList<Coordinator>());
+			}
+		}
+		
+		if (mRegisteredCoordinators.get(tLevel).size() > 0){
+			Logging.log(this, "#### Got more than one coordinator at level " + tLevel + ", already known (0): " + mRegisteredCoordinators.get(tLevel).get(0) + ", new one: " + pCoordinator);
+		}
+		
+		// store the new coordinator
+		mRegisteredCoordinators.get(tLevel).add(pCoordinator);
+		
+		// register coordinator as addressable target
+		addRoutableTarget(pCoordinator);
+
+		// register as known coordinator
+		mKnownCoordinators.add(pCoordinator);
+		
+		// update GUI: image for node object 
+		//TODO: check and be aware of topology dynamics
+		getNode().setDecorationParameter("L"+ tLevel);
+		
+		// it's time to update the GUI
+		notifyGUI(pCoordinator);
+	}
+	
+	/**
+	 * Unregisters a coordinator from the internal database.
+	 * 
+	 * @param pCoordinator the coordinator which should be unregistered
+	 */
+	public void unregisterCoordinator(Coordinator pCoordinator)
+	{
+		Logging.log(this, "Unegistering coordinator " + pCoordinator);
+
+		// unregister from list of known coordinators
+		mKnownCoordinators.remove(pCoordinator);
+
+		// it's time to update the GUI
+		notifyGUI(pCoordinator);
+	}
+	
+	/**
+	 * Updates the registered HRMID for a defined coordinator.
+	 * 
+	 * @param pCluster the cluster whose HRMID is updated
+	 */
+	@SuppressWarnings("unused")
+	public void updateCoordinatorAddress(Coordinator pCoordinator)
+	{
+		HRMID tHRMID = pCoordinator.getHRMID();
+		
+		if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
+			
+			if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+				Logging.log(this, "Updating the HRMID to " + tHRMID.toString() + " for " + pCoordinator);
+			}
+
+			// register the new HRMID
+			mRegisteredHRMIDs.add(tHRMID);
+
+			// filter relative HRMIDs
+			if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
+				// update node label within GUI
+				String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
+				getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
+			}
+			
+			// it's time to update the GUI
+			notifyGUI(pCoordinator);
+		}else{
+			Logging. warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCoordinator);
+		}
+			
+	}
+
+	/**
+	 * Returns a list of known coordinators.
+	 * 
+	 * @return the list of known coordinators
+	 */
+	public LinkedList<Coordinator> listKnownCoordinators()
+	{
+		return mKnownCoordinators;
+	}
+	
+	/**
+	 * Registers a cluster at the local database.
+	 * 
+	 * @param pCluster the cluster which should be registered
+	 */
+	public void registerCluster(Cluster pCluster)
+	{
+		int tLevel = pCluster.getHierarchyLevel().getValue();
+
+		Logging.log(this, "Registering cluster " + pCluster + " at level " + tLevel);
+
+		// register as known cluster
+		mKnownClusters.add(pCluster);
+		
+		// it's time to update the GUI
+		notifyGUI(pCluster);
+	}
+	
+	/**
+	 * Unregisters a cluster from the local database.
+	 * 
+	 * @param pCluster the cluster which should be unregistered.
+	 */
+	public void unregisterCluster(Cluster pCluster)
+	{
+		Logging.log(this, "Unegistering coordinator " + pCluster);
+
+		// unregister from list of known clusters
+		mKnownClusters.remove(pCluster);
+		
+		// it's time to update the GUI
+		notifyGUI(pCluster);
+	}
+	
+	/**
+	 * Updates the registered HRMID for a defined cluster.
+	 * 
+	 * @param pCluster the cluster whose HRMID is updated
+	 */
+	@SuppressWarnings("unused")
+	public void updateClusterAddress(Cluster pCluster)
+	{
+		HRMID tHRMID = pCluster.getHRMID();
+
+		if (pCluster.getHierarchyLevel().isBaseLevel()){
+			if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
+				
+				/**
+				 * Update the local DB with the given HRMID
+				 */
+				if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+					Logging.log(this, "Updating the HRMID to " + pCluster.getHRMID().toString() + " for " + pCluster);
+				}
+				
+				// register the new HRMID
+				mRegisteredHRMIDs.add(tHRMID);
+				
+				// filter relative HRMIDs
+				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
+					// update node label within GUI
+					String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
+					getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
+				}
+				
+				/**
+				 * Register the HRMID in the DNS for the local router 
+				 */
+				// register the HRMID in the hierarchical DNS for the local router
+				HierarchicalNameMappingService<HRMID> tNMS = null;
+				try {
+					tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
+				} catch (RuntimeException tExc) {
+					HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
+				}
+				
+				// get the local router's human readable name (= DNS name)
+				Name tLocalRouterName = getNode().getCentralFN().getName();
+				
+				// register HRMID for the given DNS name
+				tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);
+				
+				// give some debug output about the current DNS state
+				String tString = new String();
+				for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
+					if (!tString.isEmpty()){
+						tString += ", ";
+					}
+					tString += tEntry;
+				}
+				Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
+				
+				// it's time to update the GUI
+				notifyGUI(pCluster);
+			}else{
+				Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCluster);
+			}
+		}else{
+			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
+			Logging.warn(this, "Skipping HRMID registration " + tHRMID.toString() + " for " + pCluster);
+		}
+	}
+
+	/**
+	 * Returns a list of known clusters.
+	 * 
+	 * @return the list of known clusters
+	 */
+	public LinkedList<Cluster> listKnownClusters()
+	{
+		return mKnownClusters;
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	/**
 	 * This method is inherited from the class application and is called by the ServerFN object once a new connection setup request is required to be established.
 	 */
@@ -623,33 +906,6 @@ public class HRMController extends Application implements IServerCallback
 	
 	/**
 	 * 
-	 * @return hierarchical routing service of this entity
-	 */
-	public HierarchicalRoutingService getHRS()
-	{
-		return mHRS;
-	}
-	
-	/**
-	 * @return the physical node running this coordinator
-	 */
-	public Node getNode() //TV
-	{
-		return mPhysicalNode;
-	}
-	
-	/**
-	 * Return the actual GUI name description of the physical node;
-     * However, this function should only be used for debug outputs, e.g., GUI outputs.
-	 * @return the GUI name
-	 */
-	public String getNodeGUIName()
-	{
-		return mPhysicalNode.getName();
-	}	
-	
-	/**
-	 * 
 	 * @param pCluster is the cluster to be added to the local cluster map
 	 */
 	public synchronized void addRoutableTarget(ICluster pCluster)
@@ -797,221 +1053,6 @@ public class HRMController extends Application implements IServerCallback
 			// we have found the searched coordinator
 			return mRegisteredCoordinators.get(pHierarchyLevel.getValue());
 		}
-	}
-	
-	/**
-	 * Registers a coordinator at the local database.
-	 * 
-	 * @param pCoordinator the coordinator for a defined cluster
-	 */
-	public void registerCoordinator(Coordinator pCoordinator)
-	{
-		int tLevel = pCoordinator.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
-
-		Logging.log(this, "Registering coordinator " + pCoordinator + " at level " + tLevel);
-
-		// make sure we have a valid linked list object
-		if(mRegisteredCoordinators == null) {
-			mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
-		}
-		
-		if(mRegisteredCoordinators.size() <= tLevel) {
-			for(int i = mRegisteredCoordinators.size() - 1; i <= tLevel ; i++) {
-				mRegisteredCoordinators.add(new LinkedList<Coordinator>());
-			}
-		}
-		
-		if (mRegisteredCoordinators.get(tLevel).size() > 0){
-			Logging.log(this, "#### Got more than one coordinator at level " + tLevel + ", already known (0): " + mRegisteredCoordinators.get(tLevel).get(0) + ", new one: " + pCoordinator);
-		}
-		
-		// store the new coordinator
-		mRegisteredCoordinators.get(tLevel).add(pCoordinator);
-		
-		// register coordinator as addressable target
-		addRoutableTarget(pCoordinator);
-
-		// register as known coordinator
-		mKnownCoordinators.add(pCoordinator);
-		
-		// update GUI: image for node object 
-		//TODO: check and be aware of topology dynamics
-		getNode().setDecorationParameter("L"+ tLevel);
-		
-		// it's time to update the GUI
-		notifyGUI(pCoordinator);
-	}
-	
-	/**
-	 * Unregisters a coordinator from the internal database.
-	 * 
-	 * @param pCoordinator the coordinator which should be unregistered
-	 */
-	public void unregisterCoordinator(Coordinator pCoordinator)
-	{
-		Logging.log(this, "Unegistering coordinator " + pCoordinator);
-
-		// unregister from list of known coordinators
-		mKnownCoordinators.remove(pCoordinator);
-
-		// it's time to update the GUI
-		notifyGUI(pCoordinator);
-	}
-	
-	/**
-	 * Updates the registered HRMID for a defined coordinator.
-	 * 
-	 * @param pCluster the cluster whose HRMID is updated
-	 */
-	@SuppressWarnings("unused")
-	public void updateCoordinatorAddress(Coordinator pCoordinator)
-	{
-		HRMID tHRMID = pCoordinator.getHRMID();
-		
-		if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
-			
-			if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-				Logging.log(this, "Updating the HRMID to " + tHRMID.toString() + " for " + pCoordinator);
-			}
-
-			// register the new HRMID
-			mRegisteredHRMIDs.add(tHRMID);
-
-			// filter relative HRMIDs
-			if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
-				// update node label within GUI
-				String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
-				getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
-			}
-			
-			// it's time to update the GUI
-			notifyGUI(pCoordinator);
-		}else{
-			Logging. warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCoordinator);
-		}
-			
-	}
-
-	/**
-	 * Returns a list of known coordinators.
-	 * 
-	 * @return the list of known coordinators
-	 */
-	public LinkedList<Coordinator> listKnownCoordinators()
-	{
-		return mKnownCoordinators;
-	}
-	
-	/**
-	 * Registers a cluster at the local database.
-	 * 
-	 * @param pCluster the cluster which should be registered
-	 */
-	public void registerCluster(Cluster pCluster)
-	{
-		int tLevel = pCluster.getHierarchyLevel().getValue();
-
-		Logging.log(this, "Registering cluster " + pCluster + " at level " + tLevel);
-
-		// register as known cluster
-		mKnownClusters.add(pCluster);
-		
-		// it's time to update the GUI
-		notifyGUI(pCluster);
-	}
-	
-	/**
-	 * Unregisters a cluster from the local database.
-	 * 
-	 * @param pCluster the cluster which should be unregistered.
-	 */
-	public void unregisterCluster(Cluster pCluster)
-	{
-		Logging.log(this, "Unegistering coordinator " + pCluster);
-
-		// unregister from list of known clusters
-		mKnownClusters.remove(pCluster);
-		
-		// it's time to update the GUI
-		notifyGUI(pCluster);
-	}
-	
-	/**
-	 * Updates the registered HRMID for a defined cluster.
-	 * 
-	 * @param pCluster the cluster whose HRMID is updated
-	 */
-	@SuppressWarnings("unused")
-	public void updateClusterAddress(Cluster pCluster)
-	{
-		HRMID tHRMID = pCluster.getHRMID();
-
-		if (pCluster.getHierarchyLevel().isBaseLevel()){
-			if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
-				
-				/**
-				 * Update the local DB with the given HRMID
-				 */
-				if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-					Logging.log(this, "Updating the HRMID to " + pCluster.getHRMID().toString() + " for " + pCluster);
-				}
-				
-				// register the new HRMID
-				mRegisteredHRMIDs.add(tHRMID);
-				
-				// filter relative HRMIDs
-				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
-					// update node label within GUI
-					String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
-					getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
-				}
-				
-				/**
-				 * Register the HRMID in the DNS for the local router 
-				 */
-				// register the HRMID in the hierarchical DNS for the local router
-				HierarchicalNameMappingService<HRMID> tNMS = null;
-				try {
-					tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
-				} catch (RuntimeException tExc) {
-					HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
-				}
-				
-				// get the local router's human readable name (= DNS name)
-				Name tLocalRouterName = getNode().getCentralFN().getName();
-				
-				// register HRMID for the given DNS name
-				tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);
-				
-				// give some debug output about the current DNS state
-				String tString = new String();
-				for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
-					if (!tString.isEmpty()){
-						tString += ", ";
-					}
-					tString += tEntry;
-				}
-				Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
-				
-				// it's time to update the GUI
-				notifyGUI(pCluster);
-			}else{
-				Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCluster);
-			}
-		}else{
-			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
-			Logging.warn(this, "Skipping HRMID registration " + tHRMID.toString() + " for " + pCluster);
-		}
-	}
-
-	/**
-	 * Returns a list of known clusters.
-	 * 
-	 * @return the list of known clusters
-	 */
-	public LinkedList<Cluster> listKnownClusters()
-	{
-		return mKnownClusters;
 	}
 
 	/**
