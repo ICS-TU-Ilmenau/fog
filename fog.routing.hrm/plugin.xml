@@ -29,12 +29,38 @@
             class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateNode"
             filter="de.tuilmenau.ics.fog.topology.IAutonomousSystem">
       </plugin>
+       <plugin
+            name="Create node"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateNode"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+       <plugin
+            name="Create bus"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateBus"
+            filter="de.tuilmenau.ics.fog.topology.IAutonomousSystem">
+      </plugin>
       <plugin
-            name="Create link to.."
-            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateLinkTo"
+            name="Delete node"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.DeleteNode"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      <plugin
+            name="Delete bus"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.DeleteBus"
+            filter="de.tuilmenau.ics.fog.bus.Bus">
+      </plugin>
+      <plugin
+            name="Link to node.."
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.LinkToNode"
             filter="de.tuilmenau.ics.fog.topology.Node">
       </plugin>
          
+      <plugin
+            name="Link to bus.."
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.LinkToBus"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+
       <editor
             editorID="de.tuilmenau.ics.fog.hrmviewer"
             filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"

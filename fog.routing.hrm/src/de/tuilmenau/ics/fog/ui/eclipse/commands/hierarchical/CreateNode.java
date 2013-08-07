@@ -31,6 +31,8 @@ public class CreateNode extends SilentCommand
 	@Override
 	public void init(Object pObject)
 	{
+		Logging.log(this, "INIT - object parameter is " + pObject);
+
 		if(pObject instanceof Node) {
 			mAs = ((Node) pObject).getAS();
 		}
