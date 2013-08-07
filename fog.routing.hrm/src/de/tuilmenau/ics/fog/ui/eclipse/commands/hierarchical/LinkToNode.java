@@ -32,7 +32,7 @@ public class LinkToNode extends Command
 	private AutonomousSystem mAs = null;
 	private IWorkbenchPartSite mSite = null;
 	private static String sLastSelectedNodeName = null;
-	private Description mCreatedBusAttributes = null;
+	private Description mBusAttributes = null;
 	
 	public LinkToNode()
 	{
@@ -138,7 +138,7 @@ public class LinkToNode extends Command
 	 */
 	private void showBusDialogs()
 	{
-		mCreatedBusAttributes = new Description();
+		mBusAttributes = new Description();
 		//TODO: show dialog to allow user to select link attributes
 	}
 }

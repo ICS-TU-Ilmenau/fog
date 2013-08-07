@@ -10,23 +10,17 @@
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
 import java.rmi.RemoteException;
-import java.util.LinkedList;
 
 import org.eclipse.ui.IWorkbenchPartSite;
 
 import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
-import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.topology.AutonomousSystem;
-import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 public class DeleteNode extends Command
 {
 	private Node mNode = null;
-	private AutonomousSystem mAs = null;
-	private IWorkbenchPartSite mSite = null;
 			
 	public DeleteNode()
 	{
@@ -37,7 +31,6 @@ public class DeleteNode extends Command
 	{
 		Logging.log(this, "INIT - object parameter is " + pObject);
 
-		mSite = pSite;
 		if(pObject instanceof Node) {
 			mNode = (Node) pObject;
 		} else if(pObject instanceof HRMController) {
@@ -45,7 +38,6 @@ public class DeleteNode extends Command
 		} else {
 			throw new RuntimeException(this +" requires a Node object instead of " + pObject +" to proceed.");
 		}
-		mAs = mNode.getAS();
 	}
 
 	@Override

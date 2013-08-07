@@ -10,7 +10,6 @@
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
 import java.rmi.RemoteException;
-import java.util.LinkedList;
 
 import org.eclipse.ui.IWorkbenchPartSite;
 
@@ -23,7 +22,6 @@ public class DeleteBus extends Command
 {
 	private Bus mBus = null;
 	private AutonomousSystem mAs = null;
-	private IWorkbenchPartSite mSite = null;
 			
 	public DeleteBus()
 	{
@@ -34,7 +32,6 @@ public class DeleteBus extends Command
 	{
 		Logging.log(this, "INIT - object parameter is " + pObject);
 
-		mSite = pSite;
 		if(pObject instanceof Bus) {
 			mBus = (Bus) pObject;
 		} else {
