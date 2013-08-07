@@ -17,9 +17,14 @@ import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 
-public class CreateLinkTo extends SilentCommand
+public class CreateBus extends SilentCommand
 {
-	public CreateLinkTo()
+	/**
+	 * Stores the next number for the next created node.
+	 */
+	private static int sNextNumber = 0;
+	
+	public CreateBus()
 	{
 	}
 
@@ -27,21 +32,24 @@ public class CreateLinkTo extends SilentCommand
 	public void init(Object pObject)
 	{
 		if(pObject instanceof Node) {
-			mSourceNode = (Node) pObject;
+			mAs = ((Node) pObject).getAS();
+		}
+		else if(pObject instanceof IAutonomousSystem) {
+			mAs = (IAutonomousSystem) pObject;
 		} else {
-			throw new RuntimeException(this +" requires a Node object instead of " + pObject +" to proceed.");
+			throw new RuntimeException(this +" requires an AutonomousSystem object instead of " + pObject +" to proceed.");
 		}
 	}
 
 	@Override
 	public void main() throws RemoteException
 	{
-		if(mSourceNode != null) {
-			//mSourceNode.executeCommand("create node C_" + sNextNumber++);
+		if(mAs != null) {
+			mAs.executeCommand("create bus bus" + sNextNumber++);
 		} else {
-			Logging.err(this, "Missing reference to a Source Node. Can not run 'create link' command.");
+			Logging.err(this, "Missing reference to an autonomous system. Can not run 'create bus' command.");
 		}
 	}
 
-	private Node mSourceNode;
+	private IAutonomousSystem mAs;
 }

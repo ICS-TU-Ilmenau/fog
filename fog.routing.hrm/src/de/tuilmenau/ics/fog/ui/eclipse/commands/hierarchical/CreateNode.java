@@ -45,7 +45,7 @@ public class CreateNode extends SilentCommand
 	public void main() throws RemoteException
 	{
 		if(mAs != null) {
-			mAs.executeCommand("create node C_" + sNextNumber++);
+			mAs.executeCommand("create node N" + sNextNumber++);
 		} else {
 			Logging.err(this, "Missing reference to an autonomous system. Can not run 'create node' command.");
 		}
