@@ -79,7 +79,7 @@ public class Network
 			if(informElement) tNode.deleted();
 			tOk = true;
 		} else {
-			mLogger.log(this, "Can not remove node. " +name +" not known.");
+			mLogger.log(this, "Can not remove unknown node \"" +name +"\".");
 		}
 		
 		return tOk;
@@ -188,7 +188,7 @@ public class Network
 				}
 			}
 			catch(RemoteException tExc) {
-				mLogger.err(this, "Can not remove bus " +pName +" from JINI registry.", tExc);
+				mLogger.err(this, "Can not remove bus \"" +pName +"\" from JINI registry.", tExc);
 			}
 			
 			mScenario.remove(tBus);
@@ -201,7 +201,7 @@ public class Network
 				}
 			}
 		} else {
-			mLogger.log(this, "Can not remove bus. " +pName +" not known or not local.");
+			mLogger.log(this, "Can not remove unknown or remote bus \"" +pName + "\".");
 		}
 		
 		return tRes;
