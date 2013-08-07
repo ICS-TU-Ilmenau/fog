@@ -271,6 +271,11 @@ public class Network
 		return tRes;
 	}
 	
+	public HashMap<String, ILowerLayer> getBuslist()
+	{
+		return buslist;
+	}
+	
 	public HashMap<String, Node> getNodelist()
 	{
 		return nodelist;
