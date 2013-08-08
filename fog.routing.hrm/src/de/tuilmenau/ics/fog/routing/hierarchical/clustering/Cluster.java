@@ -460,11 +460,8 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		// update the HRMID
 		mHRMID = pHRMID.clone();
 		
-		// inform HRM controller about the change if we are at base hierarchy level
-		// otherwise the HRM controller will receive the same update from the correspondign coordinator instance
-		if (getHierarchyLevel().isBaseLevel()){
-			getHRMController().updateClusterAddress(this);
-		}
+		// inform HRM controller about the address change
+		getHRMController().updateClusterAddress(this);
 	}
 	
 	public BullyPriority getHighestPriority()
