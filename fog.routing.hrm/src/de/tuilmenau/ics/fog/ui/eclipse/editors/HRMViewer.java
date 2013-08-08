@@ -86,6 +86,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 		
 	}
 	
+	/**
+	 * Resets all parts of the EditorPart
+	 */
 	private void destroyPartControl()
 	{
 		mContainer.dispose();
@@ -95,6 +98,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 		mShell.redraw();
 	}
 	
+	/**
+	 * Creates all needed parts of the EditorPart.
+	 * 
+	 * @param pParent the parent shell
+	 */
 	@Override
 	public void createPartControl(Composite pParent)
 	{
@@ -326,127 +334,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
         mContainer.setSize(mContainer.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         mContainerRoutingTable.setSize(mContainerRoutingTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 	}
-	
-	/**
-	 * Listener for electing coordinator for this cluster.
-	 * 
-	 */
-	private class ListenerElectCoordinator implements Listener
-	{
-		private Cluster mCluster = null;
-		
-		private ListenerElectCoordinator(Cluster pCluster)
-		{
-			super();
-			mCluster = pCluster;
-		}
-		
-		@Override
-		public void handleEvent(Event event)
-		{
-			ElectionManager.getElectionManager().getElector(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).startElection();
-		}
-		
-	}
-
-	/**
-	 * Listener for electing coordinators for all clusters on this hierarchy level. 
-	 *
-	 */
-	private class ListenerElectHierarchyLevelCoordinators implements Listener
-	{
-		private Cluster mCluster = null;
-		
-		private ListenerElectHierarchyLevelCoordinators(Cluster pCluster)
-		{
-			super();
-			mCluster = pCluster;
-		}
-		
-		@Override
-		public void handleEvent(Event event)
-		{
-			Logging.log(this, "Available Elector instances: ");
-			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
-				Logging.log(this, tProcess.toString());
-			}
-			for(Elector tElector : ElectionManager.getElectionManager().getElectors(mCluster.getHierarchyLevel().getValue())) {
-//				boolean tStartProcess=true;
-//				Cluster tCluster = tElector.getCluster();
-//				for(CoordinatorCEPChannel tCEP : tCluster.getClusterMembers()) {
-//					if(tCEP.isEdgeCEP()) {
-//						tStartProcess = false;
-//					}
-//				}
-//				if(tStartProcess) {
-					tElector.startElection();
-//				}
-			}
-			
-		}
-		
-	}
-	
-	/**
-	 * Listener for clustering the network on a defined hierarchy level. 
-	 *
-	 */
-	private class ListenerClusterHierarchyLevel implements Listener
-	{
-		private Cluster mCluster = null;
-		private HRMViewer mHRMViewer = null;
-		
-		private ListenerClusterHierarchyLevel(HRMViewer pHRMViewer, Cluster pCluster)
-		{
-			super();
-			mCluster = pCluster;
-			mHRMViewer = pHRMViewer;
-		}
-		
-		@Override
-		public void handleEvent(Event event)
-		{
-			Logging.log(this, "Available Election Processes: ");
-			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
-				Logging.log(tProcess.toString());
-			}
-			for(Elector tElector : ElectionManager.getElectionManager().getElectors(mCluster.getHierarchyLevel().getValue())) {
-				tElector.startClustering();
-			}
-		}
-		
-		public String toString()
-		{
-			return mHRMViewer.toString() + "@" + getClass().getSimpleName(); 
-		}
-	}
-	
-	/**
-	 * Listener for clustering the network, including the current cluster's coordinator and its siblings. 
-	 *
-	 */
-	private class ListenerClusterHierarchy implements Listener
-	{
-		private Cluster mCluster = null;
-		private HRMViewer mHRMViewer = null;
-		
-		private ListenerClusterHierarchy(HRMViewer pHRMViewer, Cluster pCluster)
-		{
-			super();
-			mCluster = pCluster;
-			mHRMViewer = pHRMViewer;
-		}
-		
-		@Override
-		public void handleEvent(Event event)
-		{
-			ElectionManager.getElectionManager().getElector(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).startClustering();
-		}		
-		public String toString()
-		{
-			return mHRMViewer.toString() + "@" + getClass().getSimpleName(); 
-		}
-	}	
 
 	/**
 	 * Draws GUI elements for depicting coordinator information.
@@ -994,4 +881,110 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 	{		
 		return "HRM viewer" + (mHRMController != null ? "@" + mHRMController.getNodeGUIName() : "");
 	}
+	
+	/**
+	 * Listener for electing coordinator for this cluster.
+	 */
+	private class ListenerElectCoordinator implements Listener
+	{
+		private Cluster mCluster = null;
+		
+		private ListenerElectCoordinator(Cluster pCluster)
+		{
+			super();
+			mCluster = pCluster;
+		}
+		
+		@Override
+		public void handleEvent(Event event)
+		{
+			ElectionManager.getElectionManager().getElector(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).startElection();
+		}
+		
+	}
+
+	/**
+	 * Listener for electing coordinators for all clusters on this hierarchy level. 
+	 */
+	private class ListenerElectHierarchyLevelCoordinators implements Listener
+	{
+		private Cluster mCluster = null;
+		
+		private ListenerElectHierarchyLevelCoordinators(Cluster pCluster)
+		{
+			super();
+			mCluster = pCluster;
+		}
+		
+		@Override
+		public void handleEvent(Event event)
+		{
+			Logging.log(this, "Available Elector instances: ");
+			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
+				Logging.log(this, tProcess.toString());
+			}
+			for(Elector tElector : ElectionManager.getElectionManager().getElectors(mCluster.getHierarchyLevel().getValue())) {
+				tElector.startElection();
+			}
+		}
+	}
+	
+	/**
+	 * Listener for clustering the network on a defined hierarchy level. 
+	 */
+	private class ListenerClusterHierarchyLevel implements Listener
+	{
+		private Cluster mCluster = null;
+		private HRMViewer mHRMViewer = null;
+		
+		private ListenerClusterHierarchyLevel(HRMViewer pHRMViewer, Cluster pCluster)
+		{
+			super();
+			mCluster = pCluster;
+			mHRMViewer = pHRMViewer;
+		}
+		
+		@Override
+		public void handleEvent(Event event)
+		{
+			Logging.log(this, "Available Election Processes: ");
+			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
+				Logging.log(tProcess.toString());
+			}
+			for(Elector tElector : ElectionManager.getElectionManager().getElectors(mCluster.getHierarchyLevel().getValue())) {
+				tElector.startClustering();
+			}
+		}
+		
+		public String toString()
+		{
+			return mHRMViewer.toString() + "@" + getClass().getSimpleName(); 
+		}
+	}
+	
+	/**
+	 * Listener for clustering the network, including the current cluster's coordinator and its siblings. 
+	 */
+	private class ListenerClusterHierarchy implements Listener
+	{
+		private Cluster mCluster = null;
+		private HRMViewer mHRMViewer = null;
+		
+		private ListenerClusterHierarchy(HRMViewer pHRMViewer, Cluster pCluster)
+		{
+			super();
+			mCluster = pCluster;
+			mHRMViewer = pHRMViewer;
+		}
+		
+		@Override
+		public void handleEvent(Event event)
+		{
+			ElectionManager.getElectionManager().getElector(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).startClustering();
+		}		
+		public String toString()
+		{
+			return mHRMViewer.toString() + "@" + getClass().getSimpleName(); 
+		}
+	}	
 }
