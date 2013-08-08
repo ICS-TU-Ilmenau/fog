@@ -518,6 +518,15 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}
 	}
 
+	/**
+	 * Determines a reference to the current AutonomousSystem instance.
+	 * 
+	 * @return the desired reference
+	 */
+	public AutonomousSystem getAS()
+	{
+		return mAS;
+	}
 	
 	/**
 	 * Determines the current simulation time
