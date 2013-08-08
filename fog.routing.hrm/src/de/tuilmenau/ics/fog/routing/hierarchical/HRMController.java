@@ -235,7 +235,7 @@ public class HRMController extends Application implements IServerCallback
 	public void registerCoordinator(Coordinator pCoordinator)
 	{
 		int tLevel = pCoordinator.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
-
+		
 		Logging.log(this, "Registering coordinator " + pCoordinator + " at level " + tLevel);
 
 		// make sure we have a valid linked list object
@@ -256,7 +256,10 @@ public class HRMController extends Application implements IServerCallback
 		// store the new coordinator
 		mRegisteredCoordinators.get(tLevel).add(pCoordinator);
 		
-		// register coordinator as addressable target
+		// register a route to the coordinator as addressable target
+		getHRS().addRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
+		
+		//TODO: remove this
 		addRoutableTarget(pCoordinator);
 
 		// register as known coordinator
@@ -302,16 +305,27 @@ public class HRMController extends Application implements IServerCallback
 				Logging.log(this, "Updating the HRMID to " + tHRMID.toString() + " for " + pCoordinator);
 			}
 
+			/**
+			 * Update the local address DB with the given HRMID
+			 */
 			// register the new HRMID
 			mRegisteredHRMIDs.add(tHRMID);
 
+			/**
+			 * Register a local loopback route for the new address 
+			 */
+			// register a route to the cluster member as addressable target
+			getHRS().addRoute(RoutingEntry.createLocalhostEntry(tHRMID));
+
+			/**
+			 * Update the GUI
+			 */
 			// filter relative HRMIDs
 			if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
 				// update node label within GUI
 				String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
 				getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
 			}
-			
 			// it's time to update the GUI
 			notifyGUI(pCoordinator);
 		}else{
@@ -374,11 +388,13 @@ public class HRMController extends Application implements IServerCallback
 	{
 		HRMID tHRMID = pCluster.getHRMID();
 
+		// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
+		// the corresponding coordinator instance
 		if (pCluster.getHierarchyLevel().isBaseLevel()){
 			if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
 				
 				/**
-				 * Update the local DB with the given HRMID
+				 * Update the local address DB with the given HRMID
 				 */
 				if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
 					Logging.log(this, "Updating the HRMID to " + pCluster.getHRMID().toString() + " for " + pCluster);
@@ -387,15 +403,15 @@ public class HRMController extends Application implements IServerCallback
 				// register the new HRMID
 				mRegisteredHRMIDs.add(tHRMID);
 				
-				// filter relative HRMIDs
-				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
-					// update node label within GUI
-					String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
-					getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
-				}
-				
 				/**
-				 * Register the HRMID in the DNS for the local router 
+				 * Register a local loopback route for the new address 
+				 */
+				// register a route to the cluster member as addressable target
+				getHRS().addRoute(RoutingEntry.createLocalhostEntry(tHRMID));
+
+				/**
+				 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
+				 * registered in the DNS as address for the name of this node. 
 				 */
 				// register the HRMID in the hierarchical DNS for the local router
 				HierarchicalNameMappingService<HRMID> tNMS = null;
@@ -403,14 +419,11 @@ public class HRMController extends Application implements IServerCallback
 					tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
 				} catch (RuntimeException tExc) {
 					HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
-				}
-				
+				}				
 				// get the local router's human readable name (= DNS name)
-				Name tLocalRouterName = getNode().getCentralFN().getName();
-				
+				Name tLocalRouterName = getNode().getCentralFN().getName();				
 				// register HRMID for the given DNS name
-				tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);
-				
+				tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
 				// give some debug output about the current DNS state
 				String tString = new String();
 				for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
@@ -421,6 +434,15 @@ public class HRMController extends Application implements IServerCallback
 				}
 				Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
 				
+				/**
+				 * Update the GUI
+				 */
+				// filter relative HRMIDs
+				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
+					// update node label within GUI
+					String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
+					getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
+				}
 				// it's time to update the GUI
 				notifyGUI(pCluster);
 			}else{

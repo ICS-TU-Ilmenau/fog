@@ -66,7 +66,12 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	private Node mNode = null;
 
 	/**
-	 * The main HRM routing database for hop-by-hop routing.
+	 * Stores the HRM based routing table which is used for hop-by-hop routing.
+	 */
+	private LinkedList<RoutingEntry> mRoutingTable = new LinkedList<RoutingEntry>();
+	
+	/**
+	 * The main HRM routing database for hop-by-hop routing. TODO: remove this
 	 */
 	private HashMap<HRMID, FIBEntry> mHopByHopRoutingMap = new HashMap<HRMID, FIBEntry>();
 
@@ -99,8 +104,8 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	}
 
 	/**
-	 * This function creates the local HRM controller instance
-	 * The HRS has to be already registered because a server FN is used, which registers a node and links at the local routing service.
+	 * This function creates the local HRM controller application. It uses a FoG server FN for offering its CEP.
+	 * For this purpose, the HRS has to be already registered because the server FN registers a node and links at the local (existing!) routing service.
 	 */
 	@Override
 	public void registered()
@@ -114,6 +119,89 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		mNode.getHost().registerApp(mHRMController);
 	}
 
+	/**
+	 * Adds a route to the local HRM routing table.
+	 * 
+	 * @param pRoutingTableEntry the routing table entry
+	 */
+	public void addRoute(RoutingEntry pRoutingTableEntry)
+	{
+		Logging.log(this, "ADDING ROUTE     : " + pRoutingTableEntry);
+
+		synchronized(mRoutingTable){
+			/**
+			 * Check for duplicates
+			 */
+			if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
+				boolean tRestartNeeded;
+				do{		
+					tRestartNeeded = false;
+					for (RoutingEntry tEntry: mRoutingTable){
+						// have we found a route to the same destination which uses the same next hop?
+						//TODO: what about multiple links to the same next hop?
+						if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) /* same destination? */ &&
+							(tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop())) /* same next hop? */){
+	
+							Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
+							
+							// remove the route
+							mRoutingTable.remove(tEntry);
+							
+							// force a restart at the beginning of the routing table
+							tRestartNeeded = true;
+							//TODO: use a better(scalable) method here for removing duplicates
+							break;						
+							
+						}
+					}
+				}while(tRestartNeeded);
+			}
+			
+			//TODO: support for updates
+			
+			/**
+			 * Add the entry to the local routing table
+			 */
+			mRoutingTable.add(pRoutingTableEntry);
+		}
+	}	
+
+	/**
+	 * Deletes a route from the local HRM routing table.
+	 * This function is usually used when a timeout occurred and the corresponding route became too old. 
+	 * 
+	 * @param pRoutingTableEntry the routing table entry
+	 */
+	private void delRoute(RoutingEntry pRoutingTableEntry)
+	{
+		Logging.log(this, "REMOVING ROUTE: " + pRoutingTableEntry);
+
+		synchronized(mRoutingTable){
+			if (mRoutingTable.contains(pRoutingTableEntry)){
+				mRoutingTable.remove(pRoutingTableEntry);
+			}else{
+				Logging.err(this, "The following route couldn't be removed from the local routing table: \n     " + pRoutingTableEntry);
+			}
+		}
+	}
+	
+	/**
+	 * Returns the local HRM routing table
+	 * 
+	 * @return the local HRM routing table
+	 */
+	public LinkedList<RoutingEntry> routingTable()
+	{
+		return mRoutingTable;		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 	public void registerNode(L2Address pAddress, boolean pGloballyImportant)
 	{
 		mRoutingMap.add(pAddress);

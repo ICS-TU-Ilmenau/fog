@@ -88,6 +88,13 @@ public class HRMConfig
 		 * Disables/enables the region limitation feature which can be used to implement an obstructive/restrictive routing based on the HRM infrastructure.
 		 */
 		public static final boolean ENABLE_REGION_LIMITATION = false; //TV
+
+
+		/**
+		 * Should each HRS instance try to avoid duplicates in its internal routing tables?
+		 * In this case, also updates of routing table entries are made if the new route has better QoS values than the old one.
+		 */
+		public static final boolean AVOID_DUPLICATES_IN_ROUTING_TABLES = true;
 	}
 
 	public class Debugging

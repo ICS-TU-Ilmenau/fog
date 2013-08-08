@@ -17,6 +17,8 @@ import java.util.Observer;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.layout.TableColumnLayout;
+import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.StyleRange;
@@ -52,6 +54,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChan
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
@@ -77,6 +80,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
     private ScrolledComposite mScroller = null;
     private Composite mContainer = null;
     private Display mDisplay = null;
+    private Composite mContainerRoutingTable = null;
 	
 	public HRMViewer()
 	{
@@ -95,6 +99,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 	@Override
 	public void createPartControl(Composite pParent)
 	{
+		// get the HRS instance
+		HierarchicalRoutingService tHRS = mHRMController.getHRS();
+
 		mShell = pParent;
 		mDisplay = pParent.getDisplay();
 		mShell.setLayout(new FillLayout());
@@ -131,9 +138,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 		}
 		
 		/**
-		 * GUI part 2: 
+		 * GUI part 2: routing table
 		 */
-		StyledText tSignaturesLabel = new StyledText(mContainer, SWT.BORDER);;
+		// create the headline
+		StyledText tSignaturesLabel = new StyledText(mContainer, SWT.BORDER);
 		tSignaturesLabel.setText("HRM Routing Table - Node " + mHRMController.getNodeGUIName());
 		tSignaturesLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
@@ -143,99 +151,134 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 	    style2.fontStyle = SWT.BOLD;
 	    tSignaturesLabel.setStyleRange(style2);
 	    
-		final Table tMappingTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+	    // create the GUI container
+	    mContainerRoutingTable = new Composite(mContainer, SWT.NONE);
+	    GridData tLayoutDataRoutingTable = new GridData(SWT.FILL, SWT.FILL, true, true);
+	    tLayoutDataRoutingTable.horizontalSpan = 1;
+	    mContainerRoutingTable.setLayoutData(tLayoutDataRoutingTable); 
+	    
+	    // create the table
+		final Table tTableRoutingTable = new Table(mContainerRoutingTable, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+		tTableRoutingTable.setHeaderVisible(true);
+		tTableRoutingTable.setLinesVisible(true);
 		
-		TableColumn tColumnHRMID = new TableColumn(tMappingTable, SWT.NONE, 0);
-		tColumnHRMID.setText("Destination");
-		TableColumn tColumnNextHop = new TableColumn(tMappingTable, SWT.NONE, 1);
-		tColumnNextHop.setText("Next hop");
-		TableColumn tColumnNextCluster = new TableColumn(tMappingTable, SWT.NONE, 2);
-		tColumnNextCluster.setText("Next cluster");
-		TableColumn tColumnFarthestCluster = new TableColumn(tMappingTable, SWT.NONE, 3);
-		tColumnFarthestCluster.setText("Farthest cluster");
-		TableColumn tColumnRoute = new TableColumn(tMappingTable, SWT.NONE, 4);
-		tColumnRoute.setText("Route");
-		TableColumn tColumnOrigin = new TableColumn(tMappingTable, SWT.NONE, 5);
-		tColumnOrigin.setText("Origin");
+		// create the columns and define the texts for the header row
+		// col. 0
+		TableColumn tTableColDest = new TableColumn(tTableRoutingTable, SWT.NONE, 0);
+		tTableColDest.setText("Dest.");
+		// col. 1
+		TableColumn tTableColNext = new TableColumn(tTableRoutingTable, SWT.NONE, 1);
+		tTableColNext.setText("Next hop");
+		// col. 2
+		TableColumn tTableColHops = new TableColumn(tTableRoutingTable, SWT.NONE, 2);
+		tTableColHops.setText("Hops");
+		// col. 3
+		TableColumn tTableColUtil = new TableColumn(tTableRoutingTable, SWT.NONE, 3);
+		tTableColUtil.setText("Util. [%]");
+		// col. 4
+		TableColumn tTableColDelay = new TableColumn(tTableRoutingTable, SWT.NONE, 4);
+		tTableColDelay.setText("MinDelay [ms]");
+		// col. 5
+		TableColumn tTableColDR = new TableColumn(tTableRoutingTable, SWT.NONE, 5);
+		tTableColDR.setText("MaxDR [Kb/s]");
+		// col. 6
+		TableColumn tTableColLoop = new TableColumn(tTableRoutingTable, SWT.NONE, 6);
+		tTableColLoop.setText("Loopback");
 		
-		HierarchicalRoutingService tHRS = mHRMController.getHRS();
-		
-		if ((tHRS.getRoutingTable() != null) && (!tHRS.getRoutingTable().isEmpty())) {
+		if ((tHRS.routingTable() != null) && (!tHRS.routingTable().isEmpty())) {
 			int tRowNumber = 0;
-			for(HRMID tHRMID : tHRS.getRoutingTable().keySet()) {
-				FIBEntry tFIBEntry =  tHRS.getFIBEntry(tHRMID);
-				TableItem tTableRow = new TableItem(tMappingTable, SWT.NONE, tRowNumber);
+			for(RoutingEntry tEntry : tHRS.routingTable()) {
+				// create the table row
+				TableItem tTableRow = new TableItem(tTableRoutingTable, SWT.NONE, tRowNumber);
+				
 				/**
-				 * Column 0:  
+				 * Column 0: destination
 				 */
-				tTableRow.setText(0, tHRMID != null ? tHRMID.toString() : "");
+				tTableRow.setText(0, tEntry.getDest() != null ? tEntry.getDest().toString() : "");
 
 				/**
-				 * Column 1:  
+				 * Column 1: next hop 
 				 */
-				if (tFIBEntry.getNextHop() != null) {
-					tTableRow.setText(1, tFIBEntry.getNextHop().toString());
+				if (tEntry.getNextHop() != null) {
+					tTableRow.setText(1, tEntry.getNextHop().toString());
 				}else{
 					tTableRow.setText(1, "??");
 				}
 				
 				/**
-				 * Column 2:  
+				 * Column 2: hop costs
 				 */
-				if (tFIBEntry.getNextCluster() != null){
-					tTableRow.setText(2, mHRMController.getCluster(tFIBEntry.getNextCluster()).toString());
+				if (tEntry.getHopCount() != RoutingEntry.NO_HOP_COSTS){
+					tTableRow.setText(2, Integer.toString(tEntry.getHopCount()));
 				}else{
-					tTableRow.setText(2, "??");
+					tTableRow.setText(2, "none");
 				}
 				
 				/**
-				 * Column 3:  
+				 * Column 3:  utilization
 				 */
-				if (tFIBEntry.getFarthestClusterInDirection() != null){
-					tTableRow.setText(3,  mHRMController.getCluster(tFIBEntry.getFarthestClusterInDirection()).toString());
+				if (tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION){
+					tTableRow.setText(3,  Float.toString(tEntry.getUtilization() * 100));
 				}else{
-					tTableRow.setText(3, "??");
+					tTableRow.setText(3, "N/A");
 				}
 				
 				/**
-				 * Column 4:  
+				 * Column 4: min. delay
 				 */
-				if (tFIBEntry.getRouteToTarget() != null){					
-					tTableRow.setText(4, tFIBEntry.getRouteToTarget().toString());
+				if (tEntry.getMinDelay() != RoutingEntry.NO_DELAY){					
+					tTableRow.setText(4, Long.toString(tEntry.getMinDelay()));
 				}else{
-					tTableRow.setText(4, "??");
+					tTableRow.setText(4, "none");
 				}
 				
 				/**
-				 * Column 5:  
+				 * Column 5: max. data rate
 				 */
-				if (tFIBEntry.getSignature() != null){
-					tTableRow.setText(5, tFIBEntry.getSignature().toString());				
+				if (tEntry.getMaxDataRate() != RoutingEntry.INFINITE_DATARATE){
+					tTableRow.setText(5, Long.toString(tEntry.getMaxDataRate()));				
 				}else{
-					tTableRow.setText(5, "??");
+					tTableRow.setText(5, "inf.");
 				}
 				
+				/**
+				 * Column 6: loopback?
+				 */
+				if (tEntry.isLocalLoop()){
+					tTableRow.setText(6, "yes");				
+				}else{
+					tTableRow.setText(6, "no");
+				}
+
 				tRowNumber++;
 			}
 		}
 		
-		TableColumn[] columns = tMappingTable.getColumns();
+		TableColumn[] columns = tTableRoutingTable.getColumns();
 		for (int k = 0; k<columns.length; k++){
 			columns[k].pack();
 		}
-		tMappingTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
+		tTableRoutingTable.setLayoutData(new GridData(GridData.FILL_BOTH));//SWT.FILL, SWT.TOP, true, true, 1, 1));
 		
-		tMappingTable.setHeaderVisible(true);
-		tMappingTable.setLinesVisible(true);
-		
-		
+		// create the container layout
+		TableColumnLayout tLayoutRoutingTable = new TableColumnLayout();
+		mContainerRoutingTable.setLayout(tLayoutRoutingTable);
+		// assign each column a layout wight
+		tLayoutRoutingTable.setColumnData(tTableColDest, new ColumnWeightData(3));
+		tLayoutRoutingTable.setColumnData(tTableColNext, new ColumnWeightData(3));
+		tLayoutRoutingTable.setColumnData(tTableColHops, new ColumnWeightData(1));
+		tLayoutRoutingTable.setColumnData(tTableColUtil, new ColumnWeightData(1));
+		tLayoutRoutingTable.setColumnData(tTableColDelay, new ColumnWeightData(1));
+		tLayoutRoutingTable.setColumnData(tTableColDR, new ColumnWeightData(1));
+		tLayoutRoutingTable.setColumnData(tTableColLoop, new ColumnWeightData(1));
+
 		/**
-		 * 
+		 * Add a listener to allow re-sorting of the table based on the destination per table row
 		 */
-		tColumnHRMID.addListener(SWT.Selection, new Listener() {
+		tTableColDest.addListener(SWT.Selection, new Listener() {
 		      public void handleEvent(Event e) {
 		        // sort column 2
-		        TableItem[] tAllRows = tMappingTable.getItems();
+		        TableItem[] tAllRows = tTableRoutingTable.getItems();
 		        Collator collator = Collator.getInstance(Locale.getDefault());
 		        
 		        for (int i = 1; i < tAllRows.length; i++) {
@@ -252,11 +295,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 		              tAllRows[i].dispose();
 		              
 		              // create new table row
-		              TableItem tRow = new TableItem(tMappingTable, SWT.NONE, j);
+		              TableItem tRow = new TableItem(tTableRoutingTable, SWT.NONE, j);
 		              tRow.setText(tRowData);
 		              
 		              // update data of table rows
-		              tAllRows = tMappingTable.getItems();
+		              tAllRows = tTableRoutingTable.getItems();
 		              
 		              break;
 		            }
@@ -266,6 +309,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 		    });
 		
         mContainer.setSize(mContainer.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        mContainerRoutingTable.setSize(mContainerRoutingTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 	}
 	
 	/**
