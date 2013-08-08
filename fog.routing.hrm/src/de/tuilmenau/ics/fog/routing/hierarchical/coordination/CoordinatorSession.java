@@ -103,7 +103,7 @@ public class CoordinatorSession extends Session
 			ClusterName tTargetCluster = tPackage.getDestinationCluster();
 			
 			try {
-				CoordinatorCEPChannel tCEP = mMux.getDemuxedCEP(this, (ClusterName)tPackage.getSourceCluster(), tTargetCluster);
+				CoordinatorCEPChannel tCEP = mMux.findCEPChannel(this, (ClusterName)tPackage.getSourceCluster(), tTargetCluster);
 				if(tCEP != null) {
 					Logging.log(this, "Forwarding " + tPackage.getData() + " from " + tPackage.getSourceCluster() + " to " + tPackage.getDestinationCluster() + " with " + tCEP);
 					tCEP.receive(tPackage.getData());

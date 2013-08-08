@@ -45,7 +45,7 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		Logging.log(this, "###### CONFIGURING NODE " + pName + " -START ###### ");
 		
 		// create a new HRM instance for this node
-		HierarchicalRoutingService tHRS = new HierarchicalRoutingService(pNode);
+		HierarchicalRoutingService tHRS = new HierarchicalRoutingService(pAS, pNode);
 		
 		// register HRM instance as routing service for the current node
 		pNode.getHost().registerRoutingService(tHRS);

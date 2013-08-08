@@ -138,7 +138,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 		}
 		
 		/**
-		 * GUI part 2: routing table
+		 * GUI part 2: routing table of the node
 		 */
 		// create the headline
 		StyledText tSignaturesLabel = new StyledText(mContainer, SWT.BORDER);
@@ -191,78 +191,80 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 		if ((tHRS.routingTable() != null) && (!tHRS.routingTable().isEmpty())) {
 			int tRowNumber = 0;
 			for(RoutingEntry tEntry : tHRS.routingTable()) {
-				// create the table row
-				TableItem tTableRow = new TableItem(tTableRoutingTable, SWT.NONE, tRowNumber);
-				
-				/**
-				 * Column 0: destination
-				 */
-				tTableRow.setText(0, tEntry.getDest() != null ? tEntry.getDest().toString() : "");
-
-				/**
-				 * Column 1: next hop 
-				 */
-				if (tEntry.getNextHop() != null) {
-					tTableRow.setText(1, tEntry.getNextHop().toString());
-				}else{
-					tTableRow.setText(1, "??");
+				if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (!tEntry.getDest().isRelativeAddress())){
+					// create the table row
+					TableItem tTableRow = new TableItem(tTableRoutingTable, SWT.NONE, tRowNumber);
+					
+					/**
+					 * Column 0: destination
+					 */
+					tTableRow.setText(0, tEntry.getDest() != null ? tEntry.getDest().toString() : "");
+	
+					/**
+					 * Column 1: next hop 
+					 */
+					if (tEntry.getNextHop() != null) {
+						tTableRow.setText(1, tEntry.getNextHop().toString());
+					}else{
+						tTableRow.setText(1, "??");
+					}
+					
+					/**
+					 * Column 2: hop costs
+					 */
+					if (tEntry.getHopCount() != RoutingEntry.NO_HOP_COSTS){
+						tTableRow.setText(2, Integer.toString(tEntry.getHopCount()));
+					}else{
+						tTableRow.setText(2, "none");
+					}
+					
+					/**
+					 * Column 3:  utilization
+					 */
+					if (tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION){
+						tTableRow.setText(3,  Float.toString(tEntry.getUtilization() * 100));
+					}else{
+						tTableRow.setText(3, "N/A");
+					}
+					
+					/**
+					 * Column 4: min. delay
+					 */
+					if (tEntry.getMinDelay() != RoutingEntry.NO_DELAY){					
+						tTableRow.setText(4, Long.toString(tEntry.getMinDelay()));
+					}else{
+						tTableRow.setText(4, "none");
+					}
+					
+					/**
+					 * Column 5: max. data rate
+					 */
+					if (tEntry.getMaxDataRate() != RoutingEntry.INFINITE_DATARATE){
+						tTableRow.setText(5, Long.toString(tEntry.getMaxDataRate()));				
+					}else{
+						tTableRow.setText(5, "inf.");
+					}
+					
+					/**
+					 * Column 6: loopback?
+					 */
+					if (tEntry.isLocalLoop()){
+						tTableRow.setText(6, "yes");				
+					}else{
+						tTableRow.setText(6, "no");
+					}
+	
+					/**
+					 * Column 7: direct neighbor?
+					 */
+					if (tEntry.isRouteToDirectNeighbor()){
+						tTableRow.setText(7, "yes");				
+					}else{
+						tTableRow.setText(7, "no");
+					}
+	
+					tRowNumber++;
 				}
-				
-				/**
-				 * Column 2: hop costs
-				 */
-				if (tEntry.getHopCount() != RoutingEntry.NO_HOP_COSTS){
-					tTableRow.setText(2, Integer.toString(tEntry.getHopCount()));
-				}else{
-					tTableRow.setText(2, "none");
-				}
-				
-				/**
-				 * Column 3:  utilization
-				 */
-				if (tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION){
-					tTableRow.setText(3,  Float.toString(tEntry.getUtilization() * 100));
-				}else{
-					tTableRow.setText(3, "N/A");
-				}
-				
-				/**
-				 * Column 4: min. delay
-				 */
-				if (tEntry.getMinDelay() != RoutingEntry.NO_DELAY){					
-					tTableRow.setText(4, Long.toString(tEntry.getMinDelay()));
-				}else{
-					tTableRow.setText(4, "none");
-				}
-				
-				/**
-				 * Column 5: max. data rate
-				 */
-				if (tEntry.getMaxDataRate() != RoutingEntry.INFINITE_DATARATE){
-					tTableRow.setText(5, Long.toString(tEntry.getMaxDataRate()));				
-				}else{
-					tTableRow.setText(5, "inf.");
-				}
-				
-				/**
-				 * Column 6: loopback?
-				 */
-				if (tEntry.isLocalLoop()){
-					tTableRow.setText(6, "yes");				
-				}else{
-					tTableRow.setText(6, "no");
-				}
-
-				/**
-				 * Column 7: direct neighbor?
-				 */
-				if (tEntry.isRouteToDirectNeighbor()){
-					tTableRow.setText(7, "yes");				
-				}else{
-					tTableRow.setText(7, "no");
-				}
-
-				tRowNumber++;
 			}
 		}
 		

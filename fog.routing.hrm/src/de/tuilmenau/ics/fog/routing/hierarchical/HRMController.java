@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Observer;
 
+import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.Service;
 import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
@@ -44,6 +45,7 @@ import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
@@ -54,7 +56,7 @@ import de.tuilmenau.ics.fog.util.Tuple;
 /**
  * This is the main HRM controller. It provides functions that are necessary to build up the hierarchical structure - every node contains such an object
  */
-public class HRMController extends Application implements IServerCallback
+public class HRMController extends Application implements IServerCallback, IEvent
 {
 	private boolean HRM_CONTROLLER_DEBUGGING = false;
 	
@@ -85,9 +87,15 @@ public class HRMController extends Application implements IServerCallback
 	private Node mNode;
 	
 	/**
-	 * Stores the registered HRMIDs in order to show them within the GUI.
+	 * Stores a reference to the local autonomous system instance.
 	 */
-	private LinkedList<HRMID> mRegisteredHRMIDs = new LinkedList<HRMID>();
+	private AutonomousSystem mAS = null;
+	
+	/**
+	 * Stores the registered HRMIDs.
+	 * This is used within the GUI and during "share phase".
+	 */
+	private LinkedList<HRMID> mRegisteredOwnHRMIDs = new LinkedList<HRMID>();
 
 	/**
 	 * Stores a database about all registered coordinators.
@@ -120,10 +128,11 @@ public class HRMController extends Application implements IServerCallback
 	private int mConnectionCounter = 0;
 	
 	/**
+	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
 	 */
-	public HRMController(Node pNode, HierarchicalRoutingService pHierarchicalRoutingService)
+	public HRMController(AutonomousSystem pAS, Node pNode, HierarchicalRoutingService pHierarchicalRoutingService)
 	{
 		// initialize the application context
 		super(pNode.getHost(), null, pNode.getIdentity());
@@ -136,6 +145,9 @@ public class HRMController extends Application implements IServerCallback
 		
 		// reference to the physical node
 		mNode = pNode;
+		
+		// reference to the AutonomousSystem object 
+		mAS = pAS;
 		
 		/**
 		 * Create a local CEP
@@ -160,6 +172,10 @@ public class HRMController extends Application implements IServerCallback
 		// set the Bully priority 
 		BullyPriority.configureNode(pNode);
 
+		
+		// fire the first "report/share phase" trigger
+		reportAndShare();
+		
 		Logging.log(this, "CREATED");
 	}
 
@@ -302,39 +318,40 @@ public class HRMController extends Application implements IServerCallback
 	{
 		HRMID tHRMID = pCoordinator.getHRMID();
 		
-		if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
-			
-			if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-				Logging.log(this, "Updating the HRMID to " + tHRMID.toString() + " for " + pCoordinator);
+		synchronized(mRegisteredOwnHRMIDs){
+			if ((!mRegisteredOwnHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
+				
+				if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+					Logging.log(this, "Updating the HRMID to " + tHRMID.toString() + " for " + pCoordinator);
+				}
+	
+				/**
+				 * Update the local address DB with the given HRMID
+				 */
+				// register the new HRMID
+				mRegisteredOwnHRMIDs.add(tHRMID);
+	
+				/**
+				 * Register a local loopback route for the new address 
+				 */
+				// register a route to the cluster member as addressable target
+				getHRS().addRoute(RoutingEntry.createLocalhostEntry(tHRMID));
+	
+				/**
+				 * Update the GUI
+				 */
+				// filter relative HRMIDs
+				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
+					// update node label within GUI
+					String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
+					getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
+				}
+				// it's time to update the GUI
+				notifyGUI(pCoordinator);
+			}else{
+				Logging. warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCoordinator);
 			}
-
-			/**
-			 * Update the local address DB with the given HRMID
-			 */
-			// register the new HRMID
-			mRegisteredHRMIDs.add(tHRMID);
-
-			/**
-			 * Register a local loopback route for the new address 
-			 */
-			// register a route to the cluster member as addressable target
-			getHRS().addRoute(RoutingEntry.createLocalhostEntry(tHRMID));
-
-			/**
-			 * Update the GUI
-			 */
-			// filter relative HRMIDs
-			if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
-				// update node label within GUI
-				String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
-				getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
-			}
-			// it's time to update the GUI
-			notifyGUI(pCoordinator);
-		}else{
-			Logging. warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCoordinator);
-		}
-			
+		}			
 	}
 
 	/**
@@ -394,62 +411,64 @@ public class HRMController extends Application implements IServerCallback
 		// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
 		// the corresponding coordinator instance
 		if (pCluster.getHierarchyLevel().isBaseLevel()){
-			if ((!mRegisteredHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
-				
-				/**
-				 * Update the local address DB with the given HRMID
-				 */
-				if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-					Logging.log(this, "Updating the HRMID to " + pCluster.getHRMID().toString() + " for " + pCluster);
-				}
-				
-				// register the new HRMID
-				mRegisteredHRMIDs.add(tHRMID);
-				
-				/**
-				 * Register a local loopback route for the new address 
-				 */
-				// register a route to the cluster member as addressable target
-				getHRS().addRoute(RoutingEntry.createLocalhostEntry(tHRMID));
-
-				/**
-				 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
-				 * registered in the DNS as address for the name of this node. 
-				 */
-				// register the HRMID in the hierarchical DNS for the local router
-				HierarchicalNameMappingService<HRMID> tNMS = null;
-				try {
-					tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
-				} catch (RuntimeException tExc) {
-					HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
-				}				
-				// get the local router's human readable name (= DNS name)
-				Name tLocalRouterName = getNode().getCentralFN().getName();				
-				// register HRMID for the given DNS name
-				tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
-				// give some debug output about the current DNS state
-				String tString = new String();
-				for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
-					if (!tString.isEmpty()){
-						tString += ", ";
+			synchronized(mRegisteredOwnHRMIDs){
+				if ((!mRegisteredOwnHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
+					
+					/**
+					 * Update the local address DB with the given HRMID
+					 */
+					if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+						Logging.log(this, "Updating the HRMID to " + pCluster.getHRMID().toString() + " for " + pCluster);
 					}
-					tString += tEntry;
+					
+					// register the new HRMID
+					mRegisteredOwnHRMIDs.add(tHRMID);
+					
+					/**
+					 * Register a local loopback route for the new address 
+					 */
+					// register a route to the cluster member as addressable target
+					getHRS().addRoute(RoutingEntry.createLocalhostEntry(tHRMID));
+	
+					/**
+					 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
+					 * registered in the DNS as address for the name of this node. 
+					 */
+					// register the HRMID in the hierarchical DNS for the local router
+					HierarchicalNameMappingService<HRMID> tNMS = null;
+					try {
+						tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
+					} catch (RuntimeException tExc) {
+						HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
+					}				
+					// get the local router's human readable name (= DNS name)
+					Name tLocalRouterName = getNode().getCentralFN().getName();				
+					// register HRMID for the given DNS name
+					tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
+					// give some debug output about the current DNS state
+					String tString = new String();
+					for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
+						if (!tString.isEmpty()){
+							tString += ", ";
+						}
+						tString += tEntry;
+					}
+					Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
+					
+					/**
+					 * Update the GUI
+					 */
+					// filter relative HRMIDs
+					if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
+						// update node label within GUI
+						String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
+						getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
+					}
+					// it's time to update the GUI
+					notifyGUI(pCluster);
+				}else{
+					Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCluster);
 				}
-				Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
-				
-				/**
-				 * Update the GUI
-				 */
-				// filter relative HRMIDs
-				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
-					// update node label within GUI
-					String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
-					getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
-				}
-				// it's time to update the GUI
-				notifyGUI(pCluster);
-			}else{
-				Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCluster);
 			}
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
@@ -468,6 +487,23 @@ public class HRMController extends Application implements IServerCallback
 	}
 
 	/**
+	 * Returns the list of registered own HRMIDs which can be used to address the physical node on which this instance is running.
+	 *  
+	 * @return the list of HRMIDs
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<HRMID> getOwnHRMIDs()
+	{
+		LinkedList<HRMID> tResult = null;
+		
+		synchronized(mRegisteredOwnHRMIDs){
+			tResult = (LinkedList<HRMID>) mRegisteredOwnHRMIDs.clone();
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Adds an entry to the routing table of the local HRS instance
 	 * In opposite to addRoute() from the HierarchicalRoutingService class, this function additionally updates the GUI
 	 * 
@@ -476,15 +512,58 @@ public class HRMController extends Application implements IServerCallback
 	public void addRoute(RoutingEntry pRoutingEntry)
 	{
 		// inform the HRS about the new route
-		getHRS().addRoute(pRoutingEntry);
-		
-		// it's time to update the GUI
-		notifyGUI(this);
+		if(getHRS().addRoute(pRoutingEntry)){
+			// it's time to update the GUI
+			notifyGUI(this);
+		}
 	}
 
 	
+	/**
+	 * Determines the current simulation time
+	 * 
+	 * @return the simulation time
+	 */
+	public double getSimulationTime()
+	{
+		return mAS.getTimeBase().now();
+	}
 	
-	
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.IEvent#fire()
+	 */
+	@Override
+	public void fire()
+	{
+		reportAndShare();
+	}
+
+	public void reportAndShare()
+	{	
+		if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
+			Logging.log(this, "REPORT AND SHARE TRIGGER received");
+		}
+
+		/**
+		 * report phase
+		 */
+		for (Coordinator tCoordinator : mKnownCoordinators) {
+			tCoordinator.reportPhase();
+		}
+		
+		/**
+		 * share phase
+		 */
+		for (Coordinator tCoordinator : mKnownCoordinators) {
+			tCoordinator.sharePhase();
+		}
+		
+		/**
+		 * register next trigger
+		 */
+		mAS.getTimeBase().scheduleIn(HRMConfig.Routing.GRANULARITY_SHARE_PHASE, this);
+	}
+
 	
 	
 	

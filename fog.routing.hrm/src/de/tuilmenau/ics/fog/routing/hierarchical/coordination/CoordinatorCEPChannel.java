@@ -23,13 +23,16 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.Nes
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
@@ -103,9 +106,44 @@ public class CoordinatorCEPChannel
 	}
 	
 	/**
+	 * Handles a SignalingMessageHrm packet.
+	 * 
+	 * @param pSignalingMessageHrmPacket the packet
+	 */
+	private void handleSignalingMessageHRM(SignalingMessageHrm pSignalingMessageHrmPacket)
+	{
+		// can we learn the peer's HRMID from the packet?
+		if (pSignalingMessageHrmPacket.getSenderName() instanceof HRMID){
+			// get the HRMID of the peer
+			HRMID tPeerHRMID = (HRMID)pSignalingMessageHrmPacket.getSenderName();
+			
+			// update peer's HRMID
+			setPeerHRMID(tPeerHRMID);
+		}		
+	}
+
+	/**
+	 * Handles a RoutingInformation packet.
+	 * 
+	 * @param pRoutingInformationPacket the packet
+	 */
+	private void handleSignalingMessageSharePhase(RoutingInformation pRoutingInformationPacket)
+	{
+		if (HRMConfig.DebugOutput.SHOW_RECEIVED_ROUTING_INFO)
+			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\"");
+		
+		for (RoutingEntry tEntry : pRoutingInformationPacket.getRoutes()){
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_ROUTING_INFO)
+				Logging.log(this, "      ..found route: " + tEntry);
+			
+			getHRMController().addRoute(tEntry);
+		}
+	}
+
+	/**
 	 * Handles a Bully signaling packet.
 	 * 
-	 * @param pBullyPacket the Bully signaling packet
+	 * @param pPacketBully the packet
 	 */
 	private void handleSignalingMessageBully(SignalingMessageBully pPacketBully) throws NetworkException
 	{
@@ -233,7 +271,10 @@ public class CoordinatorCEPChannel
 	 */
 	public boolean receive(Serializable pData) throws NetworkException
 	{
-		boolean CHANNEL_SIGNALING_DEBUGGING = true;
+		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
+			Logging.log(this, "RECEIVED DATA from \"" + getPeerHRMID() + "\": " + pData);
+		}
+			
 
 		Node tNode = getHRMController().getNode();
 		HierarchicalRoutingService tHRS = getHRMController().getHRS();
@@ -242,9 +283,6 @@ public class CoordinatorCEPChannel
 		 * Invalid data
 		 */
 		if(pData == null) {
-			if (CHANNEL_SIGNALING_DEBUGGING)
-				Logging.log(this, "received from \"" + mPeerCluster + "\" invalid data");
-
 			throw new NetworkException("Received invalid null pointer as data");
 		}
 
@@ -252,6 +290,19 @@ public class CoordinatorCEPChannel
 		 * main packet processing
 		 */
 		try {
+			
+			/**
+			 * HRM signaling message
+			 */
+			if (pData instanceof SignalingMessageHrm){
+				// cast to a SignalingMessageHrm signaling message
+				SignalingMessageHrm tSignalingMessageHrmPacket = (SignalingMessageHrm)pData;
+			
+				// process SignalingMessageHrm message
+				handleSignalingMessageHRM(tSignalingMessageHrmPacket);
+				
+				//HINT: don't return here because we are still interested in the more detailed packet data from derived packet types!
+			}
 			
 			/**
 			 * Bully signaling message
@@ -265,6 +316,27 @@ public class CoordinatorCEPChannel
 				
 				return true;
 			}
+
+			/**
+			 * RoutingInformation
+			 */
+			if (pData instanceof RoutingInformation){
+				// cast to a RoutingInformation signaling message
+				RoutingInformation tRoutingInformationPacket = (RoutingInformation)pData;
+
+				if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
+					Logging.log(this, "ROUTE_DISTRIBUTION-received from \"" + getPeerHRMID() + "\" a ROUTING INFO: " + tRoutingInformationPacket);
+				}
+				
+				// process Bully message
+				handleSignalingMessageSharePhase(tRoutingInformationPacket);
+				
+				return true;
+			}
+			
+			
+			
+			
 			
 			/**
 			 * NeighborClusterAnnounce
@@ -272,7 +344,7 @@ public class CoordinatorCEPChannel
 			if(pData instanceof NeighborClusterAnnounce) {
 				NeighborClusterAnnounce tAnnouncePacket = (NeighborClusterAnnounce)pData;
 
-				if (CHANNEL_SIGNALING_DEBUGGING)
+				if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 					Logging.log(this, "NEIGHBOR received from \"" + mPeerCluster + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
 
 				if(tAnnouncePacket.isInterASAnnouncement()) {
@@ -331,8 +403,8 @@ public class CoordinatorCEPChannel
 			if(pData instanceof AssignHRMID) {
 				AssignHRMID tAssignHRMIDPacket = (AssignHRMID)pData;
 
-				if (CHANNEL_SIGNALING_DEBUGGING)
-					Logging.log(this, "ASSIGN_HRMID-received from \"" + mPeerCluster + "\" assigned HRMID: " + tAssignHRMIDPacket.getHRMID().toString());
+				if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+					Logging.log(this, "ASSIGN_HRMID-received from \"" + getPeerHRMID() + "\" assigned HRMID: " + tAssignHRMIDPacket.getHRMID().toString());
 
 				if (getPeer() instanceof Coordinator){
 					Coordinator tCoordinator = (Coordinator)getPeer();
@@ -349,7 +421,7 @@ public class CoordinatorCEPChannel
 			if(pData instanceof TopologyData) {
 				TopologyData tTopologyPacket = (TopologyData)pData;
 				
-				if (CHANNEL_SIGNALING_DEBUGGING)
+				if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 					Logging.log(this, "TOPOLOGY-received from \"" + mPeerCluster + "\" TOPOLOGY DATA: " + tTopologyPacket);
 
 				if (getPeer() instanceof Coordinator){
@@ -515,7 +587,7 @@ public class CoordinatorCEPChannel
 			if (pData instanceof RequestCoordinator) {
 				RequestCoordinator tRequestCoordinatorPacket = (RequestCoordinator) pData;
 				
-				if (CHANNEL_SIGNALING_DEBUGGING)
+				if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 					Logging.log(this, "CHANNEL-received from \"" + mPeerCluster + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
 
 				if(!tRequestCoordinatorPacket.isAnswer()) {
@@ -894,8 +966,11 @@ public class CoordinatorCEPChannel
 		return getPeer().getMultiplexer();
 	}
 
+	/**
+	 * Returns a descriptive string about this object 
+	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "@" + getPeer().getClusterDescription() +  "(PeerPrio=" + mPeerPriority.getValue() + (getPeerName() != null ? ", Peer=" + getPeerName().getDescr() : "") + "EdgeRouter=" + (mIsEdgeRouter ? "yes" : "no") + ")";
+		return getClass().getSimpleName() + "@" + getPeer().getClusterDescription() +  "(PeerPrio=" + mPeerPriority.getValue() + (getPeerName() != null ? ", Peer=" + getPeerHRMID() : "") + ")";
 	}
 }

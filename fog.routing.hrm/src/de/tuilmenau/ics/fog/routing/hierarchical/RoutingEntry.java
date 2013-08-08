@@ -230,6 +230,20 @@ public class RoutingEntry
 	}
 
 	/**
+	 * Creates an identical duplicate
+	 * 
+	 * @return the identical duplicate
+	 */
+	public RoutingEntry clone()
+	{
+		RoutingEntry tResult = new RoutingEntry(mDestination, mNextHop, mHopCount, mUtilization, mMinDelay, mMaxDataRate);
+		tResult.mRouteToDirectNeighbor = mRouteToDirectNeighbor;
+		tResult.mLocalLoop = mLocalLoop;
+		
+		return tResult;
+	}
+	
+	/**
 	 * Returns an object describing string
 	 * 
 	 *  @return the describing string

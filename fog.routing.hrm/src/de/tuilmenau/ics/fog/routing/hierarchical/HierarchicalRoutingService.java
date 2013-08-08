@@ -40,6 +40,7 @@ import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.*;
+import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
@@ -66,6 +67,11 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	private Node mNode = null;
 
 	/**
+	 * Stores the reference to the AutonomousSystem. 
+	 */
+	private AutonomousSystem mAS = null;
+	
+	/**
 	 * Stores the HRM based routing table which is used for hop-by-hop routing.
 	 */
 	private LinkedList<RoutingEntry> mRoutingTable = new LinkedList<RoutingEntry>();
@@ -85,14 +91,15 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	
 	/**
 	 * Creates a local HRS instance for a node.
-	 * 
+	 * @param pAS the autonomous system at which the HRS is instantiated 
 	 * @param pNode the node on which this routing service instance is created on
 	 */
-	public HierarchicalRoutingService(Node pNode)
+	public HierarchicalRoutingService(AutonomousSystem pAS, Node pNode)
 	{
 		Logging.log(this, "CREATED ON " + pNode);
 		
 		mNode = pNode;
+		mAS = pAS;
 		
 		mNameMapping = new HierarchicalNameMappingService(HierarchicalNameMappingService.getGlobalNameMappingService(), null);
 		Logging.log(this, "Using name mapping service " + mNameMapping.toString());
@@ -113,7 +120,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		Logging.log(this, "Got event \"ROUTING SERVICE REGISTERED\"");
 		
 		// create HRM controller instance 
-		mHRMController = new HRMController(mNode, this);
+		mHRMController = new HRMController(mAS, mNode, this);
 		
 		// register the HRM controller instance as application at the local host
 		mNode.getHost().registerApp(mHRMController);
@@ -124,66 +131,75 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
 	 * 
 	 * @param pRoutingTableEntry the routing table entry
+	 * @return true if the entry is new and was added, otherwise false
 	 */
-	public void addRoute(RoutingEntry pRoutingTableEntry)
+	public boolean addRoute(RoutingEntry pRoutingTableEntry)
 	{
-		Logging.log(this, "ADDING ROUTE     : " + pRoutingTableEntry);
-
+		boolean tResult = false;
+		
 		synchronized(mRoutingTable){
 			/**
 			 * Check for duplicates
 			 */
+			boolean tFoundDuplicate = false;
 			if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
-				boolean tRestartNeeded;
-				do{		
-					tRestartNeeded = false;
-					for (RoutingEntry tEntry: mRoutingTable){
-						// have we found a route to the same destination which uses the same next hop?
-						//TODO: what about multiple links to the same next hop?
-						if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) /* same destination? */ &&
-							(tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop())) /* same next hop? */){
-	
-							Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
-							
-							// remove the route
-							mRoutingTable.remove(tEntry);
-							
-							// force a restart at the beginning of the routing table
-							tRestartNeeded = true;
-							//TODO: use a better(scalable) method here for removing duplicates
-							break;						
-							
-						}
+				for (RoutingEntry tEntry: mRoutingTable){
+					// have we found a route to the same destination which uses the same next hop?
+					//TODO: what about multiple links to the same next hop?
+					if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) /* same destination? */ &&
+						(tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop())) /* same next hop? */){
+
+						//Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
+						tFoundDuplicate = true;
+						
+						break;						
+						
 					}
-				}while(tRestartNeeded);
+				}
 			}
-			
-			//TODO: support for updates
 			
 			/**
 			 * Add the entry to the local routing table
 			 */
-			mRoutingTable.add(pRoutingTableEntry);
+			if (!tFoundDuplicate){
+				Logging.log(this, "ADDING ROUTE      : " + pRoutingTableEntry);
+
+				mRoutingTable.add(pRoutingTableEntry.clone());
+				
+				tResult = true;
+			}else{
+				//TODO: support for updates
+			}
 		}
+		
+		return tResult;
 	}	
 
 	/**
 	 * Deletes a route from the local HRM routing table.
 	 * This function is usually used when a timeout occurred and the corresponding route became too old. 
 	 * 
-	 * @param pRoutingTableEntry the routing table entry
+	 * @param pRoutingTableEntry the routing table entry 
+	 * @return true if the entry was found and removed, otherwise false
 	 */
-	private void delRoute(RoutingEntry pRoutingTableEntry)
+	private boolean delRoute(RoutingEntry pRoutingTableEntry)
 	{
+		boolean tResult = false;
+		
 		Logging.log(this, "REMOVING ROUTE: " + pRoutingTableEntry);
 
 		synchronized(mRoutingTable){
 			if (mRoutingTable.contains(pRoutingTableEntry)){
+				// remove the entry
 				mRoutingTable.remove(pRoutingTableEntry);
+				
+				tResult = true;
 			}else{
 				Logging.err(this, "The following route couldn't be removed from the local routing table: \n     " + pRoutingTableEntry);
 			}
 		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -191,9 +207,16 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * 
 	 * @return the local HRM routing table
 	 */
+	@SuppressWarnings("unchecked")
 	public LinkedList<RoutingEntry> routingTable()
 	{
-		return mRoutingTable;		
+		LinkedList<RoutingEntry> tResult = null;
+		
+		synchronized (mRoutingTable) {
+			tResult = (LinkedList<RoutingEntry>) mRoutingTable.clone();
+		}
+		
+		return tResult;		
 	}
 	
 	

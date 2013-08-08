@@ -31,7 +31,22 @@ public class HRMConfig
 		/**
 		 * Show relative addresses in the GUI? (e.g., "0.0.1")
 		 */
-		public static final boolean GUI_SHOW_RELATIVE_ADDRESSES = true;
+		public static final boolean GUI_SHOW_RELATIVE_ADDRESSES = false;
+
+		/**
+		 * Show debug outputs about the timing of report/share phases of each existing coordinator.
+		 */
+		public static final boolean GUI_SHOW_TIMING_ROUTE_DISTRIBUTION = true;
+
+		/**
+		 * Shows debug outputs for each received packet of a channel.
+		 */
+		public static final boolean SHOW_RECEIVED_CHANNEL_PACKETS = true;
+
+		/**
+		 * Shows debug outputs for each received RoutingInformation packet.
+		 */
+		public static final boolean SHOW_RECEIVED_ROUTING_INFO = false;
 	}
 	
 	public class Addressing
@@ -97,6 +112,12 @@ public class HRMConfig
 		 * Defines the hop costs for a route to a direct neighbor. 
 		 */
 		public static final int HOP_COSTS_TO_A_DIRECT_NEIGHBOR = 1;
+
+		/**
+		 * Defines the time between two triggers for the HRMController/node specific "share phase"
+		 * The higher in the hierarchy a coordinator is, the higher is the multiplier for this value.
+		 */
+		public static final double GRANULARITY_SHARE_PHASE = 2.0; // in seconds
 	}
 
 	public class Debugging

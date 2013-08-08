@@ -333,7 +333,7 @@ public class CoordinatorCEPMultiplexer
 		return mDemux.get(pCEP);
 	}
 	
-	public CoordinatorCEPChannel getDemuxedCEP(CoordinatorSession pCEP, ClusterName pSource, ClusterName pCluster) throws NetworkException
+	public CoordinatorCEPChannel findCEPChannel(CoordinatorSession pCEP, ClusterName pSource, ClusterName pCluster) throws NetworkException
 	{
 		if(mDemux.containsKey(pCEP)) {
 			for(CoordinatorCEPChannel tCEP : mDemux.get(pCEP)) {

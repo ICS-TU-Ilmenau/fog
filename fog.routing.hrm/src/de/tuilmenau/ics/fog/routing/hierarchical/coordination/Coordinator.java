@@ -27,6 +27,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.FIBEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
@@ -64,6 +65,16 @@ public class Coordinator implements ICluster, HRMEntity
 	 * List for identification of entities this cluster manager is connected to
 	 */
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
+	
+	/**
+	 * Stores the simulation timestamp of the last "share phase"
+	 */
+	private double mTimeOfLastSharePhase = 0; 
+	
+	/**
+	 * Stores the routes which should be shared with cluster members.
+	 */
+	private LinkedList<RoutingEntry> mSharedRoutes = new LinkedList<RoutingEntry>();
 	
 	private HRMSignature mSignature = null;
 	
@@ -232,14 +243,49 @@ public class Coordinator implements ICluster, HRMEntity
 		
 		// are we on base hierarchy level?
 		if (getHierarchyLevel().getValue() == 1){ // TODO: isBaseLevel()){
-			// create
+			// create the new routing table entry
 			RoutingEntry tRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tMemberHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
 			
 			Logging.log(this, "SHARING ROUTE: " + tRoutingEntry);
 			
+			// add the entry to the local routing table
 			getHRMController().addRoute(tRoutingEntry);
 			
-			//TODO: store shared routes and distribute them later on
+			// store the entry for route sharing with cluster members
+			synchronized (mSharedRoutes){
+				/**
+				 * Check for duplicates
+				 */
+				if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
+					boolean tRestartNeeded;
+					do{		
+						tRestartNeeded = false;
+						for (RoutingEntry tEntry: mSharedRoutes){
+							// have we found a route to the same destination which uses the same next hop?
+							//TODO: what about multiple links to the same next hop?
+							if ((tEntry.getDest().equals(tRoutingEntry.getDest())) /* same destination? */ &&
+								(tEntry.getNextHop().equals(tRoutingEntry.getNextHop())) /* same next hop? */){
+		
+								Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
+								
+								// remove the route
+								mSharedRoutes.remove(tEntry);
+								
+								// force a restart at the beginning of the routing table
+								tRestartNeeded = true;
+								//TODO: use a better(scalable) method here for removing duplicates
+								break;						
+								
+							}
+						}
+					}while(tRestartNeeded);
+				}
+				
+				/**
+				 * Add the entry to the shared routing table
+				 */
+				mSharedRoutes.add(tRoutingEntry);
+			}
 		}else{
 			//TODO
 			Logging.log(this, "IMPLEMENT ME - SHARING ROUTE TO: " + pClusterMemberChannel);
@@ -270,9 +316,88 @@ public class Coordinator implements ICluster, HRMEntity
 		}
 	}
 	
+	/**
+	 * Checks if the "share phase" should be started or not
+	 * 
+	 * @return true if the "share phase" should be started, otherwise false
+	 */
+	public boolean sharePhaseHasTimeout()
+	{
+		// determine the time between two "share phases"
+		double tDesiredTimePeriod = 2 * HRMConfig.Routing.GRANULARITY_SHARE_PHASE * (getHierarchyLevel().getValue() - 1); //TODO: use an exponential time distribution here
+		
+		// determine the time when a "share phase" has to be started 
+		double tTimeNextSharePhase = mTimeOfLastSharePhase + tDesiredTimePeriod;
 	
+		// determine the current simulation time from the HRMCotnroller instance
+		double tCurrentSimulationTime = getHRMController().getSimulationTime();
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
+			Logging.log(this, "Checking for timeout of \"share phase\": desired time period is " + tDesiredTimePeriod + ", " + tCurrentSimulationTime + " > " + tTimeNextSharePhase + "? -> " + (tCurrentSimulationTime >= tTimeNextSharePhase));
+		}
+		
+		return (tCurrentSimulationTime >= tTimeNextSharePhase);
+	}
 	
+	/**
+	 * This function implements the "share phase".
+	 * It distributes locally stored sharable routing data among the known cluster members
+	 */
+	public void sharePhase()
+	{
+		if (sharePhaseHasTimeout()){
+			Logging.log(this, "SHARE PHASE with cluster members on level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+			HRMID tOwnClusterAddress = mManagedCluster.getHRMID();
 	
+			Logging.log(this, "    ..distributing as " + tOwnClusterAddress.toString() + " aggregated ROUTES among cluster members: " + mManagedCluster.getClusterMembers());
+			
+			// send the routing information to cluster members
+			for(CoordinatorCEPChannel tClusterMember : mManagedCluster.getClusterMembers()) {
+				RoutingInformation tRoutingInformationPacket = new RoutingInformation(getHRMID(), tClusterMember.getPeerHRMID());
+			
+				// are we on base hierarchy level?
+				if (getHierarchyLevel().getValue() == 1){ // TODO: isBaseLevel()){
+
+					/**
+					 * Add neighbor routes from the cluster member to here per registered local HRMID.
+					 */
+					for (HRMID tHRMID : getHRMController().getOwnHRMIDs()){
+						// create entry for cluster internal routing towards us
+						RoutingEntry tRouteFromClusterMemberToHere = RoutingEntry.createRouteToDirectNeighbor(tHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+						tRoutingInformationPacket.addRoute(tRouteFromClusterMemberToHere);
+					}
+					
+					//TODO: need routing graph here!
+					
+					//TODO: routes to other cluster members
+				}else{
+					//TODO: implement me
+				}	
+				
+				// do we have interesting routing information?
+				if (tRoutingInformationPacket.getRoutes().size() > 0){
+					tClusterMember.sendPacket(tRoutingInformationPacket);
+				}else{
+					// no routing information -> no packet is sent
+				}				
+			}
+		}else{
+			// share phase shouldn't be started, we have to wait until next trigger
+		}
+	}
+	
+	/**
+	 * This function implements the "report phase".
+	 * It sends locally stored sharable routing data to the superior coordinator
+	 */
+	public void reportPhase()
+	{
+		if (!getHierarchyLevel().isHighest()){
+			
+		}else{
+			// we are the highest hierarchy level, no one to send topology reports to
+		}
+	}
 	
 	
 	
