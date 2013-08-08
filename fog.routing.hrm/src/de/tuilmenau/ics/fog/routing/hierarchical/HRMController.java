@@ -888,7 +888,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	}
 	
 	/**
-	 * This method has to be invoked once a new neighbor node is spotted (/hierarchy level 0).
+	 * This method has to be invoked once a new neighbor node is detected.
 	 * It causes the addition to the intermediate cluster that is associated to the interface the note was spotted at.
 	 * 
 	 * @param pName is the name of the entity a connection will be established to

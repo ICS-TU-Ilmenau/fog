@@ -16,7 +16,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -33,9 +32,7 @@ import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.AddressingTypeProperty.AddressingType;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
@@ -604,48 +601,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		return 0;
 	}
 	
-	private boolean checkForEncapsulation(L2Address pAddress, AddressingType pType)
-	{
-		if(pAddress.getCaps() != null) {
-			for(Property tProp : pAddress.getCaps()) {
-				if(tProp instanceof AddressingTypeProperty) {
-					AddressingTypeProperty tAddressingProp = (AddressingTypeProperty) tProp;
-					if(tAddressingProp.getAddressingType() == pType) {
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
-	
-	private boolean checkForInterAS(L2Address pOne, L2Address pTwo)
-	{
-		AddressingTypeProperty tAddressingPropOne = null;
-		AddressingTypeProperty tAddressingPropTwo = null;
-		
-		for(Property tProp : pOne.getCaps()) {
-			if(tProp instanceof AddressingTypeProperty) {
-				tAddressingPropOne = (AddressingTypeProperty) tProp;
-			}
-		}
-		
-		for(Property tProp : pTwo.getCaps()) {
-			if(tProp instanceof AddressingTypeProperty) {
-				tAddressingPropTwo = (AddressingTypeProperty) tProp;
-			}
-		}
-		
-		return !tAddressingPropOne.getAS().equals(tAddressingPropTwo.getAS());
-	}
-	
-	private boolean checkPairForEncapsulation(L2Address pAddressOne, L2Address pAddressTwo, AddressingType pType)
-	{
-		boolean tCompare = checkForEncapsulation(pAddressOne, pType) && checkForEncapsulation(pAddressTwo, pType);
-		
-		return tCompare && checkForInterAS(pAddressOne, pAddressTwo);
-	}
-
 	public Namespace getNamespace()
 	{
 		return HRMID.HRMNamespace;
@@ -903,20 +858,29 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 						// DirectDownGate ttGate = (DirectDownGate) ((GateContainer)(tGate).getNextNode()).getGate(tContemporaryRoute.get(1).getID());
 
 						Long tClusterID = Long.valueOf(0L);
-						try {
-							tClusterID = Long.valueOf(ttGate.getLowerLayer().getBus().getName().hashCode());
-						} catch (RemoteException tExc) {
-							Logging.err(this, "Unable to determine a hash value of the lower layer", tExc);
+//						try {
+//							tClusterID = Long.valueOf(ttGate.getLowerLayer().getBus().getName().hashCode());
+//						} catch (RemoteException tExc) {
+//							Logging.err(this, "Unable to determine a hash value of the lower layer", tExc);
+//						}
+//						Logging.log(this, "about to open a connection from " + pFrom + " to " + tDestination);
+//						tDontElect = checkPairForEncapsulation(tSource, tDestination, AddressingType.IP);
+//						if(tDontElect) {
+//							Logging.log(this, "Pair " + tSource.getDescr() + ", " + tDestination.getDescr() + " not scheduled for election");
+//						} else {
+//							Logging.log(this, "Pair " + tSource.getDescr() + ", " + tDestination.getDescr() + " scheduled for election");
+//						}
+//						EventNewClusterMemberDetected tConnectEvent = new EventNewClusterMemberDetected(tDestination, tClusterID, tDontElect);
+//						mNode.getHost().getTimeBase().scheduleIn(waitTime, tConnectEvent);
+						
+						//TODO: replaced the above part
+						
+						Logging.log(this, "Opening connection to " + tDestination);
+						if (mHRMController == null){
+							Logging.err(this, "HRM controller is invalid, skipping connect request");
+							return;
 						}
-						Logging.log(this, "about to open a connection from " + pFrom + " to " + tDestination);
-						tDontElect = checkPairForEncapsulation(tSource, tDestination, AddressingType.IP);
-						if(tDontElect) {
-							Logging.log(this, "Pair " + tSource.getDescr() + ", " + tDestination.getDescr() + " not scheduled for election");
-						} else {
-							Logging.log(this, "Pair " + tSource.getDescr() + ", " + tDestination.getDescr() + " scheduled for election");
-						}
-						EventNewClusterMemberDetected tConnectEvent = new EventNewClusterMemberDetected(tDestination, tClusterID, tDontElect);
-						mNode.getHost().getTimeBase().scheduleIn(waitTime, tConnectEvent);
+						mHRMController.addConnection(tDestination, HierarchyLevel.createBaseLevel(), tClusterID, false);
 					}
 				}
 			}
@@ -1011,31 +975,5 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		String tResult = getClass().getSimpleName() + (mNode != null ? "@" + mNode.toString() : "");
 		
 		return tResult;
-	}
-	
-	private class EventNewClusterMemberDetected implements IEvent
-	{
-		public EventNewClusterMemberDetected(Name pName, long pToClusterID, boolean pConnectionToOtherAS)
-		{
-			super();
-			mConnectTo = pName;
-			mToClusterID = pToClusterID;
-			mConnectionToOtherAS = pConnectionToOtherAS;
-		}
-		
-		@Override
-		public void fire()
-		{
-			Logging.log(this, "Opening connection to " + mConnectTo);
-			if (mHRMController == null){
-				Logging.err(this, "HRM controller is invalid, skipping connect request");
-				return;
-			}
-			mHRMController.addConnection(mConnectTo, HierarchyLevel.createBaseLevel(), mToClusterID, mConnectionToOtherAS);
-		}
-		
-		private Name mConnectTo;
-		private long mToClusterID = 0;
-		private boolean mConnectionToOtherAS;
 	}
 }

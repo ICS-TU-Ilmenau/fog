@@ -31,7 +31,7 @@ public class HRMConfig
 		/**
 		 * Show relative addresses in the GUI? (e.g., "0.0.1")
 		 */
-		public static final boolean GUI_SHOW_RELATIVE_ADDRESSES = false;
+		public static final boolean GUI_SHOW_RELATIVE_ADDRESSES = true;
 
 		/**
 		 * Show debug outputs about the timing of report/share phases of each existing coordinator.
