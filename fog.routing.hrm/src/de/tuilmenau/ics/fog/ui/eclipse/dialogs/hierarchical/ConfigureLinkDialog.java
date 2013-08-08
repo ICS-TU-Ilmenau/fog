@@ -12,8 +12,6 @@ package de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 
-import de.tuilmenau.ics.fog.facade.Description;
-
 public class ConfigureLinkDialog extends Dialog 
 {
 	/**

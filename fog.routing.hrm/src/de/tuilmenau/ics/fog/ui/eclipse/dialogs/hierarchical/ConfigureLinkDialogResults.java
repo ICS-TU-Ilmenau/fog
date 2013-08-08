@@ -10,7 +10,6 @@
 package de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical;
 
 import de.tuilmenau.ics.fog.facade.Description;
-import de.tuilmenau.ics.fog.topology.Node;
 
 /**
  * This class is used to return a package of result values from the ConfigureDialog dialog.

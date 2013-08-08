@@ -11,9 +11,6 @@ package de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical;
 
 import org.eclipse.swt.widgets.Shell;
 
-import de.tuilmenau.ics.fog.topology.Node;
-
-
 public class ConfigureLinkDialogThread implements Runnable
 {
 	/**

@@ -19,11 +19,8 @@ import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
-import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical.ConfigureLinkDialog;
-import de.tuilmenau.ics.fog.ui.eclipse.dialogs.hierarchical.ConfigureLinkDialogResults;
 
 public class LinkToNode extends Command
 {
