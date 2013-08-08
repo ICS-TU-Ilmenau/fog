@@ -42,6 +42,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
 import org.eclipse.swt.graphics.Color;
 
+import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -68,7 +69,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * The HRM viewer, which depicts all information from an HRM controller.
  * 
  */
-public class HRMViewer extends EditorPart implements Observer, Runnable
+public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 {
 	private static boolean HRM_VIEWER_DEBUGGING = false;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = false;
@@ -81,6 +82,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
     private Display mDisplay = null;
     private Composite mContainerRoutingTable = null;
 	
+    /**
+     * Stores the simulation time for the next GUI update.
+     */
+    private double mTimeNextGUIUpdate = 0;
+    
 	public HRMViewer()
 	{
 		
@@ -874,9 +880,39 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 			Logging.log(this, "Got notification from " + pSource + " because of \"" + pReason + "\"");
 		}
 
-		resetGUI();
+		startGUIUpdateTimer();
 	}
 	
+	/**
+	 * Starts the timer for the "update GUI" event.
+	 * If the timer is already started nothing is done.
+	 */
+	private void startGUIUpdateTimer()
+	{
+		if (mTimeNextGUIUpdate == 0){
+			// determine the time when a "share phase" has to be started 
+			mTimeNextGUIUpdate = mHRMController.getSimulationTime() + HRMConfig.DebugOutput.GUI_NODE_DISPLAY_UPDATE_INTERVAL;
+
+			// register next trigger
+			mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.DebugOutput.GUI_NODE_DISPLAY_UPDATE_INTERVAL, this);
+		}else{
+			// timer is already started, we ignore the repeated request
+		}
+	}
+	
+	/**
+	 * This function is called when the event is fired by the main event system.
+	 */
+	@Override
+	public void fire()
+	{
+		// reset stored GUI update time
+		mTimeNextGUIUpdate = 0;
+		
+		// trigger GUI update
+		resetGUI();
+	}
+
 	public String toString()
 	{		
 		return "HRM viewer" + (mHRMController != null ? "@" + mHRMController.getNodeGUIName() : "");

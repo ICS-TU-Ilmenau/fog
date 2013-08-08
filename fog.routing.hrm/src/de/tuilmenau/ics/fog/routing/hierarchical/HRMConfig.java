@@ -47,6 +47,11 @@ public class HRMConfig
 		 * Shows debug outputs for each received RoutingInformation packet.
 		 */
 		public static final boolean SHOW_RECEIVED_ROUTING_INFO = false;
+
+		/**
+		 * Defines the time period between two updates of the node specific HRM display.
+		 */
+		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 1.0;
 	}
 	
 	public class Addressing
