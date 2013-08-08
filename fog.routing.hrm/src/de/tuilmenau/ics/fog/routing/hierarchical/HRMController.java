@@ -549,7 +549,7 @@ public class HRMController extends Application implements IServerCallback
 			}
 			if(!tClusterFound)
 			{
-				Cluster tCluster = new Cluster(new Long(tJoin.getTargetClusterID()), tJoin.getHierarchyLevel(), this);
+				Cluster tCluster = new Cluster(this, new Long(tJoin.getTargetClusterID()), tJoin.getHierarchyLevel());
 				if(tParticipate.isInterASCluster()) {
 					tCluster.setInterASCluster();
 					setSourceIntermediateCluster(tCluster, tCluster);
@@ -850,7 +850,7 @@ public class HRMController extends Application implements IServerCallback
 		if(!tClusterFound)
 		{
 			Logging.log(this, "Cluster is new, creating objects...");
-			Cluster tCluster = new Cluster(new Long(pToClusterID), pLevel, this);
+			Cluster tCluster = new Cluster(this, new Long(pToClusterID), pLevel);
 			setSourceIntermediateCluster(tCluster, tCluster);
 			addRoutableTarget(tCluster);
 			tCEP = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());

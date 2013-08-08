@@ -120,26 +120,26 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 * by a token the coordinator sends to all participants. In contrast to the cluster token the identity is used
 	 * to filter potential participants that may be used for the election of a coordinator.
 	 * 
-	 * @param pClusterID
-	 * @param pLevel
-	 * @param ptHRMController
+	 * @param ptHRMController a reference to the HRMController instance
+	 * @param pClusterID the cluster ID
+	 * @param pHierarchyLevel the hierarchy level
 	 */
-	public Cluster(Long pClusterID, HierarchyLevel pHierarchyLevelValue, HRMController pHRMController)
+	public Cluster(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel)
 	{
 		// initialize the HRMID of the cluster to ".0.0.0"
 		mHRMID = new HRMID(0);
 		
 		mClusterID = pClusterID;
-		mHierarchyLevel = pHierarchyLevelValue;
+		mHierarchyLevel = pHierarchyLevel;
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
 		mHRMController = pHRMController;
 		mBullyPriority = BullyPriority.createForCluster(this);
-		Logging.log(this, "CREATED CLUSTER " + mClusterID + " on level " + mHierarchyLevel + " with priority " + mBullyPriority.getValue());
+		Logging.log(this, "CREATED CLUSTER " + mClusterID + " on level " + mHierarchyLevel.getValue() + " with priority " + mBullyPriority.getValue());
 		for(ICluster tCluster : getHRMController().getRoutingTargets())
 		{
 			Logging.log(this, "Found already known neighbor: " + tCluster);
-			if ((tCluster.getHierarchyLevel().equals(pHierarchyLevelValue)) && (tCluster != this))
+			if ((tCluster.getHierarchyLevel().equals(mHierarchyLevel)) && (tCluster != this))
 			{
 				if (!(tCluster instanceof Cluster)){
 					Logging.err(this, "Routing target should be a cluster, but it is " + tCluster);
