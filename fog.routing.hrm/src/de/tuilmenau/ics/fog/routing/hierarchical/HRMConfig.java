@@ -36,7 +36,7 @@ public class HRMConfig
 		/**
 		 * Show debug outputs about the timing of report/share phases of each existing coordinator.
 		 */
-		public static final boolean GUI_SHOW_TIMING_ROUTE_DISTRIBUTION = true;
+		public static final boolean GUI_SHOW_TIMING_ROUTE_DISTRIBUTION = false;
 
 		/**
 		 * Shows debug outputs for each received packet of a channel.

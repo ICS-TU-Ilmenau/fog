@@ -345,15 +345,21 @@ public class Coordinator implements ICluster, HRMEntity
 	 */
 	public void sharePhase()
 	{
+		// should we start the "share phase"?
 		if (sharePhaseHasTimeout()){
 			Logging.log(this, "SHARE PHASE with cluster members on level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+
+			// store the time of this "share phase"
+			mTimeOfLastSharePhase = getHRMController().getSimulationTime();
+			
+			// determine own local cluster address
 			HRMID tOwnClusterAddress = mManagedCluster.getHRMID();
 	
 			Logging.log(this, "    ..distributing as " + tOwnClusterAddress.toString() + " aggregated ROUTES among cluster members: " + mManagedCluster.getClusterMembers());
 			
 			// send the routing information to cluster members
 			for(CoordinatorCEPChannel tClusterMember : mManagedCluster.getClusterMembers()) {
-				RoutingInformation tRoutingInformationPacket = new RoutingInformation(getHRMID(), tClusterMember.getPeerHRMID());
+				RoutingInformation tRoutingInformationPacket = new RoutingInformation(tOwnClusterAddress, tClusterMember.getPeerHRMID());
 			
 				// are we on base hierarchy level?
 				if (getHierarchyLevel().getValue() == 1){ // TODO: isBaseLevel()){
