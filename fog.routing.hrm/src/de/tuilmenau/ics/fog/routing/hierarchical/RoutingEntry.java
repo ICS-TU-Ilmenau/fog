@@ -107,7 +107,7 @@ public class RoutingEntry
 		mLocalLoop = false;
 		mRouteToDirectNeighbor = false;
 		
-		Logging.log(this, "CREATED");
+		//Logging.log(this, "CREATED");
 	}
 	
 	/**
