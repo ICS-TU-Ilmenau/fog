@@ -23,14 +23,20 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class NodeConfiguratorHRM implements NodeConfigurator
 {
-
-//	public static final String NAME = "hierarchical";
-	
+	/**
+	 * Constructor
+	 */
 	public NodeConfiguratorHRM()
-	{
-		
+	{		
 	}
 
+	/**
+	 * Configures the HRM specific parameters of the already create node.
+	 * 
+	 * @param pName the name of the node
+	 * @param pAS the autonomous system to which the node belongs to
+	 * @param pNode the node which has to be configured
+	 */
 	@Override
 	public void configure(String pName, AutonomousSystem pAS, Node pNode)
 	{
@@ -47,6 +53,11 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		Logging.log(this, "###### CONFIGURING NODE " + pName + " -END ###### ");
 	}
 
+	/**
+	 * Generates a descriptive string about this object
+	 * 
+	 * @return the description string
+	 */
 	public String toString()
 	{
 		String tResult = getClass().getSimpleName() + (mNode != null ? "@" + mNode.toString() : "");
@@ -54,5 +65,8 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		return tResult;
 	}
 	
+	/**
+	 * Stores the node which has to be configured
+	 */
 	private Node mNode = null;
 }

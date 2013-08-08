@@ -38,6 +38,12 @@ public class LinkToNode extends Command
 	{
 	}
 
+	/**
+	 * Initializes this Command.
+	 *
+	 * @param pSite the SWT site for this Command
+	 * @param pObject the object parameter
+	 */
 	@Override
 	public void init(IWorkbenchPartSite pSite, Object pObject)
 	{
@@ -68,6 +74,9 @@ public class LinkToNode extends Command
 		}
 	}
 
+	/**
+	 * Triggers the actual link creation process.
+	 */
 	private void createBusAndLinkToNodes()
 	{
 		// create name for bus
@@ -134,7 +143,7 @@ public class LinkToNode extends Command
 	}
 	
 	/**
-	 * Shows the dialog which allows the user to select the attributes for the bus.
+	 * Shows the dialog which allows the user to select the attributes for the bus which has to be created for the desired link.
 	 */
 	private void showBusDialogs()
 	{

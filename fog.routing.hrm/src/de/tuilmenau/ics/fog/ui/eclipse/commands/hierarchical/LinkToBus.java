@@ -30,10 +30,19 @@ public class LinkToBus extends Command
 	private static String sLastSelectedBusName = null;
 	private ILowerLayer mSelectedBus = null;
 			
+	/**
+	 * Constructor
+	 */
 	public LinkToBus()
 	{
 	}
 
+	/**
+	 * Initializes this Command.
+	 *
+	 * @param pSite the SWT site for this Command
+	 * @param pObject the object parameter
+	 */
 	@Override
 	public void init(IWorkbenchPartSite pSite, Object pObject)
 	{
@@ -62,6 +71,9 @@ public class LinkToBus extends Command
 		}
 	}
 
+	/**
+	 * Triggers the actual link creation process.
+	 */
 	private void createLinkToBus()
 	{
 		if (mSelectedBus != null){
@@ -76,6 +88,9 @@ public class LinkToBus extends Command
 		}
 	}
 	
+	/**
+	 * Shows a dialog to allow the user to select the destination bus to which the node should be linked.
+	 */
 	private void showBusDialog()
 	{
 		// determine how many busses exist in the network

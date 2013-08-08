@@ -24,10 +24,18 @@ public class CreateBus extends SilentCommand
 	 */
 	private static int sNextNumber = 0;
 	
+	/**
+	 * Constructor
+	 */
 	public CreateBus()
 	{
 	}
 
+	/**
+	 * Initializes this SilentCommand.
+	 * 
+	 * @param pObject the object parameter
+	 */
 	@Override
 	public void init(Object pObject)
 	{

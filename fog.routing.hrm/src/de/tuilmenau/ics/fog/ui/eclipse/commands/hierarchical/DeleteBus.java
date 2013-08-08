@@ -22,11 +22,20 @@ public class DeleteBus extends Command
 {
 	private Bus mBus = null;
 	private AutonomousSystem mAs = null;
-			
+
+	/**
+	 * Constructor
+	 */
 	public DeleteBus()
 	{
 	}
 
+	/**
+	 * Initializes this Command.
+	 *
+	 * @param pSite the SWT site for this Command
+	 * @param pObject the object parameter
+	 */
 	@Override
 	public void init(IWorkbenchPartSite pSite, Object pObject)
 	{
@@ -52,6 +61,9 @@ public class DeleteBus extends Command
 		}
 	}
 
+	/**
+	 * Triggers the actual deletion.
+	 */
 	private void deleteBus()
 	{
 		if ((mBus != null) && (mAs != null)){
@@ -62,6 +74,9 @@ public class DeleteBus extends Command
 		}
 	}
 	
+	/**
+	 * Shoes a dialog to allow the user to acknowledge/cancel the deletion process
+	 */
 	private void showAckDialog()
 	{
 		

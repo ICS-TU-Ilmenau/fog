@@ -26,6 +26,11 @@ public class DeleteNode extends Command
 	{
 	}
 
+	/**
+	 * Initializes this Command.
+	 * 
+	 * @param pObject the object parameter
+	 */
 	@Override
 	public void init(IWorkbenchPartSite pSite, Object pObject)
 	{
@@ -52,6 +57,9 @@ public class DeleteNode extends Command
 		}
 	}
 
+	/**
+	 * Triggers the actual deletion process.
+	 */
 	private void deleteNode()
 	{
 		if (mNode != null){
@@ -62,6 +70,9 @@ public class DeleteNode extends Command
 		}
 	}
 	
+	/**
+	 * Shows a dialog to allow the user to acknowledge/cancel the deletion process.
+	 */
 	private void showAckDialog()
 	{
 		

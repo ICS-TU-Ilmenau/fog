@@ -23,11 +23,19 @@ public class CreateNode extends SilentCommand
 	 * Stores the next number for the next created node.
 	 */
 	private static int sNextNumber = 0;
-	
+
+	/**
+	 * Constructor
+	 */
 	public CreateNode()
 	{
 	}
 
+	/**
+	 * Initializes this SilentCommand.
+	 * 
+	 * @param pObject the object parameter
+	 */
 	@Override
 	public void init(Object pObject)
 	{
