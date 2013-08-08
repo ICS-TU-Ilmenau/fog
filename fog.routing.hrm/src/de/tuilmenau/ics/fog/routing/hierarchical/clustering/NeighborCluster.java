@@ -132,7 +132,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		pCEP.addAnnouncedCluster(tCluster, this);
 	}
 
-	public CoordinatorCEPChannel getCoordinatorCEP()
+	public CoordinatorCEPChannel getSuperiorCoordinatorCEP()
 	{
 		return null;
 	}

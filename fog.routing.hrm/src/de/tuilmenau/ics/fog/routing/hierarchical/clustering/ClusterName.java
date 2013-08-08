@@ -166,7 +166,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public CoordinatorCEPChannel getCoordinatorCEP()
+	public CoordinatorCEPChannel getSuperiorCoordinatorCEP()
 	{
 		return null;
 	}

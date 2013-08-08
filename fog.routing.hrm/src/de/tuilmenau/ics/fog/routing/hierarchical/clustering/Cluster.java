@@ -364,8 +364,8 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				 */
 				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel)) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
-						if(tManager.getCoordinatorCEP() != null) {
-							tManager.getCoordinatorCEP().sendPacket(pAnnounce);
+						if(tManager.getSuperiorCoordinatorCEP() != null) {
+							tManager.getSuperiorCoordinatorCEP().sendPacket(pAnnounce);
 						}
 					}
 				}
@@ -396,7 +396,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 	}
 	
-	public CoordinatorCEPChannel getCoordinatorCEP()
+	public CoordinatorCEPChannel getSuperiorCoordinatorCEP()
 	{
 		return mChannelToCoordinator;
 	}

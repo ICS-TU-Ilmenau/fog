@@ -167,9 +167,9 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	
 	/**
 	 * 
-	 * @return Return null in case the node is coordinator itself, otherwise the connection end point that leads to the coordinator is returned. 
+	 * @return Return null in case the node is coordinator itself, otherwise the connection end point that leads to the superior coordinator is returned. 
 	 */
-	public CoordinatorCEPChannel getCoordinatorCEP();
+	public CoordinatorCEPChannel getSuperiorCoordinatorCEP();
 	
 	/**
 	 * Once an announcement was received, the coordinator is set via this method. However this function does not have to be necessarily called

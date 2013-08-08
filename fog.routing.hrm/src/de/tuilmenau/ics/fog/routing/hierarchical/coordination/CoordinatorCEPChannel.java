@@ -129,7 +129,7 @@ public class CoordinatorCEPChannel
 			if (BULLY_SIGNALING_DEBUGGING)
 				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" an ELECT: " + tPacketBullyElect);
 
-			if ((getPeer().getCoordinatorCEP() != null) && (getPeer().getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
+			if ((getPeer().getSuperiorCoordinatorCEP() != null) && (getPeer().getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
 				
 				mPeerPriority = tPacketBullyElect.getSenderPriority();
 				
@@ -519,7 +519,7 @@ public class CoordinatorCEPChannel
 					Logging.log(this, "CHANNEL-received from \"" + mPeerCluster + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
 
 				if(!tRequestCoordinatorPacket.isAnswer()) {
-					if(getPeer().getCoordinatorCEP() != null) {
+					if(getPeer().getSuperiorCoordinatorCEP() != null) {
 						ICluster tCluster = getPeer().getHRMController().getClusterWithCoordinatorOnLevel(getPeer().getHierarchyLevel().getValue());
 						Logging.log(this, "Name of coordinator is " + tCluster.getCoordinatorName());
 						
