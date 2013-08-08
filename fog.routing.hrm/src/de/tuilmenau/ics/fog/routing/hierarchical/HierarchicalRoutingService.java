@@ -121,6 +121,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 
 	/**
 	 * Adds a route to the local HRM routing table.
+	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
 	 * 
 	 * @param pRoutingTableEntry the routing table entry
 	 */

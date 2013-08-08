@@ -844,7 +844,7 @@ public class CoordinatorCEPChannel
 					tNewCluster = tCluster;
 					if(tNewCluster instanceof NeighborCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {
 						Logging.log(this, "Filling required information into " + tNewCluster);
-						tNewCluster.setCoordinatorCEP(null, null, pEntry.getCoordinatorName(), pEntry.getToken(), pEntry.getCoordinatorRoutingAddress());
+						tNewCluster.setSuperiorCoordinatorCEP(null, null, pEntry.getCoordinatorName(), pEntry.getToken(), pEntry.getCoordinatorRoutingAddress());
 						if(pEntry.isInterASCluster()){
 							tNewCluster.setInterASCluster();
 						}

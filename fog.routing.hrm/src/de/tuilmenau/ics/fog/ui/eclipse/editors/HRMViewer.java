@@ -183,7 +183,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 		tTableColDR.setText("MaxDR [Kb/s]");
 		// col. 6
 		TableColumn tTableColLoop = new TableColumn(tTableRoutingTable, SWT.NONE, 6);
-		tTableColLoop.setText("Loopback");
+		tTableColLoop.setText("Loopback?");
+		// col. 7
+		TableColumn tTableColDirectNeighbor = new TableColumn(tTableRoutingTable, SWT.NONE, 7);
+		tTableColDirectNeighbor.setText("Route to neighbor");
 		
 		if ((tHRS.routingTable() != null) && (!tHRS.routingTable().isEmpty())) {
 			int tRowNumber = 0;
@@ -250,6 +253,15 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 					tTableRow.setText(6, "no");
 				}
 
+				/**
+				 * Column 7: direct neighbor?
+				 */
+				if (tEntry.isRouteToDirectNeighbor()){
+					tTableRow.setText(7, "yes");				
+				}else{
+					tTableRow.setText(7, "no");
+				}
+
 				tRowNumber++;
 			}
 		}
@@ -271,43 +283,45 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 		tLayoutRoutingTable.setColumnData(tTableColDelay, new ColumnWeightData(1));
 		tLayoutRoutingTable.setColumnData(tTableColDR, new ColumnWeightData(1));
 		tLayoutRoutingTable.setColumnData(tTableColLoop, new ColumnWeightData(1));
-
+		tLayoutRoutingTable.setColumnData(tTableColDirectNeighbor, new ColumnWeightData(1));		
+		
 		/**
 		 * Add a listener to allow re-sorting of the table based on the destination per table row
 		 */
 		tTableColDest.addListener(SWT.Selection, new Listener() {
-		      public void handleEvent(Event e) {
-		        // sort column 2
+			public void handleEvent(Event e) {
+				// sort column 2
 		        TableItem[] tAllRows = tTableRoutingTable.getItems();
 		        Collator collator = Collator.getInstance(Locale.getDefault());
 		        
 		        for (int i = 1; i < tAllRows.length; i++) {
-		          String value1 = tAllRows[i].getText(1);
+		        	String value1 = tAllRows[i].getText(1);
 		          
-		          for (int j = 0; j < i; j++) {
-		            String value2 = tAllRows[j].getText(1);
+		        	for (int j = 0; j < i; j++) {
+		        		String value2 = tAllRows[j].getText(1);
 		            
-		            if (collator.compare(value1, value2) < 0) {
-		              // copy table row data
-		              String[] tRowData = { tAllRows[i].getText(0), tAllRows[i].getText(1) };
-		              
-		              // delete table row "i"
-		              tAllRows[i].dispose();
-		              
-		              // create new table row
-		              TableItem tRow = new TableItem(tTableRoutingTable, SWT.NONE, j);
-		              tRow.setText(tRowData);
-		              
-		              // update data of table rows
-		              tAllRows = tTableRoutingTable.getItems();
-		              
-		              break;
-		            }
-		          }
+		        		if (collator.compare(value1, value2) < 0) {
+							// copy table row data
+							String[] tRowData = { tAllRows[i].getText(0), tAllRows[i].getText(1) };
+							  
+							// delete table row "i"
+							tAllRows[i].dispose();
+							  
+							// create new table row
+							TableItem tRow = new TableItem(tTableRoutingTable, SWT.NONE, j);
+							tRow.setText(tRowData);
+							  
+							// update data of table rows
+							tAllRows = tTableRoutingTable.getItems();
+							  
+							break;
+		        		}
+		        	}
 		        }
-		      }
-		    });
+			}
+	    });
 		
+		// arrange the GUI content in order to full the entire space
         mContainer.setSize(mContainer.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         mContainerRoutingTable.setSize(mContainerRoutingTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 	}

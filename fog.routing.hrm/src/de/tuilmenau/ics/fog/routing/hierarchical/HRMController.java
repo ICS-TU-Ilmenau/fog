@@ -202,6 +202,9 @@ public class HRMController extends Application implements IServerCallback
 		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
 			Logging.log(this, "Got notification with argument " + pArgument);
 		}
+		
+		//TODO: add a time period here to avoid multiple GUI updates in short time periods
+		
 		mGUIInformer.notifyObservers(pArgument);
 	}
 
@@ -464,7 +467,21 @@ public class HRMController extends Application implements IServerCallback
 		return mKnownClusters;
 	}
 
-	
+	/**
+	 * Adds an entry to the routing table of the local HRS instance
+	 * In opposite to addRoute() from the HierarchicalRoutingService class, this function additionally updates the GUI
+	 * 
+	 * @param pRoutingEntry the new routing entry
+	 */
+	public void addRoute(RoutingEntry pRoutingEntry)
+	{
+		// inform the HRS about the new route
+		getHRS().addRoute(pRoutingEntry);
+		
+		// it's time to update the GUI
+		notifyGUI(this);
+	}
+
 	
 	
 	

@@ -31,7 +31,7 @@ public class RoutingEntry
 	/**
 	 * Defines a constant value for "no utilization".
 	 */
-	public static final float NO_UTILIZATION = 0;
+	public static final float NO_UTILIZATION = -1;
 
 	/**
 	 * Defines a constant value for "no delay".
@@ -76,8 +76,15 @@ public class RoutingEntry
 
 	/**
 	 * Stores if the route describes a local loop.
+	 * (for GUI only)
 	 */
-	private boolean mLocalLoop = true; 
+	private boolean mLocalLoop = false; 
+	
+	/**
+	 * Stores if the route describes a link to a neighbor node.
+	 * (for GUI only)
+	 */
+	private boolean mRouteToDirectNeighbor = false;
 	
 	/**
 	 * Constructor
@@ -98,8 +105,9 @@ public class RoutingEntry
 		mMinDelay = pMinDelay;
 		mMaxDataRate = pMaxDataRate;
 		mLocalLoop = false;
+		mRouteToDirectNeighbor = false;
 		
-		Logging.log(this, "Created");
+		Logging.log(this, "CREATED");
 	}
 	
 	/**
@@ -114,6 +122,26 @@ public class RoutingEntry
 		
 		// mark as local loop
 		tEntry.mLocalLoop = true;
+		
+		// return with the entry
+		return tEntry;
+	}
+
+	/**
+	 * Factory function: creates a route to a direct neighbor.
+	 * 
+	 * @param pDirectNeighbor the destination of the direct neighbor
+	 * @param pUtilization the utilization of the described route
+	 * @param pMinDelay the minimum additional delay the described route causes
+	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 */
+	public static RoutingEntry createRouteToDirectNeighbor(HRMID pDirectNeighbor, float pUtilization, long pMinDelay, long pMaxDataRate)
+	{
+		// create instance
+		RoutingEntry tEntry = new RoutingEntry(pDirectNeighbor, pDirectNeighbor, HRMConfig.Routing.HOP_COSTS_TO_A_DIRECT_NEIGHBOR, pUtilization, pMinDelay, pMaxDataRate);
+		
+		// mark as local loop
+		tEntry.mRouteToDirectNeighbor = true;
 		
 		// return with the entry
 		return tEntry;
@@ -181,6 +209,7 @@ public class RoutingEntry
 	
 	/**
 	 * Determines if the route describes a local loop.
+	 * (for GUI only)
 	 * 
 	 * @return true if the route is a local loop, otherwise false
 	 */
@@ -189,6 +218,17 @@ public class RoutingEntry
 		return mLocalLoop;
 	}
 	
+	/**
+	 * Determines if the route ends at a direct neighbor.
+	 * (for GUI only)
+	 * 
+	 * @return true if the route is such a route, otherwise false
+	 */
+	public boolean isRouteToDirectNeighbor()
+	{
+		return mRouteToDirectNeighbor;
+	}
+
 	/**
 	 * Returns an object describing string
 	 * 

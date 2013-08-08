@@ -261,7 +261,7 @@ public class Elector implements HRMEntity
 		signalElectionEnd();
 		
 		Name tNodeName = tNode.getRoutingService().getNameFor(tNode.getCentralFN());
-		mParentCluster.setCoordinatorCEP(null, mParentCluster.getSignature(), tNode.getCentralFN().getName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), (L2Address)tNodeName);
+		mParentCluster.setSuperiorCoordinatorCEP(null, mParentCluster.getSignature(), tNode.getCentralFN().getName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), (L2Address)tNodeName);
 
 		// create new coordinator instance
 		Coordinator tElectedCoordinator = new Coordinator(mParentCluster);

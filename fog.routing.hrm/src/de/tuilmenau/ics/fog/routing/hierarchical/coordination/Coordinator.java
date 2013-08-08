@@ -135,6 +135,125 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 	
 	/**
+	 * Creates a new HRMID for a cluster member depending on the given member number.
+	 * 
+	 * @param pMemberNumber the member number
+	 * @return the new HRMID for the cluster member
+	 */
+	private HRMID createClusterMemberAddress(int pMemberNumber)
+	{
+		HRMID tHRMID = mHRMID.clone();
+		
+		// transform the member number to a BigInteger
+		BigInteger tAddress = BigInteger.valueOf(pMemberNumber);
+
+		// set the member number for the given hierarchy level
+		tHRMID.setLevelAddress(mHierarchyLevel, tAddress);
+
+		// some debug outputs
+		if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+			Logging.log(this, "Set " + tAddress + " on hierarchy level " + mHierarchyLevel.getValue() + " for HRMID " + tHRMID.toString());
+			Logging.log(this, "Created for a cluster member the NEW HRMID=" + tHRMID.toString());
+		}
+		
+		return tHRMID;
+	}
+
+	/**
+	 * This function is called for distributing HRMIDs among the cluster members.
+	 */
+	public void signalAddressDistribution()
+	{
+		/**
+		 * The following value is used to assign monotonously growing addresses to all cluster members.
+		 * The addressing has to start with "1".
+		 */
+		int tNextClusterMemberAddress = 1;
+
+		Logging.log(this, "DISTRIBUTING ADDRESSES to entities on level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+		
+		/**
+		 * Assign ourself an HRMID address
+		 */
+		// are we at the base level?
+		if(mHierarchyLevel.isBaseLevel()) {
+			
+			// create new HRMID for ourself
+			HRMID tOwnAddress = createClusterMemberAddress(tNextClusterMemberAddress++);
+
+			Logging.log(this, "    ..setting local HRMID " + tOwnAddress.toString());
+
+			//HINT: don't update the HRMID of the coordinator here!
+			
+			// update the HRMID of the managed cluster by direct call and avoid additional communication overhead
+			mManagedCluster.setHRMID(this, tOwnAddress);
+		}
+
+		/**
+		 * Distribute AssignHRMID packets among the cluster members 
+		 */
+		Logging.log(this, "    ..distributing HRMIDs among cluster members: " + mManagedCluster.getClusterMembers());
+		for(CoordinatorCEPChannel tClusterMember : mManagedCluster.getClusterMembers()) {
+
+			//TODO: don't send this update in a loop to ourself!
+			//TODO: check if cluster members already have an address and distribute only free addresses here
+			
+			// create new HRMID for cluster member
+			HRMID tHRMID = createClusterMemberAddress(tNextClusterMemberAddress++);
+
+			// store the HRMID under which the peer will be addressable from now 
+			tClusterMember.setPeerHRMID(tHRMID);
+			
+			if ((tClusterMember.getPeerHRMID() != null) && (!tClusterMember.getPeerHRMID().equals(tHRMID))){
+				Logging.log(this, "    ..replacing HRMID " + tClusterMember.getPeerHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
+			}else
+				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
+
+			// create new AssignHRMID packet for the cluster member
+			AssignHRMID tAssignHRMID = new AssignHRMID(getHRMController().getNode().getCentralFN().getName(), tClusterMember.getPeerHRMID(), tHRMID);
+			
+			// share the route to this cluster member with all other cluster members
+			shareRoute(tClusterMember);
+			
+			// send the packet
+			tClusterMember.sendPacket(tAssignHRMID);
+		}
+	}
+	
+	/**
+	 * Shares a router to a cluster cluster member with other cluster members
+	 * 
+	 * @param pClusterMemberChannel the cluster member to whom we have a sharable route
+	 */
+	private void shareRoute(CoordinatorCEPChannel pClusterMemberChannel)
+	{
+		// determine the HRMID of the cluster member
+		HRMID tMemberHRMID = pClusterMemberChannel.getPeerHRMID();
+		
+		// are we on base hierarchy level?
+		if (getHierarchyLevel().getValue() == 1){ // TODO: isBaseLevel()){
+			// create
+			RoutingEntry tRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tMemberHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+			
+			Logging.log(this, "SHARING ROUTE: " + tRoutingEntry);
+			
+			getHRMController().addRoute(tRoutingEntry);
+			
+			//TODO: store shared routes and distribute them later on
+		}else{
+			//TODO
+			Logging.log(this, "IMPLEMENT ME - SHARING ROUTE TO: " + pClusterMemberChannel);
+		}
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	/**
 	 * Returns the coordinator HRMSignature
 	 * 
 	 * @return the signature
@@ -253,89 +372,6 @@ public class Coordinator implements ICluster, HRMEntity
 		}
 	}
 	
-	/**
-	 * Creates a new HRMID for a cluster member depending on the given member number.
-	 * 
-	 * @param pMemberNumber the member number
-	 * @return the new HRMID for the cluster member
-	 */
-	private HRMID createClusterMemberAddress(int pMemberNumber)
-	{
-		HRMID tHRMID = mHRMID.clone();
-		
-		// transform the member number to a BigInteger
-		BigInteger tAddress = BigInteger.valueOf(pMemberNumber);
-
-		// set the member number for the given hierarchy level
-		tHRMID.setLevelAddress(mHierarchyLevel, tAddress);
-
-		// some debug outputs
-		if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-			Logging.log(this, "Set " + tAddress + " on hierarchy level " + mHierarchyLevel.getValue() + " for HRMID " + tHRMID.toString());
-			Logging.log(this, "Created for a cluster member the NEW HRMID=" + tHRMID.toString());
-		}
-		
-		return tHRMID;
-	}
-
-	/**
-	 * This function is called for distributing HRMIDs among the cluster members.
-	 */
-	public void signalAddressDistribution()
-	{
-		/**
-		 * The following value is used to assign monotonously growing addresses to all cluster members.
-		 * The addressing has to start with "1".
-		 */
-		int tNextClusterMemberAddress = 1;
-
-		Logging.log(this, "DISTRIBUTING ADDRESSES to entities on level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
-		
-		/**
-		 * Assign ourself an HRMID address
-		 */
-		// are we at the base level?
-		if(mHierarchyLevel.isBaseLevel()) {
-			
-			// create new HRMID for ourself
-			HRMID tOwnAddress = createClusterMemberAddress(tNextClusterMemberAddress++);
-
-			Logging.log(this, "    ..setting local HRMID " + tOwnAddress.toString());
-
-			//HINT: don't update the HRMID of the coordinator here!
-			
-			// update the HRMID of the managed cluster by direct call and avoid additional communication overhead
-			mManagedCluster.setHRMID(this, tOwnAddress);
-		}
-
-		/**
-		 * Distribute AssignHRMID packets among the cluster members 
-		 */
-		Logging.log(this, "    ..distributing HRMIDs among cluster members: " + mManagedCluster.getClusterMembers());
-		for(CoordinatorCEPChannel tClusterMember : mManagedCluster.getClusterMembers()) {
-
-			//TODO: don't send this update in a loop to ourself!
-			//TODO: check if cluster members already have an address and distribute only free addresses here
-			
-			// create new HRMID for cluster member
-			HRMID tHRMID = createClusterMemberAddress(tNextClusterMemberAddress++);
-
-			// store the HRMID under which the peer will be addressable from now 
-			tClusterMember.setPeerHRMID(tHRMID);
-			
-			if ((tClusterMember.getPeerHRMID() != null) && (!tClusterMember.getPeerHRMID().equals(tHRMID))){
-				Logging.log(this, "    ..replacing HRMID " + tClusterMember.getPeerHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
-			}else
-				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
-
-			// create new AssignHRMID packet for the cluster member
-			AssignHRMID tAssignHRMID = new AssignHRMID(getHRMController().getNode().getCentralFN().getName(), tClusterMember.getPeerHRMID(), tHRMID);
-			
-			// send the packet
-			tClusterMember.sendPacket(tAssignHRMID);
-		}
-	}
-	
 	private boolean connectToNeighbors(int radius)
 	{
 		for(HRMGraphNodeName tNode : mClustersToNotify) {
@@ -379,6 +415,11 @@ public class Coordinator implements ICluster, HRMEntity
 		}
 	}
 
+	/**
+	 * Determines the Bully priority of the superior coordinator.
+	 * 
+	 * @return the Bully priority of the superior coordinator
+	 */
 	@Override
 	public BullyPriority getCoordinatorPriority() {
 		if(mCoordinatorCEP != null) {
@@ -667,7 +708,7 @@ public class Coordinator implements ICluster, HRMEntity
 								}
 							}
 							setToken(pAnnounce.getToken());
-							setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(),pAnnounce.getToken(),  pCEP.getPeerName());
+							setSuperiorCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(),pAnnounce.getToken(),  pCEP.getPeerName());
 							getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 							getCoordinatorCEP().sendPacket(tNewCovered);
 						}
@@ -686,7 +727,7 @@ public class Coordinator implements ICluster, HRMEntity
 				}
 				setToken(pAnnounce.getToken());
 				getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
-				setCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerName());
+				setSuperiorCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerName());
 			}
 		} else {
 			/*
@@ -819,7 +860,7 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 
 	@Override
-	public void setCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, int pCoordToken, HRMName pAddress) {
+	public void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, int pCoordToken, HRMName pAddress) {
 		/**
 		 * the name of the cluster, which is managed by this coordinator
 		 */

@@ -31,7 +31,7 @@ public class HRMConfig
 		/**
 		 * Show relative addresses in the GUI? (e.g., "0.0.1")
 		 */
-		public static final boolean GUI_SHOW_RELATIVE_ADDRESSES = false;
+		public static final boolean GUI_SHOW_RELATIVE_ADDRESSES = true;
 	}
 	
 	public class Addressing
@@ -77,24 +77,26 @@ public class HRMConfig
 	 */
 	public class Routing
 	{
-
 		/**
 		 * Maximum radius that is allowed during expansion phase 
 		 */
 		public static final int EXPANSION_RADIUS = 4; //TV
-		
 		
 		/**
 		 * Disables/enables the region limitation feature which can be used to implement an obstructive/restrictive routing based on the HRM infrastructure.
 		 */
 		public static final boolean ENABLE_REGION_LIMITATION = false; //TV
 
-
 		/**
 		 * Should each HRS instance try to avoid duplicates in its internal routing tables?
 		 * In this case, also updates of routing table entries are made if the new route has better QoS values than the old one.
 		 */
 		public static final boolean AVOID_DUPLICATES_IN_ROUTING_TABLES = true;
+
+		/**
+		 * Defines the hop costs for a route to a direct neighbor. 
+		 */
+		public static final int HOP_COSTS_TO_A_DIRECT_NEIGHBOR = 1;
 	}
 
 	public class Debugging
