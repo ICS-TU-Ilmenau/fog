@@ -547,6 +547,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 		reportAndShare();
 	}
 
+	/**
+	 * Triggers the "report phase" / "share phase" of all known coordinators
+	 */
 	public void reportAndShare()
 	{	
 		if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
@@ -572,9 +575,28 @@ public class HRMController extends Application implements IServerCallback, IEven
 		 */
 		mAS.getTimeBase().scheduleIn(HRMConfig.Routing.GRANULARITY_SHARE_PHASE, this);
 	}
-
 	
+	/**
+	 * Calculate the time period between "share phases" 
+	 *  
+	 * @param pHierarchyLevel the hierarchy level 
+	 * @return the calculated time period
+	 */
+	public double getPeriodSharePhase(int pHierarchyLevelValue)
+	{
+		return (double) 2 * HRMConfig.Routing.GRANULARITY_SHARE_PHASE * pHierarchyLevelValue; //TODO: use an exponential time distribution here
+	}
 	
+	/**
+	 * Calculate the time period between "share phases" 
+	 *  
+	 * @param pHierarchyLevel the hierarchy level 
+	 * @return the calculated time period
+	 */
+	public double getPeriodReportPhase(HierarchyLevel pHierarchyLevel)
+	{
+		return (double) HRMConfig.Routing.GRANULARITY_SHARE_PHASE * (pHierarchyLevel.getValue() - 1); //TODO: use an exponential time distribution here
+	}
 	
 	
 	

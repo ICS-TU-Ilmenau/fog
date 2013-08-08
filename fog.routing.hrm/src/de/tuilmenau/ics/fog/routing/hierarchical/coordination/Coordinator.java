@@ -324,7 +324,7 @@ public class Coordinator implements ICluster, HRMEntity
 	public boolean sharePhaseHasTimeout()
 	{
 		// determine the time between two "share phases"
-		double tDesiredTimePeriod = 2 * HRMConfig.Routing.GRANULARITY_SHARE_PHASE * (getHierarchyLevel().getValue() - 1); //TODO: use an exponential time distribution here
+		double tDesiredTimePeriod = getHRMController().getPeriodSharePhase(getHierarchyLevel().getValue() - 1);
 		
 		// determine the time when a "share phase" has to be started 
 		double tTimeNextSharePhase = mTimeOfLastSharePhase + tDesiredTimePeriod;
