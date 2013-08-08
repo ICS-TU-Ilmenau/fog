@@ -73,7 +73,11 @@ public class RoutingEntry
 	 * Stores the maximum data rate[Kb/s] the described route might provide.
 	 */
 	private long mMaxDataRate = INFINITE_DATARATE;
-	
+
+	/**
+	 * Stores if the route describes a local loop.
+	 */
+	private boolean mLocalLoop = true; 
 	
 	/**
 	 * Constructor
@@ -93,6 +97,7 @@ public class RoutingEntry
 		mUtilization = pUtilization;
 		mMinDelay = pMinDelay;
 		mMaxDataRate = pMaxDataRate;
+		mLocalLoop = false;
 		
 		Logging.log(this, "Created");
 	}
@@ -104,7 +109,14 @@ public class RoutingEntry
 	 */
 	public static RoutingEntry createLocalhostEntry(HRMID pLoopAddress)
 	{
-		return new RoutingEntry(pLoopAddress, pLoopAddress, NO_HOP_COSTS, NO_UTILIZATION, NO_DELAY, INFINITE_DATARATE);
+		// create instance
+		RoutingEntry tEntry = new RoutingEntry(pLoopAddress, pLoopAddress, NO_HOP_COSTS, NO_UTILIZATION, NO_DELAY, INFINITE_DATARATE);
+		
+		// mark as local loop
+		tEntry.mLocalLoop = true;
+		
+		// return with the entry
+		return tEntry;
 	}
 
 	/**
@@ -165,6 +177,16 @@ public class RoutingEntry
 	public long getMaxDataRate()
 	{
 		return mMaxDataRate;
+	}
+	
+	/**
+	 * Determines if the route describes a local loop.
+	 * 
+	 * @return true if the route is a local loop, otherwise false
+	 */
+	public boolean isLocalLoop()
+	{
+		return mLocalLoop;
 	}
 	
 	/**
