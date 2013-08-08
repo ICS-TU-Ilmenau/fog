@@ -215,7 +215,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	private void notifyGUI(Object pArgument)
 	{
-		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
 			Logging.log(this, "Got notification with argument " + pArgument);
 		}
 		
@@ -229,7 +229,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	public void registerGUI(Observer pGUI)
 	{
-		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
 			Logging.log(this, "Registering GUI " + pGUI);
 		}
 		mGUIInformer.addObserver(pGUI);
@@ -240,7 +240,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	public void unregisterGUI(Observer pGUI)
 	{
-		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
 			Logging.log(this, "Unregistering GUI " + pGUI);
 		}
 		mGUIInformer.deleteObserver(pGUI);

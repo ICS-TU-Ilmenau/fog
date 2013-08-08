@@ -984,7 +984,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable
 	@Override
 	public void update(Observable pSource, Object pReason)
 	{
-		if (HRMConfig.DebugOutput.GUI_NOTIFICATIONS){
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
 			Logging.log(this, "Got notification from " + pSource + " because of \"" + pReason + "\"");
 		}
 
