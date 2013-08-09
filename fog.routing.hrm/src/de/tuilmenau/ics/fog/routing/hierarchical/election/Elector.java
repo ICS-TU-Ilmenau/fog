@@ -93,10 +93,14 @@ public class Elector implements HRMEntity
 	 */
 	public void startElection()
 	{
-		signalElectionStart();
-		
-		//TODO: remove the following and trigger it in a correct way 
-		eventAllPrioritiesReceived();
+		if (getElectorState() != ElectorState.ELECTING){
+			signalElectionStart();
+			
+			//TODO: remove the following and trigger it in a correct way 
+			eventAllPrioritiesReceived();
+		}else{
+			Logging.warn(this, "Election is already running");
+		}
 	}
 	
 	/**
