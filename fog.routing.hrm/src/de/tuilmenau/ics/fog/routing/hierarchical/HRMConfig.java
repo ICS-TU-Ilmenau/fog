@@ -46,7 +46,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for each received RoutingInformation packet.
 		 */
-		public static final boolean SHOW_RECEIVED_ROUTING_INFO = false;
+		public static final boolean SHOW_SHARE_PHASE = false;
 
 		/**
 		 * Defines the time period between two updates of the node specific HRM display.

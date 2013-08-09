@@ -129,11 +129,12 @@ public class CoordinatorCEPChannel
 	 */
 	private void handleSignalingMessageSharePhase(RoutingInformation pRoutingInformationPacket)
 	{
-		if (HRMConfig.DebugOutput.SHOW_RECEIVED_ROUTING_INFO)
-			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\"");
+		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRoutingInformationPacket);
+		}
 		
 		for (RoutingEntry tEntry : pRoutingInformationPacket.getRoutes()){
-			if (HRMConfig.DebugOutput.SHOW_RECEIVED_ROUTING_INFO)
+			if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE)
 				Logging.log(this, "      ..found route: " + tEntry);
 			
 			getHRMController().addRoute(tEntry);
@@ -324,10 +325,6 @@ public class CoordinatorCEPChannel
 				// cast to a RoutingInformation signaling message
 				RoutingInformation tRoutingInformationPacket = (RoutingInformation)pData;
 
-				if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
-					Logging.log(this, "ROUTE_DISTRIBUTION-received from \"" + getPeerHRMID() + "\" a ROUTING INFO: " + tRoutingInformationPacket);
-				}
-				
 				// process Bully message
 				handleSignalingMessageSharePhase(tRoutingInformationPacket);
 				

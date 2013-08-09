@@ -347,7 +347,9 @@ public class Coordinator implements ICluster, HRMEntity
 	{
 		// should we start the "share phase"?
 		if (sharePhaseHasTimeout()){
-			Logging.log(this, "SHARE PHASE with cluster members on level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+			if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+				Logging.log(this, "SHARE PHASE with cluster members on level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+			}
 
 			// store the time of this "share phase"
 			mTimeOfLastSharePhase = getHRMController().getSimulationTime();
@@ -355,7 +357,9 @@ public class Coordinator implements ICluster, HRMEntity
 			// determine own local cluster address
 			HRMID tOwnClusterAddress = mManagedCluster.getHRMID();
 	
-			Logging.log(this, "    ..distributing as " + tOwnClusterAddress.toString() + " aggregated ROUTES among cluster members: " + mManagedCluster.getClusterMembers());
+			if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+				Logging.log(this, "    ..distributing as " + tOwnClusterAddress.toString() + " aggregated ROUTES among cluster members: " + mManagedCluster.getClusterMembers());
+			}
 			
 			// send the routing information to cluster members
 			for(CoordinatorCEPChannel tClusterMember : mManagedCluster.getClusterMembers()) {

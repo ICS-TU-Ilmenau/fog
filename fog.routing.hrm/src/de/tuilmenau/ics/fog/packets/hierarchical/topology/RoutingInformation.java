@@ -13,6 +13,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -45,7 +46,9 @@ public class RoutingInformation extends SignalingMessageHrm
 	 */
 	public void addRoute(RoutingEntry pRoutingEntry)
 	{
-		Logging.log(this, "Adding routing entry: " + pRoutingEntry);
+		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+			Logging.log(this, "Adding routing entry: " + pRoutingEntry);
+		}
 		
 		if (mRoutingEntries.contains(pRoutingEntry)){
 			Logging.err(this, "Duplicated entries detected, skipping this \"addRoute\" request");
