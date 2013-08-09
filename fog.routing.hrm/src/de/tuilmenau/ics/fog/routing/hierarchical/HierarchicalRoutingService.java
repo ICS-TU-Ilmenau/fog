@@ -297,16 +297,22 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	
 	public void registerNode(L2Address pAddress, boolean pGloballyImportant)
 	{
+		Logging.log(this, "REGISTERING NODE ADDRESS: " + pAddress + ", glob. important=" + pGloballyImportant);
+
 		mRoutingMap.add(pAddress);
 	}
 	
 	public void registerNode(Name pName, Name pAddress) throws RemoteException
 	{
+		Logging.log(this, "REGISTERING NODE NAME/ADDRESS: " + pName + " with address " + pAddress);
+
 		mNameMapping.registerName(pName, pAddress, NamingLevel.NAMES);
 	}
 
-	public boolean registerRoute(HRMName pFrom, HRMName pTo, Route pPath)
+	public boolean registerRoute(HRMName pFrom, HRMName pTo, Route pRoute)
 	{
+		Logging.log(this, "Registering route from " + pFrom + " to " + pTo + " by path \"" + pRoute + "\"");
+		
 		if(!mCoordinatorRoutingMap.contains(pFrom)){
 			mCoordinatorRoutingMap.add(pFrom);
 		}
@@ -315,15 +321,15 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			mCoordinatorRoutingMap.add(pTo);
 		}
 		
-		if(!mCoordinatorRoutingMap.isLinked(pFrom, pTo, pPath)) {
-			if(pPath != null) {
-				Route tPath = (Route)pPath.clone();
+		if(!mCoordinatorRoutingMap.isLinked(pFrom, pTo, pRoute)) {
+			if(pRoute != null) {
+				Route tPath = (Route)pRoute.clone();
 				if(!mCoordinatorRoutingMap.isLinked(pFrom, pTo, tPath)) {
 					mCoordinatorRoutingMap.storeLink(pFrom, pTo, tPath);
 				}
 			}
 		} else {
-			Logging.trace(this, "Link is already known (from " + pFrom + " to " + pTo + ")");
+			Logging.warn(this, "Link already known, source=" + pFrom + ", destination=" + pTo + ", route=" + pRoute);
 		}
 		return true;
 	}
