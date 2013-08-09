@@ -74,15 +74,15 @@ public class Simulation
 	{
 		if(pName == null) throw new RuntimeException(this +": invalid paramter pName of createAS");
 		
-		AutonomousSystem mLocalNet = mASs.get(pName);
-		if(mLocalNet == null) {
+		AutonomousSystem tLocalNet = mASs.get(pName);
+		if(tLocalNet == null) {
 			// try to get it via Jini
 			if(JiniHelper.getService(IAutonomousSystem.class, pName) == null) {
 				// when Jini failed, then create it locally
-				mLocalNet = new AutonomousSystem(pName, this, pPartialRouting, pPartialRoutingServiceName);
-				mASs.put(pName, mLocalNet);
+				tLocalNet = new AutonomousSystem(pName, this, pPartialRouting, pPartialRoutingServiceName);
+				mASs.put(pName, tLocalNet);
 				
-				mLogger.log(this, mLocalNet +" created");
+				mLogger.log(this, tLocalNet +" created");
 				return true;
 			}
 			// else: available on some other worker => reject
