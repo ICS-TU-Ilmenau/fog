@@ -446,7 +446,7 @@ public class Simulation
 		return true;
 	}
 
-	public Collection<AutonomousSystem> getLocalAS()
+	public Collection<AutonomousSystem> getAllAS()
 	{
 		return mASs.values();
 	}
