@@ -332,12 +332,12 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		return tForwarding;
 	}
 	
-	private <LinkType> List<RoutingServiceLink> getRoute(RoutableGraph pMap, HRMName pSource, HRMName pDestination)
+	private <LinkType> List<RoutingServiceLink> getRouteFromGraph(RoutableGraph pGraph, HRMName pSource, HRMName pDestination)
 	{		
-		if(pMap.contains(pSource) && pMap.contains(pDestination)) {
+		if(pGraph.contains(pSource) && pGraph.contains(pDestination)) {
 			List<LinkType> tRoute = null;
 			try {
-				tRoute = (List<LinkType>)pMap.getRoute(pSource, pDestination);
+				tRoute = (List<LinkType>)pGraph.getRoute(pSource, pDestination);
 				if(!tRoute.isEmpty()) {
 					if(tRoute.get(0) instanceof RoutingServiceLink) {
 						List<RoutingServiceLink> tRes = new LinkedList<RoutingServiceLink>();
@@ -366,13 +366,15 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	
 	private <LinkType> List<LinkType> getRoute(HRMName pSource, HRMName pDestination, Description pDescription, Identity pIdentity)
 	{
+		Logging.log(this, "GET ROUTE from " + pSource + " to " + pDestination);
+		
 		if(mRoutingMap.contains(pSource) && mRoutingMap.contains(pDestination)) {
-			List<LinkType> tRes = (List<LinkType>) getRoute(mRoutingMap, pSource, pDestination);
+			List<LinkType> tRes = (List<LinkType>) getRouteFromGraph(mRoutingMap, pSource, pDestination);
 			return tRes;
 		}
 		
 		if(mCoordinatorRoutingMap.contains(pSource) && mCoordinatorRoutingMap.contains(pDestination)) {
-			List<LinkType> tRes = (List<LinkType>) getRoute(mCoordinatorRoutingMap, pSource, pDestination);
+			List<LinkType> tRes = (List<LinkType>) getRouteFromGraph(mCoordinatorRoutingMap, pSource, pDestination);
 			return tRes;
 		}
 		
@@ -417,10 +419,12 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		 * Debug output about process start
 		 */
 		// debug output
-		if(pRequirements.isBestEffort()) {
-			Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination +"\"");
-		} else {
-			Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination + "\" with requirements \"" + pRequirements.toString() + "\"");
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			if(pRequirements.isBestEffort()) {
+				Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination +"\"");
+			} else {
+				Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination + "\" with requirements \"" + pRequirements.toString() + "\"");
+			}
 		}
 
 		/**
@@ -429,7 +433,9 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		// count call
 		//TODO: mCounterGetRoute.write(+1.0, mTimeBase.nowStream());
 
-		// check if the destination is defined by the help of a HRMID
+		/**
+		 * routing to a HRMID
+		 */
 		if (pDestination instanceof HRMID){
 			HRMID tDestHRMID = (HRMID)pDestination;
 			
@@ -470,6 +476,13 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 //			if(!mMap.contains(pSource)) {
 //				throw new RoutingException("Map does not contain source '" +pSource +"'. Invalid routing service entity '" +this +"' called.");
 //			}
+			
+		} 
+
+		/**
+		 * routing to a L2Address
+		 */
+		if (pDestination instanceof L2Address){
 			
 		}
 		
@@ -610,6 +623,10 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 				
 			}
 		}
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "      ..RESULT: " + tResultRoute);
+		}
+		
 		return tResultRoute;
 	}
 
