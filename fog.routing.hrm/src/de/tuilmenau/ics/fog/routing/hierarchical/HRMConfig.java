@@ -103,11 +103,6 @@ public class HRMConfig
 		public static final int EXPANSION_RADIUS = 4; //TV
 		
 		/**
-		 * Disables/enables the region limitation feature which can be used to implement an obstructive/restrictive routing based on the HRM infrastructure.
-		 */
-		public static final boolean ENABLE_REGION_LIMITATION = false; //TV
-
-		/**
 		 * Should each HRS instance try to avoid duplicates in its internal routing tables?
 		 * In this case, also updates of routing table entries are made if the new route has better QoS values than the old one.
 		 */
@@ -123,6 +118,11 @@ public class HRMConfig
 		 * The higher in the hierarchy a coordinator is, the higher is the multiplier for this value.
 		 */
 		public static final double GRANULARITY_SHARE_PHASE = 2.0; // in seconds
+		
+		/**
+		 * Should the packets of the "share phase" be send periodically? 
+		 */
+		public static final boolean PERIODIC_SHARE_PHASES = false; 
 	}
 
 	public class Debugging

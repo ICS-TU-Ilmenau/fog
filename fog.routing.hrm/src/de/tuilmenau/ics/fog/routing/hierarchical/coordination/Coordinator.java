@@ -76,6 +76,11 @@ public class Coordinator implements ICluster, HRMEntity
 	 */
 	private LinkedList<RoutingEntry> mSharedRoutes = new LinkedList<RoutingEntry>();
 	
+	/**
+	 * Stores whether the data of the "shared phase" has changed or not.
+	 */
+	private boolean mSharedRoutesHaveChanged = false;
+	
 	private HRMSignature mSignature = null;
 	
 	private HRMID mHRMID = null;
@@ -271,6 +276,9 @@ public class Coordinator implements ICluster, HRMEntity
 								// remove the route
 								mSharedRoutes.remove(tEntry);
 								
+								// mark "shared phase" data as changed
+								mSharedRoutesHaveChanged = true;
+								
 								// force a restart at the beginning of the routing table
 								tRestartNeeded = true;
 								//TODO: use a better(scalable) method here for removing duplicates
@@ -284,7 +292,9 @@ public class Coordinator implements ICluster, HRMEntity
 				/**
 				 * Add the entry to the shared routing table
 				 */
-				mSharedRoutes.add(tRoutingEntry);
+				mSharedRoutes.add(tRoutingEntry);//TODO: use a database per cluster member here
+				// mark "shared phase" data as changed
+				mSharedRoutesHaveChanged = true;
 			}
 		}else{
 			//TODO
@@ -340,6 +350,16 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 	
 	/**
+	 * Determines if new "share phase" data is available
+	 * 
+	 * @return true if new data is available, otherwise false
+	 */
+	private boolean hasNewSharePhaseData()
+	{
+		return mSharedRoutesHaveChanged;
+	}
+	
+	/**
 	 * This function implements the "share phase".
 	 * It distributes locally stored sharable routing data among the known cluster members
 	 */
@@ -353,7 +373,17 @@ public class Coordinator implements ICluster, HRMEntity
 
 			// store the time of this "share phase"
 			mTimeOfLastSharePhase = getHRMController().getSimulationTime();
+
+			if ((!HRMConfig.Routing.PERIODIC_SHARE_PHASES) && (hasNewSharePhaseData())){
+				if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+					Logging.log(this, "SHARE PHASE skipped because routing data hasn't changed since last signaling round");
+				}
+				return;
+			}
 			
+			/**
+			 * SHARE PHASE 
+			 */
 			// determine own local cluster address
 			HRMID tOwnClusterAddress = mManagedCluster.getHRMID();
 	
@@ -369,7 +399,7 @@ public class Coordinator implements ICluster, HRMEntity
 				if (getHierarchyLevel().getValue() == 1){ // TODO: isBaseLevel()){
 
 					/**
-					 * Add neighbor routes from the cluster member to here per registered local HRMID.
+					 * Add routes from the cluster member to this node for every registered local HRMID.
 					 */
 					for (HRMID tHRMID : getHRMController().getOwnHRMIDs()){
 						// create entry for cluster internal routing towards us
