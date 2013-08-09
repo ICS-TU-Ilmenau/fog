@@ -52,7 +52,7 @@ public class HRMName implements Name
 	 * 
 	 * @return The address will be returned by this method.
 	 */
-	public BigInteger getAddress()
+	public BigInteger getComplexAddress()
 	{
 		return mAddress;
 	}

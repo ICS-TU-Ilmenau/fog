@@ -68,7 +68,7 @@ public class CoordinatorCEPMultiplexer
 
 		if(!mConnectedEntities.contains(pTargetCluster.getCoordinatorName())) {
 			mConnectedEntities.add(pTargetCluster.getCoordinatorName());
-			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(pTargetCluster.getCoordinatorsAddress().getAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getToken());
+			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(pTargetCluster.getCoordinatorsAddress().getComplexAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getToken());
 			CoordinatorSession tCEP = new CoordinatorSession(mHRMController, false, tSourceClusterHierLvl, mHRMController.getMultiplexerOnLevel(tSourceClusterHierLvl.getValue()));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNode().getCentralFN().getName());
 			
@@ -190,7 +190,7 @@ public class CoordinatorCEPMultiplexer
 					}
 					Logging.log(this, "Created " + tDiscovery + " for " + pTargetCluster);
 					tDiscovery.setOrigin(tManager.getClusterID());
-					tDiscovery.setTargetClusterID(pTargetCluster.getCoordinatorsAddress().getAddress().longValue());
+					tDiscovery.setTargetClusterID(pTargetCluster.getCoordinatorsAddress().getComplexAddress().longValue());
 					tBigDiscovery.addNestedDiscovery(tDiscovery);
 				}
 			}

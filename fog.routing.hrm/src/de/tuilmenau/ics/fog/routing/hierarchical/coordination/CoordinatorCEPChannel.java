@@ -594,7 +594,7 @@ public class CoordinatorCEPChannel
 						
 						int tToken = tCluster.getToken();
 						Name tCoordinatorName = tCluster.getCoordinatorName();
-						long tCoordinatorAddress = tCluster.getCoordinatorsAddress().getAddress().longValue();
+						long tCoordinatorAddress = tCluster.getCoordinatorsAddress().getComplexAddress().longValue();
 						HRMName tL2Address = tCluster.getCoordinatorsAddress();
 						DiscoveryEntry tEntry = new DiscoveryEntry(tToken, tCoordinatorName, tCoordinatorAddress, tL2Address, tCluster.getHierarchyLevel());
 						tEntry.setPriority(getPeer().getCoordinatorPriority());
@@ -619,7 +619,7 @@ public class CoordinatorCEPChannel
 					if(tRequestCoordinatorPacket.getDiscoveryEntries() != null) {
 						for(DiscoveryEntry tEntry : tRequestCoordinatorPacket.getDiscoveryEntries()) {
 							ClusterName tDummy = handleDiscoveryEntry(tEntry);
-							getPeer().getHRMController().getCluster(new ClusterName(getPeer().getToken(), ((getSourceName()).getAddress().longValue()), getPeer().getHierarchyLevel())).addNeighborCluster(getPeer().getHRMController().getCluster(tDummy));
+							getPeer().getHRMController().getCluster(new ClusterName(getPeer().getToken(), ((getSourceName()).getComplexAddress().longValue()), getPeer().getHierarchyLevel())).addNeighborCluster(getPeer().getHRMController().getCluster(tDummy));
 							addAnnouncedCluster(getHRMController().getCluster(tDummy), getRemoteClusterName());
 						}
 					}
@@ -809,7 +809,7 @@ public class CoordinatorCEPChannel
 			Logging.log(this, "Sending " + pData);
 		}
 		if(getPeer() instanceof Coordinator) {
-			getCEPMultiplexer().write(pData, this, new ClusterName(getPeer().getToken(), ((L2Address)getPeerName()).getAddress().longValue(), getPeer().getHierarchyLevel()));
+			getCEPMultiplexer().write(pData, this, new ClusterName(getPeer().getToken(), ((L2Address)getPeerName()).getComplexAddress().longValue(), getPeer().getHierarchyLevel()));
 		} else {
 			getCEPMultiplexer().write(pData, this, getRemoteClusterName());
 		}

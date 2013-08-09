@@ -74,6 +74,11 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	private LinkedList<RoutingEntry> mRoutingTable = new LinkedList<RoutingEntry>();
 	
 	/**
+	 * Stores the HRMIDs of direct neighbor nodes.
+	 */
+	private LinkedList<HRMID> mDirectNeighborAddresses = new LinkedList<HRMID>();
+	
+	/**
 	 * The main HRM routing database for hop-by-hop routing. TODO: remove this
 	 */
 	private HashMap<HRMID, FIBEntry> mHopByHopRoutingMap = new HashMap<HRMID, FIBEntry>();
@@ -161,7 +166,22 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			if (!tFoundDuplicate){
 				Logging.log(this, "ADDING ROUTE      : " + pRoutingTableEntry);
 
+				// add the route to the routing table
 				mRoutingTable.add(pRoutingTableEntry.clone());
+				
+				// save HRMID of the given route if it belongs to a direct neighbor node
+				if (pRoutingTableEntry.isRouteToDirectNeighbor())
+				{
+					synchronized(mDirectNeighborAddresses){
+						// get the HRMID of the direct neighbor
+						HRMID tHRMID = pRoutingTableEntry.getDest().clone();
+						
+						Logging.log(this, "     ..adding " + tHRMID + " as address of a direct neighbor");
+						
+						// add address
+						mDirectNeighborAddresses.add(tHRMID);
+					}
+				}
 				
 				tResult = true;
 			}else{
@@ -375,7 +395,85 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	@Override
 	public Route getRoute(ForwardingNode pSource, Name pDestination, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException
 	{		
-		Logging.log(this, "Searching for a route from " + pSource + " to " + pDestination);
+		Route tResultRoute = new Route();
+
+		/**
+		 * Check parameters
+		 */
+		// check source parameter
+		if(pSource == null){
+			throw new RoutingException("Invalid source parameter.");
+		}
+		// check destination parameter
+		if(pDestination == null){
+			throw new RoutingException("Invalid destination parameter.");
+		}
+		// avoid additional checks
+		if(pRequirements == null) {
+			pRequirements = new Description();
+		}
+
+		/**
+		 * Debug output about process start
+		 */
+		// debug output
+		if(pRequirements.isBestEffort()) {
+			Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination +"\"");
+		} else {
+			Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination + "\" with requirements \"" + pRequirements.toString() + "\"");
+		}
+
+		/**
+		 * Count the route request
+		 */
+		// count call
+		//TODO: mCounterGetRoute.write(+1.0, mTimeBase.nowStream());
+
+		// check if the destination is defined by the help of a HRMID
+		if (pDestination instanceof HRMID){
+			HRMID tDestHRMID = (HRMID)pDestination;
+			
+			/**
+			 * CHECK NEIGHBORHOD
+			 * Check if the destination is a direct neighbor
+			 */
+			boolean tDestinationIsDirectNeighbor = false;
+			synchronized (mDirectNeighborAddresses) {
+				for (HRMID tHRMID : mDirectNeighborAddresses){
+					if (tHRMID.equals(tDestHRMID)){
+						Logging.log(this, "     .." + tDestHRMID + " found as address of a direct neighbor node");
+						tDestinationIsDirectNeighbor = true;
+						break;
+					}
+				}
+			}
+
+			/**
+			 * SET NEXT HOP
+			 * Determine the next hop of the desired route
+			 */
+			HRMID tNextHopHRMID = null;
+			if(!tDestinationIsDirectNeighbor){
+
+				//TODO
+			}else{
+				// the next hop is the final destination
+				tNextHopHRMID = tDestHRMID;
+			}
+			
+			/**
+			 * CALCULATE ROUTE
+			 * Determine the FoG specific gates towards the neighbor node
+			 */
+				
+			// Does map contain source?
+//			if(!mMap.contains(pSource)) {
+//				throw new RoutingException("Map does not contain source '" +pSource +"'. Invalid routing service entity '" +this +"' called.");
+//			}
+			
+		}
+		
+		
 		List<RoutingServiceLink> tLinks = null;
 
 		NameMappingEntry<Name> [] tEntries = mNameMapping.getAddresses(pDestination);
@@ -474,7 +572,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			}
 		}
 		
-		Route tRes = new Route();
 		if(pRequirements == null) {
 			pRequirements = new Description();
 		}
@@ -496,7 +593,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			 * Compare with partial routing service
 			 */
 			RouteSegmentPath tPath = new RouteSegmentPath();
-			tRes.add(tPath);
+			tResultRoute.add(tPath);
 			
 			for(RoutingServiceLink tLink : tLinks) {
 				if(tLink.getID() != null) {
@@ -506,14 +603,14 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			
 			if(tConnectToApp != null) {
 				if(tConnectToApp.getApplicationName() != null) {
-					tRes.add(new RouteSegmentAddress(tConnectToApp.getApplicationName()));
+					tResultRoute.add(new RouteSegmentAddress(tConnectToApp.getApplicationName()));
 				} else {
-					tRes.add(new RouteSegmentAddress(new SimpleName(tConnectToApp.getApplicationNamespace())));
+					tResultRoute.add(new RouteSegmentAddress(new SimpleName(tConnectToApp.getApplicationNamespace())));
 				}
 				
 			}
 		}
-		return tRes;
+		return tResultRoute;
 	}
 
 	public RoutableGraph<HRMName, Route> getCoordinatorRoutingMap()
@@ -822,7 +919,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			double waitTime = 0.1;//(mRandomGenerator.nextDouble()*5)+2; //TODO: check if event handler still drops events which have a time in the past or the very near future
 			Logging.log(this, "Waiting " + waitTime + " seconds");
 			if(tDestination != null && !pFrom.equals(tThisHostAddress) && !tDestination.equals(tThisHostAddress)) {
-				if(tSource.getAddress().longValue() < tDestination.getAddress().longValue()) {
+				if(tSource.getComplexAddress().longValue() < tDestination.getComplexAddress().longValue()) {
 					List<RoutingServiceLink> tContemporaryRoute = mRoutingMap.getRoute(tThisHostAddress, tDestination);
 					Logging.log(this, "Will initiate connection from " + tThisHostAddress + " to " + tDestination + " via FN " + pFrom);
 

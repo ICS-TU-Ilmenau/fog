@@ -171,7 +171,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, HRMGraphNodeNam
 	{
 		if(pObj instanceof HRMID) {
 			// compare the addresses by the help of getAddress()
-			return getAddress().equals(((HRMID)pObj).getAddress());
+			return getComplexAddress().equals(((HRMID)pObj).getComplexAddress());
 		}
 		return false;
 	}
