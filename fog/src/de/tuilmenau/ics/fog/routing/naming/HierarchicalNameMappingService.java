@@ -33,7 +33,7 @@ public class HierarchicalNameMappingService<Address extends Serializable> implem
 	private static NameMappingService sSingletonNameMappingService = null;
 	
 	
-	public static void createGlobalNameMappingService(Simulation pSim)
+	public static NameMappingService createGlobalNameMappingService(Simulation pSim)
 	{
 		// first try: local NM
 		if(sSingletonNameMappingService == null) {
@@ -53,6 +53,8 @@ public class HierarchicalNameMappingService<Address extends Serializable> implem
 		} else {
 			Logging.getInstance().log("Using local NameMappingService");
 		}
+		
+		return sSingletonNameMappingService;
 	}
 	
 	/**
