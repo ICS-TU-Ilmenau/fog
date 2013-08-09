@@ -236,6 +236,58 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		return tResult;		
 	}
 	
+	/**
+	 * Determines a route within a RoutableGraph.
+	 *  
+	 * @param pGraph the RoutableGraph instance
+	 * @param pSource the source where the searched route should start
+	 * @param pDestination the destination where the searched route should start
+	 * @return the found route
+	 */
+	@SuppressWarnings("unchecked")
+	private <LinkType> List<RoutingServiceLink> getRouteFromGraph(RoutableGraph pGraph, HRMName pSource, HRMName pDestination)
+	{
+		Logging.log(this, "GET ROUTE in graph " + pGraph.toString() + " from " + pSource + " to " + pDestination);
+
+		List<RoutingServiceLink> tResult = new LinkedList<RoutingServiceLink>();
+
+		// check if source/destination are known by the graph
+		if(pGraph.contains(pSource) && pGraph.contains(pDestination)) {
+			try {
+				// determine the route in the graph instance
+				List<LinkType> tFoundRoute = (List<LinkType>)pGraph.getRoute(pSource, pDestination);
+				
+				// have we found a route in the graph instance?
+				if(!tFoundRoute.isEmpty()) {
+					/**
+					 * transform the route from the graph instance to a list of RoutingServiceLink(GateIDs) objects
+					 */
+					if(tFoundRoute.get(0) instanceof RoutingServiceLink) {
+						// iterate over all links(GateIDs), add them to the result list
+						for(RoutingServiceLink tLinkInFoundRoute : (List<RoutingServiceLink>)tFoundRoute) {
+							tResult.add(tLinkInFoundRoute);
+						}
+					} else if(tFoundRoute.get(0) instanceof RouteSegmentPath) {
+						// iterate over all routing segments and their stored links(GateIDs), add them to the result list
+						for(RouteSegmentPath tRouteSegment : (List<RouteSegmentPath>)tFoundRoute) {
+							for(GateID tID : tRouteSegment) {
+								tResult.add(new RoutingServiceLink(tID, null, RoutingServiceLink.DEFAULT));
+							}
+						}
+					}
+				}
+			} catch (ClassCastException tExc) {
+				Logging.err(this, "Unable to cast the getRouteFromGraph result, returning null", tExc);
+				
+				// reset the result
+				tResult = null;
+			}
+		}
+		
+		Logging.log(this, "     ..RESULT: " + tResult);
+		
+		return tResult;
+	}
 	
 	
 	
@@ -330,38 +382,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		Logging.log(this, "Forwarding entry will be " + tForwarding);
 		
 		return tForwarding;
-	}
-	
-	private <LinkType> List<RoutingServiceLink> getRouteFromGraph(RoutableGraph pGraph, HRMName pSource, HRMName pDestination)
-	{		
-		if(pGraph.contains(pSource) && pGraph.contains(pDestination)) {
-			List<LinkType> tRoute = null;
-			try {
-				tRoute = (List<LinkType>)pGraph.getRoute(pSource, pDestination);
-				if(!tRoute.isEmpty()) {
-					if(tRoute.get(0) instanceof RoutingServiceLink) {
-						List<RoutingServiceLink> tRes = new LinkedList<RoutingServiceLink>();
-						for(RoutingServiceLink tLink : (List<RoutingServiceLink>)tRoute) {
-							tRes.add(tLink);
-						}
-						return tRes;
-					} else if(tRoute.get(0) instanceof RouteSegmentPath) {
-						List<RoutingServiceLink> tRes = new LinkedList<RoutingServiceLink>();
-						for(RouteSegmentPath tPath : (List<RouteSegmentPath>)tRoute) {
-							for(GateID tID : tPath) {
-								tRes.add(new RoutingServiceLink(tID, null, RoutingServiceLink.DEFAULT));
-							}
-						}
-						return tRes;
-					}
-				}
-			} catch (ClassCastException tExc) {
-				Logging.err(this, "Unable to cast result, returning null", tExc);
-				return null;
-			}
-		}
-		
-		return null;
 	}
 	
 	private <LinkType> List<LinkType> getRoute(HRMName pSource, HRMName pDestination, Description pDescription, Identity pIdentity)
