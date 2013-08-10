@@ -186,9 +186,14 @@ public class Controller
 						}
 						Route nextRoute = mNode.getTransferPlane().getRoute(lastHop, addr, descr, origin);
 					
-						packet.getRoute().addFirst(nextRoute);
-						mLogger.log(this, "Set new route for " + packet);
-						lastHop.handlePacket(packet, null);
+						if (nextRoute != null){
+							packet.getRoute().addFirst(nextRoute);
+							mLogger.log(this, "Set new route for " + packet);
+							lastHop.handlePacket(packet, null);
+						}else{
+							throw new TransferServiceException(this, "Missing next partial route to " +segment +". Packet dropped.");
+						}
+							
 					}
 					catch(NetworkException exc) {
 						throw new TransferServiceException(this, "Can not calculate next partial route to " +segment +". Packet dropped.", exc);
