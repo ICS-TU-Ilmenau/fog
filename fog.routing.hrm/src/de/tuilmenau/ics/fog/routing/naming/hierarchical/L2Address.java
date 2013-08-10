@@ -10,13 +10,22 @@
 package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 
 import java.math.BigInteger;
+import java.util.Random;
 
-import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 
 public class L2Address extends HRMName
 {
 	private static final long serialVersionUID = 4484202410314555829L;
+
+	/**
+	 * Stores the random number generator instance. One instance per physical simulation node is used 
+	 * because a singleton is needed. Otherwise, parallel number generators might be initialized with 
+	 * the same seed and generate address duplicates. This simplifies the L2address generation and 
+	 * maintains unique addressing scheme. For real use, a UUID has to be used as L2address which 
+	 * promises a low risk of collisions.
+	 */
+	private static Random mRandomGenerator = null;
 
 	/**
 	 * Create an address that is used to identify a node at the MAC layer.
@@ -28,9 +37,33 @@ public class L2Address extends HRMName
 		super(BigInteger.valueOf(pAddress));
 	}
 
-	public void setCaps(Description pDescription)
+	/**
+	 * Create a new L2 address based on a random number from the random number generator  
+	 * 
+	 * @return the new L2 address
+	 */
+	public static L2Address create()
 	{
-		super.setCaps(pDescription);
+		long tNumber = getRandomGenerator().nextLong();
+		
+		// generate new object with the correct number
+		L2Address tResult = new L2Address(tNumber);
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns a reference to the singleton with the random number generator
+	 * 
+	 * @return the random number generator
+	 */
+	private static Random getRandomGenerator()
+	{
+		// create singleton for random number generator
+		if (mRandomGenerator == null)
+			mRandomGenerator = new Random(System.currentTimeMillis());
+		
+		return mRandomGenerator;
 	}
 	
 	public boolean equals(Object pObj)
@@ -39,7 +72,6 @@ public class L2Address extends HRMName
 			return false;
 		}
 		
-		//TODO: remove this
 		if(pObj == this){
 			return true;
 		}
@@ -61,6 +93,9 @@ public class L2Address extends HRMName
 		return false;
 	}
 	
+	/**
+	 * Create a descriptive string about this object
+	 */
 	public String toString()
 	{
 		return getClass().getSimpleName() + "(name=\"" + mOptionalDescr + "\", addr.=" + mAddress + ")";
