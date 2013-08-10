@@ -40,7 +40,7 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		mReceiverName = pReceiverName;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
-			Logging.log(this, "CREATED");
+			Logging.log(getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + "): CREATED");
 		}
 	}
 	
