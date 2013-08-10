@@ -70,26 +70,6 @@ public class HRMName implements Name
 	}
 	
 	/**
-	 * Because a node that is identified by an HRMName can have several abilities, they have to be described.
-	 * 
-	 * @param pDescription Provide the the description of the nodes abilities.
-	 */
-	public void setCaps(Description pDescription)
-	{
-		mDescription = pDescription;
-	}
-
-	/**
-	 * Because a node that is identified by an HRMName can have several abilities, they have to be described.
-	 * 
-	 * @return Returned is the description of the nodes abilities.
-	 */
-	public Description getCaps()
-	{
-		return mDescription;
-	}
-	
-	/**
 	 * Set a description of the HRMName via this method.
 	 * 
 	 * @param pDescr
