@@ -49,6 +49,16 @@ public class HRMConfig
 		public static final boolean SHOW_SHARE_PHASE = false;
 
 		/**
+		 * Shows debug outputs about the routing process 
+		 */
+		public static final boolean GUI_SHOW_ROUTING = true;
+
+		/**
+		 * Show debug outputs about node/link detection
+		 */
+		public static final boolean GUI_SHOW_TOPOLOGY_DETECTION = true;
+
+		/**
 		 * Defines the time period between two updates of the node specific HRM display.
 		 */
 		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 1.0;
@@ -120,7 +130,8 @@ public class HRMConfig
 		public static final double GRANULARITY_SHARE_PHASE = 2.0; // in seconds
 		
 		/**
-		 * Should the packets of the "share phase" be send periodically? 
+		 * Should the packets of the "share phase" be send periodically?
+		 * If a distributed simulation (span a network over multiple physical nodes) is used, this value has to be set to "true". 
 		 */
 		public static final boolean PERIODIC_SHARE_PHASES = false; 
 	}
