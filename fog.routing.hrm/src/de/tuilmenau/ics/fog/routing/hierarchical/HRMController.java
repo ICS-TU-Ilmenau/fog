@@ -45,6 +45,7 @@ import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
@@ -276,7 +277,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		mRegisteredCoordinators.get(tLevel).add(pCoordinator);
 		
 		// register a route to the coordinator as addressable target
-		getHRS().addRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
+		getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
 		
 		//TODO: remove this
 		addRoutableTarget(pCoordinator);
@@ -335,7 +336,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				 * Register a local loopback route for the new address 
 				 */
 				// register a route to the cluster member as addressable target
-				getHRS().addRoute(RoutingEntry.createLocalhostEntry(tHRMID));
+				getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(tHRMID));
 	
 				/**
 				 * Update the GUI
@@ -428,7 +429,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					 * Register a local loopback route for the new address 
 					 */
 					// register a route to the cluster member as addressable target
-					getHRS().addRoute(RoutingEntry.createLocalhostEntry(tHRMID));
+					getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(tHRMID));
 	
 					/**
 					 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
@@ -512,7 +513,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	public void addRoute(RoutingEntry pRoutingEntry)
 	{
 		// inform the HRS about the new route
-		if(getHRS().addRoute(pRoutingEntry)){
+		if(getHRS().addHRMRoute(pRoutingEntry)){
 			// it's time to update the GUI
 			notifyGUI(this);
 		}
@@ -704,7 +705,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				tAttachedCluster.setPriority(tParticipate.getSenderPriority());
 				if(tAttachedCluster.getCoordinatorName() != null) {
 					try {
-						getHRS().registerNode(tAttachedCluster.getCoordinatorName(), tAttachedCluster.getCoordinatorsAddress());
+						getHRS().mapFoGNameToL2Address(tAttachedCluster.getCoordinatorName(), tAttachedCluster.getCoordinatorsAddress());
 					} catch (RemoteException tExc) {
 						Logging.err(this, "Unable to fulfill requirements", tExc);
 					}
@@ -747,7 +748,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 								tCluster.setInterASCluster();
 							}
 							try {
-								getHRS().registerNode(tCluster.getCoordinatorName(), tCluster.getCoordinatorsAddress());
+								getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), (L2Address)tCluster.getCoordinatorsAddress());
 							} catch (RemoteException tExc) {
 								Logging.err(this, "Unable to fulfill requirements", tExc);
 							}
@@ -1017,7 +1018,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 						RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
 						GateID tID= tPath.getFirst();
 						
-						Collection<RoutingServiceLink> tLinkCollection = getHRS().getLocalRoutingMap().getOutEdges(tMyAddress);
+						Collection<RoutingServiceLink> tLinkCollection = getHRS().getFoGRoutingGraph().getOutEdges(tMyAddress);
 						RoutingServiceLink tOutEdge = null;
 						
 						for(RoutingServiceLink tLink : tLinkCollection) {
@@ -1026,7 +1027,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 							}
 						}
 						
-						tMyFirstNodeInDirection = getHRS().getLocalRoutingMap().getDest(tOutEdge);
+						tMyFirstNodeInDirection = getHRS().getFoGRoutingGraph().getDest(tOutEdge);
 						tConnectionCEP.setRouteToPeer(tRoute);
 					}
 					

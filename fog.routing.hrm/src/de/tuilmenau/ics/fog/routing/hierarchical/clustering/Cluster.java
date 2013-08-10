@@ -223,7 +223,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 			}
 			setCoordinatorPriority(pCoordinatorChannel.getPeerPriority());
 			try {
-				getHRMController().getHRS().registerNode(pCoordName, pAddress);
+				getHRMController().getHRS().mapFoGNameToL2Address(pCoordName, pAddress);
 			} catch (RemoteException tExc) {
 				Logging.err(this, "Unable to register " + pCoordName, tExc);
 			}
@@ -302,7 +302,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 			}
 			
 			try {
-				getHRMController().getHRS().registerNode(tCluster.getCoordinatorName(), tCluster.getCoordinatorsAddress());
+				getHRMController().getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), tCluster.getCoordinatorsAddress());
 			} catch (RemoteException tExc) {
 				Logging.err(this, "Unable to fulfill requirements", tExc);
 			}
@@ -322,7 +322,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		if(pAnnounce.getCoordinatorName() != null) {
 //			Description tDescription = new Description();
 			try {
-				getHRMController().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
+				getHRMController().getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 			} catch (RemoteException tExc) {
 				Logging.warn(this, "Unable to register " + pAnnounce.getCoordinatorName(), tExc);
 			}

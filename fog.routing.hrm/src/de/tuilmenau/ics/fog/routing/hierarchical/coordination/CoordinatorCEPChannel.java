@@ -935,7 +935,7 @@ public class CoordinatorCEPChannel
 					tNewCluster.setInterASCluster();
 				}
 				try {
-					getHRMController().getHRS().registerNode(tNewCluster.getCoordinatorName(), tNewCluster.getCoordinatorsAddress());
+					getHRMController().getHRS().mapFoGNameToL2Address(tNewCluster.getCoordinatorName(), tNewCluster.getCoordinatorsAddress());
 				} catch (RemoteException tExc) {
 					Logging.err(this, "Unable to register " + tNewCluster.getCoordinatorName(), tExc);
 				}

@@ -356,7 +356,13 @@ public class Coordinator implements ICluster, HRMEntity
 	 */
 	private boolean hasNewSharePhaseData()
 	{
-		return mSharedRoutesHaveChanged;
+		boolean tResult = false;
+		
+		synchronized (mSharedRoutes){
+			tResult = mSharedRoutesHaveChanged;
+		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -374,7 +380,7 @@ public class Coordinator implements ICluster, HRMEntity
 			// store the time of this "share phase"
 			mTimeOfLastSharePhase = getHRMController().getSimulationTime();
 
-			if ((!HRMConfig.Routing.PERIODIC_SHARE_PHASES) && (hasNewSharePhaseData())){
+			if ((!HRMConfig.Routing.PERIODIC_SHARE_PHASES) && (!hasNewSharePhaseData())){
 				if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 					Logging.log(this, "SHARE PHASE skipped because routing data hasn't changed since last signaling round");
 				}
@@ -391,35 +397,45 @@ public class Coordinator implements ICluster, HRMEntity
 				Logging.log(this, "    ..distributing as " + tOwnClusterAddress.toString() + " aggregated ROUTES among cluster members: " + mManagedCluster.getClusterMembers());
 			}
 			
-			// send the routing information to cluster members
-			for(CoordinatorCEPChannel tClusterMember : mManagedCluster.getClusterMembers()) {
-				RoutingInformation tRoutingInformationPacket = new RoutingInformation(tOwnClusterAddress, tClusterMember.getPeerHRMID());
-			
-				// are we on base hierarchy level?
-				if (getHierarchyLevel().getValue() == 1){ // TODO: isBaseLevel()){
-
-					/**
-					 * Add routes from the cluster member to this node for every registered local HRMID.
-					 */
-					for (HRMID tHRMID : getHRMController().getOwnHRMIDs()){
-						// create entry for cluster internal routing towards us
-						RoutingEntry tRouteFromClusterMemberToHere = RoutingEntry.createRouteToDirectNeighbor(tHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
-						tRoutingInformationPacket.addRoute(tRouteFromClusterMemberToHere);
-					}
-					
-					//TODO: need routing graph here!
-					
-					//TODO: routes to other cluster members
-				}else{
-					//TODO: implement me
-				}	
+			synchronized (mSharedRoutes){
+				// send the routing information to cluster members
+				for(CoordinatorCEPChannel tClusterMember : mManagedCluster.getClusterMembers()) {
+					RoutingInformation tRoutingInformationPacket = new RoutingInformation(tOwnClusterAddress, tClusterMember.getPeerHRMID());
 				
-				// do we have interesting routing information?
-				if (tRoutingInformationPacket.getRoutes().size() > 0){
-					tClusterMember.sendPacket(tRoutingInformationPacket);
-				}else{
-					// no routing information -> no packet is sent
-				}				
+					// are we on base hierarchy level?
+					if (getHierarchyLevel().getValue() == 1){ // TODO: isBaseLevel()){
+	
+						/**
+						 * ADD ROUTES: routes from the cluster member to this node for every registered local HRMID.
+						 */
+						for (HRMID tHRMID : getHRMController().getOwnHRMIDs()){
+							// create entry for cluster internal routing towards us
+							RoutingEntry tRouteFromClusterMemberToHere = RoutingEntry.createRouteToDirectNeighbor(tHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+							tRoutingInformationPacket.addRoute(tRouteFromClusterMemberToHere);
+						}
+						
+						//TODO: need routing graph here!
+						
+						//TODO: routes to other cluster members
+					}else{
+						//TODO: implement me
+					}	
+					
+					/**
+					 * Send the routing data to the cluster member
+					 */
+					// do we have interesting routing information?
+					if (tRoutingInformationPacket.getRoutes().size() > 0){
+						tClusterMember.sendPacket(tRoutingInformationPacket);
+					}else{
+						// no routing information -> no packet is sent
+					}
+				}
+
+				/**
+				 * mark "share phase" data as known
+				 */
+				mSharedRoutesHaveChanged = false;
 			}
 		}else{
 			// share phase shouldn't be started, we have to wait until next trigger
@@ -970,7 +986,7 @@ public class Coordinator implements ICluster, HRMEntity
 			RoutingService tRS = (RoutingService)getHRMController().getNode().getRoutingService();
 			if(! tRS.isKnown(pAnnounce.getCoordinatorName())) {
 				try {
-					getHRMController().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
+					getHRMController().getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 				} catch (RemoteException tExc) {
 					Logging.err(this, "Unable to register " + pAnnounce.getCoordinatorName() + " at higher entity", tExc);
 				}
@@ -998,7 +1014,7 @@ public class Coordinator implements ICluster, HRMEntity
 				if(! tRS.isKnown(pAnnounce.getCoordinatorName())) {
 					
 					try {
-						getHRMController().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
+						getHRMController().getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 					} catch (RemoteException tExc) {
 						Logging.err(this, "Unable to register " + pAnnounce.getCoordinatorName() + " at name mapping service", tExc);
 					}

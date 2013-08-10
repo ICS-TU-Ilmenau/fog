@@ -36,7 +36,7 @@ public class CoordinatorSession extends Session
 {
 	private HRMController mHRMController = null;
 	private boolean mServerSide = false;
-	private L2Address mSourceIdentification = null;
+	private L2Address mSourceL2Address = null;
 	private L2Address mPeerIdentification = null;
 	private HierarchyLevel mHierarchyLevel = null;
 	private CoordinatorCEPMultiplexer mMux;
@@ -56,7 +56,7 @@ public class CoordinatorSession extends Session
 		mHRMController = pHRMController;
 		
 			RoutingService tRS = (RoutingService)getHRMController().getNode().getRoutingService();
-			mSourceIdentification = (L2Address) tRS.getNameFor(getHRMController().getNode().getCentralFN());
+			mSourceL2Address = (L2Address)tRS.getNameFor(getHRMController().getNode().getCentralFN());
 		
 		Logging.log(this, "Created");
 
@@ -83,19 +83,19 @@ public class CoordinatorSession extends Session
 				}
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
 				if(mHierarchyLevel.isBaseLevel()) {
-					getHRMController().getHRS().registerRoute(mSourceIdentification, mPeerIdentification, mRouteToPeer);
+					getHRMController().getHRS().registerRoute(mSourceL2Address, mPeerIdentification, mRouteToPeer);
 				}
-				write(mSourceIdentification);
+				write(mSourceL2Address);
 			}
 
 		} else if (pData instanceof L2Address) {
 			mPeerIdentification = (L2Address) pData;
 			if(mHierarchyLevel.isBaseLevel()) {
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
-				getHRMController().getHRS().registerRoute(mSourceIdentification, mPeerIdentification, mRouteToPeer);
+				getHRMController().getHRS().registerRoute(mSourceL2Address, mPeerIdentification, mRouteToPeer);
 			} else {
 				if(mServerSide) {
-					write(mSourceIdentification);
+					write(mSourceL2Address);
 				}
 			}
 		} else if (pData instanceof MultiplexedPackage) {
@@ -217,7 +217,7 @@ public class CoordinatorSession extends Session
 	 */
 	public HRMName getSourceRoutingServiceAddress()
 	{
-		return mSourceIdentification;
+		return mSourceL2Address;
 	}
 	
 	/**
@@ -241,9 +241,9 @@ public class CoordinatorSession extends Session
 	public String toString()
 	{
 		if(mPeerIdentification != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getMultiplexer() + "(Source=" + mSourceIdentification + ", Peer=" + mPeerIdentification + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getMultiplexer() + "(Source=" + mSourceL2Address + ", Peer=" + mPeerIdentification + ")";
 		} else {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Source=" + mSourceIdentification + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Source=" + mSourceL2Address + ")";
 		}
 		 
 	}

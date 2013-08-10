@@ -38,6 +38,8 @@ import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.*;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
+import de.tuilmenau.ics.fog.topology.ILowerLayer;
+import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
@@ -77,19 +79,35 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * Stores the HRMIDs of direct neighbor nodes.
 	 */
 	private LinkedList<HRMID> mDirectNeighborAddresses = new LinkedList<HRMID>();
+
+	/**
+	 * Stores the FoG specific routing graph (consisting of FNs and Gates)
+	 */
+	private final RoutableGraph<HRMName, RoutingServiceLink> mFoGRoutingGraph;
+
+	/**
+	 * Stores the name mapping instance for mapping FoG names to L2 addresses
+	 */
+	private HierarchicalNameMappingService<L2Address> mFoGNamesToL2AddressesMapping = null;
+
+	/**
+	 * Stores the mapping from FoG FNs to L2 addresses
+	 */
+	private HashMap<ForwardingNode, L2Address> mFNToL2AddressesMapping = new HashMap<ForwardingNode, L2Address>();
 	
 	/**
-	 * The main HRM routing database for hop-by-hop routing. TODO: remove this
+	 * Stores a reference to the local HRMController application
 	 */
-	private HashMap<HRMID, FIBEntry> mHopByHopRoutingMap = new HashMap<HRMID, FIBEntry>();
+	private HRMController mHRMController = null;
 
-	private final RoutableGraph<HRMName, RoutingServiceLink> mRoutingMap;
+	/**
+	 * Stores if the start of the HRMController application instance is still pending
+	 */
+	private boolean mWaitOnControllerstart = true;
+	
 	private final RoutableGraph<HRMName, Route> mCoordinatorRoutingMap;
-	private HierarchicalNameMappingService<Name> mNameMapping = null;
-	private static Random mRandomGenerator = null; //singleton needed, otherwise parallel number generators might be initialized with the same seed
-	private HRMController mHRMController = null; //TODO: getRoute und co abfangen, wenn HRMController nocht nicht gestartet ist
 	private Name mSourceIdentification = null;
-	private HashMap<ForwardingElement, L2Address> mLayer2NameMapping = new HashMap<ForwardingElement, L2Address>();
+
 	
 	/**
 	 * Creates a local HRS instance for a node.
@@ -103,12 +121,12 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		mNode = pNode;
 		mAS = pAS;
 		
-		mNameMapping = new HierarchicalNameMappingService(HierarchicalNameMappingService.getGlobalNameMappingService(), null);
-		Logging.log(this, "Using name mapping service " + mNameMapping.toString());
+		// create the FoG specific routing graph (consisting of FNs and Gates)
+		mFoGRoutingGraph = new RoutableGraph<HRMName, RoutingServiceLink>();
+
+		// create name mapping instance to map FoG names to L2 addresses
+		mFoGNamesToL2AddressesMapping = new HierarchicalNameMappingService<L2Address>(HierarchicalNameMappingService.getGlobalNameMappingService(), null);
 		
-		if (mRandomGenerator == null)
-			mRandomGenerator = new Random(System.currentTimeMillis());
-		mRoutingMap = new RoutableGraph<HRMName, RoutingServiceLink>();
 		mCoordinatorRoutingMap = new RoutableGraph<HRMName, Route>();
 	}
 
@@ -126,8 +144,45 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		
 		// register the HRM controller instance as application at the local host
 		mNode.getHost().registerApp(mHRMController);
+		
+		mWaitOnControllerstart = false;
+
+		// end an active waiting by getHRMController()
+		synchronized(this){
+			notify();
+		}
 	}
 
+	/**
+	 * Returns a reference to the HRMController application.
+	 * However, this function waits in case the application wasn't started yet.
+	 * 
+	 * @return the HRMController application
+	 */
+	public HRMController getHRMController()
+	{
+		int tLoop = 0;
+		while(mWaitOnControllerstart){
+			try {
+				synchronized (this) {
+					wait(500 /* ms */);
+				}
+				if (tLoop > 0){
+					Logging.log(this, "WAITING FOR HRMController application start - loop " + tLoop);
+				}
+				tLoop++;
+			} catch (InterruptedException e) {
+				Logging.log(this, "CONTINUING PROCESSING");
+			}		
+		}
+		
+		if (mHRMController == null){
+			throw new RuntimeException(this + ": HRMController reference is still invalid");
+		}
+		
+		return mHRMController;
+	}
+	
 	/**
 	 * Adds a route to the local HRM routing table.
 	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
@@ -135,7 +190,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * @param pRoutingTableEntry the routing table entry
 	 * @return true if the entry is new and was added, otherwise false
 	 */
-	public boolean addRoute(RoutingEntry pRoutingTableEntry)
+	public boolean addHRMRoute(RoutingEntry pRoutingTableEntry)
 	{
 		boolean tResult = false;
 		
@@ -199,7 +254,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * @param pRoutingTableEntry the routing table entry 
 	 * @return true if the entry was found and removed, otherwise false
 	 */
-	private boolean delRoute(RoutingEntry pRoutingTableEntry)
+	private boolean delHRMRoute(RoutingEntry pRoutingTableEntry)
 	{
 		boolean tResult = false;
 		
@@ -284,14 +339,526 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			}
 		}
 		
-		Logging.log(this, "     ..RESULT: " + tResult);
+		Logging.log(this, "      ..RESULT(getRouteFromGraph): " + tResult);
 		
 		return tResult;
 	}
 	
+	/**
+	 * Returns the FoG specific routing graph
+	 * 
+	 * @return the routing graph
+	 */
+	public RoutableGraph<HRMName, RoutingServiceLink> getFoGRoutingGraph()
+	{
+		return mFoGRoutingGraph;
+	}
+
+	/**
+	 * Register a FoG name for an L2Address
+	 *   
+	 * @param pName the FoG name
+	 * @param pL2Address the L2 address
+	 * @throws RemoteException
+	 */
+	public void mapFoGNameToL2Address(Name pName, Name pL2Address) throws RemoteException
+	{
+		Logging.log(this, "REGISTERING NAME-to-L2ADDRESS MAPPING: " + pName + " to " + pL2Address);
+
+		if (pL2Address instanceof L2Address){
+			synchronized (mFoGNamesToL2AddressesMapping) {
+				mFoGNamesToL2AddressesMapping.registerName(pName, (L2Address)pL2Address, NamingLevel.NAMES);
+			}
+		}else{
+			Logging.err(this, "Given L2Address has invalid type: " + pL2Address);
+		}
+	}
+
+	/**
+	 * Determines a route in the local routing graphs
+	 * 
+	 * @param pSource the name of the node where the route should start 
+	 * @param pDestination the name of the node where the route should end
+	 * @param pDescription the desired route attributes
+	 * @param pRequester the identity of the caller	 *  
+	 * @return the determined route, null if no route was found
+	 */
+	private <LinkType> List<LinkType> getRouteFromLocalGraphs(HRMName pSource, HRMName pDestination, Description pDescription, Identity pRequester)
+	{
+		Logging.log(this, "GET ROUTE (getRouteFromLocalGraphs) from " + pSource + " to " + pDestination);
+		
+		List<LinkType> tResult = null;
+		
+		/**
+		 * Look in the local FoG specific routing graph
+		 */
+		if(mFoGRoutingGraph.contains(pSource) && mFoGRoutingGraph.contains(pDestination)) {
+			tResult = (List<LinkType>) getRouteFromGraph(mFoGRoutingGraph, pSource, pDestination);
+			Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-routingMap): " + tResult);
+		}
+		
+		/**
+		 * 
+		 */
+		if(mCoordinatorRoutingMap.contains(pSource) && mCoordinatorRoutingMap.contains(pDestination)) {
+			tResult = (List<LinkType>) getRouteFromGraph(mCoordinatorRoutingMap, pSource, pDestination);
+			Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-coordinatorMap): " + tResult);
+		}
+		
+		Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs): " + tResult);
+		
+		return tResult;
+	}
+
+	/**
+	 * Determines the L2Address for the given FN
+	 * 
+	 * @param pNode the FN for which the HRM name should be determined
+	 * @return the determined L2Address if it exists, otherwise null is returned 
+	 */
+	public L2Address getL2AddressFor(ForwardingNode pNode)
+	{
+		L2Address tResult = null;
+		
+		synchronized (mFNToL2AddressesMapping) {
+			tResult = mFNToL2AddressesMapping.get(pNode);			
+		}
+		
+		return tResult;
+	}
+	@Override
+	public L2Address getNameFor(ForwardingNode pNode)
+	{
+		return getL2AddressFor(pNode);
+	}
+
+	/**
+	 * Determines the L2Addresses for a given FoG name.
+	 * 
+	 * @param pName the FoG name
+	 * @return the L2Addresses
+	 */
+	public NameMappingEntry<L2Address>[] getL2AddressesFor(Name pName)
+	{
+		NameMappingEntry<L2Address>[] tResult = null;
+		
+		synchronized (mFoGNamesToL2AddressesMapping) {
+			tResult = mFoGNamesToL2AddressesMapping.getAddresses(pName);			
+		}
+		
+		return tResult;
+	}
 	
+	/**
+	 * Registers a node at the database of this HRS instance
+	 * 
+	 * @param pElement the FN to register at routing service
+	 * @param pName the name for the FN (null, if no name available)
+     * @param pLevel the level of abstraction for the naming  
+     * @param pDescription the requirements description for a connection to this node
+	 */
+	@Override
+	public void registerNode(ForwardingNode pElement, Name pName, NamingLevel pLevel, Description pDescription)
+	{	
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "REGISTERING NODE: " + pElement + " with name " + pName + (pLevel != NamingLevel.NONE ? " on naming level " + pLevel : "") + " with description " + pDescription);
+		}
+
+		/**
+		 * Determine addresses for "pName"
+		 */
+		NameMappingEntry<L2Address> [] tAddresses = getL2AddressesFor(pName);
+
+		// have we found any already existing addresses?
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			if ((tAddresses != null) && (tAddresses.length > 0)){
+				Logging.log(this, "Found " + tAddresses.length + " already registered address for " + pElement);
+				for (int i = 0; i < tAddresses.length; i++){
+					Logging.log(this, "     ..[" + i + "](" + tAddresses[i].getAddress().getClass().getSimpleName() + "): " + tAddresses[i].getAddress().toString());
+				}
+			}
+		}		
+		
+		/**
+		 * Register name mappings 
+		 */
+		synchronized (mFNToL2AddressesMapping) {
+			// is there already an L2Address registered for the node?
+			if(!mFNToL2AddressesMapping.containsKey(pElement)) {
+				/**
+				 * Generate L2 address for the node
+				 */
+				L2Address tNodeL2Address = L2Address.create();
+				tNodeL2Address.setDescr(pElement.toString());
+				
+				/** 
+				 * Register mapping from FN to L2address
+				 */
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..registering NAME MAPPING for FN \"" + pElement + "\": L2address=\"" + tNodeL2Address + "\", level=" + pLevel);
+				}
+				mFNToL2AddressesMapping.put(pElement, tNodeL2Address);
+				/** 
+				 * Register mapping from FoG name to L2address
+				 */
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..registering NAME MAPPING for FoG name \"" + pName + "\": L2address=\"" + tNodeL2Address + "\", level=" + pLevel);
+				}
+				synchronized (mFoGNamesToL2AddressesMapping) {
+					mFoGNamesToL2AddressesMapping.registerName(pName, tNodeL2Address, pLevel);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Unregisters an FN.
+	 * 
+	 * @param pElement the FN which should be unregistered.
+	 * @return true if the FN was removed, otherwise false
+	 */
+	@Override
+	public boolean unregisterNode(ForwardingNode pElement)
+	{
+		Logging.log(this, "UNREGISTERING NODE: " + pElement);
+
+		// get the L2Address of this FN
+		L2Address tNodeL2Address = getL2AddressFor(pElement);
+
+		// have we found an L2 address?
+		if (tNodeL2Address != null){
+			/**
+			 * remove the FN from the FoG specific routing graph
+			 */
+			synchronized (mFoGRoutingGraph) {
+				if(mFoGRoutingGraph.contains(tNodeL2Address)) {
+					mFoGRoutingGraph.remove(tNodeL2Address);
+				}
+			}
+			
+			//TODO: remove this
+			synchronized (mCoordinatorRoutingMap) {
+				if(mCoordinatorRoutingMap.contains(tNodeL2Address)) {
+					mCoordinatorRoutingMap.remove(tNodeL2Address);
+				}
+			}
+		}
+			
+		return true;
+	}
+
+	/**
+	 * Registers a link in the local FoG specific routing graph
+	 * 
+	 *  @param pFrom the FN where the link begins
+	 *  @param pGate the Gate (link) which is to be registered
+	 *  @throws NetworkException
+	 */
+	@Override
+	public void registerLink(ForwardingElement pFrom, AbstractGate pGate) throws NetworkException
+	{
+		Logging.log(this, "REGISTERING LINK: source=" + pFrom + " ## dest.=" + pGate.getNextNode() + " ## attr.=" + pGate.getDescription() + " ## gate=" + pGate + " ## peer=" + pGate.getRemoteDestinationName());
+
+		/**
+		 * Make sure that the starting point of the link is already known to the FN-to-L2address mapping.
+		 * Determine the L2Address of the starting point.
+		 */
+		L2Address tFromL2Address = null;
+		// check the class type of pFrom
+		if (pFrom instanceof ForwardingNode){
+			// get the FN where the route should start
+			ForwardingNode tFromFN = (ForwardingNode)pFrom;
+			
+			// determine the L2address of the starting point
+			tFromL2Address = getL2AddressFor(tFromFN);
+			
+			// is the FN still unknown for the FN-to-L2address mapping?
+			if(tFromL2Address == null) {
+				Logging.warn(this, "Source node " + pFrom +" of link " + pGate + " isn't known yet. It will be registered implicitly.");
+				
+				registerNode(tFromFN, null, NamingLevel.NONE, null);
+				
+				// determine the L2address of the starting point to check if the registration was successful
+				tFromL2Address = getL2AddressFor(tFromFN);
+				if(tFromL2Address == null) {
+					throw new RuntimeException(this + " - FN " + pFrom + " is still unknown to the FN-to-L2address mapping, although it was registered before.");
+				}
+			}
+		}else{
+			// pFrom isn't derived from ForwardingNode
+			throw new RuntimeException(this + " - Source FE " + pFrom + " has the wrong class hierarchy(ForwardingNode is missing).");
+		}
+
+		/**
+		 * Check if the link is one to another physical neighbor node or not.
+		 * Determine the L2Address of the ending point of the link
+		 */
+		L2Address tToL2Address = null;
+		boolean tIsLinkToPhysicalNeigborNode = false;
+		if( pGate instanceof DirectDownGate){
+			// mark as link to another node
+			tIsLinkToPhysicalNeigborNode = true;
+
+			// determine the L2Address of the destination FN for this gate
+			// HINT: For DirectDownGate gates, this address is defined in "DirectDownGate" by a call to "RoutingService.getL2AddressFor(ILowerLayer.getMultiplexerGate())".
+			//       However, there will occur two calls to registerLink():
+			//				* 1.) the DirectDownGate is created
+			//				* 2.) the peer has answered by a packet of "OpenGateResponse" and the peer name is now known
+			//       Therefore, we ignore the first registerLink() request and wait for the (hopfefully) appearing second request.
+			tToL2Address = (L2Address) pGate.getRemoteDestinationName();
+			if (tToL2Address == null){
+				Logging.log(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this registerLink() request and wait until the peer is known");
+			}
+
+			Logging.log(this, "      ..external link, which ends at the physical node " + tToL2Address);
+		}else{
+			// mark as node-internal link
+			tIsLinkToPhysicalNeigborNode = false;
+
+			// we have any kind of a gate, we determine its ending point
+			ForwardingNode tToFN = (ForwardingNode)pGate.getNextNode();
+			
+			/**
+			 * Make sure that the starting point of the link is already known to the FN-to-L2address mapping.
+		 	*/
+			tToL2Address = getL2AddressFor(tToFN);
+			// is the FN still unknown for the FN-to-L2address mapping?
+			if(tToL2Address == null) {
+				Logging.warn(this, "Destination node " + tToFN +" of link " + pGate + " isn't known yet. It will be registered implicitly.");
+				
+				registerNode(tToFN, null, NamingLevel.NONE, null);
+				
+				// determine the L2address of the starting point to check if the registration was successful
+				tToL2Address = getL2AddressFor(tToFN);
+				if(tToL2Address == null) {
+					throw new RuntimeException(this + " - Destination FN " + pFrom + " is still unknown to the FN-to-L2address mapping, although it was registered before.");
+				}
+			}
+
+			Logging.log(this, "      ..internal link, which ends at the local node " + tToL2Address);
+		}
+
+		if(tToL2Address == null) {
+			// return immediately because the peer name is sill unknown
+			Logging.log(this, "Peer name is still unknown, waiting for the second request (source=" + tFromL2Address + ", gate=" + pGate + ")");
+			return;
+		}
+		
+		/**
+		 * Add link to FoG specific routing graph
+		 */
+		mFoGRoutingGraph.storeLink(tFromL2Address, tToL2Address, new RoutingServiceLink(pGate.getGateID(), null, RoutingServiceLink.DEFAULT));
+		
+		/**
+		 * DIRECT NEIGHBOR FOUND: create a HRM connection to it
+		 */
+		if(tIsLinkToPhysicalNeigborNode) {
+			L2Address tThisHostL2Address = getL2AddressFor(mNode.getCentralFN());
+
+			Logging.info(this, "NODE " + tThisHostL2Address + " FOUND DIRECT NEIGHBOR: " + tToL2Address);
+			
+			if((!pFrom.equals(tThisHostL2Address)) && (!tToL2Address.equals(tThisHostL2Address))) {
+				if(tFromL2Address.getComplexAddress().longValue() < tToL2Address.getComplexAddress().longValue()) {
+					Logging.log(this, "    ..initiating connection from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
+
+					// determine the route to the neighbor
+					List<RoutingServiceLink> tRouteToNeighbor = mFoGRoutingGraph.getRoute(tThisHostL2Address, tToL2Address);
+					Logging.log(this, "    ..determined route from " + tThisHostL2Address + " to " + tToL2Address + ": " + tRouteToNeighbor);
+					if(tRouteToNeighbor != null) {
+						// determine the transparent gate towards the neighbor
+						AbstractGate tOutgoingTransparentGate = null;
+						try {
+							tOutgoingTransparentGate = mNode.getCentralFN().getGate(tRouteToNeighbor.get(0).getID());
+						} catch (IndexOutOfBoundsException tExc) {
+							Logging.err(this, "registerLink() couldn't determine the outgoing gate for a connection from " + tThisHostL2Address + " to " + tToL2Address + ", determined route is: " + tRouteToNeighbor, tExc);
+						}
+						if(tOutgoingTransparentGate != null) {
+							// determine the first next node behind the outgoing transparent gate
+							ForwardingElement tFirstNextNode = tOutgoingTransparentGate.getNextNode();
+							
+							// get the gate container from the first next node
+							GateContainer tContainer = (GateContainer) tFirstNextNode;
+							
+							// get the DirectDownGate ID
+							RoutingServiceLink tDownGateLink = tRouteToNeighbor.get(1); 
+							
+							if (tDownGateLink != null){
+								GateID tDownGateGateID = tDownGateLink.getID();
+							
+								// hash the name of the bus where the outgoing gate belongs to in order to create a temporary identification of the cluster
+								Long tClusterID = Long.valueOf(0L);
+								DirectDownGate tDirectDownGate = (DirectDownGate) tContainer.getGate(tDownGateGateID);
+								if (tDirectDownGate != null){
+									NetworkInterface tNetworkInterface = tDirectDownGate.getLowerLayer();
+									if (tNetworkInterface != null){
+										ILowerLayer tLowerLayer = tNetworkInterface.getBus();
+										if (tLowerLayer != null){
+											String tBusName = null;
+											try {
+												tBusName = tLowerLayer.getName();
+											} catch (RemoteException tExc) {
+												Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), Bus Name is invalid", tExc);
+												tBusName = null;
+											}
+											if (tBusName != null){
+												tClusterID = Long.valueOf(tBusName.hashCode());
+											}else{
+												Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), Bus Name is invalid");
+											}
+										}else{
+											Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), ILowerLayer is invalid");
+										}
+									}else{
+										Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus to " + tToL2Address + ", NetworkInterface is invalid");
+									}									
+								}else{
+									Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus " + tToL2Address + ", DirectDownGate is invalid");
+								}
+
+								/**
+								 * Open a connection to the neighbor
+								 */
+								if (getHRMController() != null){
+								    Logging.log(this, "    ..opening connection to " + tToL2Address);
+								    getHRMController().addConnection(tToL2Address, HierarchyLevel.createBaseLevel(), tClusterID, false);
+								}else{
+									Logging.err(this, "registerLink() cannot connect to the neghbor " + tToL2Address + " because the HRM controller is invalid");
+								}
+							}else{
+								Logging.err(this, "registerLink() hasn't found the DirectDownGate in the route from " + tThisHostL2Address + " to " + tToL2Address + ", route is: " + tRouteToNeighbor);
+							}
+								
+						}else{
+							Logging.err(this, "registerLink() couldn't determine the outgoing gate of the route from " + tThisHostL2Address + " to " + tToL2Address + ", route is: " + tRouteToNeighbor);
+						}
+						
+					}else{
+						Logging.err(this, "registerLink() couldn't determine a route from " + tThisHostL2Address + " to " + tToL2Address);
+					}
+				}else{
+					Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address);
+				}
+			}else{
+				Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is linked to the central FN " + tThisHostL2Address);
+			}
+		}
+	}
 	
+	@Override
+	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate)
+	{
+		Logging.log(this, "UNREGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
+
+		/**
+		 * Check if the link is one to another physical neighbor node or not.
+		 * Determine the L2Address of the ending point of the link
+		 */
+		boolean tIsLinkToPhysicalNeigborNode = false;
+		if( pGate instanceof DirectDownGate){
+			// mark as link to another node
+			tIsLinkToPhysicalNeigborNode = true;
+		}else{
+			// mark as node-internal link
+			tIsLinkToPhysicalNeigborNode = false;
+		}
+			
+		/**
+		 * Determine the L2Address of the starting point of the link
+		 */
+		L2Address tFromL2Address = mFNToL2AddressesMapping.get(pFrom);
+
+		/**
+		 * Remove the connections to this neighbor node
+		 */
+		if (tIsLinkToPhysicalNeigborNode){
+			//TODO: implement this
+		}
+		
+		/**
+		 * Remove the link from the FoG specific routing graph
+		 */
+		// determine which links are outgoing from the FN "pFrom"
+		Collection<RoutingServiceLink> tOutgoingLinksFromFN = mFoGRoutingGraph.getOutEdges(tFromL2Address);
+		// have we found at least one outgoing link?
+		if(tOutgoingLinksFromFN != null) {
+			for(RoutingServiceLink tOutgoingLink : tOutgoingLinksFromFN) {
+				// have we found the right outgoing link? (we check the GateIDs)
+				if(tOutgoingLink.equals(pGate)) {
+					// remove the link from the FoG specific routing graph
+					mFoGRoutingGraph.unlink(tOutgoingLink);
+				}
+			}
+		}
+		
+		return false;
+	}
+
+	/**
+	 * Updates the capabilities of existing forwarding nodes.
+	 * (However, this function is only used to update the capabilities of the central FN instead of all FNs. 
+	 * Because either the central FN is able to provide a special function or no FN on this physical node is able to do this.)
+	 * 
+	 * @param pElement the FN for which the capabilities have to be updated
+	 * @param pCapabilities the new capabilities for the FN
+	 */
+	@Override
+	public void updateNode(ForwardingNode pElement, Description pCapabilities)
+	{
+		Logging.log(this, "UPDATING NODE " + pElement + ": old caps.=" + mNode.getCapabilities() + ", new caps.=" + pCapabilities);
+
+		// TODO: what about functional requirements and function placing?
+	}
 	
+	/**
+	 * Returns a reference to the used name mapping service
+	 * 
+	 * @return the reference to the name mapping service
+	 */
+	@Override
+	public NameMappingService<L2Address> getNameMappingService()
+	{
+		return mFoGNamesToL2AddressesMapping;
+	}
+
+	/**
+	 * Checks if a given FoG FN name is known to this HRS instance
+	 * 
+	 * @return true if the FoG name is known, otherwise false
+	 */
+	@Override
+	public boolean isKnown(Name pName)
+	{
+		boolean tResult = false;
+		
+		// check if the FoG name is stored in the FoG-to-L2Addresses mapping
+		synchronized (mFoGNamesToL2AddressesMapping) {
+			tResult = (mFoGNamesToL2AddressesMapping.getAddresses(pName) != null);			
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Unregisters a FoG name for a given FN
+	 * 
+	 * @return true if the operation was successful, otherwise false is returned
+	 */
+	@Override
+	public boolean unregisterName(ForwardingNode pFN, Name pName)
+	{
+		boolean tResult = false;
+		
+		// determine the L2Address 
+		L2Address tFNL2Address = getL2AddressFor(pFN);
+		
+		// unregister mapping from FoG name to the determined L2address
+		synchronized (mFoGNamesToL2AddressesMapping) {
+			tResult = mFoGNamesToL2AddressesMapping.unregisterName(pName, tFNL2Address);
+		}
+		
+		return tResult;
+	}
+
 	
 	
 	
@@ -299,16 +866,9 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	{
 		Logging.log(this, "REGISTERING NODE ADDRESS: " + pAddress + ", glob. important=" + pGloballyImportant);
 
-		mRoutingMap.add(pAddress);
+		mFoGRoutingGraph.add(pAddress);
 	}
 	
-	public void registerNode(Name pName, Name pAddress) throws RemoteException
-	{
-		Logging.log(this, "REGISTERING NODE NAME/ADDRESS: " + pName + " with address " + pAddress);
-
-		mNameMapping.registerName(pName, pAddress, NamingLevel.NAMES);
-	}
-
 	public boolean registerRoute(HRMName pFrom, HRMName pTo, Route pRoute)
 	{
 		Logging.log(this, "Registering route from " + pFrom + " to " + pTo + " by path \"" + pRoute + "\"");
@@ -369,8 +929,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		try {
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
 		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
-			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
+			tNMS = HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
 		}
 		
 		int tHighestDescendingDifference = HRMConfig.Hierarchy.HEIGHT - 1;
@@ -388,23 +947,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		Logging.log(this, "Forwarding entry will be " + tForwarding);
 		
 		return tForwarding;
-	}
-	
-	private <LinkType> List<LinkType> getRoute(HRMName pSource, HRMName pDestination, Description pDescription, Identity pIdentity)
-	{
-		Logging.log(this, "GET ROUTE from " + pSource + " to " + pDestination);
-		
-		if(mRoutingMap.contains(pSource) && mRoutingMap.contains(pDestination)) {
-			List<LinkType> tRes = (List<LinkType>) getRouteFromGraph(mRoutingMap, pSource, pDestination);
-			return tRes;
-		}
-		
-		if(mCoordinatorRoutingMap.contains(pSource) && mCoordinatorRoutingMap.contains(pDestination)) {
-			List<LinkType> tRes = (List<LinkType>) getRouteFromGraph(mCoordinatorRoutingMap, pSource, pDestination);
-			return tRes;
-		}
-		
-		return null;
 	}
 	
 //	public Route getRoutePath(HRMName pHrmName, HRMName pHrmName2, Description pDescription, Identity pIdentity)
@@ -506,27 +1048,25 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		} 
 
 		/**
-		 * routing to a L2Address
+		 * routing to an L2Address
 		 */
 		if (pDestination instanceof L2Address){
-			
+			Logging.err(this, "Implement routing to " + pDestination);
 		}
 		
 		
 		List<RoutingServiceLink> tLinks = null;
 
-		NameMappingEntry<Name> [] tEntries = mNameMapping.getAddresses(pDestination);
-		
-		L2Address tSource = mLayer2NameMapping.get(pSource);
-		L2Address tDestination = null;
-		
+		L2Address tL2AddressSource = mFNToL2AddressesMapping.get(pSource);
+		L2Address tL2AddressDestination = null;
 		if( pDestination instanceof L2Address ) {
-			tDestination = (L2Address) pDestination;
+			tL2AddressDestination = (L2Address) pDestination;
 		} else {
+			NameMappingEntry<L2Address> [] tEntries = mFoGNamesToL2AddressesMapping.getAddresses(pDestination);
 			if(tEntries != null && tEntries.length > 0) {
-				tDestination = (L2Address) tEntries[0].getAddress();
+				tL2AddressDestination = (L2Address) tEntries[0].getAddress();
 			} else {
-				throw new RoutingException("Unable to lookup destination address");
+				throw new RoutingException("Unable to lookup L2 address of destination");
 			}
 		}
 		
@@ -535,92 +1075,58 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		if(pRequirements != null) {
 			for(Property tProperty : pRequirements) {
 				if(tProperty instanceof ContactDestinationApplication) {
-					if(mRoutingMap.contains(tDestination)) {
-						tLinks = mRoutingMap.getRoute(tSource, tDestination);
+					if(mFoGRoutingGraph.contains(tL2AddressDestination)) {
+						tLinks = mFoGRoutingGraph.getRoute(tL2AddressSource, tL2AddressDestination);
 						tConnectToApp = (ContactDestinationApplication) tProperty;
 					}
-					if(mCoordinatorRoutingMap.contains(tDestination)) {
-						List<Route> tRouteToDestination = mCoordinatorRoutingMap.getRoute(tSource, tDestination);
-						Route tRoute = new Route();
+					if(mCoordinatorRoutingMap.contains(tL2AddressDestination)) {
+						List<Route> tRouteToDestination = mCoordinatorRoutingMap.getRoute(tL2AddressSource, tL2AddressDestination);
+
 						for(Route tPath : tRouteToDestination) {
-							tRoute.addAll(tPath.clone());
+							tResultRoute.addAll(tPath.clone());
 						}
 						if(((ContactDestinationApplication)tProperty).getApplicationName() != null) {
-							tRoute.addLast(new RouteSegmentAddress(((ContactDestinationApplication)tProperty).getApplicationName()));
+							tResultRoute.addLast(new RouteSegmentAddress(((ContactDestinationApplication)tProperty).getApplicationName()));
 						} else {
-							tRoute.addLast(new RouteSegmentAddress(new SimpleName(((ContactDestinationApplication)tProperty).getApplicationNamespace())));
+							tResultRoute.addLast(new RouteSegmentAddress(new SimpleName(((ContactDestinationApplication)tProperty).getApplicationNamespace())));
 						}
-						return tRoute;
+						return tResultRoute;
 					}
 				}
 			}
 		}
 		
-		if(mCoordinatorRoutingMap.contains(tSource) && mCoordinatorRoutingMap.contains(tDestination)) {
-			Route tRoute = new Route();
+		if(mCoordinatorRoutingMap.contains(tL2AddressSource) && mCoordinatorRoutingMap.contains(tL2AddressDestination)) {
 			List<Route> tSegmentPaths = null;
-			tSegmentPaths = mCoordinatorRoutingMap.getRoute(tSource, tDestination);
-			Logging.log(this, "route from " + pSource + " to " + pDestination + " is " + tSegmentPaths);
+			tSegmentPaths = getCoordinatorRoutingMap().getRoute(tL2AddressSource, tL2AddressDestination);
 			
 			for(Route tPath : tSegmentPaths) {
-				tRoute.addAll(tPath.clone());
+				tResultRoute.addAll(tPath.clone());
 			}
-			return tRoute;
+
+			Logging.log(this, "COORDINATOR GRAPH returned a route from " + pSource + " to " + pDestination + " as " + tResultRoute);
+			return tResultRoute;
 		}
 		
 		if(pDestination instanceof HRMID) {
-			Route tRoute = new Route();
-
 			if(!pSource.equals(getSourceIdentification())) {
-				List<RoutingServiceLink> tGateList = mRoutingMap.getRoute(tSource, (HRMName) getSourceIdentification());
+				List<RoutingServiceLink> tGateList = mFoGRoutingGraph.getRoute(tL2AddressSource, (HRMName) getSourceIdentification());
 				if(!tGateList.isEmpty()) {
 					RouteSegmentPath tPath = new RouteSegmentPath();
 					for(RoutingServiceLink tLink : tGateList) {
 						tPath.add(tLink.getID());
 					}
-					tRoute.add(tPath);
+					tResultRoute.add(tPath);
 				}
-			}
-			
-			HRMID tTarget = (HRMID) pDestination;
-			
-			HRMID tForwarding = null;
-			try {
-				tForwarding = getForwardingHRMID(tTarget);
-			} catch (RemoteException tExc) {
-				Logging.err(this, "Unable to find forwarding HRMID", tExc);
-			}
-			
-			if(mHopByHopRoutingMap != null) {
-				
-				FIBEntry tFIBEntry = mHopByHopRoutingMap.get(tForwarding);
-				HRMName tForwardingEntity = null;
-				if(tFIBEntry != null) {
-					tForwardingEntity = tFIBEntry.getNextHop();
-				}
-				
-				List<Route> tPath = getCoordinatorRoutingMap().getRoute(tSource, tForwardingEntity);
-				if(tPath != null && tPath.size() > 0) {
-					tRoute.addAll(tPath.get(0).clone());
-					if(!tTarget.equals(tFIBEntry.getDestination())) {
-						tRoute.add(new RouteSegmentAddress(pDestination));
-					}
-				}
-				
-				return tRoute;
 			}
 		}
-		
-		if(pRequirements == null) {
-			pRequirements = new Description();
-		}
-		
+
 		if(tLinks == null) {
 			/*Collection<RoutingServiceLink>
 			for(RoutingServiceLink tLink : mRoutingMap.getGraphForGUI().getEdges()) {
 				Logging.log(this, "Edge " + tLink + " connects " + mRoutingMap.getSource(tLink) + " and " + mRoutingMap.getDest(tLink));
 			}*/
-			tLinks = getRoute(tSource, tDestination, null, null);
+			tLinks = getRouteFromLocalGraphs(tL2AddressSource, tL2AddressDestination, null, null);
 		}
 		
 		if(tLinks == null || tLinks.isEmpty()) {
@@ -650,7 +1156,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			}
 		}
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "      ..RESULT: " + tResultRoute);
+			Logging.log(this, "      ..RESULT(getRoute): " + tResultRoute);
 		}
 		
 		return tResultRoute;
@@ -659,26 +1165,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	public RoutableGraph<HRMName, Route> getCoordinatorRoutingMap()
 	{
 		return mCoordinatorRoutingMap;
-	}
-	
-	public RoutableGraph<HRMName, RoutingServiceLink> getLocalRoutingMap()
-	{
-		return mRoutingMap;
-	}
-	
-	public String getEdges()
-	{
-		return mRoutingMap.getEdges().toString();
-	}
-	
-	public String getNodes()
-	{
-		return mRoutingMap.getVertices().toString();
-	}
-	
-	public FIBEntry getFIBEntry(HRMID pHRMID)
-	{
-		return mHopByHopRoutingMap.get(pHRMID);
 	}
 	
 	public boolean addRoutingEntry(HRMID pRoutingID, FIBEntry pEntry)
@@ -703,11 +1189,11 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 //			Logging.log(this, "Not replacing " + tOldEntry.getDestination() + " with " + pEntry);
 //			return false;
 //		} else {
-//			if(mHRMController.getApprovedSignatures().contains(pEntry.getSignature())) {
+//			if(getHRMController().getApprovedSignatures().contains(pEntry.getSignature())) {
 //				mHopByHopRoutingMap.remove(pRoutingID);
 //			}
 //		}
-//		if(mHRMController.getApprovedSignatures().contains(pEntry.getSignature())) {
+//		if(getHRMController().getApprovedSignatures().contains(pEntry.getSignature())) {
 //			mHopByHopRoutingMap.put(pRoutingID, pEntry);
 //			return true;
 //		} else {
@@ -716,11 +1202,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 //		}
 		
 		return true;
-	}
-	
-	public HashMap<HRMID, FIBEntry> getRoutingTable()
-	{
-		return mHopByHopRoutingMap;
 	}
 	
 	@Override
@@ -749,41 +1230,17 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	public Name getSourceIdentification()
 	{
 		if(mSourceIdentification == null) {
-			NameMappingEntry<Name> tAddresses[] = null;
-			tAddresses = mNameMapping.getAddresses(mHRMController.getNode().getCentralFN().getName());
-			for(NameMappingEntry<Name> tEntry : tAddresses) {
-				mSourceIdentification = tEntry.getAddress();
+			NameMappingEntry<L2Address> tAddresses[] = null;
+			tAddresses = mFoGNamesToL2AddressesMapping.getAddresses(getHRMController().getNode().getCentralFN().getName());
+			for(NameMappingEntry<L2Address> tAddress : tAddresses) {
+				//TODO: check if we find more than one!?
+				mSourceIdentification = tAddress.getAddress();
 			}
 		}
 		
 		return mSourceIdentification;
 	}
 	
-	@Override
-	public void registerNode(ForwardingNode pElement, Name pName, NamingLevel pLevel, Description pDescription)
-	{	
-		Logging.log(this, "REGISTERING NODE: " + pElement + " with name " + pName + (pLevel != NamingLevel.NONE ? " on naming level " + pLevel : "") + " with description " + pDescription);
-
-		NameMappingEntry<Name> [] tEntries = null;
-		tEntries = mNameMapping.getAddresses(pName);
-		L2Address tAddress = null;
-		
-		if ((tEntries != null) && (tEntries.length > 0))
-			Logging.log(this, "Found name " + tEntries[0].getAddress().toString() + " for " + pElement);
-		
-		if(!mLayer2NameMapping.containsKey(pElement)) {
-			long tRandomNumber = mRandomGenerator.nextLong();
-			Logging.log(this, "Generated as L2 address the long value " + tRandomNumber + " for " + pName);
-			
-			tAddress = new L2Address(tRandomNumber);
-			tAddress.setCaps(mNode.getCapabilities());
-			tAddress.setDescr(pElement.toString());
-			mNameMapping.registerName(pName, tAddress, pLevel);
-		}
-		if(tAddress instanceof L2Address) {
-			mLayer2NameMapping.put(pElement, tAddress);
-		}
-	}
 	
 	private boolean checkIfNameIsOnIgnoreList(HRMName pName, Description pDescription)
 	{
@@ -811,15 +1268,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		return false;
 	}
 
-	@Override
-	public void updateNode(ForwardingNode pElement, Description pCapabilities)
-	{
-		Logging.log(this, "UPDATING NODE " + pElement + " with capabilities " + pCapabilities);
-
-		/*
-		 * do nothing here
-		 */
-	}
 	
 	/**
 	 * @param pName Element to search for
@@ -827,234 +1275,30 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 */
 	private HRMName getAddress(Name pName, Description pDescription) throws RoutingException
 	{
-		NameMappingEntry<Name>[] addrs = mNameMapping.getAddresses(pName);
+		NameMappingEntry<L2Address>[] tAddresses = mFoGNamesToL2AddressesMapping.getAddresses(pName);
 		
-		if(addrs.length == 0) {
-			return null;
-		} else {
+		if(tAddresses.length > 0){
 			// Check if some destinations are excluded from search.
 			// Return first address, which is not on the ignore list.
-			for(int i=0; i<addrs.length; i++) {
-				if(!checkIfNameIsOnIgnoreList((HRMName) addrs[i].getAddress(), pDescription)) {
-					return (HRMName) addrs[i].getAddress();
+			for(NameMappingEntry<L2Address> tAddress : tAddresses) {
+				if (!checkIfNameIsOnIgnoreList((HRMName) tAddress.getAddress(), pDescription)) {
+					return (HRMName) tAddress.getAddress();
 				}
 			}
 			
-			Logging.warn(this, "Have to ignore all " +addrs.length +" addresses listed for name " +pName +".");
+			Logging.warn(this, "Have to ignore all " + tAddresses.length + " addresses listed for name " + pName +".");
 			return null;
 		}
-	}
 
-	@Override
-	public boolean unregisterNode(ForwardingNode pElement)
-	{
-		Logging.log(this, "UNREGISTERING NODE " + pElement);
-
-		L2Address tLookedUp = mLayer2NameMapping.get(pElement);
-		
-		if(mRoutingMap.contains(tLookedUp)) {
-			mRoutingMap.remove(tLookedUp);
-		}
-		
-		if(mCoordinatorRoutingMap.contains(tLookedUp)) {
-			mCoordinatorRoutingMap.remove(tLookedUp);
-		}
-		
-		return true;
-	}
-
-	/**
-	 * Informs routing service about new connection provided by a gate.
-	 * Might be called recursively.
-	 */
-	private void informRoutingService(ForwardingNode pFrom, ForwardingElement pTo, AbstractGate pGate, Name pRemoteDestinationName, Number pLinkCost) throws NetworkException
-	{
-		// is it a local connection between two FNs?
-		if(pRemoteDestinationName == null) {
-			// announce local connections between multiplexers
-			// -> signals routes through nodes to next higher routing service level
-			if(pTo instanceof GateContainer) {
-				// ignore gates without a correct ID
-				if(pGate.getGateID() != null) {
-					// recursive call
-					HRMName tAddress = (HRMName) getNameFor((ForwardingNode) pTo);
-					if(tAddress == null) {
-						Logging.warn(this, "Destination node " +pTo +" in link " +pGate +" was not registered.");
-						registerNode((GateContainer)pTo, null, NamingLevel.NONE, null);
-					}
-					informRoutingService(pFrom, pTo, pGate, tAddress, pLinkCost);
-				}
-			}
-		} else {
-//			HRMName tFrom = (HRMName) getNameFor(pFrom);
-			HRMName tTo;
-			
-			if(pRemoteDestinationName instanceof HRMID) {
-				tTo =  (HRMName) pRemoteDestinationName;
-			} else {
-				tTo = getAddress(pRemoteDestinationName, null);
-			}
-			
-			if(tTo == null) {
-				tTo = getAddress(pRemoteDestinationName, null);
-			}
-			
-			if(tTo == null) {
-				Logging.warn(this, "Target is still null");
-			}
-		}
-	}
-
-	@Override
-	public void registerLink(ForwardingElement pFrom, AbstractGate pGate) throws NetworkException
-	{
-		Logging.log(this, "REGISTERING LINK: source=" + pFrom + ", dest.=" + pGate.getNextNode() + ", attr.=" + pGate.getDescription() + ", gate=" + pGate);
-
-		HRMName tFrom = getNameFor((ForwardingNode) pFrom);
-		
-		if(tFrom != null) {
-			Logging.warn(this, "Source node " +pFrom +" of link " +pGate +" not known. Register it implicitly.");
-			
-			registerNode((ForwardingNode)pFrom, null, NamingLevel.NONE, null);
-			
-			tFrom = getNameFor((ForwardingNode) pFrom);
-			if(tFrom == null) {
-				throw new RuntimeException(this +" - FN " +pFrom +" not known even so it was registered before.");
-			}
-		}
-		
-		informRoutingService((ForwardingNode)pFrom, pGate.getNextNode(), pGate, pGate.getRemoteDestinationName(), pGate.getCost());
-		
-		L2Address tDestination = null;
-		
-		if( pGate instanceof DirectDownGate && pGate.getRemoteDestinationName() != null ) {
-			tDestination = (L2Address) pGate.getRemoteDestinationName();
-		} else if(pGate instanceof DirectDownGate && pGate.getRemoteDestinationName() == null) {
-			return;
-		} else if(!(pGate instanceof DirectDownGate)) {
-			ForwardingElement tForwarder = pGate.getNextNode();
-			tDestination = mLayer2NameMapping.get(tForwarder);
-			if(tDestination == null) {
-				registerNode((ForwardingNode)tForwarder, null, NamingLevel.NONE, null);
-			}
-			tDestination = mLayer2NameMapping.get(tForwarder);
-		}
-		
-		L2Address tSource = (L2Address) getNameFor((ForwardingNode) pFrom);
-		
-		if(tSource == null || tDestination == null) {
-			throw new NetworkException("Either source or destination could not be registered before.");
-		}
-		
-		mRoutingMap.storeLink(tSource, tDestination, new RoutingServiceLink(pGate.getGateID(), null, RoutingServiceLink.DEFAULT));
-		
-		HRMName tThisHostAddress = null;
-		boolean tDontElect=false;
-		
-		tThisHostAddress = getNameFor(mNode.getCentralFN());
-		
-		/**
-		 * Have we got a link registration for a new neighbor?
-		 */
-		if(pGate instanceof DirectDownGate) {
-			Logging.info(this, "Add link to external " +tDestination);
-			
-			double waitTime = 0.1;//(mRandomGenerator.nextDouble()*5)+2; //TODO: check if event handler still drops events which have a time in the past or the very near future
-			Logging.log(this, "Waiting " + waitTime + " seconds");
-			if(tDestination != null && !pFrom.equals(tThisHostAddress) && !tDestination.equals(tThisHostAddress)) {
-				if(tSource.getComplexAddress().longValue() < tDestination.getComplexAddress().longValue()) {
-					List<RoutingServiceLink> tContemporaryRoute = mRoutingMap.getRoute(tThisHostAddress, tDestination);
-					Logging.log(this, "Will initiate connection from " + tThisHostAddress + " to " + tDestination + " via FN " + pFrom);
-
-					// output stack trace
-//					StackTraceElement[] tStackTrace = Thread.currentThread().getStackTrace();
-//					for (StackTraceElement tElement : tStackTrace) {
-//						Logging.log(this, tElement.toString());
-//					}
-
-//					mNeighborRoutes.add(new RememberFN(tContemporaryRoute, tDestination));
-					/*
-					 * We hash the name of the bus on which the packet came in to create a temporary identification of the cluster
-					 */
-					if(tContemporaryRoute == null) {
-						Logging.log(this, "Trigger");
-					}
-					AbstractGate tGate = null;
-					try {
-						tGate = mNode.getCentralFN().getGate(tContemporaryRoute.get(0).getID());
-					} catch (IndexOutOfBoundsException tExc) {
-						Logging.err(this, "Unable to determine outgoing gate for connection to " + pGate + " while contemporary route is " + tContemporaryRoute, tExc);
-					}
-					if(tGate == null) {
-						return;
-					} else {
-						ForwardingElement tFirstElement = (tGate).getNextNode();
-						GateContainer tContainer = (GateContainer) tFirstElement;
-						Logging.log(this, "Contemporary route is " + tContemporaryRoute);
-						RoutingServiceLink tLink = tContemporaryRoute.get(1); 
-						GateID tID = tLink.getID();
-						DirectDownGate ttGate = (DirectDownGate) tContainer.getGate(tID);
-						
-						// DirectDownGate ttGate = (DirectDownGate) ((GateContainer)(tGate).getNextNode()).getGate(tContemporaryRoute.get(1).getID());
-
-						Long tClusterID = Long.valueOf(0L);
-//						try {
-//							tClusterID = Long.valueOf(ttGate.getLowerLayer().getBus().getName().hashCode());
-//						} catch (RemoteException tExc) {
-//							Logging.err(this, "Unable to determine a hash value of the lower layer", tExc);
-//						}
-//						Logging.log(this, "about to open a connection from " + pFrom + " to " + tDestination);
-//						tDontElect = checkPairForEncapsulation(tSource, tDestination, AddressingType.IP);
-//						if(tDontElect) {
-//							Logging.log(this, "Pair " + tSource.getDescr() + ", " + tDestination.getDescr() + " not scheduled for election");
-//						} else {
-//							Logging.log(this, "Pair " + tSource.getDescr() + ", " + tDestination.getDescr() + " scheduled for election");
-//						}
-//						EventNewClusterMemberDetected tConnectEvent = new EventNewClusterMemberDetected(tDestination, tClusterID, tDontElect);
-//						mNode.getHost().getTimeBase().scheduleIn(waitTime, tConnectEvent);
-						
-						//TODO: replaced the above part
-						
-						Logging.log(this, "Opening connection to " + tDestination);
-						if (mHRMController == null){
-							Logging.err(this, "HRM controller is invalid, skipping connect request");
-							return;
-						}
-						mHRMController.addConnection(tDestination, HierarchyLevel.createBaseLevel(), tClusterID, false);
-					}
-				}
-			}
-		} else {
-			Logging.log(this, "This link is internal");
-		}
-	}
-
-	@Override
-	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate)
-	{
-		Logging.log(this, "UNREGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
-
-		L2Address tSource = mLayer2NameMapping.get(pFrom);
-//		L2Address tDestination = mLocalNameMapping.get(pGate.getNextNode());
-		
-		Collection<RoutingServiceLink> tCandidateLinks = mRoutingMap.getOutEdges(tSource);
-		if(tCandidateLinks != null) {
-			for(RoutingServiceLink tLink : tCandidateLinks) {
-				if(tLink.equals(pGate.getGateID())) {
-					mRoutingMap.unlink(tLink);
-				}
-			}
-		}
-		
-		return false;
+		return null;
 	}
 
 	@Override
 	public ForwardingNode getLocalElement(Name pDestination)
 	{
 		if(pDestination != null) {
-			for(ForwardingElement tElement : mLayer2NameMapping.keySet()) {
-				L2Address tAddr = mLayer2NameMapping.get(tElement) ;
+			for(ForwardingElement tElement : mFNToL2AddressesMapping.keySet()) {
+				L2Address tAddr = mFNToL2AddressesMapping.get(tElement) ;
 				
 				if(pDestination.equals(tAddr)) {
 					if(tElement instanceof ForwardingNode) {
@@ -1070,32 +1314,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	public LinkedList<Name> getIntermediateFNs(ForwardingNode pSource,	Route pRoute, boolean pOnlyDestination)
 	{
 		return null;
-	}
-
-	@Override
-	public HRMName getNameFor(ForwardingNode pNode)
-	{
-		return mLayer2NameMapping.get(pNode);
-	}
-
-	@Override
-	public NameMappingService getNameMappingService()
-	{
-		return mNameMapping;
-	}
-
-	@Override
-	public boolean isKnown(Name pName)
-	{
-		return mNameMapping.getAddresses(pName) != null;
-	}
-
-	@Override
-	public boolean unregisterName(ForwardingNode pElement, Name pName)
-	{
-		L2Address tAddress = mLayer2NameMapping.get(pElement);
-		
-		return mNameMapping.unregisterName(pName, tAddress);
 	}
 
 	@Override
