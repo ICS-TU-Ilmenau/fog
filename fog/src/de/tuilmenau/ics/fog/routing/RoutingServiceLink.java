@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.routing;
 
 import de.tuilmenau.ics.fog.IEventRef;
 import de.tuilmenau.ics.fog.facade.Description;
+import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Viewable;
 
@@ -31,28 +32,37 @@ public class RoutingServiceLink
 	
 	public RoutingServiceLink(GateID pID, Description pDescription, Number pLinkCost)
 	{
-		mID = pID;
+		mGateID = pID;
 		if(pDescription != null) {
 			mDescr = pDescription.clone();
 		} else {
 			mDescr = null;
 		}
 		mDescr = pDescription;
-		mCost = pLinkCost;
+		mGateCosts = pLinkCost;
 	}
 	
 	public boolean equals(Object pObj)
 	{
-		if(pObj == null) return false;
-		if(pObj == this) return true;
+		if(pObj == null){
+			return false;
+		}
 		
-		if(pObj instanceof GateID)
-			return ((GateID) pObj).equals(mID);
+		if(pObj == this){
+			return true;
+		}
 		
-		// TODO check, if this comparison does not conflict with comment for class
+		if(pObj instanceof GateID){
+			return ((GateID) pObj).equals(mGateID);
+		}
+
+		if (pObj instanceof AbstractGate){
+			return ((AbstractGate) pObj).getGateID().equals(mGateID);
+		}
+		
 		if(pObj instanceof RoutingServiceLink) {
-			if(mID != null) {
-				return mID.equals(((RoutingServiceLink) pObj).mID);
+			if(mGateID != null) {
+				return mGateID.equals(((RoutingServiceLink) pObj).mGateID);
 			}
 		}
 		
@@ -61,7 +71,7 @@ public class RoutingServiceLink
 	
 	public GateID getID()
 	{
-		return mID;
+		return mGateID;
 	}
 	
 	public Description getDescription()
@@ -71,19 +81,19 @@ public class RoutingServiceLink
 	
 	public void setCost(Number pNewCost)
 	{
-		mCost = pNewCost;
+		mGateCosts = pNewCost;
 	}
 	
 	public Number getCost()
 	{
-		if(mCost == null) mCost = 1;
+		if(mGateCosts == null) mGateCosts = 1;
 		
-		return mCost;
+		return mGateCosts;
 	}
 	
 	public boolean hasInfiniteCost()
 	{
-		if(mCost != null) return INFINITE.equals(mCost);
+		if(mGateCosts != null) return INFINITE.equals(mGateCosts);
 		else return false;
 	}
 	
@@ -99,22 +109,25 @@ public class RoutingServiceLink
 	
 	public String toString()
 	{
-		if(mID != null) {
-			if(mCost != null) {
-				return mID.toString() +" (c=" +mCost +")";
+		if(mGateID != null) {
+			if(mGateCosts != null) {
+				return mGateID.toString() +" (c=" + mGateCosts +")";
 			} else {
-				return mID.toString();
+				return mGateID.toString();
 			}
 		}
 		else return UNNUMBERED_LINK_NAME;
 	}
 	
-	@Viewable("Gate number")
-	private GateID mID;
+	@Viewable("Gate ID")
+	private GateID mGateID;
+	
 	@Viewable("Description")
 	private Description mDescr;
+	
 	@Viewable("Cost value")
-	private Number mCost;
+	private Number mGateCosts;
+	
 	@Viewable("Associated timer")
 	private IEventRef mTimer;
 }
