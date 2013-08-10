@@ -13,6 +13,8 @@ import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.LoggableElement;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 public class SignalingMessageHrm extends LoggableElement implements Serializable
 {
@@ -36,6 +38,10 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	{
 		mSenderName = pSenderName;
 		mReceiverName = pReceiverName;
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+			Logging.log(this, "CREATED");
+		}
 	}
 	
 	/**

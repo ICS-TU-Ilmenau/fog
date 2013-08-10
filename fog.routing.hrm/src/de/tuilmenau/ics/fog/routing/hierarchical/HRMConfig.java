@@ -59,6 +59,11 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_TOPOLOGY_DETECTION = true;
 
 		/**
+		 * Shows general debug outputs about signaling messages
+		 */
+		public static final boolean GUI_SHOW_SIGNALING = true;
+
+		/**
 		 * Defines the time period between two updates of the node specific HRM display.
 		 */
 		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 1.0;
