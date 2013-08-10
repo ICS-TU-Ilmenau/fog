@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
@@ -304,41 +303,49 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	{
 		Logging.log(this, "GET ROUTE in graph " + pGraph.toString() + " from " + pSource + " to " + pDestination);
 
-		List<RoutingServiceLink> tResult = new LinkedList<RoutingServiceLink>();
+		List<RoutingServiceLink> tResult = null;
 
-		// check if source/destination are known by the graph
-		if(pGraph.contains(pSource) && pGraph.contains(pDestination)) {
-			try {
-				// determine the route in the graph instance
-				List<LinkType> tFoundRoute = (List<LinkType>)pGraph.getRoute(pSource, pDestination);
-				
-				// have we found a route in the graph instance?
-				if(!tFoundRoute.isEmpty()) {
-					/**
-					 * transform the route from the graph instance to a list of RoutingServiceLink(GateIDs) objects
-					 */
-					if(tFoundRoute.get(0) instanceof RoutingServiceLink) {
-						// iterate over all links(GateIDs), add them to the result list
-						for(RoutingServiceLink tLinkInFoundRoute : (List<RoutingServiceLink>)tFoundRoute) {
-							tResult.add(tLinkInFoundRoute);
-						}
-					} else if(tFoundRoute.get(0) instanceof RouteSegmentPath) {
-						// iterate over all routing segments and their stored links(GateIDs), add them to the result list
-						for(RouteSegmentPath tRouteSegment : (List<RouteSegmentPath>)tFoundRoute) {
-							for(GateID tID : tRouteSegment) {
-								tResult.add(new RoutingServiceLink(tID, null, RoutingServiceLink.DEFAULT));
-							}
-						}
-					}
+		List<LinkType> tFoundRoute = null;
+		
+		// HINT: keep the locked (synchronized) area small!
+		synchronized (pGraph) {
+			// check if source/destination are known by the graph
+			if(pGraph.contains(pSource) && pGraph.contains(pDestination)) {
+				try {
+					// determine the route in the graph instance
+					tFoundRoute = (List<LinkType>)pGraph.getRoute(pSource, pDestination);
+				} catch (ClassCastException tExc) {
+					Logging.err(this, "Unable to cast the getRouteFromGraph result, returning null", tExc);
+					
+					// reset the result
+					tResult = null;
 				}
-			} catch (ClassCastException tExc) {
-				Logging.err(this, "Unable to cast the getRouteFromGraph result, returning null", tExc);
-				
-				// reset the result
-				tResult = null;
 			}
 		}
-		
+
+		// have we found a route in the graph instance?
+		if((tFoundRoute != null) && (!tFoundRoute.isEmpty())) {
+			// create result object
+			tResult = new LinkedList<RoutingServiceLink>();
+			
+			/**
+			 * transform the route from the graph instance to a list of RoutingServiceLink(GateIDs) objects
+			 */
+			if(tFoundRoute.get(0) instanceof RoutingServiceLink) {
+				// iterate over all links(GateIDs), add them to the result list
+				for(RoutingServiceLink tLinkInFoundRoute : (List<RoutingServiceLink>)tFoundRoute) {
+					tResult.add(tLinkInFoundRoute);
+				}
+			} else if(tFoundRoute.get(0) instanceof RouteSegmentPath) {
+				// iterate over all routing segments and their stored links(GateIDs), add them to the result list
+				for(RouteSegmentPath tRouteSegment : (List<RouteSegmentPath>)tFoundRoute) {
+					for(GateID tID : tRouteSegment) {
+						tResult.add(new RoutingServiceLink(tID, null, RoutingServiceLink.DEFAULT));
+					}
+				}
+			}
+		}
+
 		Logging.log(this, "      ..RESULT(getRouteFromGraph): " + tResult);
 		
 		return tResult;
@@ -352,6 +359,20 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	public RoutableGraph<HRMName, RoutingServiceLink> getFoGRoutingGraph()
 	{
 		return mFoGRoutingGraph;
+	}
+
+	/**
+	 * Stores a link in the local FoG specific routing graph
+	 * 
+	 * @param pFromL2Address the starting point of the link
+	 * @param pToL2Address the ending point of the link
+	 * @param pRoutingServiceLink the link description
+	 */
+	private void storeLinkInFogRoutingGraph(L2Address pFromL2Address, L2Address pToL2Address,	RoutingServiceLink pRoutingServiceLink)
+	{
+		synchronized (mFoGRoutingGraph) {
+			mFoGRoutingGraph.storeLink(pFromL2Address, pToL2Address, pRoutingServiceLink);
+		}
 	}
 
 	/**
@@ -383,30 +404,45 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * @param pRequester the identity of the caller	 *  
 	 * @return the determined route, null if no route was found
 	 */
-	private <LinkType> List<LinkType> getRouteFromLocalGraphs(HRMName pSource, HRMName pDestination, Description pDescription, Identity pRequester)
+	private <LinkType> List<RoutingServiceLink> getRouteFromLocalGraphs(HRMName pSource, HRMName pDestination, Description pDescription, Identity pRequester)
 	{
 		Logging.log(this, "GET ROUTE (getRouteFromLocalGraphs) from " + pSource + " to " + pDestination);
 		
-		List<LinkType> tResult = null;
+		List<RoutingServiceLink> tResult = null;
 		
 		/**
 		 * Look in the local FoG specific routing graph
 		 */
-		if(mFoGRoutingGraph.contains(pSource) && mFoGRoutingGraph.contains(pDestination)) {
-			tResult = (List<LinkType>) getRouteFromGraph(mFoGRoutingGraph, pSource, pDestination);
-			Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-routingMap): " + tResult);
-		}
+		tResult = getRouteFromGraph(mFoGRoutingGraph, pSource, pDestination);
+		Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-routingMap): " + tResult);
 		
 		/**
 		 * 
 		 */
-		if(mCoordinatorRoutingMap.contains(pSource) && mCoordinatorRoutingMap.contains(pDestination)) {
-			tResult = (List<LinkType>) getRouteFromGraph(mCoordinatorRoutingMap, pSource, pDestination);
-			Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-coordinatorMap): " + tResult);
-		}
+		tResult = getRouteFromGraph(mCoordinatorRoutingMap, pSource, pDestination);
+		Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-coordinatorMap): " + tResult);
 		
 		Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs): " + tResult);
 		
+		return tResult;
+	}
+
+	/**
+	 * Determines a route from one L2 address to another one based on the FoG specific routing graph.
+	 * 
+	 * @param pToL2Address the ending point of the desired route
+	 * @return the determined route, returns "null" if no route was found
+	 */
+	public List<RoutingServiceLink> getRouteToPhysicalNeighbor(L2Address pToL2Address)
+	{
+		List<RoutingServiceLink> tResult = null;
+
+		// determine address of this physical node
+		L2Address tThisHostL2Address = getL2AddressFor(mNode.getCentralFN());
+
+		// query route in the FoG specific routing graph
+		tResult = getRouteFromGraph(mFoGRoutingGraph, tThisHostL2Address, pToL2Address);
+
 		return tResult;
 	}
 
@@ -546,7 +582,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			
 		return true;
 	}
-
+	
 	/**
 	 * Registers a link in the local FoG specific routing graph
 	 * 
@@ -647,7 +683,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		/**
 		 * Add link to FoG specific routing graph
 		 */
-		mFoGRoutingGraph.storeLink(tFromL2Address, tToL2Address, new RoutingServiceLink(pGate.getGateID(), null, RoutingServiceLink.DEFAULT));
+		storeLinkInFogRoutingGraph(tFromL2Address, tToL2Address, new RoutingServiceLink(pGate.getGateID(), null, RoutingServiceLink.DEFAULT));
 		
 		/**
 		 * DIRECT NEIGHBOR FOUND: create a HRM connection to it
@@ -655,86 +691,12 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		if(tIsLinkToPhysicalNeigborNode) {
 			L2Address tThisHostL2Address = getL2AddressFor(mNode.getCentralFN());
 
-			Logging.info(this, "NODE " + tThisHostL2Address + " FOUND DIRECT NEIGHBOR: " + tToL2Address);
-			
+			Logging.info(this, "      ..NODE " + tThisHostL2Address + " FOUND POSSIBLE DIRECT NEIGHBOR: " + tToL2Address + "?");
+
 			if((!pFrom.equals(tThisHostL2Address)) && (!tToL2Address.equals(tThisHostL2Address))) {
 				if(tFromL2Address.getComplexAddress().longValue() < tToL2Address.getComplexAddress().longValue()) {
-					Logging.log(this, "    ..initiating connection from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
-
-					// determine the route to the neighbor
-					List<RoutingServiceLink> tRouteToNeighbor = mFoGRoutingGraph.getRoute(tThisHostL2Address, tToL2Address);
-					Logging.log(this, "    ..determined route from " + tThisHostL2Address + " to " + tToL2Address + ": " + tRouteToNeighbor);
-					if(tRouteToNeighbor != null) {
-						// determine the transparent gate towards the neighbor
-						AbstractGate tOutgoingTransparentGate = null;
-						try {
-							tOutgoingTransparentGate = mNode.getCentralFN().getGate(tRouteToNeighbor.get(0).getID());
-						} catch (IndexOutOfBoundsException tExc) {
-							Logging.err(this, "registerLink() couldn't determine the outgoing gate for a connection from " + tThisHostL2Address + " to " + tToL2Address + ", determined route is: " + tRouteToNeighbor, tExc);
-						}
-						if(tOutgoingTransparentGate != null) {
-							// determine the first next node behind the outgoing transparent gate
-							ForwardingElement tFirstNextNode = tOutgoingTransparentGate.getNextNode();
-							
-							// get the gate container from the first next node
-							GateContainer tContainer = (GateContainer) tFirstNextNode;
-							
-							// get the DirectDownGate ID
-							RoutingServiceLink tDownGateLink = tRouteToNeighbor.get(1); 
-							
-							if (tDownGateLink != null){
-								GateID tDownGateGateID = tDownGateLink.getID();
-							
-								// hash the name of the bus where the outgoing gate belongs to in order to create a temporary identification of the cluster
-								Long tClusterID = Long.valueOf(0L);
-								DirectDownGate tDirectDownGate = (DirectDownGate) tContainer.getGate(tDownGateGateID);
-								if (tDirectDownGate != null){
-									NetworkInterface tNetworkInterface = tDirectDownGate.getLowerLayer();
-									if (tNetworkInterface != null){
-										ILowerLayer tLowerLayer = tNetworkInterface.getBus();
-										if (tLowerLayer != null){
-											String tBusName = null;
-											try {
-												tBusName = tLowerLayer.getName();
-											} catch (RemoteException tExc) {
-												Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), Bus Name is invalid", tExc);
-												tBusName = null;
-											}
-											if (tBusName != null){
-												tClusterID = Long.valueOf(tBusName.hashCode());
-											}else{
-												Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), Bus Name is invalid");
-											}
-										}else{
-											Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), ILowerLayer is invalid");
-										}
-									}else{
-										Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus to " + tToL2Address + ", NetworkInterface is invalid");
-									}									
-								}else{
-									Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus " + tToL2Address + ", DirectDownGate is invalid");
-								}
-
-								/**
-								 * Open a connection to the neighbor
-								 */
-								if (getHRMController() != null){
-								    Logging.log(this, "    ..opening connection to " + tToL2Address);
-								    getHRMController().addConnection(tToL2Address, HierarchyLevel.createBaseLevel(), tClusterID, false);
-								}else{
-									Logging.err(this, "registerLink() cannot connect to the neghbor " + tToL2Address + " because the HRM controller is invalid");
-								}
-							}else{
-								Logging.err(this, "registerLink() hasn't found the DirectDownGate in the route from " + tThisHostL2Address + " to " + tToL2Address + ", route is: " + tRouteToNeighbor);
-							}
-								
-						}else{
-							Logging.err(this, "registerLink() couldn't determine the outgoing gate of the route from " + tThisHostL2Address + " to " + tToL2Address + ", route is: " + tRouteToNeighbor);
-						}
-						
-					}else{
-						Logging.err(this, "registerLink() couldn't determine a route from " + tThisHostL2Address + " to " + tToL2Address);
-					}
+					Logging.log(this, "    ..actually found an interesting link from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
+					getHRMController().detectedPhysicalNeighborNode(tToL2Address);
 				}else{
 					Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address);
 				}

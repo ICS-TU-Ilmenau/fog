@@ -47,8 +47,14 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
+import de.tuilmenau.ics.fog.topology.ILowerLayer;
+import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
+import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
+import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
+import de.tuilmenau.ics.fog.transfer.gates.DirectDownGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.SimpleName;
@@ -519,6 +525,89 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}
 	}
 
+	/**
+	 * Reacts on a detected new physical neighbor. A new connection to this neighbor is created.
+	 * 
+	 * @param pNeighborL2Address the L2 address of the detected physical neighbor
+	 */
+	public void detectedPhysicalNeighborNode(L2Address pNeighborL2Address)
+	{
+		L2Address tThisHostL2Address = getHRS().getL2AddressFor(mNode.getCentralFN());
+
+		Logging.info(this, "NODE " + tThisHostL2Address + " FOUND DIRECT NEIGHBOR: " + pNeighborL2Address);
+		
+		// determine the route to the neighbor
+		List<RoutingServiceLink> tRouteToNeighbor = getHRS().getRouteToPhysicalNeighbor(pNeighborL2Address);
+		Logging.log(this, "    ..determined route from " + tThisHostL2Address + " to " + pNeighborL2Address + ": " + tRouteToNeighbor);
+		if(tRouteToNeighbor != null) {
+			// determine the transparent gate towards the neighbor
+			AbstractGate tOutgoingTransparentGate = null;
+			try {
+				tOutgoingTransparentGate = mNode.getCentralFN().getGate(tRouteToNeighbor.get(0).getID());
+			} catch (IndexOutOfBoundsException tExc) {
+				Logging.err(this, "registerLink() couldn't determine the outgoing gate for a connection from " + tThisHostL2Address + " to " + pNeighborL2Address + ", determined route is: " + tRouteToNeighbor, tExc);
+			}
+			if(tOutgoingTransparentGate != null) {
+				// determine the first next node behind the outgoing transparent gate
+				ForwardingElement tFirstNextNode = tOutgoingTransparentGate.getNextNode();
+				
+				// get the gate container from the first next node
+				GateContainer tContainer = (GateContainer) tFirstNextNode;
+				
+				// get the DirectDownGate ID
+				RoutingServiceLink tDownGateLink = tRouteToNeighbor.get(1); 
+				
+				if (tDownGateLink != null){
+					GateID tDownGateGateID = tDownGateLink.getID();
+				
+					// hash the name of the bus where the outgoing gate belongs to in order to create a temporary identification of the cluster
+					Long tClusterID = Long.valueOf(0L);
+					DirectDownGate tDirectDownGate = (DirectDownGate) tContainer.getGate(tDownGateGateID);
+					if (tDirectDownGate != null){
+						NetworkInterface tNetworkInterface = tDirectDownGate.getLowerLayer();
+						if (tNetworkInterface != null){
+							ILowerLayer tLowerLayer = tNetworkInterface.getBus();
+							if (tLowerLayer != null){
+								String tBusName = null;
+								try {
+									tBusName = tLowerLayer.getName();
+								} catch (RemoteException tExc) {
+									Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), Bus Name is invalid", tExc);
+									tBusName = null;
+								}
+								if (tBusName != null){
+									tClusterID = Long.valueOf(tBusName.hashCode());
+								}else{
+									Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), Bus Name is invalid");
+								}
+							}else{
+								Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), ILowerLayer is invalid");
+							}
+						}else{
+							Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus to " + pNeighborL2Address + ", NetworkInterface is invalid");
+						}									
+					}else{
+						Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus " + pNeighborL2Address + ", DirectDownGate is invalid");
+					}
+
+					/**
+					 * Open a connection to the neighbor
+					 */
+				    Logging.log(this, "    ..opening connection to " + pNeighborL2Address);
+				    addConnection(pNeighborL2Address, HierarchyLevel.createBaseLevel(), tClusterID, false);
+				}else{
+					Logging.err(this, "registerLink() hasn't found the DirectDownGate in the route from " + tThisHostL2Address + " to " + pNeighborL2Address + ", route is: " + tRouteToNeighbor);
+				}
+					
+			}else{
+				Logging.err(this, "registerLink() couldn't determine the outgoing gate of the route from " + tThisHostL2Address + " to " + pNeighborL2Address + ", route is: " + tRouteToNeighbor);
+			}
+			
+		}else{
+			Logging.err(this, "registerLink() couldn't determine a route from " + tThisHostL2Address + " to " + pNeighborL2Address);
+		}
+	}
+	
 	/**
 	 * Determines a reference to the current AutonomousSystem instance.
 	 * 
