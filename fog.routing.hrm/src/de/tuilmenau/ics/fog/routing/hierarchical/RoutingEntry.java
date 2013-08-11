@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -85,6 +86,11 @@ public class RoutingEntry
 	 * (for GUI only)
 	 */
 	private boolean mRouteToDirectNeighbor = false;
+
+	/**
+	 * Stores the L2 address of the next hop if known
+	 */
+	private L2Address mNextHopL2Address = null;
 	
 	/**
 	 * Constructor
@@ -147,6 +153,26 @@ public class RoutingEntry
 		return tEntry;
 	}
 
+	/**
+	 * Defines the L2 address of the next hop
+	 * 
+	 * @param pDestL2Address the L2 address of the next hop
+	 */
+	public void setNextHopL2Address(L2Address pNextHopL2Address)
+	{
+		mNextHopL2Address = pNextHopL2Address;	
+	}
+	
+	/**
+	 * Returns the L2 address of the next hop of this route (if known)
+	 * 
+	 * @return the L2 address of the next hop, returns null if none is known
+	 */
+	public L2Address getNextHopL2Address()
+	{
+		return mNextHopL2Address;
+	}
+	
 	/**
 	 * Returns the destination of the route
 	 * 

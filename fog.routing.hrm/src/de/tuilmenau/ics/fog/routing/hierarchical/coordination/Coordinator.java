@@ -41,6 +41,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
@@ -229,7 +230,7 @@ public class Coordinator implements ICluster, HRMEntity
 			AssignHRMID tAssignHRMID = new AssignHRMID(getHRMController().getNode().getCentralFN().getName(), tClusterMember.getPeerHRMID(), tHRMID);
 			
 			// share the route to this cluster member with all other cluster members
-			shareRoute(tClusterMember);
+			shareRouteToClusterMember(tClusterMember);
 			
 			// send the packet
 			tClusterMember.sendPacket(tAssignHRMID);
@@ -237,11 +238,11 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 	
 	/**
-	 * Shares a router to a cluster cluster member with other cluster members
+	 * Shares a route to a cluster cluster member with other cluster members
 	 * 
 	 * @param pClusterMemberChannel the cluster member to whom we have a sharable route
 	 */
-	private void shareRoute(CoordinatorCEPChannel pClusterMemberChannel)
+	private void shareRouteToClusterMember(CoordinatorCEPChannel pClusterMemberChannel)
 	{
 		// determine the HRMID of the cluster member
 		HRMID tMemberHRMID = pClusterMemberChannel.getPeerHRMID();
@@ -250,11 +251,13 @@ public class Coordinator implements ICluster, HRMEntity
 		if (getHierarchyLevel().getValue() == 1){ // TODO: isBaseLevel()){
 			// create the new routing table entry
 			RoutingEntry tRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tMemberHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+			// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+			tRoutingEntry.setNextHopL2Address(pClusterMemberChannel.getPeerL2Address());
 			
 			Logging.log(this, "SHARING ROUTE: " + tRoutingEntry);
 			
 			// add the entry to the local routing table
-			getHRMController().addRoute(tRoutingEntry);
+			getHRMController().addHRMRoute(tRoutingEntry);
 			
 			// store the entry for route sharing with cluster members
 			synchronized (mSharedRoutes){
@@ -408,9 +411,15 @@ public class Coordinator implements ICluster, HRMEntity
 						/**
 						 * ADD ROUTES: routes from the cluster member to this node for every registered local HRMID.
 						 */
+						// determine the L2 address of this physical node
+						L2Address tPhysNodeL2Address = getHRMController().getHRS().getL2AddressForNode();
+						// iterate over all HRMIDs which are registered for this physical node
 						for (HRMID tHRMID : getHRMController().getOwnHRMIDs()){
 							// create entry for cluster internal routing towards us
 							RoutingEntry tRouteFromClusterMemberToHere = RoutingEntry.createRouteToDirectNeighbor(tHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+							// define the L2 address of the next hop in order to let the receiver store it in its HRMID-to-L2ADDRESS mapping
+							tRouteFromClusterMemberToHere.setNextHopL2Address(tPhysNodeL2Address);
+							// add the route in the "share phase" signaling
 							tRoutingInformationPacket.addRoute(tRouteFromClusterMemberToHere);
 						}
 						
