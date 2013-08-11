@@ -103,7 +103,7 @@ public class CoordinatorCEPMultiplexer
 						/*
 						 * we need the last hop in direct to the neighbor
 						 */
-						ICluster tPredecessorToRemote = (ICluster) mHRMController.getRoutableClusterGraph().getDest(pTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
+						ICluster tPredecessorToRemote = (ICluster) mHRMController.getRoutableClusterGraph().getLinkEndNode(pTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
 						tParticipate.setPredecessor(new ClusterName(tPredecessorToRemote.getToken(), tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getHierarchyLevel()));
 						Logging.log(this, "Successfully set predecessor for " + pTargetCluster + ":" + tPredecessorToRemote);
 					} else {
@@ -121,7 +121,7 @@ public class CoordinatorCEPMultiplexer
 						 * the predecessor has to be the next hop
 						 */
 						if(!tClusterList.isEmpty()) {
-							ICluster tPredecessor = (ICluster) mHRMController.getRoutableClusterGraph().getDest(tNeighbor, tClusterList.get(tClusterList.size()-1));
+							ICluster tPredecessor = (ICluster) mHRMController.getRoutableClusterGraph().getLinkEndNode(tNeighbor, tClusterList.get(tClusterList.size()-1));
 							tEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
 							Logging.log(this, "Successfully set predecessor for " + tNeighbor + ":" + tPredecessor);
 						} else {

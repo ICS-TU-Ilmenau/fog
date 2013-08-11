@@ -519,7 +519,7 @@ public class CoordinatorCEPChannel
 			
 			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getPeer(), pCluster);
 			if(!tClusterList.isEmpty()) {
-				ICluster tPredecessorCluster = (ICluster) getHRMController().getRoutableClusterGraph().getDest(pCluster, tClusterList.get(tClusterList.size()-1));
+				ICluster tPredecessorCluster = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(pCluster, tClusterList.get(tClusterList.size()-1));
 				ClusterName tPredecessorClusterName = new ClusterName(tPredecessorCluster.getToken(), tPredecessorCluster.getClusterID(), tPredecessorCluster.getHierarchyLevel());
 				tEntry.setPredecessor(tPredecessorClusterName);
 			}
