@@ -61,7 +61,6 @@ public class CoordinatorCEPChannel
 	private ICluster mPeerCluster;
 	private BullyPriority mPeerPriority = null;
 	private boolean mKnowsCoordinator = false;
-	private HashMap<ICluster, ICluster> mAnnouncerMapping;
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
 	private BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink> mBreadthFirstSearch;
@@ -416,172 +415,6 @@ public class CoordinatorCEPChannel
 			}
 			
 			/**
-			 * TopologyData
-			 */
-			if(pData instanceof TopologyData) {
-				TopologyData tTopologyPacket = (TopologyData)pData;
-				
-				if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-					Logging.log(this, "TOPOLOGY-received from \"" + mPeerCluster + "\" TOPOLOGY DATA: " + tTopologyPacket);
-
-				if (getPeer() instanceof Coordinator){
-					Coordinator tCoordinator = (Coordinator)getPeer();
-					tCoordinator.handleSharedTopologyData(tTopologyPacket);
-				}
-			}/* else if (pData instanceof NestedDiscovery) {
-				NestedDiscovery tDiscovery = (NestedDiscovery) pData;
-				handleClusterDiscovery(tDiscovery);
-			}*/
-			
-			
-			/**
-			 * RouteRequest
-			 */
-//			if(pData instanceof RouteRequest) {
-//				RouteRequest tRouteRequestPacket = (RouteRequest) pData;
-//				
-//				if (CHANNEL_SIGNALING_DEBUGGING)
-//					Logging.log(this, " ROUTE-received from \"" + mPeerCluster + "\" ROUTE REQUEST: " + tRouteRequestPacket);
-//
-//				if(tRouteRequestPacket.getTarget() instanceof HRMID) {
-//					HRMName tRequestAddress = tRouteRequestPacket.getSource();
-//					HRMName tDestinationAddress = getSourceName();
-//					if(!tRouteRequestPacket.isAnswer() && tHRS.getFIBEntry( (HRMID) tRouteRequestPacket.getTarget()) != null && tRequestAddress != null && tRequestAddress.equals(tDestinationAddress)) {
-//						/*
-//						 * Find out if route request can be solved by this entity without querying a higher coordinator
-//						 */
-//						for(IRoutableClusterGraphTargetName tCluster : getHRMController().getClusters(0)) {
-//							FIBEntry tEntry = tHRS.getFIBEntry( (HRMID) tRouteRequestPacket.getTarget());
-//							if(tCluster instanceof Cluster && tEntry != null && (tEntry.getFarthestClusterInDirection() == null || tEntry.getFarthestClusterInDirection().equals(tCluster))) {
-//								Route tRoute = tHRS.getRoutePath( getSourceName(), tRouteRequestPacket.getTarget(), new Description(), tNode.getIdentity());
-//								RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
-//								HRMName tSource = null;
-//								HRMName tTarget = null;
-//								for(Route tCandidatePath : tHRS.getCoordinatorRoutingMap().getEdges()) {
-//									if(tCandidatePath.equals(tPath)) {
-//										 tSource = tHRS.getCoordinatorRoutingMap().getSource(tCandidatePath);
-//										 tTarget = tHRS.getCoordinatorRoutingMap().getDest(tCandidatePath);
-//										 break;
-//									}
-//								}
-//								tRouteRequestPacket.addRoutingVector(new RoutingServiceLinkVector(tRoute, tSource, tTarget));
-//								tRouteRequestPacket.setAnswer();
-//								tRouteRequestPacket.setResult(ResultType.SUCCESS);
-//
-//								// send packet
-//								sendPacket(tRouteRequestPacket);
-//								
-//								return true;
-//							}
-//						}
-//					}
-//					
-//					if(!tRouteRequestPacket.isAnswer() && tRouteRequestPacket.isRouteAccumulation()) {
-//						if(getRemoteClusterName().getHierarchyLevel() != getPeer().getHierarchyLevel() && getPeer().isInterASCluster()) {
-//							HRMID tAddress =  (HRMID) tRouteRequestPacket.getTarget();
-//							LinkedList<Name> tIPAddresses = HRMIPMapper.getHRMIPMapper().getIPFromHRMID(tAddress);
-//							Route tRoute = null;
-//							if(tIPAddresses != null) {
-//								for(Name tTargetAddress : tIPAddresses) {
-//									try {
-//										tRoute = ((RoutingServiceMultiplexer)tNode.getRoutingService()).getRoute(tNode.getCentralFN(), tTargetAddress, ((RouteRequest)pData).getDescription(), null);
-//									} catch (NetworkException tExc) {
-//										Logging.info(this, "BGP routing service did not find a route to " + tTargetAddress);
-//									}
-//									Logging.log(this, "Interop: Route to "+ tAddress + " with IP address " + tTargetAddress + " is " + tRoute);
-//								}
-//							} else {
-//								Logging.err(this, "Unable to distribute addresses because no IP address is available");
-//							}
-//							if(tRoute != null) {
-//								tRouteRequestPacket.setAnswer();
-//								tRouteRequestPacket.setRoute(tRoute);
-//								
-//								// send packet
-//								sendPacket(tRouteRequestPacket);
-//								
-//							}
-//						} 
-//						return true;
-//					} else if(tRouteRequestPacket.isAnswer()) {
-//						/*
-//						 * In this case normally someone is waiting for this packet to arrive, therefore is not handled by any cluster and you only get a notification.
-//						 */
-//						synchronized(tRouteRequestPacket) {
-//							tRouteRequestPacket.notifyAll();
-//						}
-//						return true;
-//					}
-//					if(getPeer() instanceof Cluster) {
-//						Coordinator tManager = ((Cluster)getPeer()).getCoordinator();
-//						tManager.handleRouteRequest((RouteRequest) pData, getRemoteClusterName());
-//						tManager.registerRouteRequest(tRouteRequestPacket.getSession(), this);
-//					} else if (getPeer() instanceof Coordinator) {
-//						/*
-//						 * Normally that case should not appear ...
-//						 */
-//						((Coordinator)getPeer()).handleRouteRequest((RouteRequest) pData, this);
-//					}
-//					/*
-//					 * This comment relates to the following else if statement: use routing service address as last instance because it is the default and all
-//					 * other addresses are derived from the HRMID
-//					 */
-//				}
-//				
-//				/**
-//				 * HRMID
-//				 */
-//				if(tRouteRequestPacket.getTarget() instanceof HRMID && !tRouteRequestPacket.isAnswer()) {
-//					List<Route> tFinalPath = tHRS.getCoordinatorRoutingMap().getRoute(tRouteRequestPacket.getSource(), tRouteRequestPacket.getTarget());
-//					if(tRouteRequestPacket.getRequiredClusters() != null) {
-//
-//						for(ClusterName tClusterName : tRouteRequestPacket.getRequiredClusters()) {
-//							tFinalPath = null;
-//							List<Route> tPath = tHRS.getCoordinatorRoutingMap().getRoute(tRouteRequestPacket.getSource(), tRouteRequestPacket.getTarget());
-//							
-//							Cluster tCluster = getHRMController().getCluster(tClusterName);
-//							LinkedList<HRMName> tAddressesOfCluster = new LinkedList<HRMName>();
-//							
-//							for(CoordinatorCEPChannel tCEP : tCluster.getParticipatingCEPs()) {
-//								tAddressesOfCluster.add(tCEP.getPeerName());
-//							}
-//							if( tAddressesOfCluster.contains(tHRS.getCoordinatorRoutingMap().getDest(tPath.get(0))) ) {
-//								tFinalPath = tPath;
-//							} else {
-//								for(HRMName tCandidate : tAddressesOfCluster) {
-//									List<Route> tOldPath = tPath;
-//									tPath = tHRS.getCoordinatorRoutingMap().getRoute(tCandidate, tRouteRequestPacket.getTarget());
-//									
-//									if(tPath.size() < tOldPath.size()) {
-//										List<Route> tFirstPart = tHRS.getCoordinatorRoutingMap().getRoute(tRouteRequestPacket.getSource(), tCandidate); 
-//										Route tSegment = (tFirstPart.size() > 0 ? tFirstPart.get(0) : null);
-//										if(tSegment != null) {
-//											tPath.add(0, tSegment);
-//										}
-//										tFinalPath = tPath;
-//									}
-//								}
-//							}
-//						}
-//					}
-//					if(tFinalPath != null && !tFinalPath.isEmpty()) {
-//						for(Route tSegment : tFinalPath) {
-//							tRouteRequestPacket.addRoutingVector(new RoutingServiceLinkVector(tSegment, tHRS.getCoordinatorRoutingMap().getSource(tSegment), tHRS.getCoordinatorRoutingMap().getDest(tSegment)));
-//						}
-//					}
-//					tRouteRequestPacket.setAnswer();
-//					
-//					// send packet
-//					sendPacket(tRouteRequestPacket);
-//					
-//				} else if(tRouteRequestPacket.getTarget() instanceof HRMID && tRouteRequestPacket.isAnswer()) {
-//					synchronized (tRouteRequestPacket) {
-//						tRouteRequestPacket.notifyAll();
-//					}
-//				}
-//			}
-			
-			/**
 			 * RequestCoordinator
 			 */
 			if (pData instanceof RequestCoordinator) {
@@ -623,12 +456,10 @@ public class CoordinatorCEPChannel
 						for(DiscoveryEntry tEntry : tRequestCoordinatorPacket.getDiscoveryEntries()) {
 							ClusterName tDummy = handleDiscoveryEntry(tEntry);
 							getPeer().getHRMController().getCluster(new ClusterName(getPeer().getToken(), ((getSourceName()).getComplexAddress().longValue()), getPeer().getHierarchyLevel())).addNeighborCluster(getPeer().getHRMController().getCluster(tDummy));
-							addAnnouncedCluster(getHRMController().getCluster(tDummy), getRemoteClusterName());
 						}
 					}
 					synchronized(tRequestCoordinatorPacket) {
 						Logging.log(this, "Received answer to " + tRequestCoordinatorPacket + ", notifying");
-						tRequestCoordinatorPacket.mWasNotified = true;
 						tRequestCoordinatorPacket.notifyAll();
 					}
 				}
@@ -735,15 +566,6 @@ public class CoordinatorCEPChannel
 		mPartOfCluster = pPartOfMyCluster;
 	}
 	
-	public ICluster getNegotiator(ICluster pCluster)
-	{
-		if(mAnnouncerMapping == null) {
-			mAnnouncerMapping = new HashMap<ICluster, ICluster>();
-		}
-		ICluster tCluster = mAnnouncerMapping.get(pCluster);
-		return tCluster;
-	}
-	
 	public boolean knowsCoordinator()
 	{
 		return mKnowsCoordinator;
@@ -766,30 +588,6 @@ public class CoordinatorCEPChannel
 		}
 			
 		mPeerPriority = pPeerPriority;
-	}
-	
-	public void addAnnouncedCluster(ICluster pAnnounced, ICluster pNegotiate)
-	{
-		Logging.log(this, "Cluster " + pAnnounced + " as announced by " + pNegotiate);
-		if(pNegotiate == null) {
-			return;
-		}
-		if(mAnnouncerMapping == null) {
-			mAnnouncerMapping = new HashMap<ICluster, ICluster>();
-		}
-		if(!mAnnouncerMapping.containsKey(pAnnounced)) {
-			mAnnouncerMapping.put(pAnnounced, pNegotiate);
-		} else {
-			Logging.log(this, "comparing " + pNegotiate + " to " + mAnnouncerMapping.get(pAnnounced));
-			if(mAnnouncerMapping.get(pAnnounced).getHierarchyLevel().isHigher(this,  pNegotiate.getHierarchyLevel())) {
-				mAnnouncerMapping.remove(pAnnounced);
-				mAnnouncerMapping.put(pAnnounced, pNegotiate);
-			} else if (pNegotiate instanceof NeighborCluster && mAnnouncerMapping.get(pAnnounced) instanceof NeighborCluster && ((NeighborCluster)pNegotiate).getClusterDistanceToTarget() < ((NeighborCluster)mAnnouncerMapping.get(pAnnounced)).getClusterDistanceToTarget()) {
-				Logging.log(this, "replacing negotiating cluster of " + pAnnounced + ": " + mAnnouncerMapping.get(pAnnounced) + " with " + pNegotiate);
-				mAnnouncerMapping.remove(pAnnounced);
-				mAnnouncerMapping.put(pAnnounced, pNegotiate);
-			}
-		}
 	}
 	
 	public void setRemoteClusterName(ClusterName pClusterName)
@@ -880,9 +678,6 @@ public class CoordinatorCEPChannel
 				HashMap<ClusterName, ClusterName> tToSetNegotiator = new HashMap<ClusterName, ClusterName>();
 				for(DiscoveryEntry tEntry : pDiscovery.getDiscoveryEntries()) {
 					tToSetNegotiator.put(handleDiscoveryEntry(tEntry), tEntry.getPredecessor());
-				}
-				for(ClusterName tDummy : tToSetNegotiator.keySet()) {
-					addAnnouncedCluster(getHRMController().getCluster(tDummy), getHRMController().getCluster(tToSetNegotiator.get(tDummy)));
 				}
 			}
 		}

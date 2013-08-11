@@ -17,7 +17,7 @@ public class ConfigureLinkDialog extends Dialog
 	/**
 	 * Stores the parent shell.
 	 */
-	Shell mParentShell = null;
+	private Shell mParentShell = null;
 	
 	/**
 	 * Constructor

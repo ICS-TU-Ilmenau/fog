@@ -642,7 +642,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	/**
 	 * Triggers the "report phase" / "share phase" of all known coordinators
 	 */
-	public void reportAndShare()
+	private void reportAndShare()
 	{	
 		if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
 			Logging.log(this, "REPORT AND SHARE TRIGGER received");
@@ -780,7 +780,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 				}
 				tCluster.getMultiplexer().mapCEPToSession(tCEP, tConnectionSession);
 				tCluster.addParticipatingCEP(tCEP);
-				tCEP.addAnnouncedCluster(tCluster, tCluster);
 				addRoutableTarget(tCluster);
 				tFoundCluster = tCluster;
 			}
@@ -878,9 +877,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 				} else {
 					Logging.warn(this, "Adding cluster that contains no neighbors");
 				}
-				for(ICluster tEveluateNegotiator : tNewlyCreatedClusters.keySet()) {
-					tCEP.addAnnouncedCluster(tEveluateNegotiator, getCluster(tNewlyCreatedClusters.get(tEveluateNegotiator)));
-				}
 			} else {
 				Logging.trace(this, "remote cluster was set earlier");
 			}
@@ -895,44 +891,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}
 		
 		tConnectionSession.start(pConnection);
-	}
-	
-	/**
-	 * 
-	 * @param pSourceCluster source cluster
-	 * @param pTargetCluster specify the target cluster to which the path has to be checked for separation through another coordinator
-	 * @param pCEPsToEvaluate list of connection end points that have to be chosen to the target
-	 * @return true if the path contains a node that is covered by another coordinator
-	 */
-	public boolean checkPathToTargetContainsCovered(HRMGraphNodeName pSourceCluster, HRMGraphNodeName pTargetCluster, LinkedList<CoordinatorCEPChannel> pCEPsToEvaluate)
-	{
-		if(pSourceCluster == null || pTargetCluster == null) {
-			Logging.log(this, "checking cluster route between null and null");
-			return false;
-		}
-		RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> tMap = ((ICluster)pSourceCluster).getHRMController().getRoutableClusterGraph();
-		List<RoutableClusterGraphLink> tClusterConnection = tMap.getRoute(pSourceCluster, pTargetCluster);
-		String tCheckedClusters = new String();
-		boolean isCovered = false;
-		for(RoutableClusterGraphLink tConnection : tClusterConnection) {
-			Collection<HRMGraphNodeName> tNodes = tMap.getGraphForGUI().getIncidentVertices(tConnection);
-			for(HRMGraphNodeName tNode : tNodes) {
-				if(tNode instanceof ICluster) {
-					CoordinatorCEPChannel tCEPLookingFor = null;
-					for(CoordinatorCEPChannel tCEP : pCEPsToEvaluate) {
-						if(tCEP.getRemoteClusterName().equals(tNode)) {
-							tCEPLookingFor = tCEP;
-						}
-					}
-					tCheckedClusters += tNode + " knows coordinator " + (tCEPLookingFor != null ? tCEPLookingFor.knowsCoordinator() : "UNKNOWN" ) + "\n";
-					if(tCEPLookingFor != null && tCEPLookingFor.knowsCoordinator()) {
-						isCovered = isCovered || true;
-					}
-				}
-			}
-		}
-		Logging.log(this, "Checked clusterroute from " + pSourceCluster + " to clusters " + tCheckedClusters);
-		return isCovered;
 	}
 	
 	/**
@@ -1007,7 +965,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * @param pLevel is the level at which a connection is added
 	 * @param pToClusterID is the identity of the cluster a connection will be added to
 	 */
-	public void connectTo(Name pName, HierarchyLevel pLevel, Long pToClusterID)
+	private void connectTo(Name pName, HierarchyLevel pLevel, Long pToClusterID)
 	{
 		Logging.log(this, "ADDING CONNECTION to " + pName + "(ClusterID=" + pToClusterID + ", hierarchy level=" + pLevel.getValue() + ")");
 

@@ -25,7 +25,6 @@ public class RequestCoordinator implements Serializable
 	private boolean mIsAnswer=false;
 	private boolean mKnowCoordinator = false;
 	private int mRandomNumber = 0;
-	public boolean mWasNotified = false;
 	
 	/**
 	 * 

@@ -14,7 +14,6 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
@@ -244,13 +243,6 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 */
 //	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP);
 	
-	/**
-	 * TODO
-	 *  
-	 * @return
-	 */
-	public TopologyData getTopologyData();
-
 	/**
 	 * It is possible, to address more than one destination within one packet - for that purpose a multiplexer is used.
 	 * 

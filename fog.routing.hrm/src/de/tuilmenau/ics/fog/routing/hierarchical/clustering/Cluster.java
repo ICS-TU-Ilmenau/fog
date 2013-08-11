@@ -103,7 +103,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private HRMSignature mCoordSignature;
 	private boolean mInterASCluster = false;
 	private int mToken;
-	private LinkedList<CoordinatorCEPChannel> mLaggards; // only used by the Elector
 	private TopologyData mTopologyData = null;
 	private LinkedList<CoordinatorCEPChannel> mOldParticipatingCEPs;
 
@@ -345,9 +344,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				}
 				pAnnounce.isForeignAnnouncement();
 			}
-			if(pCEP != null) {
-				pCEP.addAnnouncedCluster(addAnnouncedCluster(pAnnounce, pCEP), getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
-			}
 		} else {
 			if(getHRMController().getClusterWithCoordinatorOnLevel(mHierarchyLevel.getValue()) == null) {
 				/*
@@ -388,10 +384,8 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 					Logging.log(this, "Unable to fulfill requirements");
 				}
 				Logging.log(this, "new negotiating cluster will be " + getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
-				pCEP.addAnnouncedCluster(addAnnouncedCluster(pAnnounce, pCEP), getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
 			} else if(pCEP != null) {
 				Logging.log(this, "new negotiating cluster will be " + getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
-				pCEP.addAnnouncedCluster(addAnnouncedCluster(pAnnounce, pCEP), getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
 			}
 		}
 	}
@@ -705,70 +699,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	}
 
 	/**
-	 * As the implemented version of HRM uses a fully distributed algorithm for signaling it is possible that some nodes are not
-	 * associated to a coordinator because they were not covered. In that case such a node sends RequestCoordinator messages to 
-	 * the neighbors. If a neighbor is not covered by a coordinator either, it is added as laggard.
-	 * 
-	 * @return Return the list of laggards that were not covered by a coordinator either. 
-	 */
-	public LinkedList<CoordinatorCEPChannel> getLaggards()
-	{
-		return mLaggards;
-	}
-
-	/**
-	 * As the implemented version of HRM uses a fully distributed algorithm for signaling it is possible that some nodes are not
-	 * associated to a coordinator because they were not covered. In that case such a node sends RequestCoordinator messages to
-	 * the neighbors. If a neighbor is not covered by a coordinator either, it is added as laggard.
-	 * 
-	 * @param pCEP Add one connection end point as laggard here.
-	 */
-	public void addLaggard(CoordinatorCEPChannel pCEP)
-	{
-		if(mLaggards == null) {
-			mLaggards = new LinkedList<CoordinatorCEPChannel>();
-			mLaggards.add(pCEP);
-		} else {
-			mLaggards.add(pCEP);
-		}
-	}
-
-//	public void handleTopologyData(TopologyData pTopologyData)
-//	{
-//		Logging.err(this, "Ignoring topology data for HRMID " + pTopologyData.getHRMID().toString() + " and topology data " + pTopologyData);
-//		Logging.err(this, "Continuing");
-		
-//		mTopologyData = pTopologyData;
-//
-//		setHRMID(this, pTopologyData.getHRMID());
-//		
-//		if(mTopologyData.getEntries() != null) {
-//			for(FIBEntry tEntry : mTopologyData.getEntries()) {
-//				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null) {
-//					/*if(!getCoordinator().getHRS().getRoutingTable().containsKey(tEntry.getDestination())) {
-//						getCoordinator().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
-//					} else {
-//						if(getCoordinator().getHRS().getFIBEntry(tEntry.getDestination()).isWriteProtected()) {
-//							getCoordinator().getLogger().log(this, "Not replacing " + getCoordinator().getHRS().getFIBEntry(tEntry.getDestination()) + " with " + tEntry);
-//						} else {
-//							getCoordinator().getHRS().getRoutingTable().remove(tEntry.getDestination());
-//							getCoordinator().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
-//						}
-//					}*/
-//					getHRMController().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
-//				}
-//			}
-//		}
-		// TODO: der koordinator soltle die routing-updates vornehmen, was wenn baselevel 0 ist? dann doch cluster?
-//	}
-	
-	@Override
-	public TopologyData getTopologyData()
-	{
-		return mTopologyData;
-	}
-	
-	/**
 	 * Determines the coordinator of this cluster. It is "null" if the election was lost or hasn't finished yet. 
 	 * 
 	 * @return the cluster's coordinator
@@ -778,7 +708,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return mCoordinator;
 	}
 	
-	public boolean hasLocalCoordinator()
+	private boolean hasLocalCoordinator()
 	{
 		return (mCoordinator != null);
 	}

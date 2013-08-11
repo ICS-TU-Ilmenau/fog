@@ -241,10 +241,4 @@ public class ClusterName implements Serializable, ICluster
 	{
 		return null;
 	}
-
-	@Override
-	public TopologyData getTopologyData()
-	{
-		return null;
-	}
 }

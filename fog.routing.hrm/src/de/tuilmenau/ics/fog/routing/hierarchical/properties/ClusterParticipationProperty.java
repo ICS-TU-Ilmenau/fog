@@ -33,7 +33,6 @@ public class ClusterParticipationProperty extends AbstractProperty
 	private int mTargetToken;
 	private Name mSourceName;
 	private HRMName mSourceAddress;
-	private LinkedList<Name> mAddressesToTarget;
 	private LinkedList<NestedParticipation> mNestParticipations = new LinkedList<NestedParticipation>();
 	private static final long serialVersionUID = 7561293731302599090L;
 	
@@ -48,27 +47,6 @@ public class ClusterParticipationProperty extends AbstractProperty
 		mTargetClusterID = pTargetClusterID;
 		mHierarchyLevel = pLevel;
 		mTargetToken = pTargetToken;
-	}
-	
-	/**
-	 * 
-	 * @param pAddress Add one more address that leads from the entitiy that creates this object to the target. 
-	 */
-	public void addAddressToTarget(Name pAddress)
-	{
-		if(mAddressesToTarget == null) {
-			mAddressesToTarget = new LinkedList<Name>();
-		}
-		mAddressesToTarget.add(pAddress);
-	}
-	
-	/**
-	 * 
-	 * @return Returned is a list of addresses that were passed in order to reach the target.
-	 */
-	public LinkedList<Name> getAddressesToTarget()
-	{
-		return mAddressesToTarget;
 	}
 	
 	/**

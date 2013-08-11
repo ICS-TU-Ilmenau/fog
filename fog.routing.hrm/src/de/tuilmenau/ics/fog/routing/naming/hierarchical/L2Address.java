@@ -32,7 +32,7 @@ public class L2Address extends HRMName
 	 * 
 	 * @param pAddress This can be a simple long value.
 	 */
-	public L2Address(long pAddress)
+	private L2Address(long pAddress)
 	{
 		super(BigInteger.valueOf(pAddress));
 	}

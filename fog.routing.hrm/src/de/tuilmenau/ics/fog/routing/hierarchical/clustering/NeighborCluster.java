@@ -129,7 +129,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 				}
 			}
 		}
-		pCEP.addAnnouncedCluster(tCluster, this);
 	}
 
 	public CoordinatorCEPChannel getSuperiorCoordinatorCEP()
@@ -433,10 +432,4 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	{
 		return mClusterID.intValue() * 1;
 	}
-
-	@Override
-	public TopologyData getTopologyData()
-	{
-		return null;
-	}	
 }

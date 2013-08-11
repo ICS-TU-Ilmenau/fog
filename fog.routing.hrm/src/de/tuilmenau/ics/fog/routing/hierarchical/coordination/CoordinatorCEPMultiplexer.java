@@ -110,17 +110,6 @@ public class CoordinatorCEPMultiplexer
 						Logging.log(this, "Unable to set predecessor for " + pTargetCluster + ":");
 					}
 					
-	
-					try {
-						for(Name tIntermediateAddress : mHRMController.getHRS().getIntermediateNodes(mHRMController.getNode().getRoutingService().getNameFor(mHRMController.getNode().getCentralFN()), pTargetCluster.getCoordinatorsAddress())) {
-							tParticipationProperty.addAddressToTarget(tIntermediateAddress);
-						}
-					} catch (RoutingException tExc) {
-						Logging.err(this, "Unable to find names", tExc);
-						return;
-					}
-					
-					
 					for(ICluster tNeighbor: tManager.getManagedCluster().getNeighbors()) {
 						DiscoveryEntry tEntry = new DiscoveryEntry(tNeighbor.getToken(), tNeighbor.getCoordinatorName(), tNeighbor.getClusterID(), tNeighbor.getCoordinatorsAddress(), tNeighbor.getHierarchyLevel());
 						tEntry.setPriority(tNeighbor.getBullyPriority());

@@ -86,7 +86,6 @@ public class Coordinator implements ICluster, HRMEntity
 	
 	private HRMID mHRMID = null;
 	private Cluster mManagedCluster;
-	private HashMap<CoordinatorCEPChannel, TopologyData> mAddressMapping = null;
 	private LinkedList<CoordinatorCEPChannel> mCEPs = null;
 	private CoordinatorCEPChannel mCoordinatorCEP = null;
 	private HRMSignature mCoordinatorSignature = null;
@@ -97,14 +96,9 @@ public class Coordinator implements ICluster, HRMEntity
 	private List<HRMGraphNodeName> mClustersToNotify;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
 	private int mReceivedAnnounces = 0;
-//	private LinkedList<Name> mIgnoreOnAddressDistribution = null;
 	private Long mClusterID;
-	private LinkedList<HRMID> mHigherHRMIDs = null;
-	private TopologyData mTopologyData = null;
 	private HashMap<HRMID, FIBEntry> mIDToFIBMapping = new HashMap<HRMID, FIBEntry>();
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnouncements;
-//	private HashMap<Long, CoordinatorCEPChannel> mRouteRequestDispatcher;
-	private HashMap<HRMID, LinkedList<RoutingServiceLinkVector>> mAddressToPathMapping;
 	
 	/**
 	 * This is the GUI specific coordinator ID. It is used to allow for an easier debugging.
@@ -131,7 +125,6 @@ public class Coordinator implements ICluster, HRMEntity
 		
 		mHierarchyLevel = mManagedCluster.getHierarchyLevel();
 		mClusterID = pCluster.getClusterID();
-		mAddressMapping = new HashMap<CoordinatorCEPChannel, TopologyData>();
 		mCEPs = new LinkedList<CoordinatorCEPChannel>();
 		
 		// creates the coordinator signature
@@ -334,7 +327,7 @@ public class Coordinator implements ICluster, HRMEntity
 	 * 
 	 * @return true if the "share phase" should be started, otherwise false
 	 */
-	public boolean sharePhaseHasTimeout()
+	private boolean sharePhaseHasTimeout()
 	{
 		// determine the time between two "share phases"
 		double tDesiredTimePeriod = getHRMController().getPeriodSharePhase(getHierarchyLevel().getValue() - 1);
@@ -663,16 +656,6 @@ public class Coordinator implements ICluster, HRMEntity
 		return mCEPs;
 	}
 
-	public LinkedList<HRMID> getHigherHRMIDs()
-	{
-		return mHigherHRMIDs;
-	}
-	
-	public HashMap<CoordinatorCEPChannel, TopologyData> getAddressMapping()
-	{
-		return mAddressMapping;
-	}
-	
 	public LinkedList<CoordinatorCEPChannel> getLowerCEPs()
 	{
 		return mManagedCluster.getClusterMembers();
@@ -758,35 +741,6 @@ public class Coordinator implements ICluster, HRMEntity
 		mIDToFIBMapping.put(pEntry.getDestination(), pEntry);
 	}
 	
-	public void handleSharedTopologyData(TopologyData pTopologyData)
-	{
-		/*
-		 * this cluster manager only computes the FIB derived from Radius algorithm
-		 */
-//		Node tNode = getHRMController().getNode();
-		
-//TODO: still needed here?
-//		if(pTopologyData.getPushThrougs() != null && !pTopologyData.getPushThrougs().isEmpty()) {
-//			for(FIBEntry tEntry : pTopologyData.getPushThrougs()) {
-//				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null && !tEntry.getNextHop().equals(tNode.getRoutingService().getNameFor(tNode.getCentralFN()))) {
-//					getHRMController().getHRS().addRoutingEntry(tEntry.getDestination(), tEntry);
-//				}
-//			}
-//		}
-		
-		Logging.log(this, "Received topology data: " + pTopologyData);
-		mTopologyData = pTopologyData;
-		
-		if(pTopologyData.getEntries() != null && !pTopologyData.getEntries().isEmpty()) {
-			if(mHigherHRMIDs == null) mHigherHRMIDs = new LinkedList<HRMID>();
-			for(FIBEntry tEntry : pTopologyData.getEntries()) {
-				mHigherHRMIDs.add(tEntry.getDestination());
-				registerFIBEntry(tEntry);
-			}
-			Logging.log(this, "Have to provide FEs for " + mHigherHRMIDs);
-		}
-	}
-
 	@Override
 	public BullyPriority getHighestPriority() {
 		return mHighestPriority;
@@ -1035,10 +989,8 @@ public class Coordinator implements ICluster, HRMEntity
 				Logging.log(this, "Unable to fulfill requirements");
 			}
 			Logging.log(this, "new negotiating cluster will be " + getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
-			pCEP.addAnnouncedCluster(addAnnouncedCluster(pAnnounce, pCEP), getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
 		} else {
 			Logging.log(this, "new negotiating cluster will be " + getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
-			pCEP.addAnnouncedCluster(addAnnouncedCluster(pAnnounce, pCEP), getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
 		}
 	}
 
@@ -1203,205 +1155,6 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 	
 	@Override
-	public TopologyData getTopologyData()
-	{
-		return mTopologyData;
-	}
-	
-	private HRMSignature getSignatureOfPath(HRMID tHRMID)
-	{
-		if(mIDToFIBMapping.containsKey(tHRMID) && mIDToFIBMapping.get(tHRMID).getSignature() != null) {
-			return mIDToFIBMapping.get(tHRMID).getSignature();
-		} else {
-			return null;
-		}
-		
-	}
-	
-	public LinkedList<RoutingServiceLinkVector> getPathFromHRMID(HRMID pID)
-	{
-		if(mIDToFIBMapping.containsKey(pID) && mIDToFIBMapping.get(pID).getRouteToTarget() != null) {
-			return mIDToFIBMapping.get(pID).getRouteToTarget();
-		} else if(mAddressToPathMapping != null && mAddressToPathMapping.containsKey(pID)) {
-				return (LinkedList<RoutingServiceLinkVector>) mAddressToPathMapping.get(pID).clone();
-			} else {
-				return null;
-			}
-	}
-	
-//	public void handleRouteRequest(RouteRequest pRequest, IRoutableClusterGraphTargetName pSourceCluster)
-//	{
-//		/**
-//		 * Stored the routing DB of the local HRM controller
-//		 */
-//		final RoutableGraph<HRMName, Route> tLocalRoutingDB = getHRMController().getHRS().getCoordinatorRoutingMap();
-//
-//		final RouteRequest tParameterRouteRequest = pRequest;
-//		final IRoutableClusterGraphTargetName tSourceCluster = pSourceCluster;
-//		final Coordinator tManager = this;
-//		
-//		if(pRequest.getResult() != null && pRequest.getResult().equals(ResultType.UNFEASIBLE)) {
-//			CoordinatorCEPChannel tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
-//			tParameterRouteRequest.setAnswer();
-//			tCEP.sendPacket(tParameterRouteRequest);
-//			return;
-//		}
-//		
-//		new Thread () {
-//			public void run() {
-//				int tDescendingDifference = 0;
-//				if(tParameterRouteRequest.getTarget() instanceof HRMID) {
-//					tDescendingDifference = (((HRMID)tParameterRouteRequest.getTarget())).getDescendingDifference(tSourceCluster.getHrmID());
-//				}
-//				
-//				/*
-//				 * Beginning of the recursion
-//				 */
-//				if(tDescendingDifference > mHierarchyLevel.getValue()) {
-//					RouteRequest tRequest = tParameterRouteRequest.clone();
-//					getCoordinatorCEP().sendPacket(tRequest);
-//					synchronized(tRequest) {
-//						try {
-//							tRequest.wait();
-//						} catch (InterruptedException tExc) {
-//							Logging.err(this, "Error when waiting for " + tRequest, tExc);
-//						}
-//					}
-//					Logging.log(tManager, "Come back of " + tRequest);
-//					try {
-//						if(tRequest.getRoutingVectors() != null) {
-//							for(RoutingServiceLinkVector tVector : tRequest.getRoutingVectors()) {
-//								tParameterRouteRequest.addRoutingVector(tVector);
-//							}
-//						}
-//					} catch (ConcurrentModificationException tExc) {
-//						if(tRequest.getRoutingVectors() != null) {
-//							for(RoutingServiceLinkVector tVector : tRequest.getRoutingVectors()) {
-//								if(tParameterRouteRequest.getRoutingVectors().contains(tVector)) {
-//									tParameterRouteRequest.addRoutingVector(tVector);
-//								}
-//							}
-//						}
-//					}
-//					
-//					tParameterRouteRequest.setAnswer();
-//					tParameterRouteRequest.setResult(tRequest.getResult());
-//					CoordinatorCEPChannel tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
-//					tCEP.sendPacket(tParameterRouteRequest);
-//				} else {
-//					/*
-//					 * end of the recursion
-//					 */
-//					Logging.log(tManager, "Reached highest cluster");
-//					final HRMID tLocalTarget = ((HRMID) (tParameterRouteRequest.getTarget())).clone();
-//					for(int i = 0; i < mHierarchyLevel.getValue(); i++) {
-//						tLocalTarget.setLevelAddress(new HierarchyLevel(this, i), BigInteger.valueOf(0));
-//					}
-//					LinkedList<IRoutableClusterGraphTargetName> tNodesToIgnore = new LinkedList<IRoutableClusterGraphTargetName>();
-//					
-//					List<RoutableClusterGraphLink> tClusterConnection = null;; 
-//					try {
-//						Logging.log(tManager, "Invalidating nodes " + tNodesToIgnore);
-//						tClusterConnection = getHRMController().getRoutableClusterGraph().getRouteWithInvalidatedNodes(tSourceCluster, getVirtualNodeFromHRMID(tLocalTarget), tNodesToIgnore);
-//						LinkedList<ICluster> tClusters = new LinkedList<ICluster>();
-//						ICluster tLastCluster = (ICluster) tSourceCluster;
-//						if(tClusterConnection != null && !tClusterConnection.isEmpty()) {
-//							for(RoutableClusterGraphLink tConnection : tClusterConnection) {
-//								tClusters.add(tLastCluster);
-//								tLastCluster = (ICluster) getHRMController().getRoutableClusterGraph().getDest(tLastCluster, tConnection);
-//							}
-//						} else {
-//							tParameterRouteRequest.setResult(ResultType.UNFEASIBLE);
-//							CoordinatorCEPChannel tCEP = mRouteRequestDispatcher.get(tParameterRouteRequest.getSession());
-//							tCEP.sendPacket(tParameterRouteRequest);
-//							return;
-//						}
-//						
-//						tClusters.add(tLastCluster);
-//						
-//						/*
-//						 * find descending difference from left to right
-//						 */
-//						Logging.log(tManager, "Got cluster connection " + tClusterConnection);
-//						Logging.log(tManager, "Got cluster connection over " + tClusters);
-//						
-//						Route tRoute = new Route();
-//						tLastCluster = (ICluster) tSourceCluster;
-//						for(ICluster tCluster : tClusters) {
-//							List<Route> tPath = tLocalRoutingDB.getRoute(tLastCluster.getCoordinatorsAddress(), tCluster.getCoordinatorsAddress());
-//							if(!tPath.isEmpty() && tPath.size() == 1 && !tLastCluster.getCoordinatorsAddress().equals(tCluster.getCoordinatorsAddress())) {
-//								for(Route tRoutePart : tPath) {
-//									tRoute.addAll(tRoutePart);
-//									RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(tRoutePart, tLocalRoutingDB.getSource(tRoutePart), tLocalRoutingDB.getDest(tRoutePart));
-//									tParameterRouteRequest.addRoutingVector(tVector);
-//								}
-//							} else if(tPath.isEmpty() && !tLastCluster.getCoordinatorsAddress().equals(tCluster.getCoordinatorsAddress()) || !tPath.isEmpty() && tPath.size() > 1 && !tLastCluster.getCoordinatorsAddress().equals(tCluster.getCoordinatorsAddress())) {
-//								Logging.err(tManager, "Unable to calculate a route segment path from " + tLastCluster.getCoordinatorsAddress() + " to " + tCluster.getCoordinatorsAddress());
-//								for(CoordinatorCEPChannel tCEP : mManagedCluster.getParticipatingCEPs()) {
-//									if(tCEP.getRemoteClusterName().equals(tLastCluster)) {
-//										Logging.log(tManager, "About to ask route from " + tLastCluster + " to " + tCluster);
-//										RouteRequest tRequest = new RouteRequest(tLastCluster.getCoordinatorsAddress(), tCluster.getCoordinatorsAddress(), null, 0);
-//										tRequest.addRequiredCluster(new ClusterName(tLastCluster.getToken(), tLastCluster.getClusterID(), tLastCluster.getHierarchyLevel()));
-//
-//										tCEP.sendPacket(tRequest);
-//										synchronized(tRequest) {
-//											if(!tRequest.isAnswer()) {
-//												try {
-//													tRequest.wait();
-//												} catch (InterruptedException tExc) {
-//													Logging.err(this, "Error when waiting for come back of route request " + tRequest, tExc);
-//												}
-//											}
-//										}
-//										if(tRequest.getRoutingVectors() != null) {
-//											for(RoutingServiceLinkVector tVector : tRequest.getRoutingVectors()) {
-//												tParameterRouteRequest.addRoutingVector(tVector);
-//											}
-//										}	
-//									}
-//								}
-//							}
-//							Logging.log(tManager, "Calculated route from " + tLastCluster.getCoordinatorsAddress() + " to " + tCluster.getCoordinatorsAddress() + ":" + tPath);
-//							tLastCluster = tCluster;
-//						}
-//						Logging.log(tManager, "Concurrent route request is " + tParameterRouteRequest);
-//						if(((HRMID)tParameterRouteRequest.getTarget()).getLevelAddress(mHierarchyLevel.getValue()) != BigInteger.valueOf(0)) {
-//							CoordinatorCEPChannel tCEP = mManagedCluster.getCEPOfCluster((ICluster) getVirtualNodeFromHRMID(tLocalTarget));
-//							RouteRequest tRequest = new RouteRequest(tCEP.getPeerName(), tParameterRouteRequest.getTarget(), tParameterRouteRequest.getDescription(), tParameterRouteRequest.getSession());
-//							tCEP.sendPacket(tRequest);
-//							synchronized(tRequest) {
-//								try {
-//									tRequest.wait();
-//								} catch (InterruptedException tExc) {
-//									Logging.err(tManager, "Error while waiting for", tExc);
-//								}
-//							}
-//							Logging.log(tManager, "Come back of " + tRequest);
-//							if(tRequest.getRoutingVectors() != null) {
-//								for(RoutingServiceLinkVector tVector : tRequest.getRoutingVectors()) {
-//									tParameterRouteRequest.addRoutingVector(tVector);
-//								}
-//							}
-//							tParameterRouteRequest.setResult(tRequest.getResult());
-//							Logging.log(tManager, "Route request is now " + tParameterRouteRequest);
-//						}
-//						long tRequestSession = tParameterRouteRequest.getSession();
-//						Logging.log(tManager, "registered requests for " + mRouteRequestDispatcher + ": ");
-//						for(Long tLong : mRouteRequestDispatcher.keySet()) {
-//							Logging.log(this, tLong + " is pointing on " + mRouteRequestDispatcher.get(tLong));
-//						}
-//						CoordinatorCEPChannel tCEP = mRouteRequestDispatcher.get(tRequestSession);
-//						tParameterRouteRequest.setAnswer();
-//						tCEP.sendPacket(tParameterRouteRequest);
-//					} catch (NullPointerException tExc) {
-//						Logging.err(tManager, "Error when trying to calculate route with invalidated node", tExc);
-//					}
-//				}
-//			}
-//		}.start();
-//	}
-
-	@Override
 	public int getSerialisedSize()
 	{
 		return 0;
@@ -1412,15 +1165,6 @@ public class Coordinator implements ICluster, HRMEntity
 		return getHRMController().getMultiplexerOnLevel(mHierarchyLevel.getValue() + 1);
 	}
 
-//	public void registerRouteRequest(Long pSession, CoordinatorCEPChannel pCEP)
-//	{
-//		if( mRouteRequestDispatcher == null ) {
-//			mRouteRequestDispatcher = new HashMap<Long, CoordinatorCEPChannel>();
-//		}
-//		Logging.log(this, "registered " + pSession + " with " + pCEP);
-//		mRouteRequestDispatcher.put(pSession, pCEP);
-//	}
-	
 	public String toString()
 	{
 		//return getClass().getSimpleName() + (mManagedCluster != null ? "(" + mManagedCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;

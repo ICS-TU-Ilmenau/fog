@@ -454,7 +454,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * @param pName the FoG name
 	 * @return the L2Addresses
 	 */
-	public NameMappingEntry<L2Address>[] getL2AddressFor(Name pName)
+	private NameMappingEntry<L2Address>[] getL2AddressFor(Name pName)
 	{
 		NameMappingEntry<L2Address>[] tResult = null;
 		
@@ -471,7 +471,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * @param pHRMID the HRMID for which the L2Address has to be determined
 	 * @return the resulting L2Address, returns "null" if no mapping was found
 	 */
-	public L2Address getL2AddressFor(HRMID pHRMID)
+	private L2Address getL2AddressFor(HRMID pHRMID)
 	{
 		L2Address tResult = null;
 		
@@ -873,7 +873,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * @param pToL2Address the ending point of the desired route
 	 * @return a list of Gate IDs to the neighbor node, returns "null" if no route was found
 	 */
-	public List<RoutingServiceLink> getGateIDsForRoute(L2Address pFromL2Address, L2Address pToL2Address)
+	private List<RoutingServiceLink> getGateIDsForRoute(L2Address pFromL2Address, L2Address pToL2Address)
 	{
 		List<RoutingServiceLink> tResult = null;
 
@@ -910,7 +910,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * @param pNextHopL2Address the L2 address of the neighbor node
 	 * @return the found route, returns null if no route was available
 	 */
-	public Route getRouteToNeighborNode(L2Address pNextHopL2Address)
+	private Route getRouteToNeighborNode(L2Address pNextHopL2Address)
 	{
 		Route tResultRoute = null;
 		
@@ -973,10 +973,11 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	
 	/**
 	 * Determines a general route from this node's central FN to a destination with special requirements
+	 * 
 	 * @param pDestination
 	 * @param pRequirements
 	 * @param pRequester
-	 * @return
+	 * @return the determined route
 	 * @throws RoutingException
 	 * @throws RequirementsException
 	 */
@@ -992,6 +993,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * @param pDestination the FoG name of the ending point of the route
 	 * @param pRequirements the route requirements 
 	 * @param pRequester the getRoute() caller
+	 * @return the determined route
 	 */
 	@Override
 	public Route getRoute(ForwardingNode pSource, Name pDestination, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException
@@ -1242,6 +1244,17 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		return tResultRoute;
 	}
 	
+	/**
+	 * This method is derived from RoutingService
+	 * 
+	 * @param pElement the element for which an error is reported
+	 */
+	@Override
+	public void reportError(Name pElement)
+	{
+		Logging.warn(this, "############ Transfer plane reported an error for " + pElement + " #############");
+		//TODO: remove the element from the routing graph
+	}
 	
 	
 	
@@ -1279,114 +1292,9 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		return true;
 	}
 	
-	public LinkedList<Name> getIntermediateNodes(Name pSource, HRMName pTarget) throws RoutingException
-	{
-		LinkedList<Name> tIntermediateNodes = new LinkedList<Name>();
-		List<Route> tPath = null;
-		if(pSource != null && pTarget != null) {
-			HRMName tSource = null;
-			if(! (pSource instanceof L2Address) ) {
-				tSource = getAddress(pSource, null);
-			} else {
-				tSource = (HRMName) pSource;
-			}
-			tPath = mCoordinatorRoutingMap.getRoute(tSource, pTarget);
-		}
-		if(tPath != null) {
-			for(Route tLink : tPath) {
-				if(!tIntermediateNodes.contains(mCoordinatorRoutingMap.getSource(tLink))) {
-					tIntermediateNodes.add(mCoordinatorRoutingMap.getSource(tLink));
-				}
-				if(!tIntermediateNodes.contains(mCoordinatorRoutingMap.getDest(tLink))) {
-					tIntermediateNodes.add(mCoordinatorRoutingMap.getDest(tLink));
-				}
-			}
-		}
-		return tIntermediateNodes;
-	}
-	
-	private HRMID getForwardingHRMID(HRMID pTarget) throws RemoteException
-	{
-		/*
-		 * find first segment where source address differs from destination address
-		 */
-		NameMappingService tNMS = null;
-		try {
-			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-		} catch (RuntimeException tExc) {
-			tNMS = HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
-		}
-		
-		int tHighestDescendingDifference = HRMConfig.Hierarchy.HEIGHT - 1;
-		
-		for(NameMappingEntry tEntry : tNMS.getAddresses(mNode.getCentralFN().getName())) {
-			if(((HRMID)tEntry.getAddress()).getDescendingDifference(pTarget) < tHighestDescendingDifference) {
-				tHighestDescendingDifference = ((HRMID)tEntry.getAddress()).getDescendingDifference(pTarget);
-//				tMyIdentification = ((HRMID)tEntry.getAddress()).clone();
-			}
-		}
-		HRMID tForwarding=new HRMID(0);
-		for(int i =  HRMConfig.Hierarchy.HEIGHT; i >= tHighestDescendingDifference ; i--) {
-			tForwarding.setLevelAddress(new HierarchyLevel(this, i), pTarget.getLevelAddress(i));
-		}
-		Logging.log(this, "Forwarding entry will be " + tForwarding);
-		
-		return tForwarding;
-	}
-	
-//	public Route getRoutePath(HRMName pHrmName, HRMName pHrmName2, Description pDescription, Identity pIdentity)
-//	{
-//		if(mCoordinatorRoutingMap.contains(pHrmName) && mCoordinatorRoutingMap.contains(pHrmName2)) {
-//			List<Route> tPath = mCoordinatorRoutingMap.getRoute(pHrmName, pHrmName2);
-//			Route tRoute = new Route();
-//			for(Route tRouteSegment : tPath) {
-//				tRoute.addAll(tRouteSegment.clone());
-//			}
-//			return tRoute;
-//		}
-//		return null;
-//	}
-
 	public RoutableGraph<HRMName, Route> getCoordinatorRoutingMap()
 	{
 		return mCoordinatorRoutingMap;
-	}
-	
-	public boolean addRoutingEntry(HRMID pRoutingID, FIBEntry pEntry)
-	{
-		/*
-		FIBEntry tEntry = (mHopByHopRoutingMap.containsKey(pRoutingID) ? mHopByHopRoutingMap.get(pRoutingID) : null);
-		if(tEntry != null && pEntry.getSignature().getLevel() > tEntry.getSignature().getLevel()) {
-			Logging.log(this, "Would replace next hop for " + pRoutingID + " with " + pEntry + "before: " + mHopByHopRoutingMap.get(pRoutingID));
-			mHopByHopRoutingMap.remove(pRoutingID);
-		} else {
-			Logging.log(this, "Not replacing " + tEntry + " with " + pEntry);
-		}
-		for(HierarchicalSignature tApproved : getCoordinator().getApprovedSignatures()) {
-			if(tApproved.getIdentityName().equals(pEntry.getSignature().getIdentityName()) && tApproved.getLevel() >= pEntry.getSignature().getLevel() ) {
-				mHopByHopRoutingMap.put(pRoutingID, pEntry);
-			} else {
-				Logging.log(this, "Signature " + pEntry.getSignature() + " is not contained in " + getCoordinator().getApprovedSignatures());
-			}
-		}*/
-//		FIBEntry tOldEntry = (mHopByHopRoutingMap.containsKey(pRoutingID) ? mHopByHopRoutingMap.get(pRoutingID) : null);
-//		if((tOldEntry != null) && (tOldEntry.getSignature().getLevel().isHigher(this, pEntry.getSignature().getLevel()))) {
-//			Logging.log(this, "Not replacing " + tOldEntry.getDestination() + " with " + pEntry);
-//			return false;
-//		} else {
-//			if(getHRMController().getApprovedSignatures().contains(pEntry.getSignature())) {
-//				mHopByHopRoutingMap.remove(pRoutingID);
-//			}
-//		}
-//		if(getHRMController().getApprovedSignatures().contains(pEntry.getSignature())) {
-//			mHopByHopRoutingMap.put(pRoutingID, pEntry);
-//			return true;
-//		} else {
-//			Logging.log(this, "Dropping\n" + pEntry + "\nin favour of\n" + mHopByHopRoutingMap.get(pRoutingID));
-//			return false;
-//		}
-		
-		return true;
 	}
 	
 	@Override
@@ -1426,58 +1334,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		return mSourceIdentification;
 	}
 	
-	
-	private boolean checkIfNameIsOnIgnoreList(HRMName pName, Description pDescription)
-	{
-		if(pName != null) {
-			if(pDescription != null) {
-				for(Property prop : pDescription) {
-					if(prop instanceof IgnoreDestinationProperty) {
-						Name ignoreName = ((IgnoreDestinationProperty) prop).getDestinationName();
-						
-						if(ignoreName != null) {
-							if(ignoreName.equals(pName)) {
-								return true;
-							}
-						}
-					}
-					// else: other property -> ignore it
-				}
-			}
-			// else: no ignore list -> do nothing
-		} else {
-			// null name should always be ignored
-			return true;
-		}
-		
-		return false;
-	}
-
-	
-	/**
-	 * @param pName Element to search for
-	 * @return Address registered in the name mapping system (null if no address found)
-	 */
-	private HRMName getAddress(Name pName, Description pDescription) throws RoutingException
-	{
-		NameMappingEntry<L2Address>[] tAddresses = mFoGNamesToL2AddressesMapping.getAddresses(pName);
-		
-		if(tAddresses.length > 0){
-			// Check if some destinations are excluded from search.
-			// Return first address, which is not on the ignore list.
-			for(NameMappingEntry<L2Address> tAddress : tAddresses) {
-				if (!checkIfNameIsOnIgnoreList((HRMName) tAddress.getAddress(), pDescription)) {
-					return (HRMName) tAddress.getAddress();
-				}
-			}
-			
-			Logging.warn(this, "Have to ignore all " + tAddresses.length + " addresses listed for name " + pName +".");
-			return null;
-		}
-
-		return null;
-	}
-
 	@Override
 	public ForwardingNode getLocalElement(Name pDestination)
 	{
@@ -1501,17 +1357,22 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		return null;
 	}
 
-	@Override
-	public void reportError(Name pElement)
-	{
-		
-	}
 
+	/**
+	 * Returns a descriptive string for this object
+	 * 
+	 * @return the descriptive string
+	 */
 	public String toString()
 	{
 		return toLocation();
 	}
 
+	/**
+	 * Returns a string describing the location of this instance
+	 * 
+	 * @return the descriptive string
+	 */
 	@Override
 	public String toLocation()
 	{

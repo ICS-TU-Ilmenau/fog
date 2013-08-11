@@ -126,23 +126,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		GridLayout tLayout = new GridLayout(1, true);
 		mContainer.setLayout(tLayout);
 		
-		/**
-		 * GUI part 0: cluster information
-		 */
 		if (HRM_VIEWER_DEBUGGING){
 			Logging.log(this, "Amount of found routing targets: " + mHRMController.getRoutingTargets().size());
 			Logging.log(this, "              ...found clusters: " + mHRMController.getRoutingTargetClusters().size());
 		}
 		
 		/**
-		 * List clusters
+		 * GUI part 0: list clusters
 		 */
 		for (Cluster tCluster: mHRMController.listKnownClusters()) {
 			// print info. about cluster
 			printCluster(tCluster);
 
 		/**
-		 * List coordinators
+		 * GUI part 1: list coordinators
 		 */
 		}
 		for (Coordinator tCoordinator: mHRMController.listKnownCoordinators()) {
@@ -346,24 +343,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 * 
 	 * @param pCoordinator selected coordinator 
 	 */
-	public void printCoordinator(ICluster pCoordinator)
+	private void printCoordinator(ICluster pCoordinator)
 	{
 		int j = 0;
 		
-		// FIB topology data from the coordinator/cluster
-		LinkedList<FIBEntry> tTopologyData = null;
-
-		// do we have a coordinator?
-		Coordinator tCoordinator = null; 
-		if (pCoordinator instanceof Coordinator){
-			tCoordinator = (Coordinator)pCoordinator; 
-			if (tCoordinator.getTopologyData() != null) {
-				tTopologyData = tCoordinator.getTopologyData().getEntries();
-			}
-		}
-
 		if (HRM_VIEWER_DEBUGGING)
-			Logging.log(this, "Printing coordinator \"" + tCoordinator.toString() +"\"");
+			Logging.log(this, "Printing coordinator \"" + pCoordinator.toString() +"\"");
 
 		/**
 		 * GUI part 1: name of the coordinator 
@@ -374,89 +359,14 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 * GUI part 2: table about CEPs 
 		 */
 		printCEPs(pCoordinator);
-
-		/**
-		 * GUI part 3: Forwarding Information Base  
-		 */
-		if (tTopologyData != null){
-			Table tFIB = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
-			TableColumn tColumnDestination = new TableColumn(tFIB, SWT.NONE, 0);
-			tColumnDestination.setText("destination");
-			TableColumn tColumnForwardingCluster = new TableColumn(tFIB, SWT.NONE, 1);
-			tColumnForwardingCluster.setText("forwarding cluster");
-			TableColumn tColumnFarthestCluster = new TableColumn(tFIB, SWT.NONE, 2);
-			tColumnFarthestCluster.setText("farthest cluster");
-			TableColumn tColumnNextHop = new TableColumn(tFIB, SWT.NONE, 3);
-			tColumnNextHop.setText("next hop");
-			TableColumn tColumnProposedRoute = new TableColumn(tFIB, SWT.NONE, 4);
-			tColumnProposedRoute.setText("proposed route");
-			TableColumn tColumnOrigin = new TableColumn(tFIB, SWT.NONE, 5);
-			tColumnOrigin.setText("origin");
-			j = 0;
-			if (tCoordinator != null) {
-				for (FIBEntry tEntry: tTopologyData) {
-					TableItem tRow = new TableItem(tFIB, SWT.NONE, j);
-					
-					/**
-					 * Column 0:  
-					 */
-					tRow.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "??"));
-					
-					/**
-					 * Column 1:  
-					 */
-					tRow.setText(1, (tEntry.getNextCluster() != null && mHRMController.getCluster(tEntry.getNextCluster()) != null ? mHRMController.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
-					
-					/**
-					 * Column 2:  
-					 */
-					ClusterName tDummy = tEntry.getFarthestClusterInDirection();
-					ICluster tFarthestCluster = null;
-					if(tDummy != null) {
-						tFarthestCluster = mHRMController.getCluster(tEntry.getFarthestClusterInDirection());
-					}
-					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "??"));
-					
-					/**
-					 * Column 3:  
-					 */
-					tRow.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "??"));
-					
-					/**
-					 * Column 4:  
-					 */
-					String tTargetString = (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : null);
-					if(tTargetString == null) {
-						tTargetString = tCoordinator.getPathToCoordinator(tCoordinator.getManagedCluster(), tCoordinator.getHRMController().getCluster(tEntry.getNextCluster())).toString();
-					}
-					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "??"));
-					
-					/**
-					 * Column 5:  
-					 */
-					tRow.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "??"));
-					
-					j++;
-				}
-			}
 			
-			tFIB.setHeaderVisible(true);
-			tFIB.setLinesVisible(true);
-			
-			TableColumn[] columns = tFIB.getColumns();
-			for(int k=0; k < columns.length; k++) {
-				columns[k].pack();
-			}
-			tFIB.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
-		}
-		
 		Label separator = new Label (mContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
 		separator.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		separator.setVisible(true);
 		
 	}
 	
-	public void printCEPs(ICluster pCluster)
+	private void printCEPs(ICluster pCluster)
 	{
 		Table tTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		
@@ -586,7 +496,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 	}
 	
-	public void printNAME(ICluster pEntity)
+	private void printNAME(ICluster pEntity)
 	{
 		StyledText tClusterLabel = new StyledText(mContainer, SWT.BORDER);;
 		tClusterLabel.setText(pEntity.toString());
@@ -604,144 +514,55 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 * 
 	 * @param pCluster selected cluster 
 	 */
-	public void printCluster(ICluster pCluster)
+	private void printCluster(Cluster pCluster)
 	{
 		int j = 0;
 
 		// on which hierarchy level are we?
 		int tHierarchyLevel = pCluster.getHierarchyLevel().getValue();
 
-		// FIB topology data from the coordinator/cluster
-		LinkedList<FIBEntry> tTopologyData = null;
-
-		// do we have a cluster?
-		Cluster tCluster = null;
-		if (pCluster instanceof Cluster){
-			tCluster = (Cluster)pCluster; 
-			if (tCluster.getTopologyData() != null) {
-				tTopologyData = tCluster.getTopologyData().getEntries();
-			}
-		}
-		
 		if (HRM_VIEWER_DEBUGGING)
-			Logging.log(this, "Printing cluster \"" + tCluster.toString() +"\"");
+			Logging.log(this, "Printing cluster \"" + pCluster.toString() +"\"");
 
 		/**
-		 * GUI part 1: name of the cluster 
+		 * GUI part 0: name of the cluster 
 		 */
 		printNAME(pCluster);
 		
 		/**
-		 * GUI part 2: tool box 
+		 * GUI part 1: tool box 
 		 */
-		if(tCluster != null) {
+		if(pCluster != null) {
 			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
 
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS){
 				ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
 			    toolItem1.setText("[Elect coordinator]");
-			    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(tCluster));
+			    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(pCluster));
 			}
 
 		    ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem2.setText("[Elect all level " + tHierarchyLevel + " coordinators]");
-		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(tCluster));
+		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(pCluster));
 		    
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS){
 			    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
 			    toolItem3.setText("[Cluster with siblings]");
-			    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(this, tCluster));
+			    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(this, pCluster));
 			}
 		    
 		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem4.setText("[Cluster all level " + tHierarchyLevel + " coordinators]");
-		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(this, tCluster));
+		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(this, pCluster));
 		    
 		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
 		
 		/**
-		 * GUI part 3: table about CEPs 
+		 * GUI part 2: table about CEPs 
 		 */
 		printCEPs(pCluster);
-
-		/**
-		 * GUI part 4: Forwarding Information Base  
-		 */
-		if (tTopologyData != null){
-			Table tFIB = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
-			
-			TableColumn tColumnDestination = new TableColumn(tFIB, SWT.NONE, 0);
-			tColumnDestination.setText("Destination");
-			
-			TableColumn tColumnForwardingCluster = new TableColumn(tFIB, SWT.NONE, 1);
-			tColumnForwardingCluster.setText("Forwarding cluster");
-			
-			TableColumn tColumnFarthestCluster = new TableColumn(tFIB, SWT.NONE, 2);
-			tColumnFarthestCluster.setText("Farthest cluster");
-			
-			TableColumn tColumnNextHop = new TableColumn(tFIB, SWT.NONE, 3);
-			tColumnNextHop.setText("Next hop");
-			
-			TableColumn tColumnProposedRoute = new TableColumn(tFIB, SWT.NONE, 4);
-			tColumnProposedRoute.setText("Route");
-			
-			TableColumn tColumnOrigin = new TableColumn(tFIB, SWT.NONE, 5);
-			tColumnOrigin.setText("Origin");
-			j = 0;
-			if (tCluster != null) {
-				for (FIBEntry tEntry: tTopologyData) {
-					TableItem tRow = new TableItem(tFIB, SWT.NONE, j);
-					
-					/**
-					 * Column 0:  
-					 */
-					tRow.setText(0, (tEntry.getDestination() != null ? tEntry.getDestination().toString() : "??"));
-
-					/**
-					 * Column 1:  
-					 */
-					tRow.setText(1, (tEntry.getNextCluster() != null && mHRMController.getCluster(tEntry.getNextCluster()) != null ? mHRMController.getCluster(tEntry.getNextCluster()).toString() : tEntry.getNextCluster().toString()));
-					
-					/**
-					 * Column 2:  
-					 */
-					ClusterName tDummy = tEntry.getFarthestClusterInDirection();
-					ICluster tFarthestCluster = null;
-					if(tDummy != null) {
-						tFarthestCluster = mHRMController.getCluster(tEntry.getFarthestClusterInDirection());
-					}
-					tRow.setText(2, (tFarthestCluster != null ? tFarthestCluster.toString() : "??"));
-
-					/**
-					 * Column 3:  
-					 */
-					tRow.setText(3, (tEntry.getNextHop() != null ? tEntry.getNextHop().toString() : "??"));
-					
-					/**
-					 * Column 4:  
-					 */
-					tRow.setText(4, (tEntry.getRouteToTarget() != null ? tEntry.getRouteToTarget().toString() : "??"));
-					
-					/**
-					 * Column 5:  
-					 */
-					tRow.setText(5, (tEntry.getSignature() != null ? tEntry.getSignature().toString() : "??"));
-					
-					j++;
-				}
-			}
-			
-			tFIB.setHeaderVisible(true);
-			tFIB.setLinesVisible(true);
-			
-			TableColumn[] columns = tFIB.getColumns();
-			for(int k=0; k < columns.length; k++) {
-				columns[k].pack();
-			}
-			tFIB.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
-		}
-		
+	
 		Label separator = new Label (mContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
 		separator.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		separator.setVisible(true);
