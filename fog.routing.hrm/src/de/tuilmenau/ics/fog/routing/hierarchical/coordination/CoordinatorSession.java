@@ -16,6 +16,7 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
+import de.tuilmenau.ics.fog.packets.NeighborRoutingInformation;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexedPackage;
@@ -23,6 +24,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RoutingService;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
@@ -36,7 +38,7 @@ public class CoordinatorSession extends Session
 {
 	private HRMController mHRMController = null;
 	private boolean mServerSide = false;
-	private L2Address mSourceL2Address = null;
+	private L2Address mSessionOriginL2Address = null;
 	private L2Address mPeerIdentification = null;
 	private HierarchyLevel mHierarchyLevel = null;
 	private CoordinatorCEPMultiplexer mMux;
@@ -55,47 +57,67 @@ public class CoordinatorSession extends Session
 		super(false, Logging.getInstance(), null);
 		mHRMController = pHRMController;
 		
-			RoutingService tRS = (RoutingService)getHRMController().getNode().getRoutingService();
-			mSourceL2Address = (L2Address)tRS.getNameFor(getHRMController().getNode().getCentralFN());
+		mSessionOriginL2Address = mHRMController.getHRS().getCentralFNL2Address(); 
 		
-		Logging.log(this, "Created");
-
 		mServerSide = pServerSide;
 		mHierarchyLevel = pLevel;
 		mMux = pMux;
+		if (mServerSide){
+			Logging.log(this, "SERVER SESSION CREATED");
+		}else{
+			Logging.log(this, "CLIENT SESSION CREATED");
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean receiveData(Object pData)
 	{
-		if(pData instanceof Tuple && !(pData instanceof HRMID)) {
-			mPeerIdentification = ((Tuple<L2Address, L2Address>)pData).getFirst();
+		Logging.log(this, "RECEIVED SESSION DATA: " + pData);
+		
+		if(pData instanceof NeighborRoutingInformation) {
+			// get the packet
+			NeighborRoutingInformation tNeighborRoutingInformationPacket = (NeighborRoutingInformation)pData;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				Logging.log(this, "NEIGHBOR ROUTING INFO found: " + tNeighborRoutingInformationPacket);
+			}
+			
+			// get the L2Address of the peer
+			mPeerIdentification = tNeighborRoutingInformationPacket.getCentralFNL2Address();
 			if(mServerSide) {
+				/**
+				 * Determine the route to the peer
+				 */
 				Route tRouteToPeer = null;
+				// search a route form the central FN to the intermediate FN between the central FN and the bus
 				try {
-					tRouteToPeer = getHRMController().getHRS().getRoute(getHRMController().getNode().getCentralFN(), ((Tuple<HRMID, HRMID>)pData).getSecond(), new Description(), getHRMController().getNode().getIdentity());
-					mRouteToPeer = tRouteToPeer;
+					tRouteToPeer = getHRMController().getHRS().getRoute(tNeighborRoutingInformationPacket.getRoutingTargetFNL2Address(), new Description(), getHRMController().getNode().getIdentity());
 				} catch (RoutingException tExc) {
 					Logging.err(this, "Unable to find route to ", tExc);
 				} catch (RequirementsException tExc) {
 					Logging.err(this, "Unable to fulfill requirements ", tExc);
 				}
+				/**
+				 * Update the local route to the peer
+				 */
+				mRouteToPeer = tRouteToPeer;
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
 				if(mHierarchyLevel.isBaseLevel()) {
-					getHRMController().getHRS().registerRoute(mSourceL2Address, mPeerIdentification, mRouteToPeer);
+					getHRMController().getHRS().registerRoute(mSessionOriginL2Address, mPeerIdentification, mRouteToPeer);
+					getHRMController().getHRS().addRouteToDirectNeighbor(mPeerIdentification, mRouteToPeer);
 				}
-				write(mSourceL2Address);
+				write(mSessionOriginL2Address);
 			}
 
 		} else if (pData instanceof L2Address) {
 			mPeerIdentification = (L2Address) pData;
 			if(mHierarchyLevel.isBaseLevel()) {
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
-				getHRMController().getHRS().registerRoute(mSourceL2Address, mPeerIdentification, mRouteToPeer);
+				getHRMController().getHRS().registerRoute(mSessionOriginL2Address, mPeerIdentification, mRouteToPeer);
 			} else {
 				if(mServerSide) {
-					write(mSourceL2Address);
+					write(mSessionOriginL2Address);
 				}
 			}
 		} else if (pData instanceof MultiplexedPackage) {
@@ -218,7 +240,7 @@ public class CoordinatorSession extends Session
 	 */
 	public HRMName getSourceRoutingServiceAddress()
 	{
-		return mSourceL2Address;
+		return mSessionOriginL2Address;
 	}
 	
 	/**
@@ -242,9 +264,9 @@ public class CoordinatorSession extends Session
 	public String toString()
 	{
 		if(mPeerIdentification != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getMultiplexer() + "(Source=" + mSourceL2Address + ", Peer=" + mPeerIdentification + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getMultiplexer() + "(Initiator=" + mSessionOriginL2Address + ", Peer=" + mPeerIdentification + ")";
 		} else {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Source=" + mSourceL2Address + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Initiator=" + mSessionOriginL2Address + ")";
 		}
 		 
 	}

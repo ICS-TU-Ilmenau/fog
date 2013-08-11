@@ -215,7 +215,7 @@ public class Coordinator implements ICluster, HRMEntity
 				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerName());
 
 			// create new AssignHRMID packet for the cluster member
-			AssignHRMID tAssignHRMID = new AssignHRMID(getHRMController().getNode().getCentralFN().getName(), tClusterMember.getPeerHRMID(), tHRMID);
+			AssignHRMID tAssignHRMID = new AssignHRMID(getHRMController().getNodeName(), tClusterMember.getPeerHRMID(), tHRMID);
 			
 			// share the route to this cluster member with all other cluster members
 			shareRouteToClusterMember(tClusterMember);
@@ -400,7 +400,7 @@ public class Coordinator implements ICluster, HRMEntity
 						 * ADD ROUTES: routes from the cluster member to this node for every registered local HRMID.
 						 */
 						// determine the L2 address of this physical node
-						L2Address tPhysNodeL2Address = getHRMController().getHRS().getL2AddressForNode();
+						L2Address tPhysNodeL2Address = getHRMController().getHRS().getCentralFNL2Address();
 						// iterate over all HRMIDs which are registered for this physical node
 						for (HRMID tHRMID : getHRMController().getOwnHRMIDs()){
 							// create entry for cluster internal routing towards us

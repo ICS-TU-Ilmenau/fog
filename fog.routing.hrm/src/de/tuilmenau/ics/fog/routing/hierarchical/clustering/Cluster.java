@@ -331,7 +331,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	
 	public void handleNeighborAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPChannel pCEP)
 	{
-		if(!pAnnounce.getCoordinatorName().equals(getHRMController().getNode().getCentralFN().getName())) {
+		if(!pAnnounce.getCoordinatorName().equals(getHRMController().getNodeName())) {
 			Logging.log(this, "Received announcement of foreign cluster");
 		}
 		
@@ -417,7 +417,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				if(!mInterASCluster) {
 					Logging.log(this, "Informing " + getClusterMembers() + " about change in priority and initiating new election");
 					
-					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNode().getCentralFN().getName(), mBullyPriority), null);
+					sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNodeName(), mBullyPriority), null);
 					
 					Logging.log(this, "Informed other clients about change of priority - it is now " + mBullyPriority.getValue());
 				}
@@ -430,7 +430,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		Logging.log(this, "Handling " + pAnnouncement);
 		if(mCoordName != null)
 		{
-			if(getHRMController().getNode().getCentralFN().getName().equals(mCoordName))
+			if(getHRMController().getNodeName().equals(mCoordName))
 			{
 				handleNeighborAnnouncement(pAnnouncement, pCEP);
 			} else {

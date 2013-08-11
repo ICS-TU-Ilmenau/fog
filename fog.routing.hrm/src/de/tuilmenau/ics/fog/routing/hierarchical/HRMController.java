@@ -32,6 +32,7 @@ import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
+import de.tuilmenau.ics.fog.packets.NeighborRoutingInformation;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
@@ -131,7 +132,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 //	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
 	
 	
-	private int mConnectionCounter = 0;
+	/**
+	 * Count the connections
+	 */
+	private int mConnections = 0;
 	
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
@@ -448,7 +452,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 						HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
 					}				
 					// get the local router's human readable name (= DNS name)
-					Name tLocalRouterName = getNode().getCentralFN().getName();				
+					Name tLocalRouterName = getNodeName();				
 					// register HRMID for the given DNS name
 					tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
 					// give some debug output about the current DNS state
@@ -538,7 +542,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		Logging.info(this, "NODE " + tThisHostL2Address + " FOUND DIRECT NEIGHBOR: " + pNeighborL2Address);
 		
 		// determine the route to the neighbor
-		List<RoutingServiceLink> tGateIDsToNeighbor = getHRS().getGateIDsToNeighborNode(pNeighborL2Address);
+		List<RoutingServiceLink> tGateIDsToNeighbor = getHRS().getGateIDsToL2Address(pNeighborL2Address);
 		Logging.log(this, "    ..determined route from " + tThisHostL2Address + " to " + pNeighborL2Address + ": " + tGateIDsToNeighbor);
 		if(tGateIDsToNeighbor != null) {
 			// determine the transparent gate towards the neighbor
@@ -1014,56 +1018,77 @@ public class HRMController extends Application implements IServerCallback, IEven
 		
 		tParticipate.setSourceClusterID(pToClusterID);
 		
-		final Name tName = pName;
-		final CoordinatorSession tConnectionCEP = tSession;
+		final Name tNeighborName = pName;
+		final CoordinatorSession tFSession = tSession;
 		final CoordinatorCEPChannel tDemultiplexed = tCEP;
 		final ICluster tClusterToAdd = tFoundCluster;
 		
 		Thread tThread = new Thread() {
 			public void run()
 			{
+				/**
+				 * Connect to the neighbor node
+				 */
 				Connection tConn = null;
 				try {
-					Logging.log(this, "CREATING CONNECTION to " + tName);
-					tConn = getHost().connectBlock(tName, getConnectDescription(tProperty), getNode().getIdentity());
+					Logging.log(this, "CREATING CONNECTION to " + tNeighborName);
+					tConn = getHost().connectBlock(tNeighborName, getConnectDescription(tProperty), getNode().getIdentity());
 				} catch (NetworkException tExc) {
-					Logging.err(this, "Unable to connecto to " + tName, tExc);
+					Logging.err(this, "Unable to connecto to " + tNeighborName, tExc);
 				}
 				if(tConn != null) {
-					Logging.log(this, "Sending source routing service address " + tConnectionCEP.getSourceRoutingServiceAddress() + " for connection number " + (++mConnectionCounter));
-					tConnectionCEP.start(tConn);
-					
-					HRMName tMyAddress = tConnectionCEP.getSourceRoutingServiceAddress();
+					Logging.log(this, "     ..starting CONNECTION " + mConnections);
+					tFSession.start(tConn);					
 
-					Route tRoute = null;
+					/**
+					 * Determine the FN between the local central FN and the bus towards the physical neighbor node and tell this the neighbor (destination of this connection)
+					 */
+					Route tRouteToNeighborFN = null;
+					// get the name of the central FN
+					L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
+					// get a route to the neighbor node (the destination of the desired connection)
 					try {
-						tRoute = getHRS().getRoute(getNode().getCentralFN(), tName, new Description(), getNode().getIdentity());
+						tRouteToNeighborFN = getHRS().getRoute(tNeighborName, new Description(), getNode().getIdentity());
 					} catch (RoutingException tExc) {
-						Logging.err(this, "Unable to find route to " + tName, tExc);
+						Logging.err(this, "Unable to find route to " + tNeighborName, tExc);
 					} catch (RequirementsException tExc) {
-						Logging.err(this, "Unable to find route to " + tName + " with requirements no requirents, Huh!", tExc);
+						Logging.err(this, "Unable to find route to " + tNeighborName + " with requirements no requirents, Huh!", tExc);
 					}
-					
-					HRMName tMyFirstNodeInDirection = null;
-					if(tRoute != null) {
-						RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
-						GateID tID= tPath.getFirst();
+					// have we found a route to the neighbor?
+					if(tRouteToNeighborFN != null) {
+						// get the first route part, which corresponds to the link between the central FN and the searched first FN towards the neighbor 
+						RouteSegmentPath tPath = (RouteSegmentPath) tRouteToNeighborFN.getFirst();
+						// get the gate ID of the link
+						GateID tGateID= tPath.getFirst();						
+						// get all outgoing links from the central FN
+						Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
 						
-						Collection<RoutingServiceLink> tLinkCollection = getHRS().getFoGRoutingGraph().getOutEdges(tMyAddress);
-						RoutingServiceLink tOutEdge = null;
-						
-						for(RoutingServiceLink tLink : tLinkCollection) {
-							if(tLink.equals(tID)) {
-								tOutEdge = tLink;
+						RoutingServiceLink tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = null;
+
+						// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
+						for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
+							// compare the GateIDs
+							if(tLink.equals(tGateID)) {
+								// found!
+								tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = tLink;
 							}
 						}
-						
-						tMyFirstNodeInDirection = getHRS().getFoGRoutingGraph().getDest(tOutEdge);
-						tConnectionCEP.setRouteToPeer(tRoute);
+						// determine the searched FN, which comes first when routing towards the neighbor
+						HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getFoGRoutingGraph().getDest(tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor);
+						if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
+							// get the L2 address
+							L2Address tFirstFNL2Address = (L2Address)tFirstNodeBeforeBusToNeighbor;
+							tFSession.setRouteToPeer(tRouteToNeighborFN);
+							// create a map between the central FN and the search FN
+							NeighborRoutingInformation tNeighborRoutingInformation = new NeighborRoutingInformation(tCentralFNL2Address, tFirstFNL2Address);
+							// tell the neighbor about the FN
+							Logging.log(this, "     ..send NEIGHBOR ROUTING INFO " + tNeighborRoutingInformation);
+							tFSession.write(tNeighborRoutingInformation);
+						}else{
+							Logging.err(this,  "connectTo() found a first FN (" + tFirstNodeBeforeBusToNeighbor + ") towards the neighbor " + tNeighborName + " but it has the wrong class type");
+						}
 					}
 					
-					Tuple<HRMName, HRMName> tTuple = new Tuple<HRMName, HRMName>(tMyAddress, tMyFirstNodeInDirection);
-					tConnectionCEP.write(tTuple);
 					tDemultiplexed.setRemoteClusterName(new ClusterName(tClusterToAdd.getToken(), tClusterToAdd.getClusterID(), tClusterToAdd.getHierarchyLevel()));
 				}
 			}
@@ -1320,5 +1345,15 @@ public class HRMController extends Application implements IServerCallback, IEven
 	public String toString()
 	{
 		return "HRM controller@" + getNode();
+	}
+
+	/**
+	 * Determine the name of the central FN of this node
+	 * 
+	 * @return the name
+	 */
+	public Name getNodeName()
+	{
+		return mNode.getCentralFN().getName();
 	}
 }

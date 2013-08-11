@@ -183,7 +183,7 @@ public class Elector implements HRMEntity
 			Node tNode = mParentCluster.getHRMController().getNode();
 	
 			// create the packet
-			BullyElect tPacketBullyElect = new BullyElect(tNode.getCentralFN().getName(), mParentCluster.getBullyPriority());
+			BullyElect tPacketBullyElect = new BullyElect(mParentCluster.getHRMController().getNodeName(), mParentCluster.getBullyPriority());
 			
 			// send broadcast
 			mParentCluster.sendPacketBroadcast(tPacketBullyElect);
@@ -208,7 +208,7 @@ public class Elector implements HRMEntity
 			Node tNode = mParentCluster.getHRMController().getNode();
 	
 			// create the packet
-			BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(tNode.getCentralFN().getName(), mParentCluster.getBullyPriority(), mParentCluster.getSignature(), mParentCluster.getToken());
+			BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mParentCluster.getHRMController().getNodeName(), mParentCluster.getBullyPriority(), mParentCluster.getSignature(), mParentCluster.getToken());
 	
 			// send broadcast
 			mParentCluster.sendPacketBroadcast(tPacketBullyAnnounce);
@@ -236,7 +236,7 @@ public class Elector implements HRMEntity
 			Node tNode = mParentCluster.getHRMController().getNode();
 	
 			// create the packet
-			BullyAlive tPacketBullyAlive = new BullyAlive(tNode.getCentralFN().getName());
+			BullyAlive tPacketBullyAlive = new BullyAlive(mParentCluster.getHRMController().getNodeName());
 	
 			// send broadcast
 			mParentCluster.sendPacketBroadcast(tPacketBullyAlive);

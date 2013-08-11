@@ -62,16 +62,16 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	 * @param pLevel is the level this cluster is related to
 	 * @param pResponsibleCoordinator as the coordinator this cluster works on (local)
 	 */
-	public NeighborCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, HierarchyLevel pLevel, HRMController pResponsibleCoordinator)
+	public NeighborCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, HierarchyLevel pLevel, HRMController pHRMController)
 	{	
-		mAnnouncer = pResponsibleCoordinator.getNode().getCentralFN().getName();
 		mCoordAddress = pAddress;
-		setCoordinatorName(pCoordName);
 		mClusterID = pClusterID;
-		mHRMController = pResponsibleCoordinator;
+		mHRMController = pHRMController;
 		mCoordName = pCoordName;
 		mToken = pToken;
 		mHierarchyLevel = pLevel;
+		mAnnouncer = mHRMController.getNodeName();
+		setCoordinatorName(pCoordName);
 	}
 	
 	public void addAnnouncedCEP(CoordinatorCEPChannel pCEP)

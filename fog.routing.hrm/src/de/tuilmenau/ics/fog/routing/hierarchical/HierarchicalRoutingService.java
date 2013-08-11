@@ -99,17 +99,21 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	private HRMController mHRMController = null;
 
 	/**
-	 * Stores the L2 address of this node
+	 * Stores the L2 address of the central FN
 	 */
-	private L2Address mNodeL2Address = null;
+	private L2Address mCentralFNL2Address = null;
 
 	/**
 	 * Stores if the start of the HRMController application instance is still pending
 	 */
 	private boolean mWaitOnControllerstart = true;
 	
+	/**
+	 * Stores routes to physical neighbors nodes
+	 */
+	private HashMap<L2Address, Route> mRoutesToDirectNeighbors = new HashMap<L2Address, Route>();
+	
 	private final RoutableGraph<HRMName, Route> mCoordinatorRoutingMap;
-	private Name mSourceIdentification = null;
 
 	
 	/**
@@ -292,6 +296,26 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	}
 	
 	/**
+	 * Adds a route to the local HRM routing table.
+	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
+	 * 
+	 * @param pNeighborL2Address the L2Address of the direct neighbor
+	 * @param pRoute the route to the direct neighbor
+	 */
+	public void addRouteToDirectNeighbor(L2Address pNeighborL2Address, Route pRoute)
+	{
+		synchronized (mRoutesToDirectNeighbors) {
+			Route tOldRoute = mRoutesToDirectNeighbors.get(pNeighborL2Address);
+			if (tOldRoute != null){
+				Logging.log(this, "Deleting old route (" + pRoute + ") to direct neighbor (" + pNeighborL2Address + ") ");
+				mRoutesToDirectNeighbors.remove(pNeighborL2Address);
+			}
+			Logging.log(this, "ADDING ROUTE (" + pRoute + ") to direct neighbor (" + pNeighborL2Address + ") ");
+			mRoutesToDirectNeighbors.put(pNeighborL2Address,  pRoute);
+		}
+	}
+
+	/**
 	 * Returns the local HRM routing table
 	 * 
 	 * @return the local HRM routing table
@@ -414,13 +438,13 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	}
 
 	/**
-	 * Returns the L2 address of this physical node.
+	 * Returns the L2 address of this physical node's central FN
 	 * 
-	 * @return the L2 address of this physical node
+	 * @return the L2 address of this physical node's central FN
 	 */
-	public L2Address getL2AddressForNode()
+	public L2Address getCentralFNL2Address()
 	{
-		return mNodeL2Address;
+		return mCentralFNL2Address;
 	}
 	
 	/**
@@ -532,7 +556,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 				
 				if (pElement.equals(mNode.getCentralFN())){
 					Logging.log(this, "     ..registering L2 address for central FN: " + tNodeL2Address);
-					mNodeL2Address = tNodeL2Address;
+					mCentralFNL2Address = tNodeL2Address;
 				}
 				
 				/** 
@@ -883,12 +907,12 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	}
 
 	/**
-	 * Determines a list of Gate IDs to a neighbor node, identified by its L2 address, based on the FoG specific routing graph.
+	 * Determines a list of Gate IDs to a node, identified by its L2 address, based on the FoG specific routing graph.
 	 * 
 	 * @param pToL2Address the L2 address of the neighbor node
 	 * @return a list of Gate IDs to the neighbor node, returns "null" if no route was found
 	 */
-	public List<RoutingServiceLink> getGateIDsToNeighborNode(L2Address pToL2Address)
+	public List<RoutingServiceLink> getGateIDsToL2Address(L2Address pToL2Address)
 	{
 		List<RoutingServiceLink> tResult = null;
 
@@ -902,35 +926,19 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	}
 
 	/**
-	 * Determines a route to a neighbor node, identified by its L2 address, based on the FoG specific routing graph.
+	 * Determines a route to a direct neighbor, identified by its L2 address.
 	 * 
-	 * @param pNextHopL2Address the L2 address of the neighbor node
+	 * @param pNeighborNodeL2Address the L2 address of the neighbor node
 	 * @return the found route, returns null if no route was available
 	 */
-	private Route getRouteToNeighborNode(L2Address pNextHopL2Address)
+	private Route getRouteToDirectNeighborNode(L2Address pNeighborNodeL2Address)
 	{
 		Route tResultRoute = null;
 		
-		// get a list of Gate IDs to the neighbor
-		List<RoutingServiceLink> tGateIDsToNeighbor = getGateIDsToNeighborNode(pNextHopL2Address);
-
-		// gate ID list is empty?
-		if((tGateIDsToNeighbor != null) && (!tGateIDsToNeighbor.isEmpty())) {
-			// create a route segment which can store a list of Gate IDs
-			RouteSegmentPath tRouteSegmentPath = new RouteSegmentPath();
-			// iterate over all gate IDs in the list
-			for(RoutingServiceLink tGateID : tGateIDsToNeighbor) {
-				// store the Gate ID in the route segment
-				tRouteSegmentPath.add(tGateID.getID());
-			}
-			
-			// create new route
-			tResultRoute = new Route();
-			
-			// add the list of Gate IDs to the resulting route
-			tResultRoute.add(tRouteSegmentPath);
+		synchronized (mRoutesToDirectNeighbors) {
+			tResultRoute = mRoutesToDirectNeighbors.get(pNeighborNodeL2Address);
 		}
-
+		
 		return tResultRoute;
 	}
 
@@ -1068,6 +1076,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			}else{
 				// the next hop is the final destination
 				tNextHopHRMID = tDestHRMID;
+				
 				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 					Logging.log(this, "      .." + tNextHopHRMID + " is the next hop");
 				}
@@ -1089,12 +1098,10 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 					 */
 					if (tNextHopL2Address != null){
 						// get a route to the neighbor
-						tResultRoute = getRouteToNeighborNode(tNextHopL2Address);
+						tResultRoute = getRouteToDirectNeighborNode(tNextHopL2Address);
 					}
 					
-					if (tResultRoute != null){
-						
-					}else{
+					if (tResultRoute == null){
 						// no route found
 						Logging.log(this, "Couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
 						synchronized (mFoGRoutingGraph) {
@@ -1242,6 +1249,23 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	}
 	
 	/**
+	 * Determines all links which are outgoing from a defined FN
+		
+	 * @param pFNName the name of the FN from which the outgoing links should be enumerated
+	 * @return the list of outgoing links
+	 */
+	public Collection<RoutingServiceLink> getOutgoingLinks(HRMName pFNName)
+	{
+		Collection<RoutingServiceLink> tResult = null;
+
+		synchronized (mFoGRoutingGraph) {
+			tResult = mFoGRoutingGraph.getOutEdges(pFNName);
+		}
+
+		return tResult;
+	}
+
+	/**
 	 * This method is derived from RoutingService
 	 * 
 	 * @param pElement the element for which an error is reported
@@ -1315,20 +1339,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	public Namespace getNamespace()
 	{
 		return HRMID.HRMNamespace;
-	}
-	
-	public Name getSourceIdentification()
-	{
-		if(mSourceIdentification == null) {
-			NameMappingEntry<L2Address> tAddresses[] = null;
-			tAddresses = mFoGNamesToL2AddressesMapping.getAddresses(getHRMController().getNode().getCentralFN().getName());
-			for(NameMappingEntry<L2Address> tAddress : tAddresses) {
-				//TODO: check if we find more than one!?
-				mSourceIdentification = tAddress.getAddress();
-			}
-		}
-		
-		return mSourceIdentification;
 	}
 	
 	@Override

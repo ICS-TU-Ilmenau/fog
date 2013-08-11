@@ -162,7 +162,7 @@ public class CoordinatorCEPChannel
 	private void handleSignalingMessageBully(SignalingMessageBully pPacketBully) throws NetworkException
 	{
 		Node tNode = getHRMController().getNode();
-		Name tLocalNodeName = tNode.getCentralFN().getName(); 
+		Name tLocalNodeName = getHRMController().getNodeName(); 
 				
 		boolean BULLY_SIGNALING_DEBUGGING = true;
 
