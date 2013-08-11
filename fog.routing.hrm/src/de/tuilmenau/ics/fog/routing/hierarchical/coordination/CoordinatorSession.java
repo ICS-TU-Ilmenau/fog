@@ -208,6 +208,7 @@ public class CoordinatorSession extends Session
 	 */
 	public void setRouteToPeer(Route pRoute)
 	{
+		Logging.log(this, "### Setting route to peer: " + pRoute);
 		mRouteToPeer = pRoute;
 	}
 	
