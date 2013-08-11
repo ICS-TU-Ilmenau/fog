@@ -122,7 +122,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 	private HierarchicalRoutingService mHierarchicalRoutingService = null;
 	
 	private RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink>();
-	private boolean mIsEdgeRouter;
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
@@ -511,12 +510,13 @@ public class HRMController extends Application implements IServerCallback, IEven
 	}
 	
 	/**
-	 * Adds an entry to the routing table of the local HRS instance
-	 * In opposite to addRoute() from the HierarchicalRoutingService class, this function additionally updates the GUI
+	 * Adds an entry to the routing table of the local HRS instance.
+	 * In opposite to addHRMRoute() from the HierarchicalRoutingService class, this function additionally updates the GUI.
+	 * If the L2 address of the next hop is defined, the HRS will update the HRMID-to-L2ADDRESS mapping.
 	 * 
 	 * @param pRoutingEntry the new routing entry
 	 */
-	public void addRoute(RoutingEntry pRoutingEntry)
+	public void addHRMRoute(RoutingEntry pRoutingEntry)
 	{
 		// inform the HRS about the new route
 		if(getHRS().addHRMRoute(pRoutingEntry)){
@@ -527,6 +527,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 
 	/**
 	 * Reacts on a detected new physical neighbor. A new connection to this neighbor is created.
+	 * However, pNeighborL2Address doesn't correspond to the neighbor's central FN!.
 	 * 
 	 * @param pNeighborL2Address the L2 address of the detected physical neighbor
 	 */
@@ -537,15 +538,15 @@ public class HRMController extends Application implements IServerCallback, IEven
 		Logging.info(this, "NODE " + tThisHostL2Address + " FOUND DIRECT NEIGHBOR: " + pNeighborL2Address);
 		
 		// determine the route to the neighbor
-		List<RoutingServiceLink> tRouteToNeighbor = getHRS().getRouteToPhysicalNeighbor(pNeighborL2Address);
-		Logging.log(this, "    ..determined route from " + tThisHostL2Address + " to " + pNeighborL2Address + ": " + tRouteToNeighbor);
-		if(tRouteToNeighbor != null) {
+		List<RoutingServiceLink> tGateIDsToNeighbor = getHRS().getGateIDsToNeighborNode(pNeighborL2Address);
+		Logging.log(this, "    ..determined route from " + tThisHostL2Address + " to " + pNeighborL2Address + ": " + tGateIDsToNeighbor);
+		if(tGateIDsToNeighbor != null) {
 			// determine the transparent gate towards the neighbor
 			AbstractGate tOutgoingTransparentGate = null;
 			try {
-				tOutgoingTransparentGate = mNode.getCentralFN().getGate(tRouteToNeighbor.get(0).getID());
+				tOutgoingTransparentGate = mNode.getCentralFN().getGate(tGateIDsToNeighbor.get(0).getID());
 			} catch (IndexOutOfBoundsException tExc) {
-				Logging.err(this, "registerLink() couldn't determine the outgoing gate for a connection from " + tThisHostL2Address + " to " + pNeighborL2Address + ", determined route is: " + tRouteToNeighbor, tExc);
+				Logging.err(this, "registerLink() couldn't determine the outgoing gate for a connection from " + tThisHostL2Address + " to " + pNeighborL2Address + ", determined route is: " + tGateIDsToNeighbor, tExc);
 			}
 			if(tOutgoingTransparentGate != null) {
 				// determine the first next node behind the outgoing transparent gate
@@ -555,13 +556,14 @@ public class HRMController extends Application implements IServerCallback, IEven
 				GateContainer tContainer = (GateContainer) tFirstNextNode;
 				
 				// get the DirectDownGate ID
-				RoutingServiceLink tDownGateLink = tRouteToNeighbor.get(1); 
+				RoutingServiceLink tDownGateLink = tGateIDsToNeighbor.get(1); 
 				
 				if (tDownGateLink != null){
 					GateID tDownGateGateID = tDownGateLink.getID();
 				
 					// hash the name of the bus where the outgoing gate belongs to in order to create a temporary identification of the cluster
 					Long tClusterID = Long.valueOf(0L);
+					// get the DirectDownGate to the neighbor node
 					DirectDownGate tDirectDownGate = (DirectDownGate) tContainer.getGate(tDownGateGateID);
 					if (tDirectDownGate != null){
 						NetworkInterface tNetworkInterface = tDirectDownGate.getLowerLayer();
@@ -594,13 +596,13 @@ public class HRMController extends Application implements IServerCallback, IEven
 					 * Open a connection to the neighbor
 					 */
 				    Logging.log(this, "    ..opening connection to " + pNeighborL2Address);
-				    addConnection(pNeighborL2Address, HierarchyLevel.createBaseLevel(), tClusterID, false);
+				    connectTo(pNeighborL2Address, HierarchyLevel.createBaseLevel(), tClusterID);
 				}else{
-					Logging.err(this, "registerLink() hasn't found the DirectDownGate in the route from " + tThisHostL2Address + " to " + pNeighborL2Address + ", route is: " + tRouteToNeighbor);
+					Logging.err(this, "registerLink() hasn't found the DirectDownGate in the route from " + tThisHostL2Address + " to " + pNeighborL2Address + ", route is: " + tGateIDsToNeighbor);
 				}
 					
 			}else{
-				Logging.err(this, "registerLink() couldn't determine the outgoing gate of the route from " + tThisHostL2Address + " to " + pNeighborL2Address + ", route is: " + tRouteToNeighbor);
+				Logging.err(this, "registerLink() couldn't determine the outgoing gate of the route from " + tThisHostL2Address + " to " + pNeighborL2Address + ", route is: " + tGateIDsToNeighbor);
 			}
 			
 		}else{
@@ -688,13 +690,28 @@ public class HRMController extends Application implements IServerCallback, IEven
 		return (double) HRMConfig.Routing.GRANULARITY_SHARE_PHASE * (pHierarchyLevel.getValue() - 1); //TODO: use an exponential time distribution here
 	}
 	
-	
-	
-	
-	
-	
 	/**
-	 * This method is inherited from the class application and is called by the ServerFN object once a new connection setup request is required to be established.
+	 * This method is derived from IServerCallback. It is called by the ServerFN in order to acquire the acknowledgment from the HRMController about the incoming connection
+	 * 
+	 * @param pAuths the authentications for the open request
+	 * @param pRoute Route to the client requesting the new connection
+	 * @param pTargetName Registered name of the Server, which the new connection was requested to
+	 * @return Reference to object handling the connection or null if open is not allowed
+	 */
+	@Override
+	public boolean openAck(LinkedList<Signature> pAuths, Description pDescription, Name pTargetName)
+	{
+		return true;
+	}
+	
+	
+	
+	
+	
+	/** 
+	 * This method is derived from IServerCallback and is called for incoming connection requests by the ServerFN.
+	 * 
+	 * @param pConnection the incoming connection
 	 */
 	@Override
 	public void newConnection(Connection pConnection)
@@ -733,14 +750,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 					}
 					
 					tCEP = new CoordinatorCEPChannel(this, tCluster);
-					((Cluster)tCluster).getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
+					((Cluster)tCluster).getMultiplexer().mapCEPToSession(tCEP, tConnectionSession);
 					if(tJoin.getHierarchyLevel().isHigherLevel()) {
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
-					} else {
-						if(tParticipate.isInterASCluster()) {
-							tCEP.setEdgeCEP();
-							mIsEdgeRouter = true;
-						}
 					}
 					tCluster.addParticipatingCEP(tCEP);
 					tClusterFound = true;
@@ -750,10 +762,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 			if(!tClusterFound)
 			{
 				Cluster tCluster = new Cluster(this, new Long(tJoin.getTargetClusterID()), tJoin.getHierarchyLevel());
-				if(tParticipate.isInterASCluster()) {
-					tCluster.setInterASCluster();
-					setSourceIntermediateCluster(tCluster, tCluster);
-				}
 				setSourceIntermediateCluster(tCluster, tCluster);
 				if(tConnectionSession == null) {
 					tConnectionSession = new CoordinatorSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
@@ -769,19 +777,14 @@ public class HRMController extends Application implements IServerCallback, IEven
 				tCEP = new CoordinatorCEPChannel(this, tCluster);
 				if(tJoin.getHierarchyLevel().isHigherLevel()) {
 					((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
-				} else {
-					if(tParticipate.isInterASCluster()) {
-						tCEP.setEdgeCEP();
-						mIsEdgeRouter = true;
-					}
 				}
-				tCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
+				tCluster.getMultiplexer().mapCEPToSession(tCEP, tConnectionSession);
 				tCluster.addParticipatingCEP(tCEP);
 				tCEP.addAnnouncedCluster(tCluster, tCluster);
 				addRoutableTarget(tCluster);
 				tFoundCluster = tCluster;
 			}
-			tFoundCluster.getMultiplexer().addMultiplexedConnection(tCEP, tConnectionSession);
+			tFoundCluster.getMultiplexer().mapCEPToSession(tCEP, tConnectionSession);
 			for(ICluster tNegotiatingCluster : getRoutingTargetClusters()) {
 				ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel().getValue() - 1 : 0 ));
 				if(tNegotiatingCluster.equals(tNegClusterName)) {
@@ -894,17 +897,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		tConnectionSession.start(pConnection);
 	}
 	
-	@Override
-	public boolean openAck(LinkedList<Signature> pAuths, Description pDescription, Name pTargetName)
-	{
-		return true;
-	}
-	
-	public String toString()
-	{
-		return "HRM controller@" + getNode();
-	}
-	
 	/**
 	 * 
 	 * @param pSourceCluster source cluster
@@ -1009,40 +1001,38 @@ public class HRMController extends Application implements IServerCallback, IEven
 	}
 	
 	/**
-	 * This method has to be invoked once a new neighbor node is detected.
-	 * It causes the addition to the intermediate cluster that is associated to the interface the note was spotted at.
+	 * This method is called in case a neighbor node is detected.
 	 * 
 	 * @param pName is the name of the entity a connection will be established to
 	 * @param pLevel is the level at which a connection is added
 	 * @param pToClusterID is the identity of the cluster a connection will be added to
-	 * @param pConnectionToOtherAS says whether the connection leads to another autonomous system
 	 */
-	public void addConnection(Name pName, HierarchyLevel pLevel, Long pToClusterID, boolean pConnectionToOtherAS)
+	public void connectTo(Name pName, HierarchyLevel pLevel, Long pToClusterID)
 	{
-		Logging.log(this, "ADDING CONNECTION to " + pName + "(ClusterID=" + pToClusterID + ", interAS=" + pConnectionToOtherAS + " on hier. level " + pLevel);
+		Logging.log(this, "ADDING CONNECTION to " + pName + "(ClusterID=" + pToClusterID + ", hierarchy level=" + pLevel.getValue() + ")");
 
-		CoordinatorSession tCEP = null;
+		CoordinatorSession tSession = null;
 		ICluster tFoundCluster = null;
-		CoordinatorCEPChannel tDemux = null;
+		CoordinatorCEPChannel tCEP = null;
 		
 		boolean tClusterFound = false;
 		for(Cluster tCluster : getRoutingTargetClusters())
 		{
 			if(tCluster.getClusterID().equals(pToClusterID)) {
-				tCEP = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
+				tSession = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
 				Route tRoute = null;
 				try {
-					tRoute = getHRS().getRoute(getNode().getCentralFN(), pName, new Description(), getNode().getIdentity());
+					tRoute = getHRS().getRoute(pName, new Description(), getNode().getIdentity());
 				} catch (RoutingException tExc) {
 					Logging.err(this, "Unable to resolve route to " + pName, tExc);
 				} catch (RequirementsException tExc) {
 					Logging.err(this, "Unable to fulfill requirements for a route to " + pName, tExc);
 				}
-				tCEP.setRouteToPeer(tRoute);
-				tDemux = new CoordinatorCEPChannel(this, tCluster);
-				tCluster.getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
+				tSession.setRouteToPeer(tRoute);
+				tCEP = new CoordinatorCEPChannel(this, tCluster);
+				tCluster.getMultiplexer().mapCEPToSession(tCEP, tSession);
 				
-				tCluster.addParticipatingCEP(tDemux);
+				tCluster.addParticipatingCEP(tCEP);
 				tFoundCluster = tCluster;
 				tClusterFound = true;
 			}
@@ -1053,28 +1043,22 @@ public class HRMController extends Application implements IServerCallback, IEven
 			Cluster tCluster = new Cluster(this, new Long(pToClusterID), pLevel);
 			setSourceIntermediateCluster(tCluster, tCluster);
 			addRoutableTarget(tCluster);
-			tCEP = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
-			tDemux = new CoordinatorCEPChannel(this, tCluster);
-			tCluster.getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
+			tSession = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
+			tCEP = new CoordinatorCEPChannel(this, tCluster);
+			tCluster.getMultiplexer().mapCEPToSession(tCEP, tSession);
 			
-			tCluster.addParticipatingCEP(tDemux);
+			tCluster.addParticipatingCEP(tCEP);
 			tFoundCluster = tCluster;
 		}
 		final ClusterParticipationProperty tProperty = new ClusterParticipationProperty(pToClusterID, pLevel, 0);
 		NestedParticipation tParticipate = tProperty.new NestedParticipation(pToClusterID, 0);
 		tProperty.addNestedparticipation(tParticipate);
 		
-		if(pConnectionToOtherAS) {
-			tFoundCluster.setInterASCluster();
-			mIsEdgeRouter = true;
-			tDemux.setEdgeCEP();
-			tParticipate.setInterASCluster();	
-		}
 		tParticipate.setSourceClusterID(pToClusterID);
 		
 		final Name tName = pName;
-		final CoordinatorSession tConnectionCEP = tCEP;
-		final CoordinatorCEPChannel tDemultiplexed = tDemux;
+		final CoordinatorSession tConnectionCEP = tSession;
+		final CoordinatorCEPChannel tDemultiplexed = tCEP;
 		final ICluster tClusterToAdd = tFoundCluster;
 		
 		Thread tThread = new Thread() {
@@ -1356,16 +1340,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 //		return tClusters;
 //	}
 //	
-	/**
-	 * Find out whether this object is an edge router
-	 * 
-	 * @return true if the node is a router to another autonomous system
-	 */
-	public boolean isEdgeRouter()
-	{
-		return mIsEdgeRouter;
-	}
-	
+
 	/**
 	 * 
 	 * @param pLevel is the level at which a multiplexer to other clusters is installed and that has to be returned
@@ -1382,5 +1357,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 			Logging.log(this, "Created new Multiplexer " + tMux + " for cluster managers on level " + pLevel);
 		}
 		return mMuxOnLevel.get(pLevel);
+	}
+	
+	public String toString()
+	{
+		return "HRM controller@" + getNode();
 	}
 }
