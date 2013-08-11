@@ -23,7 +23,6 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class NeighborRoutingInformation extends LoggableElement implements Serializable
 {
-
 	/**
 	 * Stores the L2Address of the central FN.
 	 */
@@ -35,18 +34,36 @@ public class NeighborRoutingInformation extends LoggableElement implements Seria
 	private L2Address mRoutingTargetFN = null;
 
 	/**
+	 * Stores if this packet is an answer to another packet of this type
+	 */
+	private boolean mIsAnswer = false;
+	public static final boolean INIT_PACKET = false;
+	public static final boolean ANSWER_PACKET = true;
+
+	/**
 	 * For using the class within (de-)serialization. 
 	 */
 	private static final long serialVersionUID = 7253912074438961613L;
-	
-	public NeighborRoutingInformation(L2Address pCentralFN, L2Address pRoutingTargetFN)
+
+	public NeighborRoutingInformation(L2Address pCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
 	{
 		mCentralFN = pCentralFN;
 		mRoutingTargetFN = pRoutingTargetFN;
+		mIsAnswer = pIsAnswer;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
 			Logging.log(getClass().getSimpleName() + "(CentralFN=" + getCentralFNL2Address()  + ", RoutingTargetFN=" + getRoutingTargetFNL2Address() + "): CREATED");
 		}
+	}
+	
+	/**
+	 * Returns if this packet is an answer to another packet of this type
+	 * 
+	 * @return true if it is an answer, otherwise false
+	 */
+	public boolean isAnswer()
+	{
+		return mIsAnswer;
 	}
 	
 	/**
@@ -77,6 +94,6 @@ public class NeighborRoutingInformation extends LoggableElement implements Seria
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(CentralFN=" + getCentralFNL2Address()  + ", RoutingTargetFN=" + getRoutingTargetFNL2Address() + ")";
+		return getClass().getSimpleName() + " (" + (isAnswer() ? "ANSWER" : "INIT") + ", CentralFN=" + getCentralFNL2Address()  + ", RoutingTargetFN=" + getRoutingTargetFNL2Address() + ")";
 	}
 }
