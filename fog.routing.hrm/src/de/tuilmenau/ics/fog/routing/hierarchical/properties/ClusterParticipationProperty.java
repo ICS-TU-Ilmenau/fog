@@ -166,7 +166,6 @@ public class ClusterParticipationProperty extends AbstractProperty
 		private int mSourceToken;
 		private ClusterName mPredecessor;
 		private LinkedList<DiscoveryEntry> mDiscoveries;
-		private boolean mInterASCluster = false;
 		private HierarchyLevel mLevel = null;
 		private BullyPriority mSenderPriority = null;
 		
@@ -294,15 +293,6 @@ public class ClusterParticipationProperty extends AbstractProperty
 		}
 		
 		/**
-		 * In case the cluster is between autonomous systems, this method should be called in order to set the corresponding
-		 * flag.
-		 */
-		public void setInterASCluster()
-		{
-			mInterASCluster = true;
-		}
-		
-		/**
 		 * 
 		 * @return The token of the cluster the coordinator is responsible for is returned here.
 		 */
@@ -334,15 +324,6 @@ public class ClusterParticipationProperty extends AbstractProperty
 		public LinkedList<DiscoveryEntry> getNeighbors()
 		{
 			return mDiscoveries;
-		}
-		
-		/**
-		 * 
-		 * @return True is returned in case the source cluster is between autonomous systems.
-		 */
-		public boolean isInterASCluster()
-		{
-			return mInterASCluster;
 		}
 		
 		public String toString()

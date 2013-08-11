@@ -122,15 +122,6 @@ public class CoordinatorCEPMultiplexer
 					
 					
 					for(ICluster tNeighbor: tManager.getManagedCluster().getNeighbors()) {
-						boolean tBreak = false;
-						for(CoordinatorCEPChannel tCheckForEdgeCluster : tNeighbor.getClusterMembers()) {
-							if(tCheckForEdgeCluster != null && tCheckForEdgeCluster.isEdgeCEP()){
-								tBreak = true;
-							}
-						}
-						if(tBreak) {
-							continue;
-						}
 						DiscoveryEntry tEntry = new DiscoveryEntry(tNeighbor.getToken(), tNeighbor.getCoordinatorName(), tNeighbor.getClusterID(), tNeighbor.getCoordinatorsAddress(), tNeighbor.getHierarchyLevel());
 						tEntry.setPriority(tNeighbor.getBullyPriority());
 						if(tNeighbor.isInterASCluster()) {

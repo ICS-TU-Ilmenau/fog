@@ -60,7 +60,6 @@ public class CoordinatorCEPChannel
 	private ClusterName mRemoteCluster;
 	private ICluster mPeerCluster;
 	private BullyPriority mPeerPriority = null;
-	private boolean mIsEdgeRouter = false;
 	private boolean mKnowsCoordinator = false;
 	private HashMap<ICluster, ICluster> mAnnouncerMapping;
 	private boolean mPartOfCluster = false;
@@ -71,6 +70,11 @@ public class CoordinatorCEPChannel
 	 * For COORDINATORS: Stores the HRMID under which the corresponding peer cluster member is addressable.
 	 */
 	private HRMID mPeerHRMID = null;
+	
+	/**
+	 * Stores the L2 address of the peer
+	 */
+	private L2Address mPeerL2Address = null;
 	
 	/**
 	 * 
@@ -106,6 +110,16 @@ public class CoordinatorCEPChannel
 	}
 	
 	/**
+	 * Returns the L2 address of the peer (cluster member).
+	 * 
+	 * @return the desired L2 address
+	 */
+	public L2Address getPeerL2Address()
+	{
+		return mPeerL2Address;
+	}
+
+	/**
 	 * Handles a SignalingMessageHrm packet.
 	 * 
 	 * @param pSignalingMessageHrmPacket the packet
@@ -137,7 +151,7 @@ public class CoordinatorCEPChannel
 			if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE)
 				Logging.log(this, "      ..found route: " + tEntry);
 			
-			getHRMController().addRoute(tEntry);
+			getHRMController().addHRMRoute(tEntry);
 		}
 	}
 
@@ -273,7 +287,7 @@ public class CoordinatorCEPChannel
 	public boolean receive(Serializable pData) throws NetworkException
 	{
 		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
-			Logging.log(this, "RECEIVED DATA from \"" + getPeerHRMID() + "\": " + pData);
+			Logging.log(this, "RECEIVED DATA from \"" + getPeerName() + "/" + getPeerHRMID() + "\": " + pData);
 		}
 			
 
@@ -351,17 +365,6 @@ public class CoordinatorCEPChannel
 							for(Route tPath : tHRS.getCoordinatorRoutingMap().getRoute(getSourceName(), getPeerName())) {
 								tAnnouncePacket.addRoutingVector(new RoutingServiceLinkVector(tPath, tHRS.getCoordinatorRoutingMap().getSource(tPath), tHRS.getCoordinatorRoutingMap().getDest(tPath)));
 							}
-						}
-						for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
-							boolean tWroteAnnouncement = false;
-							if(tCEP.isEdgeCEP()) {
-								
-								// send packet
-								tCEP.sendPacket(tAnnouncePacket);
-
-								tWroteAnnouncement = true;
-							}
-							Logging.log(this, "Testing " + tCEP + " whether it is an inter as link:" + tWroteAnnouncement);
 						}
 					} else {
 						if(getPeer() instanceof Cluster) {
@@ -831,17 +834,6 @@ public class CoordinatorCEPChannel
 		return mPartOfCluster;
 	}
 	
-	public boolean isEdgeCEP()
-	{
-		return mIsEdgeRouter;
-	}
-	
-	public void setEdgeCEP()
-	{
-//TODO		ElectionManager.getElectionManager().removeElection(getPeer().getHierarchyLevel().getValue(), getPeer().getClusterID());
-		mIsEdgeRouter = true;
-	}
-	
 	public void handleClusterDiscovery(NestedDiscovery pDiscovery, boolean pRequest) throws PropertyException, NetworkException
 	{
 		if(pRequest){
@@ -863,13 +855,6 @@ public class CoordinatorCEPChannel
 						Logging.log(this, "Radius is " + tRadius);
 						
 						if(tCluster instanceof NeighborCluster && ((NeighborCluster)tCluster).getClusterDistanceToTarget() + pDiscovery.getDistance() > tRadius) continue;
-						boolean tBreak=false;
-						for(CoordinatorCEPChannel tCEP : tCluster.getClusterMembers()) {
-							if(tCEP.isEdgeCEP()) tBreak = true;
-						}
-						if(tBreak) {
-							continue;
-						}
 						int tToken = tCluster.getToken();
 						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
 							if(tCluster instanceof NeighborCluster) {
