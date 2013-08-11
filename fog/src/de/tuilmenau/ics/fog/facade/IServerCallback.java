@@ -28,11 +28,10 @@ public interface IServerCallback
 	 * informed about the FoG-socket for sending data via this connection. 
 	 * 
 	 * @param pAuths Authentications for the open request
-	 * @param pRoute Route to the client requesting the new connection
+	 * @param pDescription The requirements from the connection request
 	 * @param pTargetName Registered name of the Server, which the new connection was requested to
-	 * @return Reference to object handling the connection or null if open is not allowed
+	 * @return True if the application acknowledges this request, otherwise false
 	 * 
-	 * TODO check if parameter pRoute is needed. It should be deleted, since if shows FoG details to the application
 	 */
 	public boolean openAck(LinkedList<Signature> pAuths, Description pDescription, Name pTargetName);
 
