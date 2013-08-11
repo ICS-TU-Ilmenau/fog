@@ -53,6 +53,16 @@ public class L2Address extends HRMName
 	}
 
 	/**
+	 * Clones the object but uses the same internal address value
+	 * 
+	 * @return the object clone
+	 */
+	public L2Address clone()
+	{
+		return new L2Address(mAddress.longValue());
+	}
+	
+	/**
 	 * Returns a reference to the singleton with the random number generator
 	 * 
 	 * @return the random number generator

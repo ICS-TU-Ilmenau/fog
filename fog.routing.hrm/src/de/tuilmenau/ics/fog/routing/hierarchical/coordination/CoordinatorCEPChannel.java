@@ -71,11 +71,6 @@ public class CoordinatorCEPChannel
 	private HRMID mPeerHRMID = null;
 	
 	/**
-	 * Stores the L2 address of the peer
-	 */
-	private L2Address mPeerL2Address = null;
-	
-	/**
 	 * 
 	 * @param pHRMController is the coordinator of a node
 	 * @param pPeerCluster is the peer cluster/coordinator
@@ -85,6 +80,7 @@ public class CoordinatorCEPChannel
 		mHRMController = pHRMController;
 		mPeerCluster = pPeerCluster;
 		mPeerPriority = new BullyPriority(this);
+		pPeerCluster.addParticipatingCEP(this);
 		Logging.log(this, "CREATED for " + mPeerCluster);
 	}
 	
@@ -108,16 +104,6 @@ public class CoordinatorCEPChannel
 		return mPeerHRMID;
 	}
 	
-	/**
-	 * Returns the L2 address of the peer (cluster member).
-	 * 
-	 * @return the desired L2 address
-	 */
-	public L2Address getPeerL2Address()
-	{
-		return mPeerL2Address;
-	}
-
 	/**
 	 * Handles a SignalingMessageHrm packet.
 	 * 
@@ -192,7 +178,7 @@ public class CoordinatorCEPChannel
 					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, getPeer().getBullyPriority(), tSignature, getPeer().getToken());
 					
 					for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
-						tAnnouncePacket.addCoveredNode(tCEP.getPeerName());
+						tAnnouncePacket.addCoveredNode(tCEP.getPeerL2Address());
 					}
 					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
 						Logging.log(this, "Sending announce that does not cover anyhting");
@@ -286,7 +272,7 @@ public class CoordinatorCEPChannel
 	public boolean receive(Serializable pData) throws NetworkException
 	{
 		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
-			Logging.log(this, "RECEIVED DATA from \"" + getPeerName() + "/" + getPeerHRMID() + "\": " + pData);
+			Logging.log(this, "RECEIVED DATA from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pData);
 		}
 			
 
@@ -360,15 +346,15 @@ public class CoordinatorCEPChannel
 				if(tAnnouncePacket.isInterASAnnouncement()) {
 					Logging.log(this, tNode.getAS().getName() + " received an announcement from " + tAnnouncePacket.getASIdentification());
 					if(tNode.getAS().getName().equals(tAnnouncePacket.getASIdentification())) {
-						if(!getSourceName().equals(getPeerName())) {
-							for(Route tPath : tHRS.getCoordinatorRoutingMap().getRoute(getSourceName(), getPeerName())) {
+						if(!getSourceName().equals(getPeerL2Address())) {
+							for(Route tPath : tHRS.getCoordinatorRoutingMap().getRoute(getSourceName(), getPeerL2Address())) {
 								tAnnouncePacket.addRoutingVector(new RoutingServiceLinkVector(tPath, tHRS.getCoordinatorRoutingMap().getSource(tPath), tHRS.getCoordinatorRoutingMap().getDest(tPath)));
 							}
 						}
 					} else {
 						if(getPeer() instanceof Cluster) {
-							if(!getSourceName().equals(getPeerName())) {
-								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), getSourceName(), getPeerName());
+							if(!getSourceName().equals(getPeerL2Address())) {
+								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), getSourceName(), getPeerL2Address());
 								tAnnouncePacket.addRoutingVector(tVector);
 							}
 							for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
@@ -596,11 +582,6 @@ public class CoordinatorCEPChannel
 		mRemoteCluster = pClusterName;
 	}
 
-	public CoordinatorCEPMultiplexer getCEPMultiplexer()
-	{
-		return getMultiplexer();
-	}
-	
 	public boolean sendPacket(Serializable pData)
 	{
 		Logging.log(this, "Sending to " + getRemoteClusterName() + " the packet " + pData);
@@ -610,16 +591,16 @@ public class CoordinatorCEPChannel
 			Logging.log(this, "Sending " + pData);
 		}
 		if(getPeer() instanceof Coordinator) {
-			getCEPMultiplexer().write(pData, this, new ClusterName(getPeer().getToken(), ((L2Address)getPeerName()).getComplexAddress().longValue(), getPeer().getHierarchyLevel()));
+			getMultiplexer().write(pData, this, new ClusterName(getPeer().getToken(), ((L2Address)getPeerL2Address()).getComplexAddress().longValue(), getPeer().getHierarchyLevel()));
 		} else {
-			getCEPMultiplexer().write(pData, this, getRemoteClusterName());
+			getMultiplexer().write(pData, this, getRemoteClusterName());
 		}
 		return true;
 	}
 	
-	public HRMName getPeerName()
+	public L2Address getPeerL2Address()
 	{
-		return getMultiplexer().getPeerRoutingServiceAddress(this);
+		return getMultiplexer().getPeerL2Address(this);
 	}
 	
 	public HRMName getSourceName()
@@ -656,7 +637,7 @@ public class CoordinatorCEPChannel
 						int tToken = tCluster.getToken();
 						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
 							if(tCluster instanceof NeighborCluster) {
-								Logging.log(this, "Reporting " + tCluster + " to " + getPeerName().getDescr() + " because " + pDiscovery.getDistance() + " + " + ((NeighborCluster)tCluster).getClusterDistanceToTarget() + "=" + (pDiscovery.getDistance() + ((NeighborCluster)tCluster).getClusterDistanceToTarget()));
+								Logging.log(this, "Reporting " + tCluster + " to " + getPeerL2Address().getDescr() + " because " + pDiscovery.getDistance() + " + " + ((NeighborCluster)tCluster).getClusterDistanceToTarget() + "=" + (pDiscovery.getDistance() + ((NeighborCluster)tCluster).getClusterDistanceToTarget()));
 								Logging.log(this, "token list was " + pDiscovery.getTokens());
 							}
 							getPathTo(pDiscovery, tCluster);
@@ -748,6 +729,6 @@ public class CoordinatorCEPChannel
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "@" + getPeer().getClusterDescription() +  "(PeerPrio=" + mPeerPriority.getValue() + (getPeerName() != null ? ", Peer=" + getPeerHRMID() : "") + ")";
+		return getClass().getSimpleName() + "@" + getPeer().getClusterDescription() +  "(PeerPrio=" + mPeerPriority.getValue() + (getPeerL2Address() != null ? ", Peer=" + getPeerHRMID() : "") + ")";
 	}
 }

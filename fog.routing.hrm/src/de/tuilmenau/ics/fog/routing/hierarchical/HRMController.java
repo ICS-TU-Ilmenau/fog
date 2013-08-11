@@ -530,6 +530,22 @@ public class HRMController extends Application implements IServerCallback, IEven
 	}
 
 	/**
+	 * Adds a route to the local HRM routing table.
+	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
+	 * 
+	 * @param pNeighborL2Address the L2Address of the direct neighbor
+	 * @param pRoute the route to the direct neighbor
+	 */
+	public void addRouteToDirectNeighbor(L2Address pNeighborL2Address, Route pRoute)
+	{
+		// inform the HRS about the new route
+		if(getHRS().addRouteToDirectNeighbor(pNeighborL2Address, pRoute)){
+			// it's time to update the GUI
+			notifyGUI(this);
+		}
+	}
+
+	/**
 	 * Reacts on a detected new physical neighbor. A new connection to this neighbor is created.
 	 * However, pNeighborL2Address doesn't correspond to the neighbor's central FN!.
 	 * 
@@ -758,7 +774,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 					if(tJoin.getHierarchyLevel().isHigherLevel()) {
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 					}
-					tCluster.addParticipatingCEP(tCEP);
 					tClusterFound = true;
 					tFoundCluster = tCluster;
 				}
@@ -783,7 +798,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 					((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 				}
 				tCluster.getMultiplexer().mapCEPToSession(tCEP, tConnectionSession);
-				tCluster.addParticipatingCEP(tCEP);
 				addRoutableTarget(tCluster);
 				tFoundCluster = tCluster;
 			}
@@ -993,8 +1007,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 				tSession.setRouteToPeer(tRoute);
 				tCEP = new CoordinatorCEPChannel(this, tCluster);
 				tCluster.getMultiplexer().mapCEPToSession(tCEP, tSession);
-				
-				tCluster.addParticipatingCEP(tCEP);
 				tFoundCluster = tCluster;
 				tClusterFound = true;
 			}
@@ -1008,8 +1020,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 			tSession = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
 			tCEP = new CoordinatorCEPChannel(this, tCluster);
 			tCluster.getMultiplexer().mapCEPToSession(tCEP, tSession);
-			
-			tCluster.addParticipatingCEP(tCEP);
 			tFoundCluster = tCluster;
 		}
 		final ClusterParticipationProperty tProperty = new ClusterParticipationProperty(pToClusterID, pLevel, 0);
@@ -1043,9 +1053,25 @@ public class HRMController extends Application implements IServerCallback, IEven
 					/**
 					 * Determine the FN between the local central FN and the bus towards the physical neighbor node and tell this the neighbor (destination of this connection)
 					 */
+					L2Address tFirstFNL2Address = getL2AddressOfFirstFNTowardsNeighbor(tNeighborName);
+					
+					/**
+					 * Send NeighborRoutingInformation to the neighbor
+					 */
+					if (tFirstFNL2Address != null){
+						// get the name of the central FN
+						L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
+						// create a map between the central FN and the search FN
+						NeighborRoutingInformation tNeighborRoutingInformation = new NeighborRoutingInformation(tCentralFNL2Address, tFirstFNL2Address, NeighborRoutingInformation.INIT_PACKET);
+						// tell the neighbor about the FN
+						Logging.log(this, "     ..send NEIGHBOR ROUTING INFO " + tNeighborRoutingInformation);
+						tFSession.write(tNeighborRoutingInformation);
+					}
+
+					/**
+					 * Find and set the route to the peer within the session object
+					 */
 					Route tRouteToNeighborFN = null;
-					// get the name of the central FN
-					L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
 					// get a route to the neighbor node (the destination of the desired connection)
 					try {
 						tRouteToNeighborFN = getHRS().getRoute(tNeighborName, new Description(), getNode().getIdentity());
@@ -1056,37 +1082,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					}
 					// have we found a route to the neighbor?
 					if(tRouteToNeighborFN != null) {
-						// get the first route part, which corresponds to the link between the central FN and the searched first FN towards the neighbor 
-						RouteSegmentPath tPath = (RouteSegmentPath) tRouteToNeighborFN.getFirst();
-						// get the gate ID of the link
-						GateID tGateID= tPath.getFirst();						
-						// get all outgoing links from the central FN
-						Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
-						
-						RoutingServiceLink tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = null;
-
-						// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
-						for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
-							// compare the GateIDs
-							if(tLink.equals(tGateID)) {
-								// found!
-								tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = tLink;
-							}
-						}
-						// determine the searched FN, which comes first when routing towards the neighbor
-						HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getFoGRoutingGraph().getDest(tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor);
-						if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
-							// get the L2 address
-							L2Address tFirstFNL2Address = (L2Address)tFirstNodeBeforeBusToNeighbor;
-							tFSession.setRouteToPeer(tRouteToNeighborFN);
-							// create a map between the central FN and the search FN
-							NeighborRoutingInformation tNeighborRoutingInformation = new NeighborRoutingInformation(tCentralFNL2Address, tFirstFNL2Address);
-							// tell the neighbor about the FN
-							Logging.log(this, "     ..send NEIGHBOR ROUTING INFO " + tNeighborRoutingInformation);
-							tFSession.write(tNeighborRoutingInformation);
-						}else{
-							Logging.err(this,  "connectTo() found a first FN (" + tFirstNodeBeforeBusToNeighbor + ") towards the neighbor " + tNeighborName + " but it has the wrong class type");
-						}
+						tFSession.setRouteToPeer(tRouteToNeighborFN);
 					}
 					
 					tDemultiplexed.setRemoteClusterName(new ClusterName(tClusterToAdd.getToken(), tClusterToAdd.getClusterID(), tClusterToAdd.getHierarchyLevel()));
@@ -1094,6 +1090,53 @@ public class HRMController extends Application implements IServerCallback, IEven
 			}
 		};
 		tThread.start();
+	}
+	
+	public L2Address getL2AddressOfFirstFNTowardsNeighbor(Name pNeighborName)
+	{
+		L2Address tResult = null;
+
+		Route tRoute = null;
+		// get the name of the central FN
+		L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
+		// get a route to the neighbor node (the destination of the desired connection)
+		try {
+			tRoute = getHRS().getRoute(pNeighborName, new Description(), getNode().getIdentity());
+		} catch (RoutingException tExc) {
+			Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName, tExc);
+		} catch (RequirementsException tExc) {
+			Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName + " with requirements no requirents, Huh!", tExc);
+		}
+		// have we found a route to the neighbor?
+		if(tRoute != null) {
+			// get the first route part, which corresponds to the link between the central FN and the searched first FN towards the neighbor 
+			RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
+			// get the gate ID of the link
+			GateID tGateID= tPath.getFirst();						
+			// get all outgoing links from the central FN
+			Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
+			
+			RoutingServiceLink tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = null;
+
+			// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
+			for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
+				// compare the GateIDs
+				if(tLink.equals(tGateID)) {
+					// found!
+					tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = tLink;
+				}
+			}
+			// determine the searched FN, which comes first when routing towards the neighbor
+			HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getFoGRoutingGraph().getDest(tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor);
+			if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
+				// get the L2 address
+				tResult = (L2Address)tFirstNodeBeforeBusToNeighbor;
+			}else{
+				Logging.err(this,  "getL2AddressOfFirstFNTowardsNeighbor() found a first FN (" + tFirstNodeBeforeBusToNeighbor + ") towards the neighbor " + pNeighborName + " but it has the wrong class type");
+			}
+		}
+		
+		return tResult;
 	}
 	
 	@Override

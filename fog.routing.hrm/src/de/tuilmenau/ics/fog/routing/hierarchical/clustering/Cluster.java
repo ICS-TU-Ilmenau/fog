@@ -103,8 +103,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private HRMSignature mCoordSignature;
 	private boolean mInterASCluster = false;
 	private int mToken;
-	private TopologyData mTopologyData = null;
-	private LinkedList<CoordinatorCEPChannel> mOldParticipatingCEPs;
 
 	/**
 	 * Stores a reference to the local coordinator instance if the local router is also the coordinator for this cluster
@@ -196,7 +194,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 
 	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
 	{
-		setSuperiorCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerName());
+		setSuperiorCoordinatorCEP(pCEP, pAnnounce.getCoordSignature(), pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerL2Address());
 		getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
@@ -232,7 +230,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 					getHRMController().getHRS().registerNode((L2Address) pAddress, false);
 				}
 				
-				getHRMController().getHRS().registerRoute(pCoordinatorChannel.getSourceName(), pCoordinatorChannel.getPeerName(), pCoordinatorChannel.getRouteToPeer());
+				getHRMController().getHRS().registerRoute(pCoordinatorChannel.getSourceName(), pCoordinatorChannel.getPeerL2Address(), pCoordinatorChannel.getRouteToPeer());
 			}
 		}
 		Logging.log(this, "This cluster has the following neighbors: " + getNeighbors());
@@ -244,7 +242,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, mHierarchyLevel, pCoordSignature, pAddress, getToken(), mClusterID);
 				tAnnounce.setCoordinatorsPriority(mBullyPriority); //TODO : ???
 				if(pCoordinatorChannel != null) {
-					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorChannel.getRouteToPeer(), pCoordinatorChannel.getSourceName(), pCoordinatorChannel.getPeerName()));
+					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorChannel.getRouteToPeer(), pCoordinatorChannel.getSourceName(), pCoordinatorChannel.getPeerL2Address()));
 				}
 				((Cluster)tCluster).announceNeighborCoord(tAnnounce, pCoordinatorChannel);
 			}
@@ -337,8 +335,8 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		
 		if(getHierarchyLevel().isBaseLevel()) {
 			if(pCEP != null) {
-				if(!pCEP.getSourceName().equals(pCEP.getPeerName()) && pCEP.getRouteToPeer() != null) {
-					RoutingServiceLinkVector tLink = new RoutingServiceLinkVector(pCEP.getRouteToPeer().clone(),  pCEP.getSourceName(), pCEP.getPeerName());
+				if(!pCEP.getSourceName().equals(pCEP.getPeerL2Address()) && pCEP.getRouteToPeer() != null) {
+					RoutingServiceLinkVector tLink = new RoutingServiceLinkVector(pCEP.getRouteToPeer().clone(),  pCEP.getSourceName(), pCEP.getPeerL2Address());
 					pAnnounce.addRoutingVector(tLink);
 					Logging.log(this, "Added routing vector " + tLink);
 				}
@@ -467,14 +465,8 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return mHighestPriority;
 	}
 	
-	public LinkedList<CoordinatorCEPChannel> getOldParticipatingCEPs()
-	{
-		return mOldParticipatingCEPs;
-	}
-	
 	public void setParticipatingCEPs(LinkedList<CoordinatorCEPChannel> pCEPs)
 	{
-		mOldParticipatingCEPs = mCEPs;
 		Logging.log(this, "Setting participating CEPs to " + pCEPs);
 		mCEPs = pCEPs;
 	}

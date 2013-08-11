@@ -23,23 +23,22 @@ import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexedPackage;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
-import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Tuple;
 
 public class CoordinatorSession extends Session
 {
+
+	private L2Address mPeerL2Address = null;
+
 	private HRMController mHRMController = null;
 	private boolean mServerSide = false;
 	private L2Address mSessionOriginL2Address = null;
-	private L2Address mPeerIdentification = null;
 	private HierarchyLevel mHierarchyLevel = null;
 	private CoordinatorCEPMultiplexer mMux;
 	private Route mRouteToPeer;
@@ -80,41 +79,74 @@ public class CoordinatorSession extends Session
 			NeighborRoutingInformation tNeighborRoutingInformationPacket = (NeighborRoutingInformation)pData;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-				Logging.log(this, "NEIGHBOR ROUTING INFO found: " + tNeighborRoutingInformationPacket);
+				Logging.log(this, "NEIGHBOR ROUTING INFO received: " + tNeighborRoutingInformationPacket);
 			}
 			
 			// get the L2Address of the peer
-			mPeerIdentification = tNeighborRoutingInformationPacket.getCentralFNL2Address();
-			if(mServerSide) {
-				/**
-				 * Determine the route to the peer
-				 */
-				Route tRouteToPeer = null;
-				// search a route form the central FN to the intermediate FN between the central FN and the bus
-				try {
-					tRouteToPeer = getHRMController().getHRS().getRoute(tNeighborRoutingInformationPacket.getRoutingTargetFNL2Address(), new Description(), getHRMController().getNode().getIdentity());
-				} catch (RoutingException tExc) {
-					Logging.err(this, "Unable to find route to ", tExc);
-				} catch (RequirementsException tExc) {
-					Logging.err(this, "Unable to fulfill requirements ", tExc);
-				}
-				/**
-				 * Update the local route to the peer
-				 */
-				mRouteToPeer = tRouteToPeer;
-				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
-				if(mHierarchyLevel.isBaseLevel()) {
-					getHRMController().getHRS().registerRoute(mSessionOriginL2Address, mPeerIdentification, mRouteToPeer);
-					getHRMController().getHRS().addRouteToDirectNeighbor(mPeerIdentification, mRouteToPeer);
-				}
-				write(mSessionOriginL2Address);
+			mPeerL2Address = tNeighborRoutingInformationPacket.getCentralFNL2Address();
+
+			/**
+			 * Determine the route to the peer
+			 */
+			Route tRouteToPeer = null;
+			// search a route form the central FN to the intermediate FN between the central FN and the bus
+			try {
+				tRouteToPeer = getHRMController().getHRS().getRoute(tNeighborRoutingInformationPacket.getRoutingTargetFNL2Address(), new Description(), getHRMController().getNode().getIdentity());
+			} catch (RoutingException tExc) {
+				Logging.err(this, "Unable to find route to ", tExc);
+			} catch (RequirementsException tExc) {
+				Logging.err(this, "Unable to fulfill requirements ", tExc);
+			}
+			/**
+			 * Update the local route to the peer
+			 */
+			tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
+			setRouteToPeer(tRouteToPeer);
+			/**
+			 * Inform the HRS about the route to the peer
+			 */
+			if(mHierarchyLevel.isBaseLevel()) {
+				getHRMController().getHRS().registerRoute(mSessionOriginL2Address, mPeerL2Address, mRouteToPeer);
+				getHRMController().addRouteToDirectNeighbor(mPeerL2Address, mRouteToPeer);
 			}
 
+			/**
+			 * Tell the peer the local central L2Address
+			 */
+			if(mServerSide) {
+				write(mSessionOriginL2Address);
+			}
+			/**
+			 * Send an answer packet
+			 */
+			if (!tNeighborRoutingInformationPacket.isAnswer()){
+				/**
+				 * get the name of the central FN
+				 */
+				L2Address tCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
+
+				/**
+				 *  determine the FN between the local central FN and the bus towards the physical neighbor node and tell this the neighbor 
+				 */
+				L2Address tFirstFNL2Address = mHRMController.getL2AddressOfFirstFNTowardsNeighbor(tNeighborRoutingInformationPacket.getRoutingTargetFNL2Address());
+
+				/**
+				 * Send NeighborRoutingInformation to the neighbor
+				 */
+				if (tFirstFNL2Address != null){
+					// create a map between the central FN and the search FN
+					NeighborRoutingInformation tNeighborRoutingInformation = new NeighborRoutingInformation(tCentralFNL2Address, tFirstFNL2Address, NeighborRoutingInformation.ANSWER_PACKET);
+					// tell the neighbor about the FN
+					Logging.log(this, "     ..send NEIGHBOR ROUTING INFO ANSWER " + tNeighborRoutingInformation);
+					write(tNeighborRoutingInformation);
+				}
+
+			}
 		} else if (pData instanceof L2Address) {
-			mPeerIdentification = (L2Address) pData;
+			mPeerL2Address = (L2Address) pData;
 			if(mHierarchyLevel.isBaseLevel()) {
-				mRouteToPeer.add(new RouteSegmentAddress(mPeerIdentification));
-				getHRMController().getHRS().registerRoute(mSessionOriginL2Address, mPeerIdentification, mRouteToPeer);
+				mRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
+				getHRMController().getHRS().registerRoute(mSessionOriginL2Address, mPeerL2Address, mRouteToPeer);
 			} else {
 				if(mServerSide) {
 					write(mSessionOriginL2Address);
@@ -244,12 +276,13 @@ public class CoordinatorSession extends Session
 	}
 	
 	/**
+	 * Returns the L2Address of the peer
 	 * 
-	 * @return The physical name of central forwarding node at the other side is returned.
+	 * @return the peer L2Address (central FN)
 	 */
-	public HRMName getPeerRoutingServiceAddress()
+	public L2Address getPeerL2Address()
 	{
-		return mPeerIdentification;
+		return mPeerL2Address;
 	}
 	
 	/**
@@ -263,8 +296,8 @@ public class CoordinatorSession extends Session
 	
 	public String toString()
 	{
-		if(mPeerIdentification != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getMultiplexer() + "(Initiator=" + mSessionOriginL2Address + ", Peer=" + mPeerIdentification + ")";
+		if(mPeerL2Address != null ) {
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getMultiplexer() + "(Initiator=" + mSessionOriginL2Address + ", Peer=" + mPeerL2Address + ")";
 		} else {
 			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Initiator=" + mSessionOriginL2Address + ")";
 		}

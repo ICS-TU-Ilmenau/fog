@@ -36,6 +36,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraph
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Tuple;
 
@@ -273,10 +274,10 @@ public class CoordinatorCEPMultiplexer
 		return null;
 	}
 	
-	public HRMName getPeerRoutingServiceAddress(CoordinatorCEPChannel pCEP)
+	public L2Address getPeerL2Address(CoordinatorCEPChannel pCEP)
 	{
 		if(mCEPToSessionMapping.containsKey(pCEP)) {
-			return mCEPToSessionMapping.get(pCEP).getPeerRoutingServiceAddress();
+			return mCEPToSessionMapping.get(pCEP).getPeerL2Address();
 		}
 		return null;
 	}

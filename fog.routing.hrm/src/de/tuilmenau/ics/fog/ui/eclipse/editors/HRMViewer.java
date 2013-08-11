@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.ui.eclipse.editors;
 
 import java.text.Collator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Observable;
@@ -61,6 +62,8 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionManager;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -71,7 +74,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 {
-	private static boolean HRM_VIEWER_DEBUGGING = false;
+	private static boolean HRM_VIEWER_DEBUGGING = true;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = false;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS = false;
 	
@@ -81,6 +84,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Composite mContainer = null;
     private Display mDisplay = null;
     private Composite mContainerRoutingTable = null;
+    private Composite mContainerNeighborRoutingTable = null;
+	private Composite mContainerHRMID2L2ADDRTable = null;
 	
     /**
      * Stores the simulation time for the next GUI update.
@@ -148,11 +153,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		
 		/**
-		 * GUI part 2: routing table of the node
+		 * GUI part 2: table of routes to direct neighbors
 		 */
 		// create the headline
 		StyledText tSignaturesLabel = new StyledText(mContainer, SWT.BORDER);
-		tSignaturesLabel.setText("HRM Routing Table - Node " + mHRMController.getNodeGUIName());
+		tSignaturesLabel.setText("Routes to Neighbors - Node " + mHRMController.getNodeGUIName());
 		tSignaturesLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style2 = new StyleRange();
@@ -160,6 +165,153 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	    style2.length = tSignaturesLabel.getText().length();
 	    style2.fontStyle = SWT.BOLD;
 	    tSignaturesLabel.setStyleRange(style2);
+	    
+	    // create the GUI container
+	    mContainerNeighborRoutingTable = new Composite(mContainer, SWT.NONE);
+	    GridData tLayoutDataNeighborRoutingTable = new GridData(SWT.FILL, SWT.FILL, true, true);
+	    tLayoutDataNeighborRoutingTable.horizontalSpan = 1;
+	    mContainerNeighborRoutingTable.setLayoutData(tLayoutDataNeighborRoutingTable); 
+	    
+	    // create the table
+		final Table tTableNeighborRoutingTable = new Table(mContainerNeighborRoutingTable, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+		tTableNeighborRoutingTable.setHeaderVisible(true);
+		tTableNeighborRoutingTable.setLinesVisible(true);
+		
+		// create the columns and define the texts for the header row
+		// col. 0
+		TableColumn tTableNeighbor = new TableColumn(tTableNeighborRoutingTable, SWT.NONE, 0);
+		tTableNeighbor.setText("Neighbor");
+		// col. 1
+		TableColumn tTableNeighborRoute = new TableColumn(tTableNeighborRoutingTable, SWT.NONE, 1);
+		tTableNeighborRoute.setText("Route");
+		
+		HashMap<L2Address, Route> tRoutesToDirectNeighbors = tHRS.getRoutesToDirectNeighbors();
+		if (HRM_VIEWER_DEBUGGING){
+			Logging.log(this, "Found " + tRoutesToDirectNeighbors.keySet().size() + " local routes to neighbor nodes");
+		}
+		
+		if ((tRoutesToDirectNeighbors != null) && (!tRoutesToDirectNeighbors.isEmpty())) {
+			int tRowNumber = 0;
+			for(L2Address tAddr : tRoutesToDirectNeighbors.keySet()) {
+				Route tRoute = tRoutesToDirectNeighbors.get(tAddr);
+				
+				// create the table row
+				TableItem tTableRow = new TableItem(tTableNeighborRoutingTable, SWT.NONE, tRowNumber);
+				
+				/**
+				 * Column 0: the neighbor name
+				 */
+				tTableRow.setText(0, tAddr.toString());
+
+				/**
+				 * Column 1: route 
+				 */
+				tTableRow.setText(1, tRoute.toString());
+
+				tRowNumber++;
+			}
+		}
+		
+		TableColumn[] columns1 = tTableNeighborRoutingTable.getColumns();
+		for (int k = 0; k < columns1.length; k++){
+			columns1[k].pack();
+		}
+		tTableNeighborRoutingTable.setLayoutData(new GridData(GridData.FILL_BOTH));//SWT.FILL, SWT.TOP, true, true, 1, 1));
+
+		// create the container layout
+		TableColumnLayout tLayoutRoutingTable = new TableColumnLayout();
+		mContainerNeighborRoutingTable.setLayout(tLayoutRoutingTable);
+		// assign each column a layout weight
+		tLayoutRoutingTable.setColumnData(tTableNeighbor, new ColumnWeightData(3));
+		tLayoutRoutingTable.setColumnData(tTableNeighborRoute, new ColumnWeightData(3));
+
+
+		/**
+		 * GUI part 3: table of known mappings from HRMID to L2Addresses
+		 */
+		// create the headline
+		StyledText tSignaturesLabel4 = new StyledText(mContainer, SWT.BORDER);
+		tSignaturesLabel4.setText("Mappings from neighbor HRMID to L2Address - Node " + mHRMController.getNodeGUIName());
+		tSignaturesLabel4.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
+		tSignaturesLabel4.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
+	    StyleRange style4 = new StyleRange();
+	    style4.start = 0;
+	    style4.length = tSignaturesLabel4.getText().length();
+	    style4.fontStyle = SWT.BOLD;
+	    tSignaturesLabel4.setStyleRange(style4);
+	    
+	    // create the GUI container
+	    mContainerHRMID2L2ADDRTable = new Composite(mContainer, SWT.NONE);
+	    GridData tLayoutDataMappingTable = new GridData(SWT.FILL, SWT.FILL, true, true);
+	    tLayoutDataMappingTable.horizontalSpan = 1;
+	    mContainerHRMID2L2ADDRTable.setLayoutData(tLayoutDataMappingTable); 
+	    
+	    // create the table
+		final Table tTableMappingTable = new Table(mContainerHRMID2L2ADDRTable, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+		tTableMappingTable.setHeaderVisible(true);
+		tTableMappingTable.setLinesVisible(true);
+		
+		// create the columns and define the texts for the header row
+		// col. 0
+		TableColumn tTableHRMID = new TableColumn(tTableMappingTable, SWT.NONE, 0);
+		tTableHRMID.setText("HRMID");
+		// col. 1
+		TableColumn tTableL2Addr = new TableColumn(tTableMappingTable, SWT.NONE, 1);
+		tTableL2Addr.setText("L2 address");
+		
+		HashMap<HRMID, L2Address> tHRMIDToL2AddressMapping = tHRS.getHRMIDToL2AddressMapping();
+		if (HRM_VIEWER_DEBUGGING){
+			Logging.log(this, "Found " + tHRMIDToL2AddressMapping.keySet().size() + " HRMID-to-L2Address mappings");
+		}
+
+		if ((tHRMIDToL2AddressMapping != null) && (!tHRMIDToL2AddressMapping.isEmpty())) {
+			int tRowNumber = 0;
+			for(HRMID tAddr : tHRMIDToL2AddressMapping.keySet()) {
+				L2Address tL2Addr = tHRMIDToL2AddressMapping.get(tAddr);
+				
+				// create the table row
+				TableItem tTableRow = new TableItem(tTableMappingTable, SWT.NONE, tRowNumber);
+				
+				/**
+				 * Column 0: the neighbor name
+				 */
+				tTableRow.setText(0, tAddr.toString());
+
+				/**
+				 * Column 1: route 
+				 */
+				tTableRow.setText(1, tL2Addr.toString());
+
+				tRowNumber++;
+			}
+		}
+		
+		TableColumn[] columns4 = tTableMappingTable.getColumns();
+		for (int k = 0; k < columns4.length; k++){
+			columns4[k].pack();
+		}
+		tTableMappingTable.setLayoutData(new GridData(GridData.FILL_BOTH));//SWT.FILL, SWT.TOP, true, true, 1, 1));
+
+		// create the container layout
+		TableColumnLayout tLayoutMappingTable = new TableColumnLayout();
+		mContainerHRMID2L2ADDRTable.setLayout(tLayoutMappingTable);
+		// assign each column a layout weight
+		tLayoutMappingTable.setColumnData(tTableHRMID, new ColumnWeightData(3));
+		tLayoutMappingTable.setColumnData(tTableL2Addr, new ColumnWeightData(3));
+
+		/**
+		 * GUI part 4: HRM routing table of the node
+		 */
+		// create the headline
+		StyledText tSignaturesLabel2 = new StyledText(mContainer, SWT.BORDER);
+		tSignaturesLabel2.setText("HRM Routing Table - Node " + mHRMController.getNodeGUIName());
+		tSignaturesLabel2.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
+		tSignaturesLabel2.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
+	    StyleRange style3 = new StyleRange();
+	    style3.start = 0;
+	    style3.length = tSignaturesLabel2.getText().length();
+	    style3.fontStyle = SWT.BOLD;
+	    tSignaturesLabel2.setStyleRange(style3);
 	    
 	    // create the GUI container
 	    mContainerRoutingTable = new Composite(mContainer, SWT.NONE);
@@ -198,9 +350,14 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn tTableColDirectNeighbor = new TableColumn(tTableRoutingTable, SWT.NONE, 7);
 		tTableColDirectNeighbor.setText("Route to neighbor");
 		
-		if ((tHRS.routingTable() != null) && (!tHRS.routingTable().isEmpty())) {
+		LinkedList<RoutingEntry> tRoutingTable = tHRS.routingTable();
+		if (HRM_VIEWER_DEBUGGING){
+			Logging.log(this, "Found " + tRoutingTable.size() + " entries in the local routing table");
+		}
+			
+		if ((tRoutingTable != null) && (!tRoutingTable.isEmpty())) {
 			int tRowNumber = 0;
-			for(RoutingEntry tEntry : tHRS.routingTable()) {
+			for(RoutingEntry tEntry : tRoutingTable) {
 				if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (!tEntry.getDest().isRelativeAddress())){
 					// create the table row
 					TableItem tTableRow = new TableItem(tTableRoutingTable, SWT.NONE, tRowNumber);
@@ -278,24 +435,24 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 		}
 		
-		TableColumn[] columns = tTableRoutingTable.getColumns();
-		for (int k = 0; k<columns.length; k++){
-			columns[k].pack();
+		TableColumn[] columns2 = tTableRoutingTable.getColumns();
+		for (int k = 0; k < columns2.length; k++){
+			columns2[k].pack();
 		}
 		tTableRoutingTable.setLayoutData(new GridData(GridData.FILL_BOTH));//SWT.FILL, SWT.TOP, true, true, 1, 1));
 		
 		// create the container layout
-		TableColumnLayout tLayoutRoutingTable = new TableColumnLayout();
-		mContainerRoutingTable.setLayout(tLayoutRoutingTable);
-		// assign each column a layout wight
-		tLayoutRoutingTable.setColumnData(tTableColDest, new ColumnWeightData(3));
-		tLayoutRoutingTable.setColumnData(tTableColNext, new ColumnWeightData(3));
-		tLayoutRoutingTable.setColumnData(tTableColHops, new ColumnWeightData(1));
-		tLayoutRoutingTable.setColumnData(tTableColUtil, new ColumnWeightData(1));
-		tLayoutRoutingTable.setColumnData(tTableColDelay, new ColumnWeightData(1));
-		tLayoutRoutingTable.setColumnData(tTableColDR, new ColumnWeightData(1));
-		tLayoutRoutingTable.setColumnData(tTableColLoop, new ColumnWeightData(1));
-		tLayoutRoutingTable.setColumnData(tTableColDirectNeighbor, new ColumnWeightData(1));		
+		TableColumnLayout tLayoutRoutingTable2 = new TableColumnLayout();
+		mContainerRoutingTable.setLayout(tLayoutRoutingTable2);
+		// assign each column a layout weight
+		tLayoutRoutingTable2.setColumnData(tTableColDest, new ColumnWeightData(3));
+		tLayoutRoutingTable2.setColumnData(tTableColNext, new ColumnWeightData(3));
+		tLayoutRoutingTable2.setColumnData(tTableColHops, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColUtil, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColDelay, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColDR, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColLoop, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColDirectNeighbor, new ColumnWeightData(1));		
 		
 		/**
 		 * Add a listener to allow re-sorting of the table based on the destination per table row
@@ -336,6 +493,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		// arrange the GUI content in order to full the entire space
         mContainer.setSize(mContainer.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         mContainerRoutingTable.setSize(mContainerRoutingTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        mContainerNeighborRoutingTable.setSize(mContainerNeighborRoutingTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        mContainerHRMID2L2ADDRTable.setSize(mContainerHRMID2L2ADDRTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 	}
 
 	/**
@@ -374,7 +533,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tColumnCoordinator.setText("Coordinator");
 		
 		TableColumn tColumnCEP = new TableColumn(tTable, SWT.NONE, 1);
-		tColumnCEP.setText("CEP");
+		tColumnCEP.setText("Peer");
 		
 		TableColumn tColumnTargetCovered = new TableColumn(tTable, SWT.NONE, 2);
 		tColumnTargetCovered.setText("Target Covered");
@@ -427,9 +586,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 
 			/**
-			 * Column 1: CEP 
+			 * Column 1: Peer 
 			 */
-			tRow.setText(1, tCEP.getPeerName().toString());
+			tRow.setText(1, tCEP.getPeerL2Address().toString());
 
 			/**
 			 * Column 2:  
@@ -470,7 +629,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			Name tTarget = null;
 			try {
 				tSource = tCEP.getSourceName();
-				tTarget = tCEP.getPeerName();
+				tTarget = tCEP.getPeerL2Address();
 				if(tSource != null && tTarget != null) {
 					Node tNode = tCEP.getHRMController().getNode();
 					tRoute = mHRMController.getHRS().getRoute(tNode.getCentralFN(), tTarget, new Description(), tNode.getIdentity());

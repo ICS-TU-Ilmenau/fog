@@ -64,21 +64,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	private AutonomousSystem mAS = null;
 	
 	/**
-	 * Stores the HRM based routing table which is used for hop-by-hop routing.
-	 */
-	private LinkedList<RoutingEntry> mRoutingTable = new LinkedList<RoutingEntry>();
-	
-	/**
-	 * Stores the HRMIDs of direct neighbor nodes.
-	 */
-	private LinkedList<HRMID> mDirectNeighborAddresses = new LinkedList<HRMID>();
-
-	/**
-	 * Stores the FoG specific routing graph (consisting of FNs and Gates)
-	 */
-	private final RoutableGraph<HRMName, RoutingServiceLink> mFoGRoutingGraph;
-
-	/**
 	 * Stores the name mapping instance for mapping FoG names to L2 addresses
 	 */
 	private HierarchicalNameMappingService<L2Address> mFoGNamesToL2AddressesMapping = null;
@@ -87,11 +72,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * Stores the mapping from FoG FNs to L2 addresses
 	 */
 	private HashMap<ForwardingNode, L2Address> mFNToL2AddressMapping = new HashMap<ForwardingNode, L2Address>();
-	
-	/**
-	 * Stores the mapping from HRMIDs of local neighbors to their L2 addresses
-	 */
-	private HashMap<HRMID, L2Address> mHRMIDToL2AddressMapping = new HashMap<HRMID, L2Address>();
 	
 	/**
 	 * Stores a reference to the local HRMController application
@@ -104,15 +84,36 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	private L2Address mCentralFNL2Address = null;
 
 	/**
-	 * Stores if the start of the HRMController application instance is still pending
+	 * Stores the HRMIDs of direct neighbor nodes.
 	 */
-	private boolean mWaitOnControllerstart = true;
-	
+	private LinkedList<HRMID> mDirectNeighborAddresses = new LinkedList<HRMID>();
+
+	/**
+	 * Stores the mapping from HRMIDs of local neighbors to their L2 addresses
+	 */
+	private HashMap<HRMID, L2Address> mHRMIDToL2AddressMapping = new HashMap<HRMID, L2Address>();
+
 	/**
 	 * Stores routes to physical neighbors nodes
 	 */
 	private HashMap<L2Address, Route> mRoutesToDirectNeighbors = new HashMap<L2Address, Route>();
 	
+	/**
+	 * Stores the HRM based routing table which is used for hop-by-hop routing.
+	 */
+	private LinkedList<RoutingEntry> mRoutingTable = new LinkedList<RoutingEntry>();
+	
+	/**
+	 * Stores the FoG specific routing graph (consisting of FNs and Gates)
+	 */
+	private final RoutableGraph<HRMName, RoutingServiceLink> mFoGRoutingGraph;
+
+	/**
+	 * Stores if the start of the HRMController application instance is still pending
+	 */
+	private boolean mWaitOnControllerstart = true;
+	
+
 	private final RoutableGraph<HRMName, Route> mCoordinatorRoutingMap;
 
 	
@@ -248,13 +249,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 						if (tL2Address != null){
 							// add L2 address for this direct neighbor
 							Logging.log(this, "     ..add mapping from " + tHRMID + " to " + tL2Address);
-							synchronized (mHRMIDToL2AddressMapping) {
-								if (!mHRMIDToL2AddressMapping.containsKey(tHRMID)){
-									mHRMIDToL2AddressMapping.put(tHRMID, tL2Address);
-								}else{
-									// HRMID is already known, mapping already exists
-								}
-							}
+							mapHRMIDToL2Address(tHRMID, tL2Address);
 						}
 					}
 				}
@@ -301,18 +296,23 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	 * 
 	 * @param pNeighborL2Address the L2Address of the direct neighbor
 	 * @param pRoute the route to the direct neighbor
+	 * @return returns true if the route was added, false if a duplicate was found
 	 */
-	public void addRouteToDirectNeighbor(L2Address pNeighborL2Address, Route pRoute)
+	public boolean addRouteToDirectNeighbor(L2Address pNeighborL2Address, Route pRoute)
 	{
+		boolean tResult = true;
+		
 		synchronized (mRoutesToDirectNeighbors) {
 			Route tOldRoute = mRoutesToDirectNeighbors.get(pNeighborL2Address);
 			if (tOldRoute != null){
-				Logging.log(this, "Deleting old route (" + pRoute + ") to direct neighbor (" + pNeighborL2Address + ") ");
-				mRoutesToDirectNeighbors.remove(pNeighborL2Address);
+				Logging.log(this, "Found duplicate route (" + pRoute + ") to direct neighbor (" + pNeighborL2Address + ") ");
+				tResult = false;
 			}
 			Logging.log(this, "ADDING ROUTE (" + pRoute + ") to direct neighbor (" + pNeighborL2Address + ") ");
 			mRoutesToDirectNeighbors.put(pNeighborL2Address,  pRoute);
 		}
+		
+		return tResult;
 	}
 
 	/**
@@ -330,6 +330,46 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		}
 		
 		return tResult;		
+	}
+	
+	/**
+	 * Returns the local table with routes to direct neighbors
+	 * 
+	 * @return the route table
+	 */
+	public HashMap<L2Address, Route> getRoutesToDirectNeighbors()
+	{
+		HashMap<L2Address, Route> tResult = new HashMap<L2Address, Route>();
+		
+		synchronized (mRoutesToDirectNeighbors) {
+			for (L2Address tAddr : mRoutesToDirectNeighbors.keySet()){
+				Route tRoute = mRoutesToDirectNeighbors.get(tAddr);
+				tResult.put(tAddr.clone(), tRoute.clone());
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Returns the list of known neighbor HRMIDs
+	 * 
+	 * @return the desired list of HRMIDs
+	 */
+	public HashMap<HRMID, L2Address> getHRMIDToL2AddressMapping()
+	{
+		HashMap<HRMID, L2Address> tResult = new HashMap<HRMID, L2Address>();
+		
+		synchronized (mHRMIDToL2AddressMapping) {
+			for (HRMID tAddr : mHRMIDToL2AddressMapping.keySet()){
+				L2Address tL2Address = mHRMIDToL2AddressMapping.get(tAddr);
+				if (tL2Address != null){
+					tResult.put(tAddr.clone(), tL2Address.clone());
+				}
+			}
+		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -418,7 +458,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 	}
 
 	/**
-	 * Register a FoG name for an L2Address
+	 * Creates a mapping from a FoG name to an L2Address
 	 *   
 	 * @param pName the FoG name
 	 * @param pL2Address the L2 address
@@ -434,6 +474,31 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 			}
 		}else{
 			Logging.err(this, "Given L2Address has invalid type: " + pL2Address);
+		}
+	}
+
+	/**
+	 * Creates a mapping from an HRMID to an L2Address
+	 * 
+	 * @param pHRMID the HRMID 
+	 * @param pL2Address the L2Address
+	 */
+	public void mapHRMIDToL2Address(HRMID pHRMID, L2Address pL2Address)
+	{
+		boolean tDuplicateFound = false;
+		
+		synchronized (mHRMIDToL2AddressMapping) {
+			for (HRMID tHRMID: mHRMIDToL2AddressMapping.keySet()){
+				if (tHRMID.equals(pHRMID)){
+					tDuplicateFound = true;
+					break;
+				}
+			}
+			if (!tDuplicateFound){
+				mHRMIDToL2AddressMapping.put(pHRMID, pL2Address);
+			}else{
+				// HRMID is already known, mapping already exists
+			}
 		}
 	}
 
@@ -1078,7 +1143,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 				tNextHopHRMID = tDestHRMID;
 				
 				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-					Logging.log(this, "      .." + tNextHopHRMID + " is the next hop");
+					Logging.log(this, "      ..NEXT HOP(HRMID): " + tNextHopHRMID);
 				}
 			}
 			
@@ -1090,7 +1155,7 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 				L2Address tNextHopL2Address = getL2AddressFor(tNextHopHRMID);
 				if (tNextHopL2Address != null){
 					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-						Logging.log(this, "      .." + tNextHopL2Address + " is the L2 address of the next hop");
+						Logging.log(this, "      ..NEXT HOP(L2ADDRESS)" + tNextHopL2Address);
 					}
 
 					/**
