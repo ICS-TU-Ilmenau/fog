@@ -41,8 +41,8 @@ import de.tuilmenau.ics.fog.util.Tuple;
 
 public class CoordinatorCEPMultiplexer
 {
-	private HashMap<CoordinatorCEPChannel, CoordinatorSession> mMultiplexer;
-	private HashMap<CoordinatorSession, LinkedList<CoordinatorCEPChannel>> mDemux;
+	private HashMap<CoordinatorCEPChannel, CoordinatorSession> mCEPToSessionMapping;
+	private HashMap<CoordinatorSession, LinkedList<CoordinatorCEPChannel>> mSessionToCEPsMapping;
 	private HashMap<Tuple<Long, Long>, CoordinatorCEPChannel> mClusterToCEPMapping;
 	private HRMController mHRMController = null;
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
@@ -51,8 +51,8 @@ public class CoordinatorCEPMultiplexer
 	public CoordinatorCEPMultiplexer(HRMController pHRMController)
 	{
 		mHRMController = pHRMController;
-		mMultiplexer = new HashMap<CoordinatorCEPChannel, CoordinatorSession>();
-		mDemux = new HashMap<CoordinatorSession, LinkedList<CoordinatorCEPChannel>>();
+		mCEPToSessionMapping = new HashMap<CoordinatorCEPChannel, CoordinatorSession>();
+		mSessionToCEPsMapping = new HashMap<CoordinatorSession, LinkedList<CoordinatorCEPChannel>>();
 		mClusterToCEPMapping = new HashMap<Tuple<Long, Long>, CoordinatorCEPChannel>();
 		Logging.log(this, "CREATED for " + pHRMController);
 	}
@@ -75,7 +75,7 @@ public class CoordinatorCEPMultiplexer
 			for(Coordinator tManager : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
 				tCEPDemultiplexed = new CoordinatorCEPChannel(mHRMController, tManager);
 				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getBullyPriority());
-				tCEP.getMultiplexer().addMultiplexedConnection(tCEPDemultiplexed, tCEP);
+				tCEP.getMultiplexer().mapCEPToSession(tCEPDemultiplexed, tCEP);
 				tCEP.getMultiplexer().addDemultiplex(tCEP, tCEPDemultiplexed);
 				synchronized(mClusterToCEPMapping) {
 					Logging.log(this, "Registering multiplex" + tManager.getClusterID() + " to " + pTargetCluster.getClusterID() + " with connection endpoint " + tCEPDemultiplexed);
@@ -278,7 +278,7 @@ public class CoordinatorCEPMultiplexer
 		ClusterName tSource = new ClusterName(pDemux.getPeer().getToken(), pDemux.getPeer().getClusterID(), pDemux.getPeer().getHierarchyLevel());
 	
 		MultiplexedPackage tMuxPackage = new MultiplexedPackage(tSource, pTargetCluster, pData);
-		CoordinatorSession tCEP = mMultiplexer.get(pDemux);
+		CoordinatorSession tCEP = mCEPToSessionMapping.get(pDemux);
 		Logging.log(this, "Sending " + tMuxPackage);
 		
 		// send packet
@@ -287,56 +287,59 @@ public class CoordinatorCEPMultiplexer
 	
 	public HRMName getSourceRoutingServiceAddress(CoordinatorCEPChannel pCEP)
 	{
-		if(mMultiplexer.containsKey(pCEP)) {
-			return mMultiplexer.get(pCEP).getSourceRoutingServiceAddress();
+		if(mCEPToSessionMapping.containsKey(pCEP)) {
+			return mCEPToSessionMapping.get(pCEP).getSourceRoutingServiceAddress();
 		}
 		return null;
 	}
 	
 	public HRMName getPeerRoutingServiceAddress(CoordinatorCEPChannel pCEP)
 	{
-		if(mMultiplexer.containsKey(pCEP)) {
-			return mMultiplexer.get(pCEP).getPeerRoutingServiceAddress();
+		if(mCEPToSessionMapping.containsKey(pCEP)) {
+			return mCEPToSessionMapping.get(pCEP).getPeerRoutingServiceAddress();
 		}
 		return null;
 	}
 	
 	public Route getRouteToPeer(CoordinatorCEPChannel pCEP)
 	{
-		if(mMultiplexer.containsKey(pCEP)) {
-			return mMultiplexer.get(pCEP).getRouteToPeer();
+		if(mCEPToSessionMapping.containsKey(pCEP)) {
+			return mCEPToSessionMapping.get(pCEP).getRouteToPeer();
 		}
 		return null;
 	}
 	
-	public synchronized void addMultiplexedConnection(CoordinatorCEPChannel pMultiplexedConnection, CoordinatorSession pConnection)
+	public synchronized void mapCEPToSession(CoordinatorCEPChannel pCEP, CoordinatorSession pSession)
 	{
-		Logging.log(this, "Registering multiplexed connection from " + pMultiplexedConnection + " to " + pConnection);
-		mMultiplexer.put(pMultiplexedConnection, pConnection);
-		for(CoordinatorCEPChannel tCEP : mMultiplexer.keySet()) {
-			Logging.log(this, tCEP + "->" + mMultiplexer.get(tCEP));
+		Logging.log(this, "Registering multiplexed connection from " + pCEP + " to " + pSession);
+		
+		// store the mapping
+		mCEPToSessionMapping.put(pCEP, pSession);
+		
+		for(CoordinatorCEPChannel tCEP : mCEPToSessionMapping.keySet()) {
+			Logging.log(this, tCEP + "->" + mCEPToSessionMapping.get(tCEP));
 		}
-		addDemultiplex(pConnection, pMultiplexedConnection);
+		addDemultiplex(pSession, pCEP);
 	}
 	
 	private void addDemultiplex(CoordinatorSession pCEP, CoordinatorCEPChannel pDemux)
 	{
 		Logging.log(this, "Registering demultiplexing from " + pCEP + " to " + pDemux);
-		if(mDemux.get(pCEP) == null) {
-			mDemux.put(pCEP, new LinkedList<CoordinatorCEPChannel>());
+		if(mSessionToCEPsMapping.get(pCEP) == null) {
+			mSessionToCEPsMapping.put(pCEP, new LinkedList<CoordinatorCEPChannel>());
 		}
-		mDemux.get(pCEP).add(pDemux);
+		mSessionToCEPsMapping.get(pCEP).add(pDemux);
 	}
 	
 	public LinkedList<CoordinatorCEPChannel> getDemuxCEPs(CoordinatorSession pCEP)
 	{
-		return mDemux.get(pCEP);
+		return mSessionToCEPsMapping.get(pCEP);
 	}
 	
 	public CoordinatorCEPChannel findCEPChannel(CoordinatorSession pCEP, ClusterName pSource, ClusterName pCluster) throws NetworkException
 	{
-		if(mDemux.containsKey(pCEP)) {
-			for(CoordinatorCEPChannel tCEP : mDemux.get(pCEP)) {
+		if(mSessionToCEPsMapping.containsKey(pCEP)) {
+			for(CoordinatorCEPChannel tCEP : mSessionToCEPsMapping.get(pCEP)) {
 				if(tCEP.getPeer().getClusterID().equals(pCluster.getClusterID())) {
 					Tuple<Long, Long> tTuple = new Tuple<Long, Long>(pSource.getClusterID(), pCluster.getClusterID());
 					boolean tSourceIsContained = isClusterMultiplexed(tTuple);
@@ -356,8 +359,8 @@ public class CoordinatorCEPMultiplexer
 		}
 		
 		Logging.log(this, "Unable to find demultiplexed coonection endpoint for " + pCEP + " and target cluster " + pCluster.getClusterID());
-		for(CoordinatorSession tCEP : mDemux.keySet()) {
-			Logging.log(this, tCEP + " to " + mDemux.get(tCEP));
+		for(CoordinatorSession tCEP : mSessionToCEPsMapping.keySet()) {
+			Logging.log(this, tCEP + " to " + mSessionToCEPsMapping.get(tCEP));
 		}
 
 		throw new NetworkException("No demultiplexed CEP found for " + pCEP + " and target cluster " + pCluster);
