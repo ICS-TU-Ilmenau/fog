@@ -41,7 +41,6 @@ import de.tuilmenau.ics.fog.topology.ILowerLayerReceive;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
 import de.tuilmenau.ics.fog.topology.NeighborList;
 import de.tuilmenau.ics.fog.topology.RemoteMedium;
-import de.tuilmenau.ics.fog.topology.ILowerLayerReceive.Status;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.headers.NumberingHeader;
 import de.tuilmenau.ics.fog.ui.IPacketObserver;
@@ -182,9 +181,17 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		}
 	}
 	
-	public boolean isBroken()
+	public Status isBroken()
 	{
-		return broken;
+		if(broken) {
+			if(mErrorTypeVisible) {
+				return Status.BROKEN;
+			} else {
+				return Status.UNKNOWN_ERROR;
+			}
+		} else {
+			return Status.OK;
+		}
 	}
 	
 	public String getName()
@@ -513,7 +520,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	{
 		NeighborList neighborlist = null;
 		
-		if(!isBroken()) {
+		if(broken) {
 			neighborlist = new NeighborList(this);
 			
 			// copy elements from entity list

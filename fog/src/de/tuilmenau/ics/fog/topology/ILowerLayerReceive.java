@@ -17,13 +17,12 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 import de.tuilmenau.ics.fog.packets.Packet;
+import de.tuilmenau.ics.fog.topology.Breakable.Status;
 
 
 
 public interface ILowerLayerReceive extends Remote
 {
-	public enum Status { OK, UNKNOWN_ERROR, BROKEN }
-
 	/**
 	 * Enables the lower layer to check, weather the receiving node
 	 * is marked as broken.

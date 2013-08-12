@@ -52,10 +52,11 @@ import de.tuilmenau.ics.fog.eclipse.utils.SWTAWTConverter;
 import de.tuilmenau.ics.fog.routing.simulated.PartialRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
+import de.tuilmenau.ics.fog.topology.Breakable;
+import de.tuilmenau.ics.fog.topology.Breakable.Status;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
-import de.tuilmenau.ics.fog.topology.ILowerLayerReceive.Status;
 import de.tuilmenau.ics.fog.transfer.DummyForwardingElement;
 import de.tuilmenau.ics.fog.transfer.Gate;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
@@ -516,15 +517,13 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 			public Paint transform(Object pVertex)
 			{
 				Boolean tBroken = false;
-				if (pVertex instanceof ILowerLayer) {
+				if (pVertex instanceof Breakable) {
 					try {
-						tBroken = ((ILowerLayer)pVertex).isBroken();
+						tBroken = ((Breakable)pVertex).isBroken() != Status.OK;
 					}
-					catch (RemoteException exc) {
+					catch(RemoteException exc) {
 						tBroken = true;
 					}
-				} else {
-					if (pVertex instanceof Node) tBroken = ((Node)pVertex).isBroken() != Status.OK;
 				}
 
 				if (tBroken) {

@@ -18,6 +18,7 @@ import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.packets.Invisible;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.routing.Route;
+import de.tuilmenau.ics.fog.topology.Breakable.Status;
 import de.tuilmenau.ics.fog.topology.ILowerLayerReceive;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
@@ -71,9 +72,9 @@ public class LowerLayerReceiveGate extends AbstractGate implements ILowerLayerRe
 					packetLog.add(packet);
 				}
 	
-				if(mEntity.getNode().isBroken() != Status.OK) {
-					// Should not happen
-					mLogger.err(this, "Received packet " + packet + " while broken.");
+				// debug check for broken lower layer
+				if(mEntity.getNode().isBroken() != de.tuilmenau.ics.fog.topology.Breakable.Status.OK) {
+					mLogger.err(this, "Internal error: Received packet " + packet + " while broken.");
 					return;
 				}
 				

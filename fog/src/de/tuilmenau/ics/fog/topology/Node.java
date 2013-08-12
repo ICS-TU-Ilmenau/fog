@@ -38,7 +38,6 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.topology.ILowerLayerReceive.Status;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.ParameterMap;
@@ -50,7 +49,7 @@ import de.tuilmenau.ics.fog.util.ParameterMap;
  * and authentication service. Furthermore, it can be attached to lower
  * layers providing connectivity to other nodes.
  */
-public class Node extends Observable implements Host, SimulationElement
+public class Node extends Observable implements Host, SimulationElement, Breakable
 {
 	public Node(String pName, AutonomousSystem pAS, ParameterMap pParameters)
 	{
@@ -176,6 +175,7 @@ public class Node extends Observable implements Host, SimulationElement
 		return true;
 	}
 	
+	@Override
 	public Status isBroken()
 	{
 		if(isBroken) {
@@ -189,12 +189,7 @@ public class Node extends Observable implements Host, SimulationElement
 		}
 	}
 	
-	
-	public boolean isShuttingDown()
-	{
-		return isShuttingDown;
-	}
-	
+	@Override
 	public void setBroken(boolean broken, boolean errorTypeVisible)
 	{
 		boolean stateChange = isBroken != broken;
@@ -216,6 +211,11 @@ public class Node extends Observable implements Host, SimulationElement
 		}
 		
 		if(stateChange) notifyObservers(broken);
+	}
+	
+	public boolean isShuttingDown()
+	{
+		return isShuttingDown;
 	}
 	
 	/**

@@ -59,9 +59,13 @@ public class Ethernet implements ILowerLayer, Runnable, IEvent
 	}
 
 	@Override
-	public boolean isBroken()
+	public Status isBroken()
 	{
-		return mBroken;
+		if(mBroken) {
+			return Status.BROKEN;
+		} else {
+			return Status.OK;
+		}
 	}
 	
 	@Override

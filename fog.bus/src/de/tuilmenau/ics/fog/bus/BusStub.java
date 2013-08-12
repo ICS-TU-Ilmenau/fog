@@ -49,7 +49,7 @@ public class BusStub implements ILowerLayer, ForwardingElement
 	}
 
 	@Override
-	public boolean isBroken() throws RemoteException
+	public Status isBroken() throws RemoteException
 	{
 		return mRemoteBus.isBroken();
 	}
