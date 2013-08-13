@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<!--
+  Forwarding on Gates Simulator/Emulator - FoG-BGP routing
+  Copyright (c) 2013, Integrated Communication Systems Group, TU Ilmenau.
+  
+  This part of the Forwarding on Gates Simulator/Emulator is free software.
+  Your are allowed to redistribute it and/or modify it under the terms of
+  the GNU General Public License version 2 as published by the Free Software
+  Foundation.
+  
+  This source is published in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License version 2 for more details.
+  
+  You should have received a copy of the GNU General Public License version 2
+  along with this program. Otherwise, you can write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
+  Alternatively, you find an online version of the license text under
+  http://www.gnu.org/licenses/gpl-2.0.html.
+-->
+<plugin>
+   <extension
+         point="de.tuilmenau.ics.fog.commands">
+      <editor
+            name="Open BGP GUI"
+            editorID="de.tuilmenau.ics.fog.bgpeditor"
+            filter="de.tuilmenau.ics.fog.routing.bgp.ui.BGPApplication"
+            onCreation="true">
+      </editor>
+      <editor
+            name="Open BGP GUI"
+            editorID="de.tuilmenau.ics.fog.bgpeditor"
+            filter="de.tuilmenau.ics.fog.routing.bgp.RoutingServiceBGP"
+            default="true">
+      </editor>
+      <plugin
+            name="Start BGP"
+            class="de.tuilmenau.ics.fog.routing.bgp.ui.StartBGP"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+      <plugin
+            name="Advertising new prefix"
+            class="de.tuilmenau.ics.fog.routing.bgp.ui.AdvertisePrefix"
+            filter="de.tuilmenau.ics.fog.routing.bgp.ui.BGPApplication">
+      </plugin>
+      <plugin
+            name="Advertising name mapping for BGP"
+            class="de.tuilmenau.ics.fog.routing.bgp.ui.AdvertiseName"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      <plugin
+            name="Import prefixes"
+            class="de.tuilmenau.ics.fog.routing.bgp.ui.ImportPrefixes"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </plugin>
+   </extension>
+   
+   <extension
+         point="de.tuilmenau.ics.fog.nodeConfiguration">
+      <routing
+            name="BGP routing service"
+            class="de.tuilmenau.ics.fog.routing.bgp.ui.NodeConfiguratorBGP">
+      </routing>
+   </extension>
+
+</plugin>
