@@ -453,6 +453,18 @@ public class Description implements Iterable<Property>, Serializable
 		
 		return descr;
 	}
+	
+	/**
+	 * @return Requirements modeling the assumptions about TCP
+	 */
+	public static Description createTCPlike()
+	{
+		Description requ = new Description();
+		
+		requ.set(new TransportProperty(true, false));
+		
+		return requ;
+	}
 
 	/**
 	 * Factory method for getting an empty description for avoiding
@@ -525,4 +537,5 @@ public class Description implements Iterable<Property>, Serializable
 	}
 	
 	private LinkedList<Property> mProperties;
+
 }
