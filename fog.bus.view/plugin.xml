@@ -2,14 +2,6 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         point="org.eclipse.ui.views">
-	  <category 
-           id="de.tuilmenau.ics.fog.views"
-           name="Forwarding on Gates">
-      </category>
-   </extension>
-   
-   <extension
          point="org.eclipse.ui.editors">
       <editor
             class="de.tuilmenau.ics.fog.bus.view.BusEditor"
