@@ -38,7 +38,8 @@ public class Elector implements HRMEntity
 		START,    // Constructor
 		IDLE,     // no coordinator known, no election running
 		ELECTING, // election process is currently running
-		ELECTED   // election process has established common consensus about the coordinator of the cluster
+		ELECTED,   // election process has established common consensus about the coordinator of the cluster
+		ERROR // election process run into an error state
 	}
 
 	//TODO: rückkehr von ELECTED zu ELECTING, wenn BullyAlive von koordinator ausbleibt
@@ -186,7 +187,7 @@ public class Elector implements HRMEntity
 			BullyElect tPacketBullyElect = new BullyElect(mParentCluster.getHRMController().getNodeName(), mParentCluster.getBullyPriority());
 			
 			// send broadcast
-			mParentCluster.sendPacketBroadcast(tPacketBullyElect);
+			mParentCluster.sendBroadcast(tPacketBullyElect);
 			
 			Logging.log(this, "SENDELECTIONS()-END");
 		}else{
@@ -196,7 +197,7 @@ public class Elector implements HRMEntity
 	}
 
 	/**
-	 * SIGNAL: ends the election by signaling BULLY ANNOUNCE to all cluster members
+	 * SIGNAL: ends the election by signaling BULLY ANNOUNCE to all cluster members 		
 	 */
 	private void signalElectionEnd()
 	{
@@ -204,17 +205,21 @@ public class Elector implements HRMEntity
 			Logging.log(this, "SENDANNOUNCE()-START, electing cluster is " + mParentCluster);
 			Logging.log(this, "SENDANNOUNCE(), cluster members: " + mParentCluster.getClusterMembers().size());
 	
-			// get reference to the node
-			Node tNode = mParentCluster.getHRMController().getNode();
-	
-			// create the packet
-			BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mParentCluster.getHRMController().getNodeName(), mParentCluster.getBullyPriority(), mParentCluster.getSignature(), mParentCluster.getToken());
-	
-			// send broadcast
-			mParentCluster.sendPacketBroadcast(tPacketBullyAnnounce);
-	
-			// set correct elector state
-			setElectorState(ElectorState.ELECTED);
+			// HINT: the coordinator has to be already created here
+
+			if (mParentCluster.getCoordinator() != null){
+				// create the packet
+				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mParentCluster.getHRMController().getNodeName(), mParentCluster.getBullyPriority(), mParentCluster.getCoordinator().toLocation() + "@" + mParentCluster.getHRMController().getHostName(), mParentCluster.getToken());
+		
+				// send broadcast
+				mParentCluster.sendBroadcast(tPacketBullyAnnounce);
+		
+				// set correct elector state
+				setElectorState(ElectorState.ELECTED);
+			}else{
+				// set correct elector state
+				setElectorState(ElectorState.ERROR);
+			}
 	
 			Logging.log(this, "SENDANNOUNCE()-END");
 		}else{
@@ -239,7 +244,7 @@ public class Elector implements HRMEntity
 			BullyAlive tPacketBullyAlive = new BullyAlive(mParentCluster.getHRMController().getNodeName());
 	
 			// send broadcast
-			mParentCluster.sendPacketBroadcast(tPacketBullyAlive);
+			mParentCluster.sendBroadcast(tPacketBullyAlive);
 	
 			Logging.log(this, "SENDALIVE()-END");
 		}else{
@@ -257,19 +262,21 @@ public class Elector implements HRMEntity
 		// mark as election winner
 		mElectionWon = true;
 		
-		HRMController tHRMController = mParentCluster.getHRMController();
-		Node tNode = tHRMController.getNode();		
+		// create new coordinator instance
+		Coordinator tElectedCoordinator = new Coordinator(mParentCluster);
+
+		// get the node
+		Node tNode = mParentCluster.getHRMController().getNode();
+		
 		int tHierarchyLevelValue = mParentCluster.getHierarchyLevel().getValue();
 
 		// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
 		signalElectionEnd();
 		
 		Name tNodeName = tNode.getRoutingService().getNameFor(tNode.getCentralFN());
-		mParentCluster.setSuperiorCoordinatorCEP(null, mParentCluster.getSignature(), tNode.getCentralFN().getName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), (L2Address)tNodeName);
+		
+		mParentCluster.setSuperiorCoordinatorCEP(null, tNode.getCentralFN().getName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), (L2Address)tNodeName);
 
-		// create new coordinator instance
-		Coordinator tElectedCoordinator = new Coordinator(mParentCluster);
-	
 		//TODO: ??
 		mParentCluster.getHRMController().setSourceIntermediateCluster(tElectedCoordinator, mParentCluster);
 			

@@ -24,7 +24,7 @@ import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
  * to a target application.
  * 
  */
-public class ContactDestinationApplication extends AbstractProperty
+public class DestinationApplicationProperty extends AbstractProperty
 {
 	private static final long serialVersionUID = 8299856490405894908L;
 	private Namespace mNamespace = null;
@@ -38,7 +38,7 @@ public class ContactDestinationApplication extends AbstractProperty
 	 * null should be used.
 	 * @param pNamespace Provide the namespace of the application here.
 	 */
-	public ContactDestinationApplication(Name pName, Namespace pNamespace)
+	public DestinationApplicationProperty(Name pName, Namespace pNamespace)
 	{
 		mNamespace=pNamespace;
 		mName = pName;

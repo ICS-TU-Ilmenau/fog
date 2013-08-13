@@ -150,9 +150,6 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 		// create HRM controller instance 
 		mHRMController = new HRMController(mAS, mNode, this);
 		
-		// register the HRM controller instance as application at the local host
-		mNode.getHost().registerApp(mHRMController);
-		
 		mWaitOnControllerstart = false;
 
 		// end an active waiting by getHRMController()
@@ -1267,10 +1264,10 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 							/**
 							 * Check if a destination application is encoded in the requirements
 							 */
-							ContactDestinationApplication tPropDestApp = null;
+							DestinationApplicationProperty tPropDestApp = null;
 							for(Property tProperty : pRequirements) {
-								if(tProperty instanceof ContactDestinationApplication) {
-									tPropDestApp = (ContactDestinationApplication) tProperty;
+								if(tProperty instanceof DestinationApplicationProperty) {
+									tPropDestApp = (DestinationApplicationProperty) tProperty;
 								}
 							}
 							

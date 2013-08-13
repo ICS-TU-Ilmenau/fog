@@ -24,13 +24,11 @@ import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
@@ -172,10 +170,7 @@ public class CoordinatorCEPChannel
 				mPeerPriority = tPacketBullyElect.getSenderPriority();
 				
 				if (getPeer().getHRMController().equals(tLocalNodeName)) {
-					// create ANNOUNCE packet
-					HRMSignature tSignature = getHRMController().getIdentity().createSignature(tNode.toString(), null, getPeer().getHierarchyLevel());
-					
-					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, getPeer().getBullyPriority(), tSignature, getPeer().getToken());
+					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, getPeer().getBullyPriority(), "CEP-to?", getPeer().getToken());
 					
 					for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
 						tAnnouncePacket.addCoveredNode(tCEP.getPeerL2Address());
@@ -499,9 +494,6 @@ public class CoordinatorCEPChannel
 			tEntry.setClusterHops(getPeer().getHRMController().getClusterDistance(pCluster));
 			tEntry.setPriority(pCluster.getBullyPriority());
 			tEntry.setRoutingVectors(getPath(pCluster.getCoordinatorsAddress()));
-			if(pCluster.isInterASCluster()) {
-				tEntry.setInterASCluster();
-			}
 			
 			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getPeer(), pCluster);
 			if(!tClusterList.isEmpty()) {
@@ -674,10 +666,7 @@ public class CoordinatorCEPChannel
 					tNewCluster = tCluster;
 					if(tNewCluster instanceof NeighborCluster && tNewCluster.getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {
 						Logging.log(this, "Filling required information into " + tNewCluster);
-						tNewCluster.setSuperiorCoordinatorCEP(null, null, pEntry.getCoordinatorName(), pEntry.getToken(), pEntry.getCoordinatorRoutingAddress());
-						if(pEntry.isInterASCluster()){
-							tNewCluster.setInterASCluster();
-						}
+						tNewCluster.setSuperiorCoordinatorCEP(null, pEntry.getCoordinatorName(), pEntry.getToken(), pEntry.getCoordinatorRoutingAddress());
 					}
 				}
 			}
@@ -692,9 +681,6 @@ public class CoordinatorCEPChannel
 				tNewCluster.setToken(pEntry.getToken());
 				tNewCluster.setPriority(pEntry.getPriority());
 				getHRMController().addRoutableTarget(tNewCluster);
-				if(pEntry.isInterASCluster()) {
-					tNewCluster.setInterASCluster();
-				}
 				try {
 					getHRMController().getHRS().mapFoGNameToL2Address(tNewCluster.getCoordinatorName(), tNewCluster.getCoordinatorsAddress());
 				} catch (RemoteException tExc) {

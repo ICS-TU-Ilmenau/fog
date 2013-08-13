@@ -16,7 +16,6 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
@@ -128,11 +127,6 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 */
 	public LinkedList<ICluster> getNeighbors();
 	
-	/**
-	 * 
-	 * @return Find out which signature the coordinator has.
-	 */
-	public HRMSignature getCoordinatorSignature();
 	
 	/**
 	 * 
@@ -175,12 +169,11 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * if a BullyAnnounce message was received.  
 	 * 
 	 * @param pCoord Provide the connection end point that leads to the coordinator here.
-	 * @param pCoordSignature Provide the signature you received from the coordinator here.
 	 * @param pCoordName Set the name of the coordinator here.
 	 * @param pAddress The address of the coordinator can be set here. It can be either an OSI Layer 2 address or a HRMID. However using the last type as address
 	 * was not implemented. 
 	 */
-	public void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, int pCoordToken, HRMName pAddress);
+	public void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress);
 	
 	/**
 	 * 
@@ -217,13 +210,13 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * 
 	 * @return true in case this cluster is between two autonomous systems.
 	 */
-	public boolean isInterASCluster();
+//	public boolean isInterASCluster();
 	
 	/**
 	 * 
 	 * Explicitly say that this cluster is between to autonomous systems.
 	 */
-	public void setInterASCluster();
+//	public void setInterASCluster();
 	
 	/**
 	 * HRM was implemented as distributed system. If a cluster is notified about the existence of a nother cluster it remembers which

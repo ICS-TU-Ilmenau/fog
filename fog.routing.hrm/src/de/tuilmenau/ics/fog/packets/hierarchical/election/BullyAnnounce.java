@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.packets.hierarchical.election;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
@@ -24,24 +23,48 @@ public class BullyAnnounce extends SignalingMessageBully
 {
 	private static final long serialVersionUID = 794175467972815277L;
 
-	private HRMSignature mCoordSignature;
 	private int mToken;
 	private LinkedList<Name> mCoveredNodes = null;
-
+	private String mCoordinatorDescription = null;
+	
 	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender (the coordinator)
 	 * @param pSenderPriority the priority of the message sender (coordinator)
-	 * @param pCoordinatorSignature is the signature of the coordinator - can be replaced by cryptographic identity
+	 * @param pCoordinatorDescription the descriptive name of the coordinator
 	 * @param pToken is the active token that is used for the identification of the domain the coordinator is active in case no Cluster IDs can be provided a priori
 	 */
-	public BullyAnnounce(Name pSenderName, BullyPriority pSenderPriority, HRMSignature pCoordinatorSignature, int pToken)
+	public BullyAnnounce(Name pSenderName, BullyPriority pSenderPriority, String pCoordinatorDescription, int pToken)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
-		mCoordSignature = pCoordinatorSignature;
+		mCoordinatorDescription = pCoordinatorDescription;
 		mToken = pToken;
 	}
+	
+	/**
+	 * Returns the descriptive string about the coordinator which announces it coordination
+	 * 
+	 * @return the descriptive string
+	 */
+	public String getCoordinatorDescription()
+	{
+		return mCoordinatorDescription;
+	}
+	
+	/**
+	 * Returns an object describing string
+	 * 
+	 *  @return the describing string
+	 */
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ",Coordinator=" + mCoordinatorDescription + ")";
+	}
+
+	
+	
 	
 	/**
 	 * 
@@ -52,15 +75,6 @@ public class BullyAnnounce extends SignalingMessageBully
 		return mToken;
 	}
 
-	/**
-	 * 
-	 * @return the signature of the coordinator - can be replaced by cryptographic identity
-	 */
-	public HRMSignature getCoordSignature()
-	{
-		return mCoordSignature;
-	}
-	
 	/**
 	 * 
 	 * @param pName is one further node that is covered by the coordinator that created this message

@@ -35,7 +35,6 @@ public class DiscoveryEntry implements Serializable
 	private HierarchyLevel mLevel = null;
 	private int mClusterHops;
 	private ClusterName mPredecessor;
-	private boolean mIsInterASCluster = false;
 	
 	/**
 	 * 
@@ -221,24 +220,6 @@ public class DiscoveryEntry implements Serializable
 	
 	public String toString()
 	{
-		return getClass().getSimpleName() + "ID(" + mClusterID + ")COORD(" + mCoordinatorName + ")+VECTORS(" + mRoutingVectors + ")HOPS(" + mClusterHops + ")" + (mIsInterASCluster ? "|InterAS" : "|IntraAS");
-	}
-	
-	/**
-	 * 
-	 * @return true if the cluster is located between two nodes that belong to different autonomous systems
-	 */
-	public boolean  isInterASCluster()
-	{
-		return mIsInterASCluster;
-	}
-	
-	/**
-	 * 
-	 * report this cluster as inter AS cluster
-	 */
-	public void setInterASCluster()
-	{
-		mIsInterASCluster = true;
+		return getClass().getSimpleName() + "ID(" + mClusterID + ")COORD(" + mCoordinatorName + ")+VECTORS(" + mRoutingVectors + ")HOPS(" + mClusterHops + ")";
 	}
 }

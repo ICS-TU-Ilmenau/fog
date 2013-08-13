@@ -21,7 +21,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
@@ -46,12 +45,10 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	private HRMName mCoordAddress;
 	private Long mClusterID;
 	private HRMController mHRMController;
-	private HRMSignature mCoordSignature;
 	private HRMID mHRMID;
 	private Name mAnnouncer;
 	private LinkedList<CoordinatorCEPChannel> mAnnouncedCEPs;
 	private Cluster mSourceIntermediateCluster = null;
-	private boolean mInterASCluster = false;
 	
 	/**
 	 * 
@@ -135,7 +132,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return null;
 	}
 
-	public synchronized void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, int pCoordToken, HRMName pAddress)
+	public synchronized void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress)
 	{
 		mCoordAddress = pAddress;
 		mCoordName = pCoordName;
@@ -256,11 +253,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public HRMSignature getCoordinatorSignature() {
-		return mCoordSignature;
-	}
-
-	@Override
 	public HRMID getHRMID() {
 		return mHRMID;
 	}
@@ -285,7 +277,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		if(mHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
 			return mHRMID.toString();
 		} else {
-			return getClusterDescription() + ":HOPS(" + getHRMController().getClusterDistance(this) + ")" + (mInterASCluster ? "InterAS" : "");
+			return getClusterDescription() + ":HOPS(" + getHRMController().getClusterDistance(this) + ")";
 		}
 	}
 
@@ -316,18 +308,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		}
 		return false;
 	}	
-
-	@Override
-	public boolean isInterASCluster()
-	{
-		return mInterASCluster;
-	}
-
-	@Override
-	public void setInterASCluster()
-	{
-		mInterASCluster = true;
-	}
 
 //	@Override
 //	public CoordinatorCEPChannel getNegotiatorCEP()

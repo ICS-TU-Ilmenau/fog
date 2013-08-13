@@ -19,7 +19,6 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexedPackage;
@@ -70,14 +69,14 @@ public class CoordinatorCEPMultiplexer
 		if(!mConnectedEntities.contains(pTargetCluster.getCoordinatorName())) {
 			mConnectedEntities.add(pTargetCluster.getCoordinatorName());
 			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(pTargetCluster.getCoordinatorsAddress().getComplexAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getToken());
-			CoordinatorSession tCEP = new CoordinatorSession(mHRMController, false, tSourceClusterHierLvl, mHRMController.getMultiplexerOnLevel(tSourceClusterHierLvl.getValue()));
+			CoordinatorSession tSession = new CoordinatorSession(mHRMController, false, tSourceClusterHierLvl, mHRMController.getMultiplexerOnLevel(tSourceClusterHierLvl.getValue()));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNodeName());
 			
 			for(Coordinator tManager : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
 				tCEPDemultiplexed = new CoordinatorCEPChannel(mHRMController, tManager);
 				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getBullyPriority());
-				tCEP.getMultiplexer().mapCEPToSession(tCEPDemultiplexed, tCEP);
-				tCEP.getMultiplexer().addDemultiplex(tCEP, tCEPDemultiplexed);
+				tSession.getMultiplexer().mapCEPToSession(tCEPDemultiplexed, tSession);
+				tSession.getMultiplexer().addDemultiplex(tSession, tCEPDemultiplexed);
 				synchronized(mClusterToCEPMapping) {
 					Logging.log(this, "Registering multiplex" + tManager.getClusterID() + " to " + pTargetCluster.getClusterID() + " with connection endpoint " + tCEPDemultiplexed);
 					mClusterToCEPMapping.put(new Tuple<Long, Long>(tManager.getClusterID(), pTargetCluster.getClusterID()), tCEPDemultiplexed);
@@ -97,7 +96,7 @@ public class CoordinatorCEPMultiplexer
 					tParticipate.setSourceClusterID(tManager.getManagedCluster().getClusterID());
 					tParticipate.setSourceToken(tManager.getManagedCluster().getToken());
 					tParticipate.setSourceName(mHRMController.getNode().getCentralFN().getName());
-					tParticipate.setSourceRoutingServiceAddress(tCEP.getSourceRoutingServiceAddress());
+					tParticipate.setSourceRoutingServiceAddress(tSession.getSourceRoutingServiceAddress());
 					
 					List<RoutableClusterGraphLink> tClusterListToRemote = mHRMController.getRoutableClusterGraph().getRoute(tManager.getManagedCluster(), pTargetCluster);
 					if(!tClusterListToRemote.isEmpty()) {
@@ -114,9 +113,6 @@ public class CoordinatorCEPMultiplexer
 					for(ICluster tNeighbor: tManager.getManagedCluster().getNeighbors()) {
 						DiscoveryEntry tEntry = new DiscoveryEntry(tNeighbor.getToken(), tNeighbor.getCoordinatorName(), tNeighbor.getClusterID(), tNeighbor.getCoordinatorsAddress(), tNeighbor.getHierarchyLevel());
 						tEntry.setPriority(tNeighbor.getBullyPriority());
-						if(tNeighbor.isInterASCluster()) {
-							tEntry.setInterASCluster();
-						}
 						List<RoutableClusterGraphLink> tClusterList = mHRMController.getRoutableClusterGraph().getRoute(tManager.getManagedCluster(), tNeighbor);
 						/*
 						 * the predecessor has to be the next hop
@@ -128,13 +124,10 @@ public class CoordinatorCEPMultiplexer
 						} else {
 							Logging.log(this, "Unable to set predecessor for " + tNeighbor);
 						}
-						if(!tManager.getManagedCluster().isInterASCluster() && ! tNeighbor.isInterASCluster() && tManager.getPathToCoordinator(tManager.getManagedCluster(), tNeighbor) != null) {
+						if(tManager.getPathToCoordinator(tManager.getManagedCluster(), tNeighbor) != null) {
 							for(RoutingServiceLinkVector tVector : tManager.getPathToCoordinator(tManager.getManagedCluster(), tNeighbor)) {
 								tEntry.addRoutingVectors(tVector);
 							}
-						}
-						if(tNeighbor.isInterASCluster()) {
-							tEntry.setInterASCluster();
 						}
 						tParticipate.addDiscoveryEntry(tEntry);
 					}
@@ -148,8 +141,8 @@ public class CoordinatorCEPMultiplexer
 			try {
 				Logging.log(this, "CREATING CONNECTION to " + tName);
 				tConn = pSourceCluster.getHRMController().getHost().connectBlock(tName, tConnectDescription, tIdentity);
-				tCEP.start(tConn);
-				tCEP.write(tCEP.getSourceRoutingServiceAddress());
+				tSession.start(tConn);
+				tSession.write(tSession.getSourceRoutingServiceAddress());
 			} catch (NetworkException tExc) {
 				Logging.err(this, "Unable to connect to " + tName, tExc);
 			}
@@ -175,7 +168,7 @@ public class CoordinatorCEPMultiplexer
 					tBigDiscovery.addNestedDiscovery(tDiscovery);
 				}
 			}
-			boolean tAbleToWrite = tCEP.write(tBigDiscovery);
+			boolean tAbleToWrite = tSession.write(tBigDiscovery);
 			if(tAbleToWrite) {
 				try {
 					synchronized(tBigDiscovery) {
@@ -204,7 +197,7 @@ public class CoordinatorCEPMultiplexer
 										tFirstCluster.addNeighborCluster(tSecondCluster);
 										Logging.log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);
 									} else {
-										Logging.warn(this, "Unable to find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of \"" + tClusters + "\", cluster discovery contained " + tDiscoveries + " and CEP is " + tCEP);
+										Logging.warn(this, "Unable to find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of \"" + tClusters + "\", cluster discovery contained " + tDiscoveries + " and CEP is " + tSession);
 									}
 								}
 							}

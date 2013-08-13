@@ -28,7 +28,6 @@ public class NeighborClusterAnnounce implements Serializable
 {
 	private static final long serialVersionUID = -9188474878782673991L;
 	private Name mCoordinatorName;
-	private Signature mCoordSignature;
 	private HierarchyLevel mLevel;
 	private HRMName mCoordAddress;
 	private boolean mAnnouncerHasAddress = false;;
@@ -51,10 +50,9 @@ public class NeighborClusterAnnounce implements Serializable
 	 * @param pToken token of the cluster that is announced
 	 * @param pClusterID identifier of the cluster
 	 */
-	public NeighborClusterAnnounce(Name pCoordinatorName, HierarchyLevel pLevel, Signature pCoordSignature, HRMName pRoutingServiceAddress, int pToken, Long pClusterID)
+	public NeighborClusterAnnounce(Name pCoordinatorName, HierarchyLevel pLevel, HRMName pRoutingServiceAddress, int pToken, Long pClusterID)
 	{
 		mCoordinatorName = pCoordinatorName;
-		mCoordSignature = pCoordSignature;
 		mLevel = pLevel;
 		mCoordAddress = pRoutingServiceAddress;
 		mClusterID = pClusterID;
@@ -102,15 +100,6 @@ public class NeighborClusterAnnounce implements Serializable
 	public Name getCoordinatorName()
 	{
 		return mCoordinatorName;
-	}
-	
-	/**
-	 * 
-	 * @return signature of the coordinator
-	 */
-	public Signature getCoordSignature()
-	{
-		return mCoordSignature;
 	}
 	
 	/**

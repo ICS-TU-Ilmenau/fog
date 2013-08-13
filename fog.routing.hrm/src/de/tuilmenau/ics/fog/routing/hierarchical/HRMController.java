@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -19,7 +20,6 @@ import java.util.Observer;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.Service;
-import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -59,7 +59,6 @@ import de.tuilmenau.ics.fog.transfer.gates.DirectDownGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.SimpleName;
-import de.tuilmenau.ics.fog.util.Tuple;
 
 /**
  * This is the main HRM controller. It provides functions that are necessary to build up the hierarchical structure - every node contains such an object
@@ -73,12 +72,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	private final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
 
-	
-	/**
-	 * Stores the local HRM specific identity of the physical node (router)
-	 */
-	private HRMIdentity mIdentity = null;
-	
 	/**
 	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance.
 	 */
@@ -121,6 +114,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * Stores a reference to the local instance of the hierarchical routing service.
 	 */
 	private HierarchicalRoutingService mHierarchicalRoutingService = null;
+	
+	/**
+	 * Stores if the application was already started.
+	 */
+	private boolean mApplicationStarted = false;
 	
 	private RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink>();
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
@@ -176,9 +174,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		// store the reference to the local instance of hierarchical routing service
 		mHierarchicalRoutingService = pHierarchicalRoutingService;
 		
-		// create the identity of this node, which is later used for creating the signatures of clusters
-		mIdentity = new HRMIdentity(this);
-
 		// set the Bully priority 
 		BullyPriority.configureNode(pNode);
 
@@ -187,6 +182,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 		reportAndShare();
 		
 		Logging.log(this, "CREATED");
+		
+		// start the application
+		start();
 	}
 
 	/**
@@ -724,12 +722,115 @@ public class HRMController extends Application implements IServerCallback, IEven
 		return true;
 	}
 	
+	/**
+	 * Helper function to get the local machine's host name.
+	 * The output of this function is useful for distributed simulations if coordinators/clusters with the name might coexist on different machines.
+	 * 
+	 * @return the host name
+	 */
+	public String getHostName()
+	{
+		String tResult = null;
+		
+		try{	
+			tResult = java.net.InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException tExc) {
+			Logging.err(this, "Unable to determine the local host name", tExc);
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Determines the L2Address of the first FN towards a neighbor. This corresponds to the FN, located between the central FN and the bus to the neighbor node.
+	 * 
+	 * @param pNeighborName the name of the neighbor
+	 * @return the L2Address of the search FN
+	 */
+	public L2Address getL2AddressOfFirstFNTowardsNeighbor(Name pNeighborName)
+	{
+		L2Address tResult = null;
+
+		Route tRoute = null;
+		// get the name of the central FN
+		L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
+		// get a route to the neighbor node (the destination of the desired connection)
+		try {
+			tRoute = getHRS().getRoute(pNeighborName, new Description(), getNode().getIdentity());
+		} catch (RoutingException tExc) {
+			Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName, tExc);
+		} catch (RequirementsException tExc) {
+			Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName + " with requirements no requirents, Huh!", tExc);
+		}
+		// have we found a route to the neighbor?
+		if(tRoute != null) {
+			// get the first route part, which corresponds to the link between the central FN and the searched first FN towards the neighbor 
+			RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
+			// get the gate ID of the link
+			GateID tGateID= tPath.getFirst();						
+			// get all outgoing links from the central FN
+			Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
+			
+			RoutingServiceLink tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = null;
+
+			// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
+			for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
+				// compare the GateIDs
+				if(tLink.equals(tGateID)) {
+					// found!
+					tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = tLink;
+				}
+			}
+			// determine the searched FN, which comes first when routing towards the neighbor
+			HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getFoGRoutingGraph().getDest(tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor);
+			if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
+				// get the L2 address
+				tResult = (L2Address)tFirstNodeBeforeBusToNeighbor;
+			}else{
+				Logging.err(this,  "getL2AddressOfFirstFNTowardsNeighbor() found a first FN (" + tFirstNodeBeforeBusToNeighbor + ") towards the neighbor " + pNeighborName + " but it has the wrong class type");
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * This function gets called if the HRMController appl. was started
+	 */
+	@Override
+	protected void started() 
+	{
+		mApplicationStarted = true;
+	}
+	
+	/**
+	 * This function gets called if the HRMController appl. should exit/terminate right now
+	 */
+	@Override
+	public void exit() 
+	{
+		Logging.warn(this, "Exit the HRMController application isn't supported");
+	}
+
+	/**
+	 * Return if the HRMController application is running
+	 * 
+	 * @return true if the HRMController application is running, otherwise false
+	 */
+	@Override
+	public boolean isRunning() 
+	{
+		return mApplicationStarted;
+	}
+
+	
+	
 	
 	
 	
 	
 	/** 
-	 * This method is derived from IServerCallback and is called for incoming connection requests by the ServerFN.
+	 * This method is derived from IServerCallback and is called for incoming connection requests by the HRMController application's ServerFN.
 	 * 
 	 * @param pConnection the incoming connection
 	 */
@@ -853,18 +954,12 @@ public class HRMController extends Application implements IServerCallback, IEven
 						if(!getRoutingTargetClusters().contains(tEntryClusterName)) {
 							tCluster = new NeighborCluster(tEntry.getClusterID(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken(), tEntry.getLevel(), this);
 							tCluster.setPriority(tEntry.getPriority());
-							if(tEntry.isInterASCluster()) {
-								tCluster.setInterASCluster();
-							}
 							try {
 								getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), (L2Address)tCluster.getCoordinatorsAddress());
 							} catch (RemoteException tExc) {
 								Logging.err(this, "Unable to fulfill requirements", tExc);
 							}
 							
-							
-							
-							if(tEntry.isInterASCluster()) tCluster.setInterASCluster();
 							tNewlyCreatedClusters.put(tCluster, tEntry.getPredecessor());
 							for(ICluster tCandidate : getRoutingTargetClusters()) {
 								if(tCandidate instanceof Cluster && tCluster.getHierarchyLevel() == tCandidate.getHierarchyLevel()) {
@@ -963,7 +1058,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		Logging.log(this, "Creating a cluster participation property for level " + pParticipationProperty.getHierarchyLevel());
 		Description tDescription = new Description();
 		//try {
-		tDescription.set(new ContactDestinationApplication(null, HRMController.ROUTING_NAMESPACE));
+		tDescription.set(new DestinationApplicationProperty(null, HRMController.ROUTING_NAMESPACE));
 		//} catch (PropertyException tExc) {
 		//	Logging.err(this, "Unable to fulfill requirements given by ContactDestinationProperty", tExc);
 		//}
@@ -1092,66 +1187,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		tThread.start();
 	}
 	
-	public L2Address getL2AddressOfFirstFNTowardsNeighbor(Name pNeighborName)
-	{
-		L2Address tResult = null;
-
-		Route tRoute = null;
-		// get the name of the central FN
-		L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
-		// get a route to the neighbor node (the destination of the desired connection)
-		try {
-			tRoute = getHRS().getRoute(pNeighborName, new Description(), getNode().getIdentity());
-		} catch (RoutingException tExc) {
-			Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName, tExc);
-		} catch (RequirementsException tExc) {
-			Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName + " with requirements no requirents, Huh!", tExc);
-		}
-		// have we found a route to the neighbor?
-		if(tRoute != null) {
-			// get the first route part, which corresponds to the link between the central FN and the searched first FN towards the neighbor 
-			RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
-			// get the gate ID of the link
-			GateID tGateID= tPath.getFirst();						
-			// get all outgoing links from the central FN
-			Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
-			
-			RoutingServiceLink tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = null;
-
-			// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
-			for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
-				// compare the GateIDs
-				if(tLink.equals(tGateID)) {
-					// found!
-					tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = tLink;
-				}
-			}
-			// determine the searched FN, which comes first when routing towards the neighbor
-			HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getFoGRoutingGraph().getDest(tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor);
-			if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
-				// get the L2 address
-				tResult = (L2Address)tFirstNodeBeforeBusToNeighbor;
-			}else{
-				Logging.err(this,  "getL2AddressOfFirstFNTowardsNeighbor() found a first FN (" + tFirstNodeBeforeBusToNeighbor + ") towards the neighbor " + pNeighborName + " but it has the wrong class type");
-			}
-		}
-		
-		return tResult;
-	}
-	
-	@Override
-	protected void started() {
-		;
-	}
-	
-	@Override
-	public void exit() {
-	}
-
-	@Override
-	public boolean isRunning() {
-		return true;
-	}
 	
 	/**
 	 * 
@@ -1305,52 +1340,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 	}
 
 	/**
-	 * Returns the local node (router) specific HRMIdentity
-	 */
-	public HRMIdentity getIdentity()
-	{
-		return mIdentity;
-	}
-
-	/**
-	 * Creates a cluster specific signature
-	 * 
-	 * @param pCluster the cluster for which the signature should be created.
-	 * @return the signature
-	 */
-	public HRMSignature createClusterSignature(Cluster pCluster)
-	{
-		HRMSignature tResult = null;
-		
-		try {
-			tResult = mIdentity.createSignature(getNode().toString(), null, pCluster.getHierarchyLevel());
-		} catch (AuthenticationException tExc) {
-			Logging.err(this,  "Wasn't able to create cluster signature for " + pCluster, tExc);
-		}
-		
-		return tResult;
-	}
-	
-	/**
-	 * Creates a coordinator specific signature
-	 * 
-	 * @param pCluster the cluster for which the signature should be created.
-	 * @return the signature
-	 */
-	public HRMSignature createCoordinatorSignature(Coordinator pCoordinator)
-	{
-		HRMSignature tResult = null;
-		
-		try {
-			tResult = mIdentity.createSignature(getNode().toString(), null, pCoordinator.getHierarchyLevel());
-		} catch (AuthenticationException tExc) {
-			Logging.err(this,  "Wasn't able to create coordinator signature for " + pCoordinator, tExc);
-		}
-		
-		return tResult;
-	}
-
-	/**
 	 * 
 	 * @param pLevel is the level at which a search for clusters is done
 	 * @return all virtual nodes that appear at the specified hierarchical level
@@ -1385,6 +1374,14 @@ public class HRMController extends Application implements IServerCallback, IEven
 		return mMuxOnLevel.get(pLevel);
 	}
 	
+	
+	
+	
+	/**
+	 * Creates a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
 	public String toString()
 	{
 		return "HRM controller@" + getNode();
@@ -1393,7 +1390,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	/**
 	 * Determine the name of the central FN of this node
 	 * 
-	 * @return the name
+	 * @return the name of the central FN
 	 */
 	public Name getNodeName()
 	{

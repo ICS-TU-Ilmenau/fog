@@ -49,7 +49,6 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
-import de.tuilmenau.ics.fog.packets.hierarchical.FIBEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
@@ -57,7 +56,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
@@ -578,10 +576,15 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			
 			/**
 			 * Column 0: coordinator
-			 */
-			if (pCluster.getCoordinatorSignature() != null) {
-				tRow.setText(0, pCluster.getCoordinatorSignature().toString());
-			}else{ 
+			 */			
+			if (pCluster instanceof Cluster){
+				Cluster tCluster = (Cluster)pCluster;
+				if (tCluster.getCoordinatorDescription() != null){
+					tRow.setText(0, tCluster.getCoordinatorDescription());
+				}else{
+					tRow.setText(0, "??");
+				}
+			}else{
 				tRow.setText(0, "??");
 			}
 

@@ -15,11 +15,8 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.TopologyData;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
-//import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMSignature;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
@@ -150,11 +147,6 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public HRMSignature getCoordinatorSignature() {
-		return null;
-	}
-
-	@Override
 	public BullyPriority getHighestPriority()
 	{
 		return null;
@@ -172,7 +164,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, HRMSignature pCoordSignature, Name pCoordName, int pCoordToken, HRMName pAddress)
+	public void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress)
 	{
 		
 	}
@@ -200,18 +192,6 @@ public class ClusterName implements Serializable, ICluster
 		
 	}
 
-	@Override
-	public boolean isInterASCluster()
-	{
-		return false;
-	}
-
-	@Override
-	public void setInterASCluster()
-	{
-		
-	}
-	
 	@Override
 	public boolean equals(Object pObj)
 	{
