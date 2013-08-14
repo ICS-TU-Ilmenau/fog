@@ -97,7 +97,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 	
 	public ReroutingExperiment(RerouteScript pScript, String pSource, String pTarget)
 	{
-		mNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
+		mNMS = HierarchicalNameMappingService.getGlobalNameMappingService(pScript.getSimulation());
 		mScript = pScript;
 		mSource = pSource;
 		mTarget = pTarget;
@@ -180,11 +180,11 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			
 			// connection created?
 			if(mConcurrentReroutingSession == null) {
-				terminateFailedExperiment();
+				terminateFailedExperiment("Connection can not be established. Maybe rerouting application not running?");
 			} else {
 				// connection failed?
 				if(mConcurrentReroutingSession.isStopped()) {
-					terminateFailedExperiment();
+					terminateFailedExperiment("Session stopped.");
 				}
 			}
 			
@@ -208,7 +208,7 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 			case 2:
 				if(!determineElementToBreak()) {
 					// stop this experiment run as it is impossible
-					terminateFailedExperiment();
+					terminateFailedExperiment("No breakable element.");
 				} else {
 					mFailedNeighbours.clear();
 					breakElement();
@@ -527,9 +527,9 @@ public class ReroutingExperiment implements IRerouteMaster, IPacketStatistics, S
 		}
 	}
 	
-	private void terminateFailedExperiment()
+	private void terminateFailedExperiment(String errorMsg)
 	{
-		mLogger.warn(this, "Terminate current experiment.");
+		mLogger.warn(this, errorMsg +" Terminate current experiment.");
 		
 		mScript.getAS().getSimulation().unsubscribe(this);
 		mScript.getAS().getSimulation().getTimeBase().scheduleIn(0.1, new IEvent() {

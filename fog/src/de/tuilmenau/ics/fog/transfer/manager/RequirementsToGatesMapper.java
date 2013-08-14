@@ -23,10 +23,10 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.properties.FunctionalRequirementProperty;
 import de.tuilmenau.ics.fog.facade.properties.Property;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.middleware.Serializer;
@@ -56,7 +56,7 @@ public class RequirementsToGatesMapper
 	 * @param forNode TODO use specific node configurations in order to create different requ. mapper
 	 * @return != null
 	 */
-	public static RequirementsToGatesMapper getInstance(Node forNode)
+	public static RequirementsToGatesMapper getInstance(FoGEntity forNode)
 	{	
 		if(sGlobalInstance == null) {
 			sGlobalInstance = new RequirementsToGatesMapper();

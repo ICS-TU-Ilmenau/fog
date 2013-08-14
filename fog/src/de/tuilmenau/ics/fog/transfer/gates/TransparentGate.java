@@ -16,9 +16,8 @@ package de.tuilmenau.ics.fog.transfer.gates;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import de.tuilmenau.ics.fog.packets.ExperimentAgent;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.packets.Packet;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.roles.Transparent;
 
@@ -31,9 +30,9 @@ import de.tuilmenau.ics.fog.transfer.gates.roles.Transparent;
 public class TransparentGate extends FunctionalGate
 {
 	
-	public TransparentGate(Node pNode, ForwardingElement pNextNode)
+	public TransparentGate(FoGEntity pEntity, ForwardingElement pNextNode)
 	{
-		super(pNode, pNextNode, Transparent.PURE_FORWARDING, pNode.getIdentity());
+		super(pEntity, pNextNode, Transparent.PURE_FORWARDING, pEntity.getIdentity());
 	}
 	
 	@Override

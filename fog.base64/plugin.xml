@@ -9,11 +9,7 @@
                 name="Base64EncoderGate"
                 description="gate factory for handling base64 encoding/decoding a stream"/>
       </factory>
-   </extension>
-   
-   <extension
-         point="de.tuilmenau.ics.fog.gateFactory">
-                  <factory
+      <factory
             class="de.tuilmenau.ics.fog.base64.Base64GateFactory">
             <gateType
                 name="Base64DecoderGate"
@@ -30,7 +26,7 @@
    </extension>
    
    <extension
-         point="de.tuilmenau.ics.fog.hostApplications">
+         point="de.tuilmenau.ics.fog.commands">
       <plugin
             name="Enable base64 encoding support"
             class="de.tuilmenau.ics.fog.base64.Base64EnableCommand"

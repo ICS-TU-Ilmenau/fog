@@ -29,7 +29,7 @@ public class PleaseCloseConnection extends SignallingRequest
 	public boolean execute(ForwardingNode fn, Packet packet, Identity requester)
 	{
 		if(fn instanceof ClientFN) {
-			fn.getNode().getLogger().log(this, "execute close socket request on " +fn + " @ " + fn.getNode());
+			fn.getEntity().getLogger().log(this, "execute close socket request on " +fn + " @ " + fn.getEntity());
 			((ClientFN) fn).closed();
 			return true;
 		}

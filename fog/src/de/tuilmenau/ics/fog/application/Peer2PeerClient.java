@@ -17,6 +17,9 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.IEvent;
+import de.tuilmenau.ics.fog.application.util.BlockingCalls;
+import de.tuilmenau.ics.fog.application.util.ServerCallback;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
@@ -24,15 +27,15 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IServerCallback;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.properties.IgnoreDestinationProperty;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.Timer;
 
 
-public class Peer2PeerClient extends ThreadApplication implements IServerCallback
+public class Peer2PeerClient extends ThreadApplication implements ServerCallback
 {
 	public Peer2PeerClient(Host pHost, Identity pIdentity)
 	{
@@ -99,13 +102,19 @@ public class Peer2PeerClient extends ThreadApplication implements IServerCallbac
 		new PeerSession().start(pConnection);
 	}
 	
+	@Override
+	public void error(ErrorEvent cause)
+	{
+		terminated(cause.getException());
+	}
+	
 	protected void execute() throws NetworkException
 	{
 		int i = 0;
 		mExit = false;
 		
 		// register own service provider
-		mServerSocket = getHost().bind(null, mName, getDescription(), getIdentity());
+		mServerSocket = getLayer().bind(null, mName, getDescription(), getIdentity());
 		Description tDescription = new Description();
 		
 		// ignore myself at the connect request
@@ -114,7 +123,7 @@ public class Peer2PeerClient extends ThreadApplication implements IServerCallbac
 		// connecting to some peers
 		try {
 			for(i=0; i<5; i++) {
-				Connection socket = getHost().connectBlock(mName, tDescription, null);
+				Connection socket = BlockingCalls.connect(getLayer(), mName, tDescription, null);
 				PeerSession connToPeer = new PeerSession();
 
 				connToPeer.send();

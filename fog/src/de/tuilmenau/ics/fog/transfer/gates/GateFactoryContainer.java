@@ -19,9 +19,9 @@ import java.util.HashMap;
 
 import de.tuilmenau.ics.extensionpoint.Extension;
 import de.tuilmenau.ics.extensionpoint.ExtensionRegistry;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.exceptions.CreationException;
 import de.tuilmenau.ics.fog.facade.Identity;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.roles.GateClass;
 import de.tuilmenau.ics.fog.transfer.gates.roles.Horizontal;
@@ -40,18 +40,18 @@ public class GateFactoryContainer
 	private static final String ENTRY_NAME  = "name";
 	
 	
-	public static AbstractGate createGate(Node node, IFunctionDescriptor funcDiscr, ForwardingElement targetFN, HashMap<String, Serializable> configParams, Identity owner) throws CreationException
+	public static AbstractGate createGate(FoGEntity entity, IFunctionDescriptor funcDiscr, ForwardingElement targetFN, HashMap<String, Serializable> configParams, Identity owner) throws CreationException
 	{
-		node.getLogger().log(node, "Creating gate for type \"" + funcDiscr.toString() + "\"");
+		entity.getLogger().log(entity, "Creating gate for type \"" + funcDiscr.toString() + "\"");
 		
 		if(funcDiscr.equals(Transparent.PURE_FORWARDING)) {
-			return new TransparentGate(node, targetFN);
+			return new TransparentGate(entity, targetFN);
 		} else if(funcDiscr.equals(Horizontal.TUNNEL)) {
-			return new HorizontalGate(node, targetFN, owner);
+			return new HorizontalGate(entity, targetFN, owner);
 		} else if(funcDiscr.equals(Numbering.NUMBERING)) {
-			return new NumberingGate(node, targetFN, configParams, owner);
+			return new NumberingGate(entity, targetFN, configParams, owner);
 		} else if(funcDiscr.equals(OrderAndCheck.ORDERANDCHECK)) {
-			return new OrderAndCheckGate(node, targetFN, owner);
+			return new OrderAndCheckGate(entity, targetFN, owner);
 		} else if(funcDiscr instanceof GateClass) {
 			try {
 				String gateType = funcDiscr.toString();
@@ -66,22 +66,22 @@ public class GateFactoryContainer
 				}
 				
 				if(typeName != null) {
-					return typeName.createGate(gateType, node, targetFN, configParams, owner);
+					return typeName.createGate(gateType, entity, targetFN, configParams, owner);
 				} else {
 					// not registered, but maybe we can find it directly via our own class loader
 					String clazzName = funcDiscr.toString();
 					Class clazz = Class.forName(clazzName);
 					Constructor<AbstractGate> constructor = null;
-					constructor = clazz.getConstructor(new Class[] {Node.class, ForwardingElement.class});
-					return constructor.newInstance(new Object[] {node, targetFN});
+					constructor = clazz.getConstructor(new Class[] {FoGEntity.class, ForwardingElement.class});
+					return constructor.newInstance(new Object[] {entity, targetFN});
 				}
 			}
 			catch(Exception exc) {
 				exc.printStackTrace();
-				throw new CreationException("Creation of gates to comply " + funcDiscr + " (" + funcDiscr.getDescriptionString() + ") not yet implemented on " + node + ".", exc);
+				throw new CreationException("Creation of gates to comply " + funcDiscr + " (" + funcDiscr.getDescriptionString() + ") not yet implemented on " + entity + ".", exc);
 			}
 		} else {
-			throw new CreationException("Function description is not instance of GateClass, creation of gates to comply " + funcDiscr + " (" + funcDiscr.getDescriptionString() + ") not yet implemented on " + node + ".", null);
+			throw new CreationException("Function description is not instance of GateClass, creation of gates to comply " + funcDiscr + " (" + funcDiscr.getDescriptionString() + ") not yet implemented on " + entity + ".", null);
 		}
 	}
 

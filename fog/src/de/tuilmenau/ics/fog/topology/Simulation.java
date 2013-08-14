@@ -28,7 +28,6 @@ import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.IWorker;
 import de.tuilmenau.ics.fog.Worker;
-import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.ui.Logging.Level;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.middleware.JiniHelper;
@@ -66,8 +65,6 @@ public class Simulation
 		mLogger.setLogLevel(pLogLevel);
 		
 		Worker.registerSimulation(this);
-		
-		HierarchicalNameMappingService.createGlobalNameMappingService(this);
 	}
 	
 	public synchronized boolean createAS(String pName, boolean pPartialRouting, String pPartialRoutingServiceName)
@@ -303,6 +300,37 @@ public class Simulation
 	}
 	
 	/**
+	 * Announces a global object to a simulation.
+	 * 
+	 * @param key Key for the global object
+	 * @param globalObject Global object
+	 * @return true, if object stored; false, if key already exists
+	 */
+	public boolean setGlobalObject(Class<?> key, Object globalObject)
+	{
+		synchronized (globalObjects) {
+			if (!globalObjects.containsKey(key)) {
+				globalObjects.put(key, globalObject);
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
+
+	/**
+	 * Retrieves a global object of the simulation.
+	 * 
+	 * @return Global object or null, if key not defined
+	 */
+	public Object getGlobalObject(Class<?> key)
+	{
+		synchronized (globalObjects) {
+			return globalObjects.get(key);
+		}
+	}
+
+	/**
 	 * Command processing.
 	 * Possible commands are listed in the wiki docu.
 	 */
@@ -522,6 +550,8 @@ public class Simulation
 	
 	private String mBaseDirectory = null;
 	private de.tuilmenau.ics.fog.ui.Logging.Level mLogLevel;
+	
+	private HashMap<Class<?>, Object> globalObjects = new HashMap<Class<?>, Object>();
 	
 	private boolean mExiting = false;
 	private boolean mTerminated = false;

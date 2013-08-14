@@ -42,8 +42,6 @@ public class NodePropertySource implements IPropertySource
 			PropertyDescriptor asDescriptor = new TextPropertyDescriptor(PROPERTY_AS, "AS");
 			PropertyDescriptor llDescriptor = new TextPropertyDescriptor(PROPERTY_LL, "Lower layer");
 			PropertyDescriptor brokenDescriptor = new TextPropertyDescriptor(PROPERTY_BROKEN, "Is broken");
-			PropertyDescriptor identDescriptor = new TextPropertyDescriptor(PROPERTY_IDENTITY, "Identity");
-			PropertyDescriptor tsDescriptor = new TextPropertyDescriptor(PROPERTY_TS, "Transfer plane");
 			PropertyDescriptor serversDescriptor = new TextPropertyDescriptor(PROPERTY_SERVERS, "Registered servers");
 			PropertyDescriptor appsDescriptor = new TextPropertyDescriptor(PROPERTY_APPS, "Running apps");
 
@@ -54,8 +52,6 @@ public class NodePropertySource implements IPropertySource
 					asDescriptor,
 					llDescriptor,
 					brokenDescriptor,
-					identDescriptor,
-					tsDescriptor,
 					serversDescriptor,
 					appsDescriptor
 				};
@@ -89,17 +85,11 @@ public class NodePropertySource implements IPropertySource
 		else if(PROPERTY_BROKEN.equals(name)) {
 			return node.isBroken();
 		}
-		else if(PROPERTY_IDENTITY.equals(name)) {
-			return node.getIdentity();
-		}
-		else if(PROPERTY_TS.equals(name)) {
-			return node.getTransferPlane();
-		}
 		else if(PROPERTY_SERVERS.equals(name)) {
-			return node.getHost().getServerNames();
+			return node.getServerNames();
 		}
 		else if(PROPERTY_APPS.equals(name)) {
-			return node.getHost().getApps();
+			return node.getApps();
 		}
 		else {
 			return null;

@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import de.tuilmenau.ics.fog.application.util.BlockingCalls;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
@@ -65,7 +66,7 @@ public class CoordinatorCEPMultiplexer
 			mConnectedEntities.add(pTargetCluster.getCoordinatorName());
 			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(pTargetCluster.getCoordinatorsAddress().getAddress().longValue(), pTargetCluster.getLevel() + 1, pTargetCluster.getToken());
 			CoordinatorCEP tCEP = new CoordinatorCEP(getLogger(), getCoordinator(), false, pSourceCluster.getLevel() + 1, getCoordinator().getMultiplexerOnLevel(pSourceCluster.getLevel() + 1));
-			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(getCoordinator().getReferenceNode().getCentralFN().getName());
+			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(getCoordinator().getName());
 			
 			for(ClusterManager tManager : getCoordinator().getClusterManagers(pSourceCluster.getLevel()+1)) {
 				tCEPDemultiplexed = new CoordinatorCEPDemultiplexed(getLogger(), mCoordinatorInstance, tManager);
@@ -90,7 +91,7 @@ public class CoordinatorCEPMultiplexer
 					
 					tParticipate.setSourceClusterID(tManager.getManagedCluster().getClusterID());
 					tParticipate.setSourceToken(tManager.getManagedCluster().getToken());
-					tParticipate.setSourceName(getCoordinator().getReferenceNode().getCentralFN().getName());
+					tParticipate.setSourceName(getCoordinator().getName());
 					tParticipate.setSourceRoutingServiceAddress(tCEP.getSourceRoutingServiceAddress());
 					
 					List<NodeConnection> tClusterListToRemote = getCoordinator().getClusterMap().getRoute(tManager.getManagedCluster(), pTargetCluster);
@@ -107,7 +108,7 @@ public class CoordinatorCEPMultiplexer
 					
 	
 					try {
-						for(Name tIntermediateAddress : getCoordinator().getHRS().getIntermediateNodes(getCoordinator().getReferenceNode().getRoutingService().getNameFor(getCoordinator().getReferenceNode().getCentralFN()), pTargetCluster.getCoordinatorsAddress())) {
+						for(Name tIntermediateAddress : getCoordinator().getHRS().getIntermediateNodes(getCoordinator().getRSName(), pTargetCluster.getCoordinatorsAddress())) {
 							tParticipationProperty.addAddressToTarget(tIntermediateAddress);
 						}
 					} catch (RoutingException tExc) {
@@ -153,12 +154,12 @@ public class CoordinatorCEPMultiplexer
 				}
 			}
 			
-			Identity tIdentity = getCoordinator().getReferenceNode().getIdentity();
+			Identity tIdentity = getCoordinator().getNodeIdentity();
 			Description tConnectDescription = getCoordinator().getConnectDescription(tParticipationProperty);
 			getLogger().log(this, "Connecting to " + pTargetCluster);
 			Connection tConn = null;;
 			try {
-				tConn = pSourceCluster.getCoordinator().getHost().connectBlock(tName, tConnectDescription, tIdentity);
+				tConn = BlockingCalls.connect(pSourceCluster.getCoordinator().getLayer(), tName, tConnectDescription, tIdentity);
 				tCEP.start(tConn);
 				tCEP.write(tCEP.getSourceRoutingServiceAddress());
 			} catch (NetworkException tExc) {
@@ -175,7 +176,7 @@ public class CoordinatorCEPMultiplexer
 				tTokens.add(tManager.getManagedCluster().getToken());
 				pTargetCluster.setNegotiatorCEP(tCEPDemultiplexed);
 				tManager.getParticipatingCEPs().add(tCEPDemultiplexed);
-				if(!pTargetCluster.getCoordinatorName().equals(getCoordinator().getReferenceNode().getCentralFN().getName())) {
+				if(!pTargetCluster.getCoordinatorName().equals(getCoordinator().getName())) {
 					NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(
 							tTokens,
 							pTargetCluster.getClusterID(),
@@ -366,7 +367,7 @@ public class CoordinatorCEPMultiplexer
 	
 	public String toString()
 	{
-		return "CEPMultiplexer" + "@" + mCoordinatorInstance.getReferenceNode().getName() + ( mCluster != null ? "(" + mCluster + ")" : "");
+		return "CEPMultiplexer" + "@" + mCoordinatorInstance.getName() + ( mCluster != null ? "(" + mCluster + ")" : "");
 	}
 	
 	public void setCluster(Cluster pCluster)

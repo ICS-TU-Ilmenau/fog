@@ -85,5 +85,10 @@ public class ProcessList implements Iterable<Process>
 		}
 	}
 
+	public String toString()
+	{
+		return this.getClass().getSimpleName() + ":" + mProcesses.toString();
+	}
+	
 	private LinkedList<Process> mProcesses = new LinkedList<Process>();
 }

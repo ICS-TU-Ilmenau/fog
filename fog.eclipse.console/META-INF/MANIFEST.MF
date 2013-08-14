@@ -10,5 +10,6 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.console;bundle-version="3.4.0",
  de.tuilmenau.ics.fog;bundle-version="1.0.2",
  de.tuilmenau.ics.fog.eclipse;bundle-version="1.0.2",
- de.tuilmenau.ics.fog.launcher;bundle-version="1.0.2"
+ de.tuilmenau.ics.fog.launcher;bundle-version="1.0.2",
+ de.tuilmenau.ics.fog.ui;bundle-version="1.0.2"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

@@ -345,7 +345,11 @@ public class CoordinatorEditor extends EditorPart
 			TableItem item = new TableItem(tTable, SWT.NONE, j);
 			item.setText(0, (pCluster.getCoordinatorSignature() != null ? pCluster.getCoordinatorSignature().toString() : ""));
 			Name tPeerAddress = tCEP.getPeerName();
-			item.setText(1, tPeerAddress.toString());
+			if(tPeerAddress != null) {
+				item.setText(1, tPeerAddress.toString());
+			} else {
+				item.setText(1, "ERROR: address is null");
+			}
 			item.setText(2, tCEP.hasRequestedCoordinator() ? Boolean.toString(tCEP.knowsCoordinator()) : "UNKNOWN");
 			item.setText(3, Boolean.toString(tCEP.isPartOfMyCluster()));
 			item.setText(4, (tCEP.getPeerPriority() != 0 ? Float.toString(tCEP.getPeerPriority()) : "UNKNOWN"));
@@ -360,7 +364,7 @@ public class CoordinatorEditor extends EditorPart
 				tSource = tCEP.getSourceName();
 				tTarget = tCEP.getPeerName();
 				if(tSource != null && tTarget != null) {
-					tRoute = mCoordinator.getHRS().getRoute(tCEP.getCoordinator().getReferenceNode().getCentralFN(), tTarget, new Description(), tCEP.getCoordinator().getReferenceNode().getIdentity());
+					tRoute = mCoordinator.getHRS().getRoute(tCEP.getCoordinator().getCentralFN(), tTarget, new Description(), tCEP.getCoordinator().getNodeIdentity());
 				} else {
 					tRoute = new Route();
 				}

@@ -11,26 +11,31 @@ package de.tuilmenau.ics.fog.eclipse.console;
 
 import java.rmi.RemoteException;
 
-import de.tuilmenau.ics.fog.eclipse.ui.commands.SilentCommand;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.topology.Simulation;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 import de.tuilmenau.ics.fog.util.Logger;
 
 
-public class OpenLoggerCommand extends SilentCommand
+public class OpenLoggerCommand implements Command
 {
-
-	public OpenLoggerCommand()
+	/**
+	 * TODO someone has to call it!
+	 */
+	public void exit()
 	{
-		super();
+		mExit = true;
 	}
-	
+
 	@Override
-	public void init(Object pObject)
+	public void execute(Object pObject)
 	{
+		//
+		// Determine logger
+		//
 		mName = pObject.toString();
 		
 		if(pObject instanceof Host) {
@@ -55,23 +60,15 @@ public class OpenLoggerCommand extends SilentCommand
 		else {
 			mLogger = null;
 		}
-	}
-	
-	/**
-	 * TODO someone has to call it!
-	 */
-	public void exit()
-	{
-		mExit = true;
-	}
-
-	@Override
-	public void main()
-	{
+		
+		//
+		// Open console
+		//
 		if(mLogger != null) {
 			ColoredEclipseConsoleLogObserver tObserver = new ColoredEclipseConsoleLogObserver("Logging " +mName +" (Logger=" +mLogger +")");
 			mLogger.addLogObserver(tObserver);
 			
+			// TODO loop maybe in wrong thread
 			while(!mExit) {
 				try {
 					Thread.sleep(1000);

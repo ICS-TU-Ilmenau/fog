@@ -26,19 +26,13 @@ public class RoutingServiceLink
 {
 	private static final String UNNUMBERED_LINK_NAME = "n.a.";
 	public static final Number INFINITE = Double.POSITIVE_INFINITY;
-	public static final Number DEFAULT = 1;
 
 	
-	public RoutingServiceLink(GateID pID, Description pDescription, Number pLinkCost)
+	public RoutingServiceLink(GateID pID, Description pDescription)
 	{
 		mID = pID;
-		if(pDescription != null) {
-			mDescr = pDescription.clone();
-		} else {
-			mDescr = null;
-		}
-		mDescr = pDescription;
-		mCost = pLinkCost;
+		setDescription(pDescription);
+		mActive = true;
 	}
 	
 	public boolean equals(Object pObj)
@@ -64,27 +58,38 @@ public class RoutingServiceLink
 		return mID;
 	}
 	
+	public void setDescription(Description newDescr)
+	{
+		if(newDescr != null) {
+			mDescr = newDescr.clone();
+		} else {
+			mDescr = null;
+		}
+	}
+	
 	public Description getDescription()
 	{
 		return mDescr;
 	}
 	
-	public void setCost(Number pNewCost)
+	public boolean descriptionEqualTo(Description otherDescr)
 	{
-		mCost = pNewCost;
+		if(mDescr != null) {
+			return mDescr.equals(otherDescr);
+		} else {
+			if(otherDescr == null) return true;
+			else return false;
+		}
 	}
 	
-	public Number getCost()
+	public void setActive(boolean active)
 	{
-		if(mCost == null) mCost = 1;
-		
-		return mCost;
+		mActive = active;
 	}
 	
-	public boolean hasInfiniteCost()
+	public boolean isActive()
 	{
-		if(mCost != null) return INFINITE.equals(mCost);
-		else return false;
+		return mActive;
 	}
 	
 	public void setEvent(IEventRef pTimer)
@@ -100,10 +105,10 @@ public class RoutingServiceLink
 	public String toString()
 	{
 		if(mID != null) {
-			if(mCost != null) {
-				return mID.toString() +" (c=" +mCost +")";
-			} else {
+			if(mActive) {
 				return mID.toString();
+			} else {
+				return mID.toString() +" (deactivated)";
 			}
 		}
 		else return UNNUMBERED_LINK_NAME;
@@ -113,8 +118,8 @@ public class RoutingServiceLink
 	private GateID mID;
 	@Viewable("Description")
 	private Description mDescr;
-	@Viewable("Cost value")
-	private Number mCost;
+	@Viewable("Link active")
+	private boolean mActive;
 	@Viewable("Associated timer")
 	private IEventRef mTimer;
 }

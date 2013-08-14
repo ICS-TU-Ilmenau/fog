@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-   <extension-point id="de.tuilmenau.ics.fog.hostApplications" name="Host Applications" schema="schema/fog.hostApplications.exsd"/>
    <extension-point id="de.tuilmenau.ics.fog.requirement.gui" name="Requirement GUI" schema="schema/fog.requirementGUI.exsd"/>
 
    <extension
@@ -61,6 +60,13 @@
             id="de.tuilmenau.ics.fog.grapheditor"
             name="FoG Graph Editor">
       </editor>
+      <editor
+            class="de.tuilmenau.ics.fog.eclipse.ui.editors.NodeEditor"
+            icon="icons/de.tuilmenau.ics.fog.gif"
+            id="de.tuilmenau.ics.fog.nodeeditor"
+            name="FoG Node Editor">
+      </editor>
+      
    </extension>
    
    <extension
@@ -72,11 +78,17 @@
    </extension>
 
    <extension
-         point="de.tuilmenau.ics.fog.hostApplications">
+         point="de.tuilmenau.ics.fog.commands">
       <editor
-            name="Open"
-            editorID="de.tuilmenau.ics.fog.grapheditor"
+            name="Show layer entities"
+            editorID="de.tuilmenau.ics.fog.nodeeditor"
             filter="de.tuilmenau.ics.fog.topology.Node"
+            default="true">
+      </editor>
+      <editor
+            name="Show transfer service"
+            editorID="de.tuilmenau.ics.fog.grapheditor"
+            filter="de.tuilmenau.ics.fog.FoGEntity"
             default="true">
       </editor>
       <editor
@@ -87,37 +99,31 @@
       </editor>
       <editor
             name="Open"
-            editorID="de.tuilmenau.ics.fog.grapheditor"
-            filter="de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService"
-            default="true">
-      </editor>
-      
-      <editor
-            name="Open"
             editorID="de.tuilmenau.ics.fog.buseditor"
             filter="de.tuilmenau.ics.fog.topology.Bus"
             default="true">
       </editor>
+      
+      
       <editor
             name="Open browser"
             editorID="de.tuilmenau.ics.fog.browser"
             filter="de.tuilmenau.ics.fog.facade.Host">
       </editor>
-      <editor
-            name="Open"
-            editorID="de.tuilmenau.ics.fog.grapheditor"
-            filter="de.tuilmenau.ics.fog.routing.hierarchical.Coordinator"
-            default="true">
-      </editor>
       <plugin
-            name="Open routing service"
+            name="Show routing service"
             class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenRoutingService"
-            filter="de.tuilmenau.ics.fog.topology.Node">
+            filter="de.tuilmenau.ics.fog.routing.RoutingService">
       </plugin>
       <plugin
-            name="Open Cluster View"
-            class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenClusterView"
-            filter="de.tuilmenau.ics.fog.topology.Node">
+            name="Show routing service"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenFoGRoutingService"
+            filter="de.tuilmenau.ics.fog.FoGEntity">
+      </plugin>
+      <plugin
+            name="Show routing service entity graph"
+            class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenRoutingServiceEntityGraph"
+            filter="de.tuilmenau.ics.fog.topology.AutonomousSystem">
       </plugin>
       <plugin
             name="Toggle broken flag"
@@ -137,7 +143,7 @@
       <plugin
             name="Reload requirements mapping"
             class="de.tuilmenau.ics.fog.eclipse.ui.commands.ReloadRequirementsMappingCommand"
-            filter="de.tuilmenau.ics.fog.topology.Node">
+            filter="de.tuilmenau.ics.fog.FoGEntity">
       </plugin>
       <plugin
             name="Do step"
@@ -152,6 +158,11 @@
       <subentry
             name="Applications"
             class="de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreatorApplication"
+            filter="de.tuilmenau.ics.fog.facade.Host">
+      </subentry>
+      <subentry
+            name="Layer entities"
+            class="de.tuilmenau.ics.fog.eclipse.ui.menu.LayerMenuCreator"
             filter="de.tuilmenau.ics.fog.facade.Host">
       </subentry>
       <plugin

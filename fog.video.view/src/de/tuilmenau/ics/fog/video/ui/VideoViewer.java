@@ -28,7 +28,6 @@ import de.tuilmenau.ics.fog.audio.ui.AudioListener;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.eclipse.utils.EditorUtils;
 import de.tuilmenau.ics.fog.facade.Host;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.video.VideoViewerApplication;
 
@@ -106,9 +105,6 @@ public class VideoViewer extends EditorPart
 		// configure view
 		if (tSelection instanceof Host) {
 			mHost = (Host) tSelection; 
-		}
-		else if(tSelection instanceof Node) {
-			mHost = ((Node) tSelection).getHost(); 
 		}
 		else {
 			throw new PartInitException("No input for editor.");

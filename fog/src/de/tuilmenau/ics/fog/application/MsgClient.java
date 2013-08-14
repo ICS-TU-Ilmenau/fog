@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.application;
 
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.IEventRef;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.NetworkException;

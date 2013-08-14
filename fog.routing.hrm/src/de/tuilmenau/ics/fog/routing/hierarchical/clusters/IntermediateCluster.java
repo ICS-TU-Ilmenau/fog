@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.clusters;
 
+import java.awt.Color;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ConcurrentModificationException;
@@ -35,11 +36,13 @@ import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess.ElectionManager;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
+import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
+import de.tuilmenau.ics.fog.ui.Decoration;
+import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -50,7 +53,7 @@ import de.tuilmenau.ics.fog.util.Logger;
  * and a physical node. Only on an intermediate cluster may be managed by a ClusterManager.
  * 
  */
-public class IntermediateCluster implements Cluster, IElementDecorator
+public class IntermediateCluster implements Cluster, Decorator
 {
 	private CoordinatorCEPDemultiplexed mCoordinator;
 	private Long mClusterID;
@@ -99,7 +102,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		mReceivedAnnounces = new LinkedList<NeighborZoneAnnounce>();
 		mSentAnnounces = new LinkedList<NeighborZoneAnnounce>();
 		mCoordinatorInstance = pCoordinatorInstance;
-		mPriority = (float) getCoordinator().getReferenceNode().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), 3.14159);
+		mPriority = (float) getCoordinator().getParameter().get("BULLY_PRIORITY_LEVEL_" + getLevel(), 3.14159);
 		getCoordinator().getLogger().log(this, "Created Cluster " + mClusterID + " on level " + mLevel + " with priority " + mPriority);
 		mLevel = pLevel;
 		for(Cluster tCluster : getCoordinator().getClusters())
@@ -114,6 +117,8 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		tProcess.addElectingCluster(this);
 		mMux = new CoordinatorCEPMultiplexer(mCoordinatorInstance);
 		mMux.setCluster(this);
+		
+		Decoration.getInstance(IntermediateCluster.class.toString()).setDecorator(mCoordinatorInstance.getReferenceNode(), this);
 	}
 	
 	public void setAnnouncedCEP(CoordinatorCEPDemultiplexed pCEP)
@@ -138,18 +143,15 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		mCoordName = pCoordName;
 		if(mCoordinator == null) {
 			synchronized(this) {
-				mCoordAddress = getCoordinator().getReferenceNode().getRoutingService().getNameFor(getCoordinator().getReferenceNode().getCentralFN());
+				mCoordAddress = getCoordinator().getRSName();
 				notifyAll();
 			}
 			setCoordinatorPriority(getPriority());
-			getCoordinator().getReferenceNode().setDecorationParameter("L"+ (mLevel+1));
-			getCoordinator().getReferenceNode().setDecorationValue("(" + pCoordSignature + ")");
 		} else {
 			synchronized(this) {
 				mCoordAddress = pAddress;
 				notifyAll();
 			}
-			getCoordinator().getReferenceNode().setDecorationValue("(" + pCoordSignature + ")");
 			setCoordinatorPriority(pCoord.getPeerPriority());
 			try {
 				getCoordinator().getHRS().registerNode(pCoordName, pAddress);
@@ -167,6 +169,10 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 			
 			/*getCoordinator().getReferenceNode().setDecorationParameter(null);*/
 		}
+		
+		// inform GUI about new decorations
+		getCoordinator().getReferenceNode().notifyObservers();
+		
 		getCoordinator().getLogger().log(this, "This cluster has the following neighbors: " + getNeighbors());
 		for(Cluster tCluster : getNeighbors()) {
 			if(tCluster instanceof IntermediateCluster) {
@@ -267,7 +273,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	
 	public void handleAnnouncement(NeighborZoneAnnounce	pAnnounce, CoordinatorCEPDemultiplexed pCEP)
 	{
-		if(!pAnnounce.getCoordinatorName().equals(getCoordinator().getReferenceNode().getCentralFN().getName())) {
+		if(!pAnnounce.getCoordinatorName().equals(getCoordinator().getName())) {
 			Logging.log(this, "Received announcement of foreign cluster");
 		}
 		
@@ -400,7 +406,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		getCoordinator().getLogger().log(this, "Handling " + pAnnouncement);
 		if(mCoordName != null)
 		{
-			if(getCoordinator().getReferenceNode().getCentralFN().getName().equals(mCoordName))
+			if(getCoordinator().getName().equals(mCoordName))
 			{
 				handleAnnouncement(pAnnouncement, pCEP);
 			} else {
@@ -538,7 +544,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	
 	public String getClusterDescription()
 	{
-		return getCoordinator().getReferenceNode() + ":" + mClusterID + "@" + mLevel + "(" + mCoordSignature + ")";
+		return getCoordinator() + ":" + mClusterID + "@" + mLevel + "(" + mCoordSignature + ")";
 	}
 	
 	public float getPriority()
@@ -561,7 +567,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 		if(mHRMID != null && HierarchicalConfig.Routing.ADDR_DISTRIBUTOR_PRINTS_HRMID) {
 			return mHRMID.toString();
 		} else {
-			return this.getClass().getSimpleName() + "@" + getCoordinator().getReferenceNode() + ":ID(" + getClusterID() + ")TK(" + mToken +  "):PR(" + getPriority() + ")COORD(" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "") + ")" + ")@" + getLevel() + (mInterASCluster ? ":InterAS" : "");
+			return this.getClass().getSimpleName() + "@" + getCoordinator() + ":ID(" + getClusterID() + ")TK(" + mToken +  "):PR(" + getPriority() + ")COORD(" +  (getCoordinatorSignature() != null ? "(" + getCoordinatorSignature() + ")" : "") + ")" + ")@" + getLevel() + (mInterASCluster ? ":InterAS" : "");
 
 		}
 	}
@@ -581,7 +587,7 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	
 	@Override
 	public Name retrieveName() {
-		return getCoordinator().getReferenceNode().getCentralFN().getName();
+		return getCoordinator().getName();
 	}
 	
 	@Override
@@ -677,23 +683,27 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 			}
 		}
 		mEnvelope = pEnvelope;
-		HierarchicalNameMappingService<HRMID> tNMS = null;
+		
 		try {
-			tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
-		} catch (RuntimeException tExc) {
-			HierarchicalNameMappingService.createGlobalNameMappingService(getCoordinator().getReferenceNode().getAS().getSimulation());
+			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(getCoordinator().getReferenceNode().getAS().getSimulation());
+			tNMS.registerName(getCoordinator().getName(), pEnvelope.getHRMID(), NamingLevel.NAMES);
+			
+			String tString = new String();
+			for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(getCoordinator().getName())) {
+				tString += tEntry + " ";
+			}
+			getCoordinator().getLogger().log(this, "Currently registered names: " + tString);
 		}
-		tNMS.registerName(getCoordinator().getReferenceNode().getCentralFN().getName(), pEnvelope.getHRMID(), NamingLevel.NAMES);
-		String tString = new String();
-		for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(getCoordinator().getReferenceNode().getCentralFN().getName())) {
-			tString += tEntry + " ";
+		catch(RemoteException exc) {
+			getCoordinator().getLogger().err(this, "Can not interact with name mapping.", exc);
 		}
-		getCoordinator().getLogger().log(this, "Currently registered names: " + tString);
-
+		
 		setHRMID(pEnvelope.getHRMID());
 		
-		getCoordinator().getReferenceNode().setDecorationValue(getCoordinator().getReferenceNode().getDecorationValue() + " " + pEnvelope.getHRMID().toString() + ",");
+		// update node and inform GUI about update
 		getCoordinator().addIdentification(pEnvelope.getHRMID());
+		getCoordinator().getReferenceNode().notifyObservers();
+		
 		if(mEnvelope.getEntries() != null) {
 			for(FIBEntry tEntry : mEnvelope.getEntries()) {
 				if((tEntry.getDestination() != null && !tEntry.getDestination().equals(new HRMID(0)) ) && tEntry.getNextHop() != null) {
@@ -763,32 +773,26 @@ public class IntermediateCluster implements Cluster, IElementDecorator
 	}
 	
 	@Override
-	public Object getDecorationParameter()
+	public String getText()
 	{
-		return IElementDecorator.Color.GREEN;
-
+		return String.valueOf(mCoordSignature) +" prio=" +mCoordinatorPriority;
 	}
-
+	
 	@Override
-	public void setDecorationParameter(Object pDecoration)
+	public Color getColor()
 	{
-		
+		return new Color(0, 0.6f, 0);
 	}
-
+	
 	@Override
-	public Object getDecorationValue()
+	public String getImageName()
 	{
-		return Float.valueOf(0.8f);
+		return "L"+ (mLevel+1);
 	}
-
+	
 	public int hashCode()
 	{
 		return mClusterID.intValue() * 1;
 	}
 	
-	@Override
-	public void setDecorationValue(Object tLabal)
-	{
-		
-	}
 }

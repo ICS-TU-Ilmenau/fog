@@ -25,12 +25,12 @@ import java.util.LinkedList;
 import jniImports.VideoTranscoder;
 
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.streaming.RTP;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.FunctionalGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
@@ -92,14 +92,14 @@ public class VideoTranscodingGate extends FunctionalGate
 	}	
 	
 	/**
-	 * @param pNode The node this gate belongs to.
+	 * @param pEntity The node this gate belongs to.
 	 * @param pNext The ForwardingElement the functional gate points to
 	 * (in most cases a multiplexer).
 	 * @param pConfigParams 
 	 */
-	public VideoTranscodingGate(Node pNode, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
+	public VideoTranscodingGate(FoGEntity pEntity, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
 	{
-		super(pNode, pNext, VideoTranscoding.TRANSCODER, pOwner);
+		super(pEntity, pNext, VideoTranscoding.TRANSCODER, pOwner);
 		
 		Register(this);
 
@@ -132,7 +132,7 @@ public class VideoTranscodingGate extends FunctionalGate
 
 	public boolean getUsageStatus()
 	{		
-		return (mNode.getTimeBase().now() - mLastSeenPacketTimestamp < ACTIVITY_TIMEOUT);
+		return (mEntity.getTimeBase().now() - mLastSeenPacketTimestamp < ACTIVITY_TIMEOUT);
 	}
 	
 	@Override
@@ -295,7 +295,7 @@ public class VideoTranscodingGate extends FunctionalGate
 	public void handlePacket(Packet pPacket, ForwardingElement pLastHop) {
 		if (!pPacket.isInvisible()) {
 			incMessageCounter();
-			mLastSeenPacketTimestamp = mNode.getTimeBase().now();
+			mLastSeenPacketTimestamp = mEntity.getTimeBase().now();
 		}
 
 		// forward invisible packets, video packets are forwarded to video decoder function!

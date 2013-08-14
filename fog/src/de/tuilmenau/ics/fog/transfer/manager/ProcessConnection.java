@@ -17,12 +17,12 @@ import de.tuilmenau.ics.CommonSim.datastream.StreamTime;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.SumNode;
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ClientFN;
 
@@ -50,7 +50,7 @@ public class ProcessConnection extends ProcessGateCollectionConstruction
 	public void start() throws NetworkException
 	{
 		if(mEndpointFN == null) {
-			Node node = getBase().getNode();
+			FoGEntity node = getBase().getEntity();
 			
 			mEndpointFN = new ClientFN(node, null, mDescription, getOwner());
 			mPeer = mEndpointFN;
@@ -72,7 +72,7 @@ public class ProcessConnection extends ProcessGateCollectionConstruction
 		if(Config.Logging.CREATE_NODE_STATISTIC) {
 			if(pRouteToPeer != null) {
 				StreamTime tNow = getTimeBase().nowStream();
-				String baseName = getBase().getNode().getCountNodePrefix();
+				String baseName = getBase().getEntity().getNode().getCountNodePrefix();
 				
 				IDoubleWriter tSum = SumNode.openAsWriter(baseName +"numberRoutes");
 				tSum.write(1.0d, tNow);

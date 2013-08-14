@@ -13,10 +13,10 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.manager;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.Gate;
 import de.tuilmenau.ics.fog.transfer.Gate.GateState;
@@ -27,14 +27,14 @@ import de.tuilmenau.ics.fog.ui.Viewable;
 
 public abstract class ProcessGateConstruction extends Process
 {
-	public ProcessGateConstruction(ForwardingNode pBase, AbstractGate pReplacementFor, Identity pOwner)
+	public ProcessGateConstruction(ForwardingNode base, AbstractGate replacementFor, Identity owner)
 	{
-		super(pBase, pOwner);
+		super(base, owner);
 		
-		mReplacementFor = pReplacementFor;
+		mReplacementFor = replacementFor;
 	}
 	
-	protected abstract AbstractGate newGate(Node pNode) throws NetworkException;
+	protected abstract AbstractGate newGate(FoGEntity entity) throws NetworkException;
 	
 	public Gate create() throws NetworkException
 	{
@@ -43,7 +43,7 @@ public abstract class ProcessGateConstruction extends Process
 		// synch for test&set of down gates
 		synchronized(tBase) {
 			// create gate
-			mGate = newGate(getBase().getNode());
+			mGate = newGate(getBase().getEntity());
 			
 			// assign gate a local ID
 			if(mReplacementFor != null) {
@@ -60,6 +60,11 @@ public abstract class ProcessGateConstruction extends Process
 				} else {
 					// init in order to be able to switch to delete
 					mGate.initialise();
+					mGate.shutdown();
+					mGate = null;
+					
+					// invalidate the process
+					mReplacementFor = null;
 					
 					throw new NetworkException(this, "Gate " +mReplacementFor +" that should be replaced is not operational. Terminating the construction of a replacement.");
 				}
@@ -75,21 +80,26 @@ public abstract class ProcessGateConstruction extends Process
 		
 		// start terminate timer for timeout till update
 		restartTimer();
-		
 		return mGate;
 	}
 	
-	public void update(GateID reverseGateNumberAtPeer, Name peerNodeRoutingName, Identity peerIdentity)
+	public void update(GateID reverseGateNumberAtPeer, Name peerNodeRoutingName, Identity peerIdentity) throws NetworkException
 	{
-		Node tNode = getBase().getNode();
+		FoGEntity tNode = getBase().getEntity();
 		
 		// check access permissions
 		if(mPeerIdentity == null) {
-			mPeerIdentity = peerIdentity;
+			if(peerIdentity != null) {
+				// check for impossible identity
+				if(peerIdentity.equals(getBase().getEntity().getIdentity())) {
+					throw new NetworkException(this, "Can not set peer " +peerIdentity +", since it is equal to node itself. Maybe peer did not sign message?");
+				} else {
+					mPeerIdentity = peerIdentity;
+				}
+			}
 		} else {
 			if(!mPeerIdentity.equals(peerIdentity)) {
-				mLogger.err(this, "Access not permitted for " +peerIdentity +". Peer identity is " +mPeerIdentity +".");
-				return;
+				throw new NetworkException(this, "Access not permitted for " +peerIdentity +". Peer identity is " +mPeerIdentity +".");
 			}
 		}
 		
@@ -101,8 +111,7 @@ public abstract class ProcessGateConstruction extends Process
 				create();
 			}
 			catch (NetworkException tExc) {
-				mLogger.err(this, "Can not create the gate implicitly. Abording update call.", tExc);
-				return;
+				throw new NetworkException(this, "Can not create the gate implicitly. Abording update call.", tExc);
 			}
 		}
 		
@@ -123,6 +132,9 @@ public abstract class ProcessGateConstruction extends Process
 			}
 			catch (NetworkException exc) {
 				mLogger.err(this, "Failed to register link " +mGate +" at " +getBase() +" at routing service.", exc);
+				
+				// Do not throw it again, because informing the routing
+				// service might not be required.
 			}
 		}
 		// else: hidden gate; do not inform RS
@@ -131,11 +143,18 @@ public abstract class ProcessGateConstruction extends Process
 	@Override
 	public boolean isChangableBy(Identity changer)
 	{
+		// check, if owner is requesting change
 		boolean allowed = super.isChangableBy(changer);
 		
 		if(!allowed) {
+			// check, if peer is requesting change
 			if(mPeerIdentity != null) {
 				allowed = mPeerIdentity.equals(changer);
+				
+				if(!allowed) {
+					// admin rights of function provider itself
+					allowed = mPeerIdentity.equals(mGate.getEntity().getIdentity());
+				}
 			} else {
 				allowed = true;
 			}

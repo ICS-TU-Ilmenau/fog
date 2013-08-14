@@ -27,6 +27,7 @@ import de.tuilmenau.ics.fog.eclipse.ui.editors.SelectionProvider;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -66,6 +67,10 @@ public class ClusterViewer extends EditorAWT implements IController
 		
 		// configure view
 		if(inputObject != null) {
+			if(inputObject instanceof HierarchicalRoutingService) {
+				inputObject = ((HierarchicalRoutingService) inputObject).getCoordinator();
+			}
+			
 			if(inputObject instanceof Coordinator) {
 				GraphViewer<RoutingServiceAddress,RoutingServiceLink> mViewer2 = new GraphViewer<RoutingServiceAddress,RoutingServiceLink>(this);
 				mViewer2.init((RoutableGraph)((Coordinator) inputObject).getClusterMap());
@@ -163,7 +168,7 @@ public class ClusterViewer extends EditorAWT implements IController
 				popup.addSeparator();
 			}
 			
-			menuCreator.fillMenu(((Node) selection).getHost(), popup);
+			menuCreator.fillMenu(((Node) selection), popup);
 		}
 	}
 	

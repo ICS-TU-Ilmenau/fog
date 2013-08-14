@@ -48,7 +48,7 @@ public class TransferFailed extends SignallingNotification
 	public boolean executeFN(ForwardingNode pFN, Packet pPacket, Identity pNotifier)
 	{
 		if(pFN instanceof ClientFN) {
-			pFN.getNode().getLogger().log(this, "Closing FN " +pFN +" due to " +mError);
+			pFN.getEntity().getLogger().log(this, "Closing FN " +pFN +" due to " +mError);
 			
 			((ClientFN) pFN).getConnectionEndPoint().close();
 			return true;

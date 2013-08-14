@@ -16,7 +16,6 @@ package de.tuilmenau.ics.fog.scripts;
 import de.tuilmenau.ics.fog.application.TCPProxy;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 
@@ -24,16 +23,12 @@ public class WWWScript extends Script
 {
 	private void generateServerTCP(AutonomousSystem as, String source, String name, int port)
 	{
-		Node tNode = as.getNodeByName(source);
+		Host tNode = as.getNodeByName(source);
 		TCPProxy tMsgServer = null;
 		
 		if(tNode != null) {
-			Host tHost = tNode.getHost();
-		
-			if(tHost != null) {
-				tMsgServer = new TCPProxy(tHost, null, name, port);
-				tMsgServer.start();
-			}
+			tMsgServer = new TCPProxy(tNode, null, name, port);
+			tMsgServer.start();
 		}
 		
 		if(tMsgServer != null) {

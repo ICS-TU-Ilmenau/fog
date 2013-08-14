@@ -10,33 +10,18 @@
 package de.tuilmenau.ics.fog.eclipse.ui.commands;
 
 import de.tuilmenau.ics.fog.application.Application;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
 
-public class ExitApplication extends SilentCommand
+public class ExitApplication implements Command
 {
-
-	public ExitApplication()
-	{
-		super();
-	}
-	
 	@Override
-	public void init(Object object)
+	public void execute(Object object)
 	{
-		if(!(object instanceof Application)) throw new RuntimeException(this +" requires an Application object to proceed.");
-		if(app != null) throw new RuntimeException("App already set for " +this);
-		
-		app = (Application) object;		
-	}
-
-	@Override
-	public void main()
-	{
-		if(app != null) {
-			app.exit();
+		if(object instanceof Application) {
+			((Application) object).exit();
+		} else {
+			throw new RuntimeException(this +" requires an Application object to proceed.");
 		}
 	}
-
-	
-	private Application app;
 }

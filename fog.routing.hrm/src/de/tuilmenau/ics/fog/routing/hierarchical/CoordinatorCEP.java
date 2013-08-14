@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import java.io.Serializable;
 
-import de.tuilmenau.ics.fog.application.Session;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
@@ -21,15 +21,11 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ClusterDiscovery.NestedDiscover
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexedPackage;
 import de.tuilmenau.ics.fog.packets.hierarchical.TopologyEnvelope;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
-import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
-import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterDummy;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.Tuple;
@@ -56,10 +52,8 @@ public class CoordinatorCEP extends Session
 	public CoordinatorCEP(Logger pLogger, Coordinator pCoord, boolean pServerSide, int pLevel, CoordinatorCEPMultiplexer pMux)
 	{
 		super(false, Logging.getInstance(), null);
-		mReferenceCoordinator = pCoord;
-		
-			RoutingService tRS = (RoutingService)getCoordinator().getReferenceNode().getRoutingService();
-			mSourceIdentification = (L2Address) tRS.getNameFor(getCoordinator().getReferenceNode().getCentralFN());
+		mReferenceCoordinator = pCoord;		
+		mSourceIdentification = (L2Address) getCoordinator().getRSName();
 		
 		getLogger().log(this, "Created");
 
@@ -77,7 +71,7 @@ public class CoordinatorCEP extends Session
 			if(mServerSide) {
 				Route tRouteToPeer = null;
 				try {
-					tRouteToPeer = getCoordinator().getHRS().getRoute(getCoordinator().getReferenceNode().getCentralFN(), ((Tuple<HRMID, HRMID>)pData).getSecond(), new Description(), getCoordinator().getReferenceNode().getIdentity());
+					tRouteToPeer = getCoordinator().getHRS().getRoute(getCoordinator().getCentralFN(), ((Tuple<HRMID, HRMID>)pData).getSecond(), new Description(), getCoordinator().getNodeIdentity());
 					mRouteToPeer = tRouteToPeer;
 				} catch (RoutingException tExc) {
 					getLogger().err(this, "Unable to find route to ", tExc);

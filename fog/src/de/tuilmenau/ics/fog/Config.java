@@ -49,7 +49,7 @@ public class Config
 	 * Indicates if some more extended GUI controls and behavior are enabled. 
 	 * Otherwise the simulator behaves in a more secured way for demo sessions.
 	 */
-	public static final boolean DEVELOPER_VERSION = true;
+	public static final boolean DEVELOPER_VERSION = false;
 	
 	/**
 	 * Configuration parameter for the simulator itself and not for
@@ -130,7 +130,7 @@ public class Config
 		 * Enables statistic files, which are logging all packets
 		 * transfered in the network.
 		 */
-		public static final boolean WRITE_PACKET_STATISTIC = true;
+		public static final boolean WRITE_PACKET_STATISTIC = false;
 		
 		/**
 		 * Requests packets to be authenticated - currently only used for registration of passed nodes,
@@ -187,6 +187,12 @@ public class Config
 		 */
 		public boolean DEFAULT_DELAY_CONSTANT = true;
 
+		/**
+		 * Enables import of delay and data rate values from
+		 * import graph descriptions
+		 */
+		public boolean USE_IMPORTED_DELAY_AND_BW = false;
+		
 		/**
 		 * Default value for loss probability of a packet transfered
 		 * via a link in %. Allowed are value between [0, 100].
@@ -266,6 +272,10 @@ public class Config
 		 * Amount of none acknowledged packets can be sent.  
 		 */
 		public static final int ACKNOWLEDGEMENT_WINDOW = 100;
+		
+		public enum COST_METRIC {DELAY, BANDWIDTH, HOP_COUNT};
+
+		public static final COST_METRIC USED_METRIC = COST_METRIC.BANDWIDTH;
 	}
 
 	/**
@@ -319,6 +329,12 @@ public class Config
 		 * alternative/backup route for relaying packets "around" an failed element.
 		 */
 		public static final boolean REROUTE_USE_HORIZONTAL_GATES = true;
+		
+		/**
+		 * Enable the following flag if you want the rerouting executor to establish connections that require a given bandwidth.
+		 * This can be used to simulate the routing of demands through the network.
+		 */
+		public static final boolean REROUTING_EXECUTOR_ALLOCATES_BANDWIDTH = false;
 		
 		/**
 		 * Activates for rerouting the automatic instantiation of a VideoTranscoding gate in case 

@@ -9,31 +9,18 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.eclipse.ui.commands;
 
-import org.eclipse.ui.IWorkbenchPartSite;
-
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
-public class DeaktivateGate extends Command
+public class DeaktivateGate implements Command
 {
-	public DeaktivateGate()
-	{
-	}
-
 	@Override
-	public void init(IWorkbenchPartSite site, Object object)
+	public void execute(Object object) throws Exception
 	{
 		if(object instanceof AbstractGate) {
-			gate = (AbstractGate) object;
+			((AbstractGate) object).shutdown();
+		} else {
+			throw new Exception(this +": Expecting gate instead of " +object);
 		}
 	}
-
-	@Override
-	public void main() throws Exception
-	{
-		if(gate != null) {
-			gate.shutdown();
-		}
-	}
-
-	private AbstractGate gate;
 }

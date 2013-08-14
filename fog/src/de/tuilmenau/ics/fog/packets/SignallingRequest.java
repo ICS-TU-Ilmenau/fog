@@ -38,14 +38,14 @@ abstract public class SignallingRequest extends Signalling
 	{
 		if(element instanceof ForwardingNode) {
 			ForwardingNode fn = (ForwardingNode) element;
-			Identity sender = getSenderIdentity(fn.getNode().getAuthenticationService(), packet);
+			Identity sender = getSenderIdentity(fn.getEntity().getAuthenticationService(), packet);
 			
 			if(sender != null) {
 				synchronized(element) {
 					return execute(fn, packet, sender);
 				}
 			} else {
-				fn.getNode().getLogger().err(this, "Can not execute signaling message " +packet +" at " +element +" due to invalid authentication.");
+				fn.getEntity().getLogger().err(this, "Can not execute signaling message " +packet +" at " +element +" due to invalid authentication.");
 			}
 		} else {
 			Logging.log(this, "Element '" +element +"' has wrong type for signalling msg");

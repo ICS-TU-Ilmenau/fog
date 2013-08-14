@@ -16,6 +16,9 @@ package de.tuilmenau.ics.fog.application;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointUDPProxy;
+import de.tuilmenau.ics.fog.application.util.ServerCallback;
+import de.tuilmenau.ics.fog.application.util.Service;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
@@ -23,16 +26,15 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IServerCallback;
-import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
 
 /**
  * UDP server socket mapped to FoG.
  */
-public class UDPServerProxy extends Application implements IServerCallback
+public class UDPServerProxy extends Application implements ServerCallback
 {
 	/**
 	 * Constructor for running TCPProxy via command line.
@@ -124,15 +126,18 @@ public class UDPServerProxy extends Application implements IServerCallback
 	}
 
 	@Override
+	public void error(ErrorEvent cause)
+	{
+		terminated(cause.getException());
+	}
+	
+	@Override
 	protected void started()
 	{
 		try {
-			Binding tBinding = getHost().bind(null, createServerName(mDestName), getDescription(), getIdentity());
+			Binding tBinding = getLayer().bind(null, createServerName(mDestName), getDescription(), getIdentity());
 			mServerBinding = new Service(false, this);
 			mServerBinding.start(tBinding);
-		}
-		catch(NetworkException tExc) {
-			terminated(tExc);
 		} catch (InvalidParameterException tExc) {
 			terminated(tExc);
 		}

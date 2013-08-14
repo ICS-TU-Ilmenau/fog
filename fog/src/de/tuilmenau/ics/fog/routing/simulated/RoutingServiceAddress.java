@@ -107,7 +107,11 @@ public class RoutingServiceAddress implements Name
 	
 	public void setCaps(Description pCaps)
 	{
-		mCaps = pCaps.clone();
+		if(pCaps != null) {
+			mCaps = pCaps.clone();
+		} else {
+			mCaps = null;
+		}
 	}
 	
 	public String toString()

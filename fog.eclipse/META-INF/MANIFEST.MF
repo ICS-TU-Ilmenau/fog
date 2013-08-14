@@ -10,7 +10,8 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.debug.ui;bundle-version="3.5.1",
  de.tuilmenau.ics.fog;bundle-version="1.0.2",
- de.tuilmenau.ics.fog.launcher;bundle-version="1.0.2"
+ de.tuilmenau.ics.fog.launcher;bundle-version="1.0.2",
+ de.tuilmenau.ics.fog.ui;bundle-version="1.0.2"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.tuilmenau.ics.fog.eclipse,

@@ -93,7 +93,7 @@ public class ProcessGateCollectionConstruction extends ProcessConstruction
 		Packet packet = new Packet(route, tPleaseOpenConnection);
 		
 		// sign it with the credentials of the process owner
-		getBase().getNode().getAuthenticationService().sign(packet, requester);
+		getBase().getEntity().getAuthenticationService().sign(packet, requester);
 		
 		signal(packet);
 	}
@@ -204,7 +204,7 @@ public class ProcessGateCollectionConstruction extends ProcessConstruction
 			SocketPathParam pathParamUp = null;
 			SocketPathParam pathParamDown = null;
 			try {
-				mIntermediateDescription = getBase().getNode().getController().deriveGatesFromRequirements(getBase(), mDescription, tListUp, tListDown);
+				mIntermediateDescription = getBase().getEntity().getController().deriveGatesFromRequirements(getBase(), mDescription, tListUp, tListDown);
 			}
 			catch(NetworkException tExc) {
 				throw new NetworkException("Can not derive gates from requirements " +mDescription +".", tExc);
@@ -323,7 +323,7 @@ public class ProcessGateCollectionConstruction extends ProcessConstruction
 			LinkedList<SocketPathParam> tListUp = new LinkedList<SocketPathParam>();
 			LinkedList<SocketPathParam> tListDown = new LinkedList<SocketPathParam>();
 			
-			mIntermediateDescription = getBase().getNode().getController().deriveGatesFromRequirements(getBase(), mDescription, tListUp, tListDown);
+			mIntermediateDescription = getBase().getEntity().getController().deriveGatesFromRequirements(getBase(), mDescription, tListUp, tListDown);
 		}
 		
 		if(mIntermediateDescription.isEmpty() && mDescription != null) {

@@ -54,7 +54,7 @@ public class SignallingInvalidGate extends Signalling
 			GateContainer container = (GateContainer) pElement;
 			
 			synchronized(container) {
-				ProcessList tProcessList = container.getNode().getProcessRegister().getProcesses(container);
+				ProcessList tProcessList = container.getEntity().getProcessRegister().getProcesses(container);
 				if(tProcessList != null) {
 					for (Process tProcess: tProcessList) {
 						//TODO: first test if process is responsible
@@ -69,13 +69,13 @@ public class SignallingInvalidGate extends Signalling
 							
 							try {
 								// get sender identity
-								Identity sender = getSenderIdentity(container.getNode().getAuthenticationService(), pPacket);
+								Identity sender = getSenderIdentity(container.getEntity().getAuthenticationService(), pPacket);
 								
 								// recalculate a route to peer
 								Description tIntermediateDescr;
 								tIntermediateDescr = tConnectionProcess.getIntermediateDescr();							
 								Route tRoute;
-								tRoute = container.getNode().getTransferPlane().getRoute(tConnectionProcess.getBase(), tConnectionProcess.getDestination(), tIntermediateDescr, sender);
+								tRoute = container.getEntity().getTransferPlane().getRoute(tConnectionProcess.getBase(), tConnectionProcess.getDestination(), tIntermediateDescr, sender);
 	
 								// trigger reconnection
 								tConnectionProcess.signal(true, tRoute);

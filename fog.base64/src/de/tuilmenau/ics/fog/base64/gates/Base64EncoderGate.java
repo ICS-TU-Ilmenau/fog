@@ -14,10 +14,10 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 import sun.misc.BASE64Encoder;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.base64.gates.role.Base64;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.packets.Packet;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.FunctionalGate;
 import de.tuilmenau.ics.middleware.Serializer;
@@ -29,14 +29,14 @@ public class Base64EncoderGate extends FunctionalGate
 {
 	
 	/**
-	 * @param pNode The node this gate belongs to.
+	 * @param pEntity The node this gate belongs to.
 	 * @param pNext The ForwardingElement the functional gate points to
 	 * (in most cases a multiplexer).
 	 * @param pConfigParams 
 	 */
-	public Base64EncoderGate(Node pNode, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
+	public Base64EncoderGate(FoGEntity pEntity, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
 	{
-		super(pNode, pNext, Base64.ENCODER, pOwner);
+		super(pEntity, pNext, Base64.ENCODER, pOwner);
 	}
 	
 	@Override
@@ -78,7 +78,7 @@ public class Base64EncoderGate extends FunctionalGate
 			}
 		} else {
 			mLogger.log(this, "No next hop given. Packet " +pPacket +" dropped.");
-			pPacket.logStats(getNode().getAS().getSimulation());
+			pPacket.logStats(getEntity().getNode().getAS().getSimulation());
 		}
 	}
 	

@@ -30,7 +30,7 @@ public class PleaseKeepAlive extends SignallingRequest
 	public boolean execute(ForwardingNode fn, Packet packet, Identity requester)
 	{
 		if(fn != null && fn instanceof ClientFN) {
-			fn.getNode().getLogger().log(this, "execute keep alive on " +fn + " @ " + fn.getNode());
+			fn.getEntity().getLogger().log(this, "execute keep alive on " +fn + " @ " + fn.getEntity());
 			
 			Process process = ((ClientFN) fn).getRelatedProcess();
 			if(process != null && process instanceof ProcessConstruction) {

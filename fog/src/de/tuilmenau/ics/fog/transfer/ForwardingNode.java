@@ -13,9 +13,9 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.transfer.gates.GateIterator;
@@ -24,9 +24,9 @@ import de.tuilmenau.ics.fog.transfer.gates.GateIterator;
 public interface ForwardingNode extends ForwardingElement
 {
 	/**
-	 * @return Reference to node the FN is located on (!= null)
+	 * @return Reference to FoG entity the FN is located on (!= null)
 	 */
-	public Node getNode();
+	public FoGEntity getEntity();
 	
 	/**
 	 * Register gate at the forwarding node and reserve a gate number for it.

@@ -103,7 +103,7 @@ public class GateIterator implements Iterator<AbstractGate>
 				// is there a filter available?
 				if(mClassFilter != null) {
 					// does gate class matches the filter?
-					if(tGate.getClass().equals(mClassFilter)) {
+					if(mClassFilter.isInstance(tGate)) {
 						tRes = tGate;
 						break;
 					}

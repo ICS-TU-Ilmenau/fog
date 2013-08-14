@@ -50,16 +50,16 @@ public class PleaseOpenDownGate extends PleaseOpenGate
 	public boolean execute(ForwardingNode pFN, Packet pPacket, Identity pRequester)
 	{
 		SignallingAnswer tAnswer = null; 
-		pFN.getNode().getLogger().log(this, "execute open request for " +pFN + " from reverse node '" +mPeerNodeRoutingID +"'");
+		pFN.getEntity().getLogger().log(this, "execute open request for " +pFN + " from reverse node '" +mPeerNodeRoutingID +"'");
 		
-		synchronized(pFN.getNode()) {
+		synchronized(pFN.getEntity()) {
 			// check, if gate already exists
 			ReroutingGate[] tBackup = new ReroutingGate[1];
-			Gate tGate = pFN.getNode().getController().checkDownGateAvailable(pFN, pPacket.getReceivedFrom(), getGateNumber(), getDescription(), tBackup);
+			Gate tGate = pFN.getEntity().getController().checkDownGateAvailable(pFN, pPacket.getReceivedFrom(), getGateNumber(), getDescription(), tBackup);
 			
 			if(tGate == null) {
 				if(tBackup[0] != null) {
-					pFN.getNode().getLogger().log(this, "found reroute gate " +tBackup[0] +". Re-creating down gate based on reroute gate.");
+					pFN.getEntity().getLogger().log(this, "found reroute gate " +tBackup[0] +". Re-creating down gate based on reroute gate.");
 				}
 				
 				ProcessDownGate process = new ProcessDownGate(pFN, pPacket.getReceivingInterface(), pPacket.getReceivedFrom(), getDescription(), pRequester, tBackup[0]);
@@ -75,12 +75,12 @@ public class PleaseOpenDownGate extends PleaseOpenGate
 					tAnswer = new OpenGateResponse(this, tExc);
 				}
 			} else {
-				pFN.getNode().getLogger().log(this, "gate " +tGate +" already exists at " +pFN);
+				pFN.getEntity().getLogger().log(this, "gate " +tGate +" already exists at " +pFN);
 			}
 		
 			// no error?
 			if(tAnswer == null) {
-				Name myFNRoutingName = pFN.getNode().getRoutingService().getNameFor(pFN);
+				Name myFNRoutingName = pFN.getEntity().getRoutingService().getNameFor(pFN);
 				tAnswer = new OpenGateResponse(this, tGate.getGateID(), myFNRoutingName);
 			}
 		}
@@ -89,7 +89,7 @@ public class PleaseOpenDownGate extends PleaseOpenGate
 		Route tRoute = new Route(pPacket.getReturnRoute());
 		Packet tPacket = new Packet(tRoute, tAnswer);
 		
-		pFN.getNode().getAuthenticationService().sign(tPacket, pFN.getOwner());
+		pFN.getEntity().getAuthenticationService().sign(tPacket, pFN.getOwner());
 		
 		if(pPacket.isReturnRouteBroken()) {
 			// Reverse route is broken because there was no gate for the

@@ -13,9 +13,9 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.gates;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
-import de.tuilmenau.ics.fog.topology.Node;
 
 
 /**
@@ -24,8 +24,8 @@ import de.tuilmenau.ics.fog.topology.Node;
  */
 public class BroadcastGate extends DirectDownGate
 {
-	public BroadcastGate(Node pNode, NetworkInterface pNetworkInterface)
+	public BroadcastGate(FoGEntity entity, NetworkInterface networkInterface)
 	{
-		super(-1, pNode, pNetworkInterface, ILowerLayer.BROADCAST, null, pNode.getIdentity());
+		super(-1, entity, networkInterface, ILowerLayer.BROADCAST, null, entity.getIdentity());
 	}	
 }

@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.clusters;
 
+import java.awt.Color;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -32,11 +33,11 @@ import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.topology.IElementDecorator;
+import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 
-public class AttachedCluster implements Cluster, IElementDecorator
+public class AttachedCluster implements Cluster, Decorator
 {
 	private static final long serialVersionUID = -8746079632866375924L;
 	private LinkedList<RoutingServiceLinkVector> mVectors;
@@ -75,7 +76,7 @@ public class AttachedCluster implements Cluster, IElementDecorator
 	 */
 	public AttachedCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, int pLevel, Coordinator pResponsibleCoordinator)
 	{	
-		mAnnouncer = pResponsibleCoordinator.getReferenceNode().getCentralFN().getName();
+		mAnnouncer = pResponsibleCoordinator.getName();
 		mCoordAddress = pAddress;
 		setCoordinatorName(pCoordName);
 		mClusterID = pClusterID;
@@ -151,7 +152,7 @@ public class AttachedCluster implements Cluster, IElementDecorator
 		addNeighborCluster(tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
-			RoutingService tRS = (RoutingService)getCoordinator().getReferenceNode().getRoutingService();
+			RoutingService tRS = getCoordinator().getRoutingService();
 			if(! tRS.isKnown(pAnnounce.getCoordinatorName())) {
 				try {
 					getCoordinator().getHRS().registerNode(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
@@ -490,27 +491,21 @@ public class AttachedCluster implements Cluster, IElementDecorator
 
 	
 	@Override
-	public Object getDecorationParameter()
+	public String getText()
 	{
-		return IElementDecorator.Color.GREEN;
+		return null;
 	}
 
 	@Override
-	public void setDecorationParameter(Object pDecoration)
+	public Color getColor()
 	{
-		
+		return new Color(0, 0.6f, 0);
 	}
 
 	@Override
-	public Object getDecorationValue()
+	public String getImageName()
 	{
-		return Float.valueOf(0.6f);
-	}
-
-	@Override
-	public void setDecorationValue(Object pValue)
-	{
-		
+		return null;
 	}
 
 	public Logger getLogger()

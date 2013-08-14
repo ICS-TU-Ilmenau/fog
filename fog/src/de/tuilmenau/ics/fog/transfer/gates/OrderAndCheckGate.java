@@ -16,10 +16,10 @@ package de.tuilmenau.ics.fog.transfer.gates;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.headers.NumberingHeader;
 import de.tuilmenau.ics.fog.transfer.gates.roles.OrderAndCheck;
@@ -35,7 +35,7 @@ import de.tuilmenau.ics.fog.ui.Viewable;
  */
 public class OrderAndCheckGate extends FunctionalGate
 {
-	public OrderAndCheckGate(Node node, ForwardingElement next, Identity pOwner)
+	public OrderAndCheckGate(FoGEntity node, ForwardingElement next, Identity pOwner)
 	{
 		super(node, next, OrderAndCheck.ORDERANDCHECK, pOwner);
 	}

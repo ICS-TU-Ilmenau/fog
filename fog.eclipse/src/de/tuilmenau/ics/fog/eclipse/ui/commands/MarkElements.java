@@ -11,8 +11,6 @@ package de.tuilmenau.ics.fog.eclipse.ui.commands;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IWorkbenchPartSite;
 
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.InvisibleMarker;
@@ -25,33 +23,24 @@ import de.tuilmenau.ics.fog.ui.Marker;
 import de.tuilmenau.ics.fog.ui.MarkerContainer;
 
 
-public class MarkElements extends Command
+public class MarkElements extends EclipseCommand
 {
-	public MarkElements()
-	{
-	}
-
 	@Override
-	public void init(IWorkbenchPartSite site, Object object)
+	public void execute(Object object) throws Exception
 	{
-		mObject = object;
-		mShell = site.getShell();
-	}
-
-	@Override
-	public void main() throws Exception
-	{
+		this.mObject = object;
+		
 		// input available?
-		if((mObject == null) || (mShell == null)) return;
+		if(mObject == null) return;
 
-		mShell.getDisplay().syncExec(new Runnable() {
+		getShell().getDisplay().syncExec(new Runnable() {
 			@Override
 			public void run()
 			{
 				// is it already marked?
 				Marker[] markers = MarkerContainer.getInstance().get(mObject);
 				if(markers.length > 0) {
-					MessageBox messageBox = new MessageBox(mShell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+					MessageBox messageBox = new MessageBox(getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
 			        messageBox.setMessage("Do you want to remove a marker?");
 			        messageBox.setText("Remove or add");
 			        int response = messageBox.open();
@@ -65,7 +54,7 @@ public class MarkElements extends Command
 				
 				// no deletion of markers? => add one
 				if(mMarker == null) {
-					MarkElementsDialog dialog = new MarkElementsDialog(mShell);
+					MarkElementsDialog dialog = new MarkElementsDialog(getShell());
 					mMarker = dialog.open(null);
 					
 					if(mMarker != null) {
@@ -113,9 +102,7 @@ public class MarkElements extends Command
 		}
 	}
 	
-	private Shell mShell;
 	private Object mObject;
-	
 	private Marker mMarker = null;
 	private Operation mOperation = Operation.ADD;
 }

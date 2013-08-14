@@ -9,8 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.audio;
 
-import de.tuilmenau.ics.fog.application.Session;
 import de.tuilmenau.ics.fog.application.UDPServerProxy;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;

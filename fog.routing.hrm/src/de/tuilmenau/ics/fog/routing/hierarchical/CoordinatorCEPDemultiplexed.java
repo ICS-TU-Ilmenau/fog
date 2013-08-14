@@ -49,7 +49,6 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMIPMapper;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
@@ -67,7 +66,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 	private boolean mRequestedCoordinator = false;
 	private boolean mPartOfCluster = false;
 	private Coordinator mReferenceCoordinator = null;
-	private Logger mLogger = Logging.getInstance();
+	private Logger mLogger;
 	private BFSDistanceLabeler<VirtualNode, NodeConnection> mBreadthFirstSearch;
 	private boolean mCrossLevelCEP = false;
 	private StackTraceElement[] mStackTrace = null;
@@ -103,7 +102,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 		try {
 			if(pData instanceof RequestZoneMembership) {
 				if(getCluster().getCoordinatorCEP() != null) {
-					Name tMyName = getCoordinator().getReferenceNode().getRoutingService().getNameFor(getCoordinator().getReferenceNode().getCentralFN());
+					Name tMyName = getCoordinator().getRSName();
 					if(getCluster().getCoordinatorName().equals(tMyName)) {
 						
 					}
@@ -111,8 +110,8 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 			} else if(pData instanceof BullyElect)	{
 				if(getCluster().getCoordinatorCEP() != null && ((BullyElect)pData).getPriority() < getCluster().getHighestPriority()) {
 					mPeerPriority = ((BullyElect)pData).getPriority();
-					if(getCluster().getCoordinator().equals(getCoordinator().getReferenceNode().getCentralFN().getName())) {
-						BullyAnnounce tAnnounce = new BullyAnnounce(getCoordinator().getReferenceNode().getCentralFN().getName(), getCluster().getPriority(), getCoordinator().getIdentity().createSignature(getCoordinator().getReferenceNode().toString(), null, getCluster().getLevel()), getCluster().getToken());
+					if(getCluster().getCoordinator().equals(getCoordinator().getName())) {
+						BullyAnnounce tAnnounce = new BullyAnnounce(getCoordinator().getName(), getCluster().getPriority(), getCoordinator().getIdentity().createSignature(getCoordinator().getName().toString(), null, getCluster().getLevel()), getCluster().getToken());
 						mLogger.log(this, " Sending bullyannounce because I have a coordinator: " + tAnnounce);
 						for(CoordinatorCEPDemultiplexed tCEP : getCluster().getParticipatingCEPs()) {
 							tAnnounce.addCoveredNode(tCEP.getPeerName());
@@ -122,11 +121,11 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						}
 						write(tAnnounce);
 					} else {
-						write(new BullyAlive(getCoordinator().getReferenceNode().getCentralFN().getName(), getCluster().getCoordinatorName()));
+						write(new BullyAlive(getCoordinator().getName(), getCluster().getCoordinatorName()));
 					}
 				} else {
 					mPeerPriority = ((BullyElect)pData).getPriority();
-					BullyReply tAnswer = new BullyReply(getCluster().getPriority(), getCoordinator().getReferenceNode().getCentralFN().getName());
+					BullyReply tAnswer = new BullyReply(getCluster().getPriority(), getCoordinator().getName());
 					write(tAnswer);
 				}
 			} else if(pData instanceof BullyReply) {
@@ -142,7 +141,10 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 				getCoordinator().getLogger().log(this, "\n\n\nReceived " + tAnnounce + "\n\n\n");
 				
 				if(tAnnounce.isInterASAnnouncement()) {
-					Logging.log(getCoordinator().getReferenceNode().getAS().getName() + " received an announcement from " + tAnnounce.getASIdentification());
+					/**
+					 * TODO in reality AS, does not have a name!
+					 */
+					mLogger.log(getCoordinator().getReferenceNode().getAS().getName() + " received an announcement from " + tAnnounce.getASIdentification());
 					if(getCoordinator().getReferenceNode().getAS().getName().equals(tAnnounce.getASIdentification())) {
 						if(!getSourceName().equals(getPeerName())) {
 							for(Route tPath : getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute((HRMName)getSourceName(), (HRMName)getPeerName())) {
@@ -155,7 +157,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 								tCEP.write(tAnnounce);
 								tWroteAnnouncement = true;
 							}
-							Logging.log(this, "Testing " + tCEP + " whether it is an inter as link:" + tWroteAnnouncement);
+							mLogger.log(this, "Testing " + tCEP + " whether it is an inter as link:" + tWroteAnnouncement);
 						}
 					} else {
 						if(getCluster() instanceof IntermediateCluster) {
@@ -169,17 +171,17 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 									tCEP.write(tAnnounce);
 									tWroteAnnouncement = true;
 								}
-								Logging.log(this, "Testing " + tCEP + " whether it leads to the clusters coordinator: " + tWroteAnnouncement);
+								mLogger.log(this, "Testing " + tCEP + " whether it leads to the clusters coordinator: " + tWroteAnnouncement);
 							}
 						} else if(getCluster() instanceof ClusterManager) {
-							Logging.log(this, "Inter AS announcement " + tAnnounce + " is handled by " + getCluster() + " whether it leads to the clusters coordinator");
+							mLogger.log(this, "Inter AS announcement " + tAnnounce + " is handled by " + getCluster() + " whether it leads to the clusters coordinator");
 							((ClusterManager)getCluster()).getManagedCluster().handleAnnouncement(tAnnounce, this);
 						}
 					}
 				} else {
 					getCluster().handleAnnouncement(tAnnounce, this);
 				}
-				Logging.log(this, "Received " + tAnnounce + " from remote cluster " + mRemoteCluster);
+				mLogger.log(this, "Received " + tAnnounce + " from remote cluster " + mRemoteCluster);
 			} else if(pData instanceof PriorityUpdate) {
 				mPeerPriority = ((PriorityUpdate)pData).getPriority();
 			} else if(pData instanceof TopologyEnvelope) {
@@ -200,7 +202,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						for(VirtualNode tCluster : getCoordinator().getClusters(0)) {
 							FIBEntry tEntry = getCoordinator().getHRS().getFIBEntry( (HRMID) tRequest.getTarget());
 							if(tCluster instanceof IntermediateCluster && tEntry != null && (tEntry.getFarthestClusterInDirection() == null || tEntry.getFarthestClusterInDirection().equals(tCluster))) {
-								Route tRoute = getCoordinator().getHRS().getRoutePath( getSourceName(), tRequest.getTarget(), new Description(), getCoordinator().getReferenceNode().getIdentity());
+								Route tRoute = getCoordinator().getHRS().getRoutePath( getSourceName(), tRequest.getTarget(), new Description(), getCoordinator().getNodeIdentity());
 								RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
 								HRMName tSource = null;
 								HRMName tTarget = null;
@@ -228,11 +230,11 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 							if(tIPAddresses != null) {
 								for(Name tTargetAddress : tIPAddresses) {
 									try {
-										tRoute = ((RoutingServiceMultiplexer)getCoordinator().getReferenceNode().getRoutingService()).getRoute(getCoordinator().getReferenceNode().getCentralFN(), tTargetAddress, ((RouteRequest)pData).getDescription(), null);
+										tRoute = ((RoutingServiceMultiplexer)getCoordinator().getRoutingService()).getRoute(getCoordinator().getCentralFN(), tTargetAddress, ((RouteRequest)pData).getDescription(), null);
 									} catch (NetworkException tExc) {
-										Logging.info(this, "BGP routing service did not find a route to " + tTargetAddress);
+										mLogger.info(this, "BGP routing service did not find a route to " + tTargetAddress);
 									}
-									Logging.log(this, "Interop: Route to "+ tAddress + " with IP address " + tTargetAddress + " is " + tRoute);
+									mLogger.log(this, "Interop: Route to "+ tAddress + " with IP address " + tTargetAddress + " is " + tRoute);
 								}
 							} else {
 								getCoordinator().getLogger().err(this, "Unable to distribute addresses because no IP address is available");
@@ -319,7 +321,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 				RequestCoordinator tRequest = (RequestCoordinator) pData;
 				if(!tRequest.isAnswer()) {
 					if(getCluster().getCoordinatorCEP() != null) {
-						Logging.log(this, "Name of coordinator is " + getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorName());
+						mLogger.log(this, "Name of coordinator is " + getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorName());
 						
 						int tToken = getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getToken();
 						Name tCoordinatorName = getCluster().getCoordinator().getClusterWithCoordinatorOnLevel(getCluster().getLevel()).getCoordinatorName();
@@ -352,14 +354,14 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						}
 					}
 					synchronized(tRequest) {
-						Logging.log(this, "Received answer to " + tRequest + ", notifying");
+						mLogger.log(this, "Received answer to " + tRequest + ", notifying");
 						tRequest.mWasNotified = true;
 						tRequest.notifyAll();
 					}
 				}
 			}
 		} catch (PropertyException tExc) {
-			Logging.err(this, "Unable to fulfill requirements", tExc);
+			mLogger.err(this, "Unable to fulfill requirements", tExc);
 		}
 		return true;
 	}
@@ -583,7 +585,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 			Cluster tSourceCluster=null;
 			tSourceCluster = getCoordinator().getCluster(ClusterDummy.compare(pDiscovery.getSourceClusterID(), pDiscovery.getToken(), pDiscovery.getLevel()));
 			if(tSourceCluster == null) {
-				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteCluster());
+				mLogger.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteCluster());
 			}
 			if(mBreadthFirstSearch == null ) {
 				this.mBreadthFirstSearch = new BFSDistanceLabeler<VirtualNode, NodeConnection>();
@@ -597,7 +599,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						int tRadius;
 
 						tRadius = HierarchicalConfig.Routing.PAN_CLUSTER_ELECTION_NUMBER;
-						Logging.log(this, "radius is " + tRadius);
+						mLogger.log(this, "radius is " + tRadius);
 						if(tCluster instanceof AttachedCluster && ((AttachedCluster)tCluster).getClustersToTarget() + pDiscovery.getDistance() > tRadius) continue;
 						boolean tBreak=false;
 						for(CoordinatorCEPDemultiplexed tCEP : tCluster.getParticipatingCEPs()) {
@@ -610,7 +612,7 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
 							if(tCluster instanceof AttachedCluster) {
 								getCoordinator().getLogger().log(this, "Reporting " + tCluster + " to " + ((HRMName)getPeerName()).getDescr() + " because " + pDiscovery.getDistance() + " + " + ((AttachedCluster)tCluster).getClustersToTarget() + "=" + (pDiscovery.getDistance() + ((AttachedCluster)tCluster).getClustersToTarget()));
-								Logging.log(this, "token list was " + pDiscovery.getTokens());
+								mLogger.log(this, "token list was " + pDiscovery.getTokens());
 							}
 							getPathTo(pDiscovery, tCluster);
 							for(Cluster tNeighbor : tCluster.getNeighbors()) {

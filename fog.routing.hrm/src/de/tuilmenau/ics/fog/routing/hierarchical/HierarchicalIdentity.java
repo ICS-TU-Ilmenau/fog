@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import de.tuilmenau.ics.fog.authentication.SimpleIdentity;
 import de.tuilmenau.ics.fog.exceptions.AuthenticationException;
+import de.tuilmenau.ics.fog.facade.Name;
 
 public class HierarchicalIdentity extends SimpleIdentity
 {
@@ -20,6 +21,12 @@ public class HierarchicalIdentity extends SimpleIdentity
 	public HierarchicalIdentity(String pName, int pLevel)
 	{
 		super(pName);
+		mLevel = pLevel;
+	}
+	
+	public HierarchicalIdentity(Name pName, int pLevel)
+	{
+		super(pName.toString());
 		mLevel = pLevel;
 	}
 	

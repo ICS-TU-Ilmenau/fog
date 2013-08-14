@@ -16,12 +16,12 @@ package de.tuilmenau.ics.fog.topology;
 import java.rmi.RemoteException;
 
 import de.tuilmenau.ics.fog.EventHandler;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.ReroutingExecutor;
 import de.tuilmenau.ics.fog.application.ReroutingExecutor.ReroutingSession;
 import de.tuilmenau.ics.fog.commands.CommandParsing;
 import de.tuilmenau.ics.fog.facade.Connection;
-import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
@@ -44,23 +44,17 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	private final static boolean ENABLE_SYNCHRONIZED_COMMAND_EXECUTION = true;
 	
 	
-	public AutonomousSystem(String pName, Simulation pSimulation, Boolean pPartialRouting, String pPartialRoutingServiceName)
+	public AutonomousSystem(String pName, Simulation pSimulation, boolean pPartialRouting, String pPartialRoutingServiceName)
 	{	
 		super(pName, new Logger(pSimulation.getLogger()), pSimulation.getTimeBase());
 		
 		mName = pName;
 		mSim = pSimulation;
 		
-		RemoteRoutingService tGrs = RoutingServiceInstanceRegister.getGlobalRoutingService(mSim);
-		
-		mLogger.log(tGrs.toString());
-		
-		// Show it in the graph for making it clickable 
-		getGraph().add(tGrs);
+		RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance(pSimulation);
+		RemoteRoutingService tGrs = register.getGlobalRoutingService(mSim);
 		
 		if(pPartialRouting) {
-			RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance();
-			
 			if(pPartialRoutingServiceName != null) {
 				mRoutingService = register.get(pPartialRoutingServiceName);
 				
@@ -72,9 +66,7 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 			}
 			
 			if(mRoutingService == null) {
-				mRoutingService = register.create(mSim.getTimeBase(), mLogger, pPartialRoutingServiceName, tGrs);
-	
-				attach(mRoutingService, tGrs);
+				mRoutingService = register.create(mSim, mSim.getTimeBase(), mLogger, pPartialRoutingServiceName, tGrs);
 			}
 		} else {
 			mRoutingService = tGrs;
@@ -82,24 +74,6 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		
 		JiniHelper.registerService(IAutonomousSystem.class, this, mName);
 		mLogger.debug(this, "Registered Autonomous System with " + JiniHelper.getService(IAutonomousSystem.class, mName) );
-	}
-	
-	@Override
-	public boolean addNode(Node newNode)
-	{
-		boolean tRes = super.addNode(newNode);
-
-		if(tRes) {
-			// TODO Link is needed for routing service showing up in the graph.
-			//      Just inserting the node seems not to be sufficient.
-			//      Bug in JUNG?
-//			getGraph().link(newNode, mRoutingService, "routing for " +newNode);
-			getGraph().add(mRoutingService);
-			// link will be deleted automatically when <code>Network</code> deletes
-			// the node
-		}
-		
-		return tRes;
 	}
 	
 	public RemoteRoutingService getRoutingService()
@@ -114,9 +88,12 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		String tRoutingConfigurator = mSim.getConfig().Scenario.ROUTING_CONFIGURATOR;
 		NodeConfiguratorContainer.getRouting().configure(tRoutingConfigurator, pName, this, newNode);
 		
-		if(!newNode.hasRoutingService()) {
-			// no routing service at all? -> create default routing service
-			newNode.getHost().registerRoutingService(new RoutingServiceSimulated(getRoutingService(), pName, newNode));
+		FoGEntity layer = (FoGEntity) newNode.getLayer(FoGEntity.class);
+		if(layer != null) {
+			if(!layer.hasRoutingService()) {
+				// no routing service at all? -> create default routing service
+				layer.registerRoutingService(new RoutingServiceSimulated(getRoutingService(), pName, newNode));
+			}
 		}
 		
 		String tAppConfigurator = mSim.getConfig().Scenario.APPLICATION_CONFIGURATOR;
@@ -227,12 +204,15 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	public ReroutingSession establishConnection(String pSendingNode, String pTargetNode)
 	{
 		Node tNode = getNodeByName(pSendingNode);
-		Connection tConnection = null;
-		tConnection = tNode.getHost().connect(new SimpleName(new Namespace("rerouting"), pTargetNode), Description.createBE(false), null);
-		
-		for(Application tApplication : tNode.getHost().getApps()) {
-			if(tApplication instanceof ReroutingExecutor) { 
-				ReroutingSession tSession = ((ReroutingExecutor)tApplication).new ReroutingSession(true);
+
+		for(Application tApplication : tNode.getApps()) {
+			if(tApplication instanceof ReroutingExecutor) {
+				ReroutingExecutor tExecutor = ((ReroutingExecutor)tApplication);
+				ReroutingSession tSession = tExecutor.new ReroutingSession(true);
+
+				Connection tConnection = null;
+				tConnection = tNode.getLayer(null).connect(new SimpleName(new Namespace("rerouting"), pTargetNode), tExecutor.getDescription(), null);
+
 				tSession.start(tConnection);
 				if(!JiniHelper.isEnabled()) {
 					return tSession;

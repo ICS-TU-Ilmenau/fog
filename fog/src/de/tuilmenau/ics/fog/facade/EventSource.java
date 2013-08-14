@@ -16,6 +16,9 @@ package de.tuilmenau.ics.fog.facade;
 import de.tuilmenau.ics.fog.facade.events.Event;
 
 
+/**
+ * Base class for objects that informs others about asynchronous events.
+ */
 public interface EventSource
 {
 	/**

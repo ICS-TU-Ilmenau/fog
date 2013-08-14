@@ -20,15 +20,11 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class StartMultipathClient extends HostApplication
 {
-	public StartMultipathClient()
-	{
-	}
-	
 	@Override
 	public void main() throws Exception
 	{
 		if(getHost() != null) {
-			String tDestination = EnterStringDialog.open(getSite().getShell(), "UDP Encapsulation listener", "Please set the IP listener:", "0.0.0.0:5000[UDP]", null);
+			String tDestination = EnterStringDialog.open(getShell(), "UDP Encapsulation listener", "Please set the IP listener:", "0.0.0.0:5000[UDP]", null);
 			Logging.trace(this, "Entered stream destination: " + tDestination);
 			if (tDestination != null)
 			{

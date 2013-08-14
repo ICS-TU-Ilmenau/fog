@@ -16,16 +16,18 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.InterOpIP;
 import de.tuilmenau.ics.fog.application.InterOpIP.Transport;
-import de.tuilmenau.ics.fog.application.Service;
-import de.tuilmenau.ics.fog.application.Session;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointUDPProxy;
+import de.tuilmenau.ics.fog.application.util.Service;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
+import de.tuilmenau.ics.fog.facade.Layer;
 import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
 import de.tuilmenau.ics.fog.facade.properties.DelayProperty;
 import de.tuilmenau.ics.fog.facade.properties.MinMaxProperty.Limit;
@@ -87,44 +89,48 @@ public class MultipathClient extends Application
 	@Override
 	protected void started() 
 	{
+		Layer layer = mHost.getLayer(null);
+		
 		// connect to multipath server
-		mHighPrioToMultipathServer = mHost.connect(mServerName, null /* TODO: differentiate between the paths and stream requirements */, null);
+		mHighPrioToMultipathServer = layer.connect(mServerName, null /* TODO: differentiate between the paths and stream requirements */, null);
 		mHighPrioSocketToMultipathServer = new MultipathSession();
 		mHighPrioSocketToMultipathServer.start(mHighPrioToMultipathServer);
 
-		mLowPrioToMultipathServer = mHost.connect(mServerName, null /* TODO: differentiate between the paths and stream requirements */, null);
+		mLowPrioToMultipathServer = layer.connect(mServerName, null /* TODO: differentiate between the paths and stream requirements */, null);
 		mLowPrioSocketToMultipathServer = new MultipathSession();
 		mLowPrioSocketToMultipathServer.start(mLowPrioToMultipathServer);
 		
 		// provide a service within the FoG network which catches incoming UDP requests/associations
-		try {
-			Binding tBinding = getHost().bind(null, mClientName, getDescription(), getIdentity());
-			
-			// per incoming connection
-			mServerSocket = new Service(false, null)
+		Binding tBinding = getLayer().bind(null, mClientName, getDescription(), getIdentity());
+		
+		// per incoming connection
+		mServerSocket = new Service(false, null)
+		{
+			@Override
+			public void newConnection(Connection pConnection)
 			{
-				public void newConnection(Connection pConnection)
-				{
-					Session tSession = new SctpClient();
-					
-					// start event processing
-					tSession.start(pConnection);
-					
-					// add it to list of ongoing connections
-					mSctpClients.add(tSession);
-					
-					String[] tSeenPeers = mServerCEP2IP.getSeenIpPeerAddresses();
-					if (tSeenPeers != null) {
-						mLogger.log(this, "New connection from an SCTP client at " + tSeenPeers[tSeenPeers.length - 1]);
-						mIpDestination = tSeenPeers[0] + "(" + mIpListenerTransport + ")"; 
-					}
+				Session tSession = new SctpClient();
+				
+				// start event processing
+				tSession.start(pConnection);
+				
+				// add it to list of ongoing connections
+				mSctpClients.add(tSession);
+				
+				String[] tSeenPeers = mServerCEP2IP.getSeenIpPeerAddresses();
+				if (tSeenPeers != null) {
+					mLogger.log(this, "New connection from an SCTP client at " + tSeenPeers[tSeenPeers.length - 1]);
+					mIpDestination = tSeenPeers[0] + "(" + mIpListenerTransport + ")"; 
 				}
-			};
-			mServerSocket.start(tBinding);
-		}
-		catch (NetworkException tExc) {
-			terminated(tExc);
-		}
+			}
+			
+			@Override
+			public void error(ErrorEvent cause)
+			{
+				terminated(cause.getException());
+			}
+		};
+		mServerSocket.start(tBinding);
 		
 		// create FoG connection towards IP destination
 		try {

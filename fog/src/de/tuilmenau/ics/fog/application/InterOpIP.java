@@ -15,9 +15,12 @@ package de.tuilmenau.ics.fog.application;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointInterOpIP;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointTCPProxy;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointUDPProxy;
+import de.tuilmenau.ics.fog.application.util.ServerCallback;
+import de.tuilmenau.ics.fog.application.util.Service;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
@@ -25,9 +28,8 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IServerCallback;
-import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.properties.IpDestinationProperty;
 import de.tuilmenau.ics.fog.routing.ip.RoutingServiceIP;
 import de.tuilmenau.ics.fog.util.SimpleName;
@@ -39,7 +41,7 @@ import de.tuilmenau.ics.fog.util.SimpleName;
  * The two operating modes are provided by two interfaces.
  * 
  */
-public class InterOpIP extends Application implements IServerCallback
+public class InterOpIP extends Application implements ServerCallback
 {
 	public enum Transport{ TCP, UDP };
 	public final static String INTEROP_APPL_ID = "IP://";
@@ -67,25 +69,26 @@ public class InterOpIP extends Application implements IServerCallback
 	@Override
 	protected void started()
 	{
-		getHost().registerRoutingService(new RoutingServiceIP(getHost()));
+		FoGEntity.registerRoutingService(getHost(), new RoutingServiceIP(getHost()));
 
-		try {
-			Binding tBinding = getHost().bind(null, mName, getDescription(), getIdentity());
-			mServerSocket = new Service(false, this);
-			mServerSocket.start(tBinding);
-		}
-		catch(NetworkException tExc) {
-			getLogger().err(this, "Can not start application.", tExc);
-			terminated(tExc);
-		}
+		Binding tBinding = getLayer().bind(null, mName, getDescription(), getIdentity());
+		mServerSocket = new Service(false, this);
+		mServerSocket.start(tBinding);
 	}
 	
+	@Override
 	public void exit()
 	{
 		if(mServerSocket != null) {
 			mServerSocket.stop();
 			mServerSocket = null;
 		}
+	}
+	
+	@Override
+	public void error(ErrorEvent cause)
+	{
+		terminated(cause.getException());
 	}
 	
 	/**

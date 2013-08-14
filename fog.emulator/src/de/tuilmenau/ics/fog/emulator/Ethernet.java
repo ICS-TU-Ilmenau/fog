@@ -17,6 +17,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.IEventRef;
+import de.tuilmenau.ics.fog.application.util.LayerObserverCallback;
 import de.tuilmenau.ics.fog.emulator.Interface.ReceiveResult;
 import de.tuilmenau.ics.fog.emulator.ethernet.MACAddress;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -58,9 +59,13 @@ public class Ethernet implements ILowerLayer, Runnable, IEvent
 	}
 
 	@Override
-	public boolean isBroken()
+	public Status isBroken()
 	{
-		return mBroken;
+		if(mBroken) {
+			return Status.BROKEN;
+		} else {
+			return Status.OK;
+		}
 	}
 	
 	@Override
@@ -147,13 +152,13 @@ public class Ethernet implements ILowerLayer, Runnable, IEvent
 	}
 
 	@Override
-	public void registerObserverNeighborList(INeighborCallback observer)
+	public void registerObserverNeighborList(LayerObserverCallback observer)
 	{
 		if(!observerList.contains(observer)) observerList.add(observer);
 	}
 
 	@Override
-	public boolean unregisterObserverNeighborList(INeighborCallback observer)
+	public boolean unregisterObserverNeighborList(LayerObserverCallback observer)
 	{
 		return observerList.remove(observer);	
 	}
@@ -331,7 +336,7 @@ public class Ethernet implements ILowerLayer, Runnable, IEvent
 			mNeighborTimes.put(pNeighbor, mAS.getTimeBase().now());
 			
 			// inform observer about new neighbor
-			for(INeighborCallback obs : observerList) {
+			for(LayerObserverCallback obs : observerList) {
 				try {
 					obs.neighborDiscovered(pNeighbor);
 				}
@@ -358,7 +363,7 @@ public class Ethernet implements ILowerLayer, Runnable, IEvent
 				
 				if(!EMULATE_BROKEN) {
 					// inform observer about deleted neighbor
-					for(INeighborCallback obs : observerList) {
+					for(LayerObserverCallback obs : observerList) {
 						try {
 							obs.neighborDisappeared(tNeighbor);
 						}
@@ -382,7 +387,7 @@ public class Ethernet implements ILowerLayer, Runnable, IEvent
 	private String mName;
 	@Viewable(value="Broken")
 	private boolean mBroken = false;
-	private LinkedList<INeighborCallback> observerList = new LinkedList<INeighborCallback>();
+	private LinkedList<LayerObserverCallback> observerList = new LinkedList<LayerObserverCallback>();
 	
 	private String mHigherLayerName;
 	private ILowerLayerReceive mHigherLayer;

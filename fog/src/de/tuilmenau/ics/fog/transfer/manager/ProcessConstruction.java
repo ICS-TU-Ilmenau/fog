@@ -126,7 +126,7 @@ public abstract class ProcessConstruction extends Process
 						
 						if((tGate != null) && (tGate instanceof HorizontalGate)) {
 							Packet keepAlive = new Packet(new PleaseKeepAlive());
-							getBase().getNode().getAuthenticationService().sign(keepAlive, getOwner());
+							getBase().getEntity().getAuthenticationService().sign(keepAlive, getOwner());
 							tGate.handlePacket(keepAlive, null);
 						}
 						// else: otherwise it makes no sense because we do not have a route

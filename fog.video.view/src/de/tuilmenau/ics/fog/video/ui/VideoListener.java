@@ -15,7 +15,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
-import de.tuilmenau.ics.fog.application.Session;
+import de.tuilmenau.ics.fog.application.util.ReceiveCallback;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.MessageBoxDialog;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectRequirementsDialog;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
@@ -27,7 +28,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.video.UDPServerVideoProxy;
 
-public class VideoListener implements IReceiveCallback
+public class VideoListener implements ReceiveCallback
 {
 		private Shell mShell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 		protected Host mHost;
@@ -38,7 +39,7 @@ public class VideoListener implements IReceiveCallback
 		protected boolean mHasNewFrame = false;
 		protected Session mSocket = null;
 		private Thread mSocketConnectionThread = null;
-		private IReceiveCallback mSocketReceiver = null;
+		private ReceiveCallback mSocketReceiver = null;
 		protected String mServerName = "";
 		protected Description mTransmissionRequirements;
 		protected long mLastFrameTime = 0;
@@ -72,7 +73,7 @@ public class VideoListener implements IReceiveCallback
 			// probe all possible server names by asking the corresponding routing service
 			for (int i = 0; i < UDPServerVideoProxy.sMaxRunningServers; i++) {
 				SimpleName name = new SimpleName(UDPServerVideoProxy.NAMESPACE_VIDEO, "VideoServer" +i);
-				if (mHost.isKnown(name)) {
+				if (mHost.getLayer(null).isKnown(name)) {
 					tRegisteredVideoServers[i] = true;
 					tFound++;
 					Logging.log(this, "Found " + name + " registered in Routing Service");
@@ -174,7 +175,7 @@ public class VideoListener implements IReceiveCallback
 						}
 
 						try {
-							Connection tConn = mHost.connect(SimpleName.parse(mServerName), mTransmissionRequirements, null);
+							Connection tConn = mHost.getLayer(null).connect(SimpleName.parse(mServerName), mTransmissionRequirements, null);
 							mSocket = new Session(false, mHost.getLogger(), mSocketReceiver);
 							mSocket.start(tConn);
 						}

@@ -16,8 +16,8 @@ package de.tuilmenau.ics.fog.transfer.gates;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.roles.IFunctionDescriptor;
 import de.tuilmenau.ics.fog.ui.Viewable;
@@ -35,9 +35,9 @@ public abstract class FunctionalGate extends AbstractGate
 	 * @param pFunctionDescriptor The description of the functional role (the
 	 * gate has to play) or {@code null}.
 	 */
-	public FunctionalGate(Node pNode, ForwardingElement pNext, IFunctionDescriptor pFunctionDescriptor, Identity pOwner)
+	public FunctionalGate(FoGEntity pEntity, ForwardingElement pNext, IFunctionDescriptor pFunctionDescriptor, Identity pOwner)
 	{
-		super(pNode, null, pOwner);
+		super(pEntity, null, pOwner);
 		
 		mNext = pNext;
 		mConfigData = null;
