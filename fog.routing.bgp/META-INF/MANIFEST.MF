@@ -1,0 +1,24 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoG routing service based on BGP
+Bundle-SymbolicName: de.tuilmenau.ics.fog.routing.bgp;singleton:=true
+Bundle-Version: 1.0.2.qualifier
+Bundle-Vendor: ICS group of TU Ilmenau
+Require-Bundle: de.tuilmenau.ics.fog;bundle-version="1.0.1",
+ de.tuilmenau.ics.graph;bundle-version="1.0.0",
+ de.tuilmenau.ics.fog.ui;bundle-version="1.0.2"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: de.tuilmenau.ics.CommonSim.datastream,
+ de.tuilmenau.ics.CommonSim.datastream.numeric
+Export-Package: SSF.Net,
+ SSF.Net.Util,
+ SSF.OS.BGP4,
+ SSF.OS.BGP4.Comm,
+ SSF.OS.BGP4.Util,
+ SSF.OS.NetFlow,
+ SSF.OS.TCP,
+ de.tuilmenau.ics.fog.routing.bgp,
+ de.tuilmenau.ics.fog.routing.bgp.ui
+Bundle-ClassPath: .,
+ lib/regexp.jar

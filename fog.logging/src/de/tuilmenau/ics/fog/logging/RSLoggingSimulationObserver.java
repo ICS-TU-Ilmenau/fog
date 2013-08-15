@@ -22,6 +22,7 @@ import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.launcher.SimulationObserver;
 import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
+import de.tuilmenau.ics.fog.routing.simulated.RootRoutingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -77,21 +78,22 @@ public class RSLoggingSimulationObserver extends FileLogObserver implements Simu
 		try {
 			for(RemoteRoutingService rs : allRS) {
 				String baseName = rs.getClass().getName() +".";
+				boolean includeInSum = !(rs instanceof RootRoutingService);
 				
 				number = rs.getNumberVertices();
 				out = DoubleNode.openAsWriter(baseName +rs.getName() +".vertices");
 				out.write(number, timeBase.nowStream());
-				sumVertices += number;
+				if(includeInSum) sumVertices += number;
 				
 				number = rs.getNumberEdges();
 				out = DoubleNode.openAsWriter(baseName +rs.getName() +".edges");
 				out.write(number, timeBase.nowStream());
-				sumEdges += number;
+				if(includeInSum) sumEdges += number;
 				
 				number = rs.getSize();
 				out = DoubleNode.openAsWriter(baseName +rs.getName() +".size");
 				out.write(number, timeBase.nowStream());
-				sumSize += number;
+				if(includeInSum) sumSize += number;
 			}
 	
 			out = DoubleNode.openAsWriter("RoutingService.sumVertices");

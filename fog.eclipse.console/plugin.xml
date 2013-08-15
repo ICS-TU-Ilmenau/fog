@@ -12,7 +12,7 @@
          point="de.tuilmenau.ics.fog.commands">
       <plugin
             name="Open console"
-            class="de.tuilmenau.ics.fog.app.console.ConsoleApp"
+            class="de.tuilmenau.ics.fog.app.console.StartConsoleCommand"
             filter="de.tuilmenau.ics.fog.facade.Host">
       </plugin>
 

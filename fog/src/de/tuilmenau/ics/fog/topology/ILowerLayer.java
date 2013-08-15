@@ -25,7 +25,7 @@ import de.tuilmenau.ics.fog.util.Logger;
 /**
  *
  */
-public interface ILowerLayer extends Remote
+public interface ILowerLayer extends Breakable, Remote
 {	
 	public static final NeighborInformation BROADCAST = new NeighborInformation(null, -1);
 	public enum SendResult { OK, LOWER_LAYER_BROKEN, NEIGHBOR_NOT_KNOWN, NEIGHBOR_NOT_REACHABLE, UNKNOWN_ERROR };
@@ -96,21 +96,6 @@ public interface ILowerLayer extends Remote
 	 * @return Description of the lower layer
 	 */
 	public Description getDescription() throws RemoteException;
-
-	/**
-	 * @return If the lower layer is broken. Mainly used for GUI purposes.
-	 */
-	public boolean isBroken() throws RemoteException;
-	
-	/**
-	 * En-/Disables the lower layer for testing purpose. In special, this
-	 * method enables test of faulty links.
-	 * 
-	 * @param pBroken true=LL is broken; false=LL is ok
-	 * @param pErrorTypeVisible true=link reports true error; false=unspecific error report
-	 * @throws RemoteException on error
-	 */
-	public void setBroken(boolean pBroken, boolean pErrorTypeVisible) throws RemoteException;
 
 	/**
 	 * 

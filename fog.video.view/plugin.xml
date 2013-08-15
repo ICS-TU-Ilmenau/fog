@@ -56,25 +56,25 @@
       </view>
    </extension>     
    <extension
-         point="de.tuilmenau.ics.fog.hostApplications">
+         point="de.tuilmenau.ics.fog.commands">
       <plugin
             name="Enable video transcoding support"
             class="de.tuilmenau.ics.fog.video.ui.VideoTranscodingEnableCommand"
             filter="de.tuilmenau.ics.fog.facade.Host">
       </plugin>
-   </extension>
-   <extension
-  	   point="de.tuilmenau.ics.fog.hostApplications">
+      
       <plugin
 	name="Start video proxy"
 	class="de.tuilmenau.ics.fog.video.ui.commands.StartVideoProxy"
 	filter="de.tuilmenau.ics.fog.facade.Host">
       </plugin>
+      
       <plugin
 	name="Start audio proxy"
 	class="de.tuilmenau.ics.fog.video.ui.commands.StartAudioProxy"
 	filter="de.tuilmenau.ics.fog.facade.Host">
       </plugin>
+      
       <editor
         name="Start video viewer"
         editorID="de.tuilmenau.ics.fog.videoeditor"

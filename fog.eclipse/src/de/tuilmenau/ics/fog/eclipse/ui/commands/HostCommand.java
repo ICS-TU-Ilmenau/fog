@@ -16,13 +16,8 @@ import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 
-public abstract class HostApplication extends EclipseCommand
+public abstract class HostCommand extends EclipseCommand
 {
-	public HostApplication()
-	{
-		host = null;
-	}
-	
 	@Override
 	public final void execute(Object object) throws Exception
 	{
@@ -66,5 +61,5 @@ public abstract class HostApplication extends EclipseCommand
 	}
 	
 	private MenuCreator menuCreator = null;
-	private Host host;
+	private Host host = null;
 }
