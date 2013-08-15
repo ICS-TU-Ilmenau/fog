@@ -33,6 +33,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.util.Logger;
 
 public class ElectionProcess extends Thread
 {
@@ -391,9 +392,11 @@ public class ElectionProcess extends Thread
 		private HashMap<Integer, HashMap<Long, ElectionProcess>>mElections = null;
 		private static ElectionManager mManager = null;
 		private ElectionNotification mNotification;
+		private Logger mLogger = Logging.getInstance();
 		
 		public ElectionManager()
 		{
+			mLogger.info(this, "************ Instance to handle elections was created.******************");
 			mElections = new HashMap<Integer, HashMap<Long, ElectionProcess>>();
 		}
 		
@@ -448,7 +451,7 @@ public class ElectionProcess extends Thread
 					if(mNotification != null) {
 						mNotification = null;
 					}
-					Logging.log(this, "No more elections available, preparing next cluster");
+					mLogger.log(this, "******* No more elections available, preparing next cluster ********");
 					if(mElections.containsKey(pLevel + 1)) {
 						for(ElectionProcess tProcess : mElections.get(Integer.valueOf(pLevel + 1)).values()) {
 							tProcess.start();

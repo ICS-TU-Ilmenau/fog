@@ -19,40 +19,60 @@ public class HierarchicalConfig
 	public class Routing
 	{
 		/**
-		 * amount of hierarchical levels in the simulation
+		 * Please provide the amount of hierarchies that should be used.
 		 */
 		public static final int HIERARCHY_LEVEL_AMOUNT = 3;
 		/**
-		 * this limits the maximum amount of nodes inside one cluster
+		 * Use this to specify the maximum size of cluster members. Here you specify the exponent to the power of 2.
 		 */
 		public static final int HIERARCHICAL_BIT_SIZE_PER_LEVEL = 8;
 		
 		/**
-		 * This limits the radius that is used to limit the cluster size of (virtual) nodes 
+		 * Specify the maximum hop count a cluster member may be away from the coordinator. 
 		 */
 		public static final int PAN_CLUSTER_ELECTION_NUMBER = 4;
 		
 		/**
-		 * specifies whether a coordinator should be used
+		 * Specify whether a coordinator should be used. Please leave this true.
 		 */
 		public static final boolean USE_COORDINATOR = true;
 		
 		/**
-		 * If this is set to true a lookup map is used to calculate the next hop in the hierarchy
+		 * If this is set to true a lookup map is used to calculate the next hop in the hierarchy. Please leave it true.
 		 */
 		public static final boolean USE_LOOKUP_MAP_IN_HIERARCHICAL_ROUTING = true;
 		
 		/**
-		 * specifies whether hierarchy preparation is done stepwise 
+		 * Specify whether hierarchy preparation should be done stepwise. Don't use values different from true :-) as long as
+		 * no dynamic clustering is provided.
+		 *  
 		 */
 		public static final boolean STEP_WISE_HIERARCHY_PREPARATION = true;
 		
-		public static final boolean BUILD_UP_HIERARCHY_AUTOMATICALLY = false;
+		/**
+		 * Once you started the election processes among all clusters the further clustering will be done automatically and will stop
+		 * as soon as the addresses and with the addresses the routing tables are distributed.
+		 */
+		public static final boolean BUILD_UP_HIERARCHY_AUTOMATICALLY = true;
 		
-		public static final boolean ELECTION_BEGINS_IMMEDIATLY_AFTER_SETUP = false;
+		/**
+		 * As soon as the topology is built up and the scenario imported, the elections begin.
+		 */
+		public static final boolean ELECTION_BEGINS_IMMEDIATLY_AFTER_SETUP = true;
 		
+		/**
+		 * If you debug and have to see the HRMID (hierarchical address of a node) in the cluster view, set this to true.
+		 */
 		public static final boolean ADDR_DISTRIBUTOR_PRINTS_HRMID = false;
 		
+		/**
+		 * It is possible to do traffic engineering with HRM. You can prohibit/allow several zones that are allowed to route the traffic.
+		 * Different types can be specified:
+		 * - obstructive (see medical description...): everything is allowed but some zones are not allowed to route the packet
+		 * - restrictive: explicitly specify regions that may route your packet through; the induced subgraph has to be connected if you want
+		 *                the packet to reach the target
+		 * However the region limitation was not implemented in the public version
+		 */
 		public static final boolean ENABLE_REGION_LIMITATION = false;
 	}
 	public Routing routing = new Routing();

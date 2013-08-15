@@ -103,10 +103,11 @@ public class HierarchicalRoutingService implements RoutingService
 		mLogger = new Logger(mReferenceNode.getLogger());
 	}
 
-	public void initiateCoordinator()
+	public Coordinator initiateCoordinator()
 	{
 		mCoordinatorInstance = new Coordinator(mReferenceNode.getLogger(), mReferenceNode.getIdentity(), mReferenceNode, this);
 		mReferenceNode.getNode().registerApp(mCoordinatorInstance);
+		return mCoordinatorInstance;
 	}
 	
 	public Coordinator getCoordinator()
@@ -124,12 +125,27 @@ public class HierarchicalRoutingService implements RoutingService
 		mNameMapping.registerName(pName, pAddress, NamingLevel.NAMES);
 	}
 
+	/**
+	 * 
+	 * Use this event to connect to other forwarding nodes.
+	 */
 	public class CoordinatorConnectEvent implements IEvent
 	{
-		public CoordinatorConnectEvent(Name pName, long pToClusterID, boolean pConnectionToOtherAS)
+		/**
+		 * 
+		 * @param pConnectTo This is the entity the connection should be established to.
+		 * @param pConnectFrom  This is the forwarding node the connection is established from.
+		 * @param pToClusterID Provide the cluster ID the connection should be associated to.
+		 * @param pConnectionToOtherAS If the connection endpoint on the other side lies in another autonomous system, that information has to be considered.
+		 */
+		public CoordinatorConnectEvent(Name pConnectTo, Name pConnectFrom, long pToClusterID, boolean pConnectionToOtherAS)
 		{
 			super();
-			mConnectTo = pName;
+			
+			mStackTrace = Thread.currentThread().getStackTrace();
+			
+			mConnectTo = pConnectTo;
+			mConnectFrom = pConnectFrom;
 			mToClusterID = pToClusterID;
 			mConnectionToOtherAS = pConnectionToOtherAS;
 		}
@@ -137,12 +153,15 @@ public class HierarchicalRoutingService implements RoutingService
 		@Override
 		public void fire()
 		{
-			mCoordinatorInstance.addConnection(mConnectTo, 0, mToClusterID, mConnectionToOtherAS);
+			mLogger.info(this, "Executing event to establish connection between " + mConnectFrom + " and " + mConnectTo);
+			mCoordinatorInstance.addConnection(mConnectTo, 0, mToClusterID, mConnectionToOtherAS, mStackTrace);
 		}
 		
 		private Name mConnectTo;
+		private Name mConnectFrom;
 		private long mToClusterID = 0;
 		private boolean mConnectionToOtherAS;
+		private StackTraceElement[] mStackTrace;
 	}
 
 	public boolean registerRoute(HRMName pFrom, HRMName pTo, Route pPath)
@@ -516,7 +535,7 @@ public class HierarchicalRoutingService implements RoutingService
 	
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "@" + mReferenceNode.toString();
+		return "HRS@" + mReferenceNode.toString();
 	}
 	
 	public String getEdges()
@@ -802,7 +821,7 @@ public class HierarchicalRoutingService implements RoutingService
 			}
 			
 			if(tTo == null) {
-				mLogger.log(this, "Trigger");
+				mLogger.log(this, "Unable to determine destination address");
 			}
 		}
 	}
@@ -864,13 +883,13 @@ public class HierarchicalRoutingService implements RoutingService
 			if(tDestination != null && !pFrom.equals(tThisHostAddress) && !tDestination.equals(tThisHostAddress)) {
 				if(tSource.getAddress().longValue() < tDestination.getAddress().longValue()) {
 					List<RoutingServiceLink> tContemporaryRoute = mRoutingMap.getRoute(tThisHostAddress, tDestination);
-					mLogger.log(this, "Will initiate connection from " + tThisHostAddress + " to " + tDestination + " via FN " + pFrom);
+					mLogger.log(this, "Will initiate connection from " + tSource + " to " + tDestination + " via FN " + pFrom);
 					mNeighborRoutes.add(new RememberFN(tContemporaryRoute, tDestination));
 					/*
 					 * We hash the name of the bus on which the packet came in to create a temporary identification of the cluster
 					 */
 					if(tContemporaryRoute == null) {
-						mLogger.log(this, "Trigger");
+						mLogger.log(this, "Contemporary route is null");
 					}
 					AbstractGate tGate = null;
 					try {
@@ -902,7 +921,8 @@ public class HierarchicalRoutingService implements RoutingService
 						} else {
 							Logging.log(this, "Pair " + tSource.getDescr() + ", " + tDestination.getDescr() + " scheduled for election");
 						}
-						CoordinatorConnectEvent tConnectEvent = new CoordinatorConnectEvent(tDestination, tClusterID, tDontElect);
+						//CoordinatorConnectEvent tConnectEvent = new CoordinatorConnectEvent(, tClusterID, tDontElect);
+						CoordinatorConnectEvent tConnectEvent = new CoordinatorConnectEvent(tDestination, tFrom, tClusterID, tDontElect);
 						mReferenceNode.getTimeBase().scheduleIn(waitTime, tConnectEvent);
 					}
 				}

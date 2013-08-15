@@ -59,7 +59,6 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
-import de.tuilmenau.ics.fog.ui.Decoration;
 import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
@@ -91,6 +90,8 @@ public class Coordinator extends Application implements ServerCallback, Decorato
 	public final static Namespace CoordinatorNamespace = new Namespace("routing");
 	private int [] mBullyPriority = new int [HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT];
 	private int mConnectionCounter = 0;
+	private int mHighestLevelOfCoordinator = -1;
+	
 	
 	/**
 	 * @param pHost is the hosts that runs the coordinator
@@ -114,8 +115,6 @@ public class Coordinator extends Application implements ServerCallback, Decorato
 		
 		mHRS = pHRS;
 		mApprovedSignatures = new LinkedList<HierarchicalSignature>();
-		
-		Decoration.getInstance(Coordinator.class.toString()).setDecorator(pNode.getNode(), this);
 	}
 
 	@Override
@@ -455,7 +454,7 @@ public class Coordinator extends Application implements ServerCallback, Decorato
 	 * @param pToClusterID is the identity of the cluster a connection will be added to
 	 * @param pConnectionToOtherAS says whether the connection leads to another autonomous system
 	 */
-	public void addConnection(Name pName, int pLevel, Long pToClusterID, boolean pConnectionToOtherAS)
+	public void addConnection(Name pName, int pLevel, Long pToClusterID, boolean pConnectionToOtherAS, StackTraceElement[] pStackTrace)
 	{
 		if(pConnectionToOtherAS) {
 			Logging.log(this, "Trigger");
@@ -475,6 +474,8 @@ public class Coordinator extends Application implements ServerCallback, Decorato
 				tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
 				((IntermediateCluster)tCluster).getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
 				
+				tDemux.setStackTrace(pStackTrace);
+				
 				tCluster.addParticipatingCEP(tDemux);
 				tFoundCluster = tCluster;
 				tClusterFound = true;
@@ -487,6 +488,8 @@ public class Coordinator extends Application implements ServerCallback, Decorato
 			addCluster(tCluster);
 			tCEP = new CoordinatorCEP(mLogger, this, false, pLevel, tCluster.getMultiplexer());
 			tDemux = new CoordinatorCEPDemultiplexed(mLogger, this, tCluster);
+			tDemux.setStackTrace(pStackTrace);
+
 			((IntermediateCluster)tCluster).getMultiplexer().addMultiplexedConnection(tDemux, tCEP);
 			
 			tCluster.addParticipatingCEP(tDemux);
@@ -793,12 +796,14 @@ public class Coordinator extends Application implements ServerCallback, Decorato
 	 * 
 	 * @param pSignature is a signature that validates a FIB entry.
 	 */
-	public void addApprovedSignature(HierarchicalSignature pSignature)
+	public synchronized void addApprovedSignature(HierarchicalSignature pSignature)
 	{
 		if(mApprovedSignatures == null) {
 			mApprovedSignatures = new LinkedList<HierarchicalSignature>();
 		}
+		getLogger().log(this, "Will add " + pSignature + " to " + mApprovedSignatures + " and is it already included? " + mApprovedSignatures.toString().contains(pSignature.toString()) + ", however the list says " + mApprovedSignatures.contains(pSignature));
 		if(!mApprovedSignatures.contains(pSignature)) {
+			getLogger().err(this, "Adding signature " + pSignature + " to " + mApprovedSignatures);
 			mApprovedSignatures.add(pSignature);
 		}
 	}
@@ -1051,6 +1056,7 @@ public class Coordinator extends Application implements ServerCallback, Decorato
 			buffer.append(id);
 		}
 		
+		
 		return buffer.toString();
 	}
 
@@ -1063,6 +1069,11 @@ public class Coordinator extends Application implements ServerCallback, Decorato
 	@Override
 	public String getImageName()
 	{
-		return null;
+		return ( mHighestLevelOfCoordinator == -1 ? null : getClass().getCanonicalName() + ( mHighestLevelOfCoordinator >= 0 ? ".L" + mHighestLevelOfCoordinator : "" ) + ".gif" );
+	}
+	
+	public void setHighestCoordinatorLevel(int pHighestLevel)
+	{
+		mHighestLevelOfCoordinator = pHighestLevel;
 	}
 }

@@ -50,4 +50,10 @@ public class ElectionEvent implements IEvent
 		return 0;
 	}
 	
+	@Override
+	public boolean equals(Object pObj)
+	{
+		return (pObj instanceof ElectionEvent ? true : false);
+	}
+	
 }

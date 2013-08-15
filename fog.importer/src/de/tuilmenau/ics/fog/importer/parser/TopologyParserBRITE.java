@@ -108,7 +108,6 @@ public class TopologyParserBRITE extends TopologyParser
 	public boolean readNextEdgeEntry() {
 		try {
 			line = reader.readLine();
-			mLogger.log(this, "Read " + line);
 			if( line!= null && !(line.equals("\n")) && ! (line.equals(""))) {
 				mLogger.log(this, "Will return true");
 				return true;

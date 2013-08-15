@@ -11,11 +11,14 @@ package de.tuilmenau.ics.fog.ui.eclipse.editors;
 
 import java.rmi.RemoteException;
 import java.text.Collator;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Locale;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -25,6 +28,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Scrollable;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -56,6 +60,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.clusters.ClusterManager;
 import de.tuilmenau.ics.fog.routing.hierarchical.clusters.IntermediateCluster;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.util.Logger;
 
 
 /**
@@ -68,30 +73,47 @@ public class CoordinatorEditor extends EditorPart
     private Composite mShell = null;
     private ScrolledComposite mScroller = null;
     private Composite mContainer = null;
-	
+
+    private Logger mLogger;
+    
+    private LinkedList<Scrollable> mDisplayObjects;
+    private boolean mTabWasClosed = false;
+    
 	public CoordinatorEditor()
 	{
+		mLogger = Logging.getInstance();
 	}
 	
-	@Override
-	public void createPartControl(Composite parent)
+	public void drawRoutingTable(TableItem pItem, HRMID pHRMID)
 	{
-		mDisplay = Display.getCurrent();
-		mShell = parent;
-		mShell.setLayout(new FillLayout());
-		mScroller = new ScrolledComposite(mShell, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
-		mContainer = new Composite(mScroller, SWT.NONE);
-		mScroller.setContent(mContainer);
-		GridLayout tLayout = new GridLayout(1, true);
-		mContainer.setLayout(tLayout);
+		pItem.setText(1, mCoordinator.getHRS().getFIBEntry(pHRMID).getNextHop() != null ? mCoordinator.getHRS().getFIBEntry(pHRMID).getNextHop().toString() : "UNKNOWN");
+		pItem.setText(2, mCoordinator.getHRS().getFIBEntry(pHRMID).getNextCluster()!=null && mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(pHRMID).getNextCluster()) != null ? mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(pHRMID).getNextCluster()).toString() : "UNKNOWN");
+		pItem.setText(3, mCoordinator.getHRS().getFIBEntry(pHRMID).getFarthestClusterInDirection()!=null && mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(pHRMID).getFarthestClusterInDirection()) != null ? mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(pHRMID).getFarthestClusterInDirection()).toString() : "UNKNOWN");
+		pItem.setText(4, mCoordinator.getHRS().getFIBEntry(pHRMID).getRouteToTarget()!=null ? mCoordinator.getHRS().getFIBEntry(pHRMID).getRouteToTarget().toString() : "UNKNOWN");
+		pItem.setText(5, mCoordinator.getHRS().getFIBEntry(pHRMID).getSignature()!=null ? mCoordinator.getHRS().getFIBEntry(pHRMID).getSignature().toString() : "UNKNOWN");
+		
+	}
+	
+	public void drawOverview()
+	{
+		LinkedList<Cluster> tNotPrintedClusters = (LinkedList<Cluster>) mCoordinator.getClusters().clone();
 		
 		for(int i = 0; i <= HierarchicalConfig.Routing.HIERARCHY_LEVEL_AMOUNT; i++) {
 			for(Cluster tCluster : mCoordinator.getClusters()) {
-				if( !(tCluster instanceof AttachedCluster) && tCluster.getLevel() == i) {
+				if(tCluster instanceof AttachedCluster) {
+					tNotPrintedClusters.removeFirstOccurrence(tCluster);
+				}
+				else if( tCluster.getLevel() == i) {
 					printCluster(tCluster);
+					tNotPrintedClusters.removeFirstOccurrence(tCluster);
+				}
+				else if(tCluster.getLevel() != i) {
+					mLogger.trace(this, "Will not print properties of cluster " + tCluster + " because it is at level " + tCluster.getLevel() + " and we are running through level " + i);
 				}
 			}
 		}
+		
+		mLogger.trace(this, "The not printed clusters are: " + tNotPrintedClusters);
 		
 		Text overviewText = new Text(mContainer, SWT.BORDER);;
 		overviewText.setText("Approved signatures: " + mCoordinator.getApprovedSignatures());
@@ -116,12 +138,7 @@ public class CoordinatorEditor extends EditorPart
 			for(HRMID tHRMID : mCoordinator.getHRS().getRoutingTable().keySet()) {
 				TableItem item = new TableItem(tMappingTable, SWT.NONE, j);
 				item.setText(0, tHRMID != null ? tHRMID.toString() : "");
-				item.setText(1, mCoordinator.getHRS().getFIBEntry(tHRMID).getNextHop() != null ? mCoordinator.getHRS().getFIBEntry(tHRMID).getNextHop().toString() : "UNKNOWN");
-				item.setText(2, mCoordinator.getHRS().getFIBEntry(tHRMID).getNextCluster()!=null && mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(tHRMID).getNextCluster()) != null ? mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(tHRMID).getNextCluster()).toString() : "UNKNOWN");
-				item.setText(3, mCoordinator.getHRS().getFIBEntry(tHRMID).getFarthestClusterInDirection()!=null && mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(tHRMID).getFarthestClusterInDirection()) != null ? mCoordinator.getCluster(mCoordinator.getHRS().getFIBEntry(tHRMID).getFarthestClusterInDirection()).toString() : "UNKNOWN");
-				item.setText(4, mCoordinator.getHRS().getFIBEntry(tHRMID).getRouteToTarget()!=null ? mCoordinator.getHRS().getFIBEntry(tHRMID).getRouteToTarget().toString() : "UNKNOWN");
-				item.setText(5, mCoordinator.getHRS().getFIBEntry(tHRMID).getSignature()!=null ? mCoordinator.getHRS().getFIBEntry(tHRMID).getSignature().toString() : "UNKNOWN");
-				
+				drawRoutingTable(item, tHRMID);
 				j++;
 			}
 		}
@@ -133,31 +150,53 @@ public class CoordinatorEditor extends EditorPart
 		tMappingTable.setHeaderVisible(true);
 		tMappingTable.setLinesVisible(true);
 		
-		
-		tColumnHRMID.addListener(SWT.Selection, new Listener() {
-		      public void handleEvent(Event e) {
-		        // sort column 2
-		        TableItem[] items = tMappingTable.getItems();
-		        Collator collator = Collator.getInstance(Locale.getDefault());
-		        for (int i = 1; i < items.length; i++) {
-		          String value1 = items[i].getText(1);
-		          for (int j = 0; j < i; j++) {
-		            String value2 = items[j].getText(1);
-		            if (collator.compare(value1, value2) < 0) {
-		              String[] values = { items[i].getText(0),
-		                  items[i].getText(1) };
-		              items[i].dispose();
-		              TableItem item = new TableItem(tMappingTable, SWT.NONE, j);
-		              item.setText(values);
-		              items = tMappingTable.getItems();
-		              break;
-		            }
-		          }
-		        }
-		      }
-		    });
-		
         mContainer.setSize(mContainer.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+	}
+	
+	@Override
+	public void createPartControl(Composite parent)
+	{
+		mDisplay = Display.getCurrent();
+		mShell = parent;
+		mShell.setLayout(new FillLayout());
+		mScroller = new ScrolledComposite(mShell, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+		mContainer = new Composite(mScroller, SWT.NONE);
+		mScroller.setContent(mContainer);
+		GridLayout tLayout = new GridLayout(1, true);
+		mContainer.setLayout(tLayout);
+		
+		drawOverview();
+		
+		Runnable timer = new Runnable() {
+			public void run() {
+				if(!mTabWasClosed) {
+					try {
+						mShell.setLayout(new FillLayout());
+						//mScroller = new ScrolledComposite(mShell, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+						mContainer = new Composite(mScroller, SWT.NONE);
+						mScroller.setContent(mContainer);
+						GridLayout tLayout = new GridLayout(1, true);
+						mContainer.setLayout(tLayout);
+						
+						drawOverview();
+						
+						mContainer.redraw();
+						mScroller.redraw();
+						mShell.redraw();
+						mShell.update();
+						mDisplay.timerExec(5000, this);
+
+					} catch (SWTException tExc) {
+						mLogger.log(this, "Unable to update layout, maybe the tab was closed?");
+						mTabWasClosed = true;
+					}
+				} else {
+					mLogger.trace(this, "Prohibiting further execution of this thread because the tab was closed");
+				}
+			}
+		};
+		mDisplay.timerExec(5000, timer);
+
 	}
 	
 	public class ElectionOnClusterListener implements Listener

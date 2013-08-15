@@ -84,8 +84,6 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 		mLogger = pLogger;
 		mLogger.log(this, "Created");
 		getCoordinator().getLogger().log(this, "Created for " + mCluster);
-		
-		mStackTrace = Thread.currentThread().getStackTrace();
 	}
 	
 	/**
@@ -144,7 +142,6 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 					/**
 					 * TODO in reality AS, does not have a name!
 					 */
-					mLogger.log(getCoordinator().getReferenceNode().getAS().getName() + " received an announcement from " + tAnnounce.getASIdentification());
 					if(getCoordinator().getReferenceNode().getAS().getName().equals(tAnnounce.getASIdentification())) {
 						if(!getSourceName().equals(getPeerName())) {
 							for(Route tPath : getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute((HRMName)getSourceName(), (HRMName)getPeerName())) {
@@ -732,5 +729,15 @@ public class CoordinatorCEPDemultiplexed implements VirtualNode
 	protected CoordinatorCEPMultiplexer getMultiplexer()
 	{
 		return getCluster().getMultiplexer();
+	}
+	
+	public void setStackTrace(StackTraceElement[] pStackTrace)
+	{
+		mStackTrace = pStackTrace;
+	}
+	
+	public StackTraceElement[] getStacktrace()
+	{
+		return mStackTrace;
 	}
 }

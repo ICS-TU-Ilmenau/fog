@@ -33,8 +33,21 @@ import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
 
+/**
+ * This cluster viewer can be used to display the cluster view of **only one** node.
+ * Because a distributed algorithm is used, only the limited view of one node can be displayed.
+ * In addition to this view you can also get an enhanced autonomous system visualization that
+ * provides an overview of the elected coordinators.
+ *
+ */
 public class ClusterViewer extends EditorAWT implements IController
 {
+	/**
+	 * This cluster viewer can be used to display the cluster view of **only one** node.
+	 * Because a distributed algorithm is used, only the limited view of one node can be displayed.
+ 	 * In addition to this view you can also get an enhanced autonomous system visualization that
+ 	 * provides an overview of the elected coordinators.
+	 */
 	public ClusterViewer()
 	{
 	}

@@ -21,6 +21,7 @@ import de.tuilmenau.ics.extensionpoint.ExtensionRegistry;
 import de.tuilmenau.ics.fog.CommandEvent;
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.ExitEvent;
+import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.Worker;
 import de.tuilmenau.ics.fog.Config.Simulator.SimulatorMode;
 import de.tuilmenau.ics.fog.importer.ScenarioImporter;
@@ -347,6 +348,12 @@ public class FoGLauncher
 			// is it not just an empty string?
 			if(!"".equals(cmdSystemProperty.trim())) {
 				sim.getTimeBase().scheduleIn(START_COMMAND_DELAY_AFTER_SETUP_SEC, new CommandEvent(sim, cmdSystemProperty));
+			}
+		}
+		if(sim.getEvents() != null) {
+			for(IEvent tEvent: sim.getEvents()) {
+				logger.info(this, "Will now execute scheduled events.");
+				sim.getTimeBase().scheduleIn(START_COMMAND_DELAY_AFTER_SETUP_SEC, tEvent);
 			}
 		}
 	}

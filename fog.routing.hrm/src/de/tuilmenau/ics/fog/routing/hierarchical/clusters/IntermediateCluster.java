@@ -29,6 +29,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPDemultiplexed;
 import de.tuilmenau.ics.fog.routing.hierarchical.CoordinatorCEPMultiplexer;
+import de.tuilmenau.ics.fog.routing.hierarchical.DebugHierarchical;
 import de.tuilmenau.ics.fog.routing.hierarchical.ElectionProcess;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalSignature;
@@ -41,7 +42,6 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
-import de.tuilmenau.ics.fog.ui.Decoration;
 import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
@@ -55,33 +55,75 @@ import de.tuilmenau.ics.fog.util.Logger;
  */
 public class IntermediateCluster implements Cluster, Decorator
 {
-	private CoordinatorCEPDemultiplexed mCoordinator;
+	private static final long serialVersionUID = -2087553402508167474L;
+	
+	/**
+	 * identification of cluster
+	 */
 	private Long mClusterID;
-	private float mHighestPriority;
-	private HRMID mHRMID = null;
+	private int mToken;
 	protected int mLevel;
+	protected boolean mInterASCluster = false;
+	
+	/**
+	 * information on priority - important when coordinator is elected
+	 */
+	private float mHighestPriority;
 	protected float mPriority;
+	
+	/**
+	 * reference to the coordinator
+	 */
+	protected Coordinator mCoordinatorInstance;
+	
+	/**
+	 * stored information about neighbor zones
+	 */
+	protected LinkedList<NeighborZoneAnnounce> mReceivedAnnounces = null;
+	protected LinkedList<NeighborZoneAnnounce> mSentAnnounces = null;
+	
+	private int mAnnoucementCounter = 0;
+	
+	/**
+	 * needed connection endpoints 
+	 */
+	private LinkedList<CoordinatorCEPDemultiplexed> mLaggards;
+	protected CoordinatorCEPDemultiplexed mNegotiator = null;
+	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
+	private CoordinatorCEPDemultiplexed mAnnouncer = null;
+	private LinkedList<CoordinatorCEPDemultiplexed> mOldParticipatingCEPs;
+	private CoordinatorCEPDemultiplexed mCoordinator;
+	protected LinkedList<CoordinatorCEPDemultiplexed> mCEPs;
+
+	/**
+	 * Route to the coordinator and the received signature
+	 */
+	protected HierarchicalSignature mCoordSignature;
+	protected Route mRouteToCoordinator;
+	
+	/**
+	 * Saved coordinator priority, the host idenficiation and the (MAC) address of the coordinator
+	 */
 	protected float mCoordinatorPriority;
 	protected Name mCoordName;
 	protected Name mCoordAddress;
-	protected Coordinator mCoordinatorInstance;
-	protected LinkedList<CoordinatorCEPDemultiplexed> mCEPs;
-	protected LinkedList<NeighborZoneAnnounce> mReceivedAnnounces = null;
-	protected LinkedList<NeighborZoneAnnounce> mSentAnnounces = null;
-	protected HierarchicalSignature mCoordSignature;
-	protected Route mRouteToCoordinator;
-	protected boolean mInterASCluster = false;
-	private int mToken;
-	private int mAnnoucementCounter = 0;
-	private LinkedList<CoordinatorCEPDemultiplexed> mLaggards;
-	private static final long serialVersionUID = -2087553402508167474L;
-	protected CoordinatorCEPDemultiplexed mNegotiator = null;
-	private LinkedList<CoordinatorCEPDemultiplexed> mNegotiators= new LinkedList<CoordinatorCEPDemultiplexed>();
-	private TopologyEnvelope mEnvelope = null;
-	private CoordinatorCEPDemultiplexed mAnnouncer = null;
-	private LinkedList<CoordinatorCEPDemultiplexed> mOldParticipatingCEPs;
 	private ClusterManager mClusterManager = null;
+	
+	/**
+	 * It is possible that one simple connection to another node addresses multiple clusters there
+	 */
 	private CoordinatorCEPMultiplexer mMux = null;
+	
+	/**
+	 * Each intermediate cluster gets an address range it can use to distribute addresses
+	 */
+	private HRMID mHRMID = null;
+	private TopologyEnvelope mEnvelope = null;
+
+	/**
+	 * An intermediate cluster is displayed with a distinct color in the cluster view
+	 */
+	private Color mGUIColor;
 	
 	/**
 	 * This is the constructor of an intermediate cluster. At first such a cluster is identified by its cluster
@@ -117,8 +159,7 @@ public class IntermediateCluster implements Cluster, Decorator
 		tProcess.addElectingCluster(this);
 		mMux = new CoordinatorCEPMultiplexer(mCoordinatorInstance);
 		mMux.setCluster(this);
-		
-		Decoration.getInstance(IntermediateCluster.class.toString()).setDecorator(mCoordinatorInstance.getReferenceNode(), this);
+		mGUIColor = new Color(0, 0.6f, 0);
 	}
 	
 	public void setAnnouncedCEP(CoordinatorCEPDemultiplexed pCEP)
@@ -147,6 +188,7 @@ public class IntermediateCluster implements Cluster, Decorator
 				notifyAll();
 			}
 			setCoordinatorPriority(getPriority());
+			getCoordinator().setHighestCoordinatorLevel(mLevel);
 		} else {
 			synchronized(this) {
 				mCoordAddress = pAddress;
@@ -446,11 +488,13 @@ public class IntermediateCluster implements Cluster, Decorator
 	{
 		if(!mCEPs.contains(pParticipatingCEP)) {
 			mCEPs.add(pParticipatingCEP);
-			getCoordinator().getLogger().info(this, "Added " + pParticipatingCEP + " to participating CEPs");
-			if(mCEPs.size() > 1) {
-				getCoordinator().getLogger().info(this, "Adding second participating CEP " + pParticipatingCEP);
-			}
-			
+//			getCoordinator().getLogger().info(this, "Added " + pParticipatingCEP + " to participating CEPs and the connection was created because of");
+//
+//			if(mCEPs.size() > 1) {
+//				getCoordinator().getLogger().info(this, "Adding second participating CEP " + pParticipatingCEP);
+//			}
+		} else {
+			getCoordinator().getLogger().warn(this, "You tried to add " + pParticipatingCEP + " twice");
 		}
 	}
 
@@ -781,7 +825,7 @@ public class IntermediateCluster implements Cluster, Decorator
 	@Override
 	public Color getColor()
 	{
-		return new Color(0, 0.6f, 0);
+		return mGUIColor;
 	}
 	
 	@Override
