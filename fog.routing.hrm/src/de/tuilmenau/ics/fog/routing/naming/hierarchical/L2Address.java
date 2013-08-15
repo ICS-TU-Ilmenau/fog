@@ -19,11 +19,10 @@ public class L2Address extends HRMName
 	private static final long serialVersionUID = 4484202410314555829L;
 
 	/**
-	 * Stores the random number generator instance. One instance per physical simulation node is used 
-	 * because a singleton is needed. Otherwise, parallel number generators might be initialized with 
-	 * the same seed and generate address duplicates. This simplifies the L2address generation and 
-	 * maintains unique addressing scheme. For real use, a UUID has to be used as L2address which 
-	 * promises a low risk of collisions.
+	 * Stores the random number generator instance. One instance per physical simulation machine is used because a singleton is needed. 
+	 * Otherwise, parallel number generators might be initialized with the same seed and generate address duplicates. This simplifies 
+	 * the L2address generation and maintains unique addressing scheme. For real use, a UUID has to be used as L2address which promises 
+	 * a low risk of collisions.
 	 */
 	private static Random mRandomGenerator = null;
 
