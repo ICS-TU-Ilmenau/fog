@@ -60,7 +60,7 @@ public class BullyAnnounce extends SignalingMessageBully
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ",Coordinator=" + mCoordinatorDescription + ")";
+		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ", Coordinator=" + mCoordinatorDescription + ")";
 	}
 
 	
