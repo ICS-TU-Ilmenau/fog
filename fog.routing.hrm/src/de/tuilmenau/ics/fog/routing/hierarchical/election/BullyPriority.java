@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.election;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
@@ -46,6 +47,22 @@ public class BullyPriority
 	 * This value is used when the connectivity changes.
 	 */
 	private int OFFSET_FOR_CONNECTIVITY = 100;
+	
+	/**
+	 * This is the priority counter, which allows for globally (related to a physical simulation machine) unique BullyPriority IDs.
+	 */
+	private static long sNextFreePriorityID = 0;
+	
+	/**
+	 * Stores the physical simulation machine specific multiplier, which is used to create unique priority IDs even if multiple physical simulation machines are connected by FoGSiEm instances
+	 * The value "-1" is important for initialization!
+	 */
+	private static long sPriorityIDMachineMultiplier = -1;
+
+	/**
+	 * Stores the unique BullyPriorityID
+	 */
+	private long mPriorityId = sNextFreePriorityID++;
 	
 	/**
 	 * Service function for the node configurator
@@ -87,16 +104,38 @@ public class BullyPriority
 	}
 	
 	/**
-	 * Constructor: initializes the Bully priority with the given value.
+	 * Determines the physical simulation machine specific ClusterID multiplier
 	 * 
-	 * @param pPriority the defined new Bully priority value
+	 * @return the generated multiplier
 	 */
-	public BullyPriority(Object pParent, long pPriority)
+	private long priorityIDMachineMultiplier()
 	{
-		mPriority = pPriority;
-		if (DEBUG_CREATION){
-			Logging.log(this,  "Created object (explicit priority is " + pPriority + ") for object \"" + pParent + "\"");
+		if (sPriorityIDMachineMultiplier < 0){
+			String tHostName = HRMController.getHostName();
+			if (tHostName != null){
+				sPriorityIDMachineMultiplier = (tHostName.hashCode() % 10000) * 10000;
+			}else{
+				Logging.err(this, "Unable to determine the machine-specific ClusterID multiplier because host name couldn't be indentified");
+			}
 		}
+
+		return sPriorityIDMachineMultiplier;
+	}
+
+	/**
+	 * Generates a new priority ID
+	 * 
+	 * @return the ID
+	 */
+	private long createPriorityID()
+	{
+		// get the current unique ID counter
+		long tResult = sNextFreePriorityID * priorityIDMachineMultiplier();
+
+		// make sure the next ID isn't equal
+		sNextFreePriorityID++;
+		
+		return tResult;
 	}
 
 	/**
@@ -108,6 +147,7 @@ public class BullyPriority
 			Logging.warn(this, "The parent object is an Integer/Long class, this often means a wrong call");
 		}
 
+		mPriorityId = createPriorityID();
 		mPriority = UNDEFINED_PRIORITY;
 
 		/**
@@ -130,6 +170,16 @@ public class BullyPriority
 		return mPriority;
 	}
 
+	/**
+	 * Returns the unique BullyPriority ID
+	 * 
+	 * @return the ID
+	 */
+	public long getUniqueID()
+	{
+		return mPriorityId;
+	}
+	
 	/**
 	 * Check if the priority is still undefined.
 	 * 
@@ -168,7 +218,7 @@ public class BullyPriority
 			return true;
 		}
 		
-		Logging.log(pLocationDescription + ": COMPARING BULLY priority " + mPriority + " with alternative " + pOtherPriority.getValue());
+		//Logging.log(pLocationDescription + ": COMPARING BULLY priority " + mPriority + " with alternative " + pOtherPriority.getValue());
 		
 		// if the priority values are equal, we return "true"
 		if (mPriority > pOtherPriority.getValue()){
@@ -201,6 +251,7 @@ public class BullyPriority
 	private BullyPriority(long pPriority)
 	{
 		mPriority = pPriority;
+		mPriorityId = createPriorityID();
 	}
 
 	public String toString()
