@@ -126,11 +126,6 @@ public class Coordinator implements ICluster, HRMEntity
 		getHRMController().registerCoordinator(this);
 
 		Logging.log(this, "CREATED");
-
-		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
-			Logging.log(this, "   ..starting address distribution");
-			signalAddressDistribution();
-		}
 	}
 	
 	/**
@@ -450,7 +445,37 @@ public class Coordinator implements ICluster, HRMEntity
 		}
 	}
 	
-	
+	/**
+	 * EVENT: "announcd", triggered by Elector if the election was won and this coordinator was announced to all cluster members 	 
+	 */
+	public void eventAnnounced()
+	{
+		/**
+		 * AUTO ADDRESS DISTRIBUTION
+		 */
+		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+			Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + mCEPs.size() + " cluster members");
+
+			signalAddressDistribution();
+		}
+
+		
+		//TODO: ??
+		getCluster().getHRMController().setSourceIntermediateCluster(this, getCluster());
+
+		/**
+		 * AUTO CLUSTERING
+		 */
+		if(getHierarchyLevel().getValue() < HRMConfig.Hierarchy.HEIGHT) {
+			if (HRMConfig.Hierarchy.BUILD_AUTOMATICALLY){
+				Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
+
+				// start the clustering of this cluster's coordinator and its neighbors
+				clusterCoordinators();
+			}
+		}
+	}
+
 	
 
 	
@@ -511,7 +536,7 @@ public class Coordinator implements ICluster, HRMEntity
 			}
 			mClustersToNotify = tClustersToNotify;
 			Logging.log(this, "clusters that are remaining for this round: " + mClustersToNotify);
-			connectToNeighbors(i);
+			connectToNeighborCoordinators(i);
 		}
 		/*
 		for(CoordinatorCEP tCEP : mCEPs) {
@@ -557,7 +582,7 @@ public class Coordinator implements ICluster, HRMEntity
 		}
 	}
 	
-	private boolean connectToNeighbors(int radius)
+	private boolean connectToNeighborCoordinators(int radius)
 	{
 		for(HRMGraphNodeName tNode : mClustersToNotify) {
 			if(tNode instanceof ICluster) {
@@ -574,14 +599,14 @@ public class Coordinator implements ICluster, HRMEntity
 				}
 				
 				if(mConnectedEntities.contains(tName)){
-					Logging.log(this, " L" + mHierarchyLevel + "-skipping connection to " + tName + " for cluster " + tNode + " because connection already exists");
+					Logging.log(this, "L" + mHierarchyLevel.getValue() + "-skipping connection to " + tName + " for cluster " + tNode + " because connection already exists");
 					continue;
 				} else {
 					/*
 					 * was it really this cluster? -> reevaluate
 					 */
-					Logging.log(this, " L" + mHierarchyLevel + "-adding connection to " + tName + " for cluster " + tNode);
-					getMultiplexer().addConnection(tCluster, mManagedCluster);
+					Logging.log(this, "L" + mHierarchyLevel.getValue() + "-adding connection to " + tName + " for cluster " + tNode);
+					getMultiplexer().connectToNeighborCoordinator(tCluster, this);
 					//new CoordinatorCEP(mManagedCluster.getCoordinator().getLogger(), mManagedCluster.getCoordinator(), this, false);
 					mConnectedEntities.add(tName);
 				}
@@ -616,10 +641,10 @@ public class Coordinator implements ICluster, HRMEntity
 	@Override
 	public void setPriority(BullyPriority pPriority) 
 	{
-		if (!getBullyPriority().equals(pPriority)){
-			Logging.err(this, "############# Trying to update Bully priority from " + getBullyPriority() + " to " + pPriority);
+		if (!getPriority().equals(pPriority)){
+			Logging.err(this, "Updating Bully priority from " + getPriority() + " to " + pPriority);
 		}else{
-			Logging.log(this, "############# Trying to set same Bully priority " + getBullyPriority());
+			Logging.log(this, "Trying to set same Bully priority " + getPriority());
 		}
 
 		//TODO: remove this function
@@ -661,10 +686,10 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 
 	@Override
-	public BullyPriority getBullyPriority() 
+	public BullyPriority getPriority() 
 	{
 		// return the Bully priority of the managed cluster object
-		return mManagedCluster.getBullyPriority();
+		return mManagedCluster.getPriority();
 	}
 
 	@Override
@@ -1103,7 +1128,7 @@ public class Coordinator implements ICluster, HRMEntity
 		return false;
 	}	
 	
-	public Cluster getManagedCluster()
+	public Cluster getCluster()
 	{
 		return mManagedCluster;
 	}
@@ -1116,9 +1141,17 @@ public class Coordinator implements ICluster, HRMEntity
 
 	@Override
 	public CoordinatorCEPMultiplexer getMultiplexer() {
-		return getHRMController().getMultiplexerOnLevel(mHierarchyLevel.getValue() + 1);
+		return getHRMController().getCoordinatorMultiplexerOnLevel(this);
 	}
 
+	
+	
+	
+	/**
+	 * Generates a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
 	public String toString()
 	{
 		//return getClass().getSimpleName() + (mManagedCluster != null ? "(" + mManagedCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;
@@ -1132,10 +1165,11 @@ public class Coordinator implements ICluster, HRMEntity
 		
 		return tResult;
 	}
+
 	private String idToString()
 	{
 		if (getHRMID() == null){
-			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getBullyPriority().getValue();
+			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getPriority().getValue();
 		}else{
 			return "HRMID=" + getHRMID().toString();
 		}

@@ -120,11 +120,16 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	private boolean mApplicationStarted = false;
 	
+	/**
+	 * Stores a database including all HRMControllers of this physical simulation machine
+	 */
+	private static LinkedList<HRMController> mRegisteredHRMControllers = new LinkedList<HRMController>();
+	
 	private RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink>();
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
-	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators;
+	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
 	
 	
 //	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
@@ -265,23 +270,20 @@ public class HRMController extends Application implements IServerCallback, IEven
 		
 		Logging.log(this, "Registering coordinator " + pCoordinator + " at level " + tLevel);
 
-		// make sure we have a valid linked list object
-		if(mRegisteredCoordinators == null) {
-			mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
-		}
-		
-		if(mRegisteredCoordinators.size() <= tLevel) {
-			for(int i = mRegisteredCoordinators.size() - 1; i <= tLevel ; i++) {
-				mRegisteredCoordinators.add(new LinkedList<Coordinator>());
+		synchronized (mRegisteredCoordinators) {
+			if(mRegisteredCoordinators.size() <= tLevel) {
+				for(int i = mRegisteredCoordinators.size() - 1; i <= tLevel ; i++) {
+					mRegisteredCoordinators.add(new LinkedList<Coordinator>());
+				}
 			}
-		}
+			
+			if (mRegisteredCoordinators.get(tLevel).size() > 0){
+				Logging.log(this, "#### Got more than one coordinator at level " + tLevel + ", already known (0): " + mRegisteredCoordinators.get(tLevel).get(0) + ", new one: " + pCoordinator);
+			}
 		
-		if (mRegisteredCoordinators.get(tLevel).size() > 0){
-			Logging.log(this, "#### Got more than one coordinator at level " + tLevel + ", already known (0): " + mRegisteredCoordinators.get(tLevel).get(0) + ", new one: " + pCoordinator);
+			// store the new coordinator
+			mRegisteredCoordinators.get(tLevel).add(pCoordinator);
 		}
-		
-		// store the new coordinator
-		mRegisteredCoordinators.get(tLevel).add(pCoordinator);
 		
 		// register a route to the coordinator as addressable target
 		getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
@@ -289,8 +291,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 		//TODO: remove this
 		addRoutableTarget(pCoordinator);
 
-		// register as known coordinator
-		mKnownCoordinators.add(pCoordinator);
+		synchronized (mKnownCoordinators) {
+			// register as known coordinator
+			mKnownCoordinators.add(pCoordinator);
+		}
 		
 		// update GUI: image for node object 
 		//TODO: check and be aware of topology dynamics
@@ -309,8 +313,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 	{
 		Logging.log(this, "Unegistering coordinator " + pCoordinator);
 
-		// unregister from list of known coordinators
-		mKnownCoordinators.remove(pCoordinator);
+		synchronized (mKnownCoordinators) {
+			// unregister from list of known coordinators
+			mKnownCoordinators.remove(pCoordinator);
+		}
 
 		// it's time to update the GUI
 		notifyGUI(pCoordinator);
@@ -367,9 +373,16 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @return the list of known coordinators
 	 */
-	public LinkedList<Coordinator> listKnownCoordinators()
+	@SuppressWarnings("unchecked")
+	public LinkedList<Coordinator> getAllCoordinators()
 	{
-		return mKnownCoordinators;
+		LinkedList<Coordinator> tResult;
+		
+		synchronized (mKnownCoordinators) {
+			tResult = (LinkedList<Coordinator>) mKnownCoordinators.clone();
+		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -383,8 +396,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 
 		Logging.log(this, "Registering cluster " + pCluster + " at level " + tLevel);
 
-		// register as known cluster
-		mKnownClusters.add(pCluster);
+		synchronized (mKnownClusters) {
+			// register as known cluster
+			mKnownClusters.add(pCluster);
+		}
 		
 		// it's time to update the GUI
 		notifyGUI(pCluster);
@@ -399,8 +414,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 	{
 		Logging.log(this, "Unegistering coordinator " + pCluster);
 
-		// unregister from list of known clusters
-		mKnownClusters.remove(pCluster);
+		synchronized (mKnownClusters) {
+			// unregister from list of known clusters
+			mKnownClusters.remove(pCluster);
+		}
 		
 		// it's time to update the GUI
 		notifyGUI(pCluster);
@@ -489,9 +506,15 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @return the list of known clusters
 	 */
-	public LinkedList<Cluster> listKnownClusters()
+	public LinkedList<Cluster> getAllClusters()
 	{
-		return mKnownClusters;
+		LinkedList<Cluster> tResult = null;
+		
+		synchronized (mKnownClusters) {
+			tResult = (LinkedList<Cluster>) mKnownClusters.clone();
+		}
+		
+		return tResult;
 	}
 
 	/**
@@ -614,7 +637,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					 * Open a connection to the neighbor
 					 */
 				    Logging.log(this, "    ..opening connection to " + pNeighborL2Address);
-				    connectTo(pNeighborL2Address, HierarchyLevel.createBaseLevel(), tClusterID);
+				    connectToNeighborNode(pNeighborL2Address, HierarchyLevel.createBaseLevel(), tClusterID);
 				}else{
 					Logging.err(this, "registerLink() hasn't found the DirectDownGate in the route from " + tThisHostL2Address + " to " + pNeighborL2Address + ", route is: " + tGateIDsToNeighbor);
 				}
@@ -728,14 +751,14 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @return the host name
 	 */
-	public String getHostName()
+	public static String getHostName()
 	{
 		String tResult = null;
 		
 		try{	
 			tResult = java.net.InetAddress.getLocalHost().getHostName();
 		} catch (UnknownHostException tExc) {
-			Logging.err(this, "Unable to determine the local host name", tExc);
+			Logging.err(null, "Unable to determine the local host name", tExc);
 		}
 		
 		return tResult;
@@ -801,6 +824,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 	protected void started() 
 	{
 		mApplicationStarted = true;
+		
+		// register in the global HRMController database
+		synchronized (mRegisteredHRMControllers) {
+			mRegisteredHRMControllers.add(this);
+		}
 	}
 	
 	/**
@@ -823,7 +851,22 @@ public class HRMController extends Application implements IServerCallback, IEven
 		return mApplicationStarted;
 	}
 
-	
+	/**
+	 * Returns the list of known HRMController instances for this physical simulation machine
+	 *  
+	 * @return the list of HRMController references
+	 */
+	@SuppressWarnings("unchecked")
+	public static LinkedList<HRMController> getALLHRMControllers()
+	{
+		LinkedList<HRMController> tResult = null;
+		
+		synchronized (mRegisteredHRMControllers) {
+			tResult = (LinkedList<HRMController>) mRegisteredHRMControllers.clone();
+		}
+		
+		return tResult;
+	}
 	
 	
 	
@@ -846,6 +889,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		Description tRequirements = pConnection.getRequirements();
 		for(Property tProperty : tRequirements) {
 			if(tProperty instanceof ClusterParticipationProperty) {
+				Logging.log(this, "Found ClusterParticipationProperty " + tProperty);
 				tJoin = (ClusterParticipationProperty)tProperty;
 			}
 		}
@@ -855,17 +899,26 @@ public class HRMController extends Application implements IServerCallback, IEven
 		} catch (ClassCastException tExc) {
 			Logging.err(this, "Unable to find the information which cluster should be attached.", tExc);
 		}
-					
+		
+		Logging.log(this, "Nested participations: " + tJoin.getNestedParticipations());
+		
 		for(NestedParticipation tParticipate : tJoin.getNestedParticipations()) {
+			Logging.log(this, "Iterate over nested participations");
+
 			CoordinatorCEPChannel tCEP = null;
 			boolean tClusterFound = false;
 			ICluster tFoundCluster = null;
+			
+			Logging.log(this, "Clusters: " + getRoutingTargetClusters());
+			
 			for(Cluster tCluster : getRoutingTargetClusters())
 			{
 				ClusterName tJoinClusterName = new ClusterName(tJoin.getTargetToken(), tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
 				ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
 				
 				if(tCluster.equals(tJoinClusterNameTok0) || tJoin.getTargetToken() != 0 && tCluster.equals(tJoinClusterName))	{
+					Logging.log(this, "Cluster found: " + tCluster);
+					
 					if(tConnectionSession == null) {
 						tConnectionSession = new CoordinatorSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
 					}
@@ -879,8 +932,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 					tFoundCluster = tCluster;
 				}
 			}
+			
 			if(!tClusterFound)
 			{
+				Logging.log(this, "Cluster not found");
+
 				Cluster tCluster = new Cluster(this, new Long(tJoin.getTargetClusterID()), tJoin.getHierarchyLevel());
 				setSourceIntermediateCluster(tCluster, tCluster);
 				if(tConnectionSession == null) {
@@ -890,7 +946,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				if(tJoin.getHierarchyLevel().isHigherLevel()) {
 					for(ICluster tVirtualNode : getRoutingTargetClusters()) {
 						if(tVirtualNode.getHierarchyLevel().getValue() == tJoin.getHierarchyLevel().getValue() - 1) {
-							tCluster.setPriority(tVirtualNode.getBullyPriority());
+							tCluster.setPriority(tVirtualNode.getPriority());
 						}
 					}
 				}
@@ -1078,7 +1134,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * @param pLevel is the level at which a connection is added
 	 * @param pToClusterID is the identity of the cluster a connection will be added to
 	 */
-	private void connectTo(Name pName, HierarchyLevel pLevel, Long pToClusterID)
+	private void connectToNeighborNode(Name pName, HierarchyLevel pLevel, Long pToClusterID)
 	{
 		Logging.log(this, "ADDING CONNECTION to " + pName + "(ClusterID=" + pToClusterID + ", hierarchy level=" + pLevel.getValue() + ")");
 
@@ -1323,20 +1379,24 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	public LinkedList<Coordinator> getCoordinator(HierarchyLevel pHierarchyLevel)
 	{
+		LinkedList<Coordinator> tResult = null;
+		
 		// is the given hierarchy level valid?
-		if (pHierarchyLevel.isUndefined()){
+		if (!pHierarchyLevel.isUndefined()){
+			synchronized (mRegisteredCoordinators) {
+				// check of we know the search coordinator
+				if(mRegisteredCoordinators.size() - 1 < pHierarchyLevel.getValue()) {
+					// we don't know a valid coordinator
+				} else {
+					// we have found the searched coordinator
+					tResult = mRegisteredCoordinators.get(pHierarchyLevel.getValue());
+				}
+			}
+		}else{
 			Logging.warn(this, "Cannot determine coordinator on an undefined hierachy level, return null");
-			return null;
 		}
-
-		// check of we know the search coordinator
-		if(mRegisteredCoordinators.size() - 1 < pHierarchyLevel.getValue()) {
-			// we don't know a valid coordinator
-			return null;
-		} else {
-			// we have found the searched coordinator
-			return mRegisteredCoordinators.get(pHierarchyLevel.getValue());
-		}
+		
+		return tResult;
 	}
 
 	/**
@@ -1361,17 +1421,21 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * @param pLevel is the level at which a multiplexer to other clusters is installed and that has to be returned
 	 * @return
 	 */
-	public CoordinatorCEPMultiplexer getMultiplexerOnLevel(int pLevel)
+	public CoordinatorCEPMultiplexer getCoordinatorMultiplexerOnLevel(Coordinator pCoordinator)
 	{
+		int tLevel = pCoordinator.getHierarchyLevel().getValue() + 1;
+		
 		if(mMuxOnLevel == null) {
 			mMuxOnLevel = new HashMap<Integer, CoordinatorCEPMultiplexer>();
 		}
-		if(!mMuxOnLevel.containsKey(pLevel)) {
-			CoordinatorCEPMultiplexer tMux = new CoordinatorCEPMultiplexer(this);
-			mMuxOnLevel.put(pLevel, tMux);
-			Logging.log(this, "Created new Multiplexer " + tMux + " for cluster managers on level " + pLevel);
+		
+		if(!mMuxOnLevel.containsKey(tLevel)) {
+			CoordinatorCEPMultiplexer tMux = new CoordinatorCEPMultiplexer(pCoordinator, this);
+			mMuxOnLevel.put(tLevel, tMux);
+			Logging.log(this, "Created new communication multiplexer " + tMux + " for coordinators on level " + tLevel);
 		}
-		return mMuxOnLevel.get(pLevel);
+		
+		return mMuxOnLevel.get(tLevel);
 	}
 	
 	

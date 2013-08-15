@@ -49,7 +49,7 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * 
 	 * @return The priority of the node that is associated to this cluster is return here
 	 */
-	public BullyPriority getBullyPriority();
+	public BullyPriority getPriority();
 
 	/**
 	 *  

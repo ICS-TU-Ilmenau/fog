@@ -64,6 +64,16 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_SIGNALING = true;
 
 		/**
+		 * Shows detailed debug outputs about Bully related signaling messages
+		 */
+		public static final boolean GUI_SHOW_SIGNALING_BULLY = true;
+
+		/**
+		 * Shows detailed debug outputs about HRMID signaling messages
+		 */
+		public static final boolean GUI_SHOW_SIGNALING_ADDRESSING = false;
+
+		/**
 		 * Defines the time period between two updates of the node specific HRM display.
 		 */
 		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 1.0;

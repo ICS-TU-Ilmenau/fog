@@ -9,24 +9,27 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.election;
 
-import java.rmi.RemoteException;
 import java.util.Random;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.RequirementsException;
-import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAlive;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyElect;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyReply;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
+
+//TODO: invalidateElection() missing, if error during communication with coordinator occurred
 
 /**
  * This class is responsible for coordinator elections. It is instantiated per cluster. 
@@ -55,19 +58,28 @@ public class Elector implements HRMEntity
 	private Cluster mParentCluster = null;
 
 	/**
-	 * The timeout for an awaited BullyAlive message (in ms).
+	 * The timeout for an awaited BullyAlive message (in s).
 	 */
-	private long TIMEOUT_FOR_ALIVE = 8000;
+	private long TIMEOUT_FOR_REPLY = 25;
+	/**
+	 * The timeout for an awaited BullyAlive message (in s).
+	 */
+	private long TIMEOUT_FOR_ALIVE = 25;
 
 	/**
-	 * The time period between two BullyAlive messages (in ms).
+	 * The time period between two BullyAlive messages (in s).
 	 */
-	private long PERIOD_FOR_ALIVE = 8000;
+	private long PERIOD_FOR_ALIVE = 10;
 
 	/**
 	 * Stores if election was won.
 	 */
 	private boolean mElectionWon = false;
+	
+	/**
+	 * Stores the timestamp of the last ElectBroadcast signaling
+	 */
+	private Double mTimestampLastElectBroadcast =  new Double(0);
 	
 	public Elector(Cluster pCluster)
 	{
@@ -75,17 +87,12 @@ public class Elector implements HRMEntity
 		mParentCluster = pCluster;
 		mElectionWon = false;
 		
-		if (mParentCluster != null){
-			// register at ElectionManager
-			ElectionManager.getElectionManager().addElection(mParentCluster.getHierarchyLevel().getValue(), mParentCluster.getClusterID(), this);
-		}
-
 		// set IDLE state
 		setElectorState(ElectorState.IDLE);
 		
 		// start coordinator election for the created HRM instance if desired
 		if(HRMConfig.Hierarchy.BUILD_AUTOMATICALLY) {
-			signalElectionStart();
+			signalElectBroadcast();
 		}
 	}
 	
@@ -94,36 +101,30 @@ public class Elector implements HRMEntity
 	 */
 	public void startElection()
 	{
-		if (getElectorState() != ElectorState.ELECTING){
-			signalElectionStart();
-			
-			//TODO: remove the following and trigger it in a correct way 
-			eventAllPrioritiesReceived();
-		}else{
-			Logging.warn(this, "Election is already running");
+		switch(getElectorState()){
+			case IDLE:
+				// set correct elector state
+				setElectorState(ElectorState.ELECTING);
+
+				signalElectBroadcast();
+				break;
+			case ELECTED:
+				Logging.log(this, "Election has already finished, coordinator is valid: " + isCoordinatorValid());
+				break;
+			case ELECTING:
+				Logging.log(this, "Election is already running");
+				break;
+			case ERROR:
+				Logging.err(this, "Election is in ERROR state");
+				break;
+			case START:
+				Logging.err(this, "Election is stuck");
+				break;
+			default:
+				break;
 		}
 	}
 	
-	/**
-	 * Starts the clustering process. This function is usually called by the GUI.
-	 */
-	public void startClustering()
-	{
-		if (mParentCluster == null){
-			Logging.err(this, "Invalid parent cluster");
-			return;
-		}
-		
-		// does the parent cluster have a coordinator, so we can start clustering of it and its siblings? 
-		if (mParentCluster.getCoordinator() == null){
-			Logging.warn(this, "Parent cluster doesn't have a coordinator yet, skipping clustering request");
-			return;
-		}
-
-		// start the clustering of this cluster's coordinator and its neighbors
-		mParentCluster.getCoordinator().clusterCoordinators();
-	}
-
 	/**
 	 * Sets the current elector state
 	 * 
@@ -132,19 +133,25 @@ public class Elector implements HRMEntity
 	private void setElectorState(ElectorState pNewState)
 	{
 		// check if state transition is valid
-		if(( ((mState == ElectorState.START) && (pNewState == ElectorState.IDLE)) ||
+		if((pNewState == ElectorState.ERROR) ||
+			(mState == pNewState) || 
+			( ((mState == ElectorState.START) && (pNewState == ElectorState.IDLE)) ||
 			((mState == ElectorState.IDLE) && (pNewState == ElectorState.ELECTING)) ||
 			((mState == ElectorState.ELECTING) && (pNewState == ElectorState.ELECTED)) ||
 			((mState == ElectorState.ELECTED) && (pNewState == ElectorState.ELECTING)) ||
 			((mState == ElectorState.ELECTED) && (pNewState == ElectorState.IDLE))
-		   ) && (mState != pNewState)) 
+		   )) 
 		{
-			Logging.log(this, "State transition from " + getElectorState() + " to " + pNewState);
-
-			// set new state
-			mState = pNewState;
+			if (mState != pNewState){
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "STATE TRANSITION from " + getElectorState() + " to " + pNewState);
+				}
+	
+				// set new state
+				mState = pNewState;
+			}
 		} else {
-			throw new RuntimeException(toLocation() + " cannot change its state from " + mState +" to " + pNewState);
+			throw new RuntimeException(toLocation() + "-cannot change its state from " + mState +" to " + pNewState);
 		}
 	}
 	
@@ -167,61 +174,103 @@ public class Elector implements HRMEntity
 	{
 		return mElectionWon;
 	}
+
+	/**
+	 * Determines if the coordinator for this election domain (=cluster) is (still) valid-
+	 * 
+	 * @return true if valid, otherwise false
+	 */
+	public boolean isCoordinatorValid()
+	{
+		return (getElectorState() == ElectorState.ELECTED);
+	}
+
+	/**
+	 * Determines if the timing of an action is okay because the minimum time period between two of such actions is maintained.
+	 * 
+	 * @param pTimestampLastSignaling the timestamp of the last action
+	 * @param pMinPeriod
+	 * @return
+	 */
+	private boolean isTimingOkayOfElectBroadcast()
+	{
+		boolean tResult = false;
+		double tNow = mParentCluster.getHRMController().getSimulationTime();
+		double tTimeout = mTimestampLastElectBroadcast.longValue() + TIMEOUT_FOR_REPLY;
+				
+		Logging.log(this, "Checking timing of ELECT BROADCAST: last=" + mTimestampLastElectBroadcast.longValue() + ", MinPeriod=" + TIMEOUT_FOR_REPLY + ", now=" + tNow + ", MinTime=" + tTimeout);
+		
+		// is timing okay?
+		if ((mTimestampLastElectBroadcast.doubleValue() == 0) || (tNow > mTimestampLastElectBroadcast.doubleValue() + TIMEOUT_FOR_REPLY)){
+			tResult = true;
+			mTimestampLastElectBroadcast = new Double(tNow);
+		}
+		
+		return tResult;
+	}
 	
 	/**
 	 * SIGNAL: start the election by signaling BULLY ELECT to all cluster members
 	 */
-	private void signalElectionStart()
+	private void signalElectBroadcast()
 	{
-		if (getElectorState() != ElectorState.ELECTED){
-			Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParentCluster);
-			Logging.log(this, "SENDELECTIONS(), cluster members: " + mParentCluster.getClusterMembers().size());
-	
-			// set correct elector state
-			setElectorState(ElectorState.ELECTING);
-			
-			// get reference to the node
-			Node tNode = mParentCluster.getHRMController().getNode();
-	
-			// create the packet
-			BullyElect tPacketBullyElect = new BullyElect(mParentCluster.getHRMController().getNodeName(), mParentCluster.getBullyPriority());
-			
-			// send broadcast
-			mParentCluster.sendBroadcast(tPacketBullyElect);
-			
-			Logging.log(this, "SENDELECTIONS()-END");
+		if (getElectorState() == ElectorState.ELECTING){
+			if (isTimingOkayOfElectBroadcast()){
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParentCluster);
+					Logging.log(this, "SENDELECTIONS(), cluster members: " + mParentCluster.getClusterMembers().size());
+				}
+		
+				// create the packet
+				BullyElect tPacketBullyElect = new BullyElect(mParentCluster.getHRMController().getNodeName(), mParentCluster.getPriority());
+				
+				// send broadcast
+				mParentCluster.sendBroadcast(tPacketBullyElect);
+				
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "SENDELECTIONS()-END");
+				}
+			}else{
+				Logging.log(this, "signalElectBroadcast() was triggered too frequently, timeout isn't reached yet, skipping this action");
+			}
+
 		}else{
-			// elector state is ELECTED
-			Logging.warn(this, "Election state is still ELECTED, we still have a valid coordinator elected, skipping election request");
+			Logging.warn(this, "Election has wrong state " + getElectorState() + " for signaling an ELECTION START, ELECTING expected");
+
+			// set correct elector state
+			setElectorState(ElectorState.ERROR);
 		}			
 	}
 
 	/**
 	 * SIGNAL: ends the election by signaling BULLY ANNOUNCE to all cluster members 		
 	 */
-	private void signalElectionEnd()
+	private void signalAnnounceBroadcast()
 	{
-		if (getElectorState() == ElectorState.ELECTING){
-			Logging.log(this, "SENDANNOUNCE()-START, electing cluster is " + mParentCluster);
-			Logging.log(this, "SENDANNOUNCE(), cluster members: " + mParentCluster.getClusterMembers().size());
+		if (getElectorState() == ElectorState.ELECTED){
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "SENDANNOUNCE()-START, electing cluster is " + mParentCluster);
+				Logging.log(this, "SENDANNOUNCE(), cluster members: " + mParentCluster.getClusterMembers().size());
+			}
 	
 			// HINT: the coordinator has to be already created here
 
 			if (mParentCluster.getCoordinator() != null){
 				// create the packet
-				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mParentCluster.getHRMController().getNodeName(), mParentCluster.getBullyPriority(), mParentCluster.getCoordinator().toLocation() + "@" + mParentCluster.getHRMController().getHostName(), mParentCluster.getToken());
+				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mParentCluster.getHRMController().getNodeName(), mParentCluster.getPriority(), mParentCluster.getCoordinator().toLocation() + "@" + HRMController.getHostName(), mParentCluster.getToken());
 		
 				// send broadcast
 				mParentCluster.sendBroadcast(tPacketBullyAnnounce);
-		
-				// set correct elector state
-				setElectorState(ElectorState.ELECTED);
 			}else{
+				Logging.warn(this, "Election has wrong state " + getElectorState() + " for signaling an ELECTION END, ELECTED expected");
+				
 				// set correct elector state
 				setElectorState(ElectorState.ERROR);
 			}
 	
-			Logging.log(this, "SENDANNOUNCE()-END");
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "SENDANNOUNCE()-END");
+			}
 		}else{
 			// elector state is ELECTED
 			Logging.warn(this, "Election state isn't ELECTING, we cannot finishe an election which wasn't started yet, error in state machine");
@@ -231,14 +280,13 @@ public class Elector implements HRMEntity
 	/**
 	 * SIGNAL: report itself as alive by signaling BULLY ALIVE to all cluster members
 	 */
-	private void signalAlive()
+	private void signalAliveBroadcast()
 	{
 		if (HRMConfig.Election.SEND_BULLY_ALIVES){
-			Logging.log(this, "SENDALIVE()-START, electing cluster is " + mParentCluster);
-			Logging.log(this, "SENDALIVE(), cluster members: " + mParentCluster.getClusterMembers().size());
-	
-			// get reference to the node
-			Node tNode = mParentCluster.getHRMController().getNode();
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "SENDALIVE()-START, electing cluster is " + mParentCluster);
+				Logging.log(this, "SENDALIVE(), cluster members: " + mParentCluster.getClusterMembers().size());
+			}
 	
 			// create the packet
 			BullyAlive tPacketBullyAlive = new BullyAlive(mParentCluster.getHRMController().getNodeName());
@@ -246,87 +294,72 @@ public class Elector implements HRMEntity
 			// send broadcast
 			mParentCluster.sendBroadcast(tPacketBullyAlive);
 	
-			Logging.log(this, "SENDALIVE()-END");
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "SENDALIVE()-END");
+			}
 		}else{
 			// BullyAlive messages are currently deactivated
 		}			
 	}
 
 	/**
+	 * SIGNAL: report itself as alive by signaling BULLY ALIVE to all cluster members
+	 */
+	private void signalResponse(CoordinatorCEPChannel pSourceClusterMember)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "SENDRESPONSE()-START, electing cluster is " + mParentCluster);
+				Logging.log(this, "SENDRESPONSE(), cluster members: " + mParentCluster.getClusterMembers().size());
+			}
+		}
+
+		// create REPLY packet
+		BullyReply tReplyPacket = new BullyReply(mParentCluster.getHRMController().getNodeName(), pSourceClusterMember.getPeerHRMID(), mParentCluster.getPriority());
+			
+		// send the answer packet
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+			Logging.log(this, "BULLY-sending to \"" + pSourceClusterMember + "\" a REPLY: " + tReplyPacket);
+
+		// send message
+		pSourceClusterMember.sendPacket(tReplyPacket);
+
+		Logging.log(this, "SENDRESPONSE()-END");
+	}
+
+	
+	/**
 	 * EVENT: sets the local node as coordinator for the parent cluster. 
 	 */
 	private void eventElectionWon()
 	{
-		Logging.log(this, "ELECTION WON for cluster " + mParentCluster);
-		
-		// mark as election winner
-		mElectionWon = true;
-		
-		// create new coordinator instance
-		Coordinator tElectedCoordinator = new Coordinator(mParentCluster);
-
-		// get the node
-		Node tNode = mParentCluster.getHRMController().getNode();
-		
-		int tHierarchyLevelValue = mParentCluster.getHierarchyLevel().getValue();
-
-		// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
-		signalElectionEnd();
-		
-		Name tNodeName = tNode.getRoutingService().getNameFor(tNode.getCentralFN());
-		
-		mParentCluster.setSuperiorCoordinatorCEP(null, tNode.getCentralFN().getName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), (L2Address)tNodeName);
-
-		//TODO: ??
-		mParentCluster.getHRMController().setSourceIntermediateCluster(tElectedCoordinator, mParentCluster);
+		if ((!isWinner()) || (!isCoordinatorValid())){
+			Logging.log(this, "ELECTION WON for cluster " + mParentCluster);
 			
-		if(tHierarchyLevelValue < HRMConfig.Hierarchy.HEIGHT - 1) {
-			if (HRMConfig.Hierarchy.BUILD_AUTOMATICALLY){
-				Logging.log(this, "ELECTION WON - triggering clustering of thus cluster's coordinator and its neighbors");
-
-				// start the clustering of this cluster's coordinator and its neighbors
-				startClustering();
-			}
-		}
-	}
+			// mark as election winner
+			mElectionWon = true;
+			
+			// set correct elector state
+			setElectorState(ElectorState.ELECTED);
 	
-	private void eventAllPrioritiesReceived()
-	{
-		// collect the Bully priority from all cluster members
-		Logging.log(this, "Searching for highest priority...");
-		for(CoordinatorCEPChannel tClusterMember : mParentCluster.getClusterMembers()) {
-			BullyPriority tPriority = tClusterMember.getPeerPriority(); 
+			// get the node
+			Node tNode = mParentCluster.getHRMController().getNode();
 			
-			Logging.log(this, "		..cluster member " + tClusterMember + " has priority " + tClusterMember.getPeerPriority().getValue()); 
-			
-			// does the cluster member have a higher Bully priority?
-			if(tPriority.isHigher(this, mParentCluster.getHighestPriority())) {
-				mParentCluster.setHighestPriority(tPriority);
-				Logging.log(this, "	         ..selecting " + tClusterMember + " as coordinator candidate");
-			}
-		}
-
-		// check own priority - are we the winner of the election?
-		Logging.log(this, "Checking if we are the winner of the election...");		
-		boolean tIsWinner = false;
-		if(mParentCluster.getBullyPriority().isHigher(this, mParentCluster.getHighestPriority())){
-			tIsWinner = true;
-		}else{
-			if (mParentCluster.getBullyPriority().equals(mParentCluster.getHighestPriority())){
-				Logging.warn(this, "Peers have SAME BULLY PRIORITY");
-
-				//TODO: rework signaling and calculate random number which has to be communicated to peers!
-				
-				// mark as winner
-				tIsWinner = true;				
-			}
-		}
+			// create new coordinator instance
+			Coordinator tNewCoordinator = new Coordinator(mParentCluster);
 	
-		// have we won the election?
-		if(tIsWinner) {
-			eventElectionWon();
+			Name tNodeName = tNode.getRoutingService().getNameFor(tNode.getCentralFN());
+			
+			mParentCluster.setSuperiorCoordinatorCEP(null, tNode.getCentralFN().getName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), (L2Address)tNodeName);
+	
+			// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
+			signalAnnounceBroadcast();
+
+			// trigger event "announced" for the coordinator
+			tNewCoordinator.eventAnnounced();
+			
 		}else{
-			eventElectionLost();
+			Logging.warn(this, "Cluster " + mParentCluster + " has still a valid and known coordinator, skipping eventElectionWon() here");
 		}
 	}
 	
@@ -339,79 +372,252 @@ public class Elector implements HRMEntity
 	
 		// mark as election loser
 		mElectionWon = false;
+		
+		// set correct elector state
+		setElectorState(ElectorState.ELECTED);
+	}
+
+	/**
+	 * EVENT: the election process was triggered by another cluster member
+	 */
+	private void eventReceivedElect()
+	{
+		// set correct elector state
+		setElectorState(ElectorState.ELECTING);
 	}
 	
 	/**
-	 * 
-	 * @param pSourceCluster is the cluster from which you want the path
-	 * @param pTargetCluster is the cluster
-	 * @return 
+	 * EVENT: another cluster member has sent its Bully priority 
 	 */
+	private void eventReceivedReply()
+	{
+		BullyPriority tHighestPrio = null;
+		CoordinatorCEPChannel tExternalWinner = null;
+		boolean tIsWinner = false;
+		boolean tElectionComplete = true;
+		
+		/**
+		 * Find the highest priority of all external cluster members
+		 */
+		Logging.log(this, "Searching for highest priority...");
+		for(CoordinatorCEPChannel tClusterMember : mParentCluster.getClusterMembers()) {
+			BullyPriority tPriority = tClusterMember.getPeerPriority(); 
+			
+			/**
+			 * are we still waiting for the Bully priority of some cluster member?
+			 */
+			if ((tPriority == null) || (tPriority.isUndefined())){
+				// election is incomplete
+				tElectionComplete = false;
+			
+				// leave the loop
+				break;
+			}
+			
+			Logging.log(this, "		..cluster member " + tClusterMember + " has priority " + tPriority.getValue()); 
+			
+			/**
+			 * find the highest priority in the cluster
+			 */
+			if((tHighestPrio == null) || (tPriority.isHigher(this, tHighestPrio))) {
+				tHighestPrio = tPriority;
+				tExternalWinner = tClusterMember;
+			}
+		}
+		
+		/**
+		 * Check if election is complete
+		 */
+		if (tElectionComplete){
+			/**
+			 * Is the local priority higher?
+			 */
+			if (mParentCluster.getPriority().isHigher(this, tHighestPrio)){
+				Logging.log(this, "	        ..HAVING HIGHER PRIORITY than " + tExternalWinner.getPeerL2Address());
 	
-//	public void run()
-//	{
-//		signalElectionStart();
-//	
-//		deriveElectionResult();
-//		
-//		if(getHierarchLevel().isHigherLevel()) {
-//			/*
-//			 * For loop can be ignored as this can only happen in case we are above level one
-//			 */
-//			while((mParentCluster.getHRMController().getClusterWithCoordinatorOnLevel(mParentCluster.getHierarchyLevel().getValue()) == null)) {
-//				mParentCluster.setHighestPriority(mParentCluster.getBullyPriority());
-//				Logging.log(this, mParentCluster + " didn't yet receive an announcement");
-//				for(CoordinatorCEPChannel tCEP : mParentCluster.getClusterMembers()) {
-//					RequestCoordinator tRequest = new RequestCoordinator(/* false */);
-//					tCEP.sendPacket(tRequest);
-////					synchronized(tRequest) {
-////						if(!tRequest.mWasNotified){
-////							Logging.log(this, "ACTIVE WAITING (run)");
-////							tRequest.wait(10000);
-////						}
-////						if(!tRequest.mWasNotified) {
-////							Logging.log(this, "Was still waiting for " + tRequest);
-////							tRequest.wait();
-////						}
-////					}
-//				}
-//				/*
-//				tTimeWaitUntil = System.currentTimeMillis()+TIMEOUT_FOR_LAGGARDS;
-//				checkWait(System.currentTimeMillis(), tTimeWaitUntil);
-//				*/
-//				try {
-//					LinkedList<CoordinatorCEPChannel> tCEPs = new LinkedList<CoordinatorCEPChannel>();
-//					tCEPs.addAll(mParentCluster.getClusterMembers());
-//					if(mParentCluster.getOldParticipatingCEPs() != null) {
-//						tCEPs.addAll(mParentCluster.getOldParticipatingCEPs());
+				// we are the absolute winner
+				tIsWinner = true;
+			}else{
+				if (mParentCluster.getPriority().equals(tHighestPrio)){
+					Logging.log(this, "	        ..HAVING SAME PRIORITY like " + tExternalWinner.getPeerL2Address());
+	
+					if (mParentCluster.getPriority().getUniqueID() > tHighestPrio.getUniqueID()){
+						Logging.log(this, "	        ..HAVING HIGHER priority ID than " + tExternalWinner.getPeerL2Address());
+	
+						// mark as winner
+						tIsWinner = true;
+					}else{
+						Logging.log(this, "	        ..HAVING LOWER/EQUAL priority ID " + mParentCluster.getPriority().getUniqueID() + " than " +  tHighestPrio.getUniqueID() + " of " + tExternalWinner.getPeerL2Address());
+					}
+				}
+			}
+			
+			/**
+			 * React on the result
+			 */
+			if(tIsWinner) {
+				Logging.log(this, "	        ..I AM WINNER");
+				eventElectionWon();
+			}else{
+				Logging.log(this, "	        ..seeing " + tExternalWinner.getPeerL2Address() + " as election winner");
+				eventElectionLost();
+			}
+		}else{
+			// election is incomplete: we are still waiting for some priority value(s)
+		}
+	}
+	
+	/**
+	 * Handles a Bully signaling packet from a cluster member
+	 * 
+	 * @param pPacketBully the packet
+	 * @param pClusterMember the reference to the sending cluster member
+	 */
+	@SuppressWarnings("unused")
+	public void handleMessageFromClusterMember(SignalingMessageBully pPacketBully, CoordinatorCEPChannel pSourceClusterMember)
+	{
+		Node tNode = mParentCluster.getHRMController().getNode();
+		Name tLocalNodeName = mParentCluster.getHRMController().getNodeName(); 
+		ICluster tSource = pSourceClusterMember.getPeer();
+		String tSourceDescription = tSource.getClusterDescription();
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+			Logging.log(this, "RECEIVED BULLY MESSAGE FROM " + pSourceClusterMember);
+
+		if (pSourceClusterMember == null){
+			Logging.err(this, "Member channel is invalid.");
+		}
+		
+		if (tSource == null){
+			Logging.err(this, "Member channel has invalid peer reference");
+		}
+		
+		// update the stored Bully priority of the cluster member
+		pSourceClusterMember.setPeerPriority(pPacketBully.getSenderPriority());		
+
+		/**
+		 * ELECT
+		 */
+		if(pPacketBully instanceof BullyElect)	{
+			
+			// cast to Bully elect packet
+			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
+			
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "BULLY-received from \"" + tSourceDescription + "\" an ELECT: " + tPacketBullyElect);
+			}
+
+//			if ((tSource.getSuperiorCoordinatorCEP() != null) && (tSource.getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
+//				
+//				if (tSource.getHRMController().equals(tLocalNodeName)) {
+//					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, tSource.getBullyPriority(), "CEP-to?", tSource.getToken());
+//					
+//					for(CoordinatorCEPChannel tCEP : tSource.getClusterMembers()) {
+//						tAnnouncePacket.addCoveredNode(tCEP.getPeerL2Address());
 //					}
-//					for(CoordinatorCEPChannel tCEP: mParentCluster.getClusterMembers()) {
-//						if(! tCEP.knowsCoordinator()) {
-//							if(!mParentCluster.getHRMController().checkPathToTargetContainsCovered(mParentCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName(), tCEPs)) {
-//								Logging.log(this, mParentCluster + " is adding laggard " + tCEP + " while clusters between are " + mParentCluster.getHRMController().getRoutableClusterGraph().getIntermediateNodes(mParentCluster.getHRMController().getSourceIntermediate(tCEP.getRemoteClusterName()), tCEP.getRemoteClusterName()));
-//								mParentCluster.addLaggard(tCEP);
-//							} else {
-//								Logging.info(this, mParentCluster + " doesn't add laggard " + tCEP);
-//							}
-//						} 
+//					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
+//						Logging.log(this, "Sending announce that does not cover anyhting");
 //					}
-//				} catch (ConcurrentModificationException tExc) {
-//					Logging.err(this, "Error when looking for uncovered clusters", tExc);
-//				}
-//				if(mParentCluster.getLaggards() != null) {
-//					((Cluster)mParentCluster).setParticipatingCEPs((LinkedList<CoordinatorCEPChannel>) mParentCluster.getLaggards().clone());
-//					mParentCluster.getLaggards().clear();
-//				}
-//				if(mParentCluster.getHRMController().getClusterWithCoordinatorOnLevel(mParentCluster.getHierarchyLevel().getValue()) == null) {
-//					deriveElectionResult();
-//				} else {
-//					break;
-//				}
-//			}
-//		}
 //
-//		ElectionManager.getElectionManager().removeElection(mParentCluster.getHierarchyLevel().getValue(), mParentCluster.getClusterID());
-//	}
+//					// send packet
+//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+//						Logging.log(this, "BULLY-sending to \"" + tSourceDescription + "\" an ANNOUNCE: " + tAnnouncePacket);
+//					pSourceClusterMember.sendPacket(tAnnouncePacket);
+//					
+//				} else {
+//					// create ALIVE packet
+//					BullyAlive tAlivePacket = new BullyAlive(tLocalNodeName);
+//					
+//					// send packet
+//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+//						Logging.log(this, "BULLY-sending to \"" + tSourceDescription + "\" an ALIVE: " + tAlivePacket);
+//					pSourceClusterMember.sendPacket(tAlivePacket);
+//					//TODO: packet is sent but never parsed or a timeout timer reset!!
+//				}
+//			} else {
+
+			// update the state
+			eventReceivedElect();
+		
+			// answer the "elect" message
+			signalResponse(pSourceClusterMember);
+				
+			/**
+			 * do we have a higher priority than the peer?
+			 */
+			boolean tHavingHigherPrio = false;
+			if (mParentCluster.getPriority().isHigher(this, pSourceClusterMember.getPeerPriority())){
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "	        ..the local priority is HIGHER than the remote, starting ELECTION by ourself");
+				}
+				
+				tHavingHigherPrio = true;
+			}else{
+				if (mParentCluster.getPriority().equals(pSourceClusterMember.getPeerPriority())){
+					Logging.log(this, "	        ..HAVING SAME PRIORITY like " + pSourceClusterMember.getPeerL2Address());
+	
+					if (mParentCluster.getPriority().getUniqueID() > pSourceClusterMember.getPeerPriority().getUniqueID()){
+						Logging.log(this, "	        ..HAVING HIGHER priority ID than " + pSourceClusterMember.getPeerL2Address());
+	
+						tHavingHigherPrio = true;
+					}else{
+						Logging.log(this, "	        ..HAVING LOWER/EQUAL priority ID " + mParentCluster.getPriority().getUniqueID() + " than " +  pSourceClusterMember.getPeerPriority().getUniqueID() + " of " + pSourceClusterMember.getPeerL2Address());
+					}
+				}
+			}
+
+			/**
+			 * send ELECT broadcasts
+			 */
+			if (tHavingHigherPrio){
+				// broadcast "ELECT" ourself
+				signalElectBroadcast();
+			}
+			
+//			}
+		}
+		
+		/**
+		 * REPLY
+		 */
+		if(pPacketBully instanceof BullyReply) {
+			
+			// cast to Bully replay packet
+			BullyReply tReplyPacket = (BullyReply)pPacketBully;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+				Logging.log(this, "BULLY-received from \"" + tSourceDescription + "\" a REPLY: " + tReplyPacket);
+
+			eventReceivedReply();
+		}
+		
+		/**
+		 * ANNOUNCE
+		 */
+		if(pPacketBully instanceof BullyAnnounce)  {
+			// cast to Bully replay packet
+			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+				Logging.log(this, "BULLY-received from \"" + tSourceDescription + "\" an ANNOUNCE: " + tAnnouncePacket);
+
+			eventElectionLost();
+
+//			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
+			tSource.handleBullyAnnounce(tAnnouncePacket, pSourceClusterMember);
+		}
+
+		/**
+		 * PRIORITY UPDATE
+		 */
+		if(pPacketBully instanceof BullyPriorityUpdate) {
+			// cast to Bully replay packet
+			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+				Logging.log(this, "BULLY-received from \"" + tSourceDescription + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
+		}
+	}
 
 	/**
 	 * Determine the parent cluster, which owns this elector. 
@@ -422,12 +628,22 @@ public class Elector implements HRMEntity
 		return mParentCluster;
 	}
 	
+	/**
+	 * Generates a descriptive string about the object
+	 * 
+	 * @return the descriptive string
+	 */
 	@Override
 	public String toString()
 	{
 		return toLocation() + "(Cluster=" + (mParentCluster != null ? "(Cluster=" + mParentCluster.getClusterID() + ")" : "");
 	}
 
+	/**
+	 * Generates a description of the location of this object instance
+	 * 
+	 * @return the location description
+	 */
 	@Override
 	public String toLocation()
 	{
@@ -441,8 +657,4 @@ public class Elector implements HRMEntity
 		
 		return tResult;
 	}
-
-//	private Boolean mPleaseInterrupt = false;
-//	private long TIMEOUT_FOR_PEERS = 1000;
-//	private long TIMEOUT_FOR_ANNOUNCEMENT=5000;
 }

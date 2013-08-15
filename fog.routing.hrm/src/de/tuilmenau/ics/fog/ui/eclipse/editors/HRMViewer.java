@@ -56,10 +56,9 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
+import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionManager;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -73,8 +72,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 {
 	private static boolean HRM_VIEWER_DEBUGGING = true;
-	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = false;
-	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS = false;
+	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = true;
+	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS = true;
 	
 	private HRMController mHRMController = null;
     private Composite mShell = null;
@@ -137,7 +136,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 0: list clusters
 		 */
-		for (Cluster tCluster: mHRMController.listKnownClusters()) {
+		for (Cluster tCluster: mHRMController.getAllClusters()) {
 			// print info. about cluster
 			printCluster(tCluster);
 
@@ -145,7 +144,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 * GUI part 1: list coordinators
 		 */
 		}
-		for (Coordinator tCoordinator: mHRMController.listKnownCoordinators()) {
+		for (Coordinator tCoordinator: mHRMController.getAllCoordinators()) {
 			// print info. about cluster
 			printCoordinator(tCoordinator);
 		}
@@ -698,20 +697,24 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
 
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS){
-				ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
-			    toolItem1.setText("[Elect coordinator]");
-			    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(pCluster));
+				if ((pCluster.getElector() != null) && (!pCluster.getElector().isCoordinatorValid())){
+					ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
+				    toolItem1.setText("[Elect local coordinator]");
+				    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(this, pCluster));
+				}
 			}
 
-		    ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem2.setText("[Elect all level " + tHierarchyLevel + " coordinators]");
-		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(pCluster));
-		    
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS){
-			    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
-			    toolItem3.setText("[Cluster with siblings]");
-			    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(this, pCluster));
+				if ((pCluster.getElector() != null) && (pCluster.getElector().isWinner())){
+				    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
+				    toolItem3.setText("[Cluster locacally]");
+				    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(this, pCluster));
+				}
 			}
+
+			ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
+		    toolItem2.setText("[Elect all level " + tHierarchyLevel + " coordinators]");
+		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(this, pCluster));
 		    
 		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem4.setText("[Cluster all level " + tHierarchyLevel + " coordinators]");
@@ -907,19 +910,30 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private class ListenerElectCoordinator implements Listener
 	{
 		private Cluster mCluster = null;
+		private HRMViewer mHRMViewer = null;
 		
-		private ListenerElectCoordinator(Cluster pCluster)
+		private ListenerElectCoordinator(HRMViewer pHRMViewer, Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
+			mHRMViewer = pHRMViewer;
 		}
 		
 		@Override
 		public void handleEvent(Event event)
 		{
-			ElectionManager.getElectionManager().getElector(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).startElection();
+			if (HRM_VIEWER_DEBUGGING){
+				Logging.log(this, "GUI-TRIGGER: Starting election for " + mCluster);
+			}
+			
+			// start the election for the selected cluster
+			mCluster.getElector().startElection();
 		}
-		
+	
+		public String toString()
+		{
+			return mHRMViewer.toString() + "@" + getClass().getSimpleName(); 
+		}
 	}
 
 	/**
@@ -928,23 +942,42 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private class ListenerElectHierarchyLevelCoordinators implements Listener
 	{
 		private Cluster mCluster = null;
-		
-		private ListenerElectHierarchyLevelCoordinators(Cluster pCluster)
+		private HRMViewer mHRMViewer = null;
+
+		private ListenerElectHierarchyLevelCoordinators(HRMViewer pHRMViewer, Cluster pCluster)
 		{
 			super();
 			mCluster = pCluster;
+			mHRMViewer = pHRMViewer;
 		}
 		
 		@Override
 		public void handleEvent(Event event)
 		{
-			Logging.log(this, "Available Elector instances: ");
-			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
-				Logging.log(this, tProcess.toString());
+			// get the hierarchy level of the selected cluster
+			HierarchyLevel tLocalClusterLevel = mCluster.getHierarchyLevel();
+			
+			// iterate over all HRMControllers
+			for(HRMController tHRMController : HRMController.getALLHRMControllers()) {
+				// iterate over all clusters from the current HRMController
+				for (Cluster tCluster: tHRMController.getAllClusters())
+				{
+					// check the hierarchy of the found cluster
+					if (tLocalClusterLevel.equals(tCluster.getHierarchyLevel())){
+						if (HRM_VIEWER_DEBUGGING){
+							Logging.log(this, "GUI-TRIGGER: Starting election for " + tCluster);
+						}
+						
+						// start the election for the found cluster
+						tCluster.getElector().startElection();
+					}
+				}
 			}
-			for(Elector tElector : ElectionManager.getElectionManager().getElectors(mCluster.getHierarchyLevel().getValue())) {
-				tElector.startElection();
-			}
+		}
+		
+		public String toString()
+		{
+			return mHRMViewer.toString() + "@" + getClass().getSimpleName(); 
 		}
 	}
 	
@@ -966,12 +999,37 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		@Override
 		public void handleEvent(Event event)
 		{
-			Logging.log(this, "Available Election Processes: ");
-			for(Elector tProcess : ElectionManager.getElectionManager().getAllElections()) {
-				Logging.log(tProcess.toString());
-			}
-			for(Elector tElector : ElectionManager.getElectionManager().getElectors(mCluster.getHierarchyLevel().getValue())) {
-				tElector.startClustering();
+			// get the hierarchy level of the selected cluster
+			HierarchyLevel tLocalClusterLevel = mCluster.getHierarchyLevel();
+			
+			// check if we are at the max. hierarchy height
+			if(tLocalClusterLevel.getValue() < HRMConfig.Hierarchy.HEIGHT - 1) {
+
+				// iterate over all HRMControllers
+				for(HRMController tHRMController : HRMController.getALLHRMControllers()) {
+					// iterate over all clusters from the current HRMController
+					for (Cluster tCluster: tHRMController.getAllClusters())
+					{
+						// check the hierarchy of the found cluster
+						if (tLocalClusterLevel.equals(tCluster.getHierarchyLevel())){
+							// get the coordinator of the current cluster
+							Coordinator tCoordinator = tCluster.getCoordinator();
+							
+							if (tCoordinator != null){
+								if (HRM_VIEWER_DEBUGGING){
+									Logging.log(this, "GUI-TRIGGER: Starting clustering for coordinator " + tCoordinator);
+								}
+								
+								// start the clustering of the selected cluster's coordinator and its neighbors
+								tCoordinator.clusterCoordinators();
+							}else{
+								Logging.err(this, "Coordinator of " + tCluster + " wasn't elected yet, skipping clustering request");
+							}
+						}
+					}
+				}
+			}else{
+				Logging.err(this, "Maximum hierarchy height " + (HRMConfig.Hierarchy.HEIGHT - 1) + "is already reached.");
 			}
 		}
 		
@@ -999,8 +1057,26 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		@Override
 		public void handleEvent(Event event)
 		{
-			ElectionManager.getElectionManager().getElector(mCluster.getHierarchyLevel().getValue(), mCluster.getClusterID()).startClustering();
+			// check if we are at the max. hierarchy height
+			if(mCluster.getHierarchyLevel().getValue() < HRMConfig.Hierarchy.HEIGHT - 1) {
+				// get the coordinator of the selected cluster
+				Coordinator tCoordinator = mCluster.getCoordinator();
+				
+				if (tCoordinator != null){
+					if (HRM_VIEWER_DEBUGGING){
+						Logging.log(this, "GUI-TRIGGER: Starting clustering for coordinator " + tCoordinator);
+					}
+					
+					// start the clustering of the selected cluster's coordinator and its neighbors
+					tCoordinator.clusterCoordinators();
+				}else{
+					Logging.err(this, "Coordinator of " + mCluster + " wasn't elected yet, skipping clustering request");
+				}
+			}else{
+				Logging.err(this, "Maximum hierarchy height " + (HRMConfig.Hierarchy.HEIGHT - 1) + "is already reached.");
+			}
 		}		
+		
 		public String toString()
 		{
 			return mHRMViewer.toString() + "@" + getClass().getSimpleName(); 

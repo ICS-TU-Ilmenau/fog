@@ -22,6 +22,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
@@ -49,12 +50,12 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private static final long serialVersionUID = -7486131336574637721L;
 
 	/**
-	 * This is the cluster counter, which allows for globally (related to a physical simulation node) unique cluster IDs.
+	 * This is the cluster counter, which allows for globally (related to a physical simulation machine) unique cluster IDs.
 	 */
 	private static long sNextClusterFreeID = 0;
 
 	/**
-	 * Stores the physical simulation node specific multiplier, which is used to create unique cluster IDs even if multiple physical simulation nodes are connected by FoGSiEm instances
+	 * Stores the physical simulation machine specific multiplier, which is used to create unique cluster IDs even if multiple physical simulation machines are connected by FoGSiEm instances
 	 * The value "-1" is important for initialization!
 	 */
 	private static long sClusterIDMachineMultiplier = -1;
@@ -168,9 +169,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 
 		
-		mMux = new CoordinatorCEPMultiplexer(mHRMController);
-		
-		mMux.setCluster(this);
+		mMux = new CoordinatorCEPMultiplexer(this, mHRMController);
 		
 		// register at HRMController's internal database
 		getHRMController().registerCluster(this);
@@ -179,7 +178,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	}
 	
 	/**
-	 * Determines the physical simulation node specific ClusterID multiplier
+	 * Determines the physical simulation machine specific ClusterID multiplier
 	 * 
 	 * @return the generated multiplier
 	 */
@@ -188,7 +187,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		if (sClusterIDMachineMultiplier < 0){
 			String tHostName = getHRMController().getHostName();
 			if (tHostName != null){
-				sClusterIDMachineMultiplier = (getHRMController().getHostName().hashCode() % 10000) * 10000;
+				sClusterIDMachineMultiplier = (tHostName.hashCode() % 10000) * 10000;
 			}else{
 				Logging.err(this, "Unable to determine the machine-specific ClusterID multiplier because host name couldn't be indentified");
 			}
@@ -299,11 +298,13 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		// extract the HRMID from the packet 
 		HRMID tHRMID = pAssignHRMIDPacket.getHRMID();
 		
-		Logging.log(this, "Handling AssignHRMID with assigned HRMID " + tHRMID.toString());
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
+			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + tHRMID.toString());
 
 		// we process such packets only on base hierarchy level, on higher hierarchy levels coordinators should be the only target for such packets
 		if (getHierarchyLevel().isBaseLevel()){
-			Logging.log(this, "     ..setting assigned HRMID " + tHRMID.toString());
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
+				Logging.log(this, "     ..setting assigned HRMID " + tHRMID.toString());
 			
 			// update the local HRMID
 			setHRMID(this, tHRMID);
@@ -315,11 +316,13 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		if (hasLocalCoordinator()){
 			// we should automatically continue the address distribution?
 			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
-				Logging.log(this, "     ..continuing the address distribution process via the coordinator " + getCoordinator());
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
+					Logging.log(this, "     ..continuing the address distribution process via the coordinator " + getCoordinator());
 				getCoordinator().signalAddressDistribution();				
 			}			
 		}else{
-			Logging.log(this, "     ..stopping address propagation here because node " + getHRMController().getNodeGUIName() + " is only a cluster member");
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
+				Logging.log(this, "     ..stopping address propagation here because node " + getHRMController().getNodeGUIName() + " is only a cluster member");
 		}
 	}
 
@@ -328,7 +331,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 * 
 	 * @return the Bully priority
 	 */
-	public BullyPriority getBullyPriority()
+	public BullyPriority getPriority()
 	{
 		if (mBullyPriority == null){
 			mBullyPriority = new BullyPriority(this);
@@ -412,7 +415,42 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return mClusterID / clusterIDMachineMultiplier();
 	}
 	
+	/**
+	 * Handles a Bully related signaling message from an external cluster member
+	 * 
+	 * @param pBullyMessage the Bully message
+	 * @param pSourceClusterMember the channel to the message source
+	 */
+	public void handleSignalingMessageBully(SignalingMessageBully pBullyMessage, CoordinatorCEPChannel pSourceClusterMember)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+			Logging.log(this, "RECEIVED BULLY MESSAGE FROM " + pSourceClusterMember);
+
+		getElector().handleMessageFromClusterMember(pBullyMessage, pSourceClusterMember);
+	}
 	
+	/**
+	 * Handles a general signaling message from an external cluster member
+	 * 
+	 * @param pMessage the signaling message
+	 * @param pCoordinatorCEPChannel the channel to the message source
+	 */
+	public void handleMessageFromClusterMember(Serializable pMessage, CoordinatorCEPChannel pSourceClusterMember)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING)
+			Logging.log(this, "RECEIVED SIGNALING MESSAGE FROM " + pSourceClusterMember);
+
+		/**
+		 * Bully signaling message
+		 */
+		if (pMessage instanceof SignalingMessageBully) {
+			// cast to a Bully signaling message
+			SignalingMessageBully tBullyMessage = (SignalingMessageBully)pMessage;
+		
+			// process Bully message
+			handleSignalingMessageBully(tBullyMessage, pSourceClusterMember);
+		}
+	}
 	
 	
 	
@@ -437,8 +475,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	{
 		setToken(pCoordToken);
 		
-		Logging.log(this, "announcement number " + (++mCoordinatorUpdateCounter) + ": Setting Coordinator " + pCoordinatorChannel + " with routing address " + pAddress + " and priority ");
-		Logging.log(this, "previous channel to coordinator was " + mChannelToCoordinator + " for coordinator " + mCoordName);
+		Logging.log(this, "Setting " + (++mCoordinatorUpdateCounter) + " time a new coordinator: " + pCoordName + "/" + pCoordinatorChannel + " with routing address " + pAddress);
 		mChannelToCoordinator = pCoordinatorChannel;
 		mCoordName = pCoordName;
 		if(mChannelToCoordinator == null) {
@@ -446,7 +483,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				mCoordAddress = getHRMController().getNode().getRoutingService().getNameFor(getHRMController().getNode().getCentralFN());
 				notifyAll();
 			}
-			setCoordinatorPriority(getBullyPriority());
+			setCoordinatorPriority(getPriority());
 		} else {
 			synchronized(this) {
 				mCoordAddress = pAddress;
@@ -911,10 +948,9 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private String idToString()
 	{
 		if (getHRMID() == null){
-			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getBullyPriority().getValue();
+			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getPriority().getValue();
 		}else{
 			return "HRMID=" + getHRMID().toString();
 		}
 	}
-
 }

@@ -112,7 +112,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public BullyPriority getBullyPriority() {
+	public BullyPriority getPriority() {
 		return null;
 	}
 

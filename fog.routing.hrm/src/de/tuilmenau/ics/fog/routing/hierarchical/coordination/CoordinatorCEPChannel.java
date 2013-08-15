@@ -56,8 +56,18 @@ public class CoordinatorCEPChannel
 {
 	private static final long serialVersionUID = -8290946480171751216L;
 	private ClusterName mRemoteCluster;
-	private ICluster mPeerCluster;
+	private ICluster mParent; // either Cluster or Coordinator
+	
+	/**
+	 * Stores the Bully priority of the peer
+	 */
 	private BullyPriority mPeerPriority = null;
+	
+	/**
+	 * Stores the freshness of the Bully priority of the peer
+	 */
+	private double mPeerPriorityTimestampLastUpdate = 0; 
+	
 	private boolean mKnowsCoordinator = false;
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
@@ -73,13 +83,13 @@ public class CoordinatorCEPChannel
 	 * @param pHRMController is the coordinator of a node
 	 * @param pPeerCluster is the peer cluster/coordinator
 	 */
-	public CoordinatorCEPChannel(HRMController pHRMController, ICluster pPeerCluster)
+	public CoordinatorCEPChannel(HRMController pHRMController, ICluster pPeer)
 	{
 		mHRMController = pHRMController;
-		mPeerCluster = pPeerCluster;
+		mParent = pPeer;
 		mPeerPriority = new BullyPriority(this);
-		pPeerCluster.addParticipatingCEP(this);
-		Logging.log(this, "CREATED for " + mPeerCluster);
+		mParent.addParticipatingCEP(this);
+		Logging.log(this, "CREATED for " + mParent);
 	}
 	
 	/**
@@ -139,124 +149,164 @@ public class CoordinatorCEPChannel
 	}
 
 	/**
+	 * Updates the Bully prirority of the peer.
+	 * 
+	 * @param pPeerPriority the Bully priority
+	 */
+	public void setPeerPriority(BullyPriority pPeerPriority)
+	{
+		if (pPeerPriority == null){
+			Logging.warn(this, "Trying to set NULL POINTER as Bully priority, ignoring this request");
+			return;
+		}
+
+		// get the current simulation time
+		double tNow = getHRMController().getSimulationTime();
+		
+		Logging.log(this, "Updating peer priority from " + mPeerPriority.getValue() + " to " + pPeerPriority.getValue() + ", last update was " + (tNow - mPeerPriorityTimestampLastUpdate) + " seconds before");
+		
+		// update the freshness of the peer priority
+		mPeerPriorityTimestampLastUpdate = tNow;
+
+		// update the peer Bully priority itself
+		mPeerPriority = pPeerPriority;
+	}
+
+	
+	//TODO: implement this, integrate check in getPeerPriority()
+	public double getPeerPriorityFreshness()
+	{
+		return 0;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/**
 	 * Handles a Bully signaling packet.
 	 * 
 	 * @param pPacketBully the packet
 	 */
-	private void handleSignalingMessageBully(SignalingMessageBully pPacketBully) throws NetworkException
-	{
-		Node tNode = getHRMController().getNode();
-		Name tLocalNodeName = getHRMController().getNodeName(); 
-				
-		boolean BULLY_SIGNALING_DEBUGGING = true;
-
-		if (getPeer() == null){
-			Logging.warn(this, "Peer is still invalid!");
-		}
-		
-		/**
-		 * ELECT
-		 */
-		if(pPacketBully instanceof BullyElect)	{
-			
-			// cast to Bully elect packet
-			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
-			
-			if (BULLY_SIGNALING_DEBUGGING)
-				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" an ELECT: " + tPacketBullyElect);
-
-			if ((getPeer().getSuperiorCoordinatorCEP() != null) && (getPeer().getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
-				
-				mPeerPriority = tPacketBullyElect.getSenderPriority();
-				
-				if (getPeer().getHRMController().equals(tLocalNodeName)) {
-					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, getPeer().getBullyPriority(), "CEP-to?", getPeer().getToken());
-					
-					for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
-						tAnnouncePacket.addCoveredNode(tCEP.getPeerL2Address());
-					}
-					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
-						Logging.log(this, "Sending announce that does not cover anyhting");
-					}
-
-					// send packet
-					if (BULLY_SIGNALING_DEBUGGING)
-						Logging.log(this, "BULLY-sending to \"" + mPeerCluster + "\" an ANNOUNCE: " + tAnnouncePacket);
-					sendPacket(tAnnouncePacket);
-					
-				} else {
-					// create ALIVE packet
-					BullyAlive tAlivePacket = new BullyAlive(tLocalNodeName);
-					
-					// send packet
-					if (BULLY_SIGNALING_DEBUGGING)
-						Logging.log(this, "BULLY-sending to \"" + mPeerCluster + "\" an ALIVE: " + tAlivePacket);
-					sendPacket(tAlivePacket);
-					//TODO: packet is sent but never parsed or a timeout timer reset!!
-				}
-			} else {
-				if (getPeer() instanceof Cluster){
-					// store peer's Bully priority
-					//TODO: peer prio direkt mal abspeichern und auf größte checken!
-					mPeerPriority = tPacketBullyElect.getSenderPriority();
-					
-					// create REPLY packet
-					BullyReply tReplyPacket = new BullyReply(tLocalNodeName, getPeerHRMID(), getPeer().getBullyPriority());
-					
-					// send the answer packet
-					if (BULLY_SIGNALING_DEBUGGING)
-						Logging.log(this, "BULLY-sending to \"" + mPeerCluster + "\" a REPLY: " + tReplyPacket);
-					sendPacket(tReplyPacket);
-				}else{
-					Logging.err(this, "Peer is not a cluster, skipping BullyReply message, peer is " + getPeer());
-				}
-			}
-		}
-		
-		/**
-		 * REPLY
-		 */
-		if(pPacketBully instanceof BullyReply) {
-			
-			// cast to Bully replay packet
-			BullyReply tReplyPacket = (BullyReply)pPacketBully;
-
-			if (BULLY_SIGNALING_DEBUGGING)
-				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" a REPLY: " + tReplyPacket);
-
-			// store peer's Bully priority
-			//TODO: peer prio direkt mal abspeichern und auf größte checken!
-			mPeerPriority = tReplyPacket.getSenderPriority();
-		}
-		
-		/**
-		 * ANNOUNCE
-		 */
-		if(pPacketBully instanceof BullyAnnounce)  {
-			// cast to Bully replay packet
-			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
-
-			if (BULLY_SIGNALING_DEBUGGING)
-				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" an ANNOUNCE: " + tAnnouncePacket);
-
-			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
-			getPeer().handleBullyAnnounce(tAnnouncePacket, this);
-		}
-
-		/**
-		 * PRIORITY UPDATE
-		 */
-		if(pPacketBully instanceof BullyPriorityUpdate) {
-			// cast to Bully replay packet
-			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
-
-			if (BULLY_SIGNALING_DEBUGGING)
-				Logging.log(this, "BULLY-received from \"" + mPeerCluster + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
-
-			// store peer's Bully priority
-			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority();
-		}
-	}
+//	private void handleSignalingMessageBully(SignalingMessageBully pPacketBully) throws NetworkException
+//	{
+//		Node tNode = getHRMController().getNode();
+//		Name tLocalNodeName = getHRMController().getNodeName(); 
+//				
+//		boolean BULLY_SIGNALING_DEBUGGING = true;
+//
+//		if (getPeer() == null){
+//			Logging.warn(this, "Peer is still invalid!");
+//		}
+//		
+//		/**
+//		 * ELECT
+//		 */
+//		if(pPacketBully instanceof BullyElect)	{
+//			
+//			// cast to Bully elect packet
+//			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
+//			
+//			if (BULLY_SIGNALING_DEBUGGING)
+//				Logging.log(this, "BULLY-received from \"" + mParent + "\" an ELECT: " + tPacketBullyElect);
+//
+//			if ((getPeer().getSuperiorCoordinatorCEP() != null) && (getPeer().getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
+//				
+//				mPeerPriority = tPacketBullyElect.getSenderPriority();
+//				
+//				if (getPeer().getHRMController().equals(tLocalNodeName)) {
+//					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, getPeer().getBullyPriority(), "CEP-to?", getPeer().getToken());
+//					
+//					for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
+//						tAnnouncePacket.addCoveredNode(tCEP.getPeerL2Address());
+//					}
+//					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
+//						Logging.log(this, "Sending announce that does not cover anyhting");
+//					}
+//
+//					// send packet
+//					if (BULLY_SIGNALING_DEBUGGING)
+//						Logging.log(this, "BULLY-sending to \"" + mParent + "\" an ANNOUNCE: " + tAnnouncePacket);
+//					sendPacket(tAnnouncePacket);
+//					
+//				} else {
+//					// create ALIVE packet
+//					BullyAlive tAlivePacket = new BullyAlive(tLocalNodeName);
+//					
+//					// send packet
+//					if (BULLY_SIGNALING_DEBUGGING)
+//						Logging.log(this, "BULLY-sending to \"" + mParent + "\" an ALIVE: " + tAlivePacket);
+//					sendPacket(tAlivePacket);
+//					//TODO: packet is sent but never parsed or a timeout timer reset!!
+//				}
+//			} else {
+//				if (getPeer() instanceof Cluster){
+//					// store peer's Bully priority
+//					//TODO: peer prio direkt mal abspeichern und auf größte checken!
+//					mPeerPriority = tPacketBullyElect.getSenderPriority();
+//					
+//					// create REPLY packet
+//					BullyReply tReplyPacket = new BullyReply(tLocalNodeName, getPeerHRMID(), getPeer().getBullyPriority());
+//					
+//					// send the answer packet
+//					if (BULLY_SIGNALING_DEBUGGING)
+//						Logging.log(this, "BULLY-sending to \"" + mParent + "\" a REPLY: " + tReplyPacket);
+//					sendPacket(tReplyPacket);
+//				}else{
+//					Logging.err(this, "Peer is not a cluster, skipping BullyReply message, peer is " + getPeer());
+//				}
+//			}
+//		}
+//		
+//		/**
+//		 * REPLY
+//		 */
+//		if(pPacketBully instanceof BullyReply) {
+//			
+//			// cast to Bully replay packet
+//			BullyReply tReplyPacket = (BullyReply)pPacketBully;
+//
+//			if (BULLY_SIGNALING_DEBUGGING)
+//				Logging.log(this, "BULLY-received from \"" + mParent + "\" a REPLY: " + tReplyPacket);
+//
+//			// store peer's Bully priority
+//			//TODO: peer prio direkt mal abspeichern und auf größte checken!
+//			mPeerPriority = tReplyPacket.getSenderPriority();
+//		}
+//		
+//		/**
+//		 * ANNOUNCE
+//		 */
+//		if(pPacketBully instanceof BullyAnnounce)  {
+//			// cast to Bully replay packet
+//			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
+//
+//			if (BULLY_SIGNALING_DEBUGGING)
+//				Logging.log(this, "BULLY-received from \"" + mParent + "\" an ANNOUNCE: " + tAnnouncePacket);
+//
+//			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
+//			getPeer().handleBullyAnnounce(tAnnouncePacket, this);
+//		}
+//
+//		/**
+//		 * PRIORITY UPDATE
+//		 */
+//		if(pPacketBully instanceof BullyPriorityUpdate) {
+//			// cast to Bully replay packet
+//			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
+//
+//			if (BULLY_SIGNALING_DEBUGGING)
+//				Logging.log(this, "BULLY-received from \"" + mParent + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
+//
+//			// store peer's Bully priority
+//			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority();
+//		}
+//	}
 	
 	/**
 	 * 
@@ -303,11 +353,19 @@ public class CoordinatorCEPChannel
 			 * Bully signaling message
 			 */
 			if (pData instanceof SignalingMessageBully) {
-				// cast to a Bully signaling message
-				SignalingMessageBully tBullyMessage = (SignalingMessageBully)pData;
-			
-				// process Bully message
-				handleSignalingMessageBully(tBullyMessage);
+				if (mParent instanceof Cluster){
+					Cluster tParentCluster = (Cluster)mParent;
+					
+					Logging.log(this, "BULLY MESSAGE FROM " + getPeerL2Address());
+					
+					// cast to a Bully signaling message
+					SignalingMessageBully tBullyMessage = (SignalingMessageBully)pData;
+				
+					// process Bully message
+					tParentCluster.handleMessageFromClusterMember(tBullyMessage, this);
+				}else{
+					Logging.err(this, "Parent " + mParent + " has the wrong class type, expected Cluster");
+				}
 				
 				return true;
 			}
@@ -336,7 +394,7 @@ public class CoordinatorCEPChannel
 				NeighborClusterAnnounce tAnnouncePacket = (NeighborClusterAnnounce)pData;
 
 				if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-					Logging.log(this, "NEIGHBOR received from \"" + mPeerCluster + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
+					Logging.log(this, "NEIGHBOR received from \"" + mParent + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
 
 				if(tAnnouncePacket.isInterASAnnouncement()) {
 					Logging.log(this, tNode.getAS().getName() + " received an announcement from " + tAnnouncePacket.getASIdentification());
@@ -365,7 +423,7 @@ public class CoordinatorCEPChannel
 							}
 						} else if(getPeer() instanceof Coordinator) {
 							Logging.log(this, "Inter AS announcement " + tAnnouncePacket + " is handled by " + getPeer() + " whether it leads to the clusters coordinator");
-							((Coordinator)getPeer()).getManagedCluster().handleNeighborAnnouncement(tAnnouncePacket, this);
+							((Coordinator)getPeer()).getCluster().handleNeighborAnnouncement(tAnnouncePacket, this);
 						}
 					}
 				} else {
@@ -402,7 +460,7 @@ public class CoordinatorCEPChannel
 				RequestCoordinator tRequestCoordinatorPacket = (RequestCoordinator) pData;
 				
 				if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-					Logging.log(this, "CHANNEL-received from \"" + mPeerCluster + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
+					Logging.log(this, "CHANNEL-received from \"" + mParent + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
 
 				if(!tRequestCoordinatorPacket.isAnswer()) {
 					if(getPeer().getSuperiorCoordinatorCEP() != null) {
@@ -492,7 +550,7 @@ public class CoordinatorCEPChannel
 		if(pCluster.getCoordinatorName() != null) {
 			DiscoveryEntry tEntry = new DiscoveryEntry(pCluster.getToken(), pCluster.getCoordinatorName(), pCluster.getClusterID(), pCluster.getCoordinatorsAddress(), pCluster.getHierarchyLevel());
 			tEntry.setClusterHops(getPeer().getHRMController().getClusterDistance(pCluster));
-			tEntry.setPriority(pCluster.getBullyPriority());
+			tEntry.setPriority(pCluster.getPriority());
 			tEntry.setRoutingVectors(getPath(pCluster.getCoordinatorsAddress()));
 			
 			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(getPeer(), pCluster);
@@ -514,7 +572,7 @@ public class CoordinatorCEPChannel
 	 */
 	public ICluster getPeer()
 	{
-		return mPeerCluster;
+		return mParent;
 	}
 	
 	/**
@@ -558,16 +616,6 @@ public class CoordinatorCEPChannel
 		return mPeerPriority;
 	}
 
-	public void setPeerPriority(BullyPriority pPeerPriority)
-	{
-		if (pPeerPriority == null){
-			Logging.warn(this, "Trying to set NULL POINTER as Bully priority, ignoring this request");
-			return;
-		}
-			
-		mPeerPriority = pPeerPriority;
-	}
-	
 	public void setRemoteClusterName(ClusterName pClusterName)
 	{
 		Logging.log(this, "Setting remote/peer cluster " + pClusterName);
