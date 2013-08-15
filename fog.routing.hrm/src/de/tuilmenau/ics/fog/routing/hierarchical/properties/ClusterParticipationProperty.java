@@ -121,6 +121,8 @@ public class ClusterParticipationProperty extends AbstractProperty
 	 */
 	public void addNestedparticipation(NestedParticipation pParticipation)
 	{
+		Logging.log(this, "Adding nested participation: " + pParticipation);
+		
 		if(mNestParticipations == null) {
 			mNestParticipations = new LinkedList<NestedParticipation>();
 		}
