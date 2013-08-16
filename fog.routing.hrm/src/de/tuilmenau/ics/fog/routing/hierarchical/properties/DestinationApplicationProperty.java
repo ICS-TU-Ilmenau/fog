@@ -27,62 +27,85 @@ import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 public class DestinationApplicationProperty extends AbstractProperty
 {
 	private static final long serialVersionUID = 8299856490405894908L;
-	private Namespace mNamespace = null;
-	private Name mName = null;
-	private Object mApplicationParameter;
+
+	/**
+	 * Stores the application name space
+	 */
+	private Namespace mAppNamespace = null;
 	
 	/**
-	 * Use this class in order to route a packet to the server forwarding node of an application 
-	 * 
-	 * @param pName If you know the concrete name of the destination application you may provide a name here. Otherwise
-	 * null should be used.
-	 * @param pNamespace Provide the namespace of the application here.
+	 * Stores the name of the application
 	 */
-	public DestinationApplicationProperty(Name pName, Namespace pNamespace)
+	private Name mAppName = null;
+	
+	/**
+	 * Stores an optional application parameter
+	 */
+	private Object mAppParameter;
+	
+	/**
+	 * Constructor 
+	 * 
+	 * @param pAppNamespace the name space of the application (can be null)
+	 * @param pAppName the name of the application (can be null)
+	 * @param pAppParameter the parameter for the application (can be null)
+	 */
+	public DestinationApplicationProperty(Namespace pAppNamespace, Name pAppName, Object pAppParameter)
 	{
-		mNamespace=pNamespace;
-		mName = pName;
+		mAppNamespace = pAppNamespace;
+		mAppName = pAppName;
+		mAppParameter = pAppParameter;
 	}
 	
 	/**
-	 * It is possible to set a parameter that can be evaluated at receiver side. It can be set here.
+	 * Constructor 
 	 * 
-	 * @param pParameter
+	 * @param pNamespace the name space of the application (can be null)
+	 * @param pAppName the name of the application (can be null)
+	 * @param pAppParameter the parameter for the application (can be null)
 	 */
-	public void setParameter(Object pParameter)
+	public DestinationApplicationProperty(Namespace pNamespace)
 	{
-		mApplicationParameter = pParameter;
-	}
-	
-	/**
-	 * 
-	 * @return In case a target application name was set it can be retrieved via this method.
-	 */
-	public Name getApplicationName()
-	{
-		return mName;
-	}
-	
-	/**
-	 * 
-	 * @return In case a target application parameter was set it can be retrieved via this method.
-	 */
-	public Object getApplicationParameter()
-	{
-		return mApplicationParameter;
-	}
-	
-	/**
-	 * 
-	 * @return In case a target application namespace was set it can be retrieved here.
-	 */
-	public Namespace getApplicationNamespace()
-	{
-		return mNamespace;
+		this(pNamespace, null, null);
 	}
 
+	/**
+	 * Returns the application name
+	 *  
+	 * @return the application name
+	 */
+	public Name getAppName()
+	{
+		return mAppName;
+	}
+	
+	/**
+	 * Returns the application parameter
+	 * 
+	 * @return the application parameter
+	 */
+	public Object getAppParameter()
+	{
+		return mAppParameter;
+	}
+	
+	/**
+	 * Returns the application name space
+	 * 
+	 * @return the application name space
+	 */
+	public Namespace getAppNamespace()
+	{
+		return mAppNamespace;
+	}
+
+	/**
+	 * Generates a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(->" + (mName != null ? mName  : "" ) + "@" + mNamespace + (mApplicationParameter != null ? ";" + mApplicationParameter : "") + ")";
+		return getClass().getSimpleName() + "(DestAppl=" + mAppNamespace + "://" + (mAppName != null ? mAppName: "" ) + ", AppParams=" +  mAppParameter + ")";
 	}
 }

@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.routing.hierarchical.clustering;
+package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -17,8 +17,6 @@ import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -87,12 +85,12 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPChannel> getClusterMembers() {
+	public LinkedList<ComChannel> getClusterMembers() {
 		return null;
 	}
 
 	@Override
-	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP) {
+	public void registerComChannel(ComChannel pParticipatingCEP) {
 		
 	}
 
@@ -153,18 +151,18 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
+	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, ComChannel pCEP)
 	{
 	}
 
 	@Override
-	public CoordinatorCEPChannel getSuperiorCoordinatorCEP()
+	public ComChannel getSuperiorCoordinatorCEP()
 	{
 		return null;
 	}
 
 	@Override
-	public void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress)
+	public void setSuperiorCoordinatorCEP(ComChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress)
 	{
 		
 	}
@@ -187,7 +185,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed)
+	public void sendClusterBroadcast(Serializable pData, LinkedList<ComChannel> pAlreadyInformed)
 	{
 		
 	}
@@ -211,13 +209,13 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
 	{
 		
 	}
 
 	@Override
-	public CoordinatorCEPMultiplexer getMultiplexer()
+	public ComChannelMuxer getMultiplexer()
 	{
 		return null;
 	}

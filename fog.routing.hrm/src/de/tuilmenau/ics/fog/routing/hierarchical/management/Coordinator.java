@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.routing.hierarchical.coordination;
+package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -29,13 +29,6 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HRMGraphNodeName;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -81,8 +74,8 @@ public class Coordinator implements ICluster, HRMEntity
 	
 	private HRMID mHRMID = null;
 	private Cluster mManagedCluster;
-	private LinkedList<CoordinatorCEPChannel> mCEPs = null;
-	private CoordinatorCEPChannel mCoordinatorCEP = null;
+	private LinkedList<ComChannel> mCEPs = null;
+	private ComChannel mCoordinatorCEP = null;
 	private Name mCoordinatorName = null;
 	private HRMName mCoordinatorAddress = null;
 	private int mToken;
@@ -117,7 +110,7 @@ public class Coordinator implements ICluster, HRMEntity
 		
 		mHierarchyLevel = mManagedCluster.getHierarchyLevel();
 		mClusterID = pCluster.getClusterID();
-		mCEPs = new LinkedList<CoordinatorCEPChannel>();
+		mCEPs = new LinkedList<ComChannel>();
 		
 		// register itself as coordinator for the managed cluster
 		mManagedCluster.setCoordinator(this);
@@ -187,7 +180,7 @@ public class Coordinator implements ICluster, HRMEntity
 		 * Distribute AssignHRMID packets among the cluster members 
 		 */
 		Logging.log(this, "    ..distributing HRMIDs among cluster members: " + mManagedCluster.getClusterMembers());
-		for(CoordinatorCEPChannel tClusterMember : mManagedCluster.getClusterMembers()) {
+		for(ComChannel tClusterMember : mManagedCluster.getClusterMembers()) {
 
 			//TODO: don't send this update in a loop to ourself!
 			//TODO: check if cluster members already have an address and distribute only free addresses here
@@ -223,7 +216,7 @@ public class Coordinator implements ICluster, HRMEntity
 	 * 
 	 * @param pClusterMemberChannel the cluster member to whom we have a sharable route
 	 */
-	private void shareRouteToClusterMember(CoordinatorCEPChannel pClusterMemberChannel)
+	private void shareRouteToClusterMember(ComChannel pClusterMemberChannel)
 	{
 		// determine the HRMID of the cluster member
 		HRMID tMemberHRMID = pClusterMemberChannel.getPeerHRMID();
@@ -383,7 +376,7 @@ public class Coordinator implements ICluster, HRMEntity
 			
 			synchronized (mSharedRoutes){
 				// send the routing information to cluster members
-				for(CoordinatorCEPChannel tClusterMember : mManagedCluster.getClusterMembers()) {
+				for(ComChannel tClusterMember : mManagedCluster.getClusterMembers()) {
 					RoutingInformation tRoutingInformationPacket = new RoutingInformation(tOwnClusterAddress, tClusterMember.getPeerHRMID());
 				
 					// are we on base hierarchy level?
@@ -656,17 +649,17 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPChannel> getClusterMembers() {
+	public LinkedList<ComChannel> getClusterMembers() {
 		return mCEPs;
 	}
 
-	public LinkedList<CoordinatorCEPChannel> getLowerCEPs()
+	public LinkedList<ComChannel> getLowerCEPs()
 	{
 		return mManagedCluster.getClusterMembers();
 	}
 	
 	@Override
-	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP) {
+	public void registerComChannel(ComChannel pParticipatingCEP) {
 		mCEPs.add(pParticipatingCEP);
 	}
 
@@ -740,7 +733,7 @@ public class Coordinator implements ICluster, HRMEntity
 		return mHighestPriority;
 	}
 	
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
 	{
 		/**
 		 * Stores the local cluster, which corresponds to the correct hierarchy level
@@ -835,7 +828,7 @@ public class Coordinator implements ICluster, HRMEntity
 							Logging.warn(this, "Rejecting " + (getSuperiorCoordinatorCEP().getPeerL2Address()).getDescr() + " in favor of " + pAnnounce.getSenderName());
 							tNewCovered.setRejection();
 							getSuperiorCoordinatorCEP().sendPacket(tNewCovered);
-							for(CoordinatorCEPChannel tCEP : getClusterMembers()) {
+							for(ComChannel tCEP : getClusterMembers()) {
 								if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerL2Address())) {
 									tCEP.setAsParticipantOfMyCluster(true);
 								} else {
@@ -853,7 +846,7 @@ public class Coordinator implements ICluster, HRMEntity
 				
 			} else {
 				if (pAnnounce.getCoveredNodes() != null){
-					for(CoordinatorCEPChannel tCEP : getClusterMembers()) {
+					for(ComChannel tCEP : getClusterMembers()) {
 						if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerL2Address())) {
 							tCEP.setAsParticipantOfMyCluster(true);
 						} else {
@@ -920,7 +913,7 @@ public class Coordinator implements ICluster, HRMEntity
 		}
 	}
 	
-	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
+	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, ComChannel pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -954,7 +947,7 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 	
 	@Override
-	public void handleNeighborAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPChannel pCEP)
+	public void handleNeighborAnnouncement(NeighborClusterAnnounce	pAnnounce, ComChannel pCEP)
 	{		
 		if(pAnnounce.getCoveringClusterEntry() != null) {
 //			Cluster tForwardingCluster = null;
@@ -989,12 +982,12 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 
 	@Override
-	public CoordinatorCEPChannel getSuperiorCoordinatorCEP() {
+	public ComChannel getSuperiorCoordinatorCEP() {
 		return mCoordinatorCEP;
 	}
 
 	@Override
-	public void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress) {
+	public void setSuperiorCoordinatorCEP(ComChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress) {
 		/**
 		 * the name of the cluster, which is managed by this coordinator
 		 */
@@ -1013,7 +1006,7 @@ public class Coordinator implements ICluster, HRMEntity
 		//		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
 		for(HRMGraphNodeName tNode: getHRMController().getRoutableClusterGraph().getNeighbors(mManagedCluster)) {
 			if(tNode instanceof ICluster) {
-				for(CoordinatorCEPChannel tCEP : mCEPs) {
+				for(ComChannel tCEP : mCEPs) {
 					if(((ICluster)tNode).getCoordinatorsAddress().equals(tCEP.getPeerL2Address()) && !tCEP.isPartOfMyCluster()) {
 						Logging.info(this, "Informing " + tCEP + " about existence of neighbor zone ");
 						NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, getHierarchyLevel(), pAddress, getToken(), pAddress.getComplexAddress().longValue());
@@ -1074,20 +1067,20 @@ public class Coordinator implements ICluster, HRMEntity
 		mHighestPriority = pHighestPriority;
 	}
 
-	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed)
+	public void sendClusterBroadcast(Serializable pData, LinkedList<ComChannel> pAlreadyInformed)
 	{
 		if(pData instanceof BullyPriorityUpdate)
 		{
 			Logging.log(this, "Will send priority update to" + mCEPs);
 		}
-		LinkedList<CoordinatorCEPChannel> tInformedCEPs = null;
+		LinkedList<ComChannel> tInformedCEPs = null;
 		if(pAlreadyInformed != null) {
 			tInformedCEPs= pAlreadyInformed;
 		} else {
-			tInformedCEPs = new LinkedList<CoordinatorCEPChannel>(); 
+			tInformedCEPs = new LinkedList<ComChannel>(); 
 		}
 		try {
-			for(CoordinatorCEPChannel tCEP : mCEPs)
+			for(ComChannel tCEP : mCEPs)
 			{
 				if(!tInformedCEPs.contains(tCEP))
 				{
@@ -1140,7 +1133,7 @@ public class Coordinator implements ICluster, HRMEntity
 	}
 
 	@Override
-	public CoordinatorCEPMultiplexer getMultiplexer() {
+	public ComChannelMuxer getMultiplexer() {
 		return getHRMController().getCoordinatorMultiplexerOnLevel(this);
 	}
 
@@ -1155,7 +1148,7 @@ public class Coordinator implements ICluster, HRMEntity
 	public String toString()
 	{
 		//return getClass().getSimpleName() + (mManagedCluster != null ? "(" + mManagedCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;
-		return toLocation() + " (" + (mManagedCluster != null ? "Cluster" + mManagedCluster.getGUIClusterID() + ", " : "") + idToString() + ")";
+		return toLocation() + "(" + (mManagedCluster != null ? "Cluster" + mManagedCluster.getGUIClusterID() + ", " : "") + idToString() + ")";
 	}
 
 	@Override

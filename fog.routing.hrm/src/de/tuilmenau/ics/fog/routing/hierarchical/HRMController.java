@@ -37,9 +37,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.*;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
@@ -128,7 +127,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	private RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink>();
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
-	private HashMap<Integer, CoordinatorCEPMultiplexer> mMuxOnLevel;
+	private HashMap<Integer, ComChannelMuxer> mMuxOnLevel;
 	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
 	
 	
@@ -880,10 +879,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 	@Override
 	public void newConnection(Connection pConnection)
 	{
-		Logging.log(this, "NEW CONNECTION " + pConnection);
+		Logging.log(this, "INCOMING CONNECTION " + pConnection.toString());
 
 		//long tClusterID = 0;
-		CoordinatorSession tConnectionSession = null;
+		ComSession tConnectionSession = null;
 		
 		ClusterParticipationProperty tJoin = null;
 		Description tRequirements = pConnection.getRequirements();
@@ -905,7 +904,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		for(NestedParticipation tParticipate : tJoin.getNestedParticipations()) {
 			Logging.log(this, "Iterate over nested participations");
 
-			CoordinatorCEPChannel tCEP = null;
+			ComChannel tCEP = null;
 			boolean tClusterFound = false;
 			ICluster tFoundCluster = null;
 			
@@ -920,10 +919,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 					Logging.log(this, "Cluster found: " + tCluster);
 					
 					if(tConnectionSession == null) {
-						tConnectionSession = new CoordinatorSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
+						tConnectionSession = new ComSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
 					}
 					
-					tCEP = new CoordinatorCEPChannel(this, tCluster);
+					tCEP = new ComChannel(this, tCluster);
 					((Cluster)tCluster).getMultiplexer().mapCEPToSession(tCEP, tConnectionSession);
 					if(tJoin.getHierarchyLevel().isHigherLevel()) {
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
@@ -940,7 +939,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				Cluster tCluster = new Cluster(this, new Long(tJoin.getTargetClusterID()), tJoin.getHierarchyLevel());
 				setSourceIntermediateCluster(tCluster, tCluster);
 				if(tConnectionSession == null) {
-					tConnectionSession = new CoordinatorSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
+					tConnectionSession = new ComSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
 				}
 
 				if(tJoin.getHierarchyLevel().isHigherLevel()) {
@@ -950,7 +949,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 						}
 					}
 				}
-				tCEP = new CoordinatorCEPChannel(this, tCluster);
+				tCEP = new ComChannel(this, tCluster);
 				if(tJoin.getHierarchyLevel().isHigherLevel()) {
 					((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 				}
@@ -1114,7 +1113,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		Logging.log(this, "Creating a cluster participation property for level " + pParticipationProperty.getHierarchyLevel());
 		Description tDescription = new Description();
 		//try {
-		tDescription.set(new DestinationApplicationProperty(null, HRMController.ROUTING_NAMESPACE));
+		tDescription.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE, null, null));
 		//} catch (PropertyException tExc) {
 		//	Logging.err(this, "Unable to fulfill requirements given by ContactDestinationProperty", tExc);
 		//}
@@ -1138,15 +1137,15 @@ public class HRMController extends Application implements IServerCallback, IEven
 	{
 		Logging.log(this, "ADDING CONNECTION to " + pName + "(ClusterID=" + pToClusterID + ", hierarchy level=" + pLevel.getValue() + ")");
 
-		CoordinatorSession tSession = null;
+		ComSession tSession = null;
 		ICluster tFoundCluster = null;
-		CoordinatorCEPChannel tCEP = null;
+		ComChannel tCEP = null;
 		
 		boolean tClusterFound = false;
 		for(Cluster tCluster : getRoutingTargetClusters())
 		{
 			if(tCluster.getClusterID().equals(pToClusterID)) {
-				tSession = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
+				tSession = new ComSession(this, false, pLevel, tCluster.getMultiplexer());
 				Route tRoute = null;
 				try {
 					tRoute = getHRS().getRoute(pName, new Description(), getNode().getIdentity());
@@ -1156,7 +1155,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					Logging.err(this, "Unable to fulfill requirements for a route to " + pName, tExc);
 				}
 				tSession.setRouteToPeer(tRoute);
-				tCEP = new CoordinatorCEPChannel(this, tCluster);
+				tCEP = new ComChannel(this, tCluster);
 				tCluster.getMultiplexer().mapCEPToSession(tCEP, tSession);
 				tFoundCluster = tCluster;
 				tClusterFound = true;
@@ -1168,8 +1167,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 			Cluster tCluster = new Cluster(this, new Long(pToClusterID), pLevel);
 			setSourceIntermediateCluster(tCluster, tCluster);
 			addRoutableTarget(tCluster);
-			tSession = new CoordinatorSession(this, false, pLevel, tCluster.getMultiplexer());
-			tCEP = new CoordinatorCEPChannel(this, tCluster);
+			tSession = new ComSession(this, false, pLevel, tCluster.getMultiplexer());
+			tCEP = new ComChannel(this, tCluster);
 			tCluster.getMultiplexer().mapCEPToSession(tCEP, tSession);
 			tFoundCluster = tCluster;
 		}
@@ -1180,9 +1179,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 		tParticipate.setSourceClusterID(pToClusterID);
 		
 		final Name tNeighborName = pName;
-		final CoordinatorSession tFSession = tSession;
-		final CoordinatorCEPChannel tDemultiplexed = tCEP;
+		final ComSession tFSession = tSession;
+		final ComChannel tDemultiplexed = tCEP;
 		final ICluster tClusterToAdd = tFoundCluster;
+		final HRMController tHRMController = this;
 		
 		Thread tThread = new Thread() {
 			public void run()
@@ -1191,14 +1191,16 @@ public class HRMController extends Application implements IServerCallback, IEven
 				 * Connect to the neighbor node
 				 */
 				Connection tConn = null;
+				Description tConReq = getConnectDescription(tProperty);
+				
 				try {
-					Logging.log(this, "CREATING CONNECTION to " + tNeighborName);
+					Logging.log(tHRMController, "OUTGOING CONNECTION to " + tNeighborName + " with requirements: " + tConReq);
 					tConn = getHost().connectBlock(tNeighborName, getConnectDescription(tProperty), getNode().getIdentity());
 				} catch (NetworkException tExc) {
-					Logging.err(this, "Unable to connecto to " + tNeighborName, tExc);
+					Logging.err(tHRMController, "Unable to connecto to " + tNeighborName, tExc);
 				}
 				if(tConn != null) {
-					Logging.log(this, "     ..starting CONNECTION " + mConnections);
+					Logging.log(tHRMController, "     ..starting CONNECTION " + mConnections);
 					tFSession.start(tConn);					
 
 					/**
@@ -1215,7 +1217,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 						// create a map between the central FN and the search FN
 						NeighborRoutingInformation tNeighborRoutingInformation = new NeighborRoutingInformation(tCentralFNL2Address, tFirstFNL2Address, NeighborRoutingInformation.INIT_PACKET);
 						// tell the neighbor about the FN
-						Logging.log(this, "     ..send NEIGHBOR ROUTING INFO " + tNeighborRoutingInformation);
+						Logging.log(tHRMController, "     ..send NEIGHBOR ROUTING INFO " + tNeighborRoutingInformation);
 						tFSession.write(tNeighborRoutingInformation);
 					}
 
@@ -1227,9 +1229,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 					try {
 						tRouteToNeighborFN = getHRS().getRoute(tNeighborName, new Description(), getNode().getIdentity());
 					} catch (RoutingException tExc) {
-						Logging.err(this, "Unable to find route to " + tNeighborName, tExc);
+						Logging.err(tHRMController, "Unable to find route to " + tNeighborName, tExc);
 					} catch (RequirementsException tExc) {
-						Logging.err(this, "Unable to find route to " + tNeighborName + " with requirements no requirents, Huh!", tExc);
+						Logging.err(tHRMController, "Unable to find route to " + tNeighborName + " with requirements no requirents, Huh!", tExc);
 					}
 					// have we found a route to the neighbor?
 					if(tRouteToNeighborFN != null) {
@@ -1421,16 +1423,16 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * @param pLevel is the level at which a multiplexer to other clusters is installed and that has to be returned
 	 * @return
 	 */
-	public CoordinatorCEPMultiplexer getCoordinatorMultiplexerOnLevel(Coordinator pCoordinator)
+	public ComChannelMuxer getCoordinatorMultiplexerOnLevel(Coordinator pCoordinator)
 	{
 		int tLevel = pCoordinator.getHierarchyLevel().getValue() + 1;
 		
 		if(mMuxOnLevel == null) {
-			mMuxOnLevel = new HashMap<Integer, CoordinatorCEPMultiplexer>();
+			mMuxOnLevel = new HashMap<Integer, ComChannelMuxer>();
 		}
 		
 		if(!mMuxOnLevel.containsKey(tLevel)) {
-			CoordinatorCEPMultiplexer tMux = new CoordinatorCEPMultiplexer(pCoordinator, this);
+			ComChannelMuxer tMux = new ComChannelMuxer(pCoordinator, this);
 			mMuxOnLevel.put(tLevel, tMux);
 			Logging.log(this, "Created new communication multiplexer " + tMux + " for coordinators on level " + tLevel);
 		}

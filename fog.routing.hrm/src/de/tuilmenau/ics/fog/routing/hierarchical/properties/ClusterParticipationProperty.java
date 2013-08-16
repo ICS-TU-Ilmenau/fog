@@ -15,9 +15,9 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -33,7 +33,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 	private int mTargetToken;
 	private Name mSourceName;
 	private HRMName mSourceAddress;
-	private LinkedList<NestedParticipation> mNestParticipations = new LinkedList<NestedParticipation>();
+	private LinkedList<NestedParticipation> mNestedParticipations = new LinkedList<NestedParticipation>();
 	private static final long serialVersionUID = 7561293731302599090L;
 	
 	/**
@@ -112,7 +112,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 	 */
 	public LinkedList<NestedParticipation> getNestedParticipations()
 	{
-		return mNestParticipations;
+		return mNestedParticipations;
 	}
 	
 	/**
@@ -123,10 +123,26 @@ public class ClusterParticipationProperty extends AbstractProperty
 	{
 		Logging.log(this, "Adding nested participation: " + pParticipation);
 		
-		if(mNestParticipations == null) {
-			mNestParticipations = new LinkedList<NestedParticipation>();
+		if(mNestedParticipations == null) {
+			mNestedParticipations = new LinkedList<NestedParticipation>();
 		}
-		mNestParticipations.add(pParticipation);
+		mNestedParticipations.add(pParticipation);
+	}
+	
+	/**
+	 * Generates a descriptive string about the object
+	 * 
+	 * @return the descriptive string
+	 */
+	public String toString()
+	{
+		String tResult = getClass().getSimpleName();
+		
+		for (NestedParticipation tEntry : mNestedParticipations){
+			tResult += "\n    .." + tEntry.toString();
+		}
+		
+		return tResult;
 	}
 	
 	/**

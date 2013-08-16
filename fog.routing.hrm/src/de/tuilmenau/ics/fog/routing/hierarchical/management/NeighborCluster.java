@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.routing.hierarchical.clustering;
+package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -22,8 +22,6 @@ import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -47,7 +45,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	private HRMController mHRMController;
 	private HRMID mHRMID;
 	private Name mAnnouncer;
-	private LinkedList<CoordinatorCEPChannel> mAnnouncedCEPs;
+	private LinkedList<ComChannel> mAnnouncedCEPs;
 	private Cluster mSourceIntermediateCluster = null;
 	
 	/**
@@ -71,10 +69,10 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		setCoordinatorName(pCoordName);
 	}
 	
-	public void addAnnouncedCEP(CoordinatorCEPChannel pCEP)
+	public void addAnnouncedCEP(ComChannel pCEP)
 	{
 		if(mAnnouncedCEPs == null) {
-			mAnnouncedCEPs = new LinkedList<CoordinatorCEPChannel>();
+			mAnnouncedCEPs = new LinkedList<ComChannel>();
 		}
 		Logging.log(getClusterDescription(), "Adding announcer " + pCEP);
 		mAnnouncedCEPs.add(pCEP);
@@ -90,7 +88,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return getPriority();
 	}
 
-	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
+	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, ComChannel pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -127,12 +125,12 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		}
 	}
 
-	public CoordinatorCEPChannel getSuperiorCoordinatorCEP()
+	public ComChannel getSuperiorCoordinatorCEP()
 	{
 		return null;
 	}
 
-	public synchronized void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress)
+	public synchronized void setSuperiorCoordinatorCEP(ComChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress)
 	{
 		mCoordAddress = pAddress;
 		mCoordName = pCoordName;
@@ -175,15 +173,15 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public LinkedList<CoordinatorCEPChannel> getClusterMembers()
+	public LinkedList<ComChannel> getClusterMembers()
 	{
-		LinkedList<CoordinatorCEPChannel> tCEPs = new LinkedList<CoordinatorCEPChannel>();
+		LinkedList<ComChannel> tCEPs = new LinkedList<ComChannel>();
 		//tCEPs.add(mCEP);
 		return tCEPs;
 	}
 
 	@Override
-	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP)
+	public void registerComChannel(ComChannel pParticipatingCEP)
 	{
 		/*
 		 * not needed, this is just a dummy for topology
@@ -265,7 +263,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed) {
+	public void sendClusterBroadcast(Serializable pData, LinkedList<ComChannel> pAlreadyInformed) {
 		/*
 		 * not needed, this is just a dummy for topology
 		 */
@@ -323,11 +321,11 @@ public class NeighborCluster implements ICluster, IElementDecorator
 //		mNegotiator = pCEP;
 //	}
 
-	public CoordinatorCEPChannel getAnnouncedCEP(ICluster pCluster)
+	public ComChannel getAnnouncedCEP(ICluster pCluster)
 	{
 		int tClosestCluster = Integer.MAX_VALUE;
-		CoordinatorCEPChannel tClosest = null;
-		for(CoordinatorCEPChannel tCEP : mAnnouncedCEPs) {
+		ComChannel tClosest = null;
+		for(ComChannel tCEP : mAnnouncedCEPs) {
 			ClusterName tClusterName = tCEP.getRemoteClusterName();
 			ICluster tRemoteCluster = getHRMController().getCluster(tClusterName) != null ? getHRMController().getCluster(tClusterName) : tClusterName;
 			if(pCluster.getHierarchyLevel() == tRemoteCluster.getHierarchyLevel()) {
@@ -349,7 +347,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return tClosest;
 	}
 	
-	public LinkedList<CoordinatorCEPChannel> getAnnouncedCEPs()
+	public LinkedList<ComChannel> getAnnouncedCEPs()
 	{
 		return mAnnouncedCEPs;
 	}
@@ -371,13 +369,13 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
 	{
 		
 	}
 
 	@Override
-	public CoordinatorCEPMultiplexer getMultiplexer()
+	public ComChannelMuxer getMultiplexer()
 	{
 		return null;
 	}

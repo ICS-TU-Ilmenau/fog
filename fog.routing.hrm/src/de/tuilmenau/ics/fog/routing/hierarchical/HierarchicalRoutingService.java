@@ -1275,10 +1275,10 @@ public class HierarchicalRoutingService implements RoutingService, HRMEntity
 							 * Add the destination application to the route
 							 */
 							if(tPropDestApp != null) {
-								if(tPropDestApp.getApplicationName() != null) {
-									tResultRoute.add(new RouteSegmentAddress(tPropDestApp.getApplicationName()));
+								if(tPropDestApp.getAppName() != null) {
+									tResultRoute.add(new RouteSegmentAddress(tPropDestApp.getAppName()));
 								} else {
-									tResultRoute.add(new RouteSegmentAddress(new SimpleName(tPropDestApp.getApplicationNamespace())));
+									tResultRoute.add(new RouteSegmentAddress(new SimpleName(tPropDestApp.getAppNamespace())));
 								}
 							}
 						}

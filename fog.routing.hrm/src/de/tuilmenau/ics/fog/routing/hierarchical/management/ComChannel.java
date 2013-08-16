@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.routing.hierarchical.coordination;
+package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -32,13 +32,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HRMGraphNodeName;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.NeighborCluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.RoutableClusterGraphLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -49,10 +42,9 @@ import de.tuilmenau.ics.graph.RoutableGraph;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
 /**
- * The class is used for the communication between a cluster and its coordinator.
- * For this purpose, both the cluster object and the coordinator object have a reference to this object. 
+ * A communication channel can exist between a cluster and the cluster members, or between a coordinator and other coordinators.
  */
-public class CoordinatorCEPChannel
+public class ComChannel
 {
 	private static final long serialVersionUID = -8290946480171751216L;
 	private ClusterName mRemoteCluster;
@@ -81,15 +73,23 @@ public class CoordinatorCEPChannel
 	/**
 	 * 
 	 * @param pHRMController is the coordinator of a node
-	 * @param pPeerCluster is the peer cluster/coordinator
+	 * @param pParent is the parent cluster/coordinator
 	 */
-	public CoordinatorCEPChannel(HRMController pHRMController, ICluster pPeer)
+	public ComChannel(HRMController pHRMController, ICluster pParent)
 	{
+		// store the HRMController application reference
 		mHRMController = pHRMController;
-		mParent = pPeer;
+		
+		// store the parent (owner) of this communication channel
+		mParent = pParent;
+		
+		// the peer priority gets initialized by a default value ("undefined")
 		mPeerPriority = new BullyPriority(this);
-		mParent.addParticipatingCEP(this);
-		Logging.log(this, "CREATED for " + mParent);
+		
+		// register at the parent (owner)
+		mParent.registerComChannel(this);
+		
+		Logging.log(this, "CREATED");
 	}
 	
 	/**
@@ -314,7 +314,7 @@ public class CoordinatorCEPChannel
 	 * @return true if the packet left the central multiplexer and the forwarding node that is attached to a direct down gate
 	 * @throws NetworkException
 	 */
-	public boolean receive(Serializable pData) throws NetworkException
+	public boolean handlePacket(Serializable pData) throws NetworkException
 	{
 		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
 			Logging.log(this, "RECEIVED DATA from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pData);
@@ -353,7 +353,12 @@ public class CoordinatorCEPChannel
 			 * Bully signaling message
 			 */
 			if (pData instanceof SignalingMessageBully) {
+				// the packet is received by a cluster
+				//HINT: this is only possible on base hierarchy level
 				if (mParent instanceof Cluster){
+					if (!mParent.getHierarchyLevel().isBaseLevel()){
+						Logging.warn(this, "EXPECTED BASE HIERARCHY LEVEL");
+					}
 					Cluster tParentCluster = (Cluster)mParent;
 					
 					Logging.log(this, "BULLY MESSAGE FROM " + getPeerL2Address());
@@ -363,7 +368,14 @@ public class CoordinatorCEPChannel
 				
 					// process Bully message
 					tParentCluster.handleMessageFromClusterMember(tBullyMessage, this);
-				}else{
+				}
+				
+				// the packet is received by a coordinator
+				if (mParent instanceof Coordinator){
+					
+				}
+
+				else{
 					Logging.err(this, "Parent " + mParent + " has the wrong class type, expected Cluster");
 				}
 				
@@ -410,7 +422,7 @@ public class CoordinatorCEPChannel
 								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), getSourceName(), getPeerL2Address());
 								tAnnouncePacket.addRoutingVector(tVector);
 							}
-							for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
+							for(ComChannel tCEP : getPeer().getClusterMembers()) {
 								boolean tWroteAnnouncement = false;
 								if(tCEP.getRemoteClusterName().getHierarchyLevel().getValue() - 1 == tAnnouncePacket.getLevel().getValue()) {
 									
@@ -753,16 +765,21 @@ public class CoordinatorCEPChannel
 		return getMultiplexer().getRouteToPeer(this);
 	}
 	
-	private CoordinatorCEPMultiplexer getMultiplexer()
+	private ComChannelMuxer getMultiplexer()
 	{
 		return getPeer().getMultiplexer();
 	}
 
+	
+	
+	
 	/**
-	 * Returns a descriptive string about this object 
+	 * Returns a descriptive string about this object
+	 * 
+	 * @return the descriptive string
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "@" + getPeer().getClusterDescription() +  "(PeerPrio=" + mPeerPriority.getValue() + (getPeerL2Address() != null ? ", Peer=" + getPeerHRMID() : "") + ")";
+		return getClass().getSimpleName() + "@" + mParent.toString() + "(PeerPrio=" + mPeerPriority.getValue() + (getPeerL2Address() != null ? ", Peer=" + getPeerHRMID() : "") + ")";
 	}
 }

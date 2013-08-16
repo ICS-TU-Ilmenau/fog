@@ -21,10 +21,10 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -305,7 +305,7 @@ public class Elector implements HRMEntity
 	/**
 	 * SIGNAL: report itself as alive by signaling BULLY ALIVE to all cluster members
 	 */
-	private void signalResponse(CoordinatorCEPChannel pSourceClusterMember)
+	private void signalResponse(ComChannel pSourceClusterMember)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
@@ -392,7 +392,7 @@ public class Elector implements HRMEntity
 	private void eventReceivedReply()
 	{
 		BullyPriority tHighestPrio = null;
-		CoordinatorCEPChannel tExternalWinner = null;
+		ComChannel tExternalWinner = null;
 		boolean tIsWinner = false;
 		boolean tElectionComplete = true;
 		
@@ -400,7 +400,7 @@ public class Elector implements HRMEntity
 		 * Find the highest priority of all external cluster members
 		 */
 		Logging.log(this, "Searching for highest priority...");
-		for(CoordinatorCEPChannel tClusterMember : mParentCluster.getClusterMembers()) {
+		for(ComChannel tClusterMember : mParentCluster.getClusterMembers()) {
 			BullyPriority tPriority = tClusterMember.getPeerPriority(); 
 			
 			/**
@@ -474,7 +474,7 @@ public class Elector implements HRMEntity
 	 * @param pClusterMember the reference to the sending cluster member
 	 */
 	@SuppressWarnings("unused")
-	public void handleMessageFromClusterMember(SignalingMessageBully pPacketBully, CoordinatorCEPChannel pSourceClusterMember)
+	public void handleMessageFromClusterMember(SignalingMessageBully pPacketBully, ComChannel pSourceClusterMember)
 	{
 		Node tNode = mParentCluster.getHRMController().getNode();
 		Name tLocalNodeName = mParentCluster.getHRMController().getNodeName(); 
@@ -619,6 +619,9 @@ public class Elector implements HRMEntity
 		}
 	}
 
+
+
+
 	/**
 	 * Determine the parent cluster, which owns this elector. 
 	 * @return the parent cluster
@@ -636,7 +639,7 @@ public class Elector implements HRMEntity
 	@Override
 	public String toString()
 	{
-		return toLocation() + "(Cluster=" + (mParentCluster != null ? "(Cluster=" + mParentCluster.getClusterID() + ")" : "");
+		return toLocation() + (mParentCluster != null ? "(Cluster=" + mParentCluster.toString() + ")" : "");
 	}
 
 	/**

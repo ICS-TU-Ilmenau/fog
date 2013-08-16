@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.routing.hierarchical.coordination;
+package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 
@@ -24,13 +24,11 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
-public class CoordinatorSession extends Session
+public class ComSession extends Session
 {
 
 	/**
@@ -41,7 +39,7 @@ public class CoordinatorSession extends Session
 	/**
 	 * Stores the communication controller
 	 */
-	private CoordinatorCEPMultiplexer mCOMController = null;
+	private ComChannelMuxer mCOMController = null;
 
 	/**
 	 * Stores a reference to the HRMController application.
@@ -61,7 +59,7 @@ public class CoordinatorSession extends Session
 	 * @param pComMultiplexer the communication multiplexer to use
 	 * 
 	 */
-	public CoordinatorSession(HRMController pHRMController, boolean pServerSide, HierarchyLevel pLevel, CoordinatorCEPMultiplexer pCOMController)
+	public ComSession(HRMController pHRMController, boolean pServerSide, HierarchyLevel pLevel, ComChannelMuxer pCOMController)
 	{
 		// call the Session constructor
 		super(false, Logging.getInstance(), null);
@@ -255,10 +253,10 @@ public class CoordinatorSession extends Session
 			ClusterName tTargetCluster = tPackage.getDestinationCluster();
 			
 			try {
-				CoordinatorCEPChannel tCEP = mCOMController.findCEPChannel(this, (ClusterName)tPackage.getSourceCluster(), tTargetCluster);
+				ComChannel tCEP = mCOMController.findCEPChannel(this, (ClusterName)tPackage.getSourceCluster(), tTargetCluster);
 				if(tCEP != null) {
 					Logging.log(this, "Forwarding " + tPackage.getData() + " from " + tPackage.getSourceCluster() + " to " + tPackage.getDestinationCluster() + " with " + tCEP);
-					tCEP.receive(tPackage.getData());
+					tCEP.handlePacket(tPackage.getData());
 				} else {
 					Logging.warn(this, "No demultiplexed connection available ");
 				}
@@ -272,7 +270,7 @@ public class CoordinatorSession extends Session
 					boolean tWasDelivered = false;
 
 					String tAnalyzedClusters = new String("");
-					for(CoordinatorCEPChannel tCEP: mCOMController.getDemuxCEPs(this)) {
+					for(ComChannel tCEP: mCOMController.getDemuxCEPs(this)) {
 						tAnalyzedClusters += tCEP.getPeer() + "\n";
 						if(tCEP.getPeer().getClusterID().equals(tNestedDiscovery.getTargetClusterID())) {
 							try {
@@ -294,7 +292,7 @@ public class CoordinatorSession extends Session
 				for(NestedDiscovery tNestedDiscovery : ((ClusterDiscovery)pData).getDiscoveries()) {
 					boolean tWasDelivered = false;
 					String tAnalyzedClusters = new String("");
-					for(CoordinatorCEPChannel tCEP: mCOMController.getDemuxCEPs(this)) {
+					for(ComChannel tCEP: mCOMController.getDemuxCEPs(this)) {
 						tAnalyzedClusters += tCEP.getPeer() + "\n";
 
 						if(tCEP.getPeer().getClusterID().equals(tNestedDiscovery.getOrigin())) {
@@ -334,7 +332,7 @@ public class CoordinatorSession extends Session
 	 * 
 	 * @return multiplexer that is in charge of this connection - only of relevance if Multicast is implemented
 	 */
-	public CoordinatorCEPMultiplexer getMultiplexer()
+	public ComChannelMuxer getMultiplexer()
 	{
 		return mCOMController;
 	}

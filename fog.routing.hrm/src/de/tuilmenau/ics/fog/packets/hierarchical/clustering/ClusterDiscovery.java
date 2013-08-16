@@ -15,8 +15,8 @@ import java.util.Random;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ClusterName;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.util.Tuple;
 
 /**

@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.routing.hierarchical.clustering;
+package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -16,8 +16,6 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -62,14 +60,14 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @return Provide list of connection end points that are connected to this cluster - the other connection end point
 	 * governs the cluster it is associated to
 	 */
-	public LinkedList<CoordinatorCEPChannel> getClusterMembers();
+	public LinkedList<ComChannel> getClusterMembers();
 	
 	/**
 	 * 
 	 * @param pParticipatingCEP This is one connection end point that is used to communicate with the remote
 	 * connection end points that govern the clusters they are associated to.
 	 */
-	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP);
+	public void registerComChannel(ComChannel pParticipatingCEP);
 	
 	/**
 	 * 
@@ -147,7 +145,7 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @param pAnnounce This is the announcement from which relevant information has to be extracted.
 	 * @param pCEP This is the connection from which necessary information will be extracted as well.
 	 */
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, CoordinatorCEPChannel pCEP);
+	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP);
 	
 	/**
 	 * This method has to be called by an connection end point once it receives the announcement about the existence
@@ -156,13 +154,13 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @param pAnnounce This is the message that contains important information about the neighbor zone.
 	 * @param pCEP This is the connection end point that is used to transfer data to the object that CEP governs
 	 */
-	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP);
+	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, ComChannel pCEP);
 	
 	/**
 	 * 
 	 * @return Return null in case the node is coordinator itself, otherwise the connection end point that leads to the superior coordinator is returned. 
 	 */
-	public CoordinatorCEPChannel getSuperiorCoordinatorCEP();
+	public ComChannel getSuperiorCoordinatorCEP();
 	
 	/**
 	 * Once an announcement was received, the coordinator is set via this method. However this function does not have to be necessarily called
@@ -173,7 +171,7 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @param pAddress The address of the coordinator can be set here. It can be either an OSI Layer 2 address or a HRMID. However using the last type as address
 	 * was not implemented. 
 	 */
-	public void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress);
+	public void setSuperiorCoordinatorCEP(ComChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress);
 	
 	/**
 	 * 
@@ -195,7 +193,7 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @param pAlreadyInformed Please provide a list that saves entities that were already informed - this is used to have a workaround
 	 * for the ConcurrentModificationException.
 	 */
-	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed);
+	public void sendClusterBroadcast(Serializable pData, LinkedList<ComChannel> pAlreadyInformed);
 	
 	/**
 	 * 
@@ -241,5 +239,5 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * 
 	 * @return The multiplexer that is associated to this cluster is returned here.
 	 */
-	public CoordinatorCEPMultiplexer getMultiplexer();
+	public ComChannelMuxer getMultiplexer();
 }

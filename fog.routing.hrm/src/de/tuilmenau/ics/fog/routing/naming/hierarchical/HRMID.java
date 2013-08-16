@@ -13,8 +13,8 @@ import java.math.BigInteger;
 
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HRMGraphNodeName;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.HRMGraphNodeName;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 
 /**
  * This class is used to identify a node in the HRM graph.

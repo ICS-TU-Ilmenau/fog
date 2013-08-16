@@ -50,15 +50,15 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.HierarchyLevel;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.ICluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.clustering.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -163,6 +163,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	    style2.fontStyle = SWT.BOLD;
 	    tSignaturesLabel.setStyleRange(style2);
 	    
+	    /**
+	     * GUI part 0: table with routes to neighbors
+	     */
 	    // create the GUI container
 	    mContainerNeighborRoutingTable = new Composite(mContainer, SWT.NONE);
 	    GridData tLayoutDataNeighborRoutingTable = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -224,7 +227,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 
 		/**
-		 * GUI part 3: table of known mappings from HRMID to L2Addresses
+		 * GUI part 1: table of known mappings from HRMID to L2Addresses
 		 */
 		// create the headline
 		StyledText tSignaturesLabel4 = new StyledText(mContainer, SWT.BORDER);
@@ -297,7 +300,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutMappingTable.setColumnData(tTableL2Addr, new ColumnWeightData(3));
 
 		/**
-		 * GUI part 4: HRM routing table of the node
+		 * GUI part 2: HRM routing table of the node
 		 */
 		// create the headline
 		StyledText tSignaturesLabel2 = new StyledText(mContainer, SWT.BORDER);
@@ -556,7 +559,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		int j = 0;
 		if (HRM_VIEWER_DEBUGGING)
 			Logging.log(this, "Amount of participating CEPs is " + pCluster.getClusterMembers().size());
-		for(CoordinatorCEPChannel tCEP : pCluster.getClusterMembers()) {
+		for(ComChannel tCEP : pCluster.getClusterMembers()) {
 			if (HRM_VIEWER_DEBUGGING)
 				Logging.log(this, "Updating table item number " + j);
 			

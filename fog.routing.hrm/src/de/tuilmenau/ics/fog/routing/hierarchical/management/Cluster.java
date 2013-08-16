@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.routing.hierarchical.clustering;
+package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 import java.net.UnknownHostException;
@@ -23,9 +23,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.Coordinator;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPChannel;
-import de.tuilmenau.ics.fog.routing.hierarchical.coordination.CoordinatorCEPMultiplexer;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -96,13 +93,13 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	private String mCoordinatorDescription = null;
 	
-	private CoordinatorCEPChannel mChannelToCoordinator = null;
+	private ComChannel mChannelToCoordinator = null;
 	private BullyPriority mHighestPriority = null;
 	private BullyPriority mCoordinatorPriority;
 	private Name mCoordName;
 	private Name mCoordAddress;
 	private HRMController mHRMController;
-	private LinkedList<CoordinatorCEPChannel> mClusterMemberChannels;
+	private LinkedList<ComChannel> mClusterMemberChannels;
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
 	private int mToken;
 
@@ -111,7 +108,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	private Coordinator mCoordinator = null;
 	
-	private CoordinatorCEPMultiplexer mMux = null;
+	private ComChannelMuxer mMux = null;
 
 	
 	/**
@@ -150,7 +147,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		// creates new elector object, which is responsible for Bully based election processes
 		mElector = new Elector(this);
 
-		mClusterMemberChannels = new LinkedList<CoordinatorCEPChannel>();
+		mClusterMemberChannels = new LinkedList<ComChannel>();
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
 
 		for(ICluster tCluster : getHRMController().getRoutingTargets())
@@ -169,7 +166,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 
 		
-		mMux = new CoordinatorCEPMultiplexer(this, mHRMController);
+		mMux = new ComChannelMuxer(this, mHRMController);
 		
 		// register at HRMController's internal database
 		getHRMController().registerCluster(this);
@@ -349,7 +346,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	{
 		Logging.log(this, "Sending CLUSTER BROADCAST " + pPacket);
 		
-		for(CoordinatorCEPChannel tClusterMember : getClusterMembers()) {			
+		for(ComChannel tClusterMember : getClusterMembers()) {			
 			Logging.log(this, "       ..to " + tClusterMember);
 			
 			// send the packet to one of the possible cluster members
@@ -421,7 +418,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 * @param pBullyMessage the Bully message
 	 * @param pSourceClusterMember the channel to the message source
 	 */
-	public void handleSignalingMessageBully(SignalingMessageBully pBullyMessage, CoordinatorCEPChannel pSourceClusterMember)
+	public void handleSignalingMessageBully(SignalingMessageBully pBullyMessage, ComChannel pSourceClusterMember)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
 			Logging.log(this, "RECEIVED BULLY MESSAGE FROM " + pSourceClusterMember);
@@ -435,7 +432,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 * @param pMessage the signaling message
 	 * @param pCoordinatorCEPChannel the channel to the message source
 	 */
-	public void handleMessageFromClusterMember(Serializable pMessage, CoordinatorCEPChannel pSourceClusterMember)
+	public void handleMessageFromClusterMember(Serializable pMessage, ComChannel pSourceClusterMember)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING)
 			Logging.log(this, "RECEIVED SIGNALING MESSAGE FROM " + pSourceClusterMember);
@@ -462,7 +459,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	
 	
 	
-	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, CoordinatorCEPChannel pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pCEP)
 	{
 		// update the description about the elected coordinator
 		mCoordinatorDescription = pBullyAnnounce.getCoordinatorDescription();
@@ -471,7 +468,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
-	public void setSuperiorCoordinatorCEP(CoordinatorCEPChannel pCoordinatorChannel, Name pCoordName, int pCoordToken, HRMName pAddress)
+	public void setSuperiorCoordinatorCEP(ComChannel pCoordinatorChannel, Name pCoordName, int pCoordToken, HRMName pAddress)
 	{
 		setToken(pCoordToken);
 		
@@ -537,7 +534,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 	}
 	
-	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, CoordinatorCEPChannel pCEP)
+	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, ComChannel pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -582,7 +579,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return tCluster;
 	}
 	
-	public void handleNeighborAnnouncement(NeighborClusterAnnounce	pAnnounce, CoordinatorCEPChannel pCEP)
+	public void handleNeighborAnnouncement(NeighborClusterAnnounce	pAnnounce, ComChannel pCEP)
 	{
 		if(!pAnnounce.getCoordinatorName().equals(getHRMController().getNodeName())) {
 			Logging.log(this, "Received announcement of foreign cluster");
@@ -643,7 +640,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 	}
 	
-	public CoordinatorCEPChannel getSuperiorCoordinatorCEP()
+	public ComChannel getSuperiorCoordinatorCEP()
 	{
 		return mChannelToCoordinator;
 	}
@@ -676,7 +673,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 	}
 	
-	private void announceNeighborCoord(NeighborClusterAnnounce pAnnouncement, CoordinatorCEPChannel pCEP)
+	private void announceNeighborCoord(NeighborClusterAnnounce pAnnouncement, ComChannel pCEP)
 	{
 		Logging.log(this, "Handling " + pAnnouncement);
 		if(mCoordName != null)
@@ -701,13 +698,13 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return mHighestPriority;
 	}
 	
-	public void setParticipatingCEPs(LinkedList<CoordinatorCEPChannel> pCEPs)
+	public void setParticipatingCEPs(LinkedList<ComChannel> pCEPs)
 	{
 		Logging.log(this, "Setting participating CEPs to " + pCEPs);
 		mClusterMemberChannels = pCEPs;
 	}
 	
-	public void addParticipatingCEP(CoordinatorCEPChannel pParticipatingCEP)
+	public void registerComChannel(ComChannel pParticipatingCEP)
 	{
 		if(!mClusterMemberChannels.contains(pParticipatingCEP)) {
 			mClusterMemberChannels.add(pParticipatingCEP);
@@ -722,7 +719,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 	}
 
-	public LinkedList<CoordinatorCEPChannel> getClusterMembers()
+	public LinkedList<ComChannel> getClusterMembers()
 	{
 		return mClusterMemberChannels;
 	}
@@ -771,7 +768,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		mCoordName = pCoordName;
 	}
 
-	public void sendClusterBroadcast(Serializable pData, LinkedList<CoordinatorCEPChannel> pAlreadyInformed)
+	public void sendClusterBroadcast(Serializable pData, LinkedList<ComChannel> pAlreadyInformed)
 	{
 		Logging.log(this, "Sending CLUSTER BROADCAST " + pData);
 		
@@ -779,14 +776,14 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		{
 			Logging.log(this, "Will send priority update to" + mClusterMemberChannels);
 		}
-		LinkedList<CoordinatorCEPChannel> tInformedCEPs = null;
+		LinkedList<ComChannel> tInformedCEPs = null;
 		if(pAlreadyInformed != null) {
 			tInformedCEPs= pAlreadyInformed;
 		} else {
-			tInformedCEPs = new LinkedList<CoordinatorCEPChannel>(); 
+			tInformedCEPs = new LinkedList<ComChannel>(); 
 		}
 		try {
-			for(CoordinatorCEPChannel tClusterMember : mClusterMemberChannels)
+			for(ComChannel tClusterMember : mClusterMemberChannels)
 			{
 				if(!tInformedCEPs.contains(tClusterMember))
 				{
@@ -858,7 +855,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	}	
 
 	@Override
-	public synchronized CoordinatorCEPMultiplexer getMultiplexer()
+	public synchronized ComChannelMuxer getMultiplexer()
 	{
 		return mMux;
 	}
@@ -924,7 +921,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		if(mHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
 			return mHRMID.toString();
 		} else {
-			return toLocation() + " (" + idToString() + ")";
+			return toLocation() + "(" + idToString() + ")";
 
 		}
 	}
