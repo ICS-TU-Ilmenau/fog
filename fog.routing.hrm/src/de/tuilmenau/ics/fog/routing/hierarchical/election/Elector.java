@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyReply;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMLocalization;
+import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
@@ -35,7 +35,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * This class is responsible for coordinator elections. It is instantiated per cluster. 
  *
  */
-public class Elector implements HRMLocalization
+public class Elector implements Localization
 {
 	public enum ElectorState {
 		START,    // Constructor

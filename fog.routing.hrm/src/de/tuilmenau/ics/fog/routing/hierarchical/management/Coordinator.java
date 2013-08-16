@@ -36,7 +36,7 @@ import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
  * This class is used for a coordinator instance and can be used on all hierarchy levels.
  * A cluster's elector instance is responsible for creating instances of this class.
  */
-public class Coordinator extends ControlEntity implements ICluster, HRMLocalization
+public class Coordinator extends ControlEntity implements ICluster, Localization
 {
 	/**
 	 * This is the GUI specific cluster counter, which allows for globally unique cluster IDs.

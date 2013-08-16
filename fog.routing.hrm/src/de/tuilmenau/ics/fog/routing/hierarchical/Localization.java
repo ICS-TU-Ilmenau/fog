@@ -12,7 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 /**
  * This interface is used to describe the location of an HRM entity
  */
-public interface HRMLocalization
+public interface Localization
 {
 	/**
 	 * Describes the location of this HRM entity instance.
