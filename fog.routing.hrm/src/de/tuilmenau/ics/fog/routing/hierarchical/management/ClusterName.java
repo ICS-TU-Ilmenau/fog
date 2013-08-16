@@ -85,7 +85,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public LinkedList<ComChannel> getClusterMembers() {
+	public LinkedList<ComChannel> getComChannels() {
 		return null;
 	}
 
@@ -185,7 +185,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void sendClusterBroadcast(Serializable pData, LinkedList<ComChannel> pAlreadyInformed)
+	public void sendClusterBroadcast(Serializable pData)
 	{
 		
 	}

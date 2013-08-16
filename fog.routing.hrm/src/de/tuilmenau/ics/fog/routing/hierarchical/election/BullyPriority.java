@@ -12,8 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.election;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -84,7 +83,7 @@ public class BullyPriority
 	 * 
 	 * @param pCluster the cluster to which this Bully priority belongs to.
 	 */
-	public static BullyPriority createForCluster(Cluster pCluster)
+	public static BullyPriority createForControlEntity(ControlEntity pCluster)
 	{
 		Node tNode = pCluster.getHRMController().getNode();
 		int tHierarchyLevel = pCluster.getHierarchyLevel().getValue();

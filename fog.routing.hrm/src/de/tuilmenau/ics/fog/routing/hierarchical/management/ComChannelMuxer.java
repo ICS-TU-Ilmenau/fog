@@ -158,7 +158,7 @@ public class ComChannelMuxer
 					}
 				}
 				tTokens.add(tManager.getCluster().getToken());
-				tManager.getClusterMembers().add(tCEPDemultiplexed);
+				tManager.getComChannels().add(tCEPDemultiplexed);
 				if(!pTargetCluster.getCoordinatorName().equals(mHRMController.getNode().getCentralFN().getName())) {
 					int tDistance = (pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() : 0); 
 					NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tTokens, pTargetCluster.getClusterID(), pTargetCluster.getToken(), pTargetCluster.getHierarchyLevel(), tDistance);

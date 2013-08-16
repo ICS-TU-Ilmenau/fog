@@ -60,7 +60,7 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @return Provide list of connection end points that are connected to this cluster - the other connection end point
 	 * governs the cluster it is associated to
 	 */
-	public LinkedList<ComChannel> getClusterMembers();
+	public LinkedList<ComChannel> getComChannels();
 	
 	/**
 	 * 
@@ -193,7 +193,7 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @param pAlreadyInformed Please provide a list that saves entities that were already informed - this is used to have a workaround
 	 * for the ConcurrentModificationException.
 	 */
-	public void sendClusterBroadcast(Serializable pData, LinkedList<ComChannel> pAlreadyInformed);
+	public void sendClusterBroadcast(Serializable pData);
 	
 	/**
 	 * 

@@ -10,24 +10,19 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
-import java.net.UnknownHostException;
 import java.rmi.RemoteException;
-import java.util.ConcurrentModificationException;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -39,7 +34,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * This class represents a clusters on a defined hierarchy level.
  * 
  */
-public class Cluster implements ICluster, IElementDecorator, HRMEntity
+public class Cluster extends ControlEntity implements ICluster, IElementDecorator
 {
 	/**
 	 * For using this class within (de-)serialization.
@@ -63,17 +58,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private Long mClusterID;
 
 	/**
-	 * Stores the Bully priority of this node for this cluster.
-	 * The value is also used inside the Elector of this cluster.
-	 */
-	private BullyPriority mBullyPriority = null;
-
-	/**
-	 * Stores the hierarchy level of this cluster.
-	 */
-	private HierarchyLevel mHierarchyLevel;
-
-	/**
 	 * Stores the elector which is responsible for coordinator elections for this cluster.
 	 */
 	private Elector mElector = null;
@@ -82,11 +66,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 * Counter about how many times a coordinator was defined
 	 */
 	private int mCoordinatorUpdateCounter = 0;
-
-	/**
-	 * The HRM ID of this cluster.
-	 */
-	private HRMID mHRMID = null;
 
 	/**
 	 * Stores a descriptive string about the elected coordinator
@@ -98,8 +77,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private BullyPriority mCoordinatorPriority;
 	private Name mCoordName;
 	private Name mCoordAddress;
-	private HRMController mHRMController;
-	private LinkedList<ComChannel> mClusterMemberChannels;
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
 	private int mToken;
 
@@ -123,14 +100,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 */
 	public Cluster(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel)
 	{
-		// initialize the HRMID of the cluster to ".0.0.0"
-		mHRMID = new HRMID(0);
-
-		// the hierarchy level is defined from outside
-		mHierarchyLevel = pHierarchyLevel;
-		
-		// update the reference to the HRMController application for internal use
-		mHRMController = pHRMController;
+		super(pHRMController, pHierarchyLevel);
 		
 		// set the ClusterID
 		if (pClusterID < 0){
@@ -141,19 +111,15 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 			mClusterID = pClusterID;
 		}
 
-		// create a new standard Bully priority
-		mBullyPriority = BullyPriority.createForCluster(this);
-
 		// creates new elector object, which is responsible for Bully based election processes
 		mElector = new Elector(this);
 
-		mClusterMemberChannels = new LinkedList<ComChannel>();
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
 
 		for(ICluster tCluster : getHRMController().getRoutingTargets())
 		{
 			Logging.log(this, "Found already known neighbor: " + tCluster);
-			if ((tCluster.getHierarchyLevel().equals(mHierarchyLevel)) && (tCluster != this))
+			if ((tCluster.getHierarchyLevel().equals(getHierarchyLevel())) && (tCluster != this))
 			{
 				if (!(tCluster instanceof Cluster)){
 					Logging.err(this, "Routing target should be a cluster, but it is " + tCluster);
@@ -161,12 +127,12 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				tCluster.addNeighborCluster(this);
 
 				// increase Bully priority because of changed connectivity (topology depending)
-				mBullyPriority.increaseConnectivity();
+				getPriority().increaseConnectivity();
 			}
 		}
 
 		
-		mMux = new ComChannelMuxer(this, mHRMController);
+		mMux = new ComChannelMuxer(this, getHRMController());
 		
 		// register at HRMController's internal database
 		getHRMController().registerCluster(this);
@@ -182,7 +148,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	private long clusterIDMachineMultiplier()
 	{
 		if (sClusterIDMachineMultiplier < 0){
-			String tHostName = getHRMController().getHostName();
+			String tHostName = HRMController.getHostName();
 			if (tHostName != null){
 				sClusterIDMachineMultiplier = (tHostName.hashCode() % 10000) * 10000;
 			}else{
@@ -219,14 +185,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		return mElector;
 	}
 	
-	/** 
-	 * Returns the reference to the node local HRMController instance 
-	 */
-	public HRMController getHRMController()
-	{
-		return mHRMController;
-	}
-
 	/**
 	 * Returns a descriptive string about the elected coordinator 
 	 * 
@@ -245,7 +203,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	public String getClusterDescription()
 	{
 		return toLocation();
-		//getHRMController().getPhysicalNode() + ":" + mClusterID + "@" + mHierarchyLevel + "(" + mCoordSignature + ")";
+		//getHRMController().getPhysicalNode() + ":" + mClusterID + "@" + getHierarchyLevel() + "(" + mCoordSignature + ")";
 	}
 
 	/**
@@ -263,7 +221,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	 * 
 	 * @return true if the coordinator is elected and known, otherwise false
 	 */
-	private boolean hasLocalCoordinator()
+	public boolean hasLocalCoordinator()
 	{
 		return (mCoordinator != null);
 	}
@@ -285,104 +243,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	}
 	
 	/**
-	 * Handles packet type "AssignHRMID".
-     * The function is called when an address update for the physical node (hierarchy level 0) was received.
-	 * 
-	 * @param pAssignHRMIDPacket the received packet with the new hierarchy level 0 address
-	 */
-	public void handleAssignHRMIDForPhysicalNode(AssignHRMID pAssignHRMIDPacket)
-	{
-		// extract the HRMID from the packet 
-		HRMID tHRMID = pAssignHRMIDPacket.getHRMID();
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
-			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + tHRMID.toString());
-
-		// we process such packets only on base hierarchy level, on higher hierarchy levels coordinators should be the only target for such packets
-		if (getHierarchyLevel().isBaseLevel()){
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
-				Logging.log(this, "     ..setting assigned HRMID " + tHRMID.toString());
-			
-			// update the local HRMID
-			setHRMID(this, tHRMID);
-		}else{
-			Logging.warn(this, "     ..ignoring AssignHRMID packet because we are at the higher hierachy level " + getHierarchyLevel().getValue());
-		}
-
-		// the local router has also the coordinator instance for this cluster?
-		if (hasLocalCoordinator()){
-			// we should automatically continue the address distribution?
-			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
-					Logging.log(this, "     ..continuing the address distribution process via the coordinator " + getCoordinator());
-				getCoordinator().signalAddressDistribution();				
-			}			
-		}else{
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
-				Logging.log(this, "     ..stopping address propagation here because node " + getHRMController().getNodeGUIName() + " is only a cluster member");
-		}
-	}
-
-	/**
-	 * Returns the Bully priority of this node for this cluster
-	 * 
-	 * @return the Bully priority
-	 */
-	public BullyPriority getPriority()
-	{
-		if (mBullyPriority == null){
-			mBullyPriority = new BullyPriority(this);
-		}
-			
-		return mBullyPriority;
-	}
-
-	/**
-	 * Sends a packet as broadcast to all cluster members
-	 * 
-	 * @param pPacket the packet which has to be broadcasted
-	 */
-	public void sendBroadcast(Serializable pPacket)
-	{
-		Logging.log(this, "Sending CLUSTER BROADCAST " + pPacket);
-		
-		for(ComChannel tClusterMember : getClusterMembers()) {			
-			Logging.log(this, "       ..to " + tClusterMember);
-			
-			// send the packet to one of the possible cluster members
-			tClusterMember.sendPacket(pPacket);
-		}
-	}
-
-	/**
-	 * Assign new HRMID for being addressable as cluster member.
-	 *  
-	 * @param pCaller the caller who assigns the new HRMID
-	 * @param pHRMID the new HRMID
-	 */
-	public void setHRMID(Object pCaller, HRMID pHRMID)
-	{
-		Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (caller=" + pCaller + ")");
-
-		// update the HRMID
-		mHRMID = pHRMID.clone();
-		
-		// inform HRM controller about the address change
-		getHRMController().updateClusterAddress(this);
-	}
-
-	/**
-	 * Returns the HRMID under which this node is addressable for this cluster
-	 * 
-	 * @return the HRMID
-	 */
-	@Override
-	public HRMID getHRMID() {
-		return mHRMID;
-	}
-	
-
-	/**
 	 * Returns the full ClusterID (including the machine specific multiplier)
 	 * 
 	 *  @return the full ClusterID
@@ -390,16 +250,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	public Long getClusterID()
 	{
 		return mClusterID;
-	}
-	
-	/**
-	 * Returns the hierarchy level of this cluster
-	 * 
-	 * @return the hierarchy level
-	 */
-	public HierarchyLevel getHierarchyLevel()
-	{
-		return mHierarchyLevel;
 	}
 	
 	/**
@@ -411,44 +261,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	{
 		return mClusterID / clusterIDMachineMultiplier();
 	}
-	
-	/**
-	 * Handles a Bully related signaling message from an external cluster member
-	 * 
-	 * @param pBullyMessage the Bully message
-	 * @param pSourceClusterMember the channel to the message source
-	 */
-	public void handleSignalingMessageBully(SignalingMessageBully pBullyMessage, ComChannel pSourceClusterMember)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-			Logging.log(this, "RECEIVED BULLY MESSAGE FROM " + pSourceClusterMember);
-
-		getElector().handleMessageFromClusterMember(pBullyMessage, pSourceClusterMember);
-	}
-	
-	/**
-	 * Handles a general signaling message from an external cluster member
-	 * 
-	 * @param pMessage the signaling message
-	 * @param pCoordinatorCEPChannel the channel to the message source
-	 */
-	public void handleMessageFromClusterMember(Serializable pMessage, ComChannel pSourceClusterMember)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING)
-			Logging.log(this, "RECEIVED SIGNALING MESSAGE FROM " + pSourceClusterMember);
-
-		/**
-		 * Bully signaling message
-		 */
-		if (pMessage instanceof SignalingMessageBully) {
-			// cast to a Bully signaling message
-			SignalingMessageBully tBullyMessage = (SignalingMessageBully)pMessage;
-		
-			// process Bully message
-			handleSignalingMessageBully(tBullyMessage, pSourceClusterMember);
-		}
-	}
-	
 	
 	
 	
@@ -507,8 +319,8 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				Logging.log(this, "CLUSTER-CEP - found already known neighbor cluster: " + tCluster);
 
 				Logging.log(this, "Preparing neighbor zone announcement");
-				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, mHierarchyLevel, pAddress, getToken(), mClusterID);
-				tAnnounce.setCoordinatorsPriority(mBullyPriority); //TODO : ???
+				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, getHierarchyLevel(), pAddress, getToken(), mClusterID);
+				tAnnounce.setCoordinatorsPriority(getPriority()); //TODO : ???
 				if(pCoordinatorChannel != null) {
 					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorChannel.getRouteToPeer(), pCoordinatorChannel.getSourceName(), pCoordinatorChannel.getPeerL2Address()));
 				}
@@ -543,7 +355,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 		ICluster tCluster = getHRMController().getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
 		if(tCluster == null) {
-			tCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), mHierarchyLevel, getHRMController());
+			tCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), getHierarchyLevel(), getHRMController());
 			getHRMController().setSourceIntermediateCluster(tCluster, this);
 			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			((NeighborCluster)tCluster).setSourceIntermediate(this);
@@ -595,11 +407,11 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				pAnnounce.isForeignAnnouncement();
 			}
 		} else {
-			if(getHRMController().getClusterWithCoordinatorOnLevel(mHierarchyLevel.getValue()) == null) {
+			if(getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel().getValue()) == null) {
 				/*
 				 * no coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel)) {
+				for(Coordinator tManager : getHRMController().getCoordinator(getHierarchyLevel())) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						tManager.storeAnnouncement(pAnnounce);
 					}
@@ -608,7 +420,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				/*
 				 * coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : getHRMController().getCoordinator(mHierarchyLevel)) {
+				for(Coordinator tManager : getHRMController().getCoordinator(getHierarchyLevel())) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
 						if(tManager.getSuperiorCoordinatorCEP() != null) {
 							tManager.getSuperiorCoordinatorCEP().sendPacket(pAnnounce);
@@ -626,7 +438,7 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 //					tForwardingCluster = (Cluster) ((Cluster) getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster()) == null ? pCEP.getRemoteCluster() : getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster())) ;
 					//pAnnounce.setAnnouncer( (tForwardingCluster.getCoordinatorsAddress() != null ? tForwardingCluster.getCoordinatorsAddress() : null ));
 					Logging.log(this, "Removing " + this + " as participating CEP from " + this);
-					getClusterMembers().remove(this);
+					getComChannels().remove(this);
 				}
 				try {
 					addNeighborCluster(getHRMController().getCluster(pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
@@ -662,13 +474,13 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 				Logging.log(this, "CLUSTER - adding neighbor cluster: " + pNeighbor);
 
 				// increase Bully priority because of changed connectivity (topology depending) 
-				mBullyPriority.increaseConnectivity();
+				getPriority().increaseConnectivity();
 				
-				Logging.log(this, "Informing " + getClusterMembers() + " about change in priority and initiating new election");
+				Logging.log(this, "Informing " + getComChannels() + " about change in priority and initiating new election");
 				
-				sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNodeName(), mBullyPriority), null);
+				sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNodeName(), getPriority()));
 				
-				Logging.log(this, "Informed other clients about change of priority - it is now " + mBullyPriority.getValue());
+				Logging.log(this, "Informed other clients about change of priority - it is now " + getPriority().getValue());
 			}
 		}
 	}
@@ -696,40 +508,6 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		}
 		
 		return mHighestPriority;
-	}
-	
-	public void setParticipatingCEPs(LinkedList<ComChannel> pCEPs)
-	{
-		Logging.log(this, "Setting participating CEPs to " + pCEPs);
-		mClusterMemberChannels = pCEPs;
-	}
-	
-	public void registerComChannel(ComChannel pParticipatingCEP)
-	{
-		if(!mClusterMemberChannels.contains(pParticipatingCEP)) {
-			mClusterMemberChannels.add(pParticipatingCEP);
-			Logging.info(this, "Added " + pParticipatingCEP + " to participating CEPs");
-			if(mClusterMemberChannels.size() > 1) {
-				Logging.info(this, "Adding second participating CEP " + pParticipatingCEP);
-//				StackTraceElement[] tStackTrace = Thread.currentThread().getStackTrace();
-//				for (StackTraceElement tElement : tStackTrace) {
-//					getCoordinator().getLogger().log(tElement.toString());
-//				}
-			}
-		}
-	}
-
-	public LinkedList<ComChannel> getClusterMembers()
-	{
-		return mClusterMemberChannels;
-	}
-	
-
-	public void setPriority(BullyPriority pPriority)
-	{
-		BullyPriority tBullyPriority = mBullyPriority;
-		mBullyPriority = pPriority;
-		Logging.log(this, "######## Setting Bully priority for cluster " + toString() + " from " + tBullyPriority.getValue() + " to " + mBullyPriority.getValue());
 	}
 	
 	public BullyPriority getCoordinatorPriority()
@@ -768,33 +546,18 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 		mCoordName = pCoordName;
 	}
 
-	public void sendClusterBroadcast(Serializable pData, LinkedList<ComChannel> pAlreadyInformed)
+	public void sendClusterBroadcast(Serializable pData)
 	{
 		Logging.log(this, "Sending CLUSTER BROADCAST " + pData);
 		
 		if(pData instanceof BullyPriorityUpdate)
 		{
-			Logging.log(this, "Will send priority update to" + mClusterMemberChannels);
+			Logging.log(this, "Will send priority update to" + getComChannels());
 		}
-		LinkedList<ComChannel> tInformedCEPs = null;
-		if(pAlreadyInformed != null) {
-			tInformedCEPs= pAlreadyInformed;
-		} else {
-			tInformedCEPs = new LinkedList<ComChannel>(); 
-		}
-		try {
-			for(ComChannel tClusterMember : mClusterMemberChannels)
-			{
-				if(!tInformedCEPs.contains(tClusterMember))
-				{
-					Logging.log(this, "   BROADCAST TO " + tClusterMember);
-					tClusterMember.sendPacket(pData);
-					tInformedCEPs.add(tClusterMember);
-				}
-			}
-		} catch (ConcurrentModificationException tExc) {
-			Logging.warn(this, "change in cluster CEP number occured, sending message to new peers", tExc);
-			sendClusterBroadcast(pData, tInformedCEPs);
+		for(ComChannel tComChannel : getComChannels())
+		{
+			Logging.log(this, "   BROADCAST TO " + tComChannel);
+			tComChannel.sendPacket(pData);
 		}
 	}
 	
@@ -918,8 +681,10 @@ public class Cluster implements ICluster, IElementDecorator, HRMEntity
 	@SuppressWarnings("unused")
 	public String toString()
 	{
-		if(mHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
-			return mHRMID.toString();
+		HRMID tHRMID = getHRMID();
+		
+		if(tHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
+			return tHRMID.toString();
 		} else {
 			return toLocation() + "(" + idToString() + ")";
 

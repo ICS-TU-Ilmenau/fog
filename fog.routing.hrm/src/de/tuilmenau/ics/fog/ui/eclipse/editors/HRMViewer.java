@@ -558,8 +558,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 		int j = 0;
 		if (HRM_VIEWER_DEBUGGING)
-			Logging.log(this, "Amount of participating CEPs is " + pCluster.getClusterMembers().size());
-		for(ComChannel tCEP : pCluster.getClusterMembers()) {
+			Logging.log(this, "Amount of participating CEPs is " + pCluster.getComChannels().size());
+		for(ComChannel tCEP : pCluster.getComChannels()) {
 			if (HRM_VIEWER_DEBUGGING)
 				Logging.log(this, "Updating table item number " + j);
 			

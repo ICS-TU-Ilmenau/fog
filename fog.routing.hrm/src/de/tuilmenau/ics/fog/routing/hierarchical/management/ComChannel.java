@@ -354,7 +354,7 @@ public class ComChannel
 			 */
 			if (pData instanceof SignalingMessageBully) {
 				// the packet is received by a cluster
-				//HINT: this is only possible on base hierarchy level
+				//HINT: this is only possible at base hierarchy level
 				if (mParent instanceof Cluster){
 					if (!mParent.getHierarchyLevel().isBaseLevel()){
 						Logging.warn(this, "EXPECTED BASE HIERARCHY LEVEL");
@@ -367,7 +367,7 @@ public class ComChannel
 					SignalingMessageBully tBullyMessage = (SignalingMessageBully)pData;
 				
 					// process Bully message
-					tParentCluster.handleMessageFromClusterMember(tBullyMessage, this);
+					tParentCluster.handlePacket(tBullyMessage, this);
 				}
 				
 				// the packet is received by a coordinator
@@ -422,7 +422,7 @@ public class ComChannel
 								RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), getSourceName(), getPeerL2Address());
 								tAnnouncePacket.addRoutingVector(tVector);
 							}
-							for(ComChannel tCEP : getPeer().getClusterMembers()) {
+							for(ComChannel tCEP : getPeer().getComChannels()) {
 								boolean tWroteAnnouncement = false;
 								if(tCEP.getRemoteClusterName().getHierarchyLevel().getValue() - 1 == tAnnouncePacket.getLevel().getValue()) {
 									
@@ -461,7 +461,7 @@ public class ComChannel
 					tCoordinator.handleAssignHRMID(tAssignHRMIDPacket);
 				} else if (getPeer() instanceof Cluster){
 					Cluster tCluster = (Cluster)getPeer();
-					tCluster.handleAssignHRMIDForPhysicalNode(tAssignHRMIDPacket);
+					tCluster.handleAssignHRMID(tAssignHRMIDPacket);
 				} 
 			}
 			

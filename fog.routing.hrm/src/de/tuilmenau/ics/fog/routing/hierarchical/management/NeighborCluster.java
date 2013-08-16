@@ -173,7 +173,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public LinkedList<ComChannel> getClusterMembers()
+	public LinkedList<ComChannel> getComChannels()
 	{
 		LinkedList<ComChannel> tCEPs = new LinkedList<ComChannel>();
 		//tCEPs.add(mCEP);
@@ -263,7 +263,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void sendClusterBroadcast(Serializable pData, LinkedList<ComChannel> pAlreadyInformed) {
+	public void sendClusterBroadcast(Serializable pData) {
 		/*
 		 * not needed, this is just a dummy for topology
 		 */
