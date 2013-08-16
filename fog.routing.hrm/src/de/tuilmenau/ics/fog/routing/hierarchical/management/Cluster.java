@@ -280,12 +280,12 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
-	public void setSuperiorCoordinatorCEP(ComChannel pCoordinatorChannel, Name pCoordName, int pCoordToken, HRMName pAddress)
+	public void setSuperiorCoordinatorCEP(ComChannel pComChannel, Name pCoordName, int pCoordToken, HRMName pAddress)
 	{
 		setToken(pCoordToken);
 		
-		Logging.log(this, "Setting " + (++mCoordinatorUpdateCounter) + " time a new coordinator: " + pCoordName + "/" + pCoordinatorChannel + " with routing address " + pAddress);
-		mChannelToCoordinator = pCoordinatorChannel;
+		Logging.log(this, "Setting " + (++mCoordinatorUpdateCounter) + " time a new coordinator: " + pCoordName + "/" + pComChannel + " with routing address " + pAddress);
+		mChannelToCoordinator = pComChannel;
 		mCoordName = pCoordName;
 		if(mChannelToCoordinator == null) {
 			synchronized(this) {
@@ -298,19 +298,19 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 				mCoordAddress = pAddress;
 				notifyAll();
 			}
-			setCoordinatorPriority(pCoordinatorChannel.getPeerPriority());
+			setCoordinatorPriority(pComChannel.getPeerPriority());
 			try {
 				getHRMController().getHRS().mapFoGNameToL2Address(pCoordName, pAddress);
 			} catch (RemoteException tExc) {
 				Logging.err(this, "Unable to register " + pCoordName, tExc);
 			}
 			
-			if(pCoordinatorChannel.getRouteToPeer() != null && !pCoordinatorChannel.getRouteToPeer().isEmpty()) {
+			if(pComChannel.getRouteToPeer() != null && !pComChannel.getRouteToPeer().isEmpty()) {
 				if(pAddress instanceof L2Address) {
 					getHRMController().getHRS().registerNode((L2Address) pAddress, false);
 				}
 				
-				getHRMController().getHRS().registerRoute(pCoordinatorChannel.getSourceName(), pCoordinatorChannel.getPeerL2Address(), pCoordinatorChannel.getRouteToPeer());
+				getHRMController().getHRS().registerRoute(pComChannel.getSourceName(), pComChannel.getPeerL2Address(), pComChannel.getRouteToPeer());
 			}
 		}
 		Logging.log(this, "This cluster has the following neighbors: " + getNeighbors());
@@ -321,10 +321,10 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 				Logging.log(this, "Preparing neighbor zone announcement");
 				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, getHierarchyLevel(), pAddress, getToken(), mClusterID);
 				tAnnounce.setCoordinatorsPriority(getPriority()); //TODO : ???
-				if(pCoordinatorChannel != null) {
-					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorChannel.getRouteToPeer(), pCoordinatorChannel.getSourceName(), pCoordinatorChannel.getPeerL2Address()));
+				if(pComChannel != null) {
+					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pComChannel.getRouteToPeer(), pComChannel.getSourceName(), pComChannel.getPeerL2Address()));
 				}
-				((Cluster)tCluster).announceNeighborCoord(tAnnounce, pCoordinatorChannel);
+				((Cluster)tCluster).announceNeighborCoord(tAnnounce, pComChannel);
 			}
 		}
 		if(mReceivedAnnounces.isEmpty()) {
@@ -340,7 +340,7 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 					/*
 					 * in this case this announcement came from a neighbor intermediate cluster
 					 */
-					handleNeighborAnnouncement(mReceivedAnnounces.removeFirst(), pCoordinatorChannel);
+					handleNeighborAnnouncement(mReceivedAnnounces.removeFirst(), pComChannel);
 				}
 			}
 		}
