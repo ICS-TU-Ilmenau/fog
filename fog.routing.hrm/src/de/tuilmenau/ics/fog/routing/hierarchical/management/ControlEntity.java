@@ -22,8 +22,8 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * A control entity can be either a cluster or a coordinator.
- * This class is used to sum common function of clusters and coordinators
+ * A control entity can be either a cluster or a coordinator instance.
+ * This class is used to concentrate common function of clusters and coordinators
  */
 public abstract class ControlEntity implements Localization
 {
