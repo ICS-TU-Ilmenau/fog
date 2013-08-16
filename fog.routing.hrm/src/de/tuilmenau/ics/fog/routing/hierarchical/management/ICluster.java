@@ -193,7 +193,7 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @param pAlreadyInformed Please provide a list that saves entities that were already informed - this is used to have a workaround
 	 * for the ConcurrentModificationException.
 	 */
-	public void sendClusterBroadcast(Serializable pData);
+//	public void sendClusterBroadcast(Serializable pData);
 	
 	/**
 	 * 

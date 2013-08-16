@@ -18,7 +18,7 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.tuilmenau.ics.fog.packets.hierarchical,
  de.tuilmenau.ics.fog.routing.hierarchical,
- de.tuilmenau.ics.fog.routing.hierarchical.clustering,
+ de.tuilmenau.ics.fog.routing.hierarchical.management,
  de.tuilmenau.ics.fog.routing.hierarchical.properties,
  de.tuilmenau.ics.fog.routing.naming.hierarchical,
  de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical

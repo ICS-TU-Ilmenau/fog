@@ -185,12 +185,6 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void sendClusterBroadcast(Serializable pData)
-	{
-		
-	}
-
-	@Override
 	public boolean equals(Object pObj)
 	{
 		if(pObj instanceof ICluster) {

@@ -262,13 +262,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		 */
 	}
 
-	@Override
-	public void sendClusterBroadcast(Serializable pData) {
-		/*
-		 * not needed, this is just a dummy for topology
-		 */
-	}
-	
 	@SuppressWarnings("unused")
 	public String toString()
 	{
@@ -306,20 +299,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		}
 		return false;
 	}	
-
-//	@Override
-//	public CoordinatorCEPChannel getNegotiatorCEP()
-//	{
-//		return mNegotiator;
-//	}
-//
-//	@Override
-//	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP)
-//	{
-//		Logging.log(getClusterDescription(), "Setting " + pCEP + " as  negotiating CEP");
-//		if(!mNegotiators.contains(pCEP)) mNegotiators.add(pCEP);
-//		mNegotiator = pCEP;
-//	}
 
 	public ComChannel getAnnouncedCEP(ICluster pCluster)
 	{

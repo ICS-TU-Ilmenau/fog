@@ -121,7 +121,7 @@ public abstract class ControlEntity implements HRMEntity
 	}
 
 	/**
-	 * Assign new HRMID for being addressable as cluster member.
+	 * Assign new HRMID for being addressable.
 	 *  
 	 * @param pCaller the caller who assigns the new HRMID
 	 * @param pHRMID the new HRMID
@@ -131,13 +131,23 @@ public abstract class ControlEntity implements HRMEntity
 		Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (caller=" + pCaller + ")");
 
 		// update the HRMID
-		mHRMID = pHRMID.clone();
+		if (pHRMID != null){
+			mHRMID = pHRMID.clone();
+		}else{
+			mHRMID = null;
+		}
 		
 		if (this instanceof Cluster){
 			Cluster tCluster = (Cluster)this;
 
 			// inform HRM controller about the address change
 			getHRMController().updateClusterAddress(tCluster);
+		}
+		if (this instanceof Coordinator){
+			Coordinator tCoordinator = (Coordinator)this;
+
+			// inform HRM controller about the address change
+			getHRMController().updateCoordinatorAddress(tCoordinator);
 		}
 	}
 
@@ -266,9 +276,9 @@ public abstract class ControlEntity implements HRMEntity
 				tCoordinator = tCluster.getCoordinator();
 			}
 		}
-//		if (this instanceof Coordinator){
-//			tCoordinator = (Coordinator)this;
-//		}
+		if (this instanceof Coordinator){
+			tCoordinator = (Coordinator)this;
+		}
 		
 		/**
 		 * Automatic address distribution via the coordinator
