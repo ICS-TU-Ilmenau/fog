@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.election;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMLocalization;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -207,8 +207,8 @@ public class BullyPriority
 	public boolean isHigher(Object pCheckLocation, BullyPriority pOtherPriority)
 	{
 		String pLocationDescription = pCheckLocation.getClass().getSimpleName();
-		if (pCheckLocation instanceof HRMEntity){
-			HRMEntity tHRMEntity = (HRMEntity)pCheckLocation;
+		if (pCheckLocation instanceof HRMLocalization){
+			HRMLocalization tHRMEntity = (HRMLocalization)pCheckLocation;
 			pLocationDescription = tHRMEntity.toLocation();
 		}
 

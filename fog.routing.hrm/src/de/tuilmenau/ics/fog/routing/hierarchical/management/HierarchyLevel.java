@@ -10,7 +10,7 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMEntity;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMLocalization;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -117,8 +117,8 @@ public class HierarchyLevel
 	public boolean isHigher(Object pCheckLocation, HierarchyLevel pOtherLevel)
 	{
 		String pLocationDescription = pCheckLocation.getClass().getSimpleName();
-		if (pCheckLocation instanceof HRMEntity){
-			HRMEntity tHRMEntity = (HRMEntity)pCheckLocation;
+		if (pCheckLocation instanceof HRMLocalization){
+			HRMLocalization tHRMEntity = (HRMLocalization)pCheckLocation;
 			pLocationDescription = tHRMEntity.toLocation();
 		}
 
