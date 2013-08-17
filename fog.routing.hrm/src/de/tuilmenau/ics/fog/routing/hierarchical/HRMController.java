@@ -331,6 +331,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 	{
 		HRMID tHRMID = pCoordinator.getHRMID();
 		
+		Logging.log(this, "Updating address to " + tHRMID.toString() + " for coordinator " + pCoordinator);
+		
 		synchronized(mRegisteredOwnHRMIDs){
 			if ((!mRegisteredOwnHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
 				
@@ -431,6 +433,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 	public void updateClusterAddress(Cluster pCluster)
 	{
 		HRMID tHRMID = pCluster.getHRMID();
+
+		Logging.log(this, "Updating address to " + tHRMID.toString() + " for cluster " + pCluster);
 
 		// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
 		// the corresponding coordinator instance
