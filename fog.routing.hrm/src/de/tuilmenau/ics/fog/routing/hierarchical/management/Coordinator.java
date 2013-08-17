@@ -654,27 +654,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 		return true;
 	}
-	
-	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority) {
-		if(superiorCoordinatorComChannel() != null) {
-			if (!superiorCoordinatorComChannel().getPeerPriority().equals(pCoordinatorPriority)){
-				Logging.info(this, "Tried to set a priority that does not correspond with the priority of the concurrent coordinator, wrong connection endpoint?");
-			}
-			superiorCoordinatorComChannel().setPeerPriority(pCoordinatorPriority);
-		}
-	}
-
-	/**
-	 * Determines the Bully priority of the superior coordinator.
-	 * 
-	 * @return the Bully priority of the superior coordinator
-	 */
-	public BullyPriority getCoordinatorPriority() {
-		if(superiorCoordinatorComChannel() != null) {
-			return superiorCoordinatorComChannel().getPeerPriority();
-		}
-		return null;
-	}
 
 	@Override
 	public Long getClusterID() {
@@ -729,7 +708,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		/*
 		 * check whether old priority was lower than new priority
 		 */
-		if(pAnnounce.getSenderPriority().isHigher(this, getCoordinatorPriority())) {
+//		if(pAnnounce.getSenderPriority().isHigher(this, getCoordinatorPriority())) {
 			/*
 			 * check whether a coordinator is already set
 			 */
@@ -779,7 +758,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 								ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusterList.get(0));
 								tOldCoveredEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
 							}
-							tOldCoveredEntry.setPriority(getCoordinatorPriority());
+							tOldCoveredEntry.setPriority(superiorCoordinatorComChannel().getPeerPriority());
 							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(mParentCluster.superiorCoordinatorL2Address()));
 							tOldCovered.setCoveringClusterEntry(tOldCoveredEntry);
 //							List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute((HRMName)pCEP.getSourceName(), getCoordinatorsAddress());
@@ -836,59 +815,59 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 				setSuperiorCoordinator(pCEP, pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerL2Address());
 			}
-		} else {
-			/*
-			 * this part is for the coordinator that intended to announce itself -> send rejection and send acting coordinator along with
-			 * the announcement that is just gained a neighbor zone
-			 */
-			
-			NeighborClusterAnnounce tUncoveredAnnounce = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), superiorCoordinatorL2Address(), getToken(), superiorCoordinatorL2Address().getComplexAddress().longValue());
-			tUncoveredAnnounce.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
-			/*
-			 * the routing service address of the announcer is set once the neighbor zone announce arrives at the rejected coordinator because this
-			 * entity is already covered
-			 */
-			
-			tUncoveredAnnounce.setNegotiatorIdentification(tLocalManagedClusterName);
-			
-			DiscoveryEntry tUncoveredEntry = new DiscoveryEntry(mParentCluster.getToken(), mParentCluster.getCoordinatorName(), mParentCluster.superiorCoordinatorL2Address().getComplexAddress().longValue(), mParentCluster.superiorCoordinatorL2Address(), mParentCluster.getHierarchyLevel());
-			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, pCEP.getRemoteClusterName());
-			if(!tClusterList.isEmpty()) {
-				ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusterList.get(0));
-				tUncoveredEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
-			}
-			tUncoveredEntry.setPriority(getCoordinatorPriority());
-			tUncoveredEntry.setRoutingVectors(pCEP.getPath(mParentCluster.superiorCoordinatorL2Address()));
-			tUncoveredAnnounce.setCoveringClusterEntry(tUncoveredEntry);
-			Logging.warn(this, "Rejecting " + (superiorCoordinatorComChannel().getPeerL2Address()).getDescr() + " in favour of " + pAnnounce.getSenderName());
-			tUncoveredAnnounce.setRejection();
-			pCEP.sendPacket(tUncoveredAnnounce);
-			
-			/*
-			 * this part is for the acting coordinator, so NeighborZoneAnnounce is sent in order to announce the cluster that was just rejected
-			 */
-			
-			NeighborClusterAnnounce tCoveredAnnounce = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pCEP.getPeerL2Address(), pAnnounce.getToken(), (pCEP.getPeerL2Address()).getComplexAddress().longValue());
-			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
-			
-//			List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute(pCEP.getSourceName(), pCEP.getPeerName());
-			
-			//tCoveredAnnounce.setAnnouncer(getCoordinator().getHRS().getCoordinatorRoutingMap().getDest(tPathToCoordinator.get(0)));
-			tCoveredAnnounce.setNegotiatorIdentification(tLocalManagedClusterName);
-			DiscoveryEntry tCoveredEntry = new DiscoveryEntry(pAnnounce.getToken(), pAnnounce.getSenderName(), (pCEP.getPeerL2Address()).getComplexAddress().longValue(), pCEP.getPeerL2Address(), getHierarchyLevel());
-			tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerL2Address()));
-			tCoveredAnnounce.setCoveringClusterEntry(tCoveredEntry);
-			tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
-			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
-			
-			List<RoutableClusterGraphLink> tClusters = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, superiorCoordinatorComChannel().getRemoteClusterName());
-			if(!tClusters.isEmpty()) {
-				ICluster tNewPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusters.get(0));
-				tUncoveredEntry.setPredecessor(new ClusterName(tNewPredecessor.getToken(), tNewPredecessor.getClusterID(), tNewPredecessor.getHierarchyLevel()));
-			}
-			Logging.log(this, "Coordinator CEP is " + superiorCoordinatorComChannel());
-			superiorCoordinatorComChannel().sendPacket(tCoveredAnnounce);
-		}
+//		} else {
+//			/*
+//			 * this part is for the coordinator that intended to announce itself -> send rejection and send acting coordinator along with
+//			 * the announcement that is just gained a neighbor zone
+//			 */
+//			
+//			NeighborClusterAnnounce tUncoveredAnnounce = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), superiorCoordinatorL2Address(), getToken(), superiorCoordinatorL2Address().getComplexAddress().longValue());
+//			tUncoveredAnnounce.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
+//			/*
+//			 * the routing service address of the announcer is set once the neighbor zone announce arrives at the rejected coordinator because this
+//			 * entity is already covered
+//			 */
+//			
+//			tUncoveredAnnounce.setNegotiatorIdentification(tLocalManagedClusterName);
+//			
+//			DiscoveryEntry tUncoveredEntry = new DiscoveryEntry(mParentCluster.getToken(), mParentCluster.getCoordinatorName(), mParentCluster.superiorCoordinatorL2Address().getComplexAddress().longValue(), mParentCluster.superiorCoordinatorL2Address(), mParentCluster.getHierarchyLevel());
+//			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, pCEP.getRemoteClusterName());
+//			if(!tClusterList.isEmpty()) {
+//				ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusterList.get(0));
+//				tUncoveredEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
+//			}
+//			tUncoveredEntry.setPriority(getCoordinatorPriority());
+//			tUncoveredEntry.setRoutingVectors(pCEP.getPath(mParentCluster.superiorCoordinatorL2Address()));
+//			tUncoveredAnnounce.setCoveringClusterEntry(tUncoveredEntry);
+//			Logging.warn(this, "Rejecting " + (superiorCoordinatorComChannel().getPeerL2Address()).getDescr() + " in favour of " + pAnnounce.getSenderName());
+//			tUncoveredAnnounce.setRejection();
+//			pCEP.sendPacket(tUncoveredAnnounce);
+//			
+//			/*
+//			 * this part is for the acting coordinator, so NeighborZoneAnnounce is sent in order to announce the cluster that was just rejected
+//			 */
+//			
+//			NeighborClusterAnnounce tCoveredAnnounce = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pCEP.getPeerL2Address(), pAnnounce.getToken(), (pCEP.getPeerL2Address()).getComplexAddress().longValue());
+//			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
+//			
+////			List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute(pCEP.getSourceName(), pCEP.getPeerName());
+//			
+//			//tCoveredAnnounce.setAnnouncer(getCoordinator().getHRS().getCoordinatorRoutingMap().getDest(tPathToCoordinator.get(0)));
+//			tCoveredAnnounce.setNegotiatorIdentification(tLocalManagedClusterName);
+//			DiscoveryEntry tCoveredEntry = new DiscoveryEntry(pAnnounce.getToken(), pAnnounce.getSenderName(), (pCEP.getPeerL2Address()).getComplexAddress().longValue(), pCEP.getPeerL2Address(), getHierarchyLevel());
+//			tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerL2Address()));
+//			tCoveredAnnounce.setCoveringClusterEntry(tCoveredEntry);
+//			tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
+//			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
+//			
+//			List<RoutableClusterGraphLink> tClusters = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, superiorCoordinatorComChannel().getRemoteClusterName());
+//			if(!tClusters.isEmpty()) {
+//				ICluster tNewPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusters.get(0));
+//				tUncoveredEntry.setPredecessor(new ClusterName(tNewPredecessor.getToken(), tNewPredecessor.getClusterID(), tNewPredecessor.getHierarchyLevel()));
+//			}
+//			Logging.log(this, "Coordinator CEP is " + superiorCoordinatorComChannel());
+//			superiorCoordinatorComChannel().sendPacket(tCoveredAnnounce);
+//		}
 	}
 	
 	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, ComChannel pCEP)
