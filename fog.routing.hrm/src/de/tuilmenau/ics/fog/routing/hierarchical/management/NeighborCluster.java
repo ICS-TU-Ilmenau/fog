@@ -25,6 +25,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -130,10 +131,10 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return null;
 	}
 
-	public synchronized void setSuperiorCoordinatorCEP(ComChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress)
+	public synchronized void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
 	{
-		mCoordAddress = pAddress;
-		mCoordName = pCoordName;
+		mCoordAddress = pCoordinatorL2Address;
+		mCoordName = pCoordinatorName;
 	}
 
 	public void addNeighborCluster(ICluster pNeighbor)
@@ -148,20 +149,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority)
-	{
-		/*
-		 * not needed, this is just a dummy for topology
-		 */
-	}
-
-	@Override
-	public BullyPriority getCoordinatorPriority()
-	{
-		return mCoordinatorPriority;
-	}
-
-	@Override
 	public void setPriority(BullyPriority pPriority)
 	{
 		mPriority = pPriority;
@@ -170,22 +157,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	@Override
 	public HRMController getHRMController() {
 		return mHRMController;
-	}
-
-	@Override
-	public LinkedList<ComChannel> getComChannels()
-	{
-		LinkedList<ComChannel> tCEPs = new LinkedList<ComChannel>();
-		//tCEPs.add(mCEP);
-		return tCEPs;
-	}
-
-	@Override
-	public void registerComChannel(ComChannel pParticipatingCEP)
-	{
-		/*
-		 * not needed, this is just a dummy for topology
-		 */
 	}
 
 	@Override
@@ -223,7 +194,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		mCoordName = pCoordName;
 	}
 
-	@Override
 	public HRMName getCoordinatorsAddress()
 	{
 		return mCoordAddress;
@@ -345,12 +315,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	public Cluster getSourceIntermediateCluster()
 	{
 		return mSourceIntermediateCluster;
-	}
-
-	@Override
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
-	{
-		
 	}
 
 	@Override

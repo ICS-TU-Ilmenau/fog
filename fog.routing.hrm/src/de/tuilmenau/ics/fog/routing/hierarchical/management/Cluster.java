@@ -72,11 +72,8 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 	 */
 	private String mCoordinatorDescription = null;
 	
-	private ComChannel mChannelToCoordinator = null;
 	private BullyPriority mHighestPriority = null;
-	private BullyPriority mCoordinatorPriority;
 	private Name mCoordName;
-	private Name mCoordAddress;
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
 	private int mToken;
 
@@ -262,7 +259,71 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		return mClusterID / clusterIDMachineMultiplier();
 	}
 	
-	
+	/**
+	 * Sends a packet as broadcast to all cluster members
+	 * 
+	 * @param pPacket the packet which has to be broadcasted
+	 */
+	public void sendClusterBroadcast(Serializable pPacket)
+	{
+		// get all communication channels
+		LinkedList<ComChannel> tComChannels = getComChannels();
+
+		// get the L2Addres of the local host
+		L2Address tLocalL2Address = getHRMController().getHRS().getCentralFNL2Address();
+		
+		Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels");
+		
+		for(ComChannel tComChannel : tComChannels) {
+			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
+			
+			if (!tIsLoopback){
+				Logging.log(this, "       ..to " + tComChannel);
+			}else{
+				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
+			}
+
+			if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (!tIsLoopback)){
+				// send the packet to one of the possible cluster members
+				tComChannel.sendPacket(pPacket);
+			}else{
+				Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
+			}
+		}
+	}
+
+	/**
+	 * Returns how many external cluster members are known
+	 * 
+	 * @return the count
+	 */
+	public int countClusterMembers()
+	{
+		int tResult = 0;
+
+		// if the local host is also treated as cluster member, we return an additional cluster member 
+		if (HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST){
+			tResult++;
+		}
+		
+		// get all communication channels
+		LinkedList<ComChannel> tComChannels = getComChannels();
+
+		// get the L2Addres of the local host
+		L2Address tLocalL2Address = getHRMController().getHRS().getCentralFNL2Address();
+		
+		for(ComChannel tComChannel : tComChannels) {
+			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
+			
+			// filter loopback channels
+			if (!tIsLoopback){
+				tResult++;
+			}
+		}
+
+		return tResult;
+	}
+
 	
 	
 	
@@ -276,41 +337,43 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		// update the description about the elected coordinator
 		mCoordinatorDescription = pBullyAnnounce.getCoordinatorDescription();
 				
-		setSuperiorCoordinatorCEP(pCEP, pBullyAnnounce.getSenderName(), pBullyAnnounce.getToken(), pCEP.getPeerL2Address());
+		setSuperiorCoordinator(pCEP, pBullyAnnounce.getSenderName(), pBullyAnnounce.getToken(), pCEP.getPeerL2Address());
 		getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
-	public void setSuperiorCoordinatorCEP(ComChannel pComChannel, Name pCoordName, int pCoordToken, HRMName pAddress)
+	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
 	{
 		setToken(pCoordToken);
 		
-		Logging.log(this, "Setting " + (++mCoordinatorUpdateCounter) + " time a new coordinator: " + pCoordName + "/" + pComChannel + " with routing address " + pAddress);
-		mChannelToCoordinator = pComChannel;
-		mCoordName = pCoordName;
-		if(mChannelToCoordinator == null) {
+		Logging.log(this, "Setting " + (++mCoordinatorUpdateCounter) + " time a new coordinator: " + pCoordinatorName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorL2Address);
+
+		// store the communication channel to the superior coordinator
+		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
+		
+		mCoordName = pCoordinatorName;
+		if(superiorCoordinatorComChannel() == null) {
 			synchronized(this) {
-				mCoordAddress = getHRMController().getNode().getRoutingService().getNameFor(getHRMController().getNode().getCentralFN());
+				// store the L2Address of the superior coordinator 
+				setSuperiorCoordinatorL2Address(getHRMController().getHRS().getCentralFNL2Address());
+				
 				notifyAll();
 			}
-			setCoordinatorPriority(getPriority());
 		} else {
 			synchronized(this) {
-				mCoordAddress = pAddress;
+				// store the L2Address of the superior coordinator 
+				setSuperiorCoordinatorL2Address(pCoordinatorL2Address);
+				
 				notifyAll();
 			}
-			setCoordinatorPriority(pComChannel.getPeerPriority());
 			try {
-				getHRMController().getHRS().mapFoGNameToL2Address(pCoordName, pAddress);
+				getHRMController().getHRS().mapFoGNameToL2Address(pCoordinatorName, pCoordinatorL2Address);
 			} catch (RemoteException tExc) {
-				Logging.err(this, "Unable to register " + pCoordName, tExc);
+				Logging.err(this, "Unable to register " + pCoordinatorName, tExc);
 			}
 			
-			if(pComChannel.getRouteToPeer() != null && !pComChannel.getRouteToPeer().isEmpty()) {
-				if(pAddress instanceof L2Address) {
-					getHRMController().getHRS().registerNode((L2Address) pAddress, false);
-				}
-				
-				getHRMController().getHRS().registerRoute(pComChannel.getSourceName(), pComChannel.getPeerL2Address(), pComChannel.getRouteToPeer());
+			if(pCoordinatorComChannel.getRouteToPeer() != null && !pCoordinatorComChannel.getRouteToPeer().isEmpty()) {
+				getHRMController().getHRS().registerNode((L2Address) pCoordinatorL2Address, false);
+				getHRMController().getHRS().registerRoute(pCoordinatorComChannel.getSourceName(), pCoordinatorComChannel.getPeerL2Address(), pCoordinatorComChannel.getRouteToPeer());
 			}
 		}
 		Logging.log(this, "This cluster has the following neighbors: " + getNeighbors());
@@ -319,12 +382,12 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 				Logging.log(this, "CLUSTER-CEP - found already known neighbor cluster: " + tCluster);
 
 				Logging.log(this, "Preparing neighbor zone announcement");
-				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, getHierarchyLevel(), pAddress, getToken(), mClusterID);
+				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, getToken(), mClusterID);
 				tAnnounce.setCoordinatorsPriority(getPriority()); //TODO : ???
-				if(pComChannel != null) {
-					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pComChannel.getRouteToPeer(), pComChannel.getSourceName(), pComChannel.getPeerL2Address()));
+				if(pCoordinatorComChannel != null) {
+					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorComChannel.getRouteToPeer(), pCoordinatorComChannel.getSourceName(), pCoordinatorComChannel.getPeerL2Address()));
 				}
-				((Cluster)tCluster).announceNeighborCoord(tAnnounce, pComChannel);
+				((Cluster)tCluster).announceNeighborCoord(tAnnounce, pCoordinatorComChannel);
 			}
 		}
 		if(mReceivedAnnounces.isEmpty()) {
@@ -332,15 +395,15 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		} else {
 			Logging.log(this, "sending old announces");
 			while(!mReceivedAnnounces.isEmpty()) {
-				if(mChannelToCoordinator != null)
+				if(superiorCoordinatorComChannel() != null)
 				{
 					// OK, we have to notify the other node via socket communication, so this cluster has to be at least one hop away
-					mChannelToCoordinator.sendPacket(mReceivedAnnounces.removeFirst());
+					superiorCoordinatorComChannel().sendPacket(mReceivedAnnounces.removeFirst());
 				} else {
 					/*
 					 * in this case this announcement came from a neighbor intermediate cluster
 					 */
-					handleNeighborAnnouncement(mReceivedAnnounces.removeFirst(), pComChannel);
+					handleNeighborAnnouncement(mReceivedAnnounces.removeFirst(), pCoordinatorComChannel);
 				}
 			}
 		}
@@ -363,7 +426,7 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 			tCluster.setToken(pAnnounce.getToken());
 			
 			try {
-				getHRMController().getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), tCluster.getCoordinatorsAddress());
+				getHRMController().getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), ((Cluster)tCluster).superiorCoordinatorL2Address());
 			} catch (RemoteException tExc) {
 				Logging.err(this, "Unable to fulfill requirements", tExc);
 			}
@@ -422,8 +485,8 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 				 */
 				for(Coordinator tManager : getHRMController().getCoordinator(getHierarchyLevel())) {
 					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
-						if(tManager.getSuperiorCoordinatorCEP() != null) {
-							tManager.getSuperiorCoordinatorCEP().sendPacket(pAnnounce);
+						if(tManager.superiorCoordinatorComChannel() != null) {
+							tManager.superiorCoordinatorComChannel().sendPacket(pAnnounce);
 						}
 					}
 				}
@@ -450,11 +513,6 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 				Logging.log(this, "new negotiating cluster will be " + getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
 			}
 		}
-	}
-	
-	public ComChannel getSuperiorCoordinatorCEP()
-	{
-		return mChannelToCoordinator;
 	}
 	
 	public void addNeighborCluster(ICluster pNeighbor)
@@ -494,7 +552,7 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 			{
 				handleNeighborAnnouncement(pAnnouncement, pCEP);
 			} else {
-				mChannelToCoordinator.sendPacket(pAnnouncement);
+				superiorCoordinatorComChannel().sendPacket(pAnnouncement);
 			}
 		} else {
 			mReceivedAnnounces.add(pAnnouncement);
@@ -508,16 +566,6 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		}
 		
 		return mHighestPriority;
-	}
-	
-	public BullyPriority getCoordinatorPriority()
-	{
-		return mCoordinatorPriority;
-	}
-	
-	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority)
-	{
-		mCoordinatorPriority = pCoordinatorPriority;
 	}
 	
 	public LinkedList<ICluster> getNeighbors()
@@ -536,31 +584,11 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		return mToken;
 	}
 	
-	public L2Address getCoordinatorsAddress()
-	{
-		return (L2Address) mCoordAddress;
-	}
-	
 	public void setCoordinatorName(Name pCoordName)
 	{
 		mCoordName = pCoordName;
 	}
 
-	public void sendClusterBroadcast(Serializable pData)
-	{
-		Logging.log(this, "Sending CLUSTER BROADCAST " + pData);
-		
-		if(pData instanceof BullyPriorityUpdate)
-		{
-			Logging.log(this, "Will send priority update to" + getComChannels());
-		}
-		for(ComChannel tComChannel : getComChannels())
-		{
-			Logging.log(this, "   BROADCAST TO " + tComChannel);
-			tComChannel.sendPacket(pData);
-		}
-	}
-	
 	public Name getCoordinatorName()
 	{
 		return mCoordName;

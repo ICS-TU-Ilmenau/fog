@@ -76,9 +76,8 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 	//	private HRMID mHRMID = null;
 //	private LinkedList<ComChannel> mCEPs = new LinkedList<ComChannel>();
-	private ComChannel mCoordinatorCEP = null;
+
 	private Name mCoordinatorName = null;
-	private HRMName mCoordinatorAddress = null;
 	private int mToken;
 	private BullyPriority mHighestPriority = null;
 	private List<HRMGraphNodeName> mClustersToNotify;
@@ -180,8 +179,10 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		/**
 		 * Distribute AssignHRMID packets among the cluster members 
 		 */
-		Logging.log(this, "    ..distributing HRMIDs among cluster members: " + mParentCluster.getComChannels());
-		for(ComChannel tClusterMember : mParentCluster.getComChannels()) {
+		LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
+		
+		Logging.log(this, "    ..distributing HRMIDs among cluster members: " + tComChannels);
+		for(ComChannel tComChannel : tComChannels) {
 
 			//TODO: don't send this update in a loop to ourself!
 			//TODO: check if cluster members already have an address and distribute only free addresses here
@@ -190,25 +191,25 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			HRMID tHRMID = createClusterMemberAddress(tNextClusterMemberAddress++);
 
 			// store the HRMID under which the peer will be addressable from now 
-			tClusterMember.setPeerHRMID(tHRMID);
+			tComChannel.setPeerHRMID(tHRMID);
 			
-			if ((tClusterMember.getPeerHRMID() != null) && (!tClusterMember.getPeerHRMID().equals(tHRMID))){
-				Logging.log(this, "    ..replacing HRMID " + tClusterMember.getPeerHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerL2Address());
+			if ((tComChannel.getPeerHRMID() != null) && (!tComChannel.getPeerHRMID().equals(tHRMID))){
+				Logging.log(this, "    ..replacing HRMID " + tComChannel.getPeerHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + tComChannel.getPeerL2Address());
 			}else
-				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + tClusterMember.getPeerL2Address());
+				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + tComChannel.getPeerL2Address());
 
 			// create new AssignHRMID packet for the cluster member
-			AssignHRMID tAssignHRMID = new AssignHRMID(getHRMController().getNodeName(), tClusterMember.getPeerHRMID(), tHRMID);
+			AssignHRMID tAssignHRMID = new AssignHRMID(getHRMController().getNodeName(), tComChannel.getPeerHRMID(), tHRMID);
 			
 			// register this new HRMID in the local HRS and create a mapping to the right L2Address
-			Logging.log(this, "    ..creating MAPPING " + tHRMID.toString() + " to " + tClusterMember.getPeerL2Address());
-			getHRMController().getHRS().mapHRMIDToL2Address(tHRMID, tClusterMember.getPeerL2Address());
+			Logging.log(this, "    ..creating MAPPING " + tHRMID.toString() + " to " + tComChannel.getPeerL2Address());
+			getHRMController().getHRS().mapHRMIDToL2Address(tHRMID, tComChannel.getPeerL2Address());
 			
 			// share the route to this cluster member with all other cluster members
-			shareRouteToClusterMember(tClusterMember);
+			shareRouteToClusterMember(tComChannel);
 			
 			// send the packet
-			tClusterMember.sendPacket(tAssignHRMID);
+			tComChannel.sendPacket(tAssignHRMID);
 		}
 	}
 	
@@ -555,7 +556,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	
 	public LinkedList<RoutingServiceLinkVector> getPathToCoordinator(ICluster pSourceCluster, ICluster pDestinationCluster)
 	{
-		List<Route> tCoordinatorPath = getHRMController().getHRS().getCoordinatorRoutingMap().getRoute(pSourceCluster.getCoordinatorsAddress(), pDestinationCluster.getCoordinatorsAddress());
+		List<Route> tCoordinatorPath = getHRMController().getHRS().getCoordinatorRoutingMap().getRoute(((ControlEntity)pSourceCluster).superiorCoordinatorL2Address(), ((ControlEntity)pDestinationCluster).superiorCoordinatorL2Address());
 		LinkedList<RoutingServiceLinkVector> tVectorList = new LinkedList<RoutingServiceLinkVector>();
 		if(tCoordinatorPath != null) {
 			for(Route tPath : tCoordinatorPath) {
@@ -622,13 +623,12 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		return true;
 	}
 	
-	@Override
 	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority) {
-		if(mCoordinatorCEP != null) {
-			if (!mCoordinatorCEP.getPeerPriority().equals(pCoordinatorPriority)){
+		if(superiorCoordinatorComChannel() != null) {
+			if (!superiorCoordinatorComChannel().getPeerPriority().equals(pCoordinatorPriority)){
 				Logging.info(this, "Tried to set a priority that does not correspond with the priority of the concurrent coordinator, wrong connection endpoint?");
 			}
-			mCoordinatorCEP.setPeerPriority(pCoordinatorPriority);
+			superiorCoordinatorComChannel().setPeerPriority(pCoordinatorPriority);
 		}
 	}
 
@@ -637,10 +637,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 * 
 	 * @return the Bully priority of the superior coordinator
 	 */
-	@Override
 	public BullyPriority getCoordinatorPriority() {
-		if(mCoordinatorCEP != null) {
-			return mCoordinatorCEP.getPeerPriority();
+		if(superiorCoordinatorComChannel() != null) {
+			return superiorCoordinatorComChannel().getPeerPriority();
 		}
 		return null;
 	}
@@ -663,21 +662,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	@Override
 	public void setCoordinatorName(Name pCoordName) {
 		mCoordinatorName = pCoordName;
-	}
-
-	@Override
-	public HRMName getCoordinatorsAddress() {
-		synchronized(this) {
-			while(mCoordinatorAddress == null) {
-				try {
-					Logging.log(this, "ACTIVE WAITING");
-					wait(1000);
-				} catch (InterruptedException tExc) {
-					Logging.err(this, "Error while waiting for address", tExc);
-				}
-			}
-			return mCoordinatorAddress;
-		}
 	}
 
 	@Override
@@ -706,14 +690,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
 	{
 		/**
-		 * Stores the local cluster, which corresponds to the correct hierarchy level
-		 */
-		ICluster tLocalCluster = getHRMController().getClusterWithCoordinatorOnLevel(getHierarchyLevel().getValue());		
-		if ((tLocalCluster != null) && (mParentCluster != tLocalCluster)){
-			Logging.err(this,  "################## WE SHOULD NEVER REACH HERE, clusters differ from each other: " + mParentCluster + " != " + tLocalCluster);
-		}
-
-		/**
 		 * the name of the cluster, which is managed by this coordinator
 		 */
 		ClusterName tLocalManagedClusterName = new ClusterName(mParentCluster.getToken(), mParentCluster.getClusterID(), mParentCluster.getHierarchyLevel());
@@ -725,7 +701,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			/*
 			 * check whether a coordinator is already set
 			 */
-			if(getSuperiorCoordinatorCEP() != null) {
+			if(superiorCoordinatorComChannel() != null) {
 				if(getCoordinatorName() != null && !pAnnounce.getSenderName().equals(getCoordinatorName())) {
 					/*
 					 * a coordinator was set earlier -> therefore inter-cluster communicatino is necessary
@@ -756,23 +732,23 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 							 * If this is a rejection the forwarding cluster as to be calculated by the receiver of this neighbor zone announcement
 							 */
 							
-							NeighborClusterAnnounce tOldCovered = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), getCoordinatorsAddress(),getToken(), getCoordinatorsAddress().getComplexAddress().longValue());
-							tOldCovered.setCoordinatorsPriority(getSuperiorCoordinatorCEP().getPeerPriority());
+							NeighborClusterAnnounce tOldCovered = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), superiorCoordinatorL2Address(),getToken(), superiorCoordinatorL2Address().getComplexAddress().longValue());
+							tOldCovered.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
 							tOldCovered.setNegotiatorIdentification(tLocalManagedClusterName);
 							
-							DiscoveryEntry tOldCoveredEntry = new DiscoveryEntry(tLocalCluster.getToken(), tLocalCluster.getCoordinatorName(), tLocalCluster.getCoordinatorsAddress().getComplexAddress().longValue(), tLocalCluster.getCoordinatorsAddress(), tLocalCluster.getHierarchyLevel());
+							DiscoveryEntry tOldCoveredEntry = new DiscoveryEntry(mParentCluster.getToken(), mParentCluster.getCoordinatorName(), mParentCluster.superiorCoordinatorL2Address().getComplexAddress().longValue(), mParentCluster.superiorCoordinatorL2Address(), mParentCluster.getHierarchyLevel());
 							/*
 							 * the forwarding cluster to the newly discovered cluster has to be one level lower so it is forwarded on the correct cluster
 							 * 
 							 * calculation of the predecessor is because the cluster identification on the remote site is multiplexed
 							 */
-							tClusterList = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, getSuperiorCoordinatorCEP().getRemoteClusterName());
+							tClusterList = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, superiorCoordinatorComChannel().getRemoteClusterName());
 							if(!tClusterList.isEmpty()) {
 								ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusterList.get(0));
 								tOldCoveredEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
 							}
 							tOldCoveredEntry.setPriority(getCoordinatorPriority());
-							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(tLocalCluster.getCoordinatorsAddress()));
+							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(mParentCluster.superiorCoordinatorL2Address()));
 							tOldCovered.setCoveringClusterEntry(tOldCoveredEntry);
 //							List<Route> tPathToCoordinator = getCoordinator().getHRS().getCoordinatorRoutingMap().getRoute((HRMName)pCEP.getSourceName(), getCoordinatorsAddress());
 							//tOldCovered.setAnnouncer(getCoordinator().getHRS().getCoordinatorRoutingMap().getDest(tPathToCoordinator.get(0)));
@@ -795,9 +771,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 								ICluster tNewPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusters.get(0));
 								tCoveredEntry.setPredecessor(new ClusterName(tNewPredecessor.getToken(), tNewPredecessor.getClusterID(), tNewPredecessor.getHierarchyLevel()));
 							}
-							Logging.warn(this, "Rejecting " + (getSuperiorCoordinatorCEP().getPeerL2Address()).getDescr() + " in favor of " + pAnnounce.getSenderName());
+							Logging.warn(this, "Rejecting " + (superiorCoordinatorComChannel().getPeerL2Address()).getDescr() + " in favor of " + pAnnounce.getSenderName());
 							tNewCovered.setRejection();
-							getSuperiorCoordinatorCEP().sendPacket(tNewCovered);
+							superiorCoordinatorComChannel().sendPacket(tNewCovered);
 							for(ComChannel tCEP : getComChannels()) {
 								if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerL2Address())) {
 									tCEP.setAsParticipantOfMyCluster(true);
@@ -807,9 +783,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 								}
 							}
 							setToken(pAnnounce.getToken());
-							setSuperiorCoordinatorCEP(pCEP, pAnnounce.getSenderName(),pAnnounce.getToken(),  pCEP.getPeerL2Address());
+							setSuperiorCoordinator(pCEP, pAnnounce.getSenderName(),pAnnounce.getToken(),  pCEP.getPeerL2Address());
 							getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
-							getSuperiorCoordinatorCEP().sendPacket(tNewCovered);
+							superiorCoordinatorComChannel().sendPacket(tNewCovered);
 						}
 					}
 				}
@@ -826,7 +802,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				}
 				setToken(pAnnounce.getToken());
 				getHRMController().setClusterWithCoordinator(getHierarchyLevel(), this);
-				setSuperiorCoordinatorCEP(pCEP, pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerL2Address());
+				setSuperiorCoordinator(pCEP, pAnnounce.getSenderName(), pAnnounce.getToken(), pCEP.getPeerL2Address());
 			}
 		} else {
 			/*
@@ -834,8 +810,8 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			 * the announcement that is just gained a neighbor zone
 			 */
 			
-			NeighborClusterAnnounce tUncoveredAnnounce = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), getCoordinatorsAddress(), getToken(), getCoordinatorsAddress().getComplexAddress().longValue());
-			tUncoveredAnnounce.setCoordinatorsPriority(getSuperiorCoordinatorCEP().getPeerPriority());
+			NeighborClusterAnnounce tUncoveredAnnounce = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), superiorCoordinatorL2Address(), getToken(), superiorCoordinatorL2Address().getComplexAddress().longValue());
+			tUncoveredAnnounce.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
 			/*
 			 * the routing service address of the announcer is set once the neighbor zone announce arrives at the rejected coordinator because this
 			 * entity is already covered
@@ -843,16 +819,16 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			
 			tUncoveredAnnounce.setNegotiatorIdentification(tLocalManagedClusterName);
 			
-			DiscoveryEntry tUncoveredEntry = new DiscoveryEntry(tLocalCluster.getToken(), tLocalCluster.getCoordinatorName(), tLocalCluster.getCoordinatorsAddress().getComplexAddress().longValue(), tLocalCluster.getCoordinatorsAddress(), tLocalCluster.getHierarchyLevel());
+			DiscoveryEntry tUncoveredEntry = new DiscoveryEntry(mParentCluster.getToken(), mParentCluster.getCoordinatorName(), mParentCluster.superiorCoordinatorL2Address().getComplexAddress().longValue(), mParentCluster.superiorCoordinatorL2Address(), mParentCluster.getHierarchyLevel());
 			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, pCEP.getRemoteClusterName());
 			if(!tClusterList.isEmpty()) {
 				ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusterList.get(0));
 				tUncoveredEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
 			}
 			tUncoveredEntry.setPriority(getCoordinatorPriority());
-			tUncoveredEntry.setRoutingVectors(pCEP.getPath(tLocalCluster.getCoordinatorsAddress()));
+			tUncoveredEntry.setRoutingVectors(pCEP.getPath(mParentCluster.superiorCoordinatorL2Address()));
 			tUncoveredAnnounce.setCoveringClusterEntry(tUncoveredEntry);
-			Logging.warn(this, "Rejecting " + (getSuperiorCoordinatorCEP().getPeerL2Address()).getDescr() + " in favour of " + pAnnounce.getSenderName());
+			Logging.warn(this, "Rejecting " + (superiorCoordinatorComChannel().getPeerL2Address()).getDescr() + " in favour of " + pAnnounce.getSenderName());
 			tUncoveredAnnounce.setRejection();
 			pCEP.sendPacket(tUncoveredAnnounce);
 			
@@ -873,13 +849,13 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
 			tCoveredAnnounce.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 			
-			List<RoutableClusterGraphLink> tClusters = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, getSuperiorCoordinatorCEP().getRemoteClusterName());
+			List<RoutableClusterGraphLink> tClusters = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, superiorCoordinatorComChannel().getRemoteClusterName());
 			if(!tClusters.isEmpty()) {
 				ICluster tNewPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusters.get(0));
 				tUncoveredEntry.setPredecessor(new ClusterName(tNewPredecessor.getToken(), tNewPredecessor.getClusterID(), tNewPredecessor.getHierarchyLevel()));
 			}
-			Logging.log(this, "Coordinator CEP is " + getSuperiorCoordinatorCEP());
-			getSuperiorCoordinatorCEP().sendPacket(tCoveredAnnounce);
+			Logging.log(this, "Coordinator CEP is " + superiorCoordinatorComChannel());
+			superiorCoordinatorComChannel().sendPacket(tCoveredAnnounce);
 		}
 	}
 	
@@ -952,36 +928,32 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 
 	@Override
-	public ComChannel getSuperiorCoordinatorCEP() {
-		return mCoordinatorCEP;
-	}
-
-	@Override
-	public void setSuperiorCoordinatorCEP(ComChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress) {
+	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address) 
+	{
 		/**
 		 * the name of the cluster, which is managed by this coordinator
 		 */
 		ClusterName tLocalManagedClusterName = new ClusterName(mParentCluster.getToken(), mParentCluster.getClusterID(), mParentCluster.getHierarchyLevel());
 		setToken(pCoordToken);
 		
-		Logging.log(this, "Setting Coordinator " + pCoord + " with name " + pCoordName + " with routing address " + pAddress);
-		Logging.log(this, "Previous coordinator was " + mCoordinatorCEP + " with name " + mCoordinatorName);
-		mCoordinatorCEP = pCoord;
-		mCoordinatorName = pCoordName;
+		Logging.log(this, "Setting channel to superior coordinator to " + pCoordinatorComChannel + " for coordinator " + pCoordinatorName + " with routing address " + pCoordinatorL2Address);
+		Logging.log(this, "Previous channel to superior coordinator was " + superiorCoordinatorComChannel() + " with name " + mCoordinatorName);
+		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
+		mCoordinatorName = pCoordinatorName;
 		synchronized(this) {
-			mCoordinatorAddress = pAddress;
+			setSuperiorCoordinatorL2Address(pCoordinatorL2Address);
 			notifyAll();
 		}
 
 		//		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
-		for(HRMGraphNodeName tNode: getHRMController().getRoutableClusterGraph().getNeighbors(mParentCluster)) {
-			if(tNode instanceof ICluster) {
+		for(HRMGraphNodeName tNeighbor: getHRMController().getRoutableClusterGraph().getNeighbors(mParentCluster)) {
+			if(tNeighbor instanceof ICluster) {
 				for(ComChannel tComChannel : getComChannels()) {
-					if(((ICluster)tNode).getCoordinatorsAddress().equals(tComChannel.getPeerL2Address()) && !tComChannel.isPartOfMyCluster()) {
+					if(((ControlEntity)tNeighbor).superiorCoordinatorL2Address().equals(tComChannel.getPeerL2Address()) && !tComChannel.isPartOfMyCluster()) {
 						Logging.info(this, "Informing " + tComChannel + " about existence of neighbor zone ");
-						NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordName, getHierarchyLevel(), pAddress, getToken(), pAddress.getComplexAddress().longValue());
-						tAnnounce.setCoordinatorsPriority(getSuperiorCoordinatorCEP().getPeerPriority());
-						LinkedList<RoutingServiceLinkVector> tVectorList = tComChannel.getPath(pAddress);
+						NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, getToken(), pCoordinatorL2Address.getComplexAddress().longValue());
+						tAnnounce.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
+						LinkedList<RoutingServiceLinkVector> tVectorList = tComChannel.getPath(pCoordinatorL2Address);
 						tAnnounce.setRoutingVectors(tVectorList);
 						tAnnounce.setNegotiatorIdentification(tLocalManagedClusterName);
 						tComChannel.sendPacket(tAnnounce);
@@ -992,7 +964,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 		if(mReceivedAnnouncements != null) {
 			for(NeighborClusterAnnounce tAnnounce : mReceivedAnnouncements) {
-				pCoord.sendPacket(tAnnounce);
+				superiorCoordinatorComChannel().sendPacket(tAnnounce);
 			}
 		}
 		

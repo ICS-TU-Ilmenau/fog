@@ -20,6 +20,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
 public class ClusterName implements Serializable, ICluster
 {
@@ -66,15 +67,6 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority) {		
-	}
-
-	@Override
-	public BullyPriority getCoordinatorPriority() {
-		return null;
-	}
-
-	@Override
 	public void setPriority(BullyPriority pPriority) {
 		
 	}
@@ -82,16 +74,6 @@ public class ClusterName implements Serializable, ICluster
 	@Override
 	public HRMController getHRMController() {
 		return null;
-	}
-
-	@Override
-	public LinkedList<ComChannel> getComChannels() {
-		return null;
-	}
-
-	@Override
-	public void registerComChannel(ComChannel pParticipatingCEP) {
-		
 	}
 
 	@Override
@@ -125,11 +107,6 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public HRMID getCoordinatorsAddress() {
-		return null;
-	}
-
-	@Override
 	public void setToken(int pToken) {
 		
 	}
@@ -156,25 +133,13 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public ComChannel getSuperiorCoordinatorCEP()
-	{
-		return null;
-	}
-
-	@Override
-	public void setSuperiorCoordinatorCEP(ComChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress)
+	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
 	{
 		
 	}
 
 	@Override
 	public void addNeighborCluster(ICluster pNeighbor)
-	{
-		
-	}
-
-	@Override
-	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
 		
 	}
@@ -200,12 +165,6 @@ public class ClusterName implements Serializable, ICluster
 			}
 		}
 		return false;
-	}
-
-	@Override
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
-	{
-		
 	}
 
 	@Override

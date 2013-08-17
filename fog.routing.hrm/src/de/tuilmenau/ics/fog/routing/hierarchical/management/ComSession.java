@@ -37,9 +37,9 @@ public class ComSession extends Session
 	private L2Address mPeerL2Address = null;
 
 	/**
-	 * Stores the communication controller
+	 * Stores the parent multiplexer for communication channels
 	 */
-	private ComChannelMuxer mCOMController = null;
+	private ComChannelMuxer mComChannelMuxer = null;
 
 	/**
 	 * Stores a reference to the HRMController application.
@@ -56,10 +56,10 @@ public class ComSession extends Session
 	 * @param pHRMController is the HRMController instance this connection end point is associated to
 	 * @param pServerSide indicates whether this session is the origin of a server or client
 	 * @param pLevel the hierarchy level of this session
-	 * @param pComMultiplexer the communication multiplexer to use
+	 * @param pComChannelMuxer the communication multiplexer to use
 	 * 
 	 */
-	public ComSession(HRMController pHRMController, boolean pServerSide, HierarchyLevel pLevel, ComChannelMuxer pCOMController)
+	public ComSession(HRMController pHRMController, boolean pServerSide, HierarchyLevel pLevel, ComChannelMuxer pComChannelMuxer)
 	{
 		// call the Session constructor
 		super(false, Logging.getInstance(), null);
@@ -71,7 +71,7 @@ public class ComSession extends Session
 		mHierarchyLevel = pLevel;
 
 		// store the superior communication controller
-		mCOMController = pCOMController;
+		mComChannelMuxer = pComChannelMuxer;
 
 		mSessionOriginL2Address = mHRMController.getHRS().getCentralFNL2Address(); 
 		
@@ -253,7 +253,7 @@ public class ComSession extends Session
 			ClusterName tTargetCluster = tPackage.getDestinationCluster();
 			
 			try {
-				ComChannel tCEP = mCOMController.findCEPChannel(this, (ClusterName)tPackage.getSourceCluster(), tTargetCluster);
+				ComChannel tCEP = mComChannelMuxer.getComChannel(this, (ClusterName)tPackage.getSourceCluster(), tTargetCluster);
 				if(tCEP != null) {
 					Logging.log(this, "Forwarding " + tPackage.getData() + " from " + tPackage.getSourceCluster() + " to " + tPackage.getDestinationCluster() + " with " + tCEP);
 					tCEP.handlePacket(tPackage.getData());
@@ -270,19 +270,22 @@ public class ComSession extends Session
 					boolean tWasDelivered = false;
 
 					String tAnalyzedClusters = new String("");
-					for(ComChannel tCEP: mCOMController.getDemuxCEPs(this)) {
-						tAnalyzedClusters += tCEP.getPeer() + "\n";
-						if(tCEP.getPeer().getClusterID().equals(tNestedDiscovery.getTargetClusterID())) {
-							try {
-								tCEP.handleClusterDiscovery(tNestedDiscovery, true);
-								tWasDelivered = true;
-							} catch (NetworkException tExc) {
-								Logging.err(this, "Error when forwarding nested discovery to clusters ",  tExc);
+					for(ComChannel tComChannel: mComChannelMuxer.getComChannels(this)) {
+						tAnalyzedClusters += tComChannel.getParent() + "\n";
+						if (tComChannel.getParent() instanceof Cluster){
+							Cluster tCluster = (Cluster)tComChannel.getParent();
+							if(tCluster.getClusterID().equals(tNestedDiscovery.getTargetClusterID())) {
+								try {
+									tComChannel.handleClusterDiscovery(tNestedDiscovery, true);
+									tWasDelivered = true;
+								} catch (NetworkException tExc) {
+									Logging.err(this, "Error when forwarding nested discovery to clusters ",  tExc);
+								}
 							}
 						}
 					}
 					if(!tWasDelivered) {
-						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mCOMController.getDemuxCEPs(this));
+						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mComChannelMuxer.getComChannels(this));
 					}
 				}
 				((ClusterDiscovery)pData).isAnswer();
@@ -292,20 +295,23 @@ public class ComSession extends Session
 				for(NestedDiscovery tNestedDiscovery : ((ClusterDiscovery)pData).getDiscoveries()) {
 					boolean tWasDelivered = false;
 					String tAnalyzedClusters = new String("");
-					for(ComChannel tCEP: mCOMController.getDemuxCEPs(this)) {
-						tAnalyzedClusters += tCEP.getPeer() + "\n";
+					for(ComChannel tComChannel: mComChannelMuxer.getComChannels(this)) {
+						tAnalyzedClusters += tComChannel.getParent() + "\n";
+						if (tComChannel.getParent() instanceof Cluster){
+							Cluster tCluster = (Cluster)tComChannel.getParent();
 
-						if(tCEP.getPeer().getClusterID().equals(tNestedDiscovery.getOrigin())) {
-							try {
-								tCEP.handleClusterDiscovery(tNestedDiscovery, false);
-								tWasDelivered = true;
-							} catch (NetworkException tExc) {
-								Logging.err(this, "Error when forwarding nested discovery",  tExc);
+							if(tCluster.getClusterID().equals(tNestedDiscovery.getOrigin())) {
+								try {
+									tComChannel.handleClusterDiscovery(tNestedDiscovery, false);
+									tWasDelivered = true;
+								} catch (NetworkException tExc) {
+									Logging.err(this, "Error when forwarding nested discovery",  tExc);
+								}
 							}
 						}
 					}
 					if(!tWasDelivered) {
-						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mCOMController.getDemuxCEPs(this));
+						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mComChannelMuxer.getComChannels(this));
 					}
 				}
 				((ClusterDiscovery)pData).completed();
@@ -334,7 +340,7 @@ public class ComSession extends Session
 	 */
 	public ComChannelMuxer getMultiplexer()
 	{
-		return mCOMController;
+		return mComChannelMuxer;
 	}
 
 	

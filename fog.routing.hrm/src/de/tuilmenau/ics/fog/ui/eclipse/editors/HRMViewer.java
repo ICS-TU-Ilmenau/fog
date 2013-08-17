@@ -52,10 +52,11 @@ import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster;
@@ -115,7 +116,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	public void createPartControl(Composite pParent)
 	{
 		// get the HRS instance
-		HierarchicalRoutingService tHRS = mHRMController.getHRS();
+		HRMRoutingService tHRS = mHRMController.getHRS();
 
 		mShell = pParent;
 		mDisplay = pParent.getDisplay();
@@ -502,7 +503,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 * 
 	 * @param pCoordinator selected coordinator 
 	 */
-	private void printCoordinator(ICluster pCoordinator)
+	private void printCoordinator(ControlEntity pCoordinator)
 	{
 		int j = 0;
 		
@@ -517,7 +518,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 2: table about CEPs 
 		 */
-		printCEPs(pCoordinator);
+		printComChannels(pCoordinator);
 			
 		Label separator = new Label (mContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
 		separator.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
@@ -525,7 +526,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 	}
 	
-	private void printCEPs(ICluster pCluster)
+	private void printComChannels(ControlEntity pControlEntity)
 	{
 		Table tTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		
@@ -556,10 +557,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
 		
-		int j = 0;
+		LinkedList<ComChannel> tComChannels = pControlEntity.getComChannels();
+		
+		int j = 0;		
 		if (HRM_VIEWER_DEBUGGING)
-			Logging.log(this, "Amount of participating CEPs is " + pCluster.getComChannels().size());
-		for(ComChannel tCEP : pCluster.getComChannels()) {
+			Logging.log(this, "Amount of participating CEPs is " + tComChannels.size());
+		for(ComChannel tCEP : tComChannels) {
 			if (HRM_VIEWER_DEBUGGING)
 				Logging.log(this, "Updating table item number " + j);
 			
@@ -579,8 +582,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 0: coordinator
 			 */			
-			if (pCluster instanceof Cluster){
-				Cluster tCluster = (Cluster)pCluster;
+			if (pControlEntity instanceof Cluster){
+				Cluster tCluster = (Cluster)pControlEntity;
 				if (tCluster.getCoordinatorDescription() != null){
 					tRow.setText(0, tCluster.getCoordinatorDescription());
 				}else{
@@ -660,7 +663,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 	}
 	
-	private void printNAME(ICluster pEntity)
+	private void printNAME(ControlEntity pEntity)
 	{
 		StyledText tClusterLabel = new StyledText(mContainer, SWT.BORDER);;
 		tClusterLabel.setText(pEntity.toString());
@@ -729,7 +732,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 2: table about CEPs 
 		 */
-		printCEPs(pCluster);
+		printComChannels(pCluster);
 	
 		Label separator = new Label (mContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
 		separator.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));

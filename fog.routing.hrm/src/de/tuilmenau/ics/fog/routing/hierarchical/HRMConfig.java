@@ -114,7 +114,14 @@ public class HRMConfig
 		/**
 		 * Identifies the base level of the hierarchy.
 		 */
-		public static final int BASE_LEVEL = 0;		
+		public static final int BASE_LEVEL = 0;
+
+		/**
+		 * Defines if signaling (e.g., broadcasts) also includes the local host.
+		 * In this case, signaling also sends packets in a loop back to the sender.
+		 * This causes ADDITIONAL LOOPBACK SIGNALING.
+		 */
+		public static final boolean SIGNALING_INCLUDES_LOCALHOST = false;		
 	}
 	
 	/**

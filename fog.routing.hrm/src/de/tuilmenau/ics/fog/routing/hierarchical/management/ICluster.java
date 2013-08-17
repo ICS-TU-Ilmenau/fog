@@ -19,6 +19,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
 public interface ICluster extends Serializable, HRMGraphNodeName
 {
@@ -27,14 +28,14 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * 
 	 * @param pCoordinatorPriority is the priority of the entity
 	 */
-	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority);
+//	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority);
 	
 	/**
 	 * Get the priority of the currently acting coordinator
 	 * 
 	 * @return priority of the acting coordinator
 	 */
-	public BullyPriority getCoordinatorPriority();
+//	public BullyPriority getCoordinatorPriority();
 	
 	/**
 	 * Set the priority the reference node has in this cluster
@@ -60,14 +61,14 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @return Provide list of connection end points that are connected to this cluster - the other connection end point
 	 * governs the cluster it is associated to
 	 */
-	public LinkedList<ComChannel> getComChannels();
+//	public LinkedList<ComChannel> getComChannels();
 	
 	/**
 	 * 
 	 * @param pParticipatingCEP This is one connection end point that is used to communicate with the remote
 	 * connection end points that govern the clusters they are associated to.
 	 */
-	public void registerComChannel(ComChannel pParticipatingCEP);
+//	public void registerComChannel(ComChannel pParticipatingCEP);
 	
 	/**
 	 * 
@@ -105,7 +106,7 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @return Get the address of the coordinator - is corresponds to a OSI-Layer 2 address. However implementation allows
 	 * the use of hierarchical addresses as well.
 	 */
-	public HRMName getCoordinatorsAddress();
+//	public HRMName getCoordinatorsAddress();
 	
 	/**
 	 * 
@@ -140,14 +141,6 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	public BullyPriority getHighestPriority();
 	
 	/**
-	 * Once a connection end point receives an announcement it calls this method.
-	 * 
-	 * @param pAnnounce This is the announcement from which relevant information has to be extracted.
-	 * @param pCEP This is the connection from which necessary information will be extracted as well.
-	 */
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP);
-	
-	/**
 	 * This method has to be called by an connection end point once it receives the announcement about the existence
 	 * of a neighbor zone. 
 	 * 
@@ -155,12 +148,6 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @param pCEP This is the connection end point that is used to transfer data to the object that CEP governs
 	 */
 	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, ComChannel pCEP);
-	
-	/**
-	 * 
-	 * @return Return null in case the node is coordinator itself, otherwise the connection end point that leads to the superior coordinator is returned. 
-	 */
-	public ComChannel getSuperiorCoordinatorCEP();
 	
 	/**
 	 * Once an announcement was received, the coordinator is set via this method. However this function does not have to be necessarily called
@@ -171,7 +158,7 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * @param pAddress The address of the coordinator can be set here. It can be either an OSI Layer 2 address or a HRMID. However using the last type as address
 	 * was not implemented. 
 	 */
-	public void setSuperiorCoordinatorCEP(ComChannel pCoord, Name pCoordName, int pCoordToken, HRMName pAddress);
+	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address);
 	
 	/**
 	 * 
@@ -181,58 +168,10 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	
 	/**
 	 * 
-	 * @param pHRMID This is the HRMID that identifies this cluster. Depending on the hierarchical level of this cluster the last
-	 * parts of that address might be zero.
-	 */
-	public void setHRMID(Object pCaller, HRMID pHRMID);
-	
-	/**
-	 * 
-	 * 
-	 * @param pData The data that should be sent is provided by this serializable object.
-	 * @param pAlreadyInformed Please provide a list that saves entities that were already informed - this is used to have a workaround
-	 * for the ConcurrentModificationException.
-	 */
-//	public void sendClusterBroadcast(Serializable pData);
-	
-	/**
-	 * 
 	 * @param pObj Provide the object for comparison
 	 * @return Return true in case the objects are equal to each other.
 	 */
 	public boolean equals(Object pObj);
-	
-	/**
-	 * In the first implementation of HRM BGP can be used at a distinct hierarchical level. For that reason one has to provide the
-	 * information whether a cluster lies  between two autonomous systems. Maybe that functionality will be reimplemented later on.
-	 * 
-	 * @return true in case this cluster is between two autonomous systems.
-	 */
-//	public boolean isInterASCluster();
-	
-	/**
-	 * 
-	 * Explicitly say that this cluster is between to autonomous systems.
-	 */
-//	public void setInterASCluster();
-	
-	/**
-	 * HRM was implemented as distributed system. If a cluster is notified about the existence of a nother cluster it remembers which
-	 * connection end point announced that cluster. The implementation expects that in order to route to that cluster it has
-	 * to reach the announcer first. However the announcer can be updated in case a shorter route to the target cluster is found. 
-	 * 
-	 * @return Return the connection end point that announced this cluster via NeighborZoneAnnounce to another connection end point. 
-	 */
-//	public CoordinatorCEPChannel getNegotiatorCEP();
-	
-	/**
-	 * HRM was implemented as distributed system. If a cluster is notified about the existence of a nother cluster it remembers which
-	 * connection end point announced that cluster. The implementation expects that in order to route to that cluster it has
-	 * to reach the announcer first. However the announcer can be updated in case a shorter route to the target cluster is found. 
-	 * 
-	 * @param pCEP Set the connection end point that announced this cluster via NeighborZoneAnnounce to another connection end point. 
-	 */
-//	public void setNegotiatorCEP(CoordinatorCEPChannel pCEP);
 	
 	/**
 	 * It is possible, to address more than one destination within one packet - for that purpose a multiplexer is used.

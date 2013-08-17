@@ -112,7 +112,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	/**
 	 * Stores a reference to the local instance of the hierarchical routing service.
 	 */
-	private HierarchicalRoutingService mHierarchicalRoutingService = null;
+	private HRMRoutingService mHierarchicalRoutingService = null;
 	
 	/**
 	 * Stores if the application was already started.
@@ -144,7 +144,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
 	 */
-	public HRMController(AutonomousSystem pAS, Node pNode, HierarchicalRoutingService pHierarchicalRoutingService)
+	public HRMController(AutonomousSystem pAS, Node pNode, HRMRoutingService pHierarchicalRoutingService)
 	{
 		// initialize the application context
 		super(pNode.getHost(), null, pNode.getIdentity());
@@ -196,7 +196,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @return hierarchical routing service of this entity
 	 */
-	public HierarchicalRoutingService getHRS()
+	public HRMRoutingService getHRS()
 	{
 		return mHierarchicalRoutingService;
 	}
@@ -923,7 +923,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					}
 					
 					tCEP = new ComChannel(this, tCluster);
-					((Cluster)tCluster).getMultiplexer().mapCEPToSession(tCEP, tConnectionSession);
+					((Cluster)tCluster).getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
 					if(tJoin.getHierarchyLevel().isHigherLevel()) {
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 					}
@@ -953,11 +953,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 				if(tJoin.getHierarchyLevel().isHigherLevel()) {
 					((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 				}
-				tCluster.getMultiplexer().mapCEPToSession(tCEP, tConnectionSession);
+				tCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
 				addRoutableTarget(tCluster);
 				tFoundCluster = tCluster;
 			}
-			tFoundCluster.getMultiplexer().mapCEPToSession(tCEP, tConnectionSession);
+			tFoundCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
 			for(ICluster tNegotiatingCluster : getRoutingTargetClusters()) {
 				ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel().getValue() - 1 : 0 ));
 				if(tNegotiatingCluster.equals(tNegClusterName)) {
@@ -1010,7 +1010,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 							tCluster = new NeighborCluster(tEntry.getClusterID(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken(), tEntry.getLevel(), this);
 							tCluster.setPriority(tEntry.getPriority());
 							try {
-								getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), (L2Address)tCluster.getCoordinatorsAddress());
+								getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), (L2Address)((NeighborCluster)tCluster).getCoordinatorsAddress());
 							} catch (RemoteException tExc) {
 								Logging.err(this, "Unable to fulfill requirements", tExc);
 							}
@@ -1035,7 +1035,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 								}
 							}
 						}
-						getRoutableClusterGraph().storeLink(tAttachedCluster, tCluster, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
+						mRoutableClusterGraph.storeLink(tAttachedCluster, tCluster, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
 					}
 					for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
 						if(getSourceIntermediate(tCluster) != null) {
@@ -1156,7 +1156,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				}
 				tSession.setRouteToPeer(tRoute);
 				tCEP = new ComChannel(this, tCluster);
-				tCluster.getMultiplexer().mapCEPToSession(tCEP, tSession);
+				tCluster.getMultiplexer().mapChannelToSession(tCEP, tSession);
 				tFoundCluster = tCluster;
 				tClusterFound = true;
 			}
@@ -1169,7 +1169,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 			addRoutableTarget(tCluster);
 			tSession = new ComSession(this, false, pLevel, tCluster.getMultiplexer());
 			tCEP = new ComChannel(this, tCluster);
-			tCluster.getMultiplexer().mapCEPToSession(tCEP, tSession);
+			tCluster.getMultiplexer().mapChannelToSession(tCEP, tSession);
 			tFoundCluster = tCluster;
 		}
 		final ClusterParticipationProperty tProperty = new ClusterParticipationProperty(pToClusterID, pLevel, 0);

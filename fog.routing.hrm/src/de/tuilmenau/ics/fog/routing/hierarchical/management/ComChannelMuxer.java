@@ -35,8 +35,8 @@ import de.tuilmenau.ics.fog.util.Tuple;
 
 public class ComChannelMuxer
 {
-	private HashMap<ComChannel, ComSession> mCEPToSessionMapping;
-	private HashMap<ComSession, LinkedList<ComChannel>> mSessionToCEPsMapping;
+	private HashMap<ComChannel, ComSession> mChannelToSessionMappings;
+	private HashMap<ComSession, LinkedList<ComChannel>> mSessionToChannelsMapping;
 	private HashMap<Tuple<Long, Long>, ComChannel> mClusterToCEPMapping;
 	private HRMController mHRMController = null;
 	private LinkedList<Name> mConnectedEntities = new LinkedList<Name>();
@@ -46,8 +46,8 @@ public class ComChannelMuxer
 	{
 		mParent = pParent;
 		mHRMController = pHRMController;
-		mCEPToSessionMapping = new HashMap<ComChannel, ComSession>();
-		mSessionToCEPsMapping = new HashMap<ComSession, LinkedList<ComChannel>>();
+		mChannelToSessionMappings = new HashMap<ComChannel, ComSession>();
+		mSessionToChannelsMapping = new HashMap<ComSession, LinkedList<ComChannel>>();
 		mClusterToCEPMapping = new HashMap<Tuple<Long, Long>, ComChannel>();
 		Logging.log(this, "CREATED for " + pHRMController);
 	}
@@ -65,22 +65,23 @@ public class ComChannelMuxer
 
 		Logging.log(this, "Ping0");
 		
+		ControlEntity tTargetControlEntity = (ControlEntity)pTargetCluster;
+		
 		if(!mConnectedEntities.contains(pTargetCluster.getCoordinatorName())) {
 			mConnectedEntities.add(pTargetCluster.getCoordinatorName());
-			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(pTargetCluster.getCoordinatorsAddress().getComplexAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getToken());
+			ClusterParticipationProperty tParticipationProperty = new ClusterParticipationProperty(tTargetControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getToken());
 			ComSession tSession = new ComSession(mHRMController, false, tSourceClusterHierLvl, mHRMController.getCoordinatorMultiplexerOnLevel(pSourceCoordinator));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNodeName());
 			
-			for(Coordinator tManager : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
-				Logging.log(this, "Ping1: " + tManager );
+			for(Coordinator tCoordinator : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
+				Logging.log(this, "Ping1: " + tCoordinator );
 
-				tCEPDemultiplexed = new ComChannel(mHRMController, tManager);
+				tCEPDemultiplexed = new ComChannel(mHRMController, tCoordinator);
 				tCEPDemultiplexed.setPeerPriority(pTargetCluster.getPriority());
-				tSession.getMultiplexer().mapCEPToSession(tCEPDemultiplexed, tSession);
-				tSession.getMultiplexer().addDemultiplex(tSession, tCEPDemultiplexed);
+				tSession.getMultiplexer().mapChannelToSession(tCEPDemultiplexed, tSession);
 				synchronized(mClusterToCEPMapping) {
-					Logging.log(this, "Registering multiplex" + tManager.getClusterID() + " to " + pTargetCluster.getClusterID() + " with connection endpoint " + tCEPDemultiplexed);
-					mClusterToCEPMapping.put(new Tuple<Long, Long>(tManager.getClusterID(), pTargetCluster.getClusterID()), tCEPDemultiplexed);
+					Logging.log(this, "Registering multiplex" + tCoordinator.getClusterID() + " to " + pTargetCluster.getClusterID() + " with connection endpoint " + tCEPDemultiplexed);
+					mClusterToCEPMapping.put(new Tuple<Long, Long>(tCoordinator.getClusterID(), pTargetCluster.getClusterID()), tCEPDemultiplexed);
 				}
 				tCEPDemultiplexed.setRemoteClusterName(new ClusterName(pTargetCluster.getToken(), pTargetCluster.getClusterID(), pTargetCluster.getHierarchyLevel()));
 			}
@@ -88,7 +89,8 @@ public class ComChannelMuxer
 			for(Coordinator tManager : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
 				Logging.log(this, "Ping2: " + tManager);
 
-				if(pTargetCluster.getCoordinatorsAddress() == null) {
+				if(tTargetControlEntity.superiorCoordinatorL2Address() == null) {
+					//TODO: fall unmoeglich, wuerde sonst oben crashen
 					Logging.err(this, "Error on trying to contact other clusters, as name is set please check its address");
 				} else {
 					NestedParticipation tParticipate = tParticipationProperty.new NestedParticipation(pTargetCluster.getClusterID(), pTargetCluster.getToken());
@@ -114,7 +116,10 @@ public class ComChannelMuxer
 					}
 					
 					for(ICluster tNeighbor: tManager.getCluster().getNeighbors()) {
-						DiscoveryEntry tEntry = new DiscoveryEntry(tNeighbor.getToken(), tNeighbor.getCoordinatorName(), tNeighbor.getClusterID(), tNeighbor.getCoordinatorsAddress(), tNeighbor.getHierarchyLevel());
+						ControlEntity tNeighborControlEntity = (ControlEntity)tNeighbor;
+
+						
+						DiscoveryEntry tEntry = new DiscoveryEntry(tNeighbor.getToken(), tNeighbor.getCoordinatorName(), tNeighbor.getClusterID(), tNeighborControlEntity.superiorCoordinatorL2Address(), tNeighbor.getHierarchyLevel());
 						tEntry.setPriority(tNeighbor.getPriority());
 						List<RoutableClusterGraphLink> tClusterList = mHRMController.getRoutableClusterGraph().getRoute(tManager.getCluster(), tNeighbor);
 						/*
@@ -167,7 +172,7 @@ public class ComChannelMuxer
 					}
 					Logging.log(this, "Created " + tDiscovery + " for " + pTargetCluster);
 					tDiscovery.setOrigin(tManager.getClusterID());
-					tDiscovery.setTargetClusterID(pTargetCluster.getCoordinatorsAddress().getComplexAddress().longValue());
+					tDiscovery.setTargetClusterID(tTargetControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue());
 					tBigDiscovery.addNestedDiscovery(tDiscovery);
 				}
 			}
@@ -250,12 +255,12 @@ public class ComChannelMuxer
 	
 	public boolean write(Serializable pData, ComChannel pDemux, ClusterName pTargetCluster)
 	{	
-		Logging.log(this, "Sending " + pData + " from " + pDemux.getPeer() + " to target cluster " + pTargetCluster);
+		Logging.log(this, "Sending " + pData + " from " + pDemux.getParent() + " to target cluster " + pTargetCluster);
 
-		ClusterName tSource = new ClusterName(pDemux.getPeer().getToken(), pDemux.getPeer().getClusterID(), pDemux.getPeer().getHierarchyLevel());
+		ClusterName tSource = new ClusterName(((ICluster)pDemux.getParent()).getToken(), ((ICluster)pDemux.getParent()).getClusterID(), pDemux.getParent().getHierarchyLevel());
 	
 		MultiplexedPackage tMuxPackage = new MultiplexedPackage(tSource, pTargetCluster, pData);
-		ComSession tCEP = mCEPToSessionMapping.get(pDemux);
+		ComSession tCEP = mChannelToSessionMappings.get(pDemux);
 		Logging.log(this, "Sending " + tMuxPackage);
 		
 		// send packet
@@ -264,60 +269,64 @@ public class ComChannelMuxer
 	
 	public HRMName getSourceRoutingServiceAddress(ComChannel pCEP)
 	{
-		if(mCEPToSessionMapping.containsKey(pCEP)) {
-			return mCEPToSessionMapping.get(pCEP).getSourceRoutingServiceAddress();
+		if(mChannelToSessionMappings.containsKey(pCEP)) {
+			return mChannelToSessionMappings.get(pCEP).getSourceRoutingServiceAddress();
 		}
 		return null;
 	}
 	
 	public L2Address getPeerL2Address(ComChannel pCEP)
 	{
-		if(mCEPToSessionMapping.containsKey(pCEP)) {
-			return mCEPToSessionMapping.get(pCEP).getPeerL2Address();
+		if(mChannelToSessionMappings.containsKey(pCEP)) {
+			return mChannelToSessionMappings.get(pCEP).getPeerL2Address();
 		}
 		return null;
 	}
 	
 	public Route getRouteToPeer(ComChannel pCEP)
 	{
-		if(mCEPToSessionMapping.containsKey(pCEP)) {
-			return mCEPToSessionMapping.get(pCEP).getRouteToPeer();
+		if(mChannelToSessionMappings.containsKey(pCEP)) {
+			return mChannelToSessionMappings.get(pCEP).getRouteToPeer();
 		}
 		return null;
 	}
 	
-	public synchronized void mapCEPToSession(ComChannel pCEP, ComSession pSession)
+	public synchronized void mapChannelToSession(ComChannel pCEP, ComSession pSession)
 	{
-		Logging.log(this, "Registering multiplexed connection from " + pCEP + " to " + pSession);
+		Logging.log(this, "Registering ComChannel-to-ComSession mapping: " + pCEP + " to " + pSession + ", already know the following mappings");
+		
+		for(ComChannel tCEP : mChannelToSessionMappings.keySet()) {
+			Logging.log(this, "      .." + tCEP + " to " + mChannelToSessionMappings.get(tCEP));
+		}
 		
 		// store the mapping
-		mCEPToSessionMapping.put(pCEP, pSession);
+		mChannelToSessionMappings.put(pCEP, pSession);
+
+		mapSessionToChannel(pSession, pCEP);
+	}
+	
+	private void mapSessionToChannel(ComSession pCEP, ComChannel pDemux)
+	{
+		Logging.log(this, "Registering ComSession-to-ComChannel mapping: " + pCEP + " to " + pDemux + ", already know the following mappins");
 		
-		for(ComChannel tCEP : mCEPToSessionMapping.keySet()) {
-			Logging.log(this, tCEP + "->" + mCEPToSessionMapping.get(tCEP));
+		if(mSessionToChannelsMapping.get(pCEP) == null) {
+			mSessionToChannelsMapping.put(pCEP, new LinkedList<ComChannel>());
 		}
-		addDemultiplex(pSession, pCEP);
+		
+		mSessionToChannelsMapping.get(pCEP).add(pDemux);
 	}
 	
-	private void addDemultiplex(ComSession pCEP, ComChannel pDemux)
+	public LinkedList<ComChannel> getComChannels(ComSession pCEP)
 	{
-		Logging.log(this, "Registering demultiplexing from " + pCEP + " to " + pDemux);
-		if(mSessionToCEPsMapping.get(pCEP) == null) {
-			mSessionToCEPsMapping.put(pCEP, new LinkedList<ComChannel>());
-		}
-		mSessionToCEPsMapping.get(pCEP).add(pDemux);
+		return mSessionToChannelsMapping.get(pCEP);
 	}
 	
-	public LinkedList<ComChannel> getDemuxCEPs(ComSession pCEP)
+	public ComChannel getComChannel(ComSession pCEP, ClusterName pSource, ClusterName pCluster) throws NetworkException
 	{
-		return mSessionToCEPsMapping.get(pCEP);
-	}
-	
-	public ComChannel findCEPChannel(ComSession pCEP, ClusterName pSource, ClusterName pCluster) throws NetworkException
-	{
-		if(mSessionToCEPsMapping.containsKey(pCEP)) {
-			for(ComChannel tCEP : mSessionToCEPsMapping.get(pCEP)) {
-				if(tCEP.getPeer().getClusterID().equals(pCluster.getClusterID())) {
+		//Logging.log(this, "Search for the ")
+		if(mSessionToChannelsMapping.containsKey(pCEP)) {
+			for(ComChannel tCEP : mSessionToChannelsMapping.get(pCEP)) {
+				if(((ICluster)tCEP.getParent()).getClusterID().equals(pCluster.getClusterID())) {
 					Tuple<Long, Long> tTuple = new Tuple<Long, Long>(pSource.getClusterID(), pCluster.getClusterID());
 					boolean tSourceIsContained = isClusterMultiplexed(tTuple);
 					Logging.log(this, "Comparing \"" + tCEP + "\" and \"" + (tSourceIsContained ? getDemultiplex(tTuple) : "") + "\" " + tCEP.getRemoteClusterName() + ", " + (tSourceIsContained ? getDemultiplex(tTuple).getRemoteClusterName() : "" ));
@@ -327,7 +336,7 @@ public class ComChannelMuxer
 					} else {
 						Logging.log(this, "Source is \"" + pSource + "\", target is \"" + pCluster+ "\", DEMUXER of source is \"" + getDemultiplex(tTuple) + "\", currently evaluated CEP is \"" + tCEP + "\"");
 					}
-					if(!isClusterMultiplexed(tTuple) && tCEP.getPeer().getClusterID().equals(pCluster.getClusterID())) {
+					if(!isClusterMultiplexed(tTuple) && ((ICluster)tCEP.getParent()).getClusterID().equals(pCluster.getClusterID())) {
 						Logging.log(this, "Returning " + tCEP + " for request on cluster " + pCluster);
 						return tCEP;
 					}
@@ -335,9 +344,9 @@ public class ComChannelMuxer
 			}
 		}
 		
-		Logging.log(this, "Unable to find demultiplexed coonection endpoint for " + pCEP + " and target cluster " + pCluster.getClusterID());
-		for(ComSession tCEP : mSessionToCEPsMapping.keySet()) {
-			Logging.log(this, tCEP + " to " + mSessionToCEPsMapping.get(tCEP));
+		Logging.log(this, "Unable to find communication channel for " + pCEP + " and target cluster " + pCluster + ", known mappings are:");
+		for(ComSession tCEP : mSessionToChannelsMapping.keySet()) {
+			Logging.log(this, "       .." + tCEP + " to " + mSessionToChannelsMapping.get(tCEP));
 		}
 
 		throw new NetworkException("No demultiplexed CEP found for " + pCEP + " and target cluster " + pCluster);

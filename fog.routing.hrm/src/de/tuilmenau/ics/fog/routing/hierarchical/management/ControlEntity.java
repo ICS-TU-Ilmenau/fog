@@ -12,13 +12,16 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.io.Serializable;
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -54,6 +57,18 @@ public abstract class ControlEntity implements Localization
 	 */
 	private LinkedList<ComChannel> mComChannels = new LinkedList<ComChannel>();
 
+	/**
+	 * Stores the communication channel to the superior coordinator.
+	 * For a base hierarchy level cluster, this is a level 0 coordinator.
+	 * For a level n coordinator, this is a level n+1 coordinator. 
+	 */
+	private ComChannel mSuperiorCoordinatorComChannel = null;
+
+	/**
+	 * Stores the L2Address of the superior coordinator.
+	 */
+	private L2Address mSuperiorCoordinatorL2Address = null;
+	
 	/**
 	 * Constructor
 	 */
@@ -186,7 +201,7 @@ public abstract class ControlEntity implements Localization
 	{
 		synchronized (mComChannels) {
 			if(!mComChannels.contains(pComChan)) {
-				Logging.log(this, "Registering communication channel " + pComChan + ", " + mComChannels.size() + " registered communication channels");
+				Logging.log(this, "Registering communication channel " + pComChan + ", " + mComChannels.size() + " communication channels already registered");
 
 				// add the channel to the database
 				mComChannels.add(pComChan);
@@ -197,23 +212,53 @@ public abstract class ControlEntity implements Localization
 	}
 
 	/**
-	 * Sends a packet as broadcast to all cluster members
-	 * 
-	 * @param pPacket the packet which has to be broadcasted
+	 * Sets the communication channel to the superior coordinator.
+	 * For a base hierarchy level cluster, this is a level 0 coordinator.
+	 * For a level n coordinator, this is a level n+1 coordinator.
+	 *  
+	 * @param pComChannel the new communication channel
 	 */
-	public void sendPacketAllComChannels(Serializable pPacket)
+	public void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
 	{
-		LinkedList<ComChannel> tComChannels = getComChannels();
-		
-		Logging.log(this, "Sending BROADCAST " + pPacket + " to " + tComChannels.size() + " com. channels");
-		
-		for(ComChannel tComChannel : tComChannels) {			
-			Logging.log(this, "       ..to " + tComChannel);
-			
-			// send the packet to one of the possible cluster members
-			tComChannel.sendPacket(pPacket);
-		}
+		mSuperiorCoordinatorComChannel = pComChannel;
 	}
+	
+	/**
+	 * Returns a reference to the communication channel towards the superior coordinator.
+	 * 
+	 * @return the communication channel
+	 */
+	public ComChannel superiorCoordinatorComChannel()
+	{
+		return mSuperiorCoordinatorComChannel;
+	}
+	
+	/**
+	 * Sets the L2Address of the superior coordinator.
+	 *  
+	 * @param pAddr the new L2Address
+	 */
+	public void setSuperiorCoordinatorL2Address(L2Address pAddr)
+	{
+		mSuperiorCoordinatorL2Address = pAddr;
+	}
+	
+	/**
+	 * Returns the L2Address of the superior coordinator.
+	 * 
+	 * @return the L2Address
+	 */
+	public L2Address superiorCoordinatorL2Address()
+	{
+		return mSuperiorCoordinatorL2Address;
+	}
+
+	//TODO
+	public abstract void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pComChannel);
+	
+	//TODO
+	public abstract void handleNeighborAnnouncement(NeighborClusterAnnounce pNeighborClusterAnnounce, ComChannel pComChannel);
+
 
 	/**
 	 * Handles a Bully related signaling message from an external cluster member
@@ -231,11 +276,11 @@ public abstract class ControlEntity implements Localization
 			
 			tCluster.getElector().handleSignalingMessageBully(pBullyMessage, pSourceClusterMember);
 		}
-//		if (this instanceof Coordinator){
-//			Coordinator tCoordinator = (Coordinator)this;
-//			
-//			tCoordinator.getCluster().getElector().handleSignalingMessageBully(pBullyMessage, pSourceClusterMember);
-//		}
+		if (this instanceof Coordinator){
+			Coordinator tCoordinator = (Coordinator)this;
+			
+			tCoordinator.getCluster().getElector().handleSignalingMessageBully(pBullyMessage, pSourceClusterMember);
+		}
 	}
 	
 	/**
