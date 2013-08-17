@@ -30,6 +30,7 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
 import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.NeighborRoutingInformation;
@@ -69,7 +70,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	/**
 	 * The global name space which is used to identify the HRM instances on nodes.
 	 */
-	private final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
+	public final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
 
 	/**
 	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance.
@@ -162,12 +163,15 @@ public class HRMController extends Application implements IServerCallback, IEven
 		mAS = pAS;
 		
 		/**
-		 * Create a local CEP
+		 * Create communication service
 		 */
 		// bind the HRMController application to a local socket
 		Binding tServerSocket=null;
+		// enable simple datagram based communication
+		Description tServiceReq = getDescription();
+		tServiceReq.set(CommunicationTypeProperty.DATAGRAM);
 		try {
-			tServerSocket = getHost().bind(null, mApplicationName, getDescription(), getIdentity());
+			tServerSocket = getHost().bind(null, mApplicationName, tServiceReq, getIdentity());
 		} catch (NetworkException tExc) {
 			Logging.err(this, "Unable to bind to hosts application interface", tExc);
 		}
@@ -1199,7 +1203,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				
 				try {
 					Logging.log(tHRMController, "OUTGOING CONNECTION to " + tNeighborName + " with requirements: " + tConReq);
-					tConn = getHost().connectBlock(tNeighborName, getConnectDescription(tProperty), getNode().getIdentity());
+					tConn = getHost().connectBlock(tNeighborName, tConReq, getNode().getIdentity());
 				} catch (NetworkException tExc) {
 					Logging.err(tHRMController, "Unable to connecto to " + tNeighborName, tExc);
 				}
