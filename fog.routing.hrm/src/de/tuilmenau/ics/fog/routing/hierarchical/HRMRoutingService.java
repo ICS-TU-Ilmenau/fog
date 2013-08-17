@@ -51,7 +51,7 @@ import de.tuilmenau.ics.graph.RoutableGraph;
  * The local information are stored locally. Furthermore, they are duplicated
  * and reported to the next higher level routing service instance.
  */
-public class HierarchicalRoutingService implements RoutingService, Localization
+public class HRMRoutingService implements RoutingService, Localization
 {
 	/**
 	 * The physical node on which this routing service instance is running.
@@ -122,7 +122,7 @@ public class HierarchicalRoutingService implements RoutingService, Localization
 	 * @param pAS the autonomous system at which the HRS is instantiated 
 	 * @param pNode the node on which this routing service instance is created on
 	 */
-	public HierarchicalRoutingService(AutonomousSystem pAS, Node pNode)
+	public HRMRoutingService(AutonomousSystem pAS, Node pNode)
 	{
 		Logging.log(this, "CREATED ON " + pNode);
 		
