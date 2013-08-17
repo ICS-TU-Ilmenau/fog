@@ -380,7 +380,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	@SuppressWarnings("unchecked")
 	private <LinkType> List<RoutingServiceLink> getRouteFromGraph(RoutableGraph pGraph, HRMName pSource, HRMName pDestination)
 	{
-		Logging.log(this, "GET ROUTE in graph " + pGraph.getClass().getSimpleName().toString() + " from " + pSource + " to " + pDestination);
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "GET ROUTE in graph " + pGraph.getClass().getSimpleName().toString() + " from " + pSource + " to " + pDestination);
+		}
 
 		List<RoutingServiceLink> tResult = null;
 
@@ -425,7 +427,9 @@ public class HRMRoutingService implements RoutingService, Localization
 			}
 		}
 
-		Logging.log(this, "      ..RESULT(getRouteFromGraph): " + tResult);
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "      ..RESULT(getRouteFromGraph): " + tResult);
+		}
 		
 		return tResult;
 	}
@@ -1254,7 +1258,9 @@ public class HRMRoutingService implements RoutingService, Localization
 							for(Route tPath : tListRouteParts) {
 								tResultRoute.addAll(tPath.clone());
 							}
-							Logging.log(this, "COORDINATOR GRAPH returned a route from " + pSource + " to " + pDestination + " as " + tResultRoute);
+							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								Logging.log(this, "COORDINATOR GRAPH returned a route from " + pSource + " to " + pDestination + " as " + tResultRoute);
+							}
 						}
 					}
 					

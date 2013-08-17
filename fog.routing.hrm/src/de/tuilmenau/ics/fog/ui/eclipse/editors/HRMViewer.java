@@ -71,7 +71,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 {
-	private static boolean HRM_VIEWER_DEBUGGING = true;
+	private static boolean HRM_VIEWER_DEBUGGING = HRMConfig.DebugOutput.GUI_SHOW_VIEWER_STEPS;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = true;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS = true;
 	

@@ -51,7 +51,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs about the routing process 
 		 */
-		public static final boolean GUI_SHOW_ROUTING = true;
+		public static final boolean GUI_SHOW_ROUTING = false;
 
 		/**
 		 * Show debug outputs about node/link detection
@@ -72,6 +72,11 @@ public class HRMConfig
 		 * Shows detailed debug outputs about HRMID signaling messages
 		 */
 		public static final boolean GUI_SHOW_SIGNALING_ADDRESSING = false;
+
+		/**
+		 * Shows detailed debug outputs about HRMViewer steps
+		 */
+		public static final boolean GUI_SHOW_VIEWER_STEPS = false;
 
 		/**
 		 * Defines the time period between two updates of the node specific HRM display.
