@@ -300,15 +300,15 @@ public abstract class ControlEntity implements Localization
 		/**
 		 * Store the new HRMID
 		 */
-		// we process such packets only on base hierarchy level, on higher hierarchy levels coordinators should be the only target for such packets
-		if (getHierarchyLevel().isBaseLevel()){
+		// we process such packets for cluster only on base hierarchy level and on all hierarchy level for coordinators
+		if ((getHierarchyLevel().isBaseLevel()) || (this instanceof Coordinator)){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
 				Logging.log(this, "     ..setting assigned HRMID " + tHRMID.toString());
 			
 			// update the local HRMID
 			setHRMID(this, tHRMID);
 		}else{
-			Logging.warn(this, "     ..ignoring AssignHRMID packet because we are at the higher hierachy level " + getHierarchyLevel().getValue());
+			Logging.warn(this, "     ..ignoring AssignHRMID packet " + pAssignHRMIDPacket + " at hierachy level " + getHierarchyLevel().getValue());
 		}
 
 		/**
