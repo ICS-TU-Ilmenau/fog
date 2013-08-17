@@ -18,6 +18,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
 /**
  * 
@@ -30,7 +31,7 @@ public class DiscoveryEntry implements Serializable
 	private LinkedList<RoutingServiceLinkVector> mRoutingVectors;
 	private int mToken;
 	private Long mClusterID;
-	private HRMName mCoordinatorRoutingAddress;
+	private L2Address mCoordinatorL2Address;
 	private BullyPriority mPriority = null;
 	private HierarchyLevel mLevel = null;
 	private int mClusterHops;
@@ -43,12 +44,12 @@ public class DiscoveryEntry implements Serializable
 	 * @param pClusterID is the cluster ID of the cluster that will be reported
 	 * @param pCoordinatorAddress is the address of the coordinator
 	 */
-	public DiscoveryEntry(int pToken, Name pCoordinatorName, Long pClusterID, HRMName pCoordinatorAddress, HierarchyLevel pLevel)
+	public DiscoveryEntry(int pToken, Name pCoordinatorName, Long pClusterID, L2Address pCoordinatorAddress, HierarchyLevel pLevel)
 	{
 		setToken(pToken);
 		setCoordinatorName(pCoordinatorName);
 		setClusterID(pClusterID);
-		setCoordinatorRoutingAddress(pCoordinatorAddress);
+		mCoordinatorL2Address = pCoordinatorAddress;
 		mLevel = pLevel;
 		mPriority = new BullyPriority(this);
 	}
@@ -204,18 +205,9 @@ public class DiscoveryEntry implements Serializable
 	 * 
 	 * @return physical name of the coordinator
 	 */
-	public HRMName getCoordinatorRoutingAddress()
+	public L2Address getCoordinatorRoutingAddress()
 	{
-		return mCoordinatorRoutingAddress;
-	}
-
-	/**
-	 * 
-	 * @param pCoordinatorRoutingAddress is physical name of the coordinator 
-	 */
-	public void setCoordinatorRoutingAddress(HRMName pCoordinatorRoutingAddress)
-	{
-		mCoordinatorRoutingAddress = pCoordinatorRoutingAddress;
+		return mCoordinatorL2Address;
 	}
 	
 	public String toString()
