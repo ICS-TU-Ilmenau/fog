@@ -77,6 +77,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	//	private HRMID mHRMID = null;
 //	private LinkedList<ComChannel> mCEPs = new LinkedList<ComChannel>();
 
+	/**
+	 * Stores if the initial clustering has already finished
+	 */
+	private boolean mInitialClusteringFinished = false;
+	
 	private Name mCoordinatorName = null;
 	private int mToken;
 	private BullyPriority mHighestPriority = null;
@@ -447,6 +452,25 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 	}
 
+	/**
+	 * EVENT: initial clustering has finished  
+	 */
+	private void eventInitialClusteringFinished()
+	{
+		// mark initial clustering as "finished"
+		mInitialClusteringFinished = true;		
+	}
+
+	/**
+	 * Returns if the initial clustering has already finished
+	 * 
+	 * @return true or false
+	 */
+	public boolean isClustered()
+	{
+		return mInitialClusteringFinished;
+	}
+
 	//TODO: fix this +1 stuff
 	@Override
 	public HierarchyLevel getHierarchyLevel() {
@@ -552,6 +576,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 		*/
 		Logging.log(this, "has a total of the following connections to higher candidates" + getComChannels().size());
+		
+		// trigger event "finished clustering" 
+		eventInitialClusteringFinished();
 	}
 	
 	public LinkedList<RoutingServiceLinkVector> getPathToCoordinator(ICluster pSourceCluster, ICluster pDestinationCluster)
