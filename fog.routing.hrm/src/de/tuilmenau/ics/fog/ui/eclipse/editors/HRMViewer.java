@@ -523,13 +523,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS){
 				if ((pCoordinator.getCluster().getElector() != null) && (pCoordinator.getCluster().getElector().isWinner()) && (!pCoordinator.isClustered())){
 				    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
-				    toolItem3.setText("[Cluster locacally]");
+				    toolItem3.setText("[Create cluster]");
 				    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(this, pCoordinator));
 				}
 			}
 
 		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem4.setText("[Cluster all level " + pCoordinator.getHierarchyLevel().getValue() + " coordinators]");
+		    toolItem4.setText("[Create all level " + pCoordinator.getHierarchyLevel().getValue() + " clusters]");
 		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(this, pCoordinator));
 		    
 		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
@@ -725,7 +725,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS){
 				if ((pCluster.getElector() != null) && (!pCluster.getElector().isCoordinatorValid())){
 					ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
-				    toolItem1.setText("[Elect local coordinator]");
+				    toolItem1.setText("[Elect coordinator]");
 				    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(this, pCluster));
 				}
 			}
@@ -1035,7 +1035,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 								}
 								
 								// start the clustering of the selected cluster's coordinator and its neighbors
-								tCoordinator.clusterCoordinators();
+								tCoordinator.exploreNeighborhodAndCreateCluster();
 							}else{
 								Logging.err(this, "Coordinator of " + tCluster + " wasn't elected yet, skipping clustering request");
 							}
@@ -1079,7 +1079,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					}
 					
 					// start the clustering of the selected cluster's coordinator and its neighbors
-					mCoordinator.clusterCoordinators();
+					mCoordinator.exploreNeighborhodAndCreateCluster();
 				}else{
 					Logging.err(this, "Coordinator is invalid, skipping clustering request");
 				}

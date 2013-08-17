@@ -447,7 +447,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
 
 				// start the clustering of this cluster's coordinator and its neighbors
-				clusterCoordinators();
+				exploreNeighborhodAndCreateCluster();
 			}
 		}
 	}
@@ -527,58 +527,63 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		return mBouncedAnnounces;
 	}
 	
-	public void clusterCoordinators()
+	public void exploreNeighborhodAndCreateCluster()
 	{
 		Logging.log(this, "CLUSTERING STARTED on hierarchy level " + getHierarchyLevel().getValue() + ", will connect to " + mParentCluster.getNeighbors());
 		
-		// are we already at the highest hierarchy level?
-		if (getHierarchyLevel().isHighest()){
-			Logging.warn(this,  "CLUSTERING SKIPPED, no clustering on highest hierarchy level " + getHierarchyLevel().getValue() + " needed");
-			return;
-		}
-			
-		int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
-
-		Logging.log(this, "Radius is " + tRadius);
-
-		BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink> tBreadthFirstSearch = new BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink>();
-
-		for(int i = 1; i <= tRadius; i++) {
-			
-			String tString = new String(">>> Expanding to radius (" + i + "/" + tRadius + ", possible clusters:");
-			for(Cluster tCluster : getHRMController().getRoutingTargetClusters()) {
-				if(tCluster.getHierarchyLevel().getValue() == getHierarchyLevel().getValue() - 1) {
-					tString += "\n" + tCluster.toString();
-				}
+		// was the clustering already triggered?
+		if (!isClustered()){
+			// are we already at the highest hierarchy level?
+			if (getHierarchyLevel().isHighest()){
+				Logging.warn(this,  "CLUSTERING SKIPPED, no clustering on highest hierarchy level " + getHierarchyLevel().getValue() + " needed");
+				return;
 			}
-			Logging.log(this, tString);
-			
-			// compute the distances of all the node from the managed cluster
-			tBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), mParentCluster);
-			
-			mClustersToNotify = tBreadthFirstSearch.getVerticesInOrderVisited();
-			List<HRMGraphNodeName> tClustersToNotify = new LinkedList<HRMGraphNodeName>(); 
-			Logging.log(this, "Clusters remembered for notification: " + mClustersToNotify);
-			for(HRMGraphNodeName tNode : mClustersToNotify) {
-				if(tNode instanceof Cluster && i == 1) {
-					tClustersToNotify.add(tNode);
-				} else if (tNode instanceof NeighborCluster && ((NeighborCluster)tNode).getClusterDistanceToTarget() <= i && ((NeighborCluster)tNode).getClusterDistanceToTarget() != 0 && !mConnectedEntities.contains(((NeighborCluster)tNode).getCoordinatorName())) {
-					tClustersToNotify.add(tNode);					
+				
+			int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
+	
+			Logging.log(this, "Radius is " + tRadius);
+	
+			BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink> tBreadthFirstSearch = new BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink>();
+	
+			for(int i = 1; i <= tRadius; i++) {
+				
+				String tString = new String(">>> Expanding to radius (" + i + "/" + tRadius + ", possible clusters:");
+				for(Cluster tCluster : getHRMController().getRoutingTargetClusters()) {
+					if(tCluster.getHierarchyLevel().getValue() == getHierarchyLevel().getValue() - 1) {
+						tString += "\n" + tCluster.toString();
+					}
 				}
+				Logging.log(this, tString);
+				
+				// compute the distances of all the node from the managed cluster
+				tBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), mParentCluster);
+				
+				mClustersToNotify = tBreadthFirstSearch.getVerticesInOrderVisited();
+				List<HRMGraphNodeName> tClustersToNotify = new LinkedList<HRMGraphNodeName>(); 
+				Logging.log(this, "Clusters remembered for notification: " + mClustersToNotify);
+				for(HRMGraphNodeName tNode : mClustersToNotify) {
+					if(tNode instanceof Cluster && i == 1) {
+						tClustersToNotify.add(tNode);
+					} else if (tNode instanceof NeighborCluster && ((NeighborCluster)tNode).getClusterDistanceToTarget() <= i && ((NeighborCluster)tNode).getClusterDistanceToTarget() != 0 && !mConnectedEntities.contains(((NeighborCluster)tNode).getCoordinatorName())) {
+						tClustersToNotify.add(tNode);					
+					}
+				}
+				mClustersToNotify = tClustersToNotify;
+				Logging.log(this, "clusters that are remaining for this round: " + mClustersToNotify);
+				connectToNeighborCoordinators(i);
 			}
-			mClustersToNotify = tClustersToNotify;
-			Logging.log(this, "clusters that are remaining for this round: " + mClustersToNotify);
-			connectToNeighborCoordinators(i);
+			/*
+			for(CoordinatorCEP tCEP : mCEPs) {
+				tCEP.write(new BullyElect(mParentCluster.getPriority(), pLevel, getCoordinator().getReferenceNode().getCentralFN().getName(), null));
+			}
+			*/
+			Logging.log(this, "has a total of the following connections to higher candidates" + getComChannels().size());
+			
+			// trigger event "finished clustering" 
+			eventInitialClusteringFinished();
+		}else{
+			Logging.warn(this, "Clustering was already triggered, clustering will be maintained");
 		}
-		/*
-		for(CoordinatorCEP tCEP : mCEPs) {
-			tCEP.write(new BullyElect(mParentCluster.getPriority(), pLevel, getCoordinator().getReferenceNode().getCentralFN().getName(), null));
-		}
-		*/
-		Logging.log(this, "has a total of the following connections to higher candidates" + getComChannels().size());
-		
-		// trigger event "finished clustering" 
-		eventInitialClusteringFinished();
 	}
 	
 	public LinkedList<RoutingServiceLinkVector> getPathToCoordinator(ICluster pSourceCluster, ICluster pDestinationCluster)
