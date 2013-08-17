@@ -23,6 +23,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -106,7 +107,14 @@ public class Elector implements Localization
 				// set correct elector state
 				setElectorState(ElectorState.ELECTING);
 
-				signalElectBroadcast();
+				// do we know more than 0 external cluster members?
+				if (mParentCluster.countClusterMembers() > 0){
+					Logging.log(this, "Trying to ask all cluster members for their Bully priority");
+					signalElectBroadcast();
+				}else{
+					Logging.log(this, "I am automatically the election WINNER because no alternative cluster member is known");
+					eventElectionWon();
+				}
 				break;
 			case ELECTED:
 				Logging.log(this, "Election has already finished, coordinator is valid: " + isCoordinatorValid());
@@ -218,14 +226,14 @@ public class Elector implements Localization
 			if (isTimingOkayOfElectBroadcast()){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 					Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParentCluster);
-					Logging.log(this, "SENDELECTIONS(), cluster members: " + mParentCluster.getComChannels().size());
+					Logging.log(this, "SENDELECTIONS(), cluster members: " + mParentCluster.countClusterMembers());
 				}
 		
 				// create the packet
 				BullyElect tPacketBullyElect = new BullyElect(mParentCluster.getHRMController().getNodeName(), mParentCluster.getPriority());
 				
 				// send broadcast
-				mParentCluster.sendPacketAllComChannels(tPacketBullyElect);
+				mParentCluster.sendClusterBroadcast(tPacketBullyElect);
 				
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 					Logging.log(this, "SENDELECTIONS()-END");
@@ -260,7 +268,7 @@ public class Elector implements Localization
 				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mParentCluster.getHRMController().getNodeName(), mParentCluster.getPriority(), mParentCluster.getCoordinator().toLocation() + "@" + HRMController.getHostName(), mParentCluster.getToken());
 		
 				// send broadcast
-				mParentCluster.sendPacketAllComChannels(tPacketBullyAnnounce);
+				mParentCluster.sendClusterBroadcast(tPacketBullyAnnounce);
 			}else{
 				Logging.warn(this, "Election has wrong state " + getElectorState() + " for signaling an ELECTION END, ELECTED expected");
 				
@@ -292,7 +300,7 @@ public class Elector implements Localization
 			BullyAlive tPacketBullyAlive = new BullyAlive(mParentCluster.getHRMController().getNodeName());
 	
 			// send broadcast
-			mParentCluster.sendPacketAllComChannels(tPacketBullyAlive);
+			mParentCluster.sendClusterBroadcast(tPacketBullyAlive);
 	
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 				Logging.log(this, "SENDALIVE()-END");
@@ -352,7 +360,7 @@ public class Elector implements Localization
 	
 			Name tNodeName = tNode.getRoutingService().getNameFor(tNode.getCentralFN());
 			
-			mParentCluster.setSuperiorCoordinatorCEP(null, tNode.getCentralFN().getName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), (L2Address)tNodeName);
+			mParentCluster.setSuperiorCoordinator(null, tNode.getCentralFN().getName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), (L2Address)tNodeName);
 	
 			// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
 			signalAnnounceBroadcast();
@@ -412,7 +420,7 @@ public class Elector implements Localization
 				// election is incomplete
 				tElectionComplete = false;
 			
-				// leave the loop
+				// leave the loop because we already known that the election is incomplete
 				break;
 			}
 			
@@ -449,7 +457,11 @@ public class Elector implements Localization
 						// mark as winner
 						tIsWinner = true;
 					}else{
-						Logging.log(this, "	        ..HAVING LOWER/EQUAL priority ID " + mParentCluster.getPriority().getUniqueID() + " than " +  tHighestPrio.getUniqueID() + " of " + tExternalWinner.getPeerL2Address());
+						if (mParentCluster.getPriority().getUniqueID() < tHighestPrio.getUniqueID()){
+							Logging.log(this, "	        ..HAVING LOWER priority ID " + mParentCluster.getPriority().getUniqueID() + " than " +  tHighestPrio.getUniqueID() + " of " + tExternalWinner.getPeerL2Address());
+						}else{
+							Logging.err(this, "	        ..HAVING SAME priority ID " + mParentCluster.getPriority().getUniqueID() + " like " +  tHighestPrio.getUniqueID() + " of " + tExternalWinner.getPeerL2Address());
+						}
 					}
 				}
 			}
@@ -461,7 +473,11 @@ public class Elector implements Localization
 				Logging.log(this, "	        ..I AM WINNER");
 				eventElectionWon();
 			}else{
-				Logging.log(this, "	        ..seeing " + tExternalWinner.getPeerL2Address() + " as election winner");
+				if (tExternalWinner != null){
+					Logging.log(this, "	        ..seeing " + tExternalWinner.getPeerL2Address() + " as election winner");
+				}else{
+					Logging.err(this, "External winner is unknown but also I am not the winner");
+				}
 				eventElectionLost();
 			}
 		}else{
@@ -480,17 +496,17 @@ public class Elector implements Localization
 	{
 		Node tNode = mParentCluster.getHRMController().getNode();
 		Name tLocalNodeName = mParentCluster.getHRMController().getNodeName(); 
-		ICluster tSource = pComChannel.getPeer();
+		ControlEntity tControlEntity = pComChannel.getParent();
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
 			Logging.log(this, "RECEIVED BULLY MESSAGE FROM " + pComChannel);
 
 		if (pComChannel == null){
-			Logging.err(this, "Member channel is invalid.");
+			Logging.err(this, "Communication channel is invalid.");
 		}
 		
-		if (tSource == null){
-			Logging.err(this, "Member channel has invalid peer reference");
+		if (tControlEntity == null){
+			Logging.err(this, "Control entity reference is invalid");
 		}
 		
 		// update the stored Bully priority of the cluster member
@@ -505,7 +521,7 @@ public class Elector implements Localization
 			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
 			
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-				Logging.log(this, "BULLY-received from \"" + tSource + "\" an ELECT: " + tPacketBullyElect);
+				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ELECT: " + tPacketBullyElect);
 			}
 
 //			if ((tSource.getSuperiorCoordinatorCEP() != null) && (tSource.getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
@@ -587,7 +603,7 @@ public class Elector implements Localization
 			BullyReply tReplyPacket = (BullyReply)pPacketBully;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-				Logging.log(this, "BULLY-received from \"" + tSource + "\" a REPLY: " + tReplyPacket);
+				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a REPLY: " + tReplyPacket);
 
 			eventReceivedReply();
 		}
@@ -600,12 +616,12 @@ public class Elector implements Localization
 			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-				Logging.log(this, "BULLY-received from \"" + tSource + "\" an ANNOUNCE: " + tAnnouncePacket);
+				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
 
 			eventElectionLost();
 
 //			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
-			tSource.handleBullyAnnounce(tAnnouncePacket, pComChannel);
+			tControlEntity.handleBullyAnnounce(tAnnouncePacket, pComChannel);
 		}
 
 		/**
@@ -616,7 +632,7 @@ public class Elector implements Localization
 			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-				Logging.log(this, "BULLY-received from \"" + tSource + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
+				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
 		}
 	}
 
