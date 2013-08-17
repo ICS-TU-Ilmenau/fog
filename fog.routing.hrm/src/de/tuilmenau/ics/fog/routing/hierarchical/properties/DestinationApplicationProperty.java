@@ -60,13 +60,13 @@ public class DestinationApplicationProperty extends AbstractProperty
 	/**
 	 * Constructor 
 	 * 
-	 * @param pNamespace the name space of the application (can be null)
+	 * @param pAppNamespace the name space of the application (can be null)
 	 * @param pAppName the name of the application (can be null)
 	 * @param pAppParameter the parameter for the application (can be null)
 	 */
-	public DestinationApplicationProperty(Namespace pNamespace)
+	public DestinationApplicationProperty(Namespace pAppNamespace)
 	{
-		this(pNamespace, null, null);
+		this(pAppNamespace, null, null);
 	}
 
 	/**
