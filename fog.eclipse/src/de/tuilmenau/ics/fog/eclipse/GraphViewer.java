@@ -289,15 +289,15 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 	    	}
 	    	
 	    	// is there a decoration container with some additional information?
-	    	//if(mDecoration != null) {
-	    		Decorator tDec = Decoration.getInstance(pNode.getClass()).getDecorator(pNode);
+	    	if(mDecoration != null) {
+	    		Decorator tDec = mDecoration.getDecorator(pNode);
 	    		if(tDec != null) {
 	    			String tAddLabel = tDec.getText();
 	    			if(tAddLabel != null) {
 	    				pLabel += " " +tAddLabel;
 	    			}
 	    		}
-	    	//}
+	    	}
 	    	
 	        Component tComponent = prepareRenderer(pRc, pRc.getEdgeLabelRenderer(), (Object)pLabel, pRc.getPickedVertexState().isPicked(pNode), pNode);
 
@@ -323,7 +323,7 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 	}
 
 	private Image loadImageFor(Object pObj)
-	{		
+	{
 		if(pObj instanceof DummyForwardingElement) {
 			pObj = ((DummyForwardingElement) pObj).getObject();
 		}
@@ -335,15 +335,15 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 			String decorationImageName = ((Decorator) pObj).getImageName();
 			if(decorationImageName != null) imageName = decorationImageName;
 		} else {
-			//if(mDecoration != null) {
-				Decorator decorator = Decoration.getInstance(pObj.getClass()).getDecorator(pObj);
+			if(mDecoration != null) {
+				Decorator decorator = mDecoration.getDecorator(pObj);
 				if(decorator != null) {
 					String decorationImageName = decorator.getImageName();
 					if(decorationImageName != null) {
 						imageName = decorationImageName;
 					}
 				}
-			//}
+			}
 		}
 		
 		return loadImage(imageName);
@@ -455,15 +455,15 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 				}
 				
 				// is there an external decorator for the object?
-				//if(mDecoration != null) {
-					Decorator decorator = Decoration.getInstance(i.getClass()).getDecorator(i);
+				if(mDecoration != null) {
+					Decorator decorator = mDecoration.getDecorator(i);
 					if(decorator != null) {
 						Color decColor = decorator.getColor();
 						if(decColor != null) {
 							return decColor;
 						}
 					}
-				//}
+				}
 				
 				return Color.WHITE;
 			}
@@ -823,7 +823,7 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 		//
 		Menu decMenu = new Menu("Decoration types");
 		popup.add(decMenu);
-				
+		
 		mi = new MenuItem("None");
 		mi.addActionListener(new ActionListener() {
 			@Override
@@ -834,7 +834,7 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 		});
 		decMenu.add(mi);
 		
-		Set<String> decorationTypes = Decoration.getStringTypes();
+		Set<String> decorationTypes = Decoration.getTypes();
 		for(String decType : decorationTypes) {
 			mi = new MenuItem(decType);
 			mi.addActionListener(new ActionListener() {

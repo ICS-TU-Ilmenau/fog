@@ -12,14 +12,11 @@ package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 import java.util.Random;
 
 import de.tuilmenau.ics.fog.FoGEntity;
-import de.tuilmenau.ics.fog.routing.hierarchical.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
-import de.tuilmenau.ics.fog.ui.Decoration;
-import de.tuilmenau.ics.fog.ui.Logging;
 
 
 /**
@@ -42,12 +39,10 @@ public class NodeConfiguratorHierarchicalRadiusOnly implements NodeConfigurator
 		HierarchicalRoutingService hRS = new HierarchicalRoutingService(pNode);
 		
 		FoGEntity.registerRoutingService(pNode, hRS);
-		Decoration.getInstance(Node.class).setDecorator(pNode, hRS.initiateCoordinator());
-		
-		Logging.getInstance().log(this, "Available decoration types are by now: " + Decoration.getClassTypes());
+		hRS.initiateCoordinator();
 		
 		if(HierarchicalConfig.Routing.ELECTION_BEGINS_IMMEDIATLY_AFTER_SETUP) {
-			if(pAS.getSimulation().getEvents() == null || !pAS.getSimulation().getEvents().contains(new ElectionEvent())) {
+			if(pAS.getSimulation().getEvents() == null) {
 				pAS.getSimulation().addEvent(new ElectionEvent());
 			} else if (pAS.getSimulation().getEvents().contains(new ElectionEvent())) {
 				/*

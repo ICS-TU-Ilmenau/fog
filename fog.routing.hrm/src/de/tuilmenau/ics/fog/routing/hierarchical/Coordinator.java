@@ -59,6 +59,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
+import de.tuilmenau.ics.fog.ui.Decoration;
 import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
@@ -115,6 +116,8 @@ public class Coordinator extends Application implements ServerCallback, Decorato
 		
 		mHRS = pHRS;
 		mApprovedSignatures = new LinkedList<HierarchicalSignature>();
+		
+		Decoration.getInstance(Coordinator.class.toString()).setDecorator(pNode.getNode(), this);
 	}
 
 	@Override
