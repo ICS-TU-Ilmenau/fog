@@ -981,7 +981,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 
 	@Override
-	public void registerMember(ICluster pNeighbor) {
+	public void registerNeighbor(ICluster pNeighbor) {
 		/*
 		 * cluster manager does not need neighbors
 		 */

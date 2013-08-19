@@ -142,10 +142,7 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 				Logging.log(this, "      ..found known neighbor cluster: " + tCluster);
 				
 				// add this cluster as neighbor to the already known one
-				tCluster.registerMember(this);
-
-				// increase Bully priority because of changed connectivity (topology depending)
-				getPriority().increaseConnectivity();
+				tCluster.registerNeighbor(this);
 			}
 		}
 		
@@ -467,7 +464,7 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		/*
 		 * function checks whether neighbor relation was established earlier
 		 */
-		registerMember(tCluster);
+		registerNeighbor(tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
 //			Description tDescription = new Description();
@@ -530,7 +527,7 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 					getComChannels().remove(this);
 				}
 				try {
-					registerMember(getHRMController().getCluster(pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
+					registerNeighbor(getHRMController().getCluster(pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
 				} catch (PropertyException tExc) {
 					Logging.log(this, "Unable to fulfill requirements");
 				}
@@ -541,31 +538,29 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		}
 	}
 	
-	public void registerMember(ICluster pMember)
+	public void registerNeighbor(ICluster pNeighbor)
 	{
+		Logging.log(this, "Registering neighbor: " + pNeighbor);
+
+		// increase Bully priority because of changed connectivity (topology depending) 
+		getPriority().increaseConnectivity();
+		
+		// inform all cluster members about the Bully priority change
+		//TODO: sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNodeName(), getPriority()));
+
 		LinkedList<ICluster> tNeighbors = getNeighbors(); 
-		if(!tNeighbors.contains(pMember))
+		if(!tNeighbors.contains(pNeighbor))
 		{
-			if(pMember instanceof Cluster) {
+			if(pNeighbor instanceof Cluster) {
 				RoutableClusterGraphLink tLink = new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.PHYSICAL_LINK);
-				getHRMController().getRoutableClusterGraph().storeLink(pMember, this, tLink);
+				getHRMController().getRoutableClusterGraph().storeLink(pNeighbor, this, tLink);
 			} else {
 				RoutableClusterGraphLink tLink = new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK);
-				getHRMController().getRoutableClusterGraph().storeLink(pMember, this, tLink);
+				getHRMController().getRoutableClusterGraph().storeLink(pNeighbor, this, tLink);
 			}
-			if(pMember instanceof Cluster) {
-				
-				Logging.log(this, "CLUSTER - adding neighbor cluster: " + pMember);
 
-				// increase Bully priority because of changed connectivity (topology depending) 
-				getPriority().increaseConnectivity();
-				
-				Logging.log(this, "Informing " + getComChannels() + " about change in priority and initiating new election");
-				
-				sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNodeName(), getPriority()));
-				
-				Logging.log(this, "Informed other clients about change of priority - it is now " + getPriority().getValue());
-			}
+			// backward call
+			pNeighbor.registerNeighbor(this);
 		}
 	}
 	

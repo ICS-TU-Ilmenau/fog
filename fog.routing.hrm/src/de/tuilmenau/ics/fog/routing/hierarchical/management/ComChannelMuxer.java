@@ -204,7 +204,7 @@ public class ComChannelMuxer
 									Cluster tFirstCluster = mHRMController.getCluster(tTuple.getFirst());
 									Cluster tSecondCluster = mHRMController.getCluster(tTuple.getSecond());
 									if(tFirstCluster != null && tSecondCluster != null ) {
-										tFirstCluster.registerMember(tSecondCluster);
+										tFirstCluster.registerNeighbor(tSecondCluster);
 										Logging.log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);
 									} else {
 										Logging.warn(this, "Unable to find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of \"" + tClusters + "\", cluster discovery contained " + tDiscoveries + " and CEP is " + tSession);

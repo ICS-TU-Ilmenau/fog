@@ -520,7 +520,7 @@ public class ComChannel
 					if(tRequestCoordinatorPacket.getDiscoveryEntries() != null) {
 						for(DiscoveryEntry tEntry : tRequestCoordinatorPacket.getDiscoveryEntries()) {
 							ClusterName tDummy = handleDiscoveryEntry(tEntry);
-							getParent().getHRMController().getCluster(new ClusterName(((ICluster)getParent()).getToken(), ((getSourceName()).getComplexAddress().longValue()), getParent().getHierarchyLevel())).registerMember(getParent().getHRMController().getCluster(tDummy));
+							getParent().getHRMController().getCluster(new ClusterName(((ICluster)getParent()).getToken(), ((getSourceName()).getComplexAddress().longValue()), getParent().getHierarchyLevel())).registerNeighbor(getParent().getHRMController().getCluster(tDummy));
 						}
 					}
 					synchronized(tRequestCoordinatorPacket) {
