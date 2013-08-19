@@ -10,21 +10,26 @@
 package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 
 import java.math.BigInteger;
-import java.util.Random;
 
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 public class L2Address extends HRMName
 {
 	private static final long serialVersionUID = 4484202410314555829L;
 
 	/**
-	 * Stores the random number generator instance. One instance per physical simulation machine is used because a singleton is needed. 
-	 * Otherwise, parallel number generators might be initialized with the same seed and generate address duplicates. This simplifies 
-	 * the L2address generation and maintains unique addressing scheme. For real use, a UUID has to be used as L2address which promises 
-	 * a low risk of collisions.
+	 * This is the L2Address counter, which allows for globally (related to a physical simulation machine) unique clusL2Addresses.
+	 * We start with "1" because the address "0" is reserved.
 	 */
-	private static Random mRandomGenerator = null;
+	private static long sNextFreeAddress = 1;
+
+	/**
+	 * Stores the physical simulation machine specific multiplier, which is used to create unique L2Addresses, even if multiple physical simulation machines are connected by FoGSiEm instances
+	 * The value "-1" is important for initialization!
+	 */
+	private static long sL2AddressMachineMultiplier = -1;
 
 	/**
 	 * Create an address that is used to identify a node at the MAC layer.
@@ -37,17 +42,40 @@ public class L2Address extends HRMName
 	}
 
 	/**
-	 * Create a new L2 address based on a random number from the random number generator  
+	 * Determines the physical simulation machine specific L2Address multiplier
 	 * 
-	 * @return the new L2 address
+	 * @return the generated multiplier
 	 */
-	public static L2Address create()
+	private static long l2addressIDMachineMultiplier()
 	{
-		long tNumber = getRandomGenerator().nextLong();
+		if (sL2AddressMachineMultiplier < 0){
+			String tHostName = HRMController.getHostName();
+			if (tHostName != null){
+				sL2AddressMachineMultiplier = (tHostName.hashCode() % 10000) * 10000;
+			}else{
+				Logging.err(null, "Unable to determine the machine-specific L2Address multiplier because host name couldn't be indentified");
+			}
+		}
+
+		return sL2AddressMachineMultiplier;
+	}
+
+	/**
+	 * Generates a new unique L2Address
+	 * 
+	 * @return the new L2Address
+	 */
+	public static L2Address createL2Address()
+	{
+		// get the current address counter
+		long tAddr = sNextFreeAddress * l2addressIDMachineMultiplier();
+
+		// make sure the next address isn't equal
+		sNextFreeAddress++;
 		
 		// generate new object with the correct number
-		L2Address tResult = new L2Address(tNumber);
-		
+		L2Address tResult = new L2Address(tAddr);
+
 		return tResult;
 	}
 
@@ -59,20 +87,6 @@ public class L2Address extends HRMName
 	public L2Address clone()
 	{
 		return new L2Address(mAddress.longValue());
-	}
-	
-	/**
-	 * Returns a reference to the singleton with the random number generator
-	 * 
-	 * @return the random number generator
-	 */
-	private static Random getRandomGenerator()
-	{
-		// create singleton for random number generator
-		if (mRandomGenerator == null)
-			mRandomGenerator = new Random(System.currentTimeMillis());
-		
-		return mRandomGenerator;
 	}
 	
 	public boolean equals(Object pObj)
@@ -107,6 +121,6 @@ public class L2Address extends HRMName
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(name=\"" + mOptionalDescr + "\", addr.=" + mAddress + ")";
+		return getClass().getSimpleName() + "(name=\"" + mOptionalDescr + "\", addr.=" + (mAddress.longValue() / l2addressIDMachineMultiplier()) + ")";
 	}
 }

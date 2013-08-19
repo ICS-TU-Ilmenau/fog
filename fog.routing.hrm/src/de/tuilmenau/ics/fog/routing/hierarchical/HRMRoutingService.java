@@ -667,7 +667,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				/**
 				 * Generate L2 address for the node
 				 */
-				L2Address tNodeL2Address = L2Address.create();
+				L2Address tNodeL2Address = L2Address.createL2Address();
 				tNodeL2Address.setDescr(pElement.toString());
 				
 				if (pElement.equals(mNode.getCentralFN())){
