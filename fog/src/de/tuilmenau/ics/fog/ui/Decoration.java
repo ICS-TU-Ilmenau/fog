@@ -28,24 +28,47 @@ public class Decoration
 	 * @param type Type of decorations (e.g. routing, hierarchy)
 	 * @return Decoration container (!= null)
 	 */
-	public static Decoration getInstance(String type)
+	public static Decoration getInstance(Class<?> type)
 	{
-		Decoration dec = decorationTypes.get(type);
+		Decoration dec = classDecorationTypes.get(type);
 		
 		if(dec == null) {
 			dec = new Decoration();
 			
-			decorationTypes.put(type, dec);
+			classDecorationTypes.put(type, dec);
 		}
 		
 		return dec;
 	}
 	
-	private static HashMap<String, Decoration> decorationTypes = new HashMap<String, Decoration>();
-	
-	public static Set<String> getTypes()
+	/**
+	 * @param type Type of decorations (e.g. routing, hierarchy)
+	 * @return Decoration container (!= null)
+	 */
+	public static Decoration getInstance(String type)
 	{
-		return decorationTypes.keySet();
+		Decoration dec = classDecorationTypes.get(type);
+		
+		if(dec == null) {
+			dec = new Decoration();
+			
+			stringDecorationTypes.put(type, dec);
+		}
+		
+		return dec;
+	}
+	
+	private static HashMap<Class<?>, Decoration> classDecorationTypes = new HashMap<Class<?>, Decoration>();
+	private static HashMap<String, Decoration> stringDecorationTypes = new HashMap<String, Decoration>();
+	
+	public static Set<Class<?>> getClassTypes()
+	{
+		return classDecorationTypes.keySet();
+	}
+	
+	public static Set<String> getStringTypes()
+	{
+		return stringDecorationTypes.keySet();
 	}
 	
 	/**
