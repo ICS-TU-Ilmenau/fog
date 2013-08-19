@@ -115,11 +115,6 @@
             filter="de.tuilmenau.ics.fog.topology.Node">
       </plugin>
       <plugin
-            name="Open Cluster View"
-            class="de.tuilmenau.ics.fog.eclipse.ui.commands.OpenClusterView"
-            filter="de.tuilmenau.ics.fog.topology.Node">
-      </plugin>
-      <plugin
             name="Toggle broken flag"
             class="de.tuilmenau.ics.fog.eclipse.ui.commands.ToggleBrokenFlag"
             filter="de.tuilmenau.ics.fog.topology.Node">
