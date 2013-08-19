@@ -72,11 +72,6 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public HRMController getHRMController() {
-		return null;
-	}
-
-	@Override
 	public Long getClusterID() {
 		return mClusterID;
 	}

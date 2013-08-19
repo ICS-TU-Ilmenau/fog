@@ -54,7 +54,7 @@ public interface ICluster extends Serializable, AbstractRoutingGraphNode
 	 *  
 	 * @return Return the HRM controller of a node that is used for cluster handling etc.
 	 */
-	public HRMController getHRMController();
+//	public HRMController getHRMController();
 	
 	/**
 	 * 
