@@ -327,7 +327,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	@Override
 	public Object getDecorationParameter()
 	{
-		return IElementDecorator.Color.GREEN;
+		return null;
 	}
 
 	@Override

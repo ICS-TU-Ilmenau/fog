@@ -22,13 +22,14 @@ import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * A control entity can be either a cluster or a coordinator instance.
  * This class is used to concentrate common function of clusters and coordinators
  */
-public abstract class ControlEntity implements Localization
+public abstract class ControlEntity implements Localization, IElementDecorator
 {
 
 	/**
@@ -363,6 +364,47 @@ public abstract class ControlEntity implements Localization
 			// process Bully message
 			handleSignalingMessageBully(tBullyMessage, pComChannel);
 		}
+	}
+
+	/**
+	 * Defines the decoration color for the ARG viewer
+	 */
+	@Override
+	public Object getDecorationParameter()
+	{
+		if (this instanceof Coordinator){
+			return IElementDecorator.Color.GREEN;
+		}
+		if (this instanceof Cluster){
+			return IElementDecorator.Color.RED;
+		}
+		
+		return null;
+	}
+
+	@Override
+	public void setDecorationParameter(Object pDecoration)
+	{
+		// not used, but have to be implemented for implementing interface IElementDecorator
+	}
+
+	/**
+	 * Defines the decoration color intensity for the ARG viewer
+	 */
+	@Override
+	public Object getDecorationValue()
+	{
+		Float tResult = Float.valueOf(1.0f - 0.7f * (getHierarchyLevel().getValue() + 1)/ HRMConfig.Hierarchy.HEIGHT);
+		
+		Logging.log(this, "Returning decoration value: " + tResult);
+		
+		return tResult;
+	}
+
+	@Override
+	public void setDecorationValue(Object tLabal)
+	{
+		// not used, but have to be implemented for implementing interface IElementDecorator
 	}
 
 }

@@ -18,7 +18,6 @@ import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -26,14 +25,13 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This class represents a clusters on a defined hierarchy level.
  * 
  */
-public class Cluster extends ControlEntity implements ICluster, IElementDecorator
+public class Cluster extends ControlEntity implements ICluster
 {
 	/**
 	 * For using this class within (de-)serialization.
@@ -688,30 +686,6 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 //		return null;
 //	}
 	
-	@Override
-	public Object getDecorationParameter()
-	{
-		return IElementDecorator.Color.GREEN;
-	}
-
-	@Override
-	public void setDecorationParameter(Object pDecoration)
-	{
-		// not used, but have to be implemented for implementing interface IElementDecorator
-	}
-
-	@Override
-	public Object getDecorationValue()
-	{
-		return Float.valueOf(0.8f);
-	}
-
-	@Override
-	public void setDecorationValue(Object tLabal)
-	{
-		// not used, but have to be implemented for implementing interface IElementDecorator
-	}
-
 	public int hashCode()
 	{
 		return mClusterID.intValue();

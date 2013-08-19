@@ -32,9 +32,9 @@ import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
 
-public class ClusterViewer extends EditorAWT implements IController
+public class ARGViewer extends EditorAWT implements IController
 {
-	public ClusterViewer()
+	public ARGViewer()
 	{
 	}
 	

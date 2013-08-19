@@ -16,9 +16,9 @@
             name="HRM viewer">
       </editor>
       <editor
-            class="de.tuilmenau.ics.fog.ui.eclipse.editors.ClusterViewer"
+            class="de.tuilmenau.ics.fog.ui.eclipse.editors.ARGViewer"
             default="false"
-            id="de.tuilmenau.ics.fog.clusterviewer"
+            id="de.tuilmenau.ics.fog.argviewer"
             name="Cluster viewer">
       </editor>
    </extension>
@@ -71,9 +71,9 @@
             name="Probe HRM routing..">
       </plugin>
       <editor
-            editorID="de.tuilmenau.ics.fog.clusterviewer"
+            editorID="de.tuilmenau.ics.fog.argviewer"
             filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
-            name="Cluster viewer">
+            name="ARG viewer">
       </editor>
    </extension>
 
