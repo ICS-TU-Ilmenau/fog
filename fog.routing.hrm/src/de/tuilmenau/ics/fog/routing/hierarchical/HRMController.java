@@ -124,7 +124,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	/**
 	 * Stores an abstract routing graph (ARG), which provides an abstract overview about logical links between clusters/coordinator.
 	 */
-	private AbstractRoutingGraph<HRMGraphNodeName, RoutableClusterGraphLink> mAbstractRoutingGraph = new AbstractRoutingGraph<HRMGraphNodeName, RoutableClusterGraphLink>();
+	private AbstractRoutingGraph<AbstractRoutingGraphNode, AbstractRoutingGraphLink> mAbstractRoutingGraph = new AbstractRoutingGraph<AbstractRoutingGraphNode, AbstractRoutingGraphLink>();
 	
 	/**
 	 * Count the outgoing connections
@@ -928,7 +928,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * @param pTo the ending point of the link
 	 * @param pLink the link between the two nodes
 	 */
-	public void registerLinkARG(ICluster pFrom, ICluster pTo, RoutableClusterGraphLink pLink)
+	public void registerLinkARG(ICluster pFrom, ICluster pTo, AbstractRoutingGraphLink pLink)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "REGISTERING LINK (ARG):  source=" + pFrom + " ## dest.=" + pTo + " ## link=" + pLink);
@@ -947,9 +947,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @return the determined route, null if no route could be found
 	 */
-	public List<RoutableClusterGraphLink> getRouteARG(HRMGraphNodeName pSource, HRMGraphNodeName pDestination)
+	public List<AbstractRoutingGraphLink> getRouteARG(AbstractRoutingGraphNode pSource, AbstractRoutingGraphNode pDestination)
 	{
-		List<RoutableClusterGraphLink> tResult = null;
+		List<AbstractRoutingGraphLink> tResult = null;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 			Logging.log(this, "GET ROUTE (ARG) from \"" + pSource + "\" to \"" + pDestination +"\"");
@@ -974,9 +974,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @return the other end of the link
 	 */
-	public HRMGraphNodeName getOtherEndOfLinkARG(HRMGraphNodeName pKnownEnd, RoutableClusterGraphLink pLink)
+	public AbstractRoutingGraphNode getOtherEndOfLinkARG(AbstractRoutingGraphNode pKnownEnd, AbstractRoutingGraphLink pLink)
 	{
-		HRMGraphNodeName tResult = null;
+		AbstractRoutingGraphNode tResult = null;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 			Logging.log(this, "GET OTHER END (ARG) of link \"" + pKnownEnd + "\" connected at \"" + pKnownEnd +"\"");
@@ -1000,9 +1000,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @return a collection of found neighbor nodes
 	 */
-	public Collection<HRMGraphNodeName> getNeighborsARG(HRMGraphNodeName pRoot)
+	public Collection<AbstractRoutingGraphNode> getNeighborsARG(AbstractRoutingGraphNode pRoot)
 	{
-		Collection<HRMGraphNodeName> tResult = null;
+		Collection<AbstractRoutingGraphNode> tResult = null;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 			Logging.log(this, "GET NEIGHBORS (ARG) from \"" + pRoot + "\"");
@@ -1015,7 +1015,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 			Logging.log(this, "      ..result: " + tResult.size() + " entries:");				
 			int i = 0;
-			for (HRMGraphNodeName tName : tResult){
+			for (AbstractRoutingGraphNode tName : tResult){
 				Logging.log(this, "      ..[" + i + "]: " + tName);
 				i++;
 			}			
@@ -1031,9 +1031,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @return a list of found vertices
 	 */
-	public List<HRMGraphNodeName> getVerticesInOrderRadiusARG(HRMGraphNodeName pRootVertex)
+	public List<AbstractRoutingGraphNode> getVerticesInOrderRadiusARG(AbstractRoutingGraphNode pRootVertex)
 	{
-		List<HRMGraphNodeName> tResult = null;
+		List<AbstractRoutingGraphNode> tResult = null;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 			Logging.log(this, "GET VERTICES ORDER RADIUS (ARG) from \"" + pRootVertex + "\"");
@@ -1046,7 +1046,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 			Logging.log(this, "      ..result: " + tResult.size() + " entries:");				
 			int i = 0;
-			for (HRMGraphNodeName tName : tResult){
+			for (AbstractRoutingGraphNode tName : tResult){
 				Logging.log(this, "      ..[" + i + "]: " + tName);
 				i++;
 			}			
@@ -1088,9 +1088,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @return the ARG
 	 */
-	public AbstractRoutingGraph<HRMGraphNodeName, RoutableClusterGraphLink> getARGForGraphViewer()
+	public AbstractRoutingGraph<AbstractRoutingGraphNode, AbstractRoutingGraphLink> getARGForGraphViewer()
 	{
-		AbstractRoutingGraph<HRMGraphNodeName, RoutableClusterGraphLink> tResult = null;
+		AbstractRoutingGraph<AbstractRoutingGraphNode, AbstractRoutingGraphLink> tResult = null;
 		
 		synchronized (mAbstractRoutingGraph) {
 			tResult = mAbstractRoutingGraph; //TODO: use a new clone() method here
@@ -1300,7 +1300,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 							} 
 							
 							// register the link to the local ARG
-							registerLinkARG(tAttachedCluster, tCluster, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
+							registerLinkARG(tAttachedCluster, tCluster, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOGICAL_LINK));
 						}
 						for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
 							if(getSourceIntermediate(tCluster) != null) {
@@ -1351,7 +1351,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	public int getClusterDistance(ICluster pCluster)
 	{
-		List<RoutableClusterGraphLink> tClusterRoute = null;
+		List<AbstractRoutingGraphLink> tClusterRoute = null;
 		int tDistance = 0;
 		if(getSourceIntermediate(pCluster) == null || pCluster == null) {
 			Logging.log(this, "source cluster for " + (pCluster instanceof NeighborCluster ? ((NeighborCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
@@ -1359,13 +1359,13 @@ public class HRMController extends Application implements IServerCallback, IEven
 		ICluster tIntermediate = getSourceIntermediate(pCluster);
 		tClusterRoute = getRouteARG(tIntermediate, pCluster);
 		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
-			for(RoutableClusterGraphLink tConnection : tClusterRoute) {
-				if(tConnection.getLinkType() == RoutableClusterGraphLink.LinkType.LOGICAL_LINK) {
+			for(AbstractRoutingGraphLink tConnection : tClusterRoute) {
+				if(tConnection.getLinkType() == AbstractRoutingGraphLink.LinkType.LOGICAL_LINK) {
 					tDistance++;
 				}
 			}
 		} else {
-			Logging.log(this, "No cluster route available");
+			//Logging.log(this, "No cluster route available");
 			tClusterRoute = getRouteARG(tIntermediate, pCluster);
 		}
 		return tDistance;

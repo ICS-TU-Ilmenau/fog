@@ -21,7 +21,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
-public interface ICluster extends Serializable, HRMGraphNodeName
+public interface ICluster extends Serializable, AbstractRoutingGraphNode
 {
 	/**
 	 * Sets the priority of the currently acting coordinator of this cluster.

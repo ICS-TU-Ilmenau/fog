@@ -139,7 +139,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 
 	public void registerNeighbor(ICluster pNeighbor)
 	{
-		getHRMController().registerLinkARG(this, pNeighbor, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
+		getHRMController().registerLinkARG(this, pNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOGICAL_LINK));
 	}
 
 	public void setHRMID(Object pCaller, HRMID pHRMID)
@@ -212,7 +212,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	@Override
 	public LinkedList<ICluster> getNeighbors() {
 		LinkedList<ICluster> tCluster = new LinkedList<ICluster>();
-		for(HRMGraphNodeName tNode : getHRMController().getNeighborsARG(this)) {
+		for(AbstractRoutingGraphNode tNode : getHRMController().getNeighborsARG(this)) {
 			if(tNode instanceof ICluster) {
 				tCluster.add((ICluster) tNode);
 			}
@@ -278,7 +278,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 			ClusterName tClusterName = tCEP.getRemoteClusterName();
 			ICluster tRemoteCluster = getHRMController().getCluster(tClusterName) != null ? getHRMController().getCluster(tClusterName) : tClusterName;
 			if(pCluster.getHierarchyLevel() == tRemoteCluster.getHierarchyLevel()) {
-				List<RoutableClusterGraphLink> tConnection = getHRMController().getRouteARG(pCluster, tRemoteCluster);
+				List<AbstractRoutingGraphLink> tConnection = getHRMController().getRouteARG(pCluster, tRemoteCluster);
 				int tDistance = 0;
 				if(tConnection != null) {
 					tDistance = tConnection.size();

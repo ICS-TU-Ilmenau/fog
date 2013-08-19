@@ -13,7 +13,7 @@ import java.math.BigInteger;
 
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.HRMGraphNodeName;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphNode;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 
 /**
@@ -23,7 +23,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
  * 	1.) a physical node, e.g., "1.1.5"
  *  2.) a coordinator or a cluster as a whole, e.g., "1.1.0" *
  */
-public class HRMID extends HRMName implements Comparable<HRMID>, HRMGraphNodeName
+public class HRMID extends HRMName implements Comparable<HRMID>, AbstractRoutingGraphNode
 {
 	private static final long serialVersionUID = -8441496024628988477L;
 

@@ -103,7 +103,7 @@ public class ComChannelMuxer
 					tParticipate.setSourceName(mHRMController.getNode().getCentralFN().getName());
 					tParticipate.setSourceRoutingServiceAddress(tSession.getSourceRoutingServiceAddress());
 					
-					List<RoutableClusterGraphLink> tClusterListToRemote = mHRMController.getRouteARG(tManager.getCluster(), pTargetCluster);
+					List<AbstractRoutingGraphLink> tClusterListToRemote = mHRMController.getRouteARG(tManager.getCluster(), pTargetCluster);
 					if(!tClusterListToRemote.isEmpty()) {
 						/*
 						 * we need the last hop in direct to the neighbor
@@ -121,7 +121,7 @@ public class ComChannelMuxer
 						
 						DiscoveryEntry tEntry = new DiscoveryEntry(tNeighbor.getToken(), tNeighbor.getCoordinatorName(), tNeighbor.getClusterID(), tNeighborControlEntity.superiorCoordinatorL2Address(), tNeighbor.getHierarchyLevel());
 						tEntry.setPriority(tNeighbor.getPriority());
-						List<RoutableClusterGraphLink> tClusterList = mHRMController.getRouteARG(tManager.getCluster(), tNeighbor);
+						List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(tManager.getCluster(), tNeighbor);
 						/*
 						 * the predecessor has to be the next hop
 						 */

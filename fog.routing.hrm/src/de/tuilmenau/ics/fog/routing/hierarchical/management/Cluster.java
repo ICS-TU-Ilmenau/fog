@@ -550,10 +550,10 @@ public class Cluster extends ControlEntity implements ICluster
 		if(!tNeighbors.contains(pNeighbor))
 		{
 			if(pNeighbor instanceof Cluster) {
-				RoutableClusterGraphLink tLink = new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.PHYSICAL_LINK);
+				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.PHYSICAL_LINK);
 				getHRMController().registerLinkARG(pNeighbor, this, tLink);
 			} else {
-				RoutableClusterGraphLink tLink = new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK);
+				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOGICAL_LINK);
 				getHRMController().registerLinkARG(pNeighbor, this, tLink);
 			}
 
@@ -590,7 +590,7 @@ public class Cluster extends ControlEntity implements ICluster
 	public LinkedList<ICluster> getNeighbors()
 	{
 		LinkedList<ICluster> tList = new LinkedList<ICluster>();
-		for(HRMGraphNodeName tNode : getHRMController().getNeighborsARG(this)) {
+		for(AbstractRoutingGraphNode tNode : getHRMController().getNeighborsARG(this)) {
 			if(tNode instanceof ICluster) {
 				tList.add((ICluster)tNode);
 			}

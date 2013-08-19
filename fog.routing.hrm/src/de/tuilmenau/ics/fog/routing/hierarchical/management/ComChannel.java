@@ -580,7 +580,7 @@ public class ComChannel
 			tEntry.setPriority(pCluster.getPriority());
 			tEntry.setRoutingVectors(getPath(tCoordL2Addr));
 			
-			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRouteARG((ICluster)getParent(), pCluster);
+			List<AbstractRoutingGraphLink> tClusterList = getHRMController().getRouteARG((ICluster)getParent(), pCluster);
 			if(!tClusterList.isEmpty()) {
 				ICluster tPredecessorCluster = (ICluster) getHRMController().getOtherEndOfLinkARG(pCluster, tClusterList.get(tClusterList.size() - 1));
 				ClusterName tPredecessorClusterName = new ClusterName(tPredecessorCluster.getToken(), tPredecessorCluster.getClusterID(), tPredecessorCluster.getHierarchyLevel());
@@ -688,10 +688,10 @@ public class ComChannel
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteClusterName());
 			}
 
-			List<HRMGraphNodeName> tDiscoveryCandidates = getHRMController().getVerticesInOrderRadiusARG(tSourceCluster);
+			List<AbstractRoutingGraphNode> tDiscoveryCandidates = getHRMController().getVerticesInOrderRadiusARG(tSourceCluster);
 			
 			if(tSourceCluster != null) {
-				for(HRMGraphNodeName tVirtualNode : tDiscoveryCandidates) {
+				for(AbstractRoutingGraphNode tVirtualNode : tDiscoveryCandidates) {
 					if(tVirtualNode instanceof ICluster) {
 						ICluster tCluster = (ICluster) tVirtualNode;
 						
