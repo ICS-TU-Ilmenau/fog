@@ -195,6 +195,8 @@ public class BullyPriority
 	 */
 	public void increaseConnectivity()
 	{
+		Logging.log(this, "Increasing priority by " + OFFSET_FOR_CONNECTIVITY);
+		
 		mPriority += OFFSET_FOR_CONNECTIVITY;
 	}
 	
