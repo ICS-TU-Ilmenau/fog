@@ -87,19 +87,22 @@ public class Elector implements Localization
 		mState = ElectorState.START;
 		mParentCluster = pCluster;
 		mElectionWon = false;
-		
-		if (mParentCluster.isNeighborHoodInitialized()){
-			// set IDLE state
-			setElectorState(ElectorState.IDLE);
-			
-			// start coordinator election for the created HRM instance if desired
-			if(HRMConfig.Hierarchy.BUILD_AUTOMATICALLY) {
-				elect();
+
+		// set IDLE state
+		setElectorState(ElectorState.IDLE);
+
+		// for higher hierarchy levels, continue hierarchy creation
+		if ((!mParentCluster.getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.START_AUTOMATICALLY)){
+			if (mParentCluster.isNeighborHoodInitialized()){
+				// start coordinator election for the created HRM instance if desired
+				if(HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY) {
+					elect();
+				}
+			}else{
+				Logging.err(this, "Neighborhood of cluster " + mParentCluster + " has to be already initialized when calling this constructor");
+				
+				setElectorState(ElectorState.ERROR);
 			}
-		}else{
-			Logging.err(this, "Neighborhood of cluster " + mParentCluster + " has to be already initialized when calling this constructor");
-			
-			setElectorState(ElectorState.ERROR);
 		}
 	}
 	

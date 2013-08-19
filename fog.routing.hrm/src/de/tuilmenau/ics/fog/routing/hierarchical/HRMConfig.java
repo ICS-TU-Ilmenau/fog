@@ -116,10 +116,16 @@ public class HRMConfig
 		public static final int USED_BITS_PER_LEVEL = 8; //TV
 
 		/**
-		 * specifies whether the hierarchy is created automatically,
-		 * otherwise it is done step by step
+		 * This specifies whether the hierarchy build process is started automatically.
+		 * Otherwise, the build process is started after user input in the GUI.
 		 */
-		public static final boolean BUILD_AUTOMATICALLY = false; //TV
+		public static final boolean START_AUTOMATICALLY = false;		
+
+		/**
+		 * This specifies whether the hierarchy build process is continued automatically.
+		 * Otherwise, it is done step by step by the help of GUI and user inputs.
+		 */
+		public static final boolean CONTINUE_AUTOMATICALLY = true;
 		
 		/**
 		 * Identifies the base level of the hierarchy.
@@ -131,7 +137,7 @@ public class HRMConfig
 		 * In this case, signaling also sends packets in a loop back to the sender.
 		 * This causes ADDITIONAL LOOPBACK SIGNALING.
 		 */
-		public static final boolean SIGNALING_INCLUDES_LOCALHOST = false;		
+		public static final boolean SIGNALING_INCLUDES_LOCALHOST = false;
 	}
 	
 	/**
