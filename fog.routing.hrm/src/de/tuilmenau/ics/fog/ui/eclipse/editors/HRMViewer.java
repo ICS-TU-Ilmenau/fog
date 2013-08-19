@@ -690,7 +690,28 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		StyledText tClusterLabel = new StyledText(mContainer, SWT.BORDER);;
 		tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue());
 		tClusterLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
-		tClusterLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
+		if (HRMConfig.DebugOutput.GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES){
+			boolean tBackgroundSet = false;
+			if (pEntity instanceof Cluster){
+				Cluster tCluster =(Cluster) pEntity;
+				if ((tCluster.getElector() != null) && (tCluster.getElector().isCoordinatorValid())){
+					tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 111));
+					tBackgroundSet = true;
+				}
+			}
+			if (pEntity instanceof Coordinator){
+				Coordinator tCoordinator =(Coordinator) pEntity;
+				if ((tCoordinator.isClustered()) || (tCoordinator.getHierarchyLevel().isHighest())){
+					tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 111));
+					tBackgroundSet = true;
+				}
+			}
+			if (!tBackgroundSet){
+				tClusterLabel.setBackground(new Color(mShell.getDisplay(), 222, 111, 111));
+			}
+		}else{
+			tClusterLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
+		}
 	    StyleRange style1 = new StyleRange();
 	    style1.start = 0;
 	    style1.length = tClusterLabel.getText().length();

@@ -79,6 +79,11 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_VIEWER_STEPS = false;
 
 		/**
+		 * Shows colored backgrounds for cluster/coordinator widgets
+		 */
+		public static final boolean GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES = true;
+
+		/**
 		 * Defines the time period between two updates of the node specific HRM display.
 		 */
 		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 1.0;
