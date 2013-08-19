@@ -179,6 +179,7 @@ public class ProbeRouting extends Command
 	 * @param pTargetNodeName the name (e.g., HRMID) of the target
 	 * @param pTargetNode the target node (reference is only used for debugging purposes)
 	 */
+	@SuppressWarnings("unused")
 	private void sendProbeConnectionRequest(Name pTargetNodeName, Node pTargetNode)
 	{
 		Logging.log(this, "Sending probe packet to " + pTargetNodeName + ", which belongs to node " + pTargetNode);
@@ -198,29 +199,33 @@ public class ProbeRouting extends Command
 					
 					Logging.log(this, "Found in the NMS the HRMID " + tTargetNodeHRMID.toString() + " for node " + pTargetNode);  
 					
-					/**
-					 * Connect to the destination node
-					 */
-					// create requirements with probe-routing property and DestinationApplication property
-					Description tConnectionReqs = new Description();
-					tConnectionReqs.set(new ProbeRoutingProperty(mNode.getCentralFN().getName().toString()));
-					tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
-					// probe connection
-					Connection tConnection = null;
-					Logging.log(this, "\n\n\nProbing a connection to " + tTargetNodeHRMID + " with requirements " + tConnectionReqs);
-					try {
-						tConnection = mNode.getHost().connectBlock(tTargetNodeHRMID, tConnectionReqs, mNode.getIdentity());
-					} catch (NetworkException tExc) {
-						Logging.err(this, "Unable to connecto to " + tTargetNodeHRMID, tExc);
-						tConnection = null;
-					}
-					
-					/**
-					 * Disconnect by closing the connection
-					 */
-					if(tConnection != null) {
-						Logging.log(this, "        ..found valid connection to " + tTargetNodeHRMID + "(" + pTargetNodeName + ")");
-						tConnection.close();
+					if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (!tTargetNodeHRMID.isRelativeAddress())){
+						/**
+						 * Connect to the destination node
+						 */
+						// create requirements with probe-routing property and DestinationApplication property
+						Description tConnectionReqs = new Description();
+						tConnectionReqs.set(new ProbeRoutingProperty(mNode.getCentralFN().getName().toString()));
+						tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
+						// probe connection
+						Connection tConnection = null;
+						Logging.log(this, "\n\n\nProbing a connection to " + tTargetNodeHRMID + " with requirements " + tConnectionReqs);
+						try {
+							tConnection = mNode.getHost().connectBlock(tTargetNodeHRMID, tConnectionReqs, mNode.getIdentity());
+						} catch (NetworkException tExc) {
+							Logging.err(this, "Unable to connecto to " + tTargetNodeHRMID, tExc);
+							tConnection = null;
+						}
+						
+						/**
+						 * Disconnect by closing the connection
+						 */
+						if(tConnection != null) {
+							Logging.log(this, "        ..found valid connection to " + tTargetNodeHRMID + "(" + pTargetNodeName + ")");
+							tConnection.close();
+						}
+					}else{
+						Logging.log(this, "     ..address " + tTargetNodeHRMID + " is ignored because it is a relative one");
 					}
 				}else{
 					Logging.log(this, "Found in the NMS the unsupported address " + tNMSEntryForTarget.getAddress() + " for node " + pTargetNode);
