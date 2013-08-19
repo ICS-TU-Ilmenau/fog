@@ -129,8 +129,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		mContainer.setLayout(tLayout);
 		
 		if (HRM_VIEWER_DEBUGGING){
-			Logging.log(this, "Amount of found routing targets: " + mHRMController.getRoutingTargets().size());
-			Logging.log(this, "              ...found clusters: " + mHRMController.getRoutingTargetClusters().size());
+			Logging.log(this, "Found clusters: " + mHRMController.getAllClusters().size());
+			Logging.log(this, "Found coordinators: " + mHRMController.getAllCoordinators().size());
 		}
 		
 		/**

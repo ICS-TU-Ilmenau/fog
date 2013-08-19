@@ -113,14 +113,13 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
 
-		for(ICluster tCluster : getHRMController().getRoutingTargets())
+		for(Cluster tCluster : getHRMController().getAllClusters())
 		{
-			Logging.log(this, "Found already known neighbor: " + tCluster);
 			if ((tCluster.getHierarchyLevel().equals(getHierarchyLevel())) && (tCluster != this))
 			{
-				if (!(tCluster instanceof Cluster)){
-					Logging.err(this, "Routing target should be a cluster, but it is " + tCluster);
-				}
+				Logging.log(this, "Found already known neighbor cluster: " + tCluster);
+				
+				// add this cluster as neighbor to the already known one
 				tCluster.addNeighborCluster(this);
 
 				// increase Bully priority because of changed connectivity (topology depending)

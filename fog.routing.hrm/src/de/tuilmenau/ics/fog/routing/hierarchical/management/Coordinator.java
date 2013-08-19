@@ -547,7 +547,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			for(int i = 1; i <= tRadius; i++) {
 				
 				String tString = new String(">>> Expanding to radius (" + i + "/" + tRadius + ", possible clusters:");
-				for(Cluster tCluster : getHRMController().getRoutingTargetClusters()) {
+				for(Cluster tCluster : getHRMController().getAllClusters()) {
 					if(tCluster.getHierarchyLevel().getValue() == getHierarchyLevel().getValue() - 1) {
 						tString += "\n" + tCluster.toString();
 					}

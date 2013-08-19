@@ -152,19 +152,16 @@ public class ClusterName implements Serializable, ICluster
 	@Override
 	public boolean equals(Object pObj)
 	{
+		boolean tResult = false;
+		
 		if(pObj instanceof ICluster) {
 			ICluster tCluster = (ICluster) pObj;
-			if(tCluster.getClusterID().equals(getClusterID()) &&
-					tCluster.getToken() == getToken() &&
-					tCluster.getHierarchyLevel() == getHierarchyLevel()) {
-				return true;
-			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
-				return false;
-			} else if (tCluster.getClusterID().equals(getClusterID())) {
-				return false;
-			}
+			if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getToken() == getToken() && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
+				tResult = true;
+			} 
 		}
-		return false;
+		
+		return tResult;
 	}
 
 	@Override

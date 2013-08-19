@@ -737,7 +737,7 @@ public class ComChannel
 		Logging.trace(this, "Handling " + pEntry);
 		ICluster tNewCluster = getHRMController().getCluster(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), pEntry.getLevel()));
 		if(tNewCluster == null) {
-			for(Cluster tCluster : getHRMController().getRoutingTargetClusters()) {
+			for(Cluster tCluster : getHRMController().getAllClusters()) {
 				if(tCluster.equals(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), new HierarchyLevel(this, getParent().getHierarchyLevel().getValue() - 1)))) {
 					tNewCluster = tCluster;
 					if(tNewCluster instanceof NeighborCluster && ((NeighborCluster)tNewCluster).getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {

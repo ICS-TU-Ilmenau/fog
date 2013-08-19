@@ -1012,9 +1012,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 					}
 	
 					if(tJoin.getHierarchyLevel().isHigherLevel()) {
-						for(ICluster tVirtualNode : getRoutingTargetClusters()) {
-							if(tVirtualNode.getHierarchyLevel().getValue() == tJoin.getHierarchyLevel().getValue() - 1) {
-								tCluster.setPriority(tVirtualNode.getPriority());
+						for(Cluster tCluster2 : getAllClusters()) {
+							if(tCluster2.getHierarchyLevel().getValue() == tJoin.getHierarchyLevel().getValue() - 1) {
+								tCluster.setPriority(tCluster2.getPriority());
 							}
 						}
 					}
@@ -1027,7 +1027,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					tFoundCluster = tCluster;
 				}
 				tFoundCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
-				for(ICluster tNegotiatingCluster : getRoutingTargetClusters()) {
+				for(ICluster tNegotiatingCluster : getAllClusters()) {
 					ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel().getValue() - 1 : 0 ));
 					if(tNegotiatingCluster.equals(tNegClusterName)) {
 						tCEP.setRemoteClusterName(tNegClusterName);
@@ -1046,9 +1046,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 					}
 					tNewlyCreatedClusters.put(tAttachedCluster, tParticipate.getPredecessor());
 					Logging.log(this, "as joining cluster");
-					for(ICluster tCandidate : getRoutingTargetClusters()) {
-						if((tCandidate instanceof Cluster) && (tCandidate.getHierarchyLevel().equals(tAttachedCluster.getHierarchyLevel()))) {
-							setSourceIntermediateCluster(tAttachedCluster, (Cluster)tCandidate);
+					for(Cluster tCluster : getAllClusters()) {
+						if(tCluster.getHierarchyLevel().equals(tAttachedCluster.getHierarchyLevel())) {
+							setSourceIntermediateCluster(tAttachedCluster, tCluster);
 						}
 					}
 					if(getSourceIntermediate(tAttachedCluster) == null) {
@@ -1070,12 +1070,24 @@ public class HRMController extends Application implements IServerCallback, IEven
 							ClusterName tEntryClusterName = new ClusterName(tEntry.getToken(), tEntry.getClusterID(), tEntry.getLevel());
 							
 							
+							/**
+							 * Search if the cluster is already locally known
+							 */
 							ICluster tCluster = null;
+							for(Cluster tKnownCluster : getAllClusters()) {
+								if(tKnownCluster.equals(tEntryClusterName)) {
+									tCluster = tKnownCluster;
+								}
+							}
+
 							if(tEntry.getRoutingVectors()!= null) {
 								for(RoutingServiceLinkVector tVector : tEntry.getRoutingVectors())
 								getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 							}
-							if(!getRoutingTargetClusters().contains(tEntryClusterName)) {
+							
+							
+							// was the cluster already known?
+							if(tCluster == null) {
 								tCluster = new NeighborCluster(tEntry.getClusterID(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken(), tEntry.getLevel(), this);
 								tCluster.setPriority(tEntry.getPriority());
 								try {
@@ -1085,9 +1097,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 								}
 								
 								tNewlyCreatedClusters.put(tCluster, tEntry.getPredecessor());
-								for(ICluster tCandidate : getRoutingTargetClusters()) {
-									if(tCandidate instanceof Cluster && tCluster.getHierarchyLevel() == tCandidate.getHierarchyLevel()) {
-										setSourceIntermediateCluster(tCluster, (Cluster)tCandidate);
+								for(Cluster tCluster1 : getAllClusters()) {
+									if(tCluster1.getHierarchyLevel() == tCluster.getHierarchyLevel()) {
+										setSourceIntermediateCluster(tCluster, tCluster1);
 										Logging.log(this, "as joining neighbor");
 									}
 								}
@@ -1097,13 +1109,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 	//							((NeighborCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
 								((NeighborCluster)tCluster).addAnnouncedCEP(tCEP);
 								Logging.log(this, "Created " +tCluster);
-							} else {
-								for(ICluster tPossibleCandidate : getRoutingTargetClusters()) {
-									if(tPossibleCandidate.equals(tEntryClusterName)) {
-										tCluster = tPossibleCandidate;
-									}
-								}
-							}
+							} 
+							
 							mRoutableClusterGraph.storeLink(tAttachedCluster, tCluster, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
 						}
 						for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
@@ -1140,7 +1147,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	public Cluster getCluster(ICluster pCluster)
 	{
-		for(Cluster tCluster : getRoutingTargetClusters()) {
+		for(Cluster tCluster : getAllClusters()) {
 			if (tCluster.equals(pCluster)) {
 				return tCluster;
 			}
@@ -1191,7 +1198,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		ComChannel tCEP = null;
 		
 		boolean tClusterFound = false;
-		for(Cluster tCluster : getRoutingTargetClusters())
+		for(Cluster tCluster : getAllClusters())
 		{
 			if(tCluster.getClusterID().equals(pToClusterID)) {
 				tSession = new ComSession(this, false, pLevel, tCluster.getMultiplexer());
@@ -1307,64 +1314,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}
 	}
 	
-	/**
-	 * Calculates the clusters which are known to the local routing database (graph)
-	 * 
-	 * @return list of all known clusters from the local routing database (graph)
-	 */
-	public synchronized LinkedList<Cluster> getRoutingTargetClusters()
-	{
-		LinkedList<Cluster> tResult = new LinkedList<Cluster>();
-
-		if (HRM_CONTROLLER_DEBUGGING) {
-			Logging.log(this, "Amount of found routing targets: " + mRoutableClusterGraph.getVertices().size());
-		}
-		int j = -1;
-		for(HRMGraphNodeName tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
-			if (tRoutableGraphNode instanceof Cluster) {
-				Cluster tCluster = (Cluster)tRoutableGraphNode;
-				j++;
-			
-				if (HRM_CONTROLLER_DEBUGGING) {
-					Logging.log(this, "Returning routing target cluster " + j + ": " + tRoutableGraphNode.toString());
-				}
-				
-				tResult.add(tCluster);
-			}else if (tRoutableGraphNode instanceof NeighborCluster){
-				Logging.warn(this, "Ignoring routing target " + tRoutableGraphNode);
-			}
-		}
-		
-		return tResult;
-	}
-	
-	/**
-	 * Calculates the clusters which are known to the local routing database (graph)
-	 * 
-	 * @return list of all known clusters from the local routing database (graph)
-	 */
-	public synchronized LinkedList<ICluster> getRoutingTargets()
-	{
-		LinkedList<ICluster> tResult = new LinkedList<ICluster>();
-
-		if (HRM_CONTROLLER_DEBUGGING) {
-			Logging.log(this, "Amount of found routing targets: " + mRoutableClusterGraph.getVertices().size());
-		}
-		int j = -1;
-		for(HRMGraphNodeName tRoutableGraphNode : mRoutableClusterGraph.getVertices()) {
-			ICluster tCluster = (ICluster)tRoutableGraphNode;
-			j++;
-		
-			if (HRM_CONTROLLER_DEBUGGING) {
-				Logging.log(this, "Returning routing target " + j + ": " + tRoutableGraphNode.toString());
-			}
-			
-			tResult.add(tCluster);
-		}
-		
-		return tResult;
-	}
-
 	/**
 	 * 
 	 * @return cluster map that is actually the graph that represents the network

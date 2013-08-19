@@ -191,7 +191,7 @@ public class ComChannelMuxer
 					}
 					for(NestedDiscovery tDiscovery : tBigDiscovery.getDiscoveries()) {
 						String tClusters = new String();
-						for(Cluster tCluster : mHRMController.getRoutingTargetClusters()) {
+						for(Cluster tCluster : mHRMController.getAllClusters()) {
 							tClusters += tCluster + ", ";
 						}
 						String tDiscoveries = new String();
