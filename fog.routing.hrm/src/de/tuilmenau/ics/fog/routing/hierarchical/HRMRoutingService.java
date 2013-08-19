@@ -224,7 +224,9 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * Add the entry to the local routing table
 			 */
 			if (!tFoundDuplicate){
-				Logging.log(this, "ADDING ROUTE      : " + pRoutingTableEntry);
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "ADDING ROUTE      : " + pRoutingTableEntry);
+				}
 
 				// add the route to the routing table
 				mRoutingTable.add(pRoutingTableEntry.clone());
@@ -240,12 +242,16 @@ public class HRMRoutingService implements RoutingService, Localization
 						L2Address tL2Address = pRoutingTableEntry.getNextHopL2Address();
 						
 						// add address for a direct neighbor
-						Logging.log(this, "     ..adding " + tHRMID + " as address of a direct neighbor");
+						if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+							Logging.log(this, "     ..adding " + tHRMID + " as address of a direct neighbor");
+						}
 						mDirectNeighborAddresses.add(tHRMID);
 
 						if (tL2Address != null){
 							// add L2 address for this direct neighbor
-							Logging.log(this, "     ..add mapping from " + tHRMID + " to " + tL2Address);
+							if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+								Logging.log(this, "     ..add mapping from " + tHRMID + " to " + tL2Address);
+							}
 							mapHRMIDToL2Address(tHRMID, tL2Address);
 						}
 					}
@@ -271,7 +277,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		boolean tResult = false;
 		
-		Logging.log(this, "REMOVING ROUTE: " + pRoutingTableEntry);
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "REMOVING ROUTE: " + pRoutingTableEntry);
+		}
 
 		synchronized(mRoutingTable){
 			if (mRoutingTable.contains(pRoutingTableEntry)){
@@ -654,7 +662,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public boolean unregisterNode(ForwardingNode pElement)
 	{
-		Logging.log(this, "UNREGISTERING NODE: " + pElement);
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "UNREGISTERING NODE: " + pElement);
+		}
 
 		// get the L2Address of this FN
 		L2Address tNodeL2Address = getL2AddressFor(pElement);
@@ -691,7 +701,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public void registerLink(ForwardingElement pFrom, AbstractGate pGate) throws NetworkException
 	{
-		Logging.log(this, "REGISTERING LINK: source=" + pFrom + " ## dest.=" + pGate.getNextNode() + " ## attr.=" + pGate.getDescription() + " ## gate=" + pGate + " ## peer=" + pGate.getRemoteDestinationName());
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "REGISTERING LINK: source=" + pFrom + " ## dest.=" + pGate.getNextNode() + " ## attr.=" + pGate.getDescription() + " ## gate=" + pGate + " ## peer=" + pGate.getRemoteDestinationName());
+		}
 
 		/**
 		 * Make sure that the starting point of the link is already known to the FN-to-L2address mapping.
@@ -708,7 +720,9 @@ public class HRMRoutingService implements RoutingService, Localization
 			
 			// is the FN still unknown for the FN-to-L2address mapping?
 			if(tFromL2Address == null) {
-				Logging.warn(this, "Source node " + pFrom +" of link " + pGate + " isn't known yet. It will be registered implicitly.");
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "Source node " + pFrom +" of link " + pGate + " isn't known yet. It will be registered implicitly.");
+				}
 				
 				registerNode(tFromFN, null, NamingLevel.NONE, null);
 				
@@ -741,10 +755,12 @@ public class HRMRoutingService implements RoutingService, Localization
 			//       Therefore, we ignore the first registerLink() request and wait for the (hopfefully) appearing second request.
 			tToL2Address = (L2Address) pGate.getRemoteDestinationName();
 			if (tToL2Address == null){
-				Logging.log(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this registerLink() request and wait until the peer is known");
+				Logging.warn(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this registerLink() request and wait until the peer is known");
 			}
 
-			Logging.log(this, "      ..external link, which ends at the physical node " + tToL2Address);
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				Logging.log(this, "      ..external link, which ends at the physical node " + tToL2Address);
+			}
 		}else{
 			// mark as node-internal link
 			tIsLinkToPhysicalNeigborNode = false;
@@ -758,7 +774,9 @@ public class HRMRoutingService implements RoutingService, Localization
 			tToL2Address = getL2AddressFor(tToFN);
 			// is the FN still unknown for the FN-to-L2address mapping?
 			if(tToL2Address == null) {
-				Logging.warn(this, "Destination node " + tToFN +" of link " + pGate + " isn't known yet. It will be registered implicitly.");
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "Destination node " + tToFN +" of link " + pGate + " isn't known yet. It will be registered implicitly.");
+				}
 				
 				registerNode(tToFN, null, NamingLevel.NONE, null);
 				
@@ -769,12 +787,16 @@ public class HRMRoutingService implements RoutingService, Localization
 				}
 			}
 
-			Logging.log(this, "      ..internal link, which ends at the local node " + tToL2Address);
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				Logging.log(this, "      ..internal link, which ends at the local node " + tToL2Address);
+			}
 		}
 
 		if(tToL2Address == null) {
 			// return immediately because the peer name is sill unknown
-			Logging.log(this, "Peer name is still unknown, waiting for the second request (source=" + tFromL2Address + ", gate=" + pGate + ")");
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				Logging.log(this, "Peer name is still unknown, waiting for the second request (source=" + tFromL2Address + ", gate=" + pGate + ")");
+			}
 			return;
 		}
 		
@@ -789,11 +811,15 @@ public class HRMRoutingService implements RoutingService, Localization
 		if(tIsLinkToPhysicalNeigborNode) {
 			L2Address tThisHostL2Address = getL2AddressFor(mNode.getCentralFN());
 
-			Logging.info(this, "      ..NODE " + tThisHostL2Address + " FOUND POSSIBLE DIRECT NEIGHBOR: " + tToL2Address + "?");
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				Logging.info(this, "      ..NODE " + tThisHostL2Address + " FOUND POSSIBLE DIRECT NEIGHBOR: " + tToL2Address + "?");
+			}
 
 			if((!pFrom.equals(tThisHostL2Address)) && (!tToL2Address.equals(tThisHostL2Address))) {
 				if(tFromL2Address.getComplexAddress().longValue() < tToL2Address.getComplexAddress().longValue()) {
-					Logging.log(this, "    ..actually found an interesting link from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
+					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+						Logging.log(this, "    ..actually found an interesting link from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
+					}
 					getHRMController().detectedPhysicalNeighborNode(tToL2Address);
 				}else{
 					Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address);
@@ -807,7 +833,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate)
 	{
-		Logging.log(this, "UNREGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "UNREGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
+		}
 
 		/**
 		 * Check if the link is one to another physical neighbor node or not.
@@ -864,7 +892,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public void updateNode(ForwardingNode pElement, Description pCapabilities)
 	{
-		Logging.log(this, "UPDATING NODE " + pElement + ": old caps.=" + mNode.getCapabilities() + ", new caps.=" + pCapabilities);
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "UPDATING NODE " + pElement + ": old caps.=" + mNode.getCapabilities() + ", new caps.=" + pCapabilities);
+		}
 
 		// TODO: what about functional requirements and function placing?
 	}
@@ -930,7 +960,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	private <LinkType> List<RoutingServiceLink> getRouteFromLocalGraphs(HRMName pSource, HRMName pDestination, Description pDescription, Identity pRequester)
 	{
-		Logging.log(this, "GET ROUTE (getRouteFromLocalGraphs) from " + pSource + " to " + pDestination);
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "GET ROUTE (getRouteFromLocalGraphs) from " + pSource + " to " + pDestination);
+		}
 		
 		List<RoutingServiceLink> tResult = null;
 		
@@ -938,17 +970,23 @@ public class HRMRoutingService implements RoutingService, Localization
 		 * Look in the local FoG specific routing graph
 		 */
 		tResult = getRouteFromGraph(mFoGRoutingGraph, pSource, pDestination);
-		Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-routingMap): " + tResult);
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-routingMap): " + tResult);
+		}
 		
 		/**
 		 * 
 		 */
 		if (tResult == null){
 			tResult = getRouteFromGraph(mCoordinatorRoutingMap, pSource, pDestination);
-			Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-coordinatorMap): " + tResult);
+			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-coordinatorMap): " + tResult);
+			}
 		}
 		
-		Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs): " + tResult);
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs): " + tResult);
+		}
 		
 		return tResult;
 	}
