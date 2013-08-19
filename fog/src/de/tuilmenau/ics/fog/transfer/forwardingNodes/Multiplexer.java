@@ -175,9 +175,12 @@ public class Multiplexer extends GateContainer
 		GateID tID = packet.fetchNextGateID();
 		
 		if(tID == null) {
+			mLogger.log(this, "Route of packet is : " + packet.getRoute());
 			if(packet.getRoute().isEmpty()) {
 				// end of gate list reached
 				// => packet is for this node
+				mLogger.log(this, "Packet is directed to this FN");
+				
 				handlePacket(packet);
 			} else {
 				// route not empty but no gate ID
