@@ -143,7 +143,9 @@ public class ComChannelMuxer
 			}
 			
 			Identity tIdentity = mHRMController.getNode().getIdentity();
-			Description tConnectDescription = mHRMController.getConnectDescription(tParticipationProperty);
+			Description tConnectDescription = mHRMController.createHRMControllerDestinationDescription();
+			tConnectDescription.set(tParticipationProperty);
+			
 			Logging.log(this, "Connecting to " + pTargetCluster);
 			Connection tConn = null;;
 			try {

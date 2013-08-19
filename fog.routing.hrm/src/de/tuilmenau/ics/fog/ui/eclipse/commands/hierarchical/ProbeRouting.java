@@ -17,14 +17,19 @@ import org.eclipse.ui.IWorkbenchPartSite;
 import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.EnterStringDialog;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
+import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
+import de.tuilmenau.ics.fog.routing.RouteSegmentDescription;
 import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.DestinationApplicationProperty;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.ProbeRoutingProperty;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
@@ -35,6 +40,7 @@ import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.IAutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.util.SimpleName;
 
 /**
  * In order to create simulations this class sends packets from one node to another randomly chosen node. Or from one 
@@ -43,7 +49,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  *  
  *
  */
-public class SendProbePacket extends Command
+public class ProbeRouting extends Command
 {
 	/**
 	 * Defines the node name which is used to send a packet to all nodes. 
@@ -63,7 +69,7 @@ public class SendProbePacket extends Command
 	private Node mNode = null;
 	private IWorkbenchPartSite mSite;
 	
-	public SendProbePacket()
+	public ProbeRouting()
 	{
 		
 	}
@@ -148,7 +154,7 @@ public class SendProbePacket extends Command
 				/**
 				 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
 				 */
-				sendHRMProbePacket(tTargetNodeName, tTargetNode);
+				sendProbeConnectionRequest(tTargetNodeName, tTargetNode);
 			} else {
 				for(Node tTargetNode : tNodeList) {
 					/**
@@ -161,7 +167,7 @@ public class SendProbePacket extends Command
 					/**
 					 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
 					 */
-					sendHRMProbePacket(tTargetNodeName, tTargetNode);
+					sendProbeConnectionRequest(tTargetNodeName, tTargetNode);
 				}
 			}
 		}
@@ -173,9 +179,10 @@ public class SendProbePacket extends Command
 	 * @param pTargetNodeName the name (e.g., HRMID) of the target
 	 * @param pTargetNode the target node (reference is only used for debugging purposes)
 	 */
-	@SuppressWarnings("deprecation")
-	private void sendHRMProbePacket(Name pTargetNodeName, Node pTargetNode)
+	private void sendProbeConnectionRequest(Name pTargetNodeName, Node pTargetNode)
 	{
+		Logging.log(this, "Sending probe packet to " + pTargetNodeName + ", which belongs to node " + pTargetNode);
+		
 		// check if we have a valid NMS
 		if (mNMS == null){
 			Logging.err(this, "Reference to NMS is invalid, cannot send a packet to " + pTargetNodeName);
@@ -190,24 +197,31 @@ public class SendProbePacket extends Command
 					HRMID tTargetNodeHRMID = (HRMID)tNMSEntryForTarget.getAddress();
 					
 					Logging.log(this, "Found in the NMS the HRMID " + tTargetNodeHRMID.toString() + " for node " + pTargetNode);  
-
-					// describe the target by the help of a route-segment
-					Route tRoute = new Route();
-					tRoute.add(new RouteSegmentAddress(tTargetNodeHRMID));
-
-					// create the probe-packet
-					Packet tPacket = new Packet(tRoute, "HRM-PROBE");
-
-					// sign the packet
-					mNode.getAuthenticationService().sign(tPacket, mNode.getCentralFN().getOwner());
-
-					// set source/target node for better debug outputs
-					tPacket.setSourceNode(mNode.getName());
-					tPacket.setTargetNode(pTargetNode.getName());
 					
-					// send the packet
-					Logging.log(this, "Sending packet from " + mNode + " to " + tTargetNodeHRMID);
-					mNode.getCentralFN().handlePacket(tPacket, mNode.getCentralFN());
+					/**
+					 * Connect to the destination node
+					 */
+					// create requirements with probe-routing property and DestinationApplication property
+					Description tConnectionReqs = new Description();
+					tConnectionReqs.set(new ProbeRoutingProperty(mNode.getCentralFN().getName().toString()));
+					tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
+					// probe connection
+					Connection tConnection = null;
+					Logging.log(this, "\n\n\nProbing a connection to " + tTargetNodeHRMID + " with requirements " + tConnectionReqs);
+					try {
+						tConnection = mNode.getHost().connectBlock(tTargetNodeHRMID, tConnectionReqs, mNode.getIdentity());
+					} catch (NetworkException tExc) {
+						Logging.err(this, "Unable to connecto to " + tTargetNodeHRMID, tExc);
+						tConnection = null;
+					}
+					
+					/**
+					 * Disconnect by closing the connection
+					 */
+					if(tConnection != null) {
+						Logging.log(this, "        ..found valid connection to " + tTargetNodeHRMID + "(" + pTargetNodeName + ")");
+						tConnection.close();
+					}
 				}else{
 					Logging.log(this, "Found in the NMS the unsupported address " + tNMSEntryForTarget.getAddress() + " for node " + pTargetNode);
 				}
@@ -215,5 +229,15 @@ public class SendProbePacket extends Command
 		} catch (RemoteException tExc) {
 			Logging.err(this, "Unable to determine addresses for node " + pTargetNode, tExc);
 		}
+	}
+	
+	/**
+	 * Returns a descriptive string about the object
+	 * 
+	 * @return the descriptive string
+	 */
+	public String toString()
+	{
+		return getClass().getSimpleName() + "@" + mNode.toString();
 	}
 }

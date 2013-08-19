@@ -67,8 +67,8 @@
             name="HRM viewer">
       </editor>
       <plugin
-            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.SendProbePacket"
-            name="Send probe packet..">
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.ProbeRouting"
+            name="Probe HRM routing..">
       </plugin>
       <editor
             editorID="de.tuilmenau.ics.fog.clusterviewer"

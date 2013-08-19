@@ -160,7 +160,12 @@ public class HRMConfig
 		 * Should the packets of the "share phase" be send periodically?
 		 * If a distributed simulation (span a network over multiple physical nodes) is used, this value has to be set to "true". 
 		 */
-		public static final boolean PERIODIC_SHARE_PHASES = false; 
+		public static final boolean PERIODIC_SHARE_PHASES = false;
+
+		/**
+		 * Define if the HRM based route should be recorded in a ProbeRoutingProperty if the connection  request uses this property.
+		 */		
+		public static final boolean RECORD_ROUTE_FOR_PROBES = true; 
 	}
 
 	public class Debugging

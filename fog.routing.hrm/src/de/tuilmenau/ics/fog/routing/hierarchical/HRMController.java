@@ -741,14 +741,21 @@ public class HRMController extends Application implements IServerCallback, IEven
 	/**
 	 * This method is derived from IServerCallback. It is called by the ServerFN in order to acquire the acknowledgment from the HRMController about the incoming connection
 	 * 
-	 * @param pAuths the authentications for the open request
-	 * @param pRoute Route to the client requesting the new connection
-	 * @param pTargetName Registered name of the Server, which the new connection was requested to
-	 * @return Reference to object handling the connection or null if open is not allowed
+	 * @param pAuths the authentications of the requesting sender
+	 * @param pRequirements the requirements for the incoming connection
+	 * @param pTargetName the registered name of the addressed target service
+	 * @return true of false
 	 */
 	@Override
-	public boolean openAck(LinkedList<Signature> pAuths, Description pDescription, Name pTargetName)
+	public boolean openAck(LinkedList<Signature> pAuths, Description pRequirements, Name pTargetName)
 	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "Incoming request for acknowledging the connection:");
+			Logging.log(this, "    ..source: " + pAuths);
+			Logging.log(this, "    ..destination: " + pTargetName);
+			Logging.log(this, "    ..requirements: " + pRequirements);
+		}
+		
 		return true;
 	}
 	
@@ -875,6 +882,25 @@ public class HRMController extends Application implements IServerCallback, IEven
 		return tResult;
 	}
 	
+	/**
+	 * Creates a Description, which directs a connection to another HRMController instance
+
+	 * @return the new description
+	 */
+	public Description createHRMControllerDestinationDescription()
+	{
+		Description tResult = new Description();
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "Creating a HRMController destination description");
+		}
+
+		tResult.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE, null, null));
+		
+		return tResult;
+	}
+
+	
 	
 	
 	
@@ -887,186 +913,224 @@ public class HRMController extends Application implements IServerCallback, IEven
 	@Override
 	public void newConnection(Connection pConnection)
 	{
-		Logging.log(this, "INCOMING CONNECTION " + pConnection.toString());
+		Logging.log(this, "INCOMING CONNECTION " + pConnection.toString() + " with requirements: " + pConnection.getRequirements());
 
-		//long tClusterID = 0;
-		ComSession tConnectionSession = null;
-		
-		ClusterParticipationProperty tJoin = null;
-		Description tRequirements = pConnection.getRequirements();
-		for(Property tProperty : tRequirements) {
-			if(tProperty instanceof ClusterParticipationProperty) {
-				Logging.log(this, "Found ClusterParticipationProperty " + tProperty);
-				tJoin = (ClusterParticipationProperty)tProperty;
+		// get the connection requirements
+		Description tConReqs = pConnection.getRequirements();
+
+		/**
+		 * Check if the new connection is a probe-packet connection
+		 */
+		boolean tProbePacketConnection = false;
+		for(Property tProperty : tConReqs) {
+			if(tProperty instanceof ProbeRoutingProperty) {
+				ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty)tProperty;
+				
+				// get the recorded route from the property
+				LinkedList<HRMID> tRecordedHRMIDs = tPropProbeRouting.getRecordedHops();
+				
+				Logging.log(this, "       ..detected a probe-routing connection(source=" + tPropProbeRouting.getSourceDescription() + " with " + tRecordedHRMIDs.size() + " recorded hops");
+
+				// print the recorded route
+				int i = 0;
+				for(HRMID tHRMID : tRecordedHRMIDs){
+					Logging.log(this, "            [" + i + "]: " + tHRMID);
+					i++;
+				}
+
+				// mark the incoming connection as probe-packet connection
+				tProbePacketConnection = true;
 			}
 		}
-		
-		try {
-			tJoin = (ClusterParticipationProperty) tRequirements.get(ClusterParticipationProperty.class);
-		} catch (ClassCastException tExc) {
-			Logging.err(this, "Unable to find the information which cluster should be attached.", tExc);
-		}
-		
-		Logging.log(this, "Nested participations: " + tJoin.getNestedParticipations());
-		
-		for(NestedParticipation tParticipate : tJoin.getNestedParticipations()) {
-			Logging.log(this, "Iterate over nested participations");
 
-			ComChannel tCEP = null;
-			boolean tClusterFound = false;
-			ICluster tFoundCluster = null;
+		// do we have a probe-packet connection?
+		if (!tProbePacketConnection){
+			//long tClusterID = 0;
+			ComSession tConnectionSession = null;
 			
-			Logging.log(this, "Clusters: " + getRoutingTargetClusters());
+			ClusterParticipationProperty tJoin = null;
+			for(Property tProperty : tConReqs) {
+				if(tProperty instanceof ClusterParticipationProperty) {
+					Logging.log(this, "Found ClusterParticipationProperty " + tProperty);
+					tJoin = (ClusterParticipationProperty)tProperty;
+				}
+			}
 			
-			for(Cluster tCluster : getRoutingTargetClusters())
-			{
-				ClusterName tJoinClusterName = new ClusterName(tJoin.getTargetToken(), tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
-				ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
+			try {
+				tJoin = (ClusterParticipationProperty) tConReqs.get(ClusterParticipationProperty.class);
+			} catch (ClassCastException tExc) {
+				Logging.err(this, "Unable to find the information which cluster should be attached.", tExc);
+			}
+			
+			Logging.log(this, "Nested participations: " + tJoin.getNestedParticipations());
+			
+			for(NestedParticipation tParticipate : tJoin.getNestedParticipations()) {
+				Logging.log(this, "Iterate over nested participations");
+	
+				ComChannel tCEP = null;
+				boolean tClusterFound = false;
+				ICluster tFoundCluster = null;
 				
-				if(tCluster.equals(tJoinClusterNameTok0) || tJoin.getTargetToken() != 0 && tCluster.equals(tJoinClusterName))	{
-					Logging.log(this, "Cluster found: " + tCluster);
+				LinkedList<Cluster> tKnownClusters = getAllClusters();
+				
+				Logging.log(this, "Searching for target cluster among " + tKnownClusters.size() + " known clusters:");
+				
+				int i = 0;
+				for(Cluster tCluster : tKnownClusters)
+				{
+					Logging.log(this, "       ..[" + i + "]: " + tCluster);
 					
+					ClusterName tJoinClusterName = new ClusterName(tJoin.getTargetToken(), tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
+					ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
+					
+					if(tCluster.equals(tJoinClusterNameTok0) || tJoin.getTargetToken() != 0 && tCluster.equals(tJoinClusterName))	{
+						Logging.log(this, "Cluster found: " + tCluster);
+						
+						if(tConnectionSession == null) {
+							tConnectionSession = new ComSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
+						}
+						
+						tCEP = new ComChannel(this, tCluster);
+						((Cluster)tCluster).getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
+						if(tJoin.getHierarchyLevel().isHigherLevel()) {
+							((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
+						}
+						tClusterFound = true;
+						tFoundCluster = tCluster;
+					}
+					i++;
+				}
+				
+				if(!tClusterFound)
+				{
+					Logging.log(this, "Cluster not found");
+	
+					Cluster tCluster = new Cluster(this, new Long(tJoin.getTargetClusterID()), tJoin.getHierarchyLevel());
+					setSourceIntermediateCluster(tCluster, tCluster);
 					if(tConnectionSession == null) {
 						tConnectionSession = new ComSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
 					}
-					
+	
+					if(tJoin.getHierarchyLevel().isHigherLevel()) {
+						for(ICluster tVirtualNode : getRoutingTargetClusters()) {
+							if(tVirtualNode.getHierarchyLevel().getValue() == tJoin.getHierarchyLevel().getValue() - 1) {
+								tCluster.setPriority(tVirtualNode.getPriority());
+							}
+						}
+					}
 					tCEP = new ComChannel(this, tCluster);
-					((Cluster)tCluster).getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
 					if(tJoin.getHierarchyLevel().isHigherLevel()) {
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 					}
-					tClusterFound = true;
+					tCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
+					addRoutableTarget(tCluster);
 					tFoundCluster = tCluster;
 				}
-			}
-			
-			if(!tClusterFound)
-			{
-				Logging.log(this, "Cluster not found");
-
-				Cluster tCluster = new Cluster(this, new Long(tJoin.getTargetClusterID()), tJoin.getHierarchyLevel());
-				setSourceIntermediateCluster(tCluster, tCluster);
-				if(tConnectionSession == null) {
-					tConnectionSession = new ComSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
+				tFoundCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
+				for(ICluster tNegotiatingCluster : getRoutingTargetClusters()) {
+					ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel().getValue() - 1 : 0 ));
+					if(tNegotiatingCluster.equals(tNegClusterName)) {
+						tCEP.setRemoteClusterName(tNegClusterName);
+					}
 				}
-
-				if(tJoin.getHierarchyLevel().isHigherLevel()) {
-					for(ICluster tVirtualNode : getRoutingTargetClusters()) {
-						if(tVirtualNode.getHierarchyLevel().getValue() == tJoin.getHierarchyLevel().getValue() - 1) {
-							tCluster.setPriority(tVirtualNode.getPriority());
+				if(tCEP.getRemoteClusterName() == null && tJoin.getHierarchyLevel().isHigherLevel()) {
+					HashMap<ICluster, ClusterName> tNewlyCreatedClusters = new HashMap<ICluster, ClusterName>(); 
+					NeighborCluster tAttachedCluster = new NeighborCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1), this);
+					tAttachedCluster.setPriority(tParticipate.getSenderPriority());
+					if(tAttachedCluster.getCoordinatorName() != null) {
+						try {
+							getHRS().mapFoGNameToL2Address(tAttachedCluster.getCoordinatorName(), tAttachedCluster.getCoordinatorsAddress());
+						} catch (RemoteException tExc) {
+							Logging.err(this, "Unable to fulfill requirements", tExc);
 						}
 					}
-				}
-				tCEP = new ComChannel(this, tCluster);
-				if(tJoin.getHierarchyLevel().isHigherLevel()) {
-					((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
-				}
-				tCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
-				addRoutableTarget(tCluster);
-				tFoundCluster = tCluster;
-			}
-			tFoundCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
-			for(ICluster tNegotiatingCluster : getRoutingTargetClusters()) {
-				ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel().getValue() - 1 : 0 ));
-				if(tNegotiatingCluster.equals(tNegClusterName)) {
-					tCEP.setRemoteClusterName(tNegClusterName);
-				}
-			}
-			if(tCEP.getRemoteClusterName() == null && tJoin.getHierarchyLevel().isHigherLevel()) {
-				HashMap<ICluster, ClusterName> tNewlyCreatedClusters = new HashMap<ICluster, ClusterName>(); 
-				NeighborCluster tAttachedCluster = new NeighborCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1), this);
-				tAttachedCluster.setPriority(tParticipate.getSenderPriority());
-				if(tAttachedCluster.getCoordinatorName() != null) {
-					try {
-						getHRS().mapFoGNameToL2Address(tAttachedCluster.getCoordinatorName(), tAttachedCluster.getCoordinatorsAddress());
-					} catch (RemoteException tExc) {
-						Logging.err(this, "Unable to fulfill requirements", tExc);
-					}
-				}
-				tNewlyCreatedClusters.put(tAttachedCluster, tParticipate.getPredecessor());
-				Logging.log(this, "as joining cluster");
-				for(ICluster tCandidate : getRoutingTargetClusters()) {
-					if((tCandidate instanceof Cluster) && (tCandidate.getHierarchyLevel().equals(tAttachedCluster.getHierarchyLevel()))) {
-						setSourceIntermediateCluster(tAttachedCluster, (Cluster)tCandidate);
-					}
-				}
-				if(getSourceIntermediate(tAttachedCluster) == null) {
-					Logging.err(this, "No source intermediate cluster for" + tAttachedCluster.getClusterDescription() + " found");
-				}
-				
-				Logging.log(this, "Created " + tAttachedCluster);
-				
-				tCEP.setRemoteClusterName(new ClusterName(tAttachedCluster.getToken(), tAttachedCluster.getClusterID(), tAttachedCluster.getHierarchyLevel()));
-				tAttachedCluster.addAnnouncedCEP(tCEP);
-				addRoutableTarget(tAttachedCluster);
-				if(tParticipate.getNeighbors() != null && !tParticipate.getNeighbors().isEmpty()) {
-					Logging.log(this, "Working on neighbors " + tParticipate.getNeighbors());
-					for(DiscoveryEntry tEntry : tParticipate.getNeighbors()) {
-						
-						/**
-						 * Create a ClusterName object from this entry
-						 */
-						ClusterName tEntryClusterName = new ClusterName(tEntry.getToken(), tEntry.getClusterID(), tEntry.getLevel());
-						
-						
-						ICluster tCluster = null;
-						if(tEntry.getRoutingVectors()!= null) {
-							for(RoutingServiceLinkVector tVector : tEntry.getRoutingVectors())
-							getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
+					tNewlyCreatedClusters.put(tAttachedCluster, tParticipate.getPredecessor());
+					Logging.log(this, "as joining cluster");
+					for(ICluster tCandidate : getRoutingTargetClusters()) {
+						if((tCandidate instanceof Cluster) && (tCandidate.getHierarchyLevel().equals(tAttachedCluster.getHierarchyLevel()))) {
+							setSourceIntermediateCluster(tAttachedCluster, (Cluster)tCandidate);
 						}
-						if(!getRoutingTargetClusters().contains(tEntryClusterName)) {
-							tCluster = new NeighborCluster(tEntry.getClusterID(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken(), tEntry.getLevel(), this);
-							tCluster.setPriority(tEntry.getPriority());
-							try {
-								getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), (L2Address)((NeighborCluster)tCluster).getCoordinatorsAddress());
-							} catch (RemoteException tExc) {
-								Logging.err(this, "Unable to fulfill requirements", tExc);
-							}
+					}
+					if(getSourceIntermediate(tAttachedCluster) == null) {
+						Logging.err(this, "No source intermediate cluster for" + tAttachedCluster.getClusterDescription() + " found");
+					}
+					
+					Logging.log(this, "Created " + tAttachedCluster);
+					
+					tCEP.setRemoteClusterName(new ClusterName(tAttachedCluster.getToken(), tAttachedCluster.getClusterID(), tAttachedCluster.getHierarchyLevel()));
+					tAttachedCluster.addAnnouncedCEP(tCEP);
+					addRoutableTarget(tAttachedCluster);
+					if(tParticipate.getNeighbors() != null && !tParticipate.getNeighbors().isEmpty()) {
+						Logging.log(this, "Working on neighbors " + tParticipate.getNeighbors());
+						for(DiscoveryEntry tEntry : tParticipate.getNeighbors()) {
 							
-							tNewlyCreatedClusters.put(tCluster, tEntry.getPredecessor());
-							for(ICluster tCandidate : getRoutingTargetClusters()) {
-								if(tCandidate instanceof Cluster && tCluster.getHierarchyLevel() == tCandidate.getHierarchyLevel()) {
-									setSourceIntermediateCluster(tCluster, (Cluster)tCandidate);
-									Logging.log(this, "as joining neighbor");
+							/**
+							 * Create a ClusterName object from this entry
+							 */
+							ClusterName tEntryClusterName = new ClusterName(tEntry.getToken(), tEntry.getClusterID(), tEntry.getLevel());
+							
+							
+							ICluster tCluster = null;
+							if(tEntry.getRoutingVectors()!= null) {
+								for(RoutingServiceLinkVector tVector : tEntry.getRoutingVectors())
+								getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
+							}
+							if(!getRoutingTargetClusters().contains(tEntryClusterName)) {
+								tCluster = new NeighborCluster(tEntry.getClusterID(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken(), tEntry.getLevel(), this);
+								tCluster.setPriority(tEntry.getPriority());
+								try {
+									getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), (L2Address)((NeighborCluster)tCluster).getCoordinatorsAddress());
+								} catch (RemoteException tExc) {
+									Logging.err(this, "Unable to fulfill requirements", tExc);
+								}
+								
+								tNewlyCreatedClusters.put(tCluster, tEntry.getPredecessor());
+								for(ICluster tCandidate : getRoutingTargetClusters()) {
+									if(tCandidate instanceof Cluster && tCluster.getHierarchyLevel() == tCandidate.getHierarchyLevel()) {
+										setSourceIntermediateCluster(tCluster, (Cluster)tCandidate);
+										Logging.log(this, "as joining neighbor");
+									}
+								}
+								if(getSourceIntermediate(tAttachedCluster) == null) {
+									Logging.err(this, "No source intermediate cluster for" + tCluster.getClusterDescription() + " found");
+								}
+	//							((NeighborCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
+								((NeighborCluster)tCluster).addAnnouncedCEP(tCEP);
+								Logging.log(this, "Created " +tCluster);
+							} else {
+								for(ICluster tPossibleCandidate : getRoutingTargetClusters()) {
+									if(tPossibleCandidate.equals(tEntryClusterName)) {
+										tCluster = tPossibleCandidate;
+									}
 								}
 							}
-							if(getSourceIntermediate(tAttachedCluster) == null) {
-								Logging.err(this, "No source intermediate cluster for" + tCluster.getClusterDescription() + " found");
-							}
-//							((NeighborCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
-							((NeighborCluster)tCluster).addAnnouncedCEP(tCEP);
-							Logging.log(this, "Created " +tCluster);
-						} else {
-							for(ICluster tPossibleCandidate : getRoutingTargetClusters()) {
-								if(tPossibleCandidate.equals(tEntryClusterName)) {
-									tCluster = tPossibleCandidate;
-								}
+							mRoutableClusterGraph.storeLink(tAttachedCluster, tCluster, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
+						}
+						for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
+							if(getSourceIntermediate(tCluster) != null) {
+								setSourceIntermediateCluster(tAttachedCluster, getSourceIntermediate(tCluster));
 							}
 						}
-						mRoutableClusterGraph.storeLink(tAttachedCluster, tCluster, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
-					}
-					for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
-						if(getSourceIntermediate(tCluster) != null) {
-							setSourceIntermediateCluster(tAttachedCluster, getSourceIntermediate(tCluster));
-						}
+					} else {
+						Logging.warn(this, "Adding cluster that contains no neighbors");
 					}
 				} else {
-					Logging.warn(this, "Adding cluster that contains no neighbors");
+					Logging.trace(this, "remote cluster was set earlier");
 				}
-			} else {
-				Logging.trace(this, "remote cluster was set earlier");
+				if(tCEP.getRemoteClusterName() == null) {
+					Logging.err(this, "Unable to set remote cluster");
+					ClusterName tRemoteClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), tParticipate.getLevel());
+							
+					tCEP.setRemoteClusterName(tRemoteClusterName);
+				}
+				tCEP.setPeerPriority(tParticipate.getSenderPriority());
+				Logging.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);
 			}
-			if(tCEP.getRemoteClusterName() == null) {
-				Logging.err(this, "Unable to set remote cluster");
-				ClusterName tRemoteClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), tParticipate.getLevel());
-						
-				tCEP.setRemoteClusterName(tRemoteClusterName);
-			}
-			tCEP.setPeerPriority(tParticipate.getSenderPriority());
-			Logging.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);
+			
+			tConnectionSession.start(pConnection);
+		}else{
+			// probe-packet connection
 		}
-		
-		tConnectionSession.start(pConnection);
 	}
 	
 	/**
@@ -1111,29 +1175,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		return tDistance;
 	}
 
-	/**
-	 * 
-	 * @param pParticipationProperty is the object that describes in which cluster this node wishes to participate
-	 * @return @return the description that will be put into the packet
-	 */
-	public Description getConnectDescription(ClusterParticipationProperty pParticipationProperty)
-	{
-		Logging.log(this, "Creating a cluster participation property for level " + pParticipationProperty.getHierarchyLevel());
-		Description tDescription = new Description();
-		//try {
-		tDescription.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE, null, null));
-		//} catch (PropertyException tExc) {
-		//	Logging.err(this, "Unable to fulfill requirements given by ContactDestinationProperty", tExc);
-		//}
-
-		try {
-			tDescription.add(pParticipationProperty);
-		} catch (PropertyException tExc) {
-			Logging.err(this, "Unable to match property that wants us to participate in a cluster", tExc);
-		}
-		return tDescription;
-	}
-	
 	/**
 	 * This method is called in case a neighbor node is detected.
 	 * 
@@ -1180,9 +1221,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 			tCluster.getMultiplexer().mapChannelToSession(tCEP, tSession);
 			tFoundCluster = tCluster;
 		}
-		final ClusterParticipationProperty tProperty = new ClusterParticipationProperty(pToClusterID, pLevel, 0);
-		NestedParticipation tParticipate = tProperty.new NestedParticipation(pToClusterID, 0);
-		tProperty.addNestedparticipation(tParticipate);
+		final ClusterParticipationProperty tClusterParticipationProperty = new ClusterParticipationProperty(pToClusterID, pLevel, 0);
+		NestedParticipation tParticipate = tClusterParticipationProperty.new NestedParticipation(pToClusterID, 0);
+		tClusterParticipationProperty.addNestedparticipation(tParticipate);
 		
 		tParticipate.setSourceClusterID(pToClusterID);
 		
@@ -1199,10 +1240,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 				 * Connect to the neighbor node
 				 */
 				Connection tConn = null;
-				Description tConReq = getConnectDescription(tProperty);
+				Description tConReq = createHRMControllerDestinationDescription();
+				tConReq.set(tClusterParticipationProperty);
 				
 				try {
-					Logging.log(tHRMController, "OUTGOING CONNECTION to " + tNeighborName + " with requirements: " + tConReq);
+					Logging.log(tHRMController, "\n\n\nOUTGOING CONNECTION to " + tNeighborName + " with requirements: " + tConReq);
 					tConn = getHost().connectBlock(tNeighborName, tConReq, getNode().getIdentity());
 				} catch (NetworkException tExc) {
 					Logging.err(tHRMController, "Unable to connecto to " + tNeighborName, tExc);
