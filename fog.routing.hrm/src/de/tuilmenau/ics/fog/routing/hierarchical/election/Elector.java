@@ -88,12 +88,36 @@ public class Elector implements Localization
 		mParentCluster = pCluster;
 		mElectionWon = false;
 		
-		// set IDLE state
-		setElectorState(ElectorState.IDLE);
-		
-		// start coordinator election for the created HRM instance if desired
-		if(HRMConfig.Hierarchy.BUILD_AUTOMATICALLY) {
+		if (mParentCluster.isNeighborHoodInitialized()){
+			// set IDLE state
+			setElectorState(ElectorState.IDLE);
+			
+			// start coordinator election for the created HRM instance if desired
+			if(HRMConfig.Hierarchy.BUILD_AUTOMATICALLY) {
+				elect();
+			}
+		}else{
+			Logging.err(this, "Neighborhood of cluster " + mParentCluster + " has to be already initialized when calling this constructor");
+			
+			setElectorState(ElectorState.ERROR);
+		}
+	}
+	
+	/**
+	 * Elects the coordinator for this cluster.
+	 */
+	private void elect()
+	{
+		// set correct elector state
+		setElectorState(ElectorState.ELECTING);
+
+		// do we know more than 0 external cluster members?
+		if (mParentCluster.countClusterMembers() > 0){
+			Logging.log(this, "Trying to ask all cluster members for their Bully priority");
 			signalElectBroadcast();
+		}else{
+			Logging.log(this, "I am automatically the election WINNER because no alternative cluster member is known");
+			eventElectionWon();
 		}
 	}
 	
@@ -104,17 +128,7 @@ public class Elector implements Localization
 	{
 		switch(getElectorState()){
 			case IDLE:
-				// set correct elector state
-				setElectorState(ElectorState.ELECTING);
-
-				// do we know more than 0 external cluster members?
-				if (mParentCluster.countClusterMembers() > 0){
-					Logging.log(this, "Trying to ask all cluster members for their Bully priority");
-					signalElectBroadcast();
-				}else{
-					Logging.log(this, "I am automatically the election WINNER because no alternative cluster member is known");
-					eventElectionWon();
-				}
+				elect();
 				break;
 			case ELECTED:
 				Logging.log(this, "Election has already finished, coordinator is valid: " + isCoordinatorValid());
@@ -232,7 +246,7 @@ public class Elector implements Localization
 				// create the packet
 				BullyElect tPacketBullyElect = new BullyElect(mParentCluster.getHRMController().getNodeName(), mParentCluster.getPriority());
 				
-				// send broadcast
+				// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority				
 				mParentCluster.sendClusterBroadcast(tPacketBullyElect);
 				
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){

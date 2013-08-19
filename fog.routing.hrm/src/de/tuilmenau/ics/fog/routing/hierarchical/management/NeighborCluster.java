@@ -112,7 +112,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		/*
 		 * function checks whether neighbor relation was established earlier
 		 */
-		addNeighborCluster(tCluster);
+		registerMember(tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
 			RoutingService tRS = (RoutingService)getHRMController().getNode().getRoutingService();
@@ -137,7 +137,7 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		mCoordName = pCoordinatorName;
 	}
 
-	public void addNeighborCluster(ICluster pNeighbor)
+	public void registerMember(ICluster pNeighbor)
 	{
 		getHRMController().getRoutableClusterGraph().storeLink(this, pNeighbor, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
 	}

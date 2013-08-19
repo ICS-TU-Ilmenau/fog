@@ -164,7 +164,7 @@ public interface ICluster extends Serializable, HRMGraphNodeName
 	 * 
 	 * @param pNeighbor This is the neighbor that has to be added to the cluster. 
 	 */
-	public void addNeighborCluster(ICluster pNeighbor);
+	public void registerMember(ICluster pNeighbor);
 	
 	/**
 	 * 

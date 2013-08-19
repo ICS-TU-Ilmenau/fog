@@ -25,7 +25,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -72,6 +71,11 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 	 */
 	private String mCoordinatorDescription = null;
 	
+	/**
+	 * Stores if the neighborhood is already initialized
+	 */
+	private boolean mNeighborInitialized = false;
+	
 	private BullyPriority mHighestPriority = null;
 	private Name mCoordName;
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
@@ -108,32 +112,55 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 			mClusterID = pClusterID;
 		}
 
-		// creates new elector object, which is responsible for Bully based election processes
-		mElector = new Elector(this);
-
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
 
+		mMux = new ComChannelMuxer(this, getHRMController());
+
+		// register at HRMController's internal database
+		getHRMController().registerCluster(this);
+
+		// detect neighbor clusters, increase the Bully priority based on the local connectivity
+		initializeNeighborhood();
+
+		// creates new elector object, which is responsible for Bully based election processes
+		mElector = new Elector(this);
+		
+		Logging.log(this, "CREATED");
+	}
+	
+	/**
+	 * Detects neighbor clusters and increases the cluster's Bully priority based on the local connectivity. 
+	 */
+	private void initializeNeighborhood()
+	{
+		Logging.log(this, "Checking local connectivity for increasing priority " + getPriority().getValue());
+		
 		for(Cluster tCluster : getHRMController().getAllClusters())
 		{
 			if ((tCluster.getHierarchyLevel().equals(getHierarchyLevel())) && (tCluster != this))
 			{
-				Logging.log(this, "Found already known neighbor cluster: " + tCluster);
+				Logging.log(this, "      ..found known neighbor cluster: " + tCluster);
 				
 				// add this cluster as neighbor to the already known one
-				tCluster.addNeighborCluster(this);
+				tCluster.registerMember(this);
 
 				// increase Bully priority because of changed connectivity (topology depending)
 				getPriority().increaseConnectivity();
 			}
 		}
-
 		
-		mMux = new ComChannelMuxer(this, getHRMController());
-		
-		// register at HRMController's internal database
-		getHRMController().registerCluster(this);
+		mNeighborInitialized = true;
+	}
 
-		Logging.log(this, "CREATED");
+	/**
+	 * Returns true if the neighborhood is already initialized - otherwise false
+	 * This function is used by the elector to make sure that the local neighborhood is already probed and initialized.
+	 *  
+	 * @return true of false
+	 */
+	public boolean isNeighborHoodInitialized()
+	{
+		return mNeighborInitialized;
 	}
 	
 	/**
@@ -440,7 +467,7 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		/*
 		 * function checks whether neighbor relation was established earlier
 		 */
-		addNeighborCluster(tCluster);
+		registerMember(tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
 //			Description tDescription = new Description();
@@ -503,7 +530,7 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 					getComChannels().remove(this);
 				}
 				try {
-					addNeighborCluster(getHRMController().getCluster(pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
+					registerMember(getHRMController().getCluster(pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
 				} catch (PropertyException tExc) {
 					Logging.log(this, "Unable to fulfill requirements");
 				}
@@ -514,21 +541,21 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		}
 	}
 	
-	public void addNeighborCluster(ICluster pNeighbor)
+	public void registerMember(ICluster pMember)
 	{
 		LinkedList<ICluster> tNeighbors = getNeighbors(); 
-		if(!tNeighbors.contains(pNeighbor))
+		if(!tNeighbors.contains(pMember))
 		{
-			if(pNeighbor instanceof Cluster) {
+			if(pMember instanceof Cluster) {
 				RoutableClusterGraphLink tLink = new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.PHYSICAL_LINK);
-				getHRMController().getRoutableClusterGraph().storeLink(pNeighbor, this, tLink);
+				getHRMController().getRoutableClusterGraph().storeLink(pMember, this, tLink);
 			} else {
 				RoutableClusterGraphLink tLink = new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK);
-				getHRMController().getRoutableClusterGraph().storeLink(pNeighbor, this, tLink);
+				getHRMController().getRoutableClusterGraph().storeLink(pMember, this, tLink);
 			}
-			if(pNeighbor instanceof Cluster) {
+			if(pMember instanceof Cluster) {
 				
-				Logging.log(this, "CLUSTER - adding neighbor cluster: " + pNeighbor);
+				Logging.log(this, "CLUSTER - adding neighbor cluster: " + pMember);
 
 				// increase Bully priority because of changed connectivity (topology depending) 
 				getPriority().increaseConnectivity();

@@ -139,7 +139,7 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public void addNeighborCluster(ICluster pNeighbor)
+	public void registerMember(ICluster pNeighbor)
 	{
 		
 	}
