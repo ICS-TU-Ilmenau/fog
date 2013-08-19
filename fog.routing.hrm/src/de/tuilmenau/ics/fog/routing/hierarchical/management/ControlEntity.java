@@ -396,7 +396,7 @@ public abstract class ControlEntity implements Localization, IElementDecorator
 	{
 		Float tResult = Float.valueOf(1.0f - 0.7f * (getHierarchyLevel().getValue() + 1)/ HRMConfig.Hierarchy.HEIGHT);
 		
-		Logging.log(this, "Returning decoration value: " + tResult);
+		//Logging.log(this, "Returning decoration value: " + tResult);
 		
 		return tResult;
 	}

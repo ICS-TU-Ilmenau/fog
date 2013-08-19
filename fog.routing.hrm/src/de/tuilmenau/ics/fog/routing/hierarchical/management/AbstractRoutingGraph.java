@@ -21,6 +21,7 @@ import edu.uci.ics.jung.graph.util.EdgeType;
 
 /**
  * Data storage for an abstracted topology view of higher hierarchy levels. 
+ * See http://jung.sourceforge.net/site/apidocs/edu/uci/ics/jung/graph/Graph.html for documentation about inherited member functions.
  * 
  * @param <NodeObject> define what is used as node objects
  * @param <LinkObject> define what is used as link objects
