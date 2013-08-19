@@ -440,16 +440,6 @@ public class HRMRoutingService implements RoutingService, Localization
 		
 		return tResult;
 	}
-	
-	/**
-	 * Returns the FoG specific routing graph
-	 * 
-	 * @return the routing graph
-	 */
-	public RoutableGraph<HRMName, RoutingServiceLink> getFoGRoutingGraph()
-	{
-		return mFoGRoutingGraph;
-	}
 
 	/**
 	 * Stores a link in the local FoG specific routing graph
@@ -458,11 +448,42 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pToL2Address the ending point of the link
 	 * @param pRoutingServiceLink the link description
 	 */
-	private void storeLinkInFogRoutingGraph(L2Address pFromL2Address, L2Address pToL2Address,	RoutingServiceLink pRoutingServiceLink)
+	private void storeLinkInFogRoutingGraph(L2Address pFromL2Address, L2Address pToL2Address, RoutingServiceLink pRoutingServiceLink)
 	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "REGISTERING LINK IN FOG GRAPH:  source=" + pFromL2Address + " ## dest.=" + pToL2Address + " ## link=" + pRoutingServiceLink);
+		}
+		
 		synchronized (mFoGRoutingGraph) {
 			mFoGRoutingGraph.storeLink(pFromL2Address, pToL2Address, pRoutingServiceLink);
 		}
+	}
+
+	/**
+	 * Returns the destination node of a link from the local FoG based routing graph
+	 * This function is used within HRMController::getL2AddressOfFirstFNTowardsNeighbor().
+	 * 
+	 * @param pLink the link for which the destination has to be determined
+	 * 
+	 * @return the search destination node
+	 */
+	public HRMName getLinkDestination(RoutingServiceLink pLink)
+	{
+		HRMName tResult = null;
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "Search for the destination node of " + pLink);
+		}
+		
+		synchronized (mFoGRoutingGraph) {
+			tResult = mFoGRoutingGraph.getDest(pLink);
+		}
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "      ..result: " + tResult);
+		}
+
+		return tResult;
 	}
 
 	/**
@@ -1279,6 +1300,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					}else{
 						// no route found
 						Logging.log(this, "Couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
+						// list known topology
 						synchronized (mFoGRoutingGraph) {
 							Collection<HRMName> tGraphNodes = mFoGRoutingGraph.getVertices();
 							int i = 0;
@@ -1385,6 +1407,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					}else{
 						// no route found
 						Logging.log(this, "Couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph nodes");
+						// list known nodes
 						synchronized (mFoGRoutingGraph) {
 							Collection<HRMName> tGraphNodes = mFoGRoutingGraph.getVertices();
 							int i = 0;
@@ -1523,7 +1546,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	
 	public void registerNode(L2Address pAddress, boolean pGloballyImportant)
 	{
-		Logging.log(this, "REGISTERING NODE ADDRESS: " + pAddress + ", glob. important=" + pGloballyImportant);
+		Logging.log(this, "REGISTERING NODE ADDRESS (FoG routing graph): " + pAddress + ", glob. important=" + pGloballyImportant);
 
 		mFoGRoutingGraph.add(pAddress);
 	}

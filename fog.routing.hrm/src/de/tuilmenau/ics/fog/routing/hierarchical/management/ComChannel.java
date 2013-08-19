@@ -67,7 +67,6 @@ public class ComChannel
 	private boolean mKnowsCoordinator = false;
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
-	private BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink> mBreadthFirstSearch;
 	
 	/**
 	 * For COORDINATORS: Stores the HRMID under which the corresponding peer cluster member is addressable.
@@ -581,9 +580,9 @@ public class ComChannel
 			tEntry.setPriority(pCluster.getPriority());
 			tEntry.setRoutingVectors(getPath(tCoordL2Addr));
 			
-			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute((ICluster)getParent(), pCluster);
+			List<RoutableClusterGraphLink> tClusterList = getHRMController().getRouteARG((ICluster)getParent(), pCluster);
 			if(!tClusterList.isEmpty()) {
-				ICluster tPredecessorCluster = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(pCluster, tClusterList.get(tClusterList.size()-1));
+				ICluster tPredecessorCluster = (ICluster) getHRMController().getOtherEndOfLinkARG(pCluster, tClusterList.get(tClusterList.size() - 1));
 				ClusterName tPredecessorClusterName = new ClusterName(tPredecessorCluster.getToken(), tPredecessorCluster.getClusterID(), tPredecessorCluster.getHierarchyLevel());
 				tEntry.setPredecessor(tPredecessorClusterName);
 			}
@@ -688,11 +687,9 @@ public class ComChannel
 			if(tSourceCluster == null) {
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteClusterName());
 			}
-			if(mBreadthFirstSearch == null ) {
-				mBreadthFirstSearch = new BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink>();
-			}
-			mBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), tSourceCluster);
-			List<HRMGraphNodeName> tDiscoveryCandidates = mBreadthFirstSearch.getVerticesInOrderVisited();
+
+			List<HRMGraphNodeName> tDiscoveryCandidates = getHRMController().getVerticesInOrderRadiusARG(tSourceCluster);
+			
 			if(tSourceCluster != null) {
 				for(HRMGraphNodeName tVirtualNode : tDiscoveryCandidates) {
 					if(tVirtualNode instanceof ICluster) {
@@ -701,7 +698,9 @@ public class ComChannel
 						int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 						Logging.log(this, "Radius is " + tRadius);
 						
-						if(tCluster instanceof NeighborCluster && ((NeighborCluster)tCluster).getClusterDistanceToTarget() + pDiscovery.getDistance() > tRadius) continue;
+						if(tCluster instanceof NeighborCluster && ((NeighborCluster)tCluster).getClusterDistanceToTarget() + pDiscovery.getDistance() > tRadius){
+							continue;
+						}
 						int tToken = tCluster.getToken();
 						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
 							if(tCluster instanceof NeighborCluster) {
@@ -756,7 +755,7 @@ public class ComChannel
 				((NeighborCluster)tNewCluster).addAnnouncedCEP(this);
 				tNewCluster.setToken(pEntry.getToken());
 				tNewCluster.setPriority(pEntry.getPriority());
-				getHRMController().addRoutableTarget(tNewCluster);
+				getHRMController().registerNodeARG(tNewCluster);
 				try {
 					getHRMController().getHRS().mapFoGNameToL2Address(tNewCluster.getCoordinatorName(), ((NeighborCluster)tNewCluster).getCoordinatorsAddress());
 				} catch (RemoteException tExc) {

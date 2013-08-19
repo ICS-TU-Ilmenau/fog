@@ -553,10 +553,10 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 		{
 			if(pNeighbor instanceof Cluster) {
 				RoutableClusterGraphLink tLink = new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.PHYSICAL_LINK);
-				getHRMController().getRoutableClusterGraph().storeLink(pNeighbor, this, tLink);
+				getHRMController().registerLinkARG(pNeighbor, this, tLink);
 			} else {
 				RoutableClusterGraphLink tLink = new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK);
-				getHRMController().getRoutableClusterGraph().storeLink(pNeighbor, this, tLink);
+				getHRMController().registerLinkARG(pNeighbor, this, tLink);
 			}
 
 			// backward call
@@ -592,7 +592,7 @@ public class Cluster extends ControlEntity implements ICluster, IElementDecorato
 	public LinkedList<ICluster> getNeighbors()
 	{
 		LinkedList<ICluster> tList = new LinkedList<ICluster>();
-		for(HRMGraphNodeName tNode : getHRMController().getRoutableClusterGraph().getNeighbors(this)) {
+		for(HRMGraphNodeName tNode : getHRMController().getNeighborsARG(this)) {
 			if(tNode instanceof ICluster) {
 				tList.add((ICluster)tNode);
 			}

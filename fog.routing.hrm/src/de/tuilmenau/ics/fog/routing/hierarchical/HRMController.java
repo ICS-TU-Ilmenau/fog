@@ -121,20 +121,20 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	private static LinkedList<HRMController> mRegisteredHRMControllers = new LinkedList<HRMController>();
 	
-	private RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> mRoutableClusterGraph = new RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink>();
+	/**
+	 * Stores an abstract routing graph (ARG), which provides an abstract overview about logical links between clusters/coordinator.
+	 */
+	private AbstractRoutingGraph<HRMGraphNodeName, RoutableClusterGraphLink> mAbstractRoutingGraph = new AbstractRoutingGraph<HRMGraphNodeName, RoutableClusterGraphLink>();
+	
+	/**
+	 * Count the outgoing connections
+	 */
+	private int mCounterOutgoingConnections = 0;
+
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	private HashMap<Integer, ComChannelMuxer> mMuxOnLevel;
 	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
-	
-	
-//	private LinkedList<HRMID> mIdentifications = new LinkedList<HRMID>();
-	
-	
-	/**
-	 * Count the connections
-	 */
-	private int mConnections = 0;
 	
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
@@ -288,7 +288,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
 		
 		//TODO: remove this
-		addRoutableTarget(pCoordinator);
+		registerNodeARG(pCoordinator);
 
 		synchronized (mKnownCoordinators) {
 			// register as known coordinator
@@ -804,18 +804,18 @@ public class HRMController extends Application implements IServerCallback, IEven
 			// get all outgoing links from the central FN
 			Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
 			
-			RoutingServiceLink tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = null;
+			RoutingServiceLink tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = null;
 
 			// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
 			for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
 				// compare the GateIDs
 				if(tLink.equals(tGateID)) {
 					// found!
-					tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor = tLink;
+					tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = tLink;
 				}
 			}
 			// determine the searched FN, which comes first when routing towards the neighbor
-			HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getFoGRoutingGraph().getDest(tLinkBetweenCentralFNAndFirstNoeTowardsNeighbor);
+			HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getLinkDestination(tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor);
 			if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
 				// get the L2 address
 				tResult = (L2Address)tFirstNodeBeforeBusToNeighbor;
@@ -896,6 +896,210 @@ public class HRMController extends Application implements IServerCallback, IEven
 		return tResult;
 	}
 
+	/**
+	 * Registers a cluster/coordinator to the locally stored abstract routing graph (ARG)
+	 *  
+	 * @param pNode the node (cluster/coordinator) which should be stored in the ARG
+	 */
+	public synchronized void registerNodeARG(ICluster pNode)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "REGISTERING NODE ADDRESS (ARG): " + pNode );
+		}
+
+		synchronized (mAbstractRoutingGraph) {
+			if(!mAbstractRoutingGraph.contains(pNode)) {
+				mAbstractRoutingGraph.add(pNode);
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..added to ARG");
+				}
+			}else{
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..node for ARG already known: " + pNode);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Registers a logical link between clusters/coordinators to the locally stored abstract routing graph (ARG)
+	 * 
+	 * @param pFrom the starting point of the link
+	 * @param pTo the ending point of the link
+	 * @param pLink the link between the two nodes
+	 */
+	public void registerLinkARG(ICluster pFrom, ICluster pTo, RoutableClusterGraphLink pLink)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "REGISTERING LINK (ARG):  source=" + pFrom + " ## dest.=" + pTo + " ## link=" + pLink);
+		}
+
+		synchronized (mAbstractRoutingGraph) {
+			mAbstractRoutingGraph.storeLink(pFrom, pTo, pLink);
+		}
+	}
+
+	/**
+	 * Determines a route in the locally stored abstract routing graph (ARG).
+	 * 
+	 * @param pSource the source of the desired route
+	 * @param pDestination the destination of the desired route
+	 * 
+	 * @return the determined route, null if no route could be found
+	 */
+	public List<RoutableClusterGraphLink> getRouteARG(HRMGraphNodeName pSource, HRMGraphNodeName pDestination)
+	{
+		List<RoutableClusterGraphLink> tResult = null;
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "GET ROUTE (ARG) from \"" + pSource + "\" to \"" + pDestination +"\"");
+		}
+
+		synchronized (mAbstractRoutingGraph) {
+			tResult = mAbstractRoutingGraph.getRoute(pSource, pDestination);
+		}
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "        ..result: " + tResult);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Determines the other end of a link and one known link end
+	 * 
+	 * @param pKnownEnd the known end of the link
+	 * @param pLink the link
+	 * 
+	 * @return the other end of the link
+	 */
+	public HRMGraphNodeName getOtherEndOfLinkARG(HRMGraphNodeName pKnownEnd, RoutableClusterGraphLink pLink)
+	{
+		HRMGraphNodeName tResult = null;
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "GET OTHER END (ARG) of link \"" + pKnownEnd + "\" connected at \"" + pKnownEnd +"\"");
+		}
+
+		synchronized (mAbstractRoutingGraph) {
+			tResult = (ICluster) mAbstractRoutingGraph.getOtherEndOfLink(pKnownEnd, pLink);
+		}
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "        ..result: " + tResult);
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Determines all known neighbors of a cluster/coordinator, which are stored in the local abstract routing graph (ARG).
+	 * 
+	 * @param pRoot the root node in the ARG
+	 * 
+	 * @return a collection of found neighbor nodes
+	 */
+	public Collection<HRMGraphNodeName> getNeighborsARG(HRMGraphNodeName pRoot)
+	{
+		Collection<HRMGraphNodeName> tResult = null;
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "GET NEIGHBORS (ARG) from \"" + pRoot + "\"");
+		}
+
+		synchronized (mAbstractRoutingGraph) {
+			tResult = mAbstractRoutingGraph.getNeighbors(pRoot);
+		}
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "      ..result: " + tResult.size() + " entries:");				
+			int i = 0;
+			for (HRMGraphNodeName tName : tResult){
+				Logging.log(this, "      ..[" + i + "]: " + tName);
+				i++;
+			}			
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Determines all vertices ordered by their distance from a given root vertex
+	 * 
+	 * @param pRootVertex the root vertex from where the distances are calculated
+	 * 
+	 * @return a list of found vertices
+	 */
+	public List<HRMGraphNodeName> getVerticesInOrderRadiusARG(HRMGraphNodeName pRootVertex)
+	{
+		List<HRMGraphNodeName> tResult = null;
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "GET VERTICES ORDER RADIUS (ARG) from \"" + pRootVertex + "\"");
+		}
+
+		synchronized (mAbstractRoutingGraph) {
+			tResult = mAbstractRoutingGraph.getVerticesInOrderRadius(pRootVertex);
+		}
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "      ..result: " + tResult.size() + " entries:");				
+			int i = 0;
+			for (HRMGraphNodeName tName : tResult){
+				Logging.log(this, "      ..[" + i + "]: " + tName);
+				i++;
+			}			
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Checks if two nodes in the locally stored abstract routing graph are linked.
+	 * 
+	 * @param pFirst first node
+	 * @param pSecond second node
+	 * 
+	 * @return true or false
+	 */
+	public boolean isLinkedARG(ClusterName pFirst, ClusterName pSecond)
+	{
+		boolean tResult = false;
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "IS LINK (ARG) from \"" + pFirst + "\" to \"" + pSecond +"\"");
+		}
+
+		synchronized (mAbstractRoutingGraph) {
+			tResult = mAbstractRoutingGraph.isLinked(pFirst, pSecond);
+		}
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "      ..result: " + tResult);				
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns the ARG for the GraphViewer.
+	 * (only for GUI!)
+	 * 
+	 * @return the ARG
+	 */
+	public AbstractRoutingGraph<HRMGraphNodeName, RoutableClusterGraphLink> getARGForGraphViewer()
+	{
+		AbstractRoutingGraph<HRMGraphNodeName, RoutableClusterGraphLink> tResult = null;
+		
+		synchronized (mAbstractRoutingGraph) {
+			tResult = mAbstractRoutingGraph; //TODO: use a new clone() method here
+		}
+		
+		return tResult;
+	}
+
+	
 	
 	
 	
@@ -1007,7 +1211,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 					}
 					tCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
-					addRoutableTarget(tCluster);
+					registerNodeARG(tCluster);
 					tFoundCluster = tCluster;
 				}
 				tFoundCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
@@ -1043,7 +1247,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					
 					tCEP.setRemoteClusterName(new ClusterName(tAttachedCluster.getToken(), tAttachedCluster.getClusterID(), tAttachedCluster.getHierarchyLevel()));
 					tAttachedCluster.addAnnouncedCEP(tCEP);
-					addRoutableTarget(tAttachedCluster);
+					registerNodeARG(tAttachedCluster);
 					if(tParticipate.getNeighbors() != null && !tParticipate.getNeighbors().isEmpty()) {
 						Logging.log(this, "Working on neighbors " + tParticipate.getNeighbors());
 						for(DiscoveryEntry tEntry : tParticipate.getNeighbors()) {
@@ -1095,7 +1299,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 								Logging.log(this, "Created " +tCluster);
 							} 
 							
-							mRoutableClusterGraph.storeLink(tAttachedCluster, tCluster, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
+							// register the link to the local ARG
+							registerLinkARG(tAttachedCluster, tCluster, new RoutableClusterGraphLink(RoutableClusterGraphLink.LinkType.LOGICAL_LINK));
 						}
 						for(ICluster tCluster : tAttachedCluster.getNeighbors()) {
 							if(getSourceIntermediate(tCluster) != null) {
@@ -1152,7 +1357,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 			Logging.log(this, "source cluster for " + (pCluster instanceof NeighborCluster ? ((NeighborCluster)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
 		}
 		ICluster tIntermediate = getSourceIntermediate(pCluster);
-		tClusterRoute = getRoutableClusterGraph().getRoute(tIntermediate, pCluster);
+		tClusterRoute = getRouteARG(tIntermediate, pCluster);
 		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
 			for(RoutableClusterGraphLink tConnection : tClusterRoute) {
 				if(tConnection.getLinkType() == RoutableClusterGraphLink.LinkType.LOGICAL_LINK) {
@@ -1161,7 +1366,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 			}
 		} else {
 			Logging.log(this, "No cluster route available");
-			tClusterRoute = getRoutableClusterGraph().getRoute(tIntermediate, pCluster);
+			tClusterRoute = getRouteARG(tIntermediate, pCluster);
 		}
 		return tDistance;
 	}
@@ -1206,7 +1411,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 			Logging.log(this, "Cluster is new, creating objects...");
 			Cluster tCluster = new Cluster(this, new Long(pToClusterID), pLevel);
 			setSourceIntermediateCluster(tCluster, tCluster);
-			addRoutableTarget(tCluster);
+			registerNodeARG(tCluster);
 			tSession = new ComSession(this, false, pLevel, tCluster.getMultiplexer());
 			tCEP = new ComChannel(this, tCluster);
 			tCluster.getMultiplexer().mapChannelToSession(tCEP, tSession);
@@ -1241,7 +1446,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					Logging.err(tHRMController, "Unable to connecto to " + tNeighborName, tExc);
 				}
 				if(tConn != null) {
-					Logging.log(tHRMController, "     ..starting CONNECTION " + mConnections);
+					Logging.log(tHRMController, "     ..starting CONNECTION " + mCounterOutgoingConnections);
 					tFSession.start(tConn);					
 
 					/**
@@ -1285,28 +1490,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		};
 		tThread.start();
 	}
-	
-	
-	/**
-	 * 
-	 * @param pCluster is the cluster to be added to the local cluster map
-	 */
-	public synchronized void addRoutableTarget(ICluster pCluster)
-	{
-		if(!mRoutableClusterGraph.contains(pCluster)) {
-			mRoutableClusterGraph.add(pCluster);
-		}
-	}
-	
-	/**
-	 * 
-	 * @return cluster map that is actually the graph that represents the network
-	 */
-	public RoutableClusterGraph<HRMGraphNodeName, RoutableClusterGraphLink> getRoutableClusterGraph()
-	{
-		return mRoutableClusterGraph;
-	}
-	
+
 	/**
 	 * 
 	 * @param pLevel as level at which a a coordinator will be set

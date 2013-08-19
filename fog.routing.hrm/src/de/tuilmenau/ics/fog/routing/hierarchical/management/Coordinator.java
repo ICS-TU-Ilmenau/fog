@@ -528,7 +528,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	
 	public void exploreNeighborhodAndCreateCluster()
 	{
-		Logging.log(this, "CLUSTERING STARTED on hierarchy level " + getHierarchyLevel().getValue() + ", will connect to " + mParentCluster.getNeighbors());
+		Logging.log(this, "\n\n\nCLUSTERING STARTED on hierarchy level " + getHierarchyLevel().getValue() + ", will connect to " + mParentCluster.getNeighbors());
 		
 		// was the clustering already triggered?
 		if (!isClustered()){
@@ -537,8 +537,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				int tMaxRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 		
 				Logging.log(this, "Maximum radius is " + tMaxRadius);
-		
-				BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink> tBreadthFirstSearch = new BFSDistanceLabeler<HRMGraphNodeName, RoutableClusterGraphLink>();
 		
 				for(int tRadius = 1; tRadius <= tMaxRadius; tRadius++) {
 					
@@ -550,10 +548,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					}
 					Logging.log(this, tString);
 					
-					// compute the distances of all the node from the managed cluster
-					tBreadthFirstSearch.labelDistances(getHRMController().getRoutableClusterGraph().getGraphForGUI(), mParentCluster);
+					// get all known nodes ordered by their radius to the parent cluster
+					mClustersToNotify = getHRMController().getVerticesInOrderRadiusARG(mParentCluster);
 					
-					mClustersToNotify = tBreadthFirstSearch.getVerticesInOrderVisited();
 					List<HRMGraphNodeName> tClustersToNotify = new LinkedList<HRMGraphNodeName>(); 
 					Logging.log(this, "Clusters remembered for notification: " + mClustersToNotify);
 					for(HRMGraphNodeName tNode : mClustersToNotify) {
@@ -598,7 +595,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	
 	private HRMGraphNodeName getFarthestVirtualNodeInDirection(HRMGraphNodeName pSource, HRMGraphNodeName pTarget)
 	{
-		List<RoutableClusterGraphLink> tList = getHRMController().getRoutableClusterGraph().getRoute(pSource, pTarget);
+		List<RoutableClusterGraphLink> tList = getHRMController().getRouteARG(pSource, pTarget);
 
 		//ICluster tFarthestCluster = null;
 		HRMGraphNodeName tResult = pSource;
@@ -606,7 +603,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			int tDistance = 0;
 			if(tList.size() > HRMConfig.Routing.EXPANSION_RADIUS) {
 				while(tDistance != HRMConfig.Routing.EXPANSION_RADIUS) {
-					tResult = getHRMController().getRoutableClusterGraph().getLinkEndNode(tResult, tList.get(0));
+					tResult = getHRMController().getOtherEndOfLinkARG(tResult, tList.get(0));
 					tList.remove(0);
 					tDistance++;
 				}
@@ -717,16 +714,16 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					 * 
 					 * find the route from the managed cluster to the cluster this entity got to know the higher cluster
 					 */
-					List<RoutableClusterGraphLink> tClusterList = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, pCEP.getRemoteClusterName());
+					List<RoutableClusterGraphLink> tClusterList = getHRMController().getRouteARG(mParentCluster, pCEP.getRemoteClusterName());
 					if(tClusterList.size() > 0) {
-						if(getHRMController().getRoutableClusterGraph().getLinkEndNode(pCEP.getRemoteClusterName(), tClusterList.get(tClusterList.size() - 1)) instanceof Cluster) {
+						if(getHRMController().getOtherEndOfLinkARG(pCEP.getRemoteClusterName(), tClusterList.get(tClusterList.size() - 1)) instanceof Cluster) {
 							Logging.warn(this, "Not sending neighbor zone announce because another intermediate cluster has a shorter route to target");
 							if(tClusterList != null) {
 								String tClusterRoute = new String();
 								HRMGraphNodeName tTransitiveElement = mParentCluster;
 								for(RoutableClusterGraphLink tConnection : tClusterList) {
 									tClusterRoute += tTransitiveElement + "\n";
-									tTransitiveElement = getHRMController().getRoutableClusterGraph().getLinkEndNode(tTransitiveElement, tConnection);
+									tTransitiveElement = getHRMController().getOtherEndOfLinkARG(tTransitiveElement, tConnection);
 								}
 								Logging.log(this, "cluster route to other entity:\n" + tClusterRoute);
 							}
@@ -751,9 +748,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 							 * 
 							 * calculation of the predecessor is because the cluster identification on the remote site is multiplexed
 							 */
-							tClusterList = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, superiorCoordinatorComChannel().getRemoteClusterName());
+							tClusterList = getHRMController().getRouteARG(mParentCluster, superiorCoordinatorComChannel().getRemoteClusterName());
 							if(!tClusterList.isEmpty()) {
-								ICluster tPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusterList.get(0));
+								ICluster tPredecessor = (ICluster) getHRMController().getOtherEndOfLinkARG(mParentCluster, tClusterList.get(0));
 								tOldCoveredEntry.setPredecessor(new ClusterName(tPredecessor.getToken(), tPredecessor.getClusterID(), tPredecessor.getHierarchyLevel()));
 							}
 							tOldCoveredEntry.setPriority(superiorCoordinatorComChannel().getPeerPriority());
@@ -775,9 +772,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 							tNewCovered.setCoveringClusterEntry(tCoveredEntry);
 							tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
 							
-							List<RoutableClusterGraphLink> tClusters = getHRMController().getRoutableClusterGraph().getRoute(mParentCluster, pCEP.getRemoteClusterName());
+							List<RoutableClusterGraphLink> tClusters = getHRMController().getRouteARG(mParentCluster, pCEP.getRemoteClusterName());
 							if(!tClusters.isEmpty()) {
-								ICluster tNewPredecessor = (ICluster) getHRMController().getRoutableClusterGraph().getLinkEndNode(mParentCluster, tClusters.get(0));
+								ICluster tNewPredecessor = (ICluster) getHRMController().getOtherEndOfLinkARG(mParentCluster, tClusters.get(0));
 								tCoveredEntry.setPredecessor(new ClusterName(tNewPredecessor.getToken(), tNewPredecessor.getClusterID(), tNewPredecessor.getHierarchyLevel()));
 							}
 							Logging.warn(this, "Rejecting " + (superiorCoordinatorComChannel().getPeerL2Address()).getDescr() + " in favor of " + pAnnounce.getSenderName());
@@ -955,7 +952,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 
 		//		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
-		for(HRMGraphNodeName tNeighbor: getHRMController().getRoutableClusterGraph().getNeighbors(mParentCluster)) {
+		for(HRMGraphNodeName tNeighbor: getHRMController().getNeighborsARG(mParentCluster)) {
 			if(tNeighbor instanceof ICluster) {
 				for(ComChannel tComChannel : getComChannels()) {
 					if(((ControlEntity)tNeighbor).superiorCoordinatorL2Address().equals(tComChannel.getPeerL2Address()) && !tComChannel.isPartOfMyCluster()) {

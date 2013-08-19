@@ -15,18 +15,19 @@ import java.util.List;
 
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
+import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 import edu.uci.ics.jung.algorithms.shortestpath.DijkstraShortestPath;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
 /**
- * Data storage for the abstracted topology view of a higher coordinator. 
+ * Data storage for an abstracted topology view of higher hierarchy levels. 
  * 
- * @param <NodeObject> This is a parameterized class - Define which objects are supposed to be nodes.
- * @param <LinkObject> This is a parameterized class - Define which objects are supposed to be links.
+ * @param <NodeObject> define what is used as node objects
+ * @param <LinkObject> define what is used as link objects
  */
-public class RoutableClusterGraph<NodeObject, LinkObject> extends RoutableGraph<NodeObject, LinkObject>
+public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<NodeObject, LinkObject>
 {
-	public RoutableClusterGraph()
+	public AbstractRoutingGraph()
 	{
 		super(null);
 	}
@@ -62,7 +63,7 @@ public class RoutableClusterGraph<NodeObject, LinkObject> extends RoutableGraph<
 			
 			// check if link already exists
 			if(!isLinked(pFrom, pTo)) {
-				// check if their already exist a link between these two nodes
+				// check if there already exist a link between these two nodes
 				if(!mRoutingGraph.getNeighbors(pFrom).contains(pTo)) {
 					// add the link to the routing graph
 					if(mRoutingGraph.addEdge(pLinkObject, pFrom, pTo, EdgeType.UNDIRECTED)) {
@@ -96,7 +97,7 @@ public class RoutableClusterGraph<NodeObject, LinkObject> extends RoutableGraph<
 			NodeObject tTarget = pFrom;
 			
 			for(LinkObject tLink : tPath) {
-				tTarget = getLinkEndNode(tTarget, tLink);
+				tTarget = getOtherEndOfLink(tTarget, tLink);
 				tNodes.add(tTarget);
 			}
 		}
@@ -105,33 +106,34 @@ public class RoutableClusterGraph<NodeObject, LinkObject> extends RoutableGraph<
 	}
 	
 	/**
-	 * Get the destination of a link. You need to provide one end point of a link because a cluster
-	 * map uses an undirected graph.
+	 * Get the other end node of a link in the stored undirected graph.
 	 * 
-	 * @param pSource This is one end point of the link you wish to know the other end point.
-	 * @param pLink This is the link you wish to know one end point while providing the other one.
-	 * @return Other end point of the link is provided.
+	 * @param pKnownEnd the known end node of the link
+	 * @param pLink the link for which the other end node should be determined
+	 * @return the other end node of the link
 	 */
-	public NodeObject getLinkEndNode(NodeObject pSource, LinkObject pLink)
+	public synchronized NodeObject getOtherEndOfLink(NodeObject pKnownEnd, LinkObject pLink)
 	{
-		try {
-			return mRoutingGraph.getOpposite(pSource, pLink);
-		} catch (IllegalArgumentException tExc) {
-			Logging.err(this, pSource + " is not incident to " + pLink + "(" + mRoutingGraph.getIncidentVertices(pLink), tExc);
-		}
-		return null;
+		NodeObject tResult = null;
 		
+		try {
+			tResult = mRoutingGraph.getOpposite(pKnownEnd, pLink);
+		} catch (IllegalArgumentException tExc) {
+			Logging.err(this, pKnownEnd + " isn't an end node of the link " + pLink + "(possible end nodes are: " + mRoutingGraph.getIncidentVertices(pLink) + ")", tExc);
+		}
+		
+		return tResult;
 	}
 	
 
 	/**
-	 * Check whether a link between two nodes are already known.
+	 * Check if two nodes have a known link.
 	 * 
 	 * @param pFirst the first node
 	 * @param pSecond the second node
 	 * @return true if a link is known, otherwise false
 	 */
-	public boolean isLinked(NodeObject pFirst, NodeObject pSecond)
+	public synchronized boolean isLinked(NodeObject pFirst, NodeObject pSecond)
 	{
 		if(mRoutingGraph.containsVertex(pFirst)) {
 			return mRoutingGraph.getNeighbors(pFirst).contains(pSecond);
@@ -153,7 +155,7 @@ public class RoutableClusterGraph<NodeObject, LinkObject> extends RoutableGraph<
 	@Override
 	public synchronized List<LinkObject> getRoute(NodeObject pFrom, NodeObject pTo)
 	{
-		List<LinkObject> tPath = null;
+		List<LinkObject> tResult = null;
 
 		pFrom = containsVertex(pFrom);
 		pTo = containsVertex(pTo);
@@ -161,9 +163,32 @@ public class RoutableClusterGraph<NodeObject, LinkObject> extends RoutableGraph<
 		if((pFrom != null) && (pTo != null)) {
 			// use Djikstra over the routing graph
 			DijkstraShortestPath<NodeObject, LinkObject> tRoutingAlgo = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph);
-			tPath = tRoutingAlgo.getPath(pFrom, pTo);
+			tResult = tRoutingAlgo.getPath(pFrom, pTo);
 		}
 
-		return tPath;
+		return tResult;
+	}
+
+	/**
+	 * @param pFromRadius
+	 * @param pToRadius
+	 * @return
+	 */
+	public List<NodeObject> getVerticesInOrderRadius(NodeObject pRootVertex)
+	{
+		List<NodeObject> tResult = null;
+		
+		//HINT: http://jung.sourceforge.net/doc/api/edu/uci/ics/jung/algorithms/shortestpath/BFSDistanceLabeler.html
+		
+		// create "Breadth-First Search" (BFS) object
+		BFSDistanceLabeler<NodeObject, LinkObject> tBreadthFirstSearch = new BFSDistanceLabeler<NodeObject, LinkObject>();
+
+		// compute the distances of all the node from the specified root node (parent cluster).
+		tBreadthFirstSearch.labelDistances(getGraphForGUI(), pRootVertex);
+
+		// the result
+		tResult = tBreadthFirstSearch.getVerticesInOrderVisited();
+		
+		return tResult;
 	}
 }
