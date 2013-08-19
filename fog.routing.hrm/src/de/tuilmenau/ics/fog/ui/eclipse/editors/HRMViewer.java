@@ -521,10 +521,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
 
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS){
-				if ((pCoordinator.getCluster().getElector() != null) && (pCoordinator.getCluster().getElector().isWinner()) && (!pCoordinator.isClustered())){
-				    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
-				    toolItem3.setText("[Create cluster]");
-				    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(this, pCoordinator));
+				if(!pCoordinator.getHierarchyLevel().isHighest()) {
+					if ((pCoordinator.getCluster().getElector() != null) && (pCoordinator.getCluster().getElector().isWinner()) && (!pCoordinator.isClustered())){
+					    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
+					    toolItem3.setText("[Create cluster]");
+					    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(this, pCoordinator));
+					}
 				}
 			}
 
@@ -1017,7 +1019,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			HierarchyLevel tLocalClusterLevel = mCoordinator.getHierarchyLevel();
 			
 			// check if we are at the max. hierarchy height
-			if(tLocalClusterLevel.getValue() < HRMConfig.Hierarchy.HEIGHT) {
+			if(!tLocalClusterLevel.isHighest()) {
 
 				// iterate over all HRMControllers
 				for(HRMController tHRMController : HRMController.getALLHRMControllers()) {
@@ -1072,7 +1074,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		public void handleEvent(Event event)
 		{
 			// check if we are at the max. hierarchy height
-			if(mCoordinator.getHierarchyLevel().getValue() < HRMConfig.Hierarchy.HEIGHT) {
+			if(!mCoordinator.getHierarchyLevel().isHighest()) {
 				if (mCoordinator != null){
 					if (HRM_VIEWER_DEBUGGING){
 						Logging.log(this, "GUI-TRIGGER: Starting clustering for coordinator " + mCoordinator);
