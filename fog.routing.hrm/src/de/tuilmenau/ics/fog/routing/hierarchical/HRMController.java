@@ -31,8 +31,6 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
-import de.tuilmenau.ics.fog.facade.properties.Property;
-import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.NeighborRoutingInformation;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -65,8 +63,6 @@ import de.tuilmenau.ics.fog.util.SimpleName;
  */
 public class HRMController extends Application implements IServerCallback, IEvent
 {
-	private boolean HRM_CONTROLLER_DEBUGGING = false;
-	
 	/**
 	 * The global name space which is used to identify the HRM instances on nodes.
 	 */
@@ -919,47 +915,35 @@ public class HRMController extends Application implements IServerCallback, IEven
 		Description tConReqs = pConnection.getRequirements();
 
 		/**
-		 * Check if the new connection is a probe-packet connection
+		 * Check if the new connection is a probe-routing connection
 		 */
-		boolean tProbePacketConnection = false;
-		for(Property tProperty : tConReqs) {
-			if(tProperty instanceof ProbeRoutingProperty) {
-				ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty)tProperty;
-				
-				// get the recorded route from the property
-				LinkedList<HRMID> tRecordedHRMIDs = tPropProbeRouting.getRecordedHops();
-				
-				Logging.log(this, "       ..detected a probe-routing connection(source=" + tPropProbeRouting.getSourceDescription() + " with " + tRecordedHRMIDs.size() + " recorded hops");
+		boolean tProbeRoutingConnection = false;
+		ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) tConReqs.get(ProbeRoutingProperty.class);
+		if (tPropProbeRouting != null){
+			// get the recorded route from the property
+			LinkedList<HRMID> tRecordedHRMIDs = tPropProbeRouting.getRecordedHops();
+			
+			Logging.log(this, "       ..detected a probe-routing connection(source=" + tPropProbeRouting.getSourceDescription() + " with " + tRecordedHRMIDs.size() + " recorded hops");
 
-				// print the recorded route
-				int i = 0;
-				for(HRMID tHRMID : tRecordedHRMIDs){
-					Logging.log(this, "            [" + i + "]: " + tHRMID);
-					i++;
-				}
-
-				// mark the incoming connection as probe-packet connection
-				tProbePacketConnection = true;
+			// print the recorded route
+			int i = 0;
+			for(HRMID tHRMID : tRecordedHRMIDs){
+				Logging.log(this, "            [" + i + "]: " + tHRMID);
+				i++;
 			}
+
+			// mark the incoming connection as probe-packet connection
+			tProbeRoutingConnection = true;
 		}
 
 		// do we have a probe-packet connection?
-		if (!tProbePacketConnection){
+		if (!tProbeRoutingConnection){
 			//long tClusterID = 0;
 			ComSession tConnectionSession = null;
 			
-			ClusterParticipationProperty tJoin = null;
-			for(Property tProperty : tConReqs) {
-				if(tProperty instanceof ClusterParticipationProperty) {
-					Logging.log(this, "Found ClusterParticipationProperty " + tProperty);
-					tJoin = (ClusterParticipationProperty)tProperty;
-				}
-			}
-			
-			try {
-				tJoin = (ClusterParticipationProperty) tConReqs.get(ClusterParticipationProperty.class);
-			} catch (ClassCastException tExc) {
-				Logging.err(this, "Unable to find the information which cluster should be attached.", tExc);
+			ClusterParticipationProperty tJoin = (ClusterParticipationProperty) tConReqs.get(ClusterParticipationProperty.class);
+			if(tJoin != null) {
+				Logging.log(this, "Found ClusterParticipationProperty " + tJoin);
 			}
 			
 			Logging.log(this, "Nested participations: " + tJoin.getNestedParticipations());

@@ -22,7 +22,6 @@ import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
-import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
@@ -1421,35 +1420,27 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		// check if we have valid requirements
 		if (pRequirements != null){
-			ProbeRoutingProperty tPropProbeRouting = null;
 			// search for the ProbeRoutingProperty property
-			for(Property tProperty : pRequirements) {
-				if(tProperty instanceof ProbeRoutingProperty) {
-					// store the found property
-					tPropProbeRouting = (ProbeRoutingProperty) tProperty;
-					
-					HRMID tLastHopHRMID = tPropProbeRouting.getLastHop();
-					
-					/**
-					 * Check if last and current hop have the same HRMID
-					 */
-					boolean tDuplicate = false;
-					if ((tLastHopHRMID != null) && (tLastHopHRMID.equals(pHopHRMID))){
-						tDuplicate = true;
-					}
-					
-					/**
-					 * Store the HRMID of the current hop
-					 */
-					if (!tDuplicate){
-						// store the HRMID
-						tPropProbeRouting.addHop(pHopHRMID);
-					}else{
-						// we have the same hop like last time
-					}
-					
-					// leave the loop
-					break;
+			ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) pRequirements.get(ProbeRoutingProperty.class);
+			if(tPropProbeRouting != null) {
+				HRMID tLastHopHRMID = tPropProbeRouting.getLastHop();
+				
+				/**
+				 * Check if last and current hop have the same HRMID
+				 */
+				boolean tDuplicate = false;
+				if ((tLastHopHRMID != null) && (tLastHopHRMID.equals(pHopHRMID))){
+					tDuplicate = true;
+				}
+				
+				/**
+				 * Store the HRMID of the current hop
+				 */
+				if (!tDuplicate){
+					// store the HRMID
+					tPropProbeRouting.addHop(pHopHRMID);
+				}else{
+					// we have the same hop like last time
 				}
 			}
 		}
@@ -1469,18 +1460,10 @@ public class HRMRoutingService implements RoutingService, Localization
 			/**
 			 * Check if a destination application is encoded in the requirements
 			 */
-			DestinationApplicationProperty tPropDestApp = null;
-			for(Property tProperty : pRequirements) {
-				if(tProperty instanceof DestinationApplicationProperty) {
-					// store the found property
-					tPropDestApp = (DestinationApplicationProperty) tProperty;
-					
-					// remove the found property from the requirements
-					pRequirements.remove(tPropDestApp);
-					
-					// leave the loop
-					break;
-				}
+			DestinationApplicationProperty tPropDestApp = (DestinationApplicationProperty) pRequirements.get(DestinationApplicationProperty.class);
+			if(tPropDestApp != null) {
+				// remove the found property from the requirements
+				pRequirements.remove(tPropDestApp);
 			}
 			
 			/**
