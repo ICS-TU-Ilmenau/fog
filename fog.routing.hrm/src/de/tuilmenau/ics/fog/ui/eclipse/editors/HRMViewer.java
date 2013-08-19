@@ -618,7 +618,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 1: Peer 
 			 */
-			tRow.setText(1, tCEP.getPeerL2Address().toString());
+			tRow.setText(1, (tCEP.getPeerL2Address() != null ? tCEP.getPeerL2Address().toString() : "??"));
 
 			/**
 			 * Column 2:  
