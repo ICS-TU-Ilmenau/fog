@@ -111,7 +111,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		ICluster tCluster = mHRMController.getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
+		ICluster tCluster = mHRMController.getClusterByID(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
 		if(tCluster == null)
 		{
 			Logging.log(this, "     ..creating cluster proxy");

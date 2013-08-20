@@ -913,12 +913,8 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	public void handleNeighborAnnouncement(NeighborClusterAnnounce	pAnnounce, ComChannel pCEP)
 	{		
 		if(pAnnounce.getCoveringClusterEntry() != null) {
-//			Cluster tForwardingCluster = null;
 			
 			if(pAnnounce.isRejected()) {
-//				Cluster tMultiplex = mParentCluster;
-//				tForwardingCluster = (Cluster) ((Cluster) getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster()) == null ? pCEP.getRemoteCluster() : getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster())) ;
-				//pAnnounce.setAnnouncer( (tForwardingCluster.getCoordinatorsAddress() != null ? tForwardingCluster.getCoordinatorsAddress() : null ));
 				Logging.log(this, "Removing " + this + " as participating CEP from " + this);
 				getComChannels().remove(this);
 			}
@@ -933,14 +929,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					}
 				}
 			}
-			try {
-				pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry());
-			} catch (PropertyException tExc) {
-				Logging.log(this, "Unable to fulfill requirements");
-			}
-			Logging.log(this, "new negotiating cluster will be " + getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
-		} else {
-			Logging.log(this, "new negotiating cluster will be " + getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
+			pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry());
 		}
 	}
 

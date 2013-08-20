@@ -205,8 +205,8 @@ public class ComChannelMuxer
 						if(tDiscovery.getNeighborRelations() != null) {
 							for(Tuple<ClusterName, ClusterName> tTuple : tDiscovery.getNeighborRelations()) {
 								if(!mHRMController.isLinkedARG(tTuple.getFirst(), tTuple.getSecond())) {
-									Cluster tFirstCluster = mHRMController.getCluster(tTuple.getFirst());
-									Cluster tSecondCluster = mHRMController.getCluster(tTuple.getSecond());
+									Cluster tFirstCluster = mHRMController.getClusterByID(tTuple.getFirst());
+									Cluster tSecondCluster = mHRMController.getClusterByID(tTuple.getSecond());
 									if(tFirstCluster != null && tSecondCluster != null ) {
 										tFirstCluster.registerNeighbor(tSecondCluster);
 										Logging.log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);

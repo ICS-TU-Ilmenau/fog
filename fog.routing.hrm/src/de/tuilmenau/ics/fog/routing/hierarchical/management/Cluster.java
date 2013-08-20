@@ -434,7 +434,7 @@ public class Cluster extends ControlEntity implements ICluster
 				getHRMController().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		Cluster tCluster = getHRMController().getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
+		Cluster tCluster = getHRMController().getClusterByID(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
 		if(tCluster != null) {
 			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
 			registerNeighbor(tCluster);
@@ -513,14 +513,7 @@ public class Cluster extends ControlEntity implements ICluster
 					Logging.log(this, "Removing " + this + " as participating CEP from " + this);
 					getComChannels().remove(this);
 				}
-				try {
-					registerNeighbor(getHRMController().getCluster(pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
-				} catch (PropertyException tExc) {
-					Logging.log(this, "Unable to fulfill requirements");
-				}
-				Logging.log(this, "new negotiating cluster will be " + getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
-			} else if(pCEP != null) {
-				Logging.log(this, "new negotiating cluster will be " + getHRMController().getCluster(pAnnounce.getNegotiatorIdentification()));
+				registerNeighbor(getHRMController().getClusterByID(pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
 			}
 		}
 	}

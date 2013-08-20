@@ -520,6 +520,26 @@ public class HRMController extends Application implements IServerCallback, IEven
 		
 		return tResult;
 	}
+	
+	/**
+	 * Returns a known cluster, which is identified by its ID.
+	 * 
+	 * @param pClusterID the cluster ID
+	 * 
+	 * @return the searched cluster object
+	 */
+	public Cluster getClusterByID(ClusterName pClusterID)
+	{
+		Cluster tResult = null;
+		
+		for(Cluster tKnownCluster : getAllClusters()) {
+			if (tKnownCluster.equals(pClusterID)) {
+				tResult = tKnownCluster;
+			}
+		}
+		
+		return tResult;
+	}
 
 	/**
 	 * Returns the list of registered own HRMIDs which can be used to address the physical node on which this instance is running.
@@ -1380,21 +1400,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}else{
 			// probe-packet connection
 		}
-	}
-	
-	/**
-	 * 
-	 * @param pCluster cluster identification
-	 * @return local object that holds meta information about the specified entity
-	 */
-	public Cluster getCluster(ICluster pCluster)
-	{
-		for(Cluster tCluster : getAllClusters()) {
-			if (tCluster.equals(pCluster)) {
-				return tCluster;
-			}
-		}
-		return null;
 	}
 	
 	/**
