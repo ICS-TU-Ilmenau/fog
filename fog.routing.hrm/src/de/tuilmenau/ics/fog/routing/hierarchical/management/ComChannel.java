@@ -734,42 +734,39 @@ public class ComChannel
 	
 	public ClusterName handleDiscoveryEntry(DiscoveryEntry pEntry)
 	{
+		ClusterName tResult = null;
+		
 		Logging.trace(this, "Handling " + pEntry);
-		ICluster tNewCluster = getHRMController().getClusterByID(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), pEntry.getLevel()));
-		if(tNewCluster == null) {
-			for(Cluster tCluster : getHRMController().getAllClusters()) {
-				if(tCluster.equals(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), new HierarchyLevel(this, getParent().getHierarchyLevel().getValue() - 1)))) {
-					tNewCluster = tCluster;
-					if(tNewCluster instanceof ClusterProxy && (pEntry.getCoordinatorRoutingAddress() == null) && (tNewCluster.getCoordinatorName() == null)) {
-						Logging.log(this, "Filling required information into " + tNewCluster);
-						tNewCluster.setSuperiorCoordinator(null, pEntry.getCoordinatorName(), pEntry.getToken(), pEntry.getCoordinatorRoutingAddress());
-					}
-				}
-			}
-			if(tNewCluster == null) {
-				/*
-				 * Be aware of the fact that the new attached cluster has lower level
-				 */
-				Logging.log(this, "     ..creating cluster proxy");
-				tNewCluster = new ClusterProxy(getHRMController(), pEntry.getClusterID(), pEntry.getLevel(), pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress(), pEntry.getToken());
-				
-				getParent().getHRMController().setSourceIntermediateCluster(tNewCluster, getParent().getHRMController().getSourceIntermediateCluster(getParent()));
-				tNewCluster.setToken(pEntry.getToken());
-				tNewCluster.setPriority(pEntry.getPriority());
-				try {
-					getHRMController().getHRS().mapFoGNameToL2Address(tNewCluster.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress());
-				} catch (RemoteException tExc) {
-					Logging.err(this, "Unable to register " + tNewCluster.getCoordinatorName(), tExc);
-				}
-				Logging.log(this, "Created " + tNewCluster);
-			}
-		}
+		
 		if(pEntry.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tLink : pEntry.getRoutingVectors()) {
 				getHRMController().getHRS().registerRoute(tLink.getSource(), tLink.getDestination(), tLink.getPath());
 			}
 		}
-		return new ClusterName(tNewCluster.getToken(), tNewCluster.getClusterID(), tNewCluster.getHierarchyLevel());
+
+		Cluster tNewCluster = getHRMController().getClusterByID(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), pEntry.getLevel()));
+		if(tNewCluster != null) {
+			tResult = new ClusterName(tNewCluster.getToken(), tNewCluster.getClusterID(), tNewCluster.getHierarchyLevel());
+		}else{
+			/*
+			 * Be aware of the fact that the new attached cluster has lower level
+			 */
+			Logging.log(this, "     ..creating cluster proxy");
+			ClusterProxy tClusterProxy = new ClusterProxy(getHRMController(), pEntry.getClusterID(), pEntry.getLevel(), pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress(), pEntry.getToken());
+			
+			getParent().getHRMController().setSourceIntermediateCluster(tClusterProxy, getParent().getHRMController().getSourceIntermediateCluster(getParent()));
+			tClusterProxy.setToken(pEntry.getToken());
+			tClusterProxy.setPriority(pEntry.getPriority());
+			try {
+				getHRMController().getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress());
+			} catch (RemoteException tExc) {
+				Logging.err(this, "Unable to register " + tClusterProxy.getCoordinatorName(), tExc);
+			}
+			Logging.log(this, "Created " + tClusterProxy);
+			tResult = new ClusterName(tClusterProxy.getToken(), tClusterProxy.getClusterID(), tClusterProxy.getHierarchyLevel());
+		}
+		
+		return tResult;
 	}
 	
 	public Route getRouteToPeer()

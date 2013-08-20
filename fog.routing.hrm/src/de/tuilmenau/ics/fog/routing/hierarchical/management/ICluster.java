@@ -13,7 +13,6 @@ import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
 public interface ICluster extends Serializable
 {
@@ -85,17 +84,6 @@ public interface ICluster extends Serializable
 	 * is provided here.
 	 */
 	public BullyPriority getHighestPriority();
-	
-	/**
-	 * Once an announcement was received, the coordinator is set via this method. However this function does not have to be necessarily called
-	 * if a BullyAnnounce message was received.  
-	 * 
-	 * @param pCoord Provide the connection end point that leads to the coordinator here.
-	 * @param pCoordName Set the name of the coordinator here.
-	 * @param pAddress The address of the coordinator can be set here. It can be either an OSI Layer 2 address or a HRMID. However using the last type as address
-	 * was not implemented. 
-	 */
-	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address);
 	
 	/**
 	 * 

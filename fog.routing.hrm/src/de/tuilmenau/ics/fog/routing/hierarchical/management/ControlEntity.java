@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.io.Serializable;
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
@@ -71,6 +72,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	private L2Address mSuperiorCoordinatorL2Address = null;
 	
+	/**
+	 * Counter about how many times a superior coordinator was defined
+	 */
+	private int mSuperiorCoordinatorUpdateCounter = 0;
+
 	/**
 	 * Constructor
 	 */
@@ -291,6 +297,17 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		}
 		
 		return tResult;
+	}
+
+	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
+	{
+		Logging.log(this, "Setting new superior coordinator (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorL2Address);
+
+		// store the communication channel to the superior coordinator
+		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
+		
+		// store the L2Address of the superior coordinator
+		setSuperiorCoordinatorL2Address(pCoordinatorL2Address);
 	}
 
 	/**

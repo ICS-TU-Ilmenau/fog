@@ -59,11 +59,6 @@ public class Cluster extends ControlEntity implements ICluster
 	private Elector mElector = null;
 	
 	/**
-	 * Counter about how many times a coordinator was defined
-	 */
-	private int mCoordinatorUpdateCounter = 0;
-
-	/**
 	 * Stores a descriptive string about the elected coordinator
 	 */
 	private String mCoordinatorDescription = null;
@@ -358,13 +353,10 @@ public class Cluster extends ControlEntity implements ICluster
 	
 	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
 	{
+		super.setSuperiorCoordinator(pCoordinatorComChannel, pCoordinatorName, pCoordToken, pCoordinatorL2Address);
+		
 		setToken(pCoordToken);
-		
-		Logging.log(this, "Setting " + (++mCoordinatorUpdateCounter) + " time a new coordinator: " + pCoordinatorName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorL2Address);
 
-		// store the communication channel to the superior coordinator
-		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
-		
 		mCoordName = pCoordinatorName;
 		if(superiorCoordinatorComChannel() == null) {
 			synchronized(this) {

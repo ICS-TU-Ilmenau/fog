@@ -98,12 +98,6 @@ public class ClusterName implements Serializable, ICluster, AbstractRoutingGraph
 	}
 
 	@Override
-	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
-	{
-		
-	}
-
-	@Override
 	public void setHighestPriority(BullyPriority pHighestPriority) {
 		
 	}

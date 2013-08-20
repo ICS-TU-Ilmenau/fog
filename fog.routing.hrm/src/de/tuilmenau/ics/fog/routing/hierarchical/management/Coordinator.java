@@ -934,22 +934,20 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	@Override
 	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address) 
 	{
-		/**
-		 * the name of the cluster, which is managed by this coordinator
-		 */
-		ClusterName tLocalManagedClusterName = new ClusterName(mParentCluster.getToken(), mParentCluster.getClusterID(), mParentCluster.getHierarchyLevel());
+		super.setSuperiorCoordinator(pCoordinatorComChannel, pCoordinatorName, pCoordToken, pCoordinatorL2Address);
+
 		setToken(pCoordToken);
-		
+
 		Logging.log(this, "Setting channel to superior coordinator to " + pCoordinatorComChannel + " for coordinator " + pCoordinatorName + " with routing address " + pCoordinatorL2Address);
 		Logging.log(this, "Previous channel to superior coordinator was " + superiorCoordinatorComChannel() + " with name " + mCoordinatorName);
 		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
 		mCoordinatorName = pCoordinatorName;
 		synchronized(this) {
-			setSuperiorCoordinatorL2Address(pCoordinatorL2Address);
 			notifyAll();
 		}
 
 		//		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
+		ClusterName tLocalManagedClusterName = new ClusterName(mParentCluster.getToken(), mParentCluster.getClusterID(), mParentCluster.getHierarchyLevel());
 		for(AbstractRoutingGraphNode tNeighbor: getHRMController().getNeighborsARG(mParentCluster)) {
 			if(tNeighbor instanceof ICluster) {
 				for(ComChannel tComChannel : getComChannels()) {
