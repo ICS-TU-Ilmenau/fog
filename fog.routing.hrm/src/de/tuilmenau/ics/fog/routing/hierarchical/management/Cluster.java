@@ -437,35 +437,28 @@ public class Cluster extends ControlEntity implements ICluster
 				getHRMController().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		ICluster tCluster = getHRMController().getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
-		if(tCluster == null) {
-			tCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), getHierarchyLevel(), getHRMController());
-			getHRMController().setSourceIntermediateCluster(tCluster, this);
-			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
-			((NeighborCluster)tCluster).setSourceIntermediate(this);
-			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
-			tCluster.setToken(pAnnounce.getToken());
+		Cluster tCluster = getHRMController().getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
+		if(tCluster != null) {
+			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
+			registerNeighbor(tCluster);
+		}else{
+			NeighborCluster tNeighborCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), getHierarchyLevel(), getHRMController());
+			getHRMController().setSourceIntermediateCluster(tNeighborCluster, this);
+			tNeighborCluster.addAnnouncedCEP(pCEP);
+			tNeighborCluster.setSourceIntermediate(this);
+			tNeighborCluster.setPriority(pAnnounce.getCoordinatorsPriority());
+			tNeighborCluster.setToken(pAnnounce.getToken());
 			
 			try {
-				getHRMController().getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), ((Cluster)tCluster).superiorCoordinatorL2Address());
+				getHRMController().getHRS().mapFoGNameToL2Address(tNeighborCluster.getCoordinatorName(),  pAnnounce.getCoordAddress());
 			} catch (RemoteException tExc) {
 				Logging.err(this, "Unable to fulfill requirements", tExc);
 			}
 			
-		} else {
-			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
+			registerNeighbor(tCluster);
 		}
-		/*if(tCluster instanceof AttachedCluster) {
-			((AttachedCluster)tCluster).setNegotiatingHost(pAnnounce.getAnnouncersAddress());
-		}*/
 		
-		/*
-		 * function checks whether neighbor relation was established earlier
-		 */
-		registerNeighbor(tCluster);
-
 		if(pAnnounce.getCoordinatorName() != null) {
-//			Description tDescription = new Description();
 			try {
 				getHRMController().getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 			} catch (RemoteException tExc) {
