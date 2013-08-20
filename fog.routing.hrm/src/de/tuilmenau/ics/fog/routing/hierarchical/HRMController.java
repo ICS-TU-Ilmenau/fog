@@ -714,11 +714,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 		 * Wait until the connection thread has finished
 		 */
 		int tLoop = 0;
-		while ((tThread.isAlive()) && (tLoop < 50 /* max. 5 seconds waiting */)){
+		while ((tThread.isAlive()) && (tLoop < HRMConfig.Hierarchy.MAX_TIMEOUTS_FOR_CONNECTION_TO_NEIGHBOR)){
 			try {
-				wait(100);
+				wait(HRMConfig.Hierarchy.WAITING_PERIOD_FOR_CONNECTION_TO_NEIGHBOR);
 				if (tLoop > 0){
-					Logging.log(this, "Waiting for connection to neighbor " + pNeighborL2Address);					
+					Logging.log(this, "Waiting for connection (thread) to neighbor " + pNeighborL2Address);					
 				}
 			} catch (InterruptedException e) {
 				Logging.warn(this, "Got an interruption when connection was triggered to neighbor " + pNeighborL2Address);
