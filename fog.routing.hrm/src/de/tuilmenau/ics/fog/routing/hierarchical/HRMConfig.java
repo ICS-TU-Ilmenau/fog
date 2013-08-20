@@ -125,7 +125,7 @@ public class HRMConfig
 		 * This specifies whether the hierarchy build process is continued automatically.
 		 * Otherwise, it is done step by step by the help of GUI and user inputs.
 		 */
-		public static final boolean CONTINUE_AUTOMATICALLY = true;
+		public static final boolean CONTINUE_AUTOMATICALLY = false;
 		
 		/**
 		 * Identifies the base level of the hierarchy.
