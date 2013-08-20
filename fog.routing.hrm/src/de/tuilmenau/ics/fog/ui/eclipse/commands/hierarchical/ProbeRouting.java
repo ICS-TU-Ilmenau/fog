@@ -117,58 +117,62 @@ public class ProbeRouting extends Command
 			}
 			// show dialog
 			int tTargetSelection = SelectFromListDialog.open(mSite.getShell(), "Target(s) selection", "To which target(s) should the probe packet be send?", (sLastTargetSelection >= 0 ? sLastTargetSelection : 1), tPossibilities);
-			sLastTargetSelection = tTargetSelection;			
-			String tTargetName = tPossibilities.get(tTargetSelection);
-			Logging.log(this, "Selected target: " + tTargetName + "(" + tTargetSelection + ")");
-			// store target selection as string
-			
-			/**
-			 * Has user selected "all nodes"?
-			 */
-			// send to all nodes of the simulation?
-			boolean tSendToAllNodes = false;
-			if (tTargetName.equals(ALL_NODES)){
-				tSendToAllNodes = true;
-			}
-
-			/**
-			 * Get a reference to the naming-service
-			 */
-			try {
-				mNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
-			} catch (RuntimeException tExc) {
-				mNMS = HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
-			}
-
-			// send to all nodes?
-			if(!tSendToAllNodes) {	
+			if (tTargetSelection >= 0){
+				sLastTargetSelection = tTargetSelection;			
+				String tTargetName = tPossibilities.get(tTargetSelection);
+				Logging.log(this, "Selected target: " + tTargetName + "(" + tTargetSelection + ")");
+				// store target selection as string
+				
 				/**
-				 * We determine detailed data about the target node here.
-				 * This is the same as if the user would have directly selected this string. Thus, the two following operations are allowed - and eases the handling of our FoG GUI.
+				 * Has user selected "all nodes"?
 				 */
-				// get a reference to the target node: this is possible for the GUI only
-				Node tTargetNode = tNodeList.get(tTargetSelection - 1 /* be aware of "all nodes" entry */);				
-				// get the name of the target node
-				Name tTargetNodeName = tTargetNode.getCentralFN().getName();
-
+				// send to all nodes of the simulation?
+				boolean tSendToAllNodes = false;
+				if (tTargetName.equals(ALL_NODES)){
+					tSendToAllNodes = true;
+				}
+	
 				/**
-				 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
+				 * Get a reference to the naming-service
 				 */
-				sendProbeConnectionRequest(tTargetNodeName, tTargetNode);
-			} else {
-				for(Node tTargetNode : tNodeList) {
+				try {
+					mNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
+				} catch (RuntimeException tExc) {
+					mNMS = HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
+				}
+	
+				// send to all nodes?
+				if(!tSendToAllNodes) {	
 					/**
 					 * We determine detailed data about the target node here.
-					 * This is the same as if the user would have directly selected this string. Thus, the following operation is allowed - and eases the handling of our FoG GUI.
+					 * This is the same as if the user would have directly selected this string. Thus, the two following operations are allowed - and eases the handling of our FoG GUI.
 					 */
+					// get a reference to the target node: this is possible for the GUI only
+					Node tTargetNode = tNodeList.get(tTargetSelection - 1 /* be aware of "all nodes" entry */);				
 					// get the name of the target node
 					Name tTargetNodeName = tTargetNode.getCentralFN().getName();
-
+	
 					/**
 					 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
 					 */
 					sendProbeConnectionRequest(tTargetNodeName, tTargetNode);
+				} else {
+					for(Node tTargetNode : tNodeList) {
+						/**
+						 * We determine detailed data about the target node here.
+						 * This is the same as if the user would have directly selected this string. Thus, the following operation is allowed - and eases the handling of our FoG GUI.
+						 */
+						// get the name of the target node
+						Name tTargetNodeName = tTargetNode.getCentralFN().getName();
+	
+						/**
+						 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
+						 */
+						sendProbeConnectionRequest(tTargetNodeName, tTargetNode);
+					}
 				}
+			}else{
+				Logging.log(this, "User canceled the target selection dialog");
 			}
 		}
 	}
