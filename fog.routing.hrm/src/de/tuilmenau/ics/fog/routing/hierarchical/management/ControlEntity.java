@@ -234,6 +234,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	{
 		Logging.log(this, "Registering neighbor: " + pNeighbor);
 
+		AbstractRoutingGraphLink.LinkType tLinkType = AbstractRoutingGraphLink.LinkType.REMOTE_LINK;
+
+		boolean tRegisterNeighbor = false;
 		if (this instanceof Cluster){
 			// increase Bully priority because of changed connectivity (topology depending) 
 			getPriority().increaseConnectivity();
@@ -241,35 +244,33 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			// inform all cluster members about the Bully priority change
 			//TODO: sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNodeName(), getPriority()));
 	
-			LinkedList<ControlEntity> tNeighbors = getNeighborsARG(); 
-			if(!tNeighbors.contains(pNeighbor))
-			{
-				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOCAL_LINK);
-				getHRMController().registerLinkARG(pNeighbor, this, tLink);
-	
-				// backward call
-				pNeighbor.registerNeighbor(this);
-			}
+			tLinkType = AbstractRoutingGraphLink.LinkType.LOCAL_LINK;
 			
-			return;
+			tRegisterNeighbor = true;
 		}
-		
+
 		if (this instanceof ClusterProxy){
+			tRegisterNeighbor = true;
+		}
+
+		/**
+		 * Register a link to the neighbor and tell the neighbor about it 
+		 */
+		if (tRegisterNeighbor){
 			LinkedList<ControlEntity> tNeighbors = getNeighborsARG(); 
 			if(!tNeighbors.contains(pNeighbor))
 			{
-				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_LINK);
+				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(tLinkType);
 				getHRMController().registerLinkARG(pNeighbor, this, tLink);
 	
 				// backward call
 				pNeighbor.registerNeighbor(this);
+			}else{
+				Logging.log(this, "Neighbor " + pNeighbor + " is already known");
 			}
-
-			return;
+		}else{
+			Logging.warn(this, "registerNeighbor() ignores registration request for neighbor: " + pNeighbor);
 		}
-
-		// else branch
-		Logging.warn(this, "registerNeighbor() ignores registration request for neighbor: " + pNeighbor);
 	}
 
 	/**
