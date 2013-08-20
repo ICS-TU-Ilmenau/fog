@@ -44,6 +44,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 	 */
 	public ClusterParticipationProperty(Long pTargetClusterID, HierarchyLevel pLevel, int pTargetToken)
 	{
+		Logging.log(this, "Setting target cluster ID " + pTargetClusterID);
 		mTargetClusterID = pTargetClusterID;
 		mHierarchyLevel = pLevel;
 		mTargetToken = pTargetToken;
@@ -67,14 +68,6 @@ public class ClusterParticipationProperty extends AbstractProperty
 		mTargetToken = pToken;
 	}
 	
-	/**
-	 * 
-	 * @param pTargetClusterID Specify the cluster ID of the target cluster here.
-	 */
-	public void setTargetClusterID(Long pTargetClusterID)
-	{
-		mTargetClusterID = pTargetClusterID;
-	}
 	
 	/**
 	 * 
@@ -83,15 +76,6 @@ public class ClusterParticipationProperty extends AbstractProperty
 	public Long getTargetClusterID()
 	{
 		return mTargetClusterID;
-	}
-	
-	/**
-	 * 
-	 * @param pClusterID Specify the cluster ID of the source cluster the coordinator belongs to, here.
-	 */
-	public void setClusterID(Long pClusterID)
-	{
-		mTargetClusterID = pClusterID;
 	}
 	
 	/**
