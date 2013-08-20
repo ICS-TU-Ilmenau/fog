@@ -568,7 +568,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tColumnPeerPriority.setText("Peer Priority");
 		
 		TableColumn tColumnNegotiator = new TableColumn(tTable, SWT.NONE, 5);
-		tColumnNegotiator.setText("Content");
+		tColumnNegotiator.setText("Peer");
 		
 		TableColumn tColumnAnnouncerNegotiator = new TableColumn(tTable, SWT.NONE, 6);
 		tColumnAnnouncerNegotiator.setText("Announcers negotiator");
