@@ -483,6 +483,16 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 					return true;
 				}
 			}
+			
+			if (pObj instanceof Long){
+				Long tOtherClusterID = (Long)pObj;
+
+				Logging.log(this, "EQUALS CLUSTER_ID COMPARING with " + pObj + ": " + tOtherClusterID + "<=>" + tThisICluster.getClusterID());
+
+				if (tOtherClusterID.equals(tThisICluster.getClusterID())) {
+					return true;
+				}
+			}
 		}
 		return false;
 	}	
