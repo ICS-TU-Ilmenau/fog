@@ -34,6 +34,10 @@ import de.tuilmenau.ics.graph.RoutableGraph;
 
 public class ARGViewer extends EditorAWT implements IController
 {
+	private HRMController mHRMController = null;
+	private SelectionProvider selectionCache = null;
+	private MenuCreator menuCreator = null;
+
 	public ARGViewer()
 	{
 	}
@@ -54,29 +58,33 @@ public class ARGViewer extends EditorAWT implements IController
 		setInput(pInput);
 		
 		// get selected object to show in editor
+		Object tInputObject;
 		if(pInput instanceof EditorInput) {
-			mEditorParameter = ((EditorInput) pInput).getObj();
+			tInputObject = ((EditorInput) pInput).getObj();
 		} else {
-			mEditorParameter = null;
+			tInputObject = null;
 		}
-		Logging.log(this, "init editor for " + mEditorParameter + " (class=" + mEditorParameter.getClass() +")");
-		
-		// update title of editor
-		setTitle(mEditorParameter.toString());
-		
-		// configure view
-		if(mEditorParameter != null) {
-			if(mEditorParameter instanceof HRMController) {
-				GraphViewer<RoutingServiceAddress, RoutingServiceLink> tViewer = new GraphViewer<RoutingServiceAddress,RoutingServiceLink>(this);
-				tViewer.init((RoutableGraph)((HRMController) mEditorParameter).getARGForGraphViewer());
-				setView(tViewer.getComponent());
+
+		if(tInputObject != null) {
+			// update title of editor
+			setTitle(tInputObject.toString());
+
+			if(tInputObject instanceof HRMController) {
+				mHRMController = (HRMController) tInputObject;				
+			} else {
+				throw new PartInitException("Invalid input object " +tInputObject +". Bus expected.");
 			}
-			else {
-				throw new PartInitException("Invalid input '" + mEditorParameter + "' for editor.");
-			}
+			
+			// update name of editor part
+			setPartName(toString());
+			
 		} else {
 			throw new PartInitException("No input for editor.");
 		}
+		
+		GraphViewer<RoutingServiceAddress, RoutingServiceLink> tViewer = new GraphViewer<RoutingServiceAddress,RoutingServiceLink>(this);
+		tViewer.init((RoutableGraph)mHRMController.getARGForGraphViewer());
+		setView(tViewer.getComponent());
 	}
 
 	@Override
@@ -91,7 +99,7 @@ public class ARGViewer extends EditorAWT implements IController
 		if(res == null) {
 			res = Platform.getAdapterManager().getAdapter(this, pFilter);
 			
-			if(res == null)	res = Platform.getAdapterManager().getAdapter(mEditorParameter, pFilter);
+			if(res == null)	res = Platform.getAdapterManager().getAdapter(mHRMController, pFilter);
 		}
 		
 		return res;
@@ -101,7 +109,7 @@ public class ARGViewer extends EditorAWT implements IController
 	public void selected(Object selection, boolean pByDefaultButton, int clickCount)
 	{
 		// default: select whole object represented in the view
-		if(selection == null) selection = mEditorParameter;
+		if(selection == null) selection = mHRMController;
 
 		Logging.trace(this, "Selected: " +selection);
 		
@@ -154,7 +162,7 @@ public class ARGViewer extends EditorAWT implements IController
 				popup.addSeparator();
 			}
 			
-			menuCreator.fillMenu(mEditorParameter, popup);
+			menuCreator.fillMenu(mHRMController, popup);
 		}
 		
 		//
@@ -169,7 +177,13 @@ public class ARGViewer extends EditorAWT implements IController
 		}
 	}
 	
-	private Object mEditorParameter = null;
-	private SelectionProvider selectionCache = null;
-	private MenuCreator menuCreator = null;
+	/**
+	 * Returns a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
+	public String toString()
+	{		
+		return "ARG viewer" + (mHRMController != null ? "@" + mHRMController.getNodeGUIName() : "");
+	}
 }
