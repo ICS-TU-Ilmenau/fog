@@ -1152,7 +1152,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 			
 			Logging.log(this, "Nested participations: " + tJoin.getNestedParticipations());
 			
-			for(NestedParticipation tParticipate : tJoin.getNestedParticipations()) {
+			for(NestedParticipation tParticipation : tJoin.getNestedParticipations()) {
 				Logging.log(this, "Iterate over nested participations");
 	
 				ComChannel tCEP = null;
@@ -1181,7 +1181,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 						tCEP = new ComChannel(this, tCluster);
 						((Cluster)tCluster).getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
 						if(tJoin.getHierarchyLevel().isHigherLevel()) {
-							((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
+							((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 						}
 						tClusterFound = true;
 						tFoundCluster = tCluster;
@@ -1208,7 +1208,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					}
 					tCEP = new ComChannel(this, tCluster);
 					if(tJoin.getHierarchyLevel().isHigherLevel()) {
-						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipate.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
+						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 					}
 					tCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
 					registerNodeARG(tCluster);
@@ -1216,15 +1216,15 @@ public class HRMController extends Application implements IServerCallback, IEven
 				}
 				tFoundCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
 				for(ICluster tNegotiatingCluster : getAllClusters()) {
-					ClusterName tNegClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel().getValue() - 1 : 0 ));
+					ClusterName tNegClusterName = new ClusterName(tParticipation.getSourceToken(), tParticipation.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel().getValue() - 1 : 0 ));
 					if(tNegotiatingCluster.equals(tNegClusterName)) {
 						tCEP.setRemoteClusterName(tNegClusterName);
 					}
 				}
 				if(tCEP.getRemoteClusterName() == null && tJoin.getHierarchyLevel().isHigherLevel()) {
 					HashMap<ICluster, ClusterName> tNewlyCreatedClusters = new HashMap<ICluster, ClusterName>(); 
-					NeighborCluster tAttachedCluster = new NeighborCluster(tParticipate.getSourceClusterID(), tParticipate.getSourceName(), tParticipate.getSourceAddress(), tParticipate.getSourceToken(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1), this);
-					tAttachedCluster.setPriority(tParticipate.getSenderPriority());
+					NeighborCluster tAttachedCluster = new NeighborCluster(tParticipation.getSourceClusterID(), tParticipation.getSourceName(), tParticipation.getSourceAddress(), tParticipation.getSourceToken(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1), this);
+					tAttachedCluster.setPriority(tParticipation.getSenderPriority());
 					if(tAttachedCluster.getCoordinatorName() != null) {
 						try {
 							getHRS().mapFoGNameToL2Address(tAttachedCluster.getCoordinatorName(), tAttachedCluster.getCoordinatorsAddress());
@@ -1232,7 +1232,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 							Logging.err(this, "Unable to fulfill requirements", tExc);
 						}
 					}
-					tNewlyCreatedClusters.put(tAttachedCluster, tParticipate.getPredecessor());
+					tNewlyCreatedClusters.put(tAttachedCluster, tParticipation.getPredecessor());
 					Logging.log(this, "as joining cluster");
 					for(Cluster tCluster : getAllClusters()) {
 						if(tCluster.getHierarchyLevel().equals(tAttachedCluster.getHierarchyLevel())) {
@@ -1248,9 +1248,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 					tCEP.setRemoteClusterName(new ClusterName(tAttachedCluster.getToken(), tAttachedCluster.getClusterID(), tAttachedCluster.getHierarchyLevel()));
 					tAttachedCluster.addAnnouncedCEP(tCEP);
 					registerNodeARG(tAttachedCluster);
-					if(tParticipate.getNeighbors() != null && !tParticipate.getNeighbors().isEmpty()) {
-						Logging.log(this, "Working on neighbors " + tParticipate.getNeighbors());
-						for(DiscoveryEntry tEntry : tParticipate.getNeighbors()) {
+					if(tParticipation.getNeighbors() != null && !tParticipation.getNeighbors().isEmpty()) {
+						Logging.log(this, "Working on neighbors " + tParticipation.getNeighbors());
+						for(DiscoveryEntry tEntry : tParticipation.getNeighbors()) {
 							
 							/**
 							 * Create a ClusterName object from this entry
@@ -1315,11 +1315,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 				}
 				if(tCEP.getRemoteClusterName() == null) {
 					Logging.err(this, "Unable to set remote cluster");
-					ClusterName tRemoteClusterName = new ClusterName(tParticipate.getSourceToken(), tParticipate.getSourceClusterID(), tParticipate.getLevel());
+					ClusterName tRemoteClusterName = new ClusterName(tParticipation.getSourceToken(), tParticipation.getSourceClusterID(), tParticipation.getLevel());
 							
 					tCEP.setRemoteClusterName(tRemoteClusterName);
 				}
-				tCEP.setPeerPriority(tParticipate.getSenderPriority());
+				tCEP.setPeerPriority(tParticipation.getSenderPriority());
 				Logging.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);
 			}
 			
