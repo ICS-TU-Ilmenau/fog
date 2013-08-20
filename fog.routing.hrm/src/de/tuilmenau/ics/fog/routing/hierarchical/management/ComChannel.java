@@ -688,12 +688,12 @@ public class ComChannel
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteClusterName());
 			}
 
-			List<AbstractRoutingGraphNode> tDiscoveryCandidates = getHRMController().getVerticesInOrderRadiusARG(tSourceCluster);
+			List<AbstractRoutingGraphNode> tARGNodesOrderDistance = getHRMController().getVerticesInOrderRadiusARG(tSourceCluster);
 			
 			if(tSourceCluster != null) {
-				for(AbstractRoutingGraphNode tVirtualNode : tDiscoveryCandidates) {
-					if(tVirtualNode instanceof ICluster) {
-						ICluster tCluster = (ICluster) tVirtualNode;
+				for(AbstractRoutingGraphNode tARGNode : tARGNodesOrderDistance) {
+					if(tARGNode instanceof ICluster) {
+						ICluster tCluster = (ICluster) tARGNode;
 						
 						int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 						Logging.log(this, "Radius is " + tRadius);
