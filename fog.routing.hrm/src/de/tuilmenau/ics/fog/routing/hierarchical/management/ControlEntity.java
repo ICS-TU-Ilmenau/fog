@@ -29,8 +29,9 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * A control entity can be either a cluster or a coordinator instance.
  * This class is used to concentrate common function of clusters and coordinators
  */
-public abstract class ControlEntity implements Localization, IElementDecorator
+public abstract class ControlEntity implements AbstractRoutingGraphNode, Localization, IElementDecorator
 {
+	private static final long serialVersionUID = 6770007191316056223L;
 
 	/**
 	 * Stores the hierarchy level of this cluster.
@@ -225,6 +226,73 @@ public abstract class ControlEntity implements Localization, IElementDecorator
 	}
 
 	/**
+	 * Registers a neighbor of this control entity within the ARG of the HRMController instance
+	 *  
+	 * @param pNeighbor the neighbor, which should be registered
+	 */
+	public void registerNeighbor(ControlEntity pNeighbor)
+	{
+		Logging.log(this, "Registering neighbor: " + pNeighbor);
+
+		if (this instanceof Cluster){
+			// increase Bully priority because of changed connectivity (topology depending) 
+			getPriority().increaseConnectivity();
+			
+			// inform all cluster members about the Bully priority change
+			//TODO: sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNodeName(), getPriority()));
+	
+			LinkedList<ControlEntity> tNeighbors = getNeighborsARG(); 
+			if(!tNeighbors.contains(pNeighbor))
+			{
+				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOCAL_LINK);
+				getHRMController().registerLinkARG(pNeighbor, this, tLink);
+	
+				// backward call
+				pNeighbor.registerNeighbor(this);
+			}
+			
+			return;
+		}
+		
+		if (this instanceof ClusterProxy){
+			LinkedList<ControlEntity> tNeighbors = getNeighborsARG(); 
+			if(!tNeighbors.contains(pNeighbor))
+			{
+				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_LINK);
+				getHRMController().registerLinkARG(pNeighbor, this, tLink);
+	
+				// backward call
+				pNeighbor.registerNeighbor(this);
+			}
+
+			return;
+		}
+
+		// else branch
+		Logging.warn(this, "registerNeighbor() ignores registration request for neighbor: " + pNeighbor);
+	}
+
+	/**
+	 * Determines all registered neighbors for this control entity, which can be found withing the ARG of the HRMController instance
+	 * 
+	 * @return the found neighbors of the ARG
+	 */
+	public LinkedList<ControlEntity> getNeighborsARG()
+	{
+		LinkedList<ControlEntity> tResult = new LinkedList<ControlEntity>();
+		
+		for(AbstractRoutingGraphNode tNode : getHRMController().getNeighborsARG(this)) {
+			if (tNode instanceof ControlEntity){
+				tResult.add((ControlEntity)tNode);
+			}else{
+				Logging.warn(this, "getNeighborsARG() ignores ARG neighbor: " + tNode);
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Sets the communication channel to the superior coordinator.
 	 * For a base hierarchy level cluster, this is a level 0 coordinator.
 	 * For a level n coordinator, this is a level n+1 coordinator.
@@ -266,12 +334,15 @@ public abstract class ControlEntity implements Localization, IElementDecorator
 		return mSuperiorCoordinatorL2Address;
 	}
 
-	//TODO
-	public abstract void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pComChannel);
+	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pComChannel)
+	{
+		//TODO: remove this
+	}
 	
-	//TODO
-	public abstract void handleNeighborAnnouncement(NeighborClusterAnnounce pNeighborClusterAnnounce, ComChannel pComChannel);
-
+	public void handleNeighborAnnouncement(NeighborClusterAnnounce pNeighborClusterAnnounce, ComChannel pComChannel)
+	{
+		//TODO: remove this
+	}
 
 	/**
 	 * Handles a Bully related signaling message from an external cluster member
@@ -386,6 +457,36 @@ public abstract class ControlEntity implements Localization, IElementDecorator
 	}
 
 	/**
+	 * Returns if both objects address the same cluster/coordinator
+	 * 
+	 * @return true or false
+	 */
+	@Override
+	public boolean equals(Object pObj)
+	{
+		if (((this instanceof Cluster) && (pObj instanceof Coordinator)) ||
+			((this instanceof Coordinator) && (pObj instanceof Cluster))){
+			return false;
+		}
+		
+		if (this instanceof ICluster)
+		{
+			ICluster tThisICluster = (ICluster)this;
+			
+			if(pObj instanceof ICluster) {
+				ICluster tICluster = (ICluster) pObj;
+				
+				//Logging.log(this, "EQUALS COMPARING with " + pObj + ": " + tICluster.getClusterID() + "<=>" + tThisICluster.getClusterID() + ", " + tICluster.getToken() + "<=>" + tThisICluster.getToken() + ", " + tICluster.getHierarchyLevel().getValue() + "<=>" + getHierarchyLevel().getValue());
+
+				if (tICluster.getClusterID().equals(tThisICluster.getClusterID()) && (tICluster.getToken() == tThisICluster.getToken()) && (tICluster.getHierarchyLevel().equals(getHierarchyLevel()))) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}	
+
+	/**
 	 * Defines the decoration color for the ARG viewer
 	 */
 	@Override
@@ -416,7 +517,7 @@ public abstract class ControlEntity implements Localization, IElementDecorator
 	@Override
 	public Object getDecorationValue()
 	{
-		Float tResult = Float.valueOf(1.0f - 0.7f * (getHierarchyLevel().getValue() + 1)/ HRMConfig.Hierarchy.HEIGHT);
+		Float tResult = Float.valueOf(1.0f - 0.5f * (getHierarchyLevel().getValue() + 1)/ HRMConfig.Hierarchy.HEIGHT);
 		
 		//Logging.log(this, "Returning decoration value: " + tResult);
 		
@@ -427,6 +528,17 @@ public abstract class ControlEntity implements Localization, IElementDecorator
 	public void setDecorationValue(Object tLabal)
 	{
 		// not used, but have to be implemented for implementing interface IElementDecorator
+	}
+
+	/**
+	 * Returns a location description about this instance
+	 */
+	@Override
+	public String toLocation()
+	{
+		String tResult = getClass().getSimpleName() + "@" + getHRMController().getNodeGUIName() + "@" + getHierarchyLevel().getValue();
+		
+		return tResult;
 	}
 
 }
