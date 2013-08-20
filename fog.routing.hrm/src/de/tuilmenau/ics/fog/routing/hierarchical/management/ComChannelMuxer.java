@@ -56,6 +56,8 @@ public class ComChannelMuxer
 	{
 		Logging.log(this, "############## Connecting to neighbor coordinator: " + pTargetCluster + ", source=" + pSourceCoordinator);
 		
+		ControlEntity tControlEntityTargetCluster = (ControlEntity)pTargetCluster;
+		
 		HierarchyLevel tSourceClusterHierLvl = new HierarchyLevel(this, pSourceCoordinator.getHierarchyLevel().getValue());
 		HierarchyLevel tTargetClusterHierLvl = new HierarchyLevel(this, pTargetCluster.getHierarchyLevel().getValue() + 1);
 
@@ -103,23 +105,22 @@ public class ComChannelMuxer
 					tParticipate.setSourceName(mHRMController.getNode().getCentralFN().getName());
 					tParticipate.setSourceRoutingServiceAddress(tSession.getSourceRoutingServiceAddress());
 					
-					List<AbstractRoutingGraphLink> tClusterListToRemote = mHRMController.getRouteARG(tManager.getCluster(), pTargetCluster);
+					List<AbstractRoutingGraphLink> tClusterListToRemote = mHRMController.getRouteARG(tManager.getCluster(), tControlEntityTargetCluster);
 					if(!tClusterListToRemote.isEmpty()) {
 						/*
 						 * we need the last hop in direct to the neighbor
 						 */
-						ICluster tPredecessorToRemote = (ICluster) mHRMController.getOtherEndOfLinkARG(pTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
+						ICluster tPredecessorToRemote = (ICluster) mHRMController.getOtherEndOfLinkARG(tControlEntityTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
 						tParticipate.setPredecessor(new ClusterName(tPredecessorToRemote.getToken(), tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getHierarchyLevel()));
 						Logging.log(this, "Successfully set predecessor for " + pTargetCluster + ":" + tPredecessorToRemote);
 					} else {
 						Logging.log(this, "Unable to set predecessor for " + pTargetCluster + ":");
 					}
 					
-					for(ICluster tNeighbor: tManager.getCluster().getNeighbors()) {
-						ControlEntity tNeighborControlEntity = (ControlEntity)tNeighbor;
-
+					for(ControlEntity tNeighbor: tManager.getCluster().getNeighborsARG()) {
+						ICluster tIClusterNeighbor = (ICluster)tNeighbor;
 						
-						DiscoveryEntry tEntry = new DiscoveryEntry(tNeighbor.getToken(), tNeighbor.getCoordinatorName(), tNeighbor.getClusterID(), tNeighborControlEntity.superiorCoordinatorL2Address(), tNeighbor.getHierarchyLevel());
+						DiscoveryEntry tEntry = new DiscoveryEntry(tIClusterNeighbor.getToken(), tIClusterNeighbor.getCoordinatorName(), tIClusterNeighbor.getClusterID(), tNeighbor.superiorCoordinatorL2Address(), tNeighbor.getHierarchyLevel());
 						tEntry.setPriority(tNeighbor.getPriority());
 						List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(tManager.getCluster(), tNeighbor);
 						/*
@@ -132,8 +133,8 @@ public class ComChannelMuxer
 						} else {
 							Logging.log(this, "Unable to set predecessor for " + tNeighbor);
 						}
-						if(tManager.getPathToCoordinator(tManager.getCluster(), tNeighbor) != null) {
-							for(RoutingServiceLinkVector tVector : tManager.getPathToCoordinator(tManager.getCluster(), tNeighbor)) {
+						if(tManager.getPathToCoordinator(tManager.getCluster(), tIClusterNeighbor) != null) {
+							for(RoutingServiceLinkVector tVector : tManager.getPathToCoordinator(tManager.getCluster(), tIClusterNeighbor)) {
 								tEntry.addRoutingVectors(tVector);
 							}
 						}
@@ -159,9 +160,9 @@ public class ComChannelMuxer
 
 			for(Coordinator tManager : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
 				LinkedList<Integer> tTokens = new LinkedList<Integer>();
-				for(ICluster tClusterForToken : tManager.getCluster().getNeighbors()) {
-					if(tClusterForToken.getHierarchyLevel().getValue() == tManager.getHierarchyLevel().getValue() - 1) {
-						tTokens.add((tClusterForToken.getToken()));
+				for(ControlEntity tNeighbor : tManager.getCluster().getNeighborsARG()) {
+					if(tNeighbor.getHierarchyLevel().getValue() == tManager.getHierarchyLevel().getValue() - 1) {
+						tTokens.add(((ICluster) tNeighbor).getToken());
 					}
 				}
 				tTokens.add(tManager.getCluster().getToken());

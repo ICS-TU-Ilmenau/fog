@@ -46,14 +46,11 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
-import de.tuilmenau.ics.fog.topology.ILowerLayer;
-import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
-import de.tuilmenau.ics.fog.transfer.gates.DirectDownGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.SimpleName;
@@ -217,6 +214,7 @@ public class HRMController extends Application implements IServerCallback, IEven
      * 
 	 * @return the GUI name
 	 */
+	@SuppressWarnings("deprecation")
 	public String getNodeGUIName()
 	{
 		return mNode.getName();
@@ -299,6 +297,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 		//TODO: check and be aware of topology dynamics
 		getNode().setDecorationParameter("L"+ tLevel);
 		
+		// register the coordinator in the local ARG
+		registerNodeARG(pCoordinator);
+
 		// it's time to update the GUI
 		notifyGUI(pCoordinator);
 	}
@@ -326,7 +327,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @param pCluster the cluster whose HRMID is updated
 	 */
-	@SuppressWarnings("unused")
 	public void updateCoordinatorAddress(Coordinator pCoordinator)
 	{
 		HRMID tHRMID = pCoordinator.getHRMID();
@@ -402,6 +402,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 			mKnownClusters.add(pCluster);
 		}
 		
+		// register the cluster in the local ARG
+		registerNodeARG(pCluster);
+
 		// it's time to update the GUI
 		notifyGUI(pCluster);
 	}
@@ -429,7 +432,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @param pCluster the cluster whose HRMID is updated
 	 */
-	@SuppressWarnings("unused")
 	public void updateClusterAddress(Cluster pCluster)
 	{
 		HRMID tHRMID = pCluster.getHRMID();
@@ -509,6 +511,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @return the list of known clusters
 	 */
+	@SuppressWarnings("unchecked")
 	public LinkedList<Cluster> getAllClusters()
 	{
 		LinkedList<Cluster> tResult = null;
@@ -575,7 +578,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * 
 	 * @param pNeighborL2Address the L2 address of the detected physical neighbor
 	 */
-	public void detectedPhysicalNeighborNode(L2Address pNeighborL2Address)
+	public void eventDetectedPhysicalNeighborNode(L2Address pNeighborL2Address)
 	{
 		L2Address tThisHostL2Address = getHRS().getL2AddressFor(mNode.getCentralFN());
 
@@ -605,42 +608,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 				if (tDownGateLink != null){
 					GateID tDownGateGateID = tDownGateLink.getID();
 				
-					// hash the name of the bus where the outgoing gate belongs to in order to create a temporary identification of the cluster
-					Long tClusterID = Long.valueOf(0L);
-					// get the DirectDownGate to the neighbor node
-					DirectDownGate tDirectDownGate = (DirectDownGate) tContainer.getGate(tDownGateGateID);
-					if (tDirectDownGate != null){
-						NetworkInterface tNetworkInterface = tDirectDownGate.getLowerLayer();
-						if (tNetworkInterface != null){
-							ILowerLayer tLowerLayer = tNetworkInterface.getBus();
-							if (tLowerLayer != null){
-								String tBusName = null;
-								try {
-									tBusName = tLowerLayer.getName();
-								} catch (RemoteException tExc) {
-									Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), Bus Name is invalid", tExc);
-									tBusName = null;
-								}
-								if (tBusName != null){
-									tClusterID = Long.valueOf(tBusName.hashCode());
-								}else{
-									Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), Bus Name is invalid");
-								}
-							}else{
-								Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus (" + tNetworkInterface.getBus() + "), ILowerLayer is invalid");
-							}
-						}else{
-							Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus to " + pNeighborL2Address + ", NetworkInterface is invalid");
-						}									
-					}else{
-						Logging.err(this, "registerLink() wasn't able to determine a hash value of the bus " + pNeighborL2Address + ", DirectDownGate is invalid");
-					}
-
 					/**
 					 * Open a connection to the neighbor
 					 */
 				    Logging.log(this, "    ..opening connection to " + pNeighborL2Address);
-				    connectToNeighborNode(pNeighborL2Address, HierarchyLevel.createBaseLevel(), tClusterID);
+				    connectToDetectedNeighborNode(pNeighborL2Address);
 				}else{
 					Logging.err(this, "registerLink() hasn't found the DirectDownGate in the route from " + tThisHostL2Address + " to " + pNeighborL2Address + ", route is: " + tGateIDsToNeighbor);
 				}
@@ -901,7 +873,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 *  
 	 * @param pNode the node (cluster/coordinator) which should be stored in the ARG
 	 */
-	public synchronized void registerNodeARG(ICluster pNode)
+	public synchronized void registerNodeARG(ControlEntity pNode)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "REGISTERING NODE ADDRESS (ARG): " + pNode );
@@ -928,7 +900,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * @param pTo the ending point of the link
 	 * @param pLink the link between the two nodes
 	 */
-	public void registerLinkARG(ICluster pFrom, ICluster pTo, AbstractRoutingGraphLink pLink)
+	public void registerLinkARG(ControlEntity pFrom, ControlEntity pTo, AbstractRoutingGraphLink pLink)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "REGISTERING LINK (ARG):  source=" + pFrom + " ## dest.=" + pTo + " ## link=" + pLink);
@@ -983,7 +955,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}
 
 		synchronized (mAbstractRoutingGraph) {
-			tResult = (ICluster) mAbstractRoutingGraph.getOtherEndOfLink(pKnownEnd, pLink);
+			tResult = mAbstractRoutingGraph.getOtherEndOfLink(pKnownEnd, pLink);
 		}
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
@@ -1152,9 +1124,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 			
 			Logging.log(this, "Nested participations: " + tJoin.getNestedParticipations());
 			
+			Logging.log(this, "Iterating over nested participations..");
 			for(NestedParticipation tParticipation : tJoin.getNestedParticipations()) {
-				Logging.log(this, "Iterate over nested participations");
-	
+				Logging.log(this, "       ..participation: " + tParticipation);
+
 				ComChannel tCEP = null;
 				boolean tClusterFound = false;
 				ICluster tFoundCluster = null;
@@ -1164,27 +1137,27 @@ public class HRMController extends Application implements IServerCallback, IEven
 				Logging.log(this, "Searching for target cluster among " + tKnownClusters.size() + " known clusters:");
 				
 				int i = 0;
-				for(Cluster tCluster : tKnownClusters)
+				for(Cluster tKnownCluster : tKnownClusters)
 				{
-					Logging.log(this, "       ..[" + i + "]: " + tCluster);
+					Logging.log(this, "       ..[" + i + "]: " + tKnownCluster);
 					
 					ClusterName tJoinClusterName = new ClusterName(tJoin.getTargetToken(), tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
 					ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
 					
-					if(tCluster.equals(tJoinClusterNameTok0) || tJoin.getTargetToken() != 0 && tCluster.equals(tJoinClusterName))	{
-						Logging.log(this, "Cluster found: " + tCluster);
+					if(tKnownCluster.equals(tJoinClusterNameTok0) || tJoin.getTargetToken() != 0 && tKnownCluster.equals(tJoinClusterName))	{
+						Logging.log(this, "Cluster found: " + tKnownCluster);
 						
 						if(tConnectionSession == null) {
-							tConnectionSession = new ComSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
+							tConnectionSession = new ComSession(this, true, tJoin.getHierarchyLevel(), tKnownCluster.getMultiplexer());
 						}
 						
-						tCEP = new ComChannel(this, tCluster);
-						((Cluster)tCluster).getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
+						tCEP = new ComChannel(this, tKnownCluster);
+						((Cluster)tKnownCluster).getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
 						if(tJoin.getHierarchyLevel().isHigherLevel()) {
-							((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
+							((Cluster)tKnownCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 						}
 						tClusterFound = true;
-						tFoundCluster = tCluster;
+						tFoundCluster = tKnownCluster;
 					}
 					i++;
 				}
@@ -1211,7 +1184,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
 					}
 					tCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
-					registerNodeARG(tCluster);
 					tFoundCluster = tCluster;
 				}
 				tFoundCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
@@ -1223,6 +1195,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				}
 				if(tCEP.getRemoteClusterName() == null && tJoin.getHierarchyLevel().isHigherLevel()) {
 					HashMap<ICluster, ClusterName> tNewlyCreatedClusters = new HashMap<ICluster, ClusterName>(); 
+					Logging.log(this, "     ..creating cluster proxy");
 					ClusterProxy tRemoteCluster = new ClusterProxy(this, tParticipation.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1), tParticipation.getSourceName(), tParticipation.getSourceAddress(), tParticipation.getSourceToken());
 					tRemoteCluster.setPriority(tParticipation.getSenderPriority());
 					HRMName tCoordinatorName = tParticipation.getSourceAddress();
@@ -1240,14 +1213,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 							setSourceIntermediateCluster(tRemoteCluster, tCluster);
 						}
 					}
-					if(getSourceIntermediate(tRemoteCluster) == null) {
-						Logging.err(this, "No source intermediate cluster for" + tRemoteCluster.getClusterDescription() + " found");
-					}
 					
 					Logging.log(this, "Created " + tRemoteCluster);
 					
 					tCEP.setRemoteClusterName(new ClusterName(tRemoteCluster.getToken(), tRemoteCluster.getClusterID(), tRemoteCluster.getHierarchyLevel()));
-					registerNodeARG(tRemoteCluster);
 					if(tParticipation.getNeighbors() != null && !tParticipation.getNeighbors().isEmpty()) {
 						Logging.log(this, "Working on neighbors " + tParticipation.getNeighbors());
 						for(DiscoveryEntry tEntry : tParticipation.getNeighbors()) {
@@ -1261,10 +1230,13 @@ public class HRMController extends Application implements IServerCallback, IEven
 							/**
 							 * Search if the cluster is already locally known
 							 */
-							ICluster tCluster = null;
+							boolean tClusterIsAlreadyKnown = false;
+							ControlEntity tSelectedCluster = null;
 							for(Cluster tKnownCluster : getAllClusters()) {
 								if(tKnownCluster.equals(tEntryClusterName)) {
-									tCluster = tKnownCluster;
+									tClusterIsAlreadyKnown = true;
+									tSelectedCluster = tKnownCluster;
+									break;
 								}
 							}
 
@@ -1275,35 +1247,36 @@ public class HRMController extends Application implements IServerCallback, IEven
 							
 							
 							// was the cluster already known?
-							if(tCluster == null) {
-								tCluster = new ClusterProxy(this, tEntry.getClusterID(), tEntry.getLevel(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken());
-								tCluster.setPriority(tEntry.getPriority());
+							if(!tClusterIsAlreadyKnown) {
+								ClusterProxy tClusterProxy = new ClusterProxy(this, tEntry.getClusterID(), tEntry.getLevel(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken());
+								tClusterProxy.setPriority(tEntry.getPriority());
 								try {
-									getHRS().mapFoGNameToL2Address(tCluster.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress());
+									getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress());
 								} catch (RemoteException tExc) {
 									Logging.err(this, "Unable to fulfill requirements", tExc);
 								}
 								
-								tNewlyCreatedClusters.put(tCluster, tEntry.getPredecessor());
+								tNewlyCreatedClusters.put(tClusterProxy, tEntry.getPredecessor());
 								for(Cluster tCluster1 : getAllClusters()) {
-									if(tCluster1.getHierarchyLevel() == tCluster.getHierarchyLevel()) {
-										setSourceIntermediateCluster(tCluster, tCluster1);
+									if(tCluster1.getHierarchyLevel() == tClusterProxy.getHierarchyLevel()) {
+										setSourceIntermediateCluster(tClusterProxy, tCluster1);
 										Logging.log(this, "as joining neighbor");
 									}
 								}
-								if(getSourceIntermediate(tRemoteCluster) == null) {
-									Logging.err(this, "No source intermediate cluster for" + tCluster.getClusterDescription() + " found");
+								if(getSourceIntermediateCluster(tRemoteCluster) == null) {
+									Logging.err(this, "No source intermediate cluster for" + tClusterProxy.getClusterDescription() + " found");
 								}
 	//							((NeighborCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
-								Logging.log(this, "Created " +tCluster);
+								
+								tSelectedCluster = tClusterProxy;
 							} 
 							
 							// register the link to the local ARG
-							registerLinkARG(tRemoteCluster, tCluster, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOGICAL_LINK));
+							registerLinkARG(tRemoteCluster, tSelectedCluster, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_LINK));
 						}
-						for(ICluster tCluster : tRemoteCluster.getNeighbors()) {
-							if(getSourceIntermediate(tCluster) != null) {
-								setSourceIntermediateCluster(tRemoteCluster, getSourceIntermediate(tCluster));
+						for(ControlEntity tNeighbor : tRemoteCluster.getNeighborsARG()) {
+							if(getSourceIntermediateCluster(tNeighbor) != null) {
+								setSourceIntermediateCluster(tRemoteCluster, getSourceIntermediateCluster(tNeighbor));
 							}
 						}
 					} else {
@@ -1348,24 +1321,24 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * @param pCluster cluster to which the distance has to be computed
 	 * @return number of clusters to target
 	 */
-	public int getClusterDistance(ICluster pCluster)
+	public int getClusterDistance(ControlEntity pCluster)
 	{
 		List<AbstractRoutingGraphLink> tClusterRoute = null;
 		int tDistance = 0;
-		if(getSourceIntermediate(pCluster) == null || pCluster == null) {
-			Logging.log(this, "source cluster for " + (pCluster instanceof ClusterProxy ? ((ClusterProxy)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediate(pCluster));
+		if(getSourceIntermediateCluster(pCluster) == null || pCluster == null) {
+			Logging.log(this, "source cluster for " + (pCluster instanceof ClusterProxy ? ((ClusterProxy)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediateCluster(pCluster));
 		}
-		ICluster tIntermediate = getSourceIntermediate(pCluster);
-		tClusterRoute = getRouteARG(tIntermediate, pCluster);
+		Cluster tIntermediateCluster = getSourceIntermediateCluster(pCluster);
+		tClusterRoute = getRouteARG(tIntermediateCluster, pCluster);
 		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
 			for(AbstractRoutingGraphLink tConnection : tClusterRoute) {
-				if(tConnection.getLinkType() == AbstractRoutingGraphLink.LinkType.LOGICAL_LINK) {
+				if(tConnection.getLinkType() == AbstractRoutingGraphLink.LinkType.REMOTE_LINK) {
 					tDistance++;
 				}
 			}
 		} else {
 			//Logging.log(this, "No cluster route available");
-			tClusterRoute = getRouteARG(tIntermediate, pCluster);
+			tClusterRoute = getRouteARG(tIntermediateCluster, pCluster);
 		}
 		return tDistance;
 	}
@@ -1377,55 +1350,28 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * @param pLevel is the level at which a connection is added
 	 * @param pToClusterID is the identity of the cluster a connection will be added to
 	 */
-	private void connectToNeighborNode(Name pName, HierarchyLevel pLevel, Long pToClusterID)
+	private void connectToDetectedNeighborNode(Name pName)
 	{
-		Logging.log(this, "ADDING CONNECTION to " + pName + "(ClusterID=" + pToClusterID + ", hierarchy level=" + pLevel.getValue() + ")");
+		Logging.log(this, "ADDING CONNECTION to neighbor node " + pName);
 
-		ComSession tSession = null;
-		ICluster tFoundCluster = null;
-		ComChannel tCEP = null;
+		Logging.log(this, "Cluster is new, creating objects...");
+		Cluster tCreatedCluster = new Cluster(this);
+		setSourceIntermediateCluster(tCreatedCluster, tCreatedCluster);
 		
-		boolean tClusterFound = false;
-		for(Cluster tCluster : getAllClusters())
-		{
-			if(tCluster.getClusterID().equals(pToClusterID)) {
-				tSession = new ComSession(this, false, pLevel, tCluster.getMultiplexer());
-				Route tRoute = null;
-				try {
-					tRoute = getHRS().getRoute(pName, new Description(), getNode().getIdentity());
-				} catch (RoutingException tExc) {
-					Logging.err(this, "Unable to resolve route to " + pName, tExc);
-				} catch (RequirementsException tExc) {
-					Logging.err(this, "Unable to fulfill requirements for a route to " + pName, tExc);
-				}
-				tSession.setRouteToPeer(tRoute);
-				tCEP = new ComChannel(this, tCluster);
-				tCluster.getMultiplexer().mapChannelToSession(tCEP, tSession);
-				tFoundCluster = tCluster;
-				tClusterFound = true;
-			}
-		}
-		if(!tClusterFound)
-		{
-			Logging.log(this, "Cluster is new, creating objects...");
-			Cluster tCluster = new Cluster(this, new Long(pToClusterID), pLevel);
-			setSourceIntermediateCluster(tCluster, tCluster);
-			registerNodeARG(tCluster);
-			tSession = new ComSession(this, false, pLevel, tCluster.getMultiplexer());
-			tCEP = new ComChannel(this, tCluster);
-			tCluster.getMultiplexer().mapChannelToSession(tCEP, tSession);
-			tFoundCluster = tCluster;
-		}
-		final ClusterParticipationProperty tClusterParticipationProperty = new ClusterParticipationProperty(pToClusterID, pLevel, 0);
-		NestedParticipation tParticipate = tClusterParticipationProperty.new NestedParticipation(pToClusterID, 0);
+		ComSession tSession = new ComSession(this, false, tCreatedCluster.getHierarchyLevel(), tCreatedCluster.getMultiplexer());
+		ComChannel tComChannel = new ComChannel(this, tCreatedCluster);
+		tCreatedCluster.getMultiplexer().mapChannelToSession(tComChannel, tSession);
+
+		final ClusterParticipationProperty tClusterParticipationProperty = new ClusterParticipationProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
+		NestedParticipation tParticipate = tClusterParticipationProperty.new NestedParticipation(tCreatedCluster.getClusterID(), 0);
 		tClusterParticipationProperty.addNestedparticipation(tParticipate);
 		
-		tParticipate.setSourceClusterID(pToClusterID);
+		tParticipate.setSourceClusterID(tCreatedCluster.getClusterID());
 		
 		final Name tNeighborName = pName;
 		final ComSession tFSession = tSession;
-		final ComChannel tDemultiplexed = tCEP;
-		final ICluster tClusterToAdd = tFoundCluster;
+		final ComChannel tfComChannel = tComChannel;
+		final ICluster tfCreatedCluster = tCreatedCluster;
 		final HRMController tHRMController = this;
 		
 		Thread tThread = new Thread() {
@@ -1483,7 +1429,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 						tFSession.setRouteToPeer(tRouteToNeighborFN);
 					}
 					
-					tDemultiplexed.setRemoteClusterName(new ClusterName(tClusterToAdd.getToken(), tClusterToAdd.getClusterID(), tClusterToAdd.getHierarchyLevel()));
+					tfComChannel.setRemoteClusterName(new ClusterName(tfCreatedCluster.getToken(), tfCreatedCluster.getClusterID(), tfCreatedCluster.getHierarchyLevel()));
 				}
 			}
 		};
@@ -1529,7 +1475,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * @param pCluster for which an intermediate cluster is searched
 	 * @return intermediate cluster that is directly connected to the node
 	 */
-	public Cluster getSourceIntermediate(ICluster pCluster)
+	public Cluster getSourceIntermediateCluster(ControlEntity pCluster)
 	{
 		if(mIntermediateMapping.containsKey(pCluster)) {
 			

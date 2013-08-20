@@ -15,14 +15,11 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
-public class ClusterName implements Serializable, ICluster
+public class ClusterName implements Serializable, ICluster, AbstractRoutingGraphNode
 {
 	/**
 	 * 
@@ -49,21 +46,6 @@ public class ClusterName implements Serializable, ICluster
 	public String toString()
 	{
 		return "\"(ID=" + mClusterID + ", Tok=" + mToken + (mHierarchyLevel != null ? ", HierLvl.=" + mHierarchyLevel.getValue() : "") + ")\""; 
-	}
-
-	@Override
-	public HRMID getHRMID() {
-		return null;
-	}
-
-	@Override
-	public Namespace getNamespace() {
-		return null;
-	}
-
-	@Override
-	public int getSerialisedSize() {
-		return 0;
 	}
 
 	@Override
@@ -112,29 +94,13 @@ public class ClusterName implements Serializable, ICluster
 	}
 
 	@Override
-	public LinkedList<ICluster> getNeighbors() {
-		return null;
-	}
-
-	@Override
 	public BullyPriority getHighestPriority()
 	{
 		return null;
 	}
 
 	@Override
-	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, ComChannel pCEP)
-	{
-	}
-
-	@Override
 	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
-	{
-		
-	}
-
-	@Override
-	public void registerNeighbor(ICluster pNeighbor)
 	{
 		
 	}
@@ -161,6 +127,33 @@ public class ClusterName implements Serializable, ICluster
 
 	@Override
 	public ComChannelMuxer getMultiplexer()
+	{
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.facade.Name#getNamespace()
+	 */
+	@Override
+	public Namespace getNamespace()
+	{
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.facade.Name#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphNode#getHRMID()
+	 */
+	@Override
+	public HRMID getHRMID()
 	{
 		return null;
 	}

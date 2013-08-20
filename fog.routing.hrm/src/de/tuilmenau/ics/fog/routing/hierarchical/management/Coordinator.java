@@ -86,7 +86,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	private BullyPriority mHighestPriority = null;
 	private List<AbstractRoutingGraphNode> mClustersToNotify;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
-	private Long mClusterID;
 	private LinkedList<NeighborClusterAnnounce> mReceivedAnnouncements;
 	
 	/**
@@ -113,8 +112,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		
 		// clone the HRMID of the managed cluster because it can already contain the needed HRMID prefix address
 		setHRMID(this,  mParentCluster.getHRMID().clone());
-		
-		mClusterID = pCluster.getClusterID();
 		
 		// register itself as coordinator for the managed cluster
 		mParentCluster.setCoordinator(this);
@@ -506,6 +503,17 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		mParentCluster.setPriority(pPriority);
 	}
 
+	/**
+	 * Returns a reference to the cluster, which this coordiantor manages.
+	 * 
+	 * @return the managed cluster
+	 */
+	public Cluster getCluster()
+	{
+		return mParentCluster;
+	}
+	
+	
 	
 	
 
@@ -528,7 +536,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	
 	public void exploreNeighborhodAndCreateCluster()
 	{
-		Logging.log(this, "\n\n\nCLUSTERING STARTED on hierarchy level " + getHierarchyLevel().getValue() + ", will connect to " + mParentCluster.getNeighbors());
+		Logging.log(this, "\n\n\nCLUSTERING STARTED on hierarchy level " + getHierarchyLevel().getValue() + ", will connect to " + mParentCluster.getNeighborsARG());
 		
 		// was the clustering already triggered?
 		if (!isClustered()){
@@ -660,7 +668,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 	@Override
 	public Long getClusterID() {
-		return mClusterID;
+		return mParentCluster.getClusterID();
 	}
 
 	@Override
@@ -689,11 +697,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	@Override
 	public int getToken() {
 		return mToken;
-	}
-
-	@Override
-	public LinkedList<ICluster> getNeighbors() {
-		return new LinkedList<ICluster>();
 	}
 
 	@Override
@@ -883,8 +886,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		ClusterProxy tCluster = null;
 		if(pAnnounce.isAnnouncementFromForeign())
 		{
+			Logging.log(this, "     ..creating cluster proxy");
 			tCluster = new ClusterProxy(mParentCluster.getHRMController(), pAnnounce.getCoordAddress().getComplexAddress().longValue() /* TODO: als clusterID den Wert? */, new HierarchyLevel(this, super.getHierarchyLevel().getValue() + 2),	pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
-			getHRMController().setSourceIntermediateCluster(tCluster, getHRMController().getSourceIntermediate(this));
+			getHRMController().setSourceIntermediateCluster(tCluster, getHRMController().getSourceIntermediateCluster(this));
 			tCluster.setToken(pAnnounce.getToken());
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			//mParentCluster.addNeighborCluster(tCluster);
@@ -984,14 +988,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 
 	@Override
-	public void registerNeighbor(ICluster pNeighbor) {
-		/*
-		 * cluster manager does not need neighbors
-		 */
-		//TODO: remove this
-	}
-	
-	@Override
 	public void setHighestPriority(BullyPriority pHighestPriority) {
 		mHighestPriority = pHighestPriority;
 	}
@@ -999,33 +995,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	@Override
 	public Namespace getNamespace() {
 		return new Namespace("clustermanager");
-	}
-	
-	@Override
-	public boolean equals(Object pObj)
-	{
-		if(pObj instanceof Cluster) {
-			return false;
-		}
-		if(pObj instanceof ICluster) {
-			ICluster tCluster = (ICluster) pObj;
-			if(tCluster.getClusterID().equals(getClusterID()) &&
-					tCluster.getToken() == getToken() &&
-					tCluster.getHierarchyLevel() == getHierarchyLevel()) {
-				return true;
-			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
-				Logging.log(this, "compared to " + pObj + "is false");
-				return false;
-			} else if (tCluster.getClusterID().equals(getClusterID())) {
-				return false;
-			}
-		}
-		return false;
-	}	
-	
-	public Cluster getCluster()
-	{
-		return mParentCluster;
 	}
 	
 	@Override

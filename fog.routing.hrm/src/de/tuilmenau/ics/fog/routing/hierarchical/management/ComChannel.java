@@ -576,13 +576,13 @@ public class ComChannel
 			L2Address tCoordL2Addr = ((ControlEntity)pCluster).superiorCoordinatorL2Address();
 
 			DiscoveryEntry tEntry = new DiscoveryEntry(pCluster.getToken(), pCluster.getCoordinatorName(), pCluster.getClusterID(), tCoordL2Addr, pCluster.getHierarchyLevel());
-			tEntry.setClusterHops(getParent().getHRMController().getClusterDistance(pCluster));
+			tEntry.setClusterHops(getParent().getHRMController().getClusterDistance((ControlEntity)pCluster));
 			tEntry.setPriority(pCluster.getPriority());
 			tEntry.setRoutingVectors(getPath(tCoordL2Addr));
 			
-			List<AbstractRoutingGraphLink> tClusterList = getHRMController().getRouteARG((ICluster)getParent(), pCluster);
+			List<AbstractRoutingGraphLink> tClusterList = getHRMController().getRouteARG(getParent(), (ControlEntity)pCluster);
 			if(!tClusterList.isEmpty()) {
-				ICluster tPredecessorCluster = (ICluster) getHRMController().getOtherEndOfLinkARG(pCluster, tClusterList.get(tClusterList.size() - 1));
+				ICluster tPredecessorCluster = (ICluster) getHRMController().getOtherEndOfLinkARG((ControlEntity)pCluster, tClusterList.get(tClusterList.size() - 1));
 				ClusterName tPredecessorClusterName = new ClusterName(tPredecessorCluster.getToken(), tPredecessorCluster.getClusterID(), tPredecessorCluster.getHierarchyLevel());
 				tEntry.setPredecessor(tPredecessorClusterName);
 			}
@@ -692,31 +692,30 @@ public class ComChannel
 			
 			if(tSourceCluster != null) {
 				for(AbstractRoutingGraphNode tARGNode : tARGNodesOrderDistance) {
-					if(tARGNode instanceof ICluster) {
-						ICluster tCluster = (ICluster) tARGNode;
+					if(tARGNode instanceof ControlEntity) {
+						ControlEntity tControlEntity = (ControlEntity) tARGNode;
+						ICluster tICluster = (ICluster)tControlEntity; //TODO: entfernen, wenn ICluster vollstaendig entfernt ist
 						
 						int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 						Logging.log(this, "Radius is " + tRadius);
 						
 						int tDistance = 0;
-						if(tCluster instanceof ClusterProxy){
-							ClusterProxy tClusterProxy = (ClusterProxy) tCluster;
+						if(tControlEntity instanceof ClusterProxy){
+							ClusterProxy tClusterProxy = (ClusterProxy) tControlEntity;
 							
 							tDistance = getHRMController().getClusterDistance(tClusterProxy) + pDiscovery.getDistance();
 							if (tDistance > tRadius){
 								continue;
 							}
 						}
-						int tToken = tCluster.getToken();
+						int tToken = ((ICluster)tControlEntity).getToken();
 						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
-							if(tCluster instanceof ClusterProxy) {
-								Logging.log(this, "Reporting " + tCluster + " to " + getPeerL2Address().getDescr());
-								Logging.log(this, "token list was " + pDiscovery.getTokens());
-							}
-							getPathTo(pDiscovery, tCluster);
-							for(ICluster tNeighbor : tCluster.getNeighbors()) {
-								ClusterName tFirstClusterName = new ClusterName(tCluster.getToken(), tCluster.getClusterID(), tCluster.getHierarchyLevel()); 
-								ClusterName tSecondClusterName = new ClusterName(tNeighbor.getToken(), tNeighbor.getClusterID(), tNeighbor.getHierarchyLevel()); 
+							getPathTo(pDiscovery, (ICluster)tControlEntity);
+							for(ControlEntity tNeighbor : tControlEntity.getNeighborsARG()) {
+								ICluster tNeighborICluster = (ICluster)tNeighbor; //TODO: entfernen, wenn ICluster vollstaendig entfernt ist
+
+								ClusterName tFirstClusterName = new ClusterName(tICluster.getToken(), tICluster.getClusterID(), tICluster.getHierarchyLevel()); 
+								ClusterName tSecondClusterName = new ClusterName(tNeighborICluster.getToken(), tNeighborICluster.getClusterID(), tNeighbor.getHierarchyLevel()); 
 								pDiscovery.addNeighborRelation(tFirstClusterName, tSecondClusterName);
 							}
 						} else {
@@ -755,12 +754,12 @@ public class ComChannel
 				/*
 				 * Be aware of the fact that the new attached cluster has lower level
 				 */
+				Logging.log(this, "     ..creating cluster proxy");
 				tNewCluster = new ClusterProxy(getHRMController(), pEntry.getClusterID(), pEntry.getLevel(), pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress(), pEntry.getToken());
 				
-				getParent().getHRMController().setSourceIntermediateCluster(tNewCluster, getParent().getHRMController().getSourceIntermediate((ICluster)getParent()));
+				getParent().getHRMController().setSourceIntermediateCluster(tNewCluster, getParent().getHRMController().getSourceIntermediateCluster(getParent()));
 				tNewCluster.setToken(pEntry.getToken());
 				tNewCluster.setPriority(pEntry.getPriority());
-				getHRMController().registerNodeARG(tNewCluster);
 				try {
 					getHRMController().getHRS().mapFoGNameToL2Address(tNewCluster.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress());
 				} catch (RemoteException tExc) {

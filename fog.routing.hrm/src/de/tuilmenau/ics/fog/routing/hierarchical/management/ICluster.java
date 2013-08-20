@@ -10,33 +10,13 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
-import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
-public interface ICluster extends Serializable, AbstractRoutingGraphNode
+public interface ICluster extends Serializable
 {
-	/**
-	 * Sets the priority of the currently acting coordinator of this cluster.
-	 * 
-	 * @param pCoordinatorPriority is the priority of the entity
-	 */
-//	public void setCoordinatorPriority(BullyPriority pCoordinatorPriority);
-	
-	/**
-	 * Get the priority of the currently acting coordinator
-	 * 
-	 * @return priority of the acting coordinator
-	 */
-//	public BullyPriority getCoordinatorPriority();
-	
 	/**
 	 * Set the priority the reference node has in this cluster
 	 * 
@@ -50,26 +30,6 @@ public interface ICluster extends Serializable, AbstractRoutingGraphNode
 	 */
 	public BullyPriority getPriority();
 
-	/**
-	 *  
-	 * @return Return the HRM controller of a node that is used for cluster handling etc.
-	 */
-//	public HRMController getHRMController();
-	
-	/**
-	 * 
-	 * @return Provide list of connection end points that are connected to this cluster - the other connection end point
-	 * governs the cluster it is associated to
-	 */
-//	public LinkedList<ComChannel> getComChannels();
-	
-	/**
-	 * 
-	 * @param pParticipatingCEP This is one connection end point that is used to communicate with the remote
-	 * connection end points that govern the clusters they are associated to.
-	 */
-//	public void registerComChannel(ComChannel pParticipatingCEP);
-	
 	/**
 	 * 
 	 * @return The ID of the cluster is returned here.
@@ -103,13 +63,6 @@ public interface ICluster extends Serializable, AbstractRoutingGraphNode
 	
 	/**
 	 * 
-	 * @return Get the address of the coordinator - is corresponds to a OSI-Layer 2 address. However implementation allows
-	 * the use of hierarchical addresses as well.
-	 */
-//	public HRMName getCoordinatorsAddress();
-	
-	/**
-	 * 
 	 * @param pToken Set the token that is sent by the coordinator here.
 	 */
 	public void setToken(int pToken);
@@ -119,13 +72,6 @@ public interface ICluster extends Serializable, AbstractRoutingGraphNode
 	 * @return The token that is used for additional identification of the cluster is provided here.
 	 */
 	public int getToken();
-	
-	/**
-	 * 
-	 * @return The neighbor clusters of this entity are provided here.
-	 */
-	public LinkedList<ICluster> getNeighbors();
-	
 	
 	/**
 	 * 
@@ -141,15 +87,6 @@ public interface ICluster extends Serializable, AbstractRoutingGraphNode
 	public BullyPriority getHighestPriority();
 	
 	/**
-	 * This method has to be called by an connection end point once it receives the announcement about the existence
-	 * of a neighbor zone. 
-	 * 
-	 * @param pAnnounce This is the message that contains important information about the neighbor zone.
-	 * @param pCEP This is the connection end point that is used to transfer data to the object that CEP governs
-	 */
-	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, ComChannel pCEP);
-	
-	/**
 	 * Once an announcement was received, the coordinator is set via this method. However this function does not have to be necessarily called
 	 * if a BullyAnnounce message was received.  
 	 * 
@@ -159,12 +96,6 @@ public interface ICluster extends Serializable, AbstractRoutingGraphNode
 	 * was not implemented. 
 	 */
 	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address);
-	
-	/**
-	 * 
-	 * @param pNeighbor This is the neighbor that has to be added to the cluster. 
-	 */
-	public void registerNeighbor(ICluster pNeighbor);
 	
 	/**
 	 * 

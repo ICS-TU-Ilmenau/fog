@@ -104,12 +104,16 @@ public class Cluster extends ControlEntity implements ICluster
 		super(pHRMController, pHierarchyLevel);
 		
 		// set the ClusterID
-		if (pClusterID < 0){
+		if ((pClusterID == null) || (pClusterID < 0)){
 			// create an ID for the cluster
 			mClusterID = createClusterID();
+
+			Logging.log(this, "ClusterID - created unique clusterID " + mClusterID);
 		}else{
 			// use the ClusterID from outside
 			mClusterID = pClusterID;
+
+			Logging.log(this, "ClusterID - using pre-defined clusterID " + mClusterID);
 		}
 
 		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
@@ -128,6 +132,16 @@ public class Cluster extends ControlEntity implements ICluster
 		Logging.log(this, "CREATED");
 	}
 	
+	/**
+	 * Constructor
+	 * 
+	 * @param pHrmController the local HRMController instance
+	 */
+	public Cluster(HRMController pHrmController)
+	{
+		this(pHrmController, null, HierarchyLevel.createBaseLevel());
+	}
+
 	/**
 	 * Detects neighbor clusters and increases the cluster's Bully priority based on the local connectivity. 
 	 */
@@ -191,7 +205,7 @@ public class Cluster extends ControlEntity implements ICluster
 
 		// make sure the next ID isn't equal
 		sNextClusterFreeID++;
-		
+	
 		return tResult;
 	}
 	
@@ -378,10 +392,12 @@ public class Cluster extends ControlEntity implements ICluster
 				getHRMController().getHRS().registerRoute(pCoordinatorComChannel.getSourceName(), pCoordinatorComChannel.getPeerL2Address(), pCoordinatorComChannel.getRouteToPeer());
 			}
 		}
-		Logging.log(this, "This cluster has the following neighbors: " + getNeighbors());
-		for(ICluster tCluster : getNeighbors()) {
-			if(tCluster instanceof Cluster) {
-				Logging.log(this, "CLUSTER-CEP - found already known neighbor cluster: " + tCluster);
+		Logging.log(this, "This cluster has the following neighbors: " + getNeighborsARG());
+		for(ControlEntity tNeighbor : getNeighborsARG()) {
+			if(tNeighbor instanceof Cluster) {
+				Cluster tNeighborCluster = (Cluster)tNeighbor;
+				
+				Logging.log(this, "CLUSTER-CEP - found already known neighbor cluster: " + tNeighborCluster);
 
 				Logging.log(this, "Preparing neighbor zone announcement");
 				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, getToken(), mClusterID);
@@ -389,7 +405,7 @@ public class Cluster extends ControlEntity implements ICluster
 				if(pCoordinatorComChannel != null) {
 					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorComChannel.getRouteToPeer(), pCoordinatorComChannel.getSourceName(), pCoordinatorComChannel.getPeerL2Address()));
 				}
-				((Cluster)tCluster).announceNeighborCoord(tAnnounce, pCoordinatorComChannel);
+				tNeighborCluster.announceNeighborCoord(tAnnounce, pCoordinatorComChannel);
 			}
 		}
 		if(mReceivedAnnounces.isEmpty()) {
@@ -423,6 +439,7 @@ public class Cluster extends ControlEntity implements ICluster
 			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
 			registerNeighbor(tCluster);
 		}else{
+			Logging.log(this, "     ..creating cluster proxy");
 			ClusterProxy tNeighborCluster = new ClusterProxy(getHRMController(), pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
 			getHRMController().setSourceIntermediateCluster(tNeighborCluster, this);
 			tNeighborCluster.setPriority(pAnnounce.getCoordinatorsPriority());
@@ -468,7 +485,7 @@ public class Cluster extends ControlEntity implements ICluster
 				 * no coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
 				for(Coordinator tManager : getHRMController().getCoordinator(getHierarchyLevel())) {
-					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
+					if(tManager.getNeighborsARG().contains(pAnnounce.getNegotiatorIdentification())) {
 						tManager.storeAnnouncement(pAnnounce);
 					}
 				}
@@ -477,7 +494,7 @@ public class Cluster extends ControlEntity implements ICluster
 				 * coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
 				for(Coordinator tManager : getHRMController().getCoordinator(getHierarchyLevel())) {
-					if(tManager.getNeighbors().contains(pAnnounce.getNegotiatorIdentification())) {
+					if(tManager.getNeighborsARG().contains(pAnnounce.getNegotiatorIdentification())) {
 						if(tManager.superiorCoordinatorComChannel() != null) {
 							tManager.superiorCoordinatorComChannel().sendPacket(pAnnounce);
 						}
@@ -508,32 +525,6 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 	}
 	
-	public void registerNeighbor(ICluster pNeighbor)
-	{
-		Logging.log(this, "Registering neighbor: " + pNeighbor);
-
-		// increase Bully priority because of changed connectivity (topology depending) 
-		getPriority().increaseConnectivity();
-		
-		// inform all cluster members about the Bully priority change
-		//TODO: sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNodeName(), getPriority()));
-
-		LinkedList<ICluster> tNeighbors = getNeighbors(); 
-		if(!tNeighbors.contains(pNeighbor))
-		{
-			if(pNeighbor instanceof Cluster) {
-				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.PHYSICAL_LINK);
-				getHRMController().registerLinkARG(pNeighbor, this, tLink);
-			} else {
-				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOGICAL_LINK);
-				getHRMController().registerLinkARG(pNeighbor, this, tLink);
-			}
-
-			// backward call
-			pNeighbor.registerNeighbor(this);
-		}
-	}
-	
 	private void announceNeighborCoord(NeighborClusterAnnounce pAnnouncement, ComChannel pCEP)
 	{
 		Logging.log(this, "Handling " + pAnnouncement);
@@ -557,17 +548,6 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 		
 		return mHighestPriority;
-	}
-	
-	public LinkedList<ICluster> getNeighbors()
-	{
-		LinkedList<ICluster> tList = new LinkedList<ICluster>();
-		for(AbstractRoutingGraphNode tNode : getHRMController().getNeighborsARG(this)) {
-			if(tNode instanceof ICluster) {
-				tList.add((ICluster)tNode);
-			}
-		}
-		return tList;
 	}
 	
 	public int getToken()
@@ -606,58 +586,12 @@ public class Cluster extends ControlEntity implements ICluster
 		return 0;
 	}
 	
-
-	@Override
-	public boolean equals(Object pObj)
-	{
-		if(pObj instanceof Coordinator) {
-			return false;
-		}
-		if(pObj instanceof Cluster) {
-			ICluster tCluster = (ICluster) pObj;
-			if (tCluster.getClusterID().equals(getClusterID()) && (tCluster.getToken() == getToken()) && (tCluster.getHierarchyLevel() == getHierarchyLevel())) {
-				return true;
-			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
-				return false;
-			} else if (tCluster.getClusterID().equals(getClusterID())) {
-				return false;
-			}
-		}
-		if(pObj instanceof ClusterName) {
-			ClusterName tClusterName = (ClusterName) pObj;
-			if (tClusterName.getClusterID().equals(getClusterID()) && (tClusterName.getToken() == getToken()) && (tClusterName.getHierarchyLevel() == getHierarchyLevel())) {
-				return true;
-			} else if(tClusterName.getClusterID().equals(getClusterID()) && tClusterName.getHierarchyLevel() == getHierarchyLevel()) {
-				return false;
-			} else if (tClusterName.getClusterID().equals(getClusterID())) {
-				return false;
-			}
-		}
-		return false;
-	}	
-
 	@Override
 	public synchronized ComChannelMuxer getMultiplexer()
 	{
 		return mMux;
 	}
 
-	/**
-	 * This method is specific for the handling of RouteRequests.
-	 * 
-	 * @param pCluster
-	 * @return
-	 */
-//	public CoordinatorCEPChannel getCEPOfCluster(ICluster pCluster)
-//	{
-//		for(CoordinatorCEPChannel tCEP : getParticipatingCEPs()) {
-//			if(tCEP.getRemoteClusterName().equals(pCluster)) {
-//				return tCEP;
-//			}
-//		}
-//		return null;
-//	}
-	
 	public int hashCode()
 	{
 		return mClusterID.intValue();

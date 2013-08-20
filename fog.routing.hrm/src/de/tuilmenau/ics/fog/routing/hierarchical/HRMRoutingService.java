@@ -879,11 +879,12 @@ public class HRMRoutingService implements RoutingService, Localization
 			}
 
 			if((!pFrom.equals(tThisHostL2Address)) && (!tToL2Address.equals(tThisHostL2Address))) {
+				//HINT: we connect only from one side, in reality this can be implemented by comparing the hash codes of the MAC addresses of both neighbors
 				if(tFromL2Address.getComplexAddress().longValue() < tToL2Address.getComplexAddress().longValue()) {
 					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 						Logging.log(this, "    ..actually found an interesting link from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
 					}
-					getHRMController().detectedPhysicalNeighborNode(tToL2Address);
+					getHRMController().eventDetectedPhysicalNeighborNode(tToL2Address);
 				}else{
 					Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address);
 				}

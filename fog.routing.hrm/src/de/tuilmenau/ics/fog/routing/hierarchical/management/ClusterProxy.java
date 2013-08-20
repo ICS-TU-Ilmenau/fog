@@ -62,6 +62,11 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		mCoordName = pCoordName;
 		mToken = pToken;
 		setCoordinatorName(pCoordName);
+		
+		// register the ClusterProxy at the local ARG
+		getHRMController().registerNodeARG(this);
+
+		Logging.log(this, "CREATED");
 	}
 
 	/**
@@ -109,8 +114,9 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		ICluster tCluster = mHRMController.getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
 		if(tCluster == null)
 		{
+			Logging.log(this, "     ..creating cluster proxy");
 			tCluster = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
-			mHRMController.setSourceIntermediateCluster(tCluster, mHRMController.getSourceIntermediate(this));
+			mHRMController.setSourceIntermediateCluster(tCluster, mHRMController.getSourceIntermediateCluster(this));
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			tCluster.setToken(pAnnounce.getToken());
 		} else {
@@ -121,7 +127,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		/*
 		 * function checks whether neighbor relation was established earlier
 		 */
-		registerNeighbor(tCluster);
+		registerNeighbor((ControlEntity)tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
 			RoutingService tRS = (RoutingService)mHRMController.getNode().getRoutingService();
@@ -138,11 +144,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	public synchronized void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
 	{
 		// nothing
-	}
-
-	public void registerNeighbor(ICluster pNeighbor)
-	{
-		mHRMController.registerLinkARG(this, pNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOGICAL_LINK));
 	}
 
 	@Override
@@ -165,17 +166,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	}
 
 	@Override
-	public LinkedList<ICluster> getNeighbors() {
-		LinkedList<ICluster> tCluster = new LinkedList<ICluster>();
-		for(AbstractRoutingGraphNode tNode : mHRMController.getNeighborsARG(this)) {
-			if(tNode instanceof ICluster) {
-				tCluster.add((ICluster) tNode);
-			}
-		}
-		return tCluster;
-	}
-
-	@Override
 	public void setHighestPriority(BullyPriority pHighestPriority) {
 		/*
 		 * not needed, this is just a dummy for topology
@@ -191,24 +181,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	public int getSerialisedSize() {
 		return 0;
 	}
-
-	@Override
-	public boolean equals(Object pObj)
-	{
-		if(pObj instanceof ICluster) {
-			ICluster tCluster = (ICluster) pObj;
-			if(tCluster.getClusterID().equals(getClusterID()) &&
-					tCluster.getToken() == getToken() &&
-					tCluster.getHierarchyLevel() == getHierarchyLevel()) {
-				return true;
-			} else if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
-				return false;
-			} else if (tCluster.getClusterID().equals(getClusterID())) {
-				return false;
-			}
-		}
-		return false;
-	}	
 
 	@Override
 	public ComChannelMuxer getMultiplexer()
