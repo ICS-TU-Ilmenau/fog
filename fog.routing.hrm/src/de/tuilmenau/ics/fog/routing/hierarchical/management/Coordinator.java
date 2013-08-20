@@ -556,8 +556,16 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					for(AbstractRoutingGraphNode tNode : mClustersToNotify) {
 						if(tNode instanceof Cluster && tRadius == 1) {
 							tClustersToNotify.add(tNode);
-						} else if (tNode instanceof NeighborCluster && ((NeighborCluster)tNode).getClusterDistanceToTarget() <= tRadius && ((NeighborCluster)tNode).getClusterDistanceToTarget() != 0 && !mConnectedEntities.contains(((NeighborCluster)tNode).getCoordinatorName())) {
-							tClustersToNotify.add(tNode);					
+						} else {
+							int tDistance = 0;
+							if (tNode instanceof ClusterProxy){
+								ClusterProxy tClusterProxy = (ClusterProxy)tNode;
+								
+								tDistance = getHRMController().getClusterDistance(tClusterProxy);
+								if ((tDistance != 0) && (tDistance <= tRadius) && !mConnectedEntities.contains(tClusterProxy.getCoordinatorName())) {
+									tClustersToNotify.add(tNode);
+								}
+							}
 						}
 					}
 					mClustersToNotify = tClustersToNotify;
@@ -872,12 +880,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				getHRMController().getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		NeighborCluster tCluster = null;
+		ClusterProxy tCluster = null;
 		if(pAnnounce.isAnnouncementFromForeign())
 		{
-			tCluster = new NeighborCluster(pAnnounce.getCoordAddress().getComplexAddress().longValue(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), new HierarchyLevel(this, super.getHierarchyLevel().getValue() + 2),	mParentCluster.getHRMController());
+			tCluster = new ClusterProxy(mParentCluster.getHRMController(), pAnnounce.getCoordAddress().getComplexAddress().longValue() /* TODO: als clusterID den Wert? */, new HierarchyLevel(this, super.getHierarchyLevel().getValue() + 2),	pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
 			getHRMController().setSourceIntermediateCluster(tCluster, getHRMController().getSourceIntermediate(this));
-			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			tCluster.setToken(pAnnounce.getToken());
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			//mParentCluster.addNeighborCluster(tCluster);

@@ -9,10 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
-import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
-import java.util.List;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
@@ -26,68 +24,80 @@ import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.topology.IElementDecorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class is used when a layer 0 neighbor cluster is detected. 
- * It includes all needed data about the neighbor cluster. //TV
+ * This class is used when a remote cluster is detected. It includes all needed data about the remote cluster.
  */
-public class NeighborCluster implements ICluster, IElementDecorator
+public class ClusterProxy extends ControlEntity implements ICluster
 {
 	private static final long serialVersionUID = -8746079632866375924L;
-	private int mToken;
-	private HierarchyLevel mHierarchyLevel = null;
-	private BullyPriority mPriority;
-	private BullyPriority mCoordinatorPriority;
-	private Name mCoordName;
-	private HRMName mCoordAddress;
-	private Long mClusterID;
+
+	/**
+	 * Stores the reference to the local HRMController instance.
+	 */
 	private HRMController mHRMController;
-	private HRMID mHRMID;
-	private Name mAnnouncer;
-	private LinkedList<ComChannel> mAnnouncedCEPs;
-	private Cluster mSourceIntermediateCluster = null;
+
+	private int mToken;
+	private Long mClusterID;
+
+	private Name mCoordName;
 	
 	/**
-	 * 
-	 * @param pClusterID identifier of the cluster
-	 * @param pCoordName name of the coordinator
-	 * @param pAddress routing service address
-	 * @param pToken as the token this cluster got
-	 * @param pLevel is the level this cluster is related to
-	 * @param pResponsibleCoordinator as the coordinator this cluster works on (local)
+	 * Constructor
+	 *  
+	 * @param pHRMController the local HRMController instance
+	 * @param pClusterID the unique ID of this cluster
+	 * @param pHierarchyLevel the hierarchy level
+	 * @param pCoordName
+	 * @param pAddress
+	 * @param pToken
 	 */
-	public NeighborCluster(Long pClusterID, Name pCoordName, HRMName pAddress, int pToken, HierarchyLevel pLevel, HRMController pHRMController)
+	public ClusterProxy(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, Name pCoordName, HRMName pAddress, int pToken)
 	{	
-		mCoordAddress = pAddress;
+		super(pHRMController, pHierarchyLevel);
+
 		mClusterID = pClusterID;
 		mHRMController = pHRMController;
 		mCoordName = pCoordName;
 		mToken = pToken;
-		mHierarchyLevel = pLevel;
-		mAnnouncer = mHRMController.getNodeName();
 		setCoordinatorName(pCoordName);
 	}
-	
-	public void addAnnouncedCEP(ComChannel pCEP)
+
+	/**
+	 * Determines the physical simulation machine specific ClusterID multiplier
+	 * 
+	 * @return the generated multiplier
+	 */
+	private long clusterIDMachineMultiplier()
 	{
-		if(mAnnouncedCEPs == null) {
-			mAnnouncedCEPs = new LinkedList<ComChannel>();
-		}
-		Logging.log(getClusterDescription(), "Adding announcer " + pCEP);
-		mAnnouncedCEPs.add(pCEP);
-	}
-	
-	public int getClusterDistanceToTarget()
-	{
-		return mHRMController.getClusterDistance(this);
+		//TODO: get this value from the signaling
+		return 1;
 	}
 
-	public BullyPriority getHighestPriority()
+	/**
+	 * Returns the full ClusterID (including the machine specific multiplier)
+	 * 
+	 *  @return the full ClusterID
+	 */
+	public Long getClusterID()
 	{
-		return getPriority();
+		return mClusterID;
 	}
+
+	/**
+	 * Returns the machine-local ClusterID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local ClusterID
+	 */
+	public long getGUIClusterID()
+	{
+		return mClusterID / clusterIDMachineMultiplier();
+	}
+	
+	
+	
+	
 
 	public void handleNeighborAnnouncement(NeighborClusterAnnounce pAnnounce, ComChannel pCEP)
 	{
@@ -99,9 +109,8 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		ICluster tCluster = mHRMController.getCluster(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
 		if(tCluster == null)
 		{
-			tCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), mHierarchyLevel,	mHRMController);
+			tCluster = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
 			mHRMController.setSourceIntermediateCluster(tCluster, mHRMController.getSourceIntermediate(this));
-			((NeighborCluster)tCluster).addAnnouncedCEP(pCEP);
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			tCluster.setToken(pAnnounce.getToken());
 		} else {
@@ -126,72 +135,14 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		}
 	}
 
-	public ComChannel getSuperiorCoordinatorCEP()
-	{
-		return null;
-	}
-
 	public synchronized void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
 	{
-		mCoordAddress = pCoordinatorL2Address;
-		mCoordName = pCoordinatorName;
+		// nothing
 	}
 
 	public void registerNeighbor(ICluster pNeighbor)
 	{
 		mHRMController.registerLinkARG(this, pNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOGICAL_LINK));
-	}
-
-	public void setHRMID(Object pCaller, HRMID pHRMID)
-	{
-		Logging.log(this, "Setting HRM ID: \"" + pHRMID + "\", triggered from " + pCaller);
-		mHRMID = pHRMID;
-	}
-
-	@Override
-	public void setPriority(BullyPriority pPriority)
-	{
-		mPriority = pPriority;
-	}
-
-	@Override
-	public Long getClusterID()
-	{
-		return mClusterID;
-	}
-
-	@Override
-	public HierarchyLevel getHierarchyLevel() {
-		return mHierarchyLevel;
-	}
-
-	@Override
-	public Name getCoordinatorName()
-	{
-		return mCoordName;
-	}
-
-	@Override
-	public BullyPriority getPriority()
-	{
-		return mPriority;
-	}
-
-	@Override
-	public String getClusterDescription()
-	{
-		return getClass().getSimpleName() + "(" + mAnnouncer + "->" + mCoordName + ")"+"PR" + "(" + mPriority + ")" + "ID(" + mClusterID + ")TK(" + mToken + ")@" + mHierarchyLevel;
-	}
-
-	@Override
-	public void setCoordinatorName(Name pCoordName)
-	{
-		mCoordName = pCoordName;
-	}
-
-	public HRMName getCoordinatorsAddress()
-	{
-		return mCoordAddress;
 	}
 
 	@Override
@@ -202,6 +153,15 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	@Override
 	public int getToken() {
 		return mToken;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster#getHighestPriority()
+	 */
+	@Override
+	public BullyPriority getHighestPriority()
+	{
+		return getPriority();
 	}
 
 	@Override
@@ -216,25 +176,10 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	@Override
-	public HRMID getHRMID() {
-		return mHRMID;
-	}
-
-	@Override
 	public void setHighestPriority(BullyPriority pHighestPriority) {
 		/*
 		 * not needed, this is just a dummy for topology
 		 */
-	}
-
-	@SuppressWarnings("unused")
-	public String toString()
-	{
-		if(mHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
-			return mHRMID.toString();
-		} else {
-			return getClusterDescription() + ":HOPS(" + mHRMController.getClusterDistance(this) + ")";
-		}
 	}
 
 	@Override
@@ -265,53 +210,6 @@ public class NeighborCluster implements ICluster, IElementDecorator
 		return false;
 	}	
 
-	public ComChannel getAnnouncedCEP(ICluster pCluster)
-	{
-		int tClosestCluster = Integer.MAX_VALUE;
-		ComChannel tClosest = null;
-		for(ComChannel tCEP : mAnnouncedCEPs) {
-			ClusterName tClusterName = tCEP.getRemoteClusterName();
-			ICluster tRemoteCluster = mHRMController.getCluster(tClusterName) != null ? mHRMController.getCluster(tClusterName) : tClusterName;
-			if(pCluster.getHierarchyLevel() == tRemoteCluster.getHierarchyLevel()) {
-				List<AbstractRoutingGraphLink> tConnection = mHRMController.getRouteARG(pCluster, tRemoteCluster);
-				int tDistance = 0;
-				if(tConnection != null) {
-					tDistance = tConnection.size();
-				}
-				if(tDistance < tClosestCluster) {
-					tClosestCluster = tDistance;
-					tClosest = tCEP;
-				}
-			}
-		}
-		if(tClosest == null) {
-			Logging.err(this, "Would return no announced CEP");
-			tClosest = mAnnouncedCEPs.getFirst();
-		}
-		return tClosest;
-	}
-	
-	public LinkedList<ComChannel> getAnnouncedCEPs()
-	{
-		return mAnnouncedCEPs;
-	}
-	
-	public void setAnnouncer(Name pAnnouncer)
-	{
-		Logging.log(this, "Announcer is " + pAnnouncer);
-		mAnnouncer = pAnnouncer;
-	}
-	
-	public void setSourceIntermediate(Cluster pIntermediate)
-	{
-		mSourceIntermediateCluster = pIntermediate;
-	}
-	
-	public Cluster getSourceIntermediateCluster()
-	{
-		return mSourceIntermediateCluster;
-	}
-
 	@Override
 	public ComChannelMuxer getMultiplexer()
 	{
@@ -319,32 +217,93 @@ public class NeighborCluster implements ICluster, IElementDecorator
 	}
 
 	
-	@Override
-	public Object getDecorationParameter()
-	{
-		return null;
-	}
-
-	@Override
-	public void setDecorationParameter(Object pDecoration)
-	{
-		
-	}
-
-	@Override
-	public Object getDecorationValue()
-	{
-		return Float.valueOf(0.6f);
-	}
-
-	@Override
-	public void setDecorationValue(Object pValue)
-	{
-		
-	}
-
 	public int hashCode()
 	{
 		return mClusterID.intValue() * 1;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity#handleBullyAnnounce(de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce, de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel)
+	 */
+	@Override
+	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pComChannel)
+	{
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster#getCoordinatorName()
+	 */
+	@Override
+	public Name getCoordinatorName()
+	{
+		return mCoordName;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster#setCoordinatorName(de.tuilmenau.ics.fog.facade.Name)
+	 */
+	@Override
+	public void setCoordinatorName(Name pCoordName)
+	{
+		mCoordName = pCoordName;		
+	}
+	
+	
+	
+	
+	
+	/**
+	 * Returns a descriptive string about the cluster
+	 * 
+	 * @return the descriptive string
+	 */
+	public String getClusterDescription()
+	{
+		return toLocation();
+		//getHRMController().getPhysicalNode() + ":" + mClusterID + "@" + getHierarchyLevel() + "(" + mCoordSignature + ")";
+	}
+
+	/**
+	 * Returns a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
+	@SuppressWarnings("unused")
+	public String toString()
+	{
+		HRMID tHRMID = getHRMID();
+		
+		if(tHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
+			return tHRMID.toString();
+		} else {
+			return toLocation() + "(" + idToString() + ")";
+
+		}
+	}
+
+	/**
+	 * Returns a location description about this instance
+	 */
+	@Override
+	public String toLocation()
+	{
+		String tResult = getClass().getSimpleName() + getGUIClusterID() + "@" + getHRMController().getNodeGUIName() + "@" + getHierarchyLevel().getValue();
+		
+		return tResult;
+	}
+	
+	/**
+	 * Returns a string including the ClusterID, the token, and the node priority
+	 * 
+	 * @return the complex string
+	 */
+	private String idToString()
+	{
+		if (getHRMID() == null){
+			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getPriority().getValue();
+		}else{
+			return "HRMID=" + getHRMID().toString();
+		}
 	}
 }

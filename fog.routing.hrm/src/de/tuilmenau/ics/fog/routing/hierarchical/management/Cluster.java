@@ -86,15 +86,17 @@ public class Cluster extends ControlEntity implements ICluster
 	
 	private ComChannelMuxer mMux = null;
 
-	
+	/**
 	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
 	 * ID and the hierarchical level. Later on - once a coordinator is found, it is additionally identified
 	 * by a token the coordinator sends to all participants. In contrast to the cluster token the identity is used
 	 * to filter potential participants that may be used for the election of a coordinator.
 	 * 
-	 * @param ptHRMController a reference to the HRMController instance
-	 * @param pClusterID the cluster ID
+	 * Constructor
+	 * 
+	 * @param pHRMController the local HRMController instance
+	 * @param pClusterID the unique ID of this cluster, a value of "-1" triggers the creation of a new ID
 	 * @param pHierarchyLevel the hierarchy level
 	 */
 	public Cluster(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel)
@@ -203,27 +205,6 @@ public class Cluster extends ControlEntity implements ICluster
 		return mElector;
 	}
 	
-	/**
-	 * Returns a descriptive string about the elected coordinator 
-	 * 
-	 * @return the descriptive string
-	 */
-	public String getCoordinatorDescription()
-	{
-		return mCoordinatorDescription;
-	}
-	
-	/**
-	 * Returns a descriptive string about the cluster
-	 * 
-	 * @return the descriptive string
-	 */
-	public String getClusterDescription()
-	{
-		return toLocation();
-		//getHRMController().getPhysicalNode() + ":" + mClusterID + "@" + getHierarchyLevel() + "(" + mCoordSignature + ")";
-	}
-
 	/**
 	 * Determines the coordinator of this cluster. It is "null" if the election was lost or hasn't finished yet. 
 	 * 
@@ -442,10 +423,8 @@ public class Cluster extends ControlEntity implements ICluster
 			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
 			registerNeighbor(tCluster);
 		}else{
-			NeighborCluster tNeighborCluster = new NeighborCluster(pAnnounce.getClusterID(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken(), getHierarchyLevel(), getHRMController());
+			ClusterProxy tNeighborCluster = new ClusterProxy(getHRMController(), pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
 			getHRMController().setSourceIntermediateCluster(tNeighborCluster, this);
-			tNeighborCluster.addAnnouncedCEP(pCEP);
-			tNeighborCluster.setSourceIntermediate(this);
 			tNeighborCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			tNeighborCluster.setToken(pAnnounce.getToken());
 			
@@ -689,6 +668,27 @@ public class Cluster extends ControlEntity implements ICluster
 	
 	
 	
+	/**
+	 * Returns a descriptive string about the elected coordinator 
+	 * 
+	 * @return the descriptive string
+	 */
+	public String getCoordinatorDescription()
+	{
+		return mCoordinatorDescription;
+	}
+	
+	/**
+	 * Returns a descriptive string about the cluster
+	 * 
+	 * @return the descriptive string
+	 */
+	public String getClusterDescription()
+	{
+		return toLocation();
+		//getHRMController().getPhysicalNode() + ":" + mClusterID + "@" + getHierarchyLevel() + "(" + mCoordSignature + ")";
+	}
+
 	/**
 	 * Returns a descriptive string about this object
 	 * 

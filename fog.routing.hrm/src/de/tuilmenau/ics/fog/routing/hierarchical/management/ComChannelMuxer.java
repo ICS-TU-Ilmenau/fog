@@ -167,11 +167,14 @@ public class ComChannelMuxer
 				tTokens.add(tManager.getCluster().getToken());
 				tManager.getComChannels().add(tCEPDemultiplexed);
 				if(!pTargetCluster.getCoordinatorName().equals(mHRMController.getNode().getCentralFN().getName())) {
-					int tDistance = (pTargetCluster instanceof NeighborCluster ? ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() : 0); 
-					NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tTokens, pTargetCluster.getClusterID(), pTargetCluster.getToken(), pTargetCluster.getHierarchyLevel(), tDistance);
-					if(pTargetCluster instanceof NeighborCluster && ((NeighborCluster)pTargetCluster).getClusterDistanceToTarget() == 0) {
-						Logging.warn(this, "Set 0 as hop count to target " + pTargetCluster);
+					int tDistance = 0;
+					if (pTargetCluster instanceof ClusterProxy){
+						ClusterProxy tClusterProxy = (ClusterProxy) pTargetCluster;
+					
+						tDistance = mHRMController.getClusterDistance(tClusterProxy); 
 					}
+					
+					NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tTokens, pTargetCluster.getClusterID(), pTargetCluster.getToken(), pTargetCluster.getHierarchyLevel(), tDistance);
 					Logging.log(this, "Created " + tDiscovery + " for " + pTargetCluster);
 					tDiscovery.setOrigin(tManager.getClusterID());
 					tDiscovery.setTargetClusterID(tTargetControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue());

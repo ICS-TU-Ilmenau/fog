@@ -158,12 +158,24 @@ public abstract class ControlEntity implements Localization, IElementDecorator
 
 			// inform HRM controller about the address change
 			getHRMController().updateClusterAddress(tCluster);
+
+			return;
+		}
+		if (this instanceof ClusterProxy){
+			ClusterProxy tClusterProxy = (ClusterProxy)this;
+
+			// inform HRM controller about the address change
+			//TODO: getHRMController().updateClusterAddress(tClusterProxy);
+			
+			return;
 		}
 		if (this instanceof Coordinator){
 			Coordinator tCoordinator = (Coordinator)this;
 
 			// inform HRM controller about the address change
 			getHRMController().updateCoordinatorAddress(tCoordinator);
+
+			return;
 		}
 	}
 
@@ -276,11 +288,18 @@ public abstract class ControlEntity implements Localization, IElementDecorator
 			Cluster tCluster = (Cluster)this;
 			
 			tCluster.getElector().handleSignalingMessageBully(pBullyMessage, pSourceClusterMember);
+			
+			return;
+		}
+		if (this instanceof ClusterProxy){
+			//nothing
 		}
 		if (this instanceof Coordinator){
 			Coordinator tCoordinator = (Coordinator)this;
 			
 			tCoordinator.getCluster().getElector().handleSignalingMessageBully(pBullyMessage, pSourceClusterMember);
+			
+			return;
 		}
 	}
 	
@@ -377,6 +396,9 @@ public abstract class ControlEntity implements Localization, IElementDecorator
 		}
 		if (this instanceof Cluster){
 			return IElementDecorator.Color.RED;
+		}
+		if (this instanceof ClusterProxy){
+			return IElementDecorator.Color.BLUE;
 		}
 		
 		return null;

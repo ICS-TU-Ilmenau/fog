@@ -698,13 +698,19 @@ public class ComChannel
 						int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
 						Logging.log(this, "Radius is " + tRadius);
 						
-						if(tCluster instanceof NeighborCluster && ((NeighborCluster)tCluster).getClusterDistanceToTarget() + pDiscovery.getDistance() > tRadius){
-							continue;
+						int tDistance = 0;
+						if(tCluster instanceof ClusterProxy){
+							ClusterProxy tClusterProxy = (ClusterProxy) tCluster;
+							
+							tDistance = getHRMController().getClusterDistance(tClusterProxy) + pDiscovery.getDistance();
+							if (tDistance > tRadius){
+								continue;
+							}
 						}
 						int tToken = tCluster.getToken();
 						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
-							if(tCluster instanceof NeighborCluster) {
-								Logging.log(this, "Reporting " + tCluster + " to " + getPeerL2Address().getDescr() + " because " + pDiscovery.getDistance() + " + " + ((NeighborCluster)tCluster).getClusterDistanceToTarget() + "=" + (pDiscovery.getDistance() + ((NeighborCluster)tCluster).getClusterDistanceToTarget()));
+							if(tCluster instanceof ClusterProxy) {
+								Logging.log(this, "Reporting " + tCluster + " to " + getPeerL2Address().getDescr());
 								Logging.log(this, "token list was " + pDiscovery.getTokens());
 							}
 							getPathTo(pDiscovery, tCluster);
@@ -739,7 +745,7 @@ public class ComChannel
 			for(Cluster tCluster : getHRMController().getAllClusters()) {
 				if(tCluster.equals(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), new HierarchyLevel(this, getParent().getHierarchyLevel().getValue() - 1)))) {
 					tNewCluster = tCluster;
-					if(tNewCluster instanceof NeighborCluster && ((NeighborCluster)tNewCluster).getCoordinatorsAddress() == null && tNewCluster.getCoordinatorName() == null) {
+					if(tNewCluster instanceof ClusterProxy && (pEntry.getCoordinatorRoutingAddress() == null) && (tNewCluster.getCoordinatorName() == null)) {
 						Logging.log(this, "Filling required information into " + tNewCluster);
 						tNewCluster.setSuperiorCoordinator(null, pEntry.getCoordinatorName(), pEntry.getToken(), pEntry.getCoordinatorRoutingAddress());
 					}
@@ -749,23 +755,19 @@ public class ComChannel
 				/*
 				 * Be aware of the fact that the new attached cluster has lower level
 				 */
-				tNewCluster = new NeighborCluster(pEntry.getClusterID(), pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress(), pEntry.getToken(), pEntry.getLevel(), getHRMController());
+				tNewCluster = new ClusterProxy(getHRMController(), pEntry.getClusterID(), pEntry.getLevel(), pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress(), pEntry.getToken());
 				
 				getParent().getHRMController().setSourceIntermediateCluster(tNewCluster, getParent().getHRMController().getSourceIntermediate((ICluster)getParent()));
-				((NeighborCluster)tNewCluster).addAnnouncedCEP(this);
 				tNewCluster.setToken(pEntry.getToken());
 				tNewCluster.setPriority(pEntry.getPriority());
 				getHRMController().registerNodeARG(tNewCluster);
 				try {
-					getHRMController().getHRS().mapFoGNameToL2Address(tNewCluster.getCoordinatorName(), ((NeighborCluster)tNewCluster).getCoordinatorsAddress());
+					getHRMController().getHRS().mapFoGNameToL2Address(tNewCluster.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress());
 				} catch (RemoteException tExc) {
 					Logging.err(this, "Unable to register " + tNewCluster.getCoordinatorName(), tExc);
 				}
 				Logging.log(this, "Created " + tNewCluster);
 			}
-			
-			((NeighborCluster)tNewCluster).addAnnouncedCEP(this);
-//			((NeighborCluster)tNewCluster).setClusterHopsOnOpposite(pEntry.getClusterHops(), this);
 		}
 		if(pEntry.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tLink : pEntry.getRoutingVectors()) {
