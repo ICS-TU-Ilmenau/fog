@@ -688,7 +688,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private void printNAME(ControlEntity pEntity)
 	{
 		StyledText tClusterLabel = new StyledText(mContainer, SWT.BORDER);;
-		tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue());
+		if (pEntity instanceof Cluster){
+			Cluster tCluster = (Cluster) pEntity;
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID());
+		}else{
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue());
+		}
 		tClusterLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		if (HRMConfig.DebugOutput.GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES){
 			boolean tBackgroundSet = false;
