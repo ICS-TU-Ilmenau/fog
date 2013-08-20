@@ -31,7 +31,7 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
-import de.tuilmenau.ics.fog.packets.NeighborRoutingInformation;
+import de.tuilmenau.ics.fog.packets.AnnouncePhysicalNeighborhood;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
@@ -229,8 +229,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 			Logging.log(this, "Got notification with argument " + pArgument);
 		}
 		
-		//TODO: add a time period here to avoid multiple GUI updates in short time periods
-		
 		mGUIInformer.notifyObservers(pArgument);
 	}
 
@@ -285,7 +283,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		// register a route to the coordinator as addressable target
 		getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
 		
-		//TODO: remove this
+		// register at the ARG
 		registerNodeARG(pCoordinator);
 
 		synchronized (mKnownCoordinators) {
@@ -574,58 +572,141 @@ public class HRMController extends Application implements IServerCallback, IEven
 
 	/**
 	 * Reacts on a detected new physical neighbor. A new connection to this neighbor is created.
-	 * However, pNeighborL2Address doesn't correspond to the neighbor's central FN!.
+	 * HINT: "pNeighborL2Address" doesn't correspond to the neighbor's central FN!
 	 * 
-	 * @param pNeighborL2Address the L2 address of the detected physical neighbor
+	 * @param pNeighborL2Address the L2 address of the detected physical neighbor's first FN towards the common bus.
 	 */
-	public void eventDetectedPhysicalNeighborNode(L2Address pNeighborL2Address)
+	public synchronized void eventDetectedPhysicalNeighborNode(L2Address pNeighborL2Address)
 	{
 		L2Address tThisHostL2Address = getHRS().getL2AddressFor(mNode.getCentralFN());
 
-		Logging.info(this, "NODE " + tThisHostL2Address + " FOUND DIRECT NEIGHBOR: " + pNeighborL2Address);
+		Logging.info(this, "\n\n\nFOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + " FOR " + tThisHostL2Address);
 		
-		// determine the route to the neighbor
-		List<RoutingServiceLink> tGateIDsToNeighbor = getHRS().getGateIDsToL2Address(pNeighborL2Address);
-		Logging.log(this, "    ..determined route from " + tThisHostL2Address + " to " + pNeighborL2Address + ": " + tGateIDsToNeighbor);
-		if(tGateIDsToNeighbor != null) {
-			// determine the transparent gate towards the neighbor
-			AbstractGate tOutgoingTransparentGate = null;
-			try {
-				tOutgoingTransparentGate = mNode.getCentralFN().getGate(tGateIDsToNeighbor.get(0).getID());
-			} catch (IndexOutOfBoundsException tExc) {
-				Logging.err(this, "registerLink() couldn't determine the outgoing gate for a connection from " + tThisHostL2Address + " to " + pNeighborL2Address + ", determined route is: " + tGateIDsToNeighbor, tExc);
-			}
-			if(tOutgoingTransparentGate != null) {
-				// determine the first next node behind the outgoing transparent gate
-				ForwardingElement tFirstNextNode = tOutgoingTransparentGate.getNextNode();
-				
-				// get the gate container from the first next node
-				GateContainer tContainer = (GateContainer) tFirstNextNode;
-				
-				// get the DirectDownGate ID
-				RoutingServiceLink tDownGateLink = tGateIDsToNeighbor.get(1); 
-				
-				if (tDownGateLink != null){
-					GateID tDownGateGateID = tDownGateLink.getID();
-				
-					/**
-					 * Open a connection to the neighbor
-					 */
-				    Logging.log(this, "    ..opening connection to " + pNeighborL2Address);
-				    connectToDetectedNeighborNode(pNeighborL2Address);
-				}else{
-					Logging.err(this, "registerLink() hasn't found the DirectDownGate in the route from " + tThisHostL2Address + " to " + pNeighborL2Address + ", route is: " + tGateIDsToNeighbor);
+		/**
+		 * Create cluster
+		 */
+	    Logging.log(this, "    ..creating new cluster");
+		Cluster tCreatedCluster = new Cluster(this);
+
+		setSourceIntermediateCluster(tCreatedCluster, tCreatedCluster);
+		
+		/**
+		 * Create communication session
+		 */
+	    Logging.log(this, "    ..creating new communication session");
+	    ComSession tSession = new ComSession(this, false, tCreatedCluster.getHierarchyLevel(), tCreatedCluster.getMultiplexer());
+	    
+	    /**
+	     * Create communication channel
+	     */
+	    Logging.log(this, "    ..creating new communication channel");
+		ComChannel tComChannel = new ComChannel(this, tCreatedCluster);
+		tComChannel.setRemoteClusterName(new ClusterName(tCreatedCluster.getToken(), tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel()));
+		
+		tCreatedCluster.getMultiplexer().mapChannelToSession(tComChannel, tSession);
+
+		/**
+		 * Describe the new created cluster
+		 */
+	    Logging.log(this, "    ..creating cluster description");
+		final ClusterParticipationProperty tClusterParticipationProperty = new ClusterParticipationProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
+		NestedParticipation tParticipate = tClusterParticipationProperty.new NestedParticipation(tCreatedCluster.getClusterID(), 0);
+		tClusterParticipationProperty.addNestedparticipation(tParticipate);
+		tParticipate.setSourceClusterID(tCreatedCluster.getClusterID());
+
+		/**
+		 * Store the thread specific variables
+		 */
+		final L2Address tNeighborName = pNeighborL2Address;
+		final ComSession tFSession = tSession;
+		final HRMController tHRMController = this;
+
+		/**
+		 * Create connection thread
+		 */
+		Thread tThread = new Thread() {
+			public void run()
+			{
+				/**
+				 * Create connection requirements
+				 */
+				Description tConnectionRequirements = createHRMControllerDestinationDescription();
+				tConnectionRequirements.set(tClusterParticipationProperty);
+
+				/**
+				 * Connect to the neighbor node
+				 */
+				Connection tConn = null;				
+				try {
+				    Logging.log(this, "    ..connecting to: " + tNeighborName + " with requirements: " + tConnectionRequirements);
+					tConn = getHost().connectBlock(tNeighborName, tConnectionRequirements, getNode().getIdentity());
+				} catch (NetworkException tExc) {
+					Logging.err(tHRMController, "Unable to connecto to " + tNeighborName, tExc);
 				}
+				if(tConn != null) {
+					mCounterOutgoingConnections++;
 					
-			}else{
-				Logging.err(this, "registerLink() couldn't determine the outgoing gate of the route from " + tThisHostL2Address + " to " + pNeighborL2Address + ", route is: " + tGateIDsToNeighbor);
+					Logging.log(tHRMController, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
+					tFSession.start(tConn);					
+					
+					/**
+					 * announce physical neighborhood
+					 */
+					L2Address tFirstFNL2Address = getL2AddressOfFirstFNTowardsNeighbor(tNeighborName);
+					if (tFirstFNL2Address != null){
+						// get the name of the central FN
+						L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
+						// create a map between the central FN and the search FN
+						AnnouncePhysicalNeighborhood tNeighborRoutingInformation = new AnnouncePhysicalNeighborhood(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalNeighborhood.INIT_PACKET);
+						// tell the neighbor about the FN
+						Logging.log(tHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
+						tFSession.write(tNeighborRoutingInformation);
+					}
+
+					/**
+					 * Find and set the route to peer within the session object
+					 */
+					Route tRouteToNeighborFN = null;
+					// get a route to the neighbor node (the destination of the desired connection)
+					try {
+						tRouteToNeighborFN = getHRS().getRoute(tNeighborName, new Description(), getNode().getIdentity());
+					} catch (RoutingException tExc) {
+						Logging.err(tHRMController, "Unable to find route to " + tNeighborName, tExc);
+					} catch (RequirementsException tExc) {
+						Logging.err(tHRMController, "Unable to find route to " + tNeighborName + " with requirements no requirents, Huh!", tExc);
+					}
+					// have we found a route to the neighbor?
+					if(tRouteToNeighborFN != null) {
+						tFSession.setRouteToPeer(tRouteToNeighborFN);
+					}
+				}
+				
+				Logging.log(this, "Connection thread for " + tNeighborName + " finished");
 			}
-			
-		}else{
-			Logging.err(this, "registerLink() couldn't determine a route from " + tThisHostL2Address + " to " + pNeighborL2Address);
+		};
+		
+		/**
+		 * Start the connection thread
+		 */
+		tThread.start();
+		
+		/**
+		 * Wait until the connection thread has finished
+		 */
+		int tLoop = 0;
+		while ((tThread.isAlive()) && (tLoop < 50 /* max. 5 seconds waiting */)){
+			try {
+				wait(100);
+				if (tLoop > 0){
+					Logging.log(this, "Waiting for connection to neighbor " + pNeighborL2Address);					
+				}
+			} catch (InterruptedException e) {
+				Logging.warn(this, "Got an interruption when connection was triggered to neighbor " + pNeighborL2Address);
+			}
+			tLoop++;
 		}
 	}
-	
+
 	/**
 	 * Determines a reference to the current AutonomousSystem instance.
 	 * 
@@ -1341,99 +1422,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 			tClusterRoute = getRouteARG(tIntermediateCluster, pCluster);
 		}
 		return tDistance;
-	}
-
-	/**
-	 * This method is called in case a neighbor node is detected.
-	 * 
-	 * @param pName is the name of the entity a connection will be established to
-	 * @param pLevel is the level at which a connection is added
-	 * @param pToClusterID is the identity of the cluster a connection will be added to
-	 */
-	private void connectToDetectedNeighborNode(Name pName)
-	{
-		Logging.log(this, "ADDING CONNECTION to neighbor node " + pName);
-
-		Logging.log(this, "Cluster is new, creating objects...");
-		Cluster tCreatedCluster = new Cluster(this);
-		setSourceIntermediateCluster(tCreatedCluster, tCreatedCluster);
-		
-		ComSession tSession = new ComSession(this, false, tCreatedCluster.getHierarchyLevel(), tCreatedCluster.getMultiplexer());
-		ComChannel tComChannel = new ComChannel(this, tCreatedCluster);
-		tCreatedCluster.getMultiplexer().mapChannelToSession(tComChannel, tSession);
-
-		final ClusterParticipationProperty tClusterParticipationProperty = new ClusterParticipationProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
-		NestedParticipation tParticipate = tClusterParticipationProperty.new NestedParticipation(tCreatedCluster.getClusterID(), 0);
-		tClusterParticipationProperty.addNestedparticipation(tParticipate);
-		
-		tParticipate.setSourceClusterID(tCreatedCluster.getClusterID());
-		
-		final Name tNeighborName = pName;
-		final ComSession tFSession = tSession;
-		final ComChannel tfComChannel = tComChannel;
-		final ICluster tfCreatedCluster = tCreatedCluster;
-		final HRMController tHRMController = this;
-		
-		Thread tThread = new Thread() {
-			public void run()
-			{
-				/**
-				 * Connect to the neighbor node
-				 */
-				Connection tConn = null;
-				Description tConReq = createHRMControllerDestinationDescription();
-				tConReq.set(tClusterParticipationProperty);
-				
-				try {
-					Logging.log(tHRMController, "\n\n\nOUTGOING CONNECTION to " + tNeighborName + " with requirements: " + tConReq);
-					tConn = getHost().connectBlock(tNeighborName, tConReq, getNode().getIdentity());
-				} catch (NetworkException tExc) {
-					Logging.err(tHRMController, "Unable to connecto to " + tNeighborName, tExc);
-				}
-				if(tConn != null) {
-					Logging.log(tHRMController, "     ..starting CONNECTION " + mCounterOutgoingConnections);
-					tFSession.start(tConn);					
-
-					/**
-					 * Determine the FN between the local central FN and the bus towards the physical neighbor node and tell this the neighbor (destination of this connection)
-					 */
-					L2Address tFirstFNL2Address = getL2AddressOfFirstFNTowardsNeighbor(tNeighborName);
-					
-					/**
-					 * Send NeighborRoutingInformation to the neighbor
-					 */
-					if (tFirstFNL2Address != null){
-						// get the name of the central FN
-						L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
-						// create a map between the central FN and the search FN
-						NeighborRoutingInformation tNeighborRoutingInformation = new NeighborRoutingInformation(tCentralFNL2Address, tFirstFNL2Address, NeighborRoutingInformation.INIT_PACKET);
-						// tell the neighbor about the FN
-						Logging.log(tHRMController, "     ..send NEIGHBOR ROUTING INFO " + tNeighborRoutingInformation);
-						tFSession.write(tNeighborRoutingInformation);
-					}
-
-					/**
-					 * Find and set the route to the peer within the session object
-					 */
-					Route tRouteToNeighborFN = null;
-					// get a route to the neighbor node (the destination of the desired connection)
-					try {
-						tRouteToNeighborFN = getHRS().getRoute(tNeighborName, new Description(), getNode().getIdentity());
-					} catch (RoutingException tExc) {
-						Logging.err(tHRMController, "Unable to find route to " + tNeighborName, tExc);
-					} catch (RequirementsException tExc) {
-						Logging.err(tHRMController, "Unable to find route to " + tNeighborName + " with requirements no requirents, Huh!", tExc);
-					}
-					// have we found a route to the neighbor?
-					if(tRouteToNeighborFN != null) {
-						tFSession.setRouteToPeer(tRouteToNeighborFN);
-					}
-					
-					tfComChannel.setRemoteClusterName(new ClusterName(tfCreatedCluster.getToken(), tfCreatedCluster.getClusterID(), tfCreatedCluster.getHierarchyLevel()));
-				}
-			}
-		};
-		tThread.start();
 	}
 
 	/**

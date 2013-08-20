@@ -16,7 +16,7 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
-import de.tuilmenau.ics.fog.packets.NeighborRoutingInformation;
+import de.tuilmenau.ics.fog.packets.AnnouncePhysicalNeighborhood;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexedPackage;
@@ -167,16 +167,19 @@ public class ComSession extends Session
 	{
 		Logging.log(this, "RECEIVED SESSION DATA: " + pData);
 		
-		if(pData instanceof NeighborRoutingInformation) {
+		/**
+		 * PACKET: AnnouncePhysicalNeighborhood
+		 */
+		if(pData instanceof AnnouncePhysicalNeighborhood) {
 			// get the packet
-			NeighborRoutingInformation tNeighborRoutingInformationPacket = (NeighborRoutingInformation)pData;
+			AnnouncePhysicalNeighborhood tAnnouncePhysicalNeighborhood = (AnnouncePhysicalNeighborhood)pData;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-				Logging.log(this, "NEIGHBOR ROUTING INFO received: " + tNeighborRoutingInformationPacket);
+				Logging.log(this, "ANNOUNCE PHYSICAL NEIGHBORHOOD received: " + tAnnouncePhysicalNeighborhood);
 			}
 			
 			// get the L2Address of the peer
-			mPeerL2Address = tNeighborRoutingInformationPacket.getCentralFNL2Address();
+			mPeerL2Address = tAnnouncePhysicalNeighborhood.getSenderCentralAddress();
 
 			/**
 			 * Determine the route to the known FN from the peer
@@ -184,7 +187,7 @@ public class ComSession extends Session
 			Route tRouteToPeer = null;
 			// search a route form the central FN to the intermediate FN between the central FN and the bus
 			try {
-				tRouteToPeer = getHRMController().getHRS().getRoute(tNeighborRoutingInformationPacket.getRoutingTargetFNL2Address(), new Description(), getHRMController().getNode().getIdentity());
+				tRouteToPeer = getHRMController().getHRS().getRoute(tAnnouncePhysicalNeighborhood.getSenderAddress(), new Description(), getHRMController().getNode().getIdentity());
 			} catch (RoutingException tExc) {
 				Logging.err(this, "Unable to find route to ", tExc);
 			} catch (RequirementsException tExc) {
@@ -215,7 +218,7 @@ public class ComSession extends Session
 			/**
 			 * Send an answer packet
 			 */
-			if (!tNeighborRoutingInformationPacket.isAnswer()){
+			if (!tAnnouncePhysicalNeighborhood.isAnswer()){
 				/**
 				 * get the name of the central FN
 				 */
@@ -224,17 +227,17 @@ public class ComSession extends Session
 				/**
 				 *  determine the FN between the local central FN and the bus towards the physical neighbor node and tell this the neighbor 
 				 */
-				L2Address tFirstFNL2Address = mHRMController.getL2AddressOfFirstFNTowardsNeighbor(tNeighborRoutingInformationPacket.getRoutingTargetFNL2Address());
+				L2Address tFirstFNL2Address = mHRMController.getL2AddressOfFirstFNTowardsNeighbor(tAnnouncePhysicalNeighborhood.getSenderAddress());
 
 				/**
-				 * Send NeighborRoutingInformation to the neighbor
+				 * Send AnnouncePhysicalNeighborhood to the neighbor
 				 */
 				if (tFirstFNL2Address != null){
 					// create a map between the central FN and the search FN
-					NeighborRoutingInformation tNeighborRoutingInformation = new NeighborRoutingInformation(tCentralFNL2Address, tFirstFNL2Address, NeighborRoutingInformation.ANSWER_PACKET);
+					AnnouncePhysicalNeighborhood tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalNeighborhood(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalNeighborhood.ANSWER_PACKET);
 					// tell the neighbor about the FN
-					Logging.log(this, "     ..send NEIGHBOR ROUTING INFO ANSWER " + tNeighborRoutingInformation);
-					write(tNeighborRoutingInformation);
+					Logging.log(this, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD ANSWER " + tAnnouncePhysicalNeighborhoodAnswer);
+					write(tAnnouncePhysicalNeighborhoodAnswer);
 				}
 
 			}

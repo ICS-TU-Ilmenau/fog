@@ -11,7 +11,6 @@ package de.tuilmenau.ics.fog.packets;
 
 import java.io.Serializable;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.LoggableElement;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -21,7 +20,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * PACKET: This packet is used to inform the neighbor about the association between the central FN and the FN between the central FN and the bus.
  * 		   It is necessary to inform the neighbor about the FN which it should use to route to the central FN of a neighbor node.
  */
-public class NeighborRoutingInformation extends LoggableElement implements Serializable
+public class AnnouncePhysicalNeighborhood extends LoggableElement implements Serializable
 {
 	/**
 	 * Stores the L2Address of the central FN.
@@ -45,14 +44,14 @@ public class NeighborRoutingInformation extends LoggableElement implements Seria
 	 */
 	private static final long serialVersionUID = 7253912074438961613L;
 
-	public NeighborRoutingInformation(L2Address pCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
+	public AnnouncePhysicalNeighborhood(L2Address pCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
 	{
 		mCentralFN = pCentralFN;
 		mRoutingTargetFN = pRoutingTargetFN;
 		mIsAnswer = pIsAnswer;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
-			Logging.log(getClass().getSimpleName() + "(CentralFN=" + getCentralFNL2Address()  + ", RoutingTargetFN=" + getRoutingTargetFNL2Address() + "): CREATED");
+			Logging.log(getClass().getSimpleName() + "(SenderCentralAddress=" + getSenderCentralAddress()  + ", SenderAddress=" + getSenderAddress() + "): CREATED");
 		}
 	}
 	
@@ -71,7 +70,7 @@ public class NeighborRoutingInformation extends LoggableElement implements Seria
 	 * 
 	 * @return name of the central FN
 	 */
-	public L2Address getCentralFNL2Address()
+	public L2Address getSenderCentralAddress()
 	{
 		return mCentralFN;
 	}
@@ -81,7 +80,7 @@ public class NeighborRoutingInformation extends LoggableElement implements Seria
 	 * 
 	 * @return name of the FN
 	 */
-	public L2Address getRoutingTargetFNL2Address()
+	public L2Address getSenderAddress()
 	{
 		return mRoutingTargetFN;
 	}
@@ -94,6 +93,6 @@ public class NeighborRoutingInformation extends LoggableElement implements Seria
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + " (" + (isAnswer() ? "ANSWER" : "INIT") + ", CentralFN=" + getCentralFNL2Address()  + ", RoutingTargetFN=" + getRoutingTargetFNL2Address() + ")";
+		return getClass().getSimpleName() + " (" + (isAnswer() ? "ANSWER" : "INIT") + ", CentralFN=" + getSenderCentralAddress()  + ", RoutingTargetFN=" + getSenderAddress() + ")";
 	}
 }
