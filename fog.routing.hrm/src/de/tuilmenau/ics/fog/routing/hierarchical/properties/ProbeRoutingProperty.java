@@ -26,7 +26,7 @@ public class ProbeRoutingProperty extends AbstractProperty
 	/**
 	 * Stores the description of the source of the corresponding packet/connection
 	 */
-	String mSourceDescription = null;
+	private String mSourceDescription = null;
 	
 	/**
 	 * Constructor

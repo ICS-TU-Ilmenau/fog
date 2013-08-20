@@ -82,29 +82,29 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	 * @param pTo This is the target of the path you want to get all nodes for
 	 * @return a list of all nodes between source and target
 	 */
-	public synchronized List<NodeObject> getIntermediateNodes(NodeObject pFrom, NodeObject pTo)
-	{
-		List<LinkObject> tPath = null;
-		
-		LinkedList<NodeObject> tNodes = new LinkedList<NodeObject>();
-		
-		pFrom = containsVertex(pFrom);
-		pTo = containsVertex(pTo);
-		
-		if((pFrom != null) && (pTo != null)) {
-			DijkstraShortestPath<NodeObject, LinkObject> tRoutingAlgo = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph);
-			tPath = tRoutingAlgo.getPath(pFrom, pTo);
-			
-			NodeObject tTarget = pFrom;
-			
-			for(LinkObject tLink : tPath) {
-				tTarget = getOtherEndOfLink(tTarget, tLink);
-				tNodes.add(tTarget);
-			}
-		}
-
-		return tNodes;
-	}
+//	public synchronized List<NodeObject> getIntermediateNodes(NodeObject pFrom, NodeObject pTo)
+//	{
+//		List<LinkObject> tPath = null;
+//		
+//		LinkedList<NodeObject> tNodes = new LinkedList<NodeObject>();
+//		
+//		pFrom = containsVertex(pFrom);
+//		pTo = containsVertex(pTo);
+//		
+//		if((pFrom != null) && (pTo != null)) {
+//			DijkstraShortestPath<NodeObject, LinkObject> tRoutingAlgo = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph);
+//			tPath = tRoutingAlgo.getPath(pFrom, pTo);
+//			
+//			NodeObject tTarget = pFrom;
+//			
+//			for(LinkObject tLink : tPath) {
+//				tTarget = getOtherEndOfLink(tTarget, tLink);
+//				tNodes.add(tTarget);
+//			}
+//		}
+//
+//		return tNodes;
+//	}
 	
 	/**
 	 * Get the other end node of a link in the stored undirected graph.

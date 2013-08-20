@@ -112,8 +112,6 @@ public class RoutingEntry
 		mMaxDataRate = pMaxDataRate;
 		mLocalLoop = false;
 		mRouteToDirectNeighbor = false;
-		
-		//Logging.log(this, "CREATED");
 	}
 	
 	/**
