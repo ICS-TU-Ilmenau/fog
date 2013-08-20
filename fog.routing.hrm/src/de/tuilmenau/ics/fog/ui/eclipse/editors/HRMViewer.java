@@ -776,15 +776,15 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	}
 
 	@Override
-	public void init(IEditorSite site, IEditorInput input) throws PartInitException
+	public void init(IEditorSite pSite, IEditorInput pInput) throws PartInitException
 	{
-		setSite(site);
-		setInput(input);
+		setSite(pSite);
+		setInput(pInput);
 		
 		// get selected object to show in editor
 		Object tInputObject;
-		if(input instanceof EditorInput) {
-			tInputObject = ((EditorInput) input).getObj();
+		if(pInput instanceof EditorInput) {
+			tInputObject = ((EditorInput) pInput).getObj();
 		} else {
 			tInputObject = null;
 		}
@@ -941,6 +941,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		resetGUI();
 	}
 
+	/**
+	 * Returns a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
 	public String toString()
 	{		
 		return "HRM viewer" + (mHRMController != null ? "@" + mHRMController.getNodeGUIName() : "");
