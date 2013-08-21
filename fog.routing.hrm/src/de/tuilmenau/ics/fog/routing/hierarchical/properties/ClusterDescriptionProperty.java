@@ -22,65 +22,70 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class is used for meta information that is used for the establishment of connections. The connections in that
- * case lead from one (potential) cluster member to a potential coordinator. 
- * 
+ * This class is used for describing a cluster, which both the connection source and the destination should 
+ * have in common (the connection destination should join the described cluster). 
  */
-public class ClusterParticipationProperty extends AbstractProperty
+public class ClusterDescriptionProperty extends AbstractProperty
 {
+	/**
+	 * Stores the hierarchy level of the cluster
+	 */
 	private HierarchyLevel mHierarchyLevel = null;
-	private Long mTargetClusterID;
-	private int mTargetToken;
+	
+	/**
+	 * Stores the unique clusterID
+	 */
+	private Long mClusterID = null;
+			
+	/**
+	 * Stores the unique coordinator ID
+	 */
+	private int mCoordinatorID = 0;
+	
 	private Name mSourceName;
 	private HRMName mSourceAddress;
 	private LinkedList<NestedParticipation> mNestedParticipations = new LinkedList<NestedParticipation>();
 	private static final long serialVersionUID = 7561293731302599090L;
 	
 	/**
-	 * @param pClusterID This is the identifier of the cluster that is supposed to be created.
-	 * @param pLevel This is the hierarchical level of the entity from which this entity comes.
-	 * @param pClusterHops amount of hops to the target
-	 * @param pTargetToken token of the cluster this request comes from
+	 * Constructor
+	 * 
+	 * @param pClusterID the already created unique ID for the cluster the sender and the receiver should be part of
+	 * @param pHierarchyLevel the hierarchy level of the cluster
+	 * @param pCoordinatorID the unique ID of the coordinator (or 0 if none exists)
 	 */
-	public ClusterParticipationProperty(Long pTargetClusterID, HierarchyLevel pLevel, int pTargetToken)
+	public ClusterDescriptionProperty(Long pClusterID, HierarchyLevel pHierarchyLevel, int pCoordinatorID)
 	{
-		Logging.log(this, "Setting target cluster ID " + pTargetClusterID);
-		mTargetClusterID = pTargetClusterID;
-		mHierarchyLevel = pLevel;
-		mTargetToken = pTargetToken;
+		Logging.log(this, "Setting target cluster ID " + pClusterID);
+		mClusterID = pClusterID;
+		mHierarchyLevel = pHierarchyLevel;
+		mCoordinatorID = pCoordinatorID;
 	}
 	
 	/**
+	 * Returns the unique coordinator ID
 	 * 
-	 * @return Returned is the token of the target cluster in order to identify that.
+	 * @return the coordinator ID
 	 */
-	public int getTargetToken()
+	public int getCoordinatorID()
 	{
-		return mTargetToken;
+		return mCoordinatorID;
 	}
 	
 	/**
+	 * Returns the unique cluster ID
 	 * 
-	 * @param pToken Specify the token of the target cluster here.
+	 * @return the unique cluster ID 
 	 */
-	public void setTargetToken(int pToken)
+	public Long getClusterID()
 	{
-		mTargetToken = pToken;
-	}
-	
-	
-	/**
-	 * 
-	 * @return The cluster ID of the target cluster is returned. 
-	 */
-	public Long getTargetClusterID()
-	{
-		return mTargetClusterID;
+		return mClusterID;
 	}
 	
 	/**
+	 * Returns the hierarchy level
 	 * 
-	 * @return Return the level the source cluster is associated to.
+	 * @return the hierarchy level
 	 */
 	public HierarchyLevel getHierarchyLevel()
 	{
@@ -305,7 +310,7 @@ public class ClusterParticipationProperty extends AbstractProperty
 		
 		public String toString()
 		{
-			return getClass().getSimpleName() + ":TARGET(" + mTargetClusterID + ")SOURCE(" + mSourceClusterID + ")STOKEN(" + mSourceToken + ")DTOKEN(" + mTargetToken + ")";
+			return getClass().getSimpleName() + ":TARGET(" + mClusterID + ")SOURCE(" + mSourceClusterID + ")STOKEN(" + mSourceToken + ")DTOKEN(" + mCoordinatorID + ")";
 		}
 		
 		/**

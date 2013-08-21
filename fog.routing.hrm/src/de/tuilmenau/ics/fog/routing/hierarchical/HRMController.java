@@ -39,7 +39,7 @@ import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterParticipationProperty.NestedParticipation;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty.NestedParticipation;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -626,7 +626,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		 * Describe the new created cluster
 		 */
 	    Logging.log(this, "    ..creating cluster description");
-		final ClusterParticipationProperty tClusterParticipationProperty = new ClusterParticipationProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
+		final ClusterDescriptionProperty tClusterParticipationProperty = new ClusterDescriptionProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
 		NestedParticipation tParticipate = tClusterParticipationProperty.new NestedParticipation(tCreatedCluster.getClusterID(), 0);
 		tClusterParticipationProperty.addNestedparticipation(tParticipate);
 		tParticipate.setSourceClusterID(tCreatedCluster.getClusterID());
@@ -1215,7 +1215,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 			//long tClusterID = 0;
 			ComSession tConnectionSession = null;
 			
-			ClusterParticipationProperty tJoin = (ClusterParticipationProperty) tConReqs.get(ClusterParticipationProperty.class);
+			ClusterDescriptionProperty tJoin = (ClusterDescriptionProperty) tConReqs.get(ClusterDescriptionProperty.class);
 			if(tJoin != null) {
 				Logging.log(this, "Found ClusterParticipationProperty " + tJoin);
 			}
@@ -1239,10 +1239,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 				{
 					Logging.log(this, "       ..[" + i + "]: " + tKnownCluster);
 					
-					ClusterName tJoinClusterName = new ClusterName(tJoin.getTargetToken(), tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
-					ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getTargetClusterID(), tJoin.getHierarchyLevel());
+					ClusterName tJoinClusterName = new ClusterName(tJoin.getCoordinatorID(), tJoin.getClusterID(), tJoin.getHierarchyLevel());
+					ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getClusterID(), tJoin.getHierarchyLevel());
 					
-					if(tKnownCluster.equals(tJoinClusterNameTok0) || tJoin.getTargetToken() != 0 && tKnownCluster.equals(tJoinClusterName))	{
+					if(tKnownCluster.equals(tJoinClusterNameTok0) || tJoin.getCoordinatorID() != 0 && tKnownCluster.equals(tJoinClusterName))	{
 						Logging.log(this, "Cluster found: " + tKnownCluster);
 						
 						if(tConnectionSession == null) {
@@ -1252,7 +1252,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 						tCEP = new ComChannel(this, tKnownCluster);
 						((Cluster)tKnownCluster).getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
 						if(tJoin.getHierarchyLevel().isHigherLevel()) {
-							((Cluster)tKnownCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
+							((Cluster)tKnownCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getClusterID(), tCEP);
 						}
 						tClusterFound = true;
 						tFoundCluster = tKnownCluster;
@@ -1264,7 +1264,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				{
 					Logging.log(this, "Cluster not found");
 	
-					Cluster tCluster = new Cluster(this, new Long(tJoin.getTargetClusterID()), tJoin.getHierarchyLevel());
+					Cluster tCluster = new Cluster(this, new Long(tJoin.getClusterID()), tJoin.getHierarchyLevel());
 					setSourceIntermediateCluster(tCluster, tCluster);
 					if(tConnectionSession == null) {
 						tConnectionSession = new ComSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
@@ -1279,7 +1279,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					}
 					tCEP = new ComChannel(this, tCluster);
 					if(tJoin.getHierarchyLevel().isHigherLevel()) {
-						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getTargetClusterID(), tCEP);
+						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getClusterID(), tCEP);
 					}
 					tCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
 					tFoundCluster = tCluster;
