@@ -15,7 +15,6 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
 public class ClusterName implements Serializable, ICluster, AbstractRoutingGraphNode
 {
@@ -43,7 +42,7 @@ public class ClusterName implements Serializable, ICluster, AbstractRoutingGraph
 	@Override
 	public String toString()
 	{
-		return "\"(ID=" + mClusterID + ", Tok=" + mToken + (mHierarchyLevel != null ? ", HierLvl.=" + mHierarchyLevel.getValue() : "") + ")\""; 
+		return getClass().getSimpleName() + "(ClusterID=" + mClusterID + ", Tok=" + mToken + (mHierarchyLevel != null ? ", HierLvl.=" + mHierarchyLevel.getValue() : "") + ")"; 
 	}
 
 	@Override
