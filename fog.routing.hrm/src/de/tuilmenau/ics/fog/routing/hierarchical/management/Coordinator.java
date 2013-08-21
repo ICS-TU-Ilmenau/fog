@@ -17,7 +17,7 @@ import java.util.List;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
+import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
@@ -84,7 +84,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	private BullyPriority mHighestPriority = null;
 	private List<AbstractRoutingGraphNode> mClustersToNotify;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
-	private LinkedList<NeighborClusterAnnounce> mReceivedAnnouncements;
+	private LinkedList<AnnounceRemoteCluster> mReceivedAnnouncements;
 	
 	/**
 	 * This is the GUI specific coordinator ID. It is used to allow for an easier debugging.
@@ -517,11 +517,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 	
 	
-	public void storeAnnouncement(NeighborClusterAnnounce pAnnounce)
+	public void storeAnnouncement(AnnounceRemoteCluster pAnnounce)
 	{
 		Logging.log(this, "Storing " + pAnnounce);
 		if(mReceivedAnnouncements == null) {
-			mReceivedAnnouncements = new LinkedList<NeighborClusterAnnounce>();
+			mReceivedAnnouncements = new LinkedList<AnnounceRemoteCluster>();
 		}
 		pAnnounce.setNegotiatorIdentification(new ClusterName(mParentCluster.getToken(), mParentCluster.getClusterID(), mParentCluster.getHierarchyLevel()));
 		mReceivedAnnouncements.add(pAnnounce);
@@ -747,7 +747,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 							 * If this is a rejection the forwarding cluster as to be calculated by the receiver of this neighbor zone announcement
 							 */
 							
-							NeighborClusterAnnounce tOldCovered = new NeighborClusterAnnounce(getCoordinatorName(), getHierarchyLevel(), superiorCoordinatorL2Address(),getToken(), superiorCoordinatorL2Address().getComplexAddress().longValue());
+							AnnounceRemoteCluster tOldCovered = new AnnounceRemoteCluster(getCoordinatorName(), getHierarchyLevel(), superiorCoordinatorL2Address(),getToken(), superiorCoordinatorL2Address().getComplexAddress().longValue());
 							tOldCovered.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
 							tOldCovered.setNegotiatorIdentification(tLocalManagedClusterName);
 							
@@ -773,7 +773,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 							 * now the old cluster is notified about the new cluster
 							 */
 							
-							NeighborClusterAnnounce tNewCovered = new NeighborClusterAnnounce(pAnnounce.getSenderName(), getHierarchyLevel(), pCEP.getPeerL2Address(), pAnnounce.getToken(), pCEP.getPeerL2Address().getComplexAddress().longValue());
+							AnnounceRemoteCluster tNewCovered = new AnnounceRemoteCluster(pAnnounce.getSenderName(), getHierarchyLevel(), pCEP.getPeerL2Address(), pAnnounce.getToken(), pCEP.getPeerL2Address().getComplexAddress().longValue());
 							tNewCovered.setCoordinatorsPriority(pAnnounce.getSenderPriority());
 							tNewCovered.setNegotiatorIdentification(tLocalManagedClusterName);
 							DiscoveryEntry tCoveredEntry = new DiscoveryEntry(pAnnounce.getToken(),	pAnnounce.getSenderName(), (pCEP.getPeerL2Address()).getComplexAddress().longValue(), pCEP.getPeerL2Address(),	getHierarchyLevel());
@@ -874,7 +874,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 //		}
 	}
 	
-	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, ComChannel pCEP)
+	private ICluster addAnnouncedCluster(AnnounceRemoteCluster pAnnounce, ComChannel pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -908,7 +908,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 	
 	@Override
-	public void handleNeighborAnnouncement(NeighborClusterAnnounce	pAnnounce, ComChannel pCEP)
+	public void handleNeighborAnnouncement(AnnounceRemoteCluster	pAnnounce, ComChannel pCEP)
 	{		
 		if(pAnnounce.getCoveringClusterEntry() != null) {
 			
@@ -953,7 +953,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				for(ComChannel tComChannel : getComChannels()) {
 					if(((ControlEntity)tNeighbor).superiorCoordinatorL2Address().equals(tComChannel.getPeerL2Address()) && !tComChannel.isPartOfMyCluster()) {
 						Logging.info(this, "Informing " + tComChannel + " about existence of neighbor zone ");
-						NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, getToken(), pCoordinatorL2Address.getComplexAddress().longValue());
+						AnnounceRemoteCluster tAnnounce = new AnnounceRemoteCluster(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, getToken(), pCoordinatorL2Address.getComplexAddress().longValue());
 						tAnnounce.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
 						LinkedList<RoutingServiceLinkVector> tVectorList = tComChannel.getPath(pCoordinatorL2Address);
 						tAnnounce.setRoutingVectors(tVectorList);
@@ -965,7 +965,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			}
 		}
 		if(mReceivedAnnouncements != null) {
-			for(NeighborClusterAnnounce tAnnounce : mReceivedAnnouncements) {
+			for(AnnounceRemoteCluster tAnnounce : mReceivedAnnouncements) {
 				superiorCoordinatorComChannel().sendPacket(tAnnounce);
 			}
 		}

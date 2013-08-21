@@ -15,7 +15,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
+import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
@@ -70,7 +70,7 @@ public class Cluster extends ControlEntity implements ICluster
 	
 	private BullyPriority mHighestPriority = null;
 	private Name mCoordName;
-	private LinkedList<NeighborClusterAnnounce> mReceivedAnnounces = null;
+	private LinkedList<AnnounceRemoteCluster> mReceivedAnnounces = null;
 	private int mToken;
 
 	/**
@@ -110,7 +110,7 @@ public class Cluster extends ControlEntity implements ICluster
 			Logging.log(this, "ClusterID - using pre-defined clusterID " + mClusterID);
 		}
 
-		mReceivedAnnounces = new LinkedList<NeighborClusterAnnounce>();
+		mReceivedAnnounces = new LinkedList<AnnounceRemoteCluster>();
 
 		mMux = new ComChannelMuxer(this, getHRMController());
 
@@ -391,7 +391,7 @@ public class Cluster extends ControlEntity implements ICluster
 				Logging.log(this, "CLUSTER-CEP - found already known neighbor cluster: " + tNeighborCluster);
 
 				Logging.log(this, "Preparing neighbor zone announcement");
-				NeighborClusterAnnounce tAnnounce = new NeighborClusterAnnounce(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, getToken(), mClusterID);
+				AnnounceRemoteCluster tAnnounce = new AnnounceRemoteCluster(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, getToken(), mClusterID);
 				tAnnounce.setCoordinatorsPriority(getPriority()); //TODO : ???
 				if(pCoordinatorComChannel != null) {
 					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorComChannel.getRouteToPeer(), pCoordinatorComChannel.getSourceName(), pCoordinatorComChannel.getPeerL2Address()));
@@ -418,7 +418,7 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 	}
 	
-	private ICluster addAnnouncedCluster(NeighborClusterAnnounce pAnnounce, ComChannel pCEP)
+	private ICluster addAnnouncedCluster(AnnounceRemoteCluster pAnnounce, ComChannel pCEP)
 	{
 		if(pAnnounce.getRoutingVectors() != null) {
 			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
@@ -455,7 +455,7 @@ public class Cluster extends ControlEntity implements ICluster
 		return tCluster;
 	}
 	
-	public void handleNeighborAnnouncement(NeighborClusterAnnounce	pAnnounce, ComChannel pCEP)
+	public void handleNeighborAnnouncement(AnnounceRemoteCluster	pAnnounce, ComChannel pCEP)
 	{
 		if(!pAnnounce.getCoordinatorName().equals(getHRMController().getNodeName())) {
 			Logging.log(this, "Received announcement of foreign cluster");
@@ -509,7 +509,7 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 	}
 	
-	private void announceNeighborCoord(NeighborClusterAnnounce pAnnouncement, ComChannel pCEP)
+	private void announceNeighborCoord(AnnounceRemoteCluster pAnnouncement, ComChannel pCEP)
 	{
 		Logging.log(this, "Handling " + pAnnouncement);
 		if(mCoordName != null)

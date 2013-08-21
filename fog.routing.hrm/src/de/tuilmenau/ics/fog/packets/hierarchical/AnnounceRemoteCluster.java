@@ -13,7 +13,6 @@ import java.io.Serializable;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
@@ -24,7 +23,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 /**
  * Once a newly discovered zone appears this object will be used to inform chosen entities about that fact.
  */
-public class NeighborClusterAnnounce implements Serializable
+public class AnnounceRemoteCluster implements Serializable
 {
 	private static final long serialVersionUID = -9188474878782673991L;
 	private Name mCoordinatorName;
@@ -50,7 +49,7 @@ public class NeighborClusterAnnounce implements Serializable
 	 * @param pToken token of the cluster that is announced
 	 * @param pClusterID identifier of the cluster
 	 */
-	public NeighborClusterAnnounce(Name pCoordinatorName, HierarchyLevel pLevel, HRMName pRoutingServiceAddress, int pToken, Long pClusterID)
+	public AnnounceRemoteCluster(Name pCoordinatorName, HierarchyLevel pLevel, HRMName pRoutingServiceAddress, int pToken, Long pClusterID)
 	{
 		mCoordinatorName = pCoordinatorName;
 		mLevel = pLevel;

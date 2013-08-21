@@ -13,7 +13,7 @@ import java.io.Serializable;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
+import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
@@ -357,7 +357,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		//TODO: remove this
 	}
 	
-	public void handleNeighborAnnouncement(NeighborClusterAnnounce pNeighborClusterAnnounce, ComChannel pComChannel)
+	public void handleNeighborAnnouncement(AnnounceRemoteCluster pNeighborClusterAnnounce, ComChannel pComChannel)
 	{
 		//TODO: remove this
 	}

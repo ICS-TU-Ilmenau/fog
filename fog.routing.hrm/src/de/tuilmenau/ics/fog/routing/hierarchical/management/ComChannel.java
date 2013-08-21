@@ -21,7 +21,7 @@ import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.packets.hierarchical.NeighborClusterAnnounce;
+import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
@@ -412,8 +412,8 @@ public class ComChannel
 		/**
 		 * NeighborClusterAnnounce
 		 */
-		if(pData instanceof NeighborClusterAnnounce) {
-			NeighborClusterAnnounce tAnnouncePacket = (NeighborClusterAnnounce)pData;
+		if(pData instanceof AnnounceRemoteCluster) {
+			AnnounceRemoteCluster tAnnouncePacket = (AnnounceRemoteCluster)pData;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "NEIGHBOR received from \"" + mParent + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
