@@ -31,7 +31,7 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
-import de.tuilmenau.ics.fog.packets.AnnouncePhysicalNeighborhood;
+import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalNeighborhood;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;

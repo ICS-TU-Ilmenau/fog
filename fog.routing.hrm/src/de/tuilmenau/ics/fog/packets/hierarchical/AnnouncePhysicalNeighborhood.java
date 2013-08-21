@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets;
+package de.tuilmenau.ics.fog.packets.hierarchical;
 
 import java.io.Serializable;
 
