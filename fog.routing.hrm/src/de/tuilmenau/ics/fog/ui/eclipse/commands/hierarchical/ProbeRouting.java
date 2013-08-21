@@ -15,17 +15,11 @@ import java.util.LinkedList;
 import org.eclipse.ui.IWorkbenchPartSite;
 
 import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
-import de.tuilmenau.ics.fog.eclipse.ui.dialogs.EnterStringDialog;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.packets.Packet;
-import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
-import de.tuilmenau.ics.fog.routing.RouteSegmentDescription;
-import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.DestinationApplicationProperty;
@@ -34,13 +28,9 @@ import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
-import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
-import de.tuilmenau.ics.fog.topology.IAutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.SimpleName;
 
 /**
  * In order to create simulations this class sends packets from one node to another randomly chosen node. Or from one 
