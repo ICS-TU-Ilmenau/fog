@@ -360,7 +360,7 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 	 * JUNG lib.
 	 * 
 	 * @param pX Width of the window
-	 * @param pY Hight of the window
+	 * @param pY Height of the window
 	 * @param pGraph Graph, which should be displayed
 	 */
 	private void createGraphView(Graph<NodeObject, LinkObject> pGraph)
@@ -501,6 +501,14 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 							return tMarkers[0].getColor();
 						}
 					} else {
+						// if the background is colored with a special an R/G/B color, we use white as frame color in order to have readable strings 
+						if(pVertex instanceof IElementDecorator && ((IElementDecorator)pVertex).getDecorationParameter() != null && ((IElementDecorator)pVertex).getDecorationParameter() instanceof IElementDecorator.Color) {
+							IElementDecorator tDecorator = (IElementDecorator)pVertex;
+							if(tDecorator.getDecorationParameter() != null){
+								return Color.WHITE;								
+							}
+						}
+
 						return DEFAULT_VERTEX_COLOR;
 					}
 				}
