@@ -27,7 +27,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty.NestedParticipation;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty.ClusterMemberDescription;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -71,7 +71,7 @@ public class ComChannelMuxer
 		
 		if(!mConnectedEntities.contains(pTargetCluster.getCoordinatorName())) {
 			mConnectedEntities.add(pTargetCluster.getCoordinatorName());
-			ClusterDescriptionProperty tParticipationProperty = new ClusterDescriptionProperty(tTargetControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getToken());
+			ClusterDescriptionProperty tPropClusterDescription = new ClusterDescriptionProperty(tTargetControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getToken());
 			ComSession tSession = new ComSession(mHRMController, false, tSourceClusterHierLvl, mHRMController.getCoordinatorMultiplexerOnLevel(pSourceCoordinator));
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNodeName());
 			
@@ -88,41 +88,38 @@ public class ComChannelMuxer
 				tCEPDemultiplexed.setRemoteClusterName(new ClusterName(pTargetCluster.getToken(), pTargetCluster.getClusterID(), pTargetCluster.getHierarchyLevel()));
 			}
 			
-			for(Coordinator tManager : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
-				Logging.log(this, "Ping2: " + tManager);
+			for(Coordinator tCoordinator : mHRMController.getCoordinator(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
+				Logging.log(this, "Ping2: " + tCoordinator);
 
 				if(tTargetControlEntity.superiorCoordinatorL2Address() == null) {
 					//TODO: fall unmoeglich, wuerde sonst oben crashen
 					Logging.err(this, "Error on trying to contact other clusters, as name is set please check its address");
 				} else {
-					NestedParticipation tParticipate = tParticipationProperty.new NestedParticipation(pTargetCluster.getClusterID(), pTargetCluster.getToken());
-					tParticipationProperty.addNestedparticipation(tParticipate);
-					tParticipate.setSenderPriority(tManager.getCluster().getPriority());
-//					tAddress = pTargetCluster.getCoordinatorsAddress().getAddress().longValue();
+					Cluster tCoordinatorCluster = tCoordinator.getCluster();
 					
-					tParticipate.setSourceClusterID(tManager.getCluster().getClusterID());
-					tParticipate.setSourceToken(tManager.getCluster().getToken());
-					tParticipate.setSourceName(mHRMController.getNode().getCentralFN().getName());
-					tParticipate.setSourceRoutingServiceAddress(tSession.getSourceRoutingServiceAddress());
+					ClusterMemberDescription tClusterMemberDescription = tPropClusterDescription.addClusterMember(tCoordinatorCluster.getClusterID(), tCoordinatorCluster.getToken(), tCoordinatorCluster.getPriority());
 					
-					List<AbstractRoutingGraphLink> tClusterListToRemote = mHRMController.getRouteARG(tManager.getCluster(), tControlEntityTargetCluster);
+					tClusterMemberDescription.setSourceName(mHRMController.getNode().getCentralFN().getName());
+					tClusterMemberDescription.setSourceRoutingServiceAddress(tSession.getSourceRoutingServiceAddress());
+					
+					List<AbstractRoutingGraphLink> tClusterListToRemote = mHRMController.getRouteARG(tCoordinator.getCluster(), tControlEntityTargetCluster);
 					if(!tClusterListToRemote.isEmpty()) {
 						/*
 						 * we need the last hop in direct to the neighbor
 						 */
 						ICluster tPredecessorToRemote = (ICluster) mHRMController.getOtherEndOfLinkARG(tControlEntityTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
-						tParticipate.setPredecessor(new ClusterName(tPredecessorToRemote.getToken(), tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getHierarchyLevel()));
+						tClusterMemberDescription.setPredecessor(new ClusterName(tPredecessorToRemote.getToken(), tPredecessorToRemote.getClusterID(), tPredecessorToRemote.getHierarchyLevel()));
 						Logging.log(this, "Successfully set predecessor for " + pTargetCluster + ":" + tPredecessorToRemote);
 					} else {
 						Logging.log(this, "Unable to set predecessor for " + pTargetCluster + ":");
 					}
 					
-					for(ControlEntity tNeighbor: tManager.getCluster().getNeighborsARG()) {
+					for(ControlEntity tNeighbor: tCoordinator.getCluster().getNeighborsARG()) {
 						ICluster tIClusterNeighbor = (ICluster)tNeighbor;
 						
 						DiscoveryEntry tEntry = new DiscoveryEntry(tIClusterNeighbor.getToken(), tIClusterNeighbor.getCoordinatorName(), tIClusterNeighbor.getClusterID(), tNeighbor.superiorCoordinatorL2Address(), tNeighbor.getHierarchyLevel());
 						tEntry.setPriority(tNeighbor.getPriority());
-						List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(tManager.getCluster(), tNeighbor);
+						List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(tCoordinator.getCluster(), tNeighbor);
 						/*
 						 * the predecessor has to be the next hop
 						 */
@@ -133,19 +130,19 @@ public class ComChannelMuxer
 						} else {
 							Logging.log(this, "Unable to set predecessor for " + tNeighbor);
 						}
-						if(tManager.getPathToCoordinator(tManager.getCluster(), tIClusterNeighbor) != null) {
-							for(RoutingServiceLinkVector tVector : tManager.getPathToCoordinator(tManager.getCluster(), tIClusterNeighbor)) {
+						if(tCoordinator.getPathToCoordinator(tCoordinator.getCluster(), tIClusterNeighbor) != null) {
+							for(RoutingServiceLinkVector tVector : tCoordinator.getPathToCoordinator(tCoordinator.getCluster(), tIClusterNeighbor)) {
 								tEntry.addRoutingVectors(tVector);
 							}
 						}
-						tParticipate.addDiscoveryEntry(tEntry);
+						tClusterMemberDescription.addDiscoveryEntry(tEntry);
 					}
 				}
 			}
 			
 			Identity tIdentity = mHRMController.getNode().getIdentity();
 			Description tConnectDescription = mHRMController.createHRMControllerDestinationDescription();
-			tConnectDescription.set(tParticipationProperty);
+			tConnectDescription.set(tPropClusterDescription);
 			
 			Logging.log(this, "Connecting to " + pTargetCluster);
 			Connection tConn = null;;

@@ -18,6 +18,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty.ClusterMemberDescription;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -42,9 +43,13 @@ public class ClusterDescriptionProperty extends AbstractProperty
 	 */
 	private int mCoordinatorID = 0;
 	
+	/**
+	 * Stores all registered cluster member descriptions
+	 */
+	private LinkedList<ClusterMemberDescription> mClusterMemberDescriptions = new LinkedList<ClusterMemberDescription>();
+
 	private Name mSourceName;
 	private HRMName mSourceAddress;
-	private LinkedList<NestedParticipation> mNestedParticipations = new LinkedList<NestedParticipation>();
 	private static final long serialVersionUID = 7561293731302599090L;
 	
 	/**
@@ -60,6 +65,8 @@ public class ClusterDescriptionProperty extends AbstractProperty
 		mClusterID = pClusterID;
 		mHierarchyLevel = pHierarchyLevel;
 		mCoordinatorID = pCoordinatorID;
+		
+		Logging.log(this, "Setting cluster hierarchy level: " + pHierarchyLevel.getValue());
 	}
 	
 	/**
@@ -93,26 +100,42 @@ public class ClusterDescriptionProperty extends AbstractProperty
 	}
 	
 	/**
-	 * As one physical node might be associated to more than one cluster at hierarchy level 0, every cluster manager of
-	 * clusters the coordinator is located at that node would create independent connections. Therefore the cluster managers
-	 * are bundled via the nested participations.  
+	 * Adds a description of a cluster member to the internal database
 	 * 
-	 * @return The list of clusters that should be multiplexed by that connection is returned here.
+	 * @param pClusterID the unique cluster ID
+	 * @param pToken the unique coordinator ID
+	 * @param pPriority the Bully priority of this cluster member
 	 */
-	public LinkedList<NestedParticipation> getNestedParticipations()
+	public ClusterMemberDescription addClusterMember(Long pClusterID, int pToken, BullyPriority pPriority)
 	{
-		return mNestedParticipations;
-	}
-	
-	/**
-	 * 
-	 * @param pParticipation Add one more nested participation via this method.
-	 */
-	public void addNestedparticipation(NestedParticipation pParticipation)
-	{
-		Logging.log(this, "Adding nested participation: " + pParticipation);
+		// create the new member
+		ClusterMemberDescription tResult = new ClusterMemberDescription(pClusterID, pToken, pPriority);
+
+		// add the cluster member to the database
+		Logging.log(this, "Adding cluster member description: " + tResult);
+
+		synchronized (mClusterMemberDescriptions) {
+			mClusterMemberDescriptions.add(tResult);
+		}
 		
-		mNestedParticipations.add(pParticipation);
+		return tResult;
+	}
+
+	/**
+	 * Returns a list of descriptions about known cluster members
+	 *  
+	 * @return the list of registered cluster members
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<ClusterMemberDescription> getClusterMembers()
+	{
+		LinkedList<ClusterMemberDescription> tResult = null;
+		
+		synchronized (mClusterMemberDescriptions) {
+			tResult = (LinkedList<ClusterMemberDescription>) mClusterMemberDescriptions.clone();
+		}
+		
+		return tResult;		
 	}
 	
 	/**
@@ -122,55 +145,54 @@ public class ClusterDescriptionProperty extends AbstractProperty
 	 */
 	public String toString()
 	{
-		String tResult = getClass().getSimpleName();
+		String tResult = getClass().getSimpleName() + " with ";
 		
-		for (NestedParticipation tEntry : mNestedParticipations){
-			tResult += "\n    .." + tEntry.toString();
+		synchronized (mClusterMemberDescriptions) {
+			tResult += mClusterMemberDescriptions.size() + " cluster member descriptions";
+			
+			int i = 0;
+			for (ClusterMemberDescription tEntry : mClusterMemberDescriptions){
+				tResult += "\n      ..[" + i + "]: " + tEntry.toString();
+				i++;
+			}
 		}
 		
 		return tResult;
 	}
 	
 	/**
-	 * As one physical node might be associated to more than one cluster at hierarchy level 0, every cluster manager of
-	 * clusters the coordinator is located at that node would create independent connections. Therefore the cluster managers
-	 * are bundled via the nested participations.  
-	 * 
-	 * The list of the nested participations can be retrieved by the ClusterParticipationProperty.getNestedParticipations() method.
+	 * This class is used to describe a cluster member of the cluster, which is described by the parent ClusterDescriptionProperty.
 	 */
-	public class NestedParticipation implements Serializable
+	public class ClusterMemberDescription implements Serializable
 	{
-		/**
-		 * 
-		 */
 		private static final long serialVersionUID = -6712697028015706544L;
-		private Long mSourceClusterID;
-		private int mSourceToken;
+
+		/**
+		 * Stores the unique ID of the cluster
+		 */
+		private Long mClusterID;
+		
+		/**
+		 * Stores the unique ID of the coordinator 
+		 */
+		private int mCoordinatorID;
+
 		private ClusterName mPredecessor;
 		private LinkedList<DiscoveryEntry> mDiscoveries;
-		private HierarchyLevel mLevel = null;
-		private BullyPriority mSenderPriority = null;
+		private HierarchyLevel mHierarchyLevel = null;
+		private BullyPriority mPriority = null;
 		
 		/**
-		 * 
-		 * @param pSourceClusterID Specify the cluster identity via this number.
-		 * @param pSourceToken Provide the token of the source cluster here.
+		 * Constructor
+		 *  
+		 * @param pClusterID the unique ID of the cluster
+		 * @param pCoordinatorID the unique ID of the coordinator
 		 */
-		public NestedParticipation(Long pSourceClusterID, int pSourceToken)
+		public ClusterMemberDescription(Long pClusterID, int pCoordinatorID, BullyPriority pPriority)
 		{
-			mSourceClusterID = pSourceClusterID;
-			mSourceToken = pSourceToken;
-		}
-		
-		/**
-		 * 
-		 * @param pPriority This is the priority of the cluster member. It is transmitted already here to
-		 * decrease communication complexity.
-		 */
-		public void setSenderPriority(BullyPriority pPriority)
-		{
-			Logging.log(this, "Setting sender priority to " + pPriority);
-			mSenderPriority = pPriority;
+			mClusterID = pClusterID;
+			mCoordinatorID = pCoordinatorID;
+			mPriority = pPriority;
 		}
 		
 		/**
@@ -178,9 +200,9 @@ public class ClusterDescriptionProperty extends AbstractProperty
 		 * @return This is the priority of the cluster member. It is already here transmitted to
 		 * decrease communication complexity.
 		 */
-		public BullyPriority getSenderPriority()
+		public BullyPriority getPriority()
 		{
-			return mSenderPriority;
+			return mPriority;
 		}
 		
 		/**
@@ -189,9 +211,11 @@ public class ClusterDescriptionProperty extends AbstractProperty
 		 * the cluster that should be joined. So the level of this nested exception is below the level of the
 		 * ClusterParticipationProperty this nested participation is part of.
 		 */
-		public void setLevel(HierarchyLevel pLevel)
+		public void setHierarchyLevel(HierarchyLevel pHierarchyLevel)
 		{
-			mLevel = pLevel;
+			Logging.log(this, "Setting cluster member hierarchy level: " + pHierarchyLevel.getValue());
+			
+			mHierarchyLevel = pHierarchyLevel;
 		}
 		
 		/**
@@ -201,9 +225,9 @@ public class ClusterDescriptionProperty extends AbstractProperty
 		 * 
 		 * @return The level of the cluster that should participate is returned.
 		 */
-		public HierarchyLevel getLevel()
+		public HierarchyLevel getHierarchyLevel()
 		{
-			return mLevel;
+			return mHierarchyLevel;
 		}
 		
 		/**
@@ -267,20 +291,11 @@ public class ClusterDescriptionProperty extends AbstractProperty
 		
 		/**
 		 * 
-		 * @param pToken This is the token of the cluster that is about to become member.
-		 */
-		public void setSourceToken(int pToken)
-		{
-			mSourceToken = pToken;
-		}
-		
-		/**
-		 * 
 		 * @return The token of the cluster the coordinator is responsible for is returned here.
 		 */
-		public int getSourceToken()
+		public int getCoordinatorID()
 		{
-			return mSourceToken;
+			return mCoordinatorID;
 		}
 		
 		/**
@@ -308,27 +323,23 @@ public class ClusterDescriptionProperty extends AbstractProperty
 			return mDiscoveries;
 		}
 		
-		public String toString()
-		{
-			return getClass().getSimpleName() + ":TARGET(" + mClusterID + ")SOURCE(" + mSourceClusterID + ")STOKEN(" + mSourceToken + ")DTOKEN(" + mCoordinatorID + ")";
-		}
-		
 		/**
 		 * 
 		 * @return The cluster identity the coordinator represents is returned.
 		 */
-		public Long getSourceClusterID()
+		public Long getClusterID()
 		{
-			return mSourceClusterID;
+			return mClusterID;
 		}
 		
 		/**
+		 * Returns a descriptive string about this object
 		 * 
-		 * @param pSourceClusterID The cluster identity the coordinator represents can be set by this function.
+		 * @return the descriptive string
 		 */
-		public void setSourceClusterID(Long pSourceClusterID)
+		public String toString()
 		{
-			mSourceClusterID = pSourceClusterID;
+			return getClass().getSimpleName() + "(ClusterID=" + getClusterID() + ", CoordID=" + getCoordinatorID() + ", PeerPrio=" + getPriority() + ")";
 		}
 	}
 }
