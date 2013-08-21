@@ -29,7 +29,6 @@ public class AnnounceRemoteCluster implements Serializable
 	private Name mCoordinatorName;
 	private HierarchyLevel mLevel;
 	private HRMName mCoordAddress;
-	private boolean mAnnouncerHasAddress = false;;
 	private LinkedList<RoutingServiceLinkVector> mRoutingLinks;
 	private BullyPriority mClusterCoordinatorPriority = null;
 	private int mToken;
@@ -38,8 +37,7 @@ public class AnnounceRemoteCluster implements Serializable
 	private boolean mForeignAnnouncement;
 	private DiscoveryEntry mCoveringCluster;
 	private ClusterName mNegotiatorIdentification;
-	private String mASIdentification;
-	private boolean mInterASCluster = false;
+
 	/**
 	 * 
 	 * @param pCoordinatorName Name of the coordinator
@@ -77,15 +75,6 @@ public class AnnounceRemoteCluster implements Serializable
 		return mClusterCoordinatorPriority;
 	}
 	
-	/**
-	 * 
-	 * @param pAnnouncerHasAddress set flag that indicates whether the target was an address assigned
-	 */
-	public void setAnnouncerHasAddressStatus(boolean pAnnouncerHasAddress)
-	{
-		mAnnouncerHasAddress = pAnnouncerHasAddress; 
-	}
-	
 	@Override
 	public String toString()
 	{
@@ -108,15 +97,6 @@ public class AnnounceRemoteCluster implements Serializable
 	public HRMName getCoordAddress()
 	{
 		return mCoordAddress;
-	}
-	
-	/**
-	 * 
-	 * @return true if the target coordinator was assigned an address
-	 */
-	public boolean getAddressInNeighborCluster()
-	{
-		return mAnnouncerHasAddress;
 	}
 	
 	/**
@@ -248,41 +228,5 @@ public class AnnounceRemoteCluster implements Serializable
 	public void setRoutingVectors(LinkedList<RoutingServiceLinkVector> pVectors)
 	{
 		mRoutingLinks = pVectors;
-	}
-	
-	/**
-	 * 
-	 * @return true if the cluster is used to connect two different autonomous systems
-	 */
-	public boolean isInterASAnnouncement()
-	{
-		return mASIdentification != null;
-	}
-	
-	/**
-	 * 
-	 * @param pASName is the name of the autonomous system the cluster belongs to
-	 */
-	public void setASIdentification(String pASName)
-	{
-		mASIdentification = pASName;
-	}
-	
-	/**
-	 * 
-	 * @return the name of the autonomous system the cluster belongs to
-	 */
-	public String getASIdentification()
-	{
-		return mASIdentification;
-	}
-	
-	/**
-	 * 
-	 * @return true if the target cluster as one that connects two different autonomous systems
-	 */
-	public boolean isInterASCluster()
-	{
-		return mInterASCluster;
 	}
 }

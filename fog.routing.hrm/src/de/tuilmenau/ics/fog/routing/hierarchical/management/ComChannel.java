@@ -418,42 +418,11 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "NEIGHBOR received from \"" + mParent + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
 
-			if(tAnnouncePacket.isInterASAnnouncement()) {
-				Logging.log(this, tNode.getAS().getName() + " received an announcement from " + tAnnouncePacket.getASIdentification());
-				if(tNode.getAS().getName().equals(tAnnouncePacket.getASIdentification())) {
-					if(!getSourceName().equals(getPeerL2Address())) {
-						for(Route tPath : tHRS.getCoordinatorRoutingMap().getRoute(getSourceName(), getPeerL2Address())) {
-							tAnnouncePacket.addRoutingVector(new RoutingServiceLinkVector(tPath, tHRS.getCoordinatorRoutingMap().getSource(tPath), tHRS.getCoordinatorRoutingMap().getDest(tPath)));
-						}
-					}
-				} else {
-					if(getParent() instanceof Cluster) {
-						if(!getSourceName().equals(getPeerL2Address())) {
-							RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(getRouteToPeer(), getSourceName(), getPeerL2Address());
-							tAnnouncePacket.addRoutingVector(tVector);
-						}
-						for(ComChannel tCEP : getParent().getComChannels()) {
-							boolean tWroteAnnouncement = false;
-							if(tCEP.getRemoteClusterName().getHierarchyLevel().getValue() - 1 == tAnnouncePacket.getLevel().getValue()) {
-								
-								// send packet
-								tCEP.sendPacket(tAnnouncePacket);
-								
-								tWroteAnnouncement = true;
-							}
-							Logging.log(this, "Testing " + tCEP + " whether it leads to the clusters coordinator: " + tWroteAnnouncement);
-						}
-					} else if(getParent() instanceof Coordinator) {
-						Logging.log(this, "Inter AS announcement " + tAnnouncePacket + " is handled by " + getParent() + " whether it leads to the clusters coordinator");
-						((Coordinator)getParent()).getCluster().handleNeighborAnnouncement(tAnnouncePacket, this);
-					}
-				}
-			} else {
-				if (!(getParent() instanceof Cluster)){
-					Logging.err(this, "Peer should be a cluster here");
-				}
-				getParent().handleNeighborAnnouncement(tAnnouncePacket, this);
+			if (!(getParent() instanceof Cluster)){
+				Logging.err(this, "Peer should be a cluster here");
 			}
+			getParent().handleNeighborAnnouncement(tAnnouncePacket, this);
+
 			Logging.log(this, "Received " + tAnnouncePacket + " from remote cluster " + mRemoteCluster);
 		}
 		
