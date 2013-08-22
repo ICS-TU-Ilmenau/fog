@@ -584,7 +584,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		int j = 0;		
 		if (HRM_VIEWER_DEBUGGING)
 			Logging.log(this, "Amount of participating CEPs is " + tComChannels.size());
-		for(ComChannel tCEP : tComChannels) {
+		for(ComChannel tComChannel : tComChannels) {
 			if (HRM_VIEWER_DEBUGGING)
 				Logging.log(this, "Updating table item number " + j);
 			
@@ -618,28 +618,28 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 1: Peer 
 			 */
-			tRow.setText(1, (tCEP.getPeerL2Address() != null ? tCEP.getPeerL2Address().toString() : "??"));
+			tRow.setText(1, (tComChannel.getPeerL2Address() != null ? tComChannel.getPeerL2Address().toString() : "??"));
 
 			/**
 			 * Column 2:  
 			 */
-			tRow.setText(2, Boolean.toString(tCEP.knowsCoordinator()));
+			tRow.setText(2, Boolean.toString(tComChannel.knowsCoordinator()));
 
 			/**
 			 * Column 3:  
 			 */
-			tRow.setText(3, Boolean.toString(tCEP.isPartOfMyCluster()));
+			tRow.setText(3, Boolean.toString(tComChannel.isPartOfMyCluster()));
 			
 			/**
 			 * Column 4:  
 			 */
-			tRow.setText(4, Float.toString(tCEP.getPeerPriority().getValue()));
+			tRow.setText(4, Float.toString(tComChannel.getPeerPriority().getValue()));
 			
 			/**
 			 * Column 5:  
 			 */
-			if (tCEP.getRemoteClusterName() != null){
-				tRow.setText(5, tCEP.getRemoteClusterName().toString());
+			if (tComChannel.getRemoteClusterName() != null){
+				tRow.setText(5, tComChannel.getRemoteClusterName().toString());
 			}else{
 				tRow.setText(5, "??");
 			}
@@ -647,8 +647,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 6:  
 			 */
-			if(tCEP.getRemoteClusterName() != null){ //&& tCEP.getRemoteClusterName() instanceof NeighborCluster && ((NeighborCluster)tCEP.getRemoteClusterName()).getAnnouncedCEP(tCEP.getRemoteClusterName()) != null && ((NeighborCluster)tCEP.getRemoteClusterName()).getAnnouncedCEP(tCEP.getRemoteClusterName()).getRemoteClusterName() != null) {
-				tRow.setText(6, tCEP.getRemoteClusterName().toString());
+			if(tComChannel.getRemoteClusterName() != null){ //&& tCEP.getRemoteClusterName() instanceof NeighborCluster && ((NeighborCluster)tCEP.getRemoteClusterName()).getAnnouncedCEP(tCEP.getRemoteClusterName()) != null && ((NeighborCluster)tCEP.getRemoteClusterName()).getAnnouncedCEP(tCEP.getRemoteClusterName()).getRemoteClusterName() != null) {
+				tRow.setText(6, tComChannel.getRemoteClusterName().toString());
 			}
 
 			/**
@@ -657,10 +657,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			Route tRoute = null;
 			Name tTarget = null;
 			try {
-				tTarget = tCEP.getPeerL2Address();
+				tTarget = tComChannel.getPeerL2Address();
 				if(tTarget != null) {
-					Node tNode = tCEP.getHRMController().getNode();
-					tRoute = mHRMController.getHRS().getRoute(tTarget, new Description(), tNode.getIdentity());
+					tRoute = mHRMController.getHRS().getRoute(tTarget, new Description(), null);
 				}
 			} catch (RoutingException tExc) {
 				Logging.err(this, "Unable to compute route to " + tTarget, tExc);
