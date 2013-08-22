@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
+import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.application.Session;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -24,7 +25,6 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -45,6 +45,11 @@ public class ComSession extends Session
 	 * Stores a reference to the HRMController application.
 	 */
 	private HRMController mHRMController = null;
+	
+	/**
+	 * Stores the registered ComChannel objects
+	 */
+	private LinkedList<ComChannel> mRegisteredComChannels = new LinkedList<ComChannel>();
 	
 	private boolean mServerSide = false;
 	private L2Address mCentralFNL2Address = null;
@@ -148,9 +153,50 @@ public class ComSession extends Session
 		return mHRMController;
 	}
 	
+	/**
+	 * Registers a communication channel
+	 * 
+	 * @param pComChannel the communication channel, which should be registered
+	 */
+	public void registerComChannel(ComChannel pComChannel)
+	{
+		Logging.log(this, "Registering communication channel: " + pComChannel);
+		
+		synchronized (mRegisteredComChannels) {
+			mRegisteredComChannels.add(pComChannel);			
+		}
+	}
 	
+	/**
+	 * Registers a communication channel
+	 * 
+	 * @param pComChannel the communication channel, which should be registered
+	 */
+	public void unregisterComChannel(ComChannel pComChannel)
+	{
+		Logging.log(this, "Unregistering communication channel: " + pComChannel);
+		
+		synchronized (mRegisteredComChannels) {
+			mRegisteredComChannels.remove(pComChannel);			
+		}
+	}
 	
-	
+	/**
+	 * Returns all registered communication channels
+	 * 
+	 * @return the list of known communication channels
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<ComChannel> getAllComChannels()
+	{
+		LinkedList<ComChannel> tResult = new LinkedList<ComChannel>();
+		
+		synchronized (mRegisteredComChannels) {
+			tResult = (LinkedList<ComChannel>) mRegisteredComChannels.clone();
+		}
+		
+		return tResult;
+	}
 	
 	
 	
@@ -269,13 +315,15 @@ public class ComSession extends Session
 		} else if(pData instanceof ClusterDiscovery) {
 			ClusterDiscovery tClusterDiscovery = (ClusterDiscovery)pData;
 			
+			LinkedList<ComChannel> tAllComChannels = getAllComChannels();
+			
 			Logging.log(this, "Received " + pData);
 			if(tClusterDiscovery.isRequest()) {
 				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
 					boolean tWasDelivered = false;
 
 					String tAnalyzedClusters = new String("");
-					for(ComChannel tComChannel: mComChannelMuxer.getComChannels(this)) {
+					for(ComChannel tComChannel: tAllComChannels) {
 						tAnalyzedClusters += tComChannel.getParent() + "\n";
 						if (tComChannel.getParent() instanceof Cluster){
 							Cluster tCluster = (Cluster)tComChannel.getParent();
@@ -290,7 +338,7 @@ public class ComSession extends Session
 						}
 					}
 					if(!tWasDelivered) {
-						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mComChannelMuxer.getComChannels(this));
+						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + tAllComChannels);
 					}
 				}
 				tClusterDiscovery.isAnswer();
@@ -300,7 +348,7 @@ public class ComSession extends Session
 				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
 					boolean tWasDelivered = false;
 					String tAnalyzedClusters = new String("");
-					for(ComChannel tComChannel: mComChannelMuxer.getComChannels(this)) {
+					for(ComChannel tComChannel: tAllComChannels) {
 						tAnalyzedClusters += tComChannel.getParent() + "\n";
 						if (tComChannel.getParent() instanceof Cluster){
 							Cluster tCluster = (Cluster)tComChannel.getParent();
@@ -316,7 +364,7 @@ public class ComSession extends Session
 						}
 					}
 					if(!tWasDelivered) {
-						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mComChannelMuxer.getComChannels(this));
+						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + tAllComChannels);
 					}
 				}
 			}

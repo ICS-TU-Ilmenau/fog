@@ -640,17 +640,17 @@ public class HRMController extends Application implements IServerCallback, IEven
 		 * Create communication session
 		 */
 	    Logging.log(this, "    ..creating new communication session");
-	    ComSession tSession = new ComSession(this, false, tCreatedCluster.getHierarchyLevel(), tCreatedCluster.getMultiplexer());
+	    ComSession tComSession = new ComSession(this, false, tCreatedCluster.getHierarchyLevel(), tCreatedCluster.getMultiplexer());
 	    
 	    /**
 	     * Create communication channel
 	     */
 	    Logging.log(this, "    ..creating new communication channel");
-		ComChannel tComChannel = new ComChannel(this, tCreatedCluster);
+		ComChannel tComChannel = new ComChannel(this, tCreatedCluster, tComSession);
 		tComChannel.setRemoteClusterName(new ClusterName(tCreatedCluster.getToken(), tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel()));
 		
-		tCreatedCluster.getMultiplexer().mapChannelToSession(tComChannel, tSession);
-
+		tCreatedCluster.getMultiplexer().mapSessionToChannel(tComSession, tComChannel);
+		
 		/**
 		 * Describe the new created cluster
 		 */
@@ -663,7 +663,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		 * Store the thread specific variables
 		 */
 		final L2Address tNeighborName = pNeighborL2Address;
-		final ComSession tFSession = tSession;
+		final ComSession tFSession = tComSession;
 		final HRMController tHRMController = this;
 
 		/**
@@ -1279,8 +1279,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 					 * Create the communication channel for the described cluster member
 					 */
 					Logging.log(this, "     ..creating communication channel");
-					ComChannel tComChannel = new ComChannel(this, tTargetCluster);
-					tTargetCluster.getMultiplexer().mapChannelToSession(tComChannel, tComSession);//TODO : ??
+					ComChannel tComChannel = new ComChannel(this, tTargetCluster, tComSession);
+					tTargetCluster.getMultiplexer().mapSessionToChannel(tComSession, tComChannel);//TODO : ??
 					if(tPropClusterDescription.getHierarchyLevel().isHigherLevel()) {//TODO : ??
 						tTargetCluster.getMultiplexer().mapClusterToComChannel(tClusterMemberDescription.getClusterID(), tPropClusterDescription.getClusterID(), tComChannel);
 					}
