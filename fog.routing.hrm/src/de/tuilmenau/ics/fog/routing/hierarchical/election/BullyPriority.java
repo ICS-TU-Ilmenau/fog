@@ -84,9 +84,9 @@ public class BullyPriority
 	 * 
 	 * @param pCluster the cluster to which this Bully priority belongs to.
 	 */
-	public static BullyPriority createForControlEntity(ControlEntity pCluster)
+	public static BullyPriority createForControlEntity(HRMController pHRMController, ControlEntity pCluster)
 	{
-		Node tNode = pCluster.getHRMController().getNode();
+		Node tNode = pHRMController.getNode();
 		int tHierarchyLevel = pCluster.getHierarchyLevel().getValue();
 		
 		if (tNode == null) {

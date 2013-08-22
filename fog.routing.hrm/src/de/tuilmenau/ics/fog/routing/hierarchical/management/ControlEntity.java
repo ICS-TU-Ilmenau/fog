@@ -53,7 +53,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	/**
 	 * Stores a reference to the parent HRMController.
 	 */
-	private HRMController mHRMController = null;
+	protected HRMController mHRMController = null;
 
 	/**
 	 * Stores the registered communication channels
@@ -92,15 +92,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		mHRMController = pHRMController;
 
 		// create a new standard Bully priority
-		mBullyPriority = BullyPriority.createForControlEntity(this);
-	}
-
-	/** 
-	 * Returns the reference to the node local HRMController instance 
-	 */
-	public HRMController getHRMController()
-	{
-		return mHRMController;
+		mBullyPriority = BullyPriority.createForControlEntity(mHRMController, this);
 	}
 
 	/**
@@ -164,7 +156,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			Cluster tCluster = (Cluster)this;
 
 			// inform HRM controller about the address change
-			getHRMController().updateClusterAddress(tCluster);
+			mHRMController.updateClusterAddress(tCluster);
 
 			return;
 		}
@@ -172,7 +164,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			ClusterProxy tClusterProxy = (ClusterProxy)this;
 
 			// inform HRM controller about the address change
-			//TODO: getHRMController().updateClusterAddress(tClusterProxy);
+			//TODO: mHRMController.updateClusterAddress(tClusterProxy);
 			
 			return;
 		}
@@ -180,7 +172,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			Coordinator tCoordinator = (Coordinator)this;
 
 			// inform HRM controller about the address change
-			getHRMController().updateCoordinatorAddress(tCoordinator);
+			mHRMController.updateCoordinatorAddress(tCoordinator);
 
 			return;
 		}
@@ -248,7 +240,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			getPriority().increaseConnectivity();
 			
 			// inform all cluster members about the Bully priority change
-			//TODO: sendClusterBroadcast(new BullyPriorityUpdate(getHRMController().getNodeName(), getPriority()));
+			//TODO: sendClusterBroadcast(new BullyPriorityUpdate(mHRMController.getNodeName(), getPriority()));
 	
 			tLinkType = AbstractRoutingGraphLink.LinkType.LOCAL_LINK;
 			
@@ -267,7 +259,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			if(!tNeighbors.contains(pNeighbor))
 			{
 				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(tLinkType);
-				getHRMController().registerLinkARG(pNeighbor, this, tLink);
+				mHRMController.registerLinkARG(pNeighbor, this, tLink);
 	
 				// backward call
 				pNeighbor.registerNeighbor(this);
@@ -288,7 +280,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	{
 		LinkedList<ControlEntity> tResult = new LinkedList<ControlEntity>();
 		
-		for(AbstractRoutingGraphNode tNode : getHRMController().getNeighborsARG(this)) {
+		for(AbstractRoutingGraphNode tNode : mHRMController.getNeighborsARG(this)) {
 			if (tNode instanceof ControlEntity){
 				tResult.add((ControlEntity)tNode);
 			}else{
@@ -447,7 +439,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			}			
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
-				Logging.log(this, "     ..stopping address propagation here because node " + getHRMController().getNodeGUIName() + " is only a cluster member");
+				Logging.log(this, "     ..stopping address propagation here because node " + mHRMController.getNodeGUIName() + " is only a cluster member");
 		}
 	}
 
@@ -564,7 +556,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + "@" + getHRMController().getNodeGUIName() + "@" + getHierarchyLevel().getValue();
+		String tResult = getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
 	}

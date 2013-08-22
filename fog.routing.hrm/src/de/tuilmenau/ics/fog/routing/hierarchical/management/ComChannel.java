@@ -10,7 +10,6 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
-import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,14 +39,14 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
-import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 
 /**
  * A communication channel can exist between a cluster and the cluster members, or between a coordinator and other coordinators.
+ * Each ComChannel instance has only one possible parental ComSession associated. However, a ComSession object can be responsible
+ * for multiple ComChannel instances.
  */
 public class ComChannel
 {
-	private static final long serialVersionUID = -8290946480171751216L;
 	private ClusterName mRemoteCluster;
 
 	/**

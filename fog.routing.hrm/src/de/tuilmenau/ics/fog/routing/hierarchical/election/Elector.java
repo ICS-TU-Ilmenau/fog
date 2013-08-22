@@ -77,16 +77,22 @@ public class Elector implements Localization
 	private boolean mElectionWon = false;
 	
 	/**
+	 * Stores a reference to the HRMController instance
+	 */
+	private HRMController mHRMController = null;
+	
+	/**
 	 * Stores the timestamp of the last ElectBroadcast signaling
 	 */
 	private Double mTimestampLastElectBroadcast =  new Double(0);
 	
-	public Elector(Cluster pCluster)
+	public Elector(HRMController pHRMController, Cluster pCluster)
 	{
 		mState = ElectorState.START;
 		mParentCluster = pCluster;
 		mElectionWon = false;
-
+		mHRMController = pHRMController;
+		
 		// set IDLE state
 		setElectorState(ElectorState.IDLE);
 
@@ -219,7 +225,7 @@ public class Elector implements Localization
 	private boolean isTimingOkayOfElectBroadcast()
 	{
 		boolean tResult = false;
-		double tNow = mParentCluster.getHRMController().getSimulationTime();
+		double tNow = mHRMController.getSimulationTime();
 		double tTimeout = mTimestampLastElectBroadcast.longValue() + TIMEOUT_FOR_REPLY;
 				
 		Logging.log(this, "Checking timing of ELECT BROADCAST: last=" + mTimestampLastElectBroadcast.longValue() + ", MinPeriod=" + TIMEOUT_FOR_REPLY + ", now=" + tNow + ", MinTime=" + tTimeout);
@@ -246,7 +252,7 @@ public class Elector implements Localization
 				}
 		
 				// create the packet
-				BullyElect tPacketBullyElect = new BullyElect(mParentCluster.getHRMController().getNodeName(), mParentCluster.getPriority());
+				BullyElect tPacketBullyElect = new BullyElect(mHRMController.getNodeName(), mParentCluster.getPriority());
 				
 				// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority				
 				mParentCluster.sendClusterBroadcast(tPacketBullyElect);
@@ -281,7 +287,7 @@ public class Elector implements Localization
 
 			if (mParentCluster.getCoordinator() != null){
 				// create the packet
-				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mParentCluster.getHRMController().getNodeName(), mParentCluster.getPriority(), mParentCluster.getCoordinator().toLocation() + "@" + HRMController.getHostName(), mParentCluster.getToken());
+				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mHRMController.getNodeName(), mParentCluster.getPriority(), mParentCluster.getCoordinator().toLocation() + "@" + HRMController.getHostName(), mParentCluster.getToken());
 		
 				// send broadcast
 				mParentCluster.sendClusterBroadcast(tPacketBullyAnnounce);
@@ -313,7 +319,7 @@ public class Elector implements Localization
 			}
 	
 			// create the packet
-			BullyAlive tPacketBullyAlive = new BullyAlive(mParentCluster.getHRMController().getNodeName());
+			BullyAlive tPacketBullyAlive = new BullyAlive(mHRMController.getNodeName());
 	
 			// send broadcast
 			mParentCluster.sendClusterBroadcast(tPacketBullyAlive);
@@ -341,7 +347,7 @@ public class Elector implements Localization
 		}
 
 		// create REPLY packet
-		BullyReply tReplyPacket = new BullyReply(mParentCluster.getHRMController().getNodeName(), pComChannel.getPeerHRMID(), mParentCluster.getPriority());
+		BullyReply tReplyPacket = new BullyReply(mHRMController.getNodeName(), pComChannel.getPeerHRMID(), mParentCluster.getPriority());
 			
 		// send the answer packet
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
@@ -369,7 +375,7 @@ public class Elector implements Localization
 			setElectorState(ElectorState.ELECTED);
 	
 			// get the node
-			Node tNode = mParentCluster.getHRMController().getNode();
+			Node tNode = mHRMController.getNode();
 			
 			// create new coordinator instance
 			Coordinator tNewCoordinator = new Coordinator(mParentCluster);
@@ -510,8 +516,8 @@ public class Elector implements Localization
 	@SuppressWarnings("unused")
 	public void handleSignalingMessageBully(SignalingMessageBully pPacketBully, ComChannel pComChannel)
 	{
-		Node tNode = mParentCluster.getHRMController().getNode();
-		Name tLocalNodeName = mParentCluster.getHRMController().getNodeName(); 
+		Node tNode = mHRMController.getNode();
+		Name tLocalNodeName = mHRMController.getNodeName(); 
 		ControlEntity tControlEntity = pComChannel.getParent();
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
@@ -683,7 +689,7 @@ public class Elector implements Localization
 		String tResult = null;
 		
 		if (getCluster() != null){
-			tResult = getClass().getSimpleName() + "@" + getCluster().getHRMController().getNodeGUIName() + "@" + getCluster().getHierarchyLevel().getValue();
+			tResult = getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getCluster().getHierarchyLevel().getValue();
 		}else{
 			tResult = getClass().getSimpleName();
 		}			

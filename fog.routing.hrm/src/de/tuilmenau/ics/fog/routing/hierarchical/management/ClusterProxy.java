@@ -63,7 +63,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		setCoordinatorName(pCoordName);
 		
 		// register the ClusterProxy at the local ARG
-		getHRMController().registerNodeARG(this);
+		mHRMController.registerNodeARG(this);
 
 		Logging.log(this, "CREATED");
 	}
@@ -253,7 +253,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + getGUIClusterID() + "@" + getHRMController().getNodeGUIName() + "@" + getHierarchyLevel().getValue();
+		String tResult = getClass().getSimpleName() + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
 	}
