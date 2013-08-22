@@ -21,7 +21,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexedPackage;
+import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -231,20 +231,6 @@ public class ComChannelMuxer
 		}else{
 			Logging.log(this, "Found " + tFoundNeighbors + " neighbor coordinators for source " + pSourceCoordinator + " and target " + pTargetCluster);
 		}
-	}
-	
-	public boolean write(Serializable pData, ComChannel pComChannel, ClusterName pTargetCluster)
-	{	
-		Logging.log(this, "Sending " + pData + " from " + pComChannel.getParent() + " to target cluster " + pTargetCluster);
-
-		ClusterName tSource = new ClusterName(((ICluster)pComChannel.getParent()).getToken(), ((ICluster)pComChannel.getParent()).getClusterID(), pComChannel.getParent().getHierarchyLevel());
-	
-		MultiplexedPackage tMuxPackage = new MultiplexedPackage(tSource, pTargetCluster, pData);
-		ComSession tComSession = pComChannel.getParentComSession();
-		Logging.log(this, "Sending " + tMuxPackage);
-		
-		// send packet
-		return tComSession.write(tMuxPackage);
 	}
 	
 	public void mapSessionToChannel(ComSession pCEP, ComChannel pDemux)

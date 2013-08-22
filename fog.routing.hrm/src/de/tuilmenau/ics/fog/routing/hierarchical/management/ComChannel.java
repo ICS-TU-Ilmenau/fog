@@ -22,6 +22,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
+import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.RequestCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
@@ -246,6 +247,32 @@ public class ComChannel
 		return mParentComSession.getRouteToPeer();
 	}
 
+	/**
+	 * Sends a packet to the peer
+	 * 
+	 * @param pData the packet payload
+	 * 
+	 * @return true if successful, otherwise false
+	 */
+	public boolean sendPacket(Serializable pData)
+	{
+		// create destination description
+		ClusterName tDestinationClusterName = getRemoteClusterName();
+		if(getParent() instanceof Coordinator) {
+			tDestinationClusterName = new ClusterName(((ICluster)getParent()).getToken(), getPeerL2Address().getComplexAddress().longValue(), getParent().getHierarchyLevel());
+		}
+		
+		Logging.log(this, "Sending " + pData + " to destination " + tDestinationClusterName);
+
+		// create the source description
+		ClusterName tSourceClusterName = new ClusterName(((ICluster)getParent()).getToken(), ((ICluster)getParent()).getClusterID(), getParent().getHierarchyLevel());
+		
+		// create the Multiplex-Header
+		MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pData);
+			
+		// send the final packet (including multiplex-header)
+		return getParentComSession().write(tMultiplexHeader);
+	}
 	
 	
 	
@@ -657,24 +684,6 @@ public class ComChannel
 		mRemoteCluster = pClusterName;
 	}
 
-	public boolean sendPacket(Serializable pData)
-	{
-		Logging.log(this, "Sending to " + getRemoteClusterName() + " the packet " + pData);
-		
-		ComChannelMuxer tMuxer = ((ICluster)getParent()).getMultiplexer();
-		
-		if(pData instanceof RequestCoordinator) {
-//			mRequestedCoordinator = true;
-			Logging.log(this, "Sending " + pData);
-		}
-		if(getParent() instanceof Coordinator) {
-			tMuxer.write(pData, this, new ClusterName(((ICluster)getParent()).getToken(), getPeerL2Address().getComplexAddress().longValue(), getParent().getHierarchyLevel()));
-		} else {
-			tMuxer.write(pData, this, getRemoteClusterName());
-		}
-		return true;
-	}
-	
 	public boolean isPartOfMyCluster()
 	{
 		return mPartOfCluster;

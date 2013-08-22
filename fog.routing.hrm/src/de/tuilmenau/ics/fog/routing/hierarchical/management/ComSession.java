@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalNeighborhood;
-import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexedPackage;
+import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -28,6 +28,11 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
+/**
+ * This class is used to manage a Session of a connection between two physical nodes.
+ * Such a communication session is able to handle several inferior communication channels,
+ * which handle again the communication between two control entities of the HRM infrastructure.
+ */
 public class ComSession extends Session
 {
 
@@ -198,16 +203,11 @@ public class ComSession extends Session
 		return tResult;
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	@SuppressWarnings("unchecked")
+	/**
+	 * Processes incoming packet data and forward it to the right ComChannel
+	 * 
+	 * @param pData the packet payload
+	 */	
 	@Override
 	public boolean receiveData(Object pData)
 	{
@@ -297,15 +297,21 @@ public class ComSession extends Session
 					write(mCentralFNL2Address);
 				}
 			}
-		} else if (pData instanceof MultiplexedPackage) {
-			MultiplexedPackage tPackage = (MultiplexedPackage) pData;
-			ClusterName tTargetCluster = tPackage.getDestinationCluster();
+		} else if (pData instanceof MultiplexHeader) {
+			MultiplexHeader tPackage = (MultiplexHeader) pData;
+			ClusterName tTargetCluster = tPackage.getReceiverClusterName();
 			
 			try {
-				ComChannel tCEP = mComChannelMuxer.getComChannel(this, (ClusterName)tPackage.getSourceCluster(), tTargetCluster);
-				if(tCEP != null) {
-					Logging.log(this, "Forwarding " + tPackage.getData() + " from " + tPackage.getSourceCluster() + " to " + tPackage.getDestinationCluster() + " with " + tCEP);
-					tCEP.handlePacket(tPackage.getData());
+				Logging.log(this, "##############");
+				Logging.log(this, "### source: " + tPackage.getSenderClusterName());
+				Logging.log(this, "### destination: " + tTargetCluster);
+				
+				ComChannel tComChannel = mComChannelMuxer.getComChannel(this, (ClusterName)tPackage.getSenderClusterName(), tTargetCluster);
+				Logging.log(this, "### channel: " + tComChannel);
+				
+				if(tComChannel != null) {
+					Logging.log(this, "Forwarding " + tPackage.getPayload() + " from " + tPackage.getSenderClusterName() + " to " + tPackage.getReceiverClusterName() + " with " + tComChannel);
+					tComChannel.handlePacket(tPackage.getPayload());
 				} else {
 					Logging.warn(this, "No demultiplexed connection available ");
 				}
@@ -372,19 +378,6 @@ public class ComSession extends Session
 		
 		return true;
 	}
-
-	/**
-	 * 
-	 * @return multiplexer that is in charge of this connection - only of relevance if Multicast is implemented
-	 */
-	public ComChannelMuxer getMultiplexer()
-	{
-		return mComChannelMuxer;
-	}
-
-	
-	
-	
 	
 	/**
 	 * Descriptive string about this object
@@ -394,9 +387,9 @@ public class ComSession extends Session
 	public String toString()
 	{
 		if(mPeerL2Address != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getMultiplexer() + "(Initiator=" + mCentralFNL2Address + ", Peer=" + mPeerL2Address + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Peer=" + mPeerL2Address + ")";
 		} else {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Initiator=" + mCentralFNL2Address + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName();
 		}
 		 
 	}
