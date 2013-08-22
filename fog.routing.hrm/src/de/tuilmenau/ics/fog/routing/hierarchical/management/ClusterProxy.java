@@ -10,7 +10,6 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.rmi.RemoteException;
-import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
@@ -131,13 +130,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 
 		if(pAnnounce.getCoordinatorName() != null) {
 			RoutingService tRS = (RoutingService)mHRMController.getNode().getRoutingService();
-			if(! tRS.isKnown(pAnnounce.getCoordinatorName())) {
-				try {
-					mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
-				} catch (RemoteException tExc) {
-					Logging.err(this, "Unable to register " + pAnnounce.getCoordinatorName() + " at name mapping service", tExc);
-				}
-			}
+			mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 		}
 	}
 

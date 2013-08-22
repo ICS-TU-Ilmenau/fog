@@ -18,7 +18,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty.ClusterMemberDescription;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -127,7 +126,7 @@ public class ClusterDescriptionProperty extends AbstractProperty
 	 * @return the list of registered cluster members
 	 */
 	@SuppressWarnings("unchecked")
-	public LinkedList<ClusterMemberDescription> getClusterMembers()
+	public LinkedList<ClusterMemberDescription> getClusterMemberDescriptions()
 	{
 		LinkedList<ClusterMemberDescription> tResult = null;
 		
@@ -234,7 +233,7 @@ public class ClusterDescriptionProperty extends AbstractProperty
 		 * 
 		 * @param pAddress This is the address of the node that is about to join the cluster.
 		 */
-		public void setSourceRoutingServiceAddress(HRMName pAddress)
+		public void setSourceL2Address(HRMName pAddress)
 		{
 			mSourceAddress = pAddress;
 		}
@@ -284,7 +283,7 @@ public class ClusterDescriptionProperty extends AbstractProperty
 		 * 
 		 * @return The address of the entity that wishes to become member of the cluster is returned. 
 		 */
-		public HRMName getSourceAddress()
+		public HRMName getSourceL2Address()
 		{
 			return mSourceAddress;
 		}
@@ -339,7 +338,7 @@ public class ClusterDescriptionProperty extends AbstractProperty
 		 */
 		public String toString()
 		{
-			return getClass().getSimpleName() + "(ClusterID=" + getClusterID() + ", CoordID=" + getCoordinatorID() + ", PeerPrio=" + getPriority() + ")";
+			return getClass().getSimpleName() + "(ClusterID=" + getClusterID() + ", CoordID=" + getCoordinatorID() + (getPriority() != null ? ", PeerPrio=" + getPriority().getValue() : "") + ")";
 		}
 	}
 }

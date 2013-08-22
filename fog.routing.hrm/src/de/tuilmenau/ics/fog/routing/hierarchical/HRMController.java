@@ -39,7 +39,7 @@ import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty.NestedParticipation;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty.ClusterMemberDescription;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -92,13 +92,13 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * Stores a database about all registered coordinators.
 	 * For example, this list is used for the GUI.
 	 */
-	private LinkedList<Coordinator> mKnownCoordinators = new LinkedList<Coordinator>();
+	private LinkedList<Coordinator> mLocalCoordinators = new LinkedList<Coordinator>();
 
 	/**
 	 * Stores a database about all registered clusters.
 	 * For example, this list is used for the GUI.
 	 */
-	private LinkedList<Cluster> mKnownClusters = new LinkedList<Cluster>();
+	private LinkedList<Cluster> mLocalClusters = new LinkedList<Cluster>();
 
 	/**
 	 * Stores a reference to the local instance of the hierarchical routing service.
@@ -128,7 +128,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	private HashMap<Integer, ComChannelMuxer> mMuxOnLevel;
-	private LinkedList<LinkedList<Coordinator>> mRegisteredCoordinators = new LinkedList<LinkedList<Coordinator>>();
 	
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
@@ -262,30 +261,15 @@ public class HRMController extends Application implements IServerCallback, IEven
 		
 		Logging.log(this, "Registering coordinator " + pCoordinator + " at level " + tLevel);
 
-		synchronized (mRegisteredCoordinators) {
-			if(mRegisteredCoordinators.size() <= tLevel) {
-				for(int i = mRegisteredCoordinators.size() - 1; i <= tLevel ; i++) {
-					mRegisteredCoordinators.add(new LinkedList<Coordinator>());
-				}
-			}
-			
-			if (mRegisteredCoordinators.get(tLevel).size() > 0){
-				Logging.log(this, "#### Got more than one coordinator at level " + tLevel + ", already known (0): " + mRegisteredCoordinators.get(tLevel).get(0) + ", new one: " + pCoordinator);
-			}
-		
-			// store the new coordinator
-			mRegisteredCoordinators.get(tLevel).add(pCoordinator);
-		}
-		
 		// register a route to the coordinator as addressable target
 		getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
 		
 		// register at the ARG
 		registerNodeARG(pCoordinator);
 
-		synchronized (mKnownCoordinators) {
+		synchronized (mLocalCoordinators) {
 			// register as known coordinator
-			mKnownCoordinators.add(pCoordinator);
+			mLocalCoordinators.add(pCoordinator);
 		}
 		
 		// update GUI: image for node object 
@@ -308,9 +292,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 	{
 		Logging.log(this, "Unegistering coordinator " + pCoordinator);
 
-		synchronized (mKnownCoordinators) {
+		synchronized (mLocalCoordinators) {
 			// unregister from list of known coordinators
-			mKnownCoordinators.remove(pCoordinator);
+			mLocalCoordinators.remove(pCoordinator);
 		}
 
 		// it's time to update the GUI
@@ -365,22 +349,48 @@ public class HRMController extends Application implements IServerCallback, IEven
 	}
 
 	/**
-	 * Returns a list of known coordinators.
+	 * Returns a list of all known local coordinators.
 	 * 
-	 * @return the list of known coordinators
+	 * @return the list of known local coordinators
 	 */
 	@SuppressWarnings("unchecked")
 	public LinkedList<Coordinator> getAllCoordinators()
 	{
 		LinkedList<Coordinator> tResult;
 		
-		synchronized (mKnownCoordinators) {
-			tResult = (LinkedList<Coordinator>) mKnownCoordinators.clone();
+		synchronized (mLocalCoordinators) {
+			tResult = (LinkedList<Coordinator>) mLocalCoordinators.clone();
 		}
 		
 		return tResult;
 	}
 	
+	/**
+	 * Returns all known coordinators for a given hierarchy level.
+	 * 
+	 * @param pHierarchyLevel the hierarchy level for which all coordinators have to be determined
+	 * 
+	 * @return the list of coordinators on the defined hierarchy level
+	 */
+	public LinkedList<Coordinator> getAllCoordinators(HierarchyLevel pHierarchyLevel)
+	{
+		LinkedList<Coordinator> tResult = new LinkedList<Coordinator>();
+		
+		// get a list of all known coordinators
+		LinkedList<Coordinator> tAllCoordiantors = getAllCoordinators();
+		
+		// iterate over all known coordinators
+		for (Coordinator tCoordinator : tAllCoordiantors){
+			// have we found a matching coordinator?
+			if (tCoordinator.getHierarchyLevel().equals(pHierarchyLevel)){
+				// add this coordinator to the result
+				tResult.add(tCoordinator);
+			}
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Registers a cluster at the local database.
 	 * 
@@ -392,9 +402,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 
 		Logging.log(this, "Registering cluster " + pCluster + " at level " + tLevel);
 
-		synchronized (mKnownClusters) {
+		synchronized (mLocalClusters) {
 			// register as known cluster
-			mKnownClusters.add(pCluster);
+			mLocalClusters.add(pCluster);
 		}
 		
 		// register the cluster in the local ARG
@@ -413,9 +423,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 	{
 		Logging.log(this, "Unegistering coordinator " + pCluster);
 
-		synchronized (mKnownClusters) {
+		synchronized (mLocalClusters) {
 			// unregister from list of known clusters
-			mKnownClusters.remove(pCluster);
+			mLocalClusters.remove(pCluster);
 		}
 		
 		// it's time to update the GUI
@@ -511,13 +521,33 @@ public class HRMController extends Application implements IServerCallback, IEven
 	{
 		LinkedList<Cluster> tResult = null;
 		
-		synchronized (mKnownClusters) {
-			tResult = (LinkedList<Cluster>) mKnownClusters.clone();
+		synchronized (mLocalClusters) {
+			tResult = (LinkedList<Cluster>) mLocalClusters.clone();
 		}
 		
 		return tResult;
 	}
-	
+
+	/**
+	 * Returns the locally known Cluster object, which was identified by its ClusterName
+	 *  
+	 * @param pClusterName the cluster name of the searched cluster
+	 * 
+	 * @return the desired cluster, null if the cluster isn't known
+	 */
+	public Cluster getClusterByName(ClusterName pClusterName)
+	{
+		Cluster tResult = null;
+		
+		for(Cluster tKnownCluster : getAllClusters()) {
+			if(tKnownCluster.equals(pClusterName)) {
+				tResult = tKnownCluster;
+			}
+		}
+
+		return tResult;
+	}
+
 	/**
 	 * Returns a known cluster, which is identified by its ID.
 	 * 
@@ -627,9 +657,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 		 */
 	    Logging.log(this, "    ..creating cluster description");
 		final ClusterDescriptionProperty tClusterParticipationProperty = new ClusterDescriptionProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
-		NestedParticipation tParticipate = tClusterParticipationProperty.new NestedParticipation(tCreatedCluster.getClusterID(), 0);
-		tClusterParticipationProperty.addNestedparticipation(tParticipate);
-		tParticipate.setSourceClusterID(tCreatedCluster.getClusterID());
+	    Logging.log(this, "    ..creating cluster member description for created cluster " + tCreatedCluster);
+		tClusterParticipationProperty.addClusterMember(tCreatedCluster.getClusterID(), 0, null);
 
 		/**
 		 * Store the thread specific variables
@@ -765,14 +794,14 @@ public class HRMController extends Application implements IServerCallback, IEven
 		/**
 		 * report phase
 		 */
-		for (Coordinator tCoordinator : mKnownCoordinators) {
+		for (Coordinator tCoordinator : getAllCoordinators()) {
 			tCoordinator.reportPhase();
 		}
 		
 		/**
 		 * share phase
 		 */
-		for (Coordinator tCoordinator : mKnownCoordinators) {
+		for (Coordinator tCoordinator : getAllCoordinators()) {
 			tCoordinator.sharePhase();
 		}
 		
@@ -1186,14 +1215,210 @@ public class HRMController extends Application implements IServerCallback, IEven
 		Logging.log(this, "INCOMING CONNECTION " + pConnection.toString() + " with requirements: " + pConnection.getRequirements());
 
 		// get the connection requirements
-		Description tConReqs = pConnection.getRequirements();
+		Description tConnectionRequirements = pConnection.getRequirements();
 
 		/**
-		 * Check if the new connection is a probe-routing connection
+		 * check if the new connection is a probe-routing connection
 		 */
-		boolean tProbeRoutingConnection = false;
-		ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) tConReqs.get(ProbeRoutingProperty.class);
-		if (tPropProbeRouting != null){
+		ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) tConnectionRequirements.get(ProbeRoutingProperty.class);
+
+		// do we have a probe-routing connection?
+		if (tPropProbeRouting == null){
+			ClusterDescriptionProperty tPropClusterDescription = (ClusterDescriptionProperty) tConnectionRequirements.get(ClusterDescriptionProperty.class);
+			
+			/******************************************************
+			 * PARSE: cluster description from remote side
+			 ******************************************************/
+			if(tPropClusterDescription != null) {
+				Logging.log(this, "       ..found cluster description: " + tPropClusterDescription);
+
+				ComSession tComSession = null;
+				Cluster tTargetCluster = null;
+
+				/**
+				 * Search if the cluster from the ClusterDescriptionProperty is already locally known
+				 */
+				LinkedList<Cluster> tClusters = getAllClusters();
+				Logging.log(this, "       ..searching for described cluster among " + tClusters.size() + " known clusters:");
+				int i = 0;
+				for(Cluster tLocalCluster : tClusters)
+				{
+					Logging.log(this, "       ..[" + i + "]: " + tLocalCluster);
+					
+					ClusterName tJoinClusterName = new ClusterName(tPropClusterDescription.getCoordinatorID(), tPropClusterDescription.getClusterID(), tPropClusterDescription.getHierarchyLevel());
+					ClusterName tJoinClusterNameTok0 = new ClusterName(0, tPropClusterDescription.getClusterID(), tPropClusterDescription.getHierarchyLevel());
+
+					// do we already know the described cluster?
+					if(tLocalCluster.equals(tJoinClusterNameTok0) || tPropClusterDescription.getCoordinatorID() != 0 && tLocalCluster.equals(tJoinClusterName))	{
+						Logging.log(this, "           ..found MATCH: " + tLocalCluster);
+						
+						tTargetCluster = tLocalCluster;
+					}
+					i++;
+				}
+
+				/**
+				 * Create a new cluster object if the described cluster doesn't have a local representation yet
+				 */
+				if (tTargetCluster == null){
+					Logging.log(this, "     ..creating new local cluster object for handling remote cluster with description: " + tPropClusterDescription); 
+					tTargetCluster = new Cluster(this, new Long(tPropClusterDescription.getClusterID()), tPropClusterDescription.getHierarchyLevel());
+					setSourceIntermediateCluster(tTargetCluster, tTargetCluster); //TODO : ??
+				}
+				
+				Logging.log(this, "     ..CONTINUING for target cluster: " + tTargetCluster);
+						
+				/**
+				 * Create the communication session
+				 */
+				Logging.log(this, "     ..creating communication session");
+				tComSession = new ComSession(this, true, tPropClusterDescription.getHierarchyLevel(), tTargetCluster.getMultiplexer());
+
+				/*****************************************************
+				 * PARSE: cluster member descriptions from remote side
+				 *****************************************************/
+				int tFoundDescribedMembers = 0;
+				for(ClusterMemberDescription tClusterMemberDescription : tPropClusterDescription.getClusterMemberDescriptions()) {
+					Logging.log(this, "       ..found cluster member description [" + tFoundDescribedMembers + "]: " + tClusterMemberDescription);
+	
+					/**
+					 * Create the communication channel for the described cluster member
+					 */
+					Logging.log(this, "     ..creating communication channel");
+					ComChannel tComChannel = new ComChannel(this, tTargetCluster);
+					tTargetCluster.getMultiplexer().mapChannelToSession(tComChannel, tComSession);//TODO : ??
+					if(tPropClusterDescription.getHierarchyLevel().isHigherLevel()) {//TODO : ??
+						tTargetCluster.getMultiplexer().mapClusterToComChannel(tClusterMemberDescription.getClusterID(), tPropClusterDescription.getClusterID(), tComChannel);
+					}
+					tComChannel.setPeerPriority(tClusterMemberDescription.getPriority());
+
+					/**
+					 * Set the remote ClusterName of the communication channel
+					 */
+					ClusterName tClusterName = new ClusterName(tClusterMemberDescription.getCoordinatorID(), tClusterMemberDescription.getClusterID(), new HierarchyLevel(this, tPropClusterDescription.getHierarchyLevel().getValue() - 1));
+					Logging.log(this, "     ..setting remote ClusterName: " + tClusterName);
+					tComChannel.setRemoteClusterName(tClusterName);
+					
+					/**
+					 * Check if the described cluster member is locally connected or a remote (distant) one
+					 */
+					boolean tIsRemoteCluster = (getClusterByName(tClusterName) != null); 
+
+					/**
+					 * Detected a remote cluster?
+					 */ 
+					if(tIsRemoteCluster && tPropClusterDescription.getHierarchyLevel().isHigherLevel()) {
+						/**
+						 * Create a ClusterProxy object
+						 */
+						Logging.log(this, "     ..creating cluster proxy");
+						ClusterProxy tClusterProxy_ClusterMember = new ClusterProxy(this, tClusterMemberDescription.getClusterID(), new HierarchyLevel(this, tPropClusterDescription.getHierarchyLevel().getValue() - 1), tClusterMemberDescription.getSourceName(), tClusterMemberDescription.getSourceL2Address(), tClusterMemberDescription.getCoordinatorID());
+						tClusterProxy_ClusterMember.setPriority(tClusterMemberDescription.getPriority());
+						
+						/**
+						 * Store the coordinator name of the remote cluster in the local FoGName-to-L2Address mapping
+						 */
+						getHRS().mapFoGNameToL2Address(tClusterMemberDescription.getSourceL2Address(), tClusterMemberDescription.getSourceL2Address());
+						
+						//TODO: store in the ARG
+						for(Cluster tCluster : getAllClusters()) {
+							if(tCluster.getHierarchyLevel().equals(tClusterProxy_ClusterMember.getHierarchyLevel())) {
+								setSourceIntermediateCluster(tClusterProxy_ClusterMember, tCluster);
+							}
+						}
+						
+						/******************************************************
+						 * PARSE: neighbor descriptions per cluster member description from remote side
+						 ******************************************************/
+						if(tClusterMemberDescription.getNeighbors() != null && !tClusterMemberDescription.getNeighbors().isEmpty()) {
+							int tFoundDescribedNeighbors = 0;
+							for(DiscoveryEntry tNeighborDescription : tClusterMemberDescription.getNeighbors()) {
+								
+								Logging.log(this, "     ..found described neighbor [" + tFoundDescribedNeighbors + "]: " + tClusterMemberDescription.getNeighbors());
+
+								/**
+								 * Store routes from the delivered routing data
+								 */
+								if(tNeighborDescription.getRoutingVectors()!= null) {
+									for(RoutingServiceLinkVector tVector : tNeighborDescription.getRoutingVectors()){
+										Logging.log(this, "     ..found routing data: source=" + tVector.getSource() + ", destination=" + tVector.getDestination() + ", route=" + tVector.getPath()); 
+										getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
+									}
+								}
+
+								/**
+								 * Create a ClusterName object for the neighbor entry
+								 */
+								ClusterName tNeighborDescriptionClusterName = new ClusterName(tNeighborDescription.getToken(), tNeighborDescription.getClusterID(), tNeighborDescription.getLevel());
+								
+								
+								/**
+								 * Search if the neighbor cluster is already locally known
+								 */
+								ControlEntity tLocalCluster_ClusterMemberNeighbor = getClusterByName(tNeighborDescriptionClusterName);
+								if(tLocalCluster_ClusterMemberNeighbor == null) {
+									Logging.log(this, "     ..neighbor of cluster member is a remote cluster, creating ClusterProxy");
+									ClusterProxy tClusterProxy_ClusterMemberNeighbor = new ClusterProxy(this, tNeighborDescription.getClusterID(), tNeighborDescription.getLevel(), tNeighborDescription.getCoordinatorName(), tNeighborDescription.getCoordinatorL2Address(),  tNeighborDescription.getToken());
+									tClusterProxy_ClusterMemberNeighbor.setPriority(tNeighborDescription.getPriority());
+									getHRS().mapFoGNameToL2Address(tClusterProxy_ClusterMemberNeighbor.getCoordinatorName(), tNeighborDescription.getCoordinatorL2Address());
+
+									boolean tFoundSourceIntermediate = false;
+									for(Cluster tLocalCluster : getAllClusters()) {
+										if(tLocalCluster.getHierarchyLevel() == tClusterProxy_ClusterMemberNeighbor.getHierarchyLevel()) {
+											Logging.log(this, "     ..registering source intermediate: " + tClusterProxy_ClusterMemberNeighbor + " <-> " + tLocalCluster);
+											setSourceIntermediateCluster(tClusterProxy_ClusterMemberNeighbor, tLocalCluster);
+											tFoundSourceIntermediate = true;
+										}
+									}
+									
+									if(!tFoundSourceIntermediate) {
+										Logging.err(this, "newConnection() hasn't found a source intermediate cluster for" + tClusterProxy_ClusterMemberNeighbor.getClusterDescription());
+									}
+									
+									// register the link in the local ARG
+									registerLinkARG(tClusterProxy_ClusterMember, tClusterProxy_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_LINK));
+								}else{
+									Logging.log(this, "     ..neighor of cluster member is the locally known cluster: " + tLocalCluster_ClusterMemberNeighbor);
+
+									// register the link in the local ARG
+									registerLinkARG(tClusterProxy_ClusterMember, tLocalCluster_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_LINK));
+								}
+								
+								tFoundDescribedNeighbors++;
+							}// described neighbors of cluster members
+							
+							//TODO: remove this
+							for(ControlEntity tNeighbor : tClusterProxy_ClusterMember.getNeighborsARG()) {
+								if(getSourceIntermediateCluster(tNeighbor) != null) {
+									setSourceIntermediateCluster(tClusterProxy_ClusterMember, getSourceIntermediateCluster(tNeighbor));
+								}
+							}
+						} else {
+							Logging.warn(this, "newConnection() hasn't found a neighbor description within the member description: " + tClusterMemberDescription);
+						}
+					} else {
+						Logging.warn(this, "newConnection() has found an already defined remote ClusterName: " + tComChannel.getRemoteClusterName());
+					}
+
+					if(tComChannel.getRemoteClusterName() == null) {
+						Logging.warn(this, "newConnection() hasn't found a valid remote ClusterName for ComChannel: " + tComChannel);
+					}
+					
+					tFoundDescribedMembers++;
+				}// described cluster members
+			
+				/**
+				 * Start the communication session
+				 */					
+				Logging.log(this, "     ..starting communication session for the new connection");
+				tComSession.start(pConnection);
+			}else{
+				Logging.err(this, "newConnection() hasn't found a valid cluster description property in the connection requirements: " + tConnectionRequirements);
+			}
+		}else{
+			/**
+			 * We have a probe-routing connection and will print some additional information about the taken route of the connection request
+			 */
 			// get the recorded route from the property
 			LinkedList<HRMID> tRecordedHRMIDs = tPropProbeRouting.getRecordedHops();
 			
@@ -1205,197 +1430,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 				Logging.log(this, "            [" + i + "]: " + tHRMID);
 				i++;
 			}
-
-			// mark the incoming connection as probe-packet connection
-			tProbeRoutingConnection = true;
-		}
-
-		// do we have a probe-packet connection?
-		if (!tProbeRoutingConnection){
-			//long tClusterID = 0;
-			ComSession tConnectionSession = null;
-			
-			ClusterDescriptionProperty tJoin = (ClusterDescriptionProperty) tConReqs.get(ClusterDescriptionProperty.class);
-			if(tJoin != null) {
-				Logging.log(this, "Found ClusterParticipationProperty " + tJoin);
-			}
-			
-			Logging.log(this, "Nested participations: " + tJoin.getNestedParticipations());
-			
-			Logging.log(this, "Iterating over nested participations..");
-			for(NestedParticipation tParticipation : tJoin.getNestedParticipations()) {
-				Logging.log(this, "       ..participation: " + tParticipation);
-
-				ComChannel tCEP = null;
-				boolean tClusterFound = false;
-				ICluster tFoundCluster = null;
-				
-				LinkedList<Cluster> tKnownClusters = getAllClusters();
-				
-				Logging.log(this, "Searching for target cluster among " + tKnownClusters.size() + " known clusters:");
-				
-				int i = 0;
-				for(Cluster tKnownCluster : tKnownClusters)
-				{
-					Logging.log(this, "       ..[" + i + "]: " + tKnownCluster);
-					
-					ClusterName tJoinClusterName = new ClusterName(tJoin.getCoordinatorID(), tJoin.getClusterID(), tJoin.getHierarchyLevel());
-					ClusterName tJoinClusterNameTok0 = new ClusterName(0, tJoin.getClusterID(), tJoin.getHierarchyLevel());
-					
-					if(tKnownCluster.equals(tJoinClusterNameTok0) || tJoin.getCoordinatorID() != 0 && tKnownCluster.equals(tJoinClusterName))	{
-						Logging.log(this, "Cluster found: " + tKnownCluster);
-						
-						if(tConnectionSession == null) {
-							tConnectionSession = new ComSession(this, true, tJoin.getHierarchyLevel(), tKnownCluster.getMultiplexer());
-						}
-						
-						tCEP = new ComChannel(this, tKnownCluster);
-						((Cluster)tKnownCluster).getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
-						if(tJoin.getHierarchyLevel().isHigherLevel()) {
-							((Cluster)tKnownCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getClusterID(), tCEP);
-						}
-						tClusterFound = true;
-						tFoundCluster = tKnownCluster;
-					}
-					i++;
-				}
-				
-				if(!tClusterFound)
-				{
-					Logging.log(this, "Cluster not found");
-	
-					Cluster tCluster = new Cluster(this, new Long(tJoin.getClusterID()), tJoin.getHierarchyLevel());
-					setSourceIntermediateCluster(tCluster, tCluster);
-					if(tConnectionSession == null) {
-						tConnectionSession = new ComSession(this, true, tJoin.getHierarchyLevel(), tCluster.getMultiplexer());
-					}
-	
-					if(tJoin.getHierarchyLevel().isHigherLevel()) {
-						for(Cluster tCluster2 : getAllClusters()) {
-							if(tCluster2.getHierarchyLevel().getValue() == tJoin.getHierarchyLevel().getValue() - 1) {
-								tCluster.setPriority(tCluster2.getPriority());
-							}
-						}
-					}
-					tCEP = new ComChannel(this, tCluster);
-					if(tJoin.getHierarchyLevel().isHigherLevel()) {
-						((Cluster)tCluster).getMultiplexer().registerDemultiplex(tParticipation.getSourceClusterID(), tJoin.getClusterID(), tCEP);
-					}
-					tCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
-					tFoundCluster = tCluster;
-				}
-				tFoundCluster.getMultiplexer().mapChannelToSession(tCEP, tConnectionSession);
-				for(ICluster tNegotiatingCluster : getAllClusters()) {
-					ClusterName tNegClusterName = new ClusterName(tParticipation.getSourceToken(), tParticipation.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1 > HRMConfig.Hierarchy.BASE_LEVEL ? tJoin.getHierarchyLevel().getValue() - 1 : 0 ));
-					if(tNegotiatingCluster.equals(tNegClusterName)) {
-						tCEP.setRemoteClusterName(tNegClusterName);
-					}
-				}
-				if(tCEP.getRemoteClusterName() == null && tJoin.getHierarchyLevel().isHigherLevel()) {
-					HashMap<ICluster, ClusterName> tNewlyCreatedClusters = new HashMap<ICluster, ClusterName>(); 
-					Logging.log(this, "     ..creating cluster proxy");
-					ClusterProxy tRemoteCluster = new ClusterProxy(this, tParticipation.getSourceClusterID(), new HierarchyLevel(this, tJoin.getHierarchyLevel().getValue() - 1), tParticipation.getSourceName(), tParticipation.getSourceAddress(), tParticipation.getSourceToken());
-					tRemoteCluster.setPriority(tParticipation.getSenderPriority());
-					HRMName tCoordinatorName = tParticipation.getSourceAddress();
-					if(tCoordinatorName != null) {
-						try {
-							getHRS().mapFoGNameToL2Address(tCoordinatorName, tParticipation.getSourceAddress());
-						} catch (RemoteException tExc) {
-							Logging.err(this, "Unable to fulfill requirements", tExc);
-						}
-					}
-					tNewlyCreatedClusters.put(tRemoteCluster, tParticipation.getPredecessor());
-					Logging.log(this, "as joining cluster");
-					for(Cluster tCluster : getAllClusters()) {
-						if(tCluster.getHierarchyLevel().equals(tRemoteCluster.getHierarchyLevel())) {
-							setSourceIntermediateCluster(tRemoteCluster, tCluster);
-						}
-					}
-					
-					Logging.log(this, "Created " + tRemoteCluster);
-					
-					tCEP.setRemoteClusterName(new ClusterName(tRemoteCluster.getToken(), tRemoteCluster.getClusterID(), tRemoteCluster.getHierarchyLevel()));
-					if(tParticipation.getNeighbors() != null && !tParticipation.getNeighbors().isEmpty()) {
-						Logging.log(this, "Working on neighbors " + tParticipation.getNeighbors());
-						for(DiscoveryEntry tEntry : tParticipation.getNeighbors()) {
-							
-							/**
-							 * Create a ClusterName object from this entry
-							 */
-							ClusterName tEntryClusterName = new ClusterName(tEntry.getToken(), tEntry.getClusterID(), tEntry.getLevel());
-							
-							
-							/**
-							 * Search if the cluster is already locally known
-							 */
-							boolean tClusterIsAlreadyKnown = false;
-							ControlEntity tSelectedCluster = null;
-							for(Cluster tKnownCluster : getAllClusters()) {
-								if(tKnownCluster.equals(tEntryClusterName)) {
-									tClusterIsAlreadyKnown = true;
-									tSelectedCluster = tKnownCluster;
-									break;
-								}
-							}
-
-							if(tEntry.getRoutingVectors()!= null) {
-								for(RoutingServiceLinkVector tVector : tEntry.getRoutingVectors())
-								getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
-							}
-							
-							
-							// was the cluster already known?
-							if(!tClusterIsAlreadyKnown) {
-								ClusterProxy tClusterProxy = new ClusterProxy(this, tEntry.getClusterID(), tEntry.getLevel(), tEntry.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress(),  tEntry.getToken());
-								tClusterProxy.setPriority(tEntry.getPriority());
-								try {
-									getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorName(), tEntry.getCoordinatorRoutingAddress());
-								} catch (RemoteException tExc) {
-									Logging.err(this, "Unable to fulfill requirements", tExc);
-								}
-								
-								tNewlyCreatedClusters.put(tClusterProxy, tEntry.getPredecessor());
-								for(Cluster tCluster1 : getAllClusters()) {
-									if(tCluster1.getHierarchyLevel() == tClusterProxy.getHierarchyLevel()) {
-										setSourceIntermediateCluster(tClusterProxy, tCluster1);
-										Logging.log(this, "as joining neighbor");
-									}
-								}
-								if(getSourceIntermediateCluster(tRemoteCluster) == null) {
-									Logging.err(this, "No source intermediate cluster for" + tClusterProxy.getClusterDescription() + " found");
-								}
-	//							((NeighborCluster)tCluster).setClusterHopsOnOpposite(tEntry.getClusterHops(), tCEP);
-								
-								tSelectedCluster = tClusterProxy;
-							} 
-							
-							// register the link to the local ARG
-							registerLinkARG(tRemoteCluster, tSelectedCluster, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_LINK));
-						}
-						for(ControlEntity tNeighbor : tRemoteCluster.getNeighborsARG()) {
-							if(getSourceIntermediateCluster(tNeighbor) != null) {
-								setSourceIntermediateCluster(tRemoteCluster, getSourceIntermediateCluster(tNeighbor));
-							}
-						}
-					} else {
-						Logging.warn(this, "Adding cluster that contains no neighbors");
-					}
-				} else {
-					Logging.trace(this, "remote cluster was set earlier");
-				}
-				if(tCEP.getRemoteClusterName() == null) {
-					Logging.err(this, "Unable to set remote cluster");
-					ClusterName tRemoteClusterName = new ClusterName(tParticipation.getSourceToken(), tParticipation.getSourceClusterID(), tParticipation.getLevel());
-							
-					tCEP.setRemoteClusterName(tRemoteClusterName);
-				}
-				tCEP.setPeerPriority(tParticipation.getSenderPriority());
-				Logging.log(this, "Got request to open a new connection with reference cluster " + tFoundCluster);
-			}
-			
-			tConnectionSession.start(pConnection);
-		}else{
-			// probe-packet connection
 		}
 	}
 	
@@ -1475,34 +1509,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}
 	}
 	
-	/**
-	 * Determines the coordinator for a given hierarchy level.
-	 * 
-	 * @param pHierarchyLevel level for which all cluster managers should be provided
-	 * @return list of managers at the level
-	 */
-	public LinkedList<Coordinator> getCoordinator(HierarchyLevel pHierarchyLevel)
-	{
-		LinkedList<Coordinator> tResult = null;
-		
-		// is the given hierarchy level valid?
-		if (!pHierarchyLevel.isUndefined()){
-			synchronized (mRegisteredCoordinators) {
-				// check of we know the search coordinator
-				if(mRegisteredCoordinators.size() - 1 < pHierarchyLevel.getValue()) {
-					// we don't know a valid coordinator
-				} else {
-					// we have found the searched coordinator
-					tResult = mRegisteredCoordinators.get(pHierarchyLevel.getValue());
-				}
-			}
-		}else{
-			Logging.warn(this, "Cannot determine coordinator on an undefined hierachy level, return null");
-		}
-		
-		return tResult;
-	}
-
 	/**
 	 * 
 	 * @param pLevel is the level at which a search for clusters is done

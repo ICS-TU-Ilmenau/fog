@@ -23,23 +23,23 @@ public class BullyAnnounce extends SignalingMessageBully
 {
 	private static final long serialVersionUID = 794175467972815277L;
 
-	private int mToken;
+	private int mCoordinatorID;
 	private LinkedList<Name> mCoveredNodes = null;
 	private String mCoordinatorDescription = null;
 	
 	/**
 	 * Constructor
 	 * 
-	 * @param pSenderName the name of the message sender (the coordinator)
+	 * @param pSenderName the name of the message sender (coordinator)
 	 * @param pSenderPriority the priority of the message sender (coordinator)
 	 * @param pCoordinatorDescription the descriptive name of the coordinator
-	 * @param pToken is the active token that is used for the identification of the domain the coordinator is active in case no Cluster IDs can be provided a priori
+	 * @param pCoordinatorID is the unique ID of the message sender (coordinator)
 	 */
-	public BullyAnnounce(Name pSenderName, BullyPriority pSenderPriority, String pCoordinatorDescription, int pToken)
+	public BullyAnnounce(Name pSenderName, BullyPriority pSenderPriority, String pCoordinatorDescription, int pCoordinatorID)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
-		mToken = pToken;
+		mCoordinatorID = pCoordinatorID;
 	}
 	
 	/**
@@ -63,16 +63,14 @@ public class BullyAnnounce extends SignalingMessageBully
 		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ", Coordinator=" + mCoordinatorDescription + ")";
 	}
 
-	
-	
-	
 	/**
+	 * Returns the unique coordinator ID
 	 * 
-	 * @return the active token that is used for the identification of the domain the coordinator is active in case no Cluster IDs can be provided a priori
+	 * @return the unique coordinator ID
 	 */
-	public int getToken()
+	public int getCoordinatorID()
 	{
-		return mToken;
+		return mCoordinatorID;
 	}
 
 	/**

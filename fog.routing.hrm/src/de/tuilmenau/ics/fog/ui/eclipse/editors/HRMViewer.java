@@ -655,16 +655,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			 * Column 7:  
 			 */
 			Route tRoute = null;
-			Name tSource = null;
 			Name tTarget = null;
 			try {
-				tSource = tCEP.getSourceName();
 				tTarget = tCEP.getPeerL2Address();
-				if(tSource != null && tTarget != null) {
+				if(tTarget != null) {
 					Node tNode = tCEP.getHRMController().getNode();
-					tRoute = mHRMController.getHRS().getRoute(tNode.getCentralFN(), tTarget, new Description(), tNode.getIdentity());
-				} else {
-					tRoute = new Route();
+					tRoute = mHRMController.getHRS().getRoute(tTarget, new Description(), tNode.getIdentity());
 				}
 			} catch (RoutingException tExc) {
 				Logging.err(this, "Unable to compute route to " + tTarget, tExc);

@@ -47,7 +47,7 @@ public class ComSession extends Session
 	private HRMController mHRMController = null;
 	
 	private boolean mServerSide = false;
-	private L2Address mSessionOriginL2Address = null;
+	private L2Address mCentralFNL2Address = null;
 	private HierarchyLevel mHierarchyLevel = null;
 	private Route mRouteToPeer;
 	
@@ -73,7 +73,7 @@ public class ComSession extends Session
 		// store the superior communication controller
 		mComChannelMuxer = pComChannelMuxer;
 
-		mSessionOriginL2Address = mHRMController.getHRS().getCentralFNL2Address(); 
+		mCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address(); 
 		
 		mServerSide = pServerSide;
 		if (mServerSide){
@@ -204,7 +204,7 @@ public class ComSession extends Session
 			 * Inform the HRS about the complete route to the peer
 			 */
 			if(mHierarchyLevel.isBaseLevel()) {
-				getHRMController().getHRS().registerRoute(mSessionOriginL2Address, mPeerL2Address, mRouteToPeer);
+				getHRMController().getHRS().registerRoute(mCentralFNL2Address, mPeerL2Address, mRouteToPeer);
 				getHRMController().addRouteToDirectNeighbor(mPeerL2Address, mRouteToPeer);
 			}
 
@@ -212,7 +212,7 @@ public class ComSession extends Session
 			 * Tell the peer the local central L2Address
 			 */
 			if(mServerSide) {
-				write(mSessionOriginL2Address);
+				write(mCentralFNL2Address);
 			}
 			
 			/**
@@ -245,10 +245,10 @@ public class ComSession extends Session
 			mPeerL2Address = (L2Address) pData;
 			if(mHierarchyLevel.isBaseLevel()) {
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
-				getHRMController().getHRS().registerRoute(mSessionOriginL2Address, mPeerL2Address, mRouteToPeer);
+				getHRMController().getHRS().registerRoute(mCentralFNL2Address, mPeerL2Address, mRouteToPeer);
 			} else {
 				if(mServerSide) {
-					write(mSessionOriginL2Address);
+					write(mCentralFNL2Address);
 				}
 			}
 		} else if (pData instanceof MultiplexedPackage) {
@@ -267,9 +267,11 @@ public class ComSession extends Session
 				Logging.err(this, "Unable to forward data", tExc);
 			}
 		} else if(pData instanceof ClusterDiscovery) {
+			ClusterDiscovery tClusterDiscovery = (ClusterDiscovery)pData;
+			
 			Logging.log(this, "Received " + pData);
-			if(((ClusterDiscovery)pData).isRequest()) {
-				for(NestedDiscovery tNestedDiscovery : ((ClusterDiscovery)pData).getDiscoveries()) {
+			if(tClusterDiscovery.isRequest()) {
+				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
 					boolean tWasDelivered = false;
 
 					String tAnalyzedClusters = new String("");
@@ -291,11 +293,11 @@ public class ComSession extends Session
 						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mComChannelMuxer.getComChannels(this));
 					}
 				}
-				((ClusterDiscovery)pData).isAnswer();
+				tClusterDiscovery.isAnswer();
 				Logging.log(this, "Sending back discovery " + pData);
-				write((ClusterDiscovery)pData);
+				write(tClusterDiscovery);
 			} else {
-				for(NestedDiscovery tNestedDiscovery : ((ClusterDiscovery)pData).getDiscoveries()) {
+				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
 					boolean tWasDelivered = false;
 					String tAnalyzedClusters = new String("");
 					for(ComChannel tComChannel: mComChannelMuxer.getComChannels(this)) {
@@ -317,26 +319,12 @@ public class ComSession extends Session
 						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + mComChannelMuxer.getComChannels(this));
 					}
 				}
-				((ClusterDiscovery)pData).completed();
-				synchronized(((ClusterDiscovery)pData)) {
-					Logging.log(this, "Notifying about come back of " + pData);
-					((ClusterDiscovery)pData).notifyAll();
-				}
 			}
 		}
 		
 		return true;
 	}
 
-	/**
-	 * 
-	 * @return The physical name of the central forwarding node at sender side is returned.
-	 */
-	public HRMName getSourceRoutingServiceAddress()
-	{
-		return mSessionOriginL2Address;
-	}
-	
 	/**
 	 * 
 	 * @return multiplexer that is in charge of this connection - only of relevance if Multicast is implemented
@@ -358,9 +346,9 @@ public class ComSession extends Session
 	public String toString()
 	{
 		if(mPeerL2Address != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getMultiplexer() + "(Initiator=" + mSessionOriginL2Address + ", Peer=" + mPeerL2Address + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getMultiplexer() + "(Initiator=" + mCentralFNL2Address + ", Peer=" + mPeerL2Address + ")";
 		} else {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Initiator=" + mSessionOriginL2Address + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Initiator=" + mCentralFNL2Address + ")";
 		}
 		 
 	}

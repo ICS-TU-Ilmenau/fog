@@ -493,16 +493,24 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pL2Address the L2 address
 	 * @throws RemoteException
 	 */
-	public void mapFoGNameToL2Address(Name pName, Name pL2Address) throws RemoteException
+	public void mapFoGNameToL2Address(Name pName, Name pL2Address)
 	{
 		Logging.log(this, "REGISTERING NAME-to-L2ADDRESS MAPPING: " + pName + " to " + pL2Address);
 
-		if (pL2Address instanceof L2Address){
-			synchronized (mFoGNamesToL2AddressesMapping) {
-				mFoGNamesToL2AddressesMapping.registerName(pName, (L2Address)pL2Address, NamingLevel.NAMES);
+		if (pL2Address != null){
+			if (pL2Address instanceof L2Address){
+				if(!isKnown(pName)) {
+					synchronized (mFoGNamesToL2AddressesMapping) {
+						mFoGNamesToL2AddressesMapping.registerName(pName, (L2Address)pL2Address, NamingLevel.NAMES);
+					}
+				}else{
+					Logging.warn(this, "       ..skipped registration of NAME-to-L2Address because a mapping already exists to the L2Address: " + getL2AddressFor(pName).toString());
+				}
+			}else{
+				Logging.err(this, "Given L2Address has invalid type: " + pL2Address);
 			}
 		}else{
-			Logging.err(this, "Given L2Address has invalid type: " + pL2Address);
+			Logging.warn(this, "       ..skipped registration of NAME-to-L2Address because the L2Address is invalid");
 		}
 	}
 

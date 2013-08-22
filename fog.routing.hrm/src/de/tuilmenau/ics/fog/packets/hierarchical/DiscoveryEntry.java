@@ -204,7 +204,7 @@ public class DiscoveryEntry implements Serializable
 	 * 
 	 * @return physical name of the coordinator
 	 */
-	public L2Address getCoordinatorRoutingAddress()
+	public L2Address getCoordinatorL2Address()
 	{
 		return mCoordinatorL2Address;
 	}

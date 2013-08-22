@@ -486,7 +486,8 @@ public class ComChannel
 				if(tRequestCoordinatorPacket.getDiscoveryEntries() != null) {
 					for(DiscoveryEntry tEntry : tRequestCoordinatorPacket.getDiscoveryEntries()) {
 						ClusterName tDummy = handleDiscoveryEntry(tEntry);
-						getParent().getHRMController().getClusterByID(new ClusterName(((ICluster)getParent()).getToken(), ((getSourceName()).getComplexAddress().longValue()), getParent().getHierarchyLevel())).registerNeighbor(getParent().getHRMController().getClusterByID(tDummy));
+						L2Address tCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
+						getParent().getHRMController().getClusterByID(new ClusterName(((ICluster)getParent()).getToken(), tCentralFNL2Address.getComplexAddress().longValue(), getParent().getHierarchyLevel())).registerNeighbor(getParent().getHRMController().getClusterByID(tDummy));
 					}
 				}
 				synchronized(tRequestCoordinatorPacket) {
@@ -507,19 +508,23 @@ public class ComChannel
 	public LinkedList<RoutingServiceLinkVector> getPath(HRMName pTarget)
 	{
 		LinkedList<RoutingServiceLinkVector> tVectors = new LinkedList<RoutingServiceLinkVector>();
+		
+		L2Address tLocalCentralFNL2Address = getHRMController().getHRS().getCentralFNL2Address();
+
 		RoutableGraph<HRMName, Route> tRoutingDatabase = getHRMController().getHRS().getCoordinatorRoutingMap();
-		List<Route> tRoute = tRoutingDatabase.getRoute(getMultiplexer().getSourceRoutingServiceAddress(this), pTarget);
-		HRMName tSource = getMultiplexer().getSourceRoutingServiceAddress(this);
-		HRMName tDestination;
+		
+		List<Route> tRoute = tRoutingDatabase.getRoute(tLocalCentralFNL2Address, pTarget);
+		
+		L2Address tDestination = null;
 		if(tRoute == null) {
 			return null;
 		} else {
 			for(int i = 0 ; i < tRoute.size() ; i++) {
 				if(tRoute.get(i) instanceof Route) {
-					tDestination = tRoutingDatabase.getDest(tRoute.get(i));
-					RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(tRoute.get(i), tSource, tDestination);
+					tDestination = (L2Address) tRoutingDatabase.getDest(tRoute.get(i));
+					RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(tRoute.get(i), tLocalCentralFNL2Address, tDestination);
 					tVectors.add(tVector);
-					tSource = tDestination;
+					tLocalCentralFNL2Address = tDestination;
 				}
 			}
 		}
@@ -623,7 +628,7 @@ public class ComChannel
 			Logging.log(this, "Sending " + pData);
 		}
 		if(getParent() instanceof Coordinator) {
-			getMultiplexer().write(pData, this, new ClusterName(((ICluster)getParent()).getToken(), ((L2Address)getPeerL2Address()).getComplexAddress().longValue(), getParent().getHierarchyLevel()));
+			getMultiplexer().write(pData, this, new ClusterName(((ICluster)getParent()).getToken(), getPeerL2Address().getComplexAddress().longValue(), getParent().getHierarchyLevel()));
 		} else {
 			getMultiplexer().write(pData, this, getRemoteClusterName());
 		}
@@ -633,11 +638,6 @@ public class ComChannel
 	public L2Address getPeerL2Address()
 	{
 		return getMultiplexer().getPeerL2Address(this);
-	}
-	
-	public HRMName getSourceName()
-	{
-		return getMultiplexer().getSourceRoutingServiceAddress(this);
 	}
 	
 	public boolean isPartOfMyCluster()
@@ -721,16 +721,12 @@ public class ComChannel
 			 * Be aware of the fact that the new attached cluster has lower level
 			 */
 			Logging.log(this, "     ..creating cluster proxy");
-			ClusterProxy tClusterProxy = new ClusterProxy(getHRMController(), pEntry.getClusterID(), pEntry.getLevel(), pEntry.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress(), pEntry.getToken());
+			ClusterProxy tClusterProxy = new ClusterProxy(getHRMController(), pEntry.getClusterID(), pEntry.getLevel(), pEntry.getCoordinatorName(), pEntry.getCoordinatorL2Address(), pEntry.getToken());
 			
 			getParent().getHRMController().setSourceIntermediateCluster(tClusterProxy, getParent().getHRMController().getSourceIntermediateCluster(getParent()));
 			tClusterProxy.setToken(pEntry.getToken());
 			tClusterProxy.setPriority(pEntry.getPriority());
-			try {
-				getHRMController().getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorName(), pEntry.getCoordinatorRoutingAddress());
-			} catch (RemoteException tExc) {
-				Logging.err(this, "Unable to register " + tClusterProxy.getCoordinatorName(), tExc);
-			}
+			getHRMController().getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorName(), pEntry.getCoordinatorL2Address());
 			Logging.log(this, "Created " + tClusterProxy);
 			tResult = new ClusterName(tClusterProxy.getToken(), tClusterProxy.getClusterID(), tClusterProxy.getHierarchyLevel());
 		}
