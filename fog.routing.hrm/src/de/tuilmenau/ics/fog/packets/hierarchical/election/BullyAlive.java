@@ -25,7 +25,7 @@ public class BullyAlive extends SignalingMessageBully
 	 * 
 	 * @param pSenderName the name of the message sender
 	 */
-	public BullyAlive(Name pSenderName) //TODO: ev. sollte hier auch die Prio. übermittelt werden, so dass man nicht immer erst auf das BullyElect warten muss
+	public BullyAlive(Name pSenderName)
 	{
 		super(pSenderName, HRMID.createBroadcast());
 	}
