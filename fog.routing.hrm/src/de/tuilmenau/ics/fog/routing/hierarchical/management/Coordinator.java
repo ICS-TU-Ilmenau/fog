@@ -665,7 +665,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			Logging.log(this, "    ..creating cluster description");
 			ClusterDescriptionProperty tPropClusterDescription = new ClusterDescriptionProperty(tTargetControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getToken());
 			
-			ComSession tComSession = new ComSession(mHRMController, false, tSourceClusterHierLvl, mHRMController.getCoordinatorMultiplexerOnLevel(this));
+			ComSession tComSession = new ComSession(mHRMController, false, tSourceClusterHierLvl);
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNodeName());
 			
 			Logging.log(this, "    ..searching for neighbor coordinators on hierarchy level: " + (tSourceClusterHierLvl.getValue() - 1));
@@ -675,7 +675,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 				ComChannel tComChannel = new ComChannel(mHRMController, tCoordinator, tComSession);
 				tComChannel.setPeerPriority(pTargetCluster.getPriority());
-				getMultiplexer().mapClusterToComChannel(tCoordinator.getClusterID(), pTargetCluster.getClusterID(), tComChannel);
 				tComChannel.setRemoteClusterName(new ClusterName(pTargetCluster.getToken(), pTargetCluster.getClusterID(), pTargetCluster.getHierarchyLevel()));
 				tFoundNeighbors++;
 			}
@@ -1161,10 +1160,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		return 0;
 	}
 
-	@Override
-	public ComChannelMuxer getMultiplexer() {
-		return mHRMController.getCoordinatorMultiplexerOnLevel(this);
-	}
 
 	
 	

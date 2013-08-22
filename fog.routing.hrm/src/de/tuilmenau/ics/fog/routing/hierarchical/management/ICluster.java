@@ -97,5 +97,5 @@ public interface ICluster extends Serializable
 	 * 
 	 * @return The multiplexer that is associated to this cluster is returned here.
 	 */
-	public ComChannelMuxer getMultiplexer();
+//	public ComChannelMuxer getMultiplexer();
 }

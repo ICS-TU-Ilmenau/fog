@@ -116,12 +116,6 @@ public class ClusterName implements Serializable, ICluster, AbstractRoutingGraph
 		return tResult;
 	}
 
-	@Override
-	public ComChannelMuxer getMultiplexer()
-	{
-		return null;
-	}
-
 	/* (non-Javadoc)
 	 * @see de.tuilmenau.ics.fog.facade.Name#getNamespace()
 	 */

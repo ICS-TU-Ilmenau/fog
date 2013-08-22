@@ -78,8 +78,6 @@ public class Cluster extends ControlEntity implements ICluster
 	 */
 	private Coordinator mCoordinator = null;
 	
-	private ComChannelMuxer mMux = null;
-
 	/**
 	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
@@ -111,8 +109,6 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 
 		mReceivedAnnounces = new LinkedList<AnnounceRemoteCluster>();
-
-		mMux = new ComChannelMuxer(this, mHRMController);
 
 		// register at HRMController's internal database
 		mHRMController.registerCluster(this);
@@ -562,12 +558,6 @@ public class Cluster extends ControlEntity implements ICluster
 		return 0;
 	}
 	
-	@Override
-	public synchronized ComChannelMuxer getMultiplexer()
-	{
-		return mMux;
-	}
-
 	public int hashCode()
 	{
 		return mClusterID.intValue();

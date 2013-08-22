@@ -59,6 +59,11 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_TOPOLOGY_DETECTION = true;
 
 		/**
+		 * Shows debug outputs about multiplex packets 
+		 */
+		public static final boolean GUI_SHOW_MULTIPLEX_PACKETS = true;
+
+		/**
 		 * Shows general debug outputs about signaling messages
 		 */
 		public static final boolean GUI_SHOW_SIGNALING = true;

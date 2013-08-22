@@ -126,7 +126,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
-	private HashMap<Integer, ComChannelMuxer> mMuxOnLevel;
 	
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
@@ -640,7 +639,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		 * Create communication session
 		 */
 	    Logging.log(this, "    ..creating new communication session");
-	    ComSession tComSession = new ComSession(this, false, tCreatedCluster.getHierarchyLevel(), tCreatedCluster.getMultiplexer());
+	    ComSession tComSession = new ComSession(this, false, tCreatedCluster.getHierarchyLevel());
 	    
 	    /**
 	     * Create communication channel
@@ -648,8 +647,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 	    Logging.log(this, "    ..creating new communication channel");
 		ComChannel tComChannel = new ComChannel(this, tCreatedCluster, tComSession);
 		tComChannel.setRemoteClusterName(new ClusterName(tCreatedCluster.getToken(), tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel()));
-		
-		tCreatedCluster.getMultiplexer().mapSessionToChannel(tComSession, tComChannel);
 		
 		/**
 		 * Describe the new created cluster
@@ -1266,7 +1263,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				 * Create the communication session
 				 */
 				Logging.log(this, "     ..creating communication session");
-				tComSession = new ComSession(this, true, tPropClusterDescription.getHierarchyLevel(), tTargetCluster.getMultiplexer());
+				tComSession = new ComSession(this, true, tPropClusterDescription.getHierarchyLevel());
 
 				/*****************************************************
 				 * PARSE: cluster member descriptions from remote side
@@ -1280,10 +1277,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 					 */
 					Logging.log(this, "     ..creating communication channel");
 					ComChannel tComChannel = new ComChannel(this, tTargetCluster, tComSession);
-					tTargetCluster.getMultiplexer().mapSessionToChannel(tComSession, tComChannel);//TODO : ??
-					if(tPropClusterDescription.getHierarchyLevel().isHigherLevel()) {//TODO : ??
-						tTargetCluster.getMultiplexer().mapClusterToComChannel(tClusterMemberDescription.getClusterID(), tPropClusterDescription.getClusterID(), tComChannel);
-					}
 					tComChannel.setPeerPriority(tClusterMemberDescription.getPriority());
 
 					/**
@@ -1518,28 +1511,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	}
 	
 
-	/**
-	 * 
-	 * @param pLevel is the level at which a multiplexer to other clusters is installed and that has to be returned
-	 * @return
-	 */
-	public ComChannelMuxer getCoordinatorMultiplexerOnLevel(Coordinator pCoordinator)
-	{
-		int tLevel = pCoordinator.getHierarchyLevel().getValue() + 1;
-		
-		if(mMuxOnLevel == null) {
-			mMuxOnLevel = new HashMap<Integer, ComChannelMuxer>();
-		}
-		
-		if(!mMuxOnLevel.containsKey(tLevel)) {
-			ComChannelMuxer tMux = new ComChannelMuxer(pCoordinator, this);
-			mMuxOnLevel.put(tLevel, tMux);
-			Logging.log(this, "Created new communication multiplexer " + tMux + " for coordinators on level " + tLevel);
-		}
-		
-		return mMuxOnLevel.get(tLevel);
-	}
-	
+
 	
 	
 	

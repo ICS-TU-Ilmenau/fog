@@ -175,13 +175,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		return 0;
 	}
 
-	@Override
-	public ComChannelMuxer getMultiplexer()
-	{
-		return null;
-	}
-
-	
 	public int hashCode()
 	{
 		return mClusterID.intValue() * 1;

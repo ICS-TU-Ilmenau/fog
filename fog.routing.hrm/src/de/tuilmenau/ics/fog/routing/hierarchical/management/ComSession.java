@@ -44,11 +44,6 @@ public class ComSession extends Session
 	private L2Address mPeerL2Address = null;
 
 	/**
-	 * Stores the parent multiplexer for communication channels
-	 */
-	private ComChannelMuxer mComChannelMuxer = null;
-
-	/**
 	 * Stores a reference to the HRMController application.
 	 */
 	private HRMController mHRMController = null;
@@ -71,7 +66,7 @@ public class ComSession extends Session
 	 * @param pComChannelMuxer the communication multiplexer to use
 	 * 
 	 */
-	public ComSession(HRMController pHRMController, boolean pServerSide, HierarchyLevel pLevel, ComChannelMuxer pComChannelMuxer)
+	public ComSession(HRMController pHRMController, boolean pServerSide, HierarchyLevel pLevel)
 	{
 		// call the Session constructor
 		super(false, Logging.getInstance(), null);
@@ -81,9 +76,6 @@ public class ComSession extends Session
 		
 		// store the hierarchy level
 		mHierarchyLevel = pLevel;
-
-		// store the superior communication controller
-		mComChannelMuxer = pComChannelMuxer;
 
 		mCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address(); 
 		
@@ -206,6 +198,127 @@ public class ComSession extends Session
 	}
 	
 	/**
+	 * Handles the packet "AnnouncePhysicalNeighborhood"
+	 * 
+	 * @param pAnnouncePhysicalNeighborhood the packet
+	 */
+	private void handleAnnouncePhysicalNeighborhood(AnnouncePhysicalNeighborhood pAnnouncePhysicalNeighborhood)
+	{
+		// get the L2Address of the peer
+		mPeerL2Address = pAnnouncePhysicalNeighborhood.getSenderCentralAddress();
+
+		/**
+		 * Determine the route to the known FN from the peer
+		 */
+		Route tRouteToPeer = null;
+		// search a route form the central FN to the intermediate FN between the central FN and the bus
+		try {
+			tRouteToPeer = getHRMController().getHRS().getRoute(pAnnouncePhysicalNeighborhood.getSenderAddress(), new Description(), getHRMController().getNode().getIdentity());
+		} catch (RoutingException tExc) {
+			Logging.err(this, "Unable to find route to ", tExc);
+		} catch (RequirementsException tExc) {
+			Logging.err(this, "Unable to fulfill requirements ", tExc);
+		}
+		
+		/**
+		 * Complete the the found route to a route which ends at the central FN of the peer node
+		 */
+		tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
+		setRouteToPeer(tRouteToPeer);
+		
+		/**
+		 * Inform the HRS about the complete route to the peer
+		 */
+		if(mHierarchyLevel.isBaseLevel()) {
+			getHRMController().getHRS().registerRoute(mCentralFNL2Address, mPeerL2Address, mRouteToPeer);
+			getHRMController().addRouteToDirectNeighbor(mPeerL2Address, mRouteToPeer);
+		}
+
+		/**
+		 * Tell the peer the local central L2Address
+		 */
+		if(mServerSide) {
+			write(mCentralFNL2Address);
+		}
+		
+		/**
+		 * Send an answer packet
+		 */
+		if (!pAnnouncePhysicalNeighborhood.isAnswer()){
+			/**
+			 * get the name of the central FN
+			 */
+			L2Address tCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
+
+			/**
+			 *  determine the FN between the local central FN and the bus towards the physical neighbor node and tell this the neighbor 
+			 */
+			L2Address tFirstFNL2Address = mHRMController.getL2AddressOfFirstFNTowardsNeighbor(pAnnouncePhysicalNeighborhood.getSenderAddress());
+
+			/**
+			 * Send AnnouncePhysicalNeighborhood to the neighbor
+			 */
+			if (tFirstFNL2Address != null){
+				// create a map between the central FN and the search FN
+				AnnouncePhysicalNeighborhood tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalNeighborhood(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalNeighborhood.ANSWER_PACKET);
+				// tell the neighbor about the FN
+				Logging.log(this, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD ANSWER " + tAnnouncePhysicalNeighborhoodAnswer);
+				write(tAnnouncePhysicalNeighborhoodAnswer);
+			}
+
+		}
+	}
+
+	/**
+	 * Handles a multiplex-packet
+	 * 
+	 * @param pMultiplexHeader the multiplex-packet
+	 */
+	private void handleMultiplexPacket(MultiplexHeader pMultiplexHeader)
+	{
+		/**
+		 * Get the target from the Multiplex-Header
+		 */
+		ClusterName tDestination = pMultiplexHeader.getReceiverClusterName();
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
+			Logging.log(this, "Forwarding data to destination: " + tDestination);
+		}
+		
+		/**
+		 * Iterate over all communication channels and find the correct channel towards the destination
+		 */
+		LinkedList<ComChannel> tComChannels = getAllComChannels();
+		ComChannel tDestinationComChannel = null;
+		for (ComChannel tComChannel : tComChannels){
+			if(((ICluster)tComChannel.getParent()).getClusterID().equals(tDestination.getClusterID())) {
+				tDestinationComChannel = tComChannel;
+				Logging.log(this, "       ..found communication channel: " + tDestinationComChannel);
+				break;
+			}
+		}
+
+		/**
+		 * Get the payload
+		 */
+		Serializable tPayload = pMultiplexHeader.getPayload();
+
+		/**
+		 * Forward the payload
+		 */
+		if (tDestinationComChannel != null){
+			try {
+				tDestinationComChannel.handlePacket(tPayload);
+				Logging.log(this, "       ..delivered payload: " + tPayload);
+			} catch (NetworkException tExc) {
+				Logging.err(this, "Unable to forward payload " + tPayload + " to " + tDestination + " via " + tDestinationComChannel);
+			}
+		} else {
+			Logging.warn(this, "Unable to find the communication channel for destination: " + tDestination);
+		}
+	}
+
+	/**
 	 * Processes incoming packet data and forward it to the right ComChannel
 	 * 
 	 * @param pData the packet payload
@@ -213,8 +326,6 @@ public class ComSession extends Session
 	@Override
 	public boolean receiveData(Object pData)
 	{
-		Logging.log(this, "RECEIVED SESSION DATA: " + pData);
-		
 		/**
 		 * PACKET: AnnouncePhysicalNeighborhood
 		 */
@@ -226,71 +337,31 @@ public class ComSession extends Session
 				Logging.log(this, "ANNOUNCE PHYSICAL NEIGHBORHOOD received: " + tAnnouncePhysicalNeighborhood);
 			}
 			
-			// get the L2Address of the peer
-			mPeerL2Address = tAnnouncePhysicalNeighborhood.getSenderCentralAddress();
-
-			/**
-			 * Determine the route to the known FN from the peer
-			 */
-			Route tRouteToPeer = null;
-			// search a route form the central FN to the intermediate FN between the central FN and the bus
-			try {
-				tRouteToPeer = getHRMController().getHRS().getRoute(tAnnouncePhysicalNeighborhood.getSenderAddress(), new Description(), getHRMController().getNode().getIdentity());
-			} catch (RoutingException tExc) {
-				Logging.err(this, "Unable to find route to ", tExc);
-			} catch (RequirementsException tExc) {
-				Logging.err(this, "Unable to fulfill requirements ", tExc);
+			handleAnnouncePhysicalNeighborhood(tAnnouncePhysicalNeighborhood);
+		} 
+		
+		/**
+		 * PACKET: MultiplexHeader
+		 */
+		if (pData instanceof MultiplexHeader) {
+			MultiplexHeader tMultiplexHeader = (MultiplexHeader) pData;
+			
+			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
+				Logging.log(this, "MULTIPLEX PACKET received: " + tMultiplexHeader);
 			}
 			
-			/**
-			 * Complete the the found route to a route which ends at the central FN of the peer node
-			 */
-			tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
-			setRouteToPeer(tRouteToPeer);
+			handleMultiplexPacket(tMultiplexHeader);
+		}
+
+		/**
+		 * PACKET: TODO
+		 */
+		if (pData instanceof L2Address) {
+			L2Address tL2Address = (L2Address)pData;
 			
-			/**
-			 * Inform the HRS about the complete route to the peer
-			 */
-			if(mHierarchyLevel.isBaseLevel()) {
-				getHRMController().getHRS().registerRoute(mCentralFNL2Address, mPeerL2Address, mRouteToPeer);
-				getHRMController().addRouteToDirectNeighbor(mPeerL2Address, mRouteToPeer);
-			}
+			Logging.log(this, "L2ADDRESS received: " + tL2Address);
 
-			/**
-			 * Tell the peer the local central L2Address
-			 */
-			if(mServerSide) {
-				write(mCentralFNL2Address);
-			}
-			
-			/**
-			 * Send an answer packet
-			 */
-			if (!tAnnouncePhysicalNeighborhood.isAnswer()){
-				/**
-				 * get the name of the central FN
-				 */
-				L2Address tCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
-
-				/**
-				 *  determine the FN between the local central FN and the bus towards the physical neighbor node and tell this the neighbor 
-				 */
-				L2Address tFirstFNL2Address = mHRMController.getL2AddressOfFirstFNTowardsNeighbor(tAnnouncePhysicalNeighborhood.getSenderAddress());
-
-				/**
-				 * Send AnnouncePhysicalNeighborhood to the neighbor
-				 */
-				if (tFirstFNL2Address != null){
-					// create a map between the central FN and the search FN
-					AnnouncePhysicalNeighborhood tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalNeighborhood(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalNeighborhood.ANSWER_PACKET);
-					// tell the neighbor about the FN
-					Logging.log(this, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD ANSWER " + tAnnouncePhysicalNeighborhoodAnswer);
-					write(tAnnouncePhysicalNeighborhoodAnswer);
-				}
-
-			}
-		} else if (pData instanceof L2Address) {
-			mPeerL2Address = (L2Address) pData;
+			mPeerL2Address = tL2Address;
 			if(mHierarchyLevel.isBaseLevel()) {
 				mRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
 				getHRMController().getHRS().registerRoute(mCentralFNL2Address, mPeerL2Address, mRouteToPeer);
@@ -299,29 +370,16 @@ public class ComSession extends Session
 					write(mCentralFNL2Address);
 				}
 			}
-		} else if (pData instanceof MultiplexHeader) {
-			MultiplexHeader tPackage = (MultiplexHeader) pData;
-			ClusterName tTargetCluster = tPackage.getReceiverClusterName();
-			
-			try {
-				Logging.log(this, "##############");
-				Logging.log(this, "### source: " + tPackage.getSenderClusterName());
-				Logging.log(this, "### destination: " + tTargetCluster);
-				
-				ComChannel tComChannel = mComChannelMuxer.getComChannel(this, (ClusterName)tPackage.getSenderClusterName(), tTargetCluster);
-				Logging.log(this, "### channel: " + tComChannel);
-				
-				if(tComChannel != null) {
-					Logging.log(this, "Forwarding " + tPackage.getPayload() + " from " + tPackage.getSenderClusterName() + " to " + tPackage.getReceiverClusterName() + " with " + tComChannel);
-					tComChannel.handlePacket(tPackage.getPayload());
-				} else {
-					Logging.warn(this, "No demultiplexed connection available ");
-				}
-			} catch (NetworkException tExc) {
-				Logging.err(this, "Unable to forward data", tExc);
-			}
-		} else if(pData instanceof ClusterDiscovery) {
+		}
+		
+		/**
+		 * PACKET: TODO
+		 */
+		if(pData instanceof ClusterDiscovery) {
 			ClusterDiscovery tClusterDiscovery = (ClusterDiscovery)pData;
+			
+			Logging.log(this, "CLUSTER DISCOVERY received: " + tClusterDiscovery);
+
 			
 			LinkedList<ComChannel> tAllComChannels = getAllComChannels();
 			
@@ -380,7 +438,7 @@ public class ComSession extends Session
 		
 		return true;
 	}
-	
+
 	/**
 	 * Descriptive string about this object
 	 * 
