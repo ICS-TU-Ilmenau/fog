@@ -463,19 +463,19 @@ public class Cluster extends ControlEntity implements ICluster
 				/*
 				 * no coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : mHRMController.getAllCoordinators(getHierarchyLevel())) {
-					if(tManager.getNeighborsARG().contains(pAnnounce.getNegotiatorIdentification())) {
-						tManager.storeAnnouncement(pAnnounce);
+				for(Coordinator tCoordinator : mHRMController.getAllCoordinators(getHierarchyLevel())) {
+					if(tCoordinator.getNeighborsARG().contains(pAnnounce.getNegotiatorIdentification())) {
+						tCoordinator.storeAnnouncement(pAnnounce);
 					}
 				}
 			} else {
 				/*
 				 * coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
 				 */
-				for(Coordinator tManager : mHRMController.getAllCoordinators(getHierarchyLevel())) {
-					if(tManager.getNeighborsARG().contains(pAnnounce.getNegotiatorIdentification())) {
-						if(tManager.superiorCoordinatorComChannel() != null) {
-							tManager.superiorCoordinatorComChannel().sendPacket(pAnnounce);
+				for(Coordinator tCoordinator : mHRMController.getAllCoordinators(getHierarchyLevel())) {
+					if(tCoordinator.getNeighborsARG().contains(pAnnounce.getNegotiatorIdentification())) {
+						if(tCoordinator.superiorCoordinatorComChannel() != null) {
+							tCoordinator.superiorCoordinatorComChannel().sendPacket(pAnnounce);
 						}
 					}
 				}
