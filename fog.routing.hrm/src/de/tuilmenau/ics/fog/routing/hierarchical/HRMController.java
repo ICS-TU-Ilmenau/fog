@@ -10,7 +10,6 @@
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import java.net.UnknownHostException;
-import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -1198,14 +1197,9 @@ public class HRMController extends Application implements IServerCallback, IEven
 		return tResult;
 	}
 
-	
-	
-	
-	
-	
-	
 	/** 
 	 * This method is derived from IServerCallback and is called for incoming connection requests by the HRMController application's ServerFN.
+	 * Such a incoming connection can either be triggered by an HRMController application or by a probe-routing request
 	 * 
 	 * @param pConnection the incoming connection
 	 */
@@ -1433,6 +1427,20 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}
 	}
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	/**
 	 * 
 	 * @param pCluster cluster to which the distance has to be computed
@@ -1509,22 +1517,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}
 	}
 	
-	/**
-	 * 
-	 * @param pLevel is the level at which a search for clusters is done
-	 * @return all virtual nodes that appear at the specified hierarchical level
-	 */
-//	public LinkedList<IRoutableClusterGraphTargetName> getClusters(int pLevel)
-//	{
-//		LinkedList<IRoutableClusterGraphTargetName> tClusters = new LinkedList<IRoutableClusterGraphTargetName>();
-//		for(IRoutableClusterGraphTargetName tNode : getRoutableClusterGraph().getVertices()) {
-//			if(tNode instanceof ICluster && ((ICluster) tNode).getHierarchyLevel().getValue() == pLevel) {
-//				tClusters.add((ICluster) tNode);
-//			}
-//		}
-//		return tClusters;
-//	}
-//	
 
 	/**
 	 * 
