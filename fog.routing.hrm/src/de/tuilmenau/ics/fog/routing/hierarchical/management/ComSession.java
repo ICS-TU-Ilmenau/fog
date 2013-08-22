@@ -32,6 +32,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * This class is used to manage a Session of a connection between two physical nodes.
  * Such a communication session is able to handle several inferior communication channels,
  * which handle again the communication between two control entities of the HRM infrastructure.
+ * 
+ * There exist a 1:1 relation between a FoG connection and a ComSession instance.
  */
 public class ComSession extends Session
 {
