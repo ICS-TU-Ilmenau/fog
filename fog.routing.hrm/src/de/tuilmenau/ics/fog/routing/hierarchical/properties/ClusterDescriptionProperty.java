@@ -144,16 +144,16 @@ public class ClusterDescriptionProperty extends AbstractProperty
 	 */
 	public String toString()
 	{
-		String tResult = getClass().getSimpleName() + " with ";
+		String tResult = getClass().getSimpleName() + "(";
 		
 		synchronized (mClusterMemberDescriptions) {
-			tResult += mClusterMemberDescriptions.size() + " cluster member descriptions";
+			tResult += mClusterMemberDescriptions.size() + " member descriptions)";
 			
-			int i = 0;
-			for (ClusterMemberDescription tEntry : mClusterMemberDescriptions){
-				tResult += "\n      ..[" + i + "]: " + tEntry.toString();
-				i++;
-			}
+//			int i = 0;
+//			for (ClusterMemberDescription tEntry : mClusterMemberDescriptions){
+//				tResult += "\n      ..[" + i + "]: " + tEntry.toString();
+//				i++;
+//			}
 		}
 		
 		return tResult;
