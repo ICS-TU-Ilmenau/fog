@@ -631,7 +631,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		 * Create cluster
 		 */
 	    Logging.log(this, "    ..creating new cluster");
-		Cluster tCreatedCluster = new Cluster(this);
+		Cluster tCreatedCluster = Cluster.createBaseCluster(this);
 
 		setSourceIntermediateCluster(tCreatedCluster, tCreatedCluster);
 		
@@ -1253,7 +1253,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				 */
 				if (tTargetCluster == null){
 					Logging.log(this, "     ..creating new local cluster object for handling remote cluster with description: " + tPropClusterDescription); 
-					tTargetCluster = new Cluster(this, new Long(tPropClusterDescription.getClusterID()), tPropClusterDescription.getHierarchyLevel());
+					tTargetCluster = Cluster.create(this, new Long(tPropClusterDescription.getClusterID()), tPropClusterDescription.getHierarchyLevel());
 					setSourceIntermediateCluster(tTargetCluster, tTargetCluster); //TODO : ??
 				}
 				

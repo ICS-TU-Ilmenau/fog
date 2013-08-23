@@ -76,7 +76,7 @@ public class Cluster extends ControlEntity implements ICluster
 	 * @param pClusterID the unique ID of this cluster, a value of "-1" triggers the creation of a new ID
 	 * @param pHierarchyLevel the hierarchy level
 	 */
-	public Cluster(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel)
+	private Cluster(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel)
 	{
 		super(pHRMController, pHierarchyLevel);
 		
@@ -108,13 +108,29 @@ public class Cluster extends ControlEntity implements ICluster
 	}
 	
 	/**
-	 * Constructor
+	 * Factory function: create a cluster
 	 * 
 	 * @param pHrmController the local HRMController instance
+	 * @param pClusterID the unique ID of this cluster, a value of "-1" triggers the creation of a new ID
+	 * @param pHierarchyLevel the hierarchy level
+	 * 
+	 * @return the new Cluster object
 	 */
-	public Cluster(HRMController pHrmController)
+	static public Cluster create(HRMController pHrmController, Long pClusterID, HierarchyLevel pHierarchyLevel)
 	{
-		this(pHrmController, null, HierarchyLevel.createBaseLevel());
+		return new Cluster(pHrmController, pClusterID, pHierarchyLevel);
+	}
+
+	/**
+	 * Factory function: create a base hierarchy level cluster
+	 * 
+	 * @param pHrmController the local HRMController instance
+	 * 
+	 * @return the new Cluster object
+	 */
+	static public Cluster createBaseCluster(HRMController pHrmController)
+	{
+		return new Cluster(pHrmController, null, HierarchyLevel.createBaseLevel());
 	}
 
 	/**
