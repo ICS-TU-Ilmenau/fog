@@ -762,7 +762,7 @@ public class ComChannel
 			ClusterProxy tClusterProxy = new ClusterProxy(mHRMController, pEntry.getClusterID(), pEntry.getLevel(), pEntry.getCoordinatorName(), pEntry.getCoordinatorL2Address(), pEntry.getToken());
 			
 			mHRMController.setSourceIntermediateCluster(tClusterProxy, mHRMController.getSourceIntermediateCluster(getParent()));
-			tClusterProxy.setToken(pEntry.getToken());
+			tClusterProxy.setSuperiorCoordinatorID(pEntry.getToken());
 			tClusterProxy.setPriority(pEntry.getPriority());
 			mHRMController.getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorName(), pEntry.getCoordinatorL2Address());
 			Logging.log(this, "Created " + tClusterProxy);

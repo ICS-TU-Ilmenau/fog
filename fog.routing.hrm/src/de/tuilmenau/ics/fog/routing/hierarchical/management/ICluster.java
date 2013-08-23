@@ -49,13 +49,6 @@ public interface ICluster extends Serializable
 	
 	/**
 	 * 
-	 * @return If you suffer from problems with the computation of the shortest route use this method instead of
-	 * the toString method
-	 */
-	public String getClusterDescription();
-
-	/**
-	 * 
 	 * @param pCoordName This is the name of the coordinator that is responsible for this cluster
 	 */
 	public void setCoordinatorName(Name pCoordName);
@@ -64,7 +57,7 @@ public interface ICluster extends Serializable
 	 * 
 	 * @param pToken Set the token that is sent by the coordinator here.
 	 */
-	public void setToken(int pToken);
+//	public void setToken(int pToken);
 	
 	/**
 	 * 

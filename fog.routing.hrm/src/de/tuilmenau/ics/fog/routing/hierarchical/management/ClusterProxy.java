@@ -110,23 +110,24 @@ public class ClusterProxy extends ControlEntity implements ICluster
 				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		ICluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pAnnounce.getLevel(), pAnnounce.getToken(), pAnnounce.getClusterID()));
+		Cluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pAnnounce.getLevel(), pAnnounce.getToken(), pAnnounce.getClusterID()));
 		if(tCluster == null)
 		{
 			Logging.log(this, "     ..creating cluster proxy");
-			tCluster = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
-			mHRMController.setSourceIntermediateCluster(tCluster, mHRMController.getSourceIntermediateCluster(this));
-			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
-			tCluster.setToken(pAnnounce.getToken());
+			ClusterProxy tClusterProxy = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
+			mHRMController.setSourceIntermediateCluster(tClusterProxy, mHRMController.getSourceIntermediateCluster(this));
+			tClusterProxy.setPriority(pAnnounce.getCoordinatorsPriority());
+			tClusterProxy.setSuperiorCoordinatorID(pAnnounce.getToken());
+			registerNeighborARG(tClusterProxy);
 		} else {
 			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
+			registerNeighborARG(tCluster);
 		}
 		//((AttachedCluster)tCluster).setNegotiatingHost(pAnnounce.getAnnouncersAddress());
 
 		/*
 		 * function checks whether neighbor relation was established earlier
 		 */
-		registerNeighborARG((ControlEntity)tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
 			RoutingService tRS = (RoutingService)mHRMController.getNode().getRoutingService();
@@ -137,12 +138,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
 	{
 		Logging.warn(this, "############### This function should never be called #############");
-	}
-
-	@Override
-	public void setToken(int pToken) {
-		setSuperiorCoordinatorID(pToken);
-		setCoordinatorID(pToken);
 	}
 
 	@Override
@@ -191,17 +186,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	
 	
 	
-	/**
-	 * Returns a descriptive string about the cluster
-	 * 
-	 * @return the descriptive string
-	 */
-	public String getClusterDescription()
-	{
-		return toLocation();
-		//getHRMController().getPhysicalNode() + ":" + mClusterID + "@" + getHierarchyLevel() + "(" + mCoordSignature + ")";
-	}
-
 	/**
 	 * Returns a descriptive string about this object
 	 * 

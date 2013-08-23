@@ -94,6 +94,12 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private int mCoordinatorID;
 	
 	/**
+	 * Stores the physical simulation machine specific multiplier, which is used to create unique IDs even if multiple physical simulation machines are connected by FoGSiEm instances
+	 * The value "-1" is important for initialization!
+	 */
+	private static long sIDMachineMultiplier = -1;
+
+	/**
 	 * Constructor
 	 */
 	public ControlEntity(HRMController pHRMController, HierarchyLevel pHierarchyLevel)
@@ -394,6 +400,25 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
+	 * Determines the physical simulation machine specific ID multiplier
+	 * 
+	 * @return the generated multiplier
+	 */
+	protected long idMachineMultiplier()
+	{
+		if (sIDMachineMultiplier < 0){
+			String tHostName = HRMController.getHostName();
+			if (tHostName != null){
+				sIDMachineMultiplier = (tHostName.hashCode() % 10000) * 10000;
+			}else{
+				Logging.err(this, "Unable to determine the machine-specific ClusterID multiplier because host name couldn't be indentified");
+			}
+		}
+
+		return sIDMachineMultiplier;
+	}
+
+	/**
 	 * Returns the full ClusterID (including the machine specific multiplier)
 	 * 
 	 *  @return the full ClusterID
@@ -433,6 +458,26 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		mCoordinatorID = pNewCoordinatorID;
 	}
 	
+	/**
+	 * Returns a descriptive string about the cluster
+	 * 
+	 * @return the descriptive string
+	 */
+	public String getClusterDescription()
+	{
+		if (this instanceof Cluster){
+			return toLocation();
+		}
+		if (this instanceof ClusterProxy){
+			return toLocation();
+		}
+		if (this instanceof Coordinator){
+			Coordinator tCoordinator = (Coordinator)this;
+			return tCoordinator.getCluster().getClusterDescription();  
+		}
+		return toString();
+	}
+
 	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pComChannel)
 	{
 		//TODO: remove this

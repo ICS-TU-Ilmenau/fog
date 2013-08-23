@@ -79,11 +79,6 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 	}
 
 	@Override
-	public void setToken(int pToken) {
-		
-	}
-
-	@Override
 	public boolean equals(Object pObj)
 	{
 		boolean tResult = false;

@@ -41,12 +41,6 @@ public class Cluster extends ControlEntity implements ICluster
 	private static long sNextClusterFreeID = 0;
 
 	/**
-	 * Stores the physical simulation machine specific multiplier, which is used to create unique cluster IDs even if multiple physical simulation machines are connected by FoGSiEm instances
-	 * The value "-1" is important for initialization!
-	 */
-	private static long sClusterIDMachineMultiplier = -1;
-
-	/**
 	 * Stores the elector which is responsible for coordinator elections for this cluster.
 	 */
 	private Elector mElector = null;
@@ -156,25 +150,6 @@ public class Cluster extends ControlEntity implements ICluster
 	}
 	
 	/**
-	 * Determines the physical simulation machine specific ClusterID multiplier
-	 * 
-	 * @return the generated multiplier
-	 */
-	private long clusterIDMachineMultiplier()
-	{
-		if (sClusterIDMachineMultiplier < 0){
-			String tHostName = HRMController.getHostName();
-			if (tHostName != null){
-				sClusterIDMachineMultiplier = (tHostName.hashCode() % 10000) * 10000;
-			}else{
-				Logging.err(this, "Unable to determine the machine-specific ClusterID multiplier because host name couldn't be indentified");
-			}
-		}
-
-		return sClusterIDMachineMultiplier;
-	}
-
-	/**
 	 * Generates a new ClusterID
 	 * 
 	 * @return the ClusterID
@@ -182,7 +157,7 @@ public class Cluster extends ControlEntity implements ICluster
 	private long createClusterID()
 	{
 		// get the current unique ID counter
-		long tResult = sNextClusterFreeID * clusterIDMachineMultiplier();
+		long tResult = sNextClusterFreeID * idMachineMultiplier();
 
 		// make sure the next ID isn't equal
 		sNextClusterFreeID++;
@@ -232,6 +207,9 @@ public class Cluster extends ControlEntity implements ICluster
 		// set the coordinator
 		mCoordinator = pCoordinator;
 		
+		// update the stored unique ID for the coordinator
+		setSuperiorCoordinatorID(pCoordinator.getCoordinatorID());
+		
 		// update the descriptive string about the coordinator
 		mCoordinatorDescription = mCoordinator.toLocation();
 	}
@@ -243,7 +221,7 @@ public class Cluster extends ControlEntity implements ICluster
 	 */
 	public long getGUIClusterID()
 	{
-		return getClusterID() / clusterIDMachineMultiplier();
+		return getClusterID() / idMachineMultiplier();
 	}
 	
 	/**
@@ -498,12 +476,6 @@ public class Cluster extends ControlEntity implements ICluster
 	}
 	
 	@Override
-	public void setToken(int pToken) {
-		setSuperiorCoordinatorID(pToken);
-		setCoordinatorID(pToken);
-	}
-	
-	@Override
 	public Namespace getNamespace() {
 		return new Namespace("cluster");
 	}
@@ -533,17 +505,6 @@ public class Cluster extends ControlEntity implements ICluster
 		return mCoordinatorDescription;
 	}
 	
-	/**
-	 * Returns a descriptive string about the cluster
-	 * 
-	 * @return the descriptive string
-	 */
-	public String getClusterDescription()
-	{
-		return toLocation();
-		//mHRMController.getPhysicalNode() + ":" + mClusterID + "@" + getHierarchyLevel() + "(" + mCoordSignature + ")";
-	}
-
 	/**
 	 * Returns a descriptive string about this object
 	 * 

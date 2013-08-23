@@ -80,6 +80,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 */
 	private boolean mInitialClusteringFinished = false;
 	
+	/**
+	 * This is the coordinator counter, which allows for globally (related to a physical simulation machine) unique coordinator IDs.
+	 */
+	private static long sNextFreeCoordinatorID = 0;
+
 	private Name mCoordinatorName = null;
 	private List<AbstractRoutingGraphNode> mClustersToNotify;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
@@ -107,6 +112,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		
 		mParentCluster = pCluster;
 		
+		// create an ID for the cluster
+		setCoordinatorID((int)createCoordinatorID());
+		
 		// clone the HRMID of the managed cluster because it can already contain the needed HRMID prefix address
 		setHRMID(this,  mParentCluster.getHRMID().clone());
 		
@@ -119,6 +127,22 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		Logging.log(this, "CREATED");
 	}
 	
+	/**
+	 * Generates a new ClusterID
+	 * 
+	 * @return the ClusterID
+	 */
+	private long createCoordinatorID()
+	{
+		// get the current unique ID counter
+		long tResult = sNextFreeCoordinatorID * idMachineMultiplier();
+
+		// make sure the next ID isn't equal
+		sNextFreeCoordinatorID++;
+	
+		return tResult;
+	}
+
 	/**
 	 * Creates a new HRMID for a cluster member depending on the given member number.
 	 * 
@@ -855,18 +879,8 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 
 	@Override
-	public String getClusterDescription() {
-		return getClass().getSimpleName() + "(" + mParentCluster + ")";
-	}
-
-	@Override
 	public void setCoordinatorName(Name pCoordName) {
 		mCoordinatorName = pCoordName;
-	}
-
-	@Override
-	public void setToken(int pToken) {
-		setCoordinatorID(pToken);
 	}
 
 	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
@@ -964,7 +978,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 									
 								}
 							}
-							setToken(pAnnounce.getCoordinatorID());
+							setSuperiorCoordinatorID(pAnnounce.getCoordinatorID());
 							setSuperiorCoordinator(pCEP, pAnnounce.getSenderName(),pAnnounce.getCoordinatorID(),  pCEP.getPeerL2Address());
 							mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
 							superiorCoordinatorComChannel().sendPacket(tNewCovered);
@@ -982,7 +996,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 						}
 					}
 				}
-				setToken(pAnnounce.getCoordinatorID());
+				setSuperiorCoordinatorID(pAnnounce.getCoordinatorID());
 				mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
 				setSuperiorCoordinator(pCEP, pAnnounce.getSenderName(), pAnnounce.getCoordinatorID(), pCEP.getPeerL2Address());
 			}
@@ -1054,7 +1068,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			Logging.log(this, "     ..creating cluster proxy");
 			tCluster = new ClusterProxy(mParentCluster.mHRMController, pAnnounce.getCoordAddress().getComplexAddress().longValue() /* TODO: als clusterID den Wert? */, new HierarchyLevel(this, super.getHierarchyLevel().getValue() + 2),	pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
 			mHRMController.setSourceIntermediateCluster(tCluster, mHRMController.getSourceIntermediateCluster(this));
-			tCluster.setToken(pAnnounce.getToken());
+			tCluster.setSuperiorCoordinatorID(pAnnounce.getToken());
 			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			//mParentCluster.addNeighborCluster(tCluster);
 		} else {
@@ -1088,8 +1102,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address) 
 	{
 		super.setSuperiorCoordinator(pCoordinatorComChannel, pCoordinatorName, pCoordToken, pCoordinatorL2Address);
-
-		setToken(pCoordToken);
 
 		Logging.log(this, "Setting channel to superior coordinator to " + pCoordinatorComChannel + " for coordinator " + pCoordinatorName + " with routing address " + pCoordinatorL2Address);
 		Logging.log(this, "Previous channel to superior coordinator was " + superiorCoordinatorComChannel() + " with name " + mCoordinatorName);
