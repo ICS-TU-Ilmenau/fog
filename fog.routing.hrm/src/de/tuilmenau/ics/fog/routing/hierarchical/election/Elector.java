@@ -132,6 +132,17 @@ public class Elector implements Localization
 	}
 	
 	/**
+	 * Restarts the election process for this cluster
+	 */
+	private void reelect()
+	{
+		//reset ELECT BROADCAST timer
+		mTimestampLastElectBroadcast = new Double(0);
+		
+		elect();
+	}
+	
+	/**
 	 * Starts the election process. This function is usually called by the GUI.
 	 */
 	public void startElection()
@@ -141,7 +152,10 @@ public class Elector implements Localization
 				elect();
 				break;
 			case ELECTED:
-				Logging.log(this, "Election has already finished, coordinator is valid: " + isCoordinatorValid());
+				if (isCoordinatorValid()){
+					Logging.log(this, "RESTARTING ELECTION, old coordinator was valid: " + isCoordinatorValid());
+					reelect();
+				}
 				break;
 			case ELECTING:
 				Logging.log(this, "Election is already running");
@@ -155,6 +169,16 @@ public class Elector implements Localization
 			default:
 				break;
 		}
+	}
+	
+	/**
+	 * Returns true if the election process was already started
+	 *  
+	 * @return true or false
+	 */
+	public boolean wasStarted()
+	{
+		return (getElectorState() != ElectorState.IDLE);
 	}
 	
 	/**
@@ -236,6 +260,10 @@ public class Elector implements Localization
 		if ((mTimestampLastElectBroadcast.doubleValue() == 0) || (tNow > mTimestampLastElectBroadcast.doubleValue() + TIMEOUT_FOR_REPLY)){
 			tResult = true;
 			mTimestampLastElectBroadcast = new Double(tNow);
+			
+			Logging.log(this, "     ..ELECT BROADCAST is okay");
+		}else{
+			Logging.log(this, "     ..ELECT BROADCAST is skipped due to timer");
 		}
 		
 		return tResult;
@@ -379,8 +407,12 @@ public class Elector implements Localization
 			// get the node
 			Node tNode = mHRMController.getNode();
 			
-			// create new coordinator instance
-			Coordinator tNewCoordinator = new Coordinator(mParentCluster);
+			// get the coordinator from the parental cluster
+			Coordinator tCoordinator = mParentCluster.getCoordinator();
+			if (tCoordinator == null){
+				// create new coordinator instance
+				tCoordinator = new Coordinator(mParentCluster);
+			}
 	
 			Name tNodeName = tNode.getRoutingService().getNameFor(tNode.getCentralFN());
 			
@@ -390,7 +422,7 @@ public class Elector implements Localization
 			signalAnnounceBroadcast();
 
 			// trigger event "announced" for the coordinator
-			tNewCoordinator.eventAnnounced();
+			tCoordinator.eventAnnouncedAsCoordinator();
 			
 		}else{
 			Logging.warn(this, "Cluster " + mParentCluster + " has still a valid and known coordinator, skipping eventElectionWon() here");
@@ -409,6 +441,13 @@ public class Elector implements Localization
 		
 		// set correct elector state
 		setElectorState(ElectorState.ELECTED);
+		
+		/**
+		 * TRIGGER: the local coordinator was deselcted by another coordinator
+		 */
+		if (mParentCluster.getCoordinator() != null){
+			mParentCluster.getCoordinator().eventDeselected();
+		}
 	}
 
 	/**
@@ -586,32 +625,8 @@ public class Elector implements Localization
 			/**
 			 * do we have a higher priority than the peer?
 			 */
-			boolean tHavingHigherPrio = false;
-			if (mParentCluster.getPriority().isHigher(this, pComChannel.getPeerPriority())){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-					Logging.log(this, "	        ..the local priority is HIGHER than the remote, starting ELECTION by ourself");
-				}
-				
-				tHavingHigherPrio = true;
-			}else{
-				if (mParentCluster.getPriority().equals(pComChannel.getPeerPriority())){
-					Logging.log(this, "	        ..HAVING SAME PRIORITY like " + pComChannel.getPeerL2Address());
-	
-					if (mParentCluster.getPriority().getUniqueID() > pComChannel.getPeerPriority().getUniqueID()){
-						Logging.log(this, "	        ..HAVING HIGHER priority ID than " + pComChannel.getPeerL2Address());
-	
-						tHavingHigherPrio = true;
-					}else{
-						Logging.log(this, "	        ..HAVING LOWER/EQUAL priority ID " + mParentCluster.getPriority().getUniqueID() + " than " +  pComChannel.getPeerPriority().getUniqueID() + " of " + pComChannel.getPeerL2Address());
-					}
-				}
-			}
-
-			/**
-			 * send ELECT broadcasts
-			 */
-			if (tHavingHigherPrio){
-				// broadcast "ELECT" ourself
+			if (havingHigherPrioriorityThan(pComChannel)){
+				// send broadcast "ELECT" ourself
 				signalElectBroadcast();
 			}
 			
@@ -664,6 +679,40 @@ public class Elector implements Localization
 			// update the peer priority stored in the communication channel
 			pComChannel.setPeerPriority(tPacketBullyPriorityUpdate.getSenderPriority());
 		}
+	}
+
+	/**
+	 * Returns true if the local priority is higher than the one of the peer (from the communication channel)
+	 * 
+	 * @param pComChannel the communication channel whose peer is interesting
+	 * 
+	 * @return true or false
+	 */
+	private boolean havingHigherPrioriorityThan(ComChannel pComChannel)
+	{
+		boolean tResult = false;
+		
+		if (mParentCluster.getPriority().isHigher(this, pComChannel.getPeerPriority())){
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "	        ..the local priority is HIGHER than the remote, starting ELECTION by ourself");
+			}
+			
+			tResult = true;
+		}else{
+			if (mParentCluster.getPriority().equals(pComChannel.getPeerPriority())){
+				Logging.log(this, "	        ..HAVING SAME PRIORITY like " + pComChannel.getPeerL2Address());
+
+				if (mParentCluster.getPriority().getUniqueID() > pComChannel.getPeerPriority().getUniqueID()){
+					Logging.log(this, "	        ..HAVING HIGHER priority ID than " + pComChannel.getPeerL2Address());
+
+					tResult = true;
+				}else{
+					Logging.log(this, "	        ..HAVING LOWER/EQUAL priority ID " + mParentCluster.getPriority().getUniqueID() + " than " +  pComChannel.getPeerPriority().getUniqueID() + " of " + pComChannel.getPeerL2Address());
+				}
+			}
+		}
+		
+		return tResult;
 	}
 
 	/**

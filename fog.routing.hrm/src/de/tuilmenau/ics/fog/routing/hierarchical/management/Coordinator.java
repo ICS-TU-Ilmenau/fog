@@ -439,9 +439,21 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 	
 	/**
+	 * EVENT: "deselected", triggered by the Elector if the election was lost and the coordinator got invalid 
+	 */
+	public void eventDeselected()
+	{
+		// register itself as coordinator for the managed cluster
+		mParentCluster.setCoordinator(null);
+
+		// register at HRMController's internal database
+		mHRMController.unregisterCoordinator(this);
+	}
+
+	/**
 	 * EVENT: "announced", triggered by Elector if the election was won and this coordinator was announced to all cluster members 	 
 	 */
-	public void eventAnnounced()
+	public void eventAnnouncedAsCoordinator()
 	{
 		/**
 		 * AUTO ADDRESS DISTRIBUTION

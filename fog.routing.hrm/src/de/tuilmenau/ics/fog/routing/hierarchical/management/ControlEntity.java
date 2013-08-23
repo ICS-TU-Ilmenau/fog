@@ -100,6 +100,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private static long sIDMachineMultiplier = -1;
 
 	/**
+	 * Stores if the superior coordinator is known
+	 */
+	private boolean mSuperiorCoordinatorKnown = false;
+	
+	/**
 	 * Constructor
 	 */
 	public ControlEntity(HRMController pHRMController, HierarchyLevel pHierarchyLevel)
@@ -345,8 +350,20 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		
 		// store the unique ID of the superior coordinator
 		setSuperiorCoordinatorID(pCoordinatorID);
+		
+		mSuperiorCoordinatorKnown = true;
 	}
 
+	/**
+	 * Returns true if the superior coordinator is already defined
+	 * 
+	 * @return true or false
+	 */
+	public boolean superiorCoordinatorKnown()
+	{
+		return mSuperiorCoordinatorKnown;
+	}
+	
 	/**
 	 * Sets the unique ID of the superior coordinator
 	 * 

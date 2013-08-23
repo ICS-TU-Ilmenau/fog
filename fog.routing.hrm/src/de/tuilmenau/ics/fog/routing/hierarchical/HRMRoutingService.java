@@ -1512,6 +1512,11 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		Logging.log(this, "Registering route from " + pFrom + " to " + pTo + " by path \"" + pRoute + "\"");
 		
+		if (pTo == null){
+			Logging.err(this, "registerRoute() got an invalid TO-parameter");
+			return false;
+		}
+		
 		if(!mCoordinatorRoutingMap.contains(pFrom)){
 			mCoordinatorRoutingMap.add(pFrom);
 		}

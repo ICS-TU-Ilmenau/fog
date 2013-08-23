@@ -30,7 +30,7 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
-import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalNeighborNode;
+import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalEndPoint;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
@@ -262,9 +262,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		// register a route to the coordinator as addressable target
 		getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
 		
-		// register at the ARG
-		registerNodeARG(pCoordinator);
-
 		synchronized (mLocalCoordinators) {
 			// register as known coordinator
 			mLocalCoordinators.add(pCoordinator);
@@ -288,12 +285,25 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	public void unregisterCoordinator(Coordinator pCoordinator)
 	{
-		Logging.log(this, "Unegistering coordinator " + pCoordinator);
+		int tLevel = pCoordinator.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
+
+		Logging.log(this, "Unegistering coordinator " + pCoordinator + " at level " + tLevel);
 
 		synchronized (mLocalCoordinators) {
 			// unregister from list of known coordinators
 			mLocalCoordinators.remove(pCoordinator);
 		}
+
+		// update GUI: image for node object 
+		//TODO: check and be aware of topology dynamics
+		if (tLevel -1 > 0){
+			getNode().setDecorationParameter("L"+ (tLevel -1));
+		}else{
+			getNode().setDecorationParameter(null);
+		}
+		
+		// register at the ARG
+		unregisterNodeARG(pCoordinator);
 
 		// it's time to update the GUI
 		notifyGUI(pCoordinator);
@@ -701,10 +711,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 						// get the name of the central FN
 						L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
 						// create a map between the central FN and the search FN
-						AnnouncePhysicalNeighborNode tNeighborRoutingInformation = new AnnouncePhysicalNeighborNode(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalNeighborNode.INIT_PACKET);
+						AnnouncePhysicalEndPoint tAnnouncePhysicalEndPoint = new AnnouncePhysicalEndPoint(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.INIT_PACKET);
 						// tell the neighbor about the FN
 						Logging.log(tHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
-						tFSession.write(tNeighborRoutingInformation);
+						tFSession.write(tAnnouncePhysicalEndPoint);
 					}
 
 					/**
@@ -748,14 +758,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 			tLoop++;
 		}
 		
-		/**
-		 * TRIGGER: inform the Cluster about the established communication channel
-		 */
 		if (mCounterOutgoingConnections > tOldCounterOutgoingConnections){
 			Logging.log(this, "Connection thread for " + tNeighborName + " finished");
-
-			// mark communication channel as established
-			tCreatedCluster.eventComChannelEstablished(tComChannel);
 		}else{
 			Logging.log(this, "Connection thread for " + tNeighborName + " failed");
 		}
@@ -1029,6 +1033,31 @@ public class HRMController extends Application implements IServerCallback, IEven
 	}
 
 	/**
+	 * Unregisters a cluster/coordinator from the locally stored abstract routing graph (ARG)
+	 *  
+	 * @param pNode the node (cluster/coordinator) which should be removed from the ARG
+	 */
+	private void unregisterNodeARG(ControlEntity pNode)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "UNREGISTERING NODE ADDRESS (ARG): " + pNode );
+		}
+		
+		synchronized (mAbstractRoutingGraph) {
+			if(mAbstractRoutingGraph.contains(pNode)) {
+				mAbstractRoutingGraph.remove(pNode);
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..removed from ARG");
+				}
+			}else{
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..node for ARG wasn't known: " + pNode);
+				}
+			}
+		}
+	}
+
+	/**
 	 * Registers a logical link between clusters/coordinators to the locally stored abstract routing graph (ARG)
 	 * 
 	 * @param pFrom the starting point of the link
@@ -1290,12 +1319,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 					Logging.log(this, "     ..creating communication channel");
 					ComChannel tComChannel = new ComChannel(this, tTargetCluster, tComSession);
 					tComChannel.setPeerPriority(tClusterMemberDescription.getPriority());
-
-					/**
-					 * TRIGGER: inform the Cluster about the established communication channel
-					 */
-					// mark communication channel as established
-					tTargetCluster.eventComChannelEstablished(tComChannel);
 
 					/**
 					 * Set the remote ClusterName of the communication channel

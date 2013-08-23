@@ -258,16 +258,21 @@ public class ComChannel
 		// create destination description
 		ClusterName tDestinationClusterName = getRemoteClusterName();
 		
-		Logging.log(this, "Sending " + pData + " to destination " + tDestinationClusterName);
-
-		// create the source description
-		ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().superiorCoordinatorID(), ((ICluster)getParent()).getClusterID());
-		
-		// create the Multiplex-Header
-		MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pData);
+		if (tDestinationClusterName != null){
+			Logging.log(this, "Sending " + pData + " to destination " + tDestinationClusterName);
+	
+			// create the source description
+			ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().superiorCoordinatorID(), ((ICluster)getParent()).getClusterID());
 			
-		// send the final packet (including multiplex-header)
-		return getParentComSession().write(tMultiplexHeader);
+			// create the Multiplex-Header
+			MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pData);
+				
+			// send the final packet (including multiplex-header)
+			return getParentComSession().write(tMultiplexHeader);
+		}else{
+			Logging.log(this, "Destination is still undefined, skipping packet payload " + pData);
+			return false;
+		}
 	}
 	
 	
@@ -447,11 +452,11 @@ public class ComChannel
 				}
 				Cluster tParentCluster = (Cluster)mParent;
 				
-				Logging.log(this, "BULLY MESSAGE FROM " + getPeerL2Address());
-				
 				// cast to a Bully signaling message
 				SignalingMessageBully tBullyMessage = (SignalingMessageBully)pData;
-			
+
+				Logging.log(this, "BULLY MESSAGE FROM " + getPeerL2Address() + "/" + tBullyMessage.getSenderName());
+				
 				// process Bully message
 				tParentCluster.handlePacket(tBullyMessage, this);
 			}
@@ -470,10 +475,6 @@ public class ComChannel
 				tCoordinator.getCluster().handlePacket(tBullyMessage, this);
 			}
 
-			else{
-				Logging.err(this, "Parent " + mParent + " has the wrong class type, expected Cluster");
-			}
-			
 			return true;
 		}
 
@@ -784,5 +785,16 @@ public class ComChannel
 	public String toString()
 	{
 		return getClass().getSimpleName() + "@" + mParent.toString() + "(PeerPrio=" + mPeerPriority.getValue() + (getPeerL2Address() != null ? ", PeerL2Addres=" + getPeerL2Address() + ", Peer=" + getPeerHRMID() : "") + ")";
+	}
+
+	/**
+	 * 
+	 */
+	public void eventParentComSessionEstablished()
+	{
+		/**
+		 * TRIGGER: inform the parental ControlEntity about the established communication session and its inferior channels
+		 */
+		getParent().eventComChannelEstablished(this);
 	}
 }

@@ -224,10 +224,12 @@ public class Cluster extends ControlEntity implements ICluster
 		mCoordinator = pCoordinator;
 		
 		// update the stored unique ID for the coordinator
-		setSuperiorCoordinatorID(pCoordinator.getCoordinatorID());
-		
-		// update the descriptive string about the coordinator
-		mCoordinatorDescription = mCoordinator.toLocation();
+		if (pCoordinator != null){
+			setSuperiorCoordinatorID(pCoordinator.getCoordinatorID());
+
+			// update the descriptive string about the coordinator
+			mCoordinatorDescription = mCoordinator.toLocation();
+		}
 	}
 	
 	/**
@@ -313,6 +315,24 @@ public class Cluster extends ControlEntity implements ICluster
 	public void eventComChannelEstablished(ComChannel pComChannel)
 	{
 		Logging.log(this, "EVENT: ComChannel established for " + pComChannel);
+		
+		boolean tCoordinatorIsFixed = false;
+		
+		// does the coordinator already know its superior coordinator?
+		if (getCoordinator() != null){
+			if (getCoordinator().superiorCoordinatorKnown()){
+				tCoordinatorIsFixed = true;
+			}
+		}
+		
+		/**
+		 * TRIGGER: election restart (do this only if election was already started)
+		 */
+		if (!tCoordinatorIsFixed){
+			if (getElector().wasStarted()){
+				getElector().startElection();
+			}
+		}
 	}
 
 	
@@ -322,12 +342,12 @@ public class Cluster extends ControlEntity implements ICluster
 	
 	
 	
-	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pCEP)
+	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pComChannel)
 	{
 		// update the description about the elected coordinator
 		mCoordinatorDescription = pBullyAnnounce.getCoordinatorDescription();
 				
-		setSuperiorCoordinator(pCEP, pBullyAnnounce.getSenderName(), pBullyAnnounce.getCoordinatorID(), pCEP.getPeerL2Address());
+		setSuperiorCoordinator(pComChannel, pBullyAnnounce.getSenderName(), pBullyAnnounce.getCoordinatorID(), pComChannel.getPeerL2Address());
 		mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	

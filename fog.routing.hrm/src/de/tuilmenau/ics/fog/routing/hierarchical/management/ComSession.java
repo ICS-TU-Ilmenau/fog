@@ -19,7 +19,7 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
-import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalNeighborNode;
+import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalEndPoint;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
@@ -110,7 +110,22 @@ public class ComSession extends Session
 		
 		return tResult;
 	}
-	
+
+	/**
+	 * This function gets called when the physical end point at remote side is locally known
+	 */
+	public void eventSessionAvailable()
+	{
+		Logging.log(this, "EVENT: session is available now");
+		
+		for(ComChannel tComChannel : getAllComChannels()){
+			/**
+			 * TRIGGER: inform the ComChannel about the established communication session
+			 */
+			tComChannel.eventParentComSessionEstablished();
+		}
+	}
+
 	/**
 	 * Determines the route to the peer (its central FN)
 	 *  
@@ -202,7 +217,7 @@ public class ComSession extends Session
 	 * 
 	 * @param pAnnouncePhysicalNeighborhood the packet
 	 */
-	private void handleAnnouncePhysicalNeighborhood(AnnouncePhysicalNeighborNode pAnnouncePhysicalNeighborhood)
+	private void handleAnnouncePhysicalEndPoint(AnnouncePhysicalEndPoint pAnnouncePhysicalNeighborhood)
 	{
 		// get the L2Address of the peer
 		mPeerL2Address = pAnnouncePhysicalNeighborhood.getSenderCentralAddress();
@@ -260,13 +275,17 @@ public class ComSession extends Session
 			 */
 			if (tFirstFNL2Address != null){
 				// create a map between the central FN and the search FN
-				AnnouncePhysicalNeighborNode tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalNeighborNode(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalNeighborNode.ANSWER_PACKET);
+				AnnouncePhysicalEndPoint tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalEndPoint(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.ANSWER_PACKET);
 				// tell the neighbor about the FN
 				Logging.log(this, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD ANSWER " + tAnnouncePhysicalNeighborhoodAnswer);
 				write(tAnnouncePhysicalNeighborhoodAnswer);
 			}
-
 		}
+		
+		/**
+		 * TRIGGER: session is available now
+		 */
+		eventSessionAvailable();		
 	}
 
 	/**
@@ -329,15 +348,15 @@ public class ComSession extends Session
 		/**
 		 * PACKET: AnnouncePhysicalNeighborhood
 		 */
-		if(pData instanceof AnnouncePhysicalNeighborNode) {
+		if(pData instanceof AnnouncePhysicalEndPoint) {
 			// get the packet
-			AnnouncePhysicalNeighborNode tAnnouncePhysicalNeighborhood = (AnnouncePhysicalNeighborNode)pData;
+			AnnouncePhysicalEndPoint tAnnouncePhysicalNeighborhood = (AnnouncePhysicalEndPoint)pData;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.log(this, "ANNOUNCE PHYSICAL NEIGHBORHOOD received: " + tAnnouncePhysicalNeighborhood);
 			}
 			
-			handleAnnouncePhysicalNeighborhood(tAnnouncePhysicalNeighborhood);
+			handleAnnouncePhysicalEndPoint(tAnnouncePhysicalNeighborhood);
 		} 
 		
 		/**
