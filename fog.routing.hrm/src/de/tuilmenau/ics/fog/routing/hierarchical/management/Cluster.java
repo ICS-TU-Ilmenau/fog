@@ -305,7 +305,16 @@ public class Cluster extends ControlEntity implements ICluster
 		return tResult;
 	}
 
-	
+	/**
+	 * EVENT: notifies that a communication channel is became available
+	 * 
+	 * @param pComChannel the communication channel which became available
+	 */
+	public void eventComChannelEstablished(ComChannel pComChannel)
+	{
+		Logging.log(this, "EVENT: ComChannel established for " + pComChannel);
+	}
+
 	
 	
 	

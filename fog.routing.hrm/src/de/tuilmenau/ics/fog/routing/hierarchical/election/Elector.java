@@ -96,11 +96,13 @@ public class Elector implements Localization
 		// set IDLE state
 		setElectorState(ElectorState.IDLE);
 
+		boolean tStartBaseLevel =  ((mParentCluster.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
+		
 		// for higher hierarchy levels, continue hierarchy creation
-		if ((!mParentCluster.getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.START_AUTOMATICALLY)){
+		if ((!mParentCluster.getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.START_AUTOMATICALLY) || (tStartBaseLevel)){
 			if (mParentCluster.isNeighborHoodInitialized()){
 				// start coordinator election for the created HRM instance if desired
-				if(HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY) {
+				if((HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY) || (tStartBaseLevel)){
 					elect();
 				}
 			}else{

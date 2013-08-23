@@ -662,10 +662,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 		final L2Address tNeighborName = pNeighborL2Address;
 		final ComSession tFSession = tComSession;
 		final HRMController tHRMController = this;
-
+		
 		/**
 		 * Create connection thread
 		 */
+		int tOldCounterOutgoingConnections = mCounterOutgoingConnections;
 		Thread tThread = new Thread() {
 			public void run()
 			{
@@ -678,18 +679,19 @@ public class HRMController extends Application implements IServerCallback, IEven
 				/**
 				 * Connect to the neighbor node
 				 */
-				Connection tConn = null;				
+				Connection tConnection = null;				
 				try {
 				    Logging.log(this, "    ..connecting to: " + tNeighborName + " with requirements: " + tConnectionRequirements);
-					tConn = getHost().connectBlock(tNeighborName, tConnectionRequirements, getNode().getIdentity());
+					tConnection = getHost().connectBlock(tNeighborName, tConnectionRequirements, getNode().getIdentity());
 				} catch (NetworkException tExc) {
 					Logging.err(tHRMController, "Unable to connecto to " + tNeighborName, tExc);
 				}
-				if(tConn != null) {
+				if(tConnection != null) {
+
 					mCounterOutgoingConnections++;
 					
 					Logging.log(tHRMController, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
-					tFSession.start(tConn);					
+					tFSession.start(tConnection);					
 					
 					/**
 					 * announce physical neighborhood
@@ -722,8 +724,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 						tFSession.setRouteToPeer(tRouteToNeighborFN);
 					}
 				}
-				
-				Logging.log(this, "Connection thread for " + tNeighborName + " finished");
 			}
 		};
 		
@@ -746,6 +746,18 @@ public class HRMController extends Application implements IServerCallback, IEven
 				Logging.warn(this, "Got an interruption when connection was triggered to neighbor " + pNeighborL2Address);
 			}
 			tLoop++;
+		}
+		
+		/**
+		 * TRIGGER: inform the Cluster about the established communication channel
+		 */
+		if (mCounterOutgoingConnections > tOldCounterOutgoingConnections){
+			Logging.log(this, "Connection thread for " + tNeighborName + " finished");
+
+			// mark communication channel as established
+			tCreatedCluster.eventComChannelEstablished(tComChannel);
+		}else{
+			Logging.log(this, "Connection thread for " + tNeighborName + " failed");
 		}
 	}
 
@@ -1278,6 +1290,12 @@ public class HRMController extends Application implements IServerCallback, IEven
 					Logging.log(this, "     ..creating communication channel");
 					ComChannel tComChannel = new ComChannel(this, tTargetCluster, tComSession);
 					tComChannel.setPeerPriority(tClusterMemberDescription.getPriority());
+
+					/**
+					 * TRIGGER: inform the Cluster about the established communication channel
+					 */
+					// mark communication channel as established
+					tTargetCluster.eventComChannelEstablished(tComChannel);
 
 					/**
 					 * Set the remote ClusterName of the communication channel

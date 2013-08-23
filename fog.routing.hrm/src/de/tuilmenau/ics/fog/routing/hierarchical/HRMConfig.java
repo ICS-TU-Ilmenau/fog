@@ -122,6 +122,11 @@ public class HRMConfig
 		public static final boolean START_AUTOMATICALLY = false;		
 
 		/**
+		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
+		 */
+		public static final boolean START_AUTOMATICALLY_BASE_LEVEL = true; 
+
+		/**
 		 * This specifies whether the hierarchy build process is continued automatically.
 		 * Otherwise, it is done step by step by the help of GUI and user inputs.
 		 */
@@ -150,7 +155,7 @@ public class HRMConfig
 		 * A value of 20 here and 250 for the waiting time means: (20 * 250 ms = 5 seconds) of 
 		 * waiting until an error is detected. 
 		 */
-		public static final int MAX_TIMEOUTS_FOR_CONNECTION_TO_NEIGHBOR = 20; 
+		public static final int MAX_TIMEOUTS_FOR_CONNECTION_TO_NEIGHBOR = 20;
 	}
 	
 	/**
