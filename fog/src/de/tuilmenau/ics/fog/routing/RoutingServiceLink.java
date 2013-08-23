@@ -25,7 +25,7 @@ import de.tuilmenau.ics.fog.ui.Viewable;
  */
 public class RoutingServiceLink
 {
-	private static final String UNNUMBERED_LINK_NAME = "n.a.";
+	protected static final String UNNUMBERED_LINK_NAME = "n.a.";
 	public static final Number INFINITE = Double.POSITIVE_INFINITY;
 	public static final Number DEFAULT = 1;
 
