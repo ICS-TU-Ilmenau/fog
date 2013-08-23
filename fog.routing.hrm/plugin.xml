@@ -16,10 +16,16 @@
             name="HRM viewer">
       </editor>
       <editor
+            class="de.tuilmenau.ics.fog.ui.eclipse.editors.L2RGViewer"
+            default="false"
+            id="de.tuilmenau.ics.fog.l2rgviewer"
+            name="L2 Routing Graph Viewer">
+      </editor>
+      <editor
             class="de.tuilmenau.ics.fog.ui.eclipse.editors.ARGViewer"
             default="false"
             id="de.tuilmenau.ics.fog.argviewer"
-            name="Cluster viewer">
+            name="Abstract Routing Graph Viewer">
       </editor>
    </extension>
    <extension
@@ -74,6 +80,11 @@
             editorID="de.tuilmenau.ics.fog.argviewer"
             filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
             name="ARG viewer">
+      </editor>
+      <editor
+            editorID="de.tuilmenau.ics.fog.l2rgviewer"
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
+            name="L2RG viewer">
       </editor>
    </extension>
 

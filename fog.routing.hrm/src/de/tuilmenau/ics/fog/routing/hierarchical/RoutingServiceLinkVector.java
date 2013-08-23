@@ -14,7 +14,7 @@ import java.io.Serializable;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
 public class RoutingServiceLinkVector implements Serializable
 {
@@ -26,19 +26,19 @@ public class RoutingServiceLinkVector implements Serializable
 	 * @param pSource is the source of this link, expressed via HRMID
 	 * @param pDestination is the destination of this link
 	 */
-	public RoutingServiceLinkVector(Route pPath, HRMName pSource, HRMName pDestination)
+	public RoutingServiceLinkVector(Route pPath, L2Address pSource, L2Address pDestination)
 	{
 		mSourceAddress = pSource;
 		mPath = pPath;
 		mDestinationAddress = pDestination;
 	}
 	
-	public HRMName getSource()
+	public L2Address getSource()
 	{
 		return mSourceAddress;
 	}
 	
-	public HRMName getDestination()
+	public L2Address getDestination()
 	{
 		return mDestinationAddress;
 	}
@@ -77,7 +77,7 @@ public class RoutingServiceLinkVector implements Serializable
 		return mSourceAddress.getDescr() + "-" + mPath + "->" + (mDestinationAddress != null ? mDestinationAddress.getDescr() : null) ;
 	}
 	
-	private HRMName mSourceAddress;
-	private HRMName mDestinationAddress;
+	private L2Address mSourceAddress;
+	private L2Address mDestinationAddress;
 	private Route mPath;
 }

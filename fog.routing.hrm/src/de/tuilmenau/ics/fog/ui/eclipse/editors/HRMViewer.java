@@ -83,7 +83,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Composite mContainer = null;
     private Display mDisplay = null;
     private Composite mContainerRoutingTable = null;
-    private Composite mContainerNeighborRoutingTable = null;
 	private Composite mContainerHRMID2L2ADDRTable = null;
 	
     /**
@@ -150,90 +149,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			// print info. about cluster
 			printCoordinator(tCoordinator);
 		}
-		
-		/**
-		 * GUI part 2: table of routes to direct neighbors
-		 */
-		// create the headline
-		StyledText tSignaturesLabel = new StyledText(mContainer, SWT.BORDER);
-		tSignaturesLabel.setText("Routes to Neighbors - Node " + mHRMController.getNodeGUIName());
-		tSignaturesLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
-		tSignaturesLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
-	    StyleRange style2 = new StyleRange();
-	    style2.start = 0;
-	    style2.length = tSignaturesLabel.getText().length();
-	    style2.fontStyle = SWT.BOLD;
-	    tSignaturesLabel.setStyleRange(style2);
-	    
-	    /**
-	     * GUI part 0: table with routes to neighbors
-	     */
-	    // create the GUI container
-	    mContainerNeighborRoutingTable = new Composite(mContainer, SWT.NONE);
-	    GridData tLayoutDataNeighborRoutingTable = new GridData(SWT.FILL, SWT.FILL, true, true);
-	    tLayoutDataNeighborRoutingTable.horizontalSpan = 1;
-	    mContainerNeighborRoutingTable.setLayoutData(tLayoutDataNeighborRoutingTable); 
-	    
-	    // create the table
-		final Table tTableNeighborRoutingTable = new Table(mContainerNeighborRoutingTable, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
-		tTableNeighborRoutingTable.setHeaderVisible(true);
-		tTableNeighborRoutingTable.setLinesVisible(true);
-		
-		// create the columns and define the texts for the header row
-		// col. 0
-		TableColumn tTableNeighbor = new TableColumn(tTableNeighborRoutingTable, SWT.NONE, 0);
-		tTableNeighbor.setText("Neighbor");
-		// col. 1
-		TableColumn tTableNeighborRoute = new TableColumn(tTableNeighborRoutingTable, SWT.NONE, 1);
-		tTableNeighborRoute.setText("Route");
-		
-		HashMap<L2Address, Route> tRoutesToDirectNeighbors = tHRS.getRoutesToDirectNeighbors();
-		if (HRM_VIEWER_DEBUGGING){
-			Logging.log(this, "Found " + tRoutesToDirectNeighbors.keySet().size() + " local routes to neighbor nodes");
-		}
-		
-		if ((tRoutesToDirectNeighbors != null) && (!tRoutesToDirectNeighbors.isEmpty())) {
-			int tRowNumber = 0;
-			for(L2Address tAddr : tRoutesToDirectNeighbors.keySet()) {
-				Route tRoute = tRoutesToDirectNeighbors.get(tAddr);
-				
-				// create the table row
-				TableItem tTableRow = new TableItem(tTableNeighborRoutingTable, SWT.NONE, tRowNumber);
-				
-				/**
-				 * Column 0: the neighbor name
-				 */
-				tTableRow.setText(0, tAddr.toString());
-
-				/**
-				 * Column 1: route 
-				 */
-				tTableRow.setText(1, tRoute.toString());
-
-				tRowNumber++;
-			}
-		}
-		
-		TableColumn[] columns1 = tTableNeighborRoutingTable.getColumns();
-		for (int k = 0; k < columns1.length; k++){
-			columns1[k].pack();
-		}
-		tTableNeighborRoutingTable.setLayoutData(new GridData(GridData.FILL_BOTH));//SWT.FILL, SWT.TOP, true, true, 1, 1));
-
-		// create the container layout
-		TableColumnLayout tLayoutRoutingTable = new TableColumnLayout();
-		mContainerNeighborRoutingTable.setLayout(tLayoutRoutingTable);
-		// assign each column a layout weight
-		tLayoutRoutingTable.setColumnData(tTableNeighbor, new ColumnWeightData(3));
-		tLayoutRoutingTable.setColumnData(tTableNeighborRoute, new ColumnWeightData(3));
-
 
 		/**
 		 * GUI part 1: table of known mappings from HRMID to L2Addresses
 		 */
 		// create the headline
 		StyledText tSignaturesLabel4 = new StyledText(mContainer, SWT.BORDER);
-		tSignaturesLabel4.setText("Mappings from neighbor HRMID to L2Address - Node " + mHRMController.getNodeGUIName());
+		tSignaturesLabel4.setText("Mappings from HRMID to L2Address - Node " + mHRMController.getNodeGUIName());
 		tSignaturesLabel4.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel4.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style4 = new StyleRange();
@@ -495,7 +417,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		// arrange the GUI content in order to full the entire space
         mContainer.setSize(mContainer.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         mContainerRoutingTable.setSize(mContainerRoutingTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-        mContainerNeighborRoutingTable.setSize(mContainerNeighborRoutingTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         mContainerHRMID2L2ADDRTable.setSize(mContainerHRMID2L2ADDRTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 	}
 

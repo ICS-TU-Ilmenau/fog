@@ -590,13 +590,13 @@ public class ComChannel
 	 * @param pTarget is the target to which routing service link vectors should be generated
 	 * @return vectors that provide a patch between forwarding nodes along with the gate numbers
 	 */
-	public LinkedList<RoutingServiceLinkVector> getPath(HRMName pTarget)
+	public LinkedList<RoutingServiceLinkVector> getPath(L2Address pTarget)
 	{
 		LinkedList<RoutingServiceLinkVector> tVectors = new LinkedList<RoutingServiceLinkVector>();
 		
 		L2Address tLocalCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
 
-		RoutableGraph<HRMName, Route> tRoutingDatabase = mHRMController.getHRS().getCoordinatorRoutingMap();
+		RoutableGraph<L2Address, Route> tRoutingDatabase = mHRMController.getHRS().getCoordinatorRoutingMap();
 		
 		List<Route> tRoute = tRoutingDatabase.getRoute(tLocalCentralFNL2Address, pTarget);
 		

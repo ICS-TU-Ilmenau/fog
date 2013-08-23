@@ -910,7 +910,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				}
 			}
 			// determine the searched FN, which comes first when routing towards the neighbor
-			HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getLinkDestination(tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor);
+			HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getL2LinkDestination(tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor);
 			if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
 				// get the L2 address
 				tResult = (L2Address)tFirstNodeBeforeBusToNeighbor;
