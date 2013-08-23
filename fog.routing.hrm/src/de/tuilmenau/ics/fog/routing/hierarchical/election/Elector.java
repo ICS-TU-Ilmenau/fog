@@ -624,8 +624,9 @@ public class Elector implements Localization
 			// cast to Bully replay packet
 			BullyReply tReplyPacket = (BullyReply)pPacketBully;
 
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a REPLY: " + tReplyPacket);
+			}
 
 			eventReceivedReply();
 		}
@@ -637,8 +638,9 @@ public class Elector implements Localization
 			// cast to Bully replay packet
 			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
 
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
+			}
 
 			eventElectionLost();
 
@@ -649,12 +651,16 @@ public class Elector implements Localization
 		/**
 		 * PRIORITY UPDATE
 		 */
-		if(pPacketBully instanceof BullyPriorityUpdate) {
+		if(pPacketBully instanceof BullyPriorityUpdate) { //TODO: paket muss auch gesendet werden
 			// cast to Bully replay packet
 			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
 
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
+			}
+			
+			// update the peer priority stored in the communication channel
+			pComChannel.setPeerPriority(tPacketBullyPriorityUpdate.getSenderPriority());
 		}
 	}
 
