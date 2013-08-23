@@ -34,7 +34,7 @@ import de.tuilmenau.ics.graph.RoutableGraph;
 
 public class ARGViewer extends EditorAWT implements IController
 {
-	private HRMController mHRMController = null;
+	protected HRMController mHRMController = null;
 	private SelectionProvider selectionCache = null;
 	private MenuCreator menuCreator = null;
 

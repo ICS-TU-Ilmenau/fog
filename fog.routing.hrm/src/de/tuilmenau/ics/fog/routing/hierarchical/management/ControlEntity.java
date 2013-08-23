@@ -252,7 +252,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void registerNeighborARG(ControlEntity pNeighbor)
 	{
-		Logging.log(this, "Registering neighbor: " + pNeighbor);
+		Logging.log(this, "Registering neighbor (ARG): " + pNeighbor);
 
 		AbstractRoutingGraphLink.LinkType tLinkType = AbstractRoutingGraphLink.LinkType.REMOTE_LINK;
 

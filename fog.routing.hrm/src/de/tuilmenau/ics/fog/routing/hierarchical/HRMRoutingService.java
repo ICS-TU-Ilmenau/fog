@@ -866,7 +866,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					}
 					getHRMController().eventDetectedPhysicalNeighborNode(tToL2Address);
 				}else{
-					Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address);
+					Logging.log(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it waits for the opposite side.");
 				}
 			}else{
 				Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is linked to the central FN " + tThisHostL2Address);
