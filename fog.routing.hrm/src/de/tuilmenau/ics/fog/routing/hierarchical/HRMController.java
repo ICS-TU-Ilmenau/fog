@@ -30,7 +30,7 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
-import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalNeighborhood;
+import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalNeighborNode;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
@@ -699,7 +699,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 						// get the name of the central FN
 						L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
 						// create a map between the central FN and the search FN
-						AnnouncePhysicalNeighborhood tNeighborRoutingInformation = new AnnouncePhysicalNeighborhood(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalNeighborhood.INIT_PACKET);
+						AnnouncePhysicalNeighborNode tNeighborRoutingInformation = new AnnouncePhysicalNeighborNode(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalNeighborNode.INIT_PACKET);
 						// tell the neighbor about the FN
 						Logging.log(tHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
 						tFSession.write(tNeighborRoutingInformation);

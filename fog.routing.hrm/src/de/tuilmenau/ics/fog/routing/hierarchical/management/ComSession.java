@@ -19,7 +19,7 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
-import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalNeighborhood;
+import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalNeighborNode;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
@@ -202,7 +202,7 @@ public class ComSession extends Session
 	 * 
 	 * @param pAnnouncePhysicalNeighborhood the packet
 	 */
-	private void handleAnnouncePhysicalNeighborhood(AnnouncePhysicalNeighborhood pAnnouncePhysicalNeighborhood)
+	private void handleAnnouncePhysicalNeighborhood(AnnouncePhysicalNeighborNode pAnnouncePhysicalNeighborhood)
 	{
 		// get the L2Address of the peer
 		mPeerL2Address = pAnnouncePhysicalNeighborhood.getSenderCentralAddress();
@@ -260,7 +260,7 @@ public class ComSession extends Session
 			 */
 			if (tFirstFNL2Address != null){
 				// create a map between the central FN and the search FN
-				AnnouncePhysicalNeighborhood tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalNeighborhood(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalNeighborhood.ANSWER_PACKET);
+				AnnouncePhysicalNeighborNode tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalNeighborNode(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalNeighborNode.ANSWER_PACKET);
 				// tell the neighbor about the FN
 				Logging.log(this, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD ANSWER " + tAnnouncePhysicalNeighborhoodAnswer);
 				write(tAnnouncePhysicalNeighborhoodAnswer);
@@ -329,9 +329,9 @@ public class ComSession extends Session
 		/**
 		 * PACKET: AnnouncePhysicalNeighborhood
 		 */
-		if(pData instanceof AnnouncePhysicalNeighborhood) {
+		if(pData instanceof AnnouncePhysicalNeighborNode) {
 			// get the packet
-			AnnouncePhysicalNeighborhood tAnnouncePhysicalNeighborhood = (AnnouncePhysicalNeighborhood)pData;
+			AnnouncePhysicalNeighborNode tAnnouncePhysicalNeighborhood = (AnnouncePhysicalNeighborNode)pData;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.log(this, "ANNOUNCE PHYSICAL NEIGHBORHOOD received: " + tAnnouncePhysicalNeighborhood);

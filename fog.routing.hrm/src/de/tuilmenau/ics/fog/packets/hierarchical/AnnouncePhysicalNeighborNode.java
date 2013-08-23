@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * PACKET: This packet is used to inform the neighbor about the association between the central FN and the FN between the central FN and the bus.
  * 		   It is necessary to inform the neighbor about the FN which it should use to route to the central FN of a neighbor node.
  */
-public class AnnouncePhysicalNeighborhood extends LoggableElement implements Serializable
+public class AnnouncePhysicalNeighborNode extends LoggableElement implements Serializable
 {
 	/**
 	 * Stores the L2Address of the central FN.
@@ -44,7 +44,7 @@ public class AnnouncePhysicalNeighborhood extends LoggableElement implements Ser
 	 */
 	private static final long serialVersionUID = 7253912074438961613L;
 
-	public AnnouncePhysicalNeighborhood(L2Address pCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
+	public AnnouncePhysicalNeighborNode(L2Address pCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
 	{
 		mCentralFN = pCentralFN;
 		mRoutingTargetFN = pRoutingTargetFN;

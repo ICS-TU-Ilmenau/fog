@@ -17,13 +17,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 public interface ICluster extends Serializable
 {
 	/**
-	 * Set the priority the reference node has in this cluster
-	 * 
-	 * @param pPriority
-	 */
-	public void setPriority(BullyPriority pPriority);
-	
-	/**
 	 * 
 	 * @return The priority of the node that is associated to this cluster is return here
 	 */
@@ -52,12 +45,6 @@ public interface ICluster extends Serializable
 	 * @param pCoordName This is the name of the coordinator that is responsible for this cluster
 	 */
 	public void setCoordinatorName(Name pCoordName);
-	
-	/**
-	 * 
-	 * @param pToken Set the token that is sent by the coordinator here.
-	 */
-//	public void setToken(int pToken);
 	
 	/**
 	 * 
