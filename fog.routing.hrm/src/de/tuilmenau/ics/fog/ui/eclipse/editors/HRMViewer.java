@@ -74,7 +74,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private static boolean HRM_VIEWER_DEBUGGING = HRMConfig.DebugOutput.GUI_SHOW_VIEWER_STEPS;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = true;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS = true;
-	
+
+	public static final boolean GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES = true;
+
 	private HRMController mHRMController = null;
     private Composite mShell = null;
     private ScrolledComposite mScroller = null;
@@ -690,7 +692,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue());
 		}
 		tClusterLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
-		if (HRMConfig.DebugOutput.GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES){
+		if (GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES){
 			boolean tBackgroundSet = false;
 			if (pEntity instanceof Cluster){
 				Cluster tCluster =(Cluster) pEntity;

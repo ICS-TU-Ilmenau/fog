@@ -31,7 +31,7 @@ public class HRMConfig
 		/**
 		 * Show relative addresses in the GUI? (e.g., "0.0.1")
 		 */
-		public static final boolean GUI_SHOW_RELATIVE_ADDRESSES = true;
+		public static final boolean GUI_SHOW_RELATIVE_ADDRESSES = false;
 
 		/**
 		 * Show debug outputs about the timing of report/share phases of each existing coordinator.
@@ -61,7 +61,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs about multiplex packets 
 		 */
-		public static final boolean GUI_SHOW_MULTIPLEX_PACKETS = true;
+		public static final boolean GUI_SHOW_MULTIPLEX_PACKETS = false;
 
 		/**
 		 * Shows general debug outputs about signaling messages
@@ -71,7 +71,7 @@ public class HRMConfig
 		/**
 		 * Shows detailed debug outputs about Bully related signaling messages
 		 */
-		public static final boolean GUI_SHOW_SIGNALING_BULLY = true;
+		public static final boolean GUI_SHOW_SIGNALING_BULLY = false;
 
 		/**
 		 * Shows detailed debug outputs about HRMID signaling messages
@@ -82,11 +82,6 @@ public class HRMConfig
 		 * Shows detailed debug outputs about HRMViewer steps
 		 */
 		public static final boolean GUI_SHOW_VIEWER_STEPS = false;
-
-		/**
-		 * Shows colored backgrounds for cluster/coordinator widgets
-		 */
-		public static final boolean GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES = true;
 
 		/**
 		 * Defines the time period between two updates of the node specific HRM display.
