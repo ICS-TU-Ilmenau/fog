@@ -90,16 +90,6 @@ public class ClusterName implements Serializable, ICluster, AbstractRoutingGraph
 		return mToken;
 	}
 
-	@Override
-	public BullyPriority getHighestPriority()
-	{
-		return null;
-	}
-
-	@Override
-	public void setHighestPriority(BullyPriority pHighestPriority) {
-		
-	}
 
 	@Override
 	public boolean equals(Object pObj)

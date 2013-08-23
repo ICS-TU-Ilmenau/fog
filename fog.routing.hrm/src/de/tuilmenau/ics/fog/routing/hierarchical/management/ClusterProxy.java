@@ -149,22 +149,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		return mToken;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster#getHighestPriority()
-	 */
-	@Override
-	public BullyPriority getHighestPriority()
-	{
-		return getPriority();
-	}
-
-	@Override
-	public void setHighestPriority(BullyPriority pHighestPriority) {
-		/*
-		 * not needed, this is just a dummy for topology
-		 */
-	}
-
 	@Override
 	public Namespace getNamespace() {
 		return new Namespace("attachedcluster");

@@ -68,7 +68,6 @@ public class Cluster extends ControlEntity implements ICluster
 	 */
 	private boolean mNeighborInitialized = false;
 	
-	private BullyPriority mHighestPriority = null;
 	private Name mCoordName;
 	private LinkedList<AnnounceRemoteCluster> mReceivedAnnounces = null;
 	private int mToken;
@@ -357,19 +356,12 @@ public class Cluster extends ControlEntity implements ICluster
 
 		mCoordName = pCoordinatorName;
 		if(superiorCoordinatorComChannel() == null) {
-			synchronized(this) {
-				// store the L2Address of the superior coordinator 
-				setSuperiorCoordinatorL2Address(mHRMController.getHRS().getCentralFNL2Address());
-				
-				notifyAll();
-			}
+			// store the L2Address of the superior coordinator 
+			setSuperiorCoordinatorL2Address(mHRMController.getHRS().getCentralFNL2Address());
 		} else {
-			synchronized(this) {
-				// store the L2Address of the superior coordinator 
-				setSuperiorCoordinatorL2Address(pCoordinatorL2Address);
-				
-				notifyAll();
-			}
+			// store the L2Address of the superior coordinator 
+			setSuperiorCoordinatorL2Address(pCoordinatorL2Address);
+
 			mHRMController.getHRS().mapFoGNameToL2Address(pCoordinatorName, pCoordinatorL2Address);
 			
 			if(pCoordinatorComChannel.getRouteToPeer() != null && !pCoordinatorComChannel.getRouteToPeer().isEmpty()) {
@@ -513,15 +505,6 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 	}
 	
-	public BullyPriority getHighestPriority()
-	{
-		if (mHighestPriority == null){
-			mHighestPriority = new BullyPriority(this);
-		}
-		
-		return mHighestPriority;
-	}
-	
 	public int getToken()
 	{
 		return mToken;
@@ -541,11 +524,6 @@ public class Cluster extends ControlEntity implements ICluster
 	public void setToken(int pToken) {
 		Logging.log(this, "Updating token from " + mToken + " to " + pToken);
 		mToken = pToken;
-	}
-	
-	@Override
-	public void setHighestPriority(BullyPriority pHighestPriority) {
-		mHighestPriority = pHighestPriority;
 	}
 	
 	@Override

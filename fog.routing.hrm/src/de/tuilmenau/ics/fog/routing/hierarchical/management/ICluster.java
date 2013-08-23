@@ -74,28 +74,8 @@ public interface ICluster extends Serializable
 	
 	/**
 	 * 
-	 * @param pHighestPriority This is the highest priority that was found for the set of participating node.
-	 */
-	public void setHighestPriority(BullyPriority pHighestPriority);
-
-	/**
-	 * 
-	 * @return The concurrently known highest priority of all priorities provided by the connection end points
-	 * is provided here.
-	 */
-	public BullyPriority getHighestPriority();
-	
-	/**
-	 * 
 	 * @param pObj Provide the object for comparison
 	 * @return Return true in case the objects are equal to each other.
 	 */
 	public boolean equals(Object pObj);
-	
-	/**
-	 * It is possible, to address more than one destination within one packet - for that purpose a multiplexer is used.
-	 * 
-	 * @return The multiplexer that is associated to this cluster is returned here.
-	 */
-//	public ComChannelMuxer getMultiplexer();
 }

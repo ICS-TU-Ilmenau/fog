@@ -89,7 +89,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	
 	private Name mCoordinatorName = null;
 	private int mToken;
-	private BullyPriority mHighestPriority = null;
 	private List<AbstractRoutingGraphNode> mClustersToNotify;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
 	private LinkedList<AnnounceRemoteCluster> mReceivedAnnouncements;
@@ -883,11 +882,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		return mToken;
 	}
 
-	@Override
-	public BullyPriority getHighestPriority() {
-		return mHighestPriority;
-	}
-	
 	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
 	{
 		/**
@@ -1142,11 +1136,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			}
 		}
 		
-	}
-
-	@Override
-	public void setHighestPriority(BullyPriority pHighestPriority) {
-		mHighestPriority = pHighestPriority;
 	}
 
 	@Override
