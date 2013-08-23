@@ -287,7 +287,7 @@ public class Elector implements Localization
 
 			if (mParentCluster.getCoordinator() != null){
 				// create the packet
-				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mHRMController.getNodeName(), mParentCluster.getPriority(), mParentCluster.getCoordinator().toLocation() + "@" + HRMController.getHostName(), mParentCluster.getToken());
+				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mHRMController.getNodeName(), mParentCluster.getPriority(), mParentCluster.getCoordinator().toLocation() + "@" + HRMController.getHostName(), mParentCluster.superiorCoordinatorID());
 		
 				// send broadcast
 				mParentCluster.sendClusterBroadcast(tPacketBullyAnnounce);

@@ -13,51 +13,49 @@ import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
-public class ClusterName implements Serializable, ICluster, AbstractRoutingGraphNode
+public class ClusterName extends ControlEntity implements Serializable, ICluster, AbstractRoutingGraphNode
 {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 3027076881853652810L;
-	private int mToken;
 	private Long mClusterID;
-	private HierarchyLevel mHierarchyLevel = null;
 	
 	/**
+	 * Constructor
 	 * 
-	 * @param pToken token of the cluster
-	 * @param pClusterID ID of the cluster
-	 * @param pLevel level of the cluster
+	 * @param pHRMController
+	 * @param pHierarchyLevel
+	 * @param pCoordinatorID
+	 * @param pClusterID
 	 */
-	public ClusterName(int pToken, Long pClusterID, HierarchyLevel pLevel)
+	public ClusterName(HRMController pHRMController, HierarchyLevel pHierarchyLevel, int pCoordinatorID, Long pClusterID)
 	{
+		super(pHRMController, pHierarchyLevel);
+		
 		mClusterID = pClusterID;
-		mToken = pToken;
-		mHierarchyLevel = pLevel;
+		setSuperiorCoordinatorID(pCoordinatorID);
+		setCoordinatorID(pCoordinatorID);
 	}
 	
-	@Override
-	public String toString()
-	{
-		return getClass().getSimpleName() + "(ClusterID=" + mClusterID + ", Tok=" + mToken + (mHierarchyLevel != null ? ", HierLvl.=" + mHierarchyLevel.getValue() : "") + ")"; 
-	}
-
-	@Override
-	public void setPriority(BullyPriority pPriority) {
-		
-	}
-
 	@Override
 	public Long getClusterID() {
 		return mClusterID;
 	}
 
 	@Override
-	public HierarchyLevel getHierarchyLevel() {
-		return mHierarchyLevel;
+	public String toString()
+	{
+		return getClass().getSimpleName() + "(ClusterID=" + mClusterID + ", CoordID=" + superiorCoordinatorID() + (getHierarchyLevel() != null ? ", HierLvl.=" + getHierarchyLevel().getValue() : "") + ")"; 
+	}
+
+	@Override
+	public void setPriority(BullyPriority pPriority) {
+		
 	}
 
 	@Override
@@ -86,19 +84,13 @@ public class ClusterName implements Serializable, ICluster, AbstractRoutingGraph
 	}
 
 	@Override
-	public int getToken() {
-		return mToken;
-	}
-
-
-	@Override
 	public boolean equals(Object pObj)
 	{
 		boolean tResult = false;
 		
 		if(pObj instanceof ICluster) {
 			ICluster tCluster = (ICluster) pObj;
-			if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getToken() == getToken() && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
+			if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getCoordinatorID() == getCoordinatorID() && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
 				tResult = true;
 			} 
 		}

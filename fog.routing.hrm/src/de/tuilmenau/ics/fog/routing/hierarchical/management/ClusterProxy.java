@@ -9,8 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
-import java.rmi.RemoteException;
-
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
@@ -19,7 +17,6 @@ import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -37,7 +34,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	 */
 	private HRMController mHRMController;
 
-	private int mToken;
 	private Long mClusterID;
 
 	private Name mCoordName;
@@ -50,16 +46,20 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	 * @param pHierarchyLevel the hierarchy level
 	 * @param pCoordName
 	 * @param pAddress
-	 * @param pToken
+	 * @param pCoordinatorID
 	 */
-	public ClusterProxy(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, Name pCoordName, HRMName pAddress, int pToken)
+	public ClusterProxy(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, Name pCoordName, HRMName pAddress, int pCoordinatorID)
 	{	
 		super(pHRMController, pHierarchyLevel);
 
 		mClusterID = pClusterID;
 		mHRMController = pHRMController;
+
 		mCoordName = pCoordName;
-		mToken = pToken;
+		
+		setSuperiorCoordinatorID(pCoordinatorID);
+		setCoordinatorID(pCoordinatorID);
+		
 		setCoordinatorName(pCoordName);
 		
 		// register the ClusterProxy at the local ARG
@@ -110,7 +110,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		ICluster tCluster = mHRMController.getClusterByID(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
+		ICluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pAnnounce.getLevel(), pAnnounce.getToken(), pAnnounce.getClusterID()));
 		if(tCluster == null)
 		{
 			Logging.log(this, "     ..creating cluster proxy");
@@ -126,7 +126,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		/*
 		 * function checks whether neighbor relation was established earlier
 		 */
-		registerNeighbor((ControlEntity)tCluster);
+		registerNeighborARG((ControlEntity)tCluster);
 
 		if(pAnnounce.getCoordinatorName() != null) {
 			RoutingService tRS = (RoutingService)mHRMController.getNode().getRoutingService();
@@ -141,12 +141,8 @@ public class ClusterProxy extends ControlEntity implements ICluster
 
 	@Override
 	public void setToken(int pToken) {
-		mToken = pToken;
-	}
-
-	@Override
-	public int getToken() {
-		return mToken;
+		setSuperiorCoordinatorID(pToken);
+		setCoordinatorID(pToken);
 	}
 
 	@Override
@@ -243,7 +239,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	private String idToString()
 	{
 		if (getHRMID() == null){
-			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getPriority().getValue();
+			return "ID=" + getClusterID() + ", CoordID=" + superiorCoordinatorID() +  ", Prio=" + getPriority().getValue();
 		}else{
 			return "HRMID=" + getHRMID().toString();
 		}

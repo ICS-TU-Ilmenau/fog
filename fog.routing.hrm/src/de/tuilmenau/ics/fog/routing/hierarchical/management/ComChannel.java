@@ -257,14 +257,11 @@ public class ComChannel
 	{
 		// create destination description
 		ClusterName tDestinationClusterName = getRemoteClusterName();
-		if(getParent() instanceof Coordinator) {
-			tDestinationClusterName = new ClusterName(((ICluster)getParent()).getToken(), getPeerL2Address().getComplexAddress().longValue(), getParent().getHierarchyLevel());
-		}
 		
 		Logging.log(this, "Sending " + pData + " to destination " + tDestinationClusterName);
 
 		// create the source description
-		ClusterName tSourceClusterName = new ClusterName(((ICluster)getParent()).getToken(), ((ICluster)getParent()).getClusterID(), getParent().getHierarchyLevel());
+		ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().superiorCoordinatorID(), ((ICluster)getParent()).getClusterID());
 		
 		// create the Multiplex-Header
 		MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pData);
@@ -532,58 +529,58 @@ public class ComChannel
 			} 
 		}
 		
-		/**
-		 * RequestCoordinator
-		 */
-		if (pData instanceof RequestCoordinator) {
-			RequestCoordinator tRequestCoordinatorPacket = (RequestCoordinator) pData;
-			
-			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "CHANNEL-received from \"" + mParent + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
-
-			if(!tRequestCoordinatorPacket.isAnswer()) {
-				if(getParent().superiorCoordinatorComChannel() != null) {
-					ICluster tCluster = mHRMController.getClusterWithCoordinatorOnLevel(getParent().getHierarchyLevel().getValue());
-					Logging.log(this, "Name of coordinator is " + tCluster.getCoordinatorName());
-					
-					int tToken = tCluster.getToken();
-					Name tCoordinatorName = tCluster.getCoordinatorName();
-					L2Address tCoordL2Addr = ((ControlEntity)tCluster).superiorCoordinatorL2Address();
-					
-					long tCoordinatorAddress = tCoordL2Addr.getComplexAddress().longValue();
-					DiscoveryEntry tEntry = new DiscoveryEntry(tToken, tCoordinatorName, tCoordinatorAddress, tCoordL2Addr, tCluster.getHierarchyLevel());
-					tEntry.setPriority(getParent().getPriority());
-					tEntry.setRoutingVectors(getPath(tCoordL2Addr));
-					tRequestCoordinatorPacket.addDiscoveryEntry(tEntry);
-					tRequestCoordinatorPacket.setCoordinatorKnown(true);
-					tRequestCoordinatorPacket.setAnswer();
-				} else {
-					tRequestCoordinatorPacket.setCoordinatorKnown(false);
-					tRequestCoordinatorPacket.setAnswer();
-				}
-				
-				// send packet
-				sendPacket(tRequestCoordinatorPacket);
-				
-			} else {
-				if(tRequestCoordinatorPacket.isCoordinatorKnown()) {
-					mKnowsCoordinator = true;
-				} else {
-					mKnowsCoordinator = false;
-				}
-				if(tRequestCoordinatorPacket.getDiscoveryEntries() != null) {
-					for(DiscoveryEntry tEntry : tRequestCoordinatorPacket.getDiscoveryEntries()) {
-						ClusterName tDummy = handleDiscoveryEntry(tEntry);
-						L2Address tCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
-						mHRMController.getClusterByID(new ClusterName(((ICluster)getParent()).getToken(), tCentralFNL2Address.getComplexAddress().longValue(), getParent().getHierarchyLevel())).registerNeighbor(mHRMController.getClusterByID(tDummy));
-					}
-				}
-				synchronized(tRequestCoordinatorPacket) {
-					Logging.log(this, "Received answer to " + tRequestCoordinatorPacket + ", notifying");
-					tRequestCoordinatorPacket.notifyAll();
-				}
-			}
-		}
+//		/**
+//		 * RequestCoordinator
+//		 */
+//		if (pData instanceof RequestCoordinator) {
+//			RequestCoordinator tRequestCoordinatorPacket = (RequestCoordinator) pData;
+//			
+//			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+//				Logging.log(this, "CHANNEL-received from \"" + mParent + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
+//
+//			if(!tRequestCoordinatorPacket.isAnswer()) {
+//				if(getParent().superiorCoordinatorComChannel() != null) {
+//					ICluster tCluster = mHRMController.getClusterWithCoordinatorOnLevel(getParent().getHierarchyLevel().getValue());
+//					Logging.log(this, "Name of coordinator is " + tCluster.getCoordinatorName());
+//					
+//					int tToken = tCluster.superiorCoordinatorID();
+//					Name tCoordinatorName = tCluster.getCoordinatorName();
+//					L2Address tCoordL2Addr = ((ControlEntity)tCluster).superiorCoordinatorL2Address();
+//					
+//					long tCoordinatorAddress = tCoordL2Addr.getComplexAddress().longValue();
+//					DiscoveryEntry tEntry = new DiscoveryEntry(tToken, tCoordinatorName, tCoordinatorAddress, tCoordL2Addr, tCluster.getHierarchyLevel());
+//					tEntry.setPriority(getParent().getPriority());
+//					tEntry.setRoutingVectors(getPath(tCoordL2Addr));
+//					tRequestCoordinatorPacket.addDiscoveryEntry(tEntry);
+//					tRequestCoordinatorPacket.setCoordinatorKnown(true);
+//					tRequestCoordinatorPacket.setAnswer();
+//				} else {
+//					tRequestCoordinatorPacket.setCoordinatorKnown(false);
+//					tRequestCoordinatorPacket.setAnswer();
+//				}
+//				
+//				// send packet
+//				sendPacket(tRequestCoordinatorPacket);
+//				
+//			} else {
+//				if(tRequestCoordinatorPacket.isCoordinatorKnown()) {
+//					mKnowsCoordinator = true;
+//				} else {
+//					mKnowsCoordinator = false;
+//				}
+//				if(tRequestCoordinatorPacket.getDiscoveryEntries() != null) {
+//					for(DiscoveryEntry tEntry : tRequestCoordinatorPacket.getDiscoveryEntries()) {
+//						ClusterName tDummy = handleDiscoveryEntry(tEntry);
+//						Cluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().superiorCoordinatorID(), getParent().getClusterID()));
+//						tCluster.registerNeighborARG(mHRMController.getClusterByID(tDummy));
+//					}
+//				}
+//				synchronized(tRequestCoordinatorPacket) {
+//					Logging.log(this, "Received answer to " + tRequestCoordinatorPacket + ", notifying");
+//					tRequestCoordinatorPacket.notifyAll();
+//				}
+//			}
+//		}
 
 		return true;
 	}
@@ -624,29 +621,27 @@ public class ComChannel
 	 * information on how to get to the cluster(s coordinator) provided as second argument
 	 * 
 	 * @param pDiscovery entry of the entity that has to be informed about the cluster provided as second argument
-	 * @param pCluster as cluster (along with the coordinator) to which a path has to be filled into the discovery entry
+	 * @param pDestination as cluster (along with the coordinator) to which a path has to be filled into the discovery entry
 	 * @throws NetworkException 
 	 * @throws PropertyException in case the requirements to the target coordinator can not be fulfilled
 	 */
-	private void getPathTo(NestedDiscovery pDiscovery, ICluster pCluster) throws NetworkException, PropertyException
+	private void getPathTo(NestedDiscovery pDiscovery, ControlEntity pDestination) throws NetworkException, PropertyException
 	{
-		if(pCluster.getCoordinatorName() != null) {
-			L2Address tCoordL2Addr = ((ControlEntity)pCluster).superiorCoordinatorL2Address();
+		L2Address tCoordL2Addr = ((ControlEntity)pDestination).superiorCoordinatorL2Address();
 
-			DiscoveryEntry tEntry = new DiscoveryEntry(pCluster.getToken(), pCluster.getCoordinatorName(), pCluster.getClusterID(), tCoordL2Addr, pCluster.getHierarchyLevel());
-			tEntry.setClusterHops(mHRMController.getClusterDistance((ControlEntity)pCluster));
-			tEntry.setPriority(pCluster.getPriority());
-			tEntry.setRoutingVectors(getPath(tCoordL2Addr));
-			
-			List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(getParent(), (ControlEntity)pCluster);
-			if(!tClusterList.isEmpty()) {
-				ICluster tPredecessorCluster = (ICluster) mHRMController.getOtherEndOfLinkARG((ControlEntity)pCluster, tClusterList.get(tClusterList.size() - 1));
-				ClusterName tPredecessorClusterName = new ClusterName(tPredecessorCluster.getToken(), tPredecessorCluster.getClusterID(), tPredecessorCluster.getHierarchyLevel());
-				tEntry.setPredecessor(tPredecessorClusterName);
-			}
-			
-			pDiscovery.addDiscoveryEntry(tEntry);
+		DiscoveryEntry tEntry = new DiscoveryEntry(pDestination.getCoordinatorID(), ((ICluster)pDestination).getCoordinatorName(), pDestination.getClusterID(), tCoordL2Addr, pDestination.getHierarchyLevel());
+		tEntry.setClusterHops(mHRMController.getClusterDistance((ControlEntity)pDestination));
+		tEntry.setPriority(pDestination.getPriority());
+		tEntry.setRoutingVectors(getPath(tCoordL2Addr));
+		
+		List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(getParent(), (ControlEntity)pDestination);
+		if(!tClusterList.isEmpty()) {
+			ICluster tPredecessorCluster = (ICluster) mHRMController.getOtherEndOfLinkARG((ControlEntity)pDestination, tClusterList.get(tClusterList.size() - 1));
+			ClusterName tPredecessorClusterName = new ClusterName(mHRMController, tPredecessorCluster.getHierarchyLevel(), tPredecessorCluster.getCoordinatorID(), tPredecessorCluster.getClusterID());
+			tEntry.setPredecessor(tPredecessorClusterName);
 		}
+		
+		pDiscovery.addDiscoveryEntry(tEntry);
 	}
 	
 
@@ -691,7 +686,7 @@ public class ComChannel
 	public void handleClusterDiscovery(NestedDiscovery pDiscovery, boolean pRequest) throws PropertyException, NetworkException
 	{
 		if(pRequest){
-			Cluster tSourceCluster = mHRMController.getClusterByID(new ClusterName(pDiscovery.getToken(), pDiscovery.getSourceClusterID(), pDiscovery.getLevel()));
+			Cluster tSourceCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pDiscovery.getLevel(), pDiscovery.getToken(), pDiscovery.getSourceClusterID()));
 			if(tSourceCluster == null) {
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteClusterName());
 			}
@@ -716,14 +711,14 @@ public class ComChannel
 								continue;
 							}
 						}
-						int tToken = ((ICluster)tControlEntity).getToken();
+						int tToken = ((ICluster)tControlEntity).getCoordinatorID();
 						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
-							getPathTo(pDiscovery, (ICluster)tControlEntity);
+							getPathTo(pDiscovery, tControlEntity);
 							for(ControlEntity tNeighbor : tControlEntity.getNeighborsARG()) {
 								ICluster tNeighborICluster = (ICluster)tNeighbor; //TODO: entfernen, wenn ICluster vollstaendig entfernt ist
 
-								ClusterName tFirstClusterName = new ClusterName(tICluster.getToken(), tICluster.getClusterID(), tICluster.getHierarchyLevel()); 
-								ClusterName tSecondClusterName = new ClusterName(tNeighborICluster.getToken(), tNeighborICluster.getClusterID(), tNeighbor.getHierarchyLevel()); 
+								ClusterName tFirstClusterName = new ClusterName(mHRMController, tICluster.getHierarchyLevel(), tICluster.getCoordinatorID(), tICluster.getClusterID()); 
+								ClusterName tSecondClusterName = new ClusterName(mHRMController, tNeighbor.getHierarchyLevel(), tNeighborICluster.getCoordinatorID(), tNeighborICluster.getClusterID()); 
 								pDiscovery.addNeighborRelation(tFirstClusterName, tSecondClusterName);
 							}
 						} else {
@@ -756,9 +751,9 @@ public class ComChannel
 			}
 		}
 
-		Cluster tNewCluster = mHRMController.getClusterByID(new ClusterName(pEntry.getToken(), pEntry.getClusterID(), pEntry.getLevel()));
+		Cluster tNewCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pEntry.getLevel(), pEntry.getToken(), pEntry.getClusterID()));
 		if(tNewCluster != null) {
-			tResult = new ClusterName(tNewCluster.getToken(), tNewCluster.getClusterID(), tNewCluster.getHierarchyLevel());
+			tResult = new ClusterName(mHRMController, tNewCluster.getHierarchyLevel(), tNewCluster.getCoordinatorID(), tNewCluster.getClusterID());
 		}else{
 			/*
 			 * Be aware of the fact that the new attached cluster has lower level
@@ -771,7 +766,7 @@ public class ComChannel
 			tClusterProxy.setPriority(pEntry.getPriority());
 			mHRMController.getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorName(), pEntry.getCoordinatorL2Address());
 			Logging.log(this, "Created " + tClusterProxy);
-			tResult = new ClusterName(tClusterProxy.getToken(), tClusterProxy.getClusterID(), tClusterProxy.getHierarchyLevel());
+			tResult = new ClusterName(mHRMController, tClusterProxy.getHierarchyLevel(), tClusterProxy.getCoordinatorID(), tClusterProxy.getClusterID());
 		}
 		
 		return tResult;

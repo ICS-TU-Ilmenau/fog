@@ -10,14 +10,12 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
-import java.rmi.RemoteException;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -49,11 +47,6 @@ public class Cluster extends ControlEntity implements ICluster
 	private static long sClusterIDMachineMultiplier = -1;
 
 	/**
-	 * Stores the unique cluster ID
-	 */
-	private Long mClusterID;
-
-	/**
 	 * Stores the elector which is responsible for coordinator elections for this cluster.
 	 */
 	private Elector mElector = null;
@@ -70,7 +63,6 @@ public class Cluster extends ControlEntity implements ICluster
 	
 	private Name mCoordName;
 	private LinkedList<AnnounceRemoteCluster> mReceivedAnnounces = null;
-	private int mToken;
 
 	/**
 	 * Stores a reference to the local coordinator instance if the local router is also the coordinator for this cluster
@@ -97,14 +89,14 @@ public class Cluster extends ControlEntity implements ICluster
 		// set the ClusterID
 		if ((pClusterID == null) || (pClusterID < 0)){
 			// create an ID for the cluster
-			mClusterID = createClusterID();
+			setClusterID(createClusterID());
 
-			Logging.log(this, "ClusterID - created unique clusterID " + mClusterID);
+			Logging.log(this, "ClusterID - created unique clusterID " + getClusterID());
 		}else{
 			// use the ClusterID from outside
-			mClusterID = pClusterID;
+			setClusterID(pClusterID);
 
-			Logging.log(this, "ClusterID - using pre-defined clusterID " + mClusterID);
+			Logging.log(this, "ClusterID - using pre-defined clusterID " + getClusterID());
 		}
 
 		mReceivedAnnounces = new LinkedList<AnnounceRemoteCluster>();
@@ -145,7 +137,7 @@ public class Cluster extends ControlEntity implements ICluster
 				Logging.log(this, "      ..found known neighbor cluster: " + tCluster);
 				
 				// add this cluster as neighbor to the already known one
-				tCluster.registerNeighbor(this);
+				tCluster.registerNeighborARG(this);
 			}
 		}
 		
@@ -245,23 +237,13 @@ public class Cluster extends ControlEntity implements ICluster
 	}
 	
 	/**
-	 * Returns the full ClusterID (including the machine specific multiplier)
-	 * 
-	 *  @return the full ClusterID
-	 */
-	public Long getClusterID()
-	{
-		return mClusterID;
-	}
-	
-	/**
 	 * Returns the machine-local ClusterID (excluding the machine specific multiplier)
 	 * 
 	 * @return the machine-local ClusterID
 	 */
 	public long getGUIClusterID()
 	{
-		return mClusterID / clusterIDMachineMultiplier();
+		return getClusterID() / clusterIDMachineMultiplier();
 	}
 	
 	/**
@@ -346,14 +328,15 @@ public class Cluster extends ControlEntity implements ICluster
 		mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
-	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
+	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordinatorID, L2Address pCoordinatorL2Address)
 	{
-		super.setSuperiorCoordinator(pCoordinatorComChannel, pCoordinatorName, pCoordToken, pCoordinatorL2Address);
+		super.setSuperiorCoordinator(pCoordinatorComChannel, pCoordinatorName, pCoordinatorID, pCoordinatorL2Address);
 
 		L2Address tLocalCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
 	
-		setToken(pCoordToken);
-
+		// make sure that a programming mistakes returns also the right unique ID of the superior coordinator
+		setCoordinatorID(pCoordinatorID);
+		
 		mCoordName = pCoordinatorName;
 		if(superiorCoordinatorComChannel() == null) {
 			// store the L2Address of the superior coordinator 
@@ -378,7 +361,7 @@ public class Cluster extends ControlEntity implements ICluster
 				Logging.log(this, "CLUSTER-CEP - found already known neighbor cluster: " + tNeighborCluster);
 
 				Logging.log(this, "Preparing neighbor zone announcement");
-				AnnounceRemoteCluster tAnnounce = new AnnounceRemoteCluster(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, getToken(), mClusterID);
+				AnnounceRemoteCluster tAnnounce = new AnnounceRemoteCluster(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, superiorCoordinatorID(), getClusterID());
 				tAnnounce.setCoordinatorsPriority(getPriority()); //TODO : ???
 				if(pCoordinatorComChannel != null) {
 					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorComChannel.getRouteToPeer(), tLocalCentralFNL2Address, pCoordinatorComChannel.getPeerL2Address()));
@@ -412,20 +395,19 @@ public class Cluster extends ControlEntity implements ICluster
 				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
 			}
 		}
-		Cluster tCluster = mHRMController.getClusterByID(new ClusterName(pAnnounce.getToken(), pAnnounce.getClusterID(), pAnnounce.getLevel()));
+		Cluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pAnnounce.getLevel(), pAnnounce.getToken(), pAnnounce.getClusterID()));
 		if(tCluster != null) {
 			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
-			registerNeighbor(tCluster);
+			registerNeighborARG(tCluster);
 		}else{
 			Logging.log(this, "     ..creating cluster proxy");
 			ClusterProxy tNeighborCluster = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
 			mHRMController.setSourceIntermediateCluster(tNeighborCluster, this);
 			tNeighborCluster.setPriority(pAnnounce.getCoordinatorsPriority());
-			tNeighborCluster.setToken(pAnnounce.getToken());
 			
 			mHRMController.getHRS().mapFoGNameToL2Address(tNeighborCluster.getCoordinatorName(),  pAnnounce.getCoordAddress());
 			
-			registerNeighbor(tCluster);
+			registerNeighborARG(tCluster);
 		}
 		
 		if(pAnnounce.getCoordinatorName() != null) {
@@ -484,7 +466,7 @@ public class Cluster extends ControlEntity implements ICluster
 					Logging.log(this, "Removing " + this + " as participating CEP from " + this);
 					getComChannels().remove(this);
 				}
-				registerNeighbor(mHRMController.getClusterByID(pComChannel.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
+				registerNeighborARG(mHRMController.getClusterByID(pComChannel.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
 			}
 		}
 	}
@@ -505,11 +487,6 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 	}
 	
-	public int getToken()
-	{
-		return mToken;
-	}
-	
 	public void setCoordinatorName(Name pCoordName)
 	{
 		mCoordName = pCoordName;
@@ -522,8 +499,8 @@ public class Cluster extends ControlEntity implements ICluster
 	
 	@Override
 	public void setToken(int pToken) {
-		Logging.log(this, "Updating token from " + mToken + " to " + pToken);
-		mToken = pToken;
+		setSuperiorCoordinatorID(pToken);
+		setCoordinatorID(pToken);
 	}
 	
 	@Override
@@ -538,7 +515,7 @@ public class Cluster extends ControlEntity implements ICluster
 	
 	public int hashCode()
 	{
-		return mClusterID.intValue();
+		return getClusterID().intValue();
 	}
 
 	
@@ -604,7 +581,7 @@ public class Cluster extends ControlEntity implements ICluster
 	private String idToString()
 	{
 		if (getHRMID() == null){
-			return "ID=" + getClusterID() + ", Tok=" + mToken +  ", NodePrio=" + getPriority().getValue();
+			return "ID=" + getClusterID() + ", CoordID=" + superiorCoordinatorID() +  ", Prio=" + getPriority().getValue();
 		}else{
 			return "HRMID=" + getHRMID().toString();
 		}

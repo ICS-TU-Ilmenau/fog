@@ -68,6 +68,12 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private ComChannel mSuperiorCoordinatorComChannel = null;
 
 	/**
+	 * Stores the unique ID of the superior coordinator.
+	 * For a Cluster object, this is the coordinator of the cluster's coordinator.
+	 */
+	private int mSuperiorCoordinatorID = 0;
+	
+	/**
 	 * Stores the L2Address of the superior coordinator.
 	 */
 	private L2Address mSuperiorCoordinatorL2Address = null;
@@ -77,6 +83,16 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	private int mSuperiorCoordinatorUpdateCounter = 0;
 
+	/**
+	 * Stores the unique cluster ID
+	 */
+	private Long mClusterID;
+
+	/**
+	 * Stores the unique coordinator ID
+	 */
+	private int mCoordinatorID;
+	
 	/**
 	 * Constructor
 	 */
@@ -228,7 +244,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 *  
 	 * @param pNeighbor the neighbor, which should be registered
 	 */
-	public void registerNeighbor(ControlEntity pNeighbor)
+	public void registerNeighborARG(ControlEntity pNeighbor)
 	{
 		Logging.log(this, "Registering neighbor: " + pNeighbor);
 
@@ -262,7 +278,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				mHRMController.registerLinkARG(pNeighbor, this, tLink);
 	
 				// backward call
-				pNeighbor.registerNeighbor(this);
+				pNeighbor.registerNeighborARG(this);
 			}else{
 				Logging.log(this, "Neighbor " + pNeighbor + " is already known");
 			}
@@ -291,7 +307,17 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		return tResult;
 	}
 
-	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
+	/**
+	 * Sets the superior coordinator.
+	 * For a coordinator instance, this is its superior coordinator.
+	 * For a cluster instance, this is its local coordinator (which is also superior).
+	 * 
+	 * @param pCoordinatorComChannel
+	 * @param pCoordinatorName
+	 * @param pCoordinatorID
+	 * @param pCoordinatorL2Address
+	 */
+	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordinatorID, L2Address pCoordinatorL2Address)
 	{
 		Logging.log(this, "Setting new superior coordinator (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorL2Address);
 
@@ -300,6 +326,29 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		
 		// store the L2Address of the superior coordinator
 		setSuperiorCoordinatorL2Address(pCoordinatorL2Address);
+		
+		// store the unique ID of the superior coordinator
+		setSuperiorCoordinatorID(pCoordinatorID);
+	}
+
+	/**
+	 * Sets the unique ID of the superior coordinator
+	 * 
+	 * @param pCoordinatorID the unique ID
+	 */
+	protected void setSuperiorCoordinatorID(int pCoordinatorID)
+	{
+		mSuperiorCoordinatorID = pCoordinatorID;
+	}
+
+	/**
+	 * Returns the unique ID of the superior coordinator
+	 * 
+	 * @return the unique ID of the superior coordinator
+	 */
+	public int superiorCoordinatorID()
+	{
+		return mSuperiorCoordinatorID;
 	}
 
 	/**
@@ -309,7 +358,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 *  
 	 * @param pComChannel the new communication channel
 	 */
-	public void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
+	protected void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
 	{
 		mSuperiorCoordinatorComChannel = pComChannel;
 	}
@@ -329,7 +378,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 *  
 	 * @param pAddr the new L2Address
 	 */
-	public void setSuperiorCoordinatorL2Address(L2Address pAddr)
+	protected void setSuperiorCoordinatorL2Address(L2Address pAddr)
 	{
 		mSuperiorCoordinatorL2Address = pAddr;
 	}
@@ -344,6 +393,46 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		return mSuperiorCoordinatorL2Address;
 	}
 
+	/**
+	 * Returns the full ClusterID (including the machine specific multiplier)
+	 * 
+	 *  @return the full ClusterID
+	 */
+	public Long getClusterID()
+	{
+		return mClusterID;
+	}
+	
+	/**
+	 * Sets the cluster ID
+	 * 
+	 * @param pNewClusterID the new cluster ID
+	 */
+	protected void setClusterID(Long pNewClusterID)
+	{
+		mClusterID = pNewClusterID;
+	}
+	
+	/**
+	 * Returns the full CoordinatorID (including the machine specific multiplier)
+	 * 
+	 *  @return the full CoordinatorID
+	 */
+	public int getCoordinatorID()
+	{
+		return mCoordinatorID;
+	}
+	
+	/**
+	 * Sets the cluster ID
+	 * 
+	 * @param pNewCoordinatorID the new cluster ID
+	 */
+	protected void setCoordinatorID(int pNewCoordinatorID)
+	{
+		mCoordinatorID = pNewCoordinatorID;
+	}
+	
 	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pComChannel)
 	{
 		//TODO: remove this
@@ -488,7 +577,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				
 				//Logging.log(this, "EQUALS COMPARING with " + pObj + ": " + tICluster.getClusterID() + "<=>" + tThisICluster.getClusterID() + ", " + tICluster.getToken() + "<=>" + tThisICluster.getToken() + ", " + tICluster.getHierarchyLevel().getValue() + "<=>" + getHierarchyLevel().getValue());
 
-				if (tICluster.getClusterID().equals(tThisICluster.getClusterID()) && (tICluster.getToken() == tThisICluster.getToken()) && (tICluster.getHierarchyLevel().equals(getHierarchyLevel()))) {
+				if (tICluster.getClusterID().equals(tThisICluster.getClusterID()) && (tICluster.getCoordinatorID() == tThisICluster.getCoordinatorID()) && (tICluster.getHierarchyLevel().equals(getHierarchyLevel()))) {
 					return true;
 				}
 			}

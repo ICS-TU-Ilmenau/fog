@@ -70,7 +70,7 @@ public interface ICluster extends Serializable
 	 * 
 	 * @return The token that is used for additional identification of the cluster is provided here.
 	 */
-	public int getToken();
+	public int getCoordinatorID();
 	
 	/**
 	 * 

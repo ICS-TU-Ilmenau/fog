@@ -646,7 +646,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	     */
 	    Logging.log(this, "    ..creating new communication channel");
 		ComChannel tComChannel = new ComChannel(this, tCreatedCluster, tComSession);
-		tComChannel.setRemoteClusterName(new ClusterName(tCreatedCluster.getToken(), tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel()));
+		tComChannel.setRemoteClusterName(new ClusterName(this, tCreatedCluster.getHierarchyLevel(), tCreatedCluster.getCoordinatorID(), tCreatedCluster.getClusterID()));
 		
 		/**
 		 * Describe the new created cluster
@@ -1236,8 +1236,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 				{
 					Logging.log(this, "       ..[" + i + "]: " + tLocalCluster);
 					
-					ClusterName tJoinClusterName = new ClusterName(tPropClusterDescription.getCoordinatorID(), tPropClusterDescription.getClusterID(), tPropClusterDescription.getHierarchyLevel());
-					ClusterName tJoinClusterNameTok0 = new ClusterName(0, tPropClusterDescription.getClusterID(), tPropClusterDescription.getHierarchyLevel());
+					ClusterName tJoinClusterName = new ClusterName(this, tPropClusterDescription.getHierarchyLevel(), tPropClusterDescription.getCoordinatorID(), tPropClusterDescription.getClusterID());
+					ClusterName tJoinClusterNameTok0 = new ClusterName(this, tPropClusterDescription.getHierarchyLevel(), 0, tPropClusterDescription.getClusterID());
 
 					// do we already know the described cluster?
 					if(tLocalCluster.equals(tJoinClusterNameTok0) || tPropClusterDescription.getCoordinatorID() != 0 && tLocalCluster.equals(tJoinClusterName))	{
@@ -1282,7 +1282,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					/**
 					 * Set the remote ClusterName of the communication channel
 					 */
-					ClusterName tClusterName = new ClusterName(tClusterMemberDescription.getCoordinatorID(), tClusterMemberDescription.getClusterID(), new HierarchyLevel(this, tPropClusterDescription.getHierarchyLevel().getValue() - 1));
+					ClusterName tClusterName = new ClusterName(this, new HierarchyLevel(this, tPropClusterDescription.getHierarchyLevel().getValue() - 1), tClusterMemberDescription.getCoordinatorID(), tClusterMemberDescription.getClusterID());
 					Logging.log(this, "     ..setting remote ClusterName: " + tClusterName);
 					tComChannel.setRemoteClusterName(tClusterName);
 					
@@ -1336,7 +1336,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 								/**
 								 * Create a ClusterName object for the neighbor entry
 								 */
-								ClusterName tNeighborDescriptionClusterName = new ClusterName(tNeighborDescription.getToken(), tNeighborDescription.getClusterID(), tNeighborDescription.getLevel());
+								ClusterName tNeighborDescriptionClusterName = new ClusterName(this, tNeighborDescription.getLevel(), tNeighborDescription.getToken(), tNeighborDescription.getClusterID());
 								
 								
 								/**
