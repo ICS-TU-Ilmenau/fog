@@ -1245,7 +1245,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 			 * PARSE: cluster description from remote side
 			 ******************************************************/
 			if(tPropClusterDescription != null) {
-				Logging.log(this, "       ..found cluster description: " + tPropClusterDescription);
+				Logging.log(this, "    ..found cluster description: " + tPropClusterDescription);
 
 				ComSession tComSession = null;
 				Cluster tTargetCluster = null;
@@ -1254,11 +1254,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 				 * Search if the cluster from the ClusterDescriptionProperty is already locally known
 				 */
 				LinkedList<Cluster> tClusters = getAllClusters();
-				Logging.log(this, "       ..searching for described cluster among " + tClusters.size() + " known clusters:");
+				Logging.log(this, "    ..searching for described cluster among " + tClusters.size() + " known clusters:");
 				int i = 0;
 				for(Cluster tLocalCluster : tClusters)
 				{
-					Logging.log(this, "       ..[" + i + "]: " + tLocalCluster);
+					Logging.log(this, "    ..[" + i + "]: " + tLocalCluster);
 					
 					ClusterName tJoinClusterName = new ClusterName(this, tPropClusterDescription.getHierarchyLevel(), tPropClusterDescription.getCoordinatorID(), tPropClusterDescription.getClusterID());
 					ClusterName tJoinClusterNameTok0 = new ClusterName(this, tPropClusterDescription.getHierarchyLevel(), 0, tPropClusterDescription.getClusterID());
@@ -1276,7 +1276,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				 * Create a new cluster object if the described cluster doesn't have a local representation yet
 				 */
 				if (tTargetCluster == null){
-					Logging.log(this, "     ..creating new local cluster object for handling remote cluster with description: " + tPropClusterDescription); 
+					Logging.log(this, "    ..creating new local cluster object for handling remote cluster with description: " + tPropClusterDescription); 
 					tTargetCluster = Cluster.create(this, new Long(tPropClusterDescription.getClusterID()), tPropClusterDescription.getHierarchyLevel());
 					setSourceIntermediateCluster(tTargetCluster, tTargetCluster); //TODO : ??
 				}

@@ -83,7 +83,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	/**
 	 * This is the coordinator counter, which allows for globally (related to a physical simulation machine) unique coordinator IDs.
 	 */
-	private static long sNextFreeCoordinatorID = 0;
+	private static long sNextFreeCoordinatorID = 1;
 
 	private Name mCoordinatorName = null;
 	private List<AbstractRoutingGraphNode> mClustersToNotify;
@@ -132,7 +132,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 * 
 	 * @return the ClusterID
 	 */
-	private long createCoordinatorID()
+	static private long createCoordinatorID()
 	{
 		// get the current unique ID counter
 		long tResult = sNextFreeCoordinatorID * idMachineMultiplier();
@@ -588,6 +588,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		
 				Logging.log(this, "Maximum radius is " + tMaxRadius);
 		
+				/**
+				 * Create the cluster ID for the new cluster, which should consist of the control entities we connect to in the next steps
+				 */
+				Long tIDFutureCluster = Cluster.createClusterID();
+
 				for(int tRadius = 1; tRadius <= tMaxRadius; tRadius++) {
 					
 					String tString = new String(">>> Expanding to radius (" + tRadius + "/" + tMaxRadius + ", possible clusters:");
@@ -620,7 +625,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					}
 					mClustersToNotify = tClustersToNotify;
 					Logging.log(this, "clusters that are remaining for this round: " + mClustersToNotify);
-					connectToNeighborCoordinators(tRadius);
+					connectToNeighborCoordinators(tRadius, tIDFutureCluster);
 				}
 				/*
 				for(CoordinatorCEP tCEP : mCEPs) {
@@ -675,7 +680,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 	}
 	
-	public void connectToNeighborCoordinator(ICluster pTargetCluster)
+	/**
+	 * Connect to the coordinator of the target cluster
+	 * @param pTargetCluster
+	 */
+	public void connectToNeighborCoordinator(ICluster pTargetCluster, Long pIDForFutureCluster)
 	{
 		Logging.log(this, "############## Connecting to neighbor coordinator: " + pTargetCluster);
 		
@@ -699,7 +708,8 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			ControlEntity tTargetControlEntity = (ControlEntity)pTargetCluster;
 
 			Logging.log(this, "    ..creating cluster description");
-			ClusterDescriptionProperty tPropClusterDescription = new ClusterDescriptionProperty(tTargetControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue(), tTargetClusterHierLvl, pTargetCluster.getCoordinatorID());
+			
+			ClusterDescriptionProperty tPropClusterDescription = new ClusterDescriptionProperty(pIDForFutureCluster, tTargetClusterHierLvl, pTargetCluster.getCoordinatorID());
 			
 			ComSession tComSession = new ComSession(mHRMController, false, tSourceClusterHierLvl);
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNodeName());
@@ -852,7 +862,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 	}
 
-	private boolean connectToNeighborCoordinators(int pRadius)
+	private boolean connectToNeighborCoordinators(int pRadius, Long pIDFutureCluster)
 	{
 		for(AbstractRoutingGraphNode tNode : mClustersToNotify) {
 			if(tNode instanceof ICluster) {
@@ -876,7 +886,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					 * was it really this cluster? -> reevaluate
 					 */
 					Logging.log(this, "L" + super.getHierarchyLevel().getValue() + "-adding connection to " + tName + " for cluster " + tNode);
-					connectToNeighborCoordinator(tCluster);
+					connectToNeighborCoordinator(tCluster, pIDFutureCluster);
 					//new CoordinatorCEP(mParentCluster.getCoordinator().getLogger(), mParentCluster.getCoordinator(), this, false);
 					mConnectedEntities.add(tName);
 				}
