@@ -471,7 +471,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		/**
 		 * AUTO CLUSTERING
 		 */
-		if(getHierarchyLevel().getValue() < HRMConfig.Hierarchy.HEIGHT) {
+		if(!getHierarchyLevel().isHighest()) {
 			if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){
 				Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
 

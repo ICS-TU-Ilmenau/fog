@@ -994,7 +994,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					}
 				}
 			}else{
-				Logging.err(this, "Maximum hierarchy height " + (HRMConfig.Hierarchy.HEIGHT - 1) + " is already reached.");
+				Logging.err(this, "Maximum hierarchy height " + (tLocalClusterLevel.getValue()) + " is already reached.");
 			}
 		}
 		
@@ -1035,7 +1035,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					Logging.err(this, "Coordinator is invalid, skipping clustering request");
 				}
 			}else{
-				Logging.err(this, "Maximum hierarchy height " + (HRMConfig.Hierarchy.HEIGHT - 1) + " is already reached.");
+				Logging.err(this, "Maximum hierarchy height " + (mCoordinator.getHierarchyLevel().getValue()) + " is already reached.");
 			}
 		}		
 		
