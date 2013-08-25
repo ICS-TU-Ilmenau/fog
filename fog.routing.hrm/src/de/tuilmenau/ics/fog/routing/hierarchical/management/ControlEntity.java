@@ -431,14 +431,14 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @return the generated multiplier
 	 */
-	protected long idMachineMultiplier()
+	static protected long idMachineMultiplier()
 	{
 		if (sIDMachineMultiplier < 0){
 			String tHostName = HRMController.getHostName();
 			if (tHostName != null){
 				sIDMachineMultiplier = (tHostName.hashCode() % 10000) * 10000;
 			}else{
-				Logging.err(this, "Unable to determine the machine-specific ClusterID multiplier because host name couldn't be indentified");
+				Logging.err(null, "Unable to determine the machine-specific ClusterID multiplier because host name couldn't be indentified");
 			}
 		}
 

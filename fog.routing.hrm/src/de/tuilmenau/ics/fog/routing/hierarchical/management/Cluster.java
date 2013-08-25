@@ -38,7 +38,7 @@ public class Cluster extends ControlEntity implements ICluster
 	/**
 	 * This is the cluster counter, which allows for globally (related to a physical simulation machine) unique cluster IDs.
 	 */
-	private static long sNextClusterFreeID = 0;
+	private static long sNextFreeClusterID = 1;
 
 	/**
 	 * Stores the elector which is responsible for coordinator elections for this cluster.
@@ -85,12 +85,12 @@ public class Cluster extends ControlEntity implements ICluster
 			// create an ID for the cluster
 			setClusterID(createClusterID());
 
-			Logging.log(this, "ClusterID - created unique clusterID " + getClusterID());
+			Logging.log(this, "ClusterID - created unique clusterID " + getClusterID() + "(" + getGUIClusterID() + ")");
 		}else{
 			// use the ClusterID from outside
 			setClusterID(pClusterID);
 
-			Logging.log(this, "ClusterID - using pre-defined clusterID " + getClusterID());
+			Logging.log(this, "ClusterID - using pre-defined clusterID " + getClusterID() + "(" + getGUIClusterID() + ")");
 		}
 
 		mReceivedAnnounces = new LinkedList<AnnounceRemoteCluster>();
@@ -170,13 +170,13 @@ public class Cluster extends ControlEntity implements ICluster
 	 * 
 	 * @return the ClusterID
 	 */
-	private long createClusterID()
+	static public long createClusterID()
 	{
 		// get the current unique ID counter
-		long tResult = sNextClusterFreeID * idMachineMultiplier();
+		long tResult = sNextFreeClusterID * idMachineMultiplier();
 
 		// make sure the next ID isn't equal
-		sNextClusterFreeID++;
+		sNextFreeClusterID++;
 	
 		return tResult;
 	}
