@@ -736,6 +736,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	
 	/**
 	 * Registers a link in the local L2 specific routing graph
+	 * HINT: This function must not block. Otherwise, the entire FoGSiEm GUI will hang until this functions returns.
 	 * 
 	 *  @param pFrom the FN where the link begins
 	 *  @param pGate the Gate (link) which is to be registered

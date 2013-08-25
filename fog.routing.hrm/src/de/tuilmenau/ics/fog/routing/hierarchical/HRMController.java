@@ -693,6 +693,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				try {
 				    Logging.log(this, "    ..connecting to: " + tNeighborName + " with requirements: " + tConnectionRequirements);
 					tConnection = getHost().connectBlock(tNeighborName, tConnectionRequirements, getNode().getIdentity());
+				    Logging.log(this, "    ..connectBlock() FINISHED");
 				} catch (NetworkException tExc) {
 					Logging.err(tHRMController, "Unable to connecto to " + tNeighborName, tExc);
 				}
@@ -733,6 +734,10 @@ public class HRMController extends Application implements IServerCallback, IEven
 					if(tRouteToNeighborFN != null) {
 						tFSession.setRouteToPeer(tRouteToNeighborFN);
 					}
+
+					Logging.log(this, "Connection thread for " + tNeighborName + " finished");
+				}else{
+					Logging.log(this, "Connection thread for " + tNeighborName + " failed");
 				}
 			}
 		};
@@ -741,28 +746,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 		 * Start the connection thread
 		 */
 		tThread.start();
-		
-		/**
-		 * Wait until the connection thread has finished
-		 */
-		int tLoop = 0;
-		while ((tThread.isAlive()) && (tLoop < HRMConfig.Hierarchy.MAX_TIMEOUTS_FOR_CONNECTION_TO_NEIGHBOR)){
-			try {
-				wait(HRMConfig.Hierarchy.WAITING_PERIOD_FOR_CONNECTION_TO_NEIGHBOR);
-				if (tLoop > 0){
-					Logging.log(this, "Waiting for connection (thread) to neighbor " + pNeighborL2Address);					
-				}
-			} catch (InterruptedException e) {
-				Logging.warn(this, "Got an interruption when connection was triggered to neighbor " + pNeighborL2Address);
-			}
-			tLoop++;
-		}
-		
-		if (mCounterOutgoingConnections > tOldCounterOutgoingConnections){
-			Logging.log(this, "Connection thread for " + tNeighborName + " finished");
-		}else{
-			Logging.log(this, "Connection thread for " + tNeighborName + " failed");
-		}
 	}
 
 	/**

@@ -143,19 +143,6 @@ public class HRMConfig
 		 * This causes ADDITIONAL LOOPBACK SIGNALING.
 		 */
 		public static final boolean SIGNALING_INCLUDES_LOCALHOST = false;
-
-		/**
-		 * Defines the milliseconds of waiting time before another check of the connection
-		 * towards a physical neighbor is processed. IF such a check fails, a timeout is count.
-		 */
-		public static final long WAITING_PERIOD_FOR_CONNECTION_TO_NEIGHBOR = 250;
-
-		/**
-		 * Defines the allowed timeouts for a connection towards a physical neighbor.
-		 * A value of 20 here and 250 for the waiting time means: (20 * 250 ms = 5 seconds) of 
-		 * waiting until an error is detected. 
-		 */
-		public static final int MAX_TIMEOUTS_FOR_CONNECTION_TO_NEIGHBOR = 20;
 	}
 	
 	/**
