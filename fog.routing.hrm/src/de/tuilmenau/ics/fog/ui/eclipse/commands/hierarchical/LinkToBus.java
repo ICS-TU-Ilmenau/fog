@@ -14,7 +14,7 @@ import java.util.LinkedList;
 
 import org.eclipse.ui.IWorkbenchPartSite;
 
-import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
@@ -22,11 +22,10 @@ import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
-public class LinkToBus extends Command
+public class LinkToBus extends EclipseCommand
 {
 	private Node mSourceNode = null;
 	private AutonomousSystem mAs = null;
-	private IWorkbenchPartSite mSite = null;
 	private static String sLastSelectedBusName = null;
 	private ILowerLayer mSelectedBus = null;
 			
@@ -38,17 +37,15 @@ public class LinkToBus extends Command
 	}
 
 	/**
-	 * Initializes this Command.
+	 * Executes the command
 	 *
-	 * @param pSite the SWT site for this Command
 	 * @param pObject the object parameter
 	 */
 	@Override
-	public void init(IWorkbenchPartSite pSite, Object pObject)
+	public void execute(Object pObject)
 	{
 		Logging.log(this, "INIT - object parameter is " + pObject);
 
-		mSite = pSite;
 		if(pObject instanceof Node) {
 			mSourceNode = (Node) pObject;
 		} else if(pObject instanceof HRMController) {
@@ -57,11 +54,7 @@ public class LinkToBus extends Command
 			throw new RuntimeException(this +" requires a Node object instead of " + pObject +" to proceed.");
 		}
 		mAs = mSourceNode.getAS();
-	}
 
-	@Override
-	public void main() throws RemoteException
-	{
 		if(mSourceNode != null) {
 			showBusDialog();
 			
@@ -116,7 +109,7 @@ public class LinkToBus extends Command
 		}
 
 		// ask the user to which bus should the node be attached to
-		int tSelectedBusNr = SelectFromListDialog.open(mSite.getShell(), "Select bus", "At which bus should node " + mSourceNode.toString() + " be attached to?", tPreSelectedBusNr, tPossibleBusNames);
+		int tSelectedBusNr = SelectFromListDialog.open(getSite().getShell(), "Select bus", "At which bus should node " + mSourceNode.toString() + " be attached to?", tPreSelectedBusNr, tPossibleBusNames);
 
 		Logging.log(this, "Source node: " + mSourceNode);
 

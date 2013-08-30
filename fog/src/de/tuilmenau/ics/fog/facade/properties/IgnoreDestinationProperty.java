@@ -36,7 +36,7 @@ public class IgnoreDestinationProperty extends AbstractProperty
 	public IgnoreDestinationProperty(Binding server) throws NetworkException
 	{
 		if(server instanceof ServerFN) {
-			destinationName = ((ServerFN) server).getNode().getRoutingService().getNameFor((ServerFN) server);
+			destinationName = ((ServerFN) server).getEntity().getRoutingService().getNameFor((ServerFN) server);
 		} else {
 			throw new NetworkException("Can not ignore destination of server " +server +" because its routing service name is not known.");
 		}

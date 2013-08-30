@@ -144,7 +144,7 @@ public class ClusterDescriptionProperty extends AbstractProperty
 	 */
 	public String toString()
 	{
-		String tResult = getClass().getSimpleName() + "(";
+		String tResult = getClass().getSimpleName() + "(ClusterID=" + mClusterID + ", CoordID=" + mCoordinatorID + ", ";
 		
 		synchronized (mClusterMemberDescriptions) {
 			tResult += mClusterMemberDescriptions.size() + " member descriptions)";

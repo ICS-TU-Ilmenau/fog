@@ -12,7 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.io.Serializable;
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.application.Session;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
@@ -96,6 +96,14 @@ public class ComSession extends Session
 	public boolean write(Serializable pData)
 	{
 		boolean tResult = false;
+		
+		if (pData instanceof MultiplexHeader){
+			MultiplexHeader tMultiplexHeader = (MultiplexHeader)pData;
+			
+			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
+				Logging.log(this, "SENDING MULTIPLEX HEADER with destination: " + tMultiplexHeader.getReceiverClusterName()  + ", payload=" + tMultiplexHeader.getPayload());
+			}
+		}
 		
 		if(getConnection() != null && getConnection().isConnected()) {
 			try	{
@@ -293,7 +301,7 @@ public class ComSession extends Session
 	 * 
 	 * @param pMultiplexHeader the multiplex-packet
 	 */
-	private void handleMultiplexPacket(MultiplexHeader pMultiplexHeader)
+	private void handleMultiplexHeader(MultiplexHeader pMultiplexHeader)
 	{
 		/**
 		 * Get the target from the Multiplex-Header
@@ -301,7 +309,7 @@ public class ComSession extends Session
 		ClusterName tDestination = pMultiplexHeader.getReceiverClusterName();
 
 		if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-			Logging.log(this, "Forwarding data to destination: " + tDestination);
+			Logging.log(this, "RECEIVING MULTIPLEX HEADER with destination: " + tDestination  + ", payload=" + pMultiplexHeader.getPayload());
 		}
 		
 		/**
@@ -323,7 +331,7 @@ public class ComSession extends Session
 		Serializable tPayload = pMultiplexHeader.getPayload();
 
 		/**
-		 * Forward the payload
+		 * Forward the payload to the correct communication channel
 		 */
 		if (tDestinationComChannel != null){
 			try {
@@ -333,7 +341,8 @@ public class ComSession extends Session
 				Logging.err(this, "Unable to forward payload " + tPayload + " to " + tDestination + " via " + tDestinationComChannel);
 			}
 		} else {
-			Logging.warn(this, "Unable to find the communication channel for destination: " + tDestination);
+			Logging.warn(this, "Unable to find the communication channel for destination: " + tDestination + ", known communication channels are:");
+			Logging.warn(this, tComChannels.toString());
 		}
 	}
 
@@ -369,7 +378,7 @@ public class ComSession extends Session
 				Logging.log(this, "MULTIPLEX PACKET received: " + tMultiplexHeader);
 			}
 			
-			handleMultiplexPacket(tMultiplexHeader);
+			handleMultiplexHeader(tMultiplexHeader);
 		}
 
 		/**

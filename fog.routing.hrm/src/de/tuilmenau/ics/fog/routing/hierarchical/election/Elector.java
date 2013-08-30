@@ -404,19 +404,14 @@ public class Elector implements Localization
 			// set correct elector state
 			setElectorState(ElectorState.ELECTED);
 	
-			// get the node
-			Node tNode = mHRMController.getNode();
-			
 			// get the coordinator from the parental cluster
 			Coordinator tCoordinator = mParentCluster.getCoordinator();
 			if (tCoordinator == null){
 				// create new coordinator instance
 				tCoordinator = new Coordinator(mParentCluster);
 			}
-	
-			Name tNodeName = tNode.getRoutingService().getNameFor(tNode.getCentralFN());
-			
-			mParentCluster.setSuperiorCoordinator(null, tNode.getCentralFN().getName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), (L2Address)tNodeName);
+				
+			mParentCluster.setSuperiorCoordinator(null, mHRMController.getNodeName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), mHRMController.getHRS().getCentralFNL2Address());
 	
 			// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
 			signalAnnounceBroadcast();

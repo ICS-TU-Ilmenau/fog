@@ -22,9 +22,9 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.widgets.Display;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.packets.Packet;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.FunctionalGate;
 import de.tuilmenau.ics.fog.ui.Viewable;
@@ -43,9 +43,9 @@ public class VideoOSDGate extends FunctionalGate
 	private String mOSDText = "default OSD";
 	private static OSType sOsType = OSDetector.getOsType();
 	
-	public VideoOSDGate(Node pNode, ForwardingElement pNextNode, HashMap<String, Serializable> pConfigParams, Identity pOwner)
+	public VideoOSDGate(FoGEntity pEntity, ForwardingElement pNextNode, HashMap<String, Serializable> pConfigParams, Identity pOwner)
 	{
-		super(pNode, pNextNode, VideoOSD.VIDEOOSD, pOwner);		
+		super(pEntity, pNextNode, VideoOSD.VIDEOOSD, pOwner);		
 		if (pConfigParams != null) {
 			mOSDText = (String)pConfigParams.get(VideoOSDProperty.HashKey_OSDText);
 		}

@@ -222,4 +222,22 @@ public class TopologyParserDIMES extends TopologyParser
 		return "as_only".equalsIgnoreCase(typeOfScenario) || !csvNodes.hasColumn("IP");
 	}
 
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.importer.ITopologyParser#getBandWidth()
+	 */
+	@Override
+	public float getBandWidth()
+	{
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.importer.ITopologyParser#getDelay()
+	 */
+	@Override
+	public float getDelay() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

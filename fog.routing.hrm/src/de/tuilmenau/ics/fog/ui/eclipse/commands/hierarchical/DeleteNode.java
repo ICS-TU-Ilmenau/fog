@@ -9,16 +9,12 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
-import java.rmi.RemoteException;
-
-import org.eclipse.ui.IWorkbenchPartSite;
-
-import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
-public class DeleteNode extends Command
+public class DeleteNode extends EclipseCommand
 {
 	private Node mNode = null;
 			
@@ -27,12 +23,12 @@ public class DeleteNode extends Command
 	}
 
 	/**
-	 * Initializes this Command.
-	 * 
+	 * Executes the command
+	 *
 	 * @param pObject the object parameter
 	 */
 	@Override
-	public void init(IWorkbenchPartSite pSite, Object pObject)
+	public void execute(Object pObject)
 	{
 		Logging.log(this, "INIT - object parameter is " + pObject);
 
@@ -43,11 +39,7 @@ public class DeleteNode extends Command
 		} else {
 			throw new RuntimeException(this +" requires a Node object instead of " + pObject +" to proceed.");
 		}
-	}
-
-	@Override
-	public void main() throws RemoteException
-	{
+		
 		if(mNode != null) {
 			showAckDialog();
 			

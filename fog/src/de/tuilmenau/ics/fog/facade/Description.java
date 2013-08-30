@@ -361,11 +361,7 @@ public class Description implements Iterable<Property>, Serializable
 		// empty list is equal to no description (both best effort)
 		if(obj == null) return isBestEffort();
 		
-		if(obj instanceof Description) {
-			if(isBestEffort() && ((Description) obj).isBestEffort()) {
-				return true;
-			}
-			
+		if(obj instanceof Description) {			
 			Description descr = (Description) obj;
 			Iterator<Property> tIterator = iterator();
 			Iterator<Property> tNewIterator = descr.iterator();
@@ -457,6 +453,18 @@ public class Description implements Iterable<Property>, Serializable
 		
 		return descr;
 	}
+	
+	/**
+	 * @return Requirements modeling the assumptions about TCP
+	 */
+	public static Description createTCPlike()
+	{
+		Description requ = new Description();
+		
+		requ.set(new TransportProperty(true, false));
+		
+		return requ;
+	}
 
 	/**
 	 * Factory method for getting an empty description for avoiding
@@ -529,4 +537,5 @@ public class Description implements Iterable<Property>, Serializable
 	}
 	
 	private LinkedList<Property> mProperties;
+
 }

@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
+import java.awt.Color;
 import java.io.Serializable;
 import java.util.LinkedList;
 
@@ -23,14 +24,14 @@ import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.topology.IElementDecorator;
+import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * A control entity can be either a cluster or a coordinator instance.
  * This class is used to concentrate common function of clusters and coordinators
  */
-public abstract class ControlEntity implements AbstractRoutingGraphNode, Localization, IElementDecorator
+public abstract class ControlEntity implements AbstractRoutingGraphNode, Localization, Decorator
 {
 	private static final long serialVersionUID = 6770007191316056223L;
 
@@ -436,7 +437,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if (sIDMachineMultiplier < 0){
 			String tHostName = HRMController.getHostName();
 			if (tHostName != null){
-				sIDMachineMultiplier = (tHostName.hashCode() % 10000) * 10000;
+				sIDMachineMultiplier = Math.abs((tHostName.hashCode() % 10000) * 10000);
 			}else{
 				Logging.err(null, "Unable to determine the machine-specific ClusterID multiplier because host name couldn't be indentified");
 			}
@@ -669,46 +670,48 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 
 	/**
 	 * Defines the decoration color for the ARG viewer
+	 * 
+	 * @return color for the control entity or null if no specific color is available
 	 */
 	@Override
-	public Object getDecorationParameter()
+	public Color getColor()
 	{
+		Float tSaturation = Float.valueOf(1.0f - 0.5f * (getHierarchyLevel().getValue() + 1)/ HRMConfig.Hierarchy.HEIGHT);
+		
 		if (this instanceof Coordinator){
-			return IElementDecorator.Color.GREEN;
+			return new Color(0, tSaturation, 0);
 		}
 		if (this instanceof Cluster){
-			return IElementDecorator.Color.RED;
+			return new Color(tSaturation, 0, 0);
 		}
 		if (this instanceof ClusterProxy){
-			return IElementDecorator.Color.BLUE;
+			return new Color(0, 0, tSaturation);
 		}
 		
 		return null;
 	}
-
-	@Override
-	public void setDecorationParameter(Object pDecoration)
-	{
-		// not used, but have to be implemented for implementing interface IElementDecorator
-	}
-
+	
+	
 	/**
-	 * Defines the decoration color intensity for the ARG viewer
+	 * Defines the decoration text for the ARG viewer
+	 * 
+	 * @return text for the control entity or null if no text is available
 	 */
 	@Override
-	public Object getDecorationValue()
+	public String getText()
 	{
-		Float tResult = Float.valueOf(1.0f - 0.5f * (getHierarchyLevel().getValue() + 1)/ HRMConfig.Hierarchy.HEIGHT);
-		
-		//Logging.log(this, "Returning decoration value: " + tResult);
-		
-		return tResult;
+		return null;
 	}
-
+	
+	/**
+	 * Defines the decoration image for the ARG viewer
+	 *  
+	 * @return file name of image for the control entity or null if no specific image is available
+	 */
 	@Override
-	public void setDecorationValue(Object tLabal)
+	public String getImageName()
 	{
-		// not used, but have to be implemented for implementing interface IElementDecorator
+		return null;
 	}
 
 	/**

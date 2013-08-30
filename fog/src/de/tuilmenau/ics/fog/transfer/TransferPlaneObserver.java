@@ -16,7 +16,6 @@ package de.tuilmenau.ics.fog.transfer;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
@@ -81,10 +80,10 @@ public interface TransferPlaneObserver
 	/**
 	 * Unregister a link from a forwarding node.
 	 * 
-	 * @param pFrom Forwarding node, from which the gate is starting.
+	 * @param pNode Forwarding node, from which the gate is starting.
 	 * @param pGate Gate to delete
 	 * @return true==success; false==link was not known
 	 */
-	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate);
+	public boolean unregisterLink(ForwardingElement pNode, AbstractGate pGate); 
 }
 

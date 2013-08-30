@@ -24,12 +24,12 @@ import java.util.Map;
 import java.util.Stack;
 
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.exceptions.CreationException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.TransferPlane;
@@ -367,7 +367,7 @@ public class SocketPathCreator {
 						}
 						if(tTargetFN == null) {
 							// Need to create a new multiplexer as target FN.
-							Multiplexer tMultiplexer = new Multiplexer(tOriginFN.getNode(), tOriginFN.getNode().getController());
+							Multiplexer tMultiplexer = new Multiplexer(tOriginFN.getEntity(), tOriginFN.getEntity().getController());
 							tMultiplexer.open();
 							tCreatedFN = tMultiplexer;
 							param.updateTargetFN(tTargetFN = tMultiplexer);
@@ -388,7 +388,7 @@ public class SocketPathCreator {
 				if(tFuncDiscr == null) {
 					param.updateFunctionDescriptor(tFuncDiscr = Transparent.PURE_FORWARDING);
 				}
-				pBaseFN.getNode().getLogger().log(pBaseFN, "SocketPathCreator: Have to create gate with param \"" + param + "\" and occurrence map \"" + pOccurrenceMap + "\"");
+				pBaseFN.getEntity().getLogger().log(pBaseFN, "SocketPathCreator: Have to create gate with param \"" + param + "\" and occurrence map \"" + pOccurrenceMap + "\"");
 				createFunctionalGate(param, pOccurrenceMap, pOwner);
 				tLastActiveFN = tTargetFN;
 				tResultList.add(param);
@@ -516,7 +516,7 @@ public class SocketPathCreator {
 		 * Create concrete functional gate.
 		 **********************************************************************/
 		
-		Node tNode = tOriginFN.getNode();
+		FoGEntity tNode = tOriginFN.getEntity();
 		tNode.getLogger().log(SocketPathCreator.class, "Have to create gate with type \"" + tFuncDiscr.toString() + "\" to a FN with type \"" + tTargetFN.toString() + "\"");
 		AbstractGate tGate = GateFactoryContainer.createGate(tNode, tFuncDiscr, tTargetFN, pParam, pOwner);
 		
@@ -782,7 +782,7 @@ public class SocketPathCreator {
 					tGate.shutdown(); //TODO Synchronize?
 				}
 				catch(RuntimeException tExc) {
-					tGate.getNode().getLogger().err(tGate, "Ignoring exception during gate shutdown.", tExc);
+					tGate.getEntity().getLogger().err(tGate, "Ignoring exception during gate shutdown.", tExc);
 				}
 				
 				ForwardingNode tOriginFN = tGateOriginMap.get(tGate);
@@ -793,7 +793,7 @@ public class SocketPathCreator {
 						tOriginFN.unregisterGate(tGate);
 					}
 					catch(RuntimeException tExc) {
-						tOriginFN.getNode().getLogger().err(tGate, "Ignoring exception during gate unregistering.", tExc);
+						tOriginFN.getEntity().getLogger().err(tGate, "Ignoring exception during gate unregistering.", tExc);
 					}
 				}
 			}
@@ -867,8 +867,8 @@ public class SocketPathCreator {
 		StringBuffer sb = new StringBuffer();
 		String tLineBreak = System.getProperty("line.separator");
 		sb.append("SocketPathCreator executed");
-		if(pBaseFN != null && pBaseFN.getNode() != null && pBaseFN.getNode().getHost() != null) {
-			sb.append(" (").append(pBaseFN.getNode().getHost().toString()).append(")");
+		if(pBaseFN != null && pBaseFN.getEntity() != null && pBaseFN.getEntity().getNode() != null) {
+			sb.append(" (").append(pBaseFN.getEntity().getNode().toString()).append(")");
 		}
 		sb.append(":");
 		// Removed:
@@ -938,7 +938,7 @@ public class SocketPathCreator {
 			sb.append(")");
 		}
 		
-		pBaseFN.getNode().getLogger().log(SocketPathCreator.class, sb.toString());
+		pBaseFN.getEntity().getLogger().log(SocketPathCreator.class, sb.toString());
 	}
 	
 	
@@ -946,16 +946,17 @@ public class SocketPathCreator {
 	 * Search for a forwarding node by given name.
 	 * 
 	 * @param pName The name of the demanded forwarding node.
-	 * @param pNode The node the demanded forwarding node belongs to.
+	 * @param pEntity The node the demanded forwarding node belongs to.
 	 * 
 	 * @return Forwarding node or {@code null}.
 	 */
-	public static ForwardingNode getForwardingNodeByName(Name pName, Node pNode) {
-		if(pName == null || pNode == null) {
+	public static ForwardingNode getForwardingNodeByName(Name pName, FoGEntity pEntity)
+	{
+		if(pName == null || pEntity == null) {
 			return null;
 		}
 		//FIXME Replace this ugly construction with a nicer one to get FN by IName.
-		TransferPlane tTP = pNode.getTransferPlane();
+		TransferPlane tTP = pEntity.getTransferPlane();
 		if(tTP != null) {
 			RoutableGraph<ForwardingElement, ForwardingElement> tTopoMap = tTP.getGraph();
 			if(tTopoMap != null) {
@@ -965,7 +966,7 @@ public class SocketPathCreator {
 						for(ForwardingElement fe : tCollection) {
 							if(fe != null && fe instanceof ForwardingNode) {
 								ForwardingNode fn = (ForwardingNode) fe;
-								Name tNameFN = pNode.getRoutingService().getNameFor(fn);
+								Name tNameFN = pEntity.getRoutingService().getNameFor(fn);
 								if(tNameFN != null && pName.equals(tNameFN)) {
 									return fn;
 								}

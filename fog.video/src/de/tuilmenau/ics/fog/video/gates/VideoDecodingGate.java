@@ -25,12 +25,12 @@ import java.util.HashMap;
 import jniImports.VideoDecoder;
 
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.streaming.RTP;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.FunctionalGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
@@ -65,14 +65,14 @@ public class VideoDecodingGate extends FunctionalGate {
 	@Viewable("OutputFormat")
 	private String mOutputFormat = "RGB32";
 	/**
-	 * @param pNode The node this gate belongs to.
+	 * @param pEntity The node this gate belongs to.
 	 * @param pNext The ForwardingElement the functional gate points to
 	 * (in most cases a multiplexer).
 	 * @param pConfigParams 
 	 */
-	public VideoDecodingGate(Node pNode, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
+	public VideoDecodingGate(FoGEntity pEntity, ForwardingElement pNext, HashMap<String, Serializable> pConfigParams, Identity pOwner)
 	{
-		super(pNode, pNext, VideoDecoding.DECODER, pOwner);
+		super(pEntity, pNext, VideoDecoding.DECODER, pOwner);
 		
 		if (pConfigParams != null) {
 			mInputCodec = (String)pConfigParams.get(VideoDecodingProperty.HashKey_VideoCodec);

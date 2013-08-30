@@ -52,7 +52,7 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	 * @param pLinkObject the link object
 	 */
 	@Override
-	public synchronized void storeLink(NodeObject pFrom, NodeObject pTo, LinkObject pLinkObject)
+	public synchronized void link(NodeObject pFrom, NodeObject pTo, LinkObject pLinkObject)
 	{
 		// check if parameters are valid
 		if((pFrom != null) && (pTo != null) && (pLinkObject != null)) {

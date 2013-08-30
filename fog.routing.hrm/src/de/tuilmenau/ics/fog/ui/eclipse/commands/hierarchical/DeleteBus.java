@@ -9,16 +9,12 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
-import java.rmi.RemoteException;
-
-import org.eclipse.ui.IWorkbenchPartSite;
-
-import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.ui.Logging;
 
-public class DeleteBus extends Command
+public class DeleteBus extends EclipseCommand
 {
 	private Bus mBus = null;
 	private AutonomousSystem mAs = null;
@@ -31,13 +27,12 @@ public class DeleteBus extends Command
 	}
 
 	/**
-	 * Initializes this Command.
+	 * Executes the command
 	 *
-	 * @param pSite the SWT site for this Command
 	 * @param pObject the object parameter
 	 */
 	@Override
-	public void init(IWorkbenchPartSite pSite, Object pObject)
+	public void execute(Object pObject)
 	{
 		Logging.log(this, "INIT - object parameter is " + pObject);
 
@@ -47,11 +42,7 @@ public class DeleteBus extends Command
 			throw new RuntimeException(this +" requires a Bus object instead of " + pObject +" to proceed.");
 		}
 		mAs = mBus.getAS();
-	}
 
-	@Override
-	public void main() throws RemoteException
-	{
 		if(mBus != null) {
 			showAckDialog();
 			

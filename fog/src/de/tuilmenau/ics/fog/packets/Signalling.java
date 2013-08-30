@@ -81,7 +81,7 @@ public abstract class Signalling extends LoggableElement implements Serializable
 	 */
 	protected static void signAndSend(ForwardingNode fn, Packet packet)
 	{
-		fn.getNode().getAuthenticationService().sign(packet, fn.getOwner());
+		fn.getEntity().getAuthenticationService().sign(packet, fn.getOwner());
 		
 		fn.handlePacket(packet, null);
 	}

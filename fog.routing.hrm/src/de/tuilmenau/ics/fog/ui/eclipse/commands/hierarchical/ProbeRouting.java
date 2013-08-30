@@ -14,7 +14,8 @@ import java.util.LinkedList;
 
 import org.eclipse.ui.IWorkbenchPartSite;
 
-import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
+import de.tuilmenau.ics.fog.FoGEntity;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -30,6 +31,7 @@ import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -39,7 +41,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  *  
  *
  */
-public class ProbeRouting extends Command
+public class ProbeRouting extends EclipseCommand
 {
 	/**
 	 * Defines the node name which is used to send a packet to all nodes. 
@@ -57,7 +59,6 @@ public class ProbeRouting extends Command
 	private static int sLastTargetSelection = -1;
 
 	private Node mNode = null;
-	private IWorkbenchPartSite mSite;
 	
 	public ProbeRouting()
 	{
@@ -71,20 +72,14 @@ public class ProbeRouting extends Command
 	 * @param pObject the object parameter
 	 */
 	@Override
-	public void init(IWorkbenchPartSite site, Object object)
+	public void execute(Object object)
 	{
-		mSite = site;
 		if(object instanceof Node) {
 			mNode = (Node) object;
 		} else if(object instanceof HRMController) {
 			mNode = ((HRMController)object).getNode();
 		}
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public void main() throws Exception
-	{
+		
 		if(mNode != null) {
 			/**
 			 * determine all nodes from the simulation
@@ -106,7 +101,7 @@ public class ProbeRouting extends Command
 				tPossibilities.add(tNode.getName());
 			}
 			// show dialog
-			int tTargetSelection = SelectFromListDialog.open(mSite.getShell(), "Target(s) selection", "To which target(s) should the probe packet be send?", (sLastTargetSelection >= 0 ? sLastTargetSelection : 1), tPossibilities);
+			int tTargetSelection = SelectFromListDialog.open(getSite().getShell(), "Target(s) selection", "To which target(s) should the probe packet be send?", (sLastTargetSelection >= 0 ? sLastTargetSelection : 1), tPossibilities);
 			if (tTargetSelection >= 0){
 				sLastTargetSelection = tTargetSelection;			
 				String tTargetName = tPossibilities.get(tTargetSelection);
@@ -126,7 +121,7 @@ public class ProbeRouting extends Command
 				 * Get a reference to the naming-service
 				 */
 				try {
-					mNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
+					mNMS = HierarchicalNameMappingService.getGlobalNameMappingService(mNode.getAS().getSimulation());
 				} catch (RuntimeException tExc) {
 					mNMS = HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
 				}
@@ -138,9 +133,16 @@ public class ProbeRouting extends Command
 					 * This is the same as if the user would have directly selected this string. Thus, the two following operations are allowed - and eases the handling of our FoG GUI.
 					 */
 					// get a reference to the target node: this is possible for the GUI only
-					Node tTargetNode = tNodeList.get(tTargetSelection - 1 /* be aware of "all nodes" entry */);				
-					// get the name of the target node
-					Name tTargetNodeName = tTargetNode.getCentralFN().getName();
+					Node tTargetNode = tNodeList.get(tTargetSelection - 1 /* be aware of "all nodes" entry */);
+					
+					// get the recursive FoG layer
+					FoGEntity tFoGLayer = (FoGEntity) tTargetNode.getLayer(FoGEntity.class);
+					
+					// get the central FN of this node
+					Multiplexer tCentralFN = tFoGLayer.getCentralFN();
+
+					// get the name of the central FN
+					Name tTargetNodeName = tCentralFN.getName();
 	
 					/**
 					 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
@@ -152,9 +154,15 @@ public class ProbeRouting extends Command
 						 * We determine detailed data about the target node here.
 						 * This is the same as if the user would have directly selected this string. Thus, the following operation is allowed - and eases the handling of our FoG GUI.
 						 */
-						// get the name of the target node
-						Name tTargetNodeName = tTargetNode.getCentralFN().getName();
-	
+						// get the recursive FoG layer
+						FoGEntity tFoGLayer = (FoGEntity) tTargetNode.getLayer(FoGEntity.class);
+						
+						// get the central FN of this node
+						Multiplexer tCentralFN = tFoGLayer.getCentralFN();
+
+						// get the name of the central FN
+						Name tTargetNodeName = tCentralFN.getName();
+		
 						/**
 						 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
 						 */
@@ -178,6 +186,12 @@ public class ProbeRouting extends Command
 	{
 		Logging.log(this, "Sending probe packet to " + pTargetNodeName + ", which belongs to node " + pTargetNode);
 		
+		// get the recursive FoG layer
+		FoGEntity tFoGLayer = (FoGEntity) mNode.getLayer(FoGEntity.class);
+		
+		// get the central FN of this node
+		Multiplexer tCentralFN = tFoGLayer.getCentralFN();
+		
 		// check if we have a valid NMS
 		if (mNMS == null){
 			Logging.err(this, "Reference to NMS is invalid, cannot send a packet to " + pTargetNodeName);
@@ -199,24 +213,20 @@ public class ProbeRouting extends Command
 						 */
 						// create requirements with probe-routing property and DestinationApplication property
 						Description tConnectionReqs = new Description();
-						tConnectionReqs.set(new ProbeRoutingProperty(mNode.getCentralFN().getName().toString()));
+						tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString()));
 						tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
 						// probe connection
 						Connection tConnection = null;
 						Logging.log(this, "\n\n\nProbing a connection to " + tTargetNodeHRMID + " with requirements " + tConnectionReqs);
-						try {
-							tConnection = mNode.getHost().connectBlock(tTargetNodeHRMID, tConnectionReqs, mNode.getIdentity());
-						} catch (NetworkException tExc) {
-							Logging.err(this, "Unable to connecto to " + tTargetNodeHRMID, tExc);
-							tConnection = null;
-						}
-						
+						tConnection = mNode.getLayer(null).connect(tTargetNodeHRMID, tConnectionReqs, mNode.getIdentity());
 						/**
 						 * Disconnect by closing the connection
 						 */
 						if(tConnection != null) {
 							Logging.log(this, "        ..found valid connection to " + tTargetNodeHRMID + "(" + pTargetNodeName + ")");
 							tConnection.close();
+						}else{
+							Logging.err(this, "Unable to connecto to " + tTargetNodeHRMID);
 						}
 					}else{
 						Logging.log(this, "     ..address " + tTargetNodeHRMID + " is ignored because it is a relative one");

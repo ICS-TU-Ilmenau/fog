@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.packets;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.transfer.manager.Process;
@@ -65,10 +66,20 @@ public class OpenGateResponse extends SignallingAnswer
 			else if(process instanceof ProcessGateConstruction) {
 				ProcessGateConstruction constrProcess = (ProcessGateConstruction) process;
 				
-				constrProcess.update(peerOutgoingNumber, peerBaseRoutingName, responder);
+				try {
+					constrProcess.update(peerOutgoingNumber, peerBaseRoutingName, responder);
+				}
+				catch (NetworkException exc) {
+					constrProcess.getLogger().err(this, "Error while updating process " +constrProcess, exc);
+				}
 			}
 			else if(process instanceof ProcessRerouting) {
-				((ProcessRerouting) process).update(packet.getReturnRoute());
+				Signature signature = packet.getSenderAuthentication();
+				Identity senderIdentity = null;
+				if(signature != null) {
+					senderIdentity = signature.getIdentity();
+				}
+				((ProcessRerouting) process).update(packet.getReturnRoute(), senderIdentity);
 			}
 			else {
 				process.getLogger().err(this, "Unexpected type of process (" +process +"); can not execute.");
@@ -83,7 +94,7 @@ public class OpenGateResponse extends SignallingAnswer
 			}
 		}
 		// TODO this might be quick&dirty -> telling the controller that we received a response to trigger "repair ready" in experiments
-		process.getBase().getNode().getController().receivedOpenGateResponse();
+		process.getBase().getEntity().getController().receivedOpenGateResponse();
 		
 		return true;
 	}

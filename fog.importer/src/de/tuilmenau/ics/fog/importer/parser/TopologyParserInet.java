@@ -146,4 +146,22 @@ public class TopologyParserInet extends TopologyParser
 	public void close() {
 		// files already closed
 	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.importer.ITopologyParser#getBandWidth()
+	 */
+	@Override
+	public float getBandWidth()
+	{
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.importer.ITopologyParser#getDelay()
+	 */
+	@Override
+	public float getDelay()
+	{
+		return 0;
+	}
 }

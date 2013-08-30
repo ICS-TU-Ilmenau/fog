@@ -9,12 +9,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
-import java.rmi.RemoteException;
 import java.util.LinkedList;
 
 import org.eclipse.ui.IWorkbenchPartSite;
 
-import de.tuilmenau.ics.fog.eclipse.ui.commands.Command;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -22,12 +21,11 @@ import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
-public class LinkToNode extends Command
+public class LinkToNode extends EclipseCommand
 {
 	private Node mSourceNode = null;
 	private Node mSelectedDestinationNode = null;
 	private AutonomousSystem mAs = null;
-	private IWorkbenchPartSite mSite = null;
 	private static String sLastSelectedNodeName = null;
 	private Description mBusAttributes = null;
 	
@@ -36,17 +34,15 @@ public class LinkToNode extends Command
 	}
 
 	/**
-	 * Initializes this Command.
+	 * Executes the command
 	 *
-	 * @param pSite the SWT site for this Command
 	 * @param pObject the object parameter
 	 */
 	@Override
-	public void init(IWorkbenchPartSite pSite, Object pObject)
+	public void execute(Object pObject)
 	{
 		Logging.log(this, "INIT - object parameter is " + pObject);
 
-		mSite = pSite;
 		if(pObject instanceof Node) {
 			mSourceNode = (Node) pObject;
 		} else if(pObject instanceof HRMController) {
@@ -55,11 +51,7 @@ public class LinkToNode extends Command
 			throw new RuntimeException(this +" requires a Node object instead of " + pObject +" to proceed.");
 		}
 		mAs = mSourceNode.getAS();
-	}
 
-	@Override
-	public void main() throws RemoteException
-	{
 		if(mSourceNode != null) {
 			showBusDialogs();
 			
@@ -97,7 +89,6 @@ public class LinkToNode extends Command
 	/**
 	 * Shows the dialog which allows the user to select the destination node.
 	 */
-	@SuppressWarnings("unused")
 	private void showNodeDialog()
 	{
 		// determine how many nodes exist in the network
@@ -123,7 +114,7 @@ public class LinkToNode extends Command
 		}
 
 		// ask the user to which bus should the node be attached to
-		int tSelectedNodeNr = SelectFromListDialog.open(mSite.getShell(), "Select destination node", "To which node should node " + mSourceNode.toString() + " have a new link?", tPreSelectedNodeNr, tPossibleNodeNames);
+		int tSelectedNodeNr = SelectFromListDialog.open(getSite().getShell(), "Select destination node", "To which node should node " + mSourceNode.toString() + " have a new link?", tPreSelectedNodeNr, tPossibleNodeNames);
 
 		Logging.log(this, "Source node: " + mSourceNode);
 

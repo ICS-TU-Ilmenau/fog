@@ -9,32 +9,16 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.eclipse.ui.commands;
 
-import org.eclipse.ui.IWorkbenchPartSite;
-
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ClientFN;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
-public class CloseConnection extends Command
+public class CloseConnection implements Command
 {
-
-	public CloseConnection()
-	{
-	}
-
 	@Override
-	public void init(IWorkbenchPartSite site, Object object)
+	public void execute(Object object) throws Exception
 	{
 		if(object instanceof ClientFN) {
-			connection = (ClientFN) object;
+			((ClientFN) object).getConnectionEndPoint().close();
 		}
 	}
-
-	@Override
-	public void main() throws Exception
-	{
-		if(connection != null) {
-			connection.getConnectionEndPoint().close();
-		}
-	}
-
-	private ClientFN connection;
 }

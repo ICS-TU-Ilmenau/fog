@@ -6,4 +6,4 @@ Forwarding on Gates
 The simulator/emulator software for FoG is called **FoGSiEm**. It is an OSGi-based application, which can be started in command line or GUI mode. The GUI mode bases on the Eclipse Rich Client Platform (RCP). The core parts of FoGSiEm are available under a dual-license GPL 2.0/EPL. The GUI extensions are available under the EPL.
 Core simulator/emulator for the Future Internet architecture "Forwarding on Gates"
 
-More information and the documentation are available [in the wiki](fog/wiki/).
+More information and the documentation are available [in the wiki](https://github.com/ICS-TU-Ilmenau/fog/wiki).

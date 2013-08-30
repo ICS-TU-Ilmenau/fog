@@ -22,6 +22,7 @@ import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.launcher.SimulationObserver;
 import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
+import de.tuilmenau.ics.fog.routing.simulated.RootRoutingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -40,7 +41,8 @@ public class RSLoggingSimulationObserver extends FileLogObserver implements Simu
 	@Override
 	public void created(Simulation sim)
 	{
-		timeBase = sim.getTimeBase();
+		this.sim = sim;
+		this.timeBase = sim.getTimeBase();
 		
 		try {
 			open(sim.getBaseDirectory(), null);
@@ -66,7 +68,7 @@ public class RSLoggingSimulationObserver extends FileLogObserver implements Simu
 	@Override
 	public void ended()
 	{
-		Collection<RemoteRoutingService> allRS = RoutingServiceInstanceRegister.getInstance().getAll();
+		Collection<RemoteRoutingService> allRS = RoutingServiceInstanceRegister.getInstance(sim).getAll();
 		int sumVertices = 0;
 		int sumEdges = 0;
 		int sumSize = 0;
@@ -76,21 +78,22 @@ public class RSLoggingSimulationObserver extends FileLogObserver implements Simu
 		try {
 			for(RemoteRoutingService rs : allRS) {
 				String baseName = rs.getClass().getName() +".";
+				boolean includeInSum = !(rs instanceof RootRoutingService);
 				
 				number = rs.getNumberVertices();
 				out = DoubleNode.openAsWriter(baseName +rs.getName() +".vertices");
 				out.write(number, timeBase.nowStream());
-				sumVertices += number;
+				if(includeInSum) sumVertices += number;
 				
 				number = rs.getNumberEdges();
 				out = DoubleNode.openAsWriter(baseName +rs.getName() +".edges");
 				out.write(number, timeBase.nowStream());
-				sumEdges += number;
+				if(includeInSum) sumEdges += number;
 				
 				number = rs.getSize();
 				out = DoubleNode.openAsWriter(baseName +rs.getName() +".size");
 				out.write(number, timeBase.nowStream());
-				sumSize += number;
+				if(includeInSum) sumSize += number;
 			}
 	
 			out = DoubleNode.openAsWriter("RoutingService.sumVertices");
@@ -115,5 +118,6 @@ public class RSLoggingSimulationObserver extends FileLogObserver implements Simu
 	{
 	}
 	
+	private Simulation sim;
 	private EventHandler timeBase;
 }

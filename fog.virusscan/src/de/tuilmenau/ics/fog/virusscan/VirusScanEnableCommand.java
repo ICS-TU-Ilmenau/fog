@@ -9,32 +9,17 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.virusscan;
 
-import de.tuilmenau.ics.fog.eclipse.ui.commands.SilentCommand;
 import de.tuilmenau.ics.fog.facade.Host;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
 
-public class VirusScanEnableCommand extends SilentCommand
+public class VirusScanEnableCommand implements Command
 {
-
-	public VirusScanEnableCommand()
-	{
-		super();
-	}
-	
 	@Override
-	public void init(Object object)
+	public void execute(Object object)
 	{
-		if(object instanceof Host) host = (Host) object; 
-	}
-
-	@Override
-	public void main()
-	{
-		if(host != null) {
-			host.registerCapability(new VirusScanProperty());
+		if(object instanceof Host) {
+			((Host) object).registerCapability(new VirusScanProperty());
 		}
 	}
-
-	
-	private Host host;
 }

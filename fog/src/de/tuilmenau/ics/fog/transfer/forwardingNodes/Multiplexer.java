@@ -13,15 +13,14 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.authentication.IdentityManagement;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IReceiveCallback;
 import de.tuilmenau.ics.fog.packets.Invisible;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.Signalling;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
@@ -46,7 +45,7 @@ public class Multiplexer extends GateContainer
 	 * @param node Node the FN is located on.
 	 * @param errorHandling Controller doing error handling for this FN (if null, the controller of the node is used)
 	 */
-	public Multiplexer(Node node, Controller errorHandling)
+	public Multiplexer(FoGEntity node, Controller errorHandling)
 	{
 		super(node, null, NamingLevel.NONE);
 		
@@ -56,7 +55,7 @@ public class Multiplexer extends GateContainer
 		}
 		
 		// TODO where to close it?
-		mPacketLog = PacketLogger.createLogger(mNode.getTimeBase(), this, node);
+		mPacketLog = PacketLogger.createLogger(mEntity.getTimeBase(), this, node);
 	}
 	
 	/**
@@ -66,25 +65,23 @@ public class Multiplexer extends GateContainer
 	 * @param name Name of the FN (just for GUI and debugging reasons)
 	 * @param level Level of abstraction of name
 	 * @param owner Identity of the FN (optional; null if not available)
-	 * @param dataSocket Socket received packets are forwarded to (optional; null if no application)
 	 * @param errorHandling Controller doing error handling for this FN (if null, the controller of the node is used)
 	 */
-	public Multiplexer(Node node, Name name, NamingLevel level, boolean privateForTransfer, Identity owner, IReceiveCallback dataSocket, Controller errorHandling)
+	public Multiplexer(FoGEntity entity, Name name, NamingLevel level, boolean privateForTransfer, Identity owner, Controller errorHandling)
 	{
-		super(node, name, level);
+		super(entity, name, level);
 		
 		mIsPrivate = privateForTransfer;
 		
 		mErrorGate = errorHandling;
 		if(mErrorGate == null) {
-			mErrorGate = node.getController();
+			mErrorGate = entity.getController();
 		}
 		
-		mDataSocket = dataSocket;
 		mOwner = owner;
 		
 		// TODO where to close it?
-		mPacketLog = PacketLogger.createLogger(mNode.getTimeBase(), this, node);
+		mPacketLog = PacketLogger.createLogger(mEntity.getTimeBase(), this, entity);
 	}
 	
 	/**
@@ -96,8 +93,8 @@ public class Multiplexer extends GateContainer
 	 */
 	public boolean connectMultiplexer(Multiplexer pMux)
 	{
-		TransparentGate toMux   = new TransparentGate(getNode(), pMux);
-		TransparentGate fromMux = new TransparentGate(getNode(), this);
+		TransparentGate toMux   = new TransparentGate(getEntity(), pMux);
+		TransparentGate fromMux = new TransparentGate(getEntity(), this);
 		
 		GateID toMuxGateNr   = registerGate(toMux);
 		GateID fromMuxGateNr = pMux.registerGate(fromMux);
@@ -154,7 +151,7 @@ public class Multiplexer extends GateContainer
 		// add signature
 		// if packet already authenticated and multiplexer has the possibility to add a signature
 		if(packet.pleaseAuthenticate() && (mOwner != null)) {
-			IdentityManagement authService = mNode.getAuthenticationService();
+			IdentityManagement authService = mEntity.getAuthenticationService();
 			
 			// check, if the existing signatures are acceptable
 			if(authService.check(packet)) {
@@ -207,7 +204,7 @@ public class Multiplexer extends GateContainer
 				
 				// is gate in correct state?
 				if(tNext.isReadyToReceive()) {
-					if (getNode().getCentralFN() == this) {
+					if (getEntity().getCentralFN() == this) {
 						packet.addToDownRoute(tNext.getGateID());
 					}
 					
@@ -234,7 +231,7 @@ public class Multiplexer extends GateContainer
 	 */
 	protected void handlePacket(Packet packet)
 	{
-		packet.logStats(getNode().getAS().getSimulation());
+		packet.logStats(getEntity().getNode().getAS().getSimulation());
 		
 		if(packet.getData() instanceof Signalling) {
 			Signalling tSig = (Signalling) packet.getData();
@@ -255,18 +252,12 @@ public class Multiplexer extends GateContainer
 	}
 	
 	/**
-	 * Called if a FN received data packets, which have to be
-	 * forwarded to higher layer entities.
+	 * Called if a FN received data packets, which have to be forwarded to higher layer entities.
+	 * The implementation of this class just outputs an error.
 	 */
 	protected void handleDataPacket(Packet packet)
 	{
-		if(mDataSocket != null) {
-			mLogger.trace(this, "Received " + packet +" for " +mDataSocket);
-			
-			mDataSocket.receiveData(packet.getData());
-		} else {
-			mLogger.warn(this, "Skip packet " +packet +" because socket towards app. " + getName().toString() + " is not valid (no signaling packet)");
-		}
+		mLogger.warn(this, "Skip packet " +packet +" because socket towards app. " + getName().toString() + " is not valid (no signaling packet)");
 	}
 	
 	/**
@@ -274,14 +265,14 @@ public class Multiplexer extends GateContainer
 	 */
 	public Description getDescription()
 	{
-		return getNode().getCapabilities();
+		return getEntity().getNode().getCapabilities();
 	}
 
 	@Override
 	public String toString()
 	{
-		if(mName != null) return "FN(" +mName +")@" +mNode;
-		else return "FN@" +mNode;
+		if(mName != null) return "FN(" +mName +")@" +mEntity;
+		else return "FN@" +mEntity;
 	}
 	
 	@Override
@@ -296,12 +287,11 @@ public class Multiplexer extends GateContainer
 		if(mOwner != null) {
 			return mOwner;
 		} else {
-			return mNode.getIdentity();
+			return mEntity.getIdentity();
 		}
 	}
 	
 	private Controller mErrorGate = null;
-	private IReceiveCallback mDataSocket = null;
 	private PacketLogger mPacketLog = null;
 	private boolean mIsPrivate = true;
 	

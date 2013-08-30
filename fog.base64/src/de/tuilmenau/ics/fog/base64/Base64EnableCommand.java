@@ -9,32 +9,17 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.base64;
 
-import de.tuilmenau.ics.fog.eclipse.ui.commands.SilentCommand;
 import de.tuilmenau.ics.fog.facade.Host;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
 
-public class Base64EnableCommand extends SilentCommand
+public class Base64EnableCommand implements Command
 {
-
-	public Base64EnableCommand()
-	{
-		super();
-	}
-	
 	@Override
-	public void init(Object object)
+	public void execute(Object object)
 	{
-		if(object instanceof Host) host = (Host) object; 
-	}
-
-	@Override
-	public void main()
-	{
-		if(host != null) {
-			host.registerCapability(new Base64Property(null));
+		if(object instanceof Host) {
+			((Host) object).registerCapability(new Base64Property(null));
 		}
 	}
-
-	
-	private Host host;
 }

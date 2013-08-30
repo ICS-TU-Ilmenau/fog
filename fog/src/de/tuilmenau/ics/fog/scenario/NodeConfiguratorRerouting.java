@@ -22,8 +22,8 @@ public class NodeConfiguratorRerouting implements NodeConfigurator
 	@Override
 	public void configure(String pName, AutonomousSystem pAS, Node pNode)
 	{
-		ReroutingExecutor tApp = new ReroutingExecutor(pNode, pNode.getIdentity());
-		pNode.getHost().registerApp(tApp);
+		ReroutingExecutor tApp = new ReroutingExecutor(pNode, null);
+		pNode.registerApp(tApp);
 		tApp.start();
 	}
 }

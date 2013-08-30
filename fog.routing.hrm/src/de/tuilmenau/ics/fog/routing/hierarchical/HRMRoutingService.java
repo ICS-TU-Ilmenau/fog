@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -36,13 +37,13 @@ import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
+import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.DirectDownGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.graph.RoutableGraph;
-
 
 /**
  * Routing service instance local to a host.
@@ -123,7 +124,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		mAS = pAS;
 		
 		// create name mapping instance to map FoG names to L2 addresses
-		mFoGNamesToL2AddressesMapping = new HierarchicalNameMappingService<L2Address>(HierarchicalNameMappingService.getGlobalNameMappingService(), null);
+		mFoGNamesToL2AddressesMapping = new HierarchicalNameMappingService<L2Address>(HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation()), null);
 		
 		mCoordinatorRoutingMap = new RoutableGraph<L2Address, Route>();
 	}
@@ -400,7 +401,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				// iterate over all routing segments and their stored links(GateIDs), add them to the result list
 				for(RouteSegmentPath tRouteSegment : (List<RouteSegmentPath>)tFoundRoute) {
 					for(GateID tID : tRouteSegment) {
-						tResult.add(new RoutingServiceLink(tID, null, RoutingServiceLink.DEFAULT));
+						tResult.add(new RoutingServiceLink(tID, null));
 					}
 				}
 			}
@@ -427,7 +428,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		}
 		
 		synchronized (mL2RoutingGraph) {
-			mL2RoutingGraph.storeLink(pFromL2Address, pToL2Address, pRoutingServiceLink);
+			mL2RoutingGraph.link(pFromL2Address, pToL2Address, pRoutingServiceLink);
 		}
 	}
 
@@ -671,7 +672,8 @@ public class HRMRoutingService implements RoutingService, Localization
 				L2Address tNodeL2Address = L2Address.createL2Address();
 				tNodeL2Address.setDescr(pElement.toString());
 				
-				if (pElement.equals(mNode.getCentralFN())){
+
+				if (pElement.equals(getCentralFN())){
 					Logging.log(this, "     ..registering L2 address for central FN: " + tNodeL2Address);
 					mCentralFNL2Address = tNodeL2Address;
 				}
@@ -847,13 +849,13 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * Add link to L2 specific routing graph
 		 */
-		storeL2Link(tFromL2Address, tToL2Address, new RoutingServiceLink(pGate.getGateID(), null, RoutingServiceLink.DEFAULT));
+		storeL2Link(tFromL2Address, tToL2Address, new RoutingServiceLink(pGate.getGateID(), null));
 		
 		/**
 		 * DIRECT NEIGHBOR FOUND: create a HRM connection to it
 		 */
 		if(tIsLinkToPhysicalNeigborNode) {
-			L2Address tThisHostL2Address = getL2AddressFor(mNode.getCentralFN());
+			L2Address tThisHostL2Address = getL2AddressFor(getCentralFN());
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.info(this, "      ..NODE " + tThisHostL2Address + " FOUND POSSIBLE DIRECT NEIGHBOR: " + tToL2Address + "?");
@@ -1108,7 +1110,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	public Route getRoute(Name pDestination, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException
 	{
-		return getRoute(mNode.getCentralFN(), pDestination, pRequirements, pRequester);
+		return getRoute(getCentralFN(), pDestination, pRequirements, pRequester);
 	}
 	
 	/**
@@ -1120,7 +1122,6 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pRequester the getRoute() caller
 	 * @return the determined route
 	 */
-	@SuppressWarnings("unused")
 	@Override
 	public Route getRoute(ForwardingNode pSource, Name pDestination, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException
 	{		
@@ -1495,7 +1496,24 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		return mL2RoutingGraph;
 	}
-	
+
+	/**
+	 * Returns the central FN of this node
+	 *  
+	 * @return the central FN
+	 */
+	public Multiplexer getCentralFN()
+	{
+		Multiplexer tResult = null;
+		
+		// get the recursive FoG layer
+		FoGEntity tFoGLayer = (FoGEntity) mNode.getLayer(FoGEntity.class);
+		
+		// get the central FN of this node
+		tResult = tFoGLayer.getCentralFN();
+		
+		return tResult;
+	}
 
 	
 	
@@ -1530,7 +1548,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			if(pRoute != null) {
 				Route tPath = (Route)pRoute.clone();
 				if(!mCoordinatorRoutingMap.isLinked(pFrom, pTo, tPath)) {
-					mCoordinatorRoutingMap.storeLink(pFrom, pTo, tPath);
+					mCoordinatorRoutingMap.link(pFrom, pTo, tPath);
 				}
 			}
 		} else {

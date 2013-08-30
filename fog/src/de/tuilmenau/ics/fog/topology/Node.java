@@ -23,25 +23,21 @@ import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.SumNode;
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.EventHandler;
+import de.tuilmenau.ics.fog.ExitEvent;
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.authentication.IdentityManagement;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
+import de.tuilmenau.ics.fog.facade.Layer;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.RoutingService;
-import de.tuilmenau.ics.fog.routing.RoutingServiceMultiplexer;
-import de.tuilmenau.ics.fog.topology.ILowerLayerReceive.Status;
-import de.tuilmenau.ics.fog.transfer.TransferPlane;
-import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
-import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
-import de.tuilmenau.ics.fog.transfer.manager.Controller;
-import de.tuilmenau.ics.fog.transfer.manager.ProcessRegister;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.ParameterMap;
@@ -53,7 +49,7 @@ import de.tuilmenau.ics.fog.util.ParameterMap;
  * and authentication service. Furthermore, it can be attached to lower
  * layers providing connectivity to other nodes.
  */
-public class Node extends Observable implements IElementDecorator
+public class Node extends Observable implements Host, SimulationElement, Breakable
 {
 	public Node(String pName, AutonomousSystem pAS, ParameterMap pParameters)
 	{
@@ -62,13 +58,6 @@ public class Node extends Observable implements IElementDecorator
 		isShuttingDown = false;
 		name = pName;
 		as = pAS;
-		controlgate = new Controller(this);
-		transferPlane = new TransferPlane(getTimeBase(), logger);
-
-		parameters = pParameters;
-		// Note: Do not create central FN here, because we do not have
-		//       a routing service available.
-		multiplexgate = null;
 		
 		// set capabilities of the node
 		String tCap = getParameter().get(Cap, null);
@@ -81,16 +70,14 @@ public class Node extends Observable implements IElementDecorator
 		else if("none".equalsIgnoreCase(tCap)) {
 			capabilities = new Description();
 		}
-
 		
+		authenticationService = IdentityManagement.getInstance(pAS, this);
+		ownIdentity = getAuthenticationService().createIdentity(toString());
+		mFoG = new FoGEntity(this);
 		
 		// TEST:
 //		routingService = new RoutingServiceMultiplexer();
 //		((RoutingServiceMultiplexer)routingService).add(new RoutingService(pRoutingService));
-		
-		host = new Host(this);
-		authenticationService = IdentityManagement.getInstance(pAS, host);
-		ownIdentity = getAuthenticationService().createIdentity(name.toString());
 	}
 	
 	/**
@@ -106,153 +93,26 @@ public class Node extends Observable implements IElementDecorator
 		return as;
 	}
 	
-	/**
-	 * Registers a routing service entity at a node.
-	 *  
-	 * @param pRS Local routing service entity
-	 */
-	public void registerRoutingService(RoutingService pRS)
-	{
-		if(routingService == null) {
-			routingService = pRS;
-		} else {
-			// check, if already a multiplexer available
-			if(routingService instanceof RoutingServiceMultiplexer) {
-				((RoutingServiceMultiplexer) routingService).add(pRS); 
-			} else {
-				// ... no -> create one and store old and new rs entities in it
-				RoutingService rs = routingService;
-				
-				RoutingServiceMultiplexer rsMult = new RoutingServiceMultiplexer(); 
-				rsMult.add(rs);
-				rsMult.add(pRS);
-				
-				// activate new RS multiplexer as new RS of node
-				routingService = rsMult;
-			}
-		}
-		
-		// inform transfer service about new routing service
-		transferPlane.setRoutingService(routingService);
-		
-		// send event "registered"
-		pRS.registered();
-	}
-	
-	/**
-	 * Unregisters a local routing service entity.
-	 * 
-	 * @param pRS Routing service entity to unregister
-	 * @returns true==success; false==RS was not registered
-	 */
-	public boolean unregisterRoutingService(RoutingService pRS)
-	{
-		if(routingService != null) {
-			// check, if already a multiplexer available
-			if(routingService instanceof RoutingServiceMultiplexer) {
-				return ((RoutingServiceMultiplexer) routingService).remove(pRS); 
-			} else {
-				if(routingService == pRS) {
-					routingService = null;
-					return true;
-				}
-			}
-		}
-		
-		return false;
-	}
-	
-	/**
-	 * @return Reference to routing service of node (!= null)
-	 */
-	public TransferPlane getTransferPlane()
-	{
-		// Debug check: It should not happen, since a node gets at least one
-		//              routing service created by the RoutingServiceFactory.
-		if(transferPlane == null) throw new RuntimeException("Node " +this +" does not have a routing service.");
-			
-		return transferPlane;
-	}
-	
-	public boolean hasRoutingService()
-	{
-		return routingService != null;
-	}
-	
-	public RoutingService getRoutingService()
-	{
-		return routingService;
-	}
-	
-	public Controller getController()
-	{
-		return controlgate;
-	}
-	
-	/**
-	 * The main FN is just an implementation artifact. From the FoG concept, it is
-	 * not needed. It would be possible to use several FNs within a node (e.g. one connecting
-	 * the interfaces and one connecting the services). But a central one make debugging
-	 * much easier and simplifies the attachment question for elements of the transfer
-	 * service.
-	 * 
-	 * @return The main FN of a node, which connects all interfaces and services within a node.
-	 */
-	public Multiplexer getCentralFN()
-	{
-		if(multiplexgate == null) {
-			Name nameObj = null;
-			if(!Config.Routing.REDUCE_NUMBER_FNS) {
-				nameObj = new SimpleName(NAMESPACE_HOST, name);
-			}
-			// Register node in routing services at attaching the first interface.
-			// It is important, that it is registered before the interface is created.
-			// TODO name for multiplexer is not really needed => remove it when code finished
-			multiplexgate = new Multiplexer(this, nameObj, NamingLevel.NAMES, Config.Routing.ENABLE_NODE_RS_HIERARCHY_LEVEL, ownIdentity, null, controlgate);
-			multiplexgate.open();
-		}
-		
-		return multiplexgate;
-	}
-	
-	public Identity getIdentity()
-	{
-		return ownIdentity;
-	}
-	
 	public IdentityManagement getAuthenticationService()
 	{
 		return authenticationService;
 	}
 	
-	public ProcessRegister getProcessRegister()
+	/**
+	 * @return Identity of the node (independent of protocol entity)
+	 */
+	public Identity getIdentity()
 	{
-		if(processes == null) {
-			processes = new ProcessRegister();
-		}
-		
-		return processes; 
+		return ownIdentity;
 	}
 	
-	/**
-	 * @return Host facade of this node (!= null)
-	 */
-	public Host getHost()
-	{
-		return host;
-	}
-	
-	/**
-	 * @return Configuration of the simulation (!= null)
-	 */
+	@Override
 	public Config getConfig()
 	{
 		return as.getSimulation().getConfig();
 	}
 	
-	/**
-	 * @return Parameter set of the node (!= null)
-	 */
+	@Override
 	public ParameterMap getParameter()
 	{
 		// debug check:
@@ -271,17 +131,19 @@ public class Node extends Observable implements IElementDecorator
 	 */
 	public void send(String target, Serializable data) throws NetworkException
 	{
-		if(transferPlane == null) {
-			throw new NetworkException("Node " +this +" does not have a routing service.");
+		if(mFoG == null) {
+			throw new NetworkException("Node " +this +" does not have a FoG layer.");
 		}
+		
 		Packet newpacket = null;
 		try {
-			Route route = transferPlane.getRoute(getCentralFN(), new SimpleName(NAMESPACE_HOST, target), Description.createBE(false), getIdentity());
+			Route route = mFoG.getTransferPlane().getRoute(mFoG.getCentralFN(), new SimpleName(NAMESPACE_HOST, target), Description.createBE(false), mFoG.getIdentity());
 			newpacket = new Packet(route, data);
 			newpacket.setSourceNode(name);
 			newpacket.setTargetNode(target);
 			logger.log(this, "sending packet " +newpacket);
-			multiplexgate.handlePacket(newpacket, null);
+			
+			mFoG.getCentralFN().handlePacket(newpacket, null);
 		} catch (NetworkException nExc) {
 			logger.err(this, "No route available", nExc);
 		}
@@ -290,14 +152,13 @@ public class Node extends Observable implements IElementDecorator
 
 	public NetworkInterface attach(ILowerLayer lowerLayer)
 	{
-		
-		return controlgate.addLink(lowerLayer);
+		return mFoG.getController().addLink(lowerLayer);
 	}
 	
 	public NetworkInterface detach(ILowerLayer lowerLayer)
 	{
-		if(controlgate != null) {
-			return controlgate.removeLink(lowerLayer);
+		if(mFoG != null) {
+			return mFoG.getController().removeLink(lowerLayer);
 		}
 		
 		return null;
@@ -305,7 +166,7 @@ public class Node extends Observable implements IElementDecorator
 	
 	public int getNumberLowerLayers()
 	{
-		return controlgate.getNumberLowerLayers();
+		return mFoG.getController().getNumberLowerLayers();
 	}
 	
 	public boolean isGateway()
@@ -313,6 +174,7 @@ public class Node extends Observable implements IElementDecorator
 		return true;
 	}
 	
+	@Override
 	public Status isBroken()
 	{
 		if(isBroken) {
@@ -326,12 +188,7 @@ public class Node extends Observable implements IElementDecorator
 		}
 	}
 	
-	
-	public boolean isShuttingDown()
-	{
-		return isShuttingDown;
-	}
-	
+	@Override
 	public void setBroken(boolean broken, boolean errorTypeVisible)
 	{
 		boolean stateChange = isBroken != broken;
@@ -355,6 +212,11 @@ public class Node extends Observable implements IElementDecorator
 		if(stateChange) notifyObservers(broken);
 	}
 	
+	public boolean isShuttingDown()
+	{
+		return isShuttingDown;
+	}
+	
 	/**
 	 * Tells a node to shutdown all services running on it.
 	 * It will be done in order to shutdown services before
@@ -366,7 +228,7 @@ public class Node extends Observable implements IElementDecorator
 		
 		// do not use list directly, because apps will remove themselves
 		// from the list, which invalidates iterators
-		LinkedList<Application> apps = new LinkedList<Application>(host.getApps());
+		LinkedList<Application> apps = new LinkedList<Application>(getApps());
 		
 		for(Application app : apps) {
 			app.exit();
@@ -381,28 +243,16 @@ public class Node extends Observable implements IElementDecorator
 	 * Informs node that it was deleted from the scenario.
 	 * Resets node and closes everything.
 	 */
+	@Override
 	public void deleted()
 	{
 		shutdown(true);
 		
-		if(controlgate != null)
-			controlgate.closed();
-		
-		if(multiplexgate != null)
-			multiplexgate.close();
-		
-		if((routingService != null) && (routingService instanceof RoutingServiceMultiplexer)) {
-			((RoutingServiceMultiplexer) routingService).clear();
-		}
+		mFoG.deleted();
+		mFoG = null;
 		
 		name = null;
-		routingService = null;
-		transferPlane = null;
-		host = null;
 		authenticationService = null;
-		ownIdentity	= null;
-		controlgate = null;
-		multiplexgate = null;
 	}
 	
 	private boolean repair()
@@ -411,8 +261,8 @@ public class Node extends Observable implements IElementDecorator
 			// we are broken, no repair
 			return false;
 		} else {
-			if(controlgate != null) {
-				controlgate.repair();
+			if(mFoG != null) {
+				mFoG.getController().repair();
 			}
 			
 			return true;
@@ -421,10 +271,12 @@ public class Node extends Observable implements IElementDecorator
 	
 	/**
 	 * @return Description of capabilities of this node. This includes the
-	 *         types of gates this node is able to create.
+	 *         types of gates this node is able to create. (!= null)
 	 */
 	public Description getCapabilities()
 	{
+		if(capabilities == null) capabilities = new Description();
+		
 		return capabilities;
 	}
 	
@@ -435,7 +287,7 @@ public class Node extends Observable implements IElementDecorator
 	public void setCapabilities(Description pCapabilities)
 	{
 		capabilities = pCapabilities;
-		controlgate.updateFNsCapabilties(capabilities);
+		mFoG.getController().updateFNsCapabilties(capabilities);
 	}
 	
 	/**
@@ -497,28 +349,81 @@ public class Node extends Observable implements IElementDecorator
 		if(name == null) return null;
 		else return name.toString();
 	}
-	
-	public String getDecorationParameter()
+
+	@Override
+	public Layer getLayer(Class<?> layerClass)
 	{
-		return (String) mDecorationParameter;
-	}
-	
-	public void setDecorationParameter(Object pDecorationParameter)
-	{
-		mDecorationParameter = pDecorationParameter;
-		notifyObservers();
+		if(layerClass == null) {
+			// return default
+			return mFoG;
+		}
+		else if(FoGEntity.class.equals(layerClass)) {
+			return mFoG;
+		}
+		else {
+			// currently not supported
+			return null;
+		}
 	}
 	
 	@Override
-	public Object getDecorationValue()
+	public Layer[] getLayers(Class<?> layerClass)
 	{
-		return mLabel;
+		Layer layer = getLayer(layerClass);
+		
+		if(layer != null) {
+			return new Layer[] { layer };
+		} else {
+			return new Layer[0];
+		}
+	}
+	
+	@Override
+	public LinkedList<Name> getServerNames()
+	{
+		return mRegisteredServers;		
+	}
+	
+	@Override
+	public void terminateSimulation(double inSec)
+	{
+		getTimeBase().scheduleIn(inSec, new ExitEvent(getAS().getSimulation()));
+	}
+	
+	@Override
+	public void registerCapability(Property pProperty)
+	{
+		Description tDescription = getCapabilities();
+		tDescription.set(pProperty);
+		
+		getLogger().trace(this, "Registering capabilitiy " + pProperty);
+		setCapabilities(tDescription);
 	}
 
 	@Override
-	public void setDecorationValue(Object pLabel)
+	public void registerApp(Application app)
 	{
-		mLabel = pLabel;
+		if(mApps == null) mApps = new LinkedList<Application>();
+		
+		if(!mApps.contains(app)) mApps.add(app);
+	}
+	
+	@Override
+	public LinkedList<Application> getApps()
+	{
+		if(mApps == null) mApps = new LinkedList<Application>();
+		
+		return mApps;		
+	}
+	
+	@Override
+	public boolean unregisterApp(Application app)
+	{
+		if(mApps != null) {
+			return mApps.remove(app);
+		}
+		
+		return false;
 	}
 	
 	@Override
@@ -534,20 +439,16 @@ public class Node extends Observable implements IElementDecorator
 	private String name;
 	private AutonomousSystem as;
 	private Logger logger;
-	private Controller controlgate;
-	private Multiplexer multiplexgate;
-	private TransferPlane transferPlane;
-	private RoutingService routingService;
 	private IdentityManagement authenticationService;
 	private Identity ownIdentity;
-	private Host host;
-	private ProcessRegister processes;
 	private Description capabilities;
 	private boolean isShuttingDown;
-    private Object mDecorationParameter=null;
-    private Object mLabel;
     private String countPrefixCache;
 	public static final Namespace NAMESPACE_HOST = new Namespace("host");
 	private ParameterMap parameters;
-	private final String Cap = "CAPABILITY";
+	private FoGEntity mFoG;
+	private LinkedList<Name> mRegisteredServers = new LinkedList<Name>();
+	private LinkedList<Application> mApps = null; // lazy creation
+	
+	private static final String Cap = "CAPABILITY";
 }

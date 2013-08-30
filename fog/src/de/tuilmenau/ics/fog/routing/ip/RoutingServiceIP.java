@@ -19,8 +19,8 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.application.HttpServer;
 import de.tuilmenau.ics.fog.application.InterOpIP;
-import de.tuilmenau.ics.fog.application.Session;
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointInterOpIP;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -246,7 +246,7 @@ public class RoutingServiceIP implements RoutingService
 		mLogger.trace(this, "Try to connect to InterOpIPv4 application");
 		
 		try {
-			Connection tConn = mHost.connect(SimpleName.parse(InterOpIP.INTEROP_APPL_ID), null, null);
+			Connection tConn = mHost.getLayer(null).connect(SimpleName.parse(InterOpIP.INTEROP_APPL_ID), null, null);
 			RoutingServiceIPSession mSocket2InterOpIP = new RoutingServiceIPSession(mHost.getLogger(), pTokenList);
 			mSocket2InterOpIP.start(tConn);
 		}

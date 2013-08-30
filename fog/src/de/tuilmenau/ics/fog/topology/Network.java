@@ -23,6 +23,7 @@ import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
+import de.tuilmenau.ics.graph.GraphProvider;
 import de.tuilmenau.ics.graph.RoutableGraph;
 import de.tuilmenau.ics.middleware.JiniHelper;
 
@@ -31,7 +32,7 @@ import de.tuilmenau.ics.middleware.JiniHelper;
  * Container for collecting "physical" nodes and links somehow belonging together.
  * In addition this container provides a graph representation for drawing the GUI. 
  */
-public class Network
+public class Network implements GraphProvider
 {
 	public Network(String pName, Logger pLogger, EventHandler pTimeBase)
 	{
@@ -241,13 +242,13 @@ public class Network
 		
 		return node;
 	}
-	
+
+	/**
+	 * @return Reference to host or null
+	 */
 	public Host getHostByName(String name)
 	{
-		Node node = nodelist.get(name);
-		
-		if(node != null) return node.getHost();
-		else return null;
+		return nodelist.get(name);
 	}
 	
 	public synchronized ILowerLayer getBusByName(String name)
@@ -286,21 +287,11 @@ public class Network
 		NetworkInterface interf = node.attach(lowerLayer);
 		
 		if(interf != null) {
-			mScenario.storeLink(node, lowerLayer, interf);
+			mScenario.link(node, lowerLayer, interf);
 			return true;
 		} else {
 			return false;
 		}
-	}
-	
-	/*
-	 * @param rsA partial RoutingService
-	 * @param rsB global/upper RoutingService
-	 */
-	public boolean attach(RemoteRoutingService rsA, RemoteRoutingService rsB)
-	{
-		mScenario.storeLink(rsA, rsB, "routing for " + rsA);
-		return true;
 	}
 	
 	public boolean detach(Node node, ILowerLayer lowerLayer)
@@ -375,6 +366,10 @@ public class Network
 		return mLogger;
 	}
 	
+	/**
+	 * For GUI purposes, only!
+	 */
+	@Override
 	public RoutableGraph<Object, Object> getGraph()
 	{
 		return mScenario;

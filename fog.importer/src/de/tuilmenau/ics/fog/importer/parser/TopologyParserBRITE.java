@@ -17,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
 import de.tuilmenau.ics.fog.tools.CSVReaderNamedCol;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -107,7 +108,6 @@ public class TopologyParserBRITE extends TopologyParser
 	public boolean readNextEdgeEntry() {
 		try {
 			line = reader.readLine();
-			mLogger.log(this, "Read " + line);
 			if( line!= null && !(line.equals("\n")) && ! (line.equals(""))) {
 				mLogger.log(this, "Will return true");
 				return true;
@@ -173,4 +173,39 @@ public class TopologyParserBRITE extends TopologyParser
     	tParameter +="=1";
         return tParameter;
     }
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.importer.ITopologyParser#getBandWidth()
+	 */
+	@Override
+	public float getBandWidth()
+	{
+		try {
+			float tBW = Float.parseFloat(line.split("\t")[5]);
+			if(tBW < 1) {
+				tBW *= 1000;
+			}
+			return tBW;
+		} catch (Exception tExc) {
+			mLogger.err(this, "Unable to parse bandwidth value", tExc);
+			return 0;
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.importer.ITopologyParser#getDelay()
+	 */
+	@Override
+	public float getDelay()
+	{
+		try {
+			float tDelay = Float.parseFloat(line.split("\t")[4]);
+			return tDelay;
+		} catch (Exception tExc) {
+			mLogger.err(this, "Unable to parse bandwidth value", tExc);
+			return 0;
+		}
+	}
+	
+	
 }

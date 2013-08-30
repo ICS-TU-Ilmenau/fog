@@ -743,7 +743,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				    Logging.log(this, "    ..creating cluster member description for the found cluster " + tCoordinatorCluster);
 					ClusterMemberDescription tClusterMemberDescription = tPropClusterDescription.addClusterMember(tCoordinatorCluster.getClusterID(), tCoordinatorCluster.getCoordinatorID(), tCoordinatorCluster.getPriority());
 					
-					tClusterMemberDescription.setSourceName(mHRMController.getNode().getCentralFN().getName());
+					tClusterMemberDescription.setSourceName(mHRMController.getNodeName());
 					tClusterMemberDescription.setSourceL2Address(tLocalCentralFNL2Address);
 					
 					List<AbstractRoutingGraphLink> tClusterListToRemote = mHRMController.getRouteARG(tCoordinator.getCluster(), tControlEntityTargetCluster);
@@ -792,66 +792,67 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			
 			Logging.log(this, "Connecting to " + pTargetCluster);
 			Connection tConnection = null;;
-			try {
-				Logging.log(this, "CREATING CONNECTION to " + tCoordinatorName);
-				tConnection = mHRMController.getHost().connectBlock(tCoordinatorName, tConnectDescription, tIdentity);
+			Logging.log(this, "CREATING CONNECTION to " + tCoordinatorName);
+			//TODO: geht der nicht-blockierende Call auf connect so noch? race conditions?
+			tConnection = mHRMController.getLayer().connect(tCoordinatorName, tConnectDescription, tIdentity);
+			if (tConnection != null){
 				tComSession.start(tConnection);
 				tComSession.write(tLocalCentralFNL2Address);
-			} catch (NetworkException tExc) {
-				Logging.err(this, "Unable to connect to " + tCoordinatorName, tExc);
-			}
-
-			for(Coordinator tCoordinator : mHRMController.getAllCoordinators(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
-				LinkedList<Integer> tTokens = new LinkedList<Integer>();
-				for(ControlEntity tNeighbor : tCoordinator.getCluster().getNeighborsARG()) {
-					if(tNeighbor.getHierarchyLevel().getValue() == tCoordinator.getHierarchyLevel().getValue() - 1) {
-						tTokens.add(((ICluster) tNeighbor).getCoordinatorID());
-					}
-				}
-				tTokens.add(tCoordinator.getCluster().getCoordinatorID());
-				if(!pTargetCluster.getCoordinatorName().equals(mHRMController.getNode().getCentralFN().getName())) {
-					int tDistance = 0;
-					if (pTargetCluster instanceof ClusterProxy){
-						ClusterProxy tClusterProxy = (ClusterProxy) pTargetCluster;
-					
-						tDistance = mHRMController.getClusterDistance(tClusterProxy); 
-					}
-					
-					NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tTokens, pTargetCluster.getClusterID(), pTargetCluster.getCoordinatorID(), pTargetCluster.getHierarchyLevel(), tDistance);
-					Logging.log(this, "Created " + tDiscovery + " for " + pTargetCluster);
-					tDiscovery.setOrigin(tCoordinator.getClusterID());
-					tDiscovery.setTargetClusterID(tTargetControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue());
-					tBigDiscovery.addNestedDiscovery(tDiscovery);
-				}
-			}
-			
-			tComSession.write(tBigDiscovery);
-			
-			for(NestedDiscovery tDiscovery : tBigDiscovery.getDiscoveries()) {
-				String tClusters = new String();
-				for(Cluster tCluster : mHRMController.getAllClusters()) {
-					tClusters += tCluster + ", ";
-				}
-				String tDiscoveries = new String();
-				for(DiscoveryEntry tEntry : tDiscovery.getDiscoveryEntries()) {
-					tDiscoveries += ", " + tEntry;
-				}
-				if(tDiscovery.getNeighborRelations() != null) {
-					for(Tuple<ClusterName, ClusterName> tTuple : tDiscovery.getNeighborRelations()) {
-						if(!mHRMController.isLinkedARG(tTuple.getFirst(), tTuple.getSecond())) {
-							Cluster tFirstCluster = mHRMController.getClusterByID(tTuple.getFirst());
-							Cluster tSecondCluster = mHRMController.getClusterByID(tTuple.getSecond());
-							if(tFirstCluster != null && tSecondCluster != null ) {
-								tFirstCluster.registerNeighborARG(tSecondCluster);
-								Logging.log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);
-							} else {
-								Logging.warn(this, "Unable to find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of \"" + tClusters + "\", cluster discovery contained " + tDiscoveries + " and CEP is " + tComSession);
-							}
+	
+				for(Coordinator tCoordinator : mHRMController.getAllCoordinators(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
+					LinkedList<Integer> tTokens = new LinkedList<Integer>();
+					for(ControlEntity tNeighbor : tCoordinator.getCluster().getNeighborsARG()) {
+						if(tNeighbor.getHierarchyLevel().getValue() == tCoordinator.getHierarchyLevel().getValue() - 1) {
+							tTokens.add(((ICluster) tNeighbor).getCoordinatorID());
 						}
 					}
-				} else {
-					Logging.warn(this, tDiscovery + "does not contain any neighbor relations");
+					tTokens.add(tCoordinator.getCluster().getCoordinatorID());
+					if(!pTargetCluster.getCoordinatorName().equals(mHRMController.getNodeName())) {
+						int tDistance = 0;
+						if (pTargetCluster instanceof ClusterProxy){
+							ClusterProxy tClusterProxy = (ClusterProxy) pTargetCluster;
+						
+							tDistance = mHRMController.getClusterDistance(tClusterProxy); 
+						}
+						
+						NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tTokens, pTargetCluster.getClusterID(), pTargetCluster.getCoordinatorID(), pTargetCluster.getHierarchyLevel(), tDistance);
+						Logging.log(this, "Created " + tDiscovery + " for " + pTargetCluster);
+						tDiscovery.setOrigin(tCoordinator.getClusterID());
+						tDiscovery.setTargetClusterID(tTargetControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue());
+						tBigDiscovery.addNestedDiscovery(tDiscovery);
+					}
 				}
+				
+				tComSession.write(tBigDiscovery);
+				
+				for(NestedDiscovery tDiscovery : tBigDiscovery.getDiscoveries()) {
+					String tClusters = new String();
+					for(Cluster tCluster : mHRMController.getAllClusters()) {
+						tClusters += tCluster + ", ";
+					}
+					String tDiscoveries = new String();
+					for(DiscoveryEntry tEntry : tDiscovery.getDiscoveryEntries()) {
+						tDiscoveries += ", " + tEntry;
+					}
+					if(tDiscovery.getNeighborRelations() != null) {
+						for(Tuple<ClusterName, ClusterName> tTuple : tDiscovery.getNeighborRelations()) {
+							if(!mHRMController.isLinkedARG(tTuple.getFirst(), tTuple.getSecond())) {
+								Cluster tFirstCluster = mHRMController.getClusterByID(tTuple.getFirst());
+								Cluster tSecondCluster = mHRMController.getClusterByID(tTuple.getSecond());
+								if(tFirstCluster != null && tSecondCluster != null ) {
+									tFirstCluster.registerNeighborARG(tSecondCluster);
+									Logging.log(this, "Connecting " + tFirstCluster + " with " + tSecondCluster);
+								} else {
+									Logging.warn(this, "Unable to find cluster " + tTuple.getFirst() + ":" + tFirstCluster + " or " + tTuple.getSecond() + ":" + tSecondCluster + " out of \"" + tClusters + "\", cluster discovery contained " + tDiscoveries + " and CEP is " + tComSession);
+								}
+							}
+						}
+					} else {
+						Logging.warn(this, tDiscovery + "does not contain any neighbor relations");
+					}
+				}
+			}else{
+				Logging.err(this, "Unable to connect to " + tCoordinatorName);
 			}
 		}
 		
@@ -1097,7 +1098,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
 		}
 		if(pAnnounce.getCoordinatorName() != null) {
-			RoutingService tRS = (RoutingService)mHRMController.getNode().getRoutingService();
 			mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 		}
 		return tCluster;
@@ -1113,7 +1113,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				getComChannels().remove(this);
 			}
 			if(pAnnounce.getCoordinatorName() != null) {
-				RoutingService tRS = (RoutingService)mHRMController.getNode().getRoutingService();
 				mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 			}
 			pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry());

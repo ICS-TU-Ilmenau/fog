@@ -130,7 +130,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		 */
 
 		if(pAnnounce.getCoordinatorName() != null) {
-			RoutingService tRS = (RoutingService)mHRMController.getNode().getRoutingService();
 			mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
 		}
 	}

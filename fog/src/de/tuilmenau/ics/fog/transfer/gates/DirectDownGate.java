@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.transfer.gates;
 
 import java.util.NoSuchElementException;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.Config.Simulator.SimulatorMode;
 import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -25,7 +26,6 @@ import de.tuilmenau.ics.fog.packets.PleaseOpenDownGate;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.topology.ILowerLayer.SendResult;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.BrokenType;
@@ -38,9 +38,9 @@ import de.tuilmenau.ics.fog.ui.Viewable;
  */
 public class DirectDownGate extends DownGate
 {
-	public DirectDownGate(int localProcessNumber, Node node, NetworkInterface networkInterface,	NeighborInformation toLowerLayerID, Description description, Identity owner)
+	public DirectDownGate(int localProcessNumber, FoGEntity entity, NetworkInterface networkInterface,	NeighborInformation toLowerLayerID, Description description, Identity owner)
 	{
-		super(node, networkInterface, description, owner);
+		super(entity, networkInterface, description, owner);
 
 		mLocalProcessNumber = localProcessNumber;
 		mToLowerLayerID = toLowerLayerID;
@@ -94,9 +94,9 @@ public class DirectDownGate extends DownGate
 				String msg = "Cannot send packet " +packet +" to " +mToLowerLayerID +" due to " +res;
 				if(Config.Simulator.MODE == SimulatorMode.FAST_SIM) {
 					// do not report it in batch mode as warning, since it might be intended by scenario
-					mNode.getLogger().log(this, msg);
+					mLogger.log(this, msg);
 				} else {
-					mNode.getLogger().warn(this, msg);
+					mLogger.warn(this, msg);
 				}
 				
 				// maybe gate already closed during error recovery? 
@@ -112,9 +112,9 @@ public class DirectDownGate extends DownGate
 					}
 				}
 				catch (NoSuchElementException e) {
-					mNode.getLogger().err(this, "Could not modify return route", e);
+					mEntity.getLogger().err(this, "Could not modify return route", e);
 				}
-				mNode.getController().handleBrokenElement(convertError(res), getLowerLayer(), packet, this);
+				mEntity.getController().handleBrokenElement(convertError(res), getLowerLayer(), packet, this);
 			}
 		} else {
 			if(!invisible) {
@@ -132,12 +132,14 @@ public class DirectDownGate extends DownGate
 		NetworkInterface ll = getLowerLayer();
 		
 		if(ll != null) {
-			Name addr = mNode.getRoutingService().getNameFor(ll.getMultiplexerGate());
+			Name addr = mEntity.getRoutingService().getNameFor(ll.getMultiplexerGate());
 			
-			Packet tReq = new Packet(new PleaseOpenDownGate(mLocalProcessNumber, getGateID(), addr, Description.createBE(false)));
-			getNode().getAuthenticationService().sign(tReq, getOwner());
-	
-			handlePacket(tReq, null);
+			Packet tReq = new Packet(new PleaseOpenDownGate(mLocalProcessNumber, getGateID(), addr, getDescription()));
+			if(getEntity().getAuthenticationService().sign(tReq, getEntity().getIdentity())) {
+				handlePacket(tReq, null);
+			} else {
+				mLogger.err(this, "Can not send refresh signaling message since signature for " +getEntity().getIdentity() +" can not be created. (owner of gate = " +getOwner() +")");
+			}
 		} else {
 			delete();
 		}
@@ -165,7 +167,7 @@ public class DirectDownGate extends DownGate
 			return BrokenType.UNKNOWN;
 		}
 	}
-
+	
 	@Viewable("Local process number")
 	private int mLocalProcessNumber = -1;
 	

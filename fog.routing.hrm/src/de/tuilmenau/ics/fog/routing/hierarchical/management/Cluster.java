@@ -80,6 +80,8 @@ public class Cluster extends ControlEntity implements ICluster
 	{
 		super(pHRMController, pHierarchyLevel);
 		
+		Logging.log(this, "CONSTRUCTOR got ClusterID: " + pClusterID);
+		
 		// set the ClusterID
 		if ((pClusterID == null) || (pClusterID < 0)){
 			// create an ID for the cluster
@@ -239,7 +241,10 @@ public class Cluster extends ControlEntity implements ICluster
 	 */
 	public long getGUIClusterID()
 	{
-		return getClusterID() / idMachineMultiplier();
+		if (getClusterID() != null)
+			return getClusterID() / idMachineMultiplier();
+		else
+			return -1;
 	}
 	
 	/**

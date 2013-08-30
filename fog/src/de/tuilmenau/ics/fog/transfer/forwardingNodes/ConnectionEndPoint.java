@@ -286,6 +286,12 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		mReceiveBuffer = null;
 	}
 	
+	/**
+	 * Called if FoG receives data for a connection end point.
+	 * The method delivers the data to the higher layer or buffers it.
+	 * 
+	 * @param data Received data for higher layer
+	 */
 	public synchronized void receive(Object data)
 	{
 		try {
@@ -311,7 +317,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	public String toString()
 	{
 		if(forwardingNode != null) {
-			return super.toString() +"@" +forwardingNode.getNode();
+			return super.toString() +"@" +forwardingNode.getEntity();
 		} else {
 			return super.toString();
 		}

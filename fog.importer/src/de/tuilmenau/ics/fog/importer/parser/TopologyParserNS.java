@@ -228,4 +228,22 @@ public class TopologyParserNS extends TopologyParser
     public String getParameter() {
     	return "";
     }
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.importer.ITopologyParser#getBandWidth()
+	 */
+	@Override
+	public float getBandWidth()
+	{
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.importer.ITopologyParser#getDelay()
+	 */
+	@Override
+	public float getDelay()
+	{
+		return 0;
+	}
 }

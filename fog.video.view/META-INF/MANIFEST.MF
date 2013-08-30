@@ -6,7 +6,8 @@ Bundle-Version: 1.0.2.qualifier
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  de.tuilmenau.ics.fog;bundle-version="1.0.2",
- de.tuilmenau.ics.fog.eclipse;bundle-version="1.0.2"
+ de.tuilmenau.ics.fog.eclipse;bundle-version="1.0.2",
+ de.tuilmenau.ics.fog.ui;bundle-version="1.0.2"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-Vendor: ICS group of TU Ilmenau

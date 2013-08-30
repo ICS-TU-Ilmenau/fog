@@ -18,6 +18,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.facade.Description;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -32,9 +33,9 @@ import de.tuilmenau.ics.fog.util.Logger;
  */
 public class DelegationPartialRoutingService extends PartialRoutingService
 {
-	public DelegationPartialRoutingService(EventHandler timeBase, Logger parentLogger, String name, RemoteRoutingService parentRS)
+	public DelegationPartialRoutingService(Simulation sim, EventHandler timeBase, Logger parentLogger, String name, RemoteRoutingService parentRS)
 	{
-		super(timeBase, parentLogger, name, parentRS);
+		super(sim, timeBase, parentLogger, name, parentRS);
 	}
 
 	public void registerDelegationDestination(RemoteRoutingService delegationDest)
@@ -110,14 +111,14 @@ public class DelegationPartialRoutingService extends PartialRoutingService
 	}
 
 	@Override
-	public Result registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription, Number pLinkCost) throws RemoteException
+	public Result registerLink(RoutingServiceAddress pFrom, RoutingServiceAddress pTo, GateID pGateID, Description pDescription) throws RemoteException
 	{
-		Result res = super.registerLink(pFrom, pTo, pGateID, pDescription, pLinkCost);
+		Result res = super.registerLink(pFrom, pTo, pGateID, pDescription);
 		
 		if((res != Result.NOTHING) && (delegationDestinations != null)) {
 			for(RemoteRoutingService rs : delegationDestinations) {
 				try {
-					rs.registerLink(pFrom, pTo, pGateID, pDescription, pLinkCost);
+					rs.registerLink(pFrom, pTo, pGateID, pDescription);
 				}
 				catch(RemoteException exc) {
 					// ignore

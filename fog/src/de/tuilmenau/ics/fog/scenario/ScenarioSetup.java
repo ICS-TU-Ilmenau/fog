@@ -84,7 +84,7 @@ public class ScenarioSetup
 		for(int i=1; i<=numberNodes; i++) {
 			String nodeName = "node" +i;
 			sim.executeCommand("create node " +nodeName);
-			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
+			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(sim);
 			try {
 				tNMS.setNodeASName(nodeName, "default");
 			} catch (RemoteException tExc) {
@@ -166,7 +166,7 @@ public class ScenarioSetup
 		pSim.executeCommand("connect 71 71-94");
 	
 		try {
-			NameMappingService mNMS = HierarchicalNameMappingService.getGlobalNameMappingService();
+			NameMappingService mNMS = HierarchicalNameMappingService.getGlobalNameMappingService(pSim);
 			mNMS.setNodeASName("71", "7");
 			mNMS.setNodeASName("72", "7");
 			mNMS.setNodeASName("73", "7");

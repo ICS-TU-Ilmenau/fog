@@ -16,6 +16,8 @@ package de.tuilmenau.ics.fog.application;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.application.interop.ConnectionEndPointTCPProxy;
+import de.tuilmenau.ics.fog.application.util.ServerCallback;
+import de.tuilmenau.ics.fog.application.util.Service;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
@@ -23,9 +25,8 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.IServerCallback;
-import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
 
@@ -33,7 +34,7 @@ import de.tuilmenau.ics.fog.util.SimpleName;
  * Proxy maps incomming FoG connections to a specific TCP service.
  * Destination server and port for the TCP connections are set via the constructor.
  */
-public class TCPProxy extends Application implements IServerCallback
+public class TCPProxy extends Application implements ServerCallback
 {
 	/**
 	 * Constructor for running TCPProxy via command line.
@@ -100,19 +101,19 @@ public class TCPProxy extends Application implements IServerCallback
 			mLogger.warn(this, "openAck failes", tExc);
 		}
 	}
+	
+	@Override
+	public void error(ErrorEvent cause)
+	{
+		terminated(cause.getException());
+	}
 
 	protected void started()
 	{
-		try {
-			Binding tBinding = getHost().bind(null, new SimpleName(HttpServer.NAMESPACE_HTTP, mName), getDescription(), getIdentity());
-			
-			mServerBinding = new Service(false, this);
-			mServerBinding.start(tBinding);
-		}
-		catch(NetworkException tExc) {
-			terminated(tExc);
-		}
-
+		Binding tBinding = getLayer().bind(null, new SimpleName(HttpServer.NAMESPACE_HTTP, mName), getDescription(), getIdentity());
+		
+		mServerBinding = new Service(false, this);
+		mServerBinding.start(tBinding);
 	}
 	
 	@Override

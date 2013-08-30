@@ -8,6 +8,7 @@
             name="HierarchicalRoutingManagement">
       </routing>
    </extension>
+   
    <extension
          point="org.eclipse.ui.editors">
       <editor
@@ -28,8 +29,9 @@
             name="Abstract Routing Graph Viewer">
       </editor>
    </extension>
+   
    <extension
-         point="de.tuilmenau.ics.fog.hostApplications">
+         point="de.tuilmenau.ics.fog.commands">
        <plugin
             name="Create node"
             class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateNode"

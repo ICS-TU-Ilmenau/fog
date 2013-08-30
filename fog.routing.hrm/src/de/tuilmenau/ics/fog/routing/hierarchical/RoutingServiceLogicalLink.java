@@ -30,7 +30,7 @@ public class RoutingServiceLogicalLink extends  RoutingServiceLink
 	 */
 	public RoutingServiceLogicalLink(Route pRoute)
 	{
-		super(null, null, null);
+		super(null, null);
 		mRoute = pRoute;
 	}
 	

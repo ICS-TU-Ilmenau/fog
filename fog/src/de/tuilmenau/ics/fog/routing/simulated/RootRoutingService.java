@@ -27,6 +27,6 @@ public class RootRoutingService extends PartialRoutingService
 	
 	public RootRoutingService(Simulation pSim)
 	{
-		super(pSim.getTimeBase(), pSim.getLogger(), ROOT_ROUTING_SERVICE_NAME, null);
+		super(pSim, pSim.getTimeBase(), pSim.getLogger(), ROOT_ROUTING_SERVICE_NAME, null);
 	}
 }

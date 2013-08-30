@@ -1,0 +1,28 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoG general GUI extensions
+Bundle-SymbolicName: de.tuilmenau.ics.fog.ui;singleton:=true
+Bundle-Version: 1.0.2.qualifier
+Bundle-Vendor: ICS group of TU Ilmenau
+Bundle-License: http://www.eclipse.org/legal/epl-v10.html
+Require-Bundle: de.tuilmenau.ics.fog;bundle-version="1.0.2",
+ de.tuilmenau.ics.fog.launcher;bundle-version="1.0.2"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.tuilmenau.ics.fog.ui.commands
+Import-Package: de.tuilmenau.ics.graph,
+ edu.uci.ics.jung.algorithms.layout,
+ edu.uci.ics.jung.algorithms.layout.util,
+ edu.uci.ics.jung.algorithms.util,
+ edu.uci.ics.jung.graph;version="2.0.1",
+ edu.uci.ics.jung.graph.event,
+ edu.uci.ics.jung.graph.util,
+ edu.uci.ics.jung.visualization,
+ edu.uci.ics.jung.visualization.control,
+ edu.uci.ics.jung.visualization.decorators,
+ edu.uci.ics.jung.visualization.picking,
+ edu.uci.ics.jung.visualization.renderers,
+ edu.uci.ics.jung.visualization.transform,
+ edu.uci.ics.jung.visualization.transform.shape,
+ edu.uci.ics.jung.visualization.util,
+ org.apache.commons.collections15

@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.application;
 
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -63,7 +64,7 @@ public abstract class ApplicationClient extends Application
 		mIsRunning = true;
 		mIsExiting = false;
 		
-		Connection tConn = getHost().connect(mConnectTo, getDescription(), getIdentity());
+		Connection tConn = getLayer().connect(mConnectTo, getDescription(), getIdentity());
 		mSession = createSession();
 		mSession.start(tConn);
 	}

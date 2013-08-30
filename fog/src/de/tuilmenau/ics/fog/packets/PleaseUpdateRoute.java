@@ -35,11 +35,11 @@ public class PleaseUpdateRoute extends SignallingRequest
 	
 	public boolean execute(ForwardingNode pFN, Packet pPacket, Identity requester)
 	{
-		Logger tLogger = pFN.getNode().getLogger();
+		Logger tLogger = pFN.getEntity().getLogger();
 		
 		if(!pPacket.isReturnRouteBroken()) {
 			// Try to find corresponding process for the re-routing action (TODO maybe it is from relay system; thus the identities do not match!)
-			Process tProcess = pFN.getNode().getProcessRegister().getProcess(pFN, requester, getProcessNumber());
+			Process tProcess = pFN.getEntity().getProcessRegister().getProcess(pFN, requester, getProcessNumber());
 			if(tProcess == null) {
 				if(pFN instanceof ClientFN) {
 					tProcess = ((ClientFN) pFN).getRelatedProcess();

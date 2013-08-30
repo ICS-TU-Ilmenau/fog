@@ -40,7 +40,7 @@ import de.tuilmenau.ics.fog.util.Size;
 public class Packet implements Serializable
 {
 	private static final long serialVersionUID = -4342798823284871078L;
-	private static final int PACKET_MAX_CHANGE_COUNTER = 50;
+	private static final int PACKET_MAX_CHANGE_COUNTER = 100;
 	
 	public Packet(Serializable data)
 	{
@@ -641,7 +641,7 @@ public class Packet implements Serializable
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(handler, this);
 		}
-		this.logStats(handler.getNode().getAS().getSimulation(), handler.getNode()); // log statistics of this packet as it finished its way through the network
+		this.logStats(handler.getEntity().getNode().getAS().getSimulation(), handler.getEntity()); // log statistics of this packet as it finished its way through the network
 	}
 	
 	/**
@@ -667,7 +667,7 @@ public class Packet implements Serializable
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(target, this);
 		}
-		this.logStats(target.getNode().getAS().getSimulation(), target.getNode()); // log statistics of this packet as it finished its way through the network
+		this.logStats(target.getEntity().getNode().getAS().getSimulation(), target.getEntity()); // log statistics of this packet as it finished its way through the network
 	}
 
 	/**
@@ -678,12 +678,12 @@ public class Packet implements Serializable
 	 * 
 	 * @param detector The node that detected the dropping of the packet.
 	 */
-	public void droppingDetected(Object detector)
+	public void droppingDetected(Object detector, Simulation simulation)
 	{
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(null, this);
 		}
-		this.logStats(null); // log statistics of this packet as it finished its way through the network		
+		this.logStats(simulation); // log statistics of this packet as it finished its way through the network		
 	}
 	
 	private Route mRoute = null;

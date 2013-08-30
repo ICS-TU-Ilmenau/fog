@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -23,7 +24,6 @@ import de.tuilmenau.ics.fog.packets.Invisible;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.Signalling;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.Gate.GateState;
@@ -44,14 +44,14 @@ import de.tuilmenau.ics.fog.util.Logger;
  */
 public class ClientFN implements ForwardingNode
 {
-	public ClientFN(Node pNode, Name pName, Description pDescription, Identity pOwner)
+	public ClientFN(FoGEntity pEntity, Name pName, Description pDescription, Identity pOwner)
 	{
-		mNode = pNode;
+		mEntity = pEntity;
 		mName = pName;
 		mDescription = pDescription;
 		mOwner = pOwner;
 		
-		mNode.getTransferPlane().registerNode(this, null, NamingLevel.NONE, pDescription);
+		mEntity.getTransferPlane().registerNode(this, null, NamingLevel.NONE, pDescription);
 	}
 	
 	/**
@@ -69,13 +69,13 @@ public class ClientFN implements ForwardingNode
 			mOutgoingGate.setID(number);
 			
 			try {
-				mNode.getTransferPlane().registerLink(this, mOutgoingGate);
+				mEntity.getTransferPlane().registerLink(this, mOutgoingGate);
 			}
 			catch (NetworkException exc) {
 				// since this link is not really useful for routing service,
 				// ignore this exception
 			}
-			mNode.getLogger().log(this, "Outgoing " + newgate + " added");
+			mEntity.getLogger().log(this, "Outgoing " + newgate + " added");
 			return number;
 		} else {
 			return null;
@@ -108,12 +108,12 @@ public class ClientFN implements ForwardingNode
 	public boolean unregisterGate(AbstractGate oldgate)
 	{
 		if((mOutgoingGate == oldgate) && (mOutgoingGate != null)) {
-			mNode.getTransferPlane().unregisterLink(this, mOutgoingGate);
+			mEntity.getTransferPlane().unregisterLink(this, mOutgoingGate);
 			
 			mOutgoingGate.setID(null);
 			mOutgoingGate.shutdown();
 			mOutgoingGate = null;
-			mNode.getLogger().log(this, "Outgoing " + oldgate + " released");
+			mEntity.getLogger().log(this, "Outgoing " + oldgate + " released");
 			return true;
 		}
 		
@@ -150,7 +150,7 @@ public class ClientFN implements ForwardingNode
 			}
 			packet.finished(this);
 		} else {
-			mNode.getLogger().err(this, "Gate list was not finished. Packet " +packet +" dropped.");
+			mEntity.getLogger().err(this, "Gate list was not finished. Packet " +packet +" dropped.");
 			packet.dropped(this);
 		}
 	}
@@ -168,7 +168,7 @@ public class ClientFN implements ForwardingNode
 				data.execute(mOutgoingGate, packet);
 			}
 			if(packet.isSignalling()) {
-				getNode().getAuthenticationService().sign(packet, getOwner());
+				mEntity.getNode().getAuthenticationService().sign(packet, getOwner());
 			}
 
 			packet.forwarded(mOutgoingGate);
@@ -218,7 +218,7 @@ public class ClientFN implements ForwardingNode
 			// remove outgoing gate
 			registerGate(null);
 			
-			mNode.getTransferPlane().unregisterNode(this);
+			mEntity.getTransferPlane().unregisterNode(this);
 			
 			if(mCEP != null) {
 				mCEP.closed();
@@ -253,9 +253,9 @@ public class ClientFN implements ForwardingNode
 	}
 	
 	@Override
-	public Node getNode()
+	public FoGEntity getEntity()
 	{
-		return mNode;
+		return mEntity;
 	}
 
 	@Override
@@ -268,7 +268,7 @@ public class ClientFN implements ForwardingNode
 	public Identity getOwner()
 	{
 		if(mOwner != null) return mOwner;
-		else return mNode.getIdentity();
+		else return mEntity.getIdentity();
 	}
 	
 	@Override
@@ -292,10 +292,10 @@ public class ClientFN implements ForwardingNode
 	
 	public Logger getLogger()
 	{
-		return mNode.getLogger();
+		return mEntity.getLogger();
 	}
 	
-	private Node mNode;
+	private FoGEntity mEntity;
 	private Name mName;
 	private Description mDescription;
 	private AbstractGate mOutgoingGate;

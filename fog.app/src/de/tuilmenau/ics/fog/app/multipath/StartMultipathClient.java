@@ -10,7 +10,7 @@
 package de.tuilmenau.ics.fog.app.multipath;
 
 import de.tuilmenau.ics.fog.application.InterOpIP;
-import de.tuilmenau.ics.fog.eclipse.ui.commands.HostApplication;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.HostCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.EnterStringDialog;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -18,17 +18,13 @@ import de.tuilmenau.ics.fog.ui.Logging;
 /**
  * Command for starting up a RelayClient at a host.
  */
-public class StartMultipathClient extends HostApplication
+public class StartMultipathClient extends HostCommand
 {
-	public StartMultipathClient()
-	{
-	}
-	
 	@Override
 	public void main() throws Exception
 	{
 		if(getHost() != null) {
-			String tDestination = EnterStringDialog.open(getSite().getShell(), "UDP Encapsulation listener", "Please set the IP listener:", "0.0.0.0:5000[UDP]", null);
+			String tDestination = EnterStringDialog.open(getShell(), "UDP Encapsulation listener", "Please set the IP listener:", "0.0.0.0:5000[UDP]", null);
 			Logging.trace(this, "Entered stream destination: " + tDestination);
 			if (tDestination != null)
 			{

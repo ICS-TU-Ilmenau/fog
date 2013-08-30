@@ -9,31 +9,17 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.encryption;
 
-import de.tuilmenau.ics.fog.eclipse.ui.commands.SilentCommand;
 import de.tuilmenau.ics.fog.facade.Host;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
 
-public class EncryptionEnableCommand extends SilentCommand
+public class EncryptionEnableCommand implements Command
 {
-	public EncryptionEnableCommand()
-	{
-		super();
-	}
-	
 	@Override
-	public void init(Object object)
+	public void execute(Object object)
 	{
-		if(object instanceof Host) host = (Host) object; 
-	}
-
-	@Override
-	public void main()
-	{
-		if(host != null) {
-			host.registerCapability(new EncryptionProperty(null));
+		if(object instanceof Host) {
+			((Host) object).registerCapability(new EncryptionProperty(null));
 		}
 	}
-
-	
-	private Host host;
 }

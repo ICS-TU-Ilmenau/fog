@@ -117,9 +117,9 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
  			}
  		}
  		
- 		// check 
  		boolean res = mGraph.addEdge(nodeName1 +"-" +nodeName2, nodeName1, nodeName2);
  		
+ 		// check, if negative result was caused by an already existing edge
  		if(!res) {
  			return mGraph.isNeighbor(nodeName1, nodeName2);
  		} else {
@@ -275,7 +275,7 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	private int decideAboutDelegation()
 	{
 		// switch to delegation routing service
-		RoutingServiceInstanceRegister.getInstance().setRoutingServiceType(true);
+		RoutingServiceInstanceRegister.getInstance(getSim()).setRoutingServiceType(true);
 		
 		// create ASs in order to create RS entities
 		Collection<String> asSet = mASGraph.getVertices();
@@ -305,7 +305,7 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	
 	private void delegateFrom(String as, String neighbor)
 	{
-		RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance();
+		RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance(getSim());
 		DelegationPartialRoutingService rsFrom = (DelegationPartialRoutingService) register.get(as);
 		DelegationPartialRoutingService rsTo   = (DelegationPartialRoutingService) register.get(neighbor);
 		
@@ -354,7 +354,6 @@ public class TopologyDistributorAnalyser extends TopologyDistributor
 	{
 		HashMap<String, Boolean> visited = new HashMap<String, Boolean>();
 		LinkedList<String> pending = new LinkedList<String>();
-		boolean tRes = false;
 		final int numberNode = graph.getVertexCount();
 		
 		if(numberNode > 0) {

@@ -11,13 +11,13 @@ package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
 import java.rmi.RemoteException;
 
-import de.tuilmenau.ics.fog.eclipse.ui.commands.SilentCommand;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.topology.IAutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 
-public class CreateBus extends SilentCommand
+public class CreateBus extends EclipseCommand
 {
 	/**
 	 * Stores the next number for the next created node.
@@ -32,12 +32,12 @@ public class CreateBus extends SilentCommand
 	}
 
 	/**
-	 * Initializes this SilentCommand.
-	 * 
+	 * Executes the command
+	 *
 	 * @param pObject the object parameter
 	 */
 	@Override
-	public void init(Object pObject)
+	public void execute(Object pObject)
 	{
 		Logging.log(this, "INIT - object parameter is " + pObject);
 
@@ -49,13 +49,13 @@ public class CreateBus extends SilentCommand
 		} else {
 			throw new RuntimeException(this +" requires an AutonomousSystem object instead of " + pObject +" to proceed.");
 		}
-	}
 
-	@Override
-	public void main() throws RemoteException
-	{
 		if(mAs != null) {
-			mAs.executeCommand("create bus bus" + sNextNumber++);
+			try {
+				mAs.executeCommand("create bus bus" + sNextNumber++);
+			} catch (RemoteException tExc) {
+				Logging.err(this, "Cannot create bus", tExc);
+			}
 		} else {
 			Logging.err(this, "Missing reference to an autonomous system. Can not run 'create bus' command.");
 		}

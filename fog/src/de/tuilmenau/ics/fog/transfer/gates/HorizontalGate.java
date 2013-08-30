@@ -16,12 +16,10 @@ package de.tuilmenau.ics.fog.transfer.gates;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.packets.Packet;
-import de.tuilmenau.ics.fog.packets.statistics.ReroutingExperiment;
-import de.tuilmenau.ics.fog.packets.statistics.ReroutingTestAgent;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.roles.Horizontal;
 import de.tuilmenau.ics.fog.ui.Viewable;
@@ -43,7 +41,7 @@ public class HorizontalGate extends FunctionalGate
 	 * @param route Route for the tunnel
 	 * @param next Output of the horizontal gate (in most cases a multiplexer)
 	 */
-	public HorizontalGate(Node node, ForwardingElement next, Identity pOwner)
+	public HorizontalGate(FoGEntity node, ForwardingElement next, Identity pOwner)
 	{
 		super(node, next, Horizontal.TUNNEL, pOwner);
 	}

@@ -42,11 +42,11 @@ abstract public class SignallingNotification extends Signalling
 	{
 		if(element instanceof ForwardingNode) {
 			ForwardingNode fn = (ForwardingNode) element;
-			Identity sender = getSenderIdentity(fn.getNode().getAuthenticationService(), packet);
+			Identity sender = getSenderIdentity(fn.getEntity().getAuthenticationService(), packet);
 			
 			if(sender != null) {
 				synchronized(fn) {
-					Process tProcess = fn.getNode().getProcessRegister().getProcess(fn, sender, getProcessNumber());
+					Process tProcess = fn.getEntity().getProcessRegister().getProcess(fn, sender, getProcessNumber());
 					if(tProcess != null) {
 						return executeProcess(tProcess, packet, sender);
 					} else {
@@ -54,7 +54,7 @@ abstract public class SignallingNotification extends Signalling
 					}
 				}
 			} else {
-				fn.getNode().getLogger().err(this, "Can not execute signaling message " +packet +" due to invalid authentication.");
+				fn.getEntity().getLogger().err(this, "Can not execute signaling message " +packet +" due to invalid authentication.");
 			}
 		} else {
 			Logging.warn(this, "Element '" +element +"' has wrong type for signalling msg.");

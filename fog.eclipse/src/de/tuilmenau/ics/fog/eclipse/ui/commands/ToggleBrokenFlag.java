@@ -12,44 +12,20 @@ package de.tuilmenau.ics.fog.eclipse.ui.commands;
 import java.rmi.RemoteException;
 
 import de.tuilmenau.ics.fog.Config;
-import de.tuilmenau.ics.fog.topology.ILowerLayer;
-import de.tuilmenau.ics.fog.topology.Node;
-import de.tuilmenau.ics.fog.topology.ILowerLayerReceive.Status;
+import de.tuilmenau.ics.fog.topology.Breakable;
+import de.tuilmenau.ics.fog.topology.Breakable.Status;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
 
-public class ToggleBrokenFlag extends SilentCommand
+public class ToggleBrokenFlag implements Command
 {
-
-	public ToggleBrokenFlag()
-	{
-		super();
-	}
-	
 	@Override
-	public void init(Object object)
+	public void execute(Object object) throws RemoteException
 	{
-		if(object instanceof Node) node = (Node) object; 
-		if(object instanceof ILowerLayer) bus = (ILowerLayer) object; 
-			
-		if((node == null) && (bus == null)) throw new RuntimeException(this +" requires a Node or Bus object to proceed. Instead of " +object +".");
-	}
-
-	@Override
-	public void main()
-	{
-		if(node != null) {
-			node.setBroken(node.isBroken() == Status.OK, Config.Routing.ERROR_TYPE_VISIBLE);
-		}
-		if(bus != null) {
-			try {
-				bus.setBroken(!bus.isBroken(), Config.Routing.ERROR_TYPE_VISIBLE);
-			} catch (RemoteException exc) {
-				// ignore it
-			}
+		if(object instanceof Breakable) {
+			((Breakable) object).setBroken(((Breakable) object).isBroken() == Status.OK, Config.Routing.ERROR_TYPE_VISIBLE);
+		} else {
+			throw new RuntimeException(this +" requires a " +Breakable.class +" object to proceed. Instead of " +object +".");
 		}
 	}
-
-	
-	private Node node;
-	private ILowerLayer bus;
 }

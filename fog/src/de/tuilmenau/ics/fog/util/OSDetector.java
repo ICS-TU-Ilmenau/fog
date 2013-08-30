@@ -29,7 +29,7 @@ public class OSDetector {
 			Logging.getInstance().log("This is Linux");
 			return OSType.Linux;
 		} else {
-			Logging.getInstance().log("This OS is not supported!");
+			Logging.getInstance().log("This OS isn't supported yet!");
 			return OSType.Unsupported;
 		}
 	}

@@ -9,6 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
+import java.awt.Color;
+import java.io.FileNotFoundException;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,19 +18,26 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Observer;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.application.Application;
-import de.tuilmenau.ics.fog.application.Service;
+import de.tuilmenau.ics.fog.application.util.ServerCallback;
+import de.tuilmenau.ics.fog.application.util.Service;
+import de.tuilmenau.ics.fog.eclipse.GraphViewer;
+import de.tuilmenau.ics.fog.eclipse.utils.Resources;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
-import de.tuilmenau.ics.fog.facade.IServerCallback;
+import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.facade.Signature;
+import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
+import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalEndPoint;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
@@ -48,19 +57,27 @@ import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
+import de.tuilmenau.ics.fog.ui.Decoration;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.ui.eclipse.NodeDecorator;
+import de.tuilmenau.ics.fog.util.BlockingEventHandling;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
 /**
  * This is the main HRM controller. It provides functions that are necessary to build up the hierarchical structure - every node contains such an object
  */
-public class HRMController extends Application implements IServerCallback, IEvent
+public class HRMController extends Application implements ServerCallback, IEvent
 {
 	/**
-	 * The global name space which is used to identify the HRM instances on nodes.
+	 * Stores the decoration instance for HRM specific decorations
 	 */
-	public final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
-
+	private Decoration mGraphViewerDecoration = null;
+	
+	/**
+	 * Stores the node specific graph decorator
+	 */
+	private NodeDecorator mNodeDecorator = null;
+	
 	/**
 	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance.
 	 */
@@ -123,7 +140,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 * Count the outgoing connections
 	 */
 	private int mCounterOutgoingConnections = 0;
-
+	
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	
@@ -135,7 +152,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 	public HRMController(AutonomousSystem pAS, Node pNode, HRMRoutingService pHierarchicalRoutingService)
 	{
 		// initialize the application context
-		super(pNode.getHost(), null, pNode.getIdentity());
+		super(pNode, null, pNode.getIdentity());
 
 		// define the local name "routing://"
 		mApplicationName = new SimpleName(ROUTING_NAMESPACE, null);
@@ -150,6 +167,17 @@ public class HRMController extends Application implements IServerCallback, IEven
 		mAS = pAS;
 		
 		/**
+		 * Create the node specific decorator
+		 */
+		mNodeDecorator = new NodeDecorator();
+		
+		/**
+		 * Set the node decoration
+		 */
+		mGraphViewerDecoration = Decoration.getInstance(GraphViewer.DEFAULT_DECORATION);//TODO: DECORATION_NAME);
+		mGraphViewerDecoration.setDecorator(mNode,  mNodeDecorator);
+		
+		/**
 		 * Create communication service
 		 */
 		// bind the HRMController application to a local socket
@@ -157,14 +185,14 @@ public class HRMController extends Application implements IServerCallback, IEven
 		// enable simple datagram based communication
 		Description tServiceReq = getDescription();
 		tServiceReq.set(CommunicationTypeProperty.DATAGRAM);
-		try {
-			tServerSocket = getHost().bind(null, mApplicationName, tServiceReq, getIdentity());
-		} catch (NetworkException tExc) {
-			Logging.err(this, "Unable to bind to hosts application interface", tExc);
+		tServerSocket = getLayer().bind(null, mApplicationName, tServiceReq, getIdentity());
+		if (tServerSocket != null){
+			// create and start the socket service
+			Service tService = new Service(false, this);
+			tService.start(tServerSocket);
+		}else{
+			Logging.err(this, "Unable to start the HRMController service");
 		}
-		// create and start the socket service
-		Service tService = new Service(false, this);
-		tService.start(tServerSocket);
 		
 		// store the reference to the local instance of hierarchical routing service
 		mHierarchicalRoutingService = pHierarchicalRoutingService;
@@ -267,9 +295,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 			mLocalCoordinators.add(pCoordinator);
 		}
 		
-		// update GUI: image for node object 
-		//TODO: check and be aware of topology dynamics
-		getNode().setDecorationParameter("L"+ tLevel);
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
 		
 		// register the coordinator in the local ARG
 		registerNodeARG(pCoordinator);
@@ -294,13 +321,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 			mLocalCoordinators.remove(pCoordinator);
 		}
 
-		// update GUI: image for node object 
-		//TODO: check and be aware of topology dynamics
-		if (tLevel -1 > 0){
-			getNode().setDecorationParameter("L"+ (tLevel -1));
-		}else{
-			getNode().setDecorationParameter(null);
-		}
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
 		
 		// register at the ARG
 		unregisterNodeARG(pCoordinator);
@@ -342,18 +364,47 @@ public class HRMController extends Application implements IServerCallback, IEven
 				/**
 				 * Update the GUI
 				 */
-				// filter relative HRMIDs
-				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
-					// update node label within GUI
-					String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
-					getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
-				}
+				// updates the GUI decoration for this node
+				updateGUINodeDecoration();
 				// it's time to update the GUI
 				notifyGUI(pCoordinator);
 			}else{
 				Logging. warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCoordinator);
 			}
 		}			
+	}
+
+	/**
+	 * 
+	 */
+	private void updateGUINodeDecoration()
+	{
+		/**
+		 * Set the decoration text
+		 */
+		String tNodeText = "";
+		
+		synchronized (mRegisteredOwnHRMIDs) {
+			for (HRMID tHRMID: mRegisteredOwnHRMIDs){
+				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
+					tNodeText += ", " + tHRMID.toString();
+				}
+			}			
+		}
+		mNodeDecorator.setText(tNodeText);
+		
+		/**
+		 * Set the decoration image
+		 */
+		LinkedList<Coordinator> tAllCoordinators = getAllCoordinators();
+		int tHighestCoordinatorLevel = -1;
+		for (Coordinator tCoordinator : tAllCoordinators){
+			int tCoordLevel = tCoordinator.getHierarchyLevel().getValue() - 1; 
+			if (tCoordLevel > tHighestCoordinatorLevel){
+				tHighestCoordinatorLevel = tCoordLevel;
+			}
+		}
+		mNodeDecorator.setImage(tHighestCoordinatorLevel);
 	}
 
 	/**
@@ -480,7 +531,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 					// register the HRMID in the hierarchical DNS for the local router
 					HierarchicalNameMappingService<HRMID> tNMS = null;
 					try {
-						tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService();
+						tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation());
 					} catch (RuntimeException tExc) {
 						HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
 					}				
@@ -501,12 +552,6 @@ public class HRMController extends Application implements IServerCallback, IEven
 					/**
 					 * Update the GUI
 					 */
-					// filter relative HRMIDs
-					if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
-						// update node label within GUI
-						String tOldDeco = (getNode().getDecorationValue() != null ? getNode().getDecorationValue().toString() : "");
-						getNode().setDecorationValue(tOldDeco + ", " + tHRMID.toString());
-					}
 					// it's time to update the GUI
 					notifyGUI(pCluster);
 				}else{
@@ -626,6 +671,38 @@ public class HRMController extends Application implements IServerCallback, IEven
 	}
 
 	/**
+	 * Connects to a service with the given name. Method blocks until the connection had been set up.
+	 */
+	private Connection connectBlock(Name pName, Description pDescription, Identity pIdentity) throws NetworkException
+	{
+		Connection conn = getLayer().connect(pName, pDescription, pIdentity);
+		BlockingEventHandling block = new BlockingEventHandling(conn, 1);
+		
+		// wait for the first event
+		Event event = block.waitForEvent();
+		
+		if(event instanceof ConnectedEvent) {
+			if(!conn.isConnected()) {
+				throw new NetworkException(this, "Connected event but connection is not connected.");
+			} else {
+				return conn;
+			}
+		}
+		else if(event instanceof ErrorEvent) {
+			Exception exc = ((ErrorEvent) event).getException();
+			
+			if(exc instanceof NetworkException) {
+				throw (NetworkException) exc;
+			} else {
+				throw new NetworkException(this, "Can not connect to " +pName +".", exc);
+			}
+		}
+		else {
+			throw new NetworkException(this, "Can not connect to " +pName +" due to " +event);
+		}
+	}
+	
+	/**
 	 * Reacts on a detected new physical neighbor. A new connection to this neighbor is created.
 	 * HINT: "pNeighborL2Address" doesn't correspond to the neighbor's central FN!
 	 * 
@@ -633,7 +710,11 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	public synchronized void eventDetectedPhysicalNeighborNode(L2Address pNeighborL2Address)
 	{
-		L2Address tThisHostL2Address = getHRS().getL2AddressFor(mNode.getCentralFN());
+		// get the recursive FoG layer
+		FoGEntity tFoGLayer = (FoGEntity) mNode.getLayer(FoGEntity.class);
+
+		// get the central FN of this node
+		L2Address tThisHostL2Address = getHRS().getL2AddressFor(tFoGLayer.getCentralFN());
 
 		Logging.info(this, "\n\n\nFOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + " FOR " + tThisHostL2Address);
 		
@@ -672,12 +753,16 @@ public class HRMController extends Application implements IServerCallback, IEven
 		final L2Address tNeighborName = pNeighborL2Address;
 		final ComSession tFSession = tComSession;
 		final HRMController tHRMController = this;
-		
+
 		/**
 		 * Create connection thread
 		 */
-		int tOldCounterOutgoingConnections = mCounterOutgoingConnections;
 		Thread tThread = new Thread() {
+			public String toString()
+			{
+				return tHRMController.toString();
+			}
+			
 			public void run()
 			{
 				/**
@@ -690,13 +775,13 @@ public class HRMController extends Application implements IServerCallback, IEven
 				 * Connect to the neighbor node
 				 */
 				Connection tConnection = null;				
+			    Logging.log(this, "    ..CONNECTING to: " + tNeighborName + " with requirements: " + tConnectionRequirements);
 				try {
-				    Logging.log(this, "    ..connecting to: " + tNeighborName + " with requirements: " + tConnectionRequirements);
-					tConnection = getHost().connectBlock(tNeighborName, tConnectionRequirements, getNode().getIdentity());
-				    Logging.log(this, "    ..connectBlock() FINISHED");
+					tConnection = connectBlock(tNeighborName, tConnectionRequirements, getNode().getIdentity());
 				} catch (NetworkException tExc) {
-					Logging.err(tHRMController, "Unable to connecto to " + tNeighborName, tExc);
+					Logging.err(this, "Cannot connect to: " + tNeighborName, tExc);
 				}
+			    Logging.log(this, "    ..connectBlock() FINISHED");
 				if(tConnection != null) {
 
 					mCounterOutgoingConnections++;
@@ -1054,7 +1139,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}
 
 		synchronized (mAbstractRoutingGraph) {
-			mAbstractRoutingGraph.storeLink(pFrom, pTo, pLink);
+			mAbstractRoutingGraph.link(pFrom, pTo, pLink);
 		}
 	}
 
@@ -1277,7 +1362,7 @@ public class HRMController extends Application implements IServerCallback, IEven
 				 */
 				if (tTargetCluster == null){
 					Logging.log(this, "    ..creating new local cluster object for handling remote cluster with description: " + tPropClusterDescription); 
-					tTargetCluster = Cluster.create(this, new Long(tPropClusterDescription.getClusterID()), tPropClusterDescription.getHierarchyLevel());
+					tTargetCluster = Cluster.create(this, tPropClusterDescription.getClusterID(), tPropClusterDescription.getHierarchyLevel());
 					setSourceIntermediateCluster(tTargetCluster, tTargetCluster); //TODO : ??
 				}
 				
@@ -1444,7 +1529,15 @@ public class HRMController extends Application implements IServerCallback, IEven
 		}
 	}
 	
-	
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.application.util.ServerCallback#error(de.tuilmenau.ics.fog.facade.events.ErrorEvent)
+	 */
+	@Override
+	public void error(ErrorEvent pCause)
+	{
+		Logging.log(this, "Got an error message because of \"" + pCause + "\"");
+	}
+
 	
 	
 	
@@ -1537,8 +1630,8 @@ public class HRMController extends Application implements IServerCallback, IEven
 
 
 	
-	
-	
+
+
 	/**
 	 * Creates a descriptive string about this object
 	 * 
@@ -1556,6 +1649,28 @@ public class HRMController extends Application implements IServerCallback, IEven
 	 */
 	public Name getNodeName()
 	{
-		return mNode.getCentralFN().getName();
+		// get the name of the central FN of this node
+		return getHRS().getCentralFN().getName();
 	}
+	
+	/**
+	 * Stores the ID of the HRM plug-in
+	 */
+	private static final String PLUGIN_ID = "de.tuilmenau.ics.fog.routing.hrm";
+	
+	/**
+	 * Stores the path to the HRM icons
+	 */
+	private static final String PATH_ICONS = "/icons/";
+
+	/**
+	 * The global name space which is used to identify the HRM instances on nodes.
+	 */
+	public final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
+
+	/**
+	 * Stores the identification string for HRM specific routing graph decorations
+	 */
+	@SuppressWarnings("unused")
+	private final static String DECORATION_NAME = "HRM coordinators & HRMIDs";
 }

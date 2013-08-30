@@ -63,7 +63,7 @@ public class ForwardingNodePropertySource extends ForwardingElementPropertySourc
 			return fn.getIterator(null);
 		}
 		else if(PROPERTY_PROCESSES.equals(name)) {
-			ProcessList pl = fn.getNode().getProcessRegister().getProcesses(fn);
+			ProcessList pl = fn.getEntity().getProcessRegister().getProcesses(fn);
 			
 			if(pl != null)
 				if(pl.size() > 0)

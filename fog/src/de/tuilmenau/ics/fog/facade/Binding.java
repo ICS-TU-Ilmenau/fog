@@ -15,7 +15,12 @@ package de.tuilmenau.ics.fog.facade;
 
 
 /**
- * Represents a binding of a higher layer at a layer.
+ * A binding is an service offering to all peers with access to a layer.
+ * It can be created at a layer via the method {@link Layer#bind}.
+ * Others can create a {@link Connection} to a binding via {@link Layer}
+ * and with the name of the binding.
+ * A binding provides methods for terminating the service offering and
+ * for retrieving incoming {@link Connection}s for it.
  */
 public interface Binding extends EventSource
 {
@@ -28,14 +33,18 @@ public interface Binding extends EventSource
 	public Connection getIncomingConnection();
 	
 	/**
-	 * @return number of connections waiting
+	 * @return Number of new connections waiting in queue
 	 */
 	public int getNumberWaitingConnections();
 	
+	/**
+	 * @return Name used for this binding
+	 */
 	public Name getName();
 	
 	/**
 	 * Closes registration and makes the binding unaccessible for peers.
+	 * The method does not block.
 	 */
 	public void close();
 }

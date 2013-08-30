@@ -64,13 +64,13 @@ public class RoutingServiceSimulated implements RoutingService
 	public RoutingServiceSimulated(RemoteRoutingService pRoutingService, String pName, Node pNode)
 	{
 		if(Config.Routing.ENABLE_NODE_RS_HIERARCHY_LEVEL) {
-			mRS = new PartialRoutingService(pNode.getTimeBase(), pNode.getLogger(), "RS@" +pName +"@" +pNode.getAS(), pRoutingService);
+			mRS = new PartialRoutingService(pNode.getAS().getSimulation(), pNode.getTimeBase(), pNode.getLogger(), "RS@" +pName +"@" +pNode.getAS(), pRoutingService);
 		} else {
 			mRS = pRoutingService;
 		}
 		
 		mRoutingIDs = new HashMap<ForwardingNode, RoutingServiceAddress>();
-		mNameMapping = HierarchicalNameMappingService.getGlobalNameMappingService();
+		mNameMapping = HierarchicalNameMappingService.getGlobalNameMappingService(pNode.getAS().getSimulation());
 		mLogger = pNode.getLogger();
 	}
 	
@@ -405,7 +405,7 @@ public class RoutingServiceSimulated implements RoutingService
 			tID.setDescr(pElement);
 			
 			// set first capabilities based on the node data
-			tID.setCaps(pElement.getNode().getCapabilities());
+			tID.setCaps(pElement.getEntity().getNode().getCapabilities());
 			
 			// register node with ID in list
 			synchronized (mRoutingIDs) {
@@ -533,7 +533,7 @@ public class RoutingServiceSimulated implements RoutingService
 	{
 		RoutingServiceAddress tFrom = getNameFor((ForwardingNode) pFrom);
 		
-		if(tFrom != null) {
+		if(tFrom == null) {
 			mLogger.log(this, "Source node " +pFrom +" of link " +pGate +" not known. Register it implicitly.");
 			registerNode((ForwardingNode)pFrom, null, NamingLevel.NONE, null);
 			
@@ -543,14 +543,14 @@ public class RoutingServiceSimulated implements RoutingService
 			}
 		}
 		
-		informRoutingService((ForwardingNode)pFrom, pGate.getNextNode(), pGate, pGate.getRemoteDestinationName(), pGate.getCost());
+		informRoutingService((ForwardingNode)pFrom, pGate.getNextNode(), pGate, pGate.getRemoteDestinationName());
 	}
 	
 	/**
 	 * Informs routing service about new connection provided by a gate.
 	 * Might be called recursively.
 	 */
-	private void informRoutingService(ForwardingNode pFrom, ForwardingElement pTo, AbstractGate pGate, Name pRemoteDestinationName, Number pLinkCost) throws NetworkException
+	private void informRoutingService(ForwardingNode pFrom, ForwardingElement pTo, AbstractGate pGate, Name pRemoteDestinationName) throws NetworkException
 	{
 		// is it a local connection between two FNs?
 		if(pRemoteDestinationName == null) {
@@ -565,7 +565,7 @@ public class RoutingServiceSimulated implements RoutingService
 						mLogger.warn(this, "Destination node " +pTo +" in link " +pGate +" was not registered.");
 						registerNode((GateContainer)pTo, null, NamingLevel.NONE, null);
 					}
-					informRoutingService(pFrom, pTo, pGate, tAddress, pLinkCost);
+					informRoutingService(pFrom, pTo, pGate, tAddress);
 				}
 			}
 		} else {
@@ -589,7 +589,7 @@ public class RoutingServiceSimulated implements RoutingService
 				
 				if(!tQoSGate) {
 					try {
-						mRS.registerLink(tFrom, tTo, pGate.getGateID(), pGate.getDescription(), pGate.getCost());
+						mRS.registerLink(tFrom, tTo, pGate.getGateID(), pGate.getDescription());
 					} catch (RemoteException exc) {
 						throw new NetworkException("Failed to register link " +pGate +": " +tFrom +"->" +tTo +" at higher entity.", exc);
 					}

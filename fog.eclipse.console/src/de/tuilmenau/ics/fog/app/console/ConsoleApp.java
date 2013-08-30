@@ -12,16 +12,19 @@ package de.tuilmenau.ics.fog.app.console;
 import java.io.IOException;
 import java.rmi.RemoteException;
 
-import de.tuilmenau.ics.fog.application.Session;
+import org.eclipse.swt.widgets.Shell;
+
+import de.tuilmenau.ics.fog.application.ThreadApplication;
+import de.tuilmenau.ics.fog.application.util.ReceiveCallback;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.eclipse.console.EclipseConsoleLogObserver;
-import de.tuilmenau.ics.fog.eclipse.ui.commands.HostApplication;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.HostCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectRequirementsDialog;
 import de.tuilmenau.ics.fog.exceptions.InvalidParameterException;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
-import de.tuilmenau.ics.fog.facade.IReceiveCallback;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
 import de.tuilmenau.ics.fog.facade.properties.DelayProperty;
@@ -37,7 +40,7 @@ import de.tuilmenau.ics.fog.util.SimpleName;
 
 
 
-public class ConsoleApp extends HostApplication implements IReceiveCallback
+public class ConsoleApp extends ThreadApplication implements ReceiveCallback
 {
 	private static final String EXIT_CMD = "exit";
 	private static final int EXIT_SLEEP_MSEC = 1000;
@@ -47,9 +50,15 @@ public class ConsoleApp extends HostApplication implements IReceiveCallback
 	// counter after how many messages the console should print message (MUST be > 1)
 	private static final int NUMBER_MSG_LOOP_COUNTER = 1000;
 	
+	public ConsoleApp(Host host, Shell shell)
+	{
+		super(host, null);
+		
+		this.shell = shell;
+	}
 	
 	@Override
-	public void main()
+	public void execute()
 	{
 		if(getHost() != null) {
 			boolean exit = false;
@@ -124,7 +133,6 @@ public class ConsoleApp extends HostApplication implements IReceiveCallback
 	public boolean executeCommand(String pCmd) throws RemoteException
 	{
 		boolean tOk = false;
-		Host host = getHost();
 		
 		// ignore empty commands
 		if (pCmd == null) return true;
@@ -164,7 +172,7 @@ public class ConsoleApp extends HostApplication implements IReceiveCallback
 				tOk = true;
 			}
 			else if (tCommand.equals("requirements") || tCommand.equals("requ")) {
-				requirements = SelectRequirementsDialog.open(getSite().getShell(), null, null, requirements);
+				requirements = SelectRequirementsDialog.open(shell, null, null, requirements);
 				log(Level.INFO, "Set requirements for connection to: " +requirements);
 				tOk = true;
 			}
@@ -215,7 +223,7 @@ public class ConsoleApp extends HostApplication implements IReceiveCallback
 						}						
 					}
 					
-					socket = host.connect(SimpleName.parse(tParts[1]), tDescr, identity);
+					socket = getHost().getLayer(null).connect(SimpleName.parse(tParts[1]), tDescr, identity);
 					
 					Session session = new Session(false, Logging.getInstance(), this);
 					session.start(socket);
@@ -333,5 +341,6 @@ public class ConsoleApp extends HostApplication implements IReceiveCallback
 	private int loopCounter = -1;
 	private double loopTime = 0;
 	private Description requirements = null;
+	private Shell shell = null;
 }
 

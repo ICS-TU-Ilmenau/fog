@@ -55,11 +55,11 @@ public abstract class Process
 		mProcessID = -1;
 		mBase = base;
 		mState = ProcessState.INIT;
-		mLogger = base.getNode().getLogger();
+		mLogger = base.getEntity().getLogger();
 		
 		// Use owner if it is known to authentication service. Otherwise, use
 		// default identity of node or (TODO) create special one
-		IdentityManagement authService = mBase.getNode().getAuthenticationService();
+		IdentityManagement authService = mBase.getEntity().getAuthenticationService();
 		if(authService.canSignFor(owner)) {
 			mOwner = owner;
 		} else {
@@ -76,7 +76,7 @@ public abstract class Process
 				}
 				else if(getState() == ProcessState.OPERATING) {
 					try {
-						if(check() && !mBase.getNode().isShuttingDown()) {
+						if(check() && !mBase.getEntity().getNode().isShuttingDown()) {
 							// everything ok; wait for next timeout
 							if(CHECK_CONTINOUSLY_IN_OPERATING_MODE) {
 								mTimer.restart();
@@ -177,7 +177,7 @@ public abstract class Process
 	
 	public EventHandler getTimeBase()
 	{
-		return mBase.getNode().getTimeBase();
+		return mBase.getEntity().getTimeBase();
 	}
 	
 	public Logger getLogger()
@@ -188,7 +188,7 @@ public abstract class Process
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() +"_ID:" +mProcessID +"@" +mBase.getNode();
+		return this.getClass().getSimpleName() +"_ID:" +mProcessID +"@" +mBase.getEntity();
 	}
 	
 	public ForwardingNode getBase()
@@ -221,7 +221,7 @@ public abstract class Process
 		mProcessID = processID;
 		
 		if(mProcessID >= 0) {
-			mBase.getNode().getProcessRegister().registerProcess(mBase, this);
+			mBase.getEntity().getProcessRegister().registerProcess(mBase, this);
 		}
 	}
 	
@@ -283,7 +283,7 @@ public abstract class Process
 		mTimer.cancel();
 		
 		synchronized(this) {
-			mBase.getNode().getProcessRegister().unregisterProcess(mBase, this);
+			mBase.getEntity().getProcessRegister().unregisterProcess(mBase, this);
 		}
 		
 		// do not set mBase to null, because others might need

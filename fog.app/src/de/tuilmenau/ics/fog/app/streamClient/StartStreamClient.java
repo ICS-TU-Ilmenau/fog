@@ -9,7 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.app.streamClient;
 
-import de.tuilmenau.ics.fog.eclipse.ui.commands.HostApplication;
+import de.tuilmenau.ics.fog.eclipse.ui.commands.HostCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.EnterStringDialog;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectRequirementsDialog;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -19,7 +19,7 @@ import de.tuilmenau.ics.fog.util.SimpleName;
 /**
  * Command for starting up a StreamClient at a host.
  */
-public class StartStreamClient extends HostApplication
+public class StartStreamClient extends HostCommand
 {
 	public StartStreamClient()
 	{

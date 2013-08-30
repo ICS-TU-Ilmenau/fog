@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
@@ -46,7 +47,7 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		HRMRoutingService tHRS = new HRMRoutingService(pAS, pNode);
 		
 		// register HRM instance as routing service for the current node
-		pNode.getHost().registerRoutingService(tHRS);
+		FoGEntity.registerRoutingService(pNode, tHRS);
 
 		Logging.log(this, "###### CONFIGURING NODE " + pName + " -END ###### ");
 	}

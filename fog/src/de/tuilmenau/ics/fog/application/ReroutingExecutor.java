@@ -18,14 +18,22 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.application.util.Service;
+import de.tuilmenau.ics.fog.application.util.Session;
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
+import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.events.ServiceDegradationEvent;
+import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
+import de.tuilmenau.ics.fog.facade.properties.MinMaxProperty.Limit;
+import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.statistics.ReroutingTestAgent;
 import de.tuilmenau.ics.fog.scripts.RerouteScript;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -41,40 +49,64 @@ public class ReroutingExecutor extends Application
 	
 	public ReroutingExecutor(Node pNode, Identity pIdentity)
 	{
-		super(pNode.getHost(), pIdentity);
+		super(pNode, pIdentity);
 	
 		mName = new SimpleName(new Namespace("rerouting"), pNode.toString());
 	}
 	
 	@Override
+	public Description getDescription()
+	{
+		Description tDescription = Description.createBE(false);
+		
+		if(Config.Routing.REROUTING_EXECUTOR_ALLOCATES_BANDWIDTH) {
+			DatarateProperty tDatarateProperty = null;
+			if(tDescription.get(DatarateProperty.class) instanceof DatarateProperty) {
+				tDatarateProperty = (DatarateProperty) tDescription.get(DatarateProperty.class);
+			}
+			if(tDatarateProperty == null) {
+				tDatarateProperty = new DatarateProperty(2, Limit.MIN);
+			}
+			try {
+				tDescription.add(tDatarateProperty);
+			} catch (PropertyException tExc) {
+				mLogger.err(this, "Unable to add bandwidth requirement", tExc);
+			}
+		}
+		
+		return tDescription;
+	}
+	
+	@Override
 	protected void started()
 	{
-		try {
-			Binding tBinding = getHost().bind(null, mName, getDescription(), getIdentity());
-			
-			// create object, which adds EchoService objects
-			// to each incoming connection
-			mServerSocket = new Service(false, null)
+		Binding tBinding = getLayer().bind(null, mName, getDescription(), getIdentity());
+		
+		// create object, which adds EchoService objects
+		// to each incoming connection
+		mServerSocket = new Service(false, null)
+		{
+			public void newConnection(Connection pConnection)
 			{
-				public void newConnection(Connection pConnection)
-				{
-					Session tSession = new ReroutingSession(false);
-					
-					// start event processing
-					tSession.start(pConnection);
-					
-					// add it to list of ongoing connections
-					if(mSessions == null) {
-						mSessions = new LinkedList<Session>();
-					}
-					mSessions.add(tSession);
+				Session tSession = new ReroutingSession(false);
+				
+				// start event processing
+				tSession.start(pConnection);
+				
+				// add it to list of ongoing connections
+				if(mSessions == null) {
+					mSessions = new LinkedList<Session>();
 				}
-			};
-			mServerSocket.start(tBinding);
-		}
-		catch (NetworkException tExc) {
-			terminated(tExc);
-		}
+				mSessions.add(tSession);
+			}
+			
+			@Override
+			public void error(ErrorEvent cause)
+			{
+				terminated(cause.getException());
+			}
+		};
+		mServerSocket.start(tBinding);
 	}
 
 	@Override

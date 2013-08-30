@@ -11,31 +11,18 @@ package de.tuilmenau.ics.fog.eclipse.ui.commands;
 
 import de.tuilmenau.ics.fog.transfer.Gate.GateState;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
+import de.tuilmenau.ics.fog.ui.commands.Command;
 
 
-public class InvalidateGate extends SilentCommand
+public class InvalidateGate implements Command
 {
-
-	public InvalidateGate()
-	{
-		super();
-	}
-	
 	@Override
-	public void init(Object object)
+	public void execute(Object object)
 	{
-		if(object instanceof AbstractGate) mGate = (AbstractGate) object; 
-			
-		if(mGate == null) throw new RuntimeException(this +" requires a gate instead of " +object +" to proceed.");
-	}
-
-	@Override
-	public void main()
-	{
-		if(mGate != null) {
-			mGate.setState(GateState.SHUTDOWN);
+		if(object instanceof AbstractGate) {
+			((AbstractGate) object).setState(GateState.SHUTDOWN);
+		} else {
+			throw new RuntimeException(this +" requires a gate instead of " +object +" to proceed.");
 		}
 	}
-	
-	private AbstractGate mGate = null;
 }

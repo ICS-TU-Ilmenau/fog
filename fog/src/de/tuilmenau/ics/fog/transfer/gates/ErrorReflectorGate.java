@@ -13,13 +13,13 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.gates;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.ExperimentAgent;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.Reroute;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.util.RateLimitedAction;
@@ -33,11 +33,11 @@ public class ErrorReflectorGate extends AbstractGate
 	private static final double MAX_ERROR_MSG_PER_SEC = 2.0d;
 	
 	
-	public ErrorReflectorGate(Node pNode, Identity pOwner)
+	public ErrorReflectorGate(FoGEntity pNode, Identity pOwner)
 	{
 		super(pNode, null, pOwner);
 		
-		mErrorMsg = new RateLimitedAction<Packet>(getNode().getTimeBase(), MAX_ERROR_MSG_PER_SEC) {
+		mErrorMsg = new RateLimitedAction<Packet>(getEntity().getTimeBase(), MAX_ERROR_MSG_PER_SEC) {
 			@Override
 			protected void doAction(Packet pPacket)
 			{
@@ -61,12 +61,12 @@ public class ErrorReflectorGate extends AbstractGate
 		if(tReturnRoute != null) {
 			String name = pLastHop.toString();
 			if (pLastHop instanceof ForwardingNode) {
-				name = ((ForwardingNode)pLastHop).getNode().toString();
+				name = ((ForwardingNode)pLastHop).getEntity().toString();
 			}
-			pPacket.logStats(getNode().getAS().getSimulation(), name);
+			pPacket.logStats(getEntity().getNode().getAS().getSimulation(), name);
 			Packet tNewPacket = new Packet(tReturnRoute, new Reroute(), pPacket);
 			
-			tNewPacket.setSourceNode(mNode.toString());
+			tNewPacket.setSourceNode(mEntity.toString());
 			if (pPacket.getData() instanceof ExperimentAgent) {
 				tNewPacket.setTargetNode(((ExperimentAgent)pPacket.getData()).getSourceNode());
 			}
