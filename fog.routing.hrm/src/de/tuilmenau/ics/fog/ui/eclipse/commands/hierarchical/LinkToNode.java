@@ -11,8 +11,6 @@ package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
 import java.util.LinkedList;
 
-import org.eclipse.ui.IWorkbenchPartSite;
-
 import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Description;

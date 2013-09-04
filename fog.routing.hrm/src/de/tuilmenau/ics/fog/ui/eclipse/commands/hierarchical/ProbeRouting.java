@@ -12,15 +12,12 @@ package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 
-import org.eclipse.ui.IWorkbenchPartSite;
-
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.DestinationApplicationProperty;
