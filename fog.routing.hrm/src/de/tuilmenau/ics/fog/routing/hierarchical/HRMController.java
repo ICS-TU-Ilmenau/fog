@@ -9,8 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
-import java.awt.Color;
-import java.io.FileNotFoundException;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,7 +22,6 @@ import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.util.ServerCallback;
 import de.tuilmenau.ics.fog.application.util.Service;
 import de.tuilmenau.ics.fog.eclipse.GraphViewer;
-import de.tuilmenau.ics.fog.eclipse.utils.Resources;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -69,14 +66,14 @@ import de.tuilmenau.ics.fog.util.SimpleName;
 public class HRMController extends Application implements ServerCallback, IEvent
 {
 	/**
-	 * Stores the decoration instance for HRM specific decorations
+	 * Stores the node specific graph decorator for HRM coordinators and HRMIDs
 	 */
-	private Decoration mGraphViewerDecoration = null;
-	
+	private NodeDecorator mDecoratorForCoordinatorsAndHRMIDs = null;
+
 	/**
-	 * Stores the node specific graph decorator
+	 * Stores the node specific graph decorator for HRM coordinators and clusters
 	 */
-	private NodeDecorator mNodeDecorator = null;
+	private NodeDecorator mDecoratorForCoordinatorsAndClusters = null;
 	
 	/**
 	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance.
@@ -167,15 +164,28 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mAS = pAS;
 		
 		/**
-		 * Create the node specific decorator
+		 * Create the node specific decorator for HRM coordinators and HRMIDs
 		 */
-		mNodeDecorator = new NodeDecorator();
+		mDecoratorForCoordinatorsAndHRMIDs = new NodeDecorator();
 		
 		/**
-		 * Set the node decoration
+		 * Create the node specific decorator for HRM coordinators and clusters
 		 */
-		mGraphViewerDecoration = Decoration.getInstance(GraphViewer.DEFAULT_DECORATION);//TODO: DECORATION_NAME);
-		mGraphViewerDecoration.setDecorator(mNode,  mNodeDecorator);
+		mDecoratorForCoordinatorsAndClusters = new NodeDecorator();
+		
+		/**
+		 * Set the node decorations
+		 */
+		Decoration tDecoration = null;
+		// create own decoration for HRM coordinators & HRMIDs
+		tDecoration = Decoration.getInstance(DECORATION_NAME_COORDINATORS_AND_HRMIDS);
+		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndHRMIDs);
+		// create own decoration for HRM coordinators and clusters
+		tDecoration = Decoration.getInstance(DECORATION_NAME_COORDINATORS_AND_CLUSTERS);
+		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndClusters);
+		// overwrite default decoration
+		tDecoration = Decoration.getInstance(GraphViewer.DEFAULT_DECORATION);
+		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndClusters);
 		
 		/**
 		 * Create communication service
@@ -380,7 +390,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private void updateGUINodeDecoration()
 	{
 		/**
-		 * Set the decoration text
+		 * Set the decoration texts
 		 */
 		String tNodeText = "";
 		
@@ -391,10 +401,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}			
 		}
-		mNodeDecorator.setText(tNodeText);
+		mDecoratorForCoordinatorsAndHRMIDs.setText(tNodeText);
+		LinkedList<Cluster> tAllClusters = getAllClusters();
+		for (Cluster tCluster : tAllClusters){
+			if (tNodeText != ""){
+				tNodeText += ", ";
+			}
+			tNodeText += Long.toString(tCluster.getGUIClusterID());
+		}
+		mDecoratorForCoordinatorsAndClusters.setText("- clusters: " + tNodeText);
 		
 		/**
-		 * Set the decoration image
+		 * Set the decoration images
 		 */
 		LinkedList<Coordinator> tAllCoordinators = getAllCoordinators();
 		int tHighestCoordinatorLevel = -1;
@@ -404,7 +422,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tHighestCoordinatorLevel = tCoordLevel;
 			}
 		}
-		mNodeDecorator.setImage(tHighestCoordinatorLevel);
+		mDecoratorForCoordinatorsAndHRMIDs.setImage(tHighestCoordinatorLevel);
+		mDecoratorForCoordinatorsAndClusters.setImage(tHighestCoordinatorLevel);
 	}
 
 	/**
@@ -466,6 +485,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			mLocalClusters.add(pCluster);
 		}
 		
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
+
 		// register the cluster in the local ARG
 		registerNodeARG(pCluster);
 
@@ -1669,8 +1691,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
 
 	/**
-	 * Stores the identification string for HRM specific routing graph decorations
+	 * Stores the identification string for HRM specific routing graph decorations (coordinators & HRMIDs)
 	 */
-	@SuppressWarnings("unused")
-	private final static String DECORATION_NAME = "HRM coordinators & HRMIDs";
+	private final static String DECORATION_NAME_COORDINATORS_AND_HRMIDS = "HRM coordinators & HRMIDs";
+
+	/**
+	 * Stores the identification string for HRM specific routing graph decorations (coordinators & clusters)
+	 */
+	private final static String DECORATION_NAME_COORDINATORS_AND_CLUSTERS = "HRM coordinators & clusters";
 }
