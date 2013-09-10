@@ -172,7 +172,7 @@ public class Cluster extends ControlEntity implements ICluster
 	 * 
 	 * @return the ClusterID
 	 */
-	static public long createClusterID()
+	static public synchronized long createClusterID()
 	{
 		// get the current unique ID counter
 		long tResult = sNextFreeClusterID * idMachineMultiplier();

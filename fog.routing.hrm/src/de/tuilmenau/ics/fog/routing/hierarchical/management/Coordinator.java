@@ -130,7 +130,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 * 
 	 * @return the ClusterID
 	 */
-	static private long createCoordinatorID()
+	static private synchronized long createCoordinatorID()
 	{
 		// get the current unique ID counter
 		long tResult = sNextFreeCoordinatorID * idMachineMultiplier();
