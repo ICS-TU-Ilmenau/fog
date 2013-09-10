@@ -689,7 +689,7 @@ public class ComChannel
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteClusterName());
 			}
 
-			List<AbstractRoutingGraphNode> tARGNodesOrderDistance = mHRMController.getVerticesInOrderRadiusARG(tSourceCluster);
+			List<AbstractRoutingGraphNode> tARGNodesOrderDistance = mHRMController.getNeighborClustersOrderedByRadiusInARG(tSourceCluster);
 			
 			if(tSourceCluster != null) {
 				for(AbstractRoutingGraphNode tARGNode : tARGNodesOrderDistance) {
