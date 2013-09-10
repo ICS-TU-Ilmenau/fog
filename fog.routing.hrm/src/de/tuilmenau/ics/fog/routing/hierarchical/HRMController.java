@@ -36,7 +36,6 @@ import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
 import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
-import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalEndPoint;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
@@ -738,7 +737,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// get the central FN of this node
 		L2Address tThisHostL2Address = getHRS().getL2AddressFor(tFoGLayer.getCentralFN());
 
-		Logging.info(this, "\n\n\nFOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + " FOR " + tThisHostL2Address);
+		Logging.info(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + " FOR " + tThisHostL2Address);
 		
 		/**
 		 * Create cluster
@@ -765,9 +764,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Describe the new created cluster
 		 */
 	    Logging.log(this, "    ..creating cluster description");
-		final RequestClusterParticipationProperty tClusterParticipationProperty = new RequestClusterParticipationProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
+		final RequestClusterParticipationProperty tRequestClusterParticipationProperty = new RequestClusterParticipationProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
+		/**
+		 * Describe the cluster member
+		 */
 	    Logging.log(this, "    ..creating cluster member description for created cluster " + tCreatedCluster);
-		tClusterParticipationProperty.addClusterMember(tCreatedCluster.getClusterID(), 0, null);
+	    tRequestClusterParticipationProperty.addClusterMember(tCreatedCluster.getClusterID(), 0, null);
 
 		/**
 		 * Store the thread specific variables
@@ -791,7 +793,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * Create connection requirements
 				 */
 				Description tConnectionRequirements = createHRMControllerDestinationDescription();
-				tConnectionRequirements.set(tClusterParticipationProperty);
+				tConnectionRequirements.set(tRequestClusterParticipationProperty);
 
 				/**
 				 * Connect to the neighbor node
