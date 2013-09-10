@@ -296,17 +296,23 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	public boolean addRouteToDirectNeighbor(L2Address pNeighborL2Address, Route pRoute)
 	{
-		boolean tResult = true;
+		boolean tResult = false;
 		
-		RoutingServiceLogicalLink tLogicalLink = new RoutingServiceLogicalLink(pRoute);
-		
-		List<RoutingServiceLink> tOldRoute = getRouteFromGraph(mL2RoutingGraph, getCentralFNL2Address(), pNeighborL2Address);
-		if (tOldRoute != null){
-			Logging.log(this, "Found old route: " + tOldRoute + " to direct neighbor: " + pNeighborL2Address);
-			Logging.log(this, "      ..new route: " + pRoute);
+		if (pNeighborL2Address != null){
+			RoutingServiceLogicalLink tLogicalLink = new RoutingServiceLogicalLink(pRoute);
+			
+			List<RoutingServiceLink> tOldRoute = getRouteFromGraph(mL2RoutingGraph, getCentralFNL2Address(), pNeighborL2Address);
+			if (tOldRoute != null){
+				Logging.log(this, "Found old route: " + tOldRoute + " to direct neighbor: " + pNeighborL2Address);
+				Logging.log(this, "      ..new route: " + pRoute);
+			}
+			Logging.log(this, "ADDING ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
+			storeL2Link(getCentralFNL2Address(), pNeighborL2Address, tLogicalLink);
+
+			tResult = true;
+		}else{
+			Logging.err(this, "addRouteToDirectNeighbor() got an invalid neighbor L2Address");
 		}
-		Logging.log(this, "ADDING ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
-		storeL2Link(getCentralFNL2Address(), pNeighborL2Address, tLogicalLink);
 
 		return tResult;
 	}
