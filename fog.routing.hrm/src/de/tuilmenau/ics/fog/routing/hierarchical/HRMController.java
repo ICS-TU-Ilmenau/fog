@@ -385,7 +385,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * 
+	 * Updates the decoration of the node (image and label text)
 	 */
 	private void updateGUINodeDecoration()
 	{
