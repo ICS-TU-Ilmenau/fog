@@ -84,6 +84,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 */
 	private static long sNextFreeCoordinatorID = 1;
 
+	/**
+	 * Count the outgoing connections
+	 */
+	private int mCounterOutgoingConnections = 0;
+
 	private Name mCoordinatorName = null;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
 	private LinkedList<AnnounceRemoteCluster> mReceivedAnnouncements;
@@ -764,112 +769,94 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 * 	 1.) use "RequestClusterParticipationProperty" for every connection to inform about the new cluster 
 	 * 
 	 * @param pNeighborCluster the found neighbor cluster whose coordinator is a neighbor of this one
+	 * @param pIDForFutureCluster the clusterID for the common cluster
 	 */
 	private void eventDetectedNeighborCoordinator(ControlEntity pNeighborCluster, Long pIDForFutureCluster)
 	{
-		Logging.log(this, "############## Connecting to neighbor coordinator: " + pNeighborCluster);
-		
 		// get the recursive FoG layer
 		FoGEntity tFoGLayer = (FoGEntity) mHRMController.getNode().getLayer(FoGEntity.class);
 
 		// get the central FN of this node
 		L2Address tThisHostL2Address = mHRMController.getHRS().getL2AddressFor(tFoGLayer.getCentralFN());
 
-		Logging.info(this, "\n\n\nFOUND NEIGHBOR CLUSTER " + pNeighborCluster + " FOR " + tThisHostL2Address);
+		Logging.info(this, "\n\n\n############## FOUND NEIGHBOR CLUSTER " + pNeighborCluster + " FOR " + tThisHostL2Address);
 
 		/**
 		 * get the name of the target coordinator name
 		 */
 		Name tTargetCoordinatorName = ((ICluster)pNeighborCluster).getCoordinatorName();
 		
-		int tFoundNeighbors = 0;
-
 		if(!isConnectedToNeighborCoordinator(tTargetCoordinatorName)) {
 			// store the connection to avoid connection duplicates during later processing
 			registerConnectionToNeighborCoordinator(tTargetCoordinatorName);
 
-			ControlEntity tControlEntityTargetCluster = (ControlEntity)pNeighborCluster;
-
 			HierarchyLevel tSourceClusterHierLvl = new HierarchyLevel(this, getHierarchyLevel().getValue());
 			HierarchyLevel tTargetClusterHierLvl = new HierarchyLevel(this, pNeighborCluster.getHierarchyLevel().getValue() + 1);
 
-			ControlEntity tTargetControlEntity = (ControlEntity)pNeighborCluster;
+			ControlEntity tNeighborClusterControlEntity = (ControlEntity)pNeighborCluster;
 
 			Logging.log(this, "    ..creating cluster description");
 			
-			RequestClusterParticipationProperty tPropRequestClusterParticipation = new RequestClusterParticipationProperty(pIDForFutureCluster, tTargetClusterHierLvl, pNeighborCluster.getCoordinatorID());
-			
+			/**
+			 * Describe the common cluster
+			 */
+		    Logging.log(this, "    ..creating cluster description");
+			RequestClusterParticipationProperty tRequestClusterParticipationProperty = new RequestClusterParticipationProperty(pIDForFutureCluster, tTargetClusterHierLvl, pNeighborCluster.getCoordinatorID());
+
 			/**
 			 * Create communication session
 			 */
 		    Logging.log(this, "    ..creating new communication session");
 		    ComSession tComSession = new ComSession(mHRMController, false, tSourceClusterHierLvl);
 
+			Logging.log(this, "    ..iterate over all coordinators on hierarchy level: " + (tSourceClusterHierLvl.getValue() - 1));
+			int tLocalCoordinatorsCount = 0;
+			for(Coordinator tLocalCoordinator : mHRMController.getAllCoordinators(new HierarchyLevel(this, tSourceClusterHierLvl.getValue()))) {
+				tLocalCoordinatorsCount++;
+				Logging.log(this, "         ..found [" + tLocalCoordinatorsCount + "] : " + tLocalCoordinator);
 
-		    ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNodeName());
-			
-			Logging.log(this, "    ..searching for neighbor coordinators on hierarchy level: " + (tSourceClusterHierLvl.getValue() - 1));
-			
-			for(Coordinator tCoordinator : mHRMController.getAllCoordinators(new HierarchyLevel(this, tSourceClusterHierLvl.getValue()))) {
-				Logging.log(this, "         ..found [" + tFoundNeighbors + "] : " + tCoordinator);
-
-				ComChannel tComChannel = new ComChannel(mHRMController, tCoordinator, tComSession);
-				tComChannel.setPeerPriority(pNeighborCluster.getPriority());
+			    /**
+			     * Create communication channel
+			     */
+			    Logging.log(this, "    ..creating new communication channel");
+				ComChannel tComChannel = new ComChannel(mHRMController, tLocalCoordinator, tComSession);
 				tComChannel.setRemoteClusterName(new ClusterName(mHRMController, pNeighborCluster.getHierarchyLevel(), pNeighborCluster.getCoordinatorID(), pNeighborCluster.getClusterID()));
-				tFoundNeighbors++;
-			}
-			
-			if (tFoundNeighbors == 0){
-				Logging.log(this, "    ..haven't found a neighbor coordinator, known coordinators are: " + mHRMController.getAllCoordinators().toString());
-			}else{
-				Logging.log(this, "    ..found " + tFoundNeighbors + " neighbor coordinators");
-			}
+				tComChannel.setPeerPriority(pNeighborCluster.getPriority());
 
-			for(Coordinator tCoordinator : mHRMController.getAllCoordinators(new HierarchyLevel(this, tSourceClusterHierLvl.getValue()))) {
-				Logging.log(this, "Ping2: " + tCoordinator);
-
-				if(tTargetControlEntity.superiorCoordinatorL2Address() != null) {
-					Cluster tCoordinatorCluster = tCoordinator.getCluster();
+				// do we know the neighbor coordinator? (we check for a known coordinator of the neighbor cluster)
+				if(tNeighborClusterControlEntity.superiorCoordinatorL2Address() != null) {
+					Cluster tCoordinatorCluster = tLocalCoordinator.getCluster();
 					
 					/**
-					 * Describe the new created cluster
+					 * Describe the cluster member
 					 */
 				    Logging.log(this, "    ..creating cluster member description for the found cluster " + tCoordinatorCluster);
-					ClusterMemberDescription tClusterMemberDescription = tPropRequestClusterParticipation.addClusterMember(tCoordinatorCluster.getClusterID(), tCoordinatorCluster.getCoordinatorID(), tCoordinatorCluster.getPriority());
-					
+					ClusterMemberDescription tClusterMemberDescription = tRequestClusterParticipationProperty.addClusterMember(tCoordinatorCluster.getClusterID(), tCoordinatorCluster.getCoordinatorID(), tCoordinatorCluster.getPriority());
 					tClusterMemberDescription.setSourceName(mHRMController.getNodeName());
 					tClusterMemberDescription.setSourceL2Address(tThisHostL2Address);
 					
-					List<AbstractRoutingGraphLink> tClusterListToRemote = mHRMController.getRouteARG(tCoordinator.getCluster(), tControlEntityTargetCluster);
-					if(!tClusterListToRemote.isEmpty()) {
-						/*
-						 * we need the last hop in direct to the neighbor
-						 */
-						ICluster tPredecessorToRemote = (ICluster) mHRMController.getOtherEndOfLinkARG(tControlEntityTargetCluster, tClusterListToRemote.get(tClusterListToRemote.size()-1));
-						tClusterMemberDescription.setPredecessor(new ClusterName(mHRMController, tPredecessorToRemote.getHierarchyLevel(), tPredecessorToRemote.getCoordinatorID(), tPredecessorToRemote.getClusterID()));
-						Logging.log(this, "Successfully set predecessor for " + pNeighborCluster + ":" + tPredecessorToRemote);
-					} else {
-						Logging.log(this, "Unable to set predecessor for " + pNeighborCluster + ":");
-					}
-					
-					for(ControlEntity tNeighbor: tCoordinator.getCluster().getNeighborsARG()) {
-						ICluster tIClusterNeighbor = (ICluster)tNeighbor;
+					/**
+					 * Iterate over all known neighbors of the current cluster member: we inform the connection target about this neighborhood topology
+					 */
+					for(ControlEntity tClusterMemberNeighbor: tLocalCoordinator.getCluster().getNeighborsARG()) {
+						ICluster tIClusterNeighbor = (ICluster)tClusterMemberNeighbor;
 						
-						DiscoveryEntry tEntry = new DiscoveryEntry(tIClusterNeighbor.getCoordinatorID(), tIClusterNeighbor.getCoordinatorName(), tIClusterNeighbor.getClusterID(), tNeighbor.superiorCoordinatorL2Address(), tNeighbor.getHierarchyLevel());
-						tEntry.setPriority(tNeighbor.getPriority());
-						List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(tCoordinator.getCluster(), tNeighbor);
+						DiscoveryEntry tEntry = new DiscoveryEntry(tClusterMemberNeighbor.getCoordinatorID(), tIClusterNeighbor.getCoordinatorName(), tClusterMemberNeighbor.getClusterID(), tClusterMemberNeighbor.superiorCoordinatorL2Address(), tClusterMemberNeighbor.getHierarchyLevel());
+						tEntry.setPriority(tClusterMemberNeighbor.getPriority());
+						List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(tLocalCoordinator.getCluster(), tClusterMemberNeighbor);
 						/*
 						 * the predecessor has to be the next hop
 						 */
 						if(!tClusterList.isEmpty()) {
-							ICluster tPredecessor = (ICluster) mHRMController.getOtherEndOfLinkARG(tNeighbor, tClusterList.get(tClusterList.size()-1));
+							ICluster tPredecessor = (ICluster) mHRMController.getOtherEndOfLinkARG(tClusterMemberNeighbor, tClusterList.get(tClusterList.size()-1));
 							tEntry.setPredecessor(new ClusterName(mHRMController, tPredecessor.getHierarchyLevel(), tPredecessor.getCoordinatorID(), tPredecessor.getClusterID()));
-							Logging.log(this, "Successfully set predecessor for " + tNeighbor + ":" + tPredecessor);
+							Logging.log(this, "Successfully set predecessor for " + tClusterMemberNeighbor + ":" + tPredecessor);
 						} else {
-							Logging.log(this, "Unable to set predecessor for " + tNeighbor);
+							Logging.log(this, "Unable to set predecessor for " + tClusterMemberNeighbor);
 						}
-						if(tCoordinator.getPathToCoordinator(tCoordinator.getCluster(), tIClusterNeighbor) != null) {
-							for(RoutingServiceLinkVector tVector : tCoordinator.getPathToCoordinator(tCoordinator.getCluster(), tIClusterNeighbor)) {
+						
+						if(tLocalCoordinator.getPathToCoordinator(tLocalCoordinator.getCluster(), tIClusterNeighbor) != null) {
+							for(RoutingServiceLinkVector tVector : tLocalCoordinator.getPathToCoordinator(tLocalCoordinator.getCluster(), tIClusterNeighbor)) {
 								tEntry.addRoutingVectors(tVector);
 							}
 						}
@@ -883,25 +870,35 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			/**
 			 * Create connection requirements
 			 */
-			Description tConnectDescription = mHRMController.createHRMControllerDestinationDescription();
-			tConnectDescription.set(tPropRequestClusterParticipation);
+			Description tConnectionRequirements = mHRMController.createHRMControllerDestinationDescription();
+			tConnectionRequirements.set(tRequestClusterParticipationProperty);
 			
-			Logging.log(this, "Connecting to " + pNeighborCluster);
-			Connection tConnection = null;;
-			Logging.log(this, "CREATING CONNECTION to " + tTargetCoordinatorName);
-			//TODO: geht der nicht-blockierende Call auf connect so noch? race conditions?
-			tConnection = tFoGLayer.connect(tTargetCoordinatorName, tConnectDescription, mHRMController.getNode().getIdentity());
+		    ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNodeName());
+
+			/**
+			 * Connect to the neighbor coordinator
+			 */
+			Connection tConnection = null;				
+		    Logging.log(this, "    ..CONNECTING to: " + tTargetCoordinatorName + " with requirements: " + tConnectionRequirements);
+			tConnection = tFoGLayer.connect(tTargetCoordinatorName, tConnectionRequirements, mHRMController.getNode().getIdentity());
+		    Logging.log(this, "    ..connect() FINISHED");
 			if (tConnection != null){
+				
+				mCounterOutgoingConnections++;
+
+				Logging.log(this, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
 				tComSession.startConnection(null, tConnection);
 	
+				
+				
 				for(Coordinator tCoordinator : mHRMController.getAllCoordinators(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
-					LinkedList<Integer> tTokens = new LinkedList<Integer>();
+					LinkedList<Integer> tCoordinatorIDs = new LinkedList<Integer>();
 					for(ControlEntity tNeighbor : tCoordinator.getCluster().getNeighborsARG()) {
 						if(tNeighbor.getHierarchyLevel().getValue() == tCoordinator.getHierarchyLevel().getValue() - 1) {
-							tTokens.add(((ICluster) tNeighbor).getCoordinatorID());
+							tCoordinatorIDs.add(((ICluster) tNeighbor).getCoordinatorID());
 						}
 					}
-					tTokens.add(tCoordinator.getCluster().getCoordinatorID());
+					tCoordinatorIDs.add(tCoordinator.getCluster().getCoordinatorID());
 					if(!tTargetCoordinatorName.equals(mHRMController.getNodeName())) {
 						int tDistance = 0;
 						if (pNeighborCluster instanceof ClusterProxy){
@@ -910,10 +907,10 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 							tDistance = mHRMController.getClusterDistance(tClusterProxy); 
 						}
 						
-						NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tTokens, pNeighborCluster.getClusterID(), pNeighborCluster.getCoordinatorID(), pNeighborCluster.getHierarchyLevel(), tDistance);
+						NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tCoordinatorIDs, pNeighborCluster.getClusterID(), pNeighborCluster.getCoordinatorID(), pNeighborCluster.getHierarchyLevel(), tDistance);
 						Logging.log(this, "Created " + tDiscovery + " for " + pNeighborCluster);
 						tDiscovery.setOrigin(tCoordinator.getClusterID());
-						tDiscovery.setTargetClusterID(tTargetControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue());
+						tDiscovery.setTargetClusterID(tNeighborClusterControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue());
 						tBigDiscovery.addNestedDiscovery(tDiscovery);
 					}
 				}
