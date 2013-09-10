@@ -779,7 +779,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		// get the central FN of this node
 		L2Address tThisHostL2Address = mHRMController.getHRS().getL2AddressFor(tFoGLayer.getCentralFN());
 
-		Logging.info(this, "\n\n\n############## FOUND NEIGHBOR CLUSTER " + pNeighborCluster + " FOR " + tThisHostL2Address);
+		Logging.info(this, "\n\n\n############## FOUND INFERIOR NEIGHBOR CLUSTER " + pNeighborCluster + " FOR " + tThisHostL2Address);
 
 		/**
 		 * get the name of the target coordinator name
