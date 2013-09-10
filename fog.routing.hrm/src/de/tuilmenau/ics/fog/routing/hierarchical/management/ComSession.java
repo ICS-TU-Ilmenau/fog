@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.application.util.Session;
+import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
@@ -113,7 +114,7 @@ public class ComSession extends Session
 				Logging.err(this, "Unable to send " + pData + " because write operation failed", tExc);
 			}
 		} else {
-			Logging.err(this, "Unable to send " + pData + " because connection is invalid");
+			Logging.err(this, "Unable to send " + pData + " because of invalid connection: " + getConnection());
 		}
 		
 		return tResult;
@@ -149,9 +150,20 @@ public class ComSession extends Session
 	 * 
 	 * @param pRoute the route to the peer
 	 */
-	public void setRouteToPeer(Route pRoute)
+	private void setRouteToPeer(Route pRoute)
 	{
-		Logging.log(this, "Setting route (" + pRoute + ") to peer (" + getPeerL2Address() + ")");
+		Logging.log(this, "Peer " + getPeerL2Address() + " is now reachable via " + pRoute);
+		
+		/**
+		 * Inform the HRS about the complete route to the peer
+		 */
+		// HINT: we do this only on base hierarchy level, in the higher layers this routing information is already known (otherwise the hierarchy couldn't have grown until this point)
+		if(mHierarchyLevel.isBaseLevel()) {
+			Logging.log(this, "      ..registering route to peer: " + pRoute);
+			getHRMController().getHRS().registerRoute(mCentralFNL2Address, mPeerL2Address, pRoute);
+			mHRMController.addRouteToDirectNeighbor(mPeerL2Address, pRoute);
+		}
+		
 		mRouteToPeer = pRoute;
 	}
 
@@ -230,38 +242,25 @@ public class ComSession extends Session
 		// get the L2Address of the peer
 		mPeerL2Address = pAnnouncePhysicalNeighborhood.getSenderCentralAddress();
 
-		/**
-		 * Determine the route to the known FN from the peer
-		 */
-		Route tRouteToPeer = null;
-		// search a route form the central FN to the intermediate FN between the central FN and the bus
-		try {
-			tRouteToPeer = getHRMController().getHRS().getRoute(pAnnouncePhysicalNeighborhood.getSenderAddress(), new Description(), getHRMController().getNode().getIdentity());
-		} catch (RoutingException tExc) {
-			Logging.err(this, "Unable to find route to ", tExc);
-		} catch (RequirementsException tExc) {
-			Logging.err(this, "Unable to fulfill requirements ", tExc);
-		}
-		
-		/**
-		 * Complete the the found route to a route which ends at the central FN of the peer node
-		 */
-		tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
-		setRouteToPeer(tRouteToPeer);
-		
-		/**
-		 * Inform the HRS about the complete route to the peer
-		 */
-		if(mHierarchyLevel.isBaseLevel()) {
-			getHRMController().getHRS().registerRoute(mCentralFNL2Address, mPeerL2Address, mRouteToPeer);
-			getHRMController().addRouteToDirectNeighbor(mPeerL2Address, mRouteToPeer);
-		}
-
-		/**
-		 * Tell the peer the local central L2Address
-		 */
-		if(mServerSide) {
-			write(mCentralFNL2Address);
+		if (pAnnouncePhysicalNeighborhood.getSenderAddress() != null){
+			/**
+			 * Determine the route to the known FN from the peer
+			 */
+			Route tRouteToPeer = null;
+			// search a route form the central FN to the intermediate FN between the central FN and the bus
+			try {
+				tRouteToPeer = getHRMController().getHRS().getRoute(pAnnouncePhysicalNeighborhood.getSenderAddress(), new Description(), getHRMController().getNode().getIdentity());
+			} catch (RoutingException tExc) {
+				Logging.err(this, "Unable to find route to ", tExc);
+			} catch (RequirementsException tExc) {
+				Logging.err(this, "Unable to fulfill requirements ", tExc);
+			}
+			
+			/**
+			 * Complete the found route to a route which ends at the central FN of the peer node
+			 */
+			tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
+			setRouteToPeer(tRouteToPeer);
 		}
 		
 		/**
@@ -384,25 +383,6 @@ public class ComSession extends Session
 		/**
 		 * PACKET: TODO
 		 */
-		if (pData instanceof L2Address) {
-			L2Address tL2Address = (L2Address)pData;
-			
-			Logging.log(this, "L2ADDRESS received: " + tL2Address);
-
-			mPeerL2Address = tL2Address;
-			if(mHierarchyLevel.isBaseLevel()) {
-				mRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
-				getHRMController().getHRS().registerRoute(mCentralFNL2Address, mPeerL2Address, mRouteToPeer);
-			} else {
-				if(mServerSide) {
-					write(mCentralFNL2Address);
-				}
-			}
-		}
-		
-		/**
-		 * PACKET: TODO
-		 */
 		if(pData instanceof ClusterDiscovery) {
 			ClusterDiscovery tClusterDiscovery = (ClusterDiscovery)pData;
 			
@@ -465,6 +445,55 @@ public class ComSession extends Session
 		}
 		
 		return true;
+	}
+
+	public void startConnection(L2Address pTargetL2Address, Connection pConnection)
+	{
+		start(pConnection);
+
+		// do we know the target L2Address?
+		if (pTargetL2Address != null){
+			/**
+			 * Update the peer L2Address
+			 */
+			mPeerL2Address = pTargetL2Address;
+			
+			/**
+			 * Find and set the route to peer within the session object
+			 */
+			Route tRouteToNeighborFN = null;
+			// get a route to the neighbor node (the destination of the desired connection)
+			try {
+				tRouteToNeighborFN = mHRMController.getHRS().getRoute(pTargetL2Address, new Description(), mHRMController.getNode().getIdentity());
+			} catch (RoutingException tExc) {
+				Logging.err(mHRMController, "Unable to find route to " + pTargetL2Address, tExc);
+			} catch (RequirementsException tExc) {
+				Logging.err(mHRMController, "Unable to find route to " + pTargetL2Address + " with requirements no requirents, Huh!", tExc);
+			}
+			// have we found a route to the neighbor?
+			if(tRouteToNeighborFN != null) {
+				/**
+				 * Complete the found route to a route which ends at the central FN of the peer node
+				 */
+				tRouteToNeighborFN.add(new RouteSegmentAddress(mPeerL2Address));
+				setRouteToPeer(tRouteToNeighborFN);
+			}
+		}else{
+			Logging.trace(this, "startConnection() doesn't know the target L2Address, will send the local L2Address to the peer");
+		}
+
+		/**
+		 * announce physical end point
+		 */
+		L2Address tFirstFNL2Address = mHRMController.getL2AddressOfFirstFNTowardsNeighbor(pTargetL2Address);
+		// HINT: if tFirstFNL2Address is null we send a blind announce to inform the peer about our L2Address
+		// get the name of the central FN
+		L2Address tCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
+		// create a map between the central FN and the search FN
+		AnnouncePhysicalEndPoint tAnnouncePhysicalEndPoint = new AnnouncePhysicalEndPoint(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.INIT_PACKET);
+		// tell the neighbor about the FN
+		Logging.log(mHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
+		write(tAnnouncePhysicalEndPoint);
 	}
 
 	/**

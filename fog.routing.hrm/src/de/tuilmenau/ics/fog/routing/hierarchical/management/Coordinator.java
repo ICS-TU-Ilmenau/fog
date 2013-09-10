@@ -84,7 +84,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	private static long sNextFreeCoordinatorID = 1;
 
 	private Name mCoordinatorName = null;
-	private List<AbstractRoutingGraphNode> mClustersToNotify;
+	private List<AbstractRoutingGraphNode> mNeighborClustersForClustering;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
 	private LinkedList<AnnounceRemoteCluster> mReceivedAnnouncements;
 	
@@ -601,12 +601,12 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					}
 					Logging.log(this, tString);
 					
-					// get all known nodes ordered by their radius to the parent cluster
-					mClustersToNotify = mHRMController.getVerticesInOrderRadiusARG(mParentCluster);
+					// get all known neighbor clusters ordered by their radius to the parent cluster
+					mNeighborClustersForClustering = mHRMController.getNeighborClustersOrderedByRadiusInARG(mParentCluster);
 					
 					List<AbstractRoutingGraphNode> tClustersToNotify = new LinkedList<AbstractRoutingGraphNode>(); 
-					Logging.log(this, "Clusters remembered for notification: " + mClustersToNotify);
-					for(AbstractRoutingGraphNode tNode : mClustersToNotify) {
+					Logging.log(this, "Clusters remembered for notification: " + mNeighborClustersForClustering);
+					for(AbstractRoutingGraphNode tNode : mNeighborClustersForClustering) {
 						if(tNode instanceof Cluster && tRadius == 1) {
 							tClustersToNotify.add(tNode);
 						} else {
@@ -621,8 +621,8 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 							}
 						}
 					}
-					mClustersToNotify = tClustersToNotify;
-					Logging.log(this, "clusters that are remaining for this round: " + mClustersToNotify);
+					mNeighborClustersForClustering = tClustersToNotify;
+					Logging.log(this, "clusters that are remaining for this round: " + mNeighborClustersForClustering);
 					connectToNeighborCoordinators(tRadius, tIDFutureCluster);
 				}
 				/*
@@ -682,7 +682,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 * Connect to the coordinator of the target cluster
 	 * @param pTargetCluster
 	 */
-	public void connectToNeighborCoordinator(ICluster pTargetCluster, Long pIDForFutureCluster)
+	private void connectToNeighborCoordinator(ICluster pTargetCluster, Long pIDForFutureCluster)
 	{
 		Logging.log(this, "############## Connecting to neighbor coordinator: " + pTargetCluster);
 		
@@ -794,8 +794,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			//TODO: geht der nicht-blockierende Call auf connect so noch? race conditions?
 			tConnection = mHRMController.getLayer().connect(tCoordinatorName, tConnectDescription, tIdentity);
 			if (tConnection != null){
-				tComSession.start(tConnection);
-				tComSession.write(tLocalCentralFNL2Address);
+				tComSession.startConnection(null, tConnection);
 	
 				for(Coordinator tCoordinator : mHRMController.getAllCoordinators(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
 					LinkedList<Integer> tTokens = new LinkedList<Integer>();
@@ -863,7 +862,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 	private boolean connectToNeighborCoordinators(int pRadius, Long pIDFutureCluster)
 	{
-		for(AbstractRoutingGraphNode tNode : mClustersToNotify) {
+		for(AbstractRoutingGraphNode tNode : mNeighborClustersForClustering) {
 			if(tNode instanceof ICluster) {
 				ICluster tCluster = (ICluster)tNode;
 				Name tName = tCluster.getCoordinatorName();
