@@ -954,44 +954,48 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		L2Address tResult = null;
 
-		Route tRoute = null;
-		// get the name of the central FN
-		L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
-		// get a route to the neighbor node (the destination of the desired connection)
-		try {
-			tRoute = getHRS().getRoute(pNeighborName, new Description(), getNode().getIdentity());
-		} catch (RoutingException tExc) {
-			Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName, tExc);
-		} catch (RequirementsException tExc) {
-			Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName + " with requirements no requirents, Huh!", tExc);
-		}
-		// have we found a route to the neighbor?
-		if(tRoute != null) {
-			// get the first route part, which corresponds to the link between the central FN and the searched first FN towards the neighbor 
-			RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
-			// get the gate ID of the link
-			GateID tGateID= tPath.getFirst();						
-			// get all outgoing links from the central FN
-			Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
-			
-			RoutingServiceLink tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = null;
-
-			// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
-			for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
-				// compare the GateIDs
-				if(tLink.equals(tGateID)) {
-					// found!
-					tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = tLink;
+		if (pNeighborName != null){
+			Route tRoute = null;
+			// get the name of the central FN
+			L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
+			// get a route to the neighbor node (the destination of the desired connection)
+			try {
+				tRoute = getHRS().getRoute(pNeighborName, new Description(), getNode().getIdentity());
+			} catch (RoutingException tExc) {
+				Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName, tExc);
+			} catch (RequirementsException tExc) {
+				Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName + " with requirements no requirents, Huh!", tExc);
+			}
+			// have we found a route to the neighbor?
+			if(tRoute != null) {
+				// get the first route part, which corresponds to the link between the central FN and the searched first FN towards the neighbor 
+				RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
+				// get the gate ID of the link
+				GateID tGateID= tPath.getFirst();						
+				// get all outgoing links from the central FN
+				Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
+				
+				RoutingServiceLink tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = null;
+	
+				// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
+				for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
+					// compare the GateIDs
+					if(tLink.equals(tGateID)) {
+						// found!
+						tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = tLink;
+					}
+				}
+				// determine the searched FN, which comes first when routing towards the neighbor
+				HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getL2LinkDestination(tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor);
+				if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
+					// get the L2 address
+					tResult = (L2Address)tFirstNodeBeforeBusToNeighbor;
+				}else{
+					Logging.err(this,  "getL2AddressOfFirstFNTowardsNeighbor() found a first FN (" + tFirstNodeBeforeBusToNeighbor + ") towards the neighbor " + pNeighborName + " but it has the wrong class type");
 				}
 			}
-			// determine the searched FN, which comes first when routing towards the neighbor
-			HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getL2LinkDestination(tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor);
-			if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
-				// get the L2 address
-				tResult = (L2Address)tFirstNodeBeforeBusToNeighbor;
-			}else{
-				Logging.err(this,  "getL2AddressOfFirstFNTowardsNeighbor() found a first FN (" + tFirstNodeBeforeBusToNeighbor + ") towards the neighbor " + pNeighborName + " but it has the wrong class type");
-			}
+		}else{
+			Logging.warn(this, "getL2AddressOfFirstFNTowardsNeighbor() found an invalid neighbor name");
 		}
 		
 		return tResult;
