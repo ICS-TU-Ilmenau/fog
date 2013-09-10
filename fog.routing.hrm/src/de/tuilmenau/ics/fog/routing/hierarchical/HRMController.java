@@ -44,7 +44,7 @@ import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty.ClusterMemberDescription;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.RequestClusterParticipationProperty.ClusterMemberDescription;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -765,7 +765,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Describe the new created cluster
 		 */
 	    Logging.log(this, "    ..creating cluster description");
-		final ClusterDescriptionProperty tClusterParticipationProperty = new ClusterDescriptionProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
+		final RequestClusterParticipationProperty tClusterParticipationProperty = new RequestClusterParticipationProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
 	    Logging.log(this, "    ..creating cluster member description for created cluster " + tCreatedCluster);
 		tClusterParticipationProperty.addClusterMember(tCreatedCluster.getClusterID(), 0, null);
 
@@ -1315,7 +1315,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		// do we have a probe-routing connection?
 		if (tPropProbeRouting == null){
-			ClusterDescriptionProperty tPropClusterDescription = (ClusterDescriptionProperty) tConnectionRequirements.get(ClusterDescriptionProperty.class);
+			RequestClusterParticipationProperty tPropClusterDescription = (RequestClusterParticipationProperty) tConnectionRequirements.get(RequestClusterParticipationProperty.class);
 			
 			/******************************************************
 			 * PARSE: cluster description from remote side

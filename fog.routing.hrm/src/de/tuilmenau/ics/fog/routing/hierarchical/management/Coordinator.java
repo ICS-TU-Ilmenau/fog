@@ -28,8 +28,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ClusterDescriptionProperty.ClusterMemberDescription;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.RequestClusterParticipationProperty;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.RequestClusterParticipationProperty.ClusterMemberDescription;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -578,7 +578,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 * Creates a cluster consisting of this coordinator and neighbor coordinators by:
 	 *     1.) querying the ARG for neighbor clusters
 	 *     2.) connect to each found neighbor cluster
-	 *     3.) send them "RequestClusterParticipation"
+	 *     3.) send them "RequestClusterParticipationProperty"
 	 */
 	public void exploreNeighborhodAndCreateCluster()
 	{
@@ -713,7 +713,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 			Logging.log(this, "    ..creating cluster description");
 			
-			ClusterDescriptionProperty tPropClusterDescription = new ClusterDescriptionProperty(pIDForFutureCluster, tTargetClusterHierLvl, pTargetCluster.getCoordinatorID());
+			RequestClusterParticipationProperty tPropClusterDescription = new RequestClusterParticipationProperty(pIDForFutureCluster, tTargetClusterHierLvl, pTargetCluster.getCoordinatorID());
 			
 			ComSession tComSession = new ComSession(mHRMController, false, tSourceClusterHierLvl);
 			ClusterDiscovery tBigDiscovery = new ClusterDiscovery(mHRMController.getNodeName());

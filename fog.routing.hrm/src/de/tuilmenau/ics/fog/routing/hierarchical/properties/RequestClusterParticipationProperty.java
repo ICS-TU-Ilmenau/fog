@@ -25,7 +25,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * This class is used for describing a cluster, which both the connection source and the destination should 
  * have in common (the connection destination should join the described cluster). 
  */
-public class ClusterDescriptionProperty extends AbstractProperty
+public class RequestClusterParticipationProperty extends AbstractProperty
 {
 	/**
 	 * Stores the hierarchy level of the cluster
@@ -58,7 +58,7 @@ public class ClusterDescriptionProperty extends AbstractProperty
 	 * @param pHierarchyLevel the hierarchy level of the cluster
 	 * @param pCoordinatorID the unique ID of the coordinator (or 0 if none exists)
 	 */
-	public ClusterDescriptionProperty(Long pClusterID, HierarchyLevel pHierarchyLevel, int pCoordinatorID)
+	public RequestClusterParticipationProperty(Long pClusterID, HierarchyLevel pHierarchyLevel, int pCoordinatorID)
 	{
 		Logging.log(this, "Setting target cluster ID " + pClusterID);
 		mClusterID = pClusterID;
