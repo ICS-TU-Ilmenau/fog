@@ -809,39 +809,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					mCounterOutgoingConnections++;
 					
 					Logging.log(tHRMController, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
-					tFSession.start(tConnection);					
+					tFSession.startConnection(tNeighborName, tConnection);					
 					
-					/**
-					 * announce physical neighborhood
-					 */
-					L2Address tFirstFNL2Address = getL2AddressOfFirstFNTowardsNeighbor(tNeighborName);
-					if (tFirstFNL2Address != null){
-						// get the name of the central FN
-						L2Address tCentralFNL2Address = getHRS().getCentralFNL2Address();
-						// create a map between the central FN and the search FN
-						AnnouncePhysicalEndPoint tAnnouncePhysicalEndPoint = new AnnouncePhysicalEndPoint(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.INIT_PACKET);
-						// tell the neighbor about the FN
-						Logging.log(tHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
-						tFSession.write(tAnnouncePhysicalEndPoint);
-					}
-
-					/**
-					 * Find and set the route to peer within the session object
-					 */
-					Route tRouteToNeighborFN = null;
-					// get a route to the neighbor node (the destination of the desired connection)
-					try {
-						tRouteToNeighborFN = getHRS().getRoute(tNeighborName, new Description(), getNode().getIdentity());
-					} catch (RoutingException tExc) {
-						Logging.err(tHRMController, "Unable to find route to " + tNeighborName, tExc);
-					} catch (RequirementsException tExc) {
-						Logging.err(tHRMController, "Unable to find route to " + tNeighborName + " with requirements no requirents, Huh!", tExc);
-					}
-					// have we found a route to the neighbor?
-					if(tRouteToNeighborFN != null) {
-						tFSession.setRouteToPeer(tRouteToNeighborFN);
-					}
-
 					Logging.log(this, "Connection thread for " + tNeighborName + " finished");
 				}else{
 					Logging.log(this, "Connection thread for " + tNeighborName + " failed");
@@ -1253,20 +1222,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Determines all vertices ordered by their distance from a given root vertex
 	 * 
-	 * @param pRootVertex the root vertex from where the distances are calculated
+	 * @param pRootCluster the root cluster from where the vertices are determined
 	 * 
 	 * @return a list of found vertices
 	 */
-	public List<AbstractRoutingGraphNode> getVerticesInOrderRadiusARG(AbstractRoutingGraphNode pRootVertex)
+	public List<AbstractRoutingGraphNode> getNeighborClustersOrderedByRadiusInARG(Cluster pRootCluster)
 	{
 		List<AbstractRoutingGraphNode> tResult = null;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "GET VERTICES ORDER RADIUS (ARG) from \"" + pRootVertex + "\"");
+			Logging.log(this, "GET VERTICES ORDERED BY RADIUS (ARG) from \"" + pRootCluster + "\"");
 		}
 
 		synchronized (mAbstractRoutingGraph) {
-			tResult = mAbstractRoutingGraph.getVerticesInOrderRadius(pRootVertex);
+			tResult = mAbstractRoutingGraph.getVerticesInOrderRadius(pRootCluster);
 		}
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
