@@ -238,28 +238,28 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 			mSourceAddress = pAddress;
 		}
 		
-		/**
-		 * 
-		 * @param pPredecessor This has to be the second last cluster of the path to the target cluster. Once the target interprets
-		 * that cluster it knows which "outgoing" cluster should be used. in order to reach the node that generated the participation
-		 * property.
-		 */
-		public void setPredecessor(ClusterName pPredecessor)
-		{
-			mPredecessor = pPredecessor;
-		}
-		
-		/**
-		 * 
-		 * @return This is be the second last cluster of the path to the target cluster. Once the target interprets
-		 * this cluster it knows which "outgoing" cluster should be used. in order to reach the node that generated the participation
-		 * property.
-		 * 
-		 */
-		public ClusterName getPredecessor()
-		{
-			return mPredecessor;
-		}
+//		/**
+//		 * 
+//		 * @param pPredecessor This has to be the second last cluster of the path to the target cluster. Once the target interprets
+//		 * that cluster it knows which "outgoing" cluster should be used. in order to reach the node that generated the participation
+//		 * property.
+//		 */
+//		public void setPredecessor(ClusterName pPredecessor)
+//		{
+//			mPredecessor = pPredecessor;
+//		}
+//		
+//		/**
+//		 * 
+//		 * @return This is be the second last cluster of the path to the target cluster. Once the target interprets
+//		 * this cluster it knows which "outgoing" cluster should be used. in order to reach the node that generated the participation
+//		 * property.
+//		 * 
+//		 */
+//		public ClusterName getPredecessor()
+//		{
+//			return mPredecessor;
+//		}
 		
 		/**
 		 * 
