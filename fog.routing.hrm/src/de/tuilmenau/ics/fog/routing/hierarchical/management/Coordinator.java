@@ -574,6 +574,12 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		return mBouncedAnnounces;
 	}
 	
+	/**
+	 * Creates a cluster consisting of this coordinator and neighbor coordinators by:
+	 *     1.) querying the ARG for neighbor clusters
+	 *     2.) connect to each found neighbor cluster
+	 *     3.) send them "RequestClusterParticipation"
+	 */
 	public void exploreNeighborhodAndCreateCluster()
 	{
 		Logging.log(this, "\n\n\nCLUSTERING STARTED on hierarchy level " + getHierarchyLevel().getValue() + ", will connect to " + mParentCluster.getNeighborsARG());
