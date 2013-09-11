@@ -373,6 +373,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	protected void setSuperiorCoordinatorID(int pCoordinatorID)
 	{
+		Logging.log(this, "Setting superior coordinator ID: " + pCoordinatorID);
 		mSuperiorCoordinatorID = pCoordinatorID;
 	}
 
@@ -484,6 +485,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	protected void setCoordinatorID(int pNewCoordinatorID)
 	{
+		Logging.log(this, "Setting coordinator ID: " + pNewCoordinatorID);
 		mCoordinatorID = pNewCoordinatorID;
 	}
 	
@@ -531,7 +533,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if (this instanceof Cluster){
 			Cluster tCluster = (Cluster)this;
 			
-			tCluster.getElector().handleSignalingMessageBully(pBullyMessage, pSourceClusterMember);
+			if (tCluster.getElector() != null){
+				tCluster.getElector().handleSignalingMessageBully(pBullyMessage, pSourceClusterMember);
+			}else{
+				Logging.warn(this, "Elector is still invalid");
+			}
 			
 			return;
 		}

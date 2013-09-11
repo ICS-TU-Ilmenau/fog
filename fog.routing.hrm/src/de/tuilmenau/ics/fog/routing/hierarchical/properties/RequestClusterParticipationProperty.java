@@ -61,6 +61,7 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	public RequestClusterParticipationProperty(Long pClusterID, HierarchyLevel pHierarchyLevel, int pCoordinatorID)
 	{
 		Logging.log(this, "Setting target cluster ID " + pClusterID);
+		Logging.log(this, "Setting target coordinator ID " + pCoordinatorID);
 		mClusterID = pClusterID;
 		mHierarchyLevel = pHierarchyLevel;
 		mCoordinatorID = pCoordinatorID;
