@@ -242,14 +242,17 @@ public class ComSession extends Session
 		// get the L2Address of the peer
 		mPeerL2Address = pAnnouncePhysicalNeighborhood.getSenderCentralAddress();
 
-		if (pAnnouncePhysicalNeighborhood.getSenderAddress() != null){
+		// get the L2Address of the peer, which should be used as routing target
+		L2Address tSenderAddress = pAnnouncePhysicalNeighborhood.getSenderAddress();
+		
+		if (tSenderAddress != null){
 			/**
 			 * Determine the route to the known FN from the peer
 			 */
 			Route tRouteToPeer = null;
 			// search a route form the central FN to the intermediate FN between the central FN and the bus
 			try {
-				tRouteToPeer = getHRMController().getHRS().getRoute(pAnnouncePhysicalNeighborhood.getSenderAddress(), new Description(), getHRMController().getNode().getIdentity());
+				tRouteToPeer = getHRMController().getHRS().getRoute(tSenderAddress, new Description(), getHRMController().getNode().getIdentity());
 			} catch (RoutingException tExc) {
 				Logging.err(this, "Unable to find route to ", tExc);
 			} catch (RequirementsException tExc) {
@@ -275,7 +278,7 @@ public class ComSession extends Session
 			/**
 			 *  determine the FN between the local central FN and the bus towards the physical neighbor node and tell this the neighbor 
 			 */
-			L2Address tFirstFNL2Address = mHRMController.getL2AddressOfFirstFNTowardsNeighbor(pAnnouncePhysicalNeighborhood.getSenderAddress());
+			L2Address tFirstFNL2Address = (tSenderAddress != null ? mHRMController.getL2AddressOfFirstFNTowardsNeighbor(tSenderAddress) : null);
 
 			/**
 			 * Send AnnouncePhysicalNeighborhood to the neighbor
@@ -447,8 +450,21 @@ public class ComSession extends Session
 		return true;
 	}
 
+	/**
+	 * Starts the superior connection by the following steps:
+	 *     1.) call "start()" from the superior class
+	 *     2.) store the L2Address of the peer
+	 *     3.) store the route to the peer
+	 *     4.) announce the local physical end point to the peer
+	 *     
+	 * @param pTargetL2Address the L2Address of the target, which should be used as routing target
+	 * @param pConnection the superior connection
+	 */
 	public void startConnection(L2Address pTargetL2Address, Connection pConnection)
 	{
+		/**
+		 * Calls "start()" of the superior class
+		 */
 		start(pConnection);
 
 		// do we know the target L2Address?
@@ -485,7 +501,7 @@ public class ComSession extends Session
 		/**
 		 * announce physical end point
 		 */
-		L2Address tFirstFNL2Address = mHRMController.getL2AddressOfFirstFNTowardsNeighbor(pTargetL2Address);
+		L2Address tFirstFNL2Address = (pTargetL2Address != null ? mHRMController.getL2AddressOfFirstFNTowardsNeighbor(pTargetL2Address) : null);
 		// HINT: if tFirstFNL2Address is null we send a blind announce to inform the peer about our L2Address
 		// get the name of the central FN
 		L2Address tCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
