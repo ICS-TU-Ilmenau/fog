@@ -633,11 +633,11 @@ public class ComChannel
 		tEntry.setRoutingVectors(getPath(tCoordL2Addr));
 		
 		List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(getParent(), (ControlEntity)pDestination);
-		if(!tClusterList.isEmpty()) {
-			ICluster tPredecessorCluster = (ICluster) mHRMController.getOtherEndOfLinkARG((ControlEntity)pDestination, tClusterList.get(tClusterList.size() - 1));
-			ClusterName tPredecessorClusterName = new ClusterName(mHRMController, tPredecessorCluster.getHierarchyLevel(), tPredecessorCluster.getCoordinatorID(), tPredecessorCluster.getClusterID());
-			tEntry.setPredecessor(tPredecessorClusterName);
-		}
+//		if(!tClusterList.isEmpty()) {
+//			ICluster tPredecessorCluster = (ICluster) mHRMController.getOtherEndOfLinkARG((ControlEntity)pDestination, tClusterList.get(tClusterList.size() - 1));
+//			ClusterName tPredecessorClusterName = new ClusterName(mHRMController, tPredecessorCluster.getHierarchyLevel(), tPredecessorCluster.getCoordinatorID(), tPredecessorCluster.getClusterID());
+//			tEntry.setPredecessor(tPredecessorClusterName);
+//		}
 		
 		pDiscovery.addDiscoveryEntry(tEntry);
 	}
@@ -729,9 +729,8 @@ public class ComChannel
 			}
 		} else {
 			if(pDiscovery.getDiscoveryEntries() != null) {
-				HashMap<ClusterName, ClusterName> tToSetNegotiator = new HashMap<ClusterName, ClusterName>();
 				for(DiscoveryEntry tEntry : pDiscovery.getDiscoveryEntries()) {
-					tToSetNegotiator.put(handleDiscoveryEntry(tEntry), tEntry.getPredecessor());
+					handleDiscoveryEntry(tEntry);
 				}
 			}
 		}

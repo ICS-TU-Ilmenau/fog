@@ -34,7 +34,7 @@ public class DiscoveryEntry implements Serializable
 	private BullyPriority mPriority = null;
 	private HierarchyLevel mLevel = null;
 	private int mClusterHops;
-	private ClusterName mPredecessor;
+//	private ClusterName mPredecessor;
 	
 	/**
 	 * 
@@ -53,23 +53,23 @@ public class DiscoveryEntry implements Serializable
 		mPriority = new BullyPriority(this);
 	}
 	
-	/**
-	 * 
-	 * @param pDummy contains cluster identification of the first cluster along the path to the entity that sent the discovery request
-	 */
-	public void setPredecessor(ClusterName pDummy)
-	{
-		mPredecessor = pDummy;
-	}
-	
-	/**
-	 * 
-	 * @return cluster identification of the first cluster along the path to the entity that sent the discovery request
-	 */
-	public ClusterName getPredecessor()
-	{
-		return mPredecessor;
-	}
+//	/**
+//	 * 
+//	 * @param pDummy contains cluster identification of the first cluster along the path to the entity that sent the discovery request
+//	 */
+//	public void setPredecessor(ClusterName pDummy)
+//	{
+//		mPredecessor = pDummy;
+//	}
+//	
+//	/**
+//	 * 
+//	 * @return cluster identification of the first cluster along the path to the entity that sent the discovery request
+//	 */
+//	public ClusterName getPredecessor()
+//	{
+//		return mPredecessor;
+//	}
 	
 	/**
 	 * 

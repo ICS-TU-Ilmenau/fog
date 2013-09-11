@@ -844,16 +844,16 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 						DiscoveryEntry tEntry = new DiscoveryEntry(tClusterMemberNeighbor.getCoordinatorID(), tIClusterNeighbor.getCoordinatorName(), tClusterMemberNeighbor.getClusterID(), tClusterMemberNeighbor.superiorCoordinatorL2Address(), tClusterMemberNeighbor.getHierarchyLevel());
 						tEntry.setPriority(tClusterMemberNeighbor.getPriority());
 						List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(tLocalCoordinator.getCluster(), tClusterMemberNeighbor);
-						/*
-						 * the predecessor has to be the next hop
-						 */
-						if(!tClusterList.isEmpty()) {
-							ICluster tPredecessor = (ICluster) mHRMController.getOtherEndOfLinkARG(tClusterMemberNeighbor, tClusterList.get(tClusterList.size()-1));
-							tEntry.setPredecessor(new ClusterName(mHRMController, tPredecessor.getHierarchyLevel(), tPredecessor.getCoordinatorID(), tPredecessor.getClusterID()));
-							Logging.log(this, "Successfully set predecessor for " + tClusterMemberNeighbor + ":" + tPredecessor);
-						} else {
-							Logging.log(this, "Unable to set predecessor for " + tClusterMemberNeighbor);
-						}
+//						/*
+//						 * the predecessor has to be the next hop
+//						 */
+//						if(!tClusterList.isEmpty()) {
+//							ICluster tPredecessor = (ICluster) mHRMController.getOtherEndOfLinkARG(tClusterMemberNeighbor, tClusterList.get(tClusterList.size()-1));
+//							tEntry.setPredecessor(new ClusterName(mHRMController, tPredecessor.getHierarchyLevel(), tPredecessor.getCoordinatorID(), tPredecessor.getClusterID()));
+//							Logging.log(this, "Successfully set predecessor for " + tClusterMemberNeighbor + ":" + tPredecessor);
+//						} else {
+//							Logging.log(this, "Unable to set predecessor for " + tClusterMemberNeighbor);
+//						}
 						
 						if(tLocalCoordinator.getPathToCoordinator(tLocalCoordinator.getCluster(), tIClusterNeighbor) != null) {
 							for(RoutingServiceLinkVector tVector : tLocalCoordinator.getPathToCoordinator(tLocalCoordinator.getCluster(), tIClusterNeighbor)) {
@@ -1017,10 +1017,10 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 							 * calculation of the predecessor is because the cluster identification on the remote site is multiplexed
 							 */
 							tRouteARG = mHRMController.getRouteARG(mParentCluster, superiorCoordinatorComChannel().getRemoteClusterName());
-							if(!tRouteARG.isEmpty()) {
-								ICluster tPredecessor = (ICluster) mHRMController.getOtherEndOfLinkARG(mParentCluster, tRouteARG.get(0));
-								tOldCoveredEntry.setPredecessor(new ClusterName(mHRMController, tPredecessor.getHierarchyLevel(), tPredecessor.getCoordinatorID(), tPredecessor.getClusterID()));
-							}
+//							if(!tRouteARG.isEmpty()) {
+//								ICluster tPredecessor = (ICluster) mHRMController.getOtherEndOfLinkARG(mParentCluster, tRouteARG.get(0));
+//								tOldCoveredEntry.setPredecessor(new ClusterName(mHRMController, tPredecessor.getHierarchyLevel(), tPredecessor.getCoordinatorID(), tPredecessor.getClusterID()));
+//							}
 							tOldCoveredEntry.setPriority(superiorCoordinatorComChannel().getPeerPriority());
 							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(mParentCluster.superiorCoordinatorL2Address()));
 							tOldCovered.setCoveringClusterEntry(tOldCoveredEntry);
@@ -1040,11 +1040,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 							tNewCovered.setCoveringClusterEntry(tCoveredEntry);
 							tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
 							
-							List<AbstractRoutingGraphLink> tClusters = mHRMController.getRouteARG(mParentCluster, pCEP.getRemoteClusterName());
-							if(!tClusters.isEmpty()) {
-								ICluster tNewPredecessor = (ICluster) mHRMController.getOtherEndOfLinkARG(mParentCluster, tClusters.get(0));
-								tCoveredEntry.setPredecessor(new ClusterName(mHRMController, tNewPredecessor.getHierarchyLevel(), tNewPredecessor.getCoordinatorID(), tNewPredecessor.getClusterID()));
-							}
+//							List<AbstractRoutingGraphLink> tClusters = mHRMController.getRouteARG(mParentCluster, pCEP.getRemoteClusterName());
+//							if(!tClusters.isEmpty()) {
+//								ICluster tNewPredecessor = (ICluster) mHRMController.getOtherEndOfLinkARG(mParentCluster, tClusters.get(0));
+//								tCoveredEntry.setPredecessor(new ClusterName(mHRMController, tNewPredecessor.getHierarchyLevel(), tNewPredecessor.getCoordinatorID(), tNewPredecessor.getClusterID()));
+//							}
 							Logging.warn(this, "Rejecting " + (superiorCoordinatorComChannel().getPeerL2Address()).getDescr() + " in favor of " + pAnnounce.getSenderName());
 							tNewCovered.setRejection();
 							superiorCoordinatorComChannel().sendPacket(tNewCovered);
