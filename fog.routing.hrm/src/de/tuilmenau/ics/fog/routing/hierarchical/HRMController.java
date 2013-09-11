@@ -323,7 +323,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		int tLevel = pCoordinator.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
 
-		Logging.log(this, "Unegistering coordinator " + pCoordinator + " at level " + tLevel);
+		Logging.log(this, "Unregistering coordinator " + pCoordinator + " at level " + tLevel);
 
 		synchronized (mLocalCoordinators) {
 			// unregister from list of known coordinators
@@ -501,13 +501,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void unregisterCluster(Cluster pCluster)
 	{
-		Logging.log(this, "Unegistering coordinator " + pCluster);
+		Logging.log(this, "Unregistering cluster " + pCluster);
 
 		synchronized (mLocalClusters) {
 			// unregister from list of known clusters
 			mLocalClusters.remove(pCluster);
 		}
 		
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
+
+		// register at the ARG
+		unregisterNodeARG(pCluster);
+
 		// it's time to update the GUI
 		notifyGUI(pCluster);
 	}
