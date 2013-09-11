@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,6 +24,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
@@ -91,11 +93,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
 	private LinkedList<AnnounceRemoteCluster> mReceivedAnnouncements;
 	
-	/**
-	 * This is the GUI specific coordinator ID. It is used to allow for an easier debugging.
-	 */
-	private int mGUICoordinatorID = sGUICoordinatorID++;
-
 	/**
 	 * 
 	 */
@@ -167,6 +164,16 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 		
 		return tHRMID;
+	}
+
+	/**
+	 * Returns the machine-local CoordinatorID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local CoordinatorID
+	 */
+	public long getGUICoordinatorID()
+	{
+		return getCoordinatorID() / idMachineMultiplier();
 	}
 
 	/**
@@ -440,15 +447,67 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 	
 	/**
-	 * EVENT: "deselected", triggered by the Elector if the election was lost and the coordinator got invalid 
+	 * EVENT: "eventCoordinatorRoleInvalid", triggered by the Elector, the reaction is:
+	 * 	 	1.) create signaling packet "BullyLeave"
+	 * 		2.) send the packet to the superior coordinator 
 	 */
-	public void eventDeselected()
+	public void eventCoordinatorRoleInvalid()
 	{
-		// register itself as coordinator for the managed cluster
+		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid");
+
+		/**
+		 * Inform all superior clusters about the event and trigger the invalidation of this coordinator instance -> we leave all Bully elections because we are no longer a possible election winner
+		 */
+		if (!getHierarchyLevel().isHighest()){
+			// create signaling packet for signaling that we leave the Bully group
+			BullyLeave tBullyLeavePacket = new BullyLeave(mHRMController.getNodeName(), getPriority());
+
+			sendAllSuperiorClusters(tBullyLeavePacket, true);
+		}else{
+			Logging.log(this, "eventCoordinatorRoleInvalid() skips further signaling because hierarchy end is already reached at: " + (getHierarchyLevel().getValue() - 1));
+		}
+
+		/**
+		 * Unregister from local databases
+		 */
+		Logging.log(this, "============ Destroying this coordinator now...");
+		
+		// unregister itself as coordinator for the managed cluster
 		mParentCluster.setCoordinator(null);
 
-		// register at HRMController's internal database
+		// unregister from HRMController's internal database
 		mHRMController.unregisterCoordinator(this);
+	}
+	
+	/**
+	 * @param pBullyLeavePacket
+	 */
+	private void sendAllSuperiorClusters(Serializable pPacket, boolean pIncludeLoopback)
+	{
+		// get all communication channels
+		LinkedList<ComChannel> tComChannels = getComChannels();
+
+		// get the L2Addres of the local host
+		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
+		
+		Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels");
+		
+		for(ComChannel tComChannel : tComChannels) {
+			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
+			
+			if (!tIsLoopback){
+				Logging.log(this, "       ..to " + tComChannel);
+			}else{
+				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
+			}
+
+			if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (pIncludeLoopback) || (!tIsLoopback)){
+				// send the packet to one of the possible cluster members
+				tComChannel.sendPacket(pPacket);
+			}else{
+				Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
+			}
+		}
 	}
 
 	/**
@@ -736,8 +795,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 			ControlEntity tNeighborClusterControlEntity = (ControlEntity)pNeighborCluster;
 
-			Logging.log(this, "    ..creating cluster description");
-			
 			/**
 			 * Describe the common cluster
 			 */
@@ -765,8 +822,8 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			     * Create communication channel
 			     */
 			    Logging.log(this, "           ..creating new communication channel");
-				ComChannel tComChannel = new ComChannel(mHRMController, tLocalCoordinator, tComSession);
-				tComChannel.setRemoteClusterName(new ClusterName(mHRMController, pNeighborCluster.getHierarchyLevel(), pNeighborCluster.getCoordinatorID(), pNeighborCluster.getClusterID()));
+				ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, tLocalCoordinator, tComSession);
+				tComChannel.setRemoteClusterName(new ClusterName(mHRMController, pNeighborCluster.getHierarchyLevel(), pNeighborCluster.getCoordinatorID(), pIDForFutureCluster /* HINT: we communicate with the new cluster -> us clusterID of new cluster */));
 				tComChannel.setPeerPriority(pNeighborCluster.getPriority());
 
 				// do we know the neighbor coordinator? (we check for a known coordinator of the neighbor cluster)
@@ -1191,7 +1248,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + mGUICoordinatorID + "@" + mHRMController.getNodeGUIName() + "@" + (getHierarchyLevel().getValue() - 1);
+		String tResult = getClass().getSimpleName() + getGUICoordinatorID() + "@" + mHRMController.getNodeGUIName() + "@" + (getHierarchyLevel().getValue() - 1);
 		
 		return tResult;
 	}

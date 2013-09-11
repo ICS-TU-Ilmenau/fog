@@ -15,6 +15,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAlive;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyElect;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyReply;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
@@ -118,12 +119,14 @@ public class Elector implements Localization
 		// set correct elector state
 		setElectorState(ElectorState.ELECTING);
 
+		Logging.log(this, "ELECTING now...");
+		
 		// do we know more than 0 external cluster members?
 		if (mParentCluster.countClusterMembers() > 0){
 			Logging.log(this, "Trying to ask all cluster members for their Bully priority");
 			signalElectBroadcast();
 		}else{
-			Logging.log(this, "I am automatically the election WINNER because no alternative cluster member is known");
+			Logging.log(this, "I AM WINNER because no alternative cluster member is known");
 			eventElectionWon();
 		}
 	}
@@ -316,15 +319,11 @@ public class Elector implements Localization
 			// HINT: the coordinator has to be already created here
 
 			if (mParentCluster.getCoordinator() != null){
-				if (tKnownClusterMembers > 0){
-					// create the packet
-					BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mHRMController.getNodeName(), mParentCluster.getPriority(), mParentCluster.getCoordinator().toLocation() + "@" + HRMController.getHostName(), mParentCluster.superiorCoordinatorID());
-			
-					// send broadcast
-					mParentCluster.sendClusterBroadcast(tPacketBullyAnnounce);
-				}else{
-					Logging.log(this, "SENDANNOUNCE() can stop here because no further cluster member is known");
-				}
+				// create the packet
+				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mHRMController.getNodeName(), mParentCluster.getPriority(), mParentCluster.getCoordinator().toLocation() + "@" + HRMController.getHostName(), mParentCluster.superiorCoordinatorID());
+		
+				// send broadcast
+				mParentCluster.sendClusterBroadcast(tPacketBullyAnnounce, true);
 			}else{
 				Logging.warn(this, "Election has wrong state " + getElectorState() + " for signaling an ELECTION END, ELECTED expected");
 				
@@ -413,10 +412,13 @@ public class Elector implements Localization
 			if (tCoordinator == null){
 				// create new coordinator instance
 				tCoordinator = new Coordinator(mParentCluster);
+			}else{
+				Logging.warn(this, "Cluster " + mParentCluster + " has already a coordinator");
 			}
-				
-			mParentCluster.setSuperiorCoordinator(null, mHRMController.getNodeName(), /* token */ new Random(System.currentTimeMillis()).nextInt(), mHRMController.getHRS().getCentralFNL2Address());
-	
+			
+			// update the coordinator description for the cluster
+			mParentCluster.setSuperiorCoordinator(null, mHRMController.getNodeName(), tCoordinator.getCoordinatorID(), mHRMController.getHRS().getCentralFNL2Address());
+			
 			// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
 			signalAnnounceBroadcast();
 
@@ -435,20 +437,56 @@ public class Elector implements Localization
 	{
 		Logging.log(this, "ELECTION LOST for cluster " + mParentCluster);
 	
+		// store the old election result
+		boolean tWasFormerWinner = mElectionWon;
+		
 		// mark as election loser
 		mElectionWon = false;
 		
 		// set correct elector state
 		setElectorState(ElectorState.ELECTED);
 		
-		/**
-		 * TRIGGER: the local coordinator was deselcted by another coordinator
-		 */
-		if (mParentCluster.getCoordinator() != null){
-			mParentCluster.getCoordinator().eventDeselected();
+		// have we been the former winner of this election?
+		if (tWasFormerWinner){
+			Logging.log(this, "ELECTION LOST BUT WE WERE THE FORMER WINNER");
+
+			/**
+			 * TRIGGER: the local coordinator was deselcted by another coordinator
+			 */
+			if (mParentCluster.getCoordinator() != null){
+				mParentCluster.getCoordinator().eventCoordinatorRoleInvalid();
+			}else{
+				Logging.err(this, "We were the former winner of the election but the coordinator is invalid");
+			}
 		}
 	}
 
+	/**
+	 * EVENT: a candidate left the election process
+	 * 
+	 * @param pComChannel the communication channel to the cluster member which left the election
+	 */
+	private void eventElectionLeft(ComChannel pComChannel)
+	{
+		mParentCluster.unregisterComChannel(pComChannel);
+		
+		// no further candidate available/known (all candidates are gone) ?
+		if (mParentCluster.countClusterMembers() < 1){
+			/**
+			 * TRIGGER: all cluster members are gone, we destroy the coordinator
+			 */
+			if (mParentCluster.getCoordinator() != null){
+				mParentCluster.getCoordinator().eventCoordinatorRoleInvalid();
+			}else{
+				Logging.warn(this, "eventElectionLeft() can't find the coordinator");
+			}
+			/**
+			 * TRIGGER: all cluster members are gone, we destroy the cluster
+			 */
+			mParentCluster.eventClusterLostAllMembers();
+		}			 
+	}
+	
 	/**
 	 * EVENT: the election process was triggered by another cluster member
 	 */
@@ -561,7 +599,7 @@ public class Elector implements Localization
 		ControlEntity tControlEntity = pComChannel.getParent();
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-			Logging.log(this, "RECEIVED BULLY MESSAGE FROM " + pComChannel);
+			Logging.log(this, "RECEIVED BULLY MESSAGE " + pPacketBully.getClass().getSimpleName() + " FROM " + pComChannel);
 
 		if (pComChannel == null){
 			Logging.err(this, "Communication channel is invalid.");
@@ -678,6 +716,21 @@ public class Elector implements Localization
 			// update the peer priority stored in the communication channel
 			pComChannel.setPeerPriority(tPacketBullyPriorityUpdate.getSenderPriority());
 		}
+		
+		/**
+		 * LEAVE
+		 */
+		if(pPacketBully instanceof BullyLeave) {
+			// cast to Bully leave packet
+			BullyLeave tLeavePacket = (BullyLeave)pPacketBully;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a LEAVE: " + tLeavePacket);
+			}
+
+			eventElectionLeft(pComChannel);
+		}
+
 	}
 
 	/**

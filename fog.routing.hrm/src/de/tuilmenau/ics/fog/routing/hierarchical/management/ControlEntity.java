@@ -238,16 +238,35 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @param pComChan the communication channel
 	 */
-	public void registerComChannel(ComChannel pComChan)
+	public void registerComChannel(ComChannel pComChannel)
 	{
 		synchronized (mComChannels) {
-			if(!mComChannels.contains(pComChan)) {
-				Logging.log(this, "Registering communication channel " + pComChan + ", " + mComChannels.size() + " communication channels already registered");
+			if(!mComChannels.contains(pComChannel)) {
+				Logging.log(this, "Registering communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels already registered");
 
 				// add the channel to the database
-				mComChannels.add(pComChan);
+				mComChannels.add(pComChannel);
 			}else{
-				Logging.err(this, "Communication channel " + pComChan + " is alredy known");
+				Logging.err(this, "Communication channel " + pComChannel + " is alredy known");
+			}			
+		}
+	}
+
+	/**
+	 * Unregisters a communication channel from the internal database
+	 * 
+	 * @param pComChan the communication channel
+	 */
+	public void unregisterComChannel(ComChannel pComChannel)
+	{
+		synchronized (mComChannels) {
+			if(mComChannels.contains(pComChannel)) {
+				// add the channel to the database
+				mComChannels.remove(pComChannel);
+
+				Logging.log(this, "Unregistered communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels still registered");
+			}else{
+				Logging.err(this, "Communication channel " + pComChannel + " isn't known");
 			}			
 		}
 	}

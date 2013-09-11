@@ -337,7 +337,7 @@ public class ComSession extends Session
 		 */
 		if (tDestinationComChannel != null){
 			try {
-				tDestinationComChannel.handlePacket(tPayload);
+				tDestinationComChannel.receiveData(tPayload);
 				Logging.log(this, "       ..delivered payload: " + tPayload);
 			} catch (NetworkException tExc) {
 				Logging.err(this, "Unable to forward payload " + tPayload + " to " + tDestination + " via " + tDestinationComChannel);

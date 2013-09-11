@@ -492,6 +492,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn tColumnRoute = new TableColumn(tTable, SWT.NONE, 5);
 		tColumnRoute.setText("Route to peer");
 		
+		TableColumn tColumnDirection = new TableColumn(tTable, SWT.NONE, 6);
+		tColumnDirection.setText("Connected");
+
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
 		
@@ -576,6 +579,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				tRow.setText(5, "??");
 			}
 			
+			/**
+			 * Column 6:  
+			 */
+			tRow.setText(6, tComChannel.getDirection().toString());
+
 			j++;
 		}
 		

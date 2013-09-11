@@ -26,13 +26,11 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
 
@@ -43,6 +41,8 @@ import de.tuilmenau.ics.graph.RoutableGraph;
  */
 public class ComChannel
 {
+	public enum Direction{IN, OUT};
+
 	private ClusterName mRemoteCluster;
 
 	/**
@@ -65,7 +65,11 @@ public class ComChannel
 	 */
 	private double mPeerPriorityTimestampLastUpdate = 0; 
 	
-	private boolean mKnowsCoordinator = false;
+	/**
+	 * Stores the direction of the communication channel (either "out" or "in")
+	 */
+	private Direction mDirection;
+	
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
 	
@@ -77,12 +81,16 @@ public class ComChannel
 	/**
 	 * 
 	 * @param pHRMController is the coordinator of a node
+	 * @param pDirection the direction of the communication channel (either upward or downward)
 	 * @param pParent is the parent cluster/coordinator
 	 */
-	public ComChannel(HRMController pHRMController, ControlEntity pParent, ComSession pParentComSession)
+	public ComChannel(HRMController pHRMController, Direction pDirection, ControlEntity pParent, ComSession pParentComSession)
 	{
 		// store the HRMController application reference
 		mHRMController = pHRMController;
+		
+		// store the direction
+		mDirection = pDirection;
 		
 		// the peer priority gets initialized by a default value ("undefined")
 		mPeerPriority = new BullyPriority(this);
@@ -128,11 +136,21 @@ public class ComChannel
 	}
 	
 	/**
+	 * Returns the direction of the communication  channel
+	 * 
+	 * @return the direction
+	 */
+	public Direction getDirection()
+	{
+		return mDirection;
+	}
+	
+	/**
 	 * Handles a SignalingMessageHrm packet.
 	 * 
 	 * @param pSignalingMessageHrmPacket the packet
 	 */
-	private void handleSignalingMessageHRM(SignalingMessageHrm pSignalingMessageHrmPacket)
+	private void getPeerHRMIDFromHRMSignalingMessage(SignalingMessageHrm pSignalingMessageHrmPacket)
 	{
 		// can we learn the peer's HRMID from the packet?
 		if (pSignalingMessageHrmPacket.getSenderName() instanceof HRMID){
@@ -403,16 +421,12 @@ public class ComChannel
 	 * @return true if the packet left the central multiplexer and the forwarding node that is attached to a direct down gate
 	 * @throws NetworkException
 	 */
-	public boolean handlePacket(Serializable pData) throws NetworkException
+	public boolean receiveData(Serializable pData) throws NetworkException
 	{
 		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
 			Logging.log(this, "RECEIVED DATA from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pData);
 		}
 			
-
-		Node tNode = mHRMController.getNode();
-		HRMRoutingService tHRS = mHRMController.getHRS();
-		
 		/*
 		 * Invalid data
 		 */
@@ -420,9 +434,6 @@ public class ComChannel
 			throw new NetworkException("Received invalid null pointer as data");
 		}
 
-		/*
-		 * main packet processing
-		 */
 		/**
 		 * HRM signaling message
 		 */
@@ -431,7 +442,7 @@ public class ComChannel
 			SignalingMessageHrm tSignalingMessageHrmPacket = (SignalingMessageHrm)pData;
 		
 			// process SignalingMessageHrm message
-			handleSignalingMessageHRM(tSignalingMessageHrmPacket);
+			getPeerHRMIDFromHRMSignalingMessage(tSignalingMessageHrmPacket);
 			
 			//HINT: don't return here because we are still interested in the more detailed packet data from derived packet types!
 		}
@@ -443,7 +454,7 @@ public class ComChannel
 			// the packet is received by a cluster
 			//HINT: this is only possible at base hierarchy level
 			if (mParent instanceof Cluster){
-				if (!mParent.getHierarchyLevel().isBaseLevel()){
+				if ((!mParent.getHierarchyLevel().isBaseLevel()) && (!(pData instanceof BullyLeave /* this packet type is sent by coordinators */))){
 					Logging.warn(this, "EXPECTED BASE HIERARCHY LEVEL");
 				}
 				Cluster tParentCluster = (Cluster)mParent;
@@ -487,6 +498,30 @@ public class ComChannel
 			return true;
 		}
 		
+		/**
+		 * AssignHRMID
+		 */
+		if(pData instanceof AssignHRMID) {
+			AssignHRMID tAssignHRMIDPacket = (AssignHRMID)pData;
+
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "ASSIGN_HRMID-received from \"" + getPeerHRMID() + "\" assigned HRMID: " + tAssignHRMIDPacket.getHRMID().toString());
+
+			// is the parent a coordinator or a cluster?
+			if (getParent() instanceof Coordinator){
+				Coordinator tCoordinator = (Coordinator)getParent();
+				
+				// let the coordinator process the HRMID assignment
+				tCoordinator.handleAssignHRMID(tAssignHRMIDPacket);
+			} else if (getParent() instanceof Cluster){
+				Cluster tCluster = (Cluster)getParent();
+
+				// let the cluster process the HRMID assignment
+				tCluster.handleAssignHRMID(tAssignHRMIDPacket);
+			}
+			return true;
+		}
+
 		
 		
 		
@@ -508,23 +543,6 @@ public class ComChannel
 			Logging.log(this, "Received " + tAnnouncePacket + " from remote cluster " + mRemoteCluster);
 		}
 		
-		/**
-		 * AssignHRMID
-		 */
-		if(pData instanceof AssignHRMID) {
-			AssignHRMID tAssignHRMIDPacket = (AssignHRMID)pData;
-
-			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "ASSIGN_HRMID-received from \"" + getPeerHRMID() + "\" assigned HRMID: " + tAssignHRMIDPacket.getHRMID().toString());
-
-			if (getParent() instanceof Coordinator){
-				Coordinator tCoordinator = (Coordinator)getParent();
-				tCoordinator.handleAssignHRMID(tAssignHRMIDPacket);
-			} else if (getParent() instanceof Cluster){
-				Cluster tCluster = (Cluster)getParent();
-				tCluster.handleAssignHRMID(tAssignHRMIDPacket);
-			} 
-		}
 		
 //		/**
 //		 * RequestCoordinator
@@ -662,11 +680,6 @@ public class ComChannel
 	public void setAsParticipantOfMyCluster(boolean pPartOfMyCluster)
 	{
 		mPartOfCluster = pPartOfMyCluster;
-	}
-	
-	public boolean knowsCoordinator()
-	{
-		return mKnowsCoordinator;
 	}
 	
 	public void setRemoteClusterName(ClusterName pClusterName)

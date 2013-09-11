@@ -344,7 +344,20 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 	}
 
-	
+	/**
+	 * EVENT: "lost all members", triggered by Elector in case the last member left the election 
+	 */
+	public void eventClusterLostAllMembers()
+	{
+		/**
+		 * Unregister from local databases
+		 */
+		Logging.log(this, "============ Destroying this cluster now...");
+		
+		// unregister from HRMController's internal database
+		mHRMController.unregisterCluster(this);
+	}
+
 	
 	
 	
@@ -588,7 +601,7 @@ public class Cluster extends ControlEntity implements ICluster
 		if (getHRMID() == null){
 			return "ID=" + getClusterID() + ", CoordID=" + superiorCoordinatorID() +  ", Prio=" + getPriority().getValue();
 		}else{
-			return "HRMID=" + getHRMID().toString() + ", ID=" + getClusterID();
+			return "HRMID=" + getHRMID().toString();
 		}
 	}
 }

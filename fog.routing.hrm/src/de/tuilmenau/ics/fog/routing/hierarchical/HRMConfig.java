@@ -124,7 +124,7 @@ public class HRMConfig
 		 * This specifies whether the hierarchy build process is continued automatically.
 		 * Otherwise, it is done step by step by the help of GUI and user inputs.
 		 */
-		public static final boolean CONTINUE_AUTOMATICALLY = false;
+		public static final boolean CONTINUE_AUTOMATICALLY = true;
 		
 		/**
 		 * Defines if signaling (e.g., broadcasts) also includes the local host.
