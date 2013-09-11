@@ -612,123 +612,143 @@ public class Elector implements Localization
 		// update the stored Bully priority of the cluster member
 		pComChannel.setPeerPriority(pPacketBully.getSenderPriority());		
 
-		/**
-		 * ELECT
-		 */
-		if(pPacketBully instanceof BullyElect)	{
-			
-			// cast to Bully elect packet
-			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
-			
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ELECT: " + tPacketBullyElect);
-			}
-
-//			if ((tSource.getSuperiorCoordinatorCEP() != null) && (tSource.getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
-//				
-//				if (tSource.getHRMController().equals(tLocalNodeName)) {
-//					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, tSource.getBullyPriority(), "CEP-to?", tSource.getToken());
-//					
-//					for(CoordinatorCEPChannel tCEP : tSource.getClusterMembers()) {
-//						tAnnouncePacket.addCoveredNode(tCEP.getPeerL2Address());
-//					}
-//					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
-//						Logging.log(this, "Sending announce that does not cover anyhting");
-//					}
-//
-//					// send packet
-//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-//						Logging.log(this, "BULLY-sending to \"" + tSourceDescription + "\" an ANNOUNCE: " + tAnnouncePacket);
-//					pSourceClusterMember.sendPacket(tAnnouncePacket);
-//					
-//				} else {
-//					// create ALIVE packet
-//					BullyAlive tAlivePacket = new BullyAlive(tLocalNodeName);
-//					
-//					// send packet
-//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-//						Logging.log(this, "BULLY-sending to \"" + tSourceDescription + "\" an ALIVE: " + tAlivePacket);
-//					pSourceClusterMember.sendPacket(tAlivePacket);
-//					//TODO: packet is sent but never parsed or a timeout timer reset!!
-//				}
-//			} else {
-
-			// update the state
-			eventReceivedElect();
-		
-			// answer the "elect" message
-			signalResponse(pComChannel);
-				
+		if (!tControlEntity.getHierarchyLevel().isHigher(this, mParentCluster.getHierarchyLevel())){
 			/**
-			 * do we have a higher priority than the peer?
+			 * ELECT
 			 */
-			if (havingHigherPrioriorityThan(pComChannel)){
-				// send broadcast "ELECT" ourself
-				signalElectBroadcast();
+			if(pPacketBully instanceof BullyElect)	{
+				
+				// cast to Bully elect packet
+				BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
+				
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ELECT: " + tPacketBullyElect);
+				}
+	
+	//			if ((tSource.getSuperiorCoordinatorCEP() != null) && (tSource.getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
+	//				
+	//				if (tSource.getHRMController().equals(tLocalNodeName)) {
+	//					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, tSource.getBullyPriority(), "CEP-to?", tSource.getToken());
+	//					
+	//					for(CoordinatorCEPChannel tCEP : tSource.getClusterMembers()) {
+	//						tAnnouncePacket.addCoveredNode(tCEP.getPeerL2Address());
+	//					}
+	//					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
+	//						Logging.log(this, "Sending announce that does not cover anyhting");
+	//					}
+	//
+	//					// send packet
+	//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+	//						Logging.log(this, "BULLY-sending to \"" + tSourceDescription + "\" an ANNOUNCE: " + tAnnouncePacket);
+	//					pSourceClusterMember.sendPacket(tAnnouncePacket);
+	//					
+	//				} else {
+	//					// create ALIVE packet
+	//					BullyAlive tAlivePacket = new BullyAlive(tLocalNodeName);
+	//					
+	//					// send packet
+	//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+	//						Logging.log(this, "BULLY-sending to \"" + tSourceDescription + "\" an ALIVE: " + tAlivePacket);
+	//					pSourceClusterMember.sendPacket(tAlivePacket);
+	//					//TODO: packet is sent but never parsed or a timeout timer reset!!
+	//				}
+	//			} else {
+	
+				// update the state
+				eventReceivedElect();
+			
+				// answer the "elect" message
+				signalResponse(pComChannel);
+					
+				/**
+				 * do we have a higher priority than the peer?
+				 */
+				if (havingHigherPrioriorityThan(pComChannel)){
+					// send broadcast "ELECT" ourself
+					signalElectBroadcast();
+				}
+				
+	//			}
 			}
 			
-//			}
-		}
-		
-		/**
-		 * REPLY
-		 */
-		if(pPacketBully instanceof BullyReply) {
-			
-			// cast to Bully replay packet
-			BullyReply tReplyPacket = (BullyReply)pPacketBully;
-
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a REPLY: " + tReplyPacket);
-			}
-
-			eventReceivedReply();
-		}
-		
-		/**
-		 * ANNOUNCE
-		 */
-		if(pPacketBully instanceof BullyAnnounce)  {
-			// cast to Bully replay packet
-			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
-
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
-			}
-
-			eventElectionLost();
-
-//			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
-			tControlEntity.handleBullyAnnounce(tAnnouncePacket, pComChannel);
-		}
-
-		/**
-		 * PRIORITY UPDATE
-		 */
-		if(pPacketBully instanceof BullyPriorityUpdate) { //TODO: paket muss auch gesendet werden
-			// cast to Bully replay packet
-			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
-
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
+			/**
+			 * REPLY
+			 */
+			if(pPacketBully instanceof BullyReply) {
+				
+				// cast to Bully replay packet
+				BullyReply tReplyPacket = (BullyReply)pPacketBully;
+	
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a REPLY: " + tReplyPacket);
+				}
+	
+				eventReceivedReply();
 			}
 			
-			// update the peer priority stored in the communication channel
-			pComChannel.setPeerPriority(tPacketBullyPriorityUpdate.getSenderPriority());
-		}
-		
-		/**
-		 * LEAVE
-		 */
-		if(pPacketBully instanceof BullyLeave) {
-			// cast to Bully leave packet
-			BullyLeave tLeavePacket = (BullyLeave)pPacketBully;
-
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-				Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a LEAVE: " + tLeavePacket);
+			/**
+			 * ANNOUNCE
+			 */
+			if(pPacketBully instanceof BullyAnnounce)  {
+				// cast to Bully replay packet
+				BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
+	
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
+				}
+	
+				eventElectionLost();
+	
+	//			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
+				tControlEntity.eventClusterCoordinatorAnnounced(tAnnouncePacket, pComChannel);
 			}
+	
+			/**
+			 * PRIORITY UPDATE
+			 */
+			if(pPacketBully instanceof BullyPriorityUpdate) { //TODO: paket muss auch gesendet werden
+				// cast to Bully replay packet
+				BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
+	
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
+				}
+				
+				// update the peer priority stored in the communication channel
+				pComChannel.setPeerPriority(tPacketBullyPriorityUpdate.getSenderPriority());
+			}
+			
+			/**
+			 * LEAVE
+			 */
+			if(pPacketBully instanceof BullyLeave) {
+				// cast to Bully leave packet
+				BullyLeave tLeavePacket = (BullyLeave)pPacketBully;
+	
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a LEAVE: " + tLeavePacket);
+				}
+	
+				eventElectionLeft(pComChannel);
+			}
+		}else{
+			Logging.log(this, "HIGHER LEVEL SENT BULLY MESSAGE " + pPacketBully.getClass().getSimpleName() + " FROM " + pComChannel);
 
-			eventElectionLeft(pComChannel);
+			/**
+			 * ANNOUNCE
+			 */
+			if(pPacketBully instanceof BullyAnnounce)  {
+				// cast to Bully replay packet
+				BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
+	
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
+				}
+	
+				tControlEntity.eventSuperiorClusterCoordinatorAnnounced(tAnnouncePacket, pComChannel);
+			}else{
+				Logging.log(this, "      ..ignoring Bully message: " + pPacketBully);
+			}
 		}
 
 	}

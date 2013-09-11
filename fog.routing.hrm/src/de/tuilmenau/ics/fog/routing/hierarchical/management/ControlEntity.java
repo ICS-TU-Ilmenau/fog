@@ -528,11 +528,24 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		return toString();
 	}
 
-	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pComChannel)
+	/**
+	 * EVENT: "cluster coordinator was announced", triggered by Elector 
+	 */
+	public void eventClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
-		//TODO: remove this
+		Logging.warn(this, "Received event via: " + pComChannel);
+		Logging.warn(this, "Ignoring announced coordinator data: " + pAnnouncePacket);
 	}
 	
+	/**
+	 * EVENT: "superior cluster coordinator was announced", triggered by Elector
+	 */ 
+	public void eventSuperiorClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
+	{
+		Logging.warn(this, "Received event from higher layer via: " + pComChannel);
+		Logging.warn(this, "Ignoring announced superior coordinator data: " + pAnnouncePacket);
+	}
+
 	public void handleNeighborAnnouncement(AnnounceRemoteCluster pNeighborClusterAnnounce, ComChannel pComChannel)
 	{
 		//TODO: remove this
@@ -773,5 +786,4 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		
 		return tResult;
 	}
-
 }

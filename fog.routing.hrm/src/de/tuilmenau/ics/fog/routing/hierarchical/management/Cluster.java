@@ -358,20 +358,40 @@ public class Cluster extends ControlEntity implements ICluster
 		mHRMController.unregisterCluster(this);
 	}
 
-	
-	
-	
-	
-	
-	
-	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pComChannel)
+	/**
+	 * EVENT: "cluster coordinator was announced", triggered by Elector 
+	 */
+	public void eventClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
 		// update the description about the elected coordinator
-		mCoordinatorDescription = pBullyAnnounce.getCoordinatorDescription();
+		mCoordinatorDescription = pAnnouncePacket.getCoordinatorDescription();
 				
-		setSuperiorCoordinator(pComChannel, pBullyAnnounce.getSenderName(), pBullyAnnounce.getCoordinatorID(), pComChannel.getPeerL2Address());
+		// set new superior coordinator
+		setSuperiorCoordinator(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
+
+		//TODO: remove?
 		mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
+	
+	/**
+	 * EVENT: "superior cluster coordinator was announced", triggered by Elector
+	 */ 
+	public void eventSuperiorClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
+	{
+		// get the coordinator of this cluster
+		Coordinator tCoordinator = getCoordinator(); 
+		
+		if (tCoordinator != null){
+			// inform the coordinator of this cluster about its superior coordinator
+			tCoordinator.eventSuperiorClusterCoordinatorAnnounced(pAnnouncePacket, pComChannel);
+		}
+	}
+
+	
+	
+	
+	
+	
 	
 	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordinatorID, L2Address pCoordinatorL2Address)
 	{

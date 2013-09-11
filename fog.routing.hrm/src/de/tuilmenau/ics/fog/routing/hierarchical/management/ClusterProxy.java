@@ -140,15 +140,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		return mClusterID.intValue() * 1;
 	}
 
-
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity#handleBullyAnnounce(de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce, de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel)
-	 */
-	@Override
-	public void handleBullyAnnounce(BullyAnnounce pBullyAnnounce, ComChannel pComChannel)
-	{
-	}
-
 	/* (non-Javadoc)
 	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster#getCoordinatorName()
 	 */

@@ -535,8 +535,12 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){
 				Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
 
-				// start the clustering of this cluster's coordinator and its neighbors
-				exploreNeighborhodAndCreateCluster();
+				// start the clustering of this cluster's coordinator and its neighbors if it wasn't already triggered by another coordinator
+				if (!isClustered()){
+					exploreNeighborhodAndCreateCluster();
+				}else{
+					Logging.warn(this, "Clustering is already finished for this hierarchy level, skipping cluster-request");
+				}
 			}
 		}
 	}
@@ -755,8 +759,13 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					}
 				}
 				
-				// trigger event "finished clustering" 
-				eventInitialClusteringFinished();
+				/**
+				 * Mark all local coordinators for this hierarchy level as "clustered"
+				 */
+				for(Coordinator tLocalCoordinator : mHRMController.getAllCoordinators(getHierarchyLevel())) {
+					// trigger event "finished clustering" 
+					tLocalCoordinator.eventInitialClusteringFinished();
+				}
 			}else{
 				Logging.warn(this,  "CLUSTERING SKIPPED, no clustering on highest hierarchy level " + getHierarchyLevel().getValue() + " needed");
 			}
@@ -945,6 +954,15 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 	}
 
+	/**
+	 * EVENT: "superior cluster coordinator was announced", triggered by Elector
+	 */ 
+	public void eventSuperiorClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
+	{
+		// store superior coordinator data
+		setSuperiorCoordinator(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
+	}
+
 	
 	
 	
@@ -988,7 +1006,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		mCoordinatorName = pCoordName;
 	}
 
-	public void handleBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
+	public void eventClusterCoordinatorAnnounced(BullyAnnounce pAnnounce, ComChannel pCEP)
 	{
 		/**
 		 * the name of the cluster, which is managed by this coordinator
