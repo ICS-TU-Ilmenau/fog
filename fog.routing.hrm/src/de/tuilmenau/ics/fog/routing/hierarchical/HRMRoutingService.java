@@ -1362,7 +1362,7 @@ public class HRMRoutingService implements RoutingService, Localization
 						encodeDestinationApplication(tResultRoute, pRequirements);
 					}else{
 						// no route found
-						Logging.log(this, "Couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph nodes");
+						Logging.log(this, "Couldn't determine a route from " + tSourceL2Address + " to " + tDestinationL2Address + ", knowing the following routing graph nodes");
 						// list known nodes
 						synchronized (mL2RoutingGraph) {
 							Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
