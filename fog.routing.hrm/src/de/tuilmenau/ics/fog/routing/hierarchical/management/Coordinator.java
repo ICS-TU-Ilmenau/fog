@@ -537,12 +537,54 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 				// start the clustering of this cluster's coordinator and its neighbors if it wasn't already triggered by another coordinator
 				if (!isClustered()){
-					exploreNeighborhodAndCreateCluster();
+					cluster();
 				}else{
 					Logging.warn(this, "Clustering is already finished for this hierarchy level, skipping cluster-request");
 				}
 			}
 		}
+	}
+
+	
+	/**
+	 * Clusters the superior hierarchy level or tries to join an already existing superior cluster
+	 */
+	public void cluster()
+	{
+		Logging.log(this, "\n\n\n################ CLUSTERING STARTED");
+
+		/**
+		 * Try to find a matching local cluster on the superior hierarchy level
+		 */
+		boolean tSuperiorClusterFound = false;
+		for(Cluster tCluster : mHRMController.getAllClusters(getHierarchyLevel())) {
+			if (joinSuperiorCluster(tCluster)){
+				// we joined the superior cluster and should end the search for a superior coordinator
+				tSuperiorClusterFound = true;
+				break;
+			}
+		}
+		
+		/**
+		 * Explore the neighborhood and create a new superior cluster
+		 */
+		if (!tSuperiorClusterFound){
+			exploreNeighborhodAndCreateSuperiorCluster();
+		}
+	}
+
+	/**
+	 * Tries to join a superior cluster
+	 * 
+	 * @param pSuperiorCluster the possible new superior cluster
+	 * 
+	 * @return true or false to indicate success/error
+	 */
+	private boolean joinSuperiorCluster(ControlEntity pSuperiorCluster)
+	{
+		Logging.log(this, "\n\n\n################ JOINING EXISTING SUPERIOR CLUSTER " + pSuperiorCluster);
+
+		return false;
 	}
 
 	/**
@@ -655,9 +697,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 *     1.) querying the ARG from the HRMController for neighbor clusters within the given max. radius
 	 *     2.) trigger event "detectedNeighborCoordinator" with increasing radius
 	 */
-	public void exploreNeighborhodAndCreateCluster()
+	private void exploreNeighborhodAndCreateSuperiorCluster()
 	{
-		Logging.log(this, "\n\n\n################ CLUSTERING STARTED on hierarchy level " + getHierarchyLevel().getValue());
+		Logging.log(this, "\n\n\n################ EXPLORATION STARTED on hierarchy level " + getHierarchyLevel().getValue());
 		
 		// was the clustering already triggered?
 		if (!isClustered()){

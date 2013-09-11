@@ -975,7 +975,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 								}
 								
 								// start the clustering of the selected cluster's coordinator and its neighbors
-								tCoordinator.exploreNeighborhodAndCreateCluster();
+								tCoordinator.cluster();
 							}else{
 								Logging.err(this, "Coordinator of " + tCluster + " wasn't elected yet, skipping clustering request");
 							}
@@ -1019,7 +1019,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					}
 					
 					// start the clustering of the selected cluster's coordinator and its neighbors
-					mCoordinator.exploreNeighborhodAndCreateCluster();
+					mCoordinator.cluster();
 				}else{
 					Logging.err(this, "Coordinator is invalid, skipping clustering request");
 				}
