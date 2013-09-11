@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -91,24 +90,6 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 		}
 		
 		return tResult;
-	}
-
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.facade.Name#getNamespace()
-	 */
-	@Override
-	public Namespace getNamespace()
-	{
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.facade.Name#getSerialisedSize()
-	 */
-	@Override
-	public int getSerialisedSize()
-	{
-		return 0;
 	}
 
 	/* (non-Javadoc)

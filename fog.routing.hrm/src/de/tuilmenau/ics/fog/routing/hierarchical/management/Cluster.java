@@ -13,7 +13,6 @@ import java.io.Serializable;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
@@ -523,16 +522,6 @@ public class Cluster extends ControlEntity implements ICluster
 	public Name getCoordinatorName()
 	{
 		return mCoordName;
-	}
-	
-	@Override
-	public Namespace getNamespace() {
-		return new Namespace("cluster");
-	}
-
-	@Override
-	public int getSerialisedSize() {
-		return 0;
 	}
 	
 	public int hashCode()

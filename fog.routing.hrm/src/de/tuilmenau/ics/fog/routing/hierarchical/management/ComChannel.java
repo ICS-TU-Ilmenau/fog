@@ -10,7 +10,6 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -632,7 +631,7 @@ public class ComChannel
 		tEntry.setPriority(pDestination.getPriority());
 		tEntry.setRoutingVectors(getPath(tCoordL2Addr));
 		
-		List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(getParent(), (ControlEntity)pDestination);
+//		List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(getParent(), (ControlEntity)pDestination);
 //		if(!tClusterList.isEmpty()) {
 //			ICluster tPredecessorCluster = (ICluster) mHRMController.getOtherEndOfLinkARG((ControlEntity)pDestination, tClusterList.get(tClusterList.size() - 1));
 //			ClusterName tPredecessorClusterName = new ClusterName(mHRMController, tPredecessorCluster.getHierarchyLevel(), tPredecessorCluster.getCoordinatorID(), tPredecessorCluster.getClusterID());

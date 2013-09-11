@@ -14,6 +14,7 @@ import java.io.Serializable;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
@@ -712,6 +713,29 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	public String getImageName()
 	{
 		return null;
+	}
+
+	/**
+	 * Returns the name space of this "Name".
+	 * This function is introduced by the "Name" class.
+	 * 
+	 * @return the name space
+	 */
+	@Override
+	public Namespace getNamespace() {
+		return new Namespace("HRM entities");
+	}
+		
+	/**
+	 * Returns the size of a serialized representation.
+	 * This function is introduced by the "Name" class.
+	 * 
+	 * @return the size of a serialized representation
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		return 0;
 	}
 
 	/**

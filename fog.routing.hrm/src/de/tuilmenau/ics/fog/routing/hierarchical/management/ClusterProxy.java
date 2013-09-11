@@ -10,7 +10,6 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -136,16 +135,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
 	{
 		Logging.warn(this, "############### This function should never be called #############");
-	}
-
-	@Override
-	public Namespace getNamespace() {
-		return new Namespace("attachedcluster");
-	}
-
-	@Override
-	public int getSerialisedSize() {
-		return 0;
 	}
 
 	public int hashCode()
