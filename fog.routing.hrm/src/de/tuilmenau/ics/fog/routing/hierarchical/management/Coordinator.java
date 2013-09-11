@@ -594,7 +594,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 */
 	public void exploreNeighborhodAndCreateCluster()
 	{
-		Logging.log(this, "\n\n\nCLUSTERING STARTED on hierarchy level " + getHierarchyLevel().getValue() + ", will connect to " + mParentCluster.getNeighborsARG());
+		Logging.log(this, "\n\n\n################ CLUSTERING STARTED on hierarchy level " + getHierarchyLevel().getValue() + ", will connect to " + mParentCluster.getNeighborsARG());
 		
 		// was the clustering already triggered?
 		if (!isClustered()){
