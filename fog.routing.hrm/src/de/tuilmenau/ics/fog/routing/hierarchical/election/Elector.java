@@ -305,19 +305,26 @@ public class Elector implements Localization
 	private void signalAnnounceBroadcast()
 	{
 		if (getElectorState() == ElectorState.ELECTED){
+			// get the size of the cluster
+			int tKnownClusterMembers = mParentCluster.getComChannels().size();
+			
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 				Logging.log(this, "SENDANNOUNCE()-START, electing cluster is " + mParentCluster);
-				Logging.log(this, "SENDANNOUNCE(), cluster members: " + mParentCluster.getComChannels().size());
+				Logging.log(this, "SENDANNOUNCE(), cluster members: " + tKnownClusterMembers);
 			}
 	
 			// HINT: the coordinator has to be already created here
 
 			if (mParentCluster.getCoordinator() != null){
-				// create the packet
-				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mHRMController.getNodeName(), mParentCluster.getPriority(), mParentCluster.getCoordinator().toLocation() + "@" + HRMController.getHostName(), mParentCluster.superiorCoordinatorID());
-		
-				// send broadcast
-				mParentCluster.sendClusterBroadcast(tPacketBullyAnnounce);
+				if (tKnownClusterMembers > 0){
+					// create the packet
+					BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mHRMController.getNodeName(), mParentCluster.getPriority(), mParentCluster.getCoordinator().toLocation() + "@" + HRMController.getHostName(), mParentCluster.superiorCoordinatorID());
+			
+					// send broadcast
+					mParentCluster.sendClusterBroadcast(tPacketBullyAnnounce);
+				}else{
+					Logging.log(this, "SENDANNOUNCE() can stop here because no further cluster member is known");
+				}
 			}else{
 				Logging.warn(this, "Election has wrong state " + getElectorState() + " for signaling an ELECTION END, ELECTED expected");
 				
