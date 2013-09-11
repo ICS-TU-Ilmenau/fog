@@ -732,7 +732,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			// store the connection to avoid connection duplicates during later processing
 			registerConnectionToNeighborCoordinator(tTargetCoordinatorName);
 
-			HierarchyLevel tSourceClusterHierLvl = new HierarchyLevel(this, getHierarchyLevel().getValue());
 			HierarchyLevel tTargetClusterHierLvl = new HierarchyLevel(this, pNeighborCluster.getHierarchyLevel().getValue() + 1);
 
 			ControlEntity tNeighborClusterControlEntity = (ControlEntity)pNeighborCluster;
@@ -743,24 +742,29 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			 * Describe the common cluster
 			 */
 		    Logging.log(this, "    ..creating cluster description");
+		    // create the cluster description
 			RequestClusterParticipationProperty tRequestClusterParticipationProperty = new RequestClusterParticipationProperty(pIDForFutureCluster, tTargetClusterHierLvl, pNeighborCluster.getCoordinatorID());
 
 			/**
 			 * Create communication session
 			 */
 		    Logging.log(this, "    ..creating new communication session");
-		    ComSession tComSession = new ComSession(mHRMController, false, tSourceClusterHierLvl);
+		    ComSession tComSession = new ComSession(mHRMController, false, getHierarchyLevel());
 
-			Logging.log(this, "    ..iterate over all coordinators on hierarchy level: " + (tSourceClusterHierLvl.getValue() - 1));
-			int tLocalCoordinatorsCount = 0;
-			for(Coordinator tLocalCoordinator : mHRMController.getAllCoordinators(new HierarchyLevel(this, tSourceClusterHierLvl.getValue()))) {
-				tLocalCoordinatorsCount++;
-				Logging.log(this, "         ..found [" + tLocalCoordinatorsCount + "] : " + tLocalCoordinator);
+		    /**
+		     * Iterate over all local coordinators on this hierarchy level and add them as already known cluster members to the cluster description
+		     */
+			Logging.log(this, "    ..iterate over all coordinators on hierarchy level: " + (getHierarchyLevel().getValue() - 1));
+			// store how many local coordinators on this hierarchy level were found
+			int tKnownLocalCoordinatorsOnThisHierarchyLevel = 0;
+			for(Coordinator tLocalCoordinator : mHRMController.getAllCoordinators(getHierarchyLevel())) {
+				tKnownLocalCoordinatorsOnThisHierarchyLevel++;
+				Logging.log(this, "         ..found [" + tKnownLocalCoordinatorsOnThisHierarchyLevel + "] : " + tLocalCoordinator);
 
 			    /**
 			     * Create communication channel
 			     */
-			    Logging.log(this, "    ..creating new communication channel");
+			    Logging.log(this, "           ..creating new communication channel");
 				ComChannel tComChannel = new ComChannel(mHRMController, tLocalCoordinator, tComSession);
 				tComChannel.setRemoteClusterName(new ClusterName(mHRMController, pNeighborCluster.getHierarchyLevel(), pNeighborCluster.getCoordinatorID(), pNeighborCluster.getClusterID()));
 				tComChannel.setPeerPriority(pNeighborCluster.getPriority());
@@ -772,7 +776,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					/**
 					 * Describe the cluster member
 					 */
-				    Logging.log(this, "    ..creating cluster member description for the found cluster " + tCoordinatorCluster);
+				    Logging.log(this, "           ..creating cluster member description for the found cluster " + tCoordinatorCluster);
 					ClusterMemberDescription tClusterMemberDescription = tRequestClusterParticipationProperty.addClusterMember(tCoordinatorCluster.getClusterID(), tCoordinatorCluster.getCoordinatorID(), tCoordinatorCluster.getPriority());
 					tClusterMemberDescription.setSourceName(mHRMController.getNodeName());
 					tClusterMemberDescription.setSourceL2Address(tThisHostL2Address);
@@ -783,18 +787,18 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					for(ControlEntity tClusterMemberNeighbor: tLocalCoordinator.getCluster().getNeighborsARG()) {
 						ICluster tIClusterNeighbor = (ICluster)tClusterMemberNeighbor;
 						
-						DiscoveryEntry tEntry = new DiscoveryEntry(tClusterMemberNeighbor.getCoordinatorID(), tIClusterNeighbor.getCoordinatorName(), tClusterMemberNeighbor.getClusterID(), tClusterMemberNeighbor.superiorCoordinatorL2Address(), tClusterMemberNeighbor.getHierarchyLevel());
-						tEntry.setPriority(tClusterMemberNeighbor.getPriority());
+						DiscoveryEntry tDiscoveryEntry = new DiscoveryEntry(tClusterMemberNeighbor.getCoordinatorID(), tIClusterNeighbor.getCoordinatorName(), tClusterMemberNeighbor.getClusterID(), tClusterMemberNeighbor.superiorCoordinatorL2Address(), tClusterMemberNeighbor.getHierarchyLevel());
+						tDiscoveryEntry.setPriority(tClusterMemberNeighbor.getPriority());
 						
 						if(tLocalCoordinator.getPathToCoordinator(tLocalCoordinator.getCluster(), tIClusterNeighbor) != null) {
 							for(RoutingServiceLinkVector tVector : tLocalCoordinator.getPathToCoordinator(tLocalCoordinator.getCluster(), tIClusterNeighbor)) {
-								tEntry.addRoutingVectors(tVector);
+								tDiscoveryEntry.addRoutingVectors(tVector);
 							}
 						}
-						tClusterMemberDescription.addDiscoveryEntry(tEntry);
+						tClusterMemberDescription.addDiscoveryEntry(tDiscoveryEntry);
 					}
 				}else{
-					Logging.err(this, "Error on trying to contact other clusters, as name is set please check its address");
+					Logging.err(this, "eventDetectedNeighborCoordinator() didn't found the L2Address of the coordinator for: " + tNeighborClusterControlEntity);
 				}
 			}
 			
@@ -821,8 +825,10 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				tComSession.startConnection(null, tConnection);
 	
 				
-				
-				for(Coordinator tCoordinator : mHRMController.getAllCoordinators(new HierarchyLevel(this, tSourceClusterHierLvl.getValue() - 1))) {
+				/**
+				 * Create and send ClusterDiscovery
+				 */
+				for(Coordinator tCoordinator : mHRMController.getAllCoordinators(new HierarchyLevel(this, getHierarchyLevel().getValue() - 1))) {
 					LinkedList<Integer> tCoordinatorIDs = new LinkedList<Integer>();
 					for(ControlEntity tNeighbor : tCoordinator.getCluster().getNeighborsARG()) {
 						if(tNeighbor.getHierarchyLevel().getValue() == tCoordinator.getHierarchyLevel().getValue() - 1) {
@@ -838,14 +844,14 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 							tDistance = mHRMController.getClusterDistance(tClusterProxy); 
 						}
 						
-						NestedDiscovery tDiscovery = tBigDiscovery.new NestedDiscovery(tCoordinatorIDs, pNeighborCluster.getClusterID(), pNeighborCluster.getCoordinatorID(), pNeighborCluster.getHierarchyLevel(), tDistance);
-						Logging.log(this, "Created " + tDiscovery + " for " + pNeighborCluster);
-						tDiscovery.setOrigin(tCoordinator.getClusterID());
-						tDiscovery.setTargetClusterID(tNeighborClusterControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue());
-						tBigDiscovery.addNestedDiscovery(tDiscovery);
+						NestedDiscovery tNestedDiscovery = tBigDiscovery.new NestedDiscovery(tCoordinatorIDs, pNeighborCluster.getClusterID(), pNeighborCluster.getCoordinatorID(), pNeighborCluster.getHierarchyLevel(), tDistance);
+						Logging.log(this, "Created " + tNestedDiscovery + " for " + pNeighborCluster);
+						tNestedDiscovery.setOrigin(tCoordinator.getClusterID());
+						tNestedDiscovery.setTargetClusterID(tNeighborClusterControlEntity.superiorCoordinatorL2Address().getComplexAddress().longValue());
+						tBigDiscovery.addNestedDiscovery(tNestedDiscovery);
 					}
 				}
-				
+				// send the ClusterDiscovery to peer
 				tComSession.write(tBigDiscovery);
 				
 				for(NestedDiscovery tDiscovery : tBigDiscovery.getDiscoveries()) {
