@@ -252,7 +252,7 @@ public class Cluster extends ControlEntity implements ICluster
 	 * 
 	 * @param pPacket the packet which has to be broadcasted
 	 */
-	public void sendClusterBroadcast(Serializable pPacket)
+	public void sendClusterBroadcast(Serializable pPacket, boolean pIncludeLoopback)
 	{
 		// get all communication channels
 		LinkedList<ComChannel> tComChannels = getComChannels();
@@ -271,13 +271,17 @@ public class Cluster extends ControlEntity implements ICluster
 				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
 			}
 
-			if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (!tIsLoopback)){
+			if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (pIncludeLoopback) || (!tIsLoopback)){
 				// send the packet to one of the possible cluster members
 				tComChannel.sendPacket(pPacket);
 			}else{
 				Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
 			}
 		}
+	}
+	public void sendClusterBroadcast(Serializable pPacket)
+	{
+		sendClusterBroadcast(pPacket, false);
 	}
 
 	/**
@@ -584,7 +588,7 @@ public class Cluster extends ControlEntity implements ICluster
 		if (getHRMID() == null){
 			return "ID=" + getClusterID() + ", CoordID=" + superiorCoordinatorID() +  ", Prio=" + getPriority().getValue();
 		}else{
-			return "HRMID=" + getHRMID().toString();
+			return "HRMID=" + getHRMID().toString() + ", ID=" + getClusterID();
 		}
 	}
 }
