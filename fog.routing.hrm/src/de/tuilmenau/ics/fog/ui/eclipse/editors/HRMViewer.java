@@ -478,25 +478,19 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tColumnCoordinator.setText("Coordinator");
 		
 		TableColumn tColumnCEP = new TableColumn(tTable, SWT.NONE, 1);
-		tColumnCEP.setText("Peer");
+		tColumnCEP.setText("Peer (L2)");
 		
 		TableColumn tColumnTargetCovered = new TableColumn(tTable, SWT.NONE, 2);
 		tColumnTargetCovered.setText("Target Covered");
 		
-		TableColumn tColumnPartofCluster = new TableColumn(tTable, SWT.NONE, 3);
-		tColumnPartofCluster.setText("Knows coord.");
-		
-		TableColumn tColumnPeerPriority = new TableColumn(tTable, SWT.NONE, 4);
+		TableColumn tColumnPeerPriority = new TableColumn(tTable, SWT.NONE, 3);
 		tColumnPeerPriority.setText("Peer Priority");
 		
-		TableColumn tColumnNegotiator = new TableColumn(tTable, SWT.NONE, 5);
-		tColumnNegotiator.setText("Peer");
+		TableColumn tColumnNegotiator = new TableColumn(tTable, SWT.NONE, 4);
+		tColumnNegotiator.setText("Remote ClusterName");
 		
-		TableColumn tColumnAnnouncerNegotiator = new TableColumn(tTable, SWT.NONE, 6);
-		tColumnAnnouncerNegotiator.setText("Announcers negotiator");
-		
-		TableColumn tColumnRoute = new TableColumn(tTable, SWT.NONE, 7);
-		tColumnRoute.setText("Route");
+		TableColumn tColumnRoute = new TableColumn(tTable, SWT.NONE, 5);
+		tColumnRoute.setText("Route to peer");
 		
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
@@ -538,43 +532,31 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 
 			/**
-			 * Column 1: Peer 
+			 * Column 1: Peer L2
 			 */
 			tRow.setText(1, (tComChannel.getPeerL2Address() != null ? tComChannel.getPeerL2Address().toString() : "??"));
 
 			/**
 			 * Column 2:  
 			 */
-			tRow.setText(2, Boolean.toString(tComChannel.knowsCoordinator()));
-
+			tRow.setText(2, Boolean.toString(tComChannel.isPartOfMyCluster()));
+			
 			/**
 			 * Column 3:  
 			 */
-			tRow.setText(3, Boolean.toString(tComChannel.isPartOfMyCluster()));
+			tRow.setText(3, Float.toString(tComChannel.getPeerPriority().getValue()));
 			
 			/**
 			 * Column 4:  
 			 */
-			tRow.setText(4, Float.toString(tComChannel.getPeerPriority().getValue()));
+			if (tComChannel.getRemoteClusterName() != null){
+				tRow.setText(4, tComChannel.getRemoteClusterName().toString());
+			}else{
+				tRow.setText(4, "??");
+			}
 			
 			/**
 			 * Column 5:  
-			 */
-			if (tComChannel.getRemoteClusterName() != null){
-				tRow.setText(5, tComChannel.getRemoteClusterName().toString());
-			}else{
-				tRow.setText(5, "??");
-			}
-			
-			/**
-			 * Column 6:  
-			 */
-			if(tComChannel.getRemoteClusterName() != null){ //&& tCEP.getRemoteClusterName() instanceof NeighborCluster && ((NeighborCluster)tCEP.getRemoteClusterName()).getAnnouncedCEP(tCEP.getRemoteClusterName()) != null && ((NeighborCluster)tCEP.getRemoteClusterName()).getAnnouncedCEP(tCEP.getRemoteClusterName()).getRemoteClusterName() != null) {
-				tRow.setText(6, tComChannel.getRemoteClusterName().toString());
-			}
-
-			/**
-			 * Column 7:  
 			 */
 			Route tRoute = null;
 			Name tTarget = null;
@@ -589,9 +571,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				Logging.err(this, "Unable to fulfill requirements for route calculation to " + tTarget, tExc);
 			}			
 			if (tRoute != null){
-				tRow.setText(7, tRoute.toString());
+				tRow.setText(5, tRoute.toString());
 			}else{
-				tRow.setText(7, "??");
+				tRow.setText(5, "??");
 			}
 			
 			j++;
