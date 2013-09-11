@@ -97,18 +97,16 @@ public class Elector implements Localization
 
 		boolean tStartBaseLevel =  ((mParentCluster.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
 		
-		// for higher hierarchy levels, continue hierarchy creation
-		if ((!mParentCluster.getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.START_AUTOMATICALLY) || (tStartBaseLevel)){
-			if (mParentCluster.isNeighborHoodInitialized()){
-				// start coordinator election for the created HRM instance if desired
-				if((HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY) || (tStartBaseLevel)){
-					elect();
-				}
-			}else{
-				Logging.err(this, "Neighborhood of cluster " + mParentCluster + " has to be already initialized when calling this constructor");
-				
-				setElectorState(ElectorState.ERROR);
+		// was the cluster already locally registered as neighbor? 
+		if (mParentCluster.isNeighborHoodInitialized()){
+			// start coordinator election for the created HRM instance if desired
+			if(((!mParentCluster.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
+				elect();
 			}
+		}else{
+			Logging.err(this, "Neighborhood of cluster " + mParentCluster + " has to be already initialized when calling this constructor");
+			
+			setElectorState(ElectorState.ERROR);
 		}
 	}
 	

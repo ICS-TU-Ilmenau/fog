@@ -116,12 +116,6 @@ public class HRMConfig
 		public static final int USED_BITS_PER_LEVEL = 8; //TV
 
 		/**
-		 * This specifies whether the hierarchy build process is started automatically.
-		 * Otherwise, the build process is started after user input in the GUI.
-		 */
-		public static final boolean START_AUTOMATICALLY = false;		
-
-		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
 		 */
 		public static final boolean START_AUTOMATICALLY_BASE_LEVEL = true; 
