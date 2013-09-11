@@ -1453,7 +1453,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									Logging.log(this, "     ..neighbor of cluster member is a remote cluster, creating ClusterProxy");
 									ClusterProxy tClusterProxy_ClusterMemberNeighbor = new ClusterProxy(this, tNeighborDescription.getClusterID(), tNeighborDescription.getLevel(), tNeighborDescription.getCoordinatorName(), tNeighborDescription.getCoordinatorL2Address(),  tNeighborDescription.getToken());
 									tClusterProxy_ClusterMemberNeighbor.setPriority(tNeighborDescription.getPriority());
-									getHRS().mapFoGNameToL2Address(tClusterProxy_ClusterMemberNeighbor.getCoordinatorName(), tNeighborDescription.getCoordinatorL2Address());
+									getHRS().mapFoGNameToL2Address(tClusterProxy_ClusterMemberNeighbor.getCoordinatorHostName(), tNeighborDescription.getCoordinatorL2Address());
 
 									boolean tFoundSourceIntermediate = false;
 									for(Cluster tLocalCluster : getAllClusters()) {

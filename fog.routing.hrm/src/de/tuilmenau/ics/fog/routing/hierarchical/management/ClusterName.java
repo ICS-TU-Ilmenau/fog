@@ -58,7 +58,7 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 	}
 
 	@Override
-	public Name getCoordinatorName() {
+	public Name getCoordinatorHostName() {
 		return null;
 	}
 
@@ -73,7 +73,7 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 	}
 
 	@Override
-	public void setCoordinatorName(Name pCoordName) {
+	public void setCoordinatorHostName(Name pCoordName) {
 		
 	}
 

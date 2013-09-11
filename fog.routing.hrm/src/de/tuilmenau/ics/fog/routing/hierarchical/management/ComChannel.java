@@ -624,9 +624,9 @@ public class ComChannel
 	 */
 	private void getPathTo(NestedDiscovery pDiscovery, ControlEntity pDestination) throws NetworkException, PropertyException
 	{
-		L2Address tCoordL2Addr = ((ControlEntity)pDestination).superiorCoordinatorL2Address();
+		L2Address tCoordL2Addr = ((ControlEntity)pDestination).superiorCoordinatorHostL2Address();
 
-		DiscoveryEntry tEntry = new DiscoveryEntry(pDestination.getCoordinatorID(), ((ICluster)pDestination).getCoordinatorName(), pDestination.getClusterID(), tCoordL2Addr, pDestination.getHierarchyLevel());
+		DiscoveryEntry tEntry = new DiscoveryEntry(pDestination.getCoordinatorID(), ((ICluster)pDestination).getCoordinatorHostName(), pDestination.getClusterID(), tCoordL2Addr, pDestination.getHierarchyLevel());
 		tEntry.setClusterHops(mHRMController.getClusterDistance((ControlEntity)pDestination));
 		tEntry.setPriority(pDestination.getPriority());
 		tEntry.setRoutingVectors(getPath(tCoordL2Addr));
@@ -760,7 +760,7 @@ public class ComChannel
 			mHRMController.setSourceIntermediateCluster(tClusterProxy, mHRMController.getSourceIntermediateCluster(getParent()));
 			tClusterProxy.setSuperiorCoordinatorID(pEntry.getToken());
 			tClusterProxy.setPriority(pEntry.getPriority());
-			mHRMController.getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorName(), pEntry.getCoordinatorL2Address());
+			mHRMController.getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorHostName(), pEntry.getCoordinatorL2Address());
 			Logging.log(this, "Created " + tClusterProxy);
 			tResult = new ClusterName(mHRMController, tClusterProxy.getHierarchyLevel(), tClusterProxy.getCoordinatorID(), tClusterProxy.getClusterID());
 		}

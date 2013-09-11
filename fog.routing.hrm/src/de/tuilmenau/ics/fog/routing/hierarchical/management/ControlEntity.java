@@ -78,7 +78,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	/**
 	 * Stores the L2Address of the superior coordinator.
 	 */
-	private L2Address mSuperiorCoordinatorL2Address = null;
+	private L2Address mSuperiorCoordinatorHostL2Address = null;
 	
 	/**
 	 * Counter about how many times a superior coordinator was defined
@@ -335,20 +335,20 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * For a coordinator instance, this is its superior coordinator.
 	 * For a cluster instance, this is its local coordinator (which is also superior).
 	 * 
-	 * @param pCoordinatorComChannel
-	 * @param pCoordinatorName
-	 * @param pCoordinatorID
-	 * @param pCoordinatorL2Address
+	 * @param pCoordinatorComChannel the communication channel to the coordinator
+	 * @param pCoordinatorHostName the name of the host where the coordinator is located
+	 * @param pCoordinatorID the unique ID of the coordinator
+	 * @param pCoordinatorHostL2Address the L2Address of the hos where the coordinator is located
 	 */
-	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordinatorID, L2Address pCoordinatorL2Address)
+	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorHostName, int pCoordinatorID, L2Address pCoordinatorHostL2Address)
 	{
-		Logging.log(this, "Setting new superior coordinator (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorL2Address);
+		Logging.log(this, "Setting new superior coordinator (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorHostName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorHostL2Address);
 
 		// store the communication channel to the superior coordinator
 		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
 		
 		// store the L2Address of the superior coordinator
-		setSuperiorCoordinatorL2Address(pCoordinatorL2Address);
+		setSuperiorCoordinatorHostL2Address(pCoordinatorHostL2Address);
 		
 		// store the unique ID of the superior coordinator
 		setSuperiorCoordinatorID(pCoordinatorID);
@@ -413,9 +413,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 *  
 	 * @param pAddr the new L2Address
 	 */
-	protected void setSuperiorCoordinatorL2Address(L2Address pAddr)
+	protected void setSuperiorCoordinatorHostL2Address(L2Address pAddr)
 	{
-		mSuperiorCoordinatorL2Address = pAddr;
+		mSuperiorCoordinatorHostL2Address = pAddr;
 	}
 	
 	/**
@@ -423,9 +423,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @return the L2Address
 	 */
-	public L2Address superiorCoordinatorL2Address()
+	public L2Address superiorCoordinatorHostL2Address()
 	{
-		return mSuperiorCoordinatorL2Address;
+		return mSuperiorCoordinatorHostL2Address;
 	}
 
 	/**

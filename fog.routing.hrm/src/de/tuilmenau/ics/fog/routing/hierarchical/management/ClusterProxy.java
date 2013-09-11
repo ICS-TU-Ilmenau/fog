@@ -58,8 +58,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		setSuperiorCoordinatorID(pCoordinatorID);
 		setCoordinatorID(pCoordinatorID);
 		
-		setCoordinatorName(pCoordName);
-		
 		// register the ClusterProxy at the local ARG
 		mHRMController.registerNodeARG(this);
 
@@ -155,7 +153,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster#getCoordinatorName()
 	 */
 	@Override
-	public Name getCoordinatorName()
+	public Name getCoordinatorHostName()
 	{
 		return mCoordName;
 	}
@@ -164,7 +162,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster#setCoordinatorName(de.tuilmenau.ics.fog.facade.Name)
 	 */
 	@Override
-	public void setCoordinatorName(Name pCoordName)
+	public void setCoordinatorHostName(Name pCoordName)
 	{
 		mCoordName = pCoordName;		
 	}

@@ -54,7 +54,8 @@ public class Cluster extends ControlEntity implements ICluster
 	 */
 	private boolean mNeighborInitialized = false;
 	
-	private Name mCoordName;
+	private Name mSuperiorCoordinatorHostName = null;
+	
 	private LinkedList<AnnounceRemoteCluster> mReceivedAnnounces = null;
 
 	/**
@@ -361,16 +362,16 @@ public class Cluster extends ControlEntity implements ICluster
 
 		L2Address tLocalCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
 	
-		// make sure that a programming mistakes returns also the right unique ID of the superior coordinator
+		// make sure that in case of a programming mistake, the right unique ID of the superior coordinator is returned
 		setCoordinatorID(pCoordinatorID);
 		
-		mCoordName = pCoordinatorName;
+		mSuperiorCoordinatorHostName = pCoordinatorName;
 		if(superiorCoordinatorComChannel() == null) {
 			// store the L2Address of the superior coordinator 
-			setSuperiorCoordinatorL2Address(mHRMController.getHRS().getCentralFNL2Address());
+			setSuperiorCoordinatorHostL2Address(mHRMController.getHRS().getCentralFNL2Address());
 		} else {
 			// store the L2Address of the superior coordinator 
-			setSuperiorCoordinatorL2Address(pCoordinatorL2Address);
+			setSuperiorCoordinatorHostL2Address(pCoordinatorL2Address);
 
 			mHRMController.getHRS().mapFoGNameToL2Address(pCoordinatorName, pCoordinatorL2Address);
 			
@@ -432,7 +433,7 @@ public class Cluster extends ControlEntity implements ICluster
 			mHRMController.setSourceIntermediateCluster(tNeighborCluster, this);
 			tNeighborCluster.setPriority(pAnnounce.getCoordinatorsPriority());
 			
-			mHRMController.getHRS().mapFoGNameToL2Address(tNeighborCluster.getCoordinatorName(),  pAnnounce.getCoordAddress());
+			mHRMController.getHRS().mapFoGNameToL2Address(tNeighborCluster.getCoordinatorHostName(),  pAnnounce.getCoordAddress());
 			
 			registerNeighborARG(tCluster);
 		}
@@ -501,9 +502,9 @@ public class Cluster extends ControlEntity implements ICluster
 	private void announceNeighborCoord(AnnounceRemoteCluster pAnnouncement, ComChannel pCEP)
 	{
 		Logging.log(this, "Handling " + pAnnouncement);
-		if(mCoordName != null)
+		if(mSuperiorCoordinatorHostName != null)
 		{
-			if(mHRMController.getNodeName().equals(mCoordName))
+			if(mHRMController.getNodeName().equals(mSuperiorCoordinatorHostName))
 			{
 				handleNeighborAnnouncement(pAnnouncement, pCEP);
 			} else {
@@ -514,14 +515,14 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 	}
 	
-	public void setCoordinatorName(Name pCoordName)
+	public void setCoordinatorHostName(Name pCoordName)
 	{
-		mCoordName = pCoordName;
+		mSuperiorCoordinatorHostName = pCoordName;
 	}
 
-	public Name getCoordinatorName()
+	public Name getCoordinatorHostName()
 	{
-		return mCoordName;
+		return mSuperiorCoordinatorHostName;
 	}
 	
 	public int hashCode()

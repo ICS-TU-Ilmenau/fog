@@ -38,13 +38,13 @@ public interface ICluster extends Serializable
 	 * 
 	 * @return The name of the coordinator that is responsible for this cluster is return here.
 	 */
-	public Name getCoordinatorName();
+	public Name getCoordinatorHostName();
 	
 	/**
 	 * 
-	 * @param pCoordName This is the name of the coordinator that is responsible for this cluster
+	 * @param pCoordinatorHostName This is the name of the coordinator that is responsible for this cluster
 	 */
-	public void setCoordinatorName(Name pCoordName);
+	public void setCoordinatorHostName(Name pCoordinatorHostName);
 	
 	/**
 	 * 
