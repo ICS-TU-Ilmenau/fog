@@ -123,7 +123,7 @@ public class ComSession extends Session
 	/**
 	 * This function gets called when the physical end point at remote side is locally known
 	 */
-	public void eventSessionAvailable()
+	private void eventSessionAvailable()
 	{
 		Logging.log(this, "EVENT: session is available now");
 		

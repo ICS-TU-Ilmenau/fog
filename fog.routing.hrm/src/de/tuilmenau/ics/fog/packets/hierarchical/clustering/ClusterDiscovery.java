@@ -27,7 +27,6 @@ public class ClusterDiscovery implements Serializable
 	private static final long serialVersionUID = -5917475359148543777L;
 	private LinkedList<NestedDiscovery> mDiscoveries = null;
 	private boolean mRequest = false;
-	private boolean mDealtWith = false;
 	private int mIdentification = 0;
 	private Name mSource;
 	
@@ -69,23 +68,6 @@ public class ClusterDiscovery implements Serializable
 	public String toString()
 	{
 		return getClass().getSimpleName() + ":"  + mSource + "(" + mIdentification + "):" /*+ tResult*/ ;
-	}
-	
-	/**
-	 * Set flag that processing of this message was completed
-	 */
-	public void completed()
-	{
-		mDealtWith = true;
-	}
-	
-	/**
-	 * 
-	 * @return true if processing of this discovery is completed
-	 */
-	public boolean isDealtWith()
-	{
-		return mDealtWith;
 	}
 	
 	/**

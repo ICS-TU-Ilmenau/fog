@@ -187,7 +187,7 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		 * @param pClusterID the unique ID of the cluster
 		 * @param pCoordinatorID the unique ID of the coordinator
 		 */
-		public ClusterMemberDescription(Long pClusterID, int pCoordinatorID, BullyPriority pPriority)
+		private ClusterMemberDescription(Long pClusterID, int pCoordinatorID, BullyPriority pPriority)
 		{
 			mClusterID = pClusterID;
 			mCoordinatorID = pCoordinatorID;

@@ -609,7 +609,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the desired cluster, null if the cluster isn't known
 	 */
-	public Cluster getClusterByName(ClusterName pClusterName)
+	private Cluster getClusterByName(ClusterName pClusterName)
 	{
 		Cluster tResult = null;
 		
