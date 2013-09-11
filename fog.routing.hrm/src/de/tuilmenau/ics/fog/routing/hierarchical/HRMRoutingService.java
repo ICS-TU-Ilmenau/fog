@@ -1074,31 +1074,43 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		Route tResultRoute = null;
 		
-		// get a list of Gate IDs to the destination
-		List<RoutingServiceLink> tGateIDsToDestination = getL2GateIDsForRoute(pFromL2Address, pToL2Address);
-
-		// gate ID list is empty?
-		if((tGateIDsToDestination != null) && (!tGateIDsToDestination.isEmpty())) {
-			// create a route segment which can store a list of Gate IDs
-			RouteSegmentPath tRouteSegmentPath = new RouteSegmentPath();
-			// iterate over all gate IDs in the list
-			for(RoutingServiceLink tLink : tGateIDsToDestination) {
-				if (tLink instanceof RoutingServiceLogicalLink){
-					RoutingServiceLogicalLink tLogicalLink = (RoutingServiceLogicalLink)tLink;
-					
-					// store the route as immediate result
-					return tLogicalLink.getRoute();
-				}else{
-					// store the Gate ID in the route segment
-					tRouteSegmentPath.add(tLink.getID());
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "GET ROUTE from \"" + pFromL2Address + "\" to \"" + pToL2Address +"\"");
+		}
+		
+		// is the source equal to the destination? 
+		if (!pFromL2Address.equals(pToL2Address)){
+			// get a list of Gate IDs to the destination
+			List<RoutingServiceLink> tGateIDsToDestination = getL2GateIDsForRoute(pFromL2Address, pToL2Address);
+	
+			// gate ID list is empty?
+			if((tGateIDsToDestination != null) && (!tGateIDsToDestination.isEmpty())) {
+				// create a route segment which can store a list of Gate IDs
+				RouteSegmentPath tRouteSegmentPath = new RouteSegmentPath();
+				// iterate over all gate IDs in the list
+				for(RoutingServiceLink tLink : tGateIDsToDestination) {
+					if (tLink instanceof RoutingServiceLogicalLink){
+						RoutingServiceLogicalLink tLogicalLink = (RoutingServiceLogicalLink)tLink;
+						
+						// store the route as immediate result
+						return tLogicalLink.getRoute();
+					}else{
+						// store the Gate ID in the route segment
+						tRouteSegmentPath.add(tLink.getID());
+					}
 				}
+				
+				// create new route
+				tResultRoute = new Route();
+				
+				// add the list of Gate IDs to the resulting route
+				tResultRoute.add(tRouteSegmentPath);
 			}
+		}else{
+			Logging.warn(this, "getL2Route() delivers an empty route because source and destination are equal");
 			
-			// create new route
+			// create a new empty route because we have already reached the destination
 			tResultRoute = new Route();
-			
-			// add the list of Gate IDs to the resulting route
-			tResultRoute.add(tRouteSegmentPath);
 		}
 
 		return tResultRoute;
