@@ -19,6 +19,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class NodeDecorator implements Decorator
 {
+	private static boolean DEBUG = false;
+	
 	/**
 	 * Stores the path to the image, which should be used to decorate the node
 	 */
@@ -46,7 +48,8 @@ public class NodeDecorator implements Decorator
 	{
 		mNodeDecorationText = pNewText;
 
-		Logging.log(this, "DECORATION - new text: " + mNodeDecorationText);
+		if (DEBUG)
+			Logging.log(this, "DECORATION - new text: " + mNodeDecorationText);
 	}
 	
 	/**
@@ -66,7 +69,8 @@ public class NodeDecorator implements Decorator
 		else
 			mNodeDecorationImage = null;
 		
-		Logging.log(this, "DECORATION - new image: " + mNodeDecorationImage);
+		if (DEBUG)
+			Logging.log(this, "DECORATION - new image: " + mNodeDecorationImage);
 	}
 	
 	/**
