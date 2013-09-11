@@ -1487,7 +1487,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								}
 							}
 						} else {
-							Logging.warn(this, "newConnection() hasn't found a neighbor description within the member description: " + tClusterMemberDescription);
+							Logging.log(this, "newConnection() hasn't found a neighbor description within the member description: " + tClusterMemberDescription);
 						}
 					} else {
 						Logging.warn(this, "newConnection() has found an already defined remote ClusterName: " + tComChannel.getRemoteClusterName());
