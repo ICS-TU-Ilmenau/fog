@@ -56,7 +56,7 @@ public class HRMConfig
 		/**
 		 * Show debug outputs about node/link detection
 		 */
-		public static final boolean GUI_SHOW_TOPOLOGY_DETECTION = true;
+		public static final boolean GUI_SHOW_TOPOLOGY_DETECTION = false;
 
 		/**
 		 * Shows debug outputs about multiplex packets 
