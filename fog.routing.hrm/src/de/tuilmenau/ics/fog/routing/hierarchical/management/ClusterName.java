@@ -19,11 +19,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
 public class ClusterName extends ControlEntity implements Serializable, ICluster, AbstractRoutingGraphNode
 {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 3027076881853652810L;
-	private Long mClusterID;
 	
 	/**
 	 * Constructor
@@ -37,16 +33,11 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 	{
 		super(pHRMController, pHierarchyLevel);
 		
-		mClusterID = pClusterID;
+		setClusterID(pClusterID);
 		setSuperiorCoordinatorID(pCoordinatorID);
 		setCoordinatorID(pCoordinatorID);
 	}
 	
-	@Override
-	public Long getClusterID() {
-		return mClusterID;
-	}
-
 	@Override
 	public void setPriority(BullyPriority pPriority) {
 		
@@ -133,7 +124,7 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 	@Override
 	public String toLocation()
 	{
-		String tResult = "Cluster" + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue();
+		String tResult = "Cluster" + getGUIClusterID() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
 	}
