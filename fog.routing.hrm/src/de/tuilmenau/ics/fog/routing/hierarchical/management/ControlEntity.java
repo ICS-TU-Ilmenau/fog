@@ -718,10 +718,10 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		Float tSaturation = Float.valueOf(1.0f - 0.5f * (getHierarchyLevel().getValue() + 1)/ HRMConfig.Hierarchy.HEIGHT);
 		
 		if (this instanceof Coordinator){
-			return new Color(0, tSaturation, 0);
+			return new Color(tSaturation, 0, 0);
 		}
 		if (this instanceof Cluster){
-			return new Color(tSaturation, 0, 0);
+			return new Color((float)0.7, tSaturation, 0);
 		}
 		if (this instanceof ClusterProxy){
 			return new Color(0, 0, tSaturation);
