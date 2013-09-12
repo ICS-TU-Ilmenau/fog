@@ -126,7 +126,8 @@ public class Elector implements Localization
 			Logging.log(this, "Trying to ask all cluster members for their Bully priority");
 			signalElectBroadcast();
 		}else{
-			Logging.log(this, "I AM WINNER because no alternative cluster member is known");
+			Logging.log(this, "I AM WINNER because no alternative cluster member is known, known cluster channels:" );
+			Logging.log(this, "    ..: " + mParentCluster.getComChannels());
 			eventElectionWon();
 		}
 	}
@@ -714,8 +715,7 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
 				}
 				
-				// update the peer priority stored in the communication channel
-				pComChannel.setPeerPriority(tPacketBullyPriorityUpdate.getSenderPriority());
+				eventReceivedPriorityUpdate(pComChannel, tPacketBullyPriorityUpdate.getSenderPriority());
 			}
 			
 			/**
@@ -751,6 +751,24 @@ public class Elector implements Localization
 			}
 		}
 
+	}
+
+	/**
+	 * @param pComChannel
+	 * @param pSenderPriority
+	 */
+	private void eventReceivedPriorityUpdate(ComChannel pComChannel, BullyPriority pSenderPriority)
+	{
+		// update the peer priority stored in the communication channel
+		pComChannel.setPeerPriority(pSenderPriority);
+		
+		if (pSenderPriority.isHigher(this, getCluster().getPriority())){
+			Logging.log(this, "Got a priority update and remote priority " + pSenderPriority.getValue() + " is higher than local " + getCluster().getPriority().getValue() + ", triggering re-election");
+			
+			startElection();
+		}else{
+			Logging.log(this, "Got priority " + pSenderPriority.getValue() + " via comm. channel: " + pComChannel);
+		}
 	}
 
 	/**
