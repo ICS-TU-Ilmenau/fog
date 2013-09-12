@@ -35,10 +35,110 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
 
 /**
- * A communication channel can exist between a cluster and the cluster members, or between a coordinator and other coordinators.
+ * A communication channel can exist between level (0) cluster instances, or a level (n) coordinator and a level (n + 1) cluster instance.
  * Each ComChannel instance has only one possible parental ComSession associated. However, a ComSession object can be responsible
  * for multiple ComChannel instances.
- */
+ *
+ * 
+ * ****************************************************************************************************************************
+ * ***************************** Explanation for two hierarchy levels (0 and 1) and three nodes *******************************
+ * ****************************************************************************************************************************
+ * From an abstract view, the communication is as follows: (note: node 2 is depicted two times here!)
+ *
+ *                                                        /===========================\
+ *                                                        |         +---------+       |
+ *                                                        |         |Coord.3@1|       |
+ *                                                        |         +---------+       |
+ *                                                        \== Cluster4@2 =|===========/
+ *                                                                       /|\
+ *                                                                        |
+ *                                                                        |internal comm.
+ *                                                                        |
+ *                                                                       \|/
+ *                                /=======================================|======\
+ *                                |  +---------+                    +---------+  |
+ *                                |  |Coord.1@0| <-- int. comm. --> |Coord.2@0|  |
+ *                                |  +---------+                    +---------+  |
+ *                                \======|======= Cluster3@1 =============|======/
+ *                                      /|\                              /|\
+ *                                       |                                |
+ *                                       |internal comm.                  |internal comm.
+ *                                       |                                |
+ *                                      \|/                              \|/
+ *   /===================================|=====\                     /====|====================================\
+ *   |   +------+                   +------+   |                     |   +------+                   +------+   |			
+ *   |   |Node 1| <-- ext. comm.--> |Node 2|   |                     |   |Node 2| <-- ext. comm.--> |Node 3|   |
+ *   |   +------+                   +------+   |                     |   +------+                   +------+   |
+ *   \============= Cluster1@0 ================/                     \============= Cluster2@0 ================/
+ *   
+ *   
+ *   
+ * ****************************************************************************************************************************
+ * ****************************************************************************************************************************
+ *
+ * From a detailed implementation view, the used communication channels between the objects are as follows (arrows indicate the connection direction):
+ *
+ *                                                                       /====================\
+ *                                                                       |                    |
+ *                                                                       | instance on node 2 |
+ *                                                                       |                    |
+ *                                                                       \== Cluster4@2 ======/
+ *                                                                                /|\
+ *   A CONNECTION is needed as parent --->                                         |CHANNEL
+ *   for each channel                                                              |
+ *                                                                             +-------+        
+ *                                                                             |Coord.3|        
+ *                                                                             +-------+        
+ *                                                                                 |
+ *                                                                                 |LOCAL OBJ. REF.
+ *                                                                                 |
+ *                                                                                 |
+ *                                                                       /====================\
+ *                                  /--                                  |                    |
+ *                                  |                  +---- CHANNEL --->| instance on node 2 |
+ *                                  |                  |                 |                    |
+ *   both channels are summarized --+                  |                 \== Cluster3@1 ======/
+ *   in ONE CONNECTION in order to  |                  |                          /|\                
+ *   reduce connection complexity   |                  |                           |   
+ *                                  |                  |                           |CHANNEL   
+ *                                  \--                |                           |   
+ *                                                 +-------+                   +-------+  
+ *                                                 |Coord.1|                   |Coord.2|  
+ *                                                 +-------+                   +-------+  
+ *                                                     |                           |
+ *                                                     |LOCAL OBJ. REF.            |LOCAL OBJ. REF.
+ *                                                     |                           |
+ *                                                     |                           |
+ *   /====================\                 /====================\      /====================\                 /====================\
+ *   |                    |                 |                    |      |                    |                 |                    |			
+ *   | instance on node 1 | <-- CHANNEL --> | instance on node 2 |      | instance on node 2 | <-- CHANNEL --> | instance on node 3 | 
+ *   |                    |                 |                    |      |                    |                 |                    | 
+ *   \===== Cluster1@0 ===/                 \===== Cluster1@0 ===/      \===== Cluster2@0 ===/                 \===== Cluster2@0 ===/
+ *   
+ *   
+ *   HINT (distributed cluster representation): a cluster can be represented by multiple instances (see "Cluster1@0") 
+ *         because it can span over multiple physical nodes
+ *   
+ *   HINT (base hierarchy level): on level 0, the connection direction depends on the detection order, 
+ *         either node 1 detects first node 2 or the other way round
+ *   
+ *   HINT (cluster broadcasts): if a coordinator wants to send a packet to all cluster members, it 
+ *         calls a function of the cluster object ("sendClusterBroadcast()")
+ *         
+ *   HINT (addressing cluster member): if a coordinator wants to send data (e.g., during "share phase") to a selected
+ *        cluster member, it uses the communication channels, which are stored within the cluster instance
+ *        
+ *  GENERAL: Because of the selected distribution of communication channels, a coordinator can be destroyed without 
+ *           losing all communication channels for an existing network cluster.
+ *           Under normal circumstances*, each coordinator should have only ONE communication channel, which leads to 
+ *           its superior cluster. But each cluster can have MANY communication channels, each leading to one cluster member.
+ *                    
+ *           *otherwise, bugs exist within the clustering
+ *                    
+ * ****************************************************************************************************************************
+ * ****************************************************************************************************************************
+ * ****************************************************************************************************************************/
+
 public class ComChannel
 {
 	public enum Direction{IN, OUT};
