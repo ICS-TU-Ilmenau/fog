@@ -308,7 +308,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		updateGUINodeDecoration();
 		
 		// register the coordinator in the local ARG
-		registerNodeARG(pCoordinator);
+		if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG)
+			registerNodeARG(pCoordinator);
 
 		// it's time to update the GUI
 		notifyGUI(pCoordinator);
@@ -334,7 +335,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		updateGUINodeDecoration();
 		
 		// register at the ARG
-		unregisterNodeARG(pCoordinator);
+		if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG)
+			unregisterNodeARG(pCoordinator);
 
 		// it's time to update the GUI
 		notifyGUI(pCoordinator);

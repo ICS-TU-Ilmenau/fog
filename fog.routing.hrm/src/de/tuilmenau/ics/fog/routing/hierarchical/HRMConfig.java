@@ -56,7 +56,7 @@ public class HRMConfig
 		/**
 		 * Show debug outputs about node/link detection
 		 */
-		public static final boolean GUI_SHOW_TOPOLOGY_DETECTION = false;
+		public static final boolean GUI_SHOW_TOPOLOGY_DETECTION = true;
 
 		/**
 		 * Shows debug outputs about multiplex packets 
@@ -82,6 +82,12 @@ public class HRMConfig
 		 * Shows detailed debug outputs about HRMViewer steps
 		 */
 		public static final boolean GUI_SHOW_VIEWER_STEPS = false;
+
+		/**
+		 * Shows coordinators in the ARG viewer
+		 * HINT: clusters HAVE TO BE STORED in the ARG, otherwise routing isn't possible
+		 */
+		public static final boolean GUI_SHOW_COORDINATORS_IN_ARG = false;
 
 		/**
 		 * Defines the time period between two updates of the node specific HRM display.
