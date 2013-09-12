@@ -326,6 +326,51 @@ public class ComSession extends Session
 	}
 
 	/**
+	 * Searches for a registered communication channel which is identified by its local clusterID
+	 * 
+	 * @param pClusterID the local clusterID
+	 * 
+	 * @return the found comm. channel or null
+	 */
+	public ComChannel getComChannelByClusterID(Long pClusterID)
+	{
+		ComChannel tResult = null;
+		
+		LinkedList<ComChannel> tComChannels = getAllComChannels();
+		for (ComChannel tComChannel : tComChannels){
+			if(((ICluster)tComChannel.getParent()).getClusterID().equals(pClusterID)) {
+				tResult = tComChannel;
+				Logging.log(this, "       ..found communication channel: " + tComChannel);
+				break;
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Searches for a registered communication channel which is identified by its remote clusterID
+	 * 
+	 * @param pClusterID the remote clusterID
+	 * 
+	 * @return the found comm. channel or null
+	 */
+	public ComChannel getComChannelByRemoteClusterID(Long pClusterID)
+	{
+		ComChannel tResult = null;
+		
+		LinkedList<ComChannel> tComChannels = getAllComChannels();
+		for (ComChannel tComChannel : tComChannels){
+			if(tComChannel.getRemoteClusterName().getClusterID().equals(pClusterID)) {
+				tResult = tComChannel;
+				break;
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Handles a multiplex-packet
 	 * 
 	 * @param pMultiplexHeader the multiplex-packet
@@ -344,15 +389,8 @@ public class ComSession extends Session
 		/**
 		 * Iterate over all communication channels and find the correct channel towards the destination
 		 */
-		LinkedList<ComChannel> tComChannels = getAllComChannels();
-		ComChannel tDestinationComChannel = null;
-		for (ComChannel tComChannel : tComChannels){
-			if(((ICluster)tComChannel.getParent()).getClusterID().equals(tDestination.getClusterID())) {
-				tDestinationComChannel = tComChannel;
-				Logging.log(this, "       ..found communication channel: " + tDestinationComChannel);
-				break;
-			}
-		}
+		ComChannel tDestinationComChannel = getComChannelByClusterID(tDestination.getClusterID());
+		Logging.log(this, "       ..found communication channel: " + tDestinationComChannel);
 
 		/**
 		 * Get the payload
@@ -371,7 +409,7 @@ public class ComSession extends Session
 			}
 		} else {
 			Logging.warn(this, "Unable to find the communication channel for destination: " + tDestination + ", known communication channels are:");
-			Logging.warn(this, tComChannels.toString());
+			Logging.warn(this, getAllComChannels().toString());
 		}
 	}
 
