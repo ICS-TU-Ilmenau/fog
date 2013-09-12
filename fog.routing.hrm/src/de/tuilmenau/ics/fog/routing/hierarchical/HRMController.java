@@ -404,7 +404,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Set the decoration texts
 		 */
 		String tNodeText = "";
-		
 		synchronized (mRegisteredOwnHRMIDs) {
 			for (HRMID tHRMID: mRegisteredOwnHRMIDs){
 				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
@@ -413,6 +412,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}			
 		}
 		mDecoratorForCoordinatorsAndHRMIDs.setText(tNodeText);
+		
+		tNodeText = "";
 		LinkedList<Cluster> tAllClusters = getAllClusters();
 		for (Cluster tCluster : tAllClusters){
 			if (tNodeText != ""){
