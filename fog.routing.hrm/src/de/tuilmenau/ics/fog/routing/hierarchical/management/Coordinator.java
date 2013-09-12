@@ -821,9 +821,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 * 	 1.) use "RequestClusterParticipationProperty" for every connection to inform about the new cluster 
 	 * 
 	 * @param pNeighborCluster the found neighbor cluster whose coordinator is a neighbor of this one
-	 * @param pIDForFutureCluster the clusterID for the common cluster
+	 * @param pFutureClusterID the clusterID for the common cluster
 	 */
-	private void eventDetectedNeighborCoordinator(ControlEntity pNeighborCluster, Long pIDForFutureCluster)
+	private void eventDetectedNeighborCoordinator(ControlEntity pNeighborCluster, Long pFutureClusterID)
 	{
 		// get the recursive FoG layer
 		FoGEntity tFoGLayer = (FoGEntity) mHRMController.getNode().getLayer(FoGEntity.class);
@@ -842,7 +842,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			// store the connection to avoid connection duplicates during later processing
 			registerConnectionToNeighborCoordinator(tNeighborCoordinatorHostName);
 
-			HierarchyLevel tTargetClusterHierLvl = new HierarchyLevel(this, pNeighborCluster.getHierarchyLevel().getValue() + 1);
+			HierarchyLevel tFutureClusterHierLvl = new HierarchyLevel(this, pNeighborCluster.getHierarchyLevel().getValue() + 1);
 
 			ControlEntity tNeighborClusterControlEntity = (ControlEntity)pNeighborCluster;
 
@@ -851,7 +851,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			 */
 		    Logging.log(this, "    ..creating cluster description");
 		    // create the cluster description
-			RequestClusterParticipationProperty tRequestClusterParticipationProperty = new RequestClusterParticipationProperty(new HierarchyLevel(this, getHierarchyLevel().getValue() - 1), pIDForFutureCluster, tTargetClusterHierLvl, pNeighborCluster.getCoordinatorID());
+			RequestClusterParticipationProperty tRequestClusterParticipationProperty = new RequestClusterParticipationProperty(new HierarchyLevel(this, getHierarchyLevel().getValue() - 1), pFutureClusterID, tFutureClusterHierLvl, pNeighborCluster.getCoordinatorID());
 
 			/**
 			 * Create communication session
@@ -874,7 +874,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			     */
 			    Logging.log(this, "           ..creating new communication channel");
 				ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, tLocalCoordinator, tComSession);
-				tComChannel.setRemoteClusterName(new ClusterName(mHRMController, pNeighborCluster.getHierarchyLevel(), pNeighborCluster.getCoordinatorID(), pIDForFutureCluster /* HINT: we communicate with the new cluster -> us clusterID of new cluster */));
+				tComChannel.setRemoteClusterName(new ClusterName(mHRMController, tFutureClusterHierLvl, -1, pFutureClusterID /* HINT: we communicate with the new cluster -> us clusterID of new cluster */));
 				tComChannel.setPeerPriority(pNeighborCluster.getPriority());
 				
 				// do we know the neighbor coordinator? (we check for a known coordinator of the neighbor cluster)
