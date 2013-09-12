@@ -14,6 +14,8 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -387,7 +389,40 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 	}
 
-	
+	/**
+	 * INCOMING PACKET: a request for cluster membership
+	 * 
+	 * @param pSourceComSession the comm. session where the packet was received
+	 * @param pRequestClusterMembershipPacket the packet
+	 */
+	public void handleRequestClusterMembership(ComSession pSourceComSession, RequestClusterMembership pRequestClusterMembershipPacket)
+	{
+		ClusterName tRemoteClusterName = new ClusterName(mHRMController, pRequestClusterMembershipPacket.getSenderHierarchyLevel(), pRequestClusterMembershipPacket.getSenderCoordinatorID(), pRequestClusterMembershipPacket.getSenderClusterID());
+		Logging.log(this, ">>>> GOT A REQUEST FOR MEMBERSHIP from: " + tRemoteClusterName);
+		
+		/**
+		 * Create the communication channel for the described cluster member
+		 */
+		Logging.log(this, "     ..creating communication channel");
+		ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.IN, this, pSourceComSession);
+
+		/**
+		 * Set the remote ClusterName of the communication channel
+		 */
+		tComChannel.setRemoteClusterName(tRemoteClusterName);
+
+		/**
+		 * SEND: acknowledgment
+		 */
+		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), getClusterID(), getCoordinatorID(), getHierarchyLevel());
+		tComChannel.sendPacket(tRequestClusterMembershipAckPacket);
+		
+		/**
+		 * TRIGGER: new coordinator election round
+		 */
+		getElector().startElection();
+	}
+
 	
 	
 	

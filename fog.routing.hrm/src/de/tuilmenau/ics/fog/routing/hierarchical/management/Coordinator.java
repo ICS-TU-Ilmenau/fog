@@ -23,8 +23,11 @@ import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
@@ -576,15 +579,51 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	/**
 	 * Tries to join a superior cluster
 	 * 
-	 * @param pSuperiorCluster the possible new superior cluster
+	 * @param pSuperiorCluster an existing superior cluster where we want to join
 	 * 
 	 * @return true or false to indicate success/error
 	 */
 	private boolean joinSuperiorCluster(ControlEntity pSuperiorCluster)
 	{
+		boolean tResult = false;
+		
 		Logging.log(this, "\n\n\n################ JOINING EXISTING SUPERIOR CLUSTER " + pSuperiorCluster);
 
-		return false;
+		/**
+		 * Try to get the comm. session towards the superior cluster
+		 */
+		ComSession tComSession = mHRMController.getOutgoingComSession(pSuperiorCluster);		
+		// have we found the comm. session?
+		if (tComSession != null){
+			Logging.log(this, "           ..found matching comm. session: " + tComSession);
+			Logging.log(this, "             ..has com. channels: " + tComSession.getAllComChannels());
+			
+		    /**
+		     * Create communication channel
+		     */
+		    Logging.log(this, "           ..creating new communication channel");
+			ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession);
+			tComChannel.setRemoteClusterName(new ClusterName(mHRMController, pSuperiorCluster.getHierarchyLevel(), pSuperiorCluster.getCoordinatorID(), pSuperiorCluster.getClusterID()));
+			tComChannel.setPeerPriority(pSuperiorCluster.getPriority());
+			
+			/**
+			 * Send "RequestClusterMembership" along the comm. session
+			 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
+			 */
+		    Logging.log(this, "           ..sending membership request via communication session");
+			RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeName(), pSuperiorCluster.getHRMID(), getClusterID(), getCoordinatorID(), getHierarchyLevel());
+			if (tComSession.write(tRequestClusterMembership)){
+				tResult = true;
+				
+				// trigger event "finished clustering" 
+				eventInitialClusteringFinished();
+			}
+		}else{
+			Logging.warn(this, "joinSuperiorCluster() wasn't able to find the outgoing comm. session towards: " + pSuperiorCluster);
+			//TODO: create new connection !?
+		}
+		
+		return tResult;
 	}
 
 	/**
@@ -594,6 +633,55 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	{
 		// mark initial clustering as "finished"
 		mInitialClusteringFinished = true;		
+	}
+
+	/**
+	 * EVENT: we have joined the superior cluster  
+	 */
+	public void eventJoinedSuperiorCluster()
+	{
+		Logging.log(this, "HAVE JOINED superior cluster");
+		
+		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), BullyPriority.createForSuperiorControlEntity(mHRMController,  this));
+		sendSuperiorCluster(tBullyPriorityUpdatePacket);
+	}
+
+	/**
+	 * Sends a packet towards the superior cluster.
+	 * If there is more than one comm. channel an error occurs but the message is sent
+	 * 
+	 * @param pPacket the packet
+	 */
+	private void sendSuperiorCluster(Serializable pPacket)
+	{
+		// get all communication channels
+		LinkedList<ComChannel> tComChannels = getComChannels();
+
+		// get the L2Addres of the local host
+		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
+		
+		Logging.log(this, "Sending TOWARDS SUPERIOR CLUSTER from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels");
+		
+		int tUsedChannels = 0;
+		for(ComChannel tComChannel : tComChannels) {
+			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
+			
+			if (!tIsLoopback){
+				Logging.log(this, "       ..to " + tComChannel);
+			}else{
+				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
+			}
+
+			// send the packet to one of the possible cluster members
+			tComChannel.sendPacket(pPacket);
+			
+			tUsedChannels++;
+		}
+		
+		// drop the warning in case too many comm. channels were used
+		if (tUsedChannels > 1){
+			Logging.warn(this, "Found " + tUsedChannels + " instead of ONLY ONE channel twoards the top of the hierarchy");
+		}
 	}
 
 	/**
@@ -808,6 +896,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					// trigger event "finished clustering" 
 					tLocalCoordinator.eventInitialClusteringFinished();
 				}
+				
+				/**
+				 * trigger event "joined superior cluster"
+				 */
+				eventJoinedSuperiorCluster();
 			}else{
 				Logging.warn(this,  "CLUSTERING SKIPPED, no clustering on highest hierarchy level " + getHierarchyLevel().getValue() + " needed");
 			}
@@ -857,7 +950,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			 * Create communication session
 			 */
 		    Logging.log(this, "    ..creating new communication session");
-		    ComSession tComSession = new ComSession(mHRMController, false, getHierarchyLevel());
+		    ComSession tComSession = new ComSession(mHRMController, false, this, getHierarchyLevel());
 
 		    /**
 		     * Iterate over all local coordinators on this hierarchy level and add them as already known cluster members to the cluster description
@@ -1005,7 +1098,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		setSuperiorCoordinator(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
 	}
 
-	
 	
 	
 	

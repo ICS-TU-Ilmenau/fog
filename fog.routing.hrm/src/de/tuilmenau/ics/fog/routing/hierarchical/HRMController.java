@@ -886,7 +886,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Create communication session
 		 */
 	    Logging.log(this, "    ..creating new communication session");
-	    ComSession tComSession = new ComSession(this, false, tCreatedCluster.getHierarchyLevel());
+	    ComSession tComSession = new ComSession(this, false, tCreatedCluster, tCreatedCluster.getHierarchyLevel());
 	    
 	    /**
 	     * Create communication channel
@@ -1505,7 +1505,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * Create the communication session
 				 */
 				Logging.log(this, "     ..creating communication session");
-				tComSession = new ComSession(this, true, tPropClusterDescription.getHierarchyLevel());
+				tComSession = new ComSession(this, true, tTargetCluster, tPropClusterDescription.getHierarchyLevel());
 
 				/*****************************************************
 				 * PARSE: cluster member descriptions from remote side

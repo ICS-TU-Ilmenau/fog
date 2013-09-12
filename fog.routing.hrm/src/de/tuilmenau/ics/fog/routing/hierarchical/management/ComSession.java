@@ -19,6 +19,7 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalEndPoint;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
@@ -35,6 +36,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * which handle again the communication between two control entities of the HRM infrastructure.
  * 
  * There exist a 1:1 relation between a FoG connection and a ComSession instance.
+ * 
  */
 public class ComSession extends Session
 {
@@ -59,6 +61,11 @@ public class ComSession extends Session
 	 */
 	private Connection mParentConnection = null;
 	
+	/**
+	 * Stores the parent control entity
+	 */
+	private ControlEntity mParent = null;
+	
 	private boolean mIncomingConnection = false;
 	private L2Address mCentralFNL2Address = null;
 	private HierarchyLevel mHierarchyLevel = null;
@@ -72,13 +79,16 @@ public class ComSession extends Session
 	 * @param pComChannelMuxer the communication multiplexer to use
 	 * 
 	 */
-	public ComSession(HRMController pHRMController, boolean pIncomingConnection, HierarchyLevel pLevel)
+	public ComSession(HRMController pHRMController, boolean pIncomingConnection, ControlEntity pParent, HierarchyLevel pLevel)
 	{
 		// call the Session constructor
 		super(false, Logging.getInstance(), null);
 		
 		// store a reference to the HRMController application
 		mHRMController = pHRMController;
+		
+		// store the parental control entity
+		mParent = pParent;
 		
 		// store the hierarchy level
 		mHierarchyLevel = pLevel;
@@ -371,6 +381,16 @@ public class ComSession extends Session
 	}
 
 	/**
+	 * Returns the parent control entity for this session
+	 * 
+	 * @return the parental control entity
+	 */
+	ControlEntity getParent()
+	{
+		return mParent;
+	}
+	
+	/**
 	 * Handles a multiplex-packet
 	 * 
 	 * @param pMultiplexHeader the multiplex-packet
@@ -389,7 +409,7 @@ public class ComSession extends Session
 		/**
 		 * Iterate over all communication channels and find the correct channel towards the destination
 		 */
-		ComChannel tDestinationComChannel = getComChannelByClusterID(tDestination.getClusterID());
+		ComChannel tDestinationComChannel = getComChannelByClusterID(tDestination.getClusterID()); //TODO: in/out beachten und hier die RemoteClusterID auswerten
 		Logging.log(this, "       ..found communication channel: " + tDestinationComChannel);
 
 		/**
@@ -433,8 +453,32 @@ public class ComSession extends Session
 			}
 			
 			handleAnnouncePhysicalEndPoint(tAnnouncePhysicalNeighborhood);
+
+			return true;
 		} 
 		
+		/**
+		 * RequestClusterMembership
+		 */
+		if(pData instanceof RequestClusterMembership) {
+			RequestClusterMembership tRequestClusterMembershipPacket = (RequestClusterMembership)pData;
+			ClusterName tRemoteClusterName = new ClusterName(mHRMController, tRequestClusterMembershipPacket.getSenderHierarchyLevel(), tRequestClusterMembershipPacket.getSenderCoordinatorID(), tRequestClusterMembershipPacket.getSenderClusterID());
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRemoteClusterName);
+			}
+			
+			// is the parent a coordinator or a cluster?
+			if (getParent() instanceof Cluster){
+				Cluster tCluster = (Cluster)getParent();
+				
+				tCluster.handleRequestClusterMembership(this, tRequestClusterMembershipPacket);
+			}else{
+				Logging.err(this, "Expected a Cluster object as parent for processing RequestClusterMembership data but parent is " + getParent());
+			}
+			return true;
+		}
+
 		/**
 		 * PACKET: MultiplexHeader
 		 */
@@ -446,6 +490,8 @@ public class ComSession extends Session
 			}
 			
 			handleMultiplexHeader(tMultiplexHeader);
+
+			return true;
 		}
 
 		/**
@@ -510,8 +556,11 @@ public class ComSession extends Session
 					}
 				}
 			}
+			
+			return true;
 		}
 		
+		Logging.warn(this, ">>>>>>>>>>>>> Found unsupported packet: " + pData);
 		return true;
 	}
 

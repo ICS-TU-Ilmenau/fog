@@ -17,6 +17,7 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
@@ -132,6 +133,8 @@ import de.tuilmenau.ics.graph.RoutableGraph;
  *           losing all communication channels for an existing network cluster.
  *           Under normal circumstances*, each coordinator should have only ONE communication channel, which leads to 
  *           its superior cluster. But each cluster can have MANY communication channels, each leading to one cluster member.
+ *
+ *   HINT: A comm. session can summarize multiple local comm. channels. However, these channels can belong to different local coordinators.
  *                    
  *           *otherwise, bugs exist within the clustering
  *                    
@@ -143,7 +146,7 @@ public class ComChannel
 {
 	public enum Direction{IN, OUT};
 
-	private ClusterName mRemoteClusterName;
+	private ClusterName mRemoteClusterName = null;
 
 	/**
 	 * Stores the parent control entity (cluster or coordinator) to which this communication channel belongs to
@@ -179,10 +182,11 @@ public class ComChannel
 	private HRMID mPeerHRMID = null;
 	
 	/**
+	 * Constructor
 	 * 
-	 * @param pHRMController is the coordinator of a node
+	 * @param pHRMController is the HRMController instance of this node
 	 * @param pDirection the direction of the communication channel (either upward or downward)
-	 * @param pParent is the parent cluster/coordinator
+	 * @param pParentComSession is the parental comm. session
 	 */
 	public ComChannel(HRMController pHRMController, Direction pDirection, ControlEntity pParent, ComSession pParentComSession)
 	{
@@ -499,6 +503,7 @@ public class ComChannel
 	 * @return true if the packet left the central multiplexer and the forwarding node that is attached to a direct down gate
 	 * @throws NetworkException
 	 */
+	@SuppressWarnings("unused")
 	public boolean receiveData(Serializable pData) throws NetworkException
 	{
 		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
@@ -600,6 +605,26 @@ public class ComChannel
 			return true;
 		}
 
+		/**
+		 * RequestClusterMembershipAck
+		 */
+		if(pData instanceof RequestClusterMembershipAck) {
+			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)pData;
+
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP_ACK-received from \"" + getPeerHRMID());
+
+			// is the parent a coordinator or a cluster?
+			if (getParent() instanceof Coordinator){
+				Coordinator tCoordinator = (Coordinator)getParent();
+				
+				// trigger event "joined superior cluster"
+				tCoordinator.eventJoinedSuperiorCluster();		
+			}else{
+				Logging.err(this, "Expected a Coordinator object as parent for processing RequestClusterMembershipAck data but parent is " + getParent());
+			}
+			return true;
+		}
 		
 		
 		
@@ -675,6 +700,7 @@ public class ComChannel
 //			}
 //		}
 
+		Logging.warn(this, ">>>>>>>>>>>>> Found unsupported packet: " + pData);
 		return true;
 	}
 	
