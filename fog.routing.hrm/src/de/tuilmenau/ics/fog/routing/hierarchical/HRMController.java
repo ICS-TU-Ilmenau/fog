@@ -715,6 +715,41 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Determines the outgoing communication session for a desired target cluster
+	 * 
+	 * @param pTargetCluster the target cluster
+	 * 
+	 * @return the found comm. session or null
+	 */
+	public ComSession getOutgoingComSession(ControlEntity pTargetCluster)
+	{
+		ComSession tResult = null;
+
+		Logging.log(this, "Searching for outgoing comm. session towards cluster: " + pTargetCluster + ", knowing these sessions and their channels:");
+		synchronized (mLocalOutgoingSessions) {
+			for (ComSession tComSession : mLocalOutgoingSessions){
+				Logging.log(this, "   ..ComSession: " + tComSession);
+				for(ComChannel tComChannel : tComSession.getAllComChannels()){
+					Logging.log(this, "     ..ComChannel: " + tComChannel);
+					Logging.log(this, "        ..RemoteCluster: " + tComChannel.getRemoteClusterName().toString());
+				}
+			}
+			
+		}
+
+		synchronized (mLocalOutgoingSessions) {
+			for (ComSession tComSession : mLocalOutgoingSessions){
+				ComChannel tComChannel = tComSession.getComChannelByRemoteClusterID(pTargetCluster.getClusterID());
+				if (tComChannel != null){
+					tResult = tComSession;
+				}
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Unregisters an outgoing communication session
 	 * 
 	 * @param pComSession the session
