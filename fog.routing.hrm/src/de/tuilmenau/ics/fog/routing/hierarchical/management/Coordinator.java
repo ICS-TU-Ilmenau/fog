@@ -836,11 +836,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		/**
 		 * get the name of the target coordinator name
 		 */
-		Name tTargetCoordinatorHostName = ((ICluster)pNeighborCluster).getCoordinatorHostName();
+		Name tNeighborCoordinatorHostName = ((ICluster)pNeighborCluster).getCoordinatorHostName();
 		
-		if(!isConnectedToNeighborCoordinator(tTargetCoordinatorHostName)) {
+		if(!isConnectedToNeighborCoordinator(tNeighborCoordinatorHostName)) {
 			// store the connection to avoid connection duplicates during later processing
-			registerConnectionToNeighborCoordinator(tTargetCoordinatorHostName);
+			registerConnectionToNeighborCoordinator(tNeighborCoordinatorHostName);
 
 			HierarchyLevel tTargetClusterHierLvl = new HierarchyLevel(this, pNeighborCluster.getHierarchyLevel().getValue() + 1);
 
@@ -922,8 +922,8 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			 * Connect to the neighbor coordinator
 			 */
 			Connection tConnection = null;				
-		    Logging.log(this, "    ..CONNECTING to: " + tTargetCoordinatorHostName + " with requirements: " + tConnectionRequirements);
-			tConnection = tFoGLayer.connect(tTargetCoordinatorHostName, tConnectionRequirements, mHRMController.getNode().getIdentity());
+		    Logging.log(this, "    ..CONNECTING to: " + tNeighborCoordinatorHostName + " with requirements: " + tConnectionRequirements);
+			tConnection = tFoGLayer.connect(tNeighborCoordinatorHostName, tConnectionRequirements, mHRMController.getNode().getIdentity());
 		    Logging.log(this, "    ..connect() FINISHED");
 			if (tConnection != null){
 				
@@ -944,7 +944,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 						}
 					}
 					tCoordinatorIDs.add(tCoordinator.getCluster().getCoordinatorID());
-					if(!tTargetCoordinatorHostName.equals(mHRMController.getNodeName())) {
+					if(!tNeighborCoordinatorHostName.equals(mHRMController.getNodeName())) {
 						int tDistance = 0;
 						if (pNeighborCluster instanceof ClusterProxy){
 							ClusterProxy tClusterProxy = (ClusterProxy) pNeighborCluster;
@@ -989,10 +989,10 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					}
 				}
 			}else{
-				Logging.err(this, "eventDetectedNeighborCoordinator() wasn't able to connect to: " + tTargetCoordinatorHostName);
+				Logging.err(this, "eventDetectedNeighborCoordinator() wasn't able to connect to: " + tNeighborCoordinatorHostName);
 			}
 		}else{
-			Logging.warn(this, "eventDetectedNeighborCoordinator() skips this connection request because there exist already a connection to: " + tTargetCoordinatorHostName);
+			Logging.warn(this, "eventDetectedNeighborCoordinator() skips this connection request because there exist already a connection to: " + tNeighborCoordinatorHostName);
 		}
 	}
 
