@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -47,12 +48,6 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 	}
 
 	@Override
-	public String toString()
-	{
-		return getClass().getSimpleName() + "(ClusterID=" + mClusterID + ", CoordID=" + superiorCoordinatorID() + (getHierarchyLevel() != null ? ", HierLvl.=" + getHierarchyLevel().getValue() : "") + ")"; 
-	}
-
-	@Override
 	public void setPriority(BullyPriority pPriority) {
 		
 	}
@@ -64,7 +59,7 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 
 	@Override
 	public BullyPriority getPriority() {
-		return null;
+		return new BullyPriority(this);
 	}
 
 	@Override
@@ -99,5 +94,61 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 	public HRMID getHRMID()
 	{
 		return null;
+	}
+	
+	/**
+	 * Returns the machine-local ClusterID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local ClusterID
+	 */
+	public long getGUIClusterID()
+	{
+		if (getClusterID() != null)
+			return getClusterID() / idMachineMultiplier();
+		else
+			return -1;
+	}
+
+	/**
+	 * Returns a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
+	@SuppressWarnings("unused")
+	public String toString()
+	{
+		HRMID tHRMID = getHRMID();
+		
+		if(tHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
+			return tHRMID.toString();
+		} else {
+			return toLocation() + "(" + idToString() + ")";
+
+		}
+	}
+
+	/**
+	 * Returns a location description about this instance
+	 */
+	@Override
+	public String toLocation()
+	{
+		String tResult = "Cluster" + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue();
+		
+		return tResult;
+	}
+	
+	/**
+	 * Returns a string including the ClusterID, the token, and the node priority
+	 * 
+	 * @return the complex string
+	 */
+	private String idToString()
+	{
+		if (getHRMID() == null){
+			return "ID=" + getClusterID() + ", CoordID=" + superiorCoordinatorID() +  ", Prio=" + getPriority().getValue();
+		}else{
+			return "HRMID=" + getHRMID().toString();
+		}
 	}
 }
