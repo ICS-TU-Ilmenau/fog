@@ -54,6 +54,11 @@ public class ComSession extends Session
 	 */
 	private LinkedList<ComChannel> mRegisteredComChannels = new LinkedList<ComChannel>();
 	
+	/**
+	 * Stores a reference to the parent FoG connection
+	 */
+	private Connection mParentConnection = null;
+	
 	private boolean mServerSide = false;
 	private L2Address mCentralFNL2Address = null;
 	private HierarchyLevel mHierarchyLevel = null;
@@ -475,10 +480,13 @@ public class ComSession extends Session
 	 */
 	public void startConnection(L2Address pTargetL2Address, Connection pConnection)
 	{
+		// store the connection
+		mParentConnection = pConnection;
+		
 		/**
 		 * Calls "start()" of the superior class
 		 */
-		start(pConnection);
+		start(mParentConnection);
 
 		// do we know the target L2Address?
 		if (pTargetL2Address != null){
