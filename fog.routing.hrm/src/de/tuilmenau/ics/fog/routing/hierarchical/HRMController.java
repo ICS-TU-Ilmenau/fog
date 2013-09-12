@@ -796,7 +796,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Describe the new created cluster
 		 */
 	    Logging.log(this, "    ..creating cluster description");
-		final RequestClusterParticipationProperty tRequestClusterParticipationProperty = new RequestClusterParticipationProperty(tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
+		final RequestClusterParticipationProperty tRequestClusterParticipationProperty = new RequestClusterParticipationProperty(HierarchyLevel.createBaseLevel(), tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
 		/**
 		 * Describe the cluster member
 		 */
@@ -1421,14 +1421,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * Set the remote ClusterName of the communication channel
 					 */
-					ClusterName tClusterName = new ClusterName(this, new HierarchyLevel(this, tPropClusterDescription.getHierarchyLevel().getValue() - 1), tClusterMemberDescription.getCoordinatorID(), tClusterMemberDescription.getClusterID());
-					Logging.log(this, "     ..setting remote ClusterName: " + tClusterName);
-					tComChannel.setRemoteClusterName(tClusterName);
+					ClusterName tRemoteClusterName = new ClusterName(this, tPropClusterDescription.getSenderHierarchyLevel(), tClusterMemberDescription.getCoordinatorID(), tClusterMemberDescription.getClusterID());
+					tComChannel.setRemoteClusterName(tRemoteClusterName);
 					
 					/**
 					 * Check if the described cluster member is locally connected or a remote (distant) one
 					 */
-					boolean tIsRemoteCluster = (getClusterByName(tClusterName) != null); 
+					boolean tIsRemoteCluster = (getClusterByName(tRemoteClusterName) != null); 
 
 					/**
 					 * Detected a remote cluster?

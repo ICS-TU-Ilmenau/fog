@@ -30,7 +30,12 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	/**
 	 * Stores the hierarchy level of the cluster
 	 */
-	private HierarchyLevel mHierarchyLevel = null;
+	private HierarchyLevel mHierarchyLevel = new HierarchyLevel(this, -1);
+	
+	/**
+	 * Stores the hierarchy level of the sender
+	 */
+	private HierarchyLevel mSenderHierarchyLevel = new HierarchyLevel(this,  -1);
 	
 	/**
 	 * Stores the unique clusterID
@@ -58,10 +63,12 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	 * @param pHierarchyLevel the hierarchy level of the cluster
 	 * @param pCoordinatorID the unique ID of the coordinator (or 0 if none exists)
 	 */
-	public RequestClusterParticipationProperty(Long pClusterID, HierarchyLevel pHierarchyLevel, int pCoordinatorID)
+	public RequestClusterParticipationProperty(HierarchyLevel pSenderHierarchyLevel, Long pClusterID, HierarchyLevel pHierarchyLevel, int pCoordinatorID)
 	{
+		Logging.log(this, "Setting sender hierarchy level " + pSenderHierarchyLevel.getValue());
 		Logging.log(this, "Setting target cluster ID " + pClusterID);
 		Logging.log(this, "Setting target coordinator ID " + pCoordinatorID);
+		mSenderHierarchyLevel = pSenderHierarchyLevel;
 		mClusterID = pClusterID;
 		mHierarchyLevel = pHierarchyLevel;
 		mCoordinatorID = pCoordinatorID;
@@ -99,6 +106,16 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		return mHierarchyLevel;
 	}
 	
+	/**
+	 * Returns the hierarchy level of the sender
+	 * 
+	 * @return the hierarchy level of the sender
+	 */
+	public HierarchyLevel getSenderHierarchyLevel()
+	{
+		return mSenderHierarchyLevel;
+	}
+
 	/**
 	 * Adds a description of a cluster member to the internal database
 	 * 
@@ -145,10 +162,10 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	 */
 	public String toString()
 	{
-		String tResult = getClass().getSimpleName() + "(ClusterID=" + mClusterID + ", CoordID=" + mCoordinatorID + ", ";
+		String tResult = getClass().getSimpleName() + "(ClusterID=" + mClusterID + ", CoordID=" + mCoordinatorID + ", HierLvl.=" + getHierarchyLevel().getValue() + ", ";
 		
 		synchronized (mClusterMemberDescriptions) {
-			tResult += mClusterMemberDescriptions.size() + " member descriptions)";
+			tResult += mClusterMemberDescriptions.size() + " member(s))";
 			
 //			int i = 0;
 //			for (ClusterMemberDescription tEntry : mClusterMemberDescriptions){
