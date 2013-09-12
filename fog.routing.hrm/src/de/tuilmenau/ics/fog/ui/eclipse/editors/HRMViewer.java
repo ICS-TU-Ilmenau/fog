@@ -478,7 +478,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tColumnCoordinator.setText("Coordinator");
 		
 		TableColumn tColumnCEP = new TableColumn(tTable, SWT.NONE, 1);
-		tColumnCEP.setText("Peer (L2)");
+		tColumnCEP.setText("Peer Node Address (L2)");
 		
 		TableColumn tColumnTargetCovered = new TableColumn(tTable, SWT.NONE, 2);
 		tColumnTargetCovered.setText("Target Covered");
@@ -487,7 +487,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tColumnPeerPriority.setText("Peer Priority");
 		
 		TableColumn tColumnNegotiator = new TableColumn(tTable, SWT.NONE, 4);
-		tColumnNegotiator.setText("Remote ClusterName");
+		tColumnNegotiator.setText("Peer Cluster");
 		
 		TableColumn tColumnRoute = new TableColumn(tTable, SWT.NONE, 5);
 		tColumnRoute.setText("Route to peer");
