@@ -43,7 +43,7 @@ public class ComChannel
 {
 	public enum Direction{IN, OUT};
 
-	private ClusterName mRemoteCluster;
+	private ClusterName mRemoteClusterName;
 
 	/**
 	 * Stores the parent control entity (cluster or coordinator) to which this communication channel belongs to
@@ -288,7 +288,28 @@ public class ComChannel
 			return false;
 		}
 	}
-	
+
+	/**
+	 * Sets a new name for the remote cluster
+	 * 
+	 * @param pClusterName the new name for the remote cluster
+	 */
+	public void setRemoteClusterName(ClusterName pClusterName)
+	{
+		Logging.log(this, "Setting remote/peer cluster name: " + pClusterName);
+		
+		mRemoteClusterName = pClusterName;
+	}
+
+	/**
+	 * Returns the name of the remote cluster
+	 *  
+	 * @return the name of the remote cluster
+	 */
+	public ClusterName getRemoteClusterName()
+	{
+		return mRemoteClusterName;
+	}
 	
 	
 	
@@ -370,49 +391,6 @@ public class ComChannel
 //			}
 //		}
 //		
-//		/**
-//		 * REPLY
-//		 */
-//		if(pPacketBully instanceof BullyReply) {
-//			
-//			// cast to Bully replay packet
-//			BullyReply tReplyPacket = (BullyReply)pPacketBully;
-//
-//			if (BULLY_SIGNALING_DEBUGGING)
-//				Logging.log(this, "BULLY-received from \"" + mParent + "\" a REPLY: " + tReplyPacket);
-//
-//			// store peer's Bully priority
-//			//TODO: peer prio direkt mal abspeichern und auf größte checken!
-//			mPeerPriority = tReplyPacket.getSenderPriority();
-//		}
-//		
-//		/**
-//		 * ANNOUNCE
-//		 */
-//		if(pPacketBully instanceof BullyAnnounce)  {
-//			// cast to Bully replay packet
-//			BullyAnnounce tAnnouncePacket = (BullyAnnounce)pPacketBully;
-//
-//			if (BULLY_SIGNALING_DEBUGGING)
-//				Logging.log(this, "BULLY-received from \"" + mParent + "\" an ANNOUNCE: " + tAnnouncePacket);
-//
-//			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
-//			getPeer().handleBullyAnnounce(tAnnouncePacket, this);
-//		}
-//
-//		/**
-//		 * PRIORITY UPDATE
-//		 */
-//		if(pPacketBully instanceof BullyPriorityUpdate) {
-//			// cast to Bully replay packet
-//			BullyPriorityUpdate tPacketBullyPriorityUpdate = (BullyPriorityUpdate)pPacketBully;
-//
-//			if (BULLY_SIGNALING_DEBUGGING)
-//				Logging.log(this, "BULLY-received from \"" + mParent + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
-//
-//			// store peer's Bully priority
-//			mPeerPriority = tPacketBullyPriorityUpdate.getSenderPriority();
-//		}
 //	}
 	
 	/**
@@ -540,7 +518,7 @@ public class ComChannel
 			}
 			getParent().handleNeighborAnnouncement(tAnnouncePacket, this);
 
-			Logging.log(this, "Received " + tAnnouncePacket + " from remote cluster " + mRemoteCluster);
+			Logging.log(this, "Received " + tAnnouncePacket + " from remote cluster " + mRemoteClusterName);
 		}
 		
 		
@@ -659,35 +637,11 @@ public class ComChannel
 		pDiscovery.addDiscoveryEntry(tEntry);
 	}
 	
-
-	/**
-	 * 
-	 * @return
-	 */
-	public ClusterName getRemoteClusterName()
-	{
-//		ICluster tCluster = null;
-//		if(mRemoteCluster instanceof ClusterName) {
-//			tCluster = mHRMController.getCluster(mRemoteCluster);
-//		}
-//		if(getCluster().getHierarchyLevel() == HRMConfig.Hierarchy.BASE_LEVEL) {
-//			return getCluster();
-//		}
-//		return (tCluster == null ? mRemoteCluster : tCluster);
-		return mRemoteCluster;
-	}
-
 	public void setAsParticipantOfMyCluster(boolean pPartOfMyCluster)
 	{
 		mPartOfCluster = pPartOfMyCluster;
 	}
 	
-	public void setRemoteClusterName(ClusterName pClusterName)
-	{
-		Logging.log(this, "Setting remote/peer cluster " + pClusterName);
-		mRemoteCluster = pClusterName;
-	}
-
 	public boolean isPartOfMyCluster()
 	{
 		return mPartOfCluster;
