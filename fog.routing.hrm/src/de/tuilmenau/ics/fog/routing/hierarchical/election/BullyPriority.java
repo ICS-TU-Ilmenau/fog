@@ -84,25 +84,49 @@ public class BullyPriority
 	 * 
 	 * @param pCluster the cluster to which this Bully priority belongs to.
 	 */
-	public static BullyPriority createForControlEntity(HRMController pHRMController, ControlEntity pCluster)
+	public static BullyPriority createForControlEntity(HRMController pHRMController, ControlEntity pControlEntity)
 	{
 		Node tNode = pHRMController.getNode();
-		int tHierarchyLevel = pCluster.getHierarchyLevel().getValue();
+		int tHierarchyLevel = pControlEntity.getHierarchyLevel().getValue();
 		
 		if (tNode == null) {
-			Logging.log(pCluster, "Cannot create Bully priority, invalid reference to physical node found");
+			Logging.log(pControlEntity, "Cannot create Bully priority, invalid reference to physical node found");
 			return null;
 		}
 
 		BullyPriority tResult = new BullyPriority((long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY));
 		
 		if (DEBUG_CREATION){
-			Logging.log(pCluster, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
+			Logging.log(pControlEntity, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
 		}
 		
 		return tResult;
 	}
 	
+	/**
+	 * Constructor: initializes the Bully priority for a cluster depending on the node configuration and the hierarchy level.
+	 * 
+	 * @param pCluster the cluster to which this Bully priority belongs to.
+	 */
+	public static BullyPriority createForSuperiorControlEntity(HRMController pHRMController, ControlEntity pControlEntity)
+	{
+		Node tNode = pHRMController.getNode();
+		int tHierarchyLevel = pControlEntity.getHierarchyLevel().getValue() + 1;
+		
+		if (tNode == null) {
+			Logging.log(pControlEntity, "Cannot create Bully priority, invalid reference to physical node found");
+			return null;
+		}
+
+		BullyPriority tResult = new BullyPriority((long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY));
+		
+		if (DEBUG_CREATION){
+			Logging.log(pControlEntity, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Determines the physical simulation machine specific ClusterID multiplier
 	 * 
