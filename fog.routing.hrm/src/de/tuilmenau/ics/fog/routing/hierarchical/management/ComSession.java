@@ -168,6 +168,16 @@ public class ComSession extends Session
 	}
 
 	/**
+	 * Sets new L2Address for peer (central FN)
+	 * 
+	 * @param pL2Address the new L2Address
+	 */
+	private void setPeerL2Address(L2Address pL2Address)
+	{
+		mPeerL2Address = pL2Address;
+	}
+	
+	/**
 	 * Returns the L2Address of the peer (central FN)
 	 * 
 	 * @return the peer L2Address (central FN)
@@ -240,7 +250,7 @@ public class ComSession extends Session
 	private void handleAnnouncePhysicalEndPoint(AnnouncePhysicalEndPoint pAnnouncePhysicalNeighborhood)
 	{
 		// get the L2Address of the peer
-		mPeerL2Address = pAnnouncePhysicalNeighborhood.getSenderCentralAddress();
+		setPeerL2Address(pAnnouncePhysicalNeighborhood.getSenderCentralAddress());
 
 		// get the L2Address of the peer, which should be used as routing target
 		L2Address tSenderAddress = pAnnouncePhysicalNeighborhood.getSenderAddress();
@@ -283,13 +293,16 @@ public class ComSession extends Session
 			/**
 			 * Send AnnouncePhysicalNeighborhood to the neighbor
 			 */
-			if (tFirstFNL2Address != null){
-				// create a map between the central FN and the search FN
-				AnnouncePhysicalEndPoint tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalEndPoint(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.ANSWER_PACKET);
-				// tell the neighbor about the FN
-				Logging.log(this, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD ANSWER " + tAnnouncePhysicalNeighborhoodAnswer);
-				write(tAnnouncePhysicalNeighborhoodAnswer);
+			if (tFirstFNL2Address == null){
+				Logging.warn(this, "handleAnnouncePhysicalEndPoint() wasn't able to determine the first FN towards: " + tSenderAddress);
 			}
+			// create a map between the central FN and the search FN
+			AnnouncePhysicalEndPoint tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalEndPoint(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.ANSWER_PACKET);
+			// tell the neighbor about the FN
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				Logging.log(this, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD ANSWER " + tAnnouncePhysicalNeighborhoodAnswer);
+			}
+			write(tAnnouncePhysicalNeighborhoodAnswer);
 		}
 		
 		/**
@@ -472,7 +485,7 @@ public class ComSession extends Session
 			/**
 			 * Update the peer L2Address
 			 */
-			mPeerL2Address = pTargetL2Address;
+			setPeerL2Address(pTargetL2Address);
 			
 			/**
 			 * Find and set the route to peer within the session object
@@ -519,8 +532,8 @@ public class ComSession extends Session
 	 */
 	public String toString()
 	{
-		if(mPeerL2Address != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Peer=" + mPeerL2Address + ")";
+		if(getPeerL2Address() != null ) {
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Peer=" + getPeerL2Address() + ")";
 		} else {
 			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName();
 		}
