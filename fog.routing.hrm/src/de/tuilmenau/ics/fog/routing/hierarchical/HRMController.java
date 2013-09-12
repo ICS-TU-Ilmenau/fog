@@ -113,6 +113,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private LinkedList<Cluster> mLocalClusters = new LinkedList<Cluster>();
 
 	/**
+	 * Stores a database about all registered outgoing comm. sessions.
+	 */
+	private LinkedList<ComSession> mLocalOutgoingSessions = new LinkedList<ComSession>();
+	
+	/**
+	 * Stores a database about all registered incoming comm. sessions.
+	 */
+	private LinkedList<ComSession> mLocalIncomingSessions = new LinkedList<ComSession>();
+
+	/**
 	 * Stores a reference to the local instance of the hierarchical routing service.
 	 */
 	private HRMRoutingService mHierarchicalRoutingService = null;
@@ -674,6 +684,62 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Registers an outgoing communication session
+	 * 
+	 * @param pComSession the new session
+	 */
+	public void registerOutgoingSession(ComSession pComSession)
+	{
+		Logging.log(this, "Registering outgoing communication session: " + pComSession);
+		
+		synchronized (mLocalOutgoingSessions) {
+			mLocalOutgoingSessions.add(pComSession);
+		}
+	}
+	
+	/**
+	 * Registers an incoming communication session
+	 * 
+	 * @param pComSession the new session
+	 */
+	public void registerIncomingSession(ComSession pComSession)
+	{
+		Logging.log(this, "Registering incoming communication session: " + pComSession);
+		
+		synchronized (mLocalIncomingSessions) {
+			mLocalIncomingSessions.add(pComSession);
+		}
+	}
+	
+	/**
+	 * Unregisters an outgoing communication session
+	 * 
+	 * @param pComSession the session
+	 */
+	public void unregisterOutgoingSession(ComSession pComSession)
+	{
+		Logging.log(this, "Unregistering outgoing communication session: " + pComSession);
+		
+		synchronized (mLocalOutgoingSessions) {
+			mLocalOutgoingSessions.remove(pComSession);
+		}
+	}
+	
+	/**
+	 * Unregisters an incoming communication session
+	 * 
+	 * @param pComSession the session
+	 */
+	public void unregisterIncomingSession(ComSession pComSession)
+	{
+		Logging.log(this, "Unregistering incoming communication session: " + pComSession);
+		
+		synchronized (mLocalIncomingSessions) {
+			mLocalIncomingSessions.remove(pComSession);
+		}
 	}
 
 	/**

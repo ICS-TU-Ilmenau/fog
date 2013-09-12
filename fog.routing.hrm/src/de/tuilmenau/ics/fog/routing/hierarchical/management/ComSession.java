@@ -59,7 +59,7 @@ public class ComSession extends Session
 	 */
 	private Connection mParentConnection = null;
 	
-	private boolean mServerSide = false;
+	private boolean mIncomingConnection = false;
 	private L2Address mCentralFNL2Address = null;
 	private HierarchyLevel mHierarchyLevel = null;
 	private Route mRouteToPeer;
@@ -67,12 +67,12 @@ public class ComSession extends Session
 	/**
 	 * 
 	 * @param pHRMController is the HRMController instance this connection end point is associated to
-	 * @param pServerSide indicates whether this session is the origin of a server or client
+	 * @param pIncomingConnection indicates whether the connection is incoming or outgoing
 	 * @param pLevel the hierarchy level of this session
 	 * @param pComChannelMuxer the communication multiplexer to use
 	 * 
 	 */
-	public ComSession(HRMController pHRMController, boolean pServerSide, HierarchyLevel pLevel)
+	public ComSession(HRMController pHRMController, boolean pIncomingConnection, HierarchyLevel pLevel)
 	{
 		// call the Session constructor
 		super(false, Logging.getInstance(), null);
@@ -85,8 +85,17 @@ public class ComSession extends Session
 
 		mCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address(); 
 		
-		mServerSide = pServerSide;
-		if (mServerSide){
+		// store the connection direction
+		mIncomingConnection = pIncomingConnection;
+		
+		// register at the HRMController as incoming or outgoing session
+		if (mIncomingConnection){
+		    mHRMController.registerIncomingSession(this);
+		}else{
+		    mHRMController.registerOutgoingSession(this);
+		}
+			
+		if (mIncomingConnection){
 			Logging.log(this, "SERVER SESSION CREATED");
 		}else{
 			Logging.log(this, "CLIENT SESSION CREATED");

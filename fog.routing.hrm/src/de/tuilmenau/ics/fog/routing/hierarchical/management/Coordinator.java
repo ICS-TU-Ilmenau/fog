@@ -858,7 +858,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			 */
 		    Logging.log(this, "    ..creating new communication session");
 		    ComSession tComSession = new ComSession(mHRMController, false, getHierarchyLevel());
-		    
+
 		    /**
 		     * Iterate over all local coordinators on this hierarchy level and add them as already known cluster members to the cluster description
 		     */
