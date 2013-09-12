@@ -851,14 +851,14 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			 */
 		    Logging.log(this, "    ..creating cluster description");
 		    // create the cluster description
-			RequestClusterParticipationProperty tRequestClusterParticipationProperty = new RequestClusterParticipationProperty(pIDForFutureCluster, tTargetClusterHierLvl, pNeighborCluster.getCoordinatorID());
+			RequestClusterParticipationProperty tRequestClusterParticipationProperty = new RequestClusterParticipationProperty(new HierarchyLevel(this, getHierarchyLevel().getValue() - 1), pIDForFutureCluster, tTargetClusterHierLvl, pNeighborCluster.getCoordinatorID());
 
 			/**
 			 * Create communication session
 			 */
 		    Logging.log(this, "    ..creating new communication session");
 		    ComSession tComSession = new ComSession(mHRMController, false, getHierarchyLevel());
-
+		    
 		    /**
 		     * Iterate over all local coordinators on this hierarchy level and add them as already known cluster members to the cluster description
 		     */
@@ -876,7 +876,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, tLocalCoordinator, tComSession);
 				tComChannel.setRemoteClusterName(new ClusterName(mHRMController, pNeighborCluster.getHierarchyLevel(), pNeighborCluster.getCoordinatorID(), pIDForFutureCluster /* HINT: we communicate with the new cluster -> us clusterID of new cluster */));
 				tComChannel.setPeerPriority(pNeighborCluster.getPriority());
-
+				
 				// do we know the neighbor coordinator? (we check for a known coordinator of the neighbor cluster)
 				if(tNeighborClusterControlEntity.superiorCoordinatorHostL2Address() != null) {
 					Cluster tCoordinatorCluster = tLocalCoordinator.getCluster();
