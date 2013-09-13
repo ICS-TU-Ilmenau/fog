@@ -543,9 +543,6 @@ public class ComChannel
 			// the packet is received by a cluster
 			//HINT: this is only possible at base hierarchy level
 			if (mParent instanceof Cluster){
-				if ((!mParent.getHierarchyLevel().isBaseLevel()) && (!(pData instanceof BullyLeave /* this packet type is sent by coordinators */))){
-					Logging.warn(this, "EXPECTED BASE HIERARCHY LEVEL");
-				}
 				Cluster tParentCluster = (Cluster)mParent;
 				
 				// cast to a Bully signaling message
