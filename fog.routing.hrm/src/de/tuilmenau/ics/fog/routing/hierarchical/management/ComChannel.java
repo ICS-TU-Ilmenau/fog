@@ -16,6 +16,7 @@ import java.util.List;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
@@ -172,6 +173,11 @@ public class ComChannel
 	 * Stores the direction of the communication channel (either "out" or "in")
 	 */
 	private Direction mDirection;
+	
+	/**
+	 * Stores a list of assigned HRMIDs
+	 */
+	private LinkedList<HRMID> mAssignedHRMIDs = new LinkedList<HRMID>();
 	
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
@@ -606,6 +612,23 @@ public class ComChannel
 		}
 
 		/**
+		 * RevokeHRMIDs
+		 */
+		if(pData instanceof RevokeHRMIDs){
+			RevokeHRMIDs tRevokeHRMIDsPacket = (RevokeHRMIDs)pData;
+
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "REVOKE_HRMIDS-received from \"" + getPeerHRMID() + "\" revoked HRMIDs: " + tRevokeHRMIDsPacket.getHRMIDs().toString());
+
+			// revoke the HRMIDs step-by-step
+			for(HRMID tHRMID: tRevokeHRMIDsPacket.getHRMIDs()){
+				getParent().eventRevokedHRMID(this, tHRMID);
+			}
+			
+			return true;
+		}
+		
+		/**
 		 * RequestClusterMembershipAck
 		 */
 		if(pData instanceof RequestClusterMembershipAck) {
@@ -884,5 +907,39 @@ public class ComChannel
 		 * TRIGGER: inform the parental ControlEntity about the established communication session and its inferior channels
 		 */
 		getParent().eventComChannelEstablished(this);
+	}
+
+	/**
+	 * Revokes all formerly assigned HRMIDs
+	 * 
+	 * @param pHRMID 
+	 */	
+	public void signalRevokeHRMIDs()
+	{
+		// debug output
+		synchronized (mAssignedHRMIDs) {
+			for(HRMID tHRMID : mAssignedHRMIDs){
+				Logging.log(this, "Revoking assigned HRMID: " + tHRMID);
+			}
+		}
+	
+		// create the packet
+		RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), mAssignedHRMIDs);
+		// send the packet
+		sendPacket(tRevokeHRMIDsPacket);
+	}
+
+	/**
+	 * Stores an assigned HRMID
+	 * 
+	 * @param pHRMID the assigned HRMID
+	 */
+	public void storeAssignedHRMID(HRMID pHRMID)
+	{
+		Logging.log(this, "Storing assigned HRMID: " + pHRMID);
+		
+		synchronized(mAssignedHRMIDs){
+			mAssignedHRMIDs.add(pHRMID);
+		}
 	}
 }

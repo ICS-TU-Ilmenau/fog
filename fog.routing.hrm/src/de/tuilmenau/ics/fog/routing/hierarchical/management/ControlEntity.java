@@ -208,6 +208,39 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
+	 * Revokes a HRMID for this entity.
+	 *  
+	 * @param pCaller the caller who assigns the new HRMID
+	 * @param pHRMID the revoked HRMID
+	 */
+	public void eventRevokedHRMID(Object pCaller, HRMID pHRMID)
+	{
+		Logging.log(this, "REVOKING HRMID=" + pHRMID + " (caller=" + pCaller + ")");
+
+		// update the HRMID
+		if (mHRMID.equals(pHRMID)){
+			mHRMID = null;
+		}
+		
+		if (this instanceof Cluster){
+			Cluster tCluster = (Cluster)this;
+
+			// inform HRM controller about the address change
+			mHRMController.revokeClusterAddress(tCluster, pHRMID);
+
+			return;
+		}
+		if (this instanceof Coordinator){
+			Coordinator tCoordinator = (Coordinator)this;
+
+			// inform HRM controller about the address change
+			mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
+
+			return;
+		}
+	}
+
+	/**
 	 * Returns the HRMID under which this node is addressable for this cluster
 	 * 
 	 * @return the HRMID
@@ -636,7 +669,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
 					Logging.log(this, "     ..continuing the address distribution process via the coordinator " + tCoordinator);
-				tCoordinator.signalAddressDistribution();				
+				tCoordinator.distributeAddresses();				
 			}			
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)

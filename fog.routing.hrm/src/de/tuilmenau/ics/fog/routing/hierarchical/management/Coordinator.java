@@ -125,7 +125,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		// register at HRMController's internal database
 		mHRMController.registerCoordinator(this);
 
-		Logging.log(this, "CREATED");
+		Logging.log(this, "\n\n\n################ CREATED COORDINATOR on hierarchy level: " + getHierarchyLevel().getValue());
 	}
 	
 	/**
@@ -182,7 +182,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	/**
 	 * This function is called for distributing HRMIDs among the cluster members.
 	 */
-	public void signalAddressDistribution()
+	public void distributeAddresses()
 	{
 		/**
 		 * The following value is used to assign monotonously growing addresses to all cluster members.
@@ -232,7 +232,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + tComChannel.getPeerL2Address());
 
 			// create new AssignHRMID packet for the cluster member
-			AssignHRMID tAssignHRMID = new AssignHRMID(mHRMController.getNodeName(), tComChannel.getPeerHRMID(), tHRMID);
+			AssignHRMID tAssignHRMIDPacket = new AssignHRMID(mHRMController.getNodeName(), tComChannel.getPeerHRMID(), tHRMID);
 			
 			// register this new HRMID in the local HRS and create a mapping to the right L2Address
 			Logging.log(this, "    ..creating MAPPING " + tHRMID.toString() + " to " + tComChannel.getPeerL2Address());
@@ -241,8 +241,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			// share the route to this cluster member with all other cluster members
 			shareRouteToClusterMember(tComChannel);
 			
+			// store the assignment for this comm. channel
+			tComChannel.storeAssignedHRMID(tHRMID);
+			
 			// send the packet
-			tComChannel.sendPacket(tAssignHRMID);
+			tComChannel.sendPacket(tAssignHRMIDPacket);
 		}
 	}
 	
@@ -471,6 +474,16 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 
 		/**
+		 * Revoke own HRMID
+		 */ 
+		eventRevokedHRMID(this, getHRMID());
+		
+		/**
+		 * Revoke all assigned HRMIDs of all cluster members
+		 */
+		revokeAssignedHRMIDsFromClusterMembers();
+		
+		/**
 		 * Unregister from local databases
 		 */
 		Logging.log(this, "============ Destroying this coordinator now...");
@@ -480,6 +493,19 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 		// unregister from HRMController's internal database
 		mHRMController.unregisterCoordinator(this);
+	}
+	
+	/**
+	 * Revokes all HRMIDs per comm. channel
+	 */
+	private void revokeAssignedHRMIDsFromClusterMembers()
+	{
+		Logging.log(this, "###### Revoking assigned HRMIDs for all clsuter members");
+
+		LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
+		for (ComChannel tcomChannel : tComChannels){
+			tcomChannel.signalRevokeHRMIDs();
+		}
 	}
 	
 	/**
@@ -524,7 +550,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
 			Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + getComChannels().size() + " cluster members");
 
-			signalAddressDistribution();
+			distributeAddresses();
 		}
 
 		

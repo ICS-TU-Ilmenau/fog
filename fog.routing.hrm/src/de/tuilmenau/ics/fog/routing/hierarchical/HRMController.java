@@ -396,6 +396,46 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Revokes a coordinator address
+	 * 
+	 * @param pCoordinator the coordinator for which the address is revoked
+	 * @param pHRMID the revoked address
+	 */
+	public void revokeCoordinatorAddress(Coordinator pCoordinator, HRMID pHRMID)
+	{
+		Logging.log(this, "Revoking address to " + pHRMID.toString() + " for coordinator " + pCoordinator);
+		
+		synchronized(mRegisteredOwnHRMIDs){
+			if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+				Logging.log(this, "Revoking the HRMID to " + pHRMID.toString() + " for " + pCoordinator);
+			}
+
+			/**
+			 * Update the local address DB with the given HRMID
+			 */
+			if (mRegisteredOwnHRMIDs.contains(pHRMID)){
+				mRegisteredOwnHRMIDs.remove(pHRMID);
+			}else{
+				Logging.err(this, "Cannot revoke unknown HRMID " + pHRMID);
+			}
+
+			/**
+			 * Register a local loopback route for the new address 
+			 */
+			// register a route to the cluster member as addressable target
+			getHRS().delHRMRoute(RoutingEntry.createLocalhostEntry(pHRMID));
+
+			/**
+			 * Update the GUI
+			 */
+			// updates the GUI decoration for this node
+			updateGUINodeDecoration();
+			// it's time to update the GUI
+			notifyGUI(pCoordinator);
+		}			
+	}
+
+	/**
 	 * Updates the decoration of the node (image and label text)
 	 */
 	private void updateGUINodeDecoration()
@@ -601,6 +641,73 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
 			Logging.warn(this, "Skipping HRMID registration " + tHRMID.toString() + " for " + pCluster);
+		}
+	}
+
+	/**
+	 * Revokes a cluster address
+	 * 
+	 * @param pCluster the cluster for which the address is revoked
+	 * @param pHRMID the revoked address
+	 */
+	public void revokeClusterAddress(Cluster pCluster, HRMID pHRMID)
+	{
+		Logging.log(this, "Revoking address " + pHRMID.toString() + " for cluster " + pCluster);
+
+		if (pCluster.getHierarchyLevel().isBaseLevel()){
+			synchronized(mRegisteredOwnHRMIDs){
+				/**
+				 * Update the local address DB with the given HRMID
+				 */
+				if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+					Logging.log(this, "Revoking the HRMID to " + pCluster.getHRMID().toString() + " for " + pCluster);
+				}
+				if (mRegisteredOwnHRMIDs.contains(pHRMID)){
+					mRegisteredOwnHRMIDs.remove(pHRMID);
+				}else{
+					Logging.err(this, "Cannot revoke unknown HRMID " + pHRMID);
+				}
+				
+				/**
+				 * Unregister the local loopback route for the address 
+				 */
+				// register a route to the cluster member as addressable target
+				getHRS().delHRMRoute(RoutingEntry.createLocalhostEntry(pHRMID));
+	
+				/**
+				 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
+				 * registered in the DNS as address for the name of this node. 
+				 */
+//TODO				// register the HRMID in the hierarchical DNS for the local router
+	//			HierarchicalNameMappingService<HRMID> tNMS = null;
+	//			try {
+	//				tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation());
+	//			} catch (RuntimeException tExc) {
+	//				HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
+	//			}				
+	//			// get the local router's human readable name (= DNS name)
+	//			Name tLocalRouterName = getNodeName();				
+	//			// register HRMID for the given DNS name
+	//			tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
+	//			// give some debug output about the current DNS state
+	//			String tString = new String();
+	//			for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
+	//				if (!tString.isEmpty()){
+	//					tString += ", ";
+	//				}
+	//				tString += tEntry;
+	//			}
+	//			Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
+				
+				/**
+				 * Update the GUI
+				 */
+				// it's time to update the GUI
+				notifyGUI(pCluster);
+			}
+		}else{
+			// we are at a higher hierarchy level and don't need the HRMID revocation
+			Logging.warn(this, "Skipping HRMID revocation of " + pHRMID.toString() + " for " + pCluster);
 		}
 	}
 
