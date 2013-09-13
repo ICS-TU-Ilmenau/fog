@@ -217,26 +217,31 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	{
 		Logging.log(this, "REVOKING HRMID=" + pHRMID + " (caller=" + pCaller + ")");
 
-		// update the HRMID
-		if (mHRMID.equals(pHRMID)){
-			mHRMID = null;
-		}
-		
-		if (this instanceof Cluster){
-			Cluster tCluster = (Cluster)this;
-
-			// inform HRM controller about the address change
-			mHRMController.revokeClusterAddress(tCluster, pHRMID);
-
-			return;
-		}
-		if (this instanceof Coordinator){
-			Coordinator tCoordinator = (Coordinator)this;
-
-			// inform HRM controller about the address change
-			mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
-
-			return;
+		if (pHRMID != null){
+			// update the HRMID
+			if (mHRMID.equals(pHRMID)){
+				Logging.log(this, "     ..revoking local HRMID: " + pHRMID);
+				mHRMID = null;
+			}
+			
+			if (this instanceof Cluster){
+				Cluster tCluster = (Cluster)this;
+	
+				// inform HRM controller about the address change
+				mHRMController.revokeClusterAddress(tCluster, pHRMID);
+	
+				return;
+			}
+			if (this instanceof Coordinator){
+				Coordinator tCoordinator = (Coordinator)this;
+	
+				// inform HRM controller about the address change
+				mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
+	
+				return;
+			}
+		}else{
+			Logging.warn(this, "Cannot revoke invalid HRMID");
 		}
 	}
 
