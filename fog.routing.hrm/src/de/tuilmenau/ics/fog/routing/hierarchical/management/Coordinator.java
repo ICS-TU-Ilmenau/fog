@@ -92,6 +92,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	 */
 	private int mCounterOutgoingConnections = 0;
 
+	/**
+	 * Stores the next free address for a cluster member
+	 */
+	private int mNextFreeClusterMemberAddress = 1;
+	
 	private Name mCoordinatorName = null;
 	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
 	private LinkedList<AnnounceRemoteCluster> mReceivedAnnouncements;
@@ -188,7 +193,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		 * The following value is used to assign monotonously growing addresses to all cluster members.
 		 * The addressing has to start with "1".
 		 */
-		int tNextClusterMemberAddress = 1;
+		mNextFreeClusterMemberAddress = 1;
 
 		Logging.log(this, "DISTRIBUTING ADDRESSES to entities on level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
 		
@@ -199,7 +204,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		if(super.getHierarchyLevel().isBaseLevel()) {
 			
 			// create new HRMID for ourself
-			HRMID tOwnAddress = createClusterMemberAddress(tNextClusterMemberAddress++);
+			HRMID tOwnAddress = createClusterMemberAddress(mNextFreeClusterMemberAddress++);
 
 			Logging.log(this, "    ..setting local HRMID " + tOwnAddress.toString());
 
@@ -220,32 +225,10 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			//TODO: don't send this update in a loop to ourself!
 			//TODO: check if cluster members already have an address and distribute only free addresses here
 			
-			// create new HRMID for cluster member
-			HRMID tHRMID = createClusterMemberAddress(tNextClusterMemberAddress++);
-
-			// store the HRMID under which the peer will be addressable from now 
-			tComChannel.setPeerHRMID(tHRMID);
-			
-			if ((tComChannel.getPeerHRMID() != null) && (!tComChannel.getPeerHRMID().equals(tHRMID))){
-				Logging.log(this, "    ..replacing HRMID " + tComChannel.getPeerHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + tComChannel.getPeerL2Address());
-			}else
-				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + tComChannel.getPeerL2Address());
-
-			// create new AssignHRMID packet for the cluster member
-			AssignHRMID tAssignHRMIDPacket = new AssignHRMID(mHRMController.getNodeName(), tComChannel.getPeerHRMID(), tHRMID);
-			
-			// register this new HRMID in the local HRS and create a mapping to the right L2Address
-			Logging.log(this, "    ..creating MAPPING " + tHRMID.toString() + " to " + tComChannel.getPeerL2Address());
-			mHRMController.getHRS().mapHRMIDToL2Address(tHRMID, tComChannel.getPeerL2Address());
-			
-			// share the route to this cluster member with all other cluster members
-			shareRouteToClusterMember(tComChannel);
-			
-			// store the assignment for this comm. channel
-			tComChannel.storeAssignedHRMID(tHRMID);
-			
-			// send the packet
-			tComChannel.sendPacket(tAssignHRMIDPacket);
+			/**
+			 * Trigger: cluster member needs HRMID
+			 */
+			eventClusterMemberNeedsHRMID(tComChannel);
 		}
 	}
 	
@@ -508,6 +491,43 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 	}
 	
+	/**
+	 * EVENT: cluster member needs HRMID
+	 * 
+	 * @param pComChannel the comm. channel towards the cluster member, which needs a new HRMID
+	 */
+	public void eventClusterMemberNeedsHRMID(ComChannel pComChannel)
+	{
+		Logging.log(this, "EVENT: Cluster_Member_Needs_HRMID for: " + pComChannel);
+		
+		// create new HRMID for cluster member
+		HRMID tHRMID = createClusterMemberAddress(mNextFreeClusterMemberAddress++);
+
+		// store the HRMID under which the peer will be addressable from now 
+		pComChannel.setPeerHRMID(tHRMID);
+		
+		if ((pComChannel.getPeerHRMID() != null) && (!pComChannel.getPeerHRMID().equals(tHRMID))){
+			Logging.log(this, "    ..replacing HRMID " + pComChannel.getPeerHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
+		}else
+			Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
+
+		// create new AssignHRMID packet for the cluster member
+		AssignHRMID tAssignHRMIDPacket = new AssignHRMID(mHRMController.getNodeName(), pComChannel.getPeerHRMID(), tHRMID);
+		
+		// register this new HRMID in the local HRS and create a mapping to the right L2Address
+		Logging.log(this, "    ..creating MAPPING " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
+		mHRMController.getHRS().mapHRMIDToL2Address(tHRMID, pComChannel.getPeerL2Address());
+		
+		// share the route to this cluster member with all other cluster members
+		shareRouteToClusterMember(pComChannel);
+		
+		// store the assignment for this comm. channel
+		pComChannel.storeAssignedHRMID(tHRMID);
+		
+		// send the packet
+		pComChannel.sendPacket(tAssignHRMIDPacket);
+	}
+
 	/**
 	 * @param pBullyLeavePacket
 	 */
