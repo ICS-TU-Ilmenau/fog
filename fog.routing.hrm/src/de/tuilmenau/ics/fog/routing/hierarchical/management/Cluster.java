@@ -418,17 +418,6 @@ public class Cluster extends ControlEntity implements ICluster
 		ClusterName tRemoteClusterName = new ClusterName(mHRMController, pRequestClusterMembershipPacket.getSenderHierarchyLevel(), pRequestClusterMembershipPacket.getSenderCoordinatorID(), pRequestClusterMembershipPacket.getSenderClusterID());
 		Logging.log(this, ">>>> GOT A REQUEST FOR MEMBERSHIP from: " + tRemoteClusterName);
 		
-		eventClusterMemberJoined(pSourceComSession, tRemoteClusterName);
-	}
-	
-	/**
-	 * EVENT: detected additional cluster member
-	 * 
-	 * @param pSourceComSession the comm. session where the packet was received
-	 * @param pRemoteClusterName the name of the new cluster member
-	 */
-	private void eventClusterMemberJoined(ComSession pSourceComSession, ClusterName pRemoteClusterName)
-	{
 		/**
 		 * Create the communication channel for the described cluster member
 		 */
@@ -438,18 +427,37 @@ public class Cluster extends ControlEntity implements ICluster
 		/**
 		 * Set the remote ClusterName of the communication channel
 		 */
-		tComChannel.setRemoteClusterName(pRemoteClusterName);
+		tComChannel.setRemoteClusterName(tRemoteClusterName);
 
 		/**
-		 * SEND: acknowledgment
+		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
 		 */
 		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), getClusterID(), getCoordinatorID(), getHierarchyLevel());
 		tComChannel.sendPacket(tRequestClusterMembershipAckPacket);
-		
+
 		/**
-		 * TRIGGER: new coordinator election round
+		 * Trigger event "cluster member joined"
 		 */
-		getElector().startElection();
+		eventClusterMemberJoined(tComChannel);
+	}
+	
+	/**
+	 * EVENT: detected additional cluster member
+	 * 
+	 * @param pComChannel the comm. channel of the new cluster member
+	 */
+	private void eventClusterMemberJoined(ComChannel pComChannel)
+	{
+		//TODO: should we do something additional here?
+
+		if (getCoordinator() != null){
+			/**
+			 * Trigger: assign new HRMID
+			 */
+			getCoordinator().eventClusterMemberNeedsHRMID(pComChannel);
+		}else{
+			Logging.warn(this, "Coordinator missing, we cannot assign a new HRMID to the joined cluster member behind comm. channel: " + pComChannel);
+		}
 	}
 
 	
