@@ -770,6 +770,9 @@ public class Elector implements Localization
 		if (pSenderPriority.isHigher(this, getCluster().getPriority())){
 			Logging.log(this, "Got a priority update and remote priority " + pSenderPriority.getValue() + " is higher than local " + getCluster().getPriority().getValue() + ", triggering re-election");
 			
+			/**
+			 * Trigger: new election round
+			 */
 			startElection();
 		}else{
 			Logging.log(this, "Got priority " + pSenderPriority.getValue() + " via comm. channel: " + pComChannel);
