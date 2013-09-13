@@ -291,7 +291,7 @@ public class Cluster extends ControlEntity implements ICluster
 	 * 
 	 * @return the count
 	 */
-	public int countClusterMembers()
+	public int countExternalClusterMembers()
 	{
 		int tResult = 0;
 
@@ -314,6 +314,21 @@ public class Cluster extends ControlEntity implements ICluster
 				tResult++;
 			}
 		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns how many cluster members are known
+	 * 
+	 * @return the count
+	 */
+	public int countClusterMembers()
+	{
+		int tResult = 0;
+
+		// count all communication channels
+		tResult = getComChannels().size();
 
 		return tResult;
 	}
@@ -351,6 +366,9 @@ public class Cluster extends ControlEntity implements ICluster
 	 */
 	public void eventClusterLostAllMembers()
 	{
+		Logging.log(this, "============ EVENT: Cluster_Lost_All_Members");
+		Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
+
 		/**
 		 * Unregister from local databases
 		 */

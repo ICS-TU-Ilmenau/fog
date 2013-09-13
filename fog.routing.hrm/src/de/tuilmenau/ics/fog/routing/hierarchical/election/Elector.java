@@ -122,7 +122,7 @@ public class Elector implements Localization
 		Logging.log(this, "ELECTING now...");
 		
 		// do we know more than 0 external cluster members?
-		if (mParentCluster.countClusterMembers() > 0){
+		if (mParentCluster.countExternalClusterMembers() > 0){
 			Logging.log(this, "Trying to ask all cluster members for their Bully priority");
 			signalElectBroadcast();
 		}else{
@@ -279,7 +279,7 @@ public class Elector implements Localization
 			if (isTimingOkayOfElectBroadcast()){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 					Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParentCluster);
-					Logging.log(this, "SENDELECTIONS(), cluster members: " + mParentCluster.countClusterMembers());
+					Logging.log(this, "SENDELECTIONS(), external cluster members: " + mParentCluster.countExternalClusterMembers());
 				}
 		
 				// create the packet
@@ -469,9 +469,14 @@ public class Elector implements Localization
 	 */
 	private void eventElectionLeft(ComChannel pComChannel)
 	{
+		Logging.log(this, "Cluster member left, comm. channel was: " + pComChannel);
+
+		// unregister the comm. channel
 		mParentCluster.unregisterComChannel(pComChannel);
 		
-		// no further candidate available/known (all candidates are gone) ?
+		Logging.log(this, "      ..remaining comm. channels: " + mParentCluster.getComChannels());
+		
+		// no further external candidates available/known (all candidates are gone) ?
 		if (mParentCluster.countClusterMembers() < 1){
 			/**
 			 * TRIGGER: all cluster members are gone, we destroy the coordinator
