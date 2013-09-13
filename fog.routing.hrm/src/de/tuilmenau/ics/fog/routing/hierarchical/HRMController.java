@@ -632,6 +632,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * Update the GUI
 					 */
+					// updates the GUI decoration for this node
+					updateGUINodeDecoration();
 					// it's time to update the GUI
 					notifyGUI(pCluster);
 				}else{
@@ -702,6 +704,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				/**
 				 * Update the GUI
 				 */
+				// updates the GUI decoration for this node
+				updateGUINodeDecoration();
 				// it's time to update the GUI
 				notifyGUI(pCluster);
 			}
