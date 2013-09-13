@@ -472,7 +472,7 @@ public class ComSession extends Session
 			if (getParent() instanceof Cluster){
 				Cluster tCluster = (Cluster)getParent();
 				
-				tCluster.handleRequestClusterMembership(this, tRequestClusterMembershipPacket);
+				tCluster.eventInferiorCoordinatorRequestsMembership(this, tRequestClusterMembershipPacket);
 			}else{
 				Logging.err(this, "Expected a Cluster object as parent for processing RequestClusterMembership data but parent is " + getParent());
 			}
