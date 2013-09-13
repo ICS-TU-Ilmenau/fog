@@ -418,6 +418,17 @@ public class Cluster extends ControlEntity implements ICluster
 		ClusterName tRemoteClusterName = new ClusterName(mHRMController, pRequestClusterMembershipPacket.getSenderHierarchyLevel(), pRequestClusterMembershipPacket.getSenderCoordinatorID(), pRequestClusterMembershipPacket.getSenderClusterID());
 		Logging.log(this, ">>>> GOT A REQUEST FOR MEMBERSHIP from: " + tRemoteClusterName);
 		
+		eventClusterMemberJoined(pSourceComSession, tRemoteClusterName);
+	}
+	
+	/**
+	 * EVENT: detected additional cluster member
+	 * 
+	 * @param pSourceComSession the comm. session where the packet was received
+	 * @param pRemoteClusterName the name of the new cluster member
+	 */
+	private void eventClusterMemberJoined(ComSession pSourceComSession, ClusterName pRemoteClusterName)
+	{
 		/**
 		 * Create the communication channel for the described cluster member
 		 */
@@ -427,7 +438,7 @@ public class Cluster extends ControlEntity implements ICluster
 		/**
 		 * Set the remote ClusterName of the communication channel
 		 */
-		tComChannel.setRemoteClusterName(tRemoteClusterName);
+		tComChannel.setRemoteClusterName(pRemoteClusterName);
 
 		/**
 		 * SEND: acknowledgment
