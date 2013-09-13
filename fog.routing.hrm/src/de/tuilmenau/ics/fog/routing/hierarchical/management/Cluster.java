@@ -542,33 +542,33 @@ public class Cluster extends ControlEntity implements ICluster
 		}
 	}
 	
-	private ICluster addAnnouncedCluster(AnnounceRemoteCluster pAnnounce, ComChannel pCEP)
-	{
-		if(pAnnounce.getRoutingVectors() != null) {
-			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
-				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
-			}
-		}
-		Cluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pAnnounce.getLevel(), pAnnounce.getToken(), pAnnounce.getClusterID()));
-		if(tCluster != null) {
-			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
-			registerNeighborARG(tCluster);
-		}else{
-			Logging.log(this, "     ..creating cluster proxy");
-			ClusterProxy tNeighborCluster = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
-			mHRMController.setSourceIntermediateCluster(tNeighborCluster, this);
-			tNeighborCluster.setPriority(pAnnounce.getCoordinatorsPriority());
-			
-			mHRMController.getHRS().mapFoGNameToL2Address(tNeighborCluster.getCoordinatorHostName(),  pAnnounce.getCoordAddress());
-			
-			registerNeighborARG(tCluster);
-		}
-		
-		if(pAnnounce.getCoordinatorName() != null) {
-			mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
-		}
-		return tCluster;
-	}
+//	private ICluster addAnnouncedCluster(AnnounceRemoteCluster pAnnounce, ComChannel pCEP)
+//	{
+//		if(pAnnounce.getRoutingVectors() != null) {
+//			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
+//				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
+//			}
+//		}
+//		Cluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pAnnounce.getLevel(), pAnnounce.getToken(), pAnnounce.getClusterID()));
+//		if(tCluster != null) {
+//			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
+//			registerNeighborARG(tCluster);
+//		}else{
+//			Logging.log(this, "     ..creating cluster proxy");
+//			ClusterProxy tNeighborCluster = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
+//			mHRMController.setSourceIntermediateCluster(tNeighborCluster, this);
+//			tNeighborCluster.setPriority(pAnnounce.getCoordinatorsPriority());
+//			
+//			mHRMController.getHRS().mapFoGNameToL2Address(tNeighborCluster.getCoordinatorHostName(),  pAnnounce.getCoordAddress());
+//			
+//			registerNeighborARG(tCluster);
+//		}
+//		
+//		if(pAnnounce.getCoordinatorName() != null) {
+//			mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
+//		}
+//		return tCluster;
+//	}
 	
 	public void handleNeighborAnnouncement(AnnounceRemoteCluster pAnnounce, ComChannel pComChannel)
 	{

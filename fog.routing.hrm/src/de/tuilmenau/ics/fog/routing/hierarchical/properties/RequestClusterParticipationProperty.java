@@ -120,13 +120,13 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	 * Adds a description of a cluster member to the internal database
 	 * 
 	 * @param pClusterID the unique cluster ID
-	 * @param pToken the unique coordinator ID
+	 * @param pCoordinatorID the unique coordinator ID
 	 * @param pPriority the Bully priority of this cluster member
 	 */
-	public ClusterMemberDescription addClusterMember(Long pClusterID, int pToken, BullyPriority pPriority)
+	public ClusterMemberDescription addClusterMember(Long pClusterID, int pCoordinatorID, BullyPriority pPriority)
 	{
 		// create the new member
-		ClusterMemberDescription tResult = new ClusterMemberDescription(pClusterID, pToken, pPriority);
+		ClusterMemberDescription tResult = new ClusterMemberDescription(pClusterID, pCoordinatorID, pPriority);
 
 		// add the cluster member to the database
 		Logging.log(this, "Adding cluster member description: " + tResult);

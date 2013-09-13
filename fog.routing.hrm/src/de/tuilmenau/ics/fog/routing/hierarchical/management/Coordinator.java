@@ -612,11 +612,13 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		 * Try to find a matching local cluster on the superior hierarchy level
 		 */
 		boolean tSuperiorClusterFound = false;
-		for(Cluster tCluster : mHRMController.getAllClusters(getHierarchyLevel())) {
-			if (joinSuperiorCluster(tCluster)){
-				// we joined the superior cluster and should end the search for a superior coordinator
-				tSuperiorClusterFound = true;
-				break;
+		if(HRMConfig.Hierarchy.COORDINATORS_CAN_JOIN_EXISTING_SUPERIOR_CLUSTERS){
+			for(Cluster tCluster : mHRMController.getAllClusters(getHierarchyLevel())) {
+				if (joinSuperiorCluster(tCluster)){
+					// we joined the superior cluster and should end the search for a superior coordinator
+					tSuperiorClusterFound = true;
+					break;
+				}
 			}
 		}
 		
@@ -1354,31 +1356,31 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 //		}
 	}
 	
-	private ICluster addAnnouncedCluster(AnnounceRemoteCluster pAnnounce, ComChannel pCEP)
-	{
-		if(pAnnounce.getRoutingVectors() != null) {
-			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
-				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
-			}
-		}
-		ClusterProxy tCluster = null;
-		if(pAnnounce.isAnnouncementFromForeign())
-		{
-			Logging.log(this, "     ..creating cluster proxy");
-			tCluster = new ClusterProxy(mParentCluster.mHRMController, pAnnounce.getCoordAddress().getComplexAddress().longValue() /* TODO: als clusterID den Wert? */, new HierarchyLevel(this, super.getHierarchyLevel().getValue() + 2),	pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
-			mHRMController.setSourceIntermediateCluster(tCluster, mHRMController.getSourceIntermediateCluster(this));
-			tCluster.setSuperiorCoordinatorID(pAnnounce.getToken());
-			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
-			//mParentCluster.addNeighborCluster(tCluster);
-		} else {
-			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
-		}
-		if(pAnnounce.getCoordinatorName() != null) {
-			mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
-		}
-		return tCluster;
-	}
-	
+//	private ICluster addAnnouncedCluster(AnnounceRemoteCluster pAnnounce, ComChannel pCEP)
+//	{
+//		if(pAnnounce.getRoutingVectors() != null) {
+//			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
+//				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
+//			}
+//		}
+//		ClusterProxy tCluster = null;
+//		if(pAnnounce.isAnnouncementFromForeign())
+//		{
+//			Logging.log(this, "     ..creating cluster proxy");
+//			tCluster = new ClusterProxy(mParentCluster.mHRMController, pAnnounce.getCoordAddress().getComplexAddress().longValue() /* TODO: als clusterID den Wert? */, new HierarchyLevel(this, super.getHierarchyLevel().getValue() + 2),	pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
+//			mHRMController.setSourceIntermediateCluster(tCluster, mHRMController.getSourceIntermediateCluster(this));
+//			tCluster.setSuperiorCoordinatorID(pAnnounce.getToken());
+//			tCluster.setPriority(pAnnounce.getCoordinatorsPriority());
+//			//mParentCluster.addNeighborCluster(tCluster);
+//		} else {
+//			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
+//		}
+//		if(pAnnounce.getCoordinatorName() != null) {
+//			mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
+//		}
+//		return tCluster;
+//	}
+//	
 	@Override
 	public void handleNeighborAnnouncement(AnnounceRemoteCluster	pAnnounce, ComChannel pCEP)
 	{		

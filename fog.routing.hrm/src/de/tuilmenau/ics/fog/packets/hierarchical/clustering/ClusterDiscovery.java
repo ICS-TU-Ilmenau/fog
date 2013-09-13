@@ -67,7 +67,7 @@ public class ClusterDiscovery implements Serializable
 
 	public String toString()
 	{
-		return getClass().getSimpleName() + ":"  + mSource + "(" + mIdentification + "):" /*+ tResult*/ ;
+		return getClass().getSimpleName() + "(Source="  + mSource + ", ID=" + mIdentification + "):";
 	}
 	
 	/**
