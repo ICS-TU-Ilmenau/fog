@@ -185,9 +185,10 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 
 	/**
+	 * EVENT: new addresses needed
 	 * This function is called for distributing HRMIDs among the cluster members.
 	 */
-	public void distributeAddresses()
+	public void eventNewAddressesNeeded()
 	{
 		/**
 		 * The following value is used to assign monotonously growing addresses to all cluster members.
@@ -570,7 +571,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
 			Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + getComChannels().size() + " cluster members");
 
-			distributeAddresses();
+			eventNewAddressesNeeded();
 		}
 
 		

@@ -669,7 +669,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
 					Logging.log(this, "     ..continuing the address distribution process via the coordinator " + tCoordinator);
-				tCoordinator.distributeAddresses();				
+				tCoordinator.eventNewAddressesNeeded();				
 			}			
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
