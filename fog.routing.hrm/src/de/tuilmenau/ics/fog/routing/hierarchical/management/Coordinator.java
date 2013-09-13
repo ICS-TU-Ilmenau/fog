@@ -477,6 +477,11 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 		// unregister from HRMController's internal database
 		mHRMController.unregisterCoordinator(this);
+		
+		/**
+		 * Inform the inferior cluster about our destruction
+		 */
+		mParentCluster.eventCoordinatorLost();
 	}
 	
 	/**
