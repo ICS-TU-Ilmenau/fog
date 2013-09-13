@@ -264,7 +264,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pRoutingTableEntry the routing table entry 
 	 * @return true if the entry was found and removed, otherwise false
 	 */
-	private boolean delHRMRoute(RoutingEntry pRoutingTableEntry)
+	boolean delHRMRoute(RoutingEntry pRoutingTableEntry)
 	{
 		boolean tResult = false;
 		
@@ -272,14 +272,28 @@ public class HRMRoutingService implements RoutingService, Localization
 			Logging.log(this, "REMOVING ROUTE: " + pRoutingTableEntry);
 		}
 
+		LinkedList<RoutingEntry> tRemoveThese = new LinkedList<RoutingEntry>();
+		
 		synchronized(mRoutingTable){
-			if (mRoutingTable.contains(pRoutingTableEntry)){
-				// remove the entry
-				mRoutingTable.remove(pRoutingTableEntry);
-				
-				tResult = true;
+			/**
+			 * Go over the RIB database and search for matching entries, mark them for deletion
+			 */
+			for(RoutingEntry tEntry: mRoutingTable){
+				// do the destinations and next hops match?
+				if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) && (tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop()))){
+					tRemoveThese.add(tEntry);
+				}
+			}
+			
+			/**
+			 * Remove all marked RIB entries
+			 */
+			if (tRemoveThese.size() > 0){
+				for(RoutingEntry tEntry: tRemoveThese){
+					mRoutingTable.remove(tEntry);
+				}
 			}else{
-				Logging.err(this, "The following route couldn't be removed from the local routing table: \n     " + pRoutingTableEntry);
+				Logging.warn(this, "Couldn't remove RIB entry: " + pRoutingTableEntry.toString());
 			}
 		}
 		
