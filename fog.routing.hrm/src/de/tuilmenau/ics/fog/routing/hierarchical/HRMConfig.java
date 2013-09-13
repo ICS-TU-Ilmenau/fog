@@ -101,7 +101,7 @@ public class HRMConfig
 		 * Specifies whether the address are assigned automatically,
 		 * otherwise it has to be triggered step by step via the GUI.
 		 */
-		public static final boolean ASSIGN_AUTOMATICALLY = false;
+		public static final boolean ASSIGN_AUTOMATICALLY = true;
 		
 		/**
 		 * Defines the address which is used for cluster broadcasts
@@ -138,6 +138,11 @@ public class HRMConfig
 		 * This causes ADDITIONAL LOOPBACK SIGNALING.
 		 */
 		public static final boolean SIGNALING_INCLUDES_LOCALHOST = false;
+
+		/**
+		 * Defines if a coordinator may join an existing local superior cluster.
+		 */
+		public static final boolean COORDINATORS_CAN_JOIN_EXISTING_SUPERIOR_CLUSTERS = true;
 	}
 	
 	/**
