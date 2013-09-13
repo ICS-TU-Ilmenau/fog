@@ -918,15 +918,25 @@ public class ComChannel
 	{
 		// debug output
 		synchronized (mAssignedHRMIDs) {
-			for(HRMID tHRMID : mAssignedHRMIDs){
-				Logging.log(this, "Revoking assigned HRMID: " + tHRMID);
+			if (mAssignedHRMIDs.size() > 0){
+				for(HRMID tHRMID : mAssignedHRMIDs){
+					Logging.log(this, "Revoking assigned HRMID: " + tHRMID);
+				}
+	
+				/**
+				 * Revoke the HRMIDs from the peer
+				 */
+				// create the packet
+				RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), mAssignedHRMIDs);
+				// send the packet
+				sendPacket(tRevokeHRMIDsPacket);
+				
+				/**
+				 * Clear the list of stored assigned HRMID
+				 */
+				mAssignedHRMIDs.clear();
 			}
 		}
-	
-		// create the packet
-		RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), mAssignedHRMIDs);
-		// send the packet
-		sendPacket(tRevokeHRMIDsPacket);
 	}
 
 	/**
