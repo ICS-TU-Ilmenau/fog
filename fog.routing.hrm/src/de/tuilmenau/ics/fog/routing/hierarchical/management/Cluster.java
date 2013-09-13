@@ -334,6 +334,23 @@ public class Cluster extends ControlEntity implements ICluster
 	}
 
 	/**
+	 * EVENT: coordinator lost
+	 */
+	public void eventCoordinatorLost()
+	{
+		Logging.log(this, "EVENT: coordiantor was lost");
+		
+		/**
+		 * Revoke HRMID of physical node if we are on base hierarchy level
+		 */ 
+		if(getHierarchyLevel().isBaseLevel()){
+			Logging.log(this, "Revoking physical node HRMID: " + getHRMID());
+			
+			eventRevokedHRMID(this, getHRMID());
+		}
+	}
+	
+	/**
 	 * EVENT: notifies that a communication channel is became available
 	 * 
 	 * @param pComChannel the communication channel which became available
