@@ -998,7 +998,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			 */
 		    Logging.log(this, "    ..creating cluster description");
 		    // create the cluster description
-			RequestClusterParticipationProperty tRequestClusterParticipationProperty = new RequestClusterParticipationProperty(new HierarchyLevel(this, getHierarchyLevel().getValue() - 1), pFutureClusterID, tFutureClusterHierLvl, pNeighborCluster.getCoordinatorID());
+			RequestClusterParticipationProperty tRequestClusterParticipationProperty = RequestClusterParticipationProperty.create(mHRMController, new HierarchyLevel(this, getHierarchyLevel().getValue() - 1), pFutureClusterID, tFutureClusterHierLvl, pNeighborCluster.getCoordinatorID());
 
 			/**
 			 * Create communication session
@@ -1032,9 +1032,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					 * Describe the cluster member
 					 */
 				    Logging.log(this, "           ..creating cluster member description for the found cluster " + tCoordinatorCluster);
-					ClusterMemberDescription tClusterMemberDescription = tRequestClusterParticipationProperty.addLocalClusterMember(tCoordinatorCluster.getClusterID(), tCoordinatorCluster.getCoordinatorID(), tCoordinatorCluster.getPriority());
-					tClusterMemberDescription.setSourceName(mHRMController.getNodeName());
-					tClusterMemberDescription.setSourceL2Address(tThisHostL2Address);
+					ClusterMemberDescription tClusterMemberDescription = tRequestClusterParticipationProperty.addSenderClusterMember(tCoordinatorCluster.getClusterID(), tCoordinatorCluster.getCoordinatorID(), tCoordinatorCluster.getPriority());
 					
 					/**
 					 * Iterate over all known neighbors of the current cluster member: we inform the connection target about this neighborhood topology

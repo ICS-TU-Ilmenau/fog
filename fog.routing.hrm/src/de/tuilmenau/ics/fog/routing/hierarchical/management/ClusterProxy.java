@@ -15,7 +15,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -42,10 +41,9 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	 * @param pClusterID the unique ID of this cluster
 	 * @param pHierarchyLevel the hierarchy level
 	 * @param pCoordName
-	 * @param pAddress
 	 * @param pCoordinatorID
 	 */
-	public ClusterProxy(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, Name pCoordName, HRMName pAddress, int pCoordinatorID)
+	public ClusterProxy(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, Name pCoordName, int pCoordinatorID)
 	{	
 		super(pHRMController, pHierarchyLevel);
 
@@ -109,7 +107,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		if(tCluster == null)
 		{
 			Logging.log(this, "     ..creating cluster proxy");
-			ClusterProxy tClusterProxy = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
+			ClusterProxy tClusterProxy = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getToken());
 			mHRMController.setSourceIntermediateCluster(tClusterProxy, mHRMController.getSourceIntermediateCluster(this));
 			tClusterProxy.setPriority(pAnnounce.getCoordinatorsPriority());
 			tClusterProxy.setSuperiorCoordinatorID(pAnnounce.getToken());

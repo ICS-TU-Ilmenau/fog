@@ -868,7 +868,7 @@ public class ComChannel
 			 * Be aware of the fact that the new attached cluster has lower level
 			 */
 			Logging.log(this, "     ..creating cluster proxy");
-			ClusterProxy tClusterProxy = new ClusterProxy(mHRMController, pEntry.getClusterID(), pEntry.getLevel(), pEntry.getCoordinatorName(), pEntry.getCoordinatorL2Address(), pEntry.getToken());
+			ClusterProxy tClusterProxy = new ClusterProxy(mHRMController, pEntry.getClusterID(), pEntry.getLevel(), pEntry.getCoordinatorName(), pEntry.getToken());
 			
 			mHRMController.setSourceIntermediateCluster(tClusterProxy, mHRMController.getSourceIntermediateCluster(getParent()));
 			tClusterProxy.setSuperiorCoordinatorID(pEntry.getToken());

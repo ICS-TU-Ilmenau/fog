@@ -12,12 +12,15 @@ package de.tuilmenau.ics.fog.routing.hierarchical.properties;
 import java.io.Serializable;
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -50,32 +53,68 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	private int mCoordinatorID = 0;
 	
 	/**
+	 * Stores the FoG name of the node where the sender is located 
+	 */
+	private Name mSenderNodeName = null;
+	
+	/**
+	 * Stores the L2Address of the node where the sender is lcoated
+	 */
+	private L2Address mSenderL2Address = null;
+
+	/**
 	 * Stores all registered cluster member descriptions
 	 */
-	private LinkedList<ClusterMemberDescription> mClusterMemberDescriptions = new LinkedList<ClusterMemberDescription>();
+	private LinkedList<ClusterMemberDescription> mSenderClusterMembers = new LinkedList<ClusterMemberDescription>();
 
-	private Name mSourceName;
-	private HRMName mSourceAddress;
 	private static final long serialVersionUID = 7561293731302599090L;
 	
 	/**
-	 * Constructor
+	 * Factory function
 	 * 
+	 * @param pHRMController the HRMController of the current node
+	 * @param pSenderHierarchyLevel the hierarchy level of the sender
 	 * @param pClusterID the already created unique ID for the cluster the sender and the receiver should be part of
 	 * @param pHierarchyLevel the hierarchy level of the cluster
 	 * @param pCoordinatorID the unique ID of the coordinator (or 0 if none exists)
 	 */
-	public RequestClusterParticipationProperty(HierarchyLevel pSenderHierarchyLevel, Long pClusterID, HierarchyLevel pHierarchyLevel, int pCoordinatorID)
+	public static RequestClusterParticipationProperty create(HRMController pHRMController, HierarchyLevel pSenderHierarchyLevel, Long pClusterID, HierarchyLevel pHierarchyLevel, int pCoordinatorID)
 	{
-		Logging.log(this, "Setting sender hierarchy level " + pSenderHierarchyLevel.getValue());
-		Logging.log(this, "Setting target cluster ID " + pClusterID);
-		Logging.log(this, "Setting target coordinator ID " + pCoordinatorID);
+		// get the recursive FoG layer
+		FoGEntity tFoGLayer = (FoGEntity) pHRMController.getNode().getLayer(FoGEntity.class);
+
+		// get the central FN of this node
+		L2Address tThisHostL2Address = pHRMController.getHRS().getL2AddressFor(tFoGLayer.getCentralFN());
+	
+		RequestClusterParticipationProperty tResult = new RequestClusterParticipationProperty(pHRMController.getNodeName(), tThisHostL2Address, pSenderHierarchyLevel, pClusterID, pHierarchyLevel, pCoordinatorID);
+		
+		return tResult;
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param pSenderNodeName the FoG name of the node where the sender is located
+	 * @param pSenderL2Address the L2Adress of the node where the sender is located
+	 * @param pSenderHierarchyLevel the hierarchy level of the sender
+	 * @param pClusterID the already created unique ID for the cluster the sender and the receiver should be part of
+	 * @param pHierarchyLevel the hierarchy level of the new cluster
+	 * @param pCoordinatorID the unique ID of the coordinator (or 0 if none exists)
+	 */
+	private RequestClusterParticipationProperty(Name pSenderNodeName, L2Address pSenderL2Address, HierarchyLevel pSenderHierarchyLevel, Long pClusterID, HierarchyLevel pHierarchyLevel, int pCoordinatorID)
+	{
+		Logging.log(this, "Setting sender node name: " + pSenderNodeName.toString());
+		Logging.log(this, "Setting sender L2Address: " + pSenderL2Address);
+		Logging.log(this, "Setting sender hierarchy level: " + pSenderHierarchyLevel.getValue());
+		Logging.log(this, "Setting target cluster ID: " + pClusterID);
+		Logging.log(this, "Setting target coordinator ID: " + pCoordinatorID);
+		Logging.log(this, "Setting cluster hierarchy level: " + pHierarchyLevel.getValue());
+		mSenderNodeName = pSenderNodeName;
+		mSenderL2Address = pSenderL2Address;
 		mSenderHierarchyLevel = pSenderHierarchyLevel;
 		mClusterID = pClusterID;
 		mHierarchyLevel = pHierarchyLevel;
 		mCoordinatorID = pCoordinatorID;
-		
-		Logging.log(this, "Setting cluster hierarchy level: " + pHierarchyLevel.getValue());
 	}
 	
 	/**
@@ -119,39 +158,62 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	}
 
 	/**
+	 * Returns the FoG name of the node where the sender is located
+	 *  
+	 * @return the FoG name of the node where the sender is located
+	 */
+	public Name getSenderNodeName()
+	{
+		return mSenderNodeName;
+	}
+	
+	/**
+	 * 
+	 * Returns the L2Address of the node where the sender is located
+	 * 
+	 * @return the L2Address of the node where the sender is located 
+	 */
+	public HRMName getSenderL2Address()
+	{
+		return mSenderL2Address;
+	}
+
+	/**
 	 * Adds a description of a member (local coordinator) to the future common cluster to the internal database
 	 * 
 	 * @param pClusterID the unique cluster ID
 	 * @param pCoordinatorID the unique coordinator ID
 	 * @param pPriority the Bully priority of this cluster member
 	 */
-	public ClusterMemberDescription addLocalClusterMember(Long pClusterID, int pCoordinatorID, BullyPriority pPriority)
+	public ClusterMemberDescription addSenderClusterMember(Long pClusterID, int pCoordinatorID, BullyPriority pPriority)
 	{
 		// create the new member
 		ClusterMemberDescription tResult = new ClusterMemberDescription(pClusterID, pCoordinatorID, pPriority);
 
 		// add the cluster member to the database
-		Logging.log(this, "Adding cluster member description: " + tResult);
+		Logging.log(this, "Adding sender's cluster member: " + tResult);
 
-		synchronized (mClusterMemberDescriptions) {
-			mClusterMemberDescriptions.add(tResult);
+		synchronized (mSenderClusterMembers) {
+			mSenderClusterMembers.add(tResult);
 		}
 		
 		return tResult;
 	}
 
 	/**
-	 * Returns a list of descriptions about known cluster members
+	 * Returns a list of descriptions about known cluster members at sender side.
+	 * For the base hierarchy level, the sender describes its local level 0 cluster.
+	 * For higher hierarchy levels, the sender describes all its local coordinators for this new cluster.
 	 *  
-	 * @return the list of registered cluster members
+	 * @return the list of cluster members at sender side
 	 */
 	@SuppressWarnings("unchecked")
-	public LinkedList<ClusterMemberDescription> getClusterMemberDescriptions()
+	public LinkedList<ClusterMemberDescription> getSenderClusterMembers()
 	{
 		LinkedList<ClusterMemberDescription> tResult = null;
 		
-		synchronized (mClusterMemberDescriptions) {
-			tResult = (LinkedList<ClusterMemberDescription>) mClusterMemberDescriptions.clone();
+		synchronized (mSenderClusterMembers) {
+			tResult = (LinkedList<ClusterMemberDescription>) mSenderClusterMembers.clone();
 		}
 		
 		return tResult;		
@@ -166,8 +228,8 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	{
 		String tResult = getClass().getSimpleName() + "(ClusterID=" + mClusterID + ", CoordID=" + mCoordinatorID + ", HierLvl.=" + getHierarchyLevel().getValue() + ", ";
 		
-		synchronized (mClusterMemberDescriptions) {
-			tResult += mClusterMemberDescriptions.size() + " member(s))";
+		synchronized (mSenderClusterMembers) {
+			tResult += mSenderClusterMembers.size() + " member(s))";
 			
 //			int i = 0;
 //			for (ClusterMemberDescription tEntry : mClusterMemberDescriptions){
@@ -187,7 +249,7 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		private static final long serialVersionUID = -6712697028015706544L;
 
 		/**
-		 * Stores the unique ID of the cluster
+		 * Stores the unique ID of the cluster at sender side
 		 */
 		private Long mClusterID;
 		
@@ -196,9 +258,12 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		 */
 		private int mCoordinatorID;
 
-		private LinkedList<DiscoveryEntry> mDiscoveries;
-		private HierarchyLevel mHierarchyLevel = null;
+		/**
+		 * Stores the Bully priority of this cluster member
+		 */
 		private BullyPriority mPriority = null;
+
+		private LinkedList<DiscoveryEntry> mDiscoveries;
 		
 		/**
 		 * Constructor
@@ -221,67 +286,6 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		public BullyPriority getPriority()
 		{
 			return mPriority;
-		}
-		
-		/**
-		 * 
-		 * @param pLevel Set the level of the source cluster here. In general this is one level below the level of
-		 * the cluster that should be joined. So the level of this nested exception is below the level of the
-		 * ClusterParticipationProperty this nested participation is part of.
-		 */
-		public void setHierarchyLevel(HierarchyLevel pHierarchyLevel)
-		{
-			Logging.log(this, "Setting cluster member hierarchy level: " + pHierarchyLevel.getValue());
-			
-			mHierarchyLevel = pHierarchyLevel;
-		}
-		
-		/**
-		 * Get the level of the source cluster here. In general this is one level below the level of
-		 * the cluster that should be joined. So the level of this nested exception is below the level of the
-		 * ClusterParticipationProperty this nested participation is part of.
-		 * 
-		 * @return The level of the cluster that should participate is returned.
-		 */
-		public HierarchyLevel getHierarchyLevel()
-		{
-			return mHierarchyLevel;
-		}
-		
-		/**
-		 * 
-		 * @param pAddress This is the address of the node that is about to join the cluster.
-		 */
-		public void setSourceL2Address(HRMName pAddress)
-		{
-			mSourceAddress = pAddress;
-		}
-		
-		/**
-		 * 
-		 * @param pSource This is the name of the host or node that is about to join the target cluster.
-		 */
-		public void setSourceName(Name pSource)
-		{
-			mSourceName = pSource;
-		}
-		
-		/**
-		 * 
-		 * @return This is the name of the host or node that is about to join the target cluster.
-		 */
-		public Name getSourceName()
-		{
-			return mSourceName;
-		}
-		
-		/**
-		 * 
-		 * @return The address of the entity that wishes to become member of the cluster is returned. 
-		 */
-		public HRMName getSourceL2Address()
-		{
-			return mSourceAddress;
 		}
 		
 		/**
