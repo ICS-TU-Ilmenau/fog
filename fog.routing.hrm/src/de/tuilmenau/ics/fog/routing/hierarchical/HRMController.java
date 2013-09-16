@@ -1016,7 +1016,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Describe the cluster member
 		 */
 	    Logging.log(this, "    ..creating cluster member description for created cluster " + tCreatedCluster);
-	    tRequestClusterParticipationProperty.addClusterMember(tCreatedCluster.getClusterID(), 0, null);
+	    tRequestClusterParticipationProperty.addLocalClusterMember(tCreatedCluster.getClusterID(), 0, null);
 
 		/**
 		 * Store the thread specific variables

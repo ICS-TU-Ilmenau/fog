@@ -16,7 +16,6 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -24,6 +23,9 @@ import de.tuilmenau.ics.fog.ui.Logging;
 /**
  * This class is used for describing a cluster, which both the connection source and the destination should 
  * have in common (the connection destination should join the described cluster). 
+ * 
+ * Additionally, the sender describes local cluster members, which have already joined this new cluster.
+ * 
  */
 public class RequestClusterParticipationProperty extends AbstractProperty
 {
@@ -117,13 +119,13 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	}
 
 	/**
-	 * Adds a description of a cluster member to the internal database
+	 * Adds a description of a member (local coordinator) to the future common cluster to the internal database
 	 * 
 	 * @param pClusterID the unique cluster ID
 	 * @param pCoordinatorID the unique coordinator ID
 	 * @param pPriority the Bully priority of this cluster member
 	 */
-	public ClusterMemberDescription addClusterMember(Long pClusterID, int pCoordinatorID, BullyPriority pPriority)
+	public ClusterMemberDescription addLocalClusterMember(Long pClusterID, int pCoordinatorID, BullyPriority pPriority)
 	{
 		// create the new member
 		ClusterMemberDescription tResult = new ClusterMemberDescription(pClusterID, pCoordinatorID, pPriority);
@@ -194,7 +196,6 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		 */
 		private int mCoordinatorID;
 
-		private ClusterName mPredecessor;
 		private LinkedList<DiscoveryEntry> mDiscoveries;
 		private HierarchyLevel mHierarchyLevel = null;
 		private BullyPriority mPriority = null;
@@ -255,29 +256,6 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		{
 			mSourceAddress = pAddress;
 		}
-		
-//		/**
-//		 * 
-//		 * @param pPredecessor This has to be the second last cluster of the path to the target cluster. Once the target interprets
-//		 * that cluster it knows which "outgoing" cluster should be used. in order to reach the node that generated the participation
-//		 * property.
-//		 */
-//		public void setPredecessor(ClusterName pPredecessor)
-//		{
-//			mPredecessor = pPredecessor;
-//		}
-//		
-//		/**
-//		 * 
-//		 * @return This is be the second last cluster of the path to the target cluster. Once the target interprets
-//		 * this cluster it knows which "outgoing" cluster should be used. in order to reach the node that generated the participation
-//		 * property.
-//		 * 
-//		 */
-//		public ClusterName getPredecessor()
-//		{
-//			return mPredecessor;
-//		}
 		
 		/**
 		 * 
