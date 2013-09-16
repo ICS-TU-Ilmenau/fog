@@ -18,6 +18,7 @@ import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -179,16 +180,27 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	}
 
 	/**
-	 * Adds a description of a member (local coordinator) to the future common cluster to the internal database
+	 * Adds a description of a member (local coordinator) to the future common cluster to the internal database.
+	 * For the base hierarchy level this is a cluster at sender side.
+	 * For a higher hierarchy level this is a coordinator which should be part of the future common cluster.
 	 * 
-	 * @param pClusterID the unique cluster ID
-	 * @param pCoordinatorID the unique coordinator ID
-	 * @param pPriority the Bully priority of this cluster member
+	 * @param pSenderClusterMember the cluster member at sender side
 	 */
-	public ClusterMemberDescription addSenderClusterMember(Long pClusterID, int pCoordinatorID, BullyPriority pPriority)
+	public ClusterMemberDescription addSenderClusterMember(Cluster pSenderClusterMember)
 	{
+		BullyPriority tClusterMemberPriority = null;
+		if(pSenderClusterMember.getHierarchyLevel().isBaseLevel()){
+			tClusterMemberPriority = pSenderClusterMember.getPriority();
+		}else{ // higher hierarchy level
+			if(pSenderClusterMember.getCoordinator() != null){
+				pSenderClusterMember.getCoordinator().getPriority();
+			}else{
+				Logging.err(this, "Coordinator of sender's cluster member should be defined here, cluster member: " + pSenderClusterMember);
+			}			
+		}
+		
 		// create the new member
-		ClusterMemberDescription tResult = new ClusterMemberDescription(pClusterID, pCoordinatorID, pPriority);
+		ClusterMemberDescription tResult = new ClusterMemberDescription(pSenderClusterMember.getClusterID(), pSenderClusterMember.getCoordinatorID(), tClusterMemberPriority);
 
 		// add the cluster member to the database
 		Logging.log(this, "Adding sender's cluster member: " + tResult);

@@ -1032,7 +1032,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					 * Describe the cluster member
 					 */
 				    Logging.log(this, "           ..creating cluster member description for the found cluster " + tCoordinatorCluster);
-					ClusterMemberDescription tClusterMemberDescription = tRequestClusterParticipationProperty.addSenderClusterMember(tCoordinatorCluster.getClusterID(), tCoordinatorCluster.getCoordinatorID(), tCoordinatorCluster.getPriority());
+					ClusterMemberDescription tClusterMemberDescription = tRequestClusterParticipationProperty.addSenderClusterMember(tCoordinatorCluster);
 					
 					/**
 					 * Iterate over all known neighbors of the current cluster member: we inform the connection target about this neighborhood topology
