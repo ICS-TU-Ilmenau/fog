@@ -456,7 +456,7 @@ public class Cluster extends ControlEntity implements ICluster
 	}
 
 	/**
-	 * EVENT: an inferior coordinator requests cluster membership
+	 * EVENT: an inferior coordinator requests cluster membership, the event is triggered by the comm. session because of some comm. end point at remote side
 	 * 
 	 * @param pSourceComSession the comm. session where the packet was received
 	 * @param pRequestClusterMembershipPacket the request packet
@@ -490,12 +490,14 @@ public class Cluster extends ControlEntity implements ICluster
 	}
 	
 	/**
-	 * EVENT: detected additional cluster member
+	 * EVENT: detected additional cluster member, the event is triggered by ourself
 	 * 
 	 * @param pComChannel the comm. channel of the new cluster member
 	 */
 	private void eventClusterMemberJoined(ComChannel pComChannel)
 	{
+		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
+		
 		//TODO: should we do something additional here?
 
 		if (getCoordinator() != null){
