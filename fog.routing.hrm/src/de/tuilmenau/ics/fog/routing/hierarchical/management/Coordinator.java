@@ -612,7 +612,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		 */
 		boolean tSuperiorClusterFound = false;
 		Logging.log(this, "      ..searching for a locally known superior cluster on hierarchy level: " + getHierarchyLevel().getValue());
-		if(HRMConfig.Hierarchy.COORDINATORS_CAN_JOIN_EXISTING_SUPERIOR_CLUSTERS){
+		if(HRMConfig.Hierarchy.COORDINATORS_MAY_JOIN_EXISTING_SUPERIOR_CLUSTERS){
 			for(Cluster tCluster : mHRMController.getAllClusters(getHierarchyLevel())) {
 				Logging.log(this, "        ..found superior cluster: " + tCluster);
 				if (joinSuperiorCluster(tCluster)){

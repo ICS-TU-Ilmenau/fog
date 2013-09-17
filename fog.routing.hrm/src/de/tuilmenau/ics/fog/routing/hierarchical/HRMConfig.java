@@ -142,7 +142,7 @@ public class HRMConfig
 		/**
 		 * Defines if a coordinator may join an existing local superior cluster.
 		 */
-		public static final boolean COORDINATORS_CAN_JOIN_EXISTING_SUPERIOR_CLUSTERS = true;
+		public static final boolean COORDINATORS_MAY_JOIN_EXISTING_SUPERIOR_CLUSTERS = true;
 
 		/**
 		 * Defines if connection should remain open or be automatically closed if the last inferior comm. channel was closed
