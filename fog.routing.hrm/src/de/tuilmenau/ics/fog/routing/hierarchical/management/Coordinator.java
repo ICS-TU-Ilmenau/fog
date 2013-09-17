@@ -936,6 +936,8 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 					 * Connect to all found cluster candidates
 					 */
 					for(AbstractRoutingGraphNode tNeighborCluster : tSelectedNeighborClusters) {
+						Logging.log(this, "     ..processing neighbor cluster: " + tNeighborCluster);
+						
 						if(tNeighborCluster instanceof ControlEntity) {
 							ControlEntity tNeighborClusterControlEntity = (ControlEntity)tNeighborCluster;
 							
