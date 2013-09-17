@@ -471,26 +471,10 @@ public class Elector implements Localization
 	{
 		Logging.log(this, "Cluster member left, comm. channel was: " + pComChannel);
 
-		// unregister the comm. channel
-		mParentCluster.unregisterComChannel(pComChannel);
-		
-		Logging.log(this, "      ..remaining comm. channels: " + mParentCluster.getComChannels());
-		
-		// no further external candidates available/known (all candidates are gone) ?
-		if (mParentCluster.countClusterMembers() < 1){
-			/**
-			 * TRIGGER: all cluster members are gone, we destroy the coordinator
-			 */
-			if (mParentCluster.getCoordinator() != null){
-				mParentCluster.getCoordinator().eventCoordinatorRoleInvalid();
-			}else{
-				Logging.warn(this, "eventElectionLeft() can't find the coordinator");
-			}
-			/**
-			 * TRIGGER: all cluster members are gone, we destroy the cluster
-			 */
-			mParentCluster.eventClusterLostAllMembers();
-		}			 
+		/**
+		 * TRIGGER: all cluster members are gone, we destroy the cluster
+		 */
+		mParentCluster.eventClusterMemberLost(pComChannel);
 	}
 	
 	/**

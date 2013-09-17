@@ -380,8 +380,39 @@ public class Cluster extends ControlEntity implements ICluster
 
 	/**
 	 * EVENT: "lost all members", triggered by Elector in case the last member left the election 
+
+	 * @param pComChannel the comm. channel of the lost cluster member
 	 */
-	public void eventClusterLostAllMembers()
+	public void eventClusterMemberLost(ComChannel pComChannel)
+	{
+		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
+		
+		// unregister the comm. channel
+		unregisterComChannel(pComChannel);
+		
+		Logging.log(this, "      ..remaining comm. channels: " + getComChannels());
+
+		// no further external candidates available/known (all candidates are gone) ?
+		if (countClusterMembers() < 1){
+			/**
+			 * TRIGGER: all cluster members are gone, we destroy the coordinator
+			 */
+			if (getCoordinator() != null){
+				getCoordinator().eventCoordinatorRoleInvalid();
+			}else{
+				Logging.warn(this, "eventClusterMemberLost() can't find the coordinator");
+			}
+			/**
+			 * TRIGGER: all cluster members are gone, we destroy the cluster
+			 */
+			eventClusterLostAllMembers();
+		}			 
+	}
+
+	/**
+	 * EVENT: "lost all members", triggered by ourself in case the last member left the election 
+	 */
+	private void eventClusterLostAllMembers()
 	{
 		Logging.log(this, "============ EVENT: Cluster_Lost_All_Members");
 		Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
