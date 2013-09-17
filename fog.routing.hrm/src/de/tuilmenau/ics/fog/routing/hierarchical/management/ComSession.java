@@ -62,6 +62,11 @@ public class ComSession extends Session
 	private Connection mParentConnection = null;
 	
 	/**
+	 * Stores the target of this comm. session
+	 */
+	private L2Address mTargetL2Address = null;
+	
+	/**
 	 * Stores the parent control entity
 	 */
 	private ControlEntity mParent = null;
@@ -244,11 +249,38 @@ public class ComSession extends Session
 	{
 		Logging.log(this, "Unregistering communication channel: " + pComChannel);
 		
+		boolean tLastChannelClosed = false; //needed because of mutex usage below
 		synchronized (mRegisteredComChannels) {
-			mRegisteredComChannels.remove(pComChannel);			
+			mRegisteredComChannels.remove(pComChannel);
+			
+			if (mRegisteredComChannels.size() == 0){
+				Logging.log(this, "    ..last inferior comm. channel was unregistered");
+
+				tLastChannelClosed = true;
+			}
 		}
+		
+		if(tLastChannelClosed){
+			/**
+			 * Trigger the event "all channels lost"
+			 */
+			eventAllChannelsClosed();
+		}		
 	}
 	
+	/**
+	 * EVENT: all inferior channels were closed
+	 */
+	private void eventAllChannelsClosed()
+	{
+		if (HRMConfig.Hierarchy.AUTO_CLEANUP_FOR_CONNECTIONS){
+			Logging.log(this, "\n\n\n########### closing the parent connection(destination=" + mTargetL2Address + ", requirements=" + getConnection().getRequirements() + ")");
+			
+			// close the connection again
+			getConnection().close();
+		}
+	}
+
 	/**
 	 * Returns all registered communication channels
 	 * 
@@ -581,6 +613,9 @@ public class ComSession extends Session
 		// store the connection
 		mParentConnection = pConnection;
 		
+		// store the target L2 address
+		mTargetL2Address = pTargetL2Address;
+		
 		/**
 		 * Calls "start()" of the superior class
 		 */
@@ -645,5 +680,4 @@ public class ComSession extends Session
 		}
 		 
 	}
-
 }

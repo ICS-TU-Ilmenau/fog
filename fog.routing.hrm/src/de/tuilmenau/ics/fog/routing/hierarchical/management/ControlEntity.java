@@ -278,6 +278,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void registerComChannel(ComChannel pComChannel)
 	{
+		Logging.log(this, "Registering comm. channel: " + pComChannel);
+		
+		// close the communication channel to the peer
+		pComChannel.closeChannel();
+		
 		synchronized (mComChannels) {
 			if(!mComChannels.contains(pComChannel)) {
 				Logging.log(this, "Registering communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels already registered");
@@ -297,6 +302,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void unregisterComChannel(ComChannel pComChannel)
 	{
+		Logging.log(this, "Unregistering comm. channel: " + pComChannel);
+
 		synchronized (mComChannels) {
 			if(mComChannels.contains(pComChannel)) {
 				// add the channel to the database
