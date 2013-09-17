@@ -31,11 +31,6 @@ public class HRMName implements Name
 	 */
 	protected String mOptionalDescr;
 	
-	/**
-	 * This description includes the requirements given by the FoG system. 
-	 */
-	private Description mDescription;
-	
 	private static final long serialVersionUID = 6612145890128148511L;
 	private static final Namespace NAMESPACE_HRM = new Namespace("HRM");
 	
