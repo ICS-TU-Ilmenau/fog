@@ -964,7 +964,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 	/**
 	 * EVENT: detected a neighbor coordinator, we react on this event by the following steps:
-	 * 	 1.) use "RequestClusterParticipationProperty" for every connection to inform about the new cluster 
+	 *   1.) connect to this neighbor coordinator and: 
+	 * 	 	a.) use "RequestClusterParticipationProperty" to inform about the desired new superior cluster which both should belong to 
+	 * 		b.) tell the neighbor coordinator about locally known network topology data from the ARG (stored in the HRMController) 
 	 * 
 	 * @param pNeighborCluster the found neighbor cluster whose coordinator is a neighbor of this one
 	 * @param pFutureClusterID the clusterID for the common cluster
@@ -1075,7 +1077,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 				Logging.log(this, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
 				tComSession.startConnection(null, tConnection);
-	
 				
 				/**
 				 * Create and send ClusterDiscovery
