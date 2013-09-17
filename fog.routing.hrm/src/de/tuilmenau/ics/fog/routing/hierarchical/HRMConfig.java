@@ -147,7 +147,7 @@ public class HRMConfig
 		/**
 		 * Defines if connection should remain open or be automatically closed if the last inferior comm. channel was closed
 		 */
-		public static final boolean AUTO_CLEANUP_FOR_CONNECTIONS = false;
+		public static final boolean AUTO_CLEANUP_FOR_CONNECTIONS = true;
 	}
 	
 	/**
