@@ -464,7 +464,7 @@ public class Cluster extends ControlEntity implements ICluster
 	public void eventInferiorCoordinatorRequestsMembership(ComSession pSourceComSession, RequestClusterMembership pRequestClusterMembershipPacket)
 	{
 		ClusterName tRemoteClusterName = new ClusterName(mHRMController, pRequestClusterMembershipPacket.getSenderHierarchyLevel(), pRequestClusterMembershipPacket.getSenderCoordinatorID(), pRequestClusterMembershipPacket.getSenderClusterID());
-		Logging.log(this, ">>>> GOT A REQUEST FOR MEMBERSHIP from: " + tRemoteClusterName);
+		Logging.log(this, "EVENT: got a membership request from: " + tRemoteClusterName);
 		
 		/**
 		 * Create the communication channel for the described cluster member
