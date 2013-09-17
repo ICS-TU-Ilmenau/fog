@@ -510,6 +510,8 @@ public class ComSession extends Session
 				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
 					boolean tWasDelivered = false;
 
+					Logging.log(this, "     ..nested discovery: " + tNestedDiscovery);
+					
 					String tAnalyzedClusters = new String("");
 					for(ComChannel tComChannel: tAllComChannels) {
 						tAnalyzedClusters += tComChannel.getParent() + "\n";

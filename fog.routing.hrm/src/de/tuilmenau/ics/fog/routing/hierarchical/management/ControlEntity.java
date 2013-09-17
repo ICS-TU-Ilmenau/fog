@@ -598,7 +598,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private void handleSignalingMessageBully(SignalingMessageBully pBullyMessage, ComChannel pSourceClusterMember)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-			Logging.log(this, "RECEIVED BULLY MESSAGE FROM " + pSourceClusterMember);
+			Logging.log(this, "RECEIVED BULLY MESSAGE " + pBullyMessage.getClass().getSimpleName() + " FROM " + pSourceClusterMember);
 
 		if (this instanceof Cluster){
 			Cluster tCluster = (Cluster)this;

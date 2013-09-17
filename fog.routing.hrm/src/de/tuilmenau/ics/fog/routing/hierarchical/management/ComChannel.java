@@ -299,7 +299,7 @@ public class ComChannel
 	public void setPeerPriority(BullyPriority pPeerPriority)
 	{
 		if (pPeerPriority == null){
-			Logging.warn(this, "Trying to set NULL POINTER as Bully priority, ignoring this request");
+			Logging.warn(this, "Trying to set a NULL POINTER as peer priority, ignoring this request, current priority: " + getPeerPriority());
 			return;
 		}
 
