@@ -421,7 +421,72 @@ public class ComChannel
 		return mRemoteClusterName;
 	}
 	
+	/**
+	 * 
+	 */
+	public void eventParentComSessionEstablished()
+	{
+		/**
+		 * TRIGGER: inform the parental ControlEntity about the established communication session and its inferior channels
+		 */
+		getParent().eventComChannelEstablished(this);
+	}
+
+	/**
+	 * Revokes all formerly assigned HRMIDs
+	 * 
+	 * @param pHRMID 
+	 */	
+	public void signalRevokeHRMIDs()
+	{
+		// debug output
+		synchronized (mAssignedHRMIDs) {
+			if (mAssignedHRMIDs.size() > 0){
+				for(HRMID tHRMID : mAssignedHRMIDs){
+					Logging.log(this, "Revoking assigned HRMID: " + tHRMID);
+				}
 	
+				/**
+				 * Revoke the HRMIDs from the peer
+				 */
+				// create the packet
+				RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), mAssignedHRMIDs);
+				// send the packet
+				sendPacket(tRevokeHRMIDsPacket);
+				
+				/**
+				 * Clear the list of stored assigned HRMID
+				 */
+				mAssignedHRMIDs.clear();
+			}
+		}
+	}
+
+	/**
+	 * Stores an assigned HRMID
+	 * 
+	 * @param pHRMID the assigned HRMID
+	 */
+	public void storeAssignedHRMID(HRMID pHRMID)
+	{
+		Logging.log(this, "Storing assigned HRMID: " + pHRMID);
+		
+		synchronized(mAssignedHRMIDs){
+			mAssignedHRMIDs.add(pHRMID);
+		}
+	}
+	
+	/**
+	 * Closes the comm. channel
+	 */
+	public void closeChannel()
+	{
+		//TODO: should we inform the peer about our death?
+
+		// unregister from the parent comm. session
+		mParentComSession.unregisterComChannel(this);
+	}
+
 	
 	
 	
@@ -893,60 +958,5 @@ public class ComChannel
 	public String toString()
 	{
 		return getClass().getSimpleName() + "@" + mParent.toString() + "(ClusterID=" + mParent.getClusterID() + ", PeerPrio=" + mPeerPriority.getValue() + (getPeerL2Address() != null ? ", PeerL2Addres=" + getPeerL2Address() + ", Peer=" + getPeerHRMID() : "") + ")";
-	}
-
-	/**
-	 * 
-	 */
-	public void eventParentComSessionEstablished()
-	{
-		/**
-		 * TRIGGER: inform the parental ControlEntity about the established communication session and its inferior channels
-		 */
-		getParent().eventComChannelEstablished(this);
-	}
-
-	/**
-	 * Revokes all formerly assigned HRMIDs
-	 * 
-	 * @param pHRMID 
-	 */	
-	public void signalRevokeHRMIDs()
-	{
-		// debug output
-		synchronized (mAssignedHRMIDs) {
-			if (mAssignedHRMIDs.size() > 0){
-				for(HRMID tHRMID : mAssignedHRMIDs){
-					Logging.log(this, "Revoking assigned HRMID: " + tHRMID);
-				}
-	
-				/**
-				 * Revoke the HRMIDs from the peer
-				 */
-				// create the packet
-				RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), mAssignedHRMIDs);
-				// send the packet
-				sendPacket(tRevokeHRMIDsPacket);
-				
-				/**
-				 * Clear the list of stored assigned HRMID
-				 */
-				mAssignedHRMIDs.clear();
-			}
-		}
-	}
-
-	/**
-	 * Stores an assigned HRMID
-	 * 
-	 * @param pHRMID the assigned HRMID
-	 */
-	public void storeAssignedHRMID(HRMID pHRMID)
-	{
-		Logging.log(this, "Storing assigned HRMID: " + pHRMID);
-		
-		synchronized(mAssignedHRMIDs){
-			mAssignedHRMIDs.add(pHRMID);
-		}
 	}
 }
