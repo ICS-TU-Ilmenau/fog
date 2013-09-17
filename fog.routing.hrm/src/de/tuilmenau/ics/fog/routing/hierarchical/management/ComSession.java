@@ -276,8 +276,8 @@ public class ComSession extends Session
 		if (HRMConfig.Hierarchy.AUTO_CLEANUP_FOR_CONNECTIONS){
 			Logging.log(this, "\n\n\n########### closing the parent connection(destination=" + mTargetL2Address + ", requirements=" + getConnection().getRequirements() + ")");
 			
-			// close the connection again
-			getConnection().close();
+			//stop the session (closes the connection)
+			stop();
 		}
 	}
 
