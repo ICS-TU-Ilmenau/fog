@@ -20,7 +20,8 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.util.Tuple;
 
 /**
- * PACKET: This class carries information of other clusters that have to be discovered by other nodes
+ * PACKET: This packet is used in order to inform a neighbor coordinator about the locally known network topology stored in the ARG (HRMController).
+ * 		   Usually, this packet is sent from a coordinator to a neighbor coordinator. 
  */
 public class ClusterDiscovery implements Serializable
 {	
