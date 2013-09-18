@@ -149,6 +149,9 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 		
 		// do not start calculation without a useful name
 		if(pName == null) {
+			// throw a short message to the console in case no event lister is used for the CEP
+			getLogger().err(this, "Can not connect without a destination name.");
+			
 			tCEP.setError(new NetworkException("Can not connect without a destination name."));
 			return tCEP;
 		}
