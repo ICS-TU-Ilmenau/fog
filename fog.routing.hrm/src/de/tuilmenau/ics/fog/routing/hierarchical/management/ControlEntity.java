@@ -725,30 +725,25 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			return false;
 		}
 		
-		if (this instanceof ICluster)
-		{
-			ICluster tThisICluster = (ICluster)this;
-			
-			if(pObj instanceof ICluster) {
-				ICluster tICluster = (ICluster) pObj;
-				
-				//Logging.log(this, "EQUALS COMPARING with " + pObj + ": " + tICluster.getClusterID() + "<=>" + tThisICluster.getClusterID() + ", " + tICluster.getToken() + "<=>" + tThisICluster.getToken() + ", " + tICluster.getHierarchyLevel().getValue() + "<=>" + getHierarchyLevel().getValue());
+		if (pObj instanceof Long){
+			Long tOtherClusterID = (Long)pObj;
 
-				if (tICluster.getClusterID().equals(tThisICluster.getClusterID()) && (tICluster.getCoordinatorID() == tThisICluster.getCoordinatorID()) && (tICluster.getHierarchyLevel().equals(getHierarchyLevel()))) {
-					return true;
-				}
+			Logging.log(this, "EQUALS CLUSTER_ID COMPARING with " + pObj + ": " + tOtherClusterID + "<=>" + getClusterID());
+
+			if (tOtherClusterID.equals(getClusterID())) {
+				return true;
 			}
+		}else{
+			ControlEntity tComparedObj = (ControlEntity) pObj;
 			
-			if (pObj instanceof Long){
-				Long tOtherClusterID = (Long)pObj;
+			//Logging.log(this, "EQUALS COMPARING with " + pObj + ": " + tICluster.getClusterID() + "<=>" + tThisICluster.getClusterID() + ", " + tICluster.getToken() + "<=>" + tThisICluster.getToken() + ", " + tICluster.getHierarchyLevel().getValue() + "<=>" + getHierarchyLevel().getValue());
 
-				Logging.log(this, "EQUALS CLUSTER_ID COMPARING with " + pObj + ": " + tOtherClusterID + "<=>" + tThisICluster.getClusterID());
-
-				if (tOtherClusterID.equals(tThisICluster.getClusterID())) {
-					return true;
-				}
+			//HINT: we ignore the coordinator ID because the clusterID is unique enough for identification
+			if (tComparedObj.getClusterID().equals(getClusterID()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
+				return true;
 			}
 		}
+
 		return false;
 	}	
 
