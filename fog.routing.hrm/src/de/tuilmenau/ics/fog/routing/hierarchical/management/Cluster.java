@@ -102,13 +102,13 @@ public class Cluster extends ControlEntity implements ICluster
 		// register at HRMController's internal database
 		mHRMController.registerCluster(this);
 
+		Logging.log(this, "\n\n\n################ CREATED CLUSTER on hierarchy level: " + (getHierarchyLevel().getValue()));
+
 		// detect neighbor clusters, increase the Bully priority based on the local connectivity
 		initializeNeighborhood();
 
 		// creates new elector object, which is responsible for Bully based election processes
 		mElector = new Elector(mHRMController, this);
-		
-		Logging.log(this, "\n\n\n################ CREATED CLUSTER on hierarchy level: " + (getHierarchyLevel().getValue()));
 	}
 	
 	/**
@@ -728,7 +728,7 @@ public class Cluster extends ControlEntity implements ICluster
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue();
+		String tResult = getClass().getSimpleName() + (getGUIClusterID() != -1 ? Long.toString(getGUIClusterID()) : "??") + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
 	}
