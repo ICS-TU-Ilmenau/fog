@@ -108,7 +108,7 @@ public class Cluster extends ControlEntity implements ICluster
 		// creates new elector object, which is responsible for Bully based election processes
 		mElector = new Elector(mHRMController, this);
 		
-		Logging.log(this, "CREATED CLUSTER on hierarchy level: " + getHierarchyLevel().getValue());
+		Logging.log(this, "\n\n\n################ CREATED CLUSTER on hierarchy level: " + (getHierarchyLevel().getValue()));
 	}
 	
 	/**
