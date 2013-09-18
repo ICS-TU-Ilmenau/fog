@@ -97,7 +97,7 @@ public class HRMConfig
 		/**
 		 * Defines if the hierarchy creation should start once the entire simulation was created. 
 		 */
-		public static final boolean BLOCK_HIERARCHY_UNTIL_END_OF_SIMULATION_CREATION = true;
+		public static final boolean BLOCK_HIERARCHY_UNTIL_END_OF_SIMULATION_CREATION = false;
 	}
 	
 	public class Addressing
