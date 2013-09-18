@@ -9,8 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.election;
 
-import java.util.Random;
-
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAlive;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
@@ -95,13 +93,6 @@ public class Elector implements Localization
 		
 		// set IDLE state
 		setElectorState(ElectorState.IDLE);
-
-		boolean tStartBaseLevel =  ((mParentCluster.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
-		
-		// start coordinator election for the created HRM instance if desired
-		if(((!mParentCluster.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
-			startElection();
-		}
 	}
 	
 	/**
@@ -600,6 +591,7 @@ public class Elector implements Localization
 		}
 		
 		// update the stored Bully priority of the cluster member
+		Logging.log(this, "      ..updating peer priority to: " + pPacketBully.getSenderPriority().getValue());
 		pComChannel.setPeerPriority(pPacketBully.getSenderPriority());		
 
 		if (!tControlEntity.getHierarchyLevel().isHigher(this, mParentCluster.getHierarchyLevel())){

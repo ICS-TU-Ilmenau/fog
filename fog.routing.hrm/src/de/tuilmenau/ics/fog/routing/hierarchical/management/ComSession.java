@@ -664,6 +664,11 @@ public class ComSession extends Session
 		// tell the neighbor about the FN
 		Logging.log(mHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
 		write(tAnnouncePhysicalEndPoint);
+		
+		/**
+		 * Trigger event "communication available"
+		 */
+		getParent().eventCommunicationAvailable();
 	}
 
 	/**

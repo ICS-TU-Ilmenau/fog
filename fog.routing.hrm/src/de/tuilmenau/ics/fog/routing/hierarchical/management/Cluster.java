@@ -138,6 +138,22 @@ public class Cluster extends ControlEntity implements ICluster
 	}
 
 	/**
+	 * EVENT: cluster communication available, triggered by the comm. session 
+	 */
+	public void eventCommunicationAvailable()
+	{
+		Logging.log(this, "EVENT: communication available");
+		
+		boolean tStartBaseLevel =  ((getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
+		
+		// start coordinator election for the created HRM instance if desired
+		if(((!getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
+			Logging.log(this, "      ..starting ELECTION");
+			mElector.startElection();
+		}
+	}
+
+	/**
 	 * Detects neighbor clusters and increases the cluster's Bully priority based on the local connectivity. 
 	 */
 	private void initializeNeighborhood()

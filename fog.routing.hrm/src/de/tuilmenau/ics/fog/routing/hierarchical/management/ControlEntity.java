@@ -578,7 +578,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void eventClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
-		Logging.warn(this, "Received event via: " + pComChannel);
+		Logging.warn(this, "Received event COORDINATOR_ANNOUNCED via: " + pComChannel);
 		Logging.warn(this, "Ignoring announced coordinator data: " + pAnnouncePacket);
 	}
 	
@@ -587,8 +587,17 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */ 
 	public void eventSuperiorClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
-		Logging.warn(this, "Received event from higher layer via: " + pComChannel);
+		Logging.warn(this, "Received event SUPERIOR_COORDINATOR_ANNOUNCED from higher layer via: " + pComChannel);
 		Logging.warn(this, "Ignoring announced superior coordinator data: " + pAnnouncePacket);
+	}
+
+	/**
+	 * EVENT: "communication available", triggered by parent comm. session
+	 */
+	public void eventCommunicationAvailable()
+	{
+		Logging.warn(this, "Received event COMMUNICATION_AVAILABLE");
+		Logging.warn(this, "Ignoring COMMUNICATION_AVAILABLE");
 	}
 
 	public void handleNeighborAnnouncement(AnnounceRemoteCluster pNeighborClusterAnnounce, ComChannel pComChannel)
@@ -698,7 +707,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	public void handlePacket(Serializable pMessage, ComChannel pComChannel)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING)
-			Logging.log(this, "RECEIVED SIGNALING MESSAGE FROM " + pComChannel);
+			Logging.log(this, "RECEIVED SIGNALING MESSAGE " + pMessage.getClass().getSimpleName() + " FROM " + pComChannel);
 
 		/**
 		 * Bully signaling message
