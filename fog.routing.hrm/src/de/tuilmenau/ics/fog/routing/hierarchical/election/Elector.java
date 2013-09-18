@@ -98,16 +98,9 @@ public class Elector implements Localization
 
 		boolean tStartBaseLevel =  ((mParentCluster.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
 		
-		// was the cluster already locally registered as neighbor? 
-		if (mParentCluster.isNeighborHoodInitialized()){
-			// start coordinator election for the created HRM instance if desired
-			if(((!mParentCluster.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
-				elect();
-			}
-		}else{
-			Logging.err(this, "Neighborhood of cluster " + mParentCluster + " has to be already initialized when calling this constructor");
-			
-			setElectorState(ElectorState.ERROR);
+		// start coordinator election for the created HRM instance if desired
+		if(((!mParentCluster.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
+			startElection();
 		}
 	}
 	
@@ -148,27 +141,34 @@ public class Elector implements Localization
 	 */
 	public void startElection()
 	{
-		switch(getElectorState()){
-			case IDLE:
-				elect();
-				break;
-			case ELECTED:
-				if (isCoordinatorValid()){
-					Logging.log(this, "RESTARTING ELECTION, old coordinator was valid: " + isCoordinatorValid());
-					reelect();
-				}
-				break;
-			case ELECTING:
-				Logging.log(this, "Election is already running");
-				break;
-			case ERROR:
-				Logging.err(this, "Election is in ERROR state");
-				break;
-			case START:
-				Logging.err(this, "Election is stuck");
-				break;
-			default:
-				break;
+		// was the cluster already locally registered as neighbor? 
+		if (mParentCluster.isNeighborHoodInitialized()){
+			switch(getElectorState()){
+				case IDLE:
+					elect();
+					break;
+				case ELECTED:
+					if (isCoordinatorValid()){
+						Logging.log(this, "RESTARTING ELECTION, old coordinator was valid: " + isCoordinatorValid());
+						reelect();
+					}
+					break;
+				case ELECTING:
+					Logging.log(this, "Election is already running");
+					break;
+				case ERROR:
+					Logging.err(this, "Election is in ERROR state");
+					break;
+				case START:
+					Logging.err(this, "Election is stuck");
+					break;
+				default:
+					break;
+			}
+		}else{
+			Logging.err(this, "Neighborhood of cluster " + mParentCluster + " has to be already initialized when calling startElection()");
+			
+			setElectorState(ElectorState.ERROR);
 		}
 	}
 	
