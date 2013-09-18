@@ -1000,7 +1000,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pNeighborL2Address the L2 address of the detected physical neighbor's first FN towards the common bus.
 	 */
-	public synchronized void eventDetectedPhysicalNeighborNode(L2Address pNeighborL2Address)
+	public synchronized void eventDetectedPhysicalNeighborNode(final L2Address pNeighborL2Address)
 	{
 		// get the recursive FoG layer
 		FoGEntity tFoGLayer = (FoGEntity) mNode.getLayer(FoGEntity.class);
@@ -1014,7 +1014,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Create cluster
 		 */
 	    Logging.log(this, "    ..creating new cluster");
-		Cluster tCreatedCluster = Cluster.createBaseCluster(this);
+		final Cluster tCreatedCluster = Cluster.createBaseCluster(this);
 
 		setSourceIntermediateCluster(tCreatedCluster, tCreatedCluster);
 		
@@ -1022,7 +1022,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Create communication session
 		 */
 	    Logging.log(this, "    ..creating new communication session");
-	    ComSession tComSession = new ComSession(this, false, tCreatedCluster, tCreatedCluster.getHierarchyLevel());
+	    final ComSession tComSession = new ComSession(this, false, tCreatedCluster, tCreatedCluster.getHierarchyLevel());
 	    
 	    /**
 	     * Create communication channel
@@ -1043,10 +1043,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	    tRequestClusterParticipationProperty.addSenderClusterMember(tCreatedCluster);
 
 		/**
-		 * Store the thread specific variables
+		 * Helper for having access to the HRMController within the created thread
 		 */
-		final L2Address tNeighborName = pNeighborL2Address;
-		final ComSession tFSession = tComSession;
 		final HRMController tHRMController = this;
 
 		/**
@@ -1081,11 +1079,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * Connect to the neighbor node
 				 */
 				Connection tConnection = null;				
-			    Logging.log(this, "    ..CONNECTING to: " + tNeighborName + " with requirements: " + tConnectionRequirements);
+			    Logging.log(this, "    ..CONNECTING to: " + pNeighborL2Address + " with requirements: " + tConnectionRequirements);
 				try {
-					tConnection = connectBlock(tNeighborName, tConnectionRequirements, getNode().getIdentity());
+					tConnection = connectBlock(pNeighborL2Address, tConnectionRequirements, getNode().getIdentity());
 				} catch (NetworkException tExc) {
-					Logging.err(this, "Cannot connect to: " + tNeighborName, tExc);
+					Logging.err(this, "Cannot connect to: " + pNeighborL2Address, tExc);
 				}
 			    Logging.log(this, "    ..connectBlock() FINISHED");
 				if(tConnection != null) {
@@ -1093,11 +1091,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					mCounterOutgoingConnections++;
 					
 					Logging.log(tHRMController, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
-					tFSession.startConnection(tNeighborName, tConnection);					
+					tComSession.startConnection(pNeighborL2Address, tConnection);					
 					
-					Logging.log(this, "Connection thread for " + tNeighborName + " finished");
+					Logging.log(this, "Connection thread for " + pNeighborL2Address + " finished");
 				}else{
-					Logging.log(this, "Connection thread for " + tNeighborName + " failed");
+					Logging.log(this, "Connection thread for " + pNeighborL2Address + " failed");
 				}
 			}
 		};
@@ -1252,7 +1250,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() is unable to find route to " + pNeighborName + " with requirements no requirents, Huh!", tExc);
 			}
 			// have we found a route to the neighbor?
-			if(tRoute != null) {
+			if((tRoute != null) && (!tRoute.isEmpty())) {
 				// get the first route part, which corresponds to the link between the central FN and the searched first FN towards the neighbor 
 				RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
 				// get the gate ID of the link
@@ -1278,6 +1276,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}else{
 					Logging.err(this,  "getL2AddressOfFirstFNTowardsNeighbor() found a first FN (" + tFirstNodeBeforeBusToNeighbor + ") towards the neighbor " + pNeighborName + " but it has the wrong class type");
 				}
+			}else{
+				Logging.warn(this, "Got as route to neighbor: " + tRoute); //HINT: this could also be a local loop -> throw only a warning				
 			}
 		}else{
 			Logging.warn(this, "getL2AddressOfFirstFNTowardsNeighbor() found an invalid neighbor name");
@@ -1794,7 +1794,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * Start the communication session
 				 */					
 				Logging.log(this, "     ..starting communication session for the new connection");
-				tComSession.start(pConnection);
+				tComSession.startConnection(tPropClusterParticipation.getSenderL2Address(), pConnection);
 			}else{
 				Logging.err(this, "newConnection() hasn't found a valid cluster description property in the connection requirements: " + tConnectionRequirements);
 			}
