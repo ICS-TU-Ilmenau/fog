@@ -1011,7 +1011,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Describe the new created cluster
 		 */
 	    Logging.log(this, "    ..creating cluster description");
-		final RequestClusterParticipationProperty tRequestClusterParticipationProperty = RequestClusterParticipationProperty.create(this, HierarchyLevel.createBaseLevel(), tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel(), 0);
+		final RequestClusterParticipationProperty tRequestClusterParticipationProperty = RequestClusterParticipationProperty.create(this, HierarchyLevel.createBaseLevel(), tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel());
 		/**
 		 * Describe the cluster member
 		 */
@@ -1488,9 +1488,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "GET VERTICES ORDERED BY RADIUS (ARG) from \"" + pRootCluster + "\"");
 		}
 
+		/**
+		 * Query for neighbors stored in within the ARG
+		 */
 		synchronized (mAbstractRoutingGraph) {
 			tResult = mAbstractRoutingGraph.getVerticesInOrderRadius(pRootCluster);
 		}
+		
+		/**
+		 * Remove the root cluster
+		 */
+		tResult.remove(pRootCluster);
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 			Logging.log(this, "      ..result: " + tResult.size() + " entries:");				
@@ -1581,7 +1589,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				Cluster tTargetCluster = null;
 
 				/**
-				 * Search if the cluster from the ClusterDescriptionProperty is already locally known
+				 * Search if the destination cluster (from the ClusterDescriptionProperty) is already locally known.
+				 * This can only be at higher hierarchy level when a coordinator explores its neighborhood.
 				 */
 				LinkedList<Cluster> tClusters = getAllClusters();
 				Logging.log(this, "    ..searching for described cluster among " + tClusters.size() + " known clusters:");
@@ -1590,11 +1599,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				{
 					Logging.log(this, "    ..[" + i + "]: " + tLocalCluster);
 					
-					ClusterName tJoinClusterName = new ClusterName(this, tPropClusterParticipation.getHierarchyLevel(), tPropClusterParticipation.getCoordinatorID(), tPropClusterParticipation.getClusterID());
-					ClusterName tJoinClusterNameTok0 = new ClusterName(this, tPropClusterParticipation.getHierarchyLevel(), 0, tPropClusterParticipation.getClusterID());
+					ClusterName tSignaledClusterName = new ClusterName(this, tPropClusterParticipation.getHierarchyLevel(), 0, tPropClusterParticipation.getClusterID());
 
 					// do we already know the described cluster?
-					if(tLocalCluster.equals(tJoinClusterNameTok0) || tPropClusterParticipation.getCoordinatorID() != 0 && tLocalCluster.equals(tJoinClusterName))	{
+					if(tLocalCluster.equals(tSignaledClusterName))	{
 						Logging.log(this, "           ..found MATCH: " + tLocalCluster);
 						
 						tTargetCluster = tLocalCluster;
@@ -1700,7 +1708,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									Logging.log(this, "     ..neighbor of cluster member is a remote cluster, creating ClusterProxy");
 									ClusterProxy tClusterProxy_ClusterMemberNeighbor = new ClusterProxy(this, tNeighborDescription.getClusterID(), tNeighborDescription.getLevel(), tNeighborDescription.getCoordinatorName(), tNeighborDescription.getToken());
 									tClusterProxy_ClusterMemberNeighbor.setPriority(tNeighborDescription.getPriority());
-									getHRS().mapFoGNameToL2Address(tClusterProxy_ClusterMemberNeighbor.getCoordinatorHostName(), tNeighborDescription.getCoordinatorL2Address());
+									getHRS().mapFoGNameToL2Address(tClusterProxy_ClusterMemberNeighbor.getCoordinatorNodeName(), tNeighborDescription.getCoordinatorL2Address());
 
 									boolean tFoundSourceIntermediate = false;
 									for(Cluster tLocalCluster : getAllClusters()) {
@@ -1897,6 +1905,28 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		return getHRS().getCentralFN().getName();
 	}
 	
+	/**
+	 * Determine the L2 address of the central FN of this node
+	 * 
+	 * @return the L2Address of the central FN
+	 */
+	public L2Address getNodeL2Address()
+	{
+		L2Address tResult = null;
+		
+		// get the recursive FoG layer
+		FoGEntity tFoGLayer = (FoGEntity) getNode().getLayer(FoGEntity.class);
+
+		if(tFoGLayer != null){
+			// get the central FN of this node
+			L2Address tThisHostL2Address = getHRS().getL2AddressFor(tFoGLayer.getCentralFN());
+			
+			tResult = tThisHostL2Address;
+		}
+
+		return tResult;
+	}
+
 	/**
 	 * Stores the ID of the HRM plug-in
 	 */
