@@ -1121,7 +1121,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				tResultRoute.add(tRouteSegmentPath);
 			}
 		}else{
-			Logging.warn(this, "getL2Route() delivers an empty route because source and destination are equal");
+			Logging.warn(this, "getL2Route() delivers an empty route because source and destination are equal: " + pFromL2Address);
 			
 			// create a new empty route because we have already reached the destination
 			tResultRoute = new Route();
