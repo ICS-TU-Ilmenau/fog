@@ -155,7 +155,7 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	 * 
 	 * @return the L2Address of the node where the sender is located 
 	 */
-	public HRMName getSenderL2Address()
+	public L2Address getSenderL2Address()
 	{
 		return mSenderL2Address;
 	}
