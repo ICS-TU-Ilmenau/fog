@@ -175,7 +175,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 
 	/**
-	 * EVENT: new addresses needed
+	 * EVENT: new addresses needed, triggered if:
+	 *           + an HRMID was received from a superior coordinator, used to distribute HRMIDs downwards the hierarchy,
+	 *           + we were announced as coordinator
 	 * This function is called for distributing HRMIDs among the cluster members.
 	 */
 	public void eventNewAddressesNeeded()
@@ -568,7 +570,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 
 			eventNewAddressesNeeded();
 		}
-
 		
 		//TODO: ??
 		mHRMController.setSourceIntermediateCluster(this, getCluster());
@@ -1292,6 +1293,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		mCoordinatorName = pCoordName;
 	}
 
+	@Override
 	public void eventClusterCoordinatorAnnounced(BullyAnnounce pAnnounce, ComChannel pCEP)
 	{
 		/**
