@@ -147,6 +147,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private int mCounterOutgoingConnections = 0;
 	
+	/**
+	 * Stores if the entire FoGSiEm simulation was already created.
+	 * This is only used for debugging purposes. This is NOT a way for avoiding race conditions in signaling.
+	 */
+	private static boolean mFoGSiEmSimulationCreationFinished = false;
+	
 	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
 	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	
@@ -969,7 +975,25 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			throw new NetworkException(this, "Can not connect to " +pName +" due to " +event);
 		}
 	}
+
+	/**
+	 * Marks the FoGSiEm simulation creation as finished.
+	 */
+	public static void simulationCreationHasFinished()
+	{
+		mFoGSiEmSimulationCreationFinished = true;
+	}
 	
+	/**
+	 * Checks if the entire simulation was created
+	 * 
+	 * @return true or false
+	 */
+	private boolean simulationCreationFinished()
+	{
+		return mFoGSiEmSimulationCreationFinished;
+	}
+
 	/**
 	 * Reacts on a detected new physical neighbor. A new connection to this neighbor is created.
 	 * HINT: "pNeighborL2Address" doesn't correspond to the neighbor's central FN!
@@ -1036,6 +1060,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			public void run()
 			{
+				if(HRMConfig.DebugOutput.BLOCK_HIERARCHY_UNTIL_END_OF_SIMULATION_CREATION)
+				{
+					while(!simulationCreationFinished()){
+						try {
+							Logging.log(this, "WAITING FOR END OF SIMULATION CREATION");
+							sleep(100);
+						} catch (InterruptedException e) {
+						}
+					}
+				}
+				
 				/**
 				 * Create connection requirements
 				 */

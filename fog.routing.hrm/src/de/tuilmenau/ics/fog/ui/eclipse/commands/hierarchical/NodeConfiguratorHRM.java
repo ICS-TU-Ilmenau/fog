@@ -10,11 +10,13 @@
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
 import de.tuilmenau.ics.fog.FoGEntity;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.ui.eclipse.SimulationCreatedEvent;
 
 /**
  * This class is used to configure nodes that are newly created.
@@ -50,6 +52,16 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		FoGEntity.registerRoutingService(pNode, tHRS);
 
 		Logging.log(this, "###### CONFIGURING NODE " + pName + " -END ###### ");
+
+		if(HRMConfig.DebugOutput.BLOCK_HIERARCHY_UNTIL_END_OF_SIMULATION_CREATION){
+			if(pAS.getSimulation().getPendingEvents() == null) {
+				//TODO: what about if some other part of FoGSiEm uses such events and has registered another event before?
+				pAS.getSimulation().addEvent(new SimulationCreatedEvent());
+			} else {
+				// there are already pending events
+			}
+		}
+
 	}
 
 	/**
