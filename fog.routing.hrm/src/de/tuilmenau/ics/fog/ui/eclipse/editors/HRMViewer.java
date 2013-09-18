@@ -426,8 +426,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 */
 	private void printCoordinator(Coordinator pCoordinator)
 	{
-		int j = 0;
-		
 		if (HRM_VIEWER_DEBUGGING)
 			Logging.log(this, "Printing coordinator \"" + pCoordinator.toString() +"\"");
 
@@ -642,8 +640,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 */
 	private void printCluster(Cluster pCluster)
 	{
-		int j = 0;
-
 		// on which hierarchy level are we?
 		int tHierarchyLevel = pCluster.getHierarchyLevel().getValue();
 
