@@ -141,7 +141,7 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster#getCoordinatorName()
 	 */
 	@Override
-	public Name getCoordinatorHostName()
+	public Name getCoordinatorNodeName()
 	{
 		return mCoordName;
 	}

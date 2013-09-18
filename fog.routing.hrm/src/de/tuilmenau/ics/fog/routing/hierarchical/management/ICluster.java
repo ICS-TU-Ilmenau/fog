@@ -38,7 +38,7 @@ public interface ICluster extends Serializable
 	 * 
 	 * @return The name of the coordinator that is responsible for this cluster is return here.
 	 */
-	public Name getCoordinatorHostName();
+	public Name getCoordinatorNodeName();
 	
 	/**
 	 * 

@@ -679,7 +679,7 @@ public class Cluster extends ControlEntity implements ICluster
 		mSuperiorCoordinatorHostName = pCoordName;
 	}
 
-	public Name getCoordinatorHostName()
+	public Name getCoordinatorNodeName()
 	{
 		return mSuperiorCoordinatorHostName;
 	}

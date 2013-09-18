@@ -44,7 +44,7 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 	}
 
 	@Override
-	public Name getCoordinatorHostName() {
+	public Name getCoordinatorNodeName() {
 		return null;
 	}
 
