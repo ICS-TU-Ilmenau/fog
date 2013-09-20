@@ -175,12 +175,12 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 
 	/**
-	 * EVENT: new addresses needed, triggered if:
+	 * DISTRIBUTE: distribute addresses among cluster members if:
 	 *           + an HRMID was received from a superior coordinator, used to distribute HRMIDs downwards the hierarchy,
 	 *           + we were announced as coordinator
 	 * This function is called for distributing HRMIDs among the cluster members.
 	 */
-	public void eventNewAddressesNeeded()
+	public void distributeAddresses()
 	{
 		/**
 		 * The following value is used to assign monotonously growing addresses to all cluster members.
@@ -188,7 +188,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		 */
 		mNextFreeClusterMemberAddress = 1;
 
-		Logging.log(this, "DISTRIBUTING ADDRESSES to entities on level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+		Logging.log(this, "DISTRIBUTING ADDRESSES to entities at level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
 		
 		/**
 		 * Assign ourself an HRMID address
@@ -537,7 +537,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
 			Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + getComChannels().size() + " cluster members");
 
-			eventNewAddressesNeeded();
+			distributeAddresses();
 		}
 		
 		//TODO: ??
@@ -1205,9 +1205,19 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	public void eventSuperiorClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
 		// store superior coordinator data
-		setSuperiorCoordinator(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
+		eventSuperiorCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
+		
+		// this event is also interesting for neighbor coordinators, which are not already part of this cluster, and   
 	}
 
+	/**
+	 * PACKET: BullyAnnounce which announce the new superior coordinator 
+	 */
+	@Override
+	public void handleCoordinatorBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
+	{
+		
+	}
 	
 	
 	
@@ -1262,114 +1272,114 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		mCoordinatorName = pCoordName;
 	}
 
-	@Override
-	public void eventClusterCoordinatorAnnounced(BullyAnnounce pAnnounce, ComChannel pCEP)
-	{
-		/**
-		 * the name of the cluster, which is managed by this coordinator
-		 */
-		ClusterName tLocalManagedClusterName = new ClusterName(mHRMController, mParentCluster.getHierarchyLevel(), mParentCluster.superiorCoordinatorID(), mParentCluster.getClusterID());
-
-		/*
-		 * check whether old priority was lower than new priority
-		 */
-//		if(pAnnounce.getSenderPriority().isHigher(this, getCoordinatorPriority())) {
-			/*
-			 * check whether a coordinator is already set
-			 */
-			if(superiorCoordinatorComChannel() != null) {
-				if(getCoordinatorNodeName() != null && !pAnnounce.getSenderName().equals(getCoordinatorNodeName())) {
-					/*
-					 * a coordinator was set earlier -> therefore inter-cluster communicatino is necessary
-					 * 
-					 * find the route from the managed cluster to the cluster this entity got to know the higher cluster
-					 */
-					List<AbstractRoutingGraphLink> tRouteARG = mHRMController.getRouteARG(mParentCluster, pCEP.getRemoteClusterName());
-					if(tRouteARG.size() > 0) {
-						if(mHRMController.getOtherEndOfLinkARG(pCEP.getRemoteClusterName(), tRouteARG.get(tRouteARG.size() - 1)) instanceof Cluster) {
-							Logging.warn(this, "Not sending neighbor zone announce because another intermediate cluster has a shorter route to target");
-							if(tRouteARG != null) {
-								String tClusterRoute = new String();
-								AbstractRoutingGraphNode tRouteARGNode = mParentCluster;
-								for(AbstractRoutingGraphLink tConnection : tRouteARG) {
-									tClusterRoute += tRouteARGNode + "\n";
-									tRouteARGNode = mHRMController.getOtherEndOfLinkARG(tRouteARGNode, tConnection);
-								}
-								Logging.log(this, "cluster route to other entity:\n" + tClusterRoute);
-							}
-						} else {
-							
-							/*
-							 * This is for the new coordinator - he is being notified about the fact that this cluster belongs to another coordinator
-							 * 
-							 * If there are intermediate clusters between the managed cluster of this cluster manager we do not send the announcement because in that case
-							 * the forwarding would get inconsistent
-							 * 
-							 * If this is a rejection the forwarding cluster as to be calculated by the receiver of this neighbor zone announcement
-							 */
-							
-							AnnounceRemoteCluster tOldCovered = new AnnounceRemoteCluster(getCoordinatorNodeName(), getHierarchyLevel(), superiorCoordinatorHostL2Address(),getCoordinatorID(), superiorCoordinatorHostL2Address().getComplexAddress().longValue());
-							tOldCovered.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
-							tOldCovered.setNegotiatorIdentification(tLocalManagedClusterName);
-							
-							DiscoveryEntry tOldCoveredEntry = new DiscoveryEntry(mParentCluster.getCoordinatorID(), mParentCluster.getCoordinatorNodeName(), mParentCluster.superiorCoordinatorHostL2Address().getComplexAddress().longValue(), mParentCluster.superiorCoordinatorHostL2Address(), mParentCluster.getHierarchyLevel());
-							/*
-							 * the forwarding cluster to the newly discovered cluster has to be one level lower so it is forwarded on the correct cluster
-							 * 
-							 * calculation of the predecessor is because the cluster identification on the remote site is multiplexed
-							 */
-							tRouteARG = mHRMController.getRouteARG(mParentCluster, superiorCoordinatorComChannel().getRemoteClusterName());
-							tOldCoveredEntry.setPriority(superiorCoordinatorComChannel().getPeerPriority());
-							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(mParentCluster.superiorCoordinatorHostL2Address()));
-							tOldCovered.setCoveringClusterEntry(tOldCoveredEntry);
-							//tOldCovered.setAnnouncer(getCoordinator().getHRS().getCoordinatorRoutingMap().getDest(tPathToCoordinator.get(0)));
-							pCEP.sendPacket(tOldCovered);
-							
-							/*
-							 * now the old cluster is notified about the new cluster
-							 */
-							
-							AnnounceRemoteCluster tNewCovered = new AnnounceRemoteCluster(pAnnounce.getSenderName(), getHierarchyLevel(), pCEP.getPeerL2Address(), pAnnounce.getCoordinatorID(), pCEP.getPeerL2Address().getComplexAddress().longValue());
-							tNewCovered.setCoordinatorsPriority(pAnnounce.getSenderPriority());
-							tNewCovered.setNegotiatorIdentification(tLocalManagedClusterName);
-							DiscoveryEntry tCoveredEntry = new DiscoveryEntry(pAnnounce.getCoordinatorID(),	pAnnounce.getSenderName(), (pCEP.getPeerL2Address()).getComplexAddress().longValue(), pCEP.getPeerL2Address(),	getHierarchyLevel());
-							tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerL2Address()));
-							tNewCovered.setCoveringClusterEntry(tCoveredEntry);
-							tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
-							
-							Logging.warn(this, "Rejecting " + (superiorCoordinatorComChannel().getPeerL2Address()).getDescr() + " in favor of " + pAnnounce.getSenderName());
-							tNewCovered.setRejection();
-							superiorCoordinatorComChannel().sendPacket(tNewCovered);
-							for(ComChannel tCEP : getComChannels()) {
-								if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerL2Address())) {
-									tCEP.setAsParticipantOfMyCluster(true);
-								} else {
-									tCEP.setAsParticipantOfMyCluster(false);
-									
-								}
-							}
-							setSuperiorCoordinatorID(pAnnounce.getCoordinatorID());
-							setSuperiorCoordinator(pCEP, pAnnounce.getSenderName(),pAnnounce.getCoordinatorID(),  pCEP.getPeerL2Address());
-							mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
-							superiorCoordinatorComChannel().sendPacket(tNewCovered);
-						}
-					}
-				}
-				
-			} else {
-				if (pAnnounce.getCoveredNodes() != null){
-					for(ComChannel tCEP : getComChannels()) {
-						if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerL2Address())) {
-							tCEP.setAsParticipantOfMyCluster(true);
-						} else {
-							tCEP.setAsParticipantOfMyCluster(false);
-						}
-					}
-				}
-				setSuperiorCoordinatorID(pAnnounce.getCoordinatorID());
-				mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
-				setSuperiorCoordinator(pCEP, pAnnounce.getSenderName(), pAnnounce.getCoordinatorID(), pCEP.getPeerL2Address());
-			}
+//	@Override
+//	public void handleCoordinatorBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
+//	{
+//		/**
+//		 * the name of the cluster, which is managed by this coordinator
+//		 */
+//		ClusterName tLocalManagedClusterName = new ClusterName(mHRMController, mParentCluster.getHierarchyLevel(), mParentCluster.superiorCoordinatorID(), mParentCluster.getClusterID());
+//
+//		/*
+//		 * check whether old priority was lower than new priority
+//		 */
+////		if(pAnnounce.getSenderPriority().isHigher(this, getCoordinatorPriority())) {
+//			/*
+//			 * check whether a coordinator is already set
+//			 */
+//			if(superiorCoordinatorComChannel() != null) {
+//				if(getCoordinatorNodeName() != null && !pAnnounce.getSenderName().equals(getCoordinatorNodeName())) {
+//					/*
+//					 * a coordinator was set earlier -> therefore inter-cluster communicatino is necessary
+//					 * 
+//					 * find the route from the managed cluster to the cluster this entity got to know the higher cluster
+//					 */
+//					List<AbstractRoutingGraphLink> tRouteARG = mHRMController.getRouteARG(mParentCluster, pCEP.getRemoteClusterName());
+//					if(tRouteARG.size() > 0) {
+//						if(mHRMController.getOtherEndOfLinkARG(pCEP.getRemoteClusterName(), tRouteARG.get(tRouteARG.size() - 1)) instanceof Cluster) {
+//							Logging.warn(this, "Not sending neighbor zone announce because another intermediate cluster has a shorter route to target");
+//							if(tRouteARG != null) {
+//								String tClusterRoute = new String();
+//								AbstractRoutingGraphNode tRouteARGNode = mParentCluster;
+//								for(AbstractRoutingGraphLink tConnection : tRouteARG) {
+//									tClusterRoute += tRouteARGNode + "\n";
+//									tRouteARGNode = mHRMController.getOtherEndOfLinkARG(tRouteARGNode, tConnection);
+//								}
+//								Logging.log(this, "cluster route to other entity:\n" + tClusterRoute);
+//							}
+//						} else {
+//							
+//							/*
+//							 * This is for the new coordinator - he is being notified about the fact that this cluster belongs to another coordinator
+//							 * 
+//							 * If there are intermediate clusters between the managed cluster of this cluster manager we do not send the announcement because in that case
+//							 * the forwarding would get inconsistent
+//							 * 
+//							 * If this is a rejection the forwarding cluster as to be calculated by the receiver of this neighbor zone announcement
+//							 */
+//							
+//							AnnounceRemoteCluster tOldCovered = new AnnounceRemoteCluster(getCoordinatorNodeName(), getHierarchyLevel(), superiorCoordinatorHostL2Address(),getCoordinatorID(), superiorCoordinatorHostL2Address().getComplexAddress().longValue());
+//							tOldCovered.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
+//							tOldCovered.setNegotiatorIdentification(tLocalManagedClusterName);
+//							
+//							DiscoveryEntry tOldCoveredEntry = new DiscoveryEntry(mParentCluster.getCoordinatorID(), mParentCluster.getCoordinatorNodeName(), mParentCluster.superiorCoordinatorHostL2Address().getComplexAddress().longValue(), mParentCluster.superiorCoordinatorHostL2Address(), mParentCluster.getHierarchyLevel());
+//							/*
+//							 * the forwarding cluster to the newly discovered cluster has to be one level lower so it is forwarded on the correct cluster
+//							 * 
+//							 * calculation of the predecessor is because the cluster identification on the remote site is multiplexed
+//							 */
+//							tRouteARG = mHRMController.getRouteARG(mParentCluster, superiorCoordinatorComChannel().getRemoteClusterName());
+//							tOldCoveredEntry.setPriority(superiorCoordinatorComChannel().getPeerPriority());
+//							tOldCoveredEntry.setRoutingVectors(pCEP.getPath(mParentCluster.superiorCoordinatorHostL2Address()));
+//							tOldCovered.setCoveringClusterEntry(tOldCoveredEntry);
+//							//tOldCovered.setAnnouncer(getCoordinator().getHRS().getCoordinatorRoutingMap().getDest(tPathToCoordinator.get(0)));
+//							pCEP.sendPacket(tOldCovered);
+//							
+//							/*
+//							 * now the old cluster is notified about the new cluster
+//							 */
+//							
+//							AnnounceRemoteCluster tNewCovered = new AnnounceRemoteCluster(pAnnounce.getSenderName(), getHierarchyLevel(), pCEP.getPeerL2Address(), pAnnounce.getCoordinatorID(), pCEP.getPeerL2Address().getComplexAddress().longValue());
+//							tNewCovered.setCoordinatorsPriority(pAnnounce.getSenderPriority());
+//							tNewCovered.setNegotiatorIdentification(tLocalManagedClusterName);
+//							DiscoveryEntry tCoveredEntry = new DiscoveryEntry(pAnnounce.getCoordinatorID(),	pAnnounce.getSenderName(), (pCEP.getPeerL2Address()).getComplexAddress().longValue(), pCEP.getPeerL2Address(),	getHierarchyLevel());
+//							tCoveredEntry.setRoutingVectors(pCEP.getPath(pCEP.getPeerL2Address()));
+//							tNewCovered.setCoveringClusterEntry(tCoveredEntry);
+//							tCoveredEntry.setPriority(pAnnounce.getSenderPriority());
+//							
+//							Logging.warn(this, "Rejecting " + (superiorCoordinatorComChannel().getPeerL2Address()).getDescr() + " in favor of " + pAnnounce.getSenderName());
+//							tNewCovered.setRejection();
+//							superiorCoordinatorComChannel().sendPacket(tNewCovered);
+//							for(ComChannel tCEP : getComChannels()) {
+//								if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerL2Address())) {
+//									tCEP.setAsParticipantOfMyCluster(true);
+//								} else {
+//									tCEP.setAsParticipantOfMyCluster(false);
+//									
+//								}
+//							}
+//							setSuperiorCoordinatorID(pAnnounce.getCoordinatorID());
+//							setSuperiorCoordinator(pCEP, pAnnounce.getSenderName(),pAnnounce.getCoordinatorID(),  pCEP.getPeerL2Address());
+//							mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
+//							superiorCoordinatorComChannel().sendPacket(tNewCovered);
+//						}
+//					}
+//				}
+//				
+//			} else {
+//				if (pAnnounce.getCoveredNodes() != null){
+//					for(ComChannel tCEP : getComChannels()) {
+//						if(pAnnounce.getCoveredNodes().contains(tCEP.getPeerL2Address())) {
+//							tCEP.setAsParticipantOfMyCluster(true);
+//						} else {
+//							tCEP.setAsParticipantOfMyCluster(false);
+//						}
+//					}
+//				}
+//				setSuperiorCoordinatorID(pAnnounce.getCoordinatorID());
+//				mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
+//				setSuperiorCoordinator(pCEP, pAnnounce.getSenderName(), pAnnounce.getCoordinatorID(), pCEP.getPeerL2Address());
+//			}
 //		} else {
 //			/*
 //			 * this part is for the coordinator that intended to announce itself -> send rejection and send acting coordinator along with
@@ -1423,7 +1433,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 //			Logging.log(this, "Coordinator CEP is " + superiorCoordinatorComChannel());
 //			superiorCoordinatorComChannel().sendPacket(tCoveredAnnounce);
 //		}
-	}
+//	}
 	
 //	private ICluster addAnnouncedCluster(AnnounceRemoteCluster pAnnounce, ComChannel pCEP)
 //	{
@@ -1467,9 +1477,9 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 
 	@Override
-	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address) 
+	public void eventSuperiorCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address) 
 	{
-		super.setSuperiorCoordinator(pCoordinatorComChannel, pCoordinatorName, pCoordToken, pCoordinatorL2Address);
+		super.eventSuperiorCoordinatorAvailable(pCoordinatorComChannel, pCoordinatorName, pCoordToken, pCoordinatorL2Address);
 
 		Logging.log(this, "Setting channel to superior coordinator to " + pCoordinatorComChannel + " for coordinator " + pCoordinatorName + " with routing address " + pCoordinatorL2Address);
 		Logging.log(this, "Previous channel to superior coordinator was " + superiorCoordinatorComChannel() + " with name " + mCoordinatorName);

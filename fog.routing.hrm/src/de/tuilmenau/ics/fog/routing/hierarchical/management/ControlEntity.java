@@ -395,7 +395,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
-	 * Sets the superior coordinator.
+	 * EVENT: superior coordinator is available
+	 * 
 	 * For a coordinator instance, this is its superior coordinator.
 	 * For a cluster instance, this is its local coordinator (which is also superior).
 	 * 
@@ -404,9 +405,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * @param pCoordinatorID the unique ID of the coordinator
 	 * @param pCoordinatorHostL2Address the L2Address of the hos where the coordinator is located
 	 */
-	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorHostName, int pCoordinatorID, L2Address pCoordinatorHostL2Address)
+	public void eventSuperiorCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorHostName, int pCoordinatorID, L2Address pCoordinatorHostL2Address)
 	{
-		Logging.log(this, "Setting new superior coordinator (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorHostName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorHostL2Address);
+		Logging.log(this, "EVENT: superior coordinator available (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorHostName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorHostL2Address);
 
 		// store the communication channel to the superior coordinator
 		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
@@ -574,20 +575,20 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
-	 * EVENT: "cluster coordinator was announced", triggered by Elector 
+	 * PACKET: "cluster coordinator was announced", triggered by Elector 
 	 */
-	public void eventClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
+	public void handleCoordinatorBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
-		Logging.warn(this, "Received event COORDINATOR_ANNOUNCED via: " + pComChannel);
+		Logging.warn(this, "Received COORDINATOR_ANNOUNCED via: " + pComChannel);
 		Logging.warn(this, "Ignoring announced coordinator data: " + pAnnouncePacket);
 	}
 	
 	/**
-	 * EVENT: "superior cluster coordinator was announced", triggered by Elector when the superior coordinator announced its new position as coordinator
+	 * PACKET: "superior cluster coordinator was announced", triggered by Elector when the superior coordinator announced its new position as coordinator
 	 */ 
-	public void eventSuperiorClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
+	public void handleSuperiorCoordinatorBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
-		Logging.warn(this, "Received event SUPERIOR_COORDINATOR_ANNOUNCED from higher layer via: " + pComChannel);
+		Logging.warn(this, "Received SUPERIOR_COORDINATOR_ANNOUNCED from higher layer via: " + pComChannel);
 		Logging.warn(this, "Ignoring announced superior coordinator data: " + pAnnouncePacket);
 	}
 
@@ -596,7 +597,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void eventCommunicationAvailable()
 	{
-		Logging.warn(this, "Received event COMMUNICATION_AVAILABLE");
+		Logging.warn(this, "Fired event COMMUNICATION_AVAILABLE");
 		Logging.warn(this, "Ignoring COMMUNICATION_AVAILABLE");
 	}
 
@@ -690,7 +691,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
 					Logging.log(this, "     ..continuing the address distribution process via the coordinator " + tCoordinator);
-				tCoordinator.eventNewAddressesNeeded();				
+				tCoordinator.distributeAddresses();				
 			}			
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)

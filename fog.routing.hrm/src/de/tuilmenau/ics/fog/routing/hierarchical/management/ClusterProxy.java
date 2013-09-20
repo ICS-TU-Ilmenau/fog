@@ -127,11 +127,6 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		}
 	}
 
-	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address)
-	{
-		Logging.warn(this, "############### This function should never be called #############");
-	}
-
 	public int hashCode()
 	{
 		return mClusterID.intValue() * 1;

@@ -409,7 +409,7 @@ public class Elector implements Localization
 			}
 			
 			// update the coordinator description for the cluster
-			mParentCluster.setSuperiorCoordinator(null, mHRMController.getNodeName(), tCoordinator.getCoordinatorID(), mHRMController.getHRS().getCentralFNL2Address());
+			mParentCluster.eventSuperiorCoordinatorAvailable(null, mHRMController.getNodeName(), tCoordinator.getCoordinatorID(), mHRMController.getHRS().getCentralFNL2Address());
 			
 			// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
 			signalAnnounceBroadcast();
@@ -680,9 +680,9 @@ public class Elector implements Localization
 				}
 	
 				eventElectionLost();
-	
-	//			//TODO: only an intermediate cluster on level 0 is able to store an announcement and forward it once a coordinator is set
-				tControlEntity.eventClusterCoordinatorAnnounced(tAnnouncePacket, pComChannel);
+
+				// trigger: superior coordinator available	
+				tControlEntity.handleCoordinatorBullyAnnounce(tAnnouncePacket, pComChannel);
 			}
 	
 			/**
@@ -726,7 +726,7 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
 				}
 	
-				tControlEntity.eventSuperiorClusterCoordinatorAnnounced(tAnnouncePacket, pComChannel);
+				tControlEntity.handleSuperiorCoordinatorBullyAnnounce(tAnnouncePacket, pComChannel);
 			}else{
 				Logging.log(this, "      ..ignoring Bully message: " + pPacketBully);
 			}

@@ -443,41 +443,41 @@ public class Cluster extends ControlEntity implements ICluster
 	}
 
 	/**
-	 * EVENT: "cluster coordinator was announced", triggered by Elector 
+	 * PACKET: "cluster coordinator was announced", triggered by Elector 
 	 */
-	public void eventClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
+	public void handleCoordinatorBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
 		// update the description about the elected coordinator
 		mCoordinatorDescription = pAnnouncePacket.getCoordinatorDescription();
 				
-		// set new superior coordinator
-		setSuperiorCoordinator(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
+		// trigger: new superior coordinator
+		eventSuperiorCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
 
 		//TODO: remove?
 		mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
 	/**
-	 * EVENT: "superior cluster coordinator was announced", triggered by Elector
+	 * PACKET: "superior cluster coordinator was announced", triggered by Elector
 	 */ 
-	public void eventSuperiorClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
+	public void handleSuperiorCoordinatorBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
 		// get the coordinator of this cluster
 		Coordinator tCoordinator = getCoordinator(); 
 		
 		if (tCoordinator != null){
 			// inform the coordinator of this cluster about its superior coordinator
-			tCoordinator.eventSuperiorClusterCoordinatorAnnounced(pAnnouncePacket, pComChannel);
+			tCoordinator.handleSuperiorCoordinatorBullyAnnounce(pAnnouncePacket, pComChannel);
 		}
 	}
 
 	/**
-	 * EVENT: got membership request, an inferior coordinator requests cluster membership, the event is triggered by the comm. session because of some comm. end point at remote side
+	 * PACKET: got membership request, an inferior coordinator requests cluster membership, the event is triggered by the comm. session because of some comm. end point at remote side
 	 * 
-	 * @param pSourceComSession the comm. session where the packet was received
 	 * @param pRequestClusterMembershipPacket the request packet
+	 * @param pSourceComSession the comm. session where the packet was received
 	 */
-	public void eventGotMembershipRequest(ComSession pSourceComSession, RequestClusterMembership pRequestClusterMembershipPacket)
+	public void handleRequestClusterMembership(RequestClusterMembership pRequestClusterMembershipPacket, ComSession pSourceComSession)
 	{
 		ClusterName tRemoteClusterName = new ClusterName(mHRMController, pRequestClusterMembershipPacket.getSenderHierarchyLevel(), pRequestClusterMembershipPacket.getSenderCoordinatorID(), pRequestClusterMembershipPacket.getSenderClusterID());
 		Logging.log(this, "EVENT: got a membership request from: " + tRemoteClusterName);
@@ -531,9 +531,9 @@ public class Cluster extends ControlEntity implements ICluster
 	
 	
 	
-	public void setSuperiorCoordinator(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordinatorID, L2Address pCoordinatorL2Address)
+	public void eventSuperiorCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordinatorID, L2Address pCoordinatorL2Address)
 	{
-		super.setSuperiorCoordinator(pCoordinatorComChannel, pCoordinatorName, pCoordinatorID, pCoordinatorL2Address);
+		super.eventSuperiorCoordinatorAvailable(pCoordinatorComChannel, pCoordinatorName, pCoordinatorID, pCoordinatorL2Address);
 
 		L2Address tLocalCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
 	
