@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.packets.hierarchical;
 import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster;
 import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
 
 /**
@@ -60,7 +59,7 @@ public class MultiplexHeader implements ProtocolHeader
 	 * 
 	 * @return the ClusterName of the sender
 	 */
-	public ICluster getSenderClusterName()
+	public ClusterName getSenderClusterName()
 	{
 		return mSenderClusterName;
 	}

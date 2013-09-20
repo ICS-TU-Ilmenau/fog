@@ -11,26 +11,24 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
 /**
  * This class is used to identify a cluster (independent from its physical location)
  */
-public class ClusterName extends ControlEntity implements Serializable, ICluster, AbstractRoutingGraphNode
+public class ClusterName extends ControlEntity implements Serializable, AbstractRoutingGraphNode
 {
 	private static final long serialVersionUID = 3027076881853652810L;
 	
 	/**
 	 * Constructor
 	 * 
-	 * @param pHRMController
-	 * @param pHierarchyLevel
-	 * @param pCoordinatorID
-	 * @param pClusterID
+	 * @param pHRMController the local HRMController instance (for accessing topology data)
+	 * @param pHierarchyLevel the hierarchy level
+	 * @param pCoordinatorID the unique ID of the coordinator
+	 * @param pClusterID the unique ID of the cluster
 	 */
 	public ClusterName(HRMController pHRMController, HierarchyLevel pHierarchyLevel, int pCoordinatorID, Long pClusterID)
 	{
@@ -41,55 +39,6 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 		setCoordinatorID(pCoordinatorID);
 	}
 	
-	@Override
-	public void setPriority(BullyPriority pPriority) {
-		
-	}
-
-	@Override
-	public Name getCoordinatorNodeName() {
-		return null;
-	}
-
-	@Override
-	public BullyPriority getPriority() {
-		return new BullyPriority(this);
-	}
-
-	@Override
-	public String getClusterDescription() {
-		return null;
-	}
-
-	@Override
-	public void setCoordinatorHostName(Name pCoordName) {
-		
-	}
-
-	@Override
-	public boolean equals(Object pObj)
-	{
-		boolean tResult = false;
-		
-		if(pObj instanceof ICluster) {
-			ICluster tCluster = (ICluster) pObj;
-			if(tCluster.getClusterID().equals(getClusterID()) && tCluster.getCoordinatorID() == getCoordinatorID() && tCluster.getHierarchyLevel() == getHierarchyLevel()) {
-				tResult = true;
-			} 
-		}
-		
-		return tResult;
-	}
-
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphNode#getHRMID()
-	 */
-	@Override
-	public HRMID getHRMID()
-	{
-		return null;
-	}
-	
 	/**
 	 * Returns the machine-local ClusterID (excluding the machine specific multiplier)
 	 * 
@@ -97,6 +46,7 @@ public class ClusterName extends ControlEntity implements Serializable, ICluster
 	 */
 	public long getGUIClusterID()
 	{
+		//TODO: bei signalisierten ClusterName-Objekten stimmt hier der Bezug zum richtigen MachineMultiplier nicht
 		if (getClusterID() != null)
 			return getClusterID() / idMachineMultiplier();
 		else
