@@ -1704,11 +1704,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						getHRS().mapFoGNameToL2Address(tPropClusterParticipation.getSenderNodeName(), tPropClusterParticipation.getSenderL2Address());
 						
 						//TODO: store in the ARG
-						for(Cluster tCluster : getAllClusters()) {
-							if(tCluster.getHierarchyLevel().equals(tClusterProxy_ClusterMember.getHierarchyLevel())) {
-								setSourceIntermediateCluster(tClusterProxy_ClusterMember, tCluster);
-							}
-						}
+//						for(Cluster tCluster : getAllClusters()) {
+//							if(tCluster.getHierarchyLevel().equals(tClusterProxy_ClusterMember.getHierarchyLevel())) {
+//								setSourceIntermediateCluster(tClusterProxy_ClusterMember, tCluster);
+//							}
+//						}
 						
 						/******************************************************
 						 * PARSE: neighbor descriptions per cluster member description from remote side
@@ -1741,22 +1741,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								ControlEntity tLocalCluster_ClusterMemberNeighbor = getClusterByName(tNeighborDescriptionClusterName);
 								if(tLocalCluster_ClusterMemberNeighbor == null) {
 									Logging.log(this, "     ..neighbor of cluster member is a remote cluster, creating ClusterProxy");
-									ClusterProxy tClusterProxy_ClusterMemberNeighbor = new ClusterProxy(this, tNeighborDescription.getClusterID(), tNeighborDescription.getLevel(), tNeighborDescription.getCoordinatorName(), tNeighborDescription.getToken());
+									ClusterProxy tClusterProxy_ClusterMemberNeighbor = new ClusterProxy(this, tNeighborDescription.getClusterID(), tNeighborDescription.getLevel(), tNeighborDescription.getCoordinatorNodeName(), tNeighborDescription.getToken());
 									tClusterProxy_ClusterMemberNeighbor.setPriority(tNeighborDescription.getPriority());
-									getHRS().mapFoGNameToL2Address(tClusterProxy_ClusterMemberNeighbor.getCoordinatorNodeName(), tNeighborDescription.getCoordinatorL2Address());
+									getHRS().mapFoGNameToL2Address(tNeighborDescription.getCoordinatorNodeName(), tNeighborDescription.getCoordinatorL2Address());
 
-									boolean tFoundSourceIntermediate = false;
-									for(Cluster tLocalCluster : getAllClusters()) {
-										if(tLocalCluster.getHierarchyLevel() == tClusterProxy_ClusterMemberNeighbor.getHierarchyLevel()) {
-											Logging.log(this, "     ..registering source intermediate: " + tClusterProxy_ClusterMemberNeighbor + " <-> " + tLocalCluster);
-											setSourceIntermediateCluster(tClusterProxy_ClusterMemberNeighbor, tLocalCluster);
-											tFoundSourceIntermediate = true;
-										}
-									}
-									
-									if(!tFoundSourceIntermediate) {
-										Logging.err(this, "newConnection() hasn't found a source intermediate cluster for" + tClusterProxy_ClusterMemberNeighbor.getClusterDescription());
-									}
+//									boolean tFoundSourceIntermediate = false;
+//									for(Cluster tLocalCluster : getAllClusters()) {
+//										if(tLocalCluster.getHierarchyLevel() == tClusterProxy_ClusterMemberNeighbor.getHierarchyLevel()) {
+//											Logging.log(this, "     ..registering source intermediate: " + tClusterProxy_ClusterMemberNeighbor + " <-> " + tLocalCluster);
+//											setSourceIntermediateCluster(tClusterProxy_ClusterMemberNeighbor, tLocalCluster);
+//											tFoundSourceIntermediate = true;
+//										}
+//									}
+//									
+//									if(!tFoundSourceIntermediate) {
+//										Logging.err(this, "newConnection() hasn't found a source intermediate cluster for" + tClusterProxy_ClusterMemberNeighbor.getClusterDescription());
+//									}
 									
 									// register the link in the local ARG
 									registerLinkARG(tClusterProxy_ClusterMember, tClusterProxy_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_LINK));
@@ -1770,12 +1770,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								tFoundDescribedNeighbors++;
 							}// described neighbors of cluster members
 							
-							//TODO: remove this
-							for(ControlEntity tNeighbor : tClusterProxy_ClusterMember.getNeighborsARG()) {
-								if(getSourceIntermediateCluster(tNeighbor) != null) {
-									setSourceIntermediateCluster(tClusterProxy_ClusterMember, getSourceIntermediateCluster(tNeighbor));
-								}
-							}
+//							//TODO: remove this
+//							for(ControlEntity tNeighbor : tClusterProxy_ClusterMember.getNeighborsARG()) {
+//								if(getSourceIntermediateCluster(tNeighbor) != null) {
+//									setSourceIntermediateCluster(tClusterProxy_ClusterMember, getSourceIntermediateCluster(tNeighbor));
+//								}
+//							}
 						} else {
 							Logging.log(this, "newConnection() hasn't found a neighbor description within the member description: " + tSenderClusterMember);
 						}

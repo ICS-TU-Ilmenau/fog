@@ -529,70 +529,70 @@ public class ComSession extends Session
 		/**
 		 * PACKET: TODO
 		 */
-		if(pData instanceof ClusterDiscovery) {
-			ClusterDiscovery tClusterDiscovery = (ClusterDiscovery)pData;
-			
-			Logging.log(this, "CLUSTER DISCOVERY received: " + tClusterDiscovery);
-
-			
-			LinkedList<ComChannel> tAllComChannels = getAllComChannels();
-			
-			Logging.log(this, "Received " + pData);
-			if(tClusterDiscovery.isRequest()) {
-				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
-					boolean tWasDelivered = false;
-
-					Logging.log(this, "     ..nested discovery: " + tNestedDiscovery);
-					
-					String tAnalyzedClusters = new String("");
-					for(ComChannel tComChannel: tAllComChannels) {
-						tAnalyzedClusters += tComChannel.getParent() + "\n";
-						if (tComChannel.getParent() instanceof Cluster){
-							Cluster tCluster = (Cluster)tComChannel.getParent();
-							if(tCluster.getClusterID().equals(tNestedDiscovery.getTargetClusterID())) {
-								try {
-									tComChannel.handleClusterDiscovery(tNestedDiscovery, true);
-									tWasDelivered = true;
-								} catch (NetworkException tExc) {
-									Logging.err(this, "Error when forwarding nested discovery to clusters ",  tExc);
-								}
-							}
-						}
-					}
-					if(!tWasDelivered) {
-						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + tAllComChannels);
-					}
-				}
-				tClusterDiscovery.isAnswer();
-				Logging.log(this, "Sending back discovery " + pData);
-				write(tClusterDiscovery);
-			} else {
-				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
-					boolean tWasDelivered = false;
-					String tAnalyzedClusters = new String("");
-					for(ComChannel tComChannel: tAllComChannels) {
-						tAnalyzedClusters += tComChannel.getParent() + "\n";
-						if (tComChannel.getParent() instanceof Cluster){
-							Cluster tCluster = (Cluster)tComChannel.getParent();
-
-							if(tCluster.getClusterID().equals(tNestedDiscovery.getOrigin())) {
-								try {
-									tComChannel.handleClusterDiscovery(tNestedDiscovery, false);
-									tWasDelivered = true;
-								} catch (NetworkException tExc) {
-									Logging.err(this, "Error when forwarding nested discovery",  tExc);
-								}
-							}
-						}
-					}
-					if(!tWasDelivered) {
-						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + tAllComChannels);
-					}
-				}
-			}
-			
-			return true;
-		}
+//		if(pData instanceof ClusterDiscovery) {
+//			ClusterDiscovery tClusterDiscovery = (ClusterDiscovery)pData;
+//			
+//			Logging.log(this, "CLUSTER DISCOVERY received: " + tClusterDiscovery);
+//
+//			
+//			LinkedList<ComChannel> tAllComChannels = getAllComChannels();
+//			
+//			Logging.log(this, "Received " + pData);
+//			if(tClusterDiscovery.isRequest()) {
+//				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
+//					boolean tWasDelivered = false;
+//
+//					Logging.log(this, "     ..nested discovery: " + tNestedDiscovery);
+//					
+//					String tAnalyzedClusters = new String("");
+//					for(ComChannel tComChannel: tAllComChannels) {
+//						tAnalyzedClusters += tComChannel.getParent() + "\n";
+//						if (tComChannel.getParent() instanceof Cluster){
+//							Cluster tCluster = (Cluster)tComChannel.getParent();
+//							if(tCluster.getClusterID().equals(tNestedDiscovery.getTargetClusterID())) {
+//								try {
+//									tComChannel.handleClusterDiscovery(tNestedDiscovery, true);
+//									tWasDelivered = true;
+//								} catch (NetworkException tExc) {
+//									Logging.err(this, "Error when forwarding nested discovery to clusters ",  tExc);
+//								}
+//							}
+//						}
+//					}
+//					if(!tWasDelivered) {
+//						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + tAllComChannels);
+//					}
+//				}
+//				tClusterDiscovery.isAnswer();
+//				Logging.log(this, "Sending back discovery " + pData);
+//				write(tClusterDiscovery);
+//			} else {
+//				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
+//					boolean tWasDelivered = false;
+//					String tAnalyzedClusters = new String("");
+//					for(ComChannel tComChannel: tAllComChannels) {
+//						tAnalyzedClusters += tComChannel.getParent() + "\n";
+//						if (tComChannel.getParent() instanceof Cluster){
+//							Cluster tCluster = (Cluster)tComChannel.getParent();
+//
+//							if(tCluster.getClusterID().equals(tNestedDiscovery.getOrigin())) {
+//								try {
+//									tComChannel.handleClusterDiscovery(tNestedDiscovery, false);
+//									tWasDelivered = true;
+//								} catch (NetworkException tExc) {
+//									Logging.err(this, "Error when forwarding nested discovery",  tExc);
+//								}
+//							}
+//						}
+//					}
+//					if(!tWasDelivered) {
+//						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + tAllComChannels);
+//					}
+//				}
+//			}
+//			
+//			return true;
+//		}
 		
 		Logging.warn(this, ">>>>>>>>>>>>> Found unsupported packet: " + pData);
 		return true;

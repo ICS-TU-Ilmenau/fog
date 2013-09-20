@@ -1453,21 +1453,22 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 //		return tCluster;
 //	}
 //	
-	@Override
-	public void handleNeighborAnnouncement(AnnounceRemoteCluster	pAnnounce, ComChannel pCEP)
-	{		
-		if(pAnnounce.getCoveringClusterEntry() != null) {
-			
-			if(pAnnounce.isRejected()) {
-				Logging.log(this, "Removing " + this + " as participating CEP from " + this);
-				getComChannels().remove(this);
-			}
-			if(pAnnounce.getCoordinatorName() != null) {
-				mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
-			}
-			pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry());
-		}
-	}
+
+//	@Override
+//	public void handleNeighborAnnouncement(AnnounceRemoteCluster	pAnnounce, ComChannel pCEP)
+//	{		
+//		if(pAnnounce.getCoveringClusterEntry() != null) {
+//			
+//			if(pAnnounce.isRejected()) {
+//				Logging.log(this, "Removing " + this + " as participating CEP from " + this);
+//				getComChannels().remove(this);
+//			}
+//			if(pAnnounce.getCoordinatorName() != null) {
+//				mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
+//			}
+//			pCEP.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry());
+//		}
+//	}
 
 //	@Override
 //	public void eventClusterCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address) 

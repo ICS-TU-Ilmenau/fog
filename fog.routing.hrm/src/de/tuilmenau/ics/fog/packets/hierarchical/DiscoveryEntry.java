@@ -119,7 +119,7 @@ public class DiscoveryEntry implements Serializable
 	 * 
 	 * @return physical name of host identification of the node that is coordinator
 	 */
-	public Name getCoordinatorName()
+	public Name getCoordinatorNodeName()
 	{
 		return mCoordinatorName;
 	}
