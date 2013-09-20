@@ -47,11 +47,6 @@ public class Cluster extends ControlEntity
 	private Elector mElector = null;
 	
 	/**
-	 * Stores a descriptive string about the elected coordinator
-	 */
-	private String mCoordinatorDescription = null;
-	
-	/**
 	 * Stores if the neighborhood is already initialized
 	 */
 	private boolean mNeighborInitialized = false;
@@ -232,13 +227,13 @@ public class Cluster extends ControlEntity
 	}
 	
 	/**
-	 * Set the new coordinator, which was elected by the Elector instance.
+	 * EVENT: new local coordinator, triggered by the Coordinator
 	 * 
-	 * @param pCoordinator the new coordinator
+	 * @param pCoordinator the new coordinator, which is located on this node
 	 */
-	public void setCoordinator(Coordinator pCoordinator)
+	public void eventNewLocalCoordinator(Coordinator pCoordinator)
 	{
-		Logging.log(this, "Updating the coordinator from " + mCoordinator + " to " + pCoordinator);
+		Logging.log(this, "EVENT: new local coordinator: " + pCoordinator + ", old one is: " + mCoordinator);
 		
 		// set the coordinator
 		mCoordinator = pCoordinator;
@@ -248,7 +243,7 @@ public class Cluster extends ControlEntity
 			setSuperiorCoordinatorID(pCoordinator.getCoordinatorID());
 
 			// update the descriptive string about the coordinator
-			mCoordinatorDescription = mCoordinator.toLocation();
+			setSuperiorCoordinatorDescription(mCoordinator.toLocation());
 		}
 	}
 	
@@ -443,30 +438,14 @@ public class Cluster extends ControlEntity
 	}
 
 	/**
-	 * PACKET: "cluster coordinator was announced", triggered by Elector 
-	 */
-	public void handleBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
-	{
-		// update the description about the elected coordinator
-		mCoordinatorDescription = pAnnouncePacket.getCoordinatorDescription();
-				
-		// trigger: new superior coordinator
-		eventClusterCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
-
-//		//TODO: remove?
-//		mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
-	}
-	
-	/**
-	 * PACKET: got membership request, an inferior coordinator requests cluster membership, the event is triggered by the comm. session because of some comm. end point at remote side
+	 * EVENT: got membership request, an inferior coordinator requests cluster membership, the event is triggered by the comm. session because of some comm. end point at remote side
 	 * 
-	 * @param pRequestClusterMembershipPacket the request packet
+	 * @param pRemoteClusterName the description of the possible new cluster member
 	 * @param pSourceComSession the comm. session where the packet was received
 	 */
-	public void handleRequestClusterMembership(RequestClusterMembership pRequestClusterMembershipPacket, ComSession pSourceComSession)
+	public void eventMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
 	{
-		ClusterName tRemoteClusterName = new ClusterName(mHRMController, pRequestClusterMembershipPacket.getSenderHierarchyLevel(), pRequestClusterMembershipPacket.getSenderClusterID(), pRequestClusterMembershipPacket.getSenderCoordinatorID());
-		Logging.log(this, "EVENT: got a membership request from: " + tRemoteClusterName);
+		Logging.log(this, "EVENT: got a membership request from: " + pRemoteClusterName);
 		
 		/**
 		 * Create the communication channel for the described cluster member
@@ -477,7 +456,7 @@ public class Cluster extends ControlEntity
 		/**
 		 * Set the remote ClusterName of the communication channel
 		 */
-		tComChannel.setRemoteClusterName(tRemoteClusterName);
+		tComChannel.setRemoteClusterName(pRemoteClusterName);
 
 		/**
 		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
@@ -519,7 +498,7 @@ public class Cluster extends ControlEntity
 	
 	public void eventClusterCoordinatorAvailable2(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordinatorID, L2Address pCoordinatorL2Address)
 	{
-		super.eventClusterCoordinatorAvailable(pCoordinatorComChannel, pCoordinatorName, pCoordinatorID, pCoordinatorL2Address);
+		super.eventClusterCoordinatorAvailable(pCoordinatorComChannel, pCoordinatorName, pCoordinatorID, pCoordinatorL2Address, null);
 
 		L2Address tLocalCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
 	
@@ -571,7 +550,7 @@ public class Cluster extends ControlEntity
 					/*
 					 * in this case this announcement came from a neighbor intermediate cluster
 					 */
-					handleNeighborAnnouncement(mReceivedAnnounces.removeFirst(), pCoordinatorComChannel);
+//					handleNeighborAnnouncement(mReceivedAnnounces.removeFirst(), pCoordinatorComChannel);
 				}
 			}
 		}
@@ -667,7 +646,7 @@ public class Cluster extends ControlEntity
 		{
 			if(mHRMController.getNodeName().equals(mSuperiorCoordinatorHostName))
 			{
-				handleNeighborAnnouncement(pAnnouncement, pCEP);
+//				handleNeighborAnnouncement(pAnnouncement, pCEP);
 			} else {
 				superiorCoordinatorComChannel().sendPacket(pAnnouncement);
 			}
@@ -695,16 +674,6 @@ public class Cluster extends ControlEntity
 	
 	
 	
-	
-	/**
-	 * Returns a descriptive string about the elected coordinator 
-	 * 
-	 * @return the descriptive string
-	 */
-	public String getCoordinatorDescription()
-	{
-		return mCoordinatorDescription;
-	}
 	
 	/**
 	 * Returns a descriptive string about this object

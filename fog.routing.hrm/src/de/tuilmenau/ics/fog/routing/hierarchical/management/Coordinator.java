@@ -114,7 +114,7 @@ public class Coordinator extends ControlEntity implements Localization
 		setHRMID(this,  mParentCluster.getHRMID().clone());
 		
 		// register itself as coordinator for the managed cluster
-		mParentCluster.setCoordinator(this);
+		mParentCluster.eventNewLocalCoordinator(this);
 
 		// register at HRMController's internal database
 		mHRMController.registerCoordinator(this);
@@ -464,7 +464,7 @@ public class Coordinator extends ControlEntity implements Localization
 		Logging.log(this, "============ Destroying this coordinator now...");
 		
 		// unregister itself as coordinator for the managed cluster
-		mParentCluster.setCoordinator(null);
+		mParentCluster.eventNewLocalCoordinator(null);
 
 		// unregister from HRMController's internal database
 		mHRMController.unregisterCoordinator(this);
@@ -1197,15 +1197,6 @@ public class Coordinator extends ControlEntity implements Localization
 		}
 	}
 
-	/**
-	 * PACKET: BullyAnnounce which announce the new superior coordinator, triggered by Elector 
-	 */ 
-	@Override
-	public void handleBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
-	{
-		// store superior coordinator data
-		eventClusterCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
-	}
 
 	
 	

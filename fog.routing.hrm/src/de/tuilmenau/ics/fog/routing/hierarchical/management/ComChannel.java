@@ -607,32 +607,34 @@ public class ComChannel
 		 * Bully signaling message
 		 */
 		if (pData instanceof SignalingMessageBully) {
+			// cast to a Bully signaling message
+			SignalingMessageBully tBullyMessage = (SignalingMessageBully)pData;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+				Logging.log(this, "RECEIVED BULLY MESSAGE " + tBullyMessage.getClass().getSimpleName());
+
 			// the packet is received by a cluster
 			//HINT: this is only possible at base hierarchy level
 			if (mParent instanceof Cluster){
 				Cluster tParentCluster = (Cluster)mParent;
 				
-				// cast to a Bully signaling message
-				SignalingMessageBully tBullyMessage = (SignalingMessageBully)pData;
-
-				Logging.log(this, "BULLY MESSAGE FROM " + getPeerL2Address() + "/" + tBullyMessage.getSenderName());
-				
-				// process Bully message
-				tParentCluster.handlePacket(tBullyMessage, this);
+				if (tParentCluster.getElector() != null){
+					tParentCluster.getElector().handleSignalingMessageBully(tBullyMessage, this);
+				}else{
+					Logging.warn(this, "Elector is still invalid");
+				}
 			}
 			
+			// the packet is received by a remote cluster object (ClusterProxy)
+			if (mParent instanceof ClusterProxy){
+				Logging.warn(this, "IGNORING THIS MESSAGE: " + tBullyMessage);
+			}
+
 			// the packet is received by a coordinator
 			if (mParent instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)mParent;
 				
-				Logging.log(this, "BULLY MESSAGE FROM " + getPeerL2Address());
-				Logging.log(this, "POSSIBLE LOOP DETECTED HERE");
-				
-				// cast to a Bully signaling message
-				SignalingMessageBully tBullyMessage = (SignalingMessageBully)pData;
-			
-				// process Bully message
-				tCoordinator.getCluster().handlePacket(tBullyMessage, this);
+				tCoordinator.getCluster().getElector().handleSignalingMessageBully(tBullyMessage, this);
 			}
 
 			return true;
@@ -707,22 +709,22 @@ public class ComChannel
 		
 		
 		
-		/**
-		 * NeighborClusterAnnounce
-		 */
-		if(pData instanceof AnnounceRemoteCluster) {
-			AnnounceRemoteCluster tAnnouncePacket = (AnnounceRemoteCluster)pData;
-
-			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "NEIGHBOR received from \"" + mParent + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
-
-			if (!(getParent() instanceof Cluster)){
-				Logging.err(this, "Peer should be a cluster here");
-			}
-			getParent().handleNeighborAnnouncement(tAnnouncePacket, this);
-
-			Logging.log(this, "Received " + tAnnouncePacket + " from remote cluster " + mRemoteClusterName);
-		}
+//		/**
+//		 * NeighborClusterAnnounce
+//		 */
+//		if(pData instanceof AnnounceRemoteCluster) {
+//			AnnounceRemoteCluster tAnnouncePacket = (AnnounceRemoteCluster)pData;
+//
+//			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+//				Logging.log(this, "NEIGHBOR received from \"" + mParent + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
+//
+//			if (!(getParent() instanceof Cluster)){
+//				Logging.err(this, "Peer should be a cluster here");
+//			}
+//			getParent().handleNeighborAnnouncement(tAnnouncePacket, this);
+//
+//			Logging.log(this, "Received " + tAnnouncePacket + " from remote cluster " + mRemoteClusterName);
+//		}
 		
 		
 //		/**

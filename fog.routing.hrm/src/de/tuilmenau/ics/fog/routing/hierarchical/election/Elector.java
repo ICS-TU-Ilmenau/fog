@@ -679,7 +679,7 @@ public class Elector implements Localization
 				eventElectionLost();
 
 				// trigger: superior coordinator available	
-				tControlEntity.handleBullyAnnounce(tAnnouncePacket, pComChannel);
+				tControlEntity.eventClusterCoordinatorAvailable(pComChannel, tAnnouncePacket.getSenderName(), tAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), tAnnouncePacket.getCoordinatorDescription());
 			}
 	
 			/**
@@ -726,7 +726,8 @@ public class Elector implements Localization
 				if(tControlEntity instanceof Coordinator){
 					Coordinator tCoordinator = (Coordinator)tControlEntity;
 					
-					tCoordinator.handleBullyAnnounce(tAnnouncePacket, pComChannel);
+					// trigger: superior coordinator available	
+					tCoordinator.eventClusterCoordinatorAvailable(pComChannel, tAnnouncePacket.getSenderName(), tAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), tAnnouncePacket.getCoordinatorDescription());
 				}else{
 					// HINT: this case shouldn't occur since the concept includes such messages only from a higher cluster towards its members (which are coordinators again)
 					Logging.err(this, "EXPECTED COORDINATOR as parent control entity for comm. channel: " + pComChannel);

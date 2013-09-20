@@ -523,8 +523,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			 */			
 			if (pControlEntity instanceof Cluster){
 				Cluster tCluster = (Cluster)pControlEntity;
-				if (tCluster.getCoordinatorDescription() != null){
-					tRow.setText(0, tCluster.getCoordinatorDescription());
+				if (tCluster.superiorCoordinatorDescription() != null){
+					tRow.setText(0, tCluster.superiorCoordinatorDescription());
 				}else{
 					tRow.setText(0, "??");
 				}

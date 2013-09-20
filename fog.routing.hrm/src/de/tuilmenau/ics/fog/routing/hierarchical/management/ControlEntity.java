@@ -81,6 +81,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private Name mSuperiorCoordinatorNodeName = null;
 	
 	/**
+	 * Stores a descriptive string about the superior coordinator
+	 */
+	private String mSuperiorCoordinatorDescription = null;
+
+	/**
 	 * Stores the L2Address of the superior coordinator.
 	 */
 	private L2Address mSuperiorCoordinatorHostL2Address = null;
@@ -409,8 +414,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * @param pCoordinatorNodeName the name of the node where the coordinator is located
 	 * @param pCoordinatorID the unique ID of the coordinator
 	 * @param pCoordinatorHostL2Address the L2Address of the node where the coordinator is located
+	 * @param pCoordinatorDescription a description of the new coordinator
 	 */
-	public void eventClusterCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorNodeName, int pCoordinatorID, L2Address pCoordinatorHostL2Address)
+	public void eventClusterCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorNodeName, int pCoordinatorID, L2Address pCoordinatorHostL2Address, String pCoordinatorDescription)
 	{
 		Logging.log(this, "EVENT: superior coordinator available (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorNodeName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorHostL2Address);
 
@@ -426,9 +432,32 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		// store the name of the node where the superior coordinator is located
 		setSuperiorCoordinatorNodeName(pCoordinatorNodeName);
 		
+		// store the description about the new superior coordinator
+		setSuperiorCoordinatorDescription(pCoordinatorDescription);
+		
 		mSuperiorCoordinatorKnown = true;
 		
 		// this event is also interesting for neighbor coordinators, which are not already part of this cluster, and   
+	}
+
+	/**
+	 * Returns the description of the superior coordinator
+	 * 
+	 * @return the description
+	 */
+	public String superiorCoordinatorDescription() {
+		return mSuperiorCoordinatorDescription;
+	}
+	
+	/**
+	 * Sets the new description about the superior coordinator
+	 * 
+	 * @param pDescription the new description
+	 */
+	protected void setSuperiorCoordinatorDescription(String pDescription)
+	{
+		Logging.log(this, "Setting superior coordinator desription: " + pDescription);
+		mSuperiorCoordinatorDescription = pDescription;
 	}
 
 	/**
@@ -606,15 +635,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
-	 * PACKET: "cluster coordinator was announced", triggered by Elector 
-	 */
-	public void handleBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
-	{
-		Logging.warn(this, "Received COORDINATOR_ANNOUNCED via: " + pComChannel);
-		Logging.warn(this, "Ignoring announced coordinator data: " + pAnnouncePacket);
-	}
-	
-	/**
 	 * EVENT: "communication available", triggered by parent comm. session
 	 */
 	public void eventCommunicationAvailable()
@@ -623,45 +643,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		Logging.warn(this, "Ignoring COMMUNICATION_AVAILABLE");
 	}
 
-	public void handleNeighborAnnouncement(AnnounceRemoteCluster pNeighborClusterAnnounce, ComChannel pComChannel)
-	{
-		//TODO: remove this
-	}
-
-	/**
-	 * Handles a Bully related signaling message from an external cluster member
-	 * 
-	 * @param pBullyMessage the Bully message
-	 * @param pSourceClusterMember the channel to the message source
-	 */
-	private void handleSignalingMessageBully(SignalingMessageBully pBullyMessage, ComChannel pSourceClusterMember)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-			Logging.log(this, "RECEIVED BULLY MESSAGE " + pBullyMessage.getClass().getSimpleName() + " FROM " + pSourceClusterMember);
-
-		if (this instanceof Cluster){
-			Cluster tCluster = (Cluster)this;
-			
-			if (tCluster.getElector() != null){
-				tCluster.getElector().handleSignalingMessageBully(pBullyMessage, pSourceClusterMember);
-			}else{
-				Logging.warn(this, "Elector is still invalid");
-			}
-			
-			return;
-		}
-		if (this instanceof ClusterProxy){
-			//nothing
-		}
-		if (this instanceof Coordinator){
-			Coordinator tCoordinator = (Coordinator)this;
-			
-			tCoordinator.getCluster().getElector().handleSignalingMessageBully(pBullyMessage, pSourceClusterMember);
-			
-			return;
-		}
-	}
-	
 	/**
 	 * EVENT: new HRMID assigned
      * The function is called when an address update was received.
@@ -715,29 +696,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
 				Logging.log(this, "     ..stopping address propagation here because node " + mHRMController.getNodeGUIName() + " is only a cluster member");
-		}
-	}
-
-	/**
-	 * Handles a general signaling message from an external cluster member
-	 * 
-	 * @param pMessage the signaling message
-	 * @param pCoordinatorCEPChannel the channel to the message source
-	 */
-	public void handlePacket(Serializable pMessage, ComChannel pComChannel)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING)
-			Logging.log(this, "RECEIVED SIGNALING MESSAGE " + pMessage.getClass().getSimpleName() + " FROM " + pComChannel);
-
-		/**
-		 * Bully signaling message
-		 */
-		if (pMessage instanceof SignalingMessageBully) {
-			// cast to a Bully signaling message
-			SignalingMessageBully tBullyMessage = (SignalingMessageBully)pMessage;
-		
-			// process Bully message
-			handleSignalingMessageBully(tBullyMessage, pComChannel);
 		}
 	}
 
