@@ -1198,15 +1198,13 @@ public class Coordinator extends ControlEntity implements Localization
 	}
 
 	/**
-	 * PACKET: BullyAnnounce which announce the new superior coordinator 
+	 * PACKET: BullyAnnounce which announce the new superior coordinator, triggered by Elector 
 	 */ 
 	@Override
 	public void handleBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
 		// store superior coordinator data
 		eventClusterCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
-		
-		// this event is also interesting for neighbor coordinators, which are not already part of this cluster, and   
 	}
 
 	

@@ -283,6 +283,8 @@ public class ComChannel
 			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRoutingInformationPacket);
 		}
 		
+		//TODO: event in coord./cluster aufrufen
+		
 		for (RoutingEntry tEntry : pRoutingInformationPacket.getRoutes()){
 			if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE)
 				Logging.log(this, "      ..found route: " + tEntry);

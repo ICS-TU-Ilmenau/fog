@@ -427,6 +427,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		setSuperiorCoordinatorNodeName(pCoordinatorNodeName);
 		
 		mSuperiorCoordinatorKnown = true;
+		
+		// this event is also interesting for neighbor coordinators, which are not already part of this cluster, and   
 	}
 
 	/**
