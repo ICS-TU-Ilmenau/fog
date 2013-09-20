@@ -663,18 +663,15 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 	
 	/**
-	 * Handles packet type "AssignHRMID".
-     * The function is called when an address update for the physical node (hierarchy level 0) was received.
+	 * EVENT: new HRMID assigned
+     * The function is called when an address update was received.
 	 * 
-	 * @param pAssignHRMIDPacket the received packet with the new hierarchy level 0 address
+	 * @param pHRMID the new HRMID
 	 */
-	public void handleAssignHRMID(AssignHRMID pAssignHRMIDPacket)
+	public void eventNewHRMIDAssigned(HRMID pHRMID)
 	{
-		// extract the HRMID from the packet 
-		HRMID tHRMID = pAssignHRMIDPacket.getHRMID();
-		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
-			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + tHRMID.toString());
+			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
 
 		/**
 		 * Store the new HRMID
@@ -682,12 +679,12 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		// we process such packets for cluster only on base hierarchy level and on all hierarchy level for coordinators
 		if ((getHierarchyLevel().isBaseLevel()) || (this instanceof Coordinator)){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
-				Logging.log(this, "     ..setting assigned HRMID " + tHRMID.toString());
+				Logging.log(this, "     ..setting assigned HRMID " + pHRMID.toString());
 			
 			// update the local HRMID
-			setHRMID(this, tHRMID);
+			setHRMID(this, pHRMID);
 		}else{
-			Logging.warn(this, "     ..ignoring AssignHRMID packet " + pAssignHRMIDPacket + " at hierachy level " + getHierarchyLevel().getValue());
+			Logging.warn(this, "     ..ignoring assigned HRMID " + pHRMID + " at hierachy level " + getHierarchyLevel().getValue());
 		}
 
 		/**

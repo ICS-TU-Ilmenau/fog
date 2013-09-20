@@ -660,18 +660,9 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "ASSIGN_HRMID-received from \"" + getPeerHRMID() + "\" assigned HRMID: " + tAssignHRMIDPacket.getHRMID().toString());
 
-			// is the parent a coordinator or a cluster?
-			if (getParent() instanceof Coordinator){
-				Coordinator tCoordinator = (Coordinator)getParent();
-				
-				// let the coordinator process the HRMID assignment
-				tCoordinator.handleAssignHRMID(tAssignHRMIDPacket);
-			} else if (getParent() instanceof Cluster){
-				Cluster tCluster = (Cluster)getParent();
-
-				// let the cluster process the HRMID assignment
-				tCluster.handleAssignHRMID(tAssignHRMIDPacket);
-			}
+			// let the coordinator process the HRMID assignment
+			getParent().eventNewHRMIDAssigned(tAssignHRMIDPacket.getHRMID());
+			
 			return true;
 		}
 
