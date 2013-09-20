@@ -583,7 +583,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 	
 	/**
-	 * EVENT: "superior cluster coordinator was announced", triggered by Elector
+	 * EVENT: "superior cluster coordinator was announced", triggered by Elector when the superior coordinator announced its new position as coordinator
 	 */ 
 	public void eventSuperiorClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
