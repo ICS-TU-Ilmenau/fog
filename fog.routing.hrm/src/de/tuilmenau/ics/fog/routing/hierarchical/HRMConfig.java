@@ -127,6 +127,11 @@ public class HRMConfig
 		public static final int USED_BITS_PER_LEVEL = 8; //TV
 
 		/**
+		 * Maximum radius that is allowed during cluster expansion phase 
+		 */
+		public static final int EXPANSION_RADIUS = 4;
+
+		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
 		 */
 		public static final boolean START_AUTOMATICALLY_BASE_LEVEL = true; 
@@ -160,11 +165,6 @@ public class HRMConfig
 	 */
 	public class Routing
 	{
-		/**
-		 * Maximum radius that is allowed during expansion phase 
-		 */
-		public static final int EXPANSION_RADIUS = 4; //TV
-		
 		/**
 		 * Should each HRS instance try to avoid duplicates in its internal routing tables?
 		 * In this case, also updates of routing table entries are made if the new route has better QoS values than the old one.

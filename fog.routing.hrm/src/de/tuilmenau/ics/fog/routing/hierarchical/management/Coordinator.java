@@ -814,7 +814,7 @@ public class Coordinator extends ControlEntity implements Localization
 		if (!isClustered()){
 			// are we already at the highest hierarchy level?
 			if (!getHierarchyLevel().isHighest()){
-				int tMaxRadius = HRMConfig.Routing.EXPANSION_RADIUS;
+				int tMaxRadius = HRMConfig.Hierarchy.EXPANSION_RADIUS;
 		
 				Logging.log(this, "Maximum radius is " + tMaxRadius);
 		
