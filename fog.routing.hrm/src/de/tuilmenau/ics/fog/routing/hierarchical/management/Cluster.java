@@ -517,7 +517,7 @@ public class Cluster extends ControlEntity implements ICluster
 	
 	
 	
-	public void eventClusterCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordinatorID, L2Address pCoordinatorL2Address)
+	public void eventClusterCoordinatorAvailable2(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordinatorID, L2Address pCoordinatorL2Address)
 	{
 		super.eventClusterCoordinatorAvailable(pCoordinatorComChannel, pCoordinatorName, pCoordinatorID, pCoordinatorL2Address);
 
