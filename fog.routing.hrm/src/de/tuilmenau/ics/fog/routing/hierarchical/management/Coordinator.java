@@ -1216,15 +1216,15 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	
 	
 	
-	public void storeAnnouncement(AnnounceRemoteCluster pAnnounce)
-	{
-		Logging.log(this, "Storing " + pAnnounce);
-		if(mReceivedAnnouncements == null) {
-			mReceivedAnnouncements = new LinkedList<AnnounceRemoteCluster>();
-		}
-		pAnnounce.setNegotiatorIdentification(new ClusterName(mHRMController, mParentCluster.getHierarchyLevel(), mParentCluster.superiorCoordinatorID(), mParentCluster.getClusterID()));
-		mReceivedAnnouncements.add(pAnnounce);
-	}
+//	public void storeAnnouncement(AnnounceRemoteCluster pAnnounce)
+//	{
+//		Logging.log(this, "Storing " + pAnnounce);
+//		if(mReceivedAnnouncements == null) {
+//			mReceivedAnnouncements = new LinkedList<AnnounceRemoteCluster>();
+//		}
+//		pAnnounce.setNegotiatorIdentification(new ClusterName(mHRMController, mParentCluster.getHierarchyLevel(), mParentCluster.superiorCoordinatorID(), mParentCluster.getClusterID()));
+//		mReceivedAnnouncements.add(pAnnounce);
+//	}
 	
 	public LinkedList<Long> getBounces()
 	{
