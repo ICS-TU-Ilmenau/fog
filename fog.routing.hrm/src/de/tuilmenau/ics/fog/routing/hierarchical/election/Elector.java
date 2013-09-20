@@ -409,7 +409,7 @@ public class Elector implements Localization
 			}
 			
 			// update the coordinator description for the cluster
-			mParentCluster.eventSuperiorCoordinatorAvailable(null, mHRMController.getNodeName(), tCoordinator.getCoordinatorID(), mHRMController.getHRS().getCentralFNL2Address());
+			mParentCluster.eventClusterCoordinatorAvailable(null, mHRMController.getNodeName(), tCoordinator.getCoordinatorID(), mHRMController.getHRS().getCentralFNL2Address());
 			
 			// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
 			signalAnnounceBroadcast();
@@ -682,7 +682,7 @@ public class Elector implements Localization
 				eventElectionLost();
 
 				// trigger: superior coordinator available	
-				tControlEntity.handleCoordinatorBullyAnnounce(tAnnouncePacket, pComChannel);
+				tControlEntity.handleBullyAnnounce(tAnnouncePacket, pComChannel);
 			}
 	
 			/**
@@ -716,7 +716,7 @@ public class Elector implements Localization
 			Logging.log(this, "HIGHER LEVEL SENT BULLY MESSAGE " + pPacketBully.getClass().getSimpleName() + " FROM " + pComChannel);
 
 			/**
-			 * ANNOUNCE
+			 * ANNOUNCE: a superior coordinator was elected and sends its announce towards its inferior coordinators 
 			 */
 			if(pPacketBully instanceof BullyAnnounce)  {
 				// cast to Bully replay packet
@@ -726,7 +726,14 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
 				}
 	
-				tControlEntity.handleSuperiorCoordinatorBullyAnnounce(tAnnouncePacket, pComChannel);
+				if(tControlEntity instanceof Coordinator){
+					Coordinator tCoordinator = (Coordinator)tControlEntity;
+					
+					tCoordinator.handleBullyAnnounce(tAnnouncePacket, pComChannel);
+				}else{
+					// HINT: this case shouldn't occur since the concept includes such messages only from a higher cluster towards its members (which are coordinators again)
+					Logging.err(this, "EXPECTED COORDINATOR as parent control entity for comm. channel: " + pComChannel);
+				}
 			}else{
 				Logging.log(this, "      ..ignoring Bully message: " + pPacketBully);
 			}

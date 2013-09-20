@@ -1200,24 +1200,17 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 	}
 
 	/**
-	 * EVENT: "superior cluster coordinator was announced", triggered by Elector
+	 * PACKET: BullyAnnounce which announce the new superior coordinator 
 	 */ 
-	public void eventSuperiorClusterCoordinatorAnnounced(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
+	@Override
+	public void handleBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
 		// store superior coordinator data
-		eventSuperiorCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
+		eventClusterCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
 		
 		// this event is also interesting for neighbor coordinators, which are not already part of this cluster, and   
 	}
 
-	/**
-	 * PACKET: BullyAnnounce which announce the new superior coordinator 
-	 */
-	@Override
-	public void handleCoordinatorBullyAnnounce(BullyAnnounce pAnnounce, ComChannel pCEP)
-	{
-		
-	}
 	
 	
 	
@@ -1476,44 +1469,44 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		}
 	}
 
-	@Override
-	public void eventSuperiorCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address) 
-	{
-		super.eventSuperiorCoordinatorAvailable(pCoordinatorComChannel, pCoordinatorName, pCoordToken, pCoordinatorL2Address);
-
-		Logging.log(this, "Setting channel to superior coordinator to " + pCoordinatorComChannel + " for coordinator " + pCoordinatorName + " with routing address " + pCoordinatorL2Address);
-		Logging.log(this, "Previous channel to superior coordinator was " + superiorCoordinatorComChannel() + " with name " + mCoordinatorName);
-		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
-		mCoordinatorName = pCoordinatorName;
-		synchronized(this) {
-			notifyAll();
-		}
-
-		//		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
-		ClusterName tLocalManagedClusterName = new ClusterName(mHRMController, mParentCluster.getHierarchyLevel(), mParentCluster.getCoordinatorID(), mParentCluster.getClusterID());
-		for(AbstractRoutingGraphNode tNeighbor: mHRMController.getNeighborsARG(mParentCluster)) {
-			if(tNeighbor instanceof ICluster) {
-				for(ComChannel tComChannel : getComChannels()) {
-					if(((ControlEntity)tNeighbor).superiorCoordinatorHostL2Address().equals(tComChannel.getPeerL2Address()) && !tComChannel.isPartOfMyCluster()) {
-						Logging.info(this, "Informing " + tComChannel + " about existence of neighbor zone ");
-						AnnounceRemoteCluster tAnnounce = new AnnounceRemoteCluster(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, getCoordinatorID(), pCoordinatorL2Address.getComplexAddress().longValue());
-						tAnnounce.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
-						LinkedList<RoutingServiceLinkVector> tVectorList = tComChannel.getPath(pCoordinatorL2Address);
-						tAnnounce.setRoutingVectors(tVectorList);
-						tAnnounce.setNegotiatorIdentification(tLocalManagedClusterName);
-						tComChannel.sendPacket(tAnnounce);
-					}
-					Logging.log(this, "Informed " + tComChannel + " about new neighbor zone");
-				}
-			}
-		}
-		if(mReceivedAnnouncements != null) {
-			for(AnnounceRemoteCluster tAnnounce : mReceivedAnnouncements) {
-				superiorCoordinatorComChannel().sendPacket(tAnnounce);
-			}
-		}
-		
-	}
+//	@Override
+//	public void eventClusterCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordToken, L2Address pCoordinatorL2Address) 
+//	{
+//		super.eventClusterCoordinatorAvailable(pCoordinatorComChannel, pCoordinatorName, pCoordToken, pCoordinatorL2Address);
+//
+//		Logging.log(this, "Setting channel to superior coordinator to " + pCoordinatorComChannel + " for coordinator " + pCoordinatorName + " with routing address " + pCoordinatorL2Address);
+//		Logging.log(this, "Previous channel to superior coordinator was " + superiorCoordinatorComChannel() + " with name " + mCoordinatorName);
+//		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
+//		mCoordinatorName = pCoordinatorName;
+//		synchronized(this) {
+//			notifyAll();
+//		}
+//
+//		//		LinkedList<CoordinatorCEP> tEntitiesToNotify = new LinkedList<CoordinatorCEP> ();
+//		ClusterName tLocalManagedClusterName = new ClusterName(mHRMController, mParentCluster.getHierarchyLevel(), mParentCluster.getCoordinatorID(), mParentCluster.getClusterID());
+//		for(AbstractRoutingGraphNode tNeighbor: mHRMController.getNeighborsARG(mParentCluster)) {
+//			if(tNeighbor instanceof ICluster) {
+//				for(ComChannel tComChannel : getComChannels()) {
+//					if(((ControlEntity)tNeighbor).superiorCoordinatorHostL2Address().equals(tComChannel.getPeerL2Address()) && !tComChannel.isPartOfMyCluster()) {
+//						Logging.info(this, "Informing " + tComChannel + " about existence of neighbor zone ");
+//						AnnounceRemoteCluster tAnnounce = new AnnounceRemoteCluster(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, getCoordinatorID(), pCoordinatorL2Address.getComplexAddress().longValue());
+//						tAnnounce.setCoordinatorsPriority(superiorCoordinatorComChannel().getPeerPriority());
+//						LinkedList<RoutingServiceLinkVector> tVectorList = tComChannel.getPath(pCoordinatorL2Address);
+//						tAnnounce.setRoutingVectors(tVectorList);
+//						tAnnounce.setNegotiatorIdentification(tLocalManagedClusterName);
+//						tComChannel.sendPacket(tAnnounce);
+//					}
+//					Logging.log(this, "Informed " + tComChannel + " about new neighbor zone");
+//				}
+//			}
+//		}
+//		if(mReceivedAnnouncements != null) {
+//			for(AnnounceRemoteCluster tAnnounce : mReceivedAnnouncements) {
+//				superiorCoordinatorComChannel().sendPacket(tAnnounce);
+//			}
+//		}
+//		
+//	}
 
 
 	

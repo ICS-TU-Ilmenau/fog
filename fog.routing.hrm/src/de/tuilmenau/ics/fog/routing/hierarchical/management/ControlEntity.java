@@ -395,17 +395,17 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
-	 * EVENT: superior coordinator is available
+	 * EVENT: cluster coordinator is available
 	 * 
 	 * For a coordinator instance, this is its superior coordinator.
-	 * For a cluster instance, this is its local coordinator (which is also superior).
+	 * For a cluster instance, this is its local coordinator.
 	 * 
 	 * @param pCoordinatorComChannel the communication channel to the coordinator
 	 * @param pCoordinatorHostName the name of the host where the coordinator is located
 	 * @param pCoordinatorID the unique ID of the coordinator
-	 * @param pCoordinatorHostL2Address the L2Address of the hos where the coordinator is located
+	 * @param pCoordinatorHostL2Address the L2Address of the node where the coordinator is located
 	 */
-	public void eventSuperiorCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorHostName, int pCoordinatorID, L2Address pCoordinatorHostL2Address)
+	public void eventClusterCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorHostName, int pCoordinatorID, L2Address pCoordinatorHostL2Address)
 	{
 		Logging.log(this, "EVENT: superior coordinator available (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorHostName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorHostL2Address);
 
@@ -577,21 +577,12 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	/**
 	 * PACKET: "cluster coordinator was announced", triggered by Elector 
 	 */
-	public void handleCoordinatorBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
+	public void handleBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
 	{
 		Logging.warn(this, "Received COORDINATOR_ANNOUNCED via: " + pComChannel);
 		Logging.warn(this, "Ignoring announced coordinator data: " + pAnnouncePacket);
 	}
 	
-	/**
-	 * PACKET: "superior cluster coordinator was announced", triggered by Elector when the superior coordinator announced its new position as coordinator
-	 */ 
-	public void handleSuperiorCoordinatorBullyAnnounce(BullyAnnounce pAnnouncePacket, ComChannel pComChannel)
-	{
-		Logging.warn(this, "Received SUPERIOR_COORDINATOR_ANNOUNCED from higher layer via: " + pComChannel);
-		Logging.warn(this, "Ignoring announced superior coordinator data: " + pAnnouncePacket);
-	}
-
 	/**
 	 * EVENT: "communication available", triggered by parent comm. session
 	 */
