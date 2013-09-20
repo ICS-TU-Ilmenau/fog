@@ -445,6 +445,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	private void setSuperiorCoordinatorNodeName(Name pNodeName)
 	{
+		Logging.log(this, "Setting superior coordinator node name: " + pNodeName);
 		mSuperiorCoordinatorNodeName = pNodeName;
 	}
 	
@@ -488,6 +489,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	protected void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
 	{
+		Logging.log(this, "Setting superior comm. channel: " + pComChannel);
 		mSuperiorCoordinatorComChannel = pComChannel;
 	}
 	
