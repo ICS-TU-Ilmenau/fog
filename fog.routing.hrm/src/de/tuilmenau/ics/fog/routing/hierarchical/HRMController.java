@@ -153,8 +153,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private static boolean mFoGSiEmSimulationCreationFinished = false;
 	
-	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
-	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
+//	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
+//	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
 	
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
@@ -1016,7 +1016,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	    Logging.log(this, "    ..creating new cluster");
 		final Cluster tCreatedCluster = Cluster.createBaseCluster(this);
 
-		setSourceIntermediateCluster(tCreatedCluster, tCreatedCluster);
+//		setSourceIntermediateCluster(tCreatedCluster, tCreatedCluster);
 		
 		/**
 		 * Create communication session
@@ -1651,7 +1651,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if (tTargetCluster == null){
 					Logging.log(this, "    ..creating new local cluster object for handling remote cluster with description: " + tPropClusterParticipation); 
 					tTargetCluster = Cluster.create(this, tPropClusterParticipation.getClusterID(), tPropClusterParticipation.getHierarchyLevel());
-					setSourceIntermediateCluster(tTargetCluster, tTargetCluster); //TODO : ??
+//					setSourceIntermediateCluster(tTargetCluster, tTargetCluster); //TODO : ??
 				}
 				
 				Logging.log(this, "     ..CONTINUING for target cluster: " + tTargetCluster);
@@ -1816,6 +1816,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 	}
 	
+	/**
+	 * Callback for ServerCallback: gets triggered if an error is caused by the server socket
+	 * 
+	 * @param the error cause
+	 */
 	/* (non-Javadoc)
 	 * @see de.tuilmenau.ics.fog.application.util.ServerCallback#error(de.tuilmenau.ics.fog.facade.events.ErrorEvent)
 	 */
@@ -1843,76 +1848,76 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pCluster cluster to which the distance has to be computed
 	 * @return number of clusters to target
 	 */
-	public int getClusterDistance(ControlEntity pCluster)
-	{
-		List<AbstractRoutingGraphLink> tClusterRoute = null;
-		int tDistance = 0;
-		if(getSourceIntermediateCluster(pCluster) == null || pCluster == null) {
-			Logging.log(this, "source cluster for " + (pCluster instanceof ClusterProxy ? ((ClusterProxy)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediateCluster(pCluster));
-		}
-		Cluster tIntermediateCluster = getSourceIntermediateCluster(pCluster);
-		tClusterRoute = getRouteARG(tIntermediateCluster, pCluster);
-		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
-			for(AbstractRoutingGraphLink tConnection : tClusterRoute) {
-				if(tConnection.getLinkType() == AbstractRoutingGraphLink.LinkType.REMOTE_LINK) {
-					tDistance++;
-				}
-			}
-		} else {
-			//Logging.log(this, "No cluster route available");
-			tClusterRoute = getRouteARG(tIntermediateCluster, pCluster);
-		}
-		return tDistance;
-	}
+//	public int getClusterDistance(ControlEntity pCluster)
+//	{
+//		List<AbstractRoutingGraphLink> tClusterRoute = null;
+//		int tDistance = 0;
+//		if(getSourceIntermediateCluster(pCluster) == null || pCluster == null) {
+//			Logging.log(this, "source cluster for " + (pCluster instanceof ClusterProxy ? ((ClusterProxy)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediateCluster(pCluster));
+//		}
+//		Cluster tIntermediateCluster = getSourceIntermediateCluster(pCluster);
+//		tClusterRoute = getRouteARG(tIntermediateCluster, pCluster);
+//		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
+//			for(AbstractRoutingGraphLink tConnection : tClusterRoute) {
+//				if(tConnection.getLinkType() == AbstractRoutingGraphLink.LinkType.REMOTE_LINK) {
+//					tDistance++;
+//				}
+//			}
+//		} else {
+//			//Logging.log(this, "No cluster route available");
+//			tClusterRoute = getRouteARG(tIntermediateCluster, pCluster);
+//		}
+//		return tDistance;
+//	}
 
-	/**
-	 * 
-	 * @param pLevel as level at which a a coordinator will be set
-	 * @param pCluster is the cluster that has set a coordinator
-	 */
-	public void setClusterWithCoordinator(HierarchyLevel pLevel, ICluster pCluster)
-	{
-		Logging.log(this, "Setting " + pCluster + " as cluster that has a connection to a coordinator at level " + pLevel.getValue());
-		mLevelToCluster.put(Integer.valueOf(pLevel.getValue()), pCluster);
-	}
+//	/**
+//	 * 
+//	 * @param pLevel as level at which a a coordinator will be set
+//	 * @param pCluster is the cluster that has set a coordinator
+//	 */
+//	public void setClusterWithCoordinator(HierarchyLevel pLevel, ICluster pCluster)
+//	{
+//		Logging.log(this, "Setting " + pCluster + " as cluster that has a connection to a coordinator at level " + pLevel.getValue());
+//		mLevelToCluster.put(Integer.valueOf(pLevel.getValue()), pCluster);
+//	}
 	
-	/**
-	 * 
-	 * @param pLevel level at which a cluster with a coordinator should be provided
-	 * @return cluster that contains a reference or a connection to a coordinator
-	 */
-	public ICluster getClusterWithCoordinatorOnLevel(int pLevel)
-	{
-		return (mLevelToCluster.containsKey(pLevel) ? mLevelToCluster.get(pLevel) : null );
-	}
+//	/**
+//	 * 
+//	 * @param pLevel level at which a cluster with a coordinator should be provided
+//	 * @return cluster that contains a reference or a connection to a coordinator
+//	 */
+//	public ICluster getClusterWithCoordinatorOnLevel(int pLevel)
+//	{
+//		return (mLevelToCluster.containsKey(pLevel) ? mLevelToCluster.get(pLevel) : null );
+//	}
 	
-	/**
-	 * 
-	 * @param pCluster is the cluster for which an intermediate cluster is saved as entity that is physically connected
-	 * @param pIntermediate is the cluster that acts as cluster that is intermediately connected to the node
-	 */
-	public void setSourceIntermediateCluster(ICluster pCluster, Cluster pIntermediate)
-	{
-		if(pIntermediate == null) {
-			Logging.err(this, "Setting " + pIntermediate + " as source intermediate for " + pCluster);
-		}
-		mIntermediateMapping.put(pCluster, pIntermediate);
-	}
-	
-	/**
-	 * 
-	 * @param pCluster for which an intermediate cluster is searched
-	 * @return intermediate cluster that is directly connected to the node
-	 */
-	public Cluster getSourceIntermediateCluster(ControlEntity pCluster)
-	{
-		if(mIntermediateMapping.containsKey(pCluster)) {
-			
-			return mIntermediateMapping.get(pCluster);
-		} else {
-			return null;
-		}
-	}
+//	/**
+//	 * 
+//	 * @param pCluster is the cluster for which an intermediate cluster is saved as entity that is physically connected
+//	 * @param pIntermediate is the cluster that acts as cluster that is intermediately connected to the node
+//	 */
+//	public void setSourceIntermediateCluster(ICluster pCluster, Cluster pIntermediate)
+//	{
+//		if(pIntermediate == null) {
+//			Logging.err(this, "Setting " + pIntermediate + " as source intermediate for " + pCluster);
+//		}
+//		mIntermediateMapping.put(pCluster, pIntermediate);
+//	}
+//	
+//	/**
+//	 * 
+//	 * @param pCluster for which an intermediate cluster is searched
+//	 * @return intermediate cluster that is directly connected to the node
+//	 */
+//	public Cluster getSourceIntermediateCluster(ControlEntity pCluster)
+//	{
+//		if(mIntermediateMapping.containsKey(pCluster)) {
+//			
+//			return mIntermediateMapping.get(pCluster);
+//		} else {
+//			return null;
+//		}
+//	}
 	
 
 

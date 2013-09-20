@@ -829,24 +829,24 @@ public class ComChannel
 	 * @throws NetworkException 
 	 * @throws PropertyException in case the requirements to the target coordinator can not be fulfilled
 	 */
-	private void getPathTo(NestedDiscovery pDiscovery, ControlEntity pDestination) throws NetworkException, PropertyException
-	{
-		L2Address tCoordL2Addr = ((ControlEntity)pDestination).superiorCoordinatorHostL2Address();
-
-		DiscoveryEntry tEntry = new DiscoveryEntry(pDestination.getCoordinatorID(), ((ICluster)pDestination).getCoordinatorNodeName(), pDestination.getClusterID(), tCoordL2Addr, pDestination.getHierarchyLevel());
-		tEntry.setClusterHops(mHRMController.getClusterDistance((ControlEntity)pDestination));
-		tEntry.setPriority(pDestination.getPriority());
-		tEntry.setRoutingVectors(getPath(tCoordL2Addr));
-		
-//		List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(getParent(), (ControlEntity)pDestination);
-//		if(!tClusterList.isEmpty()) {
-//			ICluster tPredecessorCluster = (ICluster) mHRMController.getOtherEndOfLinkARG((ControlEntity)pDestination, tClusterList.get(tClusterList.size() - 1));
-//			ClusterName tPredecessorClusterName = new ClusterName(mHRMController, tPredecessorCluster.getHierarchyLevel(), tPredecessorCluster.getCoordinatorID(), tPredecessorCluster.getClusterID());
-//			tEntry.setPredecessor(tPredecessorClusterName);
-//		}
-		
-		pDiscovery.addDiscoveryEntry(tEntry);
-	}
+//	private void getPathTo(NestedDiscovery pDiscovery, ControlEntity pDestination) throws NetworkException, PropertyException
+//	{
+//		L2Address tCoordL2Addr = ((ControlEntity)pDestination).superiorCoordinatorHostL2Address();
+//
+//		DiscoveryEntry tEntry = new DiscoveryEntry(pDestination.getCoordinatorID(), ((ICluster)pDestination).getCoordinatorNodeName(), pDestination.getClusterID(), tCoordL2Addr, pDestination.getHierarchyLevel());
+//		tEntry.setClusterHops(mHRMController.getClusterDistance((ControlEntity)pDestination));
+//		tEntry.setPriority(pDestination.getPriority());
+//		tEntry.setRoutingVectors(getPath(tCoordL2Addr));
+//		
+////		List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(getParent(), (ControlEntity)pDestination);
+////		if(!tClusterList.isEmpty()) {
+////			ICluster tPredecessorCluster = (ICluster) mHRMController.getOtherEndOfLinkARG((ControlEntity)pDestination, tClusterList.get(tClusterList.size() - 1));
+////			ClusterName tPredecessorClusterName = new ClusterName(mHRMController, tPredecessorCluster.getHierarchyLevel(), tPredecessorCluster.getCoordinatorID(), tPredecessorCluster.getClusterID());
+////			tEntry.setPredecessor(tPredecessorClusterName);
+////		}
+//		
+//		pDiscovery.addDiscoveryEntry(tEntry);
+//	}
 	
 	public void setAsParticipantOfMyCluster(boolean pPartOfMyCluster)
 	{

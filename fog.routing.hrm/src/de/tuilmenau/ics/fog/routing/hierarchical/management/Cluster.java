@@ -29,7 +29,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * This class represents a clusters on a defined hierarchy level.
  * 
  */
-public class Cluster extends ControlEntity implements ICluster
+public class Cluster extends ControlEntity
 {
 	/**
 	 * For using this class within (de-)serialization.
@@ -453,8 +453,8 @@ public class Cluster extends ControlEntity implements ICluster
 		// trigger: new superior coordinator
 		eventClusterCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address());
 
-		//TODO: remove?
-		mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
+//		//TODO: remove?
+//		mHRMController.setClusterWithCoordinator(getHierarchyLevel(), this);
 	}
 	
 	/**

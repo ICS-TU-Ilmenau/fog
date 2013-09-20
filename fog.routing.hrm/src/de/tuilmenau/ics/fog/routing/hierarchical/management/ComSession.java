@@ -380,7 +380,7 @@ public class ComSession extends Session
 		
 		LinkedList<ComChannel> tComChannels = getAllComChannels();
 		for (ComChannel tComChannel : tComChannels){
-			if(((ICluster)tComChannel.getParent()).getClusterID().equals(pClusterID)) {
+			if(tComChannel.getParent().getClusterID().equals(pClusterID)) {
 				tResult = tComChannel;
 				Logging.log(this, "       ..found communication channel: " + tComChannel);
 				break;
