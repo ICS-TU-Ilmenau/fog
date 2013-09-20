@@ -76,6 +76,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private int mSuperiorCoordinatorID = 0;
 	
 	/**
+	 * Stores the name of the node where the superior coordinator is located.
+	 */
+	private Name mSuperiorCoordinatorNodeName = null;
+	
+	/**
 	 * Stores the L2Address of the superior coordinator.
 	 */
 	private L2Address mSuperiorCoordinatorHostL2Address = null;
@@ -401,13 +406,13 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * For a cluster instance, this is its local coordinator.
 	 * 
 	 * @param pCoordinatorComChannel the communication channel to the coordinator
-	 * @param pCoordinatorHostName the name of the host where the coordinator is located
+	 * @param pCoordinatorNodeName the name of the node where the coordinator is located
 	 * @param pCoordinatorID the unique ID of the coordinator
 	 * @param pCoordinatorHostL2Address the L2Address of the node where the coordinator is located
 	 */
-	public void eventClusterCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorHostName, int pCoordinatorID, L2Address pCoordinatorHostL2Address)
+	public void eventClusterCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorNodeName, int pCoordinatorID, L2Address pCoordinatorHostL2Address)
 	{
-		Logging.log(this, "EVENT: superior coordinator available (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorHostName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorHostL2Address);
+		Logging.log(this, "EVENT: superior coordinator available (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorNodeName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorHostL2Address);
 
 		// store the communication channel to the superior coordinator
 		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
@@ -418,9 +423,31 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		// store the unique ID of the superior coordinator
 		setSuperiorCoordinatorID(pCoordinatorID);
 		
+		// store the name of the node where the superior coordinator is located
+		setSuperiorCoordinatorNodeName(pCoordinatorNodeName);
+		
 		mSuperiorCoordinatorKnown = true;
 	}
 
+	/**
+	 * Returns the name of the node where the superior coordinator is located
+	 * 
+	 * @return the name of the node
+	 */
+	public Name superiorCoordinatorNodeName() {
+		return mSuperiorCoordinatorNodeName;
+	}
+
+	/**
+	 * Sets the name of the node where the superior coordinator is located.
+	 * 
+	 * @param pNodeName the name of the node
+	 */
+	private void setSuperiorCoordinatorNodeName(Name pNodeName)
+	{
+		mSuperiorCoordinatorNodeName = pNodeName;
+	}
+	
 	/**
 	 * Returns true if the superior coordinator is already defined
 	 * 
