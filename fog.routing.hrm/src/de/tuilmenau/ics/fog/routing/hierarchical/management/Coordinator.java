@@ -1062,7 +1062,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			/**
 			 * Create the hierarchy level description for the new cluster, which should be 1 above the current one
 			 */
-			HierarchyLevel tFutureClusterHierLvl = getHierarchyLevel(); //TODO: add "-1" if the coordinator hier. level handling was fixed
+			HierarchyLevel tFutureClusterHierLvl = getHierarchyLevel(); //TODO: add "+1" if the coordinator hier. level handling was fixed
 	
 			Logging.info(this, "\n\n\n############## EXPANDING TO " + pDestinationNodeName + " FOR " + mHRMController.getNodeL2Address() + ", future clusterID is " + Long.toString(pFutureClusterID) + ", future hier. level is " + tFutureClusterHierLvl.getValue());
 	
