@@ -17,6 +17,9 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
+/**
+ * This class is used to identify a cluster (independent from its physical location)
+ */
 public class ClusterName extends ControlEntity implements Serializable, ICluster, AbstractRoutingGraphNode
 {
 	private static final long serialVersionUID = 3027076881853652810L;
