@@ -494,7 +494,7 @@ public class ComSession extends Session
 		 */
 		if(pData instanceof RequestClusterMembership) {
 			RequestClusterMembership tRequestClusterMembershipPacket = (RequestClusterMembership)pData;
-			ClusterName tRemoteClusterName = new ClusterName(mHRMController, tRequestClusterMembershipPacket.getSenderHierarchyLevel(), tRequestClusterMembershipPacket.getSenderCoordinatorID(), tRequestClusterMembershipPacket.getSenderClusterID());
+			ClusterName tRemoteClusterName = new ClusterName(mHRMController, tRequestClusterMembershipPacket.getSenderHierarchyLevel(), tRequestClusterMembershipPacket.getSenderClusterID(), tRequestClusterMembershipPacket.getSenderCoordinatorID());
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRemoteClusterName);

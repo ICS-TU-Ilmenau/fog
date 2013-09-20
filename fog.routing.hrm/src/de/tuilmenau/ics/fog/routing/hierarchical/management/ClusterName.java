@@ -27,10 +27,10 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	 * 
 	 * @param pHRMController the local HRMController instance (for accessing topology data)
 	 * @param pHierarchyLevel the hierarchy level
-	 * @param pCoordinatorID the unique ID of the coordinator
 	 * @param pClusterID the unique ID of the cluster
+	 * @param pCoordinatorID the unique ID of the coordinator
 	 */
-	public ClusterName(HRMController pHRMController, HierarchyLevel pHierarchyLevel, int pCoordinatorID, Long pClusterID)
+	public ClusterName(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID)
 	{
 		super(pHRMController, pHierarchyLevel);
 		

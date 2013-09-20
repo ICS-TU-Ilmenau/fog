@@ -386,7 +386,7 @@ public class ComChannel
 			Logging.log(this, "Sending " + pData + " to destination " + tDestinationClusterName);
 	
 			// create the source description
-			ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().superiorCoordinatorID(), ((ICluster)getParent()).getClusterID());
+			ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().getClusterID(), getParent().superiorCoordinatorID());
 			
 			// create the Multiplex-Header
 			MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pData);
@@ -861,7 +861,7 @@ public class ComChannel
 	public void handleClusterDiscovery(NestedDiscovery pDiscovery, boolean pRequest) throws PropertyException, NetworkException
 	{
 		if(pRequest){
-			Cluster tSourceCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pDiscovery.getLevel(), pDiscovery.getToken(), pDiscovery.getSourceClusterID()));
+			Cluster tSourceCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pDiscovery.getLevel(), pDiscovery.getSourceClusterID(), pDiscovery.getToken()));
 			if(tSourceCluster == null) {
 				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteClusterName());
 			}
@@ -892,8 +892,8 @@ public class ComChannel
 							for(ControlEntity tNeighbor : tControlEntity.getNeighborsARG()) {
 								ICluster tNeighborICluster = (ICluster)tNeighbor; //TODO: entfernen, wenn ICluster vollstaendig entfernt ist
 
-								ClusterName tFirstClusterName = new ClusterName(mHRMController, tICluster.getHierarchyLevel(), tICluster.getCoordinatorID(), tICluster.getClusterID()); 
-								ClusterName tSecondClusterName = new ClusterName(mHRMController, tNeighbor.getHierarchyLevel(), tNeighborICluster.getCoordinatorID(), tNeighborICluster.getClusterID()); 
+								ClusterName tFirstClusterName = new ClusterName(mHRMController, tICluster.getHierarchyLevel(), tICluster.getClusterID(), tICluster.getCoordinatorID()); 
+								ClusterName tSecondClusterName = new ClusterName(mHRMController, tNeighbor.getHierarchyLevel(), tNeighborICluster.getClusterID(), tNeighborICluster.getCoordinatorID()); 
 								pDiscovery.addNeighborRelation(tFirstClusterName, tSecondClusterName);
 							}
 						} else {
@@ -925,9 +925,9 @@ public class ComChannel
 			}
 		}
 
-		Cluster tNewCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pEntry.getLevel(), pEntry.getToken(), pEntry.getClusterID()));
+		Cluster tNewCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pEntry.getLevel(), pEntry.getClusterID(), pEntry.getToken()));
 		if(tNewCluster != null) {
-			tResult = new ClusterName(mHRMController, tNewCluster.getHierarchyLevel(), tNewCluster.getCoordinatorID(), tNewCluster.getClusterID());
+			tResult = new ClusterName(mHRMController, tNewCluster.getHierarchyLevel(), tNewCluster.getClusterID(), tNewCluster.getCoordinatorID());
 		}else{
 			/*
 			 * Be aware of the fact that the new attached cluster has lower level
@@ -940,7 +940,7 @@ public class ComChannel
 			tClusterProxy.setPriority(pEntry.getPriority());
 			mHRMController.getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorNodeName(), pEntry.getCoordinatorL2Address());
 			Logging.log(this, "Created " + tClusterProxy);
-			tResult = new ClusterName(mHRMController, tClusterProxy.getHierarchyLevel(), tClusterProxy.getCoordinatorID(), tClusterProxy.getClusterID());
+			tResult = new ClusterName(mHRMController, tClusterProxy.getHierarchyLevel(), tClusterProxy.getClusterID(), tClusterProxy.getCoordinatorID());
 		}
 		
 		return tResult;

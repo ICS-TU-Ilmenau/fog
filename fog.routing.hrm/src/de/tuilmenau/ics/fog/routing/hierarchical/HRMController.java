@@ -1029,7 +1029,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	     */
 	    Logging.log(this, "    ..creating new communication channel");
 		ComChannel tComChannel = new ComChannel(this, ComChannel.Direction.OUT, tCreatedCluster, tComSession);
-		tComChannel.setRemoteClusterName(new ClusterName(this, tCreatedCluster.getHierarchyLevel(), tCreatedCluster.getCoordinatorID(), tCreatedCluster.getClusterID()));
+		tComChannel.setRemoteClusterName(new ClusterName(this, tCreatedCluster.getHierarchyLevel(), tCreatedCluster.getClusterID(), tCreatedCluster.getCoordinatorID()));
 		
 		/**
 		 * Describe the new created cluster
@@ -1634,7 +1634,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				{
 					Logging.log(this, "    ..[" + i + "]: " + tLocalCluster);
 					
-					ClusterName tSignaledClusterName = new ClusterName(this, tPropClusterParticipation.getHierarchyLevel(), 0, tPropClusterParticipation.getClusterID());
+					ClusterName tSignaledClusterName = new ClusterName(this, tPropClusterParticipation.getHierarchyLevel(), tPropClusterParticipation.getClusterID(), 0);
 
 					// do we already know the described cluster?
 					if(tLocalCluster.equals(tSignaledClusterName))	{
@@ -1679,7 +1679,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * Set the remote ClusterName of the communication channel
 					 */
-					ClusterName tRemoteClusterName = new ClusterName(this, tPropClusterParticipation.getSenderHierarchyLevel(), tSenderClusterMember.getCoordinatorID(), tSenderClusterMember.getClusterID());
+					ClusterName tRemoteClusterName = new ClusterName(this, tPropClusterParticipation.getSenderHierarchyLevel(), tSenderClusterMember.getClusterID(), tSenderClusterMember.getCoordinatorID());
 					tComChannel.setRemoteClusterName(tRemoteClusterName);
 					
 					/**
@@ -1732,7 +1732,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								/**
 								 * Create a ClusterName object for the neighbor entry
 								 */
-								ClusterName tNeighborDescriptionClusterName = new ClusterName(this, tNeighborDescription.getLevel(), tNeighborDescription.getToken(), tNeighborDescription.getClusterID());
+								ClusterName tNeighborDescriptionClusterName = new ClusterName(this, tNeighborDescription.getLevel(), tNeighborDescription.getClusterID(), tNeighborDescription.getToken());
 								
 								
 								/**

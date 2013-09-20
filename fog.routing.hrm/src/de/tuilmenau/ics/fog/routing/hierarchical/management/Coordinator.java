@@ -622,7 +622,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		     */
 		    Logging.log(this, "           ..creating new communication channel");
 			ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession);
-			tComChannel.setRemoteClusterName(new ClusterName(mHRMController, pSuperiorCluster.getHierarchyLevel(), pSuperiorCluster.getCoordinatorID(), pSuperiorCluster.getClusterID()));
+			tComChannel.setRemoteClusterName(new ClusterName(mHRMController, pSuperiorCluster.getHierarchyLevel(), pSuperiorCluster.getClusterID(), pSuperiorCluster.getCoordinatorID()));
 			tComChannel.setPeerPriority(pSuperiorCluster.getPriority());
 			
 			/**
@@ -1071,7 +1071,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 				     */
 				    Logging.log(this, "           ..creating new communication channel");
 					ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, tLocalNeighborCoordinator, tComSession);
-					tComChannel.setRemoteClusterName(new ClusterName(mHRMController, tFutureClusterHierLvl, -1, pFutureClusterID /* HINT: we will communicate with the new cluster -> us clusterID of new cluster */));
+					tComChannel.setRemoteClusterName(new ClusterName(mHRMController, tFutureClusterHierLvl, pFutureClusterID /* HINT: we will communicate with the new cluster -> us clusterID of new cluster */, -1));
 					
 					/**
 					 * Get get cluster for the locally found neighbor coordinator
