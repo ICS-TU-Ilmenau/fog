@@ -444,7 +444,7 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 			// create signaling packet for signaling that we leave the Bully group
 			BullyLeave tBullyLeavePacket = new BullyLeave(mHRMController.getNodeName(), getPriority());
 
-			sendAllSuperiorClusters(tBullyLeavePacket, true);
+			sendSuperiorCluster(tBullyLeavePacket);
 		}else{
 			Logging.log(this, "eventCoordinatorRoleInvalid() skips further signaling because hierarchy end is already reached at: " + (getHierarchyLevel().getValue() - 1));
 		}
@@ -524,37 +524,6 @@ public class Coordinator extends ControlEntity implements ICluster, Localization
 		
 		// send the packet
 		pComChannel.sendPacket(tAssignHRMIDPacket);
-	}
-
-	/**
-	 * @param pBullyLeavePacket
-	 */
-	private void sendAllSuperiorClusters(Serializable pPacket, boolean pIncludeLoopback)
-	{
-		// get all communication channels
-		LinkedList<ComChannel> tComChannels = getComChannels();
-
-		// get the L2Addres of the local host
-		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
-		
-		Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels");
-		
-		for(ComChannel tComChannel : tComChannels) {
-			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
-			
-			if (!tIsLoopback){
-				Logging.log(this, "       ..to " + tComChannel);
-			}else{
-				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
-			}
-
-			if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (pIncludeLoopback) || (!tIsLoopback)){
-				// send the packet to one of the possible cluster members
-				tComChannel.sendPacket(pPacket);
-			}else{
-				Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
-			}
-		}
 	}
 
 	/**
