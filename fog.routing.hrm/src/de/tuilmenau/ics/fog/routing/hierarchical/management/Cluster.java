@@ -472,12 +472,12 @@ public class Cluster extends ControlEntity implements ICluster
 	}
 
 	/**
-	 * EVENT: an inferior coordinator requests cluster membership, the event is triggered by the comm. session because of some comm. end point at remote side
+	 * EVENT: got membership request, an inferior coordinator requests cluster membership, the event is triggered by the comm. session because of some comm. end point at remote side
 	 * 
 	 * @param pSourceComSession the comm. session where the packet was received
 	 * @param pRequestClusterMembershipPacket the request packet
 	 */
-	public void eventInferiorCoordinatorRequestsMembership(ComSession pSourceComSession, RequestClusterMembership pRequestClusterMembershipPacket)
+	public void eventGotMembershipRequest(ComSession pSourceComSession, RequestClusterMembership pRequestClusterMembershipPacket)
 	{
 		ClusterName tRemoteClusterName = new ClusterName(mHRMController, pRequestClusterMembershipPacket.getSenderHierarchyLevel(), pRequestClusterMembershipPacket.getSenderCoordinatorID(), pRequestClusterMembershipPacket.getSenderClusterID());
 		Logging.log(this, "EVENT: got a membership request from: " + tRemoteClusterName);
