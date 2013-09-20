@@ -10,29 +10,22 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class is used when a remote cluster is detected. It includes all needed data about the remote cluster.
+ * This class is used to identify a remote cluster (including the location information). It includes all needed data about the remote cluster.
  */
-public class ClusterProxy extends ControlEntity implements ICluster
+public class ClusterProxy extends ClusterName
 {
 	private static final long serialVersionUID = -8746079632866375924L;
 
 	/**
-	 * Stores the reference to the local HRMController instance.
+	 * Stores the name of the node where the coordinator of the addressed cluster is located
 	 */
-	private HRMController mHRMController;
-
-	private Long mClusterID;
-
-	private Name mCoordName;
+	private Name mCoordinatorNodeName;
 	
 	/**
 	 * Constructor
@@ -40,20 +33,15 @@ public class ClusterProxy extends ControlEntity implements ICluster
 	 * @param pHRMController the local HRMController instance
 	 * @param pClusterID the unique ID of this cluster
 	 * @param pHierarchyLevel the hierarchy level
-	 * @param pCoordName
+	 * @param pCoordinatorNodeName
 	 * @param pCoordinatorID
 	 */
-	public ClusterProxy(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, Name pCoordName, int pCoordinatorID)
+	public ClusterProxy(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, Name pCoordinatorNodeName, int pCoordinatorID)
 	{	
-		super(pHRMController, pHierarchyLevel);
+		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID);
 
-		mClusterID = pClusterID;
-		mHRMController = pHRMController;
-
-		mCoordName = pCoordName;
-		
-		setSuperiorCoordinatorID(pCoordinatorID);
-		setCoordinatorID(pCoordinatorID);
+		// store the name of the node where the coordinator is located
+		mCoordinatorNodeName = pCoordinatorNodeName;
 		
 		// register the ClusterProxy at the local ARG
 		mHRMController.registerNodeARG(this);
@@ -61,98 +49,54 @@ public class ClusterProxy extends ControlEntity implements ICluster
 		Logging.log(this, "CREATED");
 	}
 
+	
+	
+
+//	public void handleNeighborAnnouncement(AnnounceRemoteCluster pAnnounce, ComChannel pCEP)
+//	{
+//		if(pAnnounce.getRoutingVectors() != null) {
+//			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
+//				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
+//			}
+//		}
+//		Cluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pAnnounce.getLevel(), pAnnounce.getToken(), pAnnounce.getClusterID()));
+//		if(tCluster == null)
+//		{
+//			Logging.log(this, "     ..creating cluster proxy");
+//			ClusterProxy tClusterProxy = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getToken());
+//			mHRMController.setSourceIntermediateCluster(tClusterProxy, mHRMController.getSourceIntermediateCluster(this));
+//			tClusterProxy.setPriority(pAnnounce.getCoordinatorsPriority());
+//			tClusterProxy.setSuperiorCoordinatorID(pAnnounce.getToken());
+//			registerNeighborARG(tClusterProxy);
+//		} else {
+//			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
+//			registerNeighborARG(tCluster);
+//		}
+//		//((AttachedCluster)tCluster).setNegotiatingHost(pAnnounce.getAnnouncersAddress());
+//
+//		/*
+//		 * function checks whether neighbor relation was established earlier
+//		 */
+//
+//		if(pAnnounce.getCoordinatorName() != null) {
+//			mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
+//		}
+//	}
+
+//	public int hashCode()
+//	{
+//		return mClusterID.intValue() * 1;
+//	}
+
 	/**
-	 * Determines the physical simulation machine specific ClusterID multiplier
+	 * Returns the name of the node where the coordinator of the described cluster is located
 	 * 
-	 * @return the generated multiplier
+	 * @return the node name
 	 */
-	private long clusterIDMachineMultiplier()
-	{
-		//TODO: get this value from the signaling
-		return 1;
-	}
-
-	/**
-	 * Returns the full ClusterID (including the machine specific multiplier)
-	 * 
-	 *  @return the full ClusterID
-	 */
-	public Long getClusterID()
-	{
-		return mClusterID;
-	}
-
-	/**
-	 * Returns the machine-local ClusterID (excluding the machine specific multiplier)
-	 * 
-	 * @return the machine-local ClusterID
-	 */
-	public long getGUIClusterID()
-	{
-		return mClusterID / clusterIDMachineMultiplier();
-	}
-	
-	
-	
-	
-
-	public void handleNeighborAnnouncement(AnnounceRemoteCluster pAnnounce, ComChannel pCEP)
-	{
-		if(pAnnounce.getRoutingVectors() != null) {
-			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
-				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
-			}
-		}
-		Cluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pAnnounce.getLevel(), pAnnounce.getToken(), pAnnounce.getClusterID()));
-		if(tCluster == null)
-		{
-			Logging.log(this, "     ..creating cluster proxy");
-			ClusterProxy tClusterProxy = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getToken());
-			mHRMController.setSourceIntermediateCluster(tClusterProxy, mHRMController.getSourceIntermediateCluster(this));
-			tClusterProxy.setPriority(pAnnounce.getCoordinatorsPriority());
-			tClusterProxy.setSuperiorCoordinatorID(pAnnounce.getToken());
-			registerNeighborARG(tClusterProxy);
-		} else {
-			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
-			registerNeighborARG(tCluster);
-		}
-		//((AttachedCluster)tCluster).setNegotiatingHost(pAnnounce.getAnnouncersAddress());
-
-		/*
-		 * function checks whether neighbor relation was established earlier
-		 */
-
-		if(pAnnounce.getCoordinatorName() != null) {
-			mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
-		}
-	}
-
-	public int hashCode()
-	{
-		return mClusterID.intValue() * 1;
-	}
-
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster#getCoordinatorName()
-	 */
-	@Override
 	public Name getCoordinatorNodeName()
 	{
-		return mCoordName;
+		return mCoordinatorNodeName;
 	}
-
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.routing.hierarchical.management.ICluster#setCoordinatorName(de.tuilmenau.ics.fog.facade.Name)
-	 */
-	@Override
-	public void setCoordinatorHostName(Name pCoordName)
-	{
-		mCoordName = pCoordName;		
-	}
-	
-	
-	
-	
 	
 	/**
 	 * Returns a descriptive string about this object
