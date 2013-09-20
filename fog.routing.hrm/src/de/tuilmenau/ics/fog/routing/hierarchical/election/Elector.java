@@ -407,10 +407,7 @@ public class Elector implements Localization
 			}else{
 				Logging.warn(this, "Cluster " + mParentCluster + " has already a coordinator");
 			}
-			
-			// update the coordinator description for the cluster
-			mParentCluster.eventClusterCoordinatorAvailable(null, mHRMController.getNodeName(), tCoordinator.getCoordinatorID(), mHRMController.getHRS().getCentralFNL2Address());
-			
+
 			// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
 			signalAnnounceBroadcast();
 
