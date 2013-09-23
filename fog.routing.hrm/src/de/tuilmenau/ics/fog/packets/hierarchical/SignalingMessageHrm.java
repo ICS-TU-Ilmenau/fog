@@ -66,6 +66,8 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		
 		tResult = ++mHRMMessagesCounter;
 		
+		Logging.log("\n########### CREATING HRM MESSAGE nr. " + tResult);
+		
 		return tResult;
 	}
 	
