@@ -137,6 +137,8 @@ public class ComSession extends Session
 		
 		if(getConnection() != null && getConnection().isConnected()) {
 			try	{
+				Logging.log(this, "SENDING PACKET: " + pData.getClass().getSimpleName());
+
 				getConnection().write(pData);
 				tResult = true;
 			} catch (NetworkException tExc) {
@@ -454,8 +456,8 @@ public class ComSession extends Session
 		 */
 		if (tDestinationComChannel != null){
 			try {
+				Logging.log(this, "       ..delivering received payload: " + tPayload);
 				tDestinationComChannel.receiveData(tPayload);
-				Logging.log(this, "       ..delivered payload: " + tPayload);
 			} catch (NetworkException tExc) {
 				Logging.err(this, "Unable to forward payload " + tPayload + " to " + tDestination + " via " + tDestinationComChannel);
 			}
@@ -473,6 +475,8 @@ public class ComSession extends Session
 	@Override
 	public boolean receiveData(Object pData)
 	{
+		Logging.log(this, "RECEIVED PACKET: " + pData.getClass().getSimpleName());
+		
 		/**
 		 * PACKET: AnnouncePhysicalNeighborhood
 		 */

@@ -1512,7 +1512,7 @@ public class Coordinator extends ControlEntity implements Localization
 
 	private String idToString()
 	{
-		if (getHRMID() == null){
+		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
 			return "ID=" + getClusterID() + ", CordID=" + getCoordinatorID() +  ", NodePrio=" + getPriority().getValue();
 		}else{
 			return "HRMID=" + getHRMID().toString();

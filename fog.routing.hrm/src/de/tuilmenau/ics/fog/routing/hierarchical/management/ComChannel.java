@@ -385,7 +385,7 @@ public class ComChannel
 		ClusterName tDestinationClusterName = getRemoteClusterName();
 		
 		if (tDestinationClusterName != null){
-			Logging.log(this, "Sending " + pData + " to destination " + tDestinationClusterName);
+			Logging.log(this, "SENDING DATA " + pData + " to destination " + tDestinationClusterName);
 	
 			// create the source description
 			ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().getClusterID(), getParent().superiorCoordinatorID());
@@ -580,7 +580,7 @@ public class ComChannel
 	public boolean receiveData(Serializable pData) throws NetworkException
 	{
 		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
-			Logging.log(this, "RECEIVED DATA from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pData);
+			Logging.log(this, "RECEIVED DATA (" + pData.getClass().getSimpleName() + ") from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pData);
 		}
 			
 		/*
@@ -952,6 +952,6 @@ public class ComChannel
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "@" + mParent.toString() + "(ClusterID=" + mParent.getClusterID() + ", PeerPrio=" + mPeerPriority.getValue() + (getPeerL2Address() != null ? ", PeerL2Addres=" + getPeerL2Address() + ", Peer=" + getPeerHRMID() : "") + ")";
+		return getClass().getSimpleName() + "@" + mParent.toString() + "(Peer="+ (getPeerL2Address() != null ? getPeerL2Address() + " <#> " + getPeerHRMID() : "") + ")";
 	}
 }
