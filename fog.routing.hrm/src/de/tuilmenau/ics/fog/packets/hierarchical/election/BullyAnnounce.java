@@ -24,7 +24,6 @@ public class BullyAnnounce extends SignalingMessageBully
 	private static final long serialVersionUID = 794175467972815277L;
 
 	private int mCoordinatorID;
-	private LinkedList<Name> mCoveredNodes = null;
 	private String mCoordinatorDescription = null;
 	
 	/**
@@ -32,10 +31,10 @@ public class BullyAnnounce extends SignalingMessageBully
 	 * 
 	 * @param pSenderName the name of the message sender (coordinator)
 	 * @param pSenderPriority the priority of the message sender (coordinator)
-	 * @param pCoordinatorDescription the descriptive name of the coordinator
-	 * @param pCoordinatorID is the unique ID of the message sender (coordinator)
+	 * @param pCoordinatorID the unique ID of the message sender (coordinator)
+	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public BullyAnnounce(Name pSenderName, BullyPriority pSenderPriority, String pCoordinatorDescription, int pCoordinatorID)
+	public BullyAnnounce(Name pSenderName, BullyPriority pSenderPriority, int pCoordinatorID, String pCoordinatorDescription)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
@@ -53,17 +52,6 @@ public class BullyAnnounce extends SignalingMessageBully
 	}
 	
 	/**
-	 * Returns an object describing string
-	 * 
-	 *  @return the describing string
-	 */
-	@Override
-	public String toString()
-	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ", Coordinator=" + mCoordinatorDescription + ")";
-	}
-
-	/**
 	 * Returns the unique coordinator ID
 	 * 
 	 * @return the unique coordinator ID
@@ -74,23 +62,13 @@ public class BullyAnnounce extends SignalingMessageBully
 	}
 
 	/**
+	 * Returns an object describing string
 	 * 
-	 * @param pName is one further node that is covered by the coordinator that created this message
+	 *  @return the describing string
 	 */
-	public void addCoveredNode(Name pName)
+	@Override
+	public String toString()
 	{
-		if(mCoveredNodes == null) {
-			mCoveredNodes = new LinkedList<Name>();
-		}
-		mCoveredNodes.add(pName);
-	}
-	
-	/**
-	 * 
-	 * @return the nodes that are covered by the coordinator that sent this message
-	 */
-	public LinkedList<Name> getCoveredNodes()
-	{
-		return mCoveredNodes;
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ", Coordinator=" + mCoordinatorDescription + ")";
 	}
 }

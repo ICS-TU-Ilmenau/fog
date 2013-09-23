@@ -38,6 +38,6 @@ public class BullyAlive extends SignalingMessageBully
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ")";
 	}
 }
