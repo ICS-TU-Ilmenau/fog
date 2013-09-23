@@ -629,7 +629,8 @@ public class Coordinator extends ControlEntity implements Localization
 			 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
 			 */
 		    Logging.log(this, "           ..sending membership request via communication session");
-			RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeName(), pSuperiorCluster.getHRMID(), getClusterID(), getCoordinatorID(), getHierarchyLevel());
+		    ClusterName tOwnClusterName = new ClusterName(mHRMController, getHierarchyLevel(), getClusterID(), getCoordinatorID());
+			RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeName(), pSuperiorCluster.getHRMID(), tOwnClusterName);
 			if (tComSession.write(tRequestClusterMembership)){
 				tResult = true;
 				

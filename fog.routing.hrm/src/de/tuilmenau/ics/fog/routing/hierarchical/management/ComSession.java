@@ -498,17 +498,16 @@ public class ComSession extends Session
 		 */
 		if(pData instanceof RequestClusterMembership) {
 			RequestClusterMembership tRequestClusterMembershipPacket = (RequestClusterMembership)pData;
-			ClusterName tRemoteClusterName = new ClusterName(mHRMController, tRequestClusterMembershipPacket.getSenderHierarchyLevel(), tRequestClusterMembershipPacket.getSenderClusterID(), tRequestClusterMembershipPacket.getSenderCoordinatorID());
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRemoteClusterName);
+				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRequestClusterMembershipPacket.getSenderClusterName());
 			}
 			
 			// is the parent a coordinator or a cluster?
 			if (getParent() instanceof Cluster){
 				Cluster tCluster = (Cluster)getParent();
 				
-				tCluster.eventMembershipRequest(tRemoteClusterName, this);
+				tCluster.eventMembershipRequest(tRequestClusterMembershipPacket.getSenderClusterName(), this);
 			}else{
 				Logging.err(this, "Expected a Cluster object as parent for processing RequestClusterMembership data but parent is " + getParent());
 			}

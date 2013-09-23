@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical.clustering;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 
 /**
  * PACKET: This packet is used when a coordinator wants to join an existing superior cluster
@@ -21,65 +21,42 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	private static final long serialVersionUID = 445881657397476245L;
 
 	/**
-	 * Store the clusterId of the sender
+	 * Store the ClusterName of the sender
 	 */
-	private Long mSenderClusterID = null;
-	
-	/**
-	 * Stores the coordinatorID of the sender 
-	 */
-	private int mSenderCoordinatorID;
-	
-	/**
-	 * Stores the hierarchy level of the sender
-	 */
-	private HierarchyLevel mSenderHierarchyLevel = null;
+	private ClusterName mSenderClusterName = null;
 	
 	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
-	 * @param pSenderClusterID the clusterID of the sender
-	 * @param pSenderCoordinatorID the coordinatorID of the sender
-	 * @param pSenderHierarchyLevel the hierarchy level of the sender
+	 * @param pSenderClusterName the ClusterName of the sender
 	 */
-	public RequestClusterMembership(Name pSenderName, Name pReceiverName, Long pSenderClusterID, int pSenderCoordinatorID, HierarchyLevel pSenderHierarchyLevel)
+	public RequestClusterMembership(Name pSenderName, Name pReceiverName, ClusterName pSenderClusterName)
 	{
 		super(pSenderName, pReceiverName);
 		
-		mSenderClusterID = pSenderClusterID;
-		mSenderCoordinatorID = pSenderCoordinatorID;
-		mSenderHierarchyLevel = pSenderHierarchyLevel;		
+		mSenderClusterName = pSenderClusterName;
 	}
 
 	/**
-	 * Returns the clusterID of the sender
+	 * Returns the ClusterName which describes the desired cluster
 	 * 
-	 * @return the clusterID of the sender
+	 * @return the ClusterName description
 	 */
-	public Long getSenderClusterID()
+	public ClusterName getSenderClusterName()
 	{
-		return mSenderClusterID;
+		return mSenderClusterName;
 	}
 	
 	/**
-	 * Returns the CoordinatorID of the sender
+	 * Returns an object describing string
 	 * 
-	 * @return the CoordinatorID of the sender
+	 *  @return the describing string
 	 */
-	public int getSenderCoordinatorID()
+	@Override
+	public String toString()
 	{
-		return mSenderCoordinatorID;
-	}
-
-	/**
-	 * Returns the hierarchy level of the sender
-	 * 
-	 * @return the hierarchy level of the sender
-	 */
-	public HierarchyLevel getSenderHierarchyLevel()
-	{
-		return mSenderHierarchyLevel;
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", SenderClusterName="+ getSenderClusterName() + ")";
 	}
 }
