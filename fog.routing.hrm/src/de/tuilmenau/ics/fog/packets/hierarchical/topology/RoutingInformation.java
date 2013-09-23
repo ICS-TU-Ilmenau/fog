@@ -76,6 +76,6 @@ public class RoutingInformation extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", "+ mRoutingEntries.size() + " shared routes)";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", "+ mRoutingEntries.size() + " shared routes)";
 	}
 }

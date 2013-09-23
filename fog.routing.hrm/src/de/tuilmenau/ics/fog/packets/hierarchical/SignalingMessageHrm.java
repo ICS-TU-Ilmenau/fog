@@ -30,6 +30,16 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	private Name mReceiverName = null;
 
 	/**
+	 * Counts the HRM internal messages
+	 */
+	private static int mHRMMessagesCounter = 0;
+	
+	/**
+	 * Stores the HRM message number
+	 */
+	private int mMessageNumber = -1;
+	
+	/**
 	 * For using the class within (de-)serialization. 
 	 */
 	private static final long serialVersionUID = 7253912074438961613L;
@@ -38,10 +48,35 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	{
 		mSenderName = pSenderName;
 		mReceiverName = pReceiverName;
+		mMessageNumber = createMessageNumber();
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
 			Logging.log(getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + "): CREATED");
 		}
+	}
+	
+	/**
+	 * Creates an HRM message number
+	 * 
+	 * @return the create HRM message number
+	 */
+	private static synchronized int createMessageNumber()
+	{
+		int tResult = -1;		
+		
+		tResult = ++mHRMMessagesCounter;
+		
+		return tResult;
+	}
+	
+	/**
+	 * Returns the HRM message number
+	 * 
+	 * @return the HRM message number
+	 */
+	public int getMessageNumber()
+	{
+		return mMessageNumber;
 	}
 	
 	/**
@@ -72,6 +107,6 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ")";
 	}
 }

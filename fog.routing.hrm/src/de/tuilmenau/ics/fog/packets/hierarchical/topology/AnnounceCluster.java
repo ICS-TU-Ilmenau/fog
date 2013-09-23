@@ -87,4 +87,15 @@ public class AnnounceCluster extends SignalingMessageHrm
 	{
 		return mTTL;
 	}
+	
+	/**
+	 * Returns an object describing string
+	 * 
+	 *  @return the describing string
+	 */
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + getTTL() + ", SenderCluster="+ getSenderClusterName() + ")";
+	}
 }

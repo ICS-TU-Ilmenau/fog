@@ -59,6 +59,6 @@ public class AssignHRMID  extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", newHRMID=" + getHRMID() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", newHRMID=" + getHRMID() + ")";
 	}
 }

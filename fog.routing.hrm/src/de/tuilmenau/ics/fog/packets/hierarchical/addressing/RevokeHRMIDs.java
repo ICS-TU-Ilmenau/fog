@@ -61,6 +61,6 @@ public class RevokeHRMIDs  extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", revokedHRMIDs=" + getHRMIDs() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", revokedHRMIDs=" + getHRMIDs() + ")";
 	}
 }
