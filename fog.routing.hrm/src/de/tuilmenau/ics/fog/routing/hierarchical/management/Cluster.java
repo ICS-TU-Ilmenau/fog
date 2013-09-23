@@ -461,7 +461,8 @@ public class Cluster extends ControlEntity
 		/**
 		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
 		 */
-		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), getClusterID(), getCoordinatorID(), getHierarchyLevel());
+	    ClusterName tOwnClusterName = new ClusterName(mHRMController, getHierarchyLevel(), getClusterID(), getCoordinatorID());
+		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), tOwnClusterName);
 		tComChannel.sendPacket(tRequestClusterMembershipAckPacket);
 
 		/**
