@@ -11,12 +11,15 @@ package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.routing.Route;
+import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
 /**
- * PACKET: This packet is used within the HRM infrastructure in order to tell other clusters the existence of a remote cluster. 
+ * PACKET: This packet is used within the HRM infrastructure in order to tell other clusters about the existence of a remote cluster.
+ *         Such information is needed for coordinators, which can use this information in order to create a new higher cluster with the coordinators of announce neighbor clusters. 
  */
 public class AnnounceCluster extends SignalingMessageHrm
 {
@@ -34,6 +37,16 @@ public class AnnounceCluster extends SignalingMessageHrm
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
 	 */
 	private int mTTL = HRMConfig.Hierarchy.EXPANSION_RADIUS;
+	
+	/**
+	 * Stores the logical hop count for the stored route 
+	 */
+	private int mRouteCosts = 0;
+	
+	/**
+	 * Stores the route to the announced cluster
+	 */
+	private Route mRoute = new Route();
 	
 	/**
 	 * Constructor
@@ -86,6 +99,36 @@ public class AnnounceCluster extends SignalingMessageHrm
 	public int getTTL()
 	{
 		return mTTL;
+	}
+	
+	/**
+	 * Adds an entry to the recorded route towards the announced cluster
+	 * 
+	 * @param pSegment the segment which should be added to the route
+	 */
+	public void addToRoute(RouteSegment pSegment)
+	{
+		mRoute.add(pSegment);
+	}
+	
+	/**
+	 * Returns the costs for the route to the announced cluster
+	 * 
+	 * @return the route costs
+	 */
+	public int getRouteCosts()
+	{
+		return mRouteCosts;
+	}
+	
+	/**
+	 * Returns the route to the announced cluster.
+	 * 
+	 * @return the route
+	 */
+	public Route getRoute()
+	{
+		return mRoute.clone();
 	}
 	
 	/**
