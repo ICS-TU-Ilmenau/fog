@@ -806,6 +806,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 
 	/**
 	 * Returns a location description about this instance
+	 * 
+	 * @return the location description
 	 */
 	@Override
 	public String toLocation()

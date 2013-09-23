@@ -384,7 +384,6 @@ public class ComSession extends Session
 		for (ComChannel tComChannel : tComChannels){
 			if(tComChannel.getParent().getClusterID().equals(pClusterID)) {
 				tResult = tComChannel;
-				Logging.log(this, "       ..found communication channel: " + tComChannel);
 				break;
 			}
 		}
