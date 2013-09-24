@@ -92,6 +92,16 @@ public class AnnounceCluster extends SignalingMessageHrm
 	}
 	
 	/**
+	 * Returns true if the TTL is still okay
+	 * 
+	 * @return true or false
+	 */
+	public boolean isTTLOkay()
+	{
+		return (mTTL >= 0);
+	}
+	
+	/**
 	 * Returns the current TTL value
 	 * 
 	 * @return the TTL value
