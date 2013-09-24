@@ -443,7 +443,7 @@ public class Coordinator extends ControlEntity implements Localization
 			// create signaling packet for signaling that we leave the Bully group
 			BullyLeave tBullyLeavePacket = new BullyLeave(mHRMController.getNodeName(), getPriority());
 
-			sendSuperiorCluster(tBullyLeavePacket);
+			sendSuperiorClusters(tBullyLeavePacket);
 		}else{
 			Logging.log(this, "eventCoordinatorRoleInvalid() skips further signaling because hierarchy end is already reached at: " + (getHierarchyLevel().getValue() - 1));
 		}
@@ -656,22 +656,24 @@ public class Coordinator extends ControlEntity implements Localization
 
 	/**
 	 * EVENT: we have joined the superior cluster, triggered by the comm. channel if the request for cluster membership was ack'ed
+	 * 
+	 * @param pSourceComChannel the source comm. channel
 	 */
-	public void eventJoinedSuperiorCluster()
+	public void eventJoinedSuperiorCluster(ComChannel pSourceComChannel)
 	{
 		Logging.log(this, "HAVE JOINED superior cluster");
 		
 		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), BullyPriority.createForSuperiorControlEntity(mHRMController,  this));
-		sendSuperiorCluster(tBullyPriorityUpdatePacket);
+		pSourceComChannel.sendPacket(tBullyPriorityUpdatePacket);
 	}
 
 	/**
-	 * Sends a packet towards the superior cluster.
+	 * Sends a packet towards all possible superior clusters
 	 * If there is more than one comm. channel an error occurs but the message is sent
 	 * 
 	 * @param pPacket the packet
 	 */
-	private void sendSuperiorCluster(Serializable pPacket)
+	private void sendSuperiorClusters(Serializable pPacket)
 	{
 		// get all communication channels
 		LinkedList<ComChannel> tComChannels = getComChannels();

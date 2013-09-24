@@ -10,15 +10,10 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.awt.Color;
-import java.io.Serializable;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
-import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
@@ -98,7 +93,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	/**
 	 * Stores the unique cluster ID
 	 */
-	private Long mClusterID;
+	private Long mClusterID = null;
 
 	/**
 	 * Stores the unique coordinator ID
@@ -437,10 +432,21 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		
 		mSuperiorCoordinatorKnown = true;
 		
-		//this event is also interesting for neighbor coordinators, which are not already part of this cluster
-		//distributeClusterAnnouncement();		
+		//trigger: neighborhood announcement
+		eventNeighborhoodNeedsAnnouncement();		
 	}
 
+	/**
+	 * EVENT: neighborhood needs announcement, triggered by ourself, we react on this event by:
+	 *        1.) -> Cluster: we are at base hierarchy level and send the neighbor clusters our announcement
+	 *            -> Coordinator: we are at a higher hierarchy level and send  
+	 *        
+	 */
+	private void eventNeighborhoodNeedsAnnouncement()
+	{
+		
+	}
+	
 	/**
 	 * Returns the description of the superior coordinator
 	 * 

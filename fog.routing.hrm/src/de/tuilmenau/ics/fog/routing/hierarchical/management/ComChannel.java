@@ -699,7 +699,7 @@ public class ComChannel
 				Coordinator tCoordinator = (Coordinator)getParent();
 				
 				// trigger event "joined superior cluster"
-				tCoordinator.eventJoinedSuperiorCluster();		
+				tCoordinator.eventJoinedSuperiorCluster(this);		
 			}else{
 				Logging.err(this, "Expected a Coordinator object as parent for processing RequestClusterMembershipAck data but parent is " + getParent());
 			}
