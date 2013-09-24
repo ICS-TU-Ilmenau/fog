@@ -39,11 +39,6 @@ public class Cluster extends ClusterProxy
 	private static long sNextFreeClusterID = 1;
 
 	/**
-	 * Stores the elector which is responsible for coordinator elections for this cluster.
-	 */
-	private Elector mElector = null;
-	
-	/**
 	 * Stores if the neighborhood is already initialized
 	 */
 	private boolean mNeighborInitialized = false;
@@ -98,7 +93,7 @@ public class Cluster extends ClusterProxy
 		initializeNeighborhood();
 
 		// creates new elector object, which is responsible for Bully based election processes
-		mElector = new Elector(mHRMController, this);
+		mElector = new Elector(mHRMController, this); //TODO: move to ClusterProxy
 	}
 	
 	/**
@@ -192,15 +187,16 @@ public class Cluster extends ClusterProxy
 	}
 	
 	/**
-	 * Returns the elector of this cluster
-	 * 
-	 * @return the elector
+	 * EVENT: neighborhood needs announcement, triggered by ourself, we react on this event by:
+	 *        1.) -> Cluster: we are at base hierarchy level and send the neighbor clusters our announcement
+	 *            -> Coordinator: we are at a higher hierarchy level and send  
+	 *        
 	 */
-	public Elector getElector()
+	private void eventNeighborhoodNeedsAnnouncement()
 	{
-		return mElector;
+		
 	}
-	
+
 	/**
 	 * Determines the coordinator of this cluster. It is "null" if the election was lost or hasn't finished yet. 
 	 * 
@@ -295,8 +291,8 @@ public class Cluster extends ClusterProxy
 		 * TRIGGER: election restart (do this only if election was already started)
 		 */
 		if (!tCoordinatorIsFixed){
-			if (getElector().wasStarted()){
-				getElector().startElection();
+			if (mElector.wasStarted()){
+				mElector.startElection();
 			}
 		}
 	}

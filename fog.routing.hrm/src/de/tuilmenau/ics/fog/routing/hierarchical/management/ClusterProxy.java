@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -31,6 +32,11 @@ public class ClusterProxy extends ClusterName
 	 */
 	protected Name mCoordinatorNodeName = null;
 	
+	/**
+	 * Stores the elector which is responsible for coordinator elections for this cluster.
+	 */
+	protected Elector mElector = null;
+
 	/**
 	 * Constructor
 	 *  
@@ -205,6 +211,16 @@ public class ClusterProxy extends ClusterName
 	public int hashCode()
 	{
 		return getClusterID().intValue();
+	}
+
+	/**
+	 * Returns the elector of this cluster
+	 * 
+	 * @return the elector
+	 */
+	public Elector getElector()
+	{
+		return mElector;
 	}
 
 	/**
