@@ -18,19 +18,15 @@ import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
-import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.RequestClusterParticipationProperty;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.RequestClusterParticipationProperty.ClusterMemberDescription;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -87,12 +83,6 @@ public class Coordinator extends ControlEntity implements Localization
 	 */
 	private int mNextFreeClusterMemberAddress = 1;
 	
-	private LinkedList<Long> mBouncedAnnounces = new LinkedList<Long>();
-	private LinkedList<AnnounceRemoteCluster> mReceivedAnnouncements;
-	
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6824959379284820010L;
 	
 	/**
@@ -1222,10 +1212,10 @@ public class Coordinator extends ControlEntity implements Localization
 //		mReceivedAnnouncements.add(pAnnounce);
 //	}
 	
-	public LinkedList<Long> getBounces()
-	{
-		return mBouncedAnnounces;
-	}
+//	public LinkedList<Long> getBounces()
+//	{
+//		return mBouncedAnnounces;
+//	}
 	
 //	private LinkedList<RoutingServiceLinkVector> getPathToCoordinator(ICluster pSourceCluster, ICluster pDestinationCluster)
 //	{
@@ -1511,6 +1501,11 @@ public class Coordinator extends ControlEntity implements Localization
 		return toLocation() + "(" + (mParentCluster != null ? "Cluster" + mParentCluster.getGUIClusterID() + ", " : "") + idToString() + ")";
 	}
 
+	/**
+	 * Returns a location description about this instance
+	 * 
+	 * @return the location description
+	 */
 	@Override
 	public String toLocation()
 	{
@@ -1519,6 +1514,11 @@ public class Coordinator extends ControlEntity implements Localization
 		return tResult;
 	}
 
+	/**
+	 * Returns a string including the ClusterID, the coordinator ID, and the node priority
+	 * 
+	 * @return the complex string
+	 */
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
