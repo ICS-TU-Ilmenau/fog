@@ -107,6 +107,22 @@ public class ClusterProxy extends ClusterName
 	}
 
 	/**
+	 * Sends a packet to the coordinator
+	 * 
+	 * @param pPacket the packet
+	 */
+	public void sendCoordinator(Serializable pPacket)
+	{
+		Logging.log(this, "Sending to superior coordinator: " + pPacket);
+		
+		if(superiorCoordinatorComChannel() != null){
+			superiorCoordinatorComChannel().sendPacket(pPacket);
+		}else{
+			Logging.warn(this, "Channel to superior coordinator is invalid");
+		}
+	}
+
+	/**
 	 * Sends a packet as broadcast to all cluster members
 	 * 
 	 * @param pPacket the packet which has to be broadcasted
