@@ -212,7 +212,7 @@ public class Cluster extends ClusterProxy implements IEvent
 	{
 		AnnounceCluster tAnnounceClusterPacket = new AnnounceCluster(mHRMController.getNodeName(), createClusterName(), mHRMController.getNodeName());
 		Logging.log(this, "\n\n########## Distributing Cluster announcement: " + tAnnounceClusterPacket);
-		sendClusterBroadcast(tAnnounceClusterPacket);
+		sendClusterBroadcast(tAnnounceClusterPacket, true);
 	}
 
 	/**
@@ -727,6 +727,8 @@ public class Cluster extends ClusterProxy implements IEvent
 
 	/**
 	 * Returns a location description about this instance
+	 * 
+	 * @return the location description
 	 */
 	@Override
 	public String toLocation()
@@ -737,7 +739,7 @@ public class Cluster extends ClusterProxy implements IEvent
 	}
 	
 	/**
-	 * Returns a string including the ClusterID, the token, and the node priority
+	 * Returns a string including the ClusterID, the coordinator ID, and the node priority
 	 * 
 	 * @return the complex string
 	 */
