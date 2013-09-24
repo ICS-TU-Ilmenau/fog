@@ -242,7 +242,7 @@ public class Cluster extends ClusterProxy implements IEvent
 	@Override
 	public void eventClusterAnnouncement(AnnounceCluster pAnnounceCluster)
 	{
-		Logging.log(this, "EVENT: cluster announcement");
+		Logging.log(this, "EVENT: cluster announcement: " + pAnnounceCluster);
 		
 		/**
 		 * Parse the announcement and update the ARG 
@@ -256,6 +256,8 @@ public class Cluster extends ClusterProxy implements IEvent
 		 */
 		LinkedList<ControlEntity> tLocallyKnownNeighbors = getNeighborsARG();
 		if(tLocallyKnownNeighbors.size() > 0){
+			Logging.log(this, "      ..found " + tLocallyKnownNeighbors.size() + " neighbors: " + tLocallyKnownNeighbors);
+
 			/**
 			 * transition from one cluster to the next one: decrease TTL
 			 */
@@ -272,15 +274,17 @@ public class Cluster extends ClusterProxy implements IEvent
 						 */
 						Cluster tLocallyKnownNeighborCluster = (Cluster)tLocallyKnownNeighbor;
 						
-						if(tLocallyKnownNeighborCluster.hasLocalCoordinator()){
-							/**
-							 * Forward the announcement
-							 */
-							Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocallyKnownNeighborCluster);
-							tLocallyKnownNeighborCluster.forwardClusterAnnouncement(pAnnounceCluster);
-						}
+						/**
+						 * Forward the announcement
+						 */
+						Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocallyKnownNeighborCluster);
+						tLocallyKnownNeighborCluster.forwardClusterAnnouncement(pAnnounceCluster);
+					}else{
+						Logging.log(this, "Ignoring stored neighbor of uninteresting type in ARG: " + tLocallyKnownNeighbor);
 					}
 				}
+			}else{
+				Logging.log(this, "TTL exceeded for cluster announcement: " + pAnnounceCluster);
 			}
 		}else{
 			Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCluster);
