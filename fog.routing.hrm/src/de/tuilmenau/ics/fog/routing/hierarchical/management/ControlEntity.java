@@ -431,22 +431,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		setSuperiorCoordinatorDescription(pCoordinatorDescription);
 		
 		mSuperiorCoordinatorKnown = true;
-		
-		//trigger: neighborhood announcement
-		eventNeighborhoodNeedsAnnouncement();		
 	}
 
-	/**
-	 * EVENT: neighborhood needs announcement, triggered by ourself, we react on this event by:
-	 *        1.) -> Cluster: we are at base hierarchy level and send the neighbor clusters our announcement
-	 *            -> Coordinator: we are at a higher hierarchy level and send  
-	 *        
-	 */
-	private void eventNeighborhoodNeedsAnnouncement()
-	{
-		
-	}
-	
 	/**
 	 * Returns the description of the superior coordinator
 	 * 
