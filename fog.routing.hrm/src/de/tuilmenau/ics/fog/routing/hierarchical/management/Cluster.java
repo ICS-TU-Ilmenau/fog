@@ -223,6 +223,14 @@ public class Cluster extends ClusterProxy
 	public void eventClusterAnnouncement(AnnounceCluster pAnnounceCluster)
 	{
 		Logging.log(this, "EVENT: cluster announcement");
+		
+		/**
+		 * Parse the announcement and update the ARG 
+		 */
+		if(!pAnnounceCluster.getSenderClusterName().equals(this)){
+			registerAnnouncedClusterARG(pAnnounceCluster);
+		}
+		
 		/**
 		 * get locally known neighbors for this cluster and hierarchy level
 		 */
@@ -257,6 +265,17 @@ public class Cluster extends ClusterProxy
 		}else{
 			Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCluster);
 		}
+	}
+
+	/**
+	 * Store the announced cluster within the local ARG
+	 * 
+	 * @param pAnnounceCluster the announcement
+	 */
+	private void registerAnnouncedClusterARG(AnnounceCluster pAnnounceCluster)
+	{
+		Logging.log(this, "REGISTERING ANNOUNCED REMOTE CLUSTER: " + pAnnounceCluster.getSenderClusterName());
+		
 	}
 
 	/**
