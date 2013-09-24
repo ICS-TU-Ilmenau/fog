@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
@@ -27,7 +28,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * This class represents a clusters on a defined hierarchy level.
  * 
  */
-public class Cluster extends ClusterProxy
+public class Cluster extends ClusterProxy implements IEvent
 {
 	/**
 	 * For using this class within (de-)serialization.
@@ -66,7 +67,7 @@ public class Cluster extends ClusterProxy
 	 */
 	private Cluster(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID)
 	{
-		super(pHRMController, pHierarchyLevel, null, null, -1);
+		super(pHRMController, pHierarchyLevel, null, -1, null);
 		
 		Logging.log(this, "CONSTRUCTOR got ClusterID: " + pClusterID);
 		
@@ -157,10 +158,10 @@ public class Cluster extends ClusterProxy
 			}
 		}
 		
-		// trigger: explicit cluster announcement to neighbors
-		distributeClusterAnnouncement();
-		
 		mNeighborInitialized = true;
+
+		// register next trigger for 
+		mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.INTERNAL_CLUSTER_ANNOUNCEMENTS * 2, this);
 	}
 
 	/**
@@ -212,6 +213,25 @@ public class Cluster extends ClusterProxy
 		AnnounceCluster tAnnounceClusterPacket = new AnnounceCluster(mHRMController.getNodeName(), createClusterName(), mHRMController.getNodeName());
 		Logging.log(this, "\n\n########## Distributing Cluster announcement: " + tAnnounceClusterPacket);
 		sendClusterBroadcast(tAnnounceClusterPacket);
+	}
+
+	/**
+	 * Implementation for IEvent::fire()
+	 */
+	@Override
+	public void fire()
+	{
+		Logging.log(this, "###########################");
+		Logging.log(this, "###### FIRE FIRE FIRE #####");
+		Logging.log(this, "###########################");
+		
+		/**
+		 * Trigger: ClusterAnnounce distribution
+		 */
+		distributeClusterAnnouncement();
+		
+		// register next trigger for 
+		mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.INTERNAL_CLUSTER_ANNOUNCEMENTS, this);
 	}
 
 	/**
@@ -274,8 +294,25 @@ public class Cluster extends ClusterProxy
 	 */
 	private void registerAnnouncedClusterARG(AnnounceCluster pAnnounceCluster)
 	{
-		Logging.log(this, "REGISTERING ANNOUNCED REMOTE CLUSTER: " + pAnnounceCluster.getSenderClusterName());
+		ClusterName tRemoteClusterName = pAnnounceCluster.getSenderClusterName();
+
+		/**
+		 * Storing the ARG node for this announced remote cluster
+		 */
+		Logging.log(this, "Registering ANNOUNCED REMOTE CLUSTER: " + tRemoteClusterName);
+		if(!mHRMController.isKnownARG(tRemoteClusterName)){
+			Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE CLUSTER: " + tRemoteClusterName);
+
+			ClusterProxy tClusterProxy = ClusterProxy.create(mHRMController, tRemoteClusterName, pAnnounceCluster.getSenderClusterCoordinatorNodeName());
+			
+			mHRMController.registerNodeARG(tClusterProxy);
+		}else{
+			Logging.log(this, "     ..already known remote cluster: " + tRemoteClusterName);
+		}
 		
+		/**
+		 * Storing the route to this announced remote cluster
+		 */
 	}
 
 	/**
