@@ -1575,6 +1575,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Checks if a node is locally stored in the abstract routing graph
+	 * 
+	 * @param pNodeARG a possible node of the ARG
+	 * 
+	 * @return true or false
+	 */
+	public boolean isKnownARG(ControlEntity pNodeARG)
+	{
+		boolean tResult = false;
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "IS KNOWN (ARG): \"" + pNodeARG + "\"");
+		}
+
+		synchronized (mAbstractRoutingGraph) {
+			tResult = mAbstractRoutingGraph.isknown(pNodeARG);
+		}
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "      ..result: " + tResult);				
+		}
+
+		return tResult;
+	}
+	
+	/**
 	 * Returns the ARG for the GraphViewer.
 	 * (only for GUI!)
 	 * 
@@ -1695,7 +1721,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * Create a ClusterProxy object
 						 */
 						Logging.log(this, "     ..creating cluster proxy");
-						ClusterProxy tClusterProxy_ClusterMember = new ClusterProxy(this, new HierarchyLevel(this, tPropClusterParticipation.getHierarchyLevel().getValue() - 1),  tSenderClusterMember.getClusterID(), tPropClusterParticipation.getSenderNodeName(), tSenderClusterMember.getCoordinatorID());
+						ClusterProxy tClusterProxy_ClusterMember = new ClusterProxy(this, new HierarchyLevel(this, tPropClusterParticipation.getHierarchyLevel().getValue() - 1),  tSenderClusterMember.getClusterID(), tSenderClusterMember.getCoordinatorID(), tPropClusterParticipation.getSenderNodeName());
 						tClusterProxy_ClusterMember.setPriority(tSenderClusterMember.getPriority());
 						
 						/**
@@ -1741,7 +1767,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								ControlEntity tLocalCluster_ClusterMemberNeighbor = getClusterByName(tNeighborDescriptionClusterName);
 								if(tLocalCluster_ClusterMemberNeighbor == null) {
 									Logging.log(this, "     ..neighbor of cluster member is a remote cluster, creating ClusterProxy");
-									ClusterProxy tClusterProxy_ClusterMemberNeighbor = new ClusterProxy(this, tNeighborDescription.getLevel(), tNeighborDescription.getClusterID(), tNeighborDescription.getCoordinatorNodeName(), tNeighborDescription.getToken());
+									ClusterProxy tClusterProxy_ClusterMemberNeighbor = new ClusterProxy(this, tNeighborDescription.getLevel(), tNeighborDescription.getClusterID(), tNeighborDescription.getToken(), tNeighborDescription.getCoordinatorNodeName());
 									tClusterProxy_ClusterMemberNeighbor.setPriority(tNeighborDescription.getPriority());
 									getHRS().mapFoGNameToL2Address(tNeighborDescription.getCoordinatorNodeName(), tNeighborDescription.getCoordinatorL2Address());
 
