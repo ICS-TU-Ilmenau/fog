@@ -659,8 +659,8 @@ public class Elector implements Localization
 				 * do we have a higher priority than the peer?
 				 */
 				if (havingHigherPrioriorityThan(pComChannel)){
-					// send broadcast "ELECT" ourself
-					signalElectBroadcast();
+					// start re-election
+					reelect();
 				}
 				
 	//			}
