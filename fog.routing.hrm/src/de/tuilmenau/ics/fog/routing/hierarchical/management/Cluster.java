@@ -209,6 +209,7 @@ public class Cluster extends ClusterProxy
 	 * 
 	 * @return the cluster's coordinator
 	 */
+	@Override
 	public Coordinator getCoordinator()
 	{
 		return mCoordinator;
@@ -259,90 +260,6 @@ public class Cluster extends ClusterProxy
 	}
 	
 	/**
-	 * Sends a packet as broadcast to all cluster members
-	 * 
-	 * @param pPacket the packet which has to be broadcasted
-	 */
-	public void sendClusterBroadcast(Serializable pPacket, boolean pIncludeLoopback)
-	{
-		// get all communication channels
-		LinkedList<ComChannel> tComChannels = getComChannels();
-
-		// get the L2Addres of the local host
-		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
-		
-		Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels");
-		
-		for(ComChannel tComChannel : tComChannels) {
-			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
-			
-			if (!tIsLoopback){
-				Logging.log(this, "       ..to " + tComChannel);
-			}else{
-				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
-			}
-
-			if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (pIncludeLoopback) || (!tIsLoopback)){
-				// send the packet to one of the possible cluster members
-				tComChannel.sendPacket(pPacket);
-			}else{
-				Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
-			}
-		}
-	}
-	public void sendClusterBroadcast(Serializable pPacket)
-	{
-		sendClusterBroadcast(pPacket, false);
-	}
-
-	/**
-	 * Returns how many external cluster members are known
-	 * 
-	 * @return the count
-	 */
-	public int countExternalClusterMembers()
-	{
-		int tResult = 0;
-
-		// if the local host is also treated as cluster member, we return an additional cluster member 
-		if (HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST){
-			tResult++;
-		}
-		
-		// get all communication channels
-		LinkedList<ComChannel> tComChannels = getComChannels();
-
-		// get the L2Addres of the local host
-		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
-		
-		for(ComChannel tComChannel : tComChannels) {
-			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
-			
-			// filter loopback channels
-			if (!tIsLoopback){
-				tResult++;
-			}
-		}
-
-		return tResult;
-	}
-
-	/**
-	 * Returns how many cluster members are known
-	 * 
-	 * @return the count
-	 */
-	public int countClusterMembers()
-	{
-		int tResult = 0;
-
-		// count all communication channels
-		tResult = getComChannels().size();
-
-		return tResult;
-	}
-
-	/**
 	 * EVENT: coordinator lost
 	 */
 	public void eventCoordinatorLost()
@@ -388,10 +305,11 @@ public class Cluster extends ClusterProxy
 	}
 
 	/**
-	 * EVENT: "lost all members", triggered by Elector in case the last member left the election 
+	 * EVENT: "lost cluster member", triggered by Elector in case a member left the election 
 
 	 * @param pComChannel the comm. channel of the lost cluster member
 	 */
+	@Override
 	public void eventClusterMemberLost(ComChannel pComChannel)
 	{
 		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
