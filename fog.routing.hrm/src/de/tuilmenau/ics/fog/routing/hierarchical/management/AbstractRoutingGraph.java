@@ -128,7 +128,7 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	
 
 	/**
-	 * Check if two nodes have a known link.
+	 * Checks if two nodes have a known link.
 	 * 
 	 * @param pFirst the first node
 	 * @param pSecond the second node
@@ -143,6 +143,17 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 		}
 	}
 	
+	/**
+	 * Checks if a node is a known one.
+	 * 
+	 * @param pNode the node
+	 * @return true if the node is known, otherwise false
+	 */
+	public synchronized boolean isknown(NodeObject pNode)
+	{
+		return mRoutingGraph.containsVertex(pNode);
+	}
+
 	/**
 	 * Return a descriptive string
 	 * 
