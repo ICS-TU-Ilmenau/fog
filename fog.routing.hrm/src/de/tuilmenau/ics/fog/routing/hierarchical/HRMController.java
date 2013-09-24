@@ -1695,7 +1695,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * Create a ClusterProxy object
 						 */
 						Logging.log(this, "     ..creating cluster proxy");
-						ClusterProxy tClusterProxy_ClusterMember = new ClusterProxy(this, tSenderClusterMember.getClusterID(), new HierarchyLevel(this, tPropClusterParticipation.getHierarchyLevel().getValue() - 1), tPropClusterParticipation.getSenderNodeName(), tSenderClusterMember.getCoordinatorID());
+						ClusterProxy tClusterProxy_ClusterMember = new ClusterProxy(this, new HierarchyLevel(this, tPropClusterParticipation.getHierarchyLevel().getValue() - 1),  tSenderClusterMember.getClusterID(), tPropClusterParticipation.getSenderNodeName(), tSenderClusterMember.getCoordinatorID());
 						tClusterProxy_ClusterMember.setPriority(tSenderClusterMember.getPriority());
 						
 						/**
@@ -1741,7 +1741,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								ControlEntity tLocalCluster_ClusterMemberNeighbor = getClusterByName(tNeighborDescriptionClusterName);
 								if(tLocalCluster_ClusterMemberNeighbor == null) {
 									Logging.log(this, "     ..neighbor of cluster member is a remote cluster, creating ClusterProxy");
-									ClusterProxy tClusterProxy_ClusterMemberNeighbor = new ClusterProxy(this, tNeighborDescription.getClusterID(), tNeighborDescription.getLevel(), tNeighborDescription.getCoordinatorNodeName(), tNeighborDescription.getToken());
+									ClusterProxy tClusterProxy_ClusterMemberNeighbor = new ClusterProxy(this, tNeighborDescription.getLevel(), tNeighborDescription.getClusterID(), tNeighborDescription.getCoordinatorNodeName(), tNeighborDescription.getToken());
 									tClusterProxy_ClusterMemberNeighbor.setPriority(tNeighborDescription.getPriority());
 									getHRS().mapFoGNameToL2Address(tNeighborDescription.getCoordinatorNodeName(), tNeighborDescription.getCoordinatorL2Address());
 

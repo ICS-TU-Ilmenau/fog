@@ -29,7 +29,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * This class represents a clusters on a defined hierarchy level.
  * 
  */
-public class Cluster extends ControlEntity
+public class Cluster extends ClusterProxy
 {
 	/**
 	 * For using this class within (de-)serialization.
@@ -51,8 +51,6 @@ public class Cluster extends ControlEntity
 	 */
 	private boolean mNeighborInitialized = false;
 	
-	private Name mSuperiorCoordinatorHostName = null;
-	
 	private LinkedList<AnnounceRemoteCluster> mReceivedAnnounces = null;
 
 	/**
@@ -70,12 +68,12 @@ public class Cluster extends ControlEntity
 	 * Constructor
 	 * 
 	 * @param pHRMController the local HRMController instance
-	 * @param pClusterID the unique ID of this cluster, a value of "-1" triggers the creation of a new ID
 	 * @param pHierarchyLevel the hierarchy level
+	 * @param pClusterID the unique ID of this cluster, a value of "-1" triggers the creation of a new ID
 	 */
-	private Cluster(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel)
+	private Cluster(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID)
 	{
-		super(pHRMController, pHierarchyLevel);
+		super(pHRMController, pHierarchyLevel, null, null, -1);
 		
 		Logging.log(this, "CONSTRUCTOR got ClusterID: " + pClusterID);
 		
@@ -110,14 +108,14 @@ public class Cluster extends ControlEntity
 	 * Factory function: create a cluster
 	 * 
 	 * @param pHrmController the local HRMController instance
-	 * @param pClusterID the unique ID of this cluster, a value of "-1" triggers the creation of a new ID
 	 * @param pHierarchyLevel the hierarchy level
+	 * @param pClusterID the unique ID of this cluster, a value of "-1" triggers the creation of a new ID
 	 * 
 	 * @return the new Cluster object
 	 */
 	static public Cluster create(HRMController pHrmController, Long pClusterID, HierarchyLevel pHierarchyLevel)
 	{
-		return new Cluster(pHrmController, pClusterID, pHierarchyLevel);
+		return new Cluster(pHrmController, pHierarchyLevel, pClusterID);
 	}
 
 	/**
@@ -129,7 +127,7 @@ public class Cluster extends ControlEntity
 	 */
 	static public Cluster createBaseCluster(HRMController pHrmController)
 	{
-		return new Cluster(pHrmController, null, HierarchyLevel.createBaseLevel());
+		return new Cluster(pHrmController, HierarchyLevel.createBaseLevel(), null);
 	}
 
 	/**
@@ -506,7 +504,7 @@ public class Cluster extends ControlEntity
 		// make sure that in case of a programming mistake, the right unique ID of the superior coordinator is returned
 		setCoordinatorID(pCoordinatorID);
 		
-		mSuperiorCoordinatorHostName = pCoordinatorName;
+		mCoordinatorNodeName = pCoordinatorName;
 		if(superiorCoordinatorComChannel() == null) {
 			// store the L2Address of the superior coordinator 
 			setSuperiorCoordinatorHostL2Address(mHRMController.getHRS().getCentralFNL2Address());
@@ -643,9 +641,9 @@ public class Cluster extends ControlEntity
 	private void announceNeighborCoord(AnnounceRemoteCluster pAnnouncement, ComChannel pCEP)
 	{
 		Logging.log(this, "Handling " + pAnnouncement);
-		if(mSuperiorCoordinatorHostName != null)
+		if(mCoordinatorNodeName != null)
 		{
-			if(mHRMController.getNodeName().equals(mSuperiorCoordinatorHostName))
+			if(mHRMController.getNodeName().equals(mCoordinatorNodeName))
 			{
 //				handleNeighborAnnouncement(pAnnouncement, pCEP);
 			} else {
@@ -655,25 +653,7 @@ public class Cluster extends ControlEntity
 			mReceivedAnnounces.add(pAnnouncement);
 		}
 	}
-	
-	public void setCoordinatorHostName(Name pCoordName)
-	{
-		mSuperiorCoordinatorHostName = pCoordName;
-	}
 
-	public Name getCoordinatorNodeName()
-	{
-		return mSuperiorCoordinatorHostName;
-	}
-	
-	public int hashCode()
-	{
-		return getClusterID().intValue();
-	}
-
-	
-	
-	
 	
 	
 	/**

@@ -25,26 +25,29 @@ public class ClusterProxy extends ClusterName
 	/**
 	 * Stores the name of the node where the coordinator of the addressed cluster is located
 	 */
-	private Name mCoordinatorNodeName;
+	protected Name mCoordinatorNodeName = null;
 	
 	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
-	 * @param pClusterID the unique ID of this cluster
 	 * @param pHierarchyLevel the hierarchy level
+	 * @param pClusterID the unique ID of this cluster
 	 * @param pCoordinatorNodeName
 	 * @param pCoordinatorID
 	 */
-	public ClusterProxy(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, Name pCoordinatorNodeName, int pCoordinatorID)
+	public ClusterProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, Name pCoordinatorNodeName, int pCoordinatorID)
 	{	
 		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID);
 
 		// store the name of the node where the coordinator is located
 		mCoordinatorNodeName = pCoordinatorNodeName;
-		
-		// register the ClusterProxy at the local ARG
-		mHRMController.registerNodeARG(this);
+
+		// do we already have a valid cluster ID? -> then we also have a valid hash code for this object and may use this as reference within the ARG
+		if (pClusterID != null){
+			// register the ClusterProxy at the local ARG
+			mHRMController.registerNodeARG(this);
+		}
 
 		Logging.log(this, "CREATED");
 	}
@@ -83,10 +86,17 @@ public class ClusterProxy extends ClusterName
 //		}
 //	}
 
-//	public int hashCode()
-//	{
-//		return mClusterID.intValue() * 1;
-//	}
+	/**
+	 * Returns a hash code for this object.
+	 * This function is used within the ARG for identifying objects.
+	 * 
+	 * @return the hash code
+	 */
+	@Override
+	public int hashCode()
+	{
+		return getClusterID().intValue();
+	}
 
 	/**
 	 * Returns the name of the node where the coordinator of the described cluster is located
