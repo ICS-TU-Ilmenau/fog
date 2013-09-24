@@ -38,15 +38,30 @@ public class ClusterProxy extends ClusterName
 	protected Elector mElector = null;
 
 	/**
+	 * Factory function
+	 *  
+	 * @param pHRMController the local HRMController instance
+	 * @param pClusterName a ClusterName which includes the hierarchy level, the unique ID of this cluster, and the unique coordinator ID
+	 * @param pClusterID the unique ID of this cluster
+	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
+	 */
+	public static ClusterProxy create(HRMController pHRMController, ClusterName pClusterName, Name pCoordinatorNodeName)
+	{	
+		ClusterProxy tResult = new ClusterProxy(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pCoordinatorNodeName);
+		
+		return tResult;
+	}
+
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
 	 * @param pHierarchyLevel the hierarchy level
 	 * @param pClusterID the unique ID of this cluster
-	 * @param pCoordinatorNodeName
-	 * @param pCoordinatorID
+	 * @param pCoordinatorID the unique coordinator ID for this cluster
+	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
 	 */
-	public ClusterProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, Name pCoordinatorNodeName, int pCoordinatorID)
+	public ClusterProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, Name pCoordinatorNodeName)
 	{	
 		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID);
 
