@@ -14,6 +14,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
@@ -98,7 +99,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	/**
 	 * Stores the unique coordinator ID
 	 */
-	private int mCoordinatorID;
+	private int mCoordinatorID = -1;
 	
 	/**
 	 * Stores the physical simulation machine specific multiplier, which is used to create unique IDs even if multiple physical simulation machines are connected by FoGSiEm instances
@@ -397,6 +398,17 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * EVENT: cluster announcement
+	 * 
+	 * @param pAnnounceCluster the received announcement
+	 */
+	public void eventClusterAnnouncement(AnnounceCluster pAnnounceCluster)
+	{
+		Logging.warn(this, "Fired event CLUSTER_ANNOUNCEMENT: " + pAnnounceCluster);
+		Logging.warn(this, "Ignoring CLUSTER_ANNOUNCEMENT");
 	}
 
 	/**

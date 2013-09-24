@@ -17,13 +17,11 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
-import de.tuilmenau.ics.fog.packets.hierarchical.clustering.ClusterDiscovery.NestedDiscovery;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
-import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
-import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -623,12 +621,13 @@ public class ComChannel
 				}else{
 					Logging.warn(this, "Elector is still invalid");
 				}
+			}else{
+				// the packet is received by a remote cluster object (ClusterProxy)
+				if (mParent instanceof ClusterProxy){
+					Logging.warn(this, "IGNORING THIS MESSAGE: " + tBullyMessage);
+				}
 			}
 			
-			// the packet is received by a remote cluster object (ClusterProxy)
-			if (mParent instanceof ClusterProxy){
-				Logging.warn(this, "IGNORING THIS MESSAGE: " + tBullyMessage);
-			}
 
 			// the packet is received by a coordinator
 			if (mParent instanceof Coordinator){
@@ -692,7 +691,7 @@ public class ComChannel
 			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)pData;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP_ACK-received from \"" + getPeerHRMID());
+				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP_ACK-received from \"" + getPeerHRMID() + "\"");
 
 			// is the parent a coordinator or a cluster?
 			if (getParent() instanceof Coordinator){
@@ -703,11 +702,23 @@ public class ComChannel
 			}else{
 				Logging.err(this, "Expected a Coordinator object as parent for processing RequestClusterMembershipAck data but parent is " + getParent());
 			}
+			
 			return true;
 		}
 		
+		/**
+		 * AnnounceCluster
+		 */
+		if(pData instanceof AnnounceCluster) {
+			AnnounceCluster tAnnounceClusterPacket = (AnnounceCluster)pData;
+
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "ANNOUNCE_CLUSTER-received from \"" + getPeerHRMID() + "\", announcement is: " + tAnnounceClusterPacket);
 		
-		
+			getParent().eventClusterAnnouncement(tAnnounceClusterPacket);
+			
+			return true;
+		}
 		
 //		/**
 //		 * NeighborClusterAnnounce

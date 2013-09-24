@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -156,6 +157,9 @@ public class Cluster extends ClusterProxy
 			}
 		}
 		
+		// trigger: explicit cluster announcement to neighbors
+		distributeClusterAnnouncement();
+		
 		mNeighborInitialized = true;
 	}
 
@@ -187,16 +191,93 @@ public class Cluster extends ClusterProxy
 	}
 	
 	/**
-	 * EVENT: neighborhood needs announcement, triggered by ourself, we react on this event by:
-	 *        1.) -> Cluster: we are at base hierarchy level and send the neighbor clusters our announcement
-	 *            -> Coordinator: we are at a higher hierarchy level and send  
-	 *        
+	 * Creates a ClusterName object which describes this cluster
+	 * 
+	 * @return the new ClusterName object
 	 */
-	private void eventNeighborhoodNeedsAnnouncement()
+	public ClusterName createClusterName()
 	{
+		ClusterName tResult = null;
 		
+		tResult = new ClusterName(mHRMController, getHierarchyLevel(), getClusterID(), getCoordinatorID());
+		
+		return tResult;
+	}
+	
+	/**
+	 * SEND: distribute AnnounceCluster messages among the neighbors which are within the given max. radius (see HRMConfig)        
+	 */
+	public void distributeClusterAnnouncement()
+	{
+		AnnounceCluster tAnnounceClusterPacket = new AnnounceCluster(mHRMController.getNodeName(), createClusterName(), mHRMController.getNodeName());
+		Logging.log(this, "\n\n########## Distributing Cluster announcement: " + tAnnounceClusterPacket);
+		sendClusterBroadcast(tAnnounceClusterPacket);
 	}
 
+	/**
+	 * EVENT: cluster announcement
+	 * 
+	 * @param pAnnounceCluster the received announcement
+	 */
+	@Override
+	public void eventClusterAnnouncement(AnnounceCluster pAnnounceCluster)
+	{
+		Logging.log(this, "EVENT: cluster announcement");
+		/**
+		 * get locally known neighbors for this cluster and hierarchy level
+		 */
+		LinkedList<ControlEntity> tLocallyKnownNeighbors = getNeighborsARG();
+		if(tLocallyKnownNeighbors.size() > 0){
+			/**
+			 * transition from one cluster to the next one: decrease TTL
+			 */
+			pAnnounceCluster.decreaseTTL();
+			
+			/**
+			 * forward the announcement if the TTL is still okay
+			 */
+			if(pAnnounceCluster.isTTLOkay()){
+				for(ControlEntity tLocallyKnownNeighbor: tLocallyKnownNeighbors){
+					if(tLocallyKnownNeighbor instanceof Cluster){
+						/**
+						 * Get the neighbor Cluster object
+						 */
+						Cluster tLocallyKnownNeighborCluster = (Cluster)tLocallyKnownNeighbor;
+						
+						if(tLocallyKnownNeighborCluster.hasLocalCoordinator()){
+							/**
+							 * Forward the announcement
+							 */
+							Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocallyKnownNeighborCluster);
+							tLocallyKnownNeighborCluster.forwardClusterAnnouncement(pAnnounceCluster);
+						}
+					}
+				}
+			}
+		}else{
+			Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCluster);
+		}
+	}
+
+	/**
+	 * Forwards a cluster announcement by sending it to its coordinator
+	 * 
+	 * @param pAnnounceCluster the cluster announcement
+	 */
+	private void forwardClusterAnnouncement(AnnounceCluster pAnnounceCluster)
+	{
+		Logging.log(this, "Forwarding cluster announcement: " + pAnnounceCluster);
+		
+		// is this node the local coordinator for this cluster?
+		if(hasLocalCoordinator()){
+			// forward this announcement to all remote cluster members
+			sendClusterBroadcast(pAnnounceCluster);
+		}else{
+			// forward this announcement to the coordinator and let it forward the announcement to the cluster members
+			sendCoordinator(pAnnounceCluster);
+		}
+	}
+	
 	/**
 	 * Determines the coordinator of this cluster. It is "null" if the election was lost or hasn't finished yet. 
 	 * 
@@ -370,8 +451,7 @@ public class Cluster extends ClusterProxy
 		/**
 		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
 		 */
-	    ClusterName tOwnClusterName = new ClusterName(mHRMController, getHierarchyLevel(), getClusterID(), getCoordinatorID());
-		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), tOwnClusterName);
+		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), createClusterName());
 		tComChannel.sendPacket(tRequestClusterMembershipAckPacket);
 
 		/**

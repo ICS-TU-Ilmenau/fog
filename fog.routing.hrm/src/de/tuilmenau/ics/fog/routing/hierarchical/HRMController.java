@@ -1029,7 +1029,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	     */
 	    Logging.log(this, "    ..creating new communication channel");
 		ComChannel tComChannel = new ComChannel(this, ComChannel.Direction.OUT, tCreatedCluster, tComSession);
-		tComChannel.setRemoteClusterName(new ClusterName(this, tCreatedCluster.getHierarchyLevel(), tCreatedCluster.getClusterID(), tCreatedCluster.getCoordinatorID()));
+		tComChannel.setRemoteClusterName(tCreatedCluster.createClusterName());
 		
 		/**
 		 * Describe the new created cluster

@@ -531,6 +531,12 @@ public class Coordinator extends ControlEntity implements Localization
 	public void eventAnnouncedAsCoordinator()
 	{
 		/**
+		 * Trigger: explicit cluster announcement to neighbors
+		 */ 
+		Logging.log(this, "EVENT ANNOUNCED - triggering distribution of ClusterAnnounces");
+		getCluster().distributeClusterAnnouncement();
+
+		/**
 		 * AUTO ADDRESS DISTRIBUTION
 		 */
 		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
