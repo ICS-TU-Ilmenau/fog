@@ -756,7 +756,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			return new Color((float)0.7, tSaturation, 0);
 		}
 		if (this instanceof ClusterProxy){
-			return new Color(0, 0, tSaturation);
+			return new Color(0, (float)0.7, tSaturation);
 		}
 		
 		return null;
