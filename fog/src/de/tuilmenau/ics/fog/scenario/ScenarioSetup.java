@@ -61,6 +61,9 @@ public class ScenarioSetup
 					case 6: rereoutetestdist(sim); break;
 					case 43: scenario43(sim); break;
 					
+					// a bus with 3 connected nodes
+					case 33: scenario33(sim); break;
+
 					// emulator scenario
 					case 99: emulator(sim); break;
 				}
@@ -253,6 +256,22 @@ public class ScenarioSetup
 		
 		// setup server
 		pSim.executeCommand("switch as2");
+	}
+
+	public static void scenario33(Simulation pSim)
+	{
+		pSim.executeCommand("@ - create as default");
+		pSim.executeCommand("switch default");
+
+		pSim.executeCommand("create node A");
+		pSim.executeCommand("create node B");
+		pSim.executeCommand("create node C");
+		
+		pSim.executeCommand("create bus bus");
+		
+		pSim.executeCommand("connect A bus");
+		pSim.executeCommand("connect B bus");
+		pSim.executeCommand("connect C bus");
 	}
 
 	public static void scenario3(Simulation pSim)
