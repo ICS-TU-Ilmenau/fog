@@ -23,6 +23,8 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
  */
 public class AnnounceCluster extends SignalingMessageHrm
 {
+	private static final long serialVersionUID = -1548886959657058300L;
+
 	/**
 	 * Stores the ClusterName of the sender
 	 */
