@@ -32,7 +32,12 @@ public class HierarchyLevel
 	/**
 	 * Identifies the base level of the hierarchy.
 	 */
-	private static final int BASE_LEVEL = 0;		
+	public static final int BASE_LEVEL = 0;		
+
+	/**
+	 * Stores the numeric hierarchy level
+	 */
+	private int mLevel = UNDEFINED_LEVEL;
 
 	/**
 	 * Constructor: initializes the hierarchy level with the given value.
@@ -176,6 +181,4 @@ public class HierarchyLevel
 	{
 		return "HierLevel(Lvl=" + Long.toString(getValue()) + ")";
 	}
-	
-	private int mLevel = UNDEFINED_LEVEL;
 }
