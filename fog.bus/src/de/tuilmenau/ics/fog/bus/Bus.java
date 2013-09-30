@@ -611,6 +611,18 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	}
 
 	@Override
+	public boolean equals(Object pOther)
+	{
+		if (pOther instanceof Bus){
+			Bus pOtherBus = (Bus)pOther;
+			
+			return (busID == pOtherBus.busID); 
+		}else{
+			return super.equals(pOther);
+		}
+	}
+	
+	@Override
 	public void notify(PacketLogger logger, EventType event, PacketQueueEntry packet)
 	{
 		notifyObservers(logger);
