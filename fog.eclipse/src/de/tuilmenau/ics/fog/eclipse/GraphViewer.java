@@ -284,9 +284,9 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 
 	    	// does the node itself contain decoration information?
 	    	if(pNode instanceof Decorator) {
-	    		String tAddLabel = ((Decorator) pNode).getText();
-	    		if(tAddLabel != null) {
-	    			pLabel += " " +tAddLabel;
+	    		String tExplicitLabel = ((Decorator) pNode).getText();
+	    		if(tExplicitLabel != null) {
+	    			pLabel = tExplicitLabel;
 	    		}
 	    	}
 	    	
