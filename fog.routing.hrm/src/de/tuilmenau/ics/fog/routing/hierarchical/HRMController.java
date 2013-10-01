@@ -49,6 +49,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
+import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
@@ -110,6 +111,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * For example, this list is used for the GUI.
 	 */
 	private LinkedList<Cluster> mLocalClusters = new LinkedList<Cluster>();
+
+	/**
+	 * Stores a database about all registered cluster members (including Cluster objects).
+	 */
+	private LinkedList<ClusterMember> mLocalClusterMembers = new LinkedList<ClusterMember>();
 
 	/**
 	 * Stores a database about all registered outgoing comm. sessions.
@@ -224,7 +230,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// set the Bully priority 
 		BullyPriority.configureNode(pNode);
 
-		
 		// fire the first "report/share phase" trigger
 		reportAndShare();
 		
@@ -458,15 +463,25 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		mDecoratorForCoordinatorsAndHRMIDs.setText(tNodeText);
 		
-		tNodeText = "";
-		LinkedList<Cluster> tAllClusters = getAllClusters();
-		for (Cluster tCluster : tAllClusters){
-			if (tNodeText != ""){
-				tNodeText += ", ";
+		String tClustersText = "";
+		tClustersText = "";
+		LinkedList<ClusterMember> tAllClusterMembers = getAllClusterMembers();
+		for (ClusterMember tClusterMember : tAllClusterMembers){
+			if (tClustersText != ""){
+				tClustersText += ", ";
 			}
-			tNodeText += Long.toString(tCluster.getGUIClusterID());
+			
+			// is this node the cluster head?
+			if (tClusterMember instanceof Cluster){
+				tClustersText += "[" + Long.toString(tClusterMember.getGUIClusterID()) + "]";
+			}else{
+				tClustersText += Long.toString(tClusterMember.getGUIClusterID());
+			}
+			for(int i = 0; i < tClusterMember.getHierarchyLevel().getValue(); i++){
+				tClustersText += "^";	
+			}			
 		}
-		mDecoratorForCoordinatorsAndClusters.setText("- clusters: " + tNodeText);
+		mDecoratorForCoordinatorsAndClusters.setText("- clusters: " + tClustersText);
 		
 		/**
 		 * Set the decoration images
@@ -527,6 +542,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Registers a cluster member at the local database.
+	 * 
+	 * @param pClusterMember the cluster member which should be registered
+	 */
+	public void registerClusterMember(ClusterMember pClusterMember)
+	{
+		int tLevel = pClusterMember.getHierarchyLevel().getValue();
+
+		Logging.log(this, "Registering cluster member " + pClusterMember + " at level " + tLevel);
+		
+		synchronized (mLocalClusterMembers) {
+			// register as known cluster member
+			mLocalClusterMembers.add(pClusterMember);			
+		}
+		
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
+
+		// register the cluster in the local ARG
+		registerNodeARG(pClusterMember);
+
+		// it's time to update the GUI
+		notifyGUI(pClusterMember);
+	}
+
+	/**
 	 * Registers a cluster at the local database.
 	 * 
 	 * @param pCluster the cluster which should be registered
@@ -540,6 +581,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		synchronized (mLocalClusters) {
 			// register as known cluster
 			mLocalClusters.add(pCluster);
+		}
+		
+		synchronized (mLocalClusterMembers) {
+			// register as known cluster member
+			mLocalClusterMembers.add(pCluster);			
 		}
 		
 		// updates the GUI decoration for this node
@@ -721,6 +767,49 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns a list of known cluster members.
+	 * 
+	 * @return the list of known cluster members
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<ClusterMember> getAllClusterMembers()
+	{
+		LinkedList<ClusterMember> tResult = null;
+		
+		synchronized (mLocalClusterMembers) {
+			tResult = (LinkedList<ClusterMember>) mLocalClusterMembers.clone();
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns a list of known cluster members (including local Cluster objects) for a given hierarchy level.
+	 * 
+	 * @param pHierarchyLevel the hierarchy level
+	 * 
+	 * @return the list of cluster members
+	 */
+	public LinkedList<ClusterMember> getAllClusterMembers(HierarchyLevel pHierarchyLevel)
+	{
+		LinkedList<ClusterMember> tResult = new LinkedList<ClusterMember>();
+		
+		// get a list of all known coordinators
+		LinkedList<ClusterMember> tAllClusterMembers = getAllClusterMembers();
+		
+		// iterate over all known coordinators
+		for (ClusterMember tClusterMember : tAllClusterMembers){
+			// have we found a matching coordinator?
+			if (tClusterMember.getHierarchyLevel().equals(pHierarchyLevel)){
+				// add this coordinator to the result
+				tResult.add(tClusterMember);
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Returns a list of known clusters.
 	 * 
 	 * @return the list of known clusters
@@ -755,6 +844,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		for (Cluster tCluster : tAllClusters){
 			// have we found a matching coordinator?
 			if (tCluster.getHierarchyLevel().equals(pHierarchyLevel)){
+				// add this coordinator to the result
+				tResult.add(tCluster);
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns a list of known clusters for a given hierarchy level.
+	 * 
+	 * @param pHierarchyLevel the hierarchy level
+	 * 
+	 * @return the list of clusters
+	 */
+	public LinkedList<Cluster> getAllClusters(int pHierarchyLevel)
+	{
+		LinkedList<Cluster> tResult = new LinkedList<Cluster>();
+		
+		// get a list of all known coordinators
+		LinkedList<Cluster> tAllClusters = getAllClusters();
+		
+		// iterate over all known coordinators
+		for (Cluster tCluster : tAllClusters){
+			// have we found a matching coordinator?
+			if (tCluster.getHierarchyLevel().getValue() == pHierarchyLevel){
 				// add this coordinator to the result
 				tResult.add(tCluster);
 			}
@@ -994,12 +1109,35 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Determines the Cluster object (on hierarchy level 0) for a given network interface
+	 * 
+	 * @param pInterface the network interface
+	 * 
+	 * @return the found Cluster object, null if nothing was found
+	 */
+	Cluster getBaseHierarchyLevelCluster(NetworkInterface pInterface)
+	{
+		Cluster tResult = null;
+		
+		LinkedList<Cluster> tBaseClusters = getAllClusters(HierarchyLevel.BASE_LEVEL);
+		for (Cluster tCluster : tBaseClusters){
+			NetworkInterface tClusterNetIf = tCluster.getBaseHierarchyLevelNetworkInterface();
+			if ((pInterface == tClusterNetIf) || (pInterface.equals(tCluster.getBaseHierarchyLevelNetworkInterface()))){
+				tResult = tCluster;
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Reacts on a detected new physical neighbor. A new connection to this neighbor is created.
 	 * HINT: "pNeighborL2Address" doesn't correspond to the neighbor's central FN!
 	 * 
+	 * @param pInterfaceToNeighbor the network interface to the neighbor 
 	 * @param pNeighborL2Address the L2 address of the detected physical neighbor's first FN towards the common bus.
 	 */
-	public synchronized void eventDetectedPhysicalNeighborNode(final L2Address pNeighborL2Address)
+	public synchronized void eventDetectedPhysicalNeighborNode(NetworkInterface pInterfaceToNeighbor, final L2Address pNeighborL2Address)
 	{
 		// get the recursive FoG layer
 		FoGEntity tFoGLayer = (FoGEntity) mNode.getLayer(FoGEntity.class);
@@ -1007,45 +1145,55 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// get the central FN of this node
 		L2Address tThisHostL2Address = getHRS().getL2AddressFor(tFoGLayer.getCentralFN());
 
-		Logging.info(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + " FOR " + tThisHostL2Address);
+		Logging.info(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor + ", local L2 address=" + tThisHostL2Address);
 		
 		/**
-		 * Create cluster
+		 * Create/get the cluster on base hierarchy level
 		 */
-	    Logging.log(this, "    ..creating new cluster");
-		final Cluster tCreatedCluster = Cluster.createBaseCluster(this);
-
+		Cluster tParentCluster = null;
+		//HINT: we make sure that we use only one Cluster object per Bus
+		Cluster tExistingCluster = getBaseHierarchyLevelCluster(pInterfaceToNeighbor);
+		if (tExistingCluster != null){
+		    Logging.log(this, "    ..using existing level0 cluster: " + tExistingCluster);
+			tParentCluster = tExistingCluster;
+		}else{
+		    Logging.log(this, "    ..knowing level0 clusters: " + getAllClusters(0));
+		    Logging.log(this, "    ..creating new level0 cluster");
+			tParentCluster = Cluster.createBaseCluster(this);
+			tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
+		}
+		
 //		setSourceIntermediateCluster(tCreatedCluster, tCreatedCluster);
 		
 		/**
 		 * Create communication session
 		 */
 	    Logging.log(this, "    ..creating new communication session");
-	    final ComSession tComSession = new ComSession(this, false, tCreatedCluster, tCreatedCluster.getHierarchyLevel());
+	    final ComSession tComSession = new ComSession(this, false, tParentCluster, tParentCluster.getHierarchyLevel());
 	    
 	    /**
 	     * Create communication channel
 	     */
 	    Logging.log(this, "    ..creating new communication channel");
-		ComChannel tComChannel = new ComChannel(this, ComChannel.Direction.OUT, tCreatedCluster, tComSession);
-		tComChannel.setRemoteClusterName(tCreatedCluster.createClusterName());
+		ComChannel tComChannel = new ComChannel(this, ComChannel.Direction.OUT, tParentCluster, tComSession);
+		tComChannel.setRemoteClusterName(tParentCluster.createClusterName());
 		
 		/**
 		 * Describe the new created cluster
 		 */
 	    Logging.log(this, "    ..creating cluster description");
-		final RequestClusterParticipationProperty tRequestClusterParticipationProperty = RequestClusterParticipationProperty.create(this, HierarchyLevel.createBaseLevel(), tCreatedCluster.getClusterID(), tCreatedCluster.getHierarchyLevel());
+		final RequestClusterParticipationProperty tRequestClusterParticipationProperty = RequestClusterParticipationProperty.create(this, HierarchyLevel.createBaseLevel(), tParentCluster.getClusterID(), tParentCluster.getHierarchyLevel());
 		/**
 		 * Describe the cluster member
 		 */
-	    Logging.log(this, "    ..creating cluster member description for created cluster " + tCreatedCluster);
-	    tRequestClusterParticipationProperty.addSenderClusterMember(tCreatedCluster);
+	    Logging.log(this, "    ..creating cluster member description for created cluster " + tParentCluster);
+	    tRequestClusterParticipationProperty.addSenderClusterMember(tParentCluster);
 
 		/**
 		 * Helper for having access to the HRMController within the created thread
 		 */
 		final HRMController tHRMController = this;
-
+		
 		/**
 		 * Create connection thread
 		 */
@@ -1639,6 +1787,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if (tPropProbeRouting == null){
 			RequestClusterParticipationProperty tPropClusterParticipation = (RequestClusterParticipationProperty) tConnectionRequirements.get(RequestClusterParticipationProperty.class);
 			
+			/**
+			 * Create ClusterName for the signaled cluster
+			 */
+			ClusterName tSignaledClusterName = new ClusterName(this, tPropClusterParticipation.getHierarchyLevel(), tPropClusterParticipation.getClusterID(), -1);
+
 			/******************************************************
 			 * PARSE: cluster description from remote side
 			 ******************************************************/
@@ -1646,7 +1799,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				Logging.log(this, "    ..found cluster description: " + tPropClusterParticipation);
 
 				ComSession tComSession = null;
-				Cluster tTargetCluster = null;
+				ClusterMember tTargetCluster = null;
 
 				/**
 				 * Search if the destination cluster (from the ClusterDescriptionProperty) is already locally known.
@@ -1659,8 +1812,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				{
 					Logging.log(this, "    ..[" + i + "]: " + tLocalCluster);
 					
-					ClusterName tSignaledClusterName = new ClusterName(this, tPropClusterParticipation.getHierarchyLevel(), tPropClusterParticipation.getClusterID(), 0);
-
 					// do we already know the described cluster?
 					if(tLocalCluster.equals(tSignaledClusterName))	{
 						Logging.log(this, "           ..found MATCH: " + tLocalCluster);
@@ -1671,12 +1822,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 
 				/**
-				 * Create a new cluster object if the described cluster doesn't have a local representation yet
+				 * Create new cluster (member) object
 				 */
-				if (tTargetCluster == null){
-					Logging.log(this, "    ..creating new local cluster object for handling remote cluster with description: " + tPropClusterParticipation); 
-					tTargetCluster = Cluster.create(this, tPropClusterParticipation.getClusterID(), tPropClusterParticipation.getHierarchyLevel());
+				if (tPropClusterParticipation.getSenderL2Address().equals(getNodeL2Address())){
+					Logging.log(this, "    ..creating new local cluster for: " + tSignaledClusterName); 
+					tTargetCluster = Cluster.create(this, tSignaledClusterName);
 //					setSourceIntermediateCluster(tTargetCluster, tTargetCluster); //TODO : ??
+				}else{
+					Logging.log(this, "    ..creating new local cluster member for: " + tSignaledClusterName); 
+					tTargetCluster = ClusterMember.create(this, tSignaledClusterName, tPropClusterParticipation.getSenderNodeName());
 				}
 				
 				Logging.log(this, "     ..CONTINUING for target cluster: " + tTargetCluster);
@@ -1720,7 +1874,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * Create a ClusterProxy object
 						 */
 						Logging.log(this, "     ..creating cluster proxy");
-						ClusterProxy tClusterProxy_ClusterMember = new ClusterProxy(this, new HierarchyLevel(this, tPropClusterParticipation.getHierarchyLevel().getValue() - 1),  tSenderClusterMember.getClusterID(), tSenderClusterMember.getCoordinatorID(), tPropClusterParticipation.getSenderNodeName());
+						ClusterMember tClusterProxy_ClusterMember = new ClusterMember(this, new HierarchyLevel(this, tPropClusterParticipation.getHierarchyLevel().getValue() - 1),  tSenderClusterMember.getClusterID(), tSenderClusterMember.getCoordinatorID(), tPropClusterParticipation.getSenderNodeName());
 						tClusterProxy_ClusterMember.setPriority(tSenderClusterMember.getPriority());
 						
 						/**
@@ -1766,7 +1920,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								ControlEntity tLocalCluster_ClusterMemberNeighbor = getClusterByName(tNeighborDescriptionClusterName);
 								if(tLocalCluster_ClusterMemberNeighbor == null) {
 									Logging.log(this, "     ..neighbor of cluster member is a remote cluster, creating ClusterProxy");
-									ClusterProxy tClusterProxy_ClusterMemberNeighbor = new ClusterProxy(this, tNeighborDescription.getLevel(), tNeighborDescription.getClusterID(), tNeighborDescription.getToken(), tNeighborDescription.getCoordinatorNodeName());
+									ClusterMember tClusterProxy_ClusterMemberNeighbor = new ClusterMember(this, tNeighborDescription.getLevel(), tNeighborDescription.getClusterID(), tNeighborDescription.getToken(), tNeighborDescription.getCoordinatorNodeName());
 									tClusterProxy_ClusterMemberNeighbor.setPriority(tNeighborDescription.getPriority());
 									getHRS().mapFoGNameToL2Address(tNeighborDescription.getCoordinatorNodeName(), tNeighborDescription.getCoordinatorL2Address());
 
@@ -1784,12 +1938,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //									}
 									
 									// register the link in the local ARG
-									registerLinkARG(tClusterProxy_ClusterMember, tClusterProxy_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_LINK));
+									registerLinkARG(tClusterProxy_ClusterMember, tClusterProxy_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.NET));
 								}else{
 									Logging.log(this, "     ..neighor of cluster member is the locally known cluster: " + tLocalCluster_ClusterMemberNeighbor);
 
 									// register the link in the local ARG
-									registerLinkARG(tClusterProxy_ClusterMember, tLocalCluster_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_LINK));
+									registerLinkARG(tClusterProxy_ClusterMember, tLocalCluster_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.NET));
 								}
 								
 								tFoundDescribedNeighbors++;

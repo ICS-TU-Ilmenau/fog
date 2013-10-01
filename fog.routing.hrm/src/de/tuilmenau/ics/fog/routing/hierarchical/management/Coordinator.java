@@ -22,6 +22,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
@@ -554,6 +555,23 @@ public class Coordinator extends ControlEntity implements Localization
 		}
 	}
 
+	/**
+	 * EVENT: cluster announcement, we react on this by:
+	 *       1.) store the topology information locally
+	 *       2.) forward the announcement downward the hierarchy to all cluster members ("to the bottom")
+	 * 
+	 * @param pAnnounceCluster the received announcement
+	 */
+	@Override
+	public void eventClusterAnnouncement(AnnounceCluster pAnnounceCluster)
+	{
+		Logging.log(this, "EVENT: cluster announcement: " + pAnnounceCluster);
+		
+		/**
+		 * Parse the announcement and update the ARG 
+		 */
+
+	}
 	
 	/**
 	 * Clusters the superior hierarchy level or tries to join an already existing superior cluster
@@ -563,30 +581,42 @@ public class Coordinator extends ControlEntity implements Localization
 		Logging.log(this, "\n\n\n################ CLUSTERING STARTED");
 
 		/**
-		 * Try to find a matching local cluster on the superior hierarchy level
+		 * Join local clusters at the superior hierarchy level
 		 */
-		boolean tJoinedExistingSuperiorCluster = false;
+		boolean tJoinedExistingLocalSuperiorCluster = false;
 		Logging.log(this, "      ..searching for a locally known superior cluster on hierarchy level: " + getHierarchyLevel().getValue());
 		if(HRMConfig.Hierarchy.COORDINATORS_MAY_JOIN_EXISTING_SUPERIOR_CLUSTERS){
 			for(Cluster tCluster : mHRMController.getAllClusters(getHierarchyLevel())) {
 				Logging.log(this, "        ..found superior cluster: " + tCluster);
+				if(tJoinedExistingLocalSuperiorCluster){
+					Logging.err(this, "cluster() FOUND MORE THAN ONE LOCAL SUPERIOR CLUSTER");
+				}
 				if (joinExistingSuperiorCluster(tCluster)){
 					Logging.log(this, "          ..joined locally known superior cluster: " + tCluster);
 					// we joined the superior cluster and should end the search for a superior coordinator
-					tJoinedExistingSuperiorCluster = true;
-					break;
+					tJoinedExistingLocalSuperiorCluster = true;
 				}
 			}
 		}
 		
 		/**
+		 * Expand locally and create a new local superior cluster
+		 */
+		if (!tJoinedExistingLocalSuperiorCluster){
+			Logging.log(this, "      ..can't find a locally known superior cluster on hierarchy level: " + getHierarchyLevel().getValue() + ", known clusters are: " + mHRMController.getAllClusters());
+			connectToSuperiorCluster(mHRMController.getNodeName(), Cluster.createClusterID());
+		}
+
+		/**
 		 * Explore the neighborhood and create a new superior cluster
 		 */
-		if (!tJoinedExistingSuperiorCluster){
-			Logging.log(this, "      ..can't find a locally known superior cluster on hierarchy level: " + getHierarchyLevel().getValue() + ", known clusters are: " + mHRMController.getAllClusters());
-			Logging.log(this, "      ..starting neighbor exploration now..");
-			exploreNeighborhoodAndCreateSuperiorCluster();
-		}
+		Logging.log(this, "      ..starting neighbor exploration now..");
+		exploreNeighborhoodAndJoinSuperiorClusters();
+		
+		/**
+		 * Trigger event "finished clustering" because we have - at least - one local superior cluster  
+		 */
+		eventInitialClusteringFinished();
 	}
 
 	/**
@@ -628,9 +658,6 @@ public class Coordinator extends ControlEntity implements Localization
 			RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeName(), pSuperiorCluster.getHRMID(), tOwnClusterName);
 			if (tComSession.write(tRequestClusterMembership)){
 				tResult = true;
-				
-				// trigger event "finished clustering" 
-				eventInitialClusteringFinished();
 			}
 		}else{
 			Logging.warn(this, "joinSuperiorCluster() wasn't able to find the outgoing comm. session towards: " + pSuperiorCluster);
@@ -804,7 +831,7 @@ public class Coordinator extends ControlEntity implements Localization
 	 *          ..if no neighbors were found: expand locally by connecting in a local loop  to ourself and trigger the creation of a new superior cluster
 	 *     
 	 */
-	private void exploreNeighborhoodAndCreateSuperiorCluster()
+	private void exploreNeighborhoodAndJoinSuperiorClusters()
 	{
 		Logging.log(this, "\n\n\n################ EXPLORATION STARTED on hierarchy level " + getHierarchyLevel().getValue());
 		
@@ -856,9 +883,9 @@ public class Coordinator extends ControlEntity implements Localization
 								 }
 							} else {
 								// is the found neighbor a ClusterProxy object?
-								if (tClusterCandidate instanceof ClusterProxy){
+								if (tClusterCandidate instanceof ClusterMember){
 									// get the proxy for this cluster
-									ClusterProxy tClusterCandidateProxy = (ClusterProxy)tClusterCandidate;
+									ClusterMember tClusterCandidateProxy = (ClusterMember)tClusterCandidate;
 									
 									// are we already connected to this candidate?
 									if (!isConnectedToNeighborCoordinator(tClusterCandidateProxy.getCoordinatorNodeName())){
@@ -958,16 +985,6 @@ public class Coordinator extends ControlEntity implements Localization
 	private void eventDetectedIsolation()
 	{
 		Logging.log(this, "EVENT: detected lcoal isolation");
-		
-		/**
-		 * Expand locally and create a new local superior cluster
-		 */
-		expandSuperiorCluster(mHRMController.getNodeName(), Cluster.createClusterID());
-		
-		/**
-		 * Trigger event "finished clustering" because we have created a local superior cluster 
-		 */
-		eventInitialClusteringFinished();
 	}
 	
 	/**
@@ -990,7 +1007,7 @@ public class Coordinator extends ControlEntity implements Localization
 			/**
 			 * Expand the superior cluster to the new detected neighbor coordinator
 			 */
-			expandSuperiorCluster(tNeighborCoordinatorNode, pFutureClusterID);
+			connectToSuperiorCluster(tNeighborCoordinatorNode, pFutureClusterID);
 
 			/**
 			 * Mark a local (instantiated on this physical node) coordinator for this hierarchy level as "clustered"
@@ -1022,7 +1039,7 @@ public class Coordinator extends ControlEntity implements Localization
 	 * @param pDestinationNodeName the name of the destination node
 	 * @param pFutureClusterID the clusterID for the desired superior cluster
 	 */
-	private void expandSuperiorCluster(Name pDestinationNodeName, Long pFutureClusterID)
+	private void connectToSuperiorCluster(Name pDestinationNodeName, Long pFutureClusterID)
 	{
 		if(pDestinationNodeName != null){
 			/**

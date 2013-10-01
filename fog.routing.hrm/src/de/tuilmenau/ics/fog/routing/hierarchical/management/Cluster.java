@@ -22,13 +22,13 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class represents a clusters on a defined hierarchy level.
- * 
+ * This class represents a cluster head at a defined hierarchy level.
  */
-public class Cluster extends ClusterProxy implements IEvent
+public class Cluster extends ClusterMember implements IEvent
 {
 	/**
 	 * For using this class within (de-)serialization.
@@ -41,9 +41,9 @@ public class Cluster extends ClusterProxy implements IEvent
 	private static long sNextFreeClusterID = 1;
 
 	/**
-	 * Stores if the neighborhood is already initialized
+	 * Stores the network interface for base hierarchy level
 	 */
-	private boolean mNeighborInitialized = false;
+	private NetworkInterface mBaseHierarchyLevelNetworkInterface = null;
 	
 	private LinkedList<AnnounceRemoteCluster> mReceivedAnnounces = null;
 
@@ -85,31 +85,52 @@ public class Cluster extends ClusterProxy implements IEvent
 		}
 
 		mReceivedAnnounces = new LinkedList<AnnounceRemoteCluster>();
-
-		// register at HRMController's internal database
-		mHRMController.registerCluster(this);
-
-		Logging.log(this, "\n\n\n################ CREATED CLUSTER on hierarchy level: " + (getHierarchyLevel().getValue()));
-
-		// detect neighbor clusters, increase the Bully priority based on the local connectivity
-		initializeNeighborhood();
-
-		// creates new elector object, which is responsible for Bully based election processes
-		mElector = new Elector(mHRMController, this); //TODO: move to ClusterProxy
 	}
 	
 	/**
 	 * Factory function: create a cluster
 	 * 
-	 * @param pHrmController the local HRMController instance
+	 * @param pHRMController the local HRMController instance
 	 * @param pHierarchyLevel the hierarchy level
 	 * @param pClusterID the unique ID of this cluster, a value of "-1" triggers the creation of a new ID
 	 * 
 	 * @return the new Cluster object
 	 */
-	static public Cluster create(HRMController pHrmController, Long pClusterID, HierarchyLevel pHierarchyLevel)
+	static public Cluster create(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID)
 	{
-		return new Cluster(pHrmController, pHierarchyLevel, pClusterID);
+		Cluster tResult = new Cluster(pHRMController, pHierarchyLevel, pClusterID);
+		
+		// detect neighbor clusters (members), increase the Bully priority based on the local connectivity
+		tResult.initializeNeighborhood();
+
+		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER on hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
+
+		// register at HRMController's internal database
+		pHRMController.registerCluster(tResult);
+
+		// creates new elector object, which is responsible for Bully based election processes
+		tResult.mElector = new Elector(pHRMController, tResult);
+
+		// trigger periodic Cluster announcements
+		if(HRMConfig.Hierarchy.CLUSTER_ANNOUNCEMENTS){
+			// register next trigger for 
+			pHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIORD_CLUSTER_ANNOUNCEMENTS * 2, tResult);
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Factory function: create a cluster
+	 * 
+	 * @param pHRMController the local HRMController instance
+	 * @param pClusterName the ClusterName for the new cluster object
+	 * 
+	 * @return the new Cluster object
+	 */
+	static public Cluster create(HRMController pHRMController, ClusterName pClusterName)
+	{
+		return create(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID());
 	}
 
 	/**
@@ -121,7 +142,7 @@ public class Cluster extends ClusterProxy implements IEvent
 	 */
 	static public Cluster createBaseCluster(HRMController pHrmController)
 	{
-		return new Cluster(pHrmController, HierarchyLevel.createBaseLevel(), null);
+		return create(pHrmController, HierarchyLevel.createBaseLevel(), null);
 	}
 
 	/**
@@ -140,41 +161,6 @@ public class Cluster extends ClusterProxy implements IEvent
 		}
 	}
 
-	/**
-	 * Detects neighbor clusters and increases the cluster's Bully priority based on the local connectivity. 
-	 */
-	private void initializeNeighborhood()
-	{
-		Logging.log(this, "Checking local connectivity for increasing priority " + getPriority().getValue());
-		
-		for(Cluster tCluster : mHRMController.getAllClusters())
-		{
-			if ((tCluster.getHierarchyLevel().equals(getHierarchyLevel())) && (tCluster != this))
-			{
-				Logging.log(this, "      ..found known neighbor cluster: " + tCluster);
-				
-				// add this cluster as neighbor to the already known one
-				tCluster.registerNeighborARG(this);
-			}
-		}
-		
-		mNeighborInitialized = true;
-
-		// register next trigger for 
-		mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.INTERNAL_CLUSTER_ANNOUNCEMENTS * 2, this);
-	}
-
-	/**
-	 * Returns true if the neighborhood is already initialized - otherwise false
-	 * This function is used by the elector to make sure that the local neighborhood is already probed and initialized.
-	 *  
-	 * @return true of false
-	 */
-	public boolean isNeighborHoodInitialized()
-	{
-		return mNeighborInitialized;
-	}
-	
 	/**
 	 * Generates a new ClusterID
 	 * 
@@ -231,11 +217,13 @@ public class Cluster extends ClusterProxy implements IEvent
 		distributeClusterAnnouncement();
 		
 		// register next trigger for 
-		mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.INTERNAL_CLUSTER_ANNOUNCEMENTS, this);
+		mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIORD_CLUSTER_ANNOUNCEMENTS, this);
 	}
 
 	/**
-	 * EVENT: cluster announcement
+	 * EVENT: cluster announcement, we react on this by:
+	 *       1.) store the topology information locally
+	 *       2.) forward the announcement within the same hierarchy level ("to the side")
 	 * 
 	 * @param pAnnounceCluster the received announcement
 	 */
@@ -252,14 +240,15 @@ public class Cluster extends ClusterProxy implements IEvent
 		}
 		
 		/**
-		 * get locally known neighbors for this cluster and hierarchy level
+		 * Forward the announcement within the same hierarchy level
 		 */
+		// get locally known neighbors for this cluster and hierarchy level
 		LinkedList<ControlEntity> tLocallyKnownNeighbors = getNeighborsARG();
 		if(tLocallyKnownNeighbors.size() > 0){
 			Logging.log(this, "      ..found " + tLocallyKnownNeighbors.size() + " neighbors: " + tLocallyKnownNeighbors);
 
 			/**
-			 * transition from one cluster to the next one: decrease TTL
+			 * transition from one cluster to the next one => decrease TTL value
 			 */
 			pAnnounceCluster.decreaseTTL();
 			
@@ -307,7 +296,7 @@ public class Cluster extends ClusterProxy implements IEvent
 		if(!mHRMController.isKnownARG(tRemoteClusterName)){
 			Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE CLUSTER: " + tRemoteClusterName);
 
-			ClusterProxy tClusterProxy = ClusterProxy.create(mHRMController, tRemoteClusterName, pAnnounceCluster.getSenderClusterCoordinatorNodeName());
+			ClusterMember tClusterProxy = ClusterMember.create(mHRMController, tRemoteClusterName, pAnnounceCluster.getSenderClusterCoordinatorNodeName());
 			
 			mHRMController.registerNodeARG(tClusterProxy);
 		}else{
@@ -454,7 +443,7 @@ public class Cluster extends ClusterProxy implements IEvent
 		Logging.log(this, "      ..remaining comm. channels: " + getComChannels());
 
 		// no further external candidates available/known (all candidates are gone) ?
-		if (countClusterMembers() < 1){
+		if (countConnectedClusterMembers() < 1){
 			/**
 			 * TRIGGER: all cluster members are gone, we destroy the coordinator
 			 */
@@ -541,6 +530,26 @@ public class Cluster extends ClusterProxy implements IEvent
 		}
 	}
 
+	/**
+	 * Sets the network interface of this cluster (only for base hierarchy level)
+	 * 
+	 * @param pInterfaceToNeighbor the network interface
+	 */
+	public void setBaseHierarchyLevelNetworkInterface(NetworkInterface pInterfaceToNeighbor)
+	{
+		Logging.log(this, "Setting network interface (base hierarchy level) to: " + pInterfaceToNeighbor);
+		mBaseHierarchyLevelNetworkInterface = pInterfaceToNeighbor;		
+	}
+	
+	/**
+	 * Returns the network interface of this cluster (only for base hierarchy level)
+	 * 
+	 * @return the network interface
+	 */
+	public NetworkInterface getBaseHierarchyLevelNetworkInterface()
+	{
+		return mBaseHierarchyLevelNetworkInterface;
+	}
 	
 	
 	
@@ -707,6 +716,18 @@ public class Cluster extends ClusterProxy implements IEvent
 
 	
 	
+	
+	/**
+	 * Defines the decoration text for the ARG viewer
+	 * 
+	 * @return text for the control entity or null if no text is available
+	 */
+	@Override
+	public String getText()
+	{
+		return null;
+	}
+
 	/**
 	 * Returns a descriptive string about this object
 	 * 

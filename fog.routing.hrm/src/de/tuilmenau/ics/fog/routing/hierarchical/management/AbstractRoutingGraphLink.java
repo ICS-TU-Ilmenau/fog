@@ -19,7 +19,7 @@ import java.io.Serializable;
 public class AbstractRoutingGraphLink implements Serializable
 {
 	private static final long serialVersionUID = 3333293111147481060L;
-	public enum LinkType {LOCAL_LINK /* direct cluster neighbor */, REMOTE_LINK /* distant cluster neighbor */};
+	public enum LinkType {NODE_LOCAL /* internal cluster neighbor */, NET /* distant cluster neighbor */};
 
 	/**
 	 * Stores the type of the link

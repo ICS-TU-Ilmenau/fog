@@ -160,9 +160,15 @@ public class HRMConfig
 		public static final boolean AUTO_CLEANUP_FOR_CONNECTIONS = true;
 
 		/**
-		 * Defines the time interval for ClusterAnnounce distributions
+		 * Defines if clusters should announce their existences among cluster members/neighbors
+		 * If this is disabled, the hierarchy creation won't be correct.
 		 */
-		public static final double INTERNAL_CLUSTER_ANNOUNCEMENTS = 3.0;
+		public static final boolean CLUSTER_ANNOUNCEMENTS = false;
+
+		/**
+		 * Defines the time period for ClusterAnnounce distributions
+		 */
+		public static final double PERIORD_CLUSTER_ANNOUNCEMENTS = 3.0;
 	}
 	
 	/**

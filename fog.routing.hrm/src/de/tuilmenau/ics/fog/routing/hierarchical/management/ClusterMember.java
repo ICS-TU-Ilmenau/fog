@@ -16,16 +16,20 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class is used to identify a remote cluster (including the location information). It includes all needed data about the remote cluster.
+ * This class represents a cluster member (can also be a cluster head).
  */
-public class ClusterProxy extends ClusterName
+public class ClusterMember extends ClusterName
 {
 	private static final long serialVersionUID = -8746079632866375924L;
+
+	/**
+	 * Stores if the neighborhood is already initialized
+	 */
+	private boolean mNeighborhoodInitialized = false;
 
 	/**
 	 * Stores the name of the node where the coordinator of the addressed cluster is located
@@ -38,21 +42,6 @@ public class ClusterProxy extends ClusterName
 	protected Elector mElector = null;
 
 	/**
-	 * Factory function
-	 *  
-	 * @param pHRMController the local HRMController instance
-	 * @param pClusterName a ClusterName which includes the hierarchy level, the unique ID of this cluster, and the unique coordinator ID
-	 * @param pClusterID the unique ID of this cluster
-	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
-	 */
-	public static ClusterProxy create(HRMController pHRMController, ClusterName pClusterName, Name pCoordinatorNodeName)
-	{	
-		ClusterProxy tResult = new ClusterProxy(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pCoordinatorNodeName);
-		
-		return tResult;
-	}
-
-	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
@@ -61,22 +50,79 @@ public class ClusterProxy extends ClusterName
 	 * @param pCoordinatorID the unique coordinator ID for this cluster
 	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
 	 */
-	public ClusterProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, Name pCoordinatorNodeName)
+	public ClusterMember(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, Name pCoordinatorNodeName)
 	{	
 		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID);
 
 		// store the name of the node where the coordinator is located
 		mCoordinatorNodeName = pCoordinatorNodeName;
 
-		// do we already have a valid cluster ID? -> then we also have a valid hash code for this object and may use this as reference within the ARG
-		if (pClusterID != null){
-			// register the ClusterProxy at the local ARG
-			mHRMController.registerNodeARG(this);
-		}
-
 		Logging.log(this, "CREATED");
 	}
 
+	/**
+	 * Factory function
+	 *  
+	 * @param pHRMController the local HRMController instance
+	 * @param pClusterName a ClusterName which includes the hierarchy level, the unique ID of this cluster, and the unique coordinator ID
+	 * @param pClusterID the unique ID of this cluster
+	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
+	 */
+	public static ClusterMember create(HRMController pHRMController, ClusterName pClusterName, Name pCoordinatorNodeName)
+	{	
+		ClusterMember tResult = new ClusterMember(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pCoordinatorNodeName);
+		
+		// detect neighbor clusters (members), increase the Bully priority based on the local connectivity
+		tResult.initializeNeighborhood();
+
+		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER MEMBER on hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
+
+		// register at HRMController's internal database
+		pHRMController.registerClusterMember(tResult);
+
+		// creates new elector object, which is responsible for Bully based election processes
+		tResult.mElector = new Elector(pHRMController, tResult);
+		
+		return tResult;
+	}
+
+	/**
+	 * Detects neighbor clusters and increases the cluster's Bully priority based on the local connectivity. 
+	 */
+	protected void initializeNeighborhood()
+	{
+		Logging.log(this, "Checking local connectivity for increasing priority " + getPriority().getValue());
+
+		/**
+		 * Store neighborhood in ARG for every locally known cluster at this hierarchy level 
+		 */
+		for(ClusterMember tClusterMember : mHRMController.getAllClusterMembers(getHierarchyLevel()))
+		{
+			if (tClusterMember != this)
+			{
+				Logging.log(this, "      ..found known neighbor cluster (member): " + tClusterMember);
+				
+				// add this cluster as neighbor to the already known one
+				tClusterMember.registerLocalNeighborARG(this);
+			}
+		}
+		
+		mNeighborhoodInitialized = true;
+	}
+
+	/**
+	 * Returns true if the neighborhood is already initialized - otherwise false
+	 * This function is used by the elector to make sure that the local neighborhood is already probed and initialized.
+	 *  
+	 * @return true of false
+	 */
+	public boolean isNeighborHoodInitialized()
+	{
+		return mNeighborhoodInitialized;
+	}
+
+	
+	
 	
 	
 
@@ -186,11 +232,11 @@ public class ClusterProxy extends ClusterName
 	}
 
 	/**
-	 * Returns how many cluster members are known
+	 * Returns how many connected cluster members are known
 	 * 
 	 * @return the count
 	 */
-	public int countClusterMembers()
+	public int countConnectedClusterMembers()
 	{
 		int tResult = 0;
 
@@ -201,11 +247,11 @@ public class ClusterProxy extends ClusterName
 	}
 
 	/**
-	 * Returns how many external cluster members are known
+	 * Returns how many connected external cluster members are known
 	 * 
 	 * @return the count
 	 */
-	public int countRemoteClusterMembers()
+	public int countConnectedRemoteClusterMembers()
 	{
 		int tResult = 0;
 
@@ -265,21 +311,24 @@ public class ClusterProxy extends ClusterName
 	}
 	
 	/**
+	 * Defines the decoration text for the ARG viewer
+	 * 
+	 * @return text for the control entity or null if no text is available
+	 */
+	@Override
+	public String getText()
+	{
+		return "Cluster" + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeName()+ ")";
+	}
+
+	/**
 	 * Returns a descriptive string about this object
 	 * 
 	 * @return the descriptive string
 	 */
-	@SuppressWarnings("unused")
 	public String toString()
 	{
-		HRMID tHRMID = getHRMID();
-		
-		if(tHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
-			return tHRMID.toString();
-		} else {
-			return toLocation() + "(" + idToString() + ")";
-
-		}
+		return toLocation() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeName()+ ")";
 	}
 
 	/**

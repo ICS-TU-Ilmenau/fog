@@ -195,8 +195,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 
 			return;
 		}
-		if (this instanceof ClusterProxy){
-			ClusterProxy tClusterProxy = (ClusterProxy)this;
+		if (this instanceof ClusterMember){
+			ClusterMember tClusterProxy = (ClusterMember)this;
 
 			// inform HRM controller about the address change
 			//TODO: mHRMController.updateClusterAddress(tClusterProxy);
@@ -337,46 +337,33 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 *  
 	 * @param pNeighbor the neighbor, which should be registered
 	 */
-	public void registerNeighborARG(ControlEntity pNeighbor)
+	public void registerLocalNeighborARG(ControlEntity pNeighbor)
 	{
 		Logging.log(this, "Registering neighbor (ARG): " + pNeighbor);
 
-		AbstractRoutingGraphLink.LinkType tLinkType = AbstractRoutingGraphLink.LinkType.REMOTE_LINK;
+		AbstractRoutingGraphLink.LinkType tLinkType = AbstractRoutingGraphLink.LinkType.NODE_LOCAL;
 
-		boolean tRegisterNeighbor = false;
-		if (this instanceof Cluster){
+		if (this instanceof ClusterMember){
 			// increase Bully priority because of changed connectivity (topology depending) 
 			getPriority().increaseConnectivity();
 			
 			// inform all cluster members about the Bully priority change
 			//TODO: sendClusterBroadcast(new BullyPriorityUpdate(mHRMController.getNodeName(), getPriority()));
-	
-			tLinkType = AbstractRoutingGraphLink.LinkType.LOCAL_LINK;
-			
-			tRegisterNeighbor = true;
-		}
-
-		if (this instanceof ClusterProxy){
-			tRegisterNeighbor = true;
 		}
 
 		/**
 		 * Register a link to the neighbor and tell the neighbor about it 
 		 */
-		if (tRegisterNeighbor){
-			LinkedList<ControlEntity> tNeighbors = getNeighborsARG(); 
-			if(!tNeighbors.contains(pNeighbor))
-			{
-				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(tLinkType);
-				mHRMController.registerLinkARG(pNeighbor, this, tLink);
-	
-				// backward call
-				pNeighbor.registerNeighborARG(this);
-			}else{
-				Logging.log(this, "Neighbor " + pNeighbor + " is already known");
-			}
+		LinkedList<ControlEntity> tNeighbors = getNeighborsARG(); 
+		if(!tNeighbors.contains(pNeighbor))
+		{
+			AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(tLinkType);
+			mHRMController.registerLinkARG(pNeighbor, this, tLink);
+
+			// backward call
+			pNeighbor.registerLocalNeighborARG(this);
 		}else{
-			Logging.warn(this, "registerNeighbor() ignores registration request for neighbor: " + pNeighbor);
+			Logging.log(this, "Neighbor " + pNeighbor + " is already known");
 		}
 	}
 
@@ -629,7 +616,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if (this instanceof Cluster){
 			return toLocation();
 		}
-		if (this instanceof ClusterProxy){
+		if (this instanceof ClusterMember){
 			return toLocation();
 		}
 		if (this instanceof Coordinator){
@@ -755,7 +742,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if (this instanceof Cluster){
 			return new Color((float)0.7, tSaturation, 0);
 		}
-		if (this instanceof ClusterProxy){
+		if (this instanceof ClusterMember){
 			return new Color(0, (float)0.7, tSaturation);
 		}
 		

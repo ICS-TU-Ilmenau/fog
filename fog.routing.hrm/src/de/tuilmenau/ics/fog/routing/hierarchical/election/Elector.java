@@ -21,7 +21,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterProxy;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterMember;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
@@ -56,7 +56,7 @@ public class Elector implements Localization
 	/**
 	 * Pointer to the parent cluster, which owns this elector
 	 */
-	private ClusterProxy mParent = null;
+	private ClusterMember mParent = null;
 
 	/**
 	 * The timeout for an awaited BullyAlive message (in s).
@@ -87,7 +87,7 @@ public class Elector implements Localization
 	 */
 	private Double mTimestampLastElectBroadcast =  new Double(0);
 	
-	public Elector(HRMController pHRMController, ClusterProxy pCluster)
+	public Elector(HRMController pHRMController, ClusterMember pCluster)
 	{
 		mState = ElectorState.START;
 		mParent = pCluster;
@@ -109,8 +109,8 @@ public class Elector implements Localization
 		Logging.log(this, "ELECTING now...");
 		
 		// do we know more than 0 external cluster members?
-		if (mParent.countRemoteClusterMembers() > 0){
-			Logging.log(this, "Trying to ask all cluster members for their Bully priority");
+		if (mParent.countConnectedRemoteClusterMembers() > 0){
+			Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Bully priority");
 			signalElectBroadcast();
 		}else{
 			Logging.log(this, "I AM WINNER because no alternative cluster member is known, known cluster channels:" );
@@ -124,10 +124,14 @@ public class Elector implements Localization
 	 */
 	private void reelect()
 	{
-		//reset ELECT BROADCAST timer
-		mTimestampLastElectBroadcast = new Double(0);
-		
-		elect();
+		if (mParent instanceof Cluster){
+			//reset ELECT BROADCAST timer
+			mTimestampLastElectBroadcast = new Double(0);
+			
+			elect();
+		}else{
+			Logging.log(this, "Reelection needed but we aren't the cluster head, we hope that the other local Cluster object will trigger a reelection" );
+		}
 	}
 	
 	/**
@@ -135,6 +139,8 @@ public class Elector implements Localization
 	 */
 	public void startElection()
 	{
+		Logging.log(this, "#### STARTING ELECTION");
+		
 		if (mParent instanceof Cluster){
 			Cluster tParentCluster = (Cluster)mParent;
 			
@@ -279,7 +285,7 @@ public class Elector implements Localization
 			if (isTimingOkayOfElectBroadcast()){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 					Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParent);
-					Logging.log(this, "SENDELECTIONS(), external cluster members: " + mParent.countRemoteClusterMembers());
+					Logging.log(this, "SENDELECTIONS(), external cluster members: " + mParent.countConnectedRemoteClusterMembers());
 				}
 		
 				// create the packet
@@ -310,7 +316,7 @@ public class Elector implements Localization
 	{
 		if (getElectorState() == ElectorState.ELECTED){
 			// get the size of the cluster
-			int tKnownClusterMembers = mParent.countClusterMembers();
+			int tKnownClusterMembers = mParent.countConnectedClusterMembers();
 			
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 				Logging.log(this, "SENDANNOUNCE()-START, electing cluster is " + mParent);
@@ -417,6 +423,7 @@ public class Elector implements Localization
 					// create new coordinator instance
 					tCoordinator = new Coordinator(tParentCluster);
 				}else{
+					//HINT: startElection() also filters for a Cluster as parent object
 					Logging.err(this, "EXPECTED CLUSTER as parent, parent is: " + mParent);
 				}
 			}else{
@@ -545,16 +552,16 @@ public class Elector implements Localization
 				if (mParent.getPriority().equals(tHighestPrio)){
 					Logging.log(this, "	        ..HAVING SAME PRIORITY like " + tExternalWinner.getPeerL2Address());
 	
-					if (mParent.getPriority().getUniqueID() > tHighestPrio.getUniqueID()){
-						Logging.log(this, "	        ..HAVING HIGHER priority ID than " + tExternalWinner.getPeerL2Address());
+					if (mHRMController.getNodeL2Address().isHigher(tExternalWinner.getPeerL2Address())){
+						Logging.log(this, "	        ..HAVING HIGHER L2 address than " + tExternalWinner.getPeerL2Address());
 	
 						// mark as winner
 						tIsWinner = true;
 					}else{
-						if (mParent.getPriority().getUniqueID() < tHighestPrio.getUniqueID()){
-							Logging.log(this, "	        ..HAVING LOWER priority ID " + mParent.getPriority().getUniqueID() + " than " +  tHighestPrio.getUniqueID() + " of " + tExternalWinner.getPeerL2Address());
+						if (mHRMController.getNodeL2Address().isLower(tExternalWinner.getPeerL2Address())){
+							Logging.log(this, "	        ..HAVING LOWER L2 address " + mHRMController.getNodeL2Address() + " than " +  tExternalWinner.getPeerL2Address());
 						}else{
-							Logging.err(this, "	        ..HAVING SAME priority ID " + mParent.getPriority().getUniqueID() + " like " +  tHighestPrio.getUniqueID() + " of " + tExternalWinner.getPeerL2Address());
+							Logging.err(this, "	        ..HAVING SAME L2 address " + mHRMController.getNodeL2Address() + " like " +  tExternalWinner.getPeerL2Address());
 						}
 					}
 				}
@@ -797,8 +804,8 @@ public class Elector implements Localization
 			if (mParent.getPriority().equals(pComChannel.getPeerPriority())){
 				Logging.log(this, "	        ..HAVING SAME PRIORITY like " + pComChannel.getPeerL2Address());
 
-				if (mParent.getPriority().getUniqueID() > pComChannel.getPeerPriority().getUniqueID()){
-					Logging.log(this, "	        ..HAVING HIGHER priority ID than " + pComChannel.getPeerL2Address());
+				if(mHRMController.getNodeL2Address().isHigher(pComChannel.getPeerL2Address())) {
+					Logging.log(this, "	        ..HAVING HIGHER L2 address than " + pComChannel.getPeerL2Address());
 
 					tResult = true;
 				}else{

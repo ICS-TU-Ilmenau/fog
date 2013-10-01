@@ -150,7 +150,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 
 		/**
-		 * GUI part 1: table of known mappings from HRMID to L2Addresses
+		 * GUI part 2: table of known mappings from HRMID to L2Addresses
 		 */
 		// create the headline
 		StyledText tSignaturesLabel4 = new StyledText(mContainer, SWT.BORDER);
