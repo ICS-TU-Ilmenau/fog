@@ -34,6 +34,7 @@ import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.*;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
+import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
@@ -809,23 +810,30 @@ public class HRMRoutingService implements RoutingService, Localization
 		 */
 		L2Address tToL2Address = null;
 		boolean tIsLinkToPhysicalNeigborNode = false;
+		NetworkInterface tInterfaceToNeighbor = null;
 		if( pGate instanceof DirectDownGate){
+			// get the direct down gate
+			DirectDownGate tDirectDownGate = (DirectDownGate)pGate;
+			
+			// get the network interface to the neighbor
+			tInterfaceToNeighbor = tDirectDownGate.getNetworkInterface();
+			
 			// mark as link to another node
 			tIsLinkToPhysicalNeigborNode = true;
-
+			
 			// determine the L2Address of the destination FN for this gate
 			// HINT: For DirectDownGate gates, this address is defined in "DirectDownGate" by a call to "RoutingService.getL2AddressFor(ILowerLayer.getMultiplexerGate())".
 			//       However, there will occur two calls to registerLink():
 			//				* 1.) the DirectDownGate is created
 			//				* 2.) the peer has answered by a packet of "OpenGateResponse" and the peer name is now known
-			//       Therefore, we ignore the first registerLink() request and wait for the (hopfefully) appearing second request.
+			//       Therefore, we ignore the first registerLink() request and wait for the (hopefully) appearing second request.
 			tToL2Address = (L2Address) pGate.getRemoteDestinationName();
 			if (tToL2Address == null){
 				Logging.warn(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this registerLink() request and wait until the peer is known");
 			}
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-				Logging.log(this, "      ..external link, which ends at the physical node " + tToL2Address);
+				Logging.log(this, "      ..external link, which ends at the physical node: " + tToL2Address);
 			}
 		}else{
 			// mark as node-internal link
@@ -882,15 +890,10 @@ public class HRMRoutingService implements RoutingService, Localization
 			}
 
 			if((!pFrom.equals(tThisHostL2Address)) && (!tToL2Address.equals(tThisHostL2Address))) {
-				//HINT: we connect only from one side, in reality this can be implemented by comparing the hash codes of the MAC addresses of both neighbors
-				if(tFromL2Address.getComplexAddress().longValue() < tToL2Address.getComplexAddress().longValue()) {
-					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-						Logging.log(this, "    ..actually found an interesting link from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
-					}
-					getHRMController().eventDetectedPhysicalNeighborNode(tToL2Address);
-				}else{
-					Logging.log(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it waits for the opposite side.");
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "    ..actually found an interesting link from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
 				}
+				getHRMController().eventDetectedPhysicalNeighborNode(tInterfaceToNeighbor, tToL2Address);
 			}else{
 				Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is linked to the central FN " + tThisHostL2Address);
 			}
