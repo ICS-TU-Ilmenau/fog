@@ -62,6 +62,13 @@ public class Route extends LinkedList<RouteSegment> implements Serializable
 		}
 	}
 
+	public void add(Route pRoute)
+	{
+		for(RouteSegment tRouteSegment: pRoute){
+			add(tRouteSegment);
+		}
+	}
+	
 	public void addFirst(GateID gateID)
 	{
 		if(size() > 0) {
