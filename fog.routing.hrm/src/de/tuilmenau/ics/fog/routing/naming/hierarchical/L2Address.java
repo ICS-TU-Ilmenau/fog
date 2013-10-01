@@ -121,7 +121,7 @@ public class L2Address extends HRMName
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(name=\"" + mOptionalDescr + "\", addr.=" + (mAddress.longValue() / l2addressIDMachineMultiplier()) + ")";
+		return getClass().getSimpleName() + (mAddress.longValue() / l2addressIDMachineMultiplier()) + "(\"" + mOptionalDescr + "\")";
 	}
 
 	/**
