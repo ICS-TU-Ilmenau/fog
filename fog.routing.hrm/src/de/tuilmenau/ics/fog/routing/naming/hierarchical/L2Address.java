@@ -123,4 +123,38 @@ public class L2Address extends HRMName
 	{
 		return getClass().getSimpleName() + "(name=\"" + mOptionalDescr + "\", addr.=" + (mAddress.longValue() / l2addressIDMachineMultiplier()) + ")";
 	}
+
+	/**
+	 * Returns true or false, depending on the comparison
+	 * 
+	 * @param pOtherL2Address the other L2 address
+	 * @return true or false
+	 */
+	public boolean isHigher(L2Address pOtherL2Address)
+	{
+		boolean tResult = false;
+
+		if(getComplexAddress().longValue() > pOtherL2Address.getComplexAddress().longValue()) {
+			tResult = true;
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns true or false, depending on the comparison
+	 * 
+	 * @param pOtherL2Address the other L2 address
+	 * @return true or false
+	 */
+	public boolean isLower(L2Address pOtherL2Address)
+	{
+		boolean tResult = false;
+
+		if(getComplexAddress().longValue() < pOtherL2Address.getComplexAddress().longValue()) {
+			tResult = true;
+		}
+		
+		return tResult;
+	}
 }
