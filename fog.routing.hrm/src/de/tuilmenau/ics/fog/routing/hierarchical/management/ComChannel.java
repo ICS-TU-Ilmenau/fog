@@ -613,28 +613,27 @@ public class ComChannel
 
 			// the packet is received by a cluster
 			//HINT: this is only possible at base hierarchy level
-			if (mParent instanceof Cluster){
-				Cluster tParentCluster = (Cluster)mParent;
+			if (mParent instanceof ClusterMember){
+				ClusterMember tParentClusterProxy = (ClusterMember)mParent;
 				
-				if (tParentCluster.getElector() != null){
-					tParentCluster.getElector().handleSignalingMessageBully(tBullyMessage, this);
+				if (tParentClusterProxy.getElector() != null){
+					tParentClusterProxy.getElector().handleSignalingMessageBully(tBullyMessage, this);
 				}else{
 					Logging.warn(this, "Elector is still invalid");
 				}
-			}else{
-				// the packet is received by a remote cluster object (ClusterProxy)
-				if (mParent instanceof ClusterProxy){
-					Logging.warn(this, "IGNORING THIS MESSAGE: " + tBullyMessage);
-				}
-			}
-			
+				return true;
+			}		
 
 			// the packet is received by a coordinator
 			if (mParent instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)mParent;
 				
 				tCoordinator.getCluster().getElector().handleSignalingMessageBully(tBullyMessage, this);
+				
+				return true;
 			}
+
+			Logging.warn(this, "IGNORING THIS MESSAGE: " + tBullyMessage);
 
 			return true;
 		}
