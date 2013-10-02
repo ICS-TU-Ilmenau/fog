@@ -196,6 +196,8 @@ public class Route extends LinkedList<RouteSegment> implements Serializable
 	{
 		// simple comparison between the sizes of the stored linked lists
 		return (size() < pOtherRoute.size());
+		
+		//TODO: introduce a scoring which assigns each entry a score depending on the route effort (gate numbers -> 1, full addresses -> 1000?)
 	}
 	
 	public boolean equals(Route pRoute)
