@@ -735,50 +735,56 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		
 		// check of the "remote" coordinator isn't stored at this physical node
 		if(!pAnnounceCoordinator.getSenderClusterCoordinatorNodeName().equals(mHRMController.getNodeName())){
-			/**
-			 * Storing the ARG node for this announced remote coordinator
-			 */
-			// search for an already existing CoordintorProxy instance
-			CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
-			if(tCoordinatorProxy == null){
-				Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
-	
-				tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeName());
-			}else{
-				// did we receive a coordinator announcement from our own coordinator?
-				if(!equals(tRemoteClusterName)){
-					Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName);
+			// check if the remote coordinator isn't the coordinator of this ClusterMember
+			if((!(this instanceof ClusterMember)) || (!pAnnounceCoordinator.getSenderClusterName().equals(this))){
+				/**
+				 * Storing the ARG node for this announced remote coordinator
+				 */
+				// search for an already existing CoordintorProxy instance
+				CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
+				if(tCoordinatorProxy == null){
+					Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
+		
+					tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeName());
 				}else{
-					Logging.log(this, "     ..ignoring announcement of own remote coordinator: " + tRemoteClusterName);
-				}
-			}
-			
-			/**
-			 * Storing the route to the announced remote coordinator
-			 * HINT: we provide a minimum hop count for the routing
-			 */
-			boolean tRegisterNewLink = true;
-			AbstractRoutingGraphLink tLink = mHRMController.getLinkARG(pSourceEntity, tCoordinatorProxy);
-			// do we know an already stored link in the ARG?
-			if(tLink != null){
-				Route tOldLinkRoute = tLink.getRoute();
-				Route tNewLinkRoute = pAnnounceCoordinator.getRoute();
-				
-				// does a route exist for the stored link?
-				if(tOldLinkRoute != null){
-					// is the new route shorter than the old one?
-					if(tNewLinkRoute.isShorter(tOldLinkRoute)){
-						// replace the stored route by the new route which is shorter than the old one
-						tLink.setRoute(tNewLinkRoute);
-						
-						tRegisterNewLink = false;
+					// did we receive a coordinator announcement from our own coordinator?
+					if(!equals(tRemoteClusterName)){
+						Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName);
+					}else{
+						Logging.log(this, "     ..ignoring announcement of own remote coordinator: " + tRemoteClusterName);
 					}
 				}
-			}
-			// have we updated an old link?
-			if(tRegisterNewLink){
-				// register the link to the announced coordinator
-				mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute()));
+				
+				/**
+				 * Storing the route to the announced remote coordinator
+				 * HINT: we provide a minimum hop count for the routing
+				 */
+				boolean tRegisterNewLink = true;
+				AbstractRoutingGraphLink tLink = mHRMController.getLinkARG(pSourceEntity, tCoordinatorProxy);
+				// do we know an already stored link in the ARG?
+				if(tLink != null){
+					Route tOldLinkRoute = tLink.getRoute();
+					Route tNewLinkRoute = pAnnounceCoordinator.getRoute();
+					
+					// does a route exist for the stored link?
+					if(tOldLinkRoute != null){
+						// is the new route shorter than the old one?
+						if(tNewLinkRoute.isShorter(tOldLinkRoute)){
+							// replace the stored route by the new route which is shorter than the old one
+							tLink.setRoute(tNewLinkRoute);
+							
+							tRegisterNewLink = false;
+						}
+					}
+				}
+				// have we updated an old link?
+				if(tRegisterNewLink){
+					// register the link to the announced coordinator
+					mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute()));
+				}
+			}else{
+				// we warn that we do not register information about our own coordinator which was instantiated on another node
+				Logging.warn(this, "Avoiding uninteresting registration of remote coordinator: " + pAnnounceCoordinator);
 			}
 		}else{
 			Logging.warn(this, "Avoiding redundant registration of locally instantiated coordinator: " + pAnnounceCoordinator);
