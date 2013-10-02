@@ -496,7 +496,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			// is this node the cluster head?
 			if (tClusterMember instanceof Cluster){
-				tClustersText += "[" + Long.toString(tClusterMember.getGUIClusterID()) + "]";
+				Cluster tCluster = (Cluster)tClusterMember;
+				if(tCluster.hasLocalCoordinator()){
+					tClustersText += "<" + Long.toString(tClusterMember.getGUIClusterID()) + ">";
+				}else{
+					tClustersText += "(" + Long.toString(tClusterMember.getGUIClusterID()) + ")";
+				}
 			}else{
 				tClustersText += Long.toString(tClusterMember.getGUIClusterID());
 			}
