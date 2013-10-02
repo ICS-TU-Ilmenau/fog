@@ -175,9 +175,10 @@ public class ClusterMember extends ClusterName
 						
 						/**
 						 * Forward the announcement
+						 * HINT: wet avoid loops by excluding the sender from the forwarding process
 						 */
 						Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocallyKnownNeighborCluster);
-						tLocallyKnownNeighborCluster.forwardCoordinatorAnnouncement(pComChannel.getPeerL2Address(), pAnnounceCoordinator);
+						tLocallyKnownNeighborCluster.forwardCoordinatorAnnouncement(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pAnnounceCoordinator);
 					}else{
 						Logging.log(this, "Ignoring stored neighbor of uninteresting type in ARG: " + tLocallyKnownNeighbor);
 					}

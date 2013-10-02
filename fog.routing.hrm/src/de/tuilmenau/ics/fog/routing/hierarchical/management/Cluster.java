@@ -189,7 +189,7 @@ public class Cluster extends ClusterMember
 		// check the TTL once more
 		if(pAnnounceCoordinator.isTTLOkay()){
 			// forward this announcement to all cluster members
-			sendClusterBroadcast(pAnnounceCoordinator, pSourceL2Address);
+			sendClusterBroadcast(pAnnounceCoordinator, pSourceL2Address /* do NOT forward to the source */);
 		}else{
 			Logging.err(this, "forwardCoordinatorAnnouncement() found invalid TTL for: " + pAnnounceCoordinator);
 		}
