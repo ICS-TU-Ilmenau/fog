@@ -763,6 +763,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				AbstractRoutingGraphLink tLink = mHRMController.getLinkARG(pSourceEntity, tCoordinatorProxy);
 				// do we know an already stored link in the ARG?
 				if(tLink != null){
+					tRegisterNewLink = false;
+
 					Route tOldLinkRoute = tLink.getRoute();
 					Route tNewLinkRoute = pAnnounceCoordinator.getRoute();
 					
@@ -773,7 +775,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 							// replace the stored route by the new route which is shorter than the old one
 							tLink.setRoute(tNewLinkRoute);
 							
-							tRegisterNewLink = false;
+							tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
 						}
 					}
 				}
@@ -781,6 +783,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				if(tRegisterNewLink){
 					// register the link to the announced coordinator
 					mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute()));
+					
+					tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
 				}
 			}else{
 				// we warn that we do not register information about our own coordinator which was instantiated on another node
