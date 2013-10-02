@@ -62,6 +62,8 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 			// make sure the ending point is known
 			pTo = add(pTo);
 			
+			Logging.trace(this, "Linking from " + pFrom + " to " + pTo + " via " + pLinkObject);
+			
 			// check if link already exists
 			if(!isLinked(pFrom, pTo)) {
 				// check if there already exist a link between these two nodes
