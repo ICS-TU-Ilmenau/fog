@@ -39,7 +39,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	/**
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
 	 */
-	private int mTTL = HRMConfig.Hierarchy.EXPANSION_RADIUS;
+	private int mTTL = HRMConfig.Hierarchy.EXPANSION_RADIUS; //TODO: set the max. INT value if it is the highest hierarchy level -> tell everyone about this coordinator!
 	
 	/**
 	 * Stores the logical hop count for the stored route 
