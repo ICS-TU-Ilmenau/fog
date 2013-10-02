@@ -108,9 +108,6 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * Stores if the start of the HRMController application instance is still pending
 	 */
 	private boolean mWaitOnControllerstart = true;
-	
-
-	private final RoutableGraph<L2Address, Route> mCoordinatorRoutingMap;
 
 	/**
 	 * Creates a local HRS instance for a node.
@@ -126,8 +123,6 @@ public class HRMRoutingService implements RoutingService, Localization
 		
 		// create name mapping instance to map FoG names to L2 addresses
 		mFoGNamesToL2AddressesMapping = new HierarchicalNameMappingService<L2Address>(HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation()), null);
-		
-		mCoordinatorRoutingMap = new RoutableGraph<L2Address, Route>();
 	}
 
 	/**
@@ -789,13 +784,6 @@ public class HRMRoutingService implements RoutingService, Localization
 					mL2RoutingGraph.remove(tNodeL2Address);
 				}
 			}
-			
-			//TODO: remove this
-			synchronized (mCoordinatorRoutingMap) {
-				if(mCoordinatorRoutingMap.contains(tNodeL2Address)) {
-					mCoordinatorRoutingMap.remove(tNodeL2Address);
-				}
-			}
 		}
 			
 		return true;
@@ -1058,48 +1046,6 @@ public class HRMRoutingService implements RoutingService, Localization
 		// unregister mapping from FoG name to the determined L2address
 		synchronized (mFoGNamesToL2AddressesMapping) {
 			tResult = mFoGNamesToL2AddressesMapping.unregisterName(pName, tFNL2Address);
-		}
-		
-		return tResult;
-	}
-
-	/**
-	 * Determines a route in the local routing graphs
-	 * 
-	 * @param pSource the name of the node where the route should start 
-	 * @param pDestination the name of the node where the route should end
-	 * @param pDescription the desired route attributes
-	 * @param pRequester the identity of the caller	 *  
-	 * @return the determined route, null if no route was found
-	 */
-	private <LinkType> List<RoutingServiceLink> getRouteFromLocalGraphs(HRMName pSource, HRMName pDestination, Description pDescription, Identity pRequester)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "GET ROUTE (getRouteFromLocalGraphs) from " + pSource + " to " + pDestination);
-		}
-		
-		List<RoutingServiceLink> tResult = null;
-		
-		/**
-		 * Look in the local L2 specific routing graph
-		 */
-		tResult = getRouteFromGraph(mL2RoutingGraph, pSource, pDestination);
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-routingMap): " + tResult);
-		}
-		
-		/**
-		 * 
-		 */
-		if (tResult == null){
-			tResult = getRouteFromGraph(mCoordinatorRoutingMap, pSource, pDestination);
-			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-				Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs-coordinatorMap): " + tResult);
-			}
-		}
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "      ..RESULT(getRouteFromLocalGraphs): " + tResult);
 		}
 		
 		return tResult;
@@ -1410,27 +1356,6 @@ public class HRMRoutingService implements RoutingService, Localization
 					 */
 					tResultRoute = getL2Route(tSourceL2Address, tDestinationL2Address);
 		
-					//TODO: remove the following by merging routing graphs
-					if (tResultRoute == null){
-						List<Route> tListRouteParts = null;
-						synchronized (mCoordinatorRoutingMap) {
-							if(mCoordinatorRoutingMap.contains(tSourceL2Address) && mCoordinatorRoutingMap.contains(tDestinationL2Address)) {
-								tListRouteParts = getCoordinatorRoutingMap().getRoute(tSourceL2Address, tDestinationL2Address);
-							}							
-						}
-						if (tListRouteParts != null){
-							// create route object
-							tResultRoute = new Route();
-							// iterate over all route parts
-							for(Route tPath : tListRouteParts) {
-								tResultRoute.addAll(tPath.clone());
-							}
-							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-								Logging.log(this, "COORDINATOR GRAPH returned a route from " + pSource + " to " + pDestination + " as " + tResultRoute);
-							}
-						}
-					}
-					
 					if (tResultRoute != null){
 						encodeDestinationApplication(tResultRoute, pRequirements);
 					}else{
@@ -1599,47 +1524,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	
 	
 	
-	public void registerNode(L2Address pAddress, boolean pGloballyImportant)
-	{
-		Logging.log(this, "REGISTERING NODE ADDRESS (FoG routing graph): " + pAddress + ", glob. important=" + pGloballyImportant);
-
-		mL2RoutingGraph.add(pAddress);
-	}
 	
-	public boolean registerRoute(L2Address pFrom, L2Address pTo, Route pRoute)
-	{
-		Logging.log(this, "Registering route from " + pFrom + " to " + pTo + " by path \"" + pRoute + "\"");
-		
-		if (pTo == null){
-			Logging.err(this, "registerRoute() got an invalid TO-parameter");
-			return false;
-		}
-		
-		if(!mCoordinatorRoutingMap.contains(pFrom)){
-			mCoordinatorRoutingMap.add(pFrom);
-		}
-		
-		if(!mCoordinatorRoutingMap.contains(pTo)){
-			mCoordinatorRoutingMap.add(pTo);
-		}
-		
-		if(!mCoordinatorRoutingMap.isLinked(pFrom, pTo, pRoute)) {
-			if(pRoute != null) {
-				Route tPath = (Route)pRoute.clone();
-				if(!mCoordinatorRoutingMap.isLinked(pFrom, pTo, tPath)) {
-					mCoordinatorRoutingMap.link(pFrom, pTo, tPath);
-				}
-			}
-		} else {
-			Logging.warn(this, "Link already known, source=" + pFrom + ", destination=" + pTo + ", route=" + pRoute);
-		}
-		return true;
-	}
-	
-	public RoutableGraph<L2Address, Route> getCoordinatorRoutingMap()
-	{
-		return mCoordinatorRoutingMap;
-	}
 	
 	@Override
 	public int getNumberVertices()
@@ -1658,18 +1543,24 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		return 0;
 	}
-	
-	public Namespace getNamespace()
-	{
-		return HRMID.HRMNamespace;
-	}
-	
+
 	@Override
 	public LinkedList<Name> getIntermediateFNs(ForwardingNode pSource,	Route pRoute, boolean pOnlyDestination)
 	{
 		return null;
 	}
 
+	
+
+	/**
+	 * Returns the namespace which is handled by our HRM routing service.
+	 * This function is inherited from RoutingService. 
+	 */
+	@Override
+	public Namespace getNamespace()
+	{
+		return HRMID.HRMNamespace;
+	}
 
 	/**
 	 * Returns a descriptive string for this object
