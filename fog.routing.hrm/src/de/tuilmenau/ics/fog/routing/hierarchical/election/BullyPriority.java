@@ -46,7 +46,7 @@ public class BullyPriority
 	/**
 	 * This value is used when the connectivity changes.
 	 */
-	private int OFFSET_FOR_CONNECTIVITY = 100;
+	private static int OFFSET_FOR_CONNECTIVITY = 100;
 	
 	/**
 	 * This is the priority counter, which allows for globally (related to a physical simulation machine) unique BullyPriority IDs.
@@ -224,6 +224,18 @@ public class BullyPriority
 		mPriority += OFFSET_FOR_CONNECTIVITY;
 	}
 	
+	/**
+	 * Clones this object.
+	 * 
+	 *  @return the object clone
+	 */
+	public BullyPriority clone()
+	{
+		BullyPriority tClone = new BullyPriority(mPriority);
+		
+		return tClone;
+	}
+
 	/**
 	 * Check if the Bully priority is higher than the other given one.
 	 * 
