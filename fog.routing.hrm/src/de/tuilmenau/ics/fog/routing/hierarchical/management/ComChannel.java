@@ -11,10 +11,8 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 import java.util.LinkedList;
-import java.util.List;
 
 import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
@@ -27,12 +25,10 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.graph.RoutableGraph;
 
 /**
  * A communication channel can exist between level (0) cluster instances, or a level (n) coordinator and a level (n + 1) cluster instance.
@@ -494,87 +490,6 @@ public class ComChannel
 		// unregister from the parent comm. session
 		mParentComSession.unregisterComChannel(this);
 	}
-
-	
-	
-	
-	
-	/**
-	 * Handles a Bully signaling packet.
-	 * 
-	 * @param pPacketBully the packet
-	 */
-//	private void handleSignalingMessageBully(SignalingMessageBully pPacketBully) throws NetworkException
-//	{
-//		Node tNode = mHRMController.getNode();
-//		Name tLocalNodeName = mHRMController.getNodeName(); 
-//				
-//		boolean BULLY_SIGNALING_DEBUGGING = true;
-//
-//		if (getPeer() == null){
-//			Logging.warn(this, "Peer is still invalid!");
-//		}
-//		
-//		/**
-//		 * ELECT
-//		 */
-//		if(pPacketBully instanceof BullyElect)	{
-//			
-//			// cast to Bully elect packet
-//			BullyElect tPacketBullyElect = (BullyElect)pPacketBully;
-//			
-//			if (BULLY_SIGNALING_DEBUGGING)
-//				Logging.log(this, "BULLY-received from \"" + mParent + "\" an ELECT: " + tPacketBullyElect);
-//
-//			if ((getPeer().getSuperiorCoordinatorCEP() != null) && (getPeer().getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
-//				
-//				mPeerPriority = tPacketBullyElect.getSenderPriority();
-//				
-//				if (getPeer().mHRMController.equals(tLocalNodeName)) {
-//					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, getPeer().getBullyPriority(), "CEP-to?", getPeer().getToken());
-//					
-//					for(CoordinatorCEPChannel tCEP : getPeer().getClusterMembers()) {
-//						tAnnouncePacket.addCoveredNode(tCEP.getPeerL2Address());
-//					}
-//					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
-//						Logging.log(this, "Sending announce that does not cover anyhting");
-//					}
-//
-//					// send packet
-//					if (BULLY_SIGNALING_DEBUGGING)
-//						Logging.log(this, "BULLY-sending to \"" + mParent + "\" an ANNOUNCE: " + tAnnouncePacket);
-//					sendPacket(tAnnouncePacket);
-//					
-//				} else {
-//					// create ALIVE packet
-//					BullyAlive tAlivePacket = new BullyAlive(tLocalNodeName);
-//					
-//					// send packet
-//					if (BULLY_SIGNALING_DEBUGGING)
-//						Logging.log(this, "BULLY-sending to \"" + mParent + "\" an ALIVE: " + tAlivePacket);
-//					sendPacket(tAlivePacket);
-//					//TODO: packet is sent but never parsed or a timeout timer reset!!
-//				}
-//			} else {
-//				if (getPeer() instanceof Cluster){
-//					// store peer's Bully priority
-//					//TODO: peer prio direkt mal abspeichern und auf größte checken!
-//					mPeerPriority = tPacketBullyElect.getSenderPriority();
-//					
-//					// create REPLY packet
-//					BullyReply tReplyPacket = new BullyReply(tLocalNodeName, getPeerHRMID(), getPeer().getBullyPriority());
-//					
-//					// send the answer packet
-//					if (BULLY_SIGNALING_DEBUGGING)
-//						Logging.log(this, "BULLY-sending to \"" + mParent + "\" a REPLY: " + tReplyPacket);
-//					sendPacket(tReplyPacket);
-//				}else{
-//					Logging.err(this, "Peer is not a cluster, skipping BullyReply message, peer is " + getPeer());
-//				}
-//			}
-//		}
-//		
-//	}
 	
 	/**
 	 * 
@@ -730,140 +645,12 @@ public class ComChannel
 			return true;
 		}
 		
-//		/**
-//		 * NeighborClusterAnnounce
-//		 */
-//		if(pData instanceof AnnounceRemoteCluster) {
-//			AnnounceRemoteCluster tAnnouncePacket = (AnnounceRemoteCluster)pData;
-//
-//			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-//				Logging.log(this, "NEIGHBOR received from \"" + mParent + "\" a NEIGHBOR CLUSTER ANNOUNCE: " + tAnnouncePacket);
-//
-//			if (!(getParent() instanceof Cluster)){
-//				Logging.err(this, "Peer should be a cluster here");
-//			}
-//			getParent().handleNeighborAnnouncement(tAnnouncePacket, this);
-//
-//			Logging.log(this, "Received " + tAnnouncePacket + " from remote cluster " + mRemoteClusterName);
-//		}
-		
-		
-//		/**
-//		 * RequestCoordinator
-//		 */
-//		if (pData instanceof RequestCoordinator) {
-//			RequestCoordinator tRequestCoordinatorPacket = (RequestCoordinator) pData;
-//			
-//			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-//				Logging.log(this, "CHANNEL-received from \"" + mParent + "\" COORDINATOR REQUEST: " + tRequestCoordinatorPacket);
-//
-//			if(!tRequestCoordinatorPacket.isAnswer()) {
-//				if(getParent().superiorCoordinatorComChannel() != null) {
-//					ICluster tCluster = mHRMController.getClusterWithCoordinatorOnLevel(getParent().getHierarchyLevel().getValue());
-//					Logging.log(this, "Name of coordinator is " + tCluster.getCoordinatorName());
-//					
-//					int tToken = tCluster.superiorCoordinatorID();
-//					Name tCoordinatorName = tCluster.getCoordinatorName();
-//					L2Address tCoordL2Addr = ((ControlEntity)tCluster).superiorCoordinatorL2Address();
-//					
-//					long tCoordinatorAddress = tCoordL2Addr.getComplexAddress().longValue();
-//					DiscoveryEntry tEntry = new DiscoveryEntry(tToken, tCoordinatorName, tCoordinatorAddress, tCoordL2Addr, tCluster.getHierarchyLevel());
-//					tEntry.setPriority(getParent().getPriority());
-//					tEntry.setRoutingVectors(getPath(tCoordL2Addr));
-//					tRequestCoordinatorPacket.addDiscoveryEntry(tEntry);
-//					tRequestCoordinatorPacket.setCoordinatorKnown(true);
-//					tRequestCoordinatorPacket.setAnswer();
-//				} else {
-//					tRequestCoordinatorPacket.setCoordinatorKnown(false);
-//					tRequestCoordinatorPacket.setAnswer();
-//				}
-//				
-//				// send packet
-//				sendPacket(tRequestCoordinatorPacket);
-//				
-//			} else {
-//				if(tRequestCoordinatorPacket.isCoordinatorKnown()) {
-//					mKnowsCoordinator = true;
-//				} else {
-//					mKnowsCoordinator = false;
-//				}
-//				if(tRequestCoordinatorPacket.getDiscoveryEntries() != null) {
-//					for(DiscoveryEntry tEntry : tRequestCoordinatorPacket.getDiscoveryEntries()) {
-//						ClusterName tDummy = handleDiscoveryEntry(tEntry);
-//						Cluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().superiorCoordinatorID(), getParent().getClusterID()));
-//						tCluster.registerNeighborARG(mHRMController.getClusterByID(tDummy));
-//					}
-//				}
-//				synchronized(tRequestCoordinatorPacket) {
-//					Logging.log(this, "Received answer to " + tRequestCoordinatorPacket + ", notifying");
-//					tRequestCoordinatorPacket.notifyAll();
-//				}
-//			}
-//		}
-
 		Logging.warn(this, ">>>>>>>>>>>>> Found unsupported packet: " + pData);
 		return true;
 	}
 	
-	/**
-	 * 
-	 * @param pTarget is the target to which routing service link vectors should be generated
-	 * @return vectors that provide a patch between forwarding nodes along with the gate numbers
-	 */
-	public LinkedList<RoutingServiceLinkVector> getPath(L2Address pTarget)
-	{
-		LinkedList<RoutingServiceLinkVector> tVectors = new LinkedList<RoutingServiceLinkVector>();
-		
-		L2Address tLocalCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
-
-		RoutableGraph<L2Address, Route> tRoutingDatabase = mHRMController.getHRS().getCoordinatorRoutingMap();
-		
-		List<Route> tRoute = tRoutingDatabase.getRoute(tLocalCentralFNL2Address, pTarget);
-		
-		L2Address tDestination = null;
-		if(tRoute == null) {
-			return null;
-		} else {
-			for(int i = 0 ; i < tRoute.size() ; i++) {
-				if(tRoute.get(i) instanceof Route) {
-					tDestination = (L2Address) tRoutingDatabase.getDest(tRoute.get(i));
-					RoutingServiceLinkVector tVector = new RoutingServiceLinkVector(tRoute.get(i), tLocalCentralFNL2Address, tDestination);
-					tVectors.add(tVector);
-					tLocalCentralFNL2Address = tDestination;
-				}
-			}
-		}
-		return tVectors;
-	}
-
-	/**
-	 * The nested discovery entry you provide in the first argument is the message that has to be filled with
-	 * information on how to get to the cluster(s coordinator) provided as second argument
-	 * 
-	 * @param pDiscovery entry of the entity that has to be informed about the cluster provided as second argument
-	 * @param pDestination as cluster (along with the coordinator) to which a path has to be filled into the discovery entry
-	 * @throws NetworkException 
-	 * @throws PropertyException in case the requirements to the target coordinator can not be fulfilled
-	 */
-//	private void getPathTo(NestedDiscovery pDiscovery, ControlEntity pDestination) throws NetworkException, PropertyException
-//	{
-//		L2Address tCoordL2Addr = ((ControlEntity)pDestination).superiorCoordinatorHostL2Address();
-//
-//		DiscoveryEntry tEntry = new DiscoveryEntry(pDestination.getCoordinatorID(), ((ICluster)pDestination).getCoordinatorNodeName(), pDestination.getClusterID(), tCoordL2Addr, pDestination.getHierarchyLevel());
-//		tEntry.setClusterHops(mHRMController.getClusterDistance((ControlEntity)pDestination));
-//		tEntry.setPriority(pDestination.getPriority());
-//		tEntry.setRoutingVectors(getPath(tCoordL2Addr));
-//		
-////		List<AbstractRoutingGraphLink> tClusterList = mHRMController.getRouteARG(getParent(), (ControlEntity)pDestination);
-////		if(!tClusterList.isEmpty()) {
-////			ICluster tPredecessorCluster = (ICluster) mHRMController.getOtherEndOfLinkARG((ControlEntity)pDestination, tClusterList.get(tClusterList.size() - 1));
-////			ClusterName tPredecessorClusterName = new ClusterName(mHRMController, tPredecessorCluster.getHierarchyLevel(), tPredecessorCluster.getCoordinatorID(), tPredecessorCluster.getClusterID());
-////			tEntry.setPredecessor(tPredecessorClusterName);
-////		}
-//		
-//		pDiscovery.addDiscoveryEntry(tEntry);
-//	}
 	
+	//TODO:
 	public void setAsParticipantOfMyCluster(boolean pPartOfMyCluster)
 	{
 		mPartOfCluster = pPartOfMyCluster;
@@ -874,93 +661,6 @@ public class ComChannel
 		return mPartOfCluster;
 	}
 	
-//	public void handleClusterDiscovery(NestedDiscovery pDiscovery, boolean pRequest) throws PropertyException, NetworkException
-//	{
-//		if(pRequest){
-//			Cluster tSourceCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pDiscovery.getLevel(), pDiscovery.getSourceClusterID(), pDiscovery.getToken()));
-//			if(tSourceCluster == null) {
-//				Logging.err(this, "Unable to find appropriate cluster for" + pDiscovery.getSourceClusterID() + " and token" + pDiscovery.getToken() + " on level " + pDiscovery.getLevel() + " remote cluster is " + getRemoteClusterName());
-//			}
-//
-//			List<AbstractRoutingGraphNode> tARGNodesOrderDistance = mHRMController.getNeighborClustersOrderedByRadiusInARG(tSourceCluster);
-//			
-//			if(tSourceCluster != null) {
-//				for(AbstractRoutingGraphNode tARGNode : tARGNodesOrderDistance) {
-//					if(tARGNode instanceof ControlEntity) {
-//						ControlEntity tControlEntity = (ControlEntity) tARGNode;
-//						ICluster tICluster = (ICluster)tControlEntity; //TODO: entfernen, wenn ICluster vollstaendig entfernt ist
-//						
-//						int tRadius = HRMConfig.Routing.EXPANSION_RADIUS;
-//						Logging.log(this, "Radius is " + tRadius);
-//						
-//						int tDistance = 0;
-//						if(tControlEntity instanceof ClusterProxy){
-//							ClusterProxy tClusterProxy = (ClusterProxy) tControlEntity;
-//							
-//							tDistance = mHRMController.getClusterDistance(tClusterProxy) + pDiscovery.getDistance();
-//							if (tDistance > tRadius){
-//								continue;
-//							}
-//						}
-//						int tToken = ((ICluster)tControlEntity).getCoordinatorID();
-//						if(!pDiscovery.getTokens().contains(Integer.valueOf(tToken))) {
-//							getPathTo(pDiscovery, tControlEntity);
-//							for(ControlEntity tNeighbor : tControlEntity.getNeighborsARG()) {
-//								ICluster tNeighborICluster = (ICluster)tNeighbor; //TODO: entfernen, wenn ICluster vollstaendig entfernt ist
-//
-//								ClusterName tFirstClusterName = new ClusterName(mHRMController, tICluster.getHierarchyLevel(), tICluster.getClusterID(), tICluster.getCoordinatorID()); 
-//								ClusterName tSecondClusterName = new ClusterName(mHRMController, tNeighbor.getHierarchyLevel(), tNeighborICluster.getClusterID(), tNeighborICluster.getCoordinatorID()); 
-//								pDiscovery.addNeighborRelation(tFirstClusterName, tSecondClusterName);
-//							}
-//						} else {
-//							/*
-//							 * Maybe print out additional stuff if required
-//							 */
-//						}
-//					}
-//				}
-//			}
-//		} else {
-//			if(pDiscovery.getDiscoveryEntries() != null) {
-//				for(DiscoveryEntry tEntry : pDiscovery.getDiscoveryEntries()) {
-//					handleDiscoveryEntry(tEntry);
-//				}
-//			}
-//		}
-//	}
-	
-//	public ClusterName handleDiscoveryEntry(DiscoveryEntry pEntry)
-//	{
-//		ClusterName tResult = null;
-//		
-//		Logging.trace(this, "Handling " + pEntry);
-//		
-//		if(pEntry.getRoutingVectors() != null) {
-//			for(RoutingServiceLinkVector tLink : pEntry.getRoutingVectors()) {
-//				mHRMController.getHRS().registerRoute(tLink.getSource(), tLink.getDestination(), tLink.getPath());
-//			}
-//		}
-//
-//		Cluster tNewCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pEntry.getLevel(), pEntry.getClusterID(), pEntry.getToken()));
-//		if(tNewCluster != null) {
-//			tResult = new ClusterName(mHRMController, tNewCluster.getHierarchyLevel(), tNewCluster.getClusterID(), tNewCluster.getCoordinatorID());
-//		}else{
-//			/*
-//			 * Be aware of the fact that the new attached cluster has lower level
-//			 */
-//			Logging.log(this, "     ..creating cluster proxy");
-//			ClusterProxy tClusterProxy = new ClusterProxy(mHRMController, pEntry.getClusterID(), pEntry.getLevel(), pEntry.getCoordinatorName(), pEntry.getToken());
-//			
-//			mHRMController.setSourceIntermediateCluster(tClusterProxy, mHRMController.getSourceIntermediateCluster(getParent()));
-//			tClusterProxy.setSuperiorCoordinatorID(pEntry.getToken());
-//			tClusterProxy.setPriority(pEntry.getPriority());
-//			mHRMController.getHRS().mapFoGNameToL2Address(tClusterProxy.getCoordinatorNodeName(), pEntry.getCoordinatorL2Address());
-//			Logging.log(this, "Created " + tClusterProxy);
-//			tResult = new ClusterName(mHRMController, tClusterProxy.getHierarchyLevel(), tClusterProxy.getClusterID(), tClusterProxy.getCoordinatorID());
-//		}
-//		
-//		return tResult;
-//	}
 	
 
 	

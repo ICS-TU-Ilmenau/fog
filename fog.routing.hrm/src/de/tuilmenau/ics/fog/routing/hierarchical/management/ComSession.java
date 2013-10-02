@@ -400,7 +400,7 @@ public class ComSession extends Session
 	 * 
 	 * @return the found comm. channel or null
 	 */
-	public ComChannel getComChannelByClusterID(Long pClusterID)
+	private ComChannel getComChannelByClusterID(Long pClusterID)
 	{
 		ComChannel tResult = null;
 		
@@ -437,16 +437,6 @@ public class ComSession extends Session
 		return tResult;
 	}
 
-	/**
-	 * Returns the parent control entity for this session
-	 * 
-	 * @return the parental control entity
-	 */
-	ControlEntity getParent()
-	{
-		return mParent;
-	}
-	
 	/**
 	 * Handles a multiplex-packet
 	 * 
@@ -527,12 +517,12 @@ public class ComSession extends Session
 			}
 			
 			// is the parent a coordinator or a cluster?
-			if (getParent() instanceof Cluster){
-				Cluster tCluster = (Cluster)getParent();
+			if (mParent instanceof Cluster){
+				Cluster tCluster = (Cluster)mParent;
 				
 				tCluster.eventMembershipRequest(tRequestClusterMembershipPacket.getSenderClusterName(), this);
 			}else{
-				Logging.err(this, "Expected a Cluster object as parent for processing RequestClusterMembership data but parent is " + getParent());
+				Logging.err(this, "Expected a Cluster object as parent for processing RequestClusterMembership data but parent is " + mParent);
 			}
 			return true;
 		}
@@ -562,74 +552,6 @@ public class ComSession extends Session
 			return true;
 		}
 
-		/**
-		 * PACKET: TODO
-		 */
-//		if(pData instanceof ClusterDiscovery) {
-//			ClusterDiscovery tClusterDiscovery = (ClusterDiscovery)pData;
-//			
-//			Logging.log(this, "CLUSTER DISCOVERY received: " + tClusterDiscovery);
-//
-//			
-//			LinkedList<ComChannel> tAllComChannels = getAllComChannels();
-//			
-//			Logging.log(this, "Received " + pData);
-//			if(tClusterDiscovery.isRequest()) {
-//				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
-//					boolean tWasDelivered = false;
-//
-//					Logging.log(this, "     ..nested discovery: " + tNestedDiscovery);
-//					
-//					String tAnalyzedClusters = new String("");
-//					for(ComChannel tComChannel: tAllComChannels) {
-//						tAnalyzedClusters += tComChannel.getParent() + "\n";
-//						if (tComChannel.getParent() instanceof Cluster){
-//							Cluster tCluster = (Cluster)tComChannel.getParent();
-//							if(tCluster.getClusterID().equals(tNestedDiscovery.getTargetClusterID())) {
-//								try {
-//									tComChannel.handleClusterDiscovery(tNestedDiscovery, true);
-//									tWasDelivered = true;
-//								} catch (NetworkException tExc) {
-//									Logging.err(this, "Error when forwarding nested discovery to clusters ",  tExc);
-//								}
-//							}
-//						}
-//					}
-//					if(!tWasDelivered) {
-//						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + tAllComChannels);
-//					}
-//				}
-//				tClusterDiscovery.isAnswer();
-//				Logging.log(this, "Sending back discovery " + pData);
-//				write(tClusterDiscovery);
-//			} else {
-//				for(NestedDiscovery tNestedDiscovery : tClusterDiscovery.getDiscoveries()) {
-//					boolean tWasDelivered = false;
-//					String tAnalyzedClusters = new String("");
-//					for(ComChannel tComChannel: tAllComChannels) {
-//						tAnalyzedClusters += tComChannel.getParent() + "\n";
-//						if (tComChannel.getParent() instanceof Cluster){
-//							Cluster tCluster = (Cluster)tComChannel.getParent();
-//
-//							if(tCluster.getClusterID().equals(tNestedDiscovery.getOrigin())) {
-//								try {
-//									tComChannel.handleClusterDiscovery(tNestedDiscovery, false);
-//									tWasDelivered = true;
-//								} catch (NetworkException tExc) {
-//									Logging.err(this, "Error when forwarding nested discovery",  tExc);
-//								}
-//							}
-//						}
-//					}
-//					if(!tWasDelivered) {
-//						Logging.log(this, "Unable to deliver\n" + tNestedDiscovery + "\nto clusters\n" + tAnalyzedClusters + "\nand CEPs\n" + tAllComChannels);
-//					}
-//				}
-//			}
-//			
-//			return true;
-//		}
-		
 		Logging.warn(this, ">>>>>>>>>>>>> Found unsupported packet: " + pData);
 		return true;
 	}
@@ -704,7 +626,7 @@ public class ComSession extends Session
 		/**
 		 * Trigger event "communication available"
 		 */
-		getParent().eventCommunicationAvailable();
+		mParent.eventCommunicationAvailable();
 	}
 
 	/**

@@ -627,35 +627,6 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ELECT: " + tPacketBullyElect);
 				}
 	
-	//			if ((tSource.getSuperiorCoordinatorCEP() != null) && (tSource.getHighestPriority().isHigher(this, tPacketBullyElect.getSenderPriority()))) {
-	//				
-	//				if (tSource.getHRMController().equals(tLocalNodeName)) {
-	//					BullyAnnounce tAnnouncePacket = new BullyAnnounce(tLocalNodeName, tSource.getBullyPriority(), "CEP-to?", tSource.getToken());
-	//					
-	//					for(CoordinatorCEPChannel tCEP : tSource.getClusterMembers()) {
-	//						tAnnouncePacket.addCoveredNode(tCEP.getPeerL2Address());
-	//					}
-	//					if(tAnnouncePacket.getCoveredNodes() == null || (tAnnouncePacket.getCoveredNodes() != null && tAnnouncePacket.getCoveredNodes().isEmpty())) {
-	//						Logging.log(this, "Sending announce that does not cover anyhting");
-	//					}
-	//
-	//					// send packet
-	//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-	//						Logging.log(this, "BULLY-sending to \"" + tSourceDescription + "\" an ANNOUNCE: " + tAnnouncePacket);
-	//					pSourceClusterMember.sendPacket(tAnnouncePacket);
-	//					
-	//				} else {
-	//					// create ALIVE packet
-	//					BullyAlive tAlivePacket = new BullyAlive(tLocalNodeName);
-	//					
-	//					// send packet
-	//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-	//						Logging.log(this, "BULLY-sending to \"" + tSourceDescription + "\" an ALIVE: " + tAlivePacket);
-	//					pSourceClusterMember.sendPacket(tAlivePacket);
-	//					//TODO: packet is sent but never parsed or a timeout timer reset!!
-	//				}
-	//			} else {
-	
 				// update the state
 				eventReceivedElect();
 			
@@ -669,8 +640,6 @@ public class Elector implements Localization
 					// start re-election
 					reelect();
 				}
-				
-	//			}
 			}
 			
 			/**

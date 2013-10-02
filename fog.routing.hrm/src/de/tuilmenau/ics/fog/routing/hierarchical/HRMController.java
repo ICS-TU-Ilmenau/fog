@@ -35,7 +35,6 @@ import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
 import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
-import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
@@ -1166,7 +1165,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the found Cluster object, null if nothing was found
 	 */
-	Cluster getBaseHierarchyLevelCluster(NetworkInterface pInterface)
+	private Cluster getBaseHierarchyLevelCluster(NetworkInterface pInterface)
 	{
 		Cluster tResult = null;
 		
@@ -1558,7 +1557,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 *  
 	 * @param pNode the node (cluster/coordinator) which should be stored in the ARG
 	 */
-	public synchronized void registerNodeARG(ControlEntity pNode)
+	private synchronized void registerNodeARG(ControlEntity pNode)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "REGISTERING NODE ADDRESS (ARG): " + pNode );
@@ -1849,6 +1848,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pConnection the incoming connection
 	 */
+	@SuppressWarnings("unused")
 	@Override
 	public void newConnection(Connection pConnection)
 	{
@@ -1906,7 +1906,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if (tPropClusterParticipation.getSenderL2Address().equals(getNodeL2Address())){
 					Logging.log(this, "    ..creating new local cluster for: " + tSignaledClusterName); 
 					tTargetCluster = Cluster.create(this, tSignaledClusterName);
-//					setSourceIntermediateCluster(tTargetCluster, tTargetCluster); //TODO : ??
 				}else{
 					Logging.log(this, "    ..creating new local cluster member for: " + tSignaledClusterName); 
 					tTargetCluster = ClusterMember.create(this, tSignaledClusterName, tPropClusterParticipation.getSenderNodeName());
@@ -1960,83 +1959,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * Store the coordinator name of the remote cluster in the local FoGName-to-L2Address mapping
 						 */
 						getHRS().mapFoGNameToL2Address(tPropClusterParticipation.getSenderNodeName(), tPropClusterParticipation.getSenderL2Address());
-						
-						//TODO: store in the ARG
-//						for(Cluster tCluster : getAllClusters()) {
-//							if(tCluster.getHierarchyLevel().equals(tClusterProxy_ClusterMember.getHierarchyLevel())) {
-//								setSourceIntermediateCluster(tClusterProxy_ClusterMember, tCluster);
-//							}
-//						}
-						
-						/******************************************************
-						 * PARSE: neighbor descriptions per cluster member description from remote side
-						 ******************************************************/
-						if(tSenderClusterMember.getNeighbors() != null && !tSenderClusterMember.getNeighbors().isEmpty()) {
-							int tFoundDescribedNeighbors = 0;
-							for(DiscoveryEntry tNeighborDescription : tSenderClusterMember.getNeighbors()) {
-								
-								Logging.log(this, "     ..found described neighbor [" + tFoundDescribedNeighbors + "]: " + tSenderClusterMember.getNeighbors());
-
-								/**
-								 * Store routes from the delivered routing data
-								 */
-								if(tNeighborDescription.getRoutingVectors()!= null) {
-									for(RoutingServiceLinkVector tVector : tNeighborDescription.getRoutingVectors()){
-										Logging.log(this, "     ..found routing data: source=" + tVector.getSource() + ", destination=" + tVector.getDestination() + ", route=" + tVector.getPath()); 
-										getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
-									}
-								}
-
-								/**
-								 * Create a ClusterName object for the neighbor entry
-								 */
-								ClusterName tNeighborDescriptionClusterName = new ClusterName(this, tNeighborDescription.getLevel(), tNeighborDescription.getClusterID(), tNeighborDescription.getToken());
-								
-								
-								/**
-								 * Search if the neighbor cluster is already locally known
-								 */
-								ControlEntity tLocalCluster_ClusterMemberNeighbor = getClusterByName(tNeighborDescriptionClusterName);
-								if(tLocalCluster_ClusterMemberNeighbor == null) {
-									Logging.log(this, "     ..neighbor of cluster member is a remote cluster, creating ClusterProxy");
-									ClusterMember tClusterProxy_ClusterMemberNeighbor = new ClusterMember(this, tNeighborDescription.getLevel(), tNeighborDescription.getClusterID(), tNeighborDescription.getToken(), tNeighborDescription.getCoordinatorNodeName());
-									tClusterProxy_ClusterMemberNeighbor.setPriority(tNeighborDescription.getPriority());
-									getHRS().mapFoGNameToL2Address(tNeighborDescription.getCoordinatorNodeName(), tNeighborDescription.getCoordinatorL2Address());
-
-//									boolean tFoundSourceIntermediate = false;
-//									for(Cluster tLocalCluster : getAllClusters()) {
-//										if(tLocalCluster.getHierarchyLevel() == tClusterProxy_ClusterMemberNeighbor.getHierarchyLevel()) {
-//											Logging.log(this, "     ..registering source intermediate: " + tClusterProxy_ClusterMemberNeighbor + " <-> " + tLocalCluster);
-//											setSourceIntermediateCluster(tClusterProxy_ClusterMemberNeighbor, tLocalCluster);
-//											tFoundSourceIntermediate = true;
-//										}
-//									}
-//									
-//									if(!tFoundSourceIntermediate) {
-//										Logging.err(this, "newConnection() hasn't found a source intermediate cluster for" + tClusterProxy_ClusterMemberNeighbor.getClusterDescription());
-//									}
-									
-									// register the link in the local ARG
-									registerLinkARG(tClusterProxy_ClusterMember, tClusterProxy_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.ROUTE));
-								}else{
-									Logging.log(this, "     ..neighor of cluster member is the locally known cluster: " + tLocalCluster_ClusterMemberNeighbor);
-
-									// register the link in the local ARG
-									registerLinkARG(tClusterProxy_ClusterMember, tLocalCluster_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.ROUTE));
-								}
-								
-								tFoundDescribedNeighbors++;
-							}// described neighbors of cluster members
-							
-//							//TODO: remove this
-//							for(ControlEntity tNeighbor : tClusterProxy_ClusterMember.getNeighborsARG()) {
-//								if(getSourceIntermediateCluster(tNeighbor) != null) {
-//									setSourceIntermediateCluster(tClusterProxy_ClusterMember, getSourceIntermediateCluster(tNeighbor));
-//								}
-//							}
-						} else {
-							Logging.log(this, "newConnection() hasn't found a neighbor description within the member description: " + tSenderClusterMember);
-						}
 					} else {
 						Logging.warn(this, "newConnection() has found an already defined remote ClusterName: " + tComChannel.getRemoteClusterName());
 					}
@@ -2087,100 +2009,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(this, "Got an error message because of \"" + pCause + "\"");
 	}
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	/**
-	 * 
-	 * @param pCluster cluster to which the distance has to be computed
-	 * @return number of clusters to target
-	 */
-//	public int getClusterDistance(ControlEntity pCluster)
-//	{
-//		List<AbstractRoutingGraphLink> tClusterRoute = null;
-//		int tDistance = 0;
-//		if(getSourceIntermediateCluster(pCluster) == null || pCluster == null) {
-//			Logging.log(this, "source cluster for " + (pCluster instanceof ClusterProxy ? ((ClusterProxy)pCluster).getClusterDescription() : pCluster.toString() ) + " is " + getSourceIntermediateCluster(pCluster));
-//		}
-//		Cluster tIntermediateCluster = getSourceIntermediateCluster(pCluster);
-//		tClusterRoute = getRouteARG(tIntermediateCluster, pCluster);
-//		if(tClusterRoute != null && !tClusterRoute.isEmpty()) {
-//			for(AbstractRoutingGraphLink tConnection : tClusterRoute) {
-//				if(tConnection.getLinkType() == AbstractRoutingGraphLink.LinkType.REMOTE_LINK) {
-//					tDistance++;
-//				}
-//			}
-//		} else {
-//			//Logging.log(this, "No cluster route available");
-//			tClusterRoute = getRouteARG(tIntermediateCluster, pCluster);
-//		}
-//		return tDistance;
-//	}
-
-//	/**
-//	 * 
-//	 * @param pLevel as level at which a a coordinator will be set
-//	 * @param pCluster is the cluster that has set a coordinator
-//	 */
-//	public void setClusterWithCoordinator(HierarchyLevel pLevel, ICluster pCluster)
-//	{
-//		Logging.log(this, "Setting " + pCluster + " as cluster that has a connection to a coordinator at level " + pLevel.getValue());
-//		mLevelToCluster.put(Integer.valueOf(pLevel.getValue()), pCluster);
-//	}
-	
-//	/**
-//	 * 
-//	 * @param pLevel level at which a cluster with a coordinator should be provided
-//	 * @return cluster that contains a reference or a connection to a coordinator
-//	 */
-//	public ICluster getClusterWithCoordinatorOnLevel(int pLevel)
-//	{
-//		return (mLevelToCluster.containsKey(pLevel) ? mLevelToCluster.get(pLevel) : null );
-//	}
-	
-//	/**
-//	 * 
-//	 * @param pCluster is the cluster for which an intermediate cluster is saved as entity that is physically connected
-//	 * @param pIntermediate is the cluster that acts as cluster that is intermediately connected to the node
-//	 */
-//	public void setSourceIntermediateCluster(ICluster pCluster, Cluster pIntermediate)
-//	{
-//		if(pIntermediate == null) {
-//			Logging.err(this, "Setting " + pIntermediate + " as source intermediate for " + pCluster);
-//		}
-//		mIntermediateMapping.put(pCluster, pIntermediate);
-//	}
-//	
-//	/**
-//	 * 
-//	 * @param pCluster for which an intermediate cluster is searched
-//	 * @return intermediate cluster that is directly connected to the node
-//	 */
-//	public Cluster getSourceIntermediateCluster(ControlEntity pCluster)
-//	{
-//		if(mIntermediateMapping.containsKey(pCluster)) {
-//			
-//			return mIntermediateMapping.get(pCluster);
-//		} else {
-//			return null;
-//		}
-//	}
-	
-
-
-	
-
 
 	/**
 	 * Creates a descriptive string about this object

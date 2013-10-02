@@ -43,7 +43,7 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	 * Stores the recorded source route.
 	 * This is only used for debugging. It is not part of the HRM concept. 
 	 */
-	protected String mSourceRoute = "";
+	private String mSourceRoute = "";
 	
 	/**
 	 * For using the class within (de-)serialization. 

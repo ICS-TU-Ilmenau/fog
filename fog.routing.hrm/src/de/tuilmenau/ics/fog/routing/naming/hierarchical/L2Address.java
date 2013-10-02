@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 import java.math.BigInteger;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 public class L2Address extends HRMName
@@ -105,13 +104,6 @@ public class L2Address extends HRMName
 		if(pObj instanceof L2Address) {
 			return (((L2Address) pObj).mAddress.equals(mAddress));
 		} 
-		
-		/**
-		 * RoutingServiceLinkVector
-		 */
-		if (pObj instanceof RoutingServiceLinkVector) {
-			return ( ((RoutingServiceLinkVector)pObj).getSource() != null && ((RoutingServiceLinkVector)pObj).getSource().equals(this)) || (((RoutingServiceLinkVector)pObj).getDestination() != null && ((RoutingServiceLinkVector)pObj).getDestination().equals(this) ) ;
-		}
 		
 		return false;
 	}

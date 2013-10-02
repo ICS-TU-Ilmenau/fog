@@ -9,7 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
-import java.io.Serializable;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
@@ -37,7 +36,7 @@ public class ClusterMember extends ClusterName
 	/**
 	 * Stores the name of the node where the coordinator of the addressed cluster is located
 	 */
-	protected Name mCoordinatorNodeName = null;
+	private Name mCoordinatorNodeName = null;
 	
 	/**
 	 * Stores the elector which is responsible for coordinator elections for this cluster.

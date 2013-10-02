@@ -13,7 +13,6 @@ import java.math.BigInteger;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 
 /**
@@ -96,8 +95,6 @@ public class HRMName implements Name
 			return ((RoutingServiceAddress) pObj).getAddress() == mAddress.longValue();
 		} else if(pObj instanceof HRMName) {
 			return (((HRMName) pObj).mAddress.equals(mAddress));
-		} if (pObj instanceof RoutingServiceLinkVector) {
-			return ( ((RoutingServiceLinkVector)pObj).getSource() != null && ((RoutingServiceLinkVector)pObj).getSource().equals(this)) || (((RoutingServiceLinkVector)pObj).getDestination() != null && ((RoutingServiceLinkVector)pObj).getDestination().equals(this) ) ;
 		}
 		
 		return false;

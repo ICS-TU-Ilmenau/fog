@@ -15,7 +15,6 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
-import de.tuilmenau.ics.fog.packets.hierarchical.DiscoveryEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
@@ -255,8 +254,6 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		 */
 		private BullyPriority mPriority = null;
 
-		private LinkedList<DiscoveryEntry> mDiscoveries;
-		
 		/**
 		 * Constructor
 		 *  
@@ -287,31 +284,6 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		public int getCoordinatorID()
 		{
 			return mCoordinatorID;
-		}
-		
-		/**
-		 * As the target cluster/coordinator has to be informed about the topology and especially has to receive
-		 * the knowledge as to how the source node of the participation request can be reached.
-		 * 
-		 * @param pEntry
-		 */
-		public void addDiscoveryEntry(DiscoveryEntry pEntry)
-		{
-			if(mDiscoveries == null) {
-				mDiscoveries = new LinkedList<DiscoveryEntry>();
-				mDiscoveries.add(pEntry);
-			} else {
-				mDiscoveries.add(pEntry);
-			}
-		}
-		
-		/**
-		 * 
-		 * @return The neighbors of the source node are returned by this method.
-		 */
-		public LinkedList<DiscoveryEntry> getNeighbors()
-		{
-			return mDiscoveries;
 		}
 		
 		/**

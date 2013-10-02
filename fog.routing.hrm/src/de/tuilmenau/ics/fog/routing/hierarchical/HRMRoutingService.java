@@ -314,7 +314,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		boolean tResult = false;
 		
 		if (pNeighborL2Address != null){
-			RoutingServiceLogicalLink tLogicalLink = new RoutingServiceLogicalLink(pRoute);
+			L2LogicalLink tLogicalLink = new L2LogicalLink(pRoute);
 			
 			List<RoutingServiceLink> tOldRoute = getRouteFromGraph(mL2RoutingGraph, getCentralFNL2Address(), pNeighborL2Address);
 			if (tOldRoute != null){
@@ -1106,8 +1106,8 @@ public class HRMRoutingService implements RoutingService, Localization
 				RouteSegmentPath tRouteSegmentPath = new RouteSegmentPath();
 				// iterate over all gate IDs in the list
 				for(RoutingServiceLink tLink : tGateIDsToDestination) {
-					if (tLink instanceof RoutingServiceLogicalLink){
-						RoutingServiceLogicalLink tLogicalLink = (RoutingServiceLogicalLink)tLink;
+					if (tLink instanceof L2LogicalLink){
+						L2LogicalLink tLogicalLink = (L2LogicalLink)tLink;
 						
 						// store the route as immediate result
 						return tLogicalLink.getRoute();

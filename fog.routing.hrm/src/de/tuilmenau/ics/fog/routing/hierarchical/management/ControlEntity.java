@@ -512,7 +512,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 *  
 	 * @param pComChannel the new communication channel
 	 */
-	protected void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
+	private void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
 	{
 		Logging.log(this, "Setting superior comm. channel: " + pComChannel);
 		mSuperiorCoordinatorComChannel = pComChannel;
@@ -533,7 +533,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 *  
 	 * @param pAddr the new L2Address
 	 */
-	protected void setSuperiorCoordinatorHostL2Address(L2Address pAddr)
+	private void setSuperiorCoordinatorHostL2Address(L2Address pAddr)
 	{
 		mSuperiorCoordinatorHostL2Address = pAddr;
 	}

@@ -9,16 +9,12 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
-import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
@@ -44,8 +40,6 @@ public class Cluster extends ClusterMember
 	 */
 	private NetworkInterface mBaseHierarchyLevelNetworkInterface = null;
 	
-	private LinkedList<AnnounceRemoteCluster> mReceivedAnnounces = null;
-
 	/**
 	 * Stores a reference to the local coordinator instance if the local router is also the coordinator for this cluster
 	 */
@@ -82,8 +76,6 @@ public class Cluster extends ClusterMember
 
 			Logging.log(this, "ClusterID - using pre-defined clusterID " + getClusterID() + "(" + getGUIClusterID() + ")");
 		}
-
-		mReceivedAnnounces = new LinkedList<AnnounceRemoteCluster>();
 	}
 	
 	/**
@@ -95,7 +87,7 @@ public class Cluster extends ClusterMember
 	 * 
 	 * @return the new Cluster object
 	 */
-	static public Cluster create(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID)
+	static private Cluster create(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID)
 	{
 		Cluster tResult = new Cluster(pHRMController, pHierarchyLevel, pClusterID);
 		
@@ -427,172 +419,6 @@ public class Cluster extends ClusterMember
 	{
 		return mBaseHierarchyLevelNetworkInterface;
 	}
-	
-	
-	
-	
-	
-	public void eventClusterCoordinatorAvailable2(ComChannel pCoordinatorComChannel, Name pCoordinatorName, int pCoordinatorID, L2Address pCoordinatorL2Address)
-	{
-		super.eventClusterCoordinatorAvailable(pCoordinatorComChannel, pCoordinatorName, pCoordinatorID, pCoordinatorL2Address, null);
-
-		L2Address tLocalCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
-	
-		// make sure that in case of a programming mistake, the right unique ID of the superior coordinator is returned
-		setCoordinatorID(pCoordinatorID);
-		
-		mCoordinatorNodeName = pCoordinatorName;
-		if(superiorCoordinatorComChannel() == null) {
-			// store the L2Address of the superior coordinator 
-			setSuperiorCoordinatorHostL2Address(mHRMController.getHRS().getCentralFNL2Address());
-		} else {
-			// store the L2Address of the superior coordinator 
-			setSuperiorCoordinatorHostL2Address(pCoordinatorL2Address);
-
-			mHRMController.getHRS().mapFoGNameToL2Address(pCoordinatorName, pCoordinatorL2Address);
-			
-			if(pCoordinatorComChannel.getRouteToPeer() != null && !pCoordinatorComChannel.getRouteToPeer().isEmpty()) {
-				mHRMController.getHRS().registerNode((L2Address) pCoordinatorL2Address, false);
-				mHRMController.getHRS().registerRoute(tLocalCentralFNL2Address, pCoordinatorComChannel.getPeerL2Address(), pCoordinatorComChannel.getRouteToPeer());
-			}
-		}
-		
-		Logging.log(this, "This cluster has the following neighbors: " + getNeighborsARG());
-		for(ControlEntity tNeighbor : getNeighborsARG()) {
-			if(tNeighbor instanceof Cluster) {
-				Cluster tNeighborCluster = (Cluster)tNeighbor;
-				
-				Logging.log(this, "CLUSTER-CEP - found already known neighbor cluster: " + tNeighborCluster);
-
-				Logging.log(this, "Preparing neighbor zone announcement");
-				AnnounceRemoteCluster tAnnounce = new AnnounceRemoteCluster(pCoordinatorName, getHierarchyLevel(), pCoordinatorL2Address, superiorCoordinatorID(), getClusterID());
-				tAnnounce.setCoordinatorsPriority(getPriority()); //TODO : ???
-				if(pCoordinatorComChannel != null) {
-					tAnnounce.addRoutingVector(new RoutingServiceLinkVector(pCoordinatorComChannel.getRouteToPeer(), tLocalCentralFNL2Address, pCoordinatorComChannel.getPeerL2Address()));
-				}
-				tNeighborCluster.announceNeighborCoord(tAnnounce, pCoordinatorComChannel);
-			}
-		}
-		if(mReceivedAnnounces.isEmpty()) {
-			Logging.log(this, "No announces came in while no coordinator was set");
-		} else {
-			Logging.log(this, "sending old announces");
-			while(!mReceivedAnnounces.isEmpty()) {
-				if(superiorCoordinatorComChannel() != null)
-				{
-					// OK, we have to notify the other node via socket communication, so this cluster has to be at least one hop away
-//					superiorCoordinatorComChannel().sendPacket(mReceivedAnnounces.removeFirst());
-				} else {
-					/*
-					 * in this case this announcement came from a neighbor intermediate cluster
-					 */
-//					handleNeighborAnnouncement(mReceivedAnnounces.removeFirst(), pCoordinatorComChannel);
-				}
-			}
-		}
-	}
-	
-//	private ICluster addAnnouncedCluster(AnnounceRemoteCluster pAnnounce, ComChannel pCEP)
-//	{
-//		if(pAnnounce.getRoutingVectors() != null) {
-//			for(RoutingServiceLinkVector tVector : pAnnounce.getRoutingVectors()) {
-//				mHRMController.getHRS().registerRoute(tVector.getSource(), tVector.getDestination(), tVector.getPath());
-//			}
-//		}
-//		Cluster tCluster = mHRMController.getClusterByID(new ClusterName(mHRMController, pAnnounce.getLevel(), pAnnounce.getToken(), pAnnounce.getClusterID()));
-//		if(tCluster != null) {
-//			Logging.log(this, "Cluster announced by " + pAnnounce + " is an intermediate neighbor ");
-//			registerNeighborARG(tCluster);
-//		}else{
-//			Logging.log(this, "     ..creating cluster proxy");
-//			ClusterProxy tNeighborCluster = new ClusterProxy(mHRMController, pAnnounce.getClusterID(), getHierarchyLevel(), pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress(), pAnnounce.getToken());
-//			mHRMController.setSourceIntermediateCluster(tNeighborCluster, this);
-//			tNeighborCluster.setPriority(pAnnounce.getCoordinatorsPriority());
-//			
-//			mHRMController.getHRS().mapFoGNameToL2Address(tNeighborCluster.getCoordinatorHostName(),  pAnnounce.getCoordAddress());
-//			
-//			registerNeighborARG(tCluster);
-//		}
-//		
-//		if(pAnnounce.getCoordinatorName() != null) {
-//			mHRMController.getHRS().mapFoGNameToL2Address(pAnnounce.getCoordinatorName(), pAnnounce.getCoordAddress());
-//		}
-//		return tCluster;
-//	}
-	
-//	public void handleNeighborAnnouncement(AnnounceRemoteCluster pAnnounce, ComChannel pComChannel)
-//	{
-//		if(!pAnnounce.getCoordinatorName().equals(mHRMController.getNodeName())) {
-//			Logging.log(this, "Received announcement of foreign cluster");
-//		}
-//		
-//		if(getHierarchyLevel().isBaseLevel()) {
-//			if(pComChannel != null) {
-//				L2Address tLocalCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
-//				if(!tLocalCentralFNL2Address.equals(pComChannel.getPeerL2Address()) && pComChannel.getRouteToPeer() != null) {
-//					RoutingServiceLinkVector tLink = new RoutingServiceLinkVector(pComChannel.getRouteToPeer().clone(),  tLocalCentralFNL2Address, pComChannel.getPeerL2Address());
-//					pAnnounce.addRoutingVector(tLink);
-//					Logging.log(this, "Added routing vector " + tLink);
-//				}
-//				pAnnounce.isForeignAnnouncement();
-//			}
-//		} else {
-//			if(mHRMController.getClusterWithCoordinatorOnLevel(getHierarchyLevel().getValue()) == null) {
-//				/*
-//				 * no coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
-//				 */
-//				for(Coordinator tCoordinator : mHRMController.getAllCoordinators(getHierarchyLevel())) {
-//					if(tCoordinator.getNeighborsARG().contains(pAnnounce.getNegotiatorIdentification())) {
-//						tCoordinator.storeAnnouncement(pAnnounce);
-//					}
-//				}
-//			} else {
-//				/*
-//				 * coordinator set -> find cluster that is neighbor of the predecessor, so routes are correct
-//				 */
-//				for(Coordinator tCoordinator : mHRMController.getAllCoordinators(getHierarchyLevel())) {
-//					if(tCoordinator.getNeighborsARG().contains(pAnnounce.getNegotiatorIdentification())) {
-//						if(tCoordinator.superiorCoordinatorComChannel() != null) {
-//							tCoordinator.superiorCoordinatorComChannel().sendPacket(pAnnounce);
-//						}
-//					}
-//				}
-//			}
-//			
-//			
-//			if(pAnnounce.getCoveringClusterEntry() != null) {
-////				Cluster tForwardingCluster = null;
-//				
-//				if(pAnnounce.isRejected()) {
-////					Cluster tMultiplex = this;
-////					tForwardingCluster = (Cluster) ((Cluster) getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster()) == null ? pCEP.getRemoteCluster() : getCoordinator().getLastUncovered(tMultiplex, pCEP.getRemoteCluster())) ;
-//					//pAnnounce.setAnnouncer( (tForwardingCluster.getCoordinatorsAddress() != null ? tForwardingCluster.getCoordinatorsAddress() : null ));
-//					Logging.log(this, "Removing " + this + " as participating CEP from " + this);
-//					getComChannels().remove(this);
-//				}
-//				registerNeighborARG(mHRMController.getClusterByID(pComChannel.handleDiscoveryEntry(pAnnounce.getCoveringClusterEntry())));
-//			}
-//		}
-//	}
-	
-	private void announceNeighborCoord(AnnounceRemoteCluster pAnnouncement, ComChannel pCEP)
-	{
-		Logging.log(this, "Handling " + pAnnouncement);
-		if(mCoordinatorNodeName != null)
-		{
-			if(mHRMController.getNodeName().equals(mCoordinatorNodeName))
-			{
-//				handleNeighborAnnouncement(pAnnouncement, pCEP);
-			} else {
-//				superiorCoordinatorComChannel().sendPacket(pAnnouncement);
-			}
-		} else {
-			mReceivedAnnounces.add(pAnnouncement);
-		}
-	}
-
-	
-	
 	
 	/**
 	 * Defines the decoration text for the ARG viewer
