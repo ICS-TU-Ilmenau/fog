@@ -22,8 +22,9 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * In general, a node has a Bully priority for each hierarchy level. In the beginning, each of those values is 1. However, the administrator of a local
  * broadcast domain is allowed to use a different value than 1 as initialization value. The highest allowed initialization value is 99.
  * 
- * During the neighbor discovery phase, the Bully priority is increased:
- * 		+ by 100*100 for each detected (logical) link to a neighbor,
+ * The Bully priority is increased:
+ *      + by 100 for each detected physical neighbor node
+ *      + by 100*1000 for each known (remote) base hierarchy level coordinator, multiplied by the hop distance
  * 
  */
 public class BullyPriority
