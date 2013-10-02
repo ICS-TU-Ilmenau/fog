@@ -174,6 +174,9 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		// update the route to the announced cluster
 		tResult.mRoute = getRoute();
 		
+		// add an entry to the recorded source route
+		tResult.addSourceRoute("[route]: (" + mRoute + ") -> (" + tResult.mRoute + ")");
+
 		Logging.log(this, "Created duplicate packet: " + tResult);
 		
 		return tResult;
