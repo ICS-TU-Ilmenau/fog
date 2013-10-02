@@ -1232,6 +1232,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Sets new base node priority for Election processes
+	 * 
+	 * @param pPriority the new base node priority
+	 */
+	public void setBaseNodePriority(long pPriority)
+	{
+		Logging.log(this, "Setting new base node priority: " + pPriority);
+		mNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, pPriority);
+	}
+
+	/**
 	 * Increases base Bully priority
 	 */
 	private void increaseBaseNodePriority_Connectivity()
@@ -1245,7 +1256,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tPriority += BullyPriority.OFFSET_FOR_CONNECTIVITY;
 		
 		// update priority
-		mNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, tPriority);
+		setBaseNodePriority(tPriority);
 	}
 	
 	/**
@@ -1264,7 +1275,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tPriority += (long)((float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance));
 		
 		// update priority
-		mNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, tPriority);
+		setBaseNodePriority(tPriority);
 	}
 
 	/**
@@ -1283,7 +1294,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tPriority -= (long)((float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance));
 		
 		// update priority
-		mNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, tPriority);
+		setBaseNodePriority(tPriority);
 	}
 
 	/**
