@@ -961,7 +961,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		 * Remove the connections to this neighbor node
 		 */
 		if (tIsLinkToPhysicalNeigborNode){
-			//TODO: implement this
+			//TODO: implement this when nodes can be broken
 		}
 		
 		/**

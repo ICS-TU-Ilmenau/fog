@@ -157,9 +157,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private static boolean mFoGSiEmSimulationCreationFinished = false;
 	
-//	private HashMap<Integer, ICluster> mLevelToCluster = new HashMap<Integer, ICluster>();
-//	private HashMap<ICluster, Cluster> mIntermediateMapping = new HashMap<ICluster, Cluster>();
-	
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started

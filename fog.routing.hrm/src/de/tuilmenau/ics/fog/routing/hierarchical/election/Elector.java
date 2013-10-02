@@ -38,7 +38,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class Elector implements Localization
 {
-	public enum ElectorState {
+	private enum ElectorState {
 		START,    // Constructor
 		IDLE,     // no coordinator known, no election running
 		ELECTING, // election process is currently running
