@@ -592,7 +592,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * EVENT: coordinator announcement, we react on this by:
 	 *       1.) store the topology information locally
-	 *       2.) forward the announcement downward the hierarchy to all cluster members ("to the bottom")
+	 *       2.) forward the announcement downward the hierarchy to all locally known clusters (where this node is the head) ("to the bottom")
 	 * 
 	 * @param pComChannel the source comm. channel
 	 * @param pAnnounceCoordinator the received announcement
@@ -612,10 +612,14 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 
 		/**
-		 * Forward the coordinator announcement to all cluster members 
+		 * Forward the coordinator announcement to all locally known clusters at this hierarchy level
 		 */
 		Logging.log(this, "\n\n########## Forwarding Coordinator announcement: " + pAnnounceCoordinator);
-		getCluster().sendClusterBroadcast(pAnnounceCoordinator, true);
+		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue() - 1);
+		Logging.log(this, "     ..distributing in clusters: " + tClusters);
+		for(Cluster tCluster : tClusters){
+			tCluster.sendClusterBroadcast(pAnnounceCoordinator, true);
+		}
 	}
 	
 	/**
