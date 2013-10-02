@@ -307,26 +307,70 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * 
 	 * @param pNeighborL2Address the L2Address of the direct neighbor
 	 * @param pRoute the route to the direct neighbor
-	 * @return returns true if the route was added, false if a duplicate was found
+	 * @return returns true if the route was stored and an GUI update is needed
 	 */
 	public boolean addRouteToDirectNeighbor(L2Address pNeighborL2Address, Route pRoute)
 	{
-		boolean tResult = false;
+		boolean tResult = true;
 		
-		if (pNeighborL2Address != null){
-			L2LogicalLink tLogicalLink = new L2LogicalLink(pRoute);
-			
-			List<RoutingServiceLink> tOldRoute = getRouteFromGraph(mL2RoutingGraph, getCentralFNL2Address(), pNeighborL2Address);
-			if (tOldRoute != null){
-				Logging.log(this, "Found old route: " + tOldRoute + " to direct neighbor: " + pNeighborL2Address);
-				Logging.log(this, "      ..new route: " + pRoute);
-			}
-			Logging.log(this, "ADDING ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
-			storeL2Link(getCentralFNL2Address(), pNeighborL2Address, tLogicalLink);
+		Logging.log(this, "ADDING ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
 
-			tResult = true;
+		if (pNeighborL2Address != null){
+			
+			/**
+			 * Determine the old logical L2 link towards the neighbor
+			 */
+			Route tOldRoute = null;
+			L2LogicalLink tOldL2Link = null;
+			List<RoutingServiceLink> tOldLinkList = getRouteFromGraph(mL2RoutingGraph, getCentralFNL2Address(), pNeighborL2Address);
+			if((tOldLinkList != null) && (tOldLinkList.size() == 1)){
+				// get the first and only route entry
+				RoutingServiceLink tLink = tOldLinkList.get(0);
+				if(tLink instanceof L2LogicalLink){
+					// get the logical L2 link
+					tOldL2Link = (L2LogicalLink) tLink;
+					
+					// get the old route from the logical L2 link description
+					tOldRoute = tOldL2Link.getRoute();					
+
+					Logging.log(this, "      ..found old route: " + tOldRoute + " to direct neighbor: " + pNeighborL2Address);
+				}
+			}
+
+			/**
+			 * Check if the new route is shorter than the old known one.
+			 * In the latter case, update the old logical link.
+			 */
+			boolean tNewLogicalLink = true;
+			if (tOldRoute != null){
+				// mark as an update instead of a new link
+				tNewLogicalLink = false;
+
+				if (pRoute.isShorter(tOldRoute)){
+					Logging.log(this, "      ..updating to better ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
+										
+					// update the old logical link
+					tOldL2Link.setRoute(pRoute);
+				}else{
+					Logging.log(this, "      ..dropping new ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
+				}
+			}
+			
+			/**
+			 * Create a new logical link
+			 */
+			if(tNewLogicalLink){
+				Logging.log(this, "      ..storing new ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
+
+				// store the new route
+				storeL2Link(getCentralFNL2Address(), pNeighborL2Address, new L2LogicalLink(pRoute));
+			}
+
 		}else{
 			Logging.err(this, "addRouteToDirectNeighbor() got an invalid neighbor L2Address");
+
+			// route was dropped
+			tResult = false;
 		}
 
 		return tResult;
