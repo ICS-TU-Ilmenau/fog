@@ -45,6 +45,16 @@ public class L2LogicalLink extends  RoutingServiceLink
 	}
 
 	/**
+	 * Sets a new route for the logical link
+	 * 
+	 * @param pNewRoute the new route
+	 */
+	public void setRoute(Route pNewRoute)
+	{
+		mRoute = pNewRoute;
+	}
+
+	/**
 	 * Returns a descriptive string about the object
 	 * 
 	 * @return the descriptive string
