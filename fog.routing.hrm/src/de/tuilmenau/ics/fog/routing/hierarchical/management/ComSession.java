@@ -599,29 +599,30 @@ public class ComSession extends Session
 			 */
 			setPeerL2Address(pTargetL2Address);
 			
-			/**
-			 * Find and set the route to peer within the session object
-			 */
-			Route tRouteToNeighborFN = null;
-			// get a route to the neighbor node (the destination of the desired connection)
-			try {
-				tRouteToNeighborFN = mHRMController.getHRS().getRoute(pTargetL2Address, new Description(), mHRMController.getNode().getIdentity());
-			} catch (RoutingException tExc) {
-				Logging.err(mHRMController, "Unable to find route to " + pTargetL2Address, tExc);
-			} catch (RequirementsException tExc) {
-				Logging.err(mHRMController, "Unable to find route to " + pTargetL2Address + " with requirements no requirents, Huh!", tExc);
-			}
-			// have we found a route to the neighbor?
-			if(tRouteToNeighborFN != null) {
-				/**
-				 * Complete the found route to a route which ends at the first FN of the peer node towards its central FN
-				 */
-				tRouteToNeighborFN.add(new RouteSegmentAddress(mPeerL2Address));
-				if(mHierarchyLevel.isBaseLevel()) {
-					Logging.log(this, "      ..registering route to peer first FN: " + tRouteToNeighborFN);
-					mHRMController.addRouteToDirectNeighbor(mPeerL2Address, tRouteToNeighborFN);
-				}
-			}
+//TODO: remove the following? it stores a route to the first FN towards the peer -> but has bad side-effects on the ARG quality, and it isn't needed for a working HRM infrastructure			
+//			/**
+//			 * Find and set the route to peer within the session object
+//			 */
+//			Route tRouteToNeighborFN = null;
+//			// get a route to the neighbor node (the destination of the desired connection)
+//			try {
+//				tRouteToNeighborFN = mHRMController.getHRS().getRoute(pTargetL2Address, new Description(), mHRMController.getNode().getIdentity());
+//			} catch (RoutingException tExc) {
+//				Logging.err(mHRMController, "Unable to find route to " + pTargetL2Address, tExc);
+//			} catch (RequirementsException tExc) {
+//				Logging.err(mHRMController, "Unable to find route to " + pTargetL2Address + " with requirements no requirents, Huh!", tExc);
+//			}
+//			// have we found a route to the neighbor?
+//			if(tRouteToNeighborFN != null) {
+//				/**
+//				 * Complete the found route to a route which ends at the first FN of the peer node towards its central FN
+//				 */
+//				tRouteToNeighborFN.add(new RouteSegmentAddress(mPeerL2Address));
+//				if(mHierarchyLevel.isBaseLevel()) {
+//					Logging.log(this, "      ..registering route to peer first FN: " + tRouteToNeighborFN);
+//					mHRMController.addRouteToDirectNeighbor(mPeerL2Address, tRouteToNeighborFN);
+//				}
+//			}
 		}else{
 			Logging.trace(this, "startConnection() doesn't know the target L2Address, will send the local L2Address to the peer");
 		}
