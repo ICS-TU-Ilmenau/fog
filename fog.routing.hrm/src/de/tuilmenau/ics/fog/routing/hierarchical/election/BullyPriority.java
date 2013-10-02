@@ -36,7 +36,7 @@ public class BullyPriority
 	/**
 	 * The value defines the prefix for the node specific configuration parameters for Bully algorithm.
 	 */
-	private static String NODE_PARAMETER_PREFIX = "BULLY_PRIORITY_LEVEL_";
+	public static String NODE_PARAMETER_PREFIX = "BASE_BULLY_PRIORITY";
 	
 	/**
 	 * This value represents an undefined priority.
@@ -46,7 +46,7 @@ public class BullyPriority
 	/**
 	 * This value is used when the connectivity changes.
 	 */
-	private static int OFFSET_FOR_CONNECTIVITY = 100;
+	public static int OFFSET_FOR_CONNECTIVITY = 100;
 	
 	/**
 	 * This is the priority counter, which allows for globally (related to a physical simulation machine) unique BullyPriority IDs.
@@ -74,9 +74,7 @@ public class BullyPriority
 		long tNodePriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
 		
 		// set the Bully priority 
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++) {
-			pNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX + i, tNodePriority);
-		}
+		pNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, tNodePriority);
 	}
 
 	/**
@@ -86,15 +84,12 @@ public class BullyPriority
 	 */
 	public static BullyPriority createForControlEntity(HRMController pHRMController, ControlEntity pControlEntity)
 	{
-		Node tNode = pHRMController.getNode();
-		int tHierarchyLevel = pControlEntity.getHierarchyLevel().getValue();
-		
-		if (tNode == null) {
-			Logging.log(pControlEntity, "Cannot create Bully priority, invalid reference to physical node found");
+		if (pHRMController == null) {
+			Logging.log(pControlEntity, "Cannot create Bully priority, invalid reference to HRMController found");
 			return null;
 		}
 
-		BullyPriority tResult = new BullyPriority((long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY));
+		BullyPriority tResult = new BullyPriority(pHRMController.getBaseNodePriority());
 		
 		if (DEBUG_CREATION){
 			Logging.log(pControlEntity, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");

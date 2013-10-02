@@ -74,6 +74,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private NodeDecorator mDecoratorForCoordinatorsAndClusters = null;
 	
 	/**
+	 * Stores the node specific graph decorator for HRM node base priority
+	 */
+	private NodeDecorator mDecoratorForBaseNodePriorities = null;
+
+	/**
 	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance.
 	 */
 	private HRMControllerObservable mGUIInformer = null;
@@ -190,12 +195,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mDecoratorForCoordinatorsAndClusters = new NodeDecorator();
 		
 		/**
+		 * Create the node specific decorator for HRM base node priorities
+		 */
+		mDecoratorForBaseNodePriorities = new NodeDecorator();
+		
+		/**
 		 * Set the node decorations
 		 */
 		Decoration tDecoration = null;
 		// create own decoration for HRM coordinators & HRMIDs
 		tDecoration = Decoration.getInstance(DECORATION_NAME_COORDINATORS_AND_HRMIDS);
 		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndHRMIDs);
+		// create own decoration for HRM base node priorities
+		tDecoration = Decoration.getInstance(DECORATION_NAME_BASE_NODE_PRIORITIES);
+		tDecoration.setDecorator(mNode,  mDecoratorForBaseNodePriorities);
 		// create own decoration for HRM coordinators and clusters
 		tDecoration = Decoration.getInstance(DECORATION_NAME_COORDINATORS_AND_CLUSTERS);
 		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndClusters);
@@ -473,6 +486,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Set the decoration texts
 		 */
+		mDecoratorForBaseNodePriorities.setText(Long.toString(getBaseNodePriority()));
+		
 		String tNodeText = "";
 		synchronized (mRegisteredOwnHRMIDs) {
 			for (HRMID tHRMID: mRegisteredOwnHRMIDs){
@@ -519,6 +534,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tHighestCoordinatorLevel = tCoordLevel;
 			}
 		}
+		mDecoratorForBaseNodePriorities.setImage(tHighestCoordinatorLevel);
 		mDecoratorForCoordinatorsAndHRMIDs.setImage(tHighestCoordinatorLevel);
 		mDecoratorForCoordinatorsAndClusters.setImage(tHighestCoordinatorLevel);
 	}
@@ -1183,6 +1199,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Determines the base node priority for Election processes
+	 * 
+	 * @return the base node priority
+	 */
+	public long getBaseNodePriority()
+	{
+		return (long) mNode.getParameter().get(BullyPriority.NODE_PARAMETER_PREFIX, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
+	}
+	
+	/**
+	 * Increase base Bully priority
+	 */
+	private void increaseBaseNodeConnectivity()
+	{
+		// get the current priority
+		long tPriority = getBaseNodePriority();
+		
+		Logging.log(this, "Increasing base node priority by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
+
+		// increase priority
+		tPriority += BullyPriority.OFFSET_FOR_CONNECTIVITY;
+		
+		// update priority
+		mNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, tPriority);
+	}
+	
+	/**
 	 * Reacts on a detected new physical neighbor. A new connection to this neighbor is created.
 	 * HINT: "pNeighborL2Address" doesn't correspond to the neighbor's central FN!
 	 * 
@@ -1213,6 +1256,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		    Logging.log(this, "    ..creating new level0 cluster");
 			tParentCluster = Cluster.createBaseCluster(this);
 			tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
+			
+			increaseBaseNodeConnectivity();
 		}
 		
 //		setSourceIntermediateCluster(tCreatedCluster, tCreatedCluster);
@@ -2075,6 +2120,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private final static String DECORATION_NAME_COORDINATORS_AND_HRMIDS = "HRM coordinators & HRMIDs";
 
+	/**
+	 * Stores the identification string for HRM specific routing graph decorations (base node priorities)
+	 */
+	private final static String DECORATION_NAME_BASE_NODE_PRIORITIES = "HRM base node priorities";
+	
 	/**
 	 * Stores the identification string for HRM specific routing graph decorations (coordinators & clusters)
 	 */
