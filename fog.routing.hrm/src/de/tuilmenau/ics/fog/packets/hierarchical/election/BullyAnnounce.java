@@ -12,12 +12,14 @@ package de.tuilmenau.ics.fog.packets.hierarchical.election;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-
+import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 /**
  * PACKET: It is used when a new coordinator is signaled to all cluster members.
  * 		   The packet has to be send as broadcast.
  */
-public class BullyAnnounce extends SignalingMessageBully
+public class BullyAnnounce extends SignalingMessageBully implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = 794175467972815277L;
 
@@ -46,7 +48,7 @@ public class BullyAnnounce extends SignalingMessageBully
 	 */
 	public String getCoordinatorDescription()
 	{
-		return mCoordinatorDescription;
+		return new String(mCoordinatorDescription);
 	}
 	
 	/**
@@ -57,6 +59,23 @@ public class BullyAnnounce extends SignalingMessageBully
 	public int getCoordinatorID()
 	{
 		return mCoordinatorID;
+	}
+
+	/**
+	 * Returns a duplicate of this packet
+	 * 
+	 * @return the duplicate packet
+	 */
+	@Override
+	public SignalingMessageHrm duplicate()
+	{
+		BullyAnnounce tResult = new BullyAnnounce(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
+		
+		super.duplicate(tResult);
+
+		Logging.log(this, "Created duplicate packet: " + tResult);
+		
+		return tResult;
 	}
 
 	/**

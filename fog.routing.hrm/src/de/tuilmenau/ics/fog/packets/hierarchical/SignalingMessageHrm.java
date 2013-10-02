@@ -40,6 +40,12 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	private int mMessageNumber = -1;
 	
 	/**
+	 * Stores the recorded source route.
+	 * This is only used for debugging. It is not part of the HRM concept. 
+	 */
+	protected String mSourceRoute = "";
+	
+	/**
 	 * For using the class within (de-)serialization. 
 	 */
 	private static final long serialVersionUID = 7253912074438961613L;
@@ -99,6 +105,40 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	public Name getReceiverName()
 	{
 		return mReceiverName;
+	}
+	
+	/**
+	 * Add a part to the recorded source route
+	 * 
+	 * @param pRoutePart the route part
+	 */
+	public void addSourceRoute(String pRoutePart)
+	{
+		mSourceRoute += "\n=> " + pRoutePart; 
+	}
+	
+	/**
+	 * Returns the route this packet has passed
+	 * 
+	 * @return the source route
+	 */
+	public String getSourceRoute()
+	{
+		return new String(mSourceRoute);
+	}
+	
+	/**
+	 * Duplicates all member variables for another packet
+	 * 
+	 * @param pOtherPacket the other packet
+	 */
+	public void duplicate(SignalingMessageHrm pOtherPacket)
+	{
+		// update the recorded source route
+		pOtherPacket.mSourceRoute = getSourceRoute();
+		
+		// add an entry to the recorded source route
+		pOtherPacket.addSourceRoute("[duplicated]");
 	}
 	
 	/**

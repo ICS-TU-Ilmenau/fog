@@ -36,25 +36,26 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	}
 	
 	/**
-	 * Constructor
-	 * 
-	 * @param pSenderName the name of the message sender
-	 * @param pReceiverName the name of the message receiver
-	 */
-	public SignalingMessageBully(Name pSenderName, Name pReceiverName)
-	{
-		super(pSenderName, pReceiverName);
-		mSenderPriority = new BullyPriority(this);
-	}
-
-	/**
 	 * Determine the sender's priority.
 	 * 
 	 * @return the priority of the message sender
 	 */
 	public BullyPriority getSenderPriority()
 	{
-		return mSenderPriority;
+		return mSenderPriority.clone();
+	}
+
+	/**
+	 * Duplicates all member variables for another packet
+	 * 
+	 * @param pOtherPacket the other packet
+	 */
+	public void duplicate(SignalingMessageBully pOtherPacket)
+	{
+		super.duplicate(pOtherPacket);
+		
+		// update the recorded source route
+		pOtherPacket.mSenderPriority = getSenderPriority();
 	}
 
 	/**

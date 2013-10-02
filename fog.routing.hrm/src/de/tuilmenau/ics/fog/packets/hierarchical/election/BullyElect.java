@@ -10,14 +10,17 @@
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: It is used when an election start is signaled.
  *         The packet has to be send as broadcast.
  */
-public class BullyElect extends SignalingMessageBully //TV
+public class BullyElect extends SignalingMessageBully implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = -335936730603961378L;
 
@@ -30,5 +33,22 @@ public class BullyElect extends SignalingMessageBully //TV
 	public BullyElect(Name pSenderName, BullyPriority pSenderPriority)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
+	}
+	
+	/**
+	 * Returns a duplicate of this packet
+	 * 
+	 * @return the duplicate packet
+	 */
+	@Override
+	public SignalingMessageHrm duplicate()
+	{
+		BullyElect tResult = new BullyElect(getSenderName(), getSenderPriority());
+		
+		super.duplicate(tResult);
+		
+		Logging.log(this, "Created duplicate packet: " + tResult);
+		
+		return tResult;
 	}
 }

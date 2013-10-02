@@ -327,7 +327,7 @@ public class Elector implements Localization
 
 			if (mParent.getCoordinator() != null){
 				// create the packet
-				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mHRMController.getNodeName(), mParent.getPriority(), mParent.superiorCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+				BullyAnnounce tPacketBullyAnnounce = new BullyAnnounce(mHRMController.getNodeName(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
 		
 				// send broadcast
 				mParent.sendClusterBroadcast(tPacketBullyAnnounce, true);
@@ -359,7 +359,7 @@ public class Elector implements Localization
 			}
 	
 			// create the packet
-			BullyAlive tPacketBullyAlive = new BullyAlive(mHRMController.getNodeName());
+			BullyAlive tPacketBullyAlive = new BullyAlive(mHRMController.getNodeName(), mParent.getPriority());
 	
 			// send broadcast
 			mParent.sendClusterBroadcast(tPacketBullyAlive);
