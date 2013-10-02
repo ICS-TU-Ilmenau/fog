@@ -139,7 +139,7 @@ public class ClusterMember extends ClusterName
 		/**
 		 * Enlarge the stored route towards the announcer
 		 */
-		pAnnounceCoordinator.addRouteHead(pComChannel.getRouteToPeer());
+		pAnnounceCoordinator.addRouteHop(pComChannel.getRouteToPeer());
 		
 		/**
 		 * Store the announced remote coordinator in the ARG 

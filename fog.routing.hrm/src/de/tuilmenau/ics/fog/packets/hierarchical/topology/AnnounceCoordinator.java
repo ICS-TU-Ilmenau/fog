@@ -44,7 +44,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	/**
 	 * Stores the logical hop count for the stored route 
 	 */
-	private int mRouteCosts = 0;
+	private int mRouteHopCount = 0;
 	
 	/**
 	 * Stores the route to the announced cluster
@@ -119,9 +119,11 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	 * 
 	 * @param pRoute the partial route which should be added to the route
 	 */
-	public void addRouteHead(Route pRoute)
+	public void addRouteHop(Route pRoute)
 	{
 		if(pRoute != null){
+			increaseRouteHopCount();
+			
 			Logging.log(this, "Adding route head");
 			Logging.log(this, "      ..old route to sender: " + mRoute);
 			Route tNewRoute = pRoute.clone();
@@ -138,9 +140,17 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	 * 
 	 * @return the route costs
 	 */
-	public int getRouteCosts()
+	public int getRouteHopCount()
 	{
-		return mRouteCosts;
+		return mRouteHopCount;
+	}
+	
+	/**
+	 * Increases the hop count for this route
+	 */
+	private void increaseRouteHopCount()
+	{
+		mRouteHopCount++;
 	}
 	
 	/**
@@ -165,14 +175,14 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		
 		super.duplicate(tResult);
 
-		// update route
-		tResult.addRouteHead(getRoute());
-		
 		// update TTL
 		tResult.mTTL = getTTL();
 		
 		// update the route to the announced cluster
 		tResult.mRoute = getRoute();
+		
+		// update the route hop costs 
+		tResult.mRouteHopCount = getRouteHopCount();
 		
 		// add an entry to the recorded source route
 		tResult.addSourceRoute("[route]: (" + mRoute + ") -> (" + tResult.mRoute + ")");
