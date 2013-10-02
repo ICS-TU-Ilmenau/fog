@@ -11,9 +11,8 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This class is used to identify a cluster (independent from its physical location)
@@ -34,41 +33,21 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	{
 		super(pHRMController, pHierarchyLevel);
 		
+		Logging.log(this, "Creating ClusterName for cluster: " + pClusterID + " and coordinator: " + pCoordinatorID);
+
 		setClusterID(pClusterID);
 		setSuperiorCoordinatorID(pCoordinatorID);
 		setCoordinatorID(pCoordinatorID);
 	}
 	
 	/**
-	 * Returns the machine-local ClusterID (excluding the machine specific multiplier)
-	 * 
-	 * @return the machine-local ClusterID
-	 */
-	public long getGUIClusterID()
-	{
-		//TODO: bei signalisierten ClusterName-Objekten stimmt hier der Bezug zum richtigen MachineMultiplier nicht
-		if (getClusterID() != null)
-			return getClusterID() / idMachineMultiplier();
-		else
-			return -1;
-	}
-
-	/**
 	 * Returns a descriptive string about this object
 	 * 
 	 * @return the descriptive string
 	 */
-	@SuppressWarnings("unused")
 	public String toString()
 	{
-		HRMID tHRMID = getHRMID();
-		
-		if(tHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
-			return tHRMID.toString();
-		} else {
-			return toLocation() + "(" + idToString() + ")";
-
-		}
+		return toLocation() + "(" + idToString() + ")";
 	}
 
 	/**
@@ -89,8 +68,8 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	 */
 	private String idToString()
 	{
-		if (getHRMID() == null){
-			return "ID=" + getClusterID() + ", CoordID=" + superiorCoordinatorID() +  ", Prio=" + getPriority().getValue();
+		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
+			return "ID=" + getClusterID() + ", CoordID=" + getCoordinatorID() +  ", Prio=" + getPriority().getValue();
 		}else{
 			return "HRMID=" + getHRMID().toString();
 		}

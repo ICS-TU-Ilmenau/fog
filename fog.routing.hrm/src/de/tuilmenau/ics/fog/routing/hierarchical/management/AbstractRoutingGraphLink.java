@@ -11,6 +11,9 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 
+import de.tuilmenau.ics.fog.routing.Route;
+import de.tuilmenau.ics.fog.ui.Logging;
+
 /**
  * Clusters are built up at bus level at the first hierarchical level. Clusters that are not physically connected to the node
  * are attached neighbor clusters. This class is used in order to determine the distance to a cluster.
@@ -19,7 +22,7 @@ import java.io.Serializable;
 public class AbstractRoutingGraphLink implements Serializable
 {
 	private static final long serialVersionUID = 3333293111147481060L;
-	public enum LinkType {NODE_LOCAL /* internal cluster neighbor */, NET /* distant cluster neighbor */};
+	public enum LinkType {OBJECT_REF /* node internal object reference */, DB_REF /* node internal link */, ROUTE /* network based link */};
 
 	/**
 	 * Stores the type of the link
@@ -27,15 +30,31 @@ public class AbstractRoutingGraphLink implements Serializable
 	private LinkType mLinkType;
 
 	/**
+	 * Stores the route to the remote side
+	 */
+	private Route mRoute = null;
+	
+	/**
 	 * Constructor of a node (cluster) connection
 	 * 
-	 * @param pType This is the type of the connection between the clusters
+	 * @param pType the type of the link between the two ARG entries
 	 */
 	public AbstractRoutingGraphLink(LinkType pLinkType)
 	{
 		mLinkType = pLinkType;
 	}
 	
+	/**
+	 * Constructor of a node (cluster) connection
+	 * 
+	 * @param pRoute the route to the remote side
+	 */
+	public AbstractRoutingGraphLink(Route pRoute)
+	{
+		mLinkType = LinkType.ROUTE;
+		mRoute = pRoute;
+	}
+
 	/**
 	 * 
 	 * @return Return the type of the connection here.
@@ -46,12 +65,38 @@ public class AbstractRoutingGraphLink implements Serializable
 	}
 	
 	/**
+	 * Returns the route to the remote side
+	 * 
+	 * @return the route to the remote side
+	 */
+	public Route getRoute()
+	{
+		return mRoute;
+	}
+	
+	/**
+	 * Updates the stored route to the remote side
+	 * 
+	 * @param pNewRoute the new route to the remote side
+	 */
+	public void setRoute(Route pNewRoute)
+	{
+		Logging.log(this, ">>> Old route: " + mRoute);
+		mRoute = pNewRoute;
+		Logging.log(this, ">>> New route: " + mRoute);
+	}
+	
+	/**
 	 * Returns a descriptive string about the object
 	 * 
 	 * @return the descriptive string
 	 */
 	public String toString()
 	{
-		return "ARG-Link(" + mLinkType.toString() + ")";
+		if(mRoute == null){
+			return getLinkType().toString();
+		}else{
+			return getLinkType().toString() +": " + mRoute.toString();				
+		}
 	}
 }

@@ -21,7 +21,9 @@ import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalEndPoint;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.Route;
+import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -131,6 +133,13 @@ public class ComSession extends Session
 			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
 				Logging.log(this, "SENDING MULTIPLEX HEADER with destination: " + tMultiplexHeader.getReceiverClusterName()  + ", payload=" + tMultiplexHeader.getPayload());
 			}
+			
+			if(tMultiplexHeader.getPayload() instanceof SignalingMessageHrm){
+				SignalingMessageHrm tSignalingHRMPacket = (SignalingMessageHrm)tMultiplexHeader.getPayload();
+				
+				// add source route entry
+				tSignalingHRMPacket.addSourceRoute("[S]: " + this.toString());
+			}
 		}
 		
 		if(getConnection() != null && getConnection().isConnected()) {
@@ -181,7 +190,7 @@ public class ComSession extends Session
 	 */
 	private void setRouteToPeer(Route pRoute)
 	{
-		Logging.log(this, "Peer " + getPeerL2Address() + " is now reachable via " + pRoute);
+		Logging.log(this, "Setting route to peer " + getPeerL2Address() + " as " + pRoute);
 		
 		/**
 		 * Inform the HRS about the complete route to the peer
@@ -326,10 +335,27 @@ public class ComSession extends Session
 			}
 			
 			/**
-			 * Complete the found route to a route which ends at the central FN of the peer node
+			 * Complete the found route to a route which ends at the central FN of the peer node, but avoid trailing duplicates 
 			 */
-			tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
-			setRouteToPeer(tRouteToPeer);
+			boolean tPeerL2AddressAlreadyKnown = false;
+			RouteSegment tRouteToPeerLastEntry = tRouteToPeer.getLast();
+			if (tRouteToPeerLastEntry instanceof RouteSegmentAddress){
+				RouteSegmentAddress tRouteToPeerLastAddress = (RouteSegmentAddress)tRouteToPeerLastEntry;
+				if(tRouteToPeerLastAddress.getAddress() instanceof L2Address){
+					L2Address tLastAddress = (L2Address)tRouteToPeerLastAddress.getAddress();
+					if(tLastAddress.equals(mPeerL2Address)){
+						tPeerL2AddressAlreadyKnown = true;
+					}
+				}
+			}
+			if(!tPeerL2AddressAlreadyKnown){
+				Logging.log(this, ">>> Old route to peer was: " + tRouteToPeer);
+				tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
+				Logging.log(this, ">>> New route to peer is: " + tRouteToPeer);
+				setRouteToPeer(tRouteToPeer);
+			}else{
+				Logging.log(this, ">>> Old route to peer: " + tRouteToPeer + " includes already the entry " + mPeerL2Address + " as last entry");
+			}
 		}
 		
 		/**
@@ -521,6 +547,16 @@ public class ComSession extends Session
 				Logging.log(this, "MULTIPLEX PACKET received: " + tMultiplexHeader);
 			}
 			
+			/**
+			 * SignalingMessageHRM
+			 */
+			if(tMultiplexHeader.getPayload() instanceof SignalingMessageHrm){
+				SignalingMessageHrm tSignalingHRMPacket = (SignalingMessageHrm)tMultiplexHeader.getPayload();
+				
+				// add source route entry
+				tSignalingHRMPacket.addSourceRoute("[R]: " + this.toString());
+			}
+
 			handleMultiplexHeader(tMultiplexHeader);
 
 			return true;

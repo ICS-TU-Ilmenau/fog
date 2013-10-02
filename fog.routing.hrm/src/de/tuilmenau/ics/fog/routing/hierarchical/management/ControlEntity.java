@@ -14,7 +14,8 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCluster;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
@@ -341,7 +342,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	{
 		Logging.log(this, "Registering neighbor (ARG): " + pNeighbor);
 
-		AbstractRoutingGraphLink.LinkType tLinkType = AbstractRoutingGraphLink.LinkType.NODE_LOCAL;
+		AbstractRoutingGraphLink.LinkType tLinkType = AbstractRoutingGraphLink.LinkType.DB_REF;
 
 		if (this instanceof ClusterMember){
 			// increase Bully priority because of changed connectivity (topology depending) 
@@ -388,14 +389,15 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
-	 * EVENT: cluster announcement
+	 * EVENT: coordinator announcement
 	 * 
-	 * @param pAnnounceCluster the received announcement
+	 * @param pComChannel the source comm. channel
+	 * @param pAnnounceCoordinator the received announcement
 	 */
-	public void eventClusterAnnouncement(AnnounceCluster pAnnounceCluster)
+	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
-		Logging.warn(this, "Fired event CLUSTER_ANNOUNCEMENT: " + pAnnounceCluster);
-		Logging.warn(this, "Ignoring CLUSTER_ANNOUNCEMENT");
+		Logging.warn(this, "Fired event COORDINATOR_ANNOUNCEMENT: " + pAnnounceCoordinator);
+		Logging.warn(this, "Ignoring COORDINATOR_ANNOUNCEMENT from comm. channel: " + pComChannel);
 	}
 
 	/**
@@ -607,6 +609,34 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 	
 	/**
+	 * Returns the machine-local ClusterID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local ClusterID
+	 */
+	public long getGUIClusterID()
+	{
+		//TODO: bei signalisierten ClusterName-Objekten stimmt hier der Bezug zum richtigen MachineMultiplier nicht
+		if (getClusterID() != null)
+			return getClusterID() / idMachineMultiplier();
+		else
+			return -1;
+	}
+
+	/**
+	 * Returns the machine-local CoordinatorID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local CoordinatorID
+	 */
+	public long getGUICoordinatorID()
+	{
+		//TODO: bei signalisierten ClusterName-Objekten stimmt hier der Bezug zum richtigen MachineMultiplier nicht
+		if (getClusterID() != null)
+			return getCoordinatorID() / idMachineMultiplier();
+		else
+			return -1;
+	}
+
+	/**
 	 * Returns a descriptive string about the cluster
 	 * 
 	 * @return the descriptive string
@@ -692,6 +722,70 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
+	 * Store the announced coordinator within the local ARG
+	 * 
+	 * @param pSourceEntity the source of the announcement (corresponds to the next hop towards the announcer)
+	 * @param pAnnounceCoordinator the announcement
+	 */
+	protected void registerAnnouncedCoordinatorARG(ControlEntity pSourceEntity, AnnounceCoordinator pAnnounceCoordinator)
+	{
+		ClusterName tRemoteClusterName = pAnnounceCoordinator.getSenderClusterName();
+		Logging.log(this, "Registering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
+		Logging.log(this, "     ..announcement took the following route: " + pAnnounceCoordinator.getSourceRoute());
+		
+		// check of the "remote" coordinator isn't stored at this physical node
+		if(!pAnnounceCoordinator.getSenderClusterCoordinatorNodeName().equals(mHRMController.getNodeName())){
+			/**
+			 * Storing the ARG node for this announced remote coordinator
+			 */
+			// search for an already existing CoordintorProxy instance
+			CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
+			if(tCoordinatorProxy == null){
+				Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
+	
+				tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeName());
+			}else{
+				// did we receive a coordinator announcement from our own coordinator?
+				if(!equals(tRemoteClusterName)){
+					Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName);
+				}else{
+					Logging.log(this, "     ..ignoring announcement of own remote coordinator: " + tRemoteClusterName);
+				}
+			}
+			
+			/**
+			 * Storing the route to the announced remote coordinator
+			 * HINT: we provide a minimum hop count for the routing
+			 */
+			boolean tRegisterNewLink = true;
+			AbstractRoutingGraphLink tLink = mHRMController.getLinkARG(pSourceEntity, tCoordinatorProxy);
+			// do we know an already stored link in the ARG?
+			if(tLink != null){
+				Route tOldLinkRoute = tLink.getRoute();
+				Route tNewLinkRoute = pAnnounceCoordinator.getRoute();
+				
+				// does a route exist for the stored link?
+				if(tOldLinkRoute != null){
+					// is the new route shorter than the old one?
+					if(tNewLinkRoute.isShorter(tOldLinkRoute)){
+						// replace the stored route by the new route which is shorter than the old one
+						tLink.setRoute(tNewLinkRoute);
+						
+						tRegisterNewLink = false;
+					}
+				}
+			}
+			// have we updated an old link?
+			if(tRegisterNewLink){
+				// register the link to the announced coordinator
+				mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute()));
+			}
+		}else{
+			Logging.warn(this, "Avoiding redundant registration of locally instantiated coordinator: " + pAnnounceCoordinator);
+		}
+	}
+
+	/**
 	 * Returns if both objects address the same cluster/coordinator
 	 * 
 	 * @return true or false
@@ -700,6 +794,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	public boolean equals(Object pObj)
 	{
 		if (((this instanceof Cluster) && (pObj instanceof Coordinator)) ||
+			((this instanceof ClusterMember) && (pObj instanceof Coordinator)) ||
+			((this instanceof Coordinator) && (pObj instanceof ClusterMember)) ||
 			((this instanceof Coordinator) && (pObj instanceof Cluster))){
 			return false;
 		}
@@ -737,13 +833,16 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		Float tSaturation = Float.valueOf(1.0f - 0.5f * (getHierarchyLevel().getValue() + 1)/ HRMConfig.Hierarchy.HEIGHT);
 		
 		if (this instanceof Coordinator){
-			return new Color(tSaturation, 0, 0);
+			return new Color(tSaturation, (float)0.6, (float)0.8);
+		}
+		if (this instanceof CoordinatorProxy){
+			return new Color(tSaturation, (float)0.6, (float)0.8);
 		}
 		if (this instanceof Cluster){
 			return new Color((float)0.7, tSaturation, 0);
 		}
 		if (this instanceof ClusterMember){
-			return new Color(0, (float)0.7, tSaturation);
+			return new Color((float)0.7, tSaturation, (float)0.3);
 		}
 		
 		return null;

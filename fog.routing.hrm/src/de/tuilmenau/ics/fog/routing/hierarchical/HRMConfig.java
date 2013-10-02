@@ -87,7 +87,7 @@ public class HRMConfig
 		 * Shows coordinators in the ARG viewer
 		 * HINT: clusters HAVE TO BE STORED in the ARG, otherwise routing isn't possible
 		 */
-		public static final boolean GUI_SHOW_COORDINATORS_IN_ARG = false;
+		public static final boolean GUI_SHOW_COORDINATORS_IN_ARG = true;
 
 		/**
 		 * Defines the time period between two updates of the node specific HRM display.
@@ -160,15 +160,15 @@ public class HRMConfig
 		public static final boolean AUTO_CLEANUP_FOR_CONNECTIONS = true;
 
 		/**
-		 * Defines if clusters should announce their existences among cluster members/neighbors
+		 * Defines if coordinator should announce their existences among cluster members/neighbors
 		 * If this is disabled, the hierarchy creation won't be correct.
 		 */
-		public static final boolean CLUSTER_ANNOUNCEMENTS = false;
+		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
 
 		/**
-		 * Defines the time period for ClusterAnnounce distributions
+		 * Defines the time period for CoordinatorAnnounce distributions
 		 */
-		public static final double PERIORD_CLUSTER_ANNOUNCEMENTS = 3.0;
+		public static final double PERIOD_COORDINATOR_ANNOUNCEMENTS = 3.0;
 	}
 	
 	/**

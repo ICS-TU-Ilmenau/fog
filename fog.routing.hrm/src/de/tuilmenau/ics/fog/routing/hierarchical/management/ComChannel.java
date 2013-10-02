@@ -21,7 +21,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMember
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCluster;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -135,6 +135,11 @@ import de.tuilmenau.ics.graph.RoutableGraph;
  *
  *   HINT: A comm. session can summarize multiple local comm. channels. However, these channels can belong to different local coordinators.
  *                    
+ *   HINT (distributed clustering): The clustering code is based on redundant clusters. Hence, a broadcast domain with 3 nodes leads to 3
+ *   	  L0 cluster associations (Cluster/ClusterMember instances) per node. Additionally, at higher hierarchy levels, the clustering code
+ *        sees every node as possible cluster head and instantiates a Cluster object at every node. Each of those Cluster object can have
+ *        communication channels to multiple ClusterMember objects. 
+ *                        
  *           *otherwise, bugs exist within the clustering
  *                    
  * ****************************************************************************************************************************
@@ -373,28 +378,31 @@ public class ComChannel
 	/**
 	 * Sends a packet to the peer
 	 * 
-	 * @param pData the packet payload
+	 * @param pPacket the packet
 	 * 
 	 * @return true if successful, otherwise false
 	 */
-	public boolean sendPacket(Serializable pData)
+	public boolean sendPacket(SignalingMessageHrm pPacket)
 	{
 		// create destination description
 		ClusterName tDestinationClusterName = getRemoteClusterName();
 		
 		if (tDestinationClusterName != null){
-			Logging.log(this, "SENDING DATA " + pData + " to destination " + tDestinationClusterName);
+			Logging.log(this, "SENDING DATA " + pPacket + " to destination " + tDestinationClusterName);
 	
 			// create the source description
 			ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().getClusterID(), getParent().superiorCoordinatorID());
 			
+			// add source route entry
+			pPacket.addSourceRoute("[S]: " + this.toString());
+			
 			// create the Multiplex-Header
-			MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pData);
+			MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pPacket);
 				
 			// send the final packet (including multiplex-header)
 			return getParentComSession().write(tMultiplexHeader);
 		}else{
-			Logging.log(this, "Destination is still undefined, skipping packet payload " + pData);
+			Logging.log(this, "Destination is still undefined, skipping packet payload " + pPacket);
 			return false;
 		}
 	}
@@ -598,6 +606,9 @@ public class ComChannel
 			// process SignalingMessageHrm message
 			getPeerHRMIDFromHRMSignalingMessage(tSignalingMessageHrmPacket);
 			
+			// add source route entry
+			tSignalingMessageHrmPacket.addSourceRoute("[R]: " + this.toString());
+
 			//HINT: don't return here because we are still interested in the more detailed packet data from derived packet types!
 		}
 		
@@ -708,13 +719,13 @@ public class ComChannel
 		/**
 		 * AnnounceCluster
 		 */
-		if(pData instanceof AnnounceCluster) {
-			AnnounceCluster tAnnounceClusterPacket = (AnnounceCluster)pData;
+		if(pData instanceof AnnounceCoordinator) {
+			AnnounceCoordinator tAnnounceClusterPacket = (AnnounceCoordinator)pData;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "ANNOUNCE_CLUSTER-received from \"" + getPeerHRMID() + "\", announcement is: " + tAnnounceClusterPacket);
 		
-			getParent().eventClusterAnnouncement(tAnnounceClusterPacket);
+			getParent().eventCoordinatorAnnouncement(this, tAnnounceClusterPacket);
 			
 			return true;
 		}

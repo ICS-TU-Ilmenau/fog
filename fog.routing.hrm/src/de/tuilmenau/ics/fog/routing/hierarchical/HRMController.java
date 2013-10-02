@@ -306,6 +306,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Registers a coordinator proxy at the local database.
+	 * 
+	 * @param pCoordinatorProxy the coordinator proxy for a defined coordinator
+	 */
+	public void registerCoordinatorProxy(CoordinatorProxy pCoordinatorProxy)
+	{
+		int tLevel = pCoordinatorProxy.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
+		
+		Logging.log(this, "Registering coordinator proxy " + pCoordinatorProxy + " at level " + tLevel);
+
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
+		
+		// register the coordinator prxy in the local ARG
+		registerNodeARG(pCoordinatorProxy);
+
+		// it's time to update the GUI
+		notifyGUI(pCoordinatorProxy);
+	}
+
+	/**
 	 * Registers a coordinator at the local database.
 	 * 
 	 * @param pCoordinator the coordinator for a defined cluster
@@ -328,8 +349,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		updateGUINodeDecoration();
 		
 		// register the coordinator in the local ARG
-		if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG)
+		if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG){
 			registerNodeARG(pCoordinator);
+			
+			registerLinkARG(pCoordinator, pCoordinator.getCluster(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+		}
 
 		// it's time to update the GUI
 		notifyGUI(pCoordinator);
@@ -892,6 +916,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		for(Cluster tKnownCluster : getAllClusters()) {
 			if(tKnownCluster.equals(pClusterName)) {
 				tResult = tKnownCluster;
+				break;
+			}
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns the locally known CoordinatorProxy object, which was identified by its ClusterName
+	 *  
+	 * @param pClusterName the cluster name of the searched coordinator proxy
+	 * 
+	 * @return the desired CoordinatorProxy, null if the coordinator isn't known
+	 */
+	public CoordinatorProxy getCoordinatorProxyByName(ClusterName pClusterName)
+	{
+		CoordinatorProxy tResult = null;
+		
+		synchronized (mAbstractRoutingGraph) {
+			for (AbstractRoutingGraphNode tNode : mAbstractRoutingGraph.getVertices()){
+				if(tNode instanceof CoordinatorProxy){
+					CoordinatorProxy tCoordinatorProxy = (CoordinatorProxy)tNode;
+					if(tCoordinatorProxy.equals(pClusterName)){
+						tResult = tCoordinatorProxy;
+						break;
+					}
+				}
 			}
 		}
 
@@ -1571,6 +1622,34 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Determines the link between two clusters/coordinators from the locally stored abstract routing graph (ARG)
+	 * 
+	 * @param pFrom the starting point of the link
+	 * @param pTo the ending point of the link
+	 * 
+	 * @return the link between the two nodes
+	 */
+	public AbstractRoutingGraphLink getLinkARG(ControlEntity pFrom, ControlEntity pTo)
+	{
+		AbstractRoutingGraphLink tResult = null;
+		
+		List<AbstractRoutingGraphLink> tRoute = null;
+		synchronized (mAbstractRoutingGraph) {
+			tRoute = mAbstractRoutingGraph.getRoute(pFrom, pTo);
+		}
+		
+		if((tRoute != null) && (!tRoute.isEmpty())){
+			if(tRoute.size() == 1){
+				tResult = tRoute.get(0);
+			}else{
+				Logging.err(this, "Expected a route with one entry but got: " + tRoute);
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Determines a route in the locally stored abstract routing graph (ARG).
 	 * 
 	 * @param pSource the source of the desired route
@@ -1737,7 +1816,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 
 		synchronized (mAbstractRoutingGraph) {
-			tResult = mAbstractRoutingGraph.isknown(pNodeARG);
+			tResult = mAbstractRoutingGraph.contains(pNodeARG);
 		}
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
@@ -1938,12 +2017,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //									}
 									
 									// register the link in the local ARG
-									registerLinkARG(tClusterProxy_ClusterMember, tClusterProxy_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.NET));
+									registerLinkARG(tClusterProxy_ClusterMember, tClusterProxy_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.ROUTE));
 								}else{
 									Logging.log(this, "     ..neighor of cluster member is the locally known cluster: " + tLocalCluster_ClusterMemberNeighbor);
 
 									// register the link in the local ARG
-									registerLinkARG(tClusterProxy_ClusterMember, tLocalCluster_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.NET));
+									registerLinkARG(tClusterProxy_ClusterMember, tLocalCluster_ClusterMemberNeighbor, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.ROUTE));
 								}
 								
 								tFoundDescribedNeighbors++;

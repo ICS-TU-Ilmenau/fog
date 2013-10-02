@@ -15,14 +15,16 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.tuilmenau.ics.fog.FoGEntity;
+import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCluster;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
@@ -35,7 +37,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * This class is used for a coordinator instance and can be used on all hierarchy levels.
  * A cluster's elector instance is responsible for creating instances of this class.
  */
-public class Coordinator extends ControlEntity implements Localization
+public class Coordinator extends ControlEntity implements Localization, IEvent
 {
 	/**
 	 * List of already known neighbor coordinators
@@ -109,7 +111,13 @@ public class Coordinator extends ControlEntity implements Localization
 		// register at HRMController's internal database
 		mHRMController.registerCoordinator(this);
 
-		Logging.log(this, "\n\n\n################ CREATED COORDINATOR on hierarchy level: " + (getHierarchyLevel().getValue() - 1));
+		Logging.log(this, "\n\n\n################ CREATED COORDINATOR at hierarchy level: " + (getHierarchyLevel().getValue() - 1));
+		
+		// trigger periodic Cluster announcements
+		if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
+			// register next trigger for 
+			mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS * 2, this);
+		}
 	}
 	
 	/**
@@ -151,16 +159,6 @@ public class Coordinator extends ControlEntity implements Localization
 		}
 		
 		return tHRMID;
-	}
-
-	/**
-	 * Returns the machine-local CoordinatorID (excluding the machine specific multiplier)
-	 * 
-	 * @return the machine-local CoordinatorID
-	 */
-	public long getGUICoordinatorID()
-	{
-		return getCoordinatorID() / idMachineMultiplier();
 	}
 
 	/**
@@ -516,6 +514,43 @@ public class Coordinator extends ControlEntity implements Localization
 	}
 
 	/**
+	 * SEND: distribute AnnounceCoordinator messages among the neighbors which are within the given max. radius (see HRMConfig)        
+	 */
+	public void distributeCoordinatorAnnouncement()
+	{
+		AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeName());
+		Logging.log(this, "\n\n########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
+		
+		/**
+		 * Send broadcasts in all locally known clusters at this hierarchy level
+		 */
+		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue() - 1);
+		Logging.log(this, "     ..distributing in clusters: " + tClusters);
+		for(Cluster tCluster : tClusters){
+			tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+		}
+	}
+
+	/**
+	 * Implementation for IEvent::fire()
+	 */
+	@Override
+	public void fire()
+	{
+		Logging.log(this, "###########################");
+		Logging.log(this, "###### FIRE FIRE FIRE #####");
+		Logging.log(this, "###########################");
+		
+		/**
+		 * Trigger: ClusterAnnounce distribution
+		 */
+		distributeCoordinatorAnnouncement();
+		
+		// register next trigger for 
+		mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS, this);
+	}
+
+	/**
 	 * EVENT: "announced", triggered by Elector if the election was won and this coordinator was announced to all cluster members 	 
 	 */
 	public void eventAnnouncedAsCoordinator()
@@ -524,7 +559,7 @@ public class Coordinator extends ControlEntity implements Localization
 		 * Trigger: explicit cluster announcement to neighbors
 		 */ 
 		Logging.log(this, "EVENT ANNOUNCED - triggering distribution of ClusterAnnounces");
-		getCluster().distributeClusterAnnouncement();
+		distributeCoordinatorAnnouncement();
 
 		/**
 		 * AUTO ADDRESS DISTRIBUTION
@@ -556,21 +591,32 @@ public class Coordinator extends ControlEntity implements Localization
 	}
 
 	/**
-	 * EVENT: cluster announcement, we react on this by:
+	 * EVENT: coordinator announcement, we react on this by:
 	 *       1.) store the topology information locally
 	 *       2.) forward the announcement downward the hierarchy to all cluster members ("to the bottom")
 	 * 
-	 * @param pAnnounceCluster the received announcement
+	 * @param pComChannel the source comm. channel
+	 * @param pAnnounceCoordinator the received announcement
 	 */
 	@Override
-	public void eventClusterAnnouncement(AnnounceCluster pAnnounceCluster)
+	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
-		Logging.log(this, "EVENT: cluster announcement: " + pAnnounceCluster);
+		Logging.log(this, "EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
 		
 		/**
-		 * Parse the announcement and update the ARG 
+		 * Store the announced remote coordinator in the ARG 
 		 */
+		if(!pAnnounceCoordinator.getSenderClusterName().equals(this)){
+			registerAnnouncedCoordinatorARG(this, pAnnounceCoordinator);
+		}else{
+			Logging.err(this, "eventCoordinatorAnnouncement() was triggered for an announcement of ourself, announcement: " + pAnnounceCoordinator);
+		}
 
+		/**
+		 * Forward the coordinator announcement to all cluster members 
+		 */
+		Logging.log(this, "\n\n########## Forwarding Coordinator announcement: " + pAnnounceCoordinator);
+		getCluster().sendClusterBroadcast(pAnnounceCoordinator, true);
 	}
 	
 	/**
@@ -591,7 +637,7 @@ public class Coordinator extends ControlEntity implements Localization
 				if(tJoinedExistingLocalSuperiorCluster){
 					Logging.err(this, "cluster() FOUND MORE THAN ONE LOCAL SUPERIOR CLUSTER");
 				}
-				if (joinExistingSuperiorCluster(tCluster)){
+				if (joinExistingLocalSuperiorCluster(tCluster)){
 					Logging.log(this, "          ..joined locally known superior cluster: " + tCluster);
 					// we joined the superior cluster and should end the search for a superior coordinator
 					tJoinedExistingLocalSuperiorCluster = true;
@@ -620,13 +666,13 @@ public class Coordinator extends ControlEntity implements Localization
 	}
 
 	/**
-	 * Tries to join an existing superior cluster
+	 * Tries to join an existing local superior cluster
 	 * 
-	 * @param pSuperiorCluster an existing superior cluster where we want to join
+	 * @param pSuperiorCluster an existing local superior cluster where we want to join
 	 * 
 	 * @return true or false to indicate success/error
 	 */
-	private boolean joinExistingSuperiorCluster(ControlEntity pSuperiorCluster)
+	private boolean joinExistingLocalSuperiorCluster(ControlEntity pSuperiorCluster)
 	{
 		boolean tResult = false;
 		
@@ -695,7 +741,7 @@ public class Coordinator extends ControlEntity implements Localization
 	 * 
 	 * @param pPacket the packet
 	 */
-	private void sendSuperiorClusters(Serializable pPacket)
+	private void sendSuperiorClusters(SignalingMessageHrm pPacket)
 	{
 		// get all communication channels
 		LinkedList<ComChannel> tComChannels = getComChannels();

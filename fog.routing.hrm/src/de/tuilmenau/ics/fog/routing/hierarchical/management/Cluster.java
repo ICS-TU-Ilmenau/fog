@@ -11,11 +11,10 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnounceRemoteCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCluster;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -28,7 +27,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 /**
  * This class represents a cluster head at a defined hierarchy level.
  */
-public class Cluster extends ClusterMember implements IEvent
+public class Cluster extends ClusterMember
 {
 	/**
 	 * For using this class within (de-)serialization.
@@ -103,19 +102,13 @@ public class Cluster extends ClusterMember implements IEvent
 		// detect neighbor clusters (members), increase the Bully priority based on the local connectivity
 		tResult.initializeNeighborhood();
 
-		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER on hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
+		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
 		// register at HRMController's internal database
 		pHRMController.registerCluster(tResult);
 
 		// creates new elector object, which is responsible for Bully based election processes
 		tResult.mElector = new Elector(pHRMController, tResult);
-
-		// trigger periodic Cluster announcements
-		if(HRMConfig.Hierarchy.CLUSTER_ANNOUNCEMENTS){
-			// register next trigger for 
-			pHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIORD_CLUSTER_ANNOUNCEMENTS * 2, tResult);
-		}
 
 		return tResult;
 	}
@@ -190,140 +183,23 @@ public class Cluster extends ClusterMember implements IEvent
 		
 		return tResult;
 	}
+
+	/**
+	 * Forwards a coordinator announcement by sending it to all cluster members
+	 * @param pSourceL2Address 
+	 * 
+	 * @param pAnnounceCoordinator the coordinator announcement
+	 */
+	public void forwardCoordinatorAnnouncement(L2Address pSourceL2Address, AnnounceCoordinator pAnnounceCoordinator)
+	{
+		Logging.log(this, "Forwarding coordinator announcement: " + pAnnounceCoordinator);
 	
-	/**
-	 * SEND: distribute AnnounceCluster messages among the neighbors which are within the given max. radius (see HRMConfig)        
-	 */
-	public void distributeClusterAnnouncement()
-	{
-		AnnounceCluster tAnnounceClusterPacket = new AnnounceCluster(mHRMController.getNodeName(), createClusterName(), mHRMController.getNodeName());
-		Logging.log(this, "\n\n########## Distributing Cluster announcement: " + tAnnounceClusterPacket);
-		sendClusterBroadcast(tAnnounceClusterPacket, true);
-	}
-
-	/**
-	 * Implementation for IEvent::fire()
-	 */
-	@Override
-	public void fire()
-	{
-		Logging.log(this, "###########################");
-		Logging.log(this, "###### FIRE FIRE FIRE #####");
-		Logging.log(this, "###########################");
-		
-		/**
-		 * Trigger: ClusterAnnounce distribution
-		 */
-		distributeClusterAnnouncement();
-		
-		// register next trigger for 
-		mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIORD_CLUSTER_ANNOUNCEMENTS, this);
-	}
-
-	/**
-	 * EVENT: cluster announcement, we react on this by:
-	 *       1.) store the topology information locally
-	 *       2.) forward the announcement within the same hierarchy level ("to the side")
-	 * 
-	 * @param pAnnounceCluster the received announcement
-	 */
-	@Override
-	public void eventClusterAnnouncement(AnnounceCluster pAnnounceCluster)
-	{
-		Logging.log(this, "EVENT: cluster announcement: " + pAnnounceCluster);
-		
-		/**
-		 * Parse the announcement and update the ARG 
-		 */
-		if(!pAnnounceCluster.getSenderClusterName().equals(this)){
-			registerAnnouncedClusterARG(pAnnounceCluster);
-		}
-		
-		/**
-		 * Forward the announcement within the same hierarchy level
-		 */
-		// get locally known neighbors for this cluster and hierarchy level
-		LinkedList<ControlEntity> tLocallyKnownNeighbors = getNeighborsARG();
-		if(tLocallyKnownNeighbors.size() > 0){
-			Logging.log(this, "      ..found " + tLocallyKnownNeighbors.size() + " neighbors: " + tLocallyKnownNeighbors);
-
-			/**
-			 * transition from one cluster to the next one => decrease TTL value
-			 */
-			pAnnounceCluster.decreaseTTL();
-			
-			/**
-			 * forward the announcement if the TTL is still okay
-			 */
-			if(pAnnounceCluster.isTTLOkay()){
-				for(ControlEntity tLocallyKnownNeighbor: tLocallyKnownNeighbors){
-					if(tLocallyKnownNeighbor instanceof Cluster){
-						/**
-						 * Get the neighbor Cluster object
-						 */
-						Cluster tLocallyKnownNeighborCluster = (Cluster)tLocallyKnownNeighbor;
-						
-						/**
-						 * Forward the announcement
-						 */
-						Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocallyKnownNeighborCluster);
-						tLocallyKnownNeighborCluster.forwardClusterAnnouncement(pAnnounceCluster);
-					}else{
-						Logging.log(this, "Ignoring stored neighbor of uninteresting type in ARG: " + tLocallyKnownNeighbor);
-					}
-				}
-			}else{
-				Logging.log(this, "TTL exceeded for cluster announcement: " + pAnnounceCluster);
-			}
+		// check the TTL once more
+		if(pAnnounceCoordinator.isTTLOkay()){
+			// forward this announcement to all cluster members
+			sendClusterBroadcast(pAnnounceCoordinator, pSourceL2Address);
 		}else{
-			Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCluster);
-		}
-	}
-
-	/**
-	 * Store the announced cluster within the local ARG
-	 * 
-	 * @param pAnnounceCluster the announcement
-	 */
-	private void registerAnnouncedClusterARG(AnnounceCluster pAnnounceCluster)
-	{
-		ClusterName tRemoteClusterName = pAnnounceCluster.getSenderClusterName();
-
-		/**
-		 * Storing the ARG node for this announced remote cluster
-		 */
-		Logging.log(this, "Registering ANNOUNCED REMOTE CLUSTER: " + tRemoteClusterName);
-		if(!mHRMController.isKnownARG(tRemoteClusterName)){
-			Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE CLUSTER: " + tRemoteClusterName);
-
-			ClusterMember tClusterProxy = ClusterMember.create(mHRMController, tRemoteClusterName, pAnnounceCluster.getSenderClusterCoordinatorNodeName());
-			
-			mHRMController.registerNodeARG(tClusterProxy);
-		}else{
-			Logging.log(this, "     ..already known remote cluster: " + tRemoteClusterName);
-		}
-		
-		/**
-		 * Storing the route to this announced remote cluster
-		 */
-	}
-
-	/**
-	 * Forwards a cluster announcement by sending it to its coordinator
-	 * 
-	 * @param pAnnounceCluster the cluster announcement
-	 */
-	private void forwardClusterAnnouncement(AnnounceCluster pAnnounceCluster)
-	{
-		Logging.log(this, "Forwarding cluster announcement: " + pAnnounceCluster);
-		
-		// is this node the local coordinator for this cluster?
-		if(hasLocalCoordinator()){
-			// forward this announcement to all remote cluster members
-			sendClusterBroadcast(pAnnounceCluster);
-		}else{
-			// forward this announcement to the coordinator and let it forward the announcement to the cluster members
-			sendCoordinator(pAnnounceCluster);
+			Logging.err(this, "forwardCoordinatorAnnouncement() found invalid TTL for: " + pAnnounceCoordinator);
 		}
 	}
 	
@@ -363,6 +239,7 @@ public class Cluster extends ClusterMember implements IEvent
 		// update the stored unique ID for the coordinator
 		if (pCoordinator != null){
 			setSuperiorCoordinatorID(pCoordinator.getCoordinatorID());
+			setCoordinatorID(pCoordinator.getCoordinatorID());			
 
 			// update the descriptive string about the coordinator
 			setSuperiorCoordinatorDescription(mCoordinator.toLocation());
@@ -604,7 +481,7 @@ public class Cluster extends ClusterMember implements IEvent
 				if(superiorCoordinatorComChannel() != null)
 				{
 					// OK, we have to notify the other node via socket communication, so this cluster has to be at least one hop away
-					superiorCoordinatorComChannel().sendPacket(mReceivedAnnounces.removeFirst());
+//					superiorCoordinatorComChannel().sendPacket(mReceivedAnnounces.removeFirst());
 				} else {
 					/*
 					 * in this case this announcement came from a neighbor intermediate cluster
@@ -707,7 +584,7 @@ public class Cluster extends ClusterMember implements IEvent
 			{
 //				handleNeighborAnnouncement(pAnnouncement, pCEP);
 			} else {
-				superiorCoordinatorComChannel().sendPacket(pAnnouncement);
+//				superiorCoordinatorComChannel().sendPacket(pAnnouncement);
 			}
 		} else {
 			mReceivedAnnounces.add(pAnnouncement);

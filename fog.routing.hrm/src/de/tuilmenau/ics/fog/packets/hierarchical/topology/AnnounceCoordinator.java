@@ -10,18 +10,19 @@
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.Route;
-import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This packet is used within the HRM infrastructure in order to tell other clusters about the existence of a remote cluster.
  *         Such information is needed for coordinators, which can use this information in order to create a new higher cluster with the coordinators of announce neighbor clusters. 
  */
-public class AnnounceCluster extends SignalingMessageHrm
+public class AnnounceCoordinator extends SignalingMessageHrm implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = -1548886959657058300L;
 
@@ -57,7 +58,7 @@ public class AnnounceCluster extends SignalingMessageHrm
 	 * @param pSenderClusterName the ClusterName of the sender
 	 * @param pCoordinatorNodeName the name of the node where the coordinator of the announced cluster is located
 	 */
-	public AnnounceCluster(Name pSenderName, ClusterName pSenderClusterName, Name pCoordinatorNodeName)
+	public AnnounceCoordinator(Name pSenderName, ClusterName pSenderClusterName, Name pCoordinatorNodeName)
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
@@ -116,11 +117,20 @@ public class AnnounceCluster extends SignalingMessageHrm
 	/**
 	 * Adds an entry to the recorded route towards the announced cluster
 	 * 
-	 * @param pSegment the segment which should be added to the route
+	 * @param pRoute the partial route which should be added to the route
 	 */
-	public void addToRoute(RouteSegment pSegment)
+	public void addRouteHead(Route pRoute)
 	{
-		mRoute.add(pSegment);
+		if(pRoute != null){
+			Logging.log(this, "Adding route head");
+			Logging.log(this, "      ..old route to sender: " + mRoute);
+			Route tNewRoute = pRoute.clone();
+			tNewRoute.add(mRoute);
+			mRoute = tNewRoute;
+			Logging.log(this, "       ..new route to sender: " + mRoute);
+		}else{
+			Logging.warn(this, "Cannot add an invalid route head");
+		}
 	}
 	
 	/**
@@ -141,6 +151,32 @@ public class AnnounceCluster extends SignalingMessageHrm
 	public Route getRoute()
 	{
 		return mRoute.clone();
+	}
+	
+	/**
+	 * Returns a duplicate of this packet
+	 * 
+	 * @return the duplicate packet
+	 */
+	@Override
+	public SignalingMessageHrm duplicate()
+	{
+		AnnounceCoordinator tResult = new AnnounceCoordinator(getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeName());
+		
+		super.duplicate(tResult);
+
+		// update route
+		tResult.addRouteHead(getRoute());
+		
+		// update TTL
+		tResult.mTTL = getTTL();
+		
+		// update the route to the announced cluster
+		tResult.mRoute = getRoute();
+		
+		Logging.log(this, "Created duplicate packet: " + tResult);
+		
+		return tResult;
 	}
 	
 	/**
