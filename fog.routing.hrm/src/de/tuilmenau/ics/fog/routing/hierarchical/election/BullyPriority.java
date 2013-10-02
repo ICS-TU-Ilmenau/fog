@@ -44,10 +44,15 @@ public class BullyPriority
 	private static long UNDEFINED_PRIORITY = -1;
 	
 	/**
-	 * This value is used when the connectivity changes.
+	 * This value is used when the connectivity changes ==> instantiate coordinators at link crossings
 	 */
 	public static int OFFSET_FOR_CONNECTIVITY = 100;
 	
+	/**
+	 * This value is used when a remote coordinator announcement is received ==> instantiate coordinators far away from one-way network parts / closer to the network core
+	 */
+	public static int OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR = 10000;
+
 	/**
 	 * This is the priority counter, which allows for globally (related to a physical simulation machine) unique BullyPriority IDs.
 	 */
