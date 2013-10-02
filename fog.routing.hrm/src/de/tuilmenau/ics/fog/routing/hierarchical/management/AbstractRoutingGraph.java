@@ -149,9 +149,9 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	 * @param pNode the node
 	 * @return true if the node is known, otherwise false
 	 */
-	public synchronized boolean isknown(NodeObject pNode)
+	public boolean isknown(NodeObject pNode)
 	{
-		return mRoutingGraph.containsVertex(pNode);
+		return contains(pNode);
 	}
 
 	/**
