@@ -182,29 +182,32 @@ public class ComSession extends Session
 	{
 		return mRouteToPeer;
 	}
-	
+
 	/**
-	 * Defines the route to the peer (its central FN)
+	 * EVENT: the route to the peer was announced, triggered by ourself if a AnnouncePhysicalEndPoint packet was received, we react by:
+	 * 		1.) store the route to the peer (to its central FN)
 	 * 
-	 * @param pRoute the route to the peer
+	 * @param pRouteToPeer the route to the peer
 	 */
-	private void setRouteToPeer(Route pRoute)
+	private void eventRouteToPeerAvailable(Route pRouteToPeer)
 	{
-		Logging.log(this, "Setting route to peer " + getPeerL2Address() + " as " + pRoute);
+		Logging.log(this, "Setting route to peer " + getPeerL2Address() + " as " + pRouteToPeer);
+		if(mRouteToPeer == null){
+			Logging.log(this, "OLD ROUTE TO PEER WAS INVALID");
+		}
 		
 		/**
 		 * Inform the HRS about the complete route to the peer
 		 */
 		// HINT: we do this only on base hierarchy level, in the higher layers this routing information is already known (otherwise the hierarchy couldn't have grown until this point)
 		if(mHierarchyLevel.isBaseLevel()) {
-			Logging.log(this, "      ..registering route to peer: " + pRoute);
-			getHRMController().getHRS().registerRoute(mCentralFNL2Address, mPeerL2Address, pRoute);
-			mHRMController.addRouteToDirectNeighbor(mPeerL2Address, pRoute);
+			Logging.log(this, "      ..registering route to peer: " + pRouteToPeer);
+			mHRMController.addRouteToDirectNeighbor(mPeerL2Address, pRouteToPeer);
 		}
 		
-		mRouteToPeer = pRoute;
+		mRouteToPeer = pRouteToPeer;
 	}
-
+	
 	/**
 	 * Sets new L2Address for peer (central FN)
 	 * 
@@ -327,7 +330,7 @@ public class ComSession extends Session
 			Route tRouteToPeer = null;
 			// search a route form the central FN to the intermediate FN between the central FN and the bus
 			try {
-				tRouteToPeer = getHRMController().getHRS().getRoute(tSenderAddress, new Description(), getHRMController().getNode().getIdentity());
+				tRouteToPeer = mHRMController.getHRS().getRoute(tSenderAddress, new Description(), getHRMController().getNode().getIdentity());
 			} catch (RoutingException tExc) {
 				Logging.err(this, "Unable to find route to ", tExc);
 			} catch (RequirementsException tExc) {
@@ -335,24 +338,32 @@ public class ComSession extends Session
 			}
 			
 			/**
-			 * Complete the found route to a route which ends at the central FN of the peer node, but avoid trailing duplicates 
+			 * Enlarge the found route by an L2Address in order to have a route which ends at the central FN of the peer node, but avoid trailing duplicates 
 			 */
 			boolean tPeerL2AddressAlreadyKnown = false;
+			// get the last entry of the known route to the peer
 			RouteSegment tRouteToPeerLastEntry = tRouteToPeer.getLast();
+			// is the last entry an address?
 			if (tRouteToPeerLastEntry instanceof RouteSegmentAddress){
 				RouteSegmentAddress tRouteToPeerLastAddress = (RouteSegmentAddress)tRouteToPeerLastEntry;
+				// is the last entry an L2Address? 
 				if(tRouteToPeerLastAddress.getAddress() instanceof L2Address){
+					// get the L2Address from the last entry
 					L2Address tLastAddress = (L2Address)tRouteToPeerLastAddress.getAddress();
+					// is the found L2Address the same like what we would add in the next step?
 					if(tLastAddress.equals(mPeerL2Address)){
 						tPeerL2AddressAlreadyKnown = true;
 					}
 				}
 			}
+			// should we add the peer L2Address as last entry in the route towards the peer?
 			if(!tPeerL2AddressAlreadyKnown){
 				Logging.log(this, ">>> Old route to peer was: " + tRouteToPeer);
+				// add the peer L2Address as last entry in the route to the peer node
 				tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
 				Logging.log(this, ">>> New route to peer is: " + tRouteToPeer);
-				setRouteToPeer(tRouteToPeer);
+				
+				eventRouteToPeerAvailable(tRouteToPeer);
 			}else{
 				Logging.log(this, ">>> Old route to peer: " + tRouteToPeer + " includes already the entry " + mPeerL2Address + " as last entry");
 			}
@@ -568,6 +579,8 @@ public class ComSession extends Session
 	 */
 	public void startConnection(L2Address pTargetL2Address, Connection pConnection)
 	{
+		Logging.log(this, "\n\n###### STARTING connection for target: " + pTargetL2Address);
+		
 		// store the connection
 		mParentConnection = pConnection;
 		
@@ -601,10 +614,13 @@ public class ComSession extends Session
 			// have we found a route to the neighbor?
 			if(tRouteToNeighborFN != null) {
 				/**
-				 * Complete the found route to a route which ends at the central FN of the peer node
+				 * Complete the found route to a route which ends at the first FN of the peer node towards its central FN
 				 */
 				tRouteToNeighborFN.add(new RouteSegmentAddress(mPeerL2Address));
-				setRouteToPeer(tRouteToNeighborFN);
+				if(mHierarchyLevel.isBaseLevel()) {
+					Logging.log(this, "      ..registering route to peer first FN: " + tRouteToNeighborFN);
+					mHRMController.addRouteToDirectNeighbor(mPeerL2Address, tRouteToNeighborFN);
+				}
 			}
 		}else{
 			Logging.trace(this, "startConnection() doesn't know the target L2Address, will send the local L2Address to the peer");
