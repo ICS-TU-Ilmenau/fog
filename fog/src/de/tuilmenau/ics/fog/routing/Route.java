@@ -192,6 +192,12 @@ public class Route extends LinkedList<RouteSegment> implements Serializable
 		return true;
 	}
 	
+	public boolean isShorter(Route pOtherRoute)
+	{
+		// simple comparison between the sizes of the stored linked lists
+		return (size() < pOtherRoute.size());
+	}
+	
 	public boolean equals(Route pRoute)
 	{
 		Iterator<RouteSegment> thisRouteIterator = this.iterator();
