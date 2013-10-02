@@ -114,7 +114,7 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	 */
 	public void addSourceRoute(String pRoutePart)
 	{
-		mSourceRoute += "\n=> " + pRoutePart; 
+		mSourceRoute += "\n(" + getMessageNumber() + ")=> " + pRoutePart; 
 	}
 	
 	/**
@@ -138,7 +138,7 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		pOtherPacket.mSourceRoute = getSourceRoute();
 		
 		// add an entry to the recorded source route
-		pOtherPacket.addSourceRoute("[duplicated]");
+		pOtherPacket.addSourceRoute("[duplicated]: (" + getMessageNumber() + ") -> (" + pOtherPacket.getMessageNumber() + ")");
 	}
 	
 	/**
