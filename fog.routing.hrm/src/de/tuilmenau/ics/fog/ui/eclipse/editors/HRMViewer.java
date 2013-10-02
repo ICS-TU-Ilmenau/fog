@@ -599,7 +599,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		StyledText tClusterLabel = new StyledText(mContainer, SWT.BORDER);;
 		if (pEntity instanceof Cluster){
 			Cluster tCluster = (Cluster) pEntity;
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectorState().toString());
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr());
 		}else{
 			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue());
 		}

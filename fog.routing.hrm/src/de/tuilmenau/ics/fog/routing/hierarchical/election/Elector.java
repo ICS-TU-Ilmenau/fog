@@ -146,7 +146,7 @@ public class Elector implements Localization
 			
 			// was the cluster already locally registered as neighbor? 
 			if (tParentCluster.isNeighborHoodInitialized()){
-				switch(getElectorState()){
+				switch(mState){
 					case IDLE:
 						elect();
 						break;
@@ -185,7 +185,7 @@ public class Elector implements Localization
 	 */
 	public boolean wasStarted()
 	{
-		return (getElectorState() != ElectorState.IDLE);
+		return (mState != ElectorState.IDLE);
 	}
 	
 	/**
@@ -207,7 +207,7 @@ public class Elector implements Localization
 		{
 			if (mState != pNewState){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-					Logging.log(this, "STATE TRANSITION from " + getElectorState() + " to " + pNewState);
+					Logging.log(this, "STATE TRANSITION from " + mState + " to " + pNewState);
 				}
 	
 				// set new state
@@ -219,13 +219,13 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * Determines the current elector state.
+	 * Determines the current election state and returns a descriptive string.
 	 * 
-	 * @return current state of the elector
+	 * @return current state of the election as string
 	 */
-	public ElectorState getElectorState()
+	public String getElectionStateStr()
 	{
-		return mState;
+		return mState.toString();
 	}	
 
 	/**
@@ -245,7 +245,7 @@ public class Elector implements Localization
 	 */
 	public boolean isCoordinatorValid()
 	{
-		return (getElectorState() == ElectorState.ELECTED);
+		return (mState == ElectorState.ELECTED);
 	}
 
 	/**
@@ -281,7 +281,7 @@ public class Elector implements Localization
 	 */
 	private void signalElectBroadcast()
 	{
-		if (getElectorState() == ElectorState.ELECTING){
+		if (mState == ElectorState.ELECTING){
 			if (isTimingOkayOfElectBroadcast()){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 					Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParent);
@@ -302,7 +302,7 @@ public class Elector implements Localization
 			}
 
 		}else{
-			Logging.warn(this, "Election has wrong state " + getElectorState() + " for signaling an ELECTION START, ELECTING expected");
+			Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION START, ELECTING expected");
 
 			// set correct elector state
 			setElectorState(ElectorState.ERROR);
@@ -314,7 +314,7 @@ public class Elector implements Localization
 	 */
 	private void signalAnnounceBroadcast()
 	{
-		if (getElectorState() == ElectorState.ELECTED){
+		if (mState == ElectorState.ELECTED){
 			// get the size of the cluster
 			int tKnownClusterMembers = mParent.countConnectedClusterMembers();
 			
@@ -332,7 +332,7 @@ public class Elector implements Localization
 				// send broadcast
 				mParent.sendClusterBroadcast(tPacketBullyAnnounce, true);
 			}else{
-				Logging.warn(this, "Election has wrong state " + getElectorState() + " for signaling an ELECTION END, ELECTED expected");
+				Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION END, ELECTED expected");
 				
 				// set correct elector state
 				setElectorState(ElectorState.ERROR);
