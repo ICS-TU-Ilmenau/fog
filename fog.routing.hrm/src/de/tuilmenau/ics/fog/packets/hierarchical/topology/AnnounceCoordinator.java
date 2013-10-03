@@ -21,7 +21,52 @@ import de.tuilmenau.ics.fog.ui.Logging;
 /**
  * PACKET: This packet is used within the HRM infrastructure in order to tell other clusters about the existence of a remote cluster.
  *         Such information is needed for coordinators, which can use this information in order to create a new higher cluster with the coordinators of announce neighbor clusters. 
- */
+ *
+ * ****************************************************************************************************************************
+ * ************************ Explanation how such a packet is forwarded within the HRM infrastructure  *************************
+ * ****************************************************************************************************************************
+ * 
+ *                      "1. towards the bottom of the hierarchy" 
+ *
+ *                                      +-------+
+ *                    +---------------- |Coord.2| ---------------+
+ *                    |                 +-------+                |
+ *                    |                                          |
+ *                    |                                          |
+ *                   \|/                                        \|/
+ *                +-------+                                 +-------+
+ *           +--- |Coord.1| ---+                       +--- |Coord.1| ---+
+ *           |    +-------+    |                       |    +-------+    |
+ *           |                 |                       |                 |
+ *          \|/               \|/                     \|/               \|/
+ *       +-------+         +-------+               +-------+         +-------+
+ *       |Coord.0|         |Coord.0|               |Coord.0|         |Coord.0|
+ *       +-------+         +-------+               +-------+         +-------+
+ *           |                 |                       |                 |
+ *           |                 |                       |                 |
+ *          \|/               \|/                     \|/               \|/
+ *     /==========\       /==========\           /==========\       /==========\
+ *     |L0 cluster|       |L0 cluster|           |L0 cluster|       |L0 cluster|
+ *     \==========/       \==========/           \==========/       \==========/  
+ *
+ * 
+ * 
+ *                              "2. towards the side"
+ *     /==========\       /==========\           /==========\       /==========\
+ *     |L0 cluster| <---> |L0 cluster| <-------> |L0 cluster| <---> |L0 cluster|
+ *     \==========/       \==========/           \==========/       \==========/
+ *       
+ *                               
+ * HINT: Assumption: each L0 coordinator knows to which L1+ clusters it belongs.
+ * 
+ * HINT (TTL): TTL handling: Based on the previous assumption, each L0 cluster is able to decide if a new logical hop is passed 
+ *             when forwarding such packets within level 0. As a result of this, the TTL value can be automatically decreased if
+ *             a new logical hop is entered 
+ *                                
+ * HINT (max. hierarchy level): Level 0                                 
+ * ****************************************************************************************************************************
+ * ****************************************************************************************************************************
+*/
 public class AnnounceCoordinator extends SignalingMessageHrm implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = -1548886959657058300L;
