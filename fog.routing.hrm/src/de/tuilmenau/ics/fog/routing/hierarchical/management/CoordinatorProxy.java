@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.ui.Logging;
-import edu.uci.ics.jung.algorithms.shortestpath.Distance;
 
 /**
  * This class represents a cluster member (can also be a cluster head).
