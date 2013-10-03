@@ -63,7 +63,12 @@ import de.tuilmenau.ics.fog.ui.Logging;
  *             when forwarding such packets within level 0. As a result of this, the TTL value can be automatically decreased if
  *             a new logical hop is entered 
  *                                
- * HINT (max. hierarchy level): Level 0                                 
+ * HINT (max. hierarchy level): Level 0 cluster don't have to distribute announces from the coordinator at the maximum hierarchy 
+ *                              level beyond the abstract borders of the cluster at maximum hierarchy. Each node gets this information 
+ *                              from its superior coordinators. There is not additional node which still needs this information 
+ *                              forwarded from the side. Otherwise, we would have an isolated node which doesn't belong to the
+ *                              HRM infrastructure. 
+ *                                                               
  * ****************************************************************************************************************************
  * ****************************************************************************************************************************
 */
