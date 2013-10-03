@@ -202,7 +202,7 @@ public class ComChannel
 		mDirection = pDirection;
 		
 		// the peer priority gets initialized by a default value ("undefined")
-		mPeerPriority = new BullyPriority(this);
+		mPeerPriority = BullyPriority.create(this);
 
 		// store the parent (owner) of this communication channel
 		mParent = pParent;
@@ -324,7 +324,7 @@ public class ComChannel
 	public BullyPriority getPeerPriority()
 	{
 		if (mPeerPriority == null){
-			mPeerPriority = new BullyPriority(this);
+			mPeerPriority = BullyPriority.create(this);
 		}
 			
 		//TODO: getPeerPriorityFreshness() integrieren und einen Timeout bauen, so das danach nur null geliefert wird

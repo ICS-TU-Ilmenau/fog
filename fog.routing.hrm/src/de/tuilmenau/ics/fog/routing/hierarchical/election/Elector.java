@@ -113,10 +113,23 @@ public class Elector implements Localization
 			Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Bully priority");
 			signalElectBroadcast();
 		}else{
-			Logging.log(this, "I AM WINNER because no alternative cluster member is known, known cluster channels:" );
-			Logging.log(this, "    ..: " + mParent.getComChannels());
-			eventElectionWon();
+			/**
+			 * trigger "detected isolation"
+			 */
+			eventDetectedIsolation();
 		}
+	}
+	
+	/**
+	 * EVENT: detected isolation 
+	 */
+	private void eventDetectedIsolation()
+	{
+		Logging.log(this, "EVENT: isolation");
+		
+		Logging.log(this, "I AM WINNER because no alternative cluster member is known, known cluster channels:" );
+		Logging.log(this, "    ..: " + mParent.getComChannels());
+		eventElectionWon();
 	}
 	
 	/**
@@ -348,6 +361,26 @@ public class Elector implements Localization
 	}
 	
 	/**
+	 * SIGNAL: BullyPriorityUpdate
+	 */
+	private void signalBullyPriorityUpdate()
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+			Logging.log(this, "SENDPRIOUPDATE()-START, electing cluster is " + mParent);
+			Logging.log(this, "SENDPRIOUPDATE(), cluster members: " + mParent.getComChannels().size());
+		}
+
+		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), mParent.getPriority());
+
+		// send broadcast
+		mParent.sendClusterBroadcast(tBullyPriorityUpdatePacket);
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+			Logging.log(this, "SENDPRIOUPDATE()-END");
+		}
+	}
+
+	/**
 	 * SIGNAL: report itself as alive by signaling BULLY ALIVE to all cluster members
 	 */
 	private void signalAliveBroadcast()
@@ -474,13 +507,33 @@ public class Elector implements Localization
 	}
 
 	/**
+	 * EVENT: priority update, triggered by ClusterMember when the priority is changed (e.g., if the base node priority was changed)
+	 */
+	public void eventPriorityUpdate()
+	{
+		Logging.log(this, "EVENT: priority update");
+		
+		/**
+		 * trigger signaling of "priority update"
+		 */
+		signalBullyPriorityUpdate();
+		
+		/**
+		 * check for winner
+		 */
+		if(mState == ElectorState.ELECTING){
+			checkForWinner();
+		}
+	}
+	
+	/**
 	 * EVENT: a candidate left the election process
 	 * 
 	 * @param pComChannel the communication channel to the cluster member which left the election
 	 */
 	private void eventElectionLeft(ComChannel pComChannel)
 	{
-		Logging.log(this, "Cluster member left, comm. channel was: " + pComChannel);
+		Logging.log(this, "EVENT: cluster member left, comm. channel was: " + pComChannel);
 
 		/**
 		 * TRIGGER: all cluster members are gone, we destroy the cluster
@@ -493,6 +546,8 @@ public class Elector implements Localization
 	 */
 	private void eventReceivedElect()
 	{
+		Logging.log(this, "EVENT: received ELECT");
+		
 		// set correct elector state
 		setElectorState(ElectorState.ELECTING);
 	}
@@ -502,87 +557,112 @@ public class Elector implements Localization
 	 */
 	private void eventReceivedReply()
 	{
+		Logging.log(this, "EVENT: received REPLY");
+
+		/**
+		 * check for a winner
+		 */
+		checkForWinner();
+	}
+	
+	/**
+	 * Checks for a winner
+	 */
+	private void checkForWinner()
+	{
 		BullyPriority tHighestPrio = null;
 		ComChannel tExternalWinner = null;
 		boolean tIsWinner = false;
 		boolean tElectionComplete = true;
 		
-		/**
-		 * Find the highest priority of all external cluster members
-		 */
-		Logging.log(this, "Searching for highest priority...");
-		for(ComChannel tComChannel : mParent.getComChannels()) {
-			BullyPriority tPriority = tComChannel.getPeerPriority(); 
-			
-			/**
-			 * are we still waiting for the Bully priority of some cluster member?
-			 */
-			if ((tPriority == null) || (tPriority.isUndefined())){
-				// election is incomplete
-				tElectionComplete = false;
-			
-				// leave the loop because we already known that the election is incomplete
-				break;
-			}
-			
-			Logging.log(this, "		..cluster member " + tComChannel + " has priority " + tPriority.getValue()); 
-			
-			/**
-			 * find the highest priority in the cluster
-			 */
-			if((tHighestPrio == null) || (tPriority.isHigher(this, tHighestPrio))) {
-				tHighestPrio = tPriority;
-				tExternalWinner = tComChannel;
-			}
-		}
-		
-		/**
-		 * Check if election is complete
-		 */
-		if (tElectionComplete){
-			/**
-			 * Is the local priority higher?
-			 */
-			if (mParent.getPriority().isHigher(this, tHighestPrio)){
-				Logging.log(this, "	        ..HAVING HIGHER PRIORITY than " + tExternalWinner.getPeerL2Address());
-	
-				// we are the absolute winner
-				tIsWinner = true;
-			}else{
-				if (mParent.getPriority().equals(tHighestPrio)){
-					Logging.log(this, "	        ..HAVING SAME PRIORITY like " + tExternalWinner.getPeerL2Address());
-	
-					if (mHRMController.getNodeL2Address().isHigher(tExternalWinner.getPeerL2Address())){
-						Logging.log(this, "	        ..HAVING HIGHER L2 address than " + tExternalWinner.getPeerL2Address());
-	
-						// mark as winner
-						tIsWinner = true;
-					}else{
-						if (mHRMController.getNodeL2Address().isLower(tExternalWinner.getPeerL2Address())){
-							Logging.log(this, "	        ..HAVING LOWER L2 address " + mHRMController.getNodeL2Address() + " than " +  tExternalWinner.getPeerL2Address());
-						}else{
-							Logging.err(this, "	        ..HAVING SAME L2 address " + mHRMController.getNodeL2Address() + " like " +  tExternalWinner.getPeerL2Address());
-						}
+		if(mState == ElectorState.ELECTING){
+			// do we know more than 0 external cluster members?
+			if (mParent.countConnectedRemoteClusterMembers() > 0){
+				/**
+				 * Find the highest priority of all external cluster members
+				 */
+				Logging.log(this, "Searching for highest priority...");
+				for(ComChannel tComChannel : mParent.getComChannels()) {
+					BullyPriority tPriority = tComChannel.getPeerPriority(); 
+					
+					/**
+					 * are we still waiting for the Bully priority of some cluster member?
+					 */
+					if ((tPriority == null) || (tPriority.isUndefined())){
+						// election is incomplete
+						tElectionComplete = false;
+					
+						// leave the loop because we already known that the election is incomplete
+						break;
+					}
+					
+					Logging.log(this, "		..cluster member " + tComChannel + " has priority " + tPriority.getValue()); 
+					
+					/**
+					 * find the highest priority in the cluster
+					 */
+					if((tHighestPrio == null) || (tPriority.isHigher(this, tHighestPrio))) {
+						tHighestPrio = tPriority;
+						tExternalWinner = tComChannel;
 					}
 				}
-			}
+				
+				/**
+				 * Check if election is complete
+				 */
+				if (tElectionComplete){
+					/**
+					 * Is the local priority higher?
+					 */
+					if (mParent.getPriority().isHigher(this, tHighestPrio)){
+						Logging.log(this, "	        ..HAVING HIGHER PRIORITY than " + tExternalWinner.getPeerL2Address());
 			
-			/**
-			 * React on the result
-			 */
-			if(tIsWinner) {
-				Logging.log(this, "	        ..I AM WINNER");
-				eventElectionWon();
-			}else{
-				if (tExternalWinner != null){
-					Logging.log(this, "	        ..seeing " + tExternalWinner.getPeerL2Address() + " as election winner");
+						// we are the absolute winner
+						tIsWinner = true;
+					}else{
+						if (mParent.getPriority().equals(tHighestPrio)){
+							Logging.log(this, "	        ..HAVING SAME PRIORITY like " + tExternalWinner.getPeerL2Address());
+			
+							if (mHRMController.getNodeL2Address().isHigher(tExternalWinner.getPeerL2Address())){
+								Logging.log(this, "	        ..HAVING HIGHER L2 address than " + tExternalWinner.getPeerL2Address());
+			
+								// mark as winner
+								tIsWinner = true;
+							}else{
+								if (mHRMController.getNodeL2Address().isLower(tExternalWinner.getPeerL2Address())){
+									Logging.log(this, "	        ..HAVING LOWER L2 address " + mHRMController.getNodeL2Address() + " than " +  tExternalWinner.getPeerL2Address());
+								}else{
+									Logging.err(this, "	        ..HAVING SAME L2 address " + mHRMController.getNodeL2Address() + " like " +  tExternalWinner.getPeerL2Address());
+								}
+							}
+						}
+					}
+					
+					/**
+					 * React on the result
+					 */
+					if(tIsWinner) {
+						Logging.log(this, "	        ..I AM WINNER");
+						eventElectionWon();
+					}else{
+						if (tExternalWinner != null){
+							Logging.log(this, "	        ..seeing " + tExternalWinner.getPeerL2Address() + " as election winner");
+						}else{
+							Logging.err(this, "External winner is unknown but also I am not the winner");
+						}
+						eventElectionLost();
+					}
 				}else{
-					Logging.err(this, "External winner is unknown but also I am not the winner");
+					// election is incomplete: we are still waiting for some priority value(s)
 				}
-				eventElectionLost();
+			}else{
+				/**
+				 * trigger "detected isolation"
+				 */
+				eventDetectedIsolation();
 			}
 		}else{
-			// election is incomplete: we are still waiting for some priority value(s)
+			Logging.err(this, "EXPECTING ELECTING STATE here but having state: " + mState.toString());
 		}
 	}
 	
@@ -744,9 +824,11 @@ public class Elector implements Localization
 			Logging.log(this, "Got a priority update and remote priority " + pSenderPriority.getValue() + " is higher than local " + mParent.getPriority().getValue() + ", triggering re-election");
 			
 			/**
-			 * Trigger: new election round
+			 * Trigger: new election round if we are the current winner
 			 */
-			startElection();
+			if(isWinner()){
+				startElection();
+			}
 		}else{
 			Logging.log(this, "Got priority " + pSenderPriority.getValue() + " via comm. channel: " + pComChannel);
 		}

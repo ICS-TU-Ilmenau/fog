@@ -14,9 +14,11 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -77,7 +79,7 @@ public class ClusterMember extends ClusterName
 		// detect neighbor clusters (members), increase the Bully priority based on the local connectivity
 		tResult.initializeNeighborhood();
 
-		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER MEMBER on hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
+		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER MEMBER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
 		// register at HRMController's internal database
 		pHRMController.registerClusterMember(tResult);
@@ -93,7 +95,7 @@ public class ClusterMember extends ClusterName
 	 */
 	protected void initializeNeighborhood()
 	{
-		Logging.log(this, "Checking local connectivity for increasing priority " + getPriority().getValue());
+		Logging.log(this, "Checking local neighborhood");
 
 		/**
 		 * Store neighborhood in ARG for every locally known cluster at this hierarchy level 
@@ -352,6 +354,50 @@ public class ClusterMember extends ClusterName
 		}
 
 		return tResult;
+	}
+
+	/**
+	 * EVENT: new base node priority
+	 * 
+	 * @param pNewBaseNodePriority the new base node priority
+	 */
+	public void eventBaseNodePriorityUpdate(long pNewBaseNodePriority)
+	{
+		Logging.log(this, "EVENT: base node priority update");
+		
+		/**
+		 * Set the new priority if it differs from the old one
+		 */
+		if((getPriority() != null) && (getPriority().getValue() != pNewBaseNodePriority)){
+			setPriority(BullyPriority.create(this, pNewBaseNodePriority));
+		}
+	}
+
+	/**
+	 * Sets a new Bully priority
+	 * 
+	 * @param pPriority the new Bully priority
+	 */
+	@Override
+	public void setPriority(BullyPriority pPriority)
+	{
+		BullyPriority tOldPriority = getPriority();
+		
+		if((pPriority != null) && (!pPriority.isUndefined())){
+			/**
+			 * Set the new priority
+			 */
+			super.setPriority(pPriority);
+	
+			/**
+			 * Send priority update if necessary 
+			 */
+			if ((tOldPriority != null) && (!tOldPriority.isUndefined()) && (!tOldPriority.equals(pPriority))){
+				mElector.eventPriorityUpdate();
+			}
+		}else{
+			Logging.err(this, "REQUEST FOR SETTING UNDEFINED PRIORITY");
+		}
 	}
 
 	/**

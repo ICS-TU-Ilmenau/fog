@@ -14,6 +14,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -139,7 +140,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	public BullyPriority getPriority()
 	{
 		if (mBullyPriority == null){
-			mBullyPriority = new BullyPriority(this);
+			mBullyPriority = BullyPriority.create(this);
 		}
 			
 		return mBullyPriority;
@@ -343,14 +344,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		Logging.log(this, "Registering neighbor (ARG): " + pNeighbor);
 
 		AbstractRoutingGraphLink.LinkType tLinkType = AbstractRoutingGraphLink.LinkType.DB_REF;
-
-		if (this instanceof ClusterMember){
-			// increase Bully priority because of changed connectivity (topology depending) 
-			getPriority().increaseConnectivity();
-			
-			// inform all cluster members about the Bully priority change
-			//TODO: sendClusterBroadcast(new BullyPriorityUpdate(mHRMController.getNodeName(), getPriority()));
-		}
 
 		/**
 		 * Register a link to the neighbor and tell the neighbor about it 

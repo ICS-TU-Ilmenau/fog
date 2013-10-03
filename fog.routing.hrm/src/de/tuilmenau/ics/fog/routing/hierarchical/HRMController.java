@@ -1240,6 +1240,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(this, "Setting new base node priority: " + pPriority);
 		mNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, pPriority);
+
+		/**
+		 * Inform all local cluster members about the change
+		 */
+		LinkedList<ClusterMember> tAllClusterMembers = getAllClusterMembers();
+		for (ClusterMember tClusterMember : tAllClusterMembers){
+			tClusterMember.eventBaseNodePriorityUpdate(pPriority);
+		}
 	}
 
 	/**
@@ -2072,7 +2080,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 */
 						Logging.log(this, "     ..creating cluster proxy");
 						ClusterMember tClusterProxy_ClusterMember = new ClusterMember(this, new HierarchyLevel(this, tPropClusterParticipation.getHierarchyLevel().getValue() - 1),  tSenderClusterMember.getClusterID(), tSenderClusterMember.getCoordinatorID(), tPropClusterParticipation.getSenderNodeName());
-						tClusterProxy_ClusterMember.setPriority(tSenderClusterMember.getPriority());
 						
 						/**
 						 * Store the coordinator name of the remote cluster in the local FoGName-to-L2Address mapping
