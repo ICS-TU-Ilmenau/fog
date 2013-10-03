@@ -129,7 +129,7 @@ public class HRMConfig
 		/**
 		 * Maximum radius that is allowed during cluster expansion phase 
 		 */
-		public static final int EXPANSION_RADIUS = 4;
+		public static final int EXPANSION_RADIUS = 2;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
@@ -160,7 +160,7 @@ public class HRMConfig
 		public static final boolean AUTO_CLEANUP_FOR_CONNECTIONS = true;
 
 		/**
-		 * Defines if coordinator should announce their existences among cluster members/neighbors
+		 * Defines if coordinators should announce their existences among cluster members/neighbors
 		 * If this is disabled, the hierarchy creation won't be correct.
 		 */
 		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
@@ -169,6 +169,11 @@ public class HRMConfig
 		 * Defines the time period for CoordinatorAnnounce distributions
 		 */
 		public static final double PERIOD_COORDINATOR_ANNOUNCEMENTS = 3.0;
+
+		/**
+		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
+		 */
+		public static final boolean PERIODIC_COORDINATOR_ANNOUNCEMENTS = true;
 	}
 	
 	/**

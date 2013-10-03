@@ -113,7 +113,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		Logging.log(this, "\n\n\n################ CREATED COORDINATOR at hierarchy level: " + (getHierarchyLevel().getValue() - 1));
 		
 		// trigger periodic Cluster announcements
-		if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
+		if(HRMConfig.Hierarchy.PERIODIC_COORDINATOR_ANNOUNCEMENTS){
 			// register next trigger for 
 			mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS * 2, this);
 		}
@@ -517,16 +517,19 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private void distributeCoordinatorAnnouncement()
 	{
-		AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeName());
-		Logging.log(this, "\n\n########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
-		
-		/**
-		 * Send broadcasts in all locally known clusters at this hierarchy level
-		 */
-		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue() - 1);
-		Logging.log(this, "     ..distributing in clusters: " + tClusters);
-		for(Cluster tCluster : tClusters){
-			tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+		// trigger periodic Cluster announcements
+		if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
+			AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeName());
+			Logging.log(this, "\n\n########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
+			
+			/**
+			 * Send broadcasts in all locally known clusters at this hierarchy level
+			 */
+			LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue() - 1);
+			Logging.log(this, "     ..distributing in clusters: " + tClusters);
+			for(Cluster tCluster : tClusters){
+				tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+			}
 		}
 	}
 
