@@ -148,22 +148,22 @@ public class ClusterMember extends ClusterName
 		registerAnnouncedCoordinatorARG(this, pAnnounceCoordinator);
 		
 		/**
-		 * Forward the announcement within the same hierarchy level ("to the side")
+		 * transition from one cluster to the next one => decrease TTL value
 		 */
-		// get locally known neighbors for this cluster and hierarchy level
-		LinkedList<ControlEntity> tLocallyKnownNeighbors = getNeighborsARG();
-		if(tLocallyKnownNeighbors.size() > 0){
-			Logging.log(this, "      ..found " + tLocallyKnownNeighbors.size() + " neighbors: " + tLocallyKnownNeighbors);
+		pAnnounceCoordinator.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
 
+		/**
+		 * forward the announcement if the TTL is still okay
+		 */
+		if(pAnnounceCoordinator.isTTLOkay()){
 			/**
-			 * transition from one cluster to the next one => decrease TTL value
+			 * Forward the announcement within the same hierarchy level ("to the side")
 			 */
-			pAnnounceCoordinator.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
-			
-			/**
-			 * forward the announcement if the TTL is still okay
-			 */
-			if(pAnnounceCoordinator.isTTLOkay()){
+			// get locally known neighbors for this cluster and hierarchy level
+			LinkedList<ControlEntity> tLocallyKnownNeighbors = getNeighborsARG();
+			if(tLocallyKnownNeighbors.size() > 0){
+				Logging.log(this, "      ..found " + tLocallyKnownNeighbors.size() + " neighbors: " + tLocallyKnownNeighbors);
+	
 				for(ControlEntity tLocallyKnownNeighbor: tLocallyKnownNeighbors){
 					/**
 					 * Forward only to clusters where this node is the head
@@ -185,10 +185,10 @@ public class ClusterMember extends ClusterName
 					}
 				}
 			}else{
-				Logging.log(this, "TTL exceeded for cluster announcement: " + pAnnounceCoordinator);
+				Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCoordinator);
 			}
 		}else{
-			Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCoordinator);
+			Logging.log(this, "TTL exceeded for cluster announcement: " + pAnnounceCoordinator);
 		}
 	}
 
