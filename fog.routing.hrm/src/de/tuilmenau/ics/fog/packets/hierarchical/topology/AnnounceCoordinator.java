@@ -101,7 +101,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	 */
 	public boolean isTTLOkay()
 	{
-		return (mTTL >= 0);
+		return (mTTL > 0);
 	}
 	
 	/**
