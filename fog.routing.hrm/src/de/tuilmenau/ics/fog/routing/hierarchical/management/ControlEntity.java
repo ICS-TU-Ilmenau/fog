@@ -738,7 +738,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				if(tCoordinatorProxy == null){
 					Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
 		
-					tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeName());
+					tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeName(), pAnnounceCoordinator.getRouteHopCount());
 				}else{
 					// did we receive a coordinator announcement from our own coordinator?
 					if(!equals(tRemoteClusterName)){

@@ -34,11 +34,14 @@ public class CoordinatorProxy extends ClusterMember
 	 * @param pClusterID the unique ID of this cluster
 	 * @param pCoordinatorID the unique coordinator ID for this cluster
 	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
+	 * @param pHopCount the hop count to the coordinator node
 	 */
-	private CoordinatorProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, Name pCoordinatorNodeName)
+	private CoordinatorProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, Name pCoordinatorNodeName, int pHopCount)
 	{	
 		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID, pCoordinatorNodeName);
 
+		mDistance = pHopCount;
+		
 		Logging.log(this, "CREATED");
 	}
 
@@ -49,10 +52,11 @@ public class CoordinatorProxy extends ClusterMember
 	 * @param pClusterName a ClusterName which includes the hierarchy level, the unique ID of this cluster, and the unique coordinator ID
 	 * @param pClusterID the unique ID of this cluster
 	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
+	 * @param pHopCount the hop count to the coordinator node
 	 */
-	public static CoordinatorProxy create(HRMController pHRMController, ClusterName pClusterName, Name pCoordinatorNodeName)
+	public static CoordinatorProxy create(HRMController pHRMController, ClusterName pClusterName, Name pCoordinatorNodeName, int pHopCount)
 	{	
-		CoordinatorProxy tResult = new CoordinatorProxy(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pCoordinatorNodeName);
+		CoordinatorProxy tResult = new CoordinatorProxy(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pCoordinatorNodeName, pHopCount);
 		
 		Logging.log(tResult, "\n\n\n################ CREATED COORDINATOR PROXY at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
@@ -69,23 +73,27 @@ public class CoordinatorProxy extends ClusterMember
 	 */
 	public void setDistance(int pDistance)
 	{
-		/**
-		 * Update the base node priority
-		 */
-		// are we at base hierarchy level
-		if(getHierarchyLevel().isBaseLevel()){
-			// distance is the init. value?
-			if(mDistance != -1){
-				// decrease base node priority
-				mHRMController.decreaseBaseNodePriority_KnownBaseCoordinator(mDistance);
+		if (mDistance != pDistance){
+			/**
+			 * Update the base node priority
+			 */
+			// are we at base hierarchy level
+			if(getHierarchyLevel().isBaseLevel()){
+				// distance is the init. value?
+				if(mDistance != -1){
+					// decrease base node priority
+					mHRMController.decreaseBaseNodePriority_KnownBaseCoordinator(mDistance);
+				}
+	
+				// increase base node priority
+				mHRMController.increaseBaseNodePriority_KnownBaseCoordinator(pDistance);
 			}
-
-			// increase base node priority
-			mHRMController.increaseBaseNodePriority_KnownBaseCoordinator(pDistance);
+			
+			Logging.log(this, "Updating the distance (hop count) to the coordinator node to: " + pDistance);
+			mDistance = pDistance;
+		}else{
+			// old value == new value
 		}
-		
-		Logging.log(this, "Updating the distance (hop count) to the coordinator node to: " + pDistance);
-		mDistance = pDistance;
 	}
 	
 	/**

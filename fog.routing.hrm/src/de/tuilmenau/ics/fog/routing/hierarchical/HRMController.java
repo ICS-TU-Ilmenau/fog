@@ -361,7 +361,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		// are we at base hierarchy level
-		if(pCoordinator.getHierarchyLevel().isBaseLevel()){
+		if(tLevel == 0 /* TODO: wenn -1  weg */){
 			// increase base node priority
 			increaseBaseNodePriority_KnownBaseCoordinator(0);
 		}
@@ -397,7 +397,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 
 		// are we at base hierarchy level
-		if(pCoordinator.getHierarchyLevel().isBaseLevel()){
+		if(tLevel == 0 /* TODO: wenn -1  weg */){
 			// increase base node priority
 			decreaseBaseNodePriority_KnownBaseCoordinator(0);
 		}
@@ -1277,10 +1277,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// get the current priority
 		long tPriority = getBaseNodePriority();
 		
-		Logging.log(this, "Increasing base node priority (KNOWN BASE COORDINATOR) by " + BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+		float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance);
+				
+		Logging.log(this, "Increasing base node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 
 		// increase priority
-		tPriority += (long)((float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance));
+		tPriority += (long)(tOffset);
 		
 		// update priority
 		setBaseNodePriority(tPriority);
@@ -1296,7 +1298,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// get the current priority
 		long tPriority = getBaseNodePriority();
 		
-		Logging.log(this, "Decreasing base node priority (KNOWN BASE COORDINATOR) by " + BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+		float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance);
+		
+		Logging.log(this, "Decreasing base node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 
 		// increase priority
 		tPriority -= (long)((float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance));
