@@ -108,7 +108,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  *   /====================\                 /====================\      /====================\                 /====================\
  *   |                    |                 |                    |      |                    |                 |                    |			
  *   | instance on node 1 | <-- CHANNEL --> | instance on node 2 |      | instance on node 2 | <-- CHANNEL --> | instance on node 3 | 
- *   |                    |                 |                    |      |                    |                 |                    | 
+ *   |      (MEMBER)      |                 |                    |      |                    |                 |       (MEMBER)     | 
  *   \===== Cluster1@0 ===/                 \===== Cluster1@0 ===/      \===== Cluster2@0 ===/                 \===== Cluster2@0 ===/
  *   
  *   
