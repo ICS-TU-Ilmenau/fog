@@ -84,7 +84,7 @@ public class BullyPriority
 	}
 
 	/**
-	 * Constructor: initializes the Bully priority for a cluster depending on the node configuration and the hierarchy level.
+	 * Factory function: initializes the Bully priority for a cluster depending on the node configuration and the hierarchy level.
 	 * 
 	 * @param pCluster the cluster to which this Bully priority belongs to.
 	 */
@@ -105,7 +105,7 @@ public class BullyPriority
 	}
 	
 	/**
-	 * Constructor: initializes the Bully priority for a cluster depending on the node configuration and the hierarchy level.
+	 * Factory function: initializes the Bully priority for a cluster depending on the node configuration and the hierarchy level.
 	 * 
 	 * @param pCluster the cluster to which this Bully priority belongs to.
 	 */
@@ -124,6 +124,45 @@ public class BullyPriority
 		if (DEBUG_CREATION){
 			Logging.log(pControlEntity, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
 		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Factory function: initializes the Bully priority with "undefined"
+	 */
+	public static BullyPriority create(Object pParent)
+	{
+		if ((pParent instanceof Integer) || (pParent instanceof Long)){
+			Logging.warn(pParent, "This object is an Integer/Long class, this often means a wrong call to BullyPriority::create()");
+		}
+
+		BullyPriority tResult = new BullyPriority(UNDEFINED_PRIORITY);
+
+		/**
+		 * HINT: Be aware of recursion here. The Bully priority is very often used inside toString(). For example, this would lead 
+		 * to recursive calls caused by getBullyPriority in the Cluster/Coordinator class. 
+		 */
+		
+		if (DEBUG_CREATION){
+			Logging.log(pParent, "Created BullyPriority object (undefined priority) for class \"" + pParent.getClass().getSimpleName() + "\"");
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Factory function: initializes the Bully priority with "undefined"
+	 */
+	public static BullyPriority create(Object pParent, long pPredefinedPriority)
+	{
+		if ((pParent instanceof Integer) || (pParent instanceof Long)){
+			Logging.warn(pParent, "This object is an Integer/Long class, this often means a wrong call to BullyPriority::create()");
+		}
+
+		BullyPriority tResult = new BullyPriority(pPredefinedPriority);
+
+		Logging.log(pParent, "Created BullyPriority object (predefined priority " + pPredefinedPriority + ")");
 		
 		return tResult;
 	}
@@ -164,28 +203,6 @@ public class BullyPriority
 	}
 
 	/**
-	 * Constructor: initializes the Bully priority with "undefined"
-	 */
-	public BullyPriority(Object pParent)
-	{
-		if ((pParent instanceof Integer) || (pParent instanceof Long)){
-			Logging.warn(this, "The parent object is an Integer/Long class, this often means a wrong call");
-		}
-
-		mPriorityId = createPriorityID();
-		mPriority = UNDEFINED_PRIORITY;
-
-		/**
-		 * HINT: Be aware of recursion here. The Bully priority is very often used inside toString(). For example, this would lead 
-		 * to recursive calls caused by getBullyPriority in the Cluster/Coordinator class. 
-		 */
-		
-		if (DEBUG_CREATION){
-			Logging.log(this,  "Created object (undefined priority) for class \"" + pParent.getClass().getSimpleName() + "\"");
-		}
-	}
-	
-	/**
 	 * Returns the Bully priority value.
 	 * 
 	 * @return Bully priority
@@ -213,16 +230,6 @@ public class BullyPriority
 	public boolean isUndefined()
 	{
 		return (mPriority == UNDEFINED_PRIORITY);
-	}
-	
-	/**
-	 * The function is called if a neighbor cluster/node is found. It increase the Bully value by a fixed value. 
-	 */
-	public void increaseConnectivity()
-	{
-		Logging.log(this, "Increasing priority by " + OFFSET_FOR_CONNECTIVITY);
-		
-		mPriority += OFFSET_FOR_CONNECTIVITY;
 	}
 	
 	/**
