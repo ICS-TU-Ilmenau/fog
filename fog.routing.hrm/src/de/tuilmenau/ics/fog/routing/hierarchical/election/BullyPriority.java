@@ -26,6 +26,9 @@ import de.tuilmenau.ics.fog.ui.Logging;
  *      + by 100 for each detected physical neighbor node
  *      + by 100*1000 for each known (remote) base hierarchy level coordinator, multiplied by the hop distance
  * 
+ * 
+ * HINT: We avoid dependencies from L1+ structures and neighborhood relations because this might cause oscillation effects.
+ * 
  */
 public class BullyPriority
 {
