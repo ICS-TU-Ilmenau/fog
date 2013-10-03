@@ -1274,18 +1274,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void increaseBaseNodePriority_KnownBaseCoordinator(int pDistance)
 	{
-		// get the current priority
-		long tPriority = getBaseNodePriority();
-		
-		float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance);
-				
-		Logging.log(this, "Increasing base node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
-
-		// increase priority
-		tPriority += (long)(tOffset);
-		
-		// update priority
-		setBaseNodePriority(tPriority);
+		if((pDistance >= 0) && (pDistance <= HRMConfig.Hierarchy.EXPANSION_RADIUS)){
+			// get the current priority
+			long tPriority = getBaseNodePriority();
+			
+			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance);
+					
+			Logging.log(this, "Increasing base node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+	
+			// increase priority
+			tPriority += (long)(tOffset);
+			
+			// update priority
+			setBaseNodePriority(tPriority);
+		}else{
+			Logging.err(this, "Detected invalid distance: " + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+		}
 	}
 
 	/**
@@ -1295,18 +1299,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void decreaseBaseNodePriority_KnownBaseCoordinator(int pDistance)
 	{
-		// get the current priority
-		long tPriority = getBaseNodePriority();
-		
-		float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance);
-		
-		Logging.log(this, "Decreasing base node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
-
-		// increase priority
-		tPriority -= (long)((float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance));
-		
-		// update priority
-		setBaseNodePriority(tPriority);
+		if((pDistance >= 0) && (pDistance <= HRMConfig.Hierarchy.EXPANSION_RADIUS)){
+			// get the current priority
+			long tPriority = getBaseNodePriority();
+			
+			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance);
+			
+			Logging.log(this, "Decreasing base node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+	
+			// increase priority
+			tPriority -= (long)((float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance));
+			
+			// update priority
+			setBaseNodePriority(tPriority);
+		}else{
+			Logging.err(this, "Detected invalid distance: " + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+		}
 	}
 
 	/**
