@@ -111,6 +111,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private LinkedList<Coordinator> mLocalCoordinators = new LinkedList<Coordinator>();
 
 	/**
+	 * Stores a database about all registered coordinator proxies.
+	 */
+	private LinkedList<CoordinatorProxy> mLocalCoordinatorProxies = new LinkedList<CoordinatorProxy>();
+	
+	/**
 	 * Stores a database about all registered clusters.
 	 * For example, this list is used for the GUI.
 	 */
@@ -324,6 +329,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		int tLevel = pCoordinatorProxy.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
 		
 		Logging.log(this, "Registering coordinator proxy " + pCoordinatorProxy + " at level " + tLevel);
+
+		synchronized (mLocalCoordinatorProxies) {
+			// register as known coordinator proxy
+			mLocalCoordinatorProxies.add(pCoordinatorProxy);
+		}
 
 		// are we at base hierarchy level
 		if(pCoordinatorProxy.getHierarchyLevel().isBaseLevel()){
@@ -586,14 +596,57 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		LinkedList<Coordinator> tResult = new LinkedList<Coordinator>();
 		
 		// get a list of all known coordinators
-		LinkedList<Coordinator> tAllCoordiantors = getAllCoordinators();
+		LinkedList<Coordinator> tAllCoordinators = getAllCoordinators();
 		
 		// iterate over all known coordinators
-		for (Coordinator tCoordinator : tAllCoordiantors){
+		for (Coordinator tCoordinator : tAllCoordinators){
 			// have we found a matching coordinator?
 			if (tCoordinator.getHierarchyLevel().equals(pHierarchyLevel)){
 				// add this coordinator to the result
 				tResult.add(tCoordinator);
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns a list of all known local coordinator proxies.
+	 * 
+	 * @return the list of known local coordinator proxies
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<CoordinatorProxy> getAllCoordinatorProxies()
+	{
+		LinkedList<CoordinatorProxy> tResult;
+		
+		synchronized (mLocalCoordinatorProxies) {
+			tResult = (LinkedList<CoordinatorProxy>) mLocalCoordinatorProxies.clone();
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Returns all known coordinator proxies for a given hierarchy level.
+	 * 
+	 * @param pHierarchyLevel the hierarchy level for which all coordinator proxies have to be determined
+	 * 
+	 * @return the list of coordinator proies at the defined hierarchy level
+	 */
+	public LinkedList<CoordinatorProxy> getAllCoordinatorProxies(HierarchyLevel pHierarchyLevel)
+	{
+		LinkedList<CoordinatorProxy> tResult = new LinkedList<CoordinatorProxy>();
+		
+		// get a list of all known coordinator proxies
+		LinkedList<CoordinatorProxy> tAllCoordinatorProxies = getAllCoordinatorProxies();
+		
+		// iterate over all known coordinator proxies
+		for (CoordinatorProxy tCoordinatorProxy : tAllCoordinatorProxies){
+			// have we found a matching coordinator proxy?
+			if (tCoordinatorProxy.getHierarchyLevel().equals(pHierarchyLevel)){
+				// add this coordinator proxy to the result
+				tResult.add(tCoordinatorProxy);
 			}
 		}
 		
