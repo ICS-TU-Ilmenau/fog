@@ -72,7 +72,6 @@ public class ComSession extends Session
 	private ControlEntity mParent = null;
 	
 	private boolean mIncomingConnection = false;
-	private L2Address mCentralFNL2Address = null;
 	private HierarchyLevel mHierarchyLevel = null;
 	private Route mRouteToPeer;
 	
@@ -98,8 +97,6 @@ public class ComSession extends Session
 		// store the hierarchy level
 		mHierarchyLevel = pLevel;
 
-		mCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address(); 
-		
 		// store the connection direction
 		mIncomingConnection = pIncomingConnection;
 		
