@@ -688,7 +688,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Create new cluster (member) object
 		 */
 		Logging.log(this, "    ..creating new local cluster member for: " + pRemoteClusterName); 
-		CoordinatorAsClusterMember tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, getCluster().createClusterName(), pSourceComSession.getPeerL2Address());
+		CoordinatorAsClusterMember tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
 		synchronized (mClusterMemberships) {
 			if(!mClusterMemberships.contains(tClusterMembership)){
 				// add this cluster membership
@@ -709,6 +709,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Set the remote ClusterName of the communication channel
 		 */
 		tComChannel.setRemoteClusterName(pRemoteClusterName);
+
+		/**
+		 * Trigger: comm. channel established 
+		 */
+		tClusterMembership.eventComChannelEstablished(tComChannel);
 
 		/**
 		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate

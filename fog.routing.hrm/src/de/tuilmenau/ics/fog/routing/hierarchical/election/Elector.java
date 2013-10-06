@@ -108,15 +108,19 @@ public class Elector implements Localization
 
 		Logging.log(this, "ELECTING now...");
 		
-		// do we know more than 0 external cluster members?
-		if (mParent.countConnectedRemoteClusterMembers() > 0){
-			Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Bully priority");
-			signalElectBroadcast();
+		if(mParent instanceof Cluster){
+			// do we know more than 0 external cluster members?
+			if (mParent.countConnectedRemoteClusterMembers() > 0){
+				Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Bully priority");
+				signalElectBroadcast();
+			}else{
+				/**
+				 * trigger "detected isolation"
+				 */
+				eventDetectedIsolation();
+			}
 		}else{
-			/**
-			 * trigger "detected isolation"
-			 */
-			eventDetectedIsolation();
+			Logging.log(this, "elect() stops here because parent is not the cluster head: " + mParent);
 		}
 	}
 	
@@ -155,11 +159,11 @@ public class Elector implements Localization
 		Logging.log(this, "#### STARTING ELECTION");
 		
 		// is the parent the cluster head?
-		if(mParent instanceof Cluster){
-			Cluster tParentCluster = (Cluster)mParent;
+		if(mParent instanceof ClusterMember){
+			ClusterMember tParentClusterMember = (ClusterMember)mParent;
 			
 			// was the cluster already locally registered as neighbor? 
-			if (tParentCluster.isNeighborHoodInitialized()){
+			if (tParentClusterMember.isNeighborHoodInitialized()){
 				switch(mState){
 					case IDLE:
 						elect();
@@ -188,7 +192,7 @@ public class Elector implements Localization
 				setElectorState(ElectorState.ERROR);
 			}
 		}else{
-			Logging.warn(this, "We skipped election start because parent isn't the cluster head: " + mParent);
+			Logging.warn(this, "We skipped election start because parent isn't a cluster member: " + mParent);
 		}
 	}
 	

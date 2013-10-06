@@ -90,6 +90,12 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_COORDINATORS_IN_ARG = true;
 
 		/**
+		 * Shows coordinator as cluster members in the ARG viewer
+		 * HINT: clusters HAVE TO BE STORED in the ARG, otherwise routing isn't possible
+		 */
+		public static final boolean GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG = false;
+
+		/**
 		 * Defines the time period between two updates of the node specific HRM display.
 		 */
 		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 1.0;
@@ -146,7 +152,7 @@ public class HRMConfig
 		 * This specifies whether the hierarchy build process should stop at a defined hierarchy level or not.
 		 * A value of "HEIGHT" deactivates the limitation.
 		 */
-		public static final int CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT = 1;
+		public static final int CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT = 99;
 
 		/**
 		 * Defines if signaling (e.g., broadcasts) also includes the local host.
@@ -154,11 +160,6 @@ public class HRMConfig
 		 * This causes ADDITIONAL LOOPBACK SIGNALING.
 		 */
 		public static final boolean SIGNALING_INCLUDES_LOCALHOST = false;
-
-		/**
-		 * Defines if a coordinator may join an existing local superior cluster.
-		 */
-		public static final boolean COORDINATORS_MAY_JOIN_EXISTING_SUPERIOR_CLUSTERS = true;
 
 		/**
 		 * Defines if connection should remain open or be automatically closed if the last inferior comm. channel was closed
@@ -174,7 +175,7 @@ public class HRMConfig
 		/**
 		 * Defines the time period for CoordinatorAnnounce distributions
 		 */
-		public static final double PERIOD_COORDINATOR_ANNOUNCEMENTS = 3.0;
+		public static final double PERIOD_COORDINATOR_ANNOUNCEMENTS = 5.0;
 
 		/**
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors

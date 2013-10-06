@@ -267,24 +267,6 @@ public class Cluster extends ClusterMember
 	}
 	
 	/**
-	 * EVENT: notifies that a communication channel is became available
-	 * 
-	 * @param pComChannel the communication channel which became available
-	 */
-	public void eventComChannelEstablished(ComChannel pComChannel)
-	{
-		Logging.log(this, "EVENT: ComChannel established for " + pComChannel);
-		
-		boolean tStartBaseLevel =  ((getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
-		
-		// start coordinator election for the created HRM instance if desired
-		if(((!getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
-			Logging.log(this, "      ..starting ELECTION");
-			mElector.startElection();
-		}
-	}
-
-	/**
 	 * EVENT: "lost cluster member", triggered by Elector in case a member left the election 
 
 	 * @param pComChannel the comm. channel of the lost cluster member

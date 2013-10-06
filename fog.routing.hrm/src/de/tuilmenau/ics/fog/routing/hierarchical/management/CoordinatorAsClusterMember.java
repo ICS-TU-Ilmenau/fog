@@ -32,14 +32,17 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
-	 * @param pHierarchyLevel the hierarchy level
-	 * @param pClusterID the unique ID of this cluster
-	 * @param pCoordinatorID the unique coordinator ID for this cluster
+	 * @param pCoordinator the coordinator which joins a cluster
+	 * @param pCoordinatorClusterName description of the cluster of the coordinator
+	 * @param pJoinedClusterName description of the joined cluster
 	 * @param pCoordinatorNodeL2Address the L2 address of the node where the coordinator of this cluster is located
 	 */
-	public CoordinatorAsClusterMember(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, L2Address pCoordinatorNodeL2Address)
+	private CoordinatorAsClusterMember(HRMController pHRMController, Coordinator pCoordinator, ClusterName pCoordinatorClusterName, ClusterName pJoinedClusterName, L2Address pCoordinatorNodeL2Address)
 	{	
-		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID, pCoordinatorNodeL2Address);
+		super(pHRMController, pCoordinatorClusterName.getHierarchyLevel(), pCoordinatorClusterName.getClusterID(), pCoordinatorClusterName.getCoordinatorID(), pCoordinatorNodeL2Address);
+
+		// update the coordinator for which this membership was created
+		mCoordinatorAsClusterMember = pCoordinator;
 
 		Logging.log(this, "CREATED");
 	}
@@ -49,32 +52,44 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 * 
 	 * @param pHRMController the local HRMController instance
 	 * @param pCoordinator the coordinator which joins a cluster
-	 * @param pClusterName a ClusterName which this describes the cluster of the coordinator for which this cluster membership was created
-	 * @param pClusterID the unique ID of this cluster
+	 * @param pJoinedClusterName description of the joined cluster
 	 * @param pClusterHeadNodeL2Address the L2 address of the node where the cluster head is located
 	 * @return
 	 */
-	public static CoordinatorAsClusterMember create(HRMController pHRMController, Coordinator pCoordinator, ClusterName pClusterName, L2Address pClusterHeadNodeL2Address)
+	public static CoordinatorAsClusterMember create(HRMController pHRMController, Coordinator pCoordinator, ClusterName pJoinedClusterName, L2Address pClusterHeadNodeL2Address)
 	{
-		CoordinatorAsClusterMember tResult = new CoordinatorAsClusterMember(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pClusterHeadNodeL2Address);
+		CoordinatorAsClusterMember tResult = new CoordinatorAsClusterMember(pHRMController, pCoordinator, pCoordinator.getCluster().createClusterName(), pJoinedClusterName, pClusterHeadNodeL2Address);
 		
 		Logging.log(tResult, "\n\n\n################ CREATED COORDINATOR AS CLUSTER MEMBER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
-		// register at HRMController's internal database
-		//pHRMController.registerClusterMember(tResult);
+		// detect neighbor clusters (members), increase the Bully priority based on the local connectivity
+		tResult.initializeNeighborhood();
 
+		if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
+			// register at HRMController's internal database
+			pHRMController.registerClusterMember(tResult);
+
+			// register the coordinator in the local ARG
+			pHRMController.registerLinkARG(tResult, pCoordinator, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+		}
+		
 		// creates new elector object, which is responsible for Bully based election processes
 		tResult.mElector = new Elector(pHRMController, tResult);
 
-		// update the coordinator for which this membership was created
-		tResult.mCoordinatorAsClusterMember = pCoordinator;
-		
-		// register the coordinator in the local ARG
-		//if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG){
-		//	pHRMController.registerLinkARG(tResult, pCoordinator, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
-		//}
-		
 		return tResult;
+	}
+
+	/**
+	 * Detects neighbor clusters and increases the cluster's Bully priority based on the local connectivity. 
+	 */
+	@Override
+	protected void initializeNeighborhood()
+	{
+		if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
+			super.initializeNeighborhood();
+		}else{
+			mNeighborhoodInitialized = true;
+		}
 	}
 
 	/**
@@ -101,7 +116,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	@Override
 	public String getText()
 	{
-		return "CoordAsClusterMember" + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
+		return "CoordAsClusterMember" + mCoordinatorAsClusterMember.getGUICoordinatorID() + "@" + mHRMController.getNodeGUIName() + "@" + mCoordinatorAsClusterMember.getHierarchyLevel().getValue() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
 	}
 
 	/**
@@ -133,7 +148,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "ID=" + getClusterID() + ", CoordID=" + superiorCoordinatorID() +  ", Prio=" + getPriority().getValue();
+			return "ID=" + getClusterID() + ", CoordID=" + getCoordinatorID() +  ", Prio=" + getPriority().getValue();
 		}else{
 			return "HRMID=" + getHRMID().toString();
 		}

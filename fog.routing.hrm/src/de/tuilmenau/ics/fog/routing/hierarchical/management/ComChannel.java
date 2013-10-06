@@ -178,6 +178,11 @@ public class ComChannel
 	 */
 	private LinkedList<HRMID> mAssignedHRMIDs = new LinkedList<HRMID>();
 	
+	/**
+	 * Stores if the comm. channel is established
+	 */
+	private boolean mChannelEstablished = false;
+	
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
 	
@@ -253,6 +258,26 @@ public class ComChannel
 	public Direction getDirection()
 	{
 		return mDirection;
+	}
+	
+	/**
+	 * EVENT: established
+	 */
+	public void eventEstablished()
+	{
+		Logging.log(this, "EVENT: established");
+		
+		mChannelEstablished = true;
+	}
+	
+	/**
+	 * Returns if the comm. channel is established
+	 * 
+	 * @return true or false
+	 */
+	public boolean isEstablished()
+	{
+		return mChannelEstablished;
 	}
 	
 	/**
@@ -381,25 +406,30 @@ public class ComChannel
 	 */
 	public boolean sendPacket(SignalingMessageHrm pPacket)
 	{
-		// create destination description
-		ClusterName tDestinationClusterName = getRemoteClusterName();
+		if(mChannelEstablished){
+			// create destination description
+			ClusterName tDestinationClusterName = getRemoteClusterName();
+			
+			if (tDestinationClusterName != null){
+				Logging.log(this, "SENDING DATA " + pPacket + " to destination " + tDestinationClusterName);
 		
-		if (tDestinationClusterName != null){
-			Logging.log(this, "SENDING DATA " + pPacket + " to destination " + tDestinationClusterName);
-	
-			// create the source description
-			ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().getClusterID(), getParent().superiorCoordinatorID());
-			
-			// add source route entry
-			pPacket.addSourceRoute("[S]: " + this.toString());
-			
-			// create the Multiplex-Header
-			MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pPacket);
+				// create the source description
+				ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().getClusterID(), getParent().superiorCoordinatorID());
 				
-			// send the final packet (including multiplex-header)
-			return getParentComSession().write(tMultiplexHeader);
+				// add source route entry
+				pPacket.addSourceRoute("[S]: " + this.toString());
+				
+				// create the Multiplex-Header
+				MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pPacket);
+					
+				// send the final packet (including multiplex-header)
+				return getParentComSession().write(tMultiplexHeader);
+			}else{
+				Logging.log(this, "Destination is still undefined, skipping packet payload " + pPacket);
+				return false;
+			}
 		}else{
-			Logging.log(this, "Destination is still undefined, skipping packet payload " + pPacket);
+			Logging.err(this, "CHANNEL IS STILL UNAVAILABLE");
 			return false;
 		}
 	}

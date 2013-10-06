@@ -33,7 +33,7 @@ public class ClusterMember extends ClusterName
 	/**
 	 * Stores if the neighborhood is already initialized
 	 */
-	private boolean mNeighborhoodInitialized = false;
+	protected boolean mNeighborhoodInitialized = false;
 
 	/**
 	 * Stores the L2 address of the node where the coordinator of the addressed cluster is located
@@ -194,6 +194,31 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
+	 * EVENT: notifies that a communication channel is became available
+	 * 
+	 * @param pComChannel the communication channel which became available
+	 */
+	public void eventComChannelEstablished(ComChannel pComChannel)
+	{
+		Logging.log(this, "EVENT: ComChannel established for " + pComChannel);
+		
+		/**
+		 * Trigger: established for the comm. channel
+		 */
+		pComChannel.eventEstablished();
+
+		/**
+		 * Trigger: start coordinator election
+		 */
+		boolean tStartBaseLevel =  ((getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
+		// start coordinator election for the created HRM instance if desired
+		if(((!getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
+			Logging.log(this, "      ..starting ELECTION");
+			mElector.startElection();
+		}
+	}
+
+	/**
 	 * EVENT: "lost cluster member", triggered by Elector in case a member left the election 
 
 	 * @param pComChannel the comm. channel of the lost cluster member
@@ -222,10 +247,11 @@ public class ClusterMember extends ClusterName
 	/**
 	 * Sends a packet as broadcast to all cluster members
 	 * 
-	 * @param pAnnounceCoordinatorPacket the CoordinatorAnnounce packet which has to be broadcasted
+	 * @param pPacket the packet which has to be broadcasted
+	 * @param pIncludeLoopback should loopback communication be included?
 	 * @param pExcludeL2Address describe a node which shouldn't receive this broadcast
 	 */
-	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, L2Address pExcludeL2Address)
+	private void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, L2Address pExcludeL2Address)
 	{
 		// get all communication channels
 		LinkedList<ComChannel> tComChannels = getComChannels();
@@ -238,14 +264,14 @@ public class ClusterMember extends ClusterName
 		for(ComChannel tComChannel : tComChannels) {
 			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
 			
-			if(!pExcludeL2Address.equals(tComChannel.getPeerL2Address())){
+			if((pExcludeL2Address == null) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()))){
 				if (!tIsLoopback){
 					Logging.log(this, "       ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
 				}else{
 					Logging.log(this, "       ..to LOOPBACK " + tComChannel);
 				}
 	
-				if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (!tIsLoopback)){
+				if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (pIncludeLoopback) || (!tIsLoopback)){
 					SignalingMessageHrm tNewPacket = pPacket.duplicate();
 					Logging.log(this, "           ..sending duplicate packet: " + tNewPacket);
 					// send the packet to one of the possible cluster members
@@ -258,40 +284,13 @@ public class ClusterMember extends ClusterName
 			}
 		}
 	}
-
-	/**
-	 * Sends a packet as broadcast to all cluster members
-	 * 
-	 * @param pPacket the packet which has to be broadcasted
-	 */
+	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, L2Address pExcludeL2Address)
+	{
+		sendClusterBroadcast(pPacket, false, pExcludeL2Address);
+	}
 	public void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback)
 	{
-		// get all communication channels
-		LinkedList<ComChannel> tComChannels = getComChannels();
-
-		// get the L2Addres of the local host
-		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
-		
-		Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels");
-		
-		for(ComChannel tComChannel : tComChannels) {
-			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
-			
-			if (!tIsLoopback){
-				Logging.log(this, "       ..to " + tComChannel);
-			}else{
-				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
-			}
-
-			if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (pIncludeLoopback) || (!tIsLoopback)){
-				SignalingMessageHrm tNewPacket = pPacket.duplicate();
-				Logging.log(this, "           ..sending duplicate packet: " + tNewPacket);
-				// send the packet to one of the possible cluster members
-				tComChannel.sendPacket(tNewPacket);
-			}else{
-				Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
-			}
-		}
+		sendClusterBroadcast(pPacket, pIncludeLoopback, null);
 	}
 	public void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket)
 	{

@@ -426,17 +426,17 @@ public class ComSession extends Session
 	/**
 	 * Searches for a registered communication channel which is identified by its local clusterID
 	 * 
-	 * @param pClusterID the local clusterID
+	 * @param pDestinationClusterName the destination ClusterName
 	 * 
 	 * @return the found comm. channel or null
 	 */
-	private ComChannel getComChannelByClusterID(Long pClusterID)
+	private ComChannel getComChannelByDestination(ClusterName pDestinationClusterName)
 	{
 		ComChannel tResult = null;
 		
 		LinkedList<ComChannel> tComChannels = getAllComChannels();
 		for (ComChannel tComChannel : tComChannels){
-			if(tComChannel.getParent().getClusterID().equals(pClusterID)) {
+			if((tComChannel.getParent().getClusterID().equals(pDestinationClusterName.getClusterID())) && (tComChannel.getParent().getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel()))) {
 				tResult = tComChannel;
 				break;
 			}
@@ -486,7 +486,7 @@ public class ComSession extends Session
 		/**
 		 * Iterate over all communication channels and find the correct channel towards the destination
 		 */
-		ComChannel tDestinationComChannel = getComChannelByClusterID(tDestination.getClusterID()); //TODO: in/out beachten und hier die RemoteClusterID auswerten
+		ComChannel tDestinationComChannel = getComChannelByDestination(tDestination); //TODO: in/out beachten und hier die RemoteClusterID auswerten
 		Logging.log(this, "       ..found communication channel: " + tDestinationComChannel);
 
 		/**

@@ -360,23 +360,26 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void registerLocalNeighborARG(ControlEntity pNeighbor)
 	{
-		Logging.log(this, "Registering neighbor (ARG): " + pNeighbor);
-
-		AbstractRoutingGraphLink.LinkType tLinkType = AbstractRoutingGraphLink.LinkType.DB_REF;
-
-		/**
-		 * Register a link to the neighbor and tell the neighbor about it 
-		 */
-		LinkedList<ControlEntity> tNeighbors = getNeighborsARG(); 
-		if(!tNeighbors.contains(pNeighbor))
-		{
-			AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(tLinkType);
-			mHRMController.registerLinkARG(pNeighbor, this, tLink);
-
-			// backward call
-			pNeighbor.registerLocalNeighborARG(this);
-		}else{
-			Logging.log(this, "Neighbor " + pNeighbor + " is already known");
+		// avoid registration of neighbors of type "CoordinatorAsClusterMember"
+		if(!(this instanceof CoordinatorAsClusterMember)){
+			Logging.log(this, "Registering neighbor (ARG): " + pNeighbor);
+	
+			AbstractRoutingGraphLink.LinkType tLinkType = AbstractRoutingGraphLink.LinkType.DB_REF;
+	
+			/**
+			 * Register a link to the neighbor and tell the neighbor about it 
+			 */
+			LinkedList<ControlEntity> tNeighbors = getNeighborsARG(); 
+			if(!tNeighbors.contains(pNeighbor))
+			{
+				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(tLinkType);
+				mHRMController.registerLinkARG(pNeighbor, this, tLink);
+	
+				// backward call
+				pNeighbor.registerLocalNeighborARG(this);
+			}else{
+				Logging.log(this, "Neighbor " + pNeighbor + " is already known");
+			}
 		}
 	}
 
