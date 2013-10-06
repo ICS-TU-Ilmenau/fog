@@ -79,25 +79,25 @@ import de.tuilmenau.ics.fog.ui.Logging;
  *                                                                       | instance on node 2 |
  *                                                                       |                    |
  *                                                                       \== Cluster4@2 ======/
- *                                                                                /|\
+ *                                                                                 |
  *   A CONNECTION is needed as parent --->                                         |CHANNEL
- *   for each channel                                                              |
+ *   for each channel                                                             \|/
  *                                                                             +-------+        
  *                                                                             |Coord.3|        
  *                                                                             +-------+        
  *                                                                                 |
  *                                                                                 |LOCAL OBJ. REF.
  *                                                                                 |
- *                                                                                 |
+ *                                                                                 | 
  *                                                                       /====================\
  *                                  /--                                  |                    |
- *                                  |                  +---- CHANNEL --->| instance on node 2 |
+ *                                  |                  +---- CHANNEL --- | instance on node 2 |
  *                                  |                  |                 |                    |
  *   both channels are summarized --+                  |                 \== Cluster3@1 ======/
- *   in ONE CONNECTION in order to  |                  |                          /|\                
+ *   in ONE CONNECTION in order to  |                  |                           |                 
  *   reduce connection complexity   |                  |                           |   
  *                                  |                  |                           |CHANNEL   
- *                                  \--                |                           |   
+ *                                  \--               \|/                         \|/   
  *                                                 +-------+                   +-------+  
  *                                                 |Coord.1|                   |Coord.2|  
  *                                                 +-------+                   +-------+  
@@ -191,6 +191,7 @@ public class ComChannel
 	 * 
 	 * @param pHRMController is the HRMController instance of this node
 	 * @param pDirection the direction of the communication channel (either upward or downward)
+	 * @param pParent the parent control entity
 	 * @param pParentComSession is the parental comm. session
 	 */
 	public ComChannel(HRMController pHRMController, Direction pDirection, ControlEntity pParent, ComSession pParentComSession)
@@ -426,10 +427,12 @@ public class ComChannel
 	}
 	
 	/**
-	 * 
+	 * EVENT: communication available
 	 */
-	public void eventParentComSessionEstablished()
+	public void eventCommunicationAvailable()
 	{
+		Logging.log(this, "EVENT: communication available");
+		
 		/**
 		 * TRIGGER: inform the parental ControlEntity about the established communication session and its inferior channels
 		 */
@@ -619,13 +622,13 @@ public class ComChannel
 				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP_ACK-received from \"" + getPeerHRMID() + "\"");
 
 			// is the parent a coordinator or a cluster?
-			if (getParent() instanceof Coordinator){
-				Coordinator tCoordinator = (Coordinator)getParent();
+			if (getParent() instanceof Cluster){
+				Cluster tCluster = (Cluster)getParent();
 				
-				// trigger event "joined superior cluster"
-				tCoordinator.eventJoinedSuperiorCluster(this);		
+				// trigger event "cluster member joined"
+				tCluster.eventClusterMemberJoined(this);		
 			}else{
-				Logging.err(this, "Expected a Coordinator object as parent for processing RequestClusterMembershipAck data but parent is " + getParent());
+				Logging.err(this, "Expected a Cluster object as parent for processing RequestClusterMembershipAck data but parent is " + getParent());
 			}
 			
 			return true;
@@ -638,7 +641,7 @@ public class ComChannel
 			AnnounceCoordinator tAnnounceClusterPacket = (AnnounceCoordinator)pData;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "ANNOUNCE_CLUSTER-received from \"" + getPeerHRMID() + "\", announcement is: " + tAnnounceClusterPacket);
+				Logging.log(this, "ANNOUNCE_COORDINATOR-received from \"" + getPeerHRMID() + "\", announcement is: " + tAnnounceClusterPacket);
 		
 			getParent().eventCoordinatorAnnouncement(this, tAnnounceClusterPacket);
 			

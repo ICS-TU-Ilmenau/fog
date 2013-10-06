@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -26,21 +27,29 @@ public class CoordinatorProxy extends ClusterMember
 	private int mDistance = -1;
 	
 	/**
+	 * Stores the L2 address of the node where the coordinator is located
+	 */
+	private L2Address mCoordinatorNodeL2Address = null;
+	
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
 	 * @param pHierarchyLevel the hierarchy level
 	 * @param pClusterID the unique ID of this cluster
 	 * @param pCoordinatorID the unique coordinator ID for this cluster
-	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
+	 * @param pCoordinatorNodeL2Address the node L2 address where the coordinator is located
 	 * @param pHopCount the hop count to the coordinator node
 	 */
-	private CoordinatorProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, Name pCoordinatorNodeName, int pHopCount)
+	private CoordinatorProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, L2Address pCoordinatorNodeL2Address, int pHopCount)
 	{	
-		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID, pCoordinatorNodeName);
+		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID, pCoordinatorNodeL2Address);
 
 		mDistance = pHopCount;
 		
+		// store the L2 address of the node where the coordinator is located
+		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
+
 		Logging.log(this, "CREATED");
 	}
 
@@ -50,12 +59,12 @@ public class CoordinatorProxy extends ClusterMember
 	 * @param pHRMController the local HRMController instance
 	 * @param pClusterName a ClusterName which includes the hierarchy level, the unique ID of this cluster, and the unique coordinator ID
 	 * @param pClusterID the unique ID of this cluster
-	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
+	 * @param pCoordinatorNodeL2Address the node L2 address where the coordinator is located
 	 * @param pHopCount the hop count to the coordinator node
 	 */
-	public static CoordinatorProxy create(HRMController pHRMController, ClusterName pClusterName, Name pCoordinatorNodeName, int pHopCount)
+	public static CoordinatorProxy create(HRMController pHRMController, ClusterName pClusterName, L2Address pCoordinatorNodeL2Address, int pHopCount)
 	{	
-		CoordinatorProxy tResult = new CoordinatorProxy(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pCoordinatorNodeName, pHopCount);
+		CoordinatorProxy tResult = new CoordinatorProxy(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pCoordinatorNodeL2Address, pHopCount);
 		
 		Logging.log(tResult, "\n\n\n################ CREATED COORDINATOR PROXY at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
@@ -63,6 +72,30 @@ public class CoordinatorProxy extends ClusterMember
 		pHRMController.registerCoordinatorProxy(tResult);
 		
 		return tResult;
+	}
+
+	/**
+	 * Creates a ClusterName object which describes this coordinator
+	 * 
+	 * @return the new ClusterName object
+	 */
+	public ClusterName createCoordinatorName()
+	{
+		ClusterName tResult = null;
+		
+		tResult = new ClusterName(mHRMController, getHierarchyLevel(), getClusterID(), getCoordinatorID());
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the L2 address of the node where the coordinator is located
+	 * 
+	 * @return the L2 address
+	 */
+	public L2Address getCoordinatorNodeL2Address()
+	{
+		return mCoordinatorNodeL2Address; 
 	}
 
 	/**
@@ -113,7 +146,7 @@ public class CoordinatorProxy extends ClusterMember
 	@Override
 	public String getText()
 	{
-		return "RemoteCoordinator" + getGUICoordinatorID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue() + "(Cluster" + getGUIClusterID() + ", Hops=" + mDistance + ", " + idToString() + ", Coord.=" + getCoordinatorNodeName()+ ")";
+		return "RemoteCoordinator" + getGUICoordinatorID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue() + "(Cluster" + getGUIClusterID() + ", Hops=" + mDistance + ", " + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
 	}
 
 	/**
@@ -123,7 +156,7 @@ public class CoordinatorProxy extends ClusterMember
 	 */
 	public String toString()
 	{
-		return toLocation() + "(Cluster" + getGUIClusterID() + ", " + idToString() + ", Coord.=" + getCoordinatorNodeName()+ ")";
+		return toLocation() + "(Cluster" + getGUIClusterID() + ", " + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
 	}
 
 	/**

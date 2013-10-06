@@ -16,6 +16,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -82,9 +83,9 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	private ClusterName mSenderClusterName = null;
 	
 	/**
-	 * Stores the name of the node where the coordinator of the announced cluster is located
+	 * Stores the L2 address of the node where the coordinator of the announced cluster is located
 	 */
-	private Name mCoordinatorNodeName = null;
+	private L2Address mCoordinatorNodeL2Address = null;
 	
 	/**
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
@@ -106,14 +107,14 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pSenderClusterName the ClusterName of the sender
-	 * @param pCoordinatorNodeName the name of the node where the coordinator of the announced cluster is located
+	 * @param pCoordinatorNodeL2Address the L2 address of the node where the coordinator is located
 	 */
-	public AnnounceCoordinator(Name pSenderName, ClusterName pSenderClusterName, Name pCoordinatorNodeName)
+	public AnnounceCoordinator(Name pSenderName, ClusterName pSenderClusterName, L2Address pCoordinatorNodeL2Address)
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
 		mSenderClusterName = pSenderClusterName;
-		mCoordinatorNodeName = pCoordinatorNodeName;
+		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
 	}
 	
 	/**
@@ -127,13 +128,13 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	}
 	
 	/**
-	 * Returns the name of the node where the coordinator of the announced cluster is located
+	 * Returns the L2 address of the node where the coordinator of the announced cluster is located
 	 * 
-	 * @return the node name
+	 * @return the L2 address
 	 */
-	public Name getSenderClusterCoordinatorNodeName()
+	public L2Address getSenderClusterCoordinatorNodeL2Address()
 	{
-		return mCoordinatorNodeName;
+		return mCoordinatorNodeL2Address;
 	}
 	
 	/**
@@ -221,7 +222,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		AnnounceCoordinator tResult = new AnnounceCoordinator(getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeName());
+		AnnounceCoordinator tResult = new AnnounceCoordinator(getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
 		
 		super.duplicate(tResult);
 

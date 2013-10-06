@@ -143,6 +143,12 @@ public class HRMConfig
 		public static final boolean CONTINUE_AUTOMATICALLY = true;
 		
 		/**
+		 * This specifies whether the hierarchy build process should stop at a defined hierarchy level or not.
+		 * A value of "HEIGHT" deactivates the limitation.
+		 */
+		public static final int CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT = 1;
+
+		/**
 		 * Defines if signaling (e.g., broadcasts) also includes the local host.
 		 * In this case, signaling also sends packets in a loop back to the sender.
 		 * This causes ADDITIONAL LOOPBACK SIGNALING.

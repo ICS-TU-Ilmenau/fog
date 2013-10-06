@@ -14,29 +14,54 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 
 /**
- * PACKET: This packet is used when a coordinator wants to join an existing superior cluster
+ * PACKET: This packet is used to acknowledge a RequestComChannel packet. It is send after the comm. channel was established.
+ * 
+ * ****************************************************************************************************************************
+ * ****************************************** Explanation of the packet usage *************************************************
+ * ****************************************************************************************************************************
+ * 
+ *        "2. request acknowledge packet " (the figure shows the ACK packet for the figure of "RequestClusterMembership") 
+ *
+ *                                      
+ *               /==========\
+ *               |L2 cluster| <------ REQUEST ACK PACKET -------+
+ *               \==========/                                   |
+ *                   /|\                                        |
+ *                    |                                         |
+ *                +-------+                                 +-------+
+ *           +... |Coord.1| ...+                       +... |Coord.1| ...+
+ *           :    +-------+    :                       :    +-------+    :
+ *           :                 :                       :                 :
+ *           :                 :                       :                 : 
+ *       +-------+         +-------+               +-------+         +-------+
+ *       |Coord.0|         |Coord.0|               |Coord.0|         |Coord.0|
+ *       +-------+         +-------+               +-------+         +-------+
+ *       
+ *       
+ * ****************************************************************************************************************************
+ * ****************************************************************************************************************************
  */
 public class RequestClusterMembershipAck extends SignalingMessageHrm
 {
 	private static final long serialVersionUID = 445881657397476245L;
 
 	/**
-	 * Store the ClusterName of the sender
+	 * Store the ClusterName of the sender (coordinator)
 	 */
-	private ClusterName mSenderClusterName = null;
+	private ClusterName mSourceCoordinator = null;
 	
 	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
-	 * @param pSenderClusterName the ClusterName of the sender
+	 * @param pSourceCoordinator the ClusterName of the sender (a coordinator)
 	 */
-	public RequestClusterMembershipAck(Name pSenderName, Name pReceiverName, ClusterName pSenderClusterName)
+	public RequestClusterMembershipAck(Name pSenderName, Name pReceiverName, ClusterName pSourceCoordinator)
 	{
 		super(pSenderName, pReceiverName);
 		
-		mSenderClusterName = pSenderClusterName;
+		mSourceCoordinator = pSourceCoordinator;
 	}
 
 	/**
@@ -44,9 +69,9 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	 * 
 	 * @return the ClusterName description
 	 */
-	public ClusterName getSenderClusterName()
+	public ClusterName getSourceCoordinator()
 	{
-		return mSenderClusterName;
+		return mSourceCoordinator;
 	}
 
 	/**
@@ -57,6 +82,6 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", SenderClusterName="+ getSenderClusterName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", SourceCoord.="+ getSourceCoordinator() + ")";
 	}
 }

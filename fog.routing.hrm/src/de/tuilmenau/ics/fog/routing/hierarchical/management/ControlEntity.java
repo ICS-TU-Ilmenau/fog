@@ -279,6 +279,26 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
+	 * Returns if a comm. channel to the given control entity does exist
+	 * 
+	 * @param pPeer the peer to which a comm. channel is searched
+	 * 
+	 * @return true or false
+	 */
+	protected boolean hasComChannel(ControlEntity pPeer)
+	{
+		boolean tResult = false;
+		
+		for(ComChannel tComChannel : getComChannels()){
+			if(tComChannel.getRemoteClusterName().equals(pPeer)){
+				tResult = true;
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Registers a communication channel to the internal database
 	 * 
 	 * @param pComChan the communication channel
@@ -725,8 +745,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		Logging.log(this, "Registering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
 		Logging.log(this, "     ..announcement took the following route: " + pAnnounceCoordinator.getSourceRoute());
 		
-		// check of the "remote" coordinator isn't stored at this physical node
-		if(!pAnnounceCoordinator.getSenderClusterCoordinatorNodeName().equals(mHRMController.getNodeName())){
+		// check if the "remote" coordinator isn't stored at this physical node
+		if(!pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(mHRMController.getNodeL2Address())){
 			// check if the remote coordinator isn't the coordinator of this ClusterMember
 			if((!(this instanceof ClusterMember)) || (!pAnnounceCoordinator.getSenderClusterName().equals(this))){
 				/**
@@ -737,7 +757,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				if(tCoordinatorProxy == null){
 					Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
 		
-					tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeName(), pAnnounceCoordinator.getRouteHopCount());
+					tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address(), pAnnounceCoordinator.getRouteHopCount());
 				}else{
 					// did we receive a coordinator announcement from our own coordinator?
 					if(!equals(tRemoteClusterName)){
@@ -796,12 +816,16 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	public boolean equals(Object pObj)
 	{
 		if (((this instanceof Cluster) && (pObj instanceof Coordinator)) ||
+			((this instanceof Cluster) && (pObj instanceof CoordinatorAsClusterMember)) ||
 			((this instanceof ClusterMember) && (pObj instanceof Coordinator)) ||
 			((this instanceof Coordinator) && (pObj instanceof ClusterMember)) ||
+			((this instanceof CoordinatorAsClusterMember) && (pObj instanceof Cluster)) ||
 			((this instanceof Coordinator) && (pObj instanceof Cluster))){
 			return false;
 		}
 		
+		ControlEntity tComparedObj = (ControlEntity) pObj;
+
 		if (pObj instanceof Long){
 			Long tOtherClusterID = (Long)pObj;
 
@@ -810,15 +834,21 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			if (tOtherClusterID.equals(getClusterID())) {
 				return true;
 			}
-		}else{
-			ControlEntity tComparedObj = (ControlEntity) pObj;
-			
-			//Logging.log(this, "EQUALS COMPARING with " + pObj + ": " + tICluster.getClusterID() + "<=>" + tThisICluster.getClusterID() + ", " + tICluster.getToken() + "<=>" + tThisICluster.getToken() + ", " + tICluster.getHierarchyLevel().getValue() + "<=>" + getHierarchyLevel().getValue());
-
-			//HINT: we ignore the coordinator ID because the clusterID is unique enough for identification
-			if (tComparedObj.getClusterID().equals(getClusterID()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
+		}
+		
+		if (this instanceof Coordinator){
+			Coordinator tThisCoordinator = (Coordinator)this;
+			if(tThisCoordinator.getCoordinatorID() == tComparedObj.getCoordinatorID()){
 				return true;
 			}
+		}
+				
+		
+		//Logging.log(this, "EQUALS COMPARING with " + pObj + ": " + tICluster.getClusterID() + "<=>" + tThisICluster.getClusterID() + ", " + tICluster.getToken() + "<=>" + tThisICluster.getToken() + ", " + tICluster.getHierarchyLevel().getValue() + "<=>" + getHierarchyLevel().getValue());
+
+		//HINT: we ignore the coordinator ID because the clusterID is unique enough for identification
+		if (tComparedObj.getClusterID().equals(getClusterID()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
+			return true;
 		}
 
 		return false;
@@ -839,6 +869,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		}
 		if (this instanceof CoordinatorProxy){
 			return new Color(tSaturation, (float)0.6, (float)0.8);
+		}
+		if (this instanceof CoordinatorAsClusterMember){
+			return new Color(tSaturation, (float)0.8, (float)0.6);
 		}
 		if (this instanceof Cluster){
 			return new Color((float)0.7, tSaturation, 0);

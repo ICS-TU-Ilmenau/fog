@@ -20,8 +20,7 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
-import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
@@ -63,12 +62,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private Cluster mParentCluster = null;;
 
-
-	/**
-	 * Stores if the initial clustering has already finished
-	 */
-	private boolean mInitialClusteringFinished = false;
-	
 	/**
 	 * This is the coordinator counter, which allows for globally (related to a physical simulation machine) unique coordinator IDs.
 	 */
@@ -83,6 +76,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * Stores the next free address for a cluster member
 	 */
 	private int mNextFreeClusterMemberAddress = 1;
+	
+	/**
+	 * Stores the cluster memberships of this coordinator
+	 */
+	private LinkedList<CoordinatorAsClusterMember> mClusterMemberships = new LinkedList<CoordinatorAsClusterMember>();
 	
 	private static final long serialVersionUID = 6824959379284820010L;
 	
@@ -427,10 +425,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Inform all superior clusters about the event and trigger the invalidation of this coordinator instance -> we leave all Bully elections because we are no longer a possible election winner
 		 */
 		if (!getHierarchyLevel().isHighest()){
-			// create signaling packet for signaling that we leave the Bully group
-			BullyLeave tBullyLeavePacket = new BullyLeave(mHRMController.getNodeName(), getPriority());
-
-			sendSuperiorClusters(tBullyLeavePacket);
+			eventAllClusterMembershipsInvalid();
 		}else{
 			Logging.log(this, "eventCoordinatorRoleInvalid() skips further signaling because hierarchy end is already reached at: " + (getHierarchyLevel().getValue() - 1));
 		}
@@ -460,6 +455,18 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Inform the inferior cluster about our destruction
 		 */
 		mParentCluster.eventCoordinatorLost();
+	}
+	
+	/**
+	 * EVENT: all cluster membership invalid
+	 */
+	private void eventAllClusterMembershipsInvalid()
+	{
+		synchronized (mClusterMemberships) {
+			for (ClusterMember tClusterMember : mClusterMemberships){
+				tClusterMember.eventMembershipInvalid();
+			}
+		}
 	}
 	
 	/**
@@ -519,7 +526,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		// trigger periodic Cluster announcements
 		if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
-			AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeName());
+			AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
 			Logging.log(this, "\n\n########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
 			
 			/**
@@ -567,27 +574,31 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * AUTO ADDRESS DISTRIBUTION
 		 */
 		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
-			Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + getComChannels().size() + " cluster members");
+			Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + mParentCluster.getComChannels().size() + " cluster members");
 
 			distributeAddresses();
 		}
 		
-		//TODO: ??
-//		mHRMController.setSourceIntermediateCluster(this, getCluster());
 
 		/**
 		 * AUTO CLUSTERING
 		 */
 		if(!getHierarchyLevel().isHighest()) {
-			if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){
-				Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
+			if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){ 
+				if(getHierarchyLevel().getValue() - 1 < HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
+					Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
 
-				// start the clustering of this cluster's coordinator and its neighbors if it wasn't already triggered by another coordinator
-				if (!isClustered()){
-					cluster();
+					// start the clustering of this cluster's coordinator and its neighbors if it wasn't already triggered by another coordinator
+					if (!isClustered()){
+						cluster();
+					}else{
+						Logging.warn(this, "Clustering is already finished for this hierarchy level, skipping cluster-request");
+					}
 				}else{
-					Logging.warn(this, "Clustering is already finished for this hierarchy level, skipping cluster-request");
+					Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + (getHierarchyLevel().getValue() - 1));
 				}
+			}else{
+				Logging.log(this, "EVENT ANNOUNCED - stopping clustering because automatic continuation is deactivated");
 			}
 		}
 	}
@@ -627,128 +638,113 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	
 	/**
 	 * Clusters the superior hierarchy level or tries to join an already existing superior cluster
+	 * HINT: Can be called only once at a time.
 	 */
-	public void cluster()
+	public synchronized void cluster()
 	{
-		Logging.log(this, "\n\n\n################ CLUSTERING STARTED");
+		Logging.log(this, "\n\n################ CLUSTERING STARTED");
 
+		// search for an existing cluster at this hierarchy level
+		Cluster tSuperiorCluster = mHRMController.getCluster(getHierarchyLevel());
+		
 		/**
-		 * Join local clusters at the superior hierarchy level
+		 * Create a new superior cluster
 		 */
-		boolean tJoinedExistingLocalSuperiorCluster = false;
-		Logging.log(this, "      ..searching for a locally known superior cluster on hierarchy level: " + getHierarchyLevel().getValue());
-		if(HRMConfig.Hierarchy.COORDINATORS_MAY_JOIN_EXISTING_SUPERIOR_CLUSTERS){
-			for(Cluster tCluster : mHRMController.getAllClusters(getHierarchyLevel())) {
-				Logging.log(this, "        ..found superior cluster: " + tCluster);
-				if(tJoinedExistingLocalSuperiorCluster){
-					Logging.err(this, "cluster() FOUND MORE THAN ONE LOCAL SUPERIOR CLUSTER");
-				}
-				if (joinExistingLocalSuperiorCluster(tCluster)){
-					Logging.log(this, "          ..joined locally known superior cluster: " + tCluster);
-					// we joined the superior cluster and should end the search for a superior coordinator
-					tJoinedExistingLocalSuperiorCluster = true;
-				}
-			}
+		if(tSuperiorCluster == null){
+			tSuperiorCluster = Cluster.create(mHRMController, getHierarchyLevel(), Cluster.createClusterID());
 		}
 		
 		/**
-		 * Expand locally and create a new local superior cluster
+		 * Distribute membership requests
 		 */
-		if (!tJoinedExistingLocalSuperiorCluster){
-			Logging.log(this, "      ..can't find a locally known superior cluster on hierarchy level: " + getHierarchyLevel().getValue() + ", known clusters are: " + mHRMController.getAllClusters());
-			connectToSuperiorCluster(mHRMController.getNodeName(), Cluster.createClusterID());
-		}
-
-		/**
-		 * Explore the neighborhood and create a new superior cluster
-		 */
-		Logging.log(this, "      ..starting neighbor exploration now..");
-		exploreNeighborhoodAndJoinSuperiorClusters();
-		
-		/**
-		 * Trigger event "finished clustering" because we have - at least - one local superior cluster  
-		 */
-		eventInitialClusteringFinished();
+		tSuperiorCluster.distributeMembershipRequests();
 	}
 
 	/**
-	 * Tries to join an existing local superior cluster
+	 * Creates a ClusterName object which describes this coordinator
 	 * 
-	 * @param pSuperiorCluster an existing local superior cluster where we want to join
-	 * 
-	 * @return true or false to indicate success/error
+	 * @return the new ClusterName object
 	 */
-	private boolean joinExistingLocalSuperiorCluster(ControlEntity pSuperiorCluster)
+	public ClusterName createCoordinatorName()
 	{
-		boolean tResult = false;
+		ClusterName tResult = null;
 		
-		Logging.log(this, "\n\n\n################ JOINING EXISTING SUPERIOR CLUSTER " + pSuperiorCluster);
-
-		/**
-		 * Try to get the comm. session towards the superior cluster
-		 */
-		ComSession tComSession = mHRMController.getOutgoingComSession(pSuperiorCluster);		
-		// have we found the comm. session?
-		if (tComSession != null){
-			Logging.log(this, "           ..found matching comm. session: " + tComSession);
-			Logging.log(this, "             ..has com. channels: " + tComSession.getAllComChannels());
-			
-		    /**
-		     * Create communication channel
-		     */
-		    Logging.log(this, "           ..creating new communication channel");
-			ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession);
-			tComChannel.setRemoteClusterName(new ClusterName(mHRMController, pSuperiorCluster.getHierarchyLevel(), pSuperiorCluster.getClusterID(), pSuperiorCluster.getCoordinatorID()));
-			tComChannel.setPeerPriority(pSuperiorCluster.getPriority());
-			
-			/**
-			 * Send "RequestClusterMembership" along the comm. session
-			 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
-			 */
-		    ClusterName tOwnClusterName = new ClusterName(mHRMController, getHierarchyLevel(), getClusterID(), getCoordinatorID());
-		    Logging.log(this, "           ..sending membership request via communication session");
-			RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeName(), pSuperiorCluster.getHRMID(), tOwnClusterName);
-			if (tComSession.write(tRequestClusterMembership)){
-				tResult = true;
-			}
-		}else{
-			Logging.warn(this, "joinSuperiorCluster() wasn't able to find the outgoing comm. session towards: " + pSuperiorCluster);
-			//TODO: create new connection !?
-		}
+		tResult = new ClusterName(mHRMController, getHierarchyLevel(), getCluster().getClusterID(), getCoordinatorID());
 		
 		return tResult;
 	}
 
 	/**
-	 * EVENT: initial clustering has finished  
+	 * EVENT: cluster membership request, a cluster requests of a coordinator to acknowledge cluster membership, triggered by the comm. session
+	 * 
+	 * @param pRemoteClusterName the description of the possible new cluster member
+	 * @param pSourceComSession the comm. session where the packet was received
 	 */
-	private void eventInitialClusteringFinished()
+	public void eventClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
 	{
-		// mark initial clustering as "finished"
-		mInitialClusteringFinished = true;		
+		Logging.log(this, "EVENT: got cluster membership request from: " + pRemoteClusterName);
+		
+		/**
+		 * Create new cluster (member) object
+		 */
+		Logging.log(this, "    ..creating new local cluster member for: " + pRemoteClusterName); 
+		CoordinatorAsClusterMember tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, getCluster().createClusterName(), pSourceComSession.getPeerL2Address());
+		synchronized (mClusterMemberships) {
+			if(!mClusterMemberships.contains(tClusterMembership)){
+				// add this cluster membership
+				mClusterMemberships.add(tClusterMembership);
+				
+			}else{
+				Logging.err(this, "Clustermembership ALREADY EXISTS for " + pRemoteClusterName);
+			}			
+		}
+		
+		/**
+		 * Create the communication channel for the described cluster member
+		 */
+		Logging.log(this, "     ..creating communication channel");
+		ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
+
+		/**
+		 * Set the remote ClusterName of the communication channel
+		 */
+		tComChannel.setRemoteClusterName(pRemoteClusterName);
+
+		/**
+		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
+		 */
+		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), createCoordinatorName());
+		tComChannel.sendPacket(tRequestClusterMembershipAckPacket);
+		
+		/**
+		 * Trigger: joined a remote cluster (sends a Bully priority update)
+		 */
+		eventJoinedRemoteCluster(tComChannel);
 	}
 
 	/**
-	 * EVENT: we have joined the superior cluster, triggered by the comm. channel if the request for cluster membership was ack'ed
+	 * EVENT: we have joined the superior cluster, triggered by ourself a request for cluster membership was ack'ed
 	 * 
 	 * @param pSourceComChannel the source comm. channel
 	 */
-	public void eventJoinedSuperiorCluster(ComChannel pSourceComChannel)
+	private void eventJoinedRemoteCluster(ComChannel pComChannelToRemoteCluster)
 	{
 		Logging.log(this, "HAVE JOINED superior cluster");
 		
 		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), BullyPriority.createForSuperiorControlEntity(mHRMController,  this));
-		pSourceComChannel.sendPacket(tBullyPriorityUpdatePacket);
+		pComChannelToRemoteCluster.sendPacket(tBullyPriorityUpdatePacket);
 	}
 
 	/**
-	 * Sends a packet towards all possible superior clusters
+	 * Sends a packet towards the superior cluster
 	 * If there is more than one comm. channel an error occurs but the message is sent
 	 * 
 	 * @param pPacket the packet
 	 */
-	private void sendSuperiorClusters(SignalingMessageHrm pPacket)
+	private void sendSuperiorCluster(SignalingMessageHrm pPacket)
 	{
+		Logging.log(this, "SENDING TO SUPERIOR CLUSTER: " + pPacket);
+		
 		// get all communication channels
 		LinkedList<ComChannel> tComChannels = getComChannels();
 
@@ -780,13 +776,34 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
+	 * 
+	 */
+	private boolean hasMembership(ClusterName pCluster)
+	{
+		boolean tResult = false;
+		
+		synchronized (mClusterMemberships) {
+			for(CoordinatorAsClusterMember tClusterMembership : mClusterMemberships){
+				if(tClusterMembership.hasComChannel(pCluster)){
+					tResult = true;
+					break;
+				}
+			}
+		}
+		return tResult;
+	}
+	
+	/**
 	 * Returns if the initial clustering has already finished
 	 * 
 	 * @return true or false
 	 */
 	public boolean isClustered()
 	{
-		return mInitialClusteringFinished;
+		// search for an existing cluster at this hierarchy level
+		Cluster tSuperiorCluster = mHRMController.getCluster(getHierarchyLevel());
+		
+		return ((tSuperiorCluster != null) && (hasMembership(tSuperiorCluster)));
 	}
 
 	//TODO: fix this +1 stuff
@@ -921,7 +938,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						 * Iterate over all cluster candidates and determines the logical distance of each found candidate
 						 */
 						for(AbstractRoutingGraphNode tClusterCandidate : tNeighborClustersForClustering) {
-							// is the found neighbor a Cluster object?
+							/**
+							 * Cluster
+							 */ 
 							if(tClusterCandidate instanceof Cluster) {
 								 if (tRadius == 1){
 									 // add this Cluster object as cluster candidate because it obviously has a logical distance of 1
@@ -933,38 +952,47 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 }else{
 									 // found a Cluster object but the radius is already beyond 1
 								 }
-							} else {
-								// is the found neighbor a ClusterProxy object?
-								if (tClusterCandidate instanceof ClusterMember){
-									// get the proxy for this cluster
-									ClusterMember tClusterCandidateProxy = (ClusterMember)tClusterCandidate;
+								 
+								 // finished processing
+								 continue;
+							}
+							
+							
+							/**
+							 * ClusterMember
+							 */ 
+							if (tClusterCandidate instanceof ClusterMember){
+								// get the ClusterMember for this cluster
+								ClusterMember tClusterCandidateProxy = (ClusterMember)tClusterCandidate;
+								
+								// are we already connected to this candidate?
+								if (!isConnectedToNeighborCoordinator(tClusterCandidateProxy.getCoordinatorNodeL2Address())){
 									
-									// are we already connected to this candidate?
-									if (!isConnectedToNeighborCoordinator(tClusterCandidateProxy.getCoordinatorNodeName())){
-										
-										// get the logical distance to the neighbor
-										int tNeighborClusterDistance = 0; //TODO: mHRMController.getClusterDistance(tClusterCandidateProxy);
-										
-										// should we connect to the found cluster candidate?
-										if ((tNeighborClusterDistance > 0) && (tNeighborClusterDistance <= tRadius)) {
-											// add this candidate to the list of connection targets
-											Logging.log(this, "     ..[r=" + tRadius + "]: found ClusterProxy candidate: " + tClusterCandidate);
-											tSelectedNeighborClusters.add(tClusterCandidateProxy);
-	
-											// remove this candidate from the global list
-											tNeighborClustersForClustering_RemoveList.add(tClusterCandidate);
-										}else{
-											// the logical distance doesn't equal to the current radius value
-											if (tNeighborClusterDistance > tRadius){
-												// we have already passed the last possible candidate -> we continue the for-loop
-												continue;
-											}
+									// get the logical distance to the neighbor
+									int tNeighborClusterDistance = 0; //TODO: mHRMController.getClusterDistance(tClusterCandidateProxy);
+									
+									// should we connect to the found cluster candidate?
+									if ((tNeighborClusterDistance > 0) && (tNeighborClusterDistance <= tRadius)) {
+										// add this candidate to the list of connection targets
+										Logging.log(this, "     ..[r=" + tRadius + "]: found ClusterProxy candidate: " + tClusterCandidate);
+										tSelectedNeighborClusters.add(tClusterCandidateProxy);
+
+										// remove this candidate from the global list
+										tNeighborClustersForClustering_RemoveList.add(tClusterCandidate);
+									}else{
+										// the logical distance doesn't equal to the current radius value
+										if (tNeighborClusterDistance > tRadius){
+											// we have already passed the last possible candidate -> we continue the for-loop
+											continue;
 										}
 									}
-								}else{
-									Logging.err(this, "Found unsupported neighbor: " + tClusterCandidate);
 								}
+								
+								 // finished processing
+								continue;
 							}
+							
+							Logging.err(this, "Found unsupported neighbor: " + tClusterCandidate);
 						}
 	
 						/**
@@ -1021,7 +1049,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					/**
 					 * Trigger event "detected isolation"
 					 */
-					eventDetectedIsolation();
+					//eventDetectedIsolation();
 				}
 			}else{
 				Logging.warn(this,  "CLUSTERING SKIPPED, no clustering on highest hierarchy level " + getHierarchyLevel().getValue() + " needed");
@@ -1031,14 +1059,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 	}
 
-	/**
-	 * EVENT: detected isolation
-	 */
-	private void eventDetectedIsolation()
-	{
-		Logging.log(this, "EVENT: detected lcoal isolation");
-	}
-	
 	/**
 	 * EVENT: detected a neighbor coordinator, we react on this event by the following steps:
 	 *   1.) expand the superior cluster to this neighbor coordinator 
@@ -1074,8 +1094,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			}else if(pNeighborClusterControlEntity instanceof Coordinator){
 				tLocalNeighborCoordinator = (Coordinator)pNeighborClusterControlEntity;
 			}			
-			// trigger event "finished clustering" 
-			tLocalNeighborCoordinator.eventInitialClusteringFinished();
 		}else{
 			Logging.warn(this, "Invalid node name for the neighbor coordinator: " + pNeighborClusterControlEntity);
 			Logging.warn(this, "     ..skipping further processing here");
@@ -1120,7 +1138,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				 * Create communication session
 				 */
 			    Logging.log(this, "    ..creating new communication session");
-			    ComSession tComSession = new ComSession(mHRMController, false, this, getHierarchyLevel());
+			    ComSession tComSession = null;//new ComSession(mHRMController, false, getHierarchyLevel());
 		
 			    /**
 			     * Iterate over all local neighbor coordinators on this hierarchy level and add them as already known cluster members for the future superior cluster

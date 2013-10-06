@@ -14,41 +14,84 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 
 /**
- * PACKET: This packet is used when a coordinator wants to join an existing superior cluster
+ * PACKET: This packet is used to request the remote side to join a local cluster. It is send from a coordinator to another coordinator.
+ * 
+ * ****************************************************************************************************************************
+ * ****************************************** Explanation of the packet usage *************************************************
+ * ****************************************************************************************************************************
+ * 
+ *                                 "1. request packet " 
+ *
+ *                                      
+ *               /==========\
+ *               |L2 cluster| ------- REQUEST PACKET -----------+
+ *               \==========/                                   |
+ *                    |                                         |
+ *                   \|/                                       \|/
+ *                +-------+                                 +-------+
+ *           +... |Coord.1| ...+                       +... |Coord.1| ...+
+ *           :    +-------+    :                       :    +-------+    :
+ *           :                 :                       :                 :
+ *           :                 :                       :                 : 
+ *       +-------+         +-------+               +-------+         +-------+
+ *       |Coord.0|         |Coord.0|               |Coord.0|         |Coord.0|
+ *       +-------+         +-------+               +-------+         +-------+
+ *       
+ *       
+ * ****************************************************************************************************************************
+ * ****************************************************************************************************************************
+ *       
  */
 public class RequestClusterMembership extends SignalingMessageHrm
 {
 	private static final long serialVersionUID = 445881657397476245L;
 
 	/**
-	 * Store the ClusterName of the sender
+	 * Store the ClusterName of the sending coordinator
 	 */
-	private ClusterName mSenderClusterName = null;
+	private ClusterName mRequestingClusterName = null;
 	
+	/**
+	 * Store the ClusterName of the target coordinator
+	 */
+	private ClusterName mTargetCoordinator = null;
+
 	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
-	 * @param pSenderClusterName the ClusterName of the sender
+	 * @param pSourceCoordinator the ClusterName of the sender (a cluster)
+	 * @param pTargetClusterName the ClusterName of the target (another coordinator)
 	 */
-	public RequestClusterMembership(Name pSenderName, Name pReceiverName, ClusterName pSenderClusterName)
+	public RequestClusterMembership(Name pSenderName, Name pReceiverName, ClusterName pRequestingCluster, ClusterName pTargetCoordinator)
 	{
 		super(pSenderName, pReceiverName);
 		
-		mSenderClusterName = pSenderClusterName;
+		mRequestingClusterName = pRequestingCluster;
+		mTargetCoordinator = pTargetCoordinator;
 	}
 
 	/**
-	 * Returns the ClusterName which describes the desired cluster
+	 * Returns the ClusterName of the source cluster
 	 * 
-	 * @return the ClusterName description
+	 * @return the ClusterName of the source
 	 */
-	public ClusterName getSenderClusterName()
+	public ClusterName getRequestingCluster()
 	{
-		return mSenderClusterName;
+		return mRequestingClusterName;
 	}
 	
+	/**
+	 * Returns the ClusterName of the target coordinator
+	 * 
+	 * @return the ClusterName of the target
+	 */
+	public ClusterName getTargetCoordinator()
+	{
+		return mTargetCoordinator;
+	}
+
 	/**
 	 * Returns an object describing string
 	 * 
@@ -57,6 +100,6 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", SenderClusterName="+ getSenderClusterName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Requester="+ getRequestingCluster() + ", TargetCoord.=" + getTargetCoordinator() + ")";
 	}
 }

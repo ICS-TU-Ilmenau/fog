@@ -42,7 +42,7 @@ public class ComSession extends Session
 {
 
 	/**
-	 * Stores the L2Address of the peer - this reference is used within getPeerL2Address() of CommunicationChannel and CommunicationChannelMultiplexer
+	 * Stores the L2Address of the peer - this reference is used within getPeerL2Address() of ComChannel
 	 */
 	private L2Address mPeerL2Address = null;
 
@@ -62,17 +62,18 @@ public class ComSession extends Session
 	private Connection mParentConnection = null;
 	
 	/**
-	 * Stores the target of this comm. session
+	 * Stores if this session is a local loopback session
 	 */
-	private L2Address mTargetL2Address = null;
+	private boolean mLocalLoopback = false;
 	
 	/**
-	 * Stores the parent control entity
+	 * Stores if this an outgoing or incoming connection
 	 */
-	private ControlEntity mParent = null;
-	
 	private boolean mIncomingConnection = false;
-	private HierarchyLevel mHierarchyLevel = null;
+
+	/**
+	 * Stores the route to the peer.
+	 */
 	private Route mRouteToPeer;
 	
 	/**
@@ -83,7 +84,7 @@ public class ComSession extends Session
 	 * @param pComChannelMuxer the communication multiplexer to use
 	 * 
 	 */
-	public ComSession(HRMController pHRMController, boolean pIncomingConnection, ControlEntity pParent, HierarchyLevel pLevel)
+	public ComSession(HRMController pHRMController, boolean pIncomingConnection)
 	{
 		// call the Session constructor
 		super(false, Logging.getInstance(), null);
@@ -91,12 +92,6 @@ public class ComSession extends Session
 		// store a reference to the HRMController application
 		mHRMController = pHRMController;
 		
-		// store the parental control entity
-		mParent = pParent;
-		
-		// store the hierarchy level
-		mHierarchyLevel = pLevel;
-
 		// store the connection direction
 		mIncomingConnection = pIncomingConnection;
 		
@@ -112,6 +107,26 @@ public class ComSession extends Session
 		}else{
 			Logging.log(this, "CLIENT SESSION CREATED");
 		}
+	}
+	
+	/**
+	 * Factory function: creates a local loopback session
+	 * 
+	 * @param pHRMController the HRMController instance
+	 * 
+	 * @return the create comm. session
+	 */
+	static public ComSession createLoopback(HRMController pHRMController)
+	{
+		ComSession tResult = new ComSession(pHRMController, false);
+		
+		// mark as local loopback session
+		tResult.mLocalLoopback = true;
+		
+		// activate the loopback connection
+		tResult.startConnection(pHRMController.getNodeL2Address(), null);
+		
+		return tResult;
 	}
 	
 	/**
@@ -139,17 +154,23 @@ public class ComSession extends Session
 			}
 		}
 		
-		if(getConnection() != null && getConnection().isConnected()) {
-			try	{
-				Logging.log(this, "SENDING PACKET: " + pData.getClass().getSimpleName());
-
-				getConnection().write(pData);
-				tResult = true;
-			} catch (NetworkException tExc) {
-				Logging.err(this, "Unable to send " + pData + " because write operation failed", tExc);
+		if(!mLocalLoopback){
+			if(mParentConnection != null && mParentConnection.isConnected()) {
+				try	{
+					Logging.log(this, "SENDING PACKET: " + pData.getClass().getSimpleName());
+	
+					mParentConnection.write(pData);
+					tResult = true;
+				} catch (NetworkException tExc) {
+					Logging.err(this, "Unable to send " + pData + " because write operation failed", tExc);
+				}
+			} else {
+				Logging.err(this, "Unable to send " + pData + " because of invalid connection: " + mParentConnection);
 			}
-		} else {
-			Logging.err(this, "Unable to send " + pData + " because of invalid connection: " + getConnection());
+		}else{
+			Logging.log(this, "SENDING local (per loopback) PACKET: " + pData.getClass().getSimpleName());
+			receiveData(pData);
+			tResult = true;
 		}
 		
 		return tResult;
@@ -166,7 +187,7 @@ public class ComSession extends Session
 			/**
 			 * TRIGGER: inform the ComChannel about the established communication session
 			 */
-			tComChannel.eventParentComSessionEstablished();
+			tComChannel.eventCommunicationAvailable();
 		}
 	}
 
@@ -196,11 +217,8 @@ public class ComSession extends Session
 		/**
 		 * Inform the HRS about the complete route to the peer
 		 */
-		// HINT: we do this only on base hierarchy level, in the higher layers this routing information is already known (otherwise the hierarchy couldn't have grown until this point)
-		if(mHierarchyLevel.isBaseLevel()) {
-			Logging.log(this, "      ..registering route to peer: " + pRouteToPeer);
-			mHRMController.addRouteToDirectNeighbor(mPeerL2Address, pRouteToPeer);
-		}
+		Logging.log(this, "      ..registering route to peer: " + pRouteToPeer);
+		mHRMController.addRouteToDirectNeighbor(mPeerL2Address, pRouteToPeer);
 		
 		mRouteToPeer = pRouteToPeer;
 	}
@@ -282,11 +300,15 @@ public class ComSession extends Session
 	 */
 	private void eventAllChannelsClosed()
 	{
-		if (HRMConfig.Hierarchy.AUTO_CLEANUP_FOR_CONNECTIONS){
-			Logging.log(this, "\n\n\n########### closing the parent connection(destination=" + mTargetL2Address + ", requirements=" + getConnection().getRequirements() + ")");
-			
-			//stop the session (closes the connection)
-			stop();
+		Logging.log(this, "EVENT: all channels are closed");
+		
+		if(!mLocalLoopback){
+			if (HRMConfig.Hierarchy.AUTO_CLEANUP_FOR_CONNECTIONS){
+				Logging.log(this, "\n\n\n########### closing the parent connection(destination=" + mPeerL2Address + ", requirements=" + mParentConnection.getRequirements() + ")");
+				
+				//stop the session (closes the connection)
+				stop();
+			}
 		}
 	}
 
@@ -521,16 +543,16 @@ public class ComSession extends Session
 			RequestClusterMembership tRequestClusterMembershipPacket = (RequestClusterMembership)pData;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRequestClusterMembershipPacket.getSenderClusterName());
+				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRequestClusterMembershipPacket.getRequestingCluster());
 			}
 			
+			Coordinator tCoordinator = mHRMController.getCoordinatorByID(tRequestClusterMembershipPacket.getTargetCoordinator().getCoordinatorID());
+			
 			// is the parent a coordinator or a cluster?
-			if (mParent instanceof Cluster){
-				Cluster tCluster = (Cluster)mParent;
-				
-				tCluster.eventMembershipRequest(tRequestClusterMembershipPacket.getSenderClusterName(), this);
+			if (tCoordinator != null){
+				tCoordinator.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), this);
 			}else{
-				Logging.err(this, "Expected a Cluster object as parent for processing RequestClusterMembership data but parent is " + mParent);
+				Logging.err(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + tRequestClusterMembershipPacket);
 			}
 			return true;
 		}
@@ -578,16 +600,19 @@ public class ComSession extends Session
 	{
 		Logging.log(this, "\n\n###### STARTING connection for target: " + pTargetL2Address);
 		
-		// store the connection
-		mParentConnection = pConnection;
-		
-		// store the target L2 address
-		mTargetL2Address = pTargetL2Address;
-		
-		/**
-		 * Calls "start()" of the superior class
-		 */
-		start(mParentConnection);
+		if(!mLocalLoopback){
+			if(pConnection != null){
+				// store the connection
+				mParentConnection = pConnection;
+				
+				/**
+				 * Calls "start()" of the superior class
+				 */
+				start(mParentConnection);
+			}else{
+				Logging.err(this, "Given connection is null");
+			}
+		}
 
 		// do we know the target L2Address?
 		if (pTargetL2Address != null){
@@ -636,11 +661,6 @@ public class ComSession extends Session
 		// tell the neighbor about the FN
 		Logging.log(mHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
 		write(tAnnouncePhysicalEndPoint);
-		
-		/**
-		 * Trigger event "communication available"
-		 */
-		mParent.eventCommunicationAvailable();
 	}
 
 	/**
@@ -651,9 +671,9 @@ public class ComSession extends Session
 	public String toString()
 	{
 		if(getPeerL2Address() != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "(Peer=" + getPeerL2Address() + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + (mLocalLoopback ? "@LOOP" : "") + "(Peer=" + getPeerL2Address() + ")";
 		} else {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName();
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + (mLocalLoopback ? "@LOOP" : "");
 		}
 		 
 	}

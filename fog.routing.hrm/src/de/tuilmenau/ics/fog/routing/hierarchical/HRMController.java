@@ -244,6 +244,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// set the Bully priority 
 		BullyPriority.configureNode(pNode);
 
+		// create local loopback session
+		ComSession.createLoopback(this);
+		
 		// fire the first "report/share phase" trigger
 		reportAndShare();
 		
@@ -680,6 +683,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Unregister a cluster member from the local database
+	 * 
+	 * @param pClusterMember the cluster member which should be unregistered
+	 */
+	public void unregisterClusterMember(ClusterMember pClusterMember)
+	{
+		Logging.log(this, "Unregistering cluster member" + pClusterMember);
+
+		synchronized (mLocalClusterMembers) {
+			// unregister from list of known cluster members
+			mLocalClusterMembers.remove(pClusterMember);
+		}
+
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
+
+		// register at the ARG
+		unregisterNodeARG(pClusterMember);
+
+		// it's time to update the GUI
+		notifyGUI(pClusterMember);
+	}
+
+	/**
 	 * Registers a cluster at the local database.
 	 * 
 	 * @param pCluster the cluster which should be registered
@@ -1017,6 +1044,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns the locally known Cluster object for a given hierarchy level
+	 * 
+	 * @param pHierarchyLevel the hierarchy level for which the Cluster object is search
+	 * 
+	 * @return the found Cluster object
+	 */
+	public Cluster getCluster(HierarchyLevel pHierarchyLevel)
+	{
+		Cluster tResult = null;
+
+		for(Cluster tKnownCluster : getAllClusters()) {
+			if(tKnownCluster.getHierarchyLevel().equals(pHierarchyLevel)) {
+				tResult = tKnownCluster;
+				break;
+			}
+		}
+
+		return tResult;
+	}
+
+	/**
 	 * Returns the locally known CoordinatorProxy object, which was identified by its ClusterName
 	 *  
 	 * @param pClusterName the cluster name of the searched coordinator proxy
@@ -1027,18 +1075,35 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		CoordinatorProxy tResult = null;
 		
-		synchronized (mAbstractRoutingGraph) {
-			for (AbstractRoutingGraphNode tNode : mAbstractRoutingGraph.getVertices()){
-				if(tNode instanceof CoordinatorProxy){
-					CoordinatorProxy tCoordinatorProxy = (CoordinatorProxy)tNode;
-					if(tCoordinatorProxy.equals(pClusterName)){
-						tResult = tCoordinatorProxy;
-						break;
-					}
+		synchronized (mLocalCoordinatorProxies) {
+			for (CoordinatorProxy tCoordinatorProxy : mLocalCoordinatorProxies){
+				if(tCoordinatorProxy.equals(pClusterName)){
+					tResult = tCoordinatorProxy;
+					break;
 				}
 			}
 		}
 
+		return tResult;
+	}
+
+	/**
+	 * Returns a known coordinator, which is identified by its ID.
+	 * 
+	 * @param pCoordinatorID the coordinator ID
+	 * 
+	 * @return the searched coordinator object
+	 */
+	public Coordinator getCoordinatorByID(int pCoordinatorID)
+	{
+		Coordinator tResult = null;
+		
+		for(Coordinator tKnownCoordinator : getAllCoordinators()) {
+			if (tKnownCoordinator.getCoordinatorID() == pCoordinatorID) {
+				tResult = tKnownCoordinator;
+			}
+		}
+		
 		return tResult;
 	}
 
@@ -1049,12 +1114,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the searched cluster object
 	 */
-	public Cluster getClusterByID(ClusterName pClusterID)
+	public Cluster getClusterByID(Long pClusterID)
 	{
 		Cluster tResult = null;
 		
 		for(Cluster tKnownCluster : getAllClusters()) {
-			if (tKnownCluster.equals(pClusterID)) {
+			if (tKnownCluster.getClusterID().equals(pClusterID)) {
 				tResult = tKnownCluster;
 			}
 		}
@@ -1093,38 +1158,113 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Determines the outgoing communication session for a desired target cluster
 	 * 
-	 * @param pTargetCluster the target cluster
+	 * @param pDestinationL2Address the L2 address of the destination
 	 * 
 	 * @return the found comm. session or null
 	 */
-	public ComSession getOutgoingComSession(ControlEntity pTargetCluster)
+	public ComSession getCreateComSession(L2Address pDestinationL2Address)
 	{
 		ComSession tResult = null;
-
-		Logging.log(this, "Searching for outgoing comm. session towards cluster: " + pTargetCluster + ", knowing these sessions and their channels:");
-		synchronized (mLocalOutgoingSessions) {
-			for (ComSession tComSession : mLocalOutgoingSessions){
-				Logging.log(this, "   ..ComSession: " + tComSession);
-				for(ComChannel tComChannel : tComSession.getAllComChannels()){
-					Logging.log(this, "     ..ComChannel: " + tComChannel);
-					Logging.log(this, "        ..RemoteCluster: " + tComChannel.getRemoteClusterName().toString());
+		
+		// is the destination valid?
+		if (pDestinationL2Address != null){
+			Logging.log(this, "Searching for outgoing comm. session to: " + pDestinationL2Address);
+			synchronized (mLocalOutgoingSessions) {
+				for (ComSession tComSession : mLocalOutgoingSessions){
+					Logging.log(this, "   ..ComSession: " + tComSession);
+					
+					// get the L2 address of the comm. session peer
+					L2Address tPeerL2Address = tComSession.getPeerL2Address();
+							
+					if(tPeerL2Address.equals(pDestinationL2Address)){
+						Logging.log(this, "     ..found match");
+						tResult = tComSession;
+						break;
+					}else{
+						Logging.log(this, "     ..uninteresting");
+					}
+				}
+				
+				if(tResult == null){
+					Logging.log(this, "getCreateComSession() could find a comm. session for destination: " + pDestinationL2Address + ", knowing these sessions and their channels:");
+					for (ComSession tComSession : mLocalOutgoingSessions){
+						Logging.log(this, "   ..ComSession: " + tComSession);
+						for(ComChannel tComChannel : tComSession.getAllComChannels()){
+							Logging.log(this, "     ..ComChannel: " + tComChannel);
+							Logging.log(this, "        ..RemoteCluster: " + tComChannel.getRemoteClusterName().toString());
+						}
+					}
+					Logging.log(this, "   ..creating new connection and session to: " + pDestinationL2Address);
+					tResult = createOutgoingComSession(pDestinationL2Address, null);
 				}
 			}
-			
+		}else{
+			Logging.err(this, "getCreateComSession() detected invalid destination L2 address");
 		}
+		return tResult;
+	}
 
-		synchronized (mLocalOutgoingSessions) {
-			for (ComSession tComSession : mLocalOutgoingSessions){
-				ComChannel tComChannel = tComSession.getComChannelByRemoteClusterID(pTargetCluster.getClusterID());
-				if (tComChannel != null){
-					tResult = tComSession;
+	/**
+	 * Creates a new comm. session (incl. connection) to a given destination L2 address and uses the given connection requirements
+	 * 
+	 * @param pDestinationL2Address the L2 address of the destination
+	 * @param pConnectionRequirements the connection requirements
+	 * 
+	 * @return the new comm. session or null
+	 */
+	private ComSession createOutgoingComSession(L2Address pDestinationL2Address, Description pConnectionRequirements)
+	{
+		ComSession tResult = null;
+		
+		Logging.log(this, "Creating connection/comm. session to: " + pDestinationL2Address + " with requirements: " + pConnectionRequirements);
+		
+		/**
+		 * Create communication session
+		 */
+	    Logging.log(this, "    ..creating new communication session");
+	    ComSession tComSession = new ComSession(this, false);
+		
+	    /**
+	     * Wait until the FoGSiEm simulation is created
+	     */
+		if(HRMConfig.DebugOutput.BLOCK_HIERARCHY_UNTIL_END_OF_SIMULATION_CREATION)
+		{
+			while(!simulationCreationFinished()){
+				try {
+					Logging.log(this, "WAITING FOR END OF SIMULATION CREATION");
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
 				}
 			}
+		}
+				
+		/**
+		 * Connect to the neighbor node
+		 */
+		Connection tConnection = null;				
+	    Logging.log(this, "    ..CONNECTING to: " + pDestinationL2Address + " with requirements: " + pConnectionRequirements);
+		try {
+			tConnection = connectBlock(pDestinationL2Address, pConnectionRequirements, getNode().getIdentity());
+		} catch (NetworkException tExc) {
+			Logging.err(this, "Cannot connect to: " + pDestinationL2Address, tExc);
+		}
+	    Logging.log(this, "    ..connectBlock() FINISHED");
+		if(tConnection != null) {
+
+			mCounterOutgoingConnections++;
+			
+			Logging.log(this, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
+			tComSession.startConnection(pDestinationL2Address, tConnection);
+			
+			// return the created comm. session
+			tResult = tComSession;
+		}else{
+			Logging.err(this, "     ..connection failed to: " + pDestinationL2Address + " with requirements: " + pConnectionRequirements);
 		}
 		
 		return tResult;
 	}
-
+	
 	/**
 	 * Unregisters an outgoing communication session
 	 * 
@@ -1377,60 +1517,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pInterfaceToNeighbor the network interface to the neighbor 
 	 * @param pNeighborL2Address the L2 address of the detected physical neighbor's first FN towards the common bus.
 	 */
-	public synchronized void eventDetectedPhysicalNeighborNode(NetworkInterface pInterfaceToNeighbor, final L2Address pNeighborL2Address)
+	public synchronized void eventDetectedPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, final L2Address pNeighborL2Address)
 	{
-		// get the recursive FoG layer
-		FoGEntity tFoGLayer = (FoGEntity) mNode.getLayer(FoGEntity.class);
-
-		// get the central FN of this node
-		L2Address tThisHostL2Address = getHRS().getL2AddressFor(tFoGLayer.getCentralFN());
-
-		Logging.info(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor + ", local L2 address=" + tThisHostL2Address);
+		Logging.info(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 		
-		/**
-		 * Create/get the cluster on base hierarchy level
-		 */
-		Cluster tParentCluster = null;
-		//HINT: we make sure that we use only one Cluster object per Bus
-		Cluster tExistingCluster = getBaseHierarchyLevelCluster(pInterfaceToNeighbor);
-		if (tExistingCluster != null){
-		    Logging.log(this, "    ..using existing level0 cluster: " + tExistingCluster);
-			tParentCluster = tExistingCluster;
-		}else{
-		    Logging.log(this, "    ..knowing level0 clusters: " + getAllClusters(0));
-		    Logging.log(this, "    ..creating new level0 cluster");
-			tParentCluster = Cluster.createBaseCluster(this);
-			tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
-			
-			increaseBaseNodePriority_Connectivity();
-		}
-		
-//		setSourceIntermediateCluster(tCreatedCluster, tCreatedCluster);
-		
-		/**
-		 * Create communication session
-		 */
-	    Logging.log(this, "    ..creating new communication session");
-	    final ComSession tComSession = new ComSession(this, false, tParentCluster, tParentCluster.getHierarchyLevel());
-	    
-	    /**
-	     * Create communication channel
-	     */
-	    Logging.log(this, "    ..creating new communication channel");
-		ComChannel tComChannel = new ComChannel(this, ComChannel.Direction.OUT, tParentCluster, tComSession);
-		tComChannel.setRemoteClusterName(tParentCluster.createClusterName());
-		
-		/**
-		 * Describe the new created cluster
-		 */
-	    Logging.log(this, "    ..creating cluster description");
-		final RequestClusterParticipationProperty tRequestClusterParticipationProperty = RequestClusterParticipationProperty.create(this, HierarchyLevel.createBaseLevel(), tParentCluster.getClusterID(), tParentCluster.getHierarchyLevel());
-		/**
-		 * Describe the cluster member
-		 */
-	    Logging.log(this, "    ..creating cluster member description for created cluster " + tParentCluster);
-	    tRequestClusterParticipationProperty.addSenderClusterMember(tParentCluster);
-
 		/**
 		 * Helper for having access to the HRMController within the created thread
 		 */
@@ -1447,17 +1537,35 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			public void run()
 			{
-				if(HRMConfig.DebugOutput.BLOCK_HIERARCHY_UNTIL_END_OF_SIMULATION_CREATION)
-				{
-					while(!simulationCreationFinished()){
-						try {
-							Logging.log(this, "WAITING FOR END OF SIMULATION CREATION");
-							sleep(100);
-						} catch (InterruptedException e) {
-						}
-					}
+				/**
+				 * Create/get the cluster on base hierarchy level
+				 */
+				Cluster tParentCluster = null;
+				//HINT: we make sure that we use only one Cluster object per Bus
+				Cluster tExistingCluster = getBaseHierarchyLevelCluster(pInterfaceToNeighbor);
+				if (tExistingCluster != null){
+				    Logging.log(this, "    ..using existing level0 cluster: " + tExistingCluster);
+					tParentCluster = tExistingCluster;
+				}else{
+				    Logging.log(this, "    ..knowing level0 clusters: " + getAllClusters(0));
+				    Logging.log(this, "    ..creating new level0 cluster");
+					tParentCluster = Cluster.createBaseCluster(tHRMController);
+					tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
+					
+					increaseBaseNodePriority_Connectivity();
 				}
-				
+
+				/**
+				 * Describe the new created cluster
+				 */
+			    Logging.log(this, "    ..creating cluster description");
+				final RequestClusterParticipationProperty tRequestClusterParticipationProperty = RequestClusterParticipationProperty.create(tHRMController, HierarchyLevel.createBaseLevel(), tParentCluster.getClusterID(), tParentCluster.getHierarchyLevel());
+				/**
+				 * Describe the cluster member
+				 */
+			    Logging.log(this, "    ..creating cluster member description for created cluster " + tParentCluster);
+			    tRequestClusterParticipationProperty.addSenderClusterMember(tParentCluster);
+
 				/**
 				 * Create connection requirements
 				 */
@@ -1465,23 +1573,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tConnectionRequirements.set(tRequestClusterParticipationProperty);
 
 				/**
-				 * Connect to the neighbor node
+				 * Create communication session
 				 */
-				Connection tConnection = null;				
-			    Logging.log(this, "    ..CONNECTING to: " + pNeighborL2Address + " with requirements: " + tConnectionRequirements);
-				try {
-					tConnection = connectBlock(pNeighborL2Address, tConnectionRequirements, getNode().getIdentity());
-				} catch (NetworkException tExc) {
-					Logging.err(this, "Cannot connect to: " + pNeighborL2Address, tExc);
-				}
-			    Logging.log(this, "    ..connectBlock() FINISHED");
-				if(tConnection != null) {
+			    Logging.log(this, "    ..get/create communication session");
+			    final ComSession tComSession = createOutgoingComSession(pNeighborL2Address, tConnectionRequirements);
+			    
+				if(tComSession != null) {
 
-					mCounterOutgoingConnections++;
-					
-					Logging.log(tHRMController, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
-					tComSession.startConnection(pNeighborL2Address, tConnection);					
-					
+				    /**
+				     * Create communication channel
+				     */
+				    Logging.log(this, "    ..creating new communication channel");
+					ComChannel tComChannel = new ComChannel(tHRMController, ComChannel.Direction.OUT, tParentCluster, tComSession);
+					tComChannel.setRemoteClusterName(tParentCluster.createClusterName());
+
 					Logging.log(this, "Connection thread for " + pNeighborL2Address + " finished");
 				}else{
 					Logging.log(this, "Connection thread for " + pNeighborL2Address + " failed");
@@ -1493,6 +1598,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Start the connection thread
 		 */
 		tThread.start();
+				
 	}
 
 	/**
@@ -2059,9 +2165,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			RequestClusterParticipationProperty tPropClusterParticipation = (RequestClusterParticipationProperty) tConnectionRequirements.get(RequestClusterParticipationProperty.class);
 			
 			/**
-			 * Create ClusterName for the signaled cluster
+			 * Create the communication session
 			 */
-			ClusterName tSignaledClusterName = new ClusterName(this, tPropClusterParticipation.getHierarchyLevel(), tPropClusterParticipation.getClusterID(), -1);
+			Logging.log(this, "     ..creating communication session");
+			ComSession tComSession = new ComSession(this, true);
 
 			/******************************************************
 			 * PARSE: cluster description from remote side
@@ -2069,7 +2176,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			if(tPropClusterParticipation != null) {
 				Logging.log(this, "    ..found cluster description: " + tPropClusterParticipation);
 
-				ComSession tComSession = null;
+				/**
+				 * Create ClusterName for the signaled cluster
+				 */
+				ClusterName tSignaledClusterName = new ClusterName(this, tPropClusterParticipation.getHierarchyLevel(), tPropClusterParticipation.getClusterID(), -1);
+
 				ClusterMember tTargetCluster = null;
 
 				/**
@@ -2100,17 +2211,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					tTargetCluster = Cluster.create(this, tSignaledClusterName);
 				}else{
 					Logging.log(this, "    ..creating new local cluster member for: " + tSignaledClusterName); 
-					tTargetCluster = ClusterMember.create(this, tSignaledClusterName, tPropClusterParticipation.getSenderNodeName());
+					tTargetCluster = ClusterMember.create(this, tSignaledClusterName, tPropClusterParticipation.getSenderL2Address());
 				}
 				
 				Logging.log(this, "     ..CONTINUING for target cluster: " + tTargetCluster);
 						
-				/**
-				 * Create the communication session
-				 */
-				Logging.log(this, "     ..creating communication session");
-				tComSession = new ComSession(this, true, tTargetCluster, tPropClusterParticipation.getHierarchyLevel());
-
 				/*****************************************************
 				 * PARSE: cluster member descriptions from remote side
 				 *****************************************************/
@@ -2144,12 +2249,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * Create a ClusterProxy object
 						 */
 						Logging.log(this, "     ..creating cluster proxy");
-						ClusterMember tClusterProxy_ClusterMember = new ClusterMember(this, new HierarchyLevel(this, tPropClusterParticipation.getHierarchyLevel().getValue() - 1),  tSenderClusterMember.getClusterID(), tSenderClusterMember.getCoordinatorID(), tPropClusterParticipation.getSenderNodeName());
-						
-						/**
-						 * Store the coordinator name of the remote cluster in the local FoGName-to-L2Address mapping
-						 */
-						getHRS().mapFoGNameToL2Address(tPropClusterParticipation.getSenderNodeName(), tPropClusterParticipation.getSenderL2Address());
+						ClusterMember tClusterProxy_ClusterMember = new ClusterMember(this, new HierarchyLevel(this, tPropClusterParticipation.getHierarchyLevel().getValue() - 1),  tSenderClusterMember.getClusterID(), tSenderClusterMember.getCoordinatorID(), tPropClusterParticipation.getSenderL2Address());
 					} else {
 						Logging.warn(this, "newConnection() has found an already defined remote ClusterName: " + tComChannel.getRemoteClusterName());
 					}
@@ -2160,15 +2260,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					
 					tFoundDescribedMembers++;
 				}// described cluster members
-			
-				/**
-				 * Start the communication session
-				 */					
-				Logging.log(this, "     ..starting communication session for the new connection");
-				tComSession.startConnection(tPropClusterParticipation.getSenderL2Address(), pConnection);
 			}else{
-				Logging.err(this, "newConnection() hasn't found a valid cluster description property in the connection requirements: " + tConnectionRequirements);
+				Logging.warn(this, "newConnection() hasn't found a valid cluster description property in the connection requirements: " + tConnectionRequirements);
 			}
+
+			/**
+			 * Start the communication session
+			 */					
+			Logging.log(this, "     ..starting communication session for the new connection");
+			tComSession.startConnection(tPropClusterParticipation.getSenderL2Address(), pConnection);
 		}else{
 			/**
 			 * We have a probe-routing connection and will print some additional information about the taken route of the connection request

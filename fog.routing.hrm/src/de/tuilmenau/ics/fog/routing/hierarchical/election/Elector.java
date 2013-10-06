@@ -154,7 +154,8 @@ public class Elector implements Localization
 	{
 		Logging.log(this, "#### STARTING ELECTION");
 		
-		if (mParent instanceof Cluster){
+		// is the parent the cluster head?
+		if(mParent instanceof Cluster){
 			Cluster tParentCluster = (Cluster)mParent;
 			
 			// was the cluster already locally registered as neighbor? 
@@ -187,7 +188,7 @@ public class Elector implements Localization
 				setElectorState(ElectorState.ERROR);
 			}
 		}else{
-			Logging.err(this, "EXPECTED CLUSTER as parent, parent is: " + mParent);
+			Logging.warn(this, "We skipped election start because parent isn't the cluster head: " + mParent);
 		}
 	}
 	
@@ -447,29 +448,29 @@ public class Elector implements Localization
 			// set correct elector state
 			setElectorState(ElectorState.ELECTED);
 	
-			// get the coordinator from the parental cluster
-			Coordinator tCoordinator = mParent.getCoordinator();
-			if (tCoordinator == null){
-				if (mParent instanceof Cluster){
+			// is the parent the cluster head?
+			if(mParent instanceof Cluster){
+				// get the coordinator from the parental cluster
+				Coordinator tCoordinator = mParent.getCoordinator();
+				if (tCoordinator == null){
 					Cluster tParentCluster = (Cluster)mParent;
 					
 					// create new coordinator instance
 					tCoordinator = new Coordinator(tParentCluster);
 				}else{
-					//HINT: startElection() also filters for a Cluster as parent object
-					Logging.err(this, "EXPECTED CLUSTER as parent, parent is: " + mParent);
+					Logging.warn(this, "Cluster " + mParent + " has already a coordinator");
+				}
+	
+				if(tCoordinator != null){
+					// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
+					signalAnnounceBroadcast();
+		
+					// trigger event "announced" for the coordinator
+					tCoordinator.eventAnnouncedAsCoordinator();
 				}
 			}else{
-				Logging.warn(this, "Cluster " + mParent + " has already a coordinator");
+				Logging.warn(this, "We have won the election but parent isn't the cluster head: " + mParent);
 			}
-
-			if(tCoordinator != null){
-				// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
-				signalAnnounceBroadcast();
-	
-				// trigger event "announced" for the coordinator
-				tCoordinator.eventAnnouncedAsCoordinator();
-			}			
 		}else{
 			Logging.warn(this, "Cluster " + mParent + " has still a valid and known coordinator, skipping eventElectionWon() here");
 		}

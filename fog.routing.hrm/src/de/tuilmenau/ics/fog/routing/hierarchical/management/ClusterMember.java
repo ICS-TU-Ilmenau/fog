@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -35,9 +36,9 @@ public class ClusterMember extends ClusterName
 	private boolean mNeighborhoodInitialized = false;
 
 	/**
-	 * Stores the name of the node where the coordinator of the addressed cluster is located
+	 * Stores the L2 address of the node where the coordinator of the addressed cluster is located
 	 */
-	private Name mCoordinatorNodeName = null;
+	private L2Address mCoordinatorNodeL2Address = null;
 	
 	/**
 	 * Stores the elector which is responsible for coordinator elections for this cluster.
@@ -51,14 +52,14 @@ public class ClusterMember extends ClusterName
 	 * @param pHierarchyLevel the hierarchy level
 	 * @param pClusterID the unique ID of this cluster
 	 * @param pCoordinatorID the unique coordinator ID for this cluster
-	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
+	 * @param pCoordinatorNodeL2Address the L2 address of the node where the coordinator of this cluster is located
 	 */
-	public ClusterMember(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, Name pCoordinatorNodeName)
+	public ClusterMember(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, L2Address pCoordinatorNodeL2Address)
 	{	
 		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID);
 
-		// store the name of the node where the coordinator is located
-		mCoordinatorNodeName = pCoordinatorNodeName;
+		// store the L2 address of the node where the coordinator is located
+		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
 
 		Logging.log(this, "CREATED");
 	}
@@ -69,11 +70,11 @@ public class ClusterMember extends ClusterName
 	 * @param pHRMController the local HRMController instance
 	 * @param pClusterName a ClusterName which includes the hierarchy level, the unique ID of this cluster, and the unique coordinator ID
 	 * @param pClusterID the unique ID of this cluster
-	 * @param pCoordinatorNodeName the node name where the coordinator of this cluster is located
+	 * @param pClusterHeadNodeL2Address the L2 address of the node where the cluster head is located
 	 */
-	public static ClusterMember create(HRMController pHRMController, ClusterName pClusterName, Name pCoordinatorNodeName)
+	public static ClusterMember create(HRMController pHRMController, ClusterName pClusterName, L2Address pClusterHeadNodeL2Address)
 	{	
-		ClusterMember tResult = new ClusterMember(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pCoordinatorNodeName);
+		ClusterMember tResult = new ClusterMember(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pClusterHeadNodeL2Address);
 		
 		// detect neighbor clusters (members), increase the Bully priority based on the local connectivity
 		tResult.initializeNeighborhood();
@@ -101,8 +102,8 @@ public class ClusterMember extends ClusterName
 		 */
 		for(ClusterMember tClusterMember : mHRMController.getAllClusterMembers(getHierarchyLevel()))
 		{
-			if (tClusterMember != this)
-			{
+			// store only cluster members for a remote cluster head
+			if ((tClusterMember != this) && (!(tClusterMember instanceof CoordinatorAsClusterMember))){
 				Logging.log(this, "      ..found known neighbor cluster (member): " + tClusterMember);
 				
 				// add this cluster as neighbor to the already known one
@@ -151,7 +152,7 @@ public class ClusterMember extends ClusterName
 		 * transition from one cluster to the next one => decrease TTL value
 		 */
 		pAnnounceCoordinator.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
-
+	
 		/**
 		 * forward the announcement if the TTL is still okay
 		 */
@@ -422,13 +423,13 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * Returns the name of the node where the coordinator of the described cluster is located
+	 * Returns the L2 address of the node where the coordinator of the described cluster is located
 	 * 
-	 * @return the node name
+	 * @return the L2 address
 	 */
-	public Name getCoordinatorNodeName()
+	public Name getCoordinatorNodeL2Address()
 	{
-		return mCoordinatorNodeName;
+		return mCoordinatorNodeL2Address;
 	}
 	
 	/**
@@ -439,7 +440,7 @@ public class ClusterMember extends ClusterName
 	@Override
 	public String getText()
 	{
-		return "RemoteCluster" + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeName()+ ")";
+		return "RemoteCluster" + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
 	}
 
 	/**
@@ -449,7 +450,7 @@ public class ClusterMember extends ClusterName
 	 */
 	public String toString()
 	{
-		return toLocation() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeName()+ ")";
+		return toLocation() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
 	}
 
 	/**
@@ -475,5 +476,51 @@ public class ClusterMember extends ClusterName
 		}else{
 			return "HRMID=" + getHRMID().toString();
 		}
+	}
+
+	/**
+	 * EVENT: membership invalid 
+	 */
+	public void eventMembershipInvalid()
+	{
+		/**
+		 * Send: "Bully Leave" to all superior clusters
+		 */
+		// create signaling packet for signaling that we leave the Bully group
+		BullyLeave tBullyLeavePacket = new BullyLeave(mHRMController.getNodeName(), getPriority());
+
+		// get all communication channels
+		LinkedList<ComChannel> tComChannels = getComChannels();
+
+		// get the L2Addres of the local host
+		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
+		
+		Logging.log(this, "CLUSTER MEMBERSHIP invalid, sending Bully leave: " + tBullyLeavePacket);
+		
+		int tUsedChannels = 0;
+		for(ComChannel tComChannel : tComChannels) {
+			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
+			
+			if (!tIsLoopback){
+				Logging.log(this, "       ..to " + tComChannel);
+			}else{
+				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
+			}
+
+			// send the packet to one of the possible cluster members
+			tComChannel.sendPacket(tBullyLeavePacket);
+			
+			tUsedChannels++;
+		}
+		
+		// drop the warning in case too many comm. channels were used
+		if (tUsedChannels > 1){
+			Logging.warn(this, "Found " + tUsedChannels + " instead of ONLY ONE channel twoards the cluster head");
+		}
+		
+		/**
+		 * Unregister from the HRMController's internal database
+		 */ 
+		mHRMController.unregisterClusterMember(this);
 	}
 }

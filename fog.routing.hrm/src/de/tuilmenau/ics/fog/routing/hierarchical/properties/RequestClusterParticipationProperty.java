@@ -47,11 +47,6 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	private Long mClusterID = null;
 			
 	/**
-	 * Stores the FoG name of the node where the sender is located 
-	 */
-	private Name mSenderNodeName = null;
-	
-	/**
 	 * Stores the L2Address of the node where the sender is located
 	 */
 	private L2Address mSenderL2Address = null;
@@ -79,7 +74,7 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		// get the central FN of this node
 		L2Address tThisHostL2Address = pHRMController.getHRS().getL2AddressFor(tFoGLayer.getCentralFN());
 	
-		RequestClusterParticipationProperty tResult = new RequestClusterParticipationProperty(pHRMController.getNodeName(), tThisHostL2Address, pSenderHierarchyLevel, pClusterID, pHierarchyLevel);
+		RequestClusterParticipationProperty tResult = new RequestClusterParticipationProperty(tThisHostL2Address, pSenderHierarchyLevel, pClusterID, pHierarchyLevel);
 		
 		return tResult;
 	}
@@ -93,14 +88,12 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	 * @param pClusterID the already created unique ID for the cluster the sender and the receiver should be part of
 	 * @param pHierarchyLevel the hierarchy level of the new cluster
 	 */
-	private RequestClusterParticipationProperty(Name pSenderNodeName, L2Address pSenderL2Address, HierarchyLevel pSenderHierarchyLevel, Long pClusterID, HierarchyLevel pHierarchyLevel)
+	private RequestClusterParticipationProperty(L2Address pSenderL2Address, HierarchyLevel pSenderHierarchyLevel, Long pClusterID, HierarchyLevel pHierarchyLevel)
 	{
-		Logging.log(this, "Setting sender node name: " + pSenderNodeName.toString());
 		Logging.log(this, "Setting sender L2Address: " + pSenderL2Address);
 		Logging.log(this, "Setting sender hierarchy level: " + pSenderHierarchyLevel.getValue());
 		Logging.log(this, "Setting target cluster ID: " + pClusterID);
 		Logging.log(this, "Setting cluster hierarchy level: " + pHierarchyLevel.getValue());
-		mSenderNodeName = pSenderNodeName;
 		mSenderL2Address = pSenderL2Address;
 		mSenderHierarchyLevel = pSenderHierarchyLevel;
 		mClusterID = pClusterID;
@@ -137,16 +130,6 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 		return mSenderHierarchyLevel;
 	}
 
-	/**
-	 * Returns the FoG name of the node where the sender is located
-	 *  
-	 * @return the FoG name of the node where the sender is located
-	 */
-	public Name getSenderNodeName()
-	{
-		return mSenderNodeName;
-	}
-	
 	/**
 	 * 
 	 * Returns the L2Address of the node where the sender is located

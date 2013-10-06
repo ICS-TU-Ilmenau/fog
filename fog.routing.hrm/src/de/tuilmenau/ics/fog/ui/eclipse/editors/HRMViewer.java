@@ -476,7 +476,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tColumnCoordinator.setText("Coordinator");
 		
 		TableColumn tColumnCEP = new TableColumn(tTable, SWT.NONE, 1);
-		tColumnCEP.setText("Peer Node Address (L2)");
+		tColumnCEP.setText("Peer L2 Address");
 		
 		TableColumn tColumnTargetCovered = new TableColumn(tTable, SWT.NONE, 2);
 		tColumnTargetCovered.setText("Target Covered");
