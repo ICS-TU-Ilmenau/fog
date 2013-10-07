@@ -125,12 +125,12 @@ public class HRMConfig
 		/**
 		 * amount of hierarchical levels in the simulation
 		 */
-		public static final int HEIGHT = 3; // TV
+		public static final int HEIGHT = 3;
 
 		/**
 		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level
 		 */
-		public static final int USED_BITS_PER_LEVEL = 8; //TV
+		public static final int USED_BITS_PER_LEVEL = 8;
 
 		/**
 		 * Maximum radius that is allowed during cluster expansion phase 
@@ -217,14 +217,6 @@ public class HRMConfig
 		public static final boolean RECORD_ROUTE_FOR_PROBES = true; 
 	}
 
-	public class Debugging
-	{
-		/**
-		 * (De-)activates the usage of HRMIDs when using toString() for clusters.
-		 */
-		public static final boolean PRINT_HRMIDS_AS_CLUSTER_IDS = false; //TV
-	}
-	
 	/**
 	 * Configuration for the election process
 	 */
