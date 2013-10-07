@@ -718,6 +718,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if (this instanceof Coordinator){
 			tCoordinator = (Coordinator)this;
 		}
+		if(this instanceof CoordinatorAsClusterMember){
+			tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
+		}
 		
 		/**
 		 * Automatic address distribution via the coordinator
