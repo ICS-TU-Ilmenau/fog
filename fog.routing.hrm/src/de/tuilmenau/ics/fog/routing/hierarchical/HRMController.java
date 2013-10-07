@@ -1117,7 +1117,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pHierarchyLevel the hierarchy level where a clustering should be done
 	 */
-	public synchronized void cluster(HierarchyLevel pHierarchyLevel)
+	public synchronized void cluster(final HierarchyLevel pHierarchyLevel)
 	{
 		Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel.getValue());
 
@@ -1149,6 +1149,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				
 				public void run()
 				{
+					Thread.currentThread().setName("Clustering@" + tHRMController.getNodeGUIName() + "@" + pHierarchyLevel.getValue());
+
 					/**
 					 * Distribute membership requests
 					 */
@@ -1577,6 +1579,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			public void run()
 			{
+				Thread.currentThread().setName("NeighborConnector@" + tHRMController.getNodeGUIName() + " for " + pNeighborL2Address);
+
 				/**
 				 * Create/get the cluster on base hierarchy level
 				 */
