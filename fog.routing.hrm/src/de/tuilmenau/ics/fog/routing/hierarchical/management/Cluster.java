@@ -382,13 +382,14 @@ public class Cluster extends ClusterMember
 						 * Create coordinator name for this coordinator
 						 */
 						ClusterName tDestinationCoordinatorName = tCoordinator.createCoordinatorName();
-						
+						ClusterName tLocalCoordinatorAsClusterMemberName = new ClusterName(mHRMController, new HierarchyLevel(this, tDestinationCoordinatorName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordiantorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tDestinationCoordinatorName.getClusterID(), tDestinationCoordinatorName.getCoordinatorID());
+
 					    /**
 					     * Create communication channel
 					     */
 					    Logging.log(this, "           ..creating new communication channel");
 						ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession);
-						tComChannel.setRemoteClusterName(tDestinationCoordinatorName); //TODO: fix the hierarchy level value here
+						tComChannel.setRemoteClusterName(tDestinationCoordinatorName); //TODO: fix the hierarchy level ofcoordinators and use tLocalCoordinatorAsClusterMemberName here
 						tComChannel.setPeerPriority(tCoordinator.getPriority());
 						
 						/**
@@ -443,13 +444,14 @@ public class Cluster extends ClusterMember
 							 * Create coordinator name for this coordinator
 							 */
 							ClusterName tDestinationCoordinatorName = tCoordinatorProxy.createCoordinatorName();
+							ClusterName tRemoteCoordinatorAsClusterMemberName = new ClusterName(mHRMController, new HierarchyLevel(this, tDestinationCoordinatorName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordiantorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tDestinationCoordinatorName.getClusterID(), tDestinationCoordinatorName.getCoordinatorID());
 							
 						    /**
 						     * Create communication channel
 						     */
 						    Logging.log(this, "           ..creating new communication channel");
 							ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession);
-							tComChannel.setRemoteClusterName(tDestinationCoordinatorName); //TODO: fix the hierarchy level value here
+							tComChannel.setRemoteClusterName(tRemoteCoordinatorAsClusterMemberName);
 							tComChannel.setPeerPriority(tCoordinatorProxy.getPriority());
 							
 							/**
