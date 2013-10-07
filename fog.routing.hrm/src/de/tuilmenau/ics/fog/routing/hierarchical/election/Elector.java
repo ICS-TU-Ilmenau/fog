@@ -459,12 +459,16 @@ public class Elector implements Localization
 				if (tCoordinator == null){
 					Cluster tParentCluster = (Cluster)mParent;
 					
+					Logging.log(this, "    ..creating new coordinator at hierarch level: " + mParent.getHierarchyLevel().getValue());
+					
 					// create new coordinator instance
 					tCoordinator = new Coordinator(tParentCluster);
 				}else{
 					Logging.warn(this, "Cluster " + mParent + " has already a coordinator");
 				}
 	
+				Logging.log(this, "    ..coordinator is: " + tCoordinator);
+				
 				if(tCoordinator != null){
 					// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
 					signalAnnounceBroadcast();
