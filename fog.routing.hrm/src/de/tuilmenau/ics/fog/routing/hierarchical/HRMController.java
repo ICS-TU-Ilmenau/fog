@@ -1123,19 +1123,43 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		if(pHierarchyLevel.isValid()){
 			// search for an existing cluster at this hierarchy level
-			Cluster tSuperiorCluster = getCluster(pHierarchyLevel);
+			Cluster tCluster = getCluster(pHierarchyLevel);
 			
 			/**
 			 * Create a new superior cluster
 			 */
-			if(tSuperiorCluster == null){
-				tSuperiorCluster = Cluster.create(this, pHierarchyLevel, Cluster.createClusterID());
+			if(tCluster == null){
+				tCluster = Cluster.create(this, pHierarchyLevel, Cluster.createClusterID());
 			}
 			
 			/**
-			 * Distribute membership requests
+			 * Helper for having access to the HRMController within the created thread
 			 */
-			tSuperiorCluster.distributeMembershipRequests();
+			final HRMController tHRMController = this;
+			final Cluster tTargetCluster = tCluster;
+			
+			/**
+			 * Create connection thread
+			 */
+			Thread tThread = new Thread() {
+				public String toString()
+				{
+					return tHRMController.toString();
+				}
+				
+				public void run()
+				{
+					/**
+					 * Distribute membership requests
+					 */
+					tTargetCluster.distributeMembershipRequests();
+				}
+			};
+			
+			/**
+			 * Start the connection thread
+			 */
+			tThread.start();
 		}else{
 			Logging.err(this, "cluster() cannot start for a hierarchy level  of: " + pHierarchyLevel.getValue());
 		}
@@ -1171,6 +1195,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	
 	/**
 	 * Determines the outgoing communication session for a desired target cluster
+	 * HINT: This function has to be called in a separate thread!
 	 * 
 	 * @param pDestinationL2Address the L2 address of the destination
 	 * 
@@ -1220,6 +1245,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 	/**
 	 * Creates a new comm. session (incl. connection) to a given destination L2 address and uses the given connection requirements
+	 * HINT: This function has to be called in a separate thread!
 	 * 
 	 * @param pDestinationL2Address the L2 address of the destination
 	 * @param pConnectionRequirements the connection requirements
@@ -1612,7 +1638,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Start the connection thread
 		 */
 		tThread.start();
-				
 	}
 
 	/**
