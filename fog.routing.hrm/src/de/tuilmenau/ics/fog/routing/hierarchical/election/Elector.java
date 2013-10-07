@@ -473,7 +473,7 @@ public class Elector implements Localization
 					tCoordinator.eventAnnouncedAsCoordinator();
 				}
 			}else{
-				Logging.warn(this, "We have won the election but parent isn't the cluster head: " + mParent);
+				Logging.log(this, "We have won the election, parent isn't the cluster head: " + mParent + ", waiting for cluster head of alternative cluster");
 			}
 		}else{
 			Logging.warn(this, "Cluster " + mParent + " has still a valid and known coordinator, skipping eventElectionWon() here");
