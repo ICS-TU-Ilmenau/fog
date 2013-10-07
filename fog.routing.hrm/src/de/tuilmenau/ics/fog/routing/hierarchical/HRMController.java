@@ -365,32 +365,41 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		Logging.log(this, "Registering coordinator " + pCoordinator + " at level " + tLevel);
 
-		// register a route to the coordinator as addressable target
-		getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
+		Coordinator tFoundAnInferiorCoordinator = getCoordinator(new HierarchyLevel(this, tLevel));
 		
-		synchronized (mLocalCoordinators) {
-			// register as known coordinator
-			mLocalCoordinators.add(pCoordinator);
-		}
-		
-		// are we at base hierarchy level
-		if(tLevel == 0 /* TODO: wenn -1  weg */){
-			// increase base node priority
-			increaseBaseNodePriority_KnownBaseCoordinator(0);
-		}
-
-		// updates the GUI decoration for this node
-		updateGUINodeDecoration();
-		
-		// register the coordinator in the local ARG
-		if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG){
-			registerNodeARG(pCoordinator);
+		/**
+		 * Check if the hierarchy is continuous
+		 */
+		if((tLevel == 0) || (tFoundAnInferiorCoordinator != null)){
+			// register a route to the coordinator as addressable target
+			getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
 			
-			registerLinkARG(pCoordinator, pCoordinator.getCluster(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+			synchronized (mLocalCoordinators) {
+				// register as known coordinator
+				mLocalCoordinators.add(pCoordinator);
+			}
+			
+			// are we at base hierarchy level
+			if(tLevel == 0 /* TODO: wenn -1  weg */){
+				// increase base node priority
+				increaseBaseNodePriority_KnownBaseCoordinator(0);
+			}
+	
+			// updates the GUI decoration for this node
+			updateGUINodeDecoration();
+			
+			// register the coordinator in the local ARG
+			if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG){
+				registerNodeARG(pCoordinator);
+				
+				registerLinkARG(pCoordinator, pCoordinator.getCluster(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+			}
+	
+			// it's time to update the GUI
+			notifyGUI(pCoordinator);
+		}else{
+			throw new RuntimeException("Hierarchy is non continuous, detected an error in the Matrix");
 		}
-
-		// it's time to update the GUI
-		notifyGUI(pCoordinator);
 	}
 	
 	/**
@@ -1050,7 +1059,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Returns the locally known Cluster object for a given hierarchy level
 	 * 
-	 * @param pHierarchyLevel the hierarchy level for which the Cluster object is search
+	 * @param pHierarchyLevel the hierarchy level for which the Cluster object is searched
 	 * 
 	 * @return the found Cluster object
 	 */
@@ -1061,6 +1070,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		for(Cluster tKnownCluster : getAllClusters()) {
 			if(tKnownCluster.getHierarchyLevel().equals(pHierarchyLevel)) {
 				tResult = tKnownCluster;
+				break;
+			}
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns the locally known Coordinator object for a given hierarchy level
+	 * 
+	 * @param pHierarchyLevel the hierarchy level for which the Coordinator object is searched
+	 * 
+	 * @return the found Coordinator object
+	 */
+	public Coordinator getCoordinator(HierarchyLevel pHierarchyLevel)
+	{
+		Coordinator tResult = null;
+
+		for(Coordinator tKnownCoordinator : getAllCoordinators()) {
+			if(tKnownCoordinator.getHierarchyLevel().equals(pHierarchyLevel)) {
+				tResult = tKnownCoordinator;
 				break;
 			}
 		}
