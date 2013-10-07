@@ -342,10 +342,12 @@ public class Cluster extends ClusterMember
 	}
 
 	/**
+	 * Distributes cluster membership requests
+	 * HINT: This function has to be called in a separate thread!
 	 * 
 	 */
 	private int mCountDistributeMembershipRequests = 0;
-	public void distributeMembershipRequests()
+	public synchronized void distributeMembershipRequests()
 	{
 		mCountDistributeMembershipRequests ++;
 		
