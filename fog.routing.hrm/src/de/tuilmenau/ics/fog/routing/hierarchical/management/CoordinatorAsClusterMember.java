@@ -158,7 +158,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "ID=" + getClusterID() + ", CoordID=" + getCoordinatorID() +  ", Prio=" + getPriority().getValue();
+			return "Lvl.=" + getHierarchyLevel().getValue() + ", ID=" + getClusterID() + ", CoordID=" + getCoordinatorID() +  ", Prio=" + getPriority().getValue();
 		}else{
 			return "HRMID=" + getHRMID().toString();
 		}
