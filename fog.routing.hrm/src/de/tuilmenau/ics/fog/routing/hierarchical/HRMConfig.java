@@ -61,7 +61,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs about multiplex packets 
 		 */
-		public static final boolean GUI_SHOW_MULTIPLEX_PACKETS = false;
+		public static final boolean GUI_SHOW_MULTIPLEX_PACKETS = true;
 
 		/**
 		 * Shows general debug outputs about signaling messages
