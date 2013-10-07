@@ -23,6 +23,8 @@ public class BullyLeave extends SignalingMessageBully
 	private static final long serialVersionUID = 7774205916502000178L;
 
 	/**
+	 * Constructor
+	 * 
 	 * @param pSenderName
 	 * @param pReceiverName
 	 */
