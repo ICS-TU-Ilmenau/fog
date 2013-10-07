@@ -695,7 +695,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		 * Store the new HRMID
 		 */
 		// we process such packets for cluster only on base hierarchy level and on all hierarchy level for coordinators
-		if ((getHierarchyLevel().isBaseLevel()) || (this instanceof Coordinator)){
+		if ((getHierarchyLevel().isBaseLevel()) || (this instanceof Coordinator) || (this instanceof CoordinatorAsClusterMember)){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
 				Logging.log(this, "     ..setting assigned HRMID " + pHRMID.toString());
 			
@@ -753,76 +753,70 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		
 		// check if the "remote" coordinator isn't stored at this physical node
 		if(!pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(mHRMController.getNodeL2Address())){
-			// check if the remote coordinator isn't the coordinator of this ClusterMember
-			if((!(this instanceof ClusterMember)) || (!pAnnounceCoordinator.getSenderClusterName().equals(this))){
-				/**
-				 * Storing the ARG node for this announced remote coordinator
-				 */
-				// search for an already existing CoordintorProxy instance
-				CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
-				if(tCoordinatorProxy == null){
-					Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
-		
-					tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address(), pAnnounceCoordinator.getRouteHopCount());
-				}else{
-					// did we receive a coordinator announcement from our own coordinator?
-					if(!equals(tRemoteClusterName)){
-						Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName);
-					}else{
-						Logging.log(this, "     ..ignoring announcement of own remote coordinator: " + tRemoteClusterName);
-					}
-				}
-				
-				/**
-				 * Storing the route to the announced remote coordinator
-				 * HINT: we provide a minimum hop count for the routing
-				 */
-				boolean tRegisterNewLink = true;
-				AbstractRoutingGraphLink tLink = mHRMController.getLinkARG(pSourceEntity, tCoordinatorProxy);
-				// do we know an already stored link in the ARG?
-				if(tLink != null){
-					tRegisterNewLink = false;
-
-					Route tOldLinkRoute = tLink.getRoute();
-					Route tNewLinkRoute = pAnnounceCoordinator.getRoute();
-					
-					// does a route exist for the stored link?
-					if(tOldLinkRoute != null){
-						// is the new route shorter than the old one?
-						if(tNewLinkRoute.isShorter(tOldLinkRoute)){
-							// replace the stored route by the new route which is shorter than the old one
-							tLink.setRoute(tNewLinkRoute);
-							
-							// update L2 link (update is automatically done in registerLinkL2() )
-							mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), tNewLinkRoute);
-
-							tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
-						}
-					}
-				}
-				// have we updated an old link?
-				if(tRegisterNewLink){
-					// register the link to the announced coordinator
-					mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute()));
-					
-					// register L2 link
-					mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), pAnnounceCoordinator.getRoute());
-					
-					// update the hop distance of the route to the coordinator node
-					tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
-
-					/**
-					 * Trigger: restart clustering
-					 */
-					HierarchyLevel tClusterLevel = new HierarchyLevel(this, tCoordinatorProxy.getHierarchyLevel().getValue() + 1);
-					if(!tClusterLevel.isHighest()){
-						Logging.log(this, "     ..restarting clustering at hierarchy level: " + tClusterLevel.getValue());
-						mHRMController.cluster(tClusterLevel);
-					}
-				}
+			/**
+			 * Storing the ARG node for this announced remote coordinator
+			 */
+			// search for an already existing CoordintorProxy instance
+			CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
+			if(tCoordinatorProxy == null){
+				Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
+	
+				tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address(), pAnnounceCoordinator.getRouteHopCount());
 			}else{
-				// we warn that we do not register information about our own coordinator which was instantiated on another node
-				Logging.log(this, "Avoiding uninteresting registration of remote coordinator: " + pAnnounceCoordinator);
+				// did we receive a coordinator announcement from our own coordinator?
+				if(!equals(tRemoteClusterName)){
+					Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName);
+				}else{
+					Logging.log(this, "     ..ignoring announcement of own remote coordinator: " + tRemoteClusterName);
+				}
+			}
+			
+			/**
+			 * Storing the route to the announced remote coordinator
+			 * HINT: we provide a minimum hop count for the routing
+			 */
+			boolean tRegisterNewLink = true;
+			AbstractRoutingGraphLink tLink = mHRMController.getLinkARG(pSourceEntity, tCoordinatorProxy);
+			// do we know an already stored link in the ARG?
+			if(tLink != null){
+				tRegisterNewLink = false;
+
+				Route tOldLinkRoute = tLink.getRoute();
+				Route tNewLinkRoute = pAnnounceCoordinator.getRoute();
+				
+				// does a route exist for the stored link?
+				if(tOldLinkRoute != null){
+					// is the new route shorter than the old one?
+					if(tNewLinkRoute.isShorter(tOldLinkRoute)){
+						// replace the stored route by the new route which is shorter than the old one
+						tLink.setRoute(tNewLinkRoute);
+						
+						// update L2 link (update is automatically done in registerLinkL2() )
+						mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), tNewLinkRoute);
+
+						tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
+					}
+				}
+			}
+			// have we updated an old link?
+			if(tRegisterNewLink){
+				// register the link to the announced coordinator
+				mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute()));
+				
+				// register L2 link
+				mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), pAnnounceCoordinator.getRoute());
+				
+				// update the hop distance of the route to the coordinator node
+				tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
+
+				/**
+				 * Trigger: restart clustering
+				 */
+				HierarchyLevel tClusterLevel = new HierarchyLevel(this, tCoordinatorProxy.getHierarchyLevel().getValue() + 1);
+				if(!tClusterLevel.isHighest()){
+					Logging.log(this, "     ..restarting clustering at hierarchy level: " + tClusterLevel.getValue());
+					mHRMController.cluster(tClusterLevel);
+				}
 			}
 		}else{
 			Logging.log(this, "Avoiding redundant registration of locally instantiated coordinator: " + pAnnounceCoordinator);
@@ -840,6 +834,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if (((this instanceof Cluster) && (pObj instanceof Coordinator)) ||
 			((this instanceof Cluster) && (pObj instanceof CoordinatorAsClusterMember)) ||
 			((this instanceof ClusterMember) && (pObj instanceof Coordinator)) ||
+			((this instanceof ClusterMember) && (!(this instanceof CoordinatorProxy)) && (pObj instanceof CoordinatorProxy)) ||
+			((this instanceof CoordinatorProxy) && (pObj instanceof ClusterMember) && (!(pObj instanceof CoordinatorProxy))) ||
 			((this instanceof Coordinator) && (pObj instanceof ClusterMember)) ||
 			((this instanceof CoordinatorAsClusterMember) && (pObj instanceof Cluster)) ||
 			((this instanceof Coordinator) && (pObj instanceof Cluster))){
@@ -865,7 +861,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			}
 		}
 				
-		
 		//Logging.log(this, "EQUALS COMPARING with " + pObj + ": " + tICluster.getClusterID() + "<=>" + tThisICluster.getClusterID() + ", " + tICluster.getToken() + "<=>" + tThisICluster.getToken() + ", " + tICluster.getHierarchyLevel().getValue() + "<=>" + getHierarchyLevel().getValue());
 
 		//HINT: we ignore the coordinator ID because the clusterID is unique enough for identification
