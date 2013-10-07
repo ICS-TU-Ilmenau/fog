@@ -361,16 +361,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void registerCoordinator(Coordinator pCoordinator)
 	{
-		int tLevel = pCoordinator.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
-		
-		Logging.log(this, "Registering coordinator " + pCoordinator + " at level " + tLevel);
+		Logging.log(this, "Registering coordinator " + pCoordinator + " at level " + pCoordinator.getHierarchyLevel().getValue());
 
-		Coordinator tFoundAnInferiorCoordinator = getCoordinator(new HierarchyLevel(this, tLevel));
+		Coordinator tFoundAnInferiorCoordinator = getCoordinator(pCoordinator.getHierarchyLevel().getValue() - 1);
 		
 		/**
 		 * Check if the hierarchy is continuous
 		 */
-		if((tLevel == 0) || (tFoundAnInferiorCoordinator != null)){
+		if((pCoordinator.getHierarchyLevel().isBaseLevel()) || (tFoundAnInferiorCoordinator != null)){
 			// register a route to the coordinator as addressable target
 			getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
 			
@@ -380,7 +378,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 			
 			// are we at base hierarchy level
-			if(tLevel == 0 /* TODO: wenn -1  weg */){
+			if(pCoordinator.getHierarchyLevel().isBaseLevel()){
 				// increase base node priority
 				increaseBaseNodePriority_KnownBaseCoordinator(0);
 			}
@@ -409,9 +407,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void unregisterCoordinator(Coordinator pCoordinator)
 	{
-		int tLevel = pCoordinator.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
-
-		Logging.log(this, "Unregistering coordinator " + pCoordinator + " at level " + tLevel);
+		Logging.log(this, "Unregistering coordinator " + pCoordinator + " at level " + pCoordinator.getHierarchyLevel().getValue());
 
 		synchronized (mLocalCoordinators) {
 			// unregister from list of known coordinators
@@ -419,7 +415,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 
 		// are we at base hierarchy level
-		if(tLevel == 0 /* TODO: wenn -1  weg */){
+		if(pCoordinator.getHierarchyLevel().isBaseLevel()){
 			// increase base node priority
 			decreaseBaseNodePriority_KnownBaseCoordinator(0);
 		}
@@ -570,7 +566,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		LinkedList<Coordinator> tAllCoordinators = getAllCoordinators();
 		int tHighestCoordinatorLevel = -1;
 		for (Coordinator tCoordinator : tAllCoordinators){
-			int tCoordLevel = tCoordinator.getHierarchyLevel().getValue() - 1; 
+			int tCoordLevel = tCoordinator.getHierarchyLevel().getValue(); 
 			if (tCoordLevel > tHighestCoordinatorLevel){
 				tHighestCoordinatorLevel = tCoordLevel;
 			}
@@ -1081,16 +1077,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Returns the locally known Coordinator object for a given hierarchy level
 	 * 
-	 * @param pHierarchyLevel the hierarchy level for which the Coordinator object is searched
+	 * @param pHierarchyLevelValue the hierarchy level for which the Coordinator object is searched
 	 * 
 	 * @return the found Coordinator object
 	 */
-	public Coordinator getCoordinator(HierarchyLevel pHierarchyLevel)
+	public Coordinator getCoordinator(int pHierarchyLevelValue)
 	{
 		Coordinator tResult = null;
 
 		for(Coordinator tKnownCoordinator : getAllCoordinators()) {
-			if(tKnownCoordinator.getHierarchyLevel().equals(pHierarchyLevel)) {
+			if(tKnownCoordinator.getHierarchyLevel().getValue() == pHierarchyLevelValue) {
 				tResult = tKnownCoordinator;
 				break;
 			}

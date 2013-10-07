@@ -108,7 +108,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// register at HRMController's internal database
 		mHRMController.registerCoordinator(this);
 
-		Logging.log(this, "\n\n\n################ CREATED COORDINATOR at hierarchy level: " + (getHierarchyLevel().getValue() - 1));
+		Logging.log(this, "\n\n\n################ CREATED COORDINATOR at hierarchy level: " + getHierarchyLevel().getValue());
 		
 		// trigger periodic Cluster announcements
 		if(HRMConfig.Hierarchy.PERIODIC_COORDINATOR_ANNOUNCEMENTS){
@@ -174,7 +174,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 */
 		mNextFreeClusterMemberAddress = 1;
 
-		Logging.log(this, "DISTRIBUTING ADDRESSES to entities at level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+		Logging.log(this, "DISTRIBUTING ADDRESSES to entities at level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
 		
 		/**
 		 * Assign ourself an HRMID address
@@ -222,7 +222,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		HRMID tMemberHRMID = pClusterMemberChannel.getPeerHRMID();
 		
 		// are we on base hierarchy level?
-		if (getHierarchyLevel().getValue() == 1){ // TODO: isBaseLevel()){
+		if (getHierarchyLevel().isBaseLevel()){
 			// create the new routing table entry
 			RoutingEntry tRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tMemberHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
 			// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
@@ -287,7 +287,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	private boolean sharePhaseHasTimeout()
 	{
 		// determine the time between two "share phases"
-		double tDesiredTimePeriod = mHRMController.getPeriodSharePhase(getHierarchyLevel().getValue() - 1);
+		double tDesiredTimePeriod = mHRMController.getPeriodSharePhase(getHierarchyLevel().getValue());
 		
 		// determine the time when a "share phase" has to be started 
 		double tTimeNextSharePhase = mTimeOfLastSharePhase + tDesiredTimePeriod;
@@ -327,7 +327,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// should we start the "share phase"?
 		if (sharePhaseHasTimeout()){
 			if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-				Logging.log(this, "SHARE PHASE with cluster members on level " + (getHierarchyLevel().getValue() - 1) + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+				Logging.log(this, "SHARE PHASE with cluster members on level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
 			}
 
 			// store the time of this "share phase"
@@ -356,7 +356,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					RoutingInformation tRoutingInformationPacket = new RoutingInformation(tOwnClusterAddress, tClusterMember.getPeerHRMID());
 				
 					// are we on base hierarchy level?
-					if (getHierarchyLevel().getValue() == 1){ // TODO: isBaseLevel()){
+					if (getHierarchyLevel().isBaseLevel()){
 	
 						/**
 						 * ADD ROUTES: routes from the cluster member to this node for every registered local HRMID.
@@ -429,7 +429,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		if (!getHierarchyLevel().isHighest()){
 			eventAllClusterMembershipsInvalid();
 		}else{
-			Logging.log(this, "eventCoordinatorRoleInvalid() skips further signaling because hierarchy end is already reached at: " + (getHierarchyLevel().getValue() - 1));
+			Logging.log(this, "eventCoordinatorRoleInvalid() skips further signaling because hierarchy end is already reached at: " + getHierarchyLevel().getValue());
 		}
 
 		/**
@@ -534,7 +534,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			/**
 			 * Send broadcasts in all locally known clusters at this hierarchy level
 			 */
-			LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue() - 1);
+			LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel());
 			Logging.log(this, "     ..distributing in clusters: " + tClusters);
 			for(Cluster tCluster : tClusters){
 				tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
@@ -587,13 +587,13 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 */
 		if(!getHierarchyLevel().isHighest()) {
 			if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){ 
-				if(getHierarchyLevel().getValue() - 1 < HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
+				if(getHierarchyLevel().getValue() < HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
 					Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
 
 					// start the clustering at the hierarchy level
-					mHRMController.cluster(new HierarchyLevel(this, getHierarchyLevel().getValue()));
+					mHRMController.cluster(new HierarchyLevel(this, getHierarchyLevel().getValue() + 1));
 				}else{
-					Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + (getHierarchyLevel().getValue() - 1));
+					Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + getHierarchyLevel().getValue());
 				}
 			}else{
 				Logging.log(this, "EVENT ANNOUNCED - stopping clustering because automatic continuation is deactivated");
@@ -627,7 +627,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Forward the coordinator announcement to all locally known clusters at this hierarchy level
 		 */
 		Logging.log(this, "\n\n########## Forwarding Coordinator announcement: " + pAnnounceCoordinator);
-		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue() - 1);
+		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel());
 		Logging.log(this, "     ..distributing in clusters: " + tClusters);
 		for(Cluster tCluster : tClusters){
 			tCluster.sendClusterBroadcast(pAnnounceCoordinator, true);
@@ -801,12 +801,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		Cluster tSuperiorCluster = mHRMController.getCluster(getHierarchyLevel());
 		
 		return ((tSuperiorCluster != null) && (hasMembership(tSuperiorCluster)));
-	}
-
-	//TODO: fix this +1 stuff
-	@Override
-	public HierarchyLevel getHierarchyLevel() {
-		return new HierarchyLevel(this, super.getHierarchyLevel().getValue() + 1);
 	}
 
 	/**
@@ -1227,7 +1221,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + getGUICoordinatorID() + "@" + mHRMController.getNodeGUIName() + "@" + (getHierarchyLevel().getValue() - 1);
+		String tResult = getClass().getSimpleName() + getGUICoordinatorID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
 	}

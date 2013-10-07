@@ -355,7 +355,7 @@ public class Cluster extends ClusterMember
 		 * Request for local coordinators
 		 ************************************/
 		Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR LOCAL COORDINATORS STARTED (call nr: " + mCountDistributeMembershipRequests + ")");
-		LinkedList<Coordinator> tCoordinators = mHRMController.getAllCoordinators(new HierarchyLevel(this,  getHierarchyLevel().getValue()));
+		LinkedList<Coordinator> tCoordinators = mHRMController.getAllCoordinators(new HierarchyLevel(this,  getHierarchyLevel().getValue() - 1));
 		
 		/**
 		 * Iterate over all found local coordinators
@@ -389,7 +389,7 @@ public class Cluster extends ClusterMember
 					     */
 					    Logging.log(this, "           ..creating new communication channel");
 						ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession);
-						tComChannel.setRemoteClusterName(tDestinationCoordinatorName); //TODO: fix the hierarchy level ofcoordinators and use tLocalCoordinatorAsClusterMemberName here
+						tComChannel.setRemoteClusterName(tLocalCoordinatorAsClusterMemberName);
 						tComChannel.setPeerPriority(tCoordinator.getPriority());
 						
 						/**
@@ -530,14 +530,7 @@ public class Cluster extends ClusterMember
 	@SuppressWarnings("unused")
 	public String toString()
 	{
-		HRMID tHRMID = getHRMID();
-		
-		if(tHRMID != null && HRMConfig.Debugging.PRINT_HRMIDS_AS_CLUSTER_IDS) {
-			return tHRMID.toString();
-		} else {
-			return toLocation() + "(" + idToString() + ")";
-
-		}
+		return toLocation() + "(" + idToString() + ")";
 	}
 
 	/**
