@@ -588,12 +588,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				if(getHierarchyLevel().getValue() - 1 < HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
 					Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
 
-					// start the clustering of this cluster's coordinator and its neighbors if it wasn't already triggered by another coordinator
-					if (!isClustered()){
-						cluster();
-					}else{
-						Logging.warn(this, "Clustering is already finished for this hierarchy level, skipping cluster-request");
-					}
+					// start the clustering at the hierarchy level
+					mHRMController.cluster(new HierarchyLevel(this, getHierarchyLevel().getValue()));
 				}else{
 					Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + (getHierarchyLevel().getValue() - 1));
 				}
@@ -636,30 +632,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 	}
 	
-	/**
-	 * Clusters the superior hierarchy level or tries to join an already existing superior cluster
-	 * HINT: Can be called only once at a time.
-	 */
-	public synchronized void cluster()
-	{
-		Logging.log(this, "\n\n################ CLUSTERING STARTED");
-
-		// search for an existing cluster at this hierarchy level
-		Cluster tSuperiorCluster = mHRMController.getCluster(getHierarchyLevel());
-		
-		/**
-		 * Create a new superior cluster
-		 */
-		if(tSuperiorCluster == null){
-			tSuperiorCluster = Cluster.create(mHRMController, getHierarchyLevel(), Cluster.createClusterID());
-		}
-		
-		/**
-		 * Distribute membership requests
-		 */
-		tSuperiorCluster.distributeMembershipRequests();
-	}
-
 	/**
 	 * Creates a ClusterName object which describes this coordinator
 	 * 
@@ -738,6 +710,24 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		
 		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), BullyPriority.createForSuperiorControlEntity(mHRMController,  this));
 		pComChannelToRemoteCluster.sendPacket(tBullyPriorityUpdatePacket);
+	}
+
+	/**
+	 * Returns all register communication channels
+	 * 
+	 * @return the communication channels
+	 */
+	public LinkedList<ComChannel> getClusterMembershipComChannels()
+	{
+		LinkedList<ComChannel> tResult = new LinkedList<ComChannel>();
+			
+		synchronized (mClusterMemberships) {
+			for (ClusterMember tClusterMembership : mClusterMemberships){
+				tResult.addAll(tClusterMembership.getComChannels());
+			}
+		}
+		
+		return tResult;
 	}
 
 	/**

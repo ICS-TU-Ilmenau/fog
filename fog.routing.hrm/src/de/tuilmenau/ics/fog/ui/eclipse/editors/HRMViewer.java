@@ -55,6 +55,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
@@ -497,6 +498,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tTable.setLinesVisible(true);
 		
 		LinkedList<ComChannel> tComChannels = pControlEntity.getComChannels();
+		if(pControlEntity instanceof Coordinator){
+			Coordinator tCoordinator = (Coordinator)pControlEntity;
+			
+			tComChannels = tCoordinator.getClusterMembershipComChannels();
+		}
 		
 		int j = 0;		
 		if (HRM_VIEWER_DEBUGGING)
@@ -552,7 +558,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			 */
 			if (tComChannel.getRemoteClusterName() != null){
 				if ((pControlEntity.getHierarchyLevel().isHigherLevel()) && (pControlEntity instanceof Cluster)){
-					tRow.setText(4, "Coordinator of " + tComChannel.getRemoteClusterName().toString());
+					ClusterName tRemoteClusterName = tComChannel.getRemoteClusterName();
+					tRow.setText(4, "Coordinator" + tRemoteClusterName.getGUICoordinatorID() + "@" + tRemoteClusterName.getHierarchyLevel().getValue() + "(" + tRemoteClusterName + ")");
 				}else{
 					tRow.setText(4, tComChannel.getRemoteClusterName().toString());
 				}
@@ -961,26 +968,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 				// iterate over all HRMControllers
 				for(HRMController tHRMController : HRMController.getALLHRMControllers()) {
-					// iterate over all clusters from the current HRMController
-					for (Cluster tCluster: tHRMController.getAllClusters())
-					{
-						// check the hierarchy of the found cluster
-						if (tLocalClusterLevel.equals(tCluster.getHierarchyLevel())){
-							// get the coordinator of the current cluster
-							Coordinator tCoordinator = tCluster.getCoordinator();
-							
-							if (tCoordinator != null){
-								if (HRM_VIEWER_DEBUGGING){
-									Logging.log(this, "GUI-TRIGGER: Starting clustering for coordinator " + tCoordinator);
-								}
-								
-								// start the clustering of the selected cluster's coordinator and its neighbors
-								tCoordinator.cluster();
-							}else{
-								Logging.err(this, "Coordinator of " + tCluster + " wasn't elected yet, skipping clustering request");
-							}
-						}
-					}
+					tHRMController.cluster(tLocalClusterLevel);
 				}
 			}else{
 				Logging.err(this, "Maximum hierarchy height " + (tLocalClusterLevel.getValue()) + " is already reached.");
@@ -1019,7 +1007,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					}
 					
 					// start the clustering of the selected cluster's coordinator and its neighbors
-					mCoordinator.cluster();
+					mHRMController.cluster(mCoordinator.getHierarchyLevel());
 				}else{
 					Logging.err(this, "Coordinator is invalid, skipping clustering request");
 				}

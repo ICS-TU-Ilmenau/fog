@@ -112,7 +112,7 @@ public class HRMConfig
 		 * Specifies whether the address are assigned automatically,
 		 * otherwise it has to be triggered step by step via the GUI.
 		 */
-		public static final boolean ASSIGN_AUTOMATICALLY = true;
+		public static final boolean ASSIGN_AUTOMATICALLY = false;
 		
 		/**
 		 * Defines the address which is used for cluster broadcasts

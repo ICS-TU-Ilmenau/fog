@@ -790,6 +790,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 							// replace the stored route by the new route which is shorter than the old one
 							tLink.setRoute(tNewLinkRoute);
 							
+							// update L2 link (update is automatically done in registerLinkL2() )
+							mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), tNewLinkRoute);
+
 							tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
 						}
 					}
@@ -799,14 +802,27 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 					// register the link to the announced coordinator
 					mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute()));
 					
+					// register L2 link
+					mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), pAnnounceCoordinator.getRoute());
+					
+					// update the hop distance of the route to the coordinator node
 					tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
+
+					/**
+					 * Trigger: restart clustering
+					 */
+					HierarchyLevel tClusterLevel = new HierarchyLevel(this, tCoordinatorProxy.getHierarchyLevel().getValue() + 1);
+					if(!tClusterLevel.isHighest()){
+						Logging.log(this, "     ..restarting clustering at hierarchy level: " + tClusterLevel.getValue());
+						mHRMController.cluster(tClusterLevel);
+					}
 				}
 			}else{
 				// we warn that we do not register information about our own coordinator which was instantiated on another node
-				Logging.warn(this, "Avoiding uninteresting registration of remote coordinator: " + pAnnounceCoordinator);
+				Logging.log(this, "Avoiding uninteresting registration of remote coordinator: " + pAnnounceCoordinator);
 			}
 		}else{
-			Logging.warn(this, "Avoiding redundant registration of locally instantiated coordinator: " + pAnnounceCoordinator);
+			Logging.log(this, "Avoiding redundant registration of locally instantiated coordinator: " + pAnnounceCoordinator);
 		}
 	}
 

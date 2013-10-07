@@ -501,12 +501,16 @@ public class Elector implements Localization
 			Logging.log(this, "ELECTION LOST BUT WE WERE THE FORMER WINNER");
 
 			/**
-			 * TRIGGER: the local coordinator was deselected by another coordinator
+			 * TRIGGER: invalidate the local coordinator because it was deselected by another coordinator
 			 */
-			if (mParent.getCoordinator() != null){
-				mParent.getCoordinator().eventCoordinatorRoleInvalid();
+			if(mParent instanceof Cluster){
+				if (mParent.getCoordinator() != null){
+					mParent.getCoordinator().eventCoordinatorRoleInvalid();
+				}else{
+					Logging.err(this, "We were the former winner of the election but the coordinator is invalid");
+				}
 			}else{
-				Logging.err(this, "We were the former winner of the election but the coordinator is invalid");
+				// we are not the cluster header, so we can't be the coordinator
 			}
 		}
 	}

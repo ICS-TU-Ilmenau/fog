@@ -297,27 +297,27 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 	
 	/**
-	 * Adds a route to the local HRM routing table.
+	 * Registers a route at the local L2 routing table.
 	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
 	 * 
-	 * @param pNeighborL2Address the L2Address of the direct neighbor
+	 * @param pToL2Address the L2Address of the destination
 	 * @param pRoute the route to the direct neighbor
 	 * @return returns true if the route was stored and an GUI update is needed
 	 */
-	public boolean addRouteToDirectNeighbor(L2Address pNeighborL2Address, Route pRoute)
+	public boolean registerLinkL2(L2Address pToL2Address, Route pRoute)
 	{
 		boolean tResult = true;
 		
-		Logging.log(this, "ADDING ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
+		Logging.log(this, "REGISTERING LINK: dest.=" + pToL2Address + ", route=\"" + pRoute + "\"");
 
-		if (pNeighborL2Address != null){
+		if (pToL2Address != null){
 			
 			/**
 			 * Determine the old logical L2 link towards the neighbor
 			 */
 			Route tOldRoute = null;
 			L2LogicalLink tOldL2Link = null;
-			List<RoutingServiceLink> tOldLinkList = getRouteFromGraph(mL2RoutingGraph, getCentralFNL2Address(), pNeighborL2Address);
+			List<RoutingServiceLink> tOldLinkList = getRouteFromGraph(mL2RoutingGraph, getCentralFNL2Address(), pToL2Address);
 			if((tOldLinkList != null) && (tOldLinkList.size() == 1)){
 				// get the first and only route entry
 				RoutingServiceLink tLink = tOldLinkList.get(0);
@@ -328,7 +328,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					// get the old route from the logical L2 link description
 					tOldRoute = tOldL2Link.getRoute();					
 
-					Logging.log(this, "      ..found old route: " + tOldRoute + " to direct neighbor: " + pNeighborL2Address);
+					Logging.log(this, "      ..found old route: " + tOldRoute + " to direct neighbor: " + pToL2Address);
 				}
 			}
 
@@ -342,12 +342,12 @@ public class HRMRoutingService implements RoutingService, Localization
 				tNewLogicalLink = false;
 
 				if (pRoute.isShorter(tOldRoute)){
-					Logging.log(this, "      ..updating to better ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
+					Logging.log(this, "      ..updating to better ROUTE \"" + pRoute + "\" to direct neighbor: " + pToL2Address);
 										
 					// update the old logical link
 					tOldL2Link.setRoute(pRoute);
 				}else{
-					Logging.log(this, "      ..dropping new ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
+					Logging.log(this, "      ..dropping new ROUTE \"" + pRoute + "\" to direct neighbor: " + pToL2Address);
 				}
 			}
 			
@@ -355,10 +355,10 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * Create a new logical link
 			 */
 			if(tNewLogicalLink){
-				Logging.log(this, "      ..storing new ROUTE \"" + pRoute + "\" to direct neighbor: " + pNeighborL2Address);
+				Logging.log(this, "      ..storing new ROUTE \"" + pRoute + "\" to direct neighbor: " + pToL2Address);
 
 				// store the new route
-				storeL2Link(getCentralFNL2Address(), pNeighborL2Address, new L2LogicalLink(pRoute));
+				storeL2Link(getCentralFNL2Address(), pToL2Address, new L2LogicalLink(pRoute));
 			}
 
 		}else{

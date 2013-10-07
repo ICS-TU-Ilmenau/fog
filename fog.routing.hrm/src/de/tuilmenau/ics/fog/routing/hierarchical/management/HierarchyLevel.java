@@ -113,6 +113,16 @@ public class HierarchyLevel
 	}
 
 	/**
+	 * Checks if the hierarchy level is in the range [0 - HRMConfig.Hierarchy.HEIGHT]
+	 * 
+	 * @return true or false
+	 */
+	public boolean isValid()
+	{
+		return ((mLevel >= 0) && (mLevel < HRMConfig.Hierarchy.HEIGHT));
+	}
+
+	/**
 	 * Check if the hierarchy level is higher than the other given one.
 	 * 
 	 * @param pCheckLocation a reference to the origin object from where the call comes from

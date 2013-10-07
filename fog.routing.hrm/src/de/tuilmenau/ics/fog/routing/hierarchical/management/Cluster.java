@@ -374,7 +374,7 @@ public class Cluster extends ClusterMember
 						/**
 						 * Update ARG
 						 */
-						mHRMController.registerLinkARG(this, tCoordinator, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+						mHRMController.registerLinkARG(this, tCoordinator, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOCAL_CONNECTION));
 
 						/**
 						 * Create coordinator name for this coordinator
@@ -414,63 +414,62 @@ public class Cluster extends ClusterMember
 		 * Requests for remote coordinators
 		 ************************************/
 		Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR REMOTE COORDINATORS STARTED");
-		LinkedList<CoordinatorProxy> tCoordinatorProxies = mHRMController.getAllCoordinatorProxies(new HierarchyLevel(this,  getHierarchyLevel().getValue()));
+		LinkedList<CoordinatorProxy> tCoordinatorProxies = mHRMController.getAllCoordinatorProxies(new HierarchyLevel(this,  getHierarchyLevel().getValue() - 1));
 		
 		if(tCoordinatorProxies.size() > 0){
-//			/**
-//			 * Iterate over all found remote coordinators
-//			 */
-//			synchronized (mInferiorRemoteCoordinators) {
-//				if(mCountDistributeMembershipRequests > 1){
-//					Logging.log(this, "      ..having connections to these inferior remote coordinators: " + mInferiorRemoteCoordinators.toString());
-//				}
-//				for (CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
-//					if (!mInferiorRemoteCoordinators.contains(tCoordinatorProxy)){
-//						Logging.log(this, "      ..found remote inferior coordinator[NEW]: " + tCoordinatorProxy);
-//						
-//						// add this remote coordinator to the list of connected coordinators
-//						mInferiorRemoteCoordinators.add(tCoordinatorProxy);
-//						
-//						ComSession tComSession = mHRMController.getCreateComSession(tCoordinatorProxy.getCoordinatorNodeL2Address());		
-//						if (tComSession != null){
-//							/**
-//							 * Update ARG
-//							 */
-//							mHRMController.registerLinkARG(this, tCoordinator, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF)); //TODO: netlink
-//	
-//							/**
-//							 * Create coordinator name for this coordinator
-//							 */
-//							ClusterName tDestinationCoordinatorName = tCoordinatorProxy.createCoordinatorName();
-//							
-//						    /**
-//						     * Create communication channel
-//						     */
-//						    Logging.log(this, "           ..creating new communication channel");
-//							ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession);
-//							tComChannel.setRemoteClusterName(tDestinationCoordinatorName); //TODO: fix the hierarchy level value here
-//							tComChannel.setPeerPriority(tCoordinatorProxy.getPriority());
-//							
-//							/**
-//							 * Send "RequestClusterMembership" along the comm. session
-//							 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
-//							 */
-//							RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeName(), mHRMController.getNodeName(), createClusterName(), tDestinationCoordinatorName);
-//						    Logging.log(this, "           ..sending membership request: " + tRequestClusterMembership);
-//							if (tComSession.write(tRequestClusterMembership)){
-//								Logging.log(this, "          ..requested successfully for membership of: " + tCoordinatorProxy);
-//							}else{
-//								Logging.log(this, "          ..failed to request for membership of: " + tCoordinatorProxy);
-//							}
-//	
-//						}else{
-//							Logging.err(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + mHRMController.getNodeName() + " for remote coordinator: " + tCoordinatorProxy);
-//						}
-//					}else{
-//						Logging.log(this, "      ..found inferior remote coordinator [already connected]: " + tCoordinatorProxy);
-//					}
-//				}
-//			}
+			/**
+			 * Iterate over all found remote coordinators
+			 */
+			synchronized (mInferiorRemoteCoordinators) {
+				if(mCountDistributeMembershipRequests > 1){
+					Logging.log(this, "      ..having connections to these inferior remote coordinators: " + mInferiorRemoteCoordinators.toString());
+				}
+				for (CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
+					if (!mInferiorRemoteCoordinators.contains(tCoordinatorProxy)){
+						Logging.log(this, "      ..found remote inferior coordinator[NEW]: " + tCoordinatorProxy);
+						
+						// add this remote coordinator to the list of connected coordinators
+						mInferiorRemoteCoordinators.add(tCoordinatorProxy);
+						
+						ComSession tComSession = mHRMController.getCreateComSession(tCoordinatorProxy.getCoordinatorNodeL2Address());		
+						if (tComSession != null){
+							/**
+							 * Update ARG
+							 */
+							mHRMController.registerLinkARG(this, tCoordinatorProxy, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_CONNECTION));	
+							/**
+							 * Create coordinator name for this coordinator
+							 */
+							ClusterName tDestinationCoordinatorName = tCoordinatorProxy.createCoordinatorName();
+							
+						    /**
+						     * Create communication channel
+						     */
+						    Logging.log(this, "           ..creating new communication channel");
+							ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession);
+							tComChannel.setRemoteClusterName(tDestinationCoordinatorName); //TODO: fix the hierarchy level value here
+							tComChannel.setPeerPriority(tCoordinatorProxy.getPriority());
+							
+							/**
+							 * Send "RequestClusterMembership" along the comm. session
+							 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
+							 */
+							RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeName(), mHRMController.getNodeName(), createClusterName(), tDestinationCoordinatorName);
+						    Logging.log(this, "           ..sending membership request: " + tRequestClusterMembership);
+							if (tComSession.write(tRequestClusterMembership)){
+								Logging.log(this, "          ..requested successfully for membership of: " + tCoordinatorProxy);
+							}else{
+								Logging.log(this, "          ..failed to request for membership of: " + tCoordinatorProxy);
+							}
+	
+						}else{
+							Logging.err(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + mHRMController.getNodeName() + " for remote coordinator: " + tCoordinatorProxy);
+						}
+					}else{
+						Logging.log(this, "      ..found inferior remote coordinator [already connected]: " + tCoordinatorProxy);
+					}
+				}
+			}
 		}else{
 			/**
 			 * Trigger: detected local isolation

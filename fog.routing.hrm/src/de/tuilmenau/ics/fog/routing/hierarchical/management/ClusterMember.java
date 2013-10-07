@@ -272,10 +272,14 @@ public class ClusterMember extends ClusterName
 				}
 	
 				if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (pIncludeLoopback) || (!tIsLoopback)){
-					SignalingMessageHrm tNewPacket = pPacket.duplicate();
-					Logging.log(this, "           ..sending duplicate packet: " + tNewPacket);
-					// send the packet to one of the possible cluster members
-					tComChannel.sendPacket(tNewPacket);
+					if(tComChannel.isEstablished()){
+						SignalingMessageHrm tNewPacket = pPacket.duplicate();
+						Logging.log(this, "           ..sending duplicate packet: " + tNewPacket);
+						// send the packet to one of the possible cluster members
+						tComChannel.sendPacket(tNewPacket);
+					}else{
+						Logging.log(this, "             ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
+					}
 				}else{
 					Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
 				}

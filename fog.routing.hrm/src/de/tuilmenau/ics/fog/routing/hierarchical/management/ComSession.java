@@ -218,7 +218,7 @@ public class ComSession extends Session
 		 * Inform the HRS about the complete route to the peer
 		 */
 		Logging.log(this, "      ..registering route to peer: " + pRouteToPeer);
-		mHRMController.addRouteToDirectNeighbor(mPeerL2Address, pRouteToPeer);
+		mHRMController.registerLinkL2(mPeerL2Address, pRouteToPeer);
 		
 		mRouteToPeer = pRouteToPeer;
 	}

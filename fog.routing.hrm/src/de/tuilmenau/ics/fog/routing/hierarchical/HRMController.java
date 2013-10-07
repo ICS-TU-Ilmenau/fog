@@ -639,6 +639,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public LinkedList<CoordinatorProxy> getAllCoordinatorProxies(HierarchyLevel pHierarchyLevel)
 	{
+		Logging.log(this, "Searching for coordinator proxies at hierarchy level: " + pHierarchyLevel.getValue());
+		
 		LinkedList<CoordinatorProxy> tResult = new LinkedList<CoordinatorProxy>();
 		
 		// get a list of all known coordinator proxies
@@ -653,6 +655,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 		
+		Logging.log(this, "      ..found: " + tResult);
+				
 		return tResult;
 	}
 
@@ -1108,23 +1112,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Returns a known cluster, which is identified by its ID.
+	 * Clusters the given hierarchy level
+	 * HINT: It is synchronized to only one call at the same time.
 	 * 
-	 * @param pClusterID the cluster ID
-	 * 
-	 * @return the searched cluster object
+	 * @param pHierarchyLevel the hierarchy level where a clustering should be done
 	 */
-	public Cluster getClusterByID(Long pClusterID)
+	public synchronized void cluster(HierarchyLevel pHierarchyLevel)
 	{
-		Cluster tResult = null;
-		
-		for(Cluster tKnownCluster : getAllClusters()) {
-			if (tKnownCluster.getClusterID().equals(pClusterID)) {
-				tResult = tKnownCluster;
+		Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel.getValue());
+
+		if(pHierarchyLevel.isValid()){
+			// search for an existing cluster at this hierarchy level
+			Cluster tSuperiorCluster = getCluster(pHierarchyLevel);
+			
+			/**
+			 * Create a new superior cluster
+			 */
+			if(tSuperiorCluster == null){
+				tSuperiorCluster = Cluster.create(this, pHierarchyLevel, Cluster.createClusterID());
 			}
+			
+			/**
+			 * Distribute membership requests
+			 */
+			tSuperiorCluster.distributeMembershipRequests();
+		}else{
+			Logging.err(this, "cluster() cannot start for a hierarchy level  of: " + pHierarchyLevel.getValue());
 		}
-		
-		return tResult;
 	}
 
 	/**
@@ -1333,10 +1347,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pNeighborL2Address the L2Address of the direct neighbor
 	 * @param pRoute the route to the direct neighbor
 	 */
-	public void addRouteToDirectNeighbor(L2Address pNeighborL2Address, Route pRoute)
+	public void registerLinkL2(L2Address pNeighborL2Address, Route pRoute)
 	{
 		// inform the HRS about the new route
-		if(getHRS().addRouteToDirectNeighbor(pNeighborL2Address, pRoute)){
+		if(getHRS().registerLinkL2(pNeighborL2Address, pRoute)){
 			// it's time to update the GUI
 			notifyGUI(this);
 		}

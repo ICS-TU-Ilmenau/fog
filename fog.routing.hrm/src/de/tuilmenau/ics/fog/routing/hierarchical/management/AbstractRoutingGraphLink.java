@@ -22,7 +22,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class AbstractRoutingGraphLink implements Serializable
 {
 	private static final long serialVersionUID = 3333293111147481060L;
-	public enum LinkType {OBJECT_REF /* node internal object reference */, DB_REF /* node internal link */, ROUTE /* network based link */};
+	public enum LinkType {OBJECT_REF /* node internal object reference */, DB_REF /* node internal link */, ROUTE /* network based link */, LOCAL_CONNECTION /* a connection to a local node */, REMOTE_CONNECTION /* a connection to a remote node */};
 
 	/**
 	 * Stores the type of the link

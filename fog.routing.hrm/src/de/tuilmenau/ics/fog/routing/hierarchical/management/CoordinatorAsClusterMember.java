@@ -39,7 +39,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 */
 	private CoordinatorAsClusterMember(HRMController pHRMController, Coordinator pCoordinator, ClusterName pCoordinatorClusterName, ClusterName pJoinedClusterName, L2Address pCoordinatorNodeL2Address)
 	{	
-		super(pHRMController, pCoordinatorClusterName.getHierarchyLevel(), pCoordinatorClusterName.getClusterID(), pCoordinatorClusterName.getCoordinatorID(), pCoordinatorNodeL2Address);
+		super(pHRMController, pJoinedClusterName.getHierarchyLevel() /* use the hierarchy level of the joined cluster here */, pCoordinatorClusterName.getClusterID(), pCoordinatorClusterName.getCoordinatorID(), pCoordinatorNodeL2Address);
 
 		// update the coordinator for which this membership was created
 		mCoordinatorAsClusterMember = pCoordinator;
@@ -126,7 +126,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 */
 	public String toString()
 	{
-		return toLocation() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
+		return toLocation() + "(Cluster=" + getGUIClusterID() + ", " + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
 	}
 
 	/**
@@ -135,7 +135,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	@Override
 	public String toLocation()
 	{
-		String tResult = getClass().getSimpleName() + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue();
+		String tResult = getClass().getSimpleName() + getGUICoordinatorID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
 	}
