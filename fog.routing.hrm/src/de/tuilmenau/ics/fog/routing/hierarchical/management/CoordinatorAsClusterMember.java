@@ -93,6 +93,16 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 
 	/**
+	 * Returns the coordinator for which this cluster membership was created
+	 * 
+	 * @return the coordinator
+	 */
+	public Coordinator getCoordinator()
+	{
+		return mCoordinatorAsClusterMember;
+	}
+	
+	/**
 	 * EVENT: coordinator announcement, we react on this by:
 	 *       1.) forward this packet to the coordinator for which this cluster membership was created
 	 * 
