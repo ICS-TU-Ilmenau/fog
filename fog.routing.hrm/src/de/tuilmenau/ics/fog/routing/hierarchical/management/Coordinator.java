@@ -112,6 +112,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		
 		// trigger periodic Cluster announcements
 		if(HRMConfig.Hierarchy.PERIODIC_COORDINATOR_ANNOUNCEMENTS){
+			Logging.log(this, "Activating periodic coordinator announcements");
+			
 			// register next trigger for 
 			mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS * 2, this);
 		}
