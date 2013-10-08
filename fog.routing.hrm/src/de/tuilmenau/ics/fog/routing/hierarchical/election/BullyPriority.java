@@ -114,15 +114,7 @@ public class BullyPriority
 	 */
 	public static BullyPriority createForSuperiorControlEntity(HRMController pHRMController, ControlEntity pControlEntity)
 	{
-		Node tNode = pHRMController.getNode();
-		int tHierarchyLevel = pControlEntity.getHierarchyLevel().getValue() + 1;
-		
-		if (tNode == null) {
-			Logging.log(pControlEntity, "Cannot create Bully priority, invalid reference to physical node found");
-			return null;
-		}
-
-		BullyPriority tResult = new BullyPriority((long) tNode.getParameter().get(NODE_PARAMETER_PREFIX + tHierarchyLevel, HRMConfig.Election.DEFAULT_BULLY_PRIORITY));
+		BullyPriority tResult = new BullyPriority(pHRMController.getBaseNodePriority());
 		
 		if (DEBUG_CREATION){
 			Logging.log(pControlEntity, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
