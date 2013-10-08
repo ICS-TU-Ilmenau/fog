@@ -17,7 +17,6 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
@@ -493,32 +492,39 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		Logging.log(this, "EVENT: Cluster_Member_Needs_HRMID for: " + pComChannel);
 		
-		// create new HRMID for cluster member
-		HRMID tHRMID = createClusterMemberAddress(mNextFreeClusterMemberAddress++);
-
-		// store the HRMID under which the peer will be addressable from now 
-		pComChannel.setPeerHRMID(tHRMID);
-		
-		if ((pComChannel.getPeerHRMID() != null) && (!pComChannel.getPeerHRMID().equals(tHRMID))){
-			Logging.log(this, "    ..replacing HRMID " + pComChannel.getPeerHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
-		}else
-			Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
-
-		// create new AssignHRMID packet for the cluster member
-		AssignHRMID tAssignHRMIDPacket = new AssignHRMID(mHRMController.getNodeName(), pComChannel.getPeerHRMID(), tHRMID);
-		
-		// register this new HRMID in the local HRS and create a mapping to the right L2Address
-		Logging.log(this, "    ..creating MAPPING " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
-		mHRMController.getHRS().mapHRMIDToL2Address(tHRMID, pComChannel.getPeerL2Address());
-		
-		// share the route to this cluster member with all other cluster members
-		shareRouteToClusterMember(pComChannel);
-		
-		// store the assignment for this comm. channel
-		pComChannel.storeAssignedHRMID(tHRMID);
-		
-		// send the packet
-		pComChannel.sendPacket(tAssignHRMIDPacket);
+		/**
+		 * AUTO ADDRESS DISTRIBUTION
+		 */
+		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+			// create new HRMID for cluster member
+			HRMID tHRMID = createClusterMemberAddress(mNextFreeClusterMemberAddress++);
+	
+			// store the HRMID under which the peer will be addressable from now 
+			pComChannel.setPeerHRMID(tHRMID);
+			
+			if ((pComChannel.getPeerHRMID() != null) && (!pComChannel.getPeerHRMID().equals(tHRMID))){
+				Logging.log(this, "    ..replacing HRMID " + pComChannel.getPeerHRMID().toString() + " and assign new HRMID " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
+			}else
+				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
+	
+			// create new AssignHRMID packet for the cluster member
+			AssignHRMID tAssignHRMIDPacket = new AssignHRMID(mHRMController.getNodeName(), pComChannel.getPeerHRMID(), tHRMID);
+			
+			// register this new HRMID in the local HRS and create a mapping to the right L2Address
+			Logging.log(this, "    ..creating MAPPING " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
+			mHRMController.getHRS().mapHRMIDToL2Address(tHRMID, pComChannel.getPeerL2Address());
+			
+			// share the route to this cluster member with all other cluster members
+			shareRouteToClusterMember(pComChannel);
+			
+			// store the assignment for this comm. channel
+			pComChannel.storeAssignedHRMID(tHRMID);
+			
+			// send the packet
+			pComChannel.sendPacket(tAssignHRMIDPacket);
+		}else{
+			Logging.log(this, "Address distribution is deactivated, no new assigned HRMID for: " + pComChannel);
+		}
 	}
 
 	/**
