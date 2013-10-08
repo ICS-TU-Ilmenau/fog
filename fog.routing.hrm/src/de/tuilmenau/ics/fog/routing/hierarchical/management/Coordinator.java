@@ -669,7 +669,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				mClusterMemberships.add(tClusterMembership);
 				
 			}else{
-				Logging.err(this, "Clustermembership ALREADY EXISTS for " + pRemoteClusterName);
+				Logging.err(this, "Cluster membership ALREADY EXISTS for " + pRemoteClusterName);
 			}			
 		}
 		
@@ -779,8 +779,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		boolean tResult = false;
 		
+		//Logging.log(this, "Checking cluster membership for: " + pCluster);
 		synchronized (mClusterMemberships) {
 			for(CoordinatorAsClusterMember tClusterMembership : mClusterMemberships){
+				//Logging.log(this, "       ..cluster membership: " + tClusterMembership);
+				//Logging.log(this, "         ..comm. channels: " + tClusterMembership.getComChannels());
 				if(tClusterMembership.hasComChannel(pCluster)){
 					tResult = true;
 					break;
@@ -798,9 +801,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public boolean isClustered()
 	{
 		// search for an existing cluster at this hierarchy level
-		Cluster tSuperiorCluster = mHRMController.getCluster(getHierarchyLevel());
+		Cluster tSuperiorCluster = mHRMController.getCluster(new HierarchyLevel(this, getHierarchyLevel().getValue() + 1));
 		
-		return ((tSuperiorCluster != null) && (hasMembership(tSuperiorCluster)));
+		return ((getHierarchyLevel().isHighest()) || ((tSuperiorCluster != null) && (hasMembership(tSuperiorCluster))));
 	}
 
 	/**
