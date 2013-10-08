@@ -566,16 +566,22 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * EVENT: another cluster member has sent its Bully priority 
+	 * EVENT: another cluster member has sent its Bully priority
+	 * 
+	 * @param pSourceComChannel the source comm. channel 
 	 */
-	private void eventReceivedReply()
+	private void eventReceivedReply(ComChannel pSourceComChannel)
 	{
 		Logging.log(this, "EVENT: received REPLY");
 
 		/**
 		 * check for a winner
 		 */
-		checkForWinner();
+		if(mState == ElectorState.ELECTING){
+			checkForWinner();
+		}else{
+			Logging.warn(this, "Received delayed REPLY via: " + pSourceComChannel);
+		}
 	}
 	
 	/**
@@ -675,7 +681,7 @@ public class Elector implements Localization
 				eventDetectedIsolation();
 			}
 		}else{
-			Logging.err(this, "EXPECTING ELECTING STATE here but having state: " + mState.toString());
+			Logging.err(this, "checkForWinner() EXPECTED STATE \"ELECTING\" here but got state: " + mState.toString());
 		}
 	}
 	
@@ -747,7 +753,7 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a REPLY: " + tReplyPacket);
 				}
 	
-				eventReceivedReply();
+				eventReceivedReply(pComChannel);
 			}
 			
 			/**
