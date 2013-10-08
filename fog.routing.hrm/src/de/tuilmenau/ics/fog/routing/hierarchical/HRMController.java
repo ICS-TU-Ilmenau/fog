@@ -470,7 +470,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// it's time to update the GUI
 				notifyGUI(pCoordinator);
 			}else{
-				Logging. warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCoordinator);
+				Logging. warn(this, "Skipping HRMID duplicate " + tHRMID.toString() +", additional registration is triggered by " + pCoordinator);
 			}
 		}			
 	}
@@ -1244,7 +1244,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					// get the L2 address of the comm. session peer
 					L2Address tPeerL2Address = tComSession.getPeerL2Address();
 							
-					if(tPeerL2Address.equals(pDestinationL2Address)){
+					if(pDestinationL2Address.equals(tPeerL2Address)){
 						Logging.log(this, "     ..found match");
 						tResult = tComSession;
 						break;
@@ -1253,6 +1253,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 				
+				// have we found an already existing connection?
 				if(tResult == null){
 					Logging.log(this, "getCreateComSession() could find a comm. session for destination: " + pDestinationL2Address + ", knowing these sessions and their channels:");
 					for (ComSession tComSession : mLocalOutgoingSessions){
@@ -1262,6 +1263,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							Logging.log(this, "        ..RemoteCluster: " + tComChannel.getRemoteClusterName().toString());
 						}
 					}
+
+					/**
+					 * Create the new connection
+					 */
 					Logging.log(this, "   ..creating new connection and session to: " + pDestinationL2Address);
 					tResult = createOutgoingComSession(pDestinationL2Address, null);
 				}
@@ -1284,7 +1289,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private ComSession createOutgoingComSession(L2Address pDestinationL2Address, Description pConnectionRequirements)
 	{
 		ComSession tResult = null;
-		
+
+		/**
+		 * Create default connection requirements if needed
+		 */
+		if (pConnectionRequirements == null){
+			pConnectionRequirements = createHRMControllerDestinationDescription();
+		}
+
 		Logging.log(this, "Creating connection/comm. session to: " + pDestinationL2Address + " with requirements: " + pConnectionRequirements);
 		
 		/**
@@ -1412,34 +1424,48 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Connects to a service with the given name. Method blocks until the connection had been set up.
+	 * Connects to a service with the given name. Method blocks until the connection has been set up.
+	 * 
+	 * @param pDestination the connection destination
+	 * @param pRequirements the requirements for the connection
+	 * @param pIdentity the identity of the connection requester
+	 * 
+	 * @return the created connection
+	 * 
+	 * @throws NetworkException
 	 */
-	private Connection connectBlock(Name pName, Description pDescription, Identity pIdentity) throws NetworkException
+	private Connection connectBlock(Name pDestination, Description pRequirements, Identity pIdentity) throws NetworkException
 	{
-		Connection conn = getLayer().connect(pName, pDescription, pIdentity);
-		BlockingEventHandling block = new BlockingEventHandling(conn, 1);
+		Logging.log(this, "\n\n\n========> OUTGOING CONNECTION REQUEST TO: " + pDestination + " with requirements: " + pRequirements);
+
+		// connect
+		Connection tConnection = getLayer().connect(pDestination, pRequirements, pIdentity);
+		Logging.log(this, "        ..=====> got connection: " + tConnection);
+		
+		
+		// create blocking event handler
+		BlockingEventHandling tBlockingEventHandling = new BlockingEventHandling(tConnection, 1);
 		
 		// wait for the first event
-		Event event = block.waitForEvent();
+		Event tEvent = tBlockingEventHandling.waitForEvent();
+		Logging.log(this, "        ..=====> got connection event: " + tEvent);
 		
-		if(event instanceof ConnectedEvent) {
-			if(!conn.isConnected()) {
+		if(tEvent instanceof ConnectedEvent) {
+			if(!tConnection.isConnected()) {
 				throw new NetworkException(this, "Connected event but connection is not connected.");
 			} else {
-				return conn;
+				return tConnection;
 			}
-		}
-		else if(event instanceof ErrorEvent) {
-			Exception exc = ((ErrorEvent) event).getException();
+		}else if(tEvent instanceof ErrorEvent) {
+			Exception exc = ((ErrorEvent) tEvent).getException();
 			
 			if(exc instanceof NetworkException) {
 				throw (NetworkException) exc;
 			} else {
-				throw new NetworkException(this, "Can not connect to " +pName +".", exc);
+				throw new NetworkException(this, "Can not connect to " + pDestination +".", exc);
 			}
-		}
-		else {
-			throw new NetworkException(this, "Can not connect to " +pName +" due to " +event);
+		}else{
+			throw new NetworkException(this, "Can not connect to " + pDestination +" due to " + tEvent);
 		}
 	}
 
@@ -2009,7 +2035,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			if(tRoute.size() == 1){
 				tResult = tRoute.get(0);
 			}else{
-				Logging.err(this, "Expected a route with one entry but got: " + tRoute);
+				Logging.err(this, "Expected a route with one entry but got: \nSOURCE=" + pFrom + "\nDESTINATION: " + pTo + "\nROUTE: " + tRoute);
 			}
 		}
 		
@@ -2338,7 +2364,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Start the communication session
 			 */					
 			Logging.log(this, "     ..starting communication session for the new connection");
-			tComSession.startConnection(tPropClusterParticipation.getSenderL2Address(), pConnection);
+			tComSession.startConnection((tPropClusterParticipation != null) ? tPropClusterParticipation.getSenderL2Address() : null, pConnection);
 		}else{
 			/**
 			 * We have a probe-routing connection and will print some additional information about the taken route of the connection request

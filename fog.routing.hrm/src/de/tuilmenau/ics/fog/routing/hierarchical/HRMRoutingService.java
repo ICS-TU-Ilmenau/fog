@@ -620,29 +620,33 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		ForwardingNode tResult = null;
 		
-		// is the search L2Address valid?
-		if(pSearchedL2Address != null) {
-			
-			// iterate over all known local FEs(FNs)
-			for(ForwardingElement tFE : mFNToL2AddressMapping.keySet()) {
-				// get the L2Address of the current FE
-				L2Address tFoundL2Address = mFNToL2AddressMapping.get(tFE);
-				
-				// have we found the searched mapping?
-				if(pSearchedL2Address.equals(tFoundL2Address)) {
-					// check if the FE is also an FN
-					if(tFE instanceof ForwardingNode) {
-						// we have a valid result
-						tResult = (ForwardingNode) tFE;
-						
-						// return immediately
-						break;
-					}else{
-						Logging.warn(this, "     ..found FE entry isn't derived from an FN, entry=" + tFE);
-					}
-				}
-			}
-		}
+// HINT: The following lines would provide the correct functionality but this would lead to routing problems within TransferPlane::getRoute when a DestinationApplicationProperty requirement is used.
+//       By deactivating this function, we enforce calls to the HRS instance for each "incompleteRoute" event.
+//
+//		
+//		// is the search L2Address valid?
+//		if(pSearchedL2Address != null) {
+//			
+//			// iterate over all known local FEs(FNs)
+//			for(ForwardingElement tFE : mFNToL2AddressMapping.keySet()) {
+//				// get the L2Address of the current FE
+//				L2Address tFoundL2Address = mFNToL2AddressMapping.get(tFE);
+//				
+//				// have we found the searched mapping?
+//				if(pSearchedL2Address.equals(tFoundL2Address)) {
+//					// check if the FE is also an FN
+//					if(tFE instanceof ForwardingNode) {
+//						// we have a valid result
+//						tResult = (ForwardingNode) tFE;
+//						
+//						// return immediately
+//						break;
+//					}else{
+//						Logging.warn(this, "     ..found FE entry isn't derived from an FN, entry=" + tFE);
+//					}
+//				}
+//			}
+//		}
 		
 		return tResult;
 	}
@@ -1312,11 +1316,11 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * L2 based routing to a FoG name
 			 */
 			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-				Logging.log(this, "      ..local FoG based routing to " + pDestination);
+				Logging.log(this, "      ..L2 based routing to " + pDestination);
 			}
 			
 			/**
-			 * Determine the L2 address of the destination (FoG name)
+			 * Determine the L2 address of the destination
 			 */
 			//L2Address tDestinationL2Address = null;
 			if (pDestination instanceof L2Address){
@@ -1439,25 +1443,27 @@ public class HRMRoutingService implements RoutingService, Localization
 			 */
 			DestinationApplicationProperty tPropDestApp = (DestinationApplicationProperty) pRequirements.get(DestinationApplicationProperty.class);
 			if(tPropDestApp != null) {
+				Logging.log(this, "    ..found destination application property: " + tPropDestApp);
+				
 				// remove the found property from the requirements
 				pRequirements.remove(tPropDestApp);
-			}
 			
-			/**
-			 * Add the destination application to the route
-			 */
-			if(tPropDestApp != null) {
+				/**
+				 * Add the destination application to the route
+				 */
 				if(tPropDestApp.getAppName() != null) {
 					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-						Logging.log(this, "Encoding in route the destination  appl. name: " + tPropDestApp.getAppName());
+						Logging.log(this, "    ..encoding in route the destination  appl. name: " + tPropDestApp.getAppName());
 					}
 					pRoute.add(new RouteSegmentAddress(tPropDestApp.getAppName()));
 				} else {
 					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-						Logging.log(this, "Encoding in route the destination  appl. name space: " + tPropDestApp.getAppNamespace());
+						Logging.log(this, "    ..encoding in route the destination  appl. name space: " + tPropDestApp.getAppNamespace());
 					}
 					pRoute.add(new RouteSegmentAddress(new SimpleName(tPropDestApp.getAppNamespace())));
 				}
+			}else{
+				Logging.log(this, "    ..no destination application property found");
 			}
 		}
 	}
