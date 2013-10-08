@@ -364,6 +364,10 @@ public class ComChannel
 			return;
 		}
 
+		if(pPeerPriority.getValue() < 0){
+			throw new RuntimeException("Invalid priority update from " + mPeerPriority.getValue() + " to " + pPeerPriority.getValue());
+		}
+		
 		// get the current simulation time
 		double tNow = mHRMController.getSimulationTime();
 		
