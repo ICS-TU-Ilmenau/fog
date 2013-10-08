@@ -180,7 +180,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 			Route tNewRoute = pRoute.clone();
 			tNewRoute.add(mRoute);
 			mRoute = tNewRoute;
-			Logging.log(this, "       ..new route to sender: " + mRoute);
+			Logging.log(this, "      ..new route to sender: " + mRoute);
 		}else{
 			Logging.warn(this, "Cannot add an invalid route head");
 		}

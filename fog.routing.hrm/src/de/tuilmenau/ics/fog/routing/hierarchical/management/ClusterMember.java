@@ -164,7 +164,7 @@ public class ClusterMember extends ClusterName
 			// get locally known neighbors for this cluster and hierarchy level
 			LinkedList<ControlEntity> tLocallyKnownNeighbors = getNeighborsARG();
 			if(tLocallyKnownNeighbors.size() > 0){
-				Logging.log(this, "      ..found " + tLocallyKnownNeighbors.size() + " neighbors: " + tLocallyKnownNeighbors);
+				Logging.log(this, "     ..found " + tLocallyKnownNeighbors.size() + " neighbors");
 	
 				for(ControlEntity tLocallyKnownNeighbor: tLocallyKnownNeighbors){
 					/**
@@ -183,7 +183,7 @@ public class ClusterMember extends ClusterName
 						Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocallyKnownNeighborCluster);
 						tLocallyKnownNeighborCluster.forwardCoordinatorAnnouncement(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pAnnounceCoordinator);
 					}else{
-						Logging.log(this, "Ignoring stored neighbor of uninteresting type in ARG: " + tLocallyKnownNeighbor);
+						//Logging.log(this, "Ignoring stored neighbor of uninteresting type in ARG: " + tLocallyKnownNeighbor);
 					}
 				}
 			}else{
