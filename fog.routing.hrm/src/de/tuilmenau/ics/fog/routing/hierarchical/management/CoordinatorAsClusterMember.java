@@ -65,14 +65,9 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		// detect neighbor clusters (members), increase the Bully priority based on the local connectivity
 		tResult.initializeNeighborhood();
 
-		if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
-			// register at HRMController's internal database
-			pHRMController.registerClusterMember(tResult);
+		// register at HRMController's internal database
+		pHRMController.registerCoordinatorAsClusterMember(tResult);
 
-			// register the coordinator in the local ARG
-			pHRMController.registerLinkARG(tResult, pCoordinator, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
-		}
-		
 		// creates new elector object, which is responsible for Bully based election processes
 		tResult.mElector = new Elector(pHRMController, tResult);
 

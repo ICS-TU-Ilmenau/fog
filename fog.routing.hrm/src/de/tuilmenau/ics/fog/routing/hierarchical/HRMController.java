@@ -675,6 +675,37 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Registers a coordinator-as-cluster-member at the local database.
+	 * 
+	 * @param pCoordinatorAsClusterMember the coordinator-as-cluster-member which should be registered
+	 */
+	public void registerCoordinatorAsClusterMember(CoordinatorAsClusterMember pCoordinatorAsClusterMember)
+	{
+		int tLevel = pCoordinatorAsClusterMember.getHierarchyLevel().getValue();
+
+		Logging.log(this, "Registering coordinator-as-cluster-member " + pCoordinatorAsClusterMember + " at level " + tLevel);
+		
+//		synchronized (mLocalClusterMembers) {
+//			// register as known cluster member
+//			mLocalClusterMembers.add(pClusterMember);			
+//		}
+		
+		if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
+			// updates the GUI decoration for this node
+			updateGUINodeDecoration();
+
+			// register the node in the local ARG
+			registerNodeARG(pCoordinatorAsClusterMember);
+
+			// register the link in the local ARG
+			registerLinkARG(pCoordinatorAsClusterMember, pCoordinatorAsClusterMember.getCoordinator(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+
+			// it's time to update the GUI
+			notifyGUI(pCoordinatorAsClusterMember);
+		}
+	}
+	
+	/**
 	 * Registers a cluster member at the local database.
 	 * 
 	 * @param pClusterMember the cluster member which should be registered
