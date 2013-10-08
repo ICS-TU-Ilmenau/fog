@@ -107,15 +107,10 @@ public class HRMID extends HRMName implements Comparable<HRMID>, AbstractRouting
 		mAddress = mAddress.add(pAddress.shiftLeft(tLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
 	}
 	
-	//TODO
-	@Override
-	public int getSerialisedSize()
-	{
-		return mAddress.bitLength();
-	}
-	
 	/**
 	 * Creates an instance clone with the same address.
+	 * 
+	 * @return the cloned object
 	 */
 	public HRMID clone()
 	{
@@ -125,6 +120,17 @@ public class HRMID extends HRMName implements Comparable<HRMID>, AbstractRouting
 		return tID;
 	}
 	
+	
+	
+	
+	
+	//TODO
+	@Override
+	public int getSerialisedSize()
+	{
+		return mAddress.bitLength();
+	}
+
 	/**
 	 * Use this method to find out the descending difference in relation to another address.
 	 * 
@@ -157,6 +163,13 @@ public class HRMID extends HRMName implements Comparable<HRMID>, AbstractRouting
 		return getLevelAddress(pCompareTo.getDescendingDifference(this)).subtract(pCompareTo.getLevelAddress(pCompareTo.getDescendingDifference(this))).intValue();
 	}
 	
+	
+	
+	
+	
+	
+	
+	
 	@Override
 	public Namespace getNamespace()
 	{
@@ -165,6 +178,8 @@ public class HRMID extends HRMName implements Comparable<HRMID>, AbstractRouting
 
 	/**
 	 * Compares the address value of both class instances and return true if they are equal to each other.
+	 * 
+	 * @return true or false
 	 */
 	@Override
 	public boolean equals(Object pObj)
@@ -178,6 +193,18 @@ public class HRMID extends HRMName implements Comparable<HRMID>, AbstractRouting
 
 	/**
 	 * Determines if this HRMID has a valid prefix, e.g., "1.3.0"
+	 * 
+	 * @return true or false
+	 */
+	public boolean isZero()
+	{
+		return (mAddress.longValue() == 0);
+	}
+	
+	/**
+	 * Determines if this HRMID has a valid prefix, e.g., "1.3.0"
+	 * 
+	 * @return true or false
 	 */
 	public boolean isRelativeAddress()
 	{
