@@ -69,9 +69,9 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "Lvl=" + getHierarchyLevel().getValue() + ", ID=" + getClusterID() + ", CoordID=" + getCoordinatorID() +  ", Prio=" + getPriority().getValue();
+			return "Coordinator" + getGUICoordinatorID();
 		}else{
-			return "HRMID=" + getHRMID().toString();
+			return "Coordinator" + getGUICoordinatorID() + ", HRMID=" + getHRMID().toString();
 		}
 	}
 }
