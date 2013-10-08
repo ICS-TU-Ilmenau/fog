@@ -563,7 +563,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			if (tComChannel.getRemoteClusterName() != null){
 				if ((pControlEntity.getHierarchyLevel().isHigherLevel()) && (pControlEntity instanceof Cluster)){
 					ClusterName tRemoteClusterName = tComChannel.getRemoteClusterName();
-					tRow.setText(4, "Coordinator" + tRemoteClusterName.getGUICoordinatorID() + "@" + tRemoteClusterName.getHierarchyLevel().getValue() + "(" + tRemoteClusterName + ")");
+					int tPeerLevel = tRemoteClusterName.getHierarchyLevel().getValue() - 1 /* the connected remote entity is always one level below because it is reported with an increment */;
+					tRow.setText(4, "Coordinator" + tRemoteClusterName.getGUICoordinatorID() + "@" + (tPeerLevel) + "(Cluster" + tRemoteClusterName.getGUIClusterID() + "@" + tPeerLevel + ")");
 				}else{
 					tRow.setText(4, tComChannel.getRemoteClusterName().toString());
 				}
