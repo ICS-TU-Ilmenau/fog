@@ -280,7 +280,9 @@ public class Cluster extends ClusterMember
 		unregisterComChannel(pComChannel);
 		
 		Logging.log(this, "      ..remaining comm. channels: " + getComChannels());
-
+		Logging.log(this, "      ..remaining connected local coordiantors: " + mInferiorLocalCoordinators);
+		Logging.log(this, "      ..remaining connected remote coordiantors: " + mInferiorRemoteCoordinators);
+		
 		// no further external candidates available/known (all candidates are gone) ?
 		if (countConnectedClusterMembers() < 1){
 			/**

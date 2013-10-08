@@ -464,6 +464,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private void eventAllClusterMembershipsInvalid()
 	{
+		Logging.log(this, "EVENT: all cluster memberships invalid");
+		
 		synchronized (mClusterMemberships) {
 			for (ClusterMember tClusterMember : mClusterMemberships){
 				tClusterMember.eventMembershipInvalid();
