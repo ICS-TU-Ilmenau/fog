@@ -109,7 +109,7 @@ public class HierarchyLevel
 	 */
 	public boolean isHighest()
 	{
-		return (mLevel >= HRMConfig.Hierarchy.HEIGHT);
+		return (mLevel >= HRMConfig.Hierarchy.HEIGHT - 1);
 	}
 
 	/**
