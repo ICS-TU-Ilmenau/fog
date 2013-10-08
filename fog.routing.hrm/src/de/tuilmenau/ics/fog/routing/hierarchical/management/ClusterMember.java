@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -216,6 +217,44 @@ public class ClusterMember extends ClusterName
 			Logging.log(this, "      ..starting ELECTION");
 			mElector.startElection();
 		}
+	}
+
+	/**
+	 * EVENT: cluster membership request, a cluster requests of a coordinator to acknowledge cluster membership, triggered by the comm. session
+	 * 
+	 * @param pRemoteClusterName the description of the possible new cluster member
+	 * @param pSourceComSession the comm. session where the packet was received
+	 */
+	public void eventClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
+	{
+		Logging.log(this, "EVENT: got cluster membership request from: " + pRemoteClusterName);
+		
+		/**
+		 * Create the communication channel for the described cluster member
+		 */
+		Logging.log(this, "     ..creating communication channel");
+		ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.IN, this, pSourceComSession);
+
+		/**
+		 * Set the remote ClusterName of the communication channel
+		 */
+		tComChannel.setRemoteClusterName(pRemoteClusterName);
+
+		/**
+		 * Trigger: comm. channel established 
+		 */
+		eventComChannelEstablished(tComChannel);
+
+		/**
+		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
+		 */
+		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), null);
+		tComChannel.sendPacket(tRequestClusterMembershipAckPacket);
+		
+		/**
+		 * Trigger: joined a remote cluster (sends a Bully priority update)
+		 */
+		eventJoinedRemoteCluster(tComChannel);
 	}
 
 	/**

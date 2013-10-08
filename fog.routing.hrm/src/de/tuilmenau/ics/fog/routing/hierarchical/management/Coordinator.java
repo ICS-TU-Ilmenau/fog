@@ -11,12 +11,8 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
-import java.util.List;
 
-import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
-import de.tuilmenau.ics.fog.facade.Connection;
-import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
@@ -26,7 +22,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.RequestClusterParticipationProperty;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -701,19 +696,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Trigger: joined a remote cluster (sends a Bully priority update)
 		 */
 		eventJoinedRemoteCluster(tComChannel);
-	}
-
-	/**
-	 * EVENT: we have joined the superior cluster, triggered by ourself a request for cluster membership was ack'ed
-	 * 
-	 * @param pSourceComChannel the source comm. channel
-	 */
-	private void eventJoinedRemoteCluster(ComChannel pComChannelToRemoteCluster)
-	{
-		Logging.log(this, "HAVE JOINED superior cluster");
-		
-		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), BullyPriority.createForSuperiorControlEntity(mHRMController,  this));
-		pComChannelToRemoteCluster.sendPacket(tBullyPriorityUpdatePacket);
 	}
 
 	/**

@@ -14,6 +14,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -438,6 +439,19 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		Logging.warn(this, "Ignoring COORDINATOR_ANNOUNCEMENT from comm. channel: " + pComChannel);
 	}
 
+	/**
+	 * EVENT: we have joined the superior cluster, triggered by ourself a request for cluster membership was ack'ed
+	 * 
+	 * @param pSourceComChannel the source comm. channel
+	 */
+	protected void eventJoinedRemoteCluster(ComChannel pComChannelToRemoteCluster)
+	{
+		Logging.log(this, "HAVE JOINED superior cluster");
+		
+		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), BullyPriority.createForSuperiorControlEntity(mHRMController,  this));
+		pComChannelToRemoteCluster.sendPacket(tBullyPriorityUpdatePacket);
+	}
+	
 	/**
 	 * EVENT: cluster coordinator is available
 	 * 

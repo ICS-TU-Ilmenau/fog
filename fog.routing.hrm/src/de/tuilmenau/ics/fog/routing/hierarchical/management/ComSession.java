@@ -550,13 +550,43 @@ public class ComSession extends Session
 				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRequestClusterMembershipPacket.getRequestingCluster());
 			}
 			
-			Coordinator tCoordinator = mHRMController.getCoordinatorByID(tRequestClusterMembershipPacket.getTargetCoordinator().getCoordinatorID());
-			
-			// is the parent a coordinator or a cluster?
-			if (tCoordinator != null){
-				tCoordinator.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), this);
-			}else{
-				Logging.err(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + tRequestClusterMembershipPacket);
+			// is the requester located at a higher hierarchy level? -> a coordinator is addressed, which should be member of the remote Cluster object
+			if (tRequestClusterMembershipPacket.getRequestingCluster().getHierarchyLevel().isHigherLevel()){
+				int tTargetCoordinatorID = tRequestClusterMembershipPacket.getDestination().getCoordinatorID();
+
+				// check the coordinator ID
+				if (tTargetCoordinatorID > 0){
+					
+					/**
+					 * Search for the coordinator and inform him about the cluster membership request
+					 */
+					Coordinator tCoordinator = mHRMController.getCoordinatorByID(tTargetCoordinatorID);
+					
+					// is the parent a coordinator or a cluster?
+					if (tCoordinator != null){
+						tCoordinator.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), this);
+					}else{
+						Logging.err(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + tRequestClusterMembershipPacket);
+					}
+				}else{
+					Logging.err(this, "Detected an invalid coordinator ID in the cluster membrship request: " + tRequestClusterMembershipPacket);
+				}
+			}else{// the requester is located at base hierarchy level -> a new ClusterMember object has to be created, which should be member of the remote Cluster object
+				/**
+				 * Create ClusterName for the signaled cluster
+				 */
+				ClusterName tSignaledClusterName = new ClusterName(mHRMController, tRequestClusterMembershipPacket.getDestination().getHierarchyLevel(), tRequestClusterMembershipPacket.getDestination().getClusterID(), -1);
+
+				/**
+				 * Create new cluster member object
+				 */
+				Logging.log(this, "    ..creating new local cluster member for: " + tSignaledClusterName); 
+				ClusterMember tClusterMember = ClusterMember.create(mHRMController, tSignaledClusterName, null);
+
+				/**
+				 * Trigger: "cluster membership request" within the new ClusterMember object
+				 */
+				tClusterMember.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), this);
 			}
 			return true;
 		}

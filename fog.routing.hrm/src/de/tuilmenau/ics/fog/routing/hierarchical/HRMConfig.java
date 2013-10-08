@@ -51,7 +51,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs about the routing process 
 		 */
-		public static final boolean GUI_SHOW_ROUTING = false;
+		public static final boolean GUI_SHOW_ROUTING = true;
 
 		/**
 		 * Show debug outputs about node/link detection
