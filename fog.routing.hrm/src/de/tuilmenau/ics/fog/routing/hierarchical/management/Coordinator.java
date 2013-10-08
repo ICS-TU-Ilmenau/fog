@@ -97,6 +97,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// clone the HRMID of the managed cluster because it can already contain the needed HRMID prefix address
 		setHRMID(this,  mParentCluster.getHRMID().clone());
 		
+		// update the cluster ID
+		setClusterID(mParentCluster.getClusterID());
+		
 		// register itself as coordinator for the managed cluster
 		mParentCluster.eventNewLocalCoordinator(this);
 
@@ -877,8 +880,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	public String toString()
 	{
-		//return getClass().getSimpleName() + (mParentCluster != null ? "(" + mParentCluster.toString() + ")" : "" ) + "TK(" +mToken + ")COORD(" + mCoordinatorSignature + ")@" + mLevel;
-		return toLocation() + "(" + (mParentCluster != null ? "Cluster" + mParentCluster.getGUIClusterID() + ", " : "") + idToString() + ")";
+		return toLocation() + "(" + idToString() + ")";
 	}
 
 	/**
@@ -902,9 +904,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "ID=" + getClusterID() + ", CordID=" + getCoordinatorID() +  ", NodePrio=" + getPriority().getValue();
+			return "Cluster" + getGUIClusterID();
 		}else{
-			return "HRMID=" + getHRMID().toString();
+			return "Cluster" + getGUIClusterID() + ", HRMID=" + getHRMID().toString();
 		}
 	}
 }

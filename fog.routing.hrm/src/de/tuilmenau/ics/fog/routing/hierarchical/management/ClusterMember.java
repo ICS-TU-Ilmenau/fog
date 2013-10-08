@@ -416,6 +416,52 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
+	 * EVENT: membership invalid 
+	 */
+	public void eventMembershipInvalid()
+	{
+		/**
+		 * Send: "Bully Leave" to all superior clusters
+		 */
+		// create signaling packet for signaling that we leave the Bully group
+		BullyLeave tBullyLeavePacket = new BullyLeave(mHRMController.getNodeName(), getPriority());
+
+		// get all communication channels
+		LinkedList<ComChannel> tComChannels = getComChannels();
+
+		// get the L2Addres of the local host
+		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
+		
+		Logging.log(this, "CLUSTER MEMBERSHIP invalid, sending Bully leave: " + tBullyLeavePacket);
+		
+		int tUsedChannels = 0;
+		for(ComChannel tComChannel : tComChannels) {
+			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
+			
+			if (!tIsLoopback){
+				Logging.log(this, "       ..to " + tComChannel);
+			}else{
+				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
+			}
+
+			// send the packet to one of the possible cluster members
+			tComChannel.sendPacket(tBullyLeavePacket);
+			
+			tUsedChannels++;
+		}
+		
+		// drop the warning in case too many comm. channels were used
+		if (tUsedChannels > 1){
+			Logging.warn(this, "Found " + tUsedChannels + " instead of ONLY ONE channel twoards the cluster head");
+		}
+		
+		/**
+		 * Unregister from the HRMController's internal database
+		 */ 
+		mHRMController.unregisterClusterMember(this);
+	}
+
+	/**
 	 * Sets a new Bully priority
 	 * 
 	 * @param pPriority the new Bully priority
@@ -492,7 +538,7 @@ public class ClusterMember extends ClusterName
 	 */
 	public String toString()
 	{
-		return toLocation() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
+		return toLocation() + "(" + idToString();
 	}
 
 	/**
@@ -514,55 +560,9 @@ public class ClusterMember extends ClusterName
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "Lvl.=" + getHierarchyLevel().getValue() + ", ID=" + getClusterID() + ", CoordID=" + superiorCoordinatorID() +  ", Prio=" + getPriority().getValue();
+			return "Coordinator" + getGUICoordinatorID() + ", CoordNode.=" + getCoordinatorNodeL2Address();
 		}else{
-			return "HRMID=" + getHRMID().toString();
+			return "Coordinator" + getGUICoordinatorID() + ", CoordNode.=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
 		}
-	}
-
-	/**
-	 * EVENT: membership invalid 
-	 */
-	public void eventMembershipInvalid()
-	{
-		/**
-		 * Send: "Bully Leave" to all superior clusters
-		 */
-		// create signaling packet for signaling that we leave the Bully group
-		BullyLeave tBullyLeavePacket = new BullyLeave(mHRMController.getNodeName(), getPriority());
-
-		// get all communication channels
-		LinkedList<ComChannel> tComChannels = getComChannels();
-
-		// get the L2Addres of the local host
-		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
-		
-		Logging.log(this, "CLUSTER MEMBERSHIP invalid, sending Bully leave: " + tBullyLeavePacket);
-		
-		int tUsedChannels = 0;
-		for(ComChannel tComChannel : tComChannels) {
-			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
-			
-			if (!tIsLoopback){
-				Logging.log(this, "       ..to " + tComChannel);
-			}else{
-				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
-			}
-
-			// send the packet to one of the possible cluster members
-			tComChannel.sendPacket(tBullyLeavePacket);
-			
-			tUsedChannels++;
-		}
-		
-		// drop the warning in case too many comm. channels were used
-		if (tUsedChannels > 1){
-			Logging.warn(this, "Found " + tUsedChannels + " instead of ONLY ONE channel twoards the cluster head");
-		}
-		
-		/**
-		 * Unregister from the HRMController's internal database
-		 */ 
-		mHRMController.unregisterClusterMember(this);
 	}
 }

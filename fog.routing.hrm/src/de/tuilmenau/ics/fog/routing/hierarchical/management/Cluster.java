@@ -547,7 +547,6 @@ public class Cluster extends ClusterMember
 	 * 
 	 * @return the descriptive string
 	 */
-	@SuppressWarnings("unused")
 	public String toString()
 	{
 		return toLocation() + "(" + idToString() + ")";
@@ -573,10 +572,10 @@ public class Cluster extends ClusterMember
 	 */
 	private String idToString()
 	{
-		if (getHRMID() == null){
-			return "ID=" + getClusterID() + ", CoordID=" + superiorCoordinatorID() +  ", Prio=" + getPriority().getValue();
+		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
+			return "Coordinator" + getGUICoordinatorID();
 		}else{
-			return "HRMID=" + getHRMID().toString();
+			return "Coordinator" + getGUICoordinatorID() + ", HRMID=" + getHRMID().toString();
 		}
 	}
 }

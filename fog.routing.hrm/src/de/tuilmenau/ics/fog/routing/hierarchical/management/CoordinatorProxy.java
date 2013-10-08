@@ -155,7 +155,7 @@ public class CoordinatorProxy extends ClusterMember
 	 */
 	public String toString()
 	{
-		return toLocation() + "(Cluster" + getGUIClusterID() + ", " + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
+		return toLocation() + "(" + idToString() + ")";
 	}
 
 	/**
@@ -177,9 +177,9 @@ public class CoordinatorProxy extends ClusterMember
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "ID=" + getClusterID() + ", NodePrio=" + getPriority().getValue();
+			return "Cluster=" + getGUIClusterID() + ", CoordNode.=" + getCoordinatorNodeL2Address();
 		}else{
-			return "HRMID=" + getHRMID().toString();
+			return "Cluster=" + getGUIClusterID() + ", CoordNode.=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
 		}
 	}
 }
