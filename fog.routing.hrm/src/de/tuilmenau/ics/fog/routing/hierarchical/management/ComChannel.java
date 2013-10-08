@@ -183,6 +183,11 @@ public class ComChannel
 	 */
 	private boolean mChannelEstablished = false;
 	
+	/**
+	 * Stores the peer entity
+	 */
+	private ControlEntity mPeer = null;
+	
 	private boolean mPartOfCluster = false;
 	private HRMController mHRMController = null;
 	
@@ -207,6 +212,9 @@ public class ComChannel
 		// store the direction
 		mDirection = pDirection;
 		
+		// store the peer entity
+		mPeer = null;
+
 		// the peer priority gets initialized by a default value ("undefined")
 		mPeerPriority = BullyPriority.create(this);
 
@@ -228,6 +236,22 @@ public class ComChannel
 		mParent.registerComChannel(this);
 		
 		Logging.log(this, "CREATED");
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param pHRMController is the HRMController instance of this node
+	 * @param pDirection the direction of the communication channel (either upward or downward)
+	 * @param pParent the parent control entity
+	 * @param pParentComSession is the parental comm. session
+	 */
+	public ComChannel(HRMController pHRMController, Direction pDirection, ControlEntity pParent, ComSession pParentComSession, ControlEntity pPeer)
+	{
+		this(pHRMController, pDirection, pParent, pParentComSession);
+		
+		// store the peer entity
+		mPeer = pPeer;
 	}
 	
 	/**
@@ -258,6 +282,16 @@ public class ComChannel
 	public Direction getDirection()
 	{
 		return mDirection;
+	}
+	
+	/**
+	 * Returns the peer entity
+	 * 
+	 * @return peer entity
+	 */
+	public ControlEntity getPeer()
+	{
+		return mPeer;
 	}
 	
 	/**

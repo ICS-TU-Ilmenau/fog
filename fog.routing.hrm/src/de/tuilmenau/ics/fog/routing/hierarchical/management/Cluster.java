@@ -272,40 +272,59 @@ public class Cluster extends ClusterMember
 	 * @param pComChannel the comm. channel of the lost cluster member
 	 */
 	@Override
-	public void eventClusterMemberLost(ComChannel pComChannel)
+	public synchronized void eventClusterMemberLost(ComChannel pComChannel)
 	{
 		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
 		
 		// unregister the comm. channel
 		unregisterComChannel(pComChannel);
 		
+		ControlEntity tComChannelPeer = pComChannel.getPeer(); 
+		if(tComChannelPeer != null){
+			// does this comm. channel end at a local coordinator?
+			if(tComChannelPeer instanceof Coordinator){
+				synchronized (mInferiorLocalCoordinators) {
+					mInferiorLocalCoordinators.remove(tComChannelPeer);					
+				}
+			}else
+			// does this comm. channel end at a remote coordinator (a coordinator proxy)?
+			if(tComChannelPeer instanceof CoordinatorProxy){
+				synchronized (mInferiorRemoteCoordinators) {
+					mInferiorRemoteCoordinators.remove(tComChannelPeer);					
+				}
+			}else{
+				Logging.err(this, "Comm. channel peer has unsupported type: " + tComChannelPeer);
+			}
+		}
 		Logging.log(this, "      ..remaining comm. channels: " + getComChannels());
 		Logging.log(this, "      ..remaining connected local coordiantors: " + mInferiorLocalCoordinators);
 		Logging.log(this, "      ..remaining connected remote coordiantors: " + mInferiorRemoteCoordinators);
 		
-		// no further external candidates available/known (all candidates are gone) ?
-		if (countConnectedClusterMembers() < 1){
+		// no further external candidates available/known (all candidates are gone) or has the last local inferior coordinator left the area?
+		if ((countConnectedClusterMembers() < 1 /* do we still have cluster members? */) || (mInferiorLocalCoordinators.size() == 0 /* has the last local coordinator left this cluster? */)){
 			/**
-			 * TRIGGER: all cluster members are gone, we destroy the coordinator
+			 * TRIGGER: cluster invalid
 			 */
-			if (getCoordinator() != null){
-				getCoordinator().eventCoordinatorRoleInvalid();
-			}else{
-				Logging.warn(this, "eventClusterMemberLost() can't find the coordinator");
-			}
-			/**
-			 * TRIGGER: all cluster members are gone, we destroy the cluster
-			 */
-			eventClusterLostAllMembers();
-		}			 
+			eventClusterInvalid();
+		}
 	}
 
 	/**
-	 * EVENT: "lost all members", triggered by ourself in case the last member left the election 
+	 * EVENT: coordinator invalid
 	 */
-	private void eventClusterLostAllMembers()
+	private void eventClusterInvalid()
 	{
-		Logging.log(this, "============ EVENT: Cluster_Lost_All_Members");
+		Logging.log(this, "============ EVENT: cluster role invalid");
+		
+		/**
+		 * TRIGGER: event coordinator role invalid
+		 */
+		if (getCoordinator() != null){
+			getCoordinator().eventCoordinatorRoleInvalid();
+		}else{
+			Logging.warn(this, "eventClusterInvalid() can't find the coordinator");
+		}
+		
 		Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
 
 		/**
@@ -322,7 +341,7 @@ public class Cluster extends ClusterMember
 	 * 
 	 * @param pComChannel the comm. channel of the new cluster member
 	 */
-	public void eventClusterMemberJoined(ComChannel pComChannel)
+	public synchronized void eventClusterMemberJoined(ComChannel pComChannel)
 	{
 		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
 		
@@ -390,7 +409,7 @@ public class Cluster extends ClusterMember
 					     * Create communication channel
 					     */
 					    Logging.log(this, "           ..creating new communication channel");
-						ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession);
+						ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession, tCoordinator);
 						tComChannel.setRemoteClusterName(tLocalCoordinatorAsClusterMemberName);
 						tComChannel.setPeerPriority(tCoordinator.getPriority());
 						
@@ -452,7 +471,7 @@ public class Cluster extends ClusterMember
 						     * Create communication channel
 						     */
 						    Logging.log(this, "           ..creating new communication channel");
-							ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession);
+							ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, tComSession, tCoordinatorProxy);
 							tComChannel.setRemoteClusterName(tRemoteCoordinatorAsClusterMemberName);
 							tComChannel.setPeerPriority(tCoordinatorProxy.getPriority());
 							
