@@ -828,10 +828,10 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				/**
 				 * Trigger: restart clustering
 				 */
-				HierarchyLevel tClusterLevel = new HierarchyLevel(this, tCoordinatorProxy.getHierarchyLevel().getValue() + 1);
-				if(!tClusterLevel.isHighest()){
-					Logging.log(this, "     ..restarting clustering at hierarchy level: " + tClusterLevel.getValue());
-					mHRMController.cluster(tClusterLevel);
+				if((!tCoordinatorProxy.getHierarchyLevel().isHighest() /* is a higher cluster possible? */) && (mHRMController.getCoordinator(tCoordinatorProxy.getHierarchyLevel()) != null /* does a local coordinator at this hierarchy level exist? */)){
+					HierarchyLevel tSuperiorClusterLevel = new HierarchyLevel(this, tCoordinatorProxy.getHierarchyLevel().getValue() + 1);
+					Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
+					mHRMController.cluster(tSuperiorClusterLevel);
 				}
 			}
 		}else{

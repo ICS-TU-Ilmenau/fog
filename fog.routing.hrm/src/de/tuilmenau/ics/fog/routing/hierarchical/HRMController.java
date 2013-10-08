@@ -1096,6 +1096,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns the locally known Coordinator object for a given hierarchy level
+	 * 
+	 * @param pHierarchyLevel the hierarchy level for which the Coordinator object is searched
+	 * 
+	 * @return the found Coordinator object
+	 */
+	public Coordinator getCoordinator(HierarchyLevel pHierarchyLevel)
+	{
+		Coordinator tResult = null;
+
+		for(Coordinator tKnownCoordinator : getAllCoordinators()) {
+			if(tKnownCoordinator.getHierarchyLevel().equals(pHierarchyLevel)) {
+				tResult = tKnownCoordinator;
+				break;
+			}
+		}
+
+		return tResult;
+	}
+
+	/**
 	 * Returns the locally known CoordinatorProxy object, which was identified by its ClusterName
 	 *  
 	 * @param pClusterName the cluster name of the searched coordinator proxy
