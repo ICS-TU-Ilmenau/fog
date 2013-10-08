@@ -114,6 +114,13 @@ public class Elector implements Localization
 				Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Bully priority");
 				signalElectBroadcast();
 			}else{
+				// we don'T have external members - but do we have local members?
+				if(mParent.countConnectedClusterMembers() > 0){					
+					/**
+					 * Send a priority update to all local cluster members
+					 */
+					signalBullyPriorityUpdate();
+				}
 				/**
 				 * trigger "detected isolation"
 				 */
@@ -378,7 +385,7 @@ public class Elector implements Localization
 		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), mParent.getPriority());
 
 		// send broadcast
-		mParent.sendClusterBroadcast(tBullyPriorityUpdatePacket);
+		mParent.sendClusterBroadcast(tBullyPriorityUpdatePacket, true);
 
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "SENDPRIOUPDATE()-END");
