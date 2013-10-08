@@ -52,24 +52,24 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	private ClusterName mRequestingClusterName = null;
 	
 	/**
-	 * Store the ClusterName of the target coordinator
+	 * Store the ClusterName of the request destination
 	 */
-	private ClusterName mTargetCoordinator = null;
+	private ClusterName mRequestDestination = null;
 
 	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
-	 * @param pSourceCoordinator the ClusterName of the sender (a cluster)
-	 * @param pTargetClusterName the ClusterName of the target (another coordinator)
+	 * @param pRequestingCluster the ClusterName of the sender (a Cluster object)
+	 * @param pDestination the ClusterName of the target (a Coordinator or a new ClusterMember object)
 	 */
-	public RequestClusterMembership(Name pSenderName, Name pReceiverName, ClusterName pRequestingCluster, ClusterName pTargetCoordinator)
+	public RequestClusterMembership(Name pSenderName, Name pReceiverName, ClusterName pRequestingCluster, ClusterName pDestination)
 	{
 		super(pSenderName, pReceiverName);
 		
 		mRequestingClusterName = pRequestingCluster;
-		mTargetCoordinator = pTargetCoordinator;
+		mRequestDestination = pDestination;
 	}
 
 	/**
@@ -83,13 +83,13 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	}
 	
 	/**
-	 * Returns the ClusterName of the target coordinator
+	 * Returns the ClusterName of the request destination
 	 * 
-	 * @return the ClusterName of the target
+	 * @return the ClusterName of the destination
 	 */
-	public ClusterName getTargetCoordinator()
+	public ClusterName getDestination()
 	{
-		return mTargetCoordinator;
+		return mRequestDestination;
 	}
 
 	/**
@@ -100,6 +100,6 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Requester="+ getRequestingCluster() + ", TargetCoord.=" + getTargetCoordinator() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Requester="+ getRequestingCluster() + ", Destination=" + getDestination() + ")";
 	}
 }
