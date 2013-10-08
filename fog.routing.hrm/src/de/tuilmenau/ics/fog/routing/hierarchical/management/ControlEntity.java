@@ -446,7 +446,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	protected void eventJoinedRemoteCluster(ComChannel pComChannelToRemoteCluster)
 	{
-		Logging.log(this, "HAVE JOINED superior cluster");
+		Logging.log(this, "HAVE JOINED remote cluster");
 		
 		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), BullyPriority.createForSuperiorControlEntity(mHRMController,  this));
 		pComChannelToRemoteCluster.sendPacket(tBullyPriorityUpdatePacket);
