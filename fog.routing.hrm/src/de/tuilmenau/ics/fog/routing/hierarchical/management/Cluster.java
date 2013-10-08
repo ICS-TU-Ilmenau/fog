@@ -16,8 +16,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMember
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -392,6 +390,7 @@ public class Cluster extends ClusterMember
 					// add this local coordinator to the list of connected coordinators
 					mInferiorLocalCoordinators.add(tCoordinator);
 
+				    Logging.log(this, "    ..get/create communication session");
 					ComSession tComSession = mHRMController.getCreateComSession(mHRMController.getNodeL2Address());		
 					if (tComSession != null){
 						/**

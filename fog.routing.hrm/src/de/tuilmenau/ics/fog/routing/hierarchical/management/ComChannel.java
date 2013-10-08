@@ -467,7 +467,7 @@ public class ComChannel
 				return false;
 			}
 		}else{
-			Logging.err(this, "CHANNEL IS STILL UNAVAILABLE");
+			Logging.err(this, "CHANNEL IS STILL UNAVAILABLE, cannot send packet: " + pPacket);
 			return false;
 		}
 	}
