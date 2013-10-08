@@ -356,35 +356,39 @@ public class ComSession extends Session
 				Logging.err(this, "Unable to fulfill requirements ", tExc);
 			}
 			
-			/**
-			 * Enlarge the found route by an L2Address in order to have a route which ends at the central FN of the peer node, but avoid trailing duplicates 
-			 */
-			boolean tPeerL2AddressAlreadyKnown = false;
-			// get the last entry of the known route to the peer
-			RouteSegment tRouteToPeerLastEntry = tRouteToPeer.getLast();
-			// is the last entry an address?
-			if (tRouteToPeerLastEntry instanceof RouteSegmentAddress){
-				RouteSegmentAddress tRouteToPeerLastAddress = (RouteSegmentAddress)tRouteToPeerLastEntry;
-				// is the last entry an L2Address? 
-				if(tRouteToPeerLastAddress.getAddress() instanceof L2Address){
-					// get the L2Address from the last entry
-					L2Address tLastAddress = (L2Address)tRouteToPeerLastAddress.getAddress();
-					// is the found L2Address the same like what we would add in the next step?
-					if(tLastAddress.equals(mPeerL2Address)){
-						tPeerL2AddressAlreadyKnown = true;
+			if(tRouteToPeer != null){
+				/**
+				 * Enlarge the found route by an L2Address in order to have a route which ends at the central FN of the peer node, but avoid trailing duplicates 
+				 */
+				boolean tPeerL2AddressAlreadyKnown = false;
+				// get the last entry of the known route to the peer
+				RouteSegment tRouteToPeerLastEntry = tRouteToPeer.getLast();
+				// is the last entry an address?
+				if (tRouteToPeerLastEntry instanceof RouteSegmentAddress){
+					RouteSegmentAddress tRouteToPeerLastAddress = (RouteSegmentAddress)tRouteToPeerLastEntry;
+					// is the last entry an L2Address? 
+					if(tRouteToPeerLastAddress.getAddress() instanceof L2Address){
+						// get the L2Address from the last entry
+						L2Address tLastAddress = (L2Address)tRouteToPeerLastAddress.getAddress();
+						// is the found L2Address the same like what we would add in the next step?
+						if(tLastAddress.equals(mPeerL2Address)){
+							tPeerL2AddressAlreadyKnown = true;
+						}
 					}
 				}
-			}
-			// should we add the peer L2Address as last entry in the route towards the peer?
-			if(!tPeerL2AddressAlreadyKnown){
-				Logging.log(this, ">>> Old route to peer was: " + tRouteToPeer);
-				// add the peer L2Address as last entry in the route to the peer node
-				tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
-				Logging.log(this, ">>> New route to peer is: " + tRouteToPeer);
-				
-				eventRouteToPeerAvailable(tRouteToPeer);
+				// should we add the peer L2Address as last entry in the route towards the peer?
+				if(!tPeerL2AddressAlreadyKnown){
+					Logging.log(this, ">>> Old route to peer was: " + tRouteToPeer);
+					// add the peer L2Address as last entry in the route to the peer node
+					tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
+					Logging.log(this, ">>> New route to peer is: " + tRouteToPeer);
+					
+					eventRouteToPeerAvailable(tRouteToPeer);
+				}else{
+					Logging.log(this, ">>> Old route to peer: " + tRouteToPeer + " includes already the entry " + mPeerL2Address + " as last entry");
+				}
 			}else{
-				Logging.log(this, ">>> Old route to peer: " + tRouteToPeer + " includes already the entry " + mPeerL2Address + " as last entry");
+				Logging.warn(this, "Couldn't determine the route to the peer: " + tSenderAddress);
 			}
 		}
 		
