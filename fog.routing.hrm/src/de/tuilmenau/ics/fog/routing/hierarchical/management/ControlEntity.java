@@ -196,20 +196,28 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 
 			return;
 		}
-		if (this instanceof ClusterMember){
-			ClusterMember tClusterProxy = (ClusterMember)this;
-
-			// inform HRM controller about the address change
-			//TODO: mHRMController.updateClusterAddress(tClusterProxy);
-			
-			return;
-		}
 		if (this instanceof Coordinator){
 			Coordinator tCoordinator = (Coordinator)this;
 
 			// inform HRM controller about the address change
 			mHRMController.updateCoordinatorAddress(tCoordinator);
 
+			return;
+		}
+		if (this instanceof CoordinatorAsClusterMember){
+			Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
+
+			// inform HRM controller about the address change
+			mHRMController.updateCoordinatorAddress(tCoordinator);
+
+			return;
+		}
+		if (this instanceof ClusterMember){
+			ClusterMember tClusterProxy = (ClusterMember)this;
+
+			// inform HRM controller about the address change
+			//TODO: mHRMController.updateClusterAddress(tClusterProxy);
+			
 			return;
 		}
 	}
@@ -241,6 +249,14 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			}
 			if (this instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)this;
+	
+				// inform HRM controller about the address change
+				mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
+	
+				return;
+			}
+			if(this instanceof CoordinatorAsClusterMember){
+				Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
 	
 				// inform HRM controller about the address change
 				mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
