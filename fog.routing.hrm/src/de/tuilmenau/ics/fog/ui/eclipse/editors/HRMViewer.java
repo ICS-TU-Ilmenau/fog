@@ -484,7 +484,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tColumnCEP.setText("Peer L2 Address");
 		
 		TableColumn tColumnTargetCovered = new TableColumn(tTable, SWT.NONE, 2);
-		tColumnTargetCovered.setText("Target Covered");
+		tColumnTargetCovered.setText("Active link");
 		
 		TableColumn tColumnPeerPriority = new TableColumn(tTable, SWT.NONE, 3);
 		tColumnPeerPriority.setText("Peer Priority");
@@ -497,6 +497,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 		TableColumn tColumnDirection = new TableColumn(tTable, SWT.NONE, 6);
 		tColumnDirection.setText("Connected");
+
+		TableColumn tColumnSendPackets = new TableColumn(tTable, SWT.NONE, 7);
+		tColumnSendPackets.setText("Sent packets");
+
+		TableColumn tColumnReceivedPackets = new TableColumn(tTable, SWT.NONE, 8);
+		tColumnReceivedPackets.setText("Received packets");
 
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
@@ -550,7 +556,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 2:  
 			 */
-			tRow.setText(2, Boolean.toString(tComChannel.isPartOfMyCluster()));
+			tRow.setText(2, tComChannel.getLinking() ? "yes" : "no");
 			
 			/**
 			 * Column 3:  
@@ -597,6 +603,16 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			 * Column 6:  
 			 */
 			tRow.setText(6, tComChannel.getDirection().toString());
+
+			/**
+			 * Column 7:  
+			 */
+			tRow.setText(7, Integer.toString(tComChannel.countSentPackets()));
+
+			/**
+			 * Column 8:  
+			 */
+			tRow.setText(8, Integer.toString(tComChannel.countReceivedPackets()));
 
 			j++;
 		}

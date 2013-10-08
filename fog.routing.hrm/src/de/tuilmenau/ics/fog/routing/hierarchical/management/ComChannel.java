@@ -188,11 +188,28 @@ public class ComChannel
 	 */
 	private ControlEntity mPeer = null;
 	
-	private boolean mPartOfCluster = false;
+	/**
+	 * Stores the counter for received packets
+	 */
+	private int mReceivedPackets = 0;
+	
+	/**
+	 * Stores the counter for sent packets
+	 */
+	private int mSentPackets = 0;
+	
+	/**
+	 * Stores the linking state of the parent and the peer
+	 */
+	private boolean mLinking = false;
+	
+	/**
+	 * Stores the HRMController reference
+	 */
 	private HRMController mHRMController = null;
 	
 	/**
-	 * For COORDINATORS: Stores the HRMID under which the corresponding peer cluster member is addressable.
+	 * Stores the HRMID of the peer
 	 */
 	private HRMID mPeerHRMID = null;
 	
@@ -368,16 +385,19 @@ public class ComChannel
 			throw new RuntimeException("Invalid priority update from " + mPeerPriority.getValue() + " to " + pPeerPriority.getValue());
 		}
 		
-		// get the current simulation time
-		double tNow = mHRMController.getSimulationTime();
-		
-		Logging.log(this, "Updating peer priority from " + mPeerPriority.getValue() + " to " + pPeerPriority.getValue() + ", last update was " + (tNow - mPeerPriorityTimestampLastUpdate) + " seconds before");
-		
-		// update the freshness of the peer priority
-		mPeerPriorityTimestampLastUpdate = tNow;
-
-		// update the peer Bully priority itself
-		mPeerPriority = pPeerPriority;
+		// is the new value equal to the old one?
+		if(!pPeerPriority.equals(mPeerPriority)){
+			// get the current simulation time
+			double tNow = mHRMController.getSimulationTime();
+			
+			Logging.log(this, "Updating peer priority from " + mPeerPriority.getValue() + " to " + pPeerPriority.getValue() + ", last update was " + (tNow - mPeerPriorityTimestampLastUpdate) + " seconds before");
+			
+			// update the freshness of the peer priority
+			mPeerPriorityTimestampLastUpdate = tNow;
+	
+			// update the peer Bully priority itself
+			mPeerPriority = pPeerPriority;
+		}
 	}
 
 	/**
@@ -436,6 +456,26 @@ public class ComChannel
 	}
 
 	/**
+	 * Count the amount of sent packets
+	 * 
+	 * @return the counter
+	 */
+	public int countSentPackets()
+	{
+		return mSentPackets;
+	}
+	
+	/**
+	 * Count the amount of received packets
+	 * 
+	 * @return the counter
+	 */
+	public int countReceivedPackets()
+	{
+		return mReceivedPackets;
+	}
+
+	/**
 	 * Sends a packet to the peer
 	 * 
 	 * @param pPacket the packet
@@ -460,10 +500,13 @@ public class ComChannel
 				// create the Multiplex-Header
 				MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pPacket);
 					
+				// count the packets
+				mSentPackets++;
+				
 				// send the final packet (including multiplex-header)
 				return getParentComSession().write(tMultiplexHeader);
 			}else{
-				Logging.log(this, "Destination is still undefined, skipping packet payload " + pPacket);
+				Logging.warn(this, "Destination is still undefined, skipping packet payload " + pPacket);
 				return false;
 			}
 		}else{
@@ -571,6 +614,9 @@ public class ComChannel
 	@SuppressWarnings("unused")
 	public boolean receiveData(Serializable pData) throws NetworkException
 	{
+		// count the packets
+		mReceivedPackets++;
+
 		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
 			Logging.log(this, "RECEIVED DATA (" + pData.getClass().getSimpleName() + ") from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pData);
 		}
@@ -720,22 +766,25 @@ public class ComChannel
 		return true;
 	}
 	
-	
-	//TODO:
-	public void setAsParticipantOfMyCluster(boolean pPartOfMyCluster)
+	/**
+	 * Sets the linking
+	 * 
+	 * @param pState the new linking state
+	 */
+	public void setLinking(boolean pState)
 	{
-		mPartOfCluster = pPartOfMyCluster;
+		mLinking = pState;
 	}
 	
-	public boolean isPartOfMyCluster()
+	/**
+	 * Returns true if the parent and the peer are link (e.g., a cluster member is linked to a cluster)
+	 * 
+	 * @return true or false
+	 */
+	public boolean getLinking()
 	{
-		return mPartOfCluster;
-	}
-	
-	
-
-	
-	
+		return mLinking;
+	}	
 	
 	/**
 	 * Returns a descriptive string about this object
