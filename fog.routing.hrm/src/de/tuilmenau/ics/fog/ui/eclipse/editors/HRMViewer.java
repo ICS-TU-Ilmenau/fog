@@ -478,10 +478,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		Table tTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		
 		TableColumn tColumnCoordinator = new TableColumn(tTable, SWT.NONE, 0);
-		tColumnCoordinator.setText("Coordinator");
+		tColumnCoordinator.setText("Peer");
 		
 		TableColumn tColumnCEP = new TableColumn(tTable, SWT.NONE, 1);
-		tColumnCEP.setText("Peer L2 Address");
+		tColumnCEP.setText("Peer Node");
 		
 		TableColumn tColumnTargetCovered = new TableColumn(tTable, SWT.NONE, 2);
 		tColumnTargetCovered.setText("Active link");
@@ -535,26 +535,17 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 			
 			/**
-			 * Column 0: coordinator
+			 * Column 0: peer
 			 */			
-			if (pControlEntity instanceof Cluster){
-				Cluster tCluster = (Cluster)pControlEntity;
-				if (tCluster.superiorCoordinatorDescription() != null){
-					tRow.setText(0, tCluster.superiorCoordinatorDescription());
-				}else{
-					tRow.setText(0, "??");
-				}
-			}else{
-				tRow.setText(0, "??");
-			}
+			tRow.setText(0, ((tComChannel.getPeer() != null) ? tComChannel.getPeer().toString() : tComChannel.getRemoteClusterName().toString()));
 
 			/**
-			 * Column 1: Peer L2
+			 * Column 1: peer node
 			 */
 			tRow.setText(1, (tComChannel.getPeerL2Address() != null ? tComChannel.getPeerL2Address().toString() : "??"));
 
 			/**
-			 * Column 2:  
+			 * Column 2: active link 
 			 */
 			tRow.setText(2, tComChannel.getLinking() ? "yes" : "no");
 			
