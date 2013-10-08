@@ -41,7 +41,6 @@ import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.RequestClusterParticipationProperty.ClusterMemberDescription;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -1685,12 +1684,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * Describe the new created cluster
 				 */
 			    Logging.log(this, "    ..creating cluster description");
-				final RequestClusterParticipationProperty tRequestClusterParticipationProperty = RequestClusterParticipationProperty.create(tHRMController, HierarchyLevel.createBaseLevel(), tParentCluster.getClusterID(), tParentCluster.getHierarchyLevel());
-				/**
-				 * Describe the cluster member
-				 */
-			    Logging.log(this, "    ..creating cluster member description for created cluster " + tParentCluster);
-			    tRequestClusterParticipationProperty.addSenderClusterMember(tParentCluster);
+				RequestClusterParticipationProperty tRequestClusterParticipationProperty = RequestClusterParticipationProperty.create(tHRMController, HierarchyLevel.createBaseLevel(), tParentCluster.getClusterID(), tParentCluster.getHierarchyLevel());
 
 				/**
 				 * Create connection requirements
@@ -2295,9 +2289,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "     ..creating communication session");
 			ComSession tComSession = new ComSession(this, true);
 
-			/******************************************************
+			/**
 			 * PARSE: cluster description from remote side
-			 ******************************************************/
+			 */
 			if(tPropClusterParticipation != null) {
 				Logging.log(this, "    ..found cluster description: " + tPropClusterParticipation);
 
@@ -2306,85 +2300,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				ClusterName tSignaledClusterName = new ClusterName(this, tPropClusterParticipation.getHierarchyLevel(), tPropClusterParticipation.getClusterID(), -1);
 
-				ClusterMember tTargetCluster = null;
-
 				/**
-				 * Search if the destination cluster (from the ClusterDescriptionProperty) is already locally known.
-				 * This can only be at higher hierarchy level when a coordinator explores its neighborhood.
+				 * Create new cluster member object
 				 */
-				LinkedList<Cluster> tClusters = getAllClusters();
-				Logging.log(this, "    ..searching for described cluster among " + tClusters.size() + " known clusters:");
-				int i = 0;
-				for(Cluster tLocalCluster : tClusters)
-				{
-					Logging.log(this, "    ..[" + i + "]: " + tLocalCluster);
-					
-					// do we already know the described cluster?
-					if(tLocalCluster.equals(tSignaledClusterName))	{
-						Logging.log(this, "           ..found MATCH: " + tLocalCluster);
-						
-						tTargetCluster = tLocalCluster;
-					}
-					i++;
-				}
-
-				/**
-				 * Create new cluster (member) object
-				 */
-				if (tPropClusterParticipation.getSenderL2Address().equals(getNodeL2Address())){
-					Logging.log(this, "    ..creating new local cluster for: " + tSignaledClusterName); 
-					tTargetCluster = Cluster.create(this, tSignaledClusterName);
-				}else{
-					Logging.log(this, "    ..creating new local cluster member for: " + tSignaledClusterName); 
-					tTargetCluster = ClusterMember.create(this, tSignaledClusterName, tPropClusterParticipation.getSenderL2Address());
-				}
+				Logging.log(this, "    ..creating new local cluster member for: " + tSignaledClusterName); 
+				ClusterMember tClusterMember = ClusterMember.create(this, tSignaledClusterName, tPropClusterParticipation.getSenderL2Address());
 				
-				Logging.log(this, "     ..CONTINUING for target cluster: " + tTargetCluster);
-						
-				/*****************************************************
-				 * PARSE: cluster member descriptions from remote side
-				 *****************************************************/
-				int tFoundDescribedMembers = 0;
-				for(ClusterMemberDescription tSenderClusterMember : tPropClusterParticipation.getSenderClusterMembers()) {
-					Logging.log(this, "       ..found cluster member description [" + tFoundDescribedMembers + "]: " + tSenderClusterMember);
-	
-					/**
-					 * Create the communication channel for the described cluster member
-					 */
-					Logging.log(this, "     ..creating communication channel");
-					ComChannel tComChannel = new ComChannel(this, ComChannel.Direction.IN, tTargetCluster, tComSession);
-					tComChannel.setPeerPriority(tSenderClusterMember.getPriority());
-
-					/**
-					 * Set the remote ClusterName of the communication channel
-					 */
-					ClusterName tRemoteClusterName = new ClusterName(this, tPropClusterParticipation.getSenderHierarchyLevel(), tSenderClusterMember.getClusterID(), tSenderClusterMember.getCoordinatorID());
-					tComChannel.setRemoteClusterName(tRemoteClusterName);
-					
-					/**
-					 * Check if the described cluster member is locally connected or a remote (distant) one
-					 */
-					boolean tIsRemoteCluster = (getClusterByName(tRemoteClusterName) != null); 
-
-					/**
-					 * Detected a remote cluster?
-					 */ 
-					if(tIsRemoteCluster && tPropClusterParticipation.getHierarchyLevel().isHigherLevel()) {
-						/**
-						 * Create a ClusterProxy object
-						 */
-						Logging.log(this, "     ..creating cluster proxy");
-						ClusterMember tClusterProxy_ClusterMember = new ClusterMember(this, new HierarchyLevel(this, tPropClusterParticipation.getHierarchyLevel().getValue() - 1),  tSenderClusterMember.getClusterID(), tSenderClusterMember.getCoordinatorID(), tPropClusterParticipation.getSenderL2Address());
-					} else {
-						Logging.warn(this, "newConnection() has found an already defined remote ClusterName: " + tComChannel.getRemoteClusterName());
-					}
-
-					if(tComChannel.getRemoteClusterName() == null) {
-						Logging.warn(this, "newConnection() hasn't found a valid remote ClusterName for ComChannel: " + tComChannel);
-					}
-					
-					tFoundDescribedMembers++;
-				}// described cluster members
+				/**
+				 * Create the communication channel for the described cluster member
+				 */
+				Logging.log(this, "     ..creating communication channel");
+				ComChannel tComChannel = new ComChannel(this, ComChannel.Direction.IN, tClusterMember, tComSession);
+				
+				/**
+				 * Set the remote ClusterName of the communication channel
+				 */
+				ClusterName tRemoteClusterName = new ClusterName(this, tPropClusterParticipation.getSenderHierarchyLevel(), tPropClusterParticipation.getClusterID(), -1);
+				tComChannel.setRemoteClusterName(tRemoteClusterName);
 			}else{
 				Logging.warn(this, "newConnection() hasn't found a valid cluster description property in the connection requirements: " + tConnectionRequirements);
 			}

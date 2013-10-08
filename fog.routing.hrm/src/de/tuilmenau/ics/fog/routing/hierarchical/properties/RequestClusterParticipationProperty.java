@@ -9,14 +9,9 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.properties;
 
-import java.io.Serializable;
-import java.util.LinkedList;
-
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -49,11 +44,6 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	 * Stores the L2Address of the node where the sender is located
 	 */
 	private L2Address mSenderL2Address = null;
-
-	/**
-	 * Stores all registered cluster member descriptions
-	 */
-	private LinkedList<ClusterMemberDescription> mSenderClusterMembers = new LinkedList<ClusterMemberDescription>();
 
 	private static final long serialVersionUID = 7561293731302599090L;
 	
@@ -141,150 +131,12 @@ public class RequestClusterParticipationProperty extends AbstractProperty
 	}
 
 	/**
-	 * Adds a description of a member (local coordinator) to the future common cluster to the internal database.
-	 * For the base hierarchy level this is a cluster at sender side.
-	 * For a higher hierarchy level this is a coordinator which should be part of the future common cluster.
-	 * 
-	 * @param pSenderClusterMember the cluster member at sender side
-	 */
-	public ClusterMemberDescription addSenderClusterMember(Cluster pSenderClusterMember)
-	{
-		BullyPriority tClusterMemberPriority = null;
-		if(pSenderClusterMember.getHierarchyLevel().isBaseLevel()){
-			tClusterMemberPriority = pSenderClusterMember.getPriority();
-		}else{ // higher hierarchy level
-			if(pSenderClusterMember.getCoordinator() != null){
-				pSenderClusterMember.getCoordinator().getPriority();
-			}else{
-				Logging.err(this, "Coordinator of sender's cluster member should be defined here, cluster member: " + pSenderClusterMember);
-			}			
-		}
-		
-		// create the new member
-		ClusterMemberDescription tResult = new ClusterMemberDescription(pSenderClusterMember.getClusterID(), pSenderClusterMember.getCoordinatorID(), tClusterMemberPriority);
-
-		// add the cluster member to the database
-		Logging.log(this, "Adding sender's cluster member: " + tResult);
-
-		synchronized (mSenderClusterMembers) {
-			mSenderClusterMembers.add(tResult);
-		}
-		
-		return tResult;
-	}
-
-	/**
-	 * Returns a list of descriptions about known cluster members at sender side.
-	 * For the base hierarchy level, the sender describes its local level 0 cluster.
-	 * For higher hierarchy levels, the sender describes all its local coordinators for this new cluster.
-	 *  
-	 * @return the list of cluster members at sender side
-	 */
-	@SuppressWarnings("unchecked")
-	public LinkedList<ClusterMemberDescription> getSenderClusterMembers()
-	{
-		LinkedList<ClusterMemberDescription> tResult = null;
-		
-		synchronized (mSenderClusterMembers) {
-			tResult = (LinkedList<ClusterMemberDescription>) mSenderClusterMembers.clone();
-		}
-		
-		return tResult;		
-	}
-	
-	/**
 	 * Generates a descriptive string about the object
 	 * 
 	 * @return the descriptive string
 	 */
 	public String toString()
 	{
-		String tResult = getClass().getSimpleName() + "(ClusterID=" + mClusterID + ", HierLvl.=" + getHierarchyLevel().getValue() + ", ";
-		
-		synchronized (mSenderClusterMembers) {
-			tResult += mSenderClusterMembers.size() + " member(s))";
-			
-//			int i = 0;
-//			for (ClusterMemberDescription tEntry : mClusterMemberDescriptions){
-//				tResult += "\n      ..[" + i + "]: " + tEntry.toString();
-//				i++;
-//			}
-		}
-		
-		return tResult;
-	}
-	
-	/**
-	 * This class is used to describe a cluster member of the cluster, which is described by the parent ClusterDescriptionProperty.
-	 */
-	public class ClusterMemberDescription implements Serializable
-	{
-		private static final long serialVersionUID = -6712697028015706544L;
-
-		/**
-		 * Stores the unique ID of the cluster at sender side
-		 */
-		private Long mClusterID;
-		
-		/**
-		 * Stores the unique ID of the coordinator 
-		 */
-		private int mCoordinatorID;
-
-		/**
-		 * Stores the Bully priority of this cluster member
-		 */
-		private BullyPriority mPriority = null;
-
-		/**
-		 * Constructor
-		 *  
-		 * @param pClusterID the unique ID of the cluster
-		 * @param pCoordinatorID the unique ID of the coordinator
-		 */
-		private ClusterMemberDescription(Long pClusterID, int pCoordinatorID, BullyPriority pPriority)
-		{
-			mClusterID = pClusterID;
-			mCoordinatorID = pCoordinatorID;
-			mPriority = pPriority;
-		}
-		
-		/**
-		 * 
-		 * @return This is the priority of the cluster member. It is already here transmitted to
-		 * decrease communication complexity.
-		 */
-		public BullyPriority getPriority()
-		{
-			return mPriority;
-		}
-		
-		/**
-		 * 
-		 * @return The token of the cluster the coordinator is responsible for is returned here.
-		 */
-		public int getCoordinatorID()
-		{
-			return mCoordinatorID;
-		}
-		
-		/**
-		 * 
-		 * @return The cluster identity the coordinator represents is returned.
-		 */
-		public Long getClusterID()
-		{
-			return mClusterID;
-		}
-		
-		/**
-		 * Returns a descriptive string about this object
-		 * 
-		 * @return the descriptive string
-		 */
-		public String toString()
-		{
-			return getClass().getSimpleName() + "(ClusterID=" + getClusterID() + ", CoordID=" + getCoordinatorID() + (getPriority() != null ? ", PeerPrio=" + getPriority().getValue() : "") + ")";
-		}
+		return getClass().getSimpleName() + "(ClusterID=" + mClusterID + ", HierLvl.=" + getHierarchyLevel().getValue() + ", ";
 	}
 }
