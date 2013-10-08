@@ -109,11 +109,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private static long sIDMachineMultiplier = -1;
 
 	/**
-	 * Stores if the superior coordinator is known
-	 */
-	private boolean mSuperiorCoordinatorKnown = false;
-	
-	/**
 	 * Constructor
 	 */
 	public ControlEntity(HRMController pHRMController, HierarchyLevel pHierarchyLevel)
@@ -179,46 +174,58 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
-		Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (caller=" + pCaller + ")");
+		if(pHRMID != null){
+			if(!pHRMID.isZero()){
+				Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (old=" + mHRMID.toString() + ", assigner=" + pCaller + ")");
 
-		// update the HRMID
-		if (pHRMID != null){
-			mHRMID = pHRMID.clone();
-		}else{
-			mHRMID = null;
-		}
-		
-		if (this instanceof Cluster){
-			Cluster tCluster = (Cluster)this;
-
-			// inform HRM controller about the address change
-			mHRMController.updateClusterAddress(tCluster);
-
-			return;
-		}
-		if (this instanceof Coordinator){
-			Coordinator tCoordinator = (Coordinator)this;
-
-			// inform HRM controller about the address change
-			mHRMController.updateCoordinatorAddress(tCoordinator);
-
-			return;
-		}
-		if (this instanceof CoordinatorAsClusterMember){
-			Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
-
-			// inform HRM controller about the address change
-			mHRMController.updateCoordinatorAddress(tCoordinator);
-
-			return;
-		}
-		if (this instanceof ClusterMember){
-			ClusterMember tClusterProxy = (ClusterMember)this;
-
-			// inform HRM controller about the address change
-			//TODO: mHRMController.updateClusterAddress(tClusterProxy);
+				// is this a new HRMID?
+				if(!pHRMID.equals(mHRMID)){
+					// update the HRMID
+					mHRMID = pHRMID.clone();
+					
+					if (this instanceof Cluster){
+						Cluster tCluster = (Cluster)this;
 			
-			return;
+						// inform HRM controller about the address change
+						mHRMController.updateClusterAddress(tCluster);
+			
+						return;
+					}
+					if (this instanceof Coordinator){
+						Coordinator tCoordinator = (Coordinator)this;
+			
+						// inform HRM controller about the address change
+						mHRMController.updateCoordinatorAddress(tCoordinator);
+			
+						return;
+					}
+					if (this instanceof CoordinatorAsClusterMember){
+						Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
+						
+						// also update the HRMID of the coordinator which is the parent of this CoordinatorAsClusterMember object
+						tCoordinator.setHRMID(this, mHRMID);
+			
+						// inform HRM controller about the address change
+						mHRMController.updateCoordinatorAddress(tCoordinator);
+			
+						return;
+					}
+					if (this instanceof ClusterMember){
+						ClusterMember tClusterProxy = (ClusterMember)this;
+			
+						// inform HRM controller about the address change
+						//TODO: mHRMController.updateClusterAddress(tClusterProxy);
+						
+						return;
+					}
+				}else{
+					Logging.log(this, "Got the same HRMID assignement again: " + pHRMID);
+				}
+			}else{
+				Logging.log(this, "Got a zero HRMID: " + pHRMID.toString());
+			}
+		}else{
+			Logging.warn(this, "Got an invalid HRMID" );
 		}
 	}
 
@@ -462,7 +469,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		// store the description about the new superior coordinator
 		setSuperiorCoordinatorDescription(pCoordinatorDescription);
 		
-		mSuperiorCoordinatorKnown = true;
+		if(this instanceof CoordinatorAsClusterMember){
+			Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
+			
+			tCoordinator.eventClusterCoordinatorAvailable(pCoordinatorComChannel, pCoordinatorNodeName, pCoordinatorID, pCoordinatorHostL2Address, pCoordinatorDescription);
+		}
 	}
 
 	/**
@@ -503,16 +514,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	{
 		Logging.log(this, "Setting superior coordinator node name: " + pNodeName);
 		mSuperiorCoordinatorNodeName = pNodeName;
-	}
-	
-	/**
-	 * Returns true if the superior coordinator is already defined
-	 * 
-	 * @return true or false
-	 */
-	public boolean superiorCoordinatorKnown()
-	{
-		return mSuperiorCoordinatorKnown;
 	}
 	
 	/**
