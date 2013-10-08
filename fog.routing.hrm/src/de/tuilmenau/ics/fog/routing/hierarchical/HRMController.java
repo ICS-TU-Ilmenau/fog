@@ -441,38 +441,46 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		HRMID tHRMID = pCoordinator.getHRMID();
 		
-		Logging.log(this, "Updating address to " + tHRMID.toString() + " for coordinator " + pCoordinator);
-		
-		synchronized(mRegisteredOwnHRMIDs){
-			if ((!mRegisteredOwnHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
+		if(tHRMID != null){
+			if(!tHRMID.isZero()){
+				Logging.log(this, "Updating address to " + tHRMID.toString() + " for coordinator " + pCoordinator);
 				
-				if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-					Logging.log(this, "Updating the HRMID to " + tHRMID.toString() + " for " + pCoordinator);
+				synchronized(mRegisteredOwnHRMIDs){
+					if ((!mRegisteredOwnHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
+						
+						if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+							Logging.log(this, "Updating the HRMID to " + tHRMID.toString() + " for " + pCoordinator);
+						}
+			
+						/**
+						 * Update the local address DB with the given HRMID
+						 */
+						// register the new HRMID
+						mRegisteredOwnHRMIDs.add(tHRMID);
+			
+						/**
+						 * Register a local loopback route for the new address 
+						 */
+						// register a route to the cluster member as addressable target
+						getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(tHRMID));
+			
+						/**
+						 * Update the GUI
+						 */
+						// updates the GUI decoration for this node
+						updateGUINodeDecoration();
+						// it's time to update the GUI
+						notifyGUI(pCoordinator);
+					}else{
+						Logging. warn(this, "Skipping HRMID duplicate " + tHRMID.toString() +", additional registration is triggered by " + pCoordinator);
+					}
 				}
-	
-				/**
-				 * Update the local address DB with the given HRMID
-				 */
-				// register the new HRMID
-				mRegisteredOwnHRMIDs.add(tHRMID);
-	
-				/**
-				 * Register a local loopback route for the new address 
-				 */
-				// register a route to the cluster member as addressable target
-				getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(tHRMID));
-	
-				/**
-				 * Update the GUI
-				 */
-				// updates the GUI decoration for this node
-				updateGUINodeDecoration();
-				// it's time to update the GUI
-				notifyGUI(pCoordinator);
 			}else{
-				Logging. warn(this, "Skipping HRMID duplicate " + tHRMID.toString() +", additional registration is triggered by " + pCoordinator);
+				Logging.err(this, "Got a zero HRMID " + tHRMID.toString() + " for the coordinator: " + pCoordinator);
 			}
-		}			
+		}else{
+			Logging.err(this, "Got an invalid HRMID for the coordinator: " + pCoordinator);
+		}
 	}
 
 	/**
