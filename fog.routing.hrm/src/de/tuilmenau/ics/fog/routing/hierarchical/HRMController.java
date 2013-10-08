@@ -1204,6 +1204,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pHierarchyLevel the hierarchy level where a clustering should be done
 	 */
+	// HINT: we use the following object to enforce that only one clustering thread is running at a time
+	final Object mClusterMutex = new Object(); 
 	public synchronized void cluster(final HierarchyLevel pHierarchyLevel)
 	{
 		Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel.getValue());
@@ -1238,10 +1240,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				{
 					Thread.currentThread().setName("Clustering@" + tHRMController.getNodeGUIName() + "@" + pHierarchyLevel.getValue());
 
-					/**
-					 * Distribute membership requests
-					 */
-					tTargetCluster.distributeMembershipRequests();
+					synchronized (mClusterMutex) {
+						/**
+						 * Distribute membership requests
+						 */
+						tTargetCluster.distributeMembershipRequests();
+					}
 				}
 			};
 			
@@ -1673,7 +1677,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void eventDetectedPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, final L2Address pNeighborL2Address)
 	{
-		Logging.info(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
+		Logging.log(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 		
 		/**
 		 * Helper for having access to the HRMController within the created thread
