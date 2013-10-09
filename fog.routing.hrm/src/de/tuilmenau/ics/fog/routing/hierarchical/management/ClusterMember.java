@@ -298,7 +298,7 @@ public class ClusterMember extends ClusterName
 		// get the L2Addres of the local host
 		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
 		
-		Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels");
+		Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getBaseNodePriority());
 		
 		for(ComChannel tComChannel : tComChannels) {
 			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
@@ -468,7 +468,7 @@ public class ClusterMember extends ClusterName
 	 * @param pPriority the new Bully priority
 	 */
 	@Override
-	public void setPriority(BullyPriority pPriority)
+	public synchronized void setPriority(BullyPriority pPriority)
 	{
 		BullyPriority tOldPriority = getPriority();
 		
@@ -531,7 +531,7 @@ public class ClusterMember extends ClusterName
 	@Override
 	public String getText()
 	{
-		return "RemoteCluster" + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
+		return "RemoteCluster" + getGUIClusterID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue() + "(" + idToString() + ")";
 	}
 
 	/**
@@ -541,7 +541,7 @@ public class ClusterMember extends ClusterName
 	 */
 	public String toString()
 	{
-		return toLocation() + "(" + idToString();
+		return toLocation() + "(" + idToString() + ")";
 	}
 
 	/**
@@ -563,9 +563,9 @@ public class ClusterMember extends ClusterName
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "Coordinator" + getGUICoordinatorID() + ", CoordNode.=" + getCoordinatorNodeL2Address();
+			return (getGUICoordinatorID() > 0 ? "Coordinator" + getGUICoordinatorID() : "") + (getCoordinatorNodeL2Address() != null ? ", CoordNode.=" + getCoordinatorNodeL2Address() : "");
 		}else{
-			return "Coordinator" + getGUICoordinatorID() + ", CoordNode.=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
+			return (getGUICoordinatorID() > 0 ? "Coordinator" + getGUICoordinatorID() : "") + (getCoordinatorNodeL2Address() != null ? ", CoordNode.=" + getCoordinatorNodeL2Address() : "") + ", HRMID=" + getHRMID().toString();
 		}
 	}
 }
