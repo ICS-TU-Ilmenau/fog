@@ -63,6 +63,9 @@ public class ParameterMap implements Configuration
 			try {
 				return formater.parse(res.toString()).doubleValue();
 			}
+			catch(NumberFormatException tExc){
+				Logging.getInstance().warn(this, "Unable to convert parameter " + res.toString() + " to a double value", tExc);
+			}
 			catch(ParseException exc) {
 				Logging.getInstance().err(this, "Unable to convert parameter " + res.toString() + " to a double value", exc);
 			}
