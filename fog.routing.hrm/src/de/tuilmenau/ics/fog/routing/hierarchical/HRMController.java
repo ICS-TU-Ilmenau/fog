@@ -127,6 +127,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private LinkedList<ClusterMember> mLocalClusterMembers = new LinkedList<ClusterMember>();
 
 	/**
+	 * Stores a database about all registered CoordinatorAsClusterMemeber instances.
+	 */
+	private LinkedList<CoordinatorAsClusterMember> mLocalCoordinatorAsClusterMemebers = new LinkedList<CoordinatorAsClusterMember>();
+	
+	/**
 	 * Stores a database about all registered outgoing comm. sessions.
 	 */
 	private LinkedList<ComSession> mLocalOutgoingSessions = new LinkedList<ComSession>();
@@ -685,10 +690,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		Logging.log(this, "Registering coordinator-as-cluster-member " + pCoordinatorAsClusterMember + " at level " + tLevel);
 		
-//		synchronized (mLocalClusterMembers) {
-//			// register as known cluster member
-//			mLocalClusterMembers.add(pClusterMember);			
-//		}
+		synchronized (mLocalCoordinatorAsClusterMemebers) {
+			// make sure the Bully priority is the right one, avoid race conditions here
+			pCoordinatorAsClusterMember.setPriority(BullyPriority.create(this, getBaseNodePriority()));
+
+			// register as known coordinator-as-cluster-member
+			mLocalCoordinatorAsClusterMemebers.add(pCoordinatorAsClusterMember);			
+		}
 		
 		if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
 			// updates the GUI decoration for this node
@@ -717,6 +725,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Logging.log(this, "Registering cluster member " + pClusterMember + " at level " + tLevel);
 		
 		synchronized (mLocalClusterMembers) {
+			
+			// make sure the Bully priority is the right one, avoid race conditions here
+			pClusterMember.setPriority(BullyPriority.create(this, getBaseNodePriority()));
+
 			// register as known cluster member
 			mLocalClusterMembers.add(pClusterMember);			
 		}
@@ -1594,10 +1606,28 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		/**
 		 * Inform all local cluster members about the change
+		 * HINT: we have to enforce a permanent lock of mLocalClusterMembers, 
+		 *       otherwise race conditions might be caused (another ClusterMemeber 
+		 *       could be created while we are updating the priorities of all the 
+		 *       formerly known ones)
 		 */
-		LinkedList<ClusterMember> tAllClusterMembers = getAllClusterMembers();
-		for (ClusterMember tClusterMember : tAllClusterMembers){
-			tClusterMember.eventBaseNodePriorityUpdate(pPriority);
+		synchronized (mLocalClusterMembers) {
+			for(ClusterMember tClusterMember : mLocalClusterMembers){
+				tClusterMember.eventBaseNodePriorityUpdate(pPriority);
+			}
+		}
+
+		/**
+		 * Inform all local CoordinatorAsClusterMemeber objects about the change
+		 * HINT: we have to enforce a permanent lock of mLocalCoordinatorAsClusterMemebers, 
+		 *       otherwise race conditions might be caused (another CoordinatorAsClusterMemeber 
+		 *       could be created while we are updating the priorities of all the 
+		 *       formerly known ones)
+		 */
+		synchronized (mLocalCoordinatorAsClusterMemebers) {
+			for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mLocalCoordinatorAsClusterMemebers){
+				tCoordinatorAsClusterMember.eventBaseNodePriorityUpdate(pPriority);
+			}
 		}
 	}
 
