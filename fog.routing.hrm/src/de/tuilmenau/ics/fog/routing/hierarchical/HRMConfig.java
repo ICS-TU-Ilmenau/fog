@@ -168,7 +168,7 @@ public class HRMConfig
 
 		/**
 		 * Defines if coordinators should announce their existences among cluster members/neighbors
-		 * If this is disabled, the hierarchy creation won't be correct.
+		 * IMPORTANT: If this is disabled, the hierarchy creation won't be correct.
 		 */
 		public static final boolean COORDINATOR_ANNOUNCEMENTS = false;
 
@@ -181,6 +181,12 @@ public class HRMConfig
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
 		 */
 		public static final boolean PERIODIC_COORDINATOR_ANNOUNCEMENTS = true;
+
+		/**
+		 * Defines if an HRM entity should report its topology knowledge to the superior entity.
+		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated network topology.
+		 */
+		public static final boolean TOPOLOGY_REPORTS = false;
 	}
 	
 	/**

@@ -332,7 +332,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pCoordinatorProxy the coordinator proxy for a defined coordinator
 	 */
-	public void registerCoordinatorProxy(CoordinatorProxy pCoordinatorProxy)
+	public synchronized void registerCoordinatorProxy(CoordinatorProxy pCoordinatorProxy)
 	{
 		int tLevel = pCoordinatorProxy.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
 		
@@ -364,7 +364,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pCoordinator the coordinator for a defined cluster
 	 */
-	public void registerCoordinator(Coordinator pCoordinator)
+	public synchronized void registerCoordinator(Coordinator pCoordinator)
 	{
 		Logging.log(this, "Registering coordinator " + pCoordinator + " at level " + pCoordinator.getHierarchyLevel().getValue());
 
@@ -410,7 +410,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pCoordinator the coordinator which should be unregistered
 	 */
-	public void unregisterCoordinator(Coordinator pCoordinator)
+	public synchronized void unregisterCoordinator(Coordinator pCoordinator)
 	{
 		Logging.log(this, "Unregistering coordinator " + pCoordinator + " at level " + pCoordinator.getHierarchyLevel().getValue());
 
@@ -684,7 +684,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pCoordinatorAsClusterMember the coordinator-as-cluster-member which should be registered
 	 */
-	public void registerCoordinatorAsClusterMember(CoordinatorAsClusterMember pCoordinatorAsClusterMember)
+	public synchronized void registerCoordinatorAsClusterMember(CoordinatorAsClusterMember pCoordinatorAsClusterMember)
 	{
 		int tLevel = pCoordinatorAsClusterMember.getHierarchyLevel().getValue();
 
@@ -718,7 +718,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pClusterMember the cluster member which should be registered
 	 */
-	public void registerClusterMember(ClusterMember pClusterMember)
+	public synchronized void registerClusterMember(ClusterMember pClusterMember)
 	{
 		int tLevel = pClusterMember.getHierarchyLevel().getValue();
 
@@ -748,7 +748,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pClusterMember the cluster member which should be unregistered
 	 */
-	public void unregisterClusterMember(ClusterMember pClusterMember)
+	public synchronized void unregisterClusterMember(ClusterMember pClusterMember)
 	{
 		Logging.log(this, "Unregistering cluster member" + pClusterMember);
 
@@ -772,7 +772,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pCluster the cluster which should be registered
 	 */
-	public void registerCluster(Cluster pCluster)
+	public synchronized void registerCluster(Cluster pCluster)
 	{
 		int tLevel = pCluster.getHierarchyLevel().getValue();
 
@@ -803,7 +803,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pCluster the cluster which should be unregistered.
 	 */
-	public void unregisterCluster(Cluster pCluster)
+	public synchronized void unregisterCluster(Cluster pCluster)
 	{
 		Logging.log(this, "Unregistering cluster " + pCluster);
 
@@ -1599,11 +1599,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pPriority the new base node priority
 	 */
-	public void setBaseNodePriority(long pPriority)
+	private int mPriorityUpdates = 0;
+	@SuppressWarnings("unchecked")
+	private void setBaseNodePriority(long pPriority)
 	{
 		Logging.log(this, "Setting new base node priority: " + pPriority);
 		mNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, pPriority);
 
+		mPriorityUpdates++;
+		
 		/**
 		 * Inform all local cluster members about the change
 		 * HINT: we have to enforce a permanent lock of mLocalClusterMembers, 
@@ -1612,8 +1616,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 *       formerly known ones)
 		 */
 		synchronized (mLocalClusterMembers) {
-			for(ClusterMember tClusterMember : mLocalClusterMembers){
+			LinkedList<ClusterMember> tLocalClusterMemebers = (LinkedList<ClusterMember>) mLocalClusterMembers.clone();
+			Logging.log(this, "Informing these cluser members about the priority (" + pPriority + ") update (" + mPriorityUpdates + "): " + tLocalClusterMemebers);
+			int i = 0;
+			for(ClusterMember tClusterMember : tLocalClusterMemebers){
+				Logging.log(this, "      ..update " + mPriorityUpdates + " - informing[" + i + "]: " + tClusterMember);
 				tClusterMember.eventBaseNodePriorityUpdate(pPriority);
+				i++;
 			}
 		}
 
@@ -1822,28 +1831,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void reportAndShare()
 	{	
-		if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
-			Logging.log(this, "REPORT AND SHARE TRIGGER received");
+		if(HRMConfig.Hierarchy.TOPOLOGY_REPORTS){
+			if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
+				Logging.log(this, "REPORT AND SHARE TRIGGER received");
+			}
+	
+			/**
+			 * report phase
+			 */
+			for (Coordinator tCoordinator : getAllCoordinators()) {
+				tCoordinator.reportPhase();
+			}
+			
+			/**
+			 * share phase
+			 */
+			for (Coordinator tCoordinator : getAllCoordinators()) {
+				tCoordinator.sharePhase();
+			}
+			
+			/**
+			 * register next trigger
+			 */
+			mAS.getTimeBase().scheduleIn(HRMConfig.Routing.GRANULARITY_SHARE_PHASE, this);
 		}
-
-		/**
-		 * report phase
-		 */
-		for (Coordinator tCoordinator : getAllCoordinators()) {
-			tCoordinator.reportPhase();
-		}
-		
-		/**
-		 * share phase
-		 */
-		for (Coordinator tCoordinator : getAllCoordinators()) {
-			tCoordinator.sharePhase();
-		}
-		
-		/**
-		 * register next trigger
-		 */
-		mAS.getTimeBase().scheduleIn(HRMConfig.Routing.GRANULARITY_SHARE_PHASE, this);
 	}
 	
 	/**
