@@ -141,7 +141,6 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * ****************************************************************************************************************************
  * ****************************************************************************************************************************
  * ****************************************************************************************************************************/
-
 public class ComChannel
 {
 	public enum Direction{IN, OUT};
@@ -212,6 +211,16 @@ public class ComChannel
 	 * Stores the HRMID of the peer
 	 */
 	private HRMID mPeerHRMID = null;
+	
+	/**
+	 * Stores the send/received packets
+	 */
+	private LinkedList<ComChannelPacketMetaData> mPackets = new LinkedList<ComChannelPacketMetaData>();
+	
+	/**
+	 * Limits the size of the packet storage
+	 */
+	private static int MAX_PACKET_STORAGE_SIZE = 20;
 	
 	/**
 	 * Constructor
@@ -476,6 +485,42 @@ public class ComChannel
 	}
 
 	/**
+	 * Returns a storage with all sent/received packets
+	 * 
+	 * @return the packet I/O storage
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<ComChannelPacketMetaData> getPacketsStorage()
+	{
+		LinkedList<ComChannelPacketMetaData> tResult = null;
+		
+		synchronized (mPackets) {
+			if(mPackets.size() > 0){
+				tResult = (LinkedList<ComChannelPacketMetaData>) mPackets.clone();
+			}
+		}
+
+		return tResult;
+	}
+	
+	/**
+	 * Stores a packet for delayed debugging
+	 * 
+	 * @param pPacket the packet
+	 */
+	private void storePacket(Serializable pPacket, boolean pWasSent)
+	{
+		synchronized (mPackets) {
+			// limit the storage size
+			while(mPackets.size() > MAX_PACKET_STORAGE_SIZE){
+				mPackets.removeFirst();
+			}
+			
+			// add the packet to the storage
+			mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent));			
+		}
+	}
+	/**
 	 * Sends a packet to the peer
 	 * 
 	 * @param pPacket the packet
@@ -500,9 +545,16 @@ public class ComChannel
 				// create the Multiplex-Header
 				MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pPacket);
 					
-				// count the packets
+				/**
+				 * count the packets
+				 */
 				mSentPackets++;
 				
+				/**
+				 * Store the packet 
+				 */
+				storePacket(pPacket, true);
+
 				// send the final packet (including multiplex-header)
 				return getParentComSession().write(tMultiplexHeader);
 			}else{
@@ -510,8 +562,8 @@ public class ComChannel
 				return false;
 			}
 		}else{
-			Logging.err(this, "CHANNEL IS STILL UNAVAILABLE, cannot send packet: " + pPacket);
-			return false;
+			throw new RuntimeException("CHANNEL IS STILL UNAVAILABLE, cannot send packet: " + pPacket);
+			//return false;
 		}
 	}
 
@@ -614,9 +666,16 @@ public class ComChannel
 	@SuppressWarnings("unused")
 	public boolean receiveData(Serializable pData) throws NetworkException
 	{
-		// count the packets
+		/**
+		 * count the packets
+		 */
 		mReceivedPackets++;
 
+		/**
+		 * Store the packet 
+		 */
+		storePacket(pData, false);
+		
 		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
 			Logging.log(this, "RECEIVED DATA (" + pData.getClass().getSimpleName() + ") from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pData);
 		}
