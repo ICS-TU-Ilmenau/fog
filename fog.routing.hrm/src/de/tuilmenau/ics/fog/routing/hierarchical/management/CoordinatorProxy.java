@@ -177,9 +177,9 @@ public class CoordinatorProxy extends ClusterMember
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "Cluster" + getGUIClusterID() + ", CoordNode.=" + getCoordinatorNodeL2Address();
+			return "Cluster" + getGUIClusterID() + ", Node.=" + getCoordinatorNodeL2Address();
 		}else{
-			return "Cluster" + getGUIClusterID() + ", CoordNode.=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
+			return "Cluster" + getGUIClusterID() + ", Node.=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
 		}
 	}
 }
