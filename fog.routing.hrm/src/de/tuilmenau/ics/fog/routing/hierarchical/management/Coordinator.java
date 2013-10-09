@@ -532,10 +532,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * SEND: distribute AnnounceCoordinator messages among the neighbors which are within the given max. radius (see HRMConfig)        
 	 */
+	public static boolean USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
 	private void distributeCoordinatorAnnouncement()
 	{
 		// trigger periodic Cluster announcements
-		if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
+		if((HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS) && (USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
 			AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
 			Logging.log(this, "\n\n########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
 			
@@ -559,14 +560,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public void fire()
 	{
 		if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
-			Logging.log(this, "###########################");
-			Logging.log(this, "###### FIRE FIRE FIRE #####");
-			Logging.log(this, "###########################");
-			
-			/**
-			 * Trigger: ClusterAnnounce distribution
-			 */
-			distributeCoordinatorAnnouncement();
+			if(USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+				Logging.log(this, "###########################");
+				Logging.log(this, "###### FIRE FIRE FIRE #####");
+				Logging.log(this, "###########################");
+				
+				/**
+				 * Trigger: ClusterAnnounce distribution
+				 */
+				distributeCoordinatorAnnouncement();
+			}
 			
 			// register next trigger for 
 			mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS, this);

@@ -122,36 +122,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	}
 	
 	/**
-	 * Creates all needed parts of the EditorPart.
+	 * Assigns a hide/show menu for a given composite object
 	 * 
-	 * @param pParent the parent shell
+	 * @param pComposite the composite for which the context menu should be available
 	 */
-	@Override
-	public void createPartControl(Composite pParent)
+	private void assignContextMenu(final Composite pComposite)
 	{
-		// get the HRS instance
-		HRMRoutingService tHRS = mHRMController.getHRS();
-
-		mShell = pParent;
-		mDisplay = pParent.getDisplay();
-		mShell.setLayout(new FillLayout());
-		if (mScroller == null){
-			mScroller = new ScrolledComposite(mShell, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
-		}
-		mContainer = new Composite(mScroller, SWT.NONE);
-		mScroller.setContent(mContainer);
-		GridLayout tLayout = new GridLayout(1, true);
-		mContainer.setLayout(tLayout);
-		
-		if (HRM_VIEWER_DEBUGGING){
-			Logging.log(this, "Found clusters: " + mHRMController.getAllClusters().size());
-			Logging.log(this, "Found coordinators: " + mHRMController.getAllCoordinators().size());
-		}
-
-		/**
-		 * Context menu
-		 */
-		mScroller.addMenuDetectListener(new MenuDetectListener()
+		pComposite.addMenuDetectListener(new MenuDetectListener()
 		{
 			@Override
 			public void menuDetected(MenuDetectEvent pEvent)
@@ -159,7 +136,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				/**
 				 * Create the context menu
 				 */
-				Menu tMenu = new Menu(mScroller);
+				Menu tMenu = new Menu(pComposite);
 				MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
 				if (mShowClusterMembers){
 					tMenuItem.setText("Hide cluster members");
@@ -196,9 +173,55 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						startGUIUpdateTimer();
 					}
 				});
-				mScroller.setMenu(tMenu);
+				MenuItem tMenuItem2 = new MenuItem(tMenu, SWT.NONE);
+				if (Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+					tMenuItem2.setText("Deactivate coordinator announcements");
+				}else{
+					tMenuItem2.setText("Activate coordinator announcements");
+				}
+				tMenuItem2.addSelectionListener(new SelectionListener() {
+					public void widgetDefaultSelected(SelectionEvent pEvent)
+					{
+						Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS = !Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS;
+						startGUIUpdateTimer();
+					}
+					public void widgetSelected(SelectionEvent pEvent)
+					{
+						Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS = !Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS;
+						startGUIUpdateTimer();
+					}
+				});
+				pComposite.setMenu(tMenu);
 			}
 		});
+	}
+	
+	/**
+	 * Creates all needed parts of the EditorPart.
+	 * 
+	 * @param pParent the parent shell
+	 */
+	@Override
+	public void createPartControl(Composite pParent)
+	{
+		// get the HRS instance
+		HRMRoutingService tHRS = mHRMController.getHRS();
+
+		mShell = pParent;
+		mDisplay = pParent.getDisplay();
+		mShell.setLayout(new FillLayout());
+		if (mScroller == null){
+			mScroller = new ScrolledComposite(mShell, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+		}
+		mContainer = new Composite(mScroller, SWT.NONE);
+		mScroller.setContent(mContainer);
+		GridLayout tLayout = new GridLayout(1, true);
+		mContainer.setLayout(tLayout);
+		
+		if (HRM_VIEWER_DEBUGGING){
+			Logging.log(this, "Found clusters: " + mHRMController.getAllClusters().size());
+			Logging.log(this, "Found coordinators: " + mHRMController.getAllCoordinators().size());
+		}
 
 		/**
 		 * GUI part 0: list clusters
@@ -508,6 +531,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
         mContainer.setSize(mContainer.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         mContainerRoutingTable.setSize(mContainerRoutingTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         mContainerHRMID2L2ADDRTable.setSize(mContainerHRMID2L2ADDRTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+		/**
+		 * Context menu
+		 */
+        assignContextMenu(mScroller);
+        assignContextMenu(mContainer);
+        assignContextMenu(mContainerRoutingTable);
+        assignContextMenu(mContainerHRMID2L2ADDRTable);
 	}
 
 	/**
