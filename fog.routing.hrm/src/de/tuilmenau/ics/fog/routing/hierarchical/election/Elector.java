@@ -903,7 +903,7 @@ public class Elector implements Localization
 	@Override
 	public String toString()
 	{
-		return toLocation() + "@" + mParent.toString();
+		return toLocation() + "@" + mParent.toString() +"[" + mState + "]";
 	}
 
 	/**
