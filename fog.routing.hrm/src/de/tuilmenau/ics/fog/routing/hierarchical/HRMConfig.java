@@ -51,7 +51,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs about the routing process 
 		 */
-		public static final boolean GUI_SHOW_ROUTING = true;
+		public static final boolean GUI_SHOW_ROUTING = false;
 
 		/**
 		 * Show debug outputs about node/link detection
@@ -170,7 +170,7 @@ public class HRMConfig
 		 * Defines if coordinators should announce their existences among cluster members/neighbors
 		 * If this is disabled, the hierarchy creation won't be correct.
 		 */
-		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
+		public static final boolean COORDINATOR_ANNOUNCEMENTS = false;
 
 		/**
 		 * Defines the time period for CoordinatorAnnounce distributions
