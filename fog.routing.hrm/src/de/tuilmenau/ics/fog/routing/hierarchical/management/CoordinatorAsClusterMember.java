@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -111,6 +112,24 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		Logging.log(this, "       ..fowarding announcement to coordinator object: " + mCoordinatorAsClusterMember);
 		
 		mCoordinatorAsClusterMember.eventCoordinatorAnnouncement(pComChannel, pAnnounceCoordinator);
+	}
+
+	/**
+	 * EVENT: new hierarchy node priority
+	 * 
+	 * @param pNewHierarchyNodePriority the new hierarchy node priority
+	 */
+	public void eventHierarchyNodePriorityUpdate(long pNewHierarchyNodePriority)
+	{
+		Logging.log(this, "EVENT: base node priority update to:  " + pNewHierarchyNodePriority);
+		
+		/**
+		 * Set the new priority if it differs from the old one
+		 */
+		if((getPriority() != null) && (getPriority().getValue() != pNewHierarchyNodePriority)){
+			Logging.log(this, "Got new base node priority, updating own priority from " + getPriority().getValue() + " to " + pNewHierarchyNodePriority);
+			setPriority(BullyPriority.create(this, pNewHierarchyNodePriority));
+		}
 	}
 
 	/**

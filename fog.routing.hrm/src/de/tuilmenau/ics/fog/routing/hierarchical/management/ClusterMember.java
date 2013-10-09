@@ -298,7 +298,7 @@ public class ClusterMember extends ClusterName
 		// get the L2Addres of the local host
 		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
 		
-		Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getBaseNodePriority());
+		Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getHierarchyNodePriority());
 		
 		for(ComChannel tComChannel : tComChannels) {
 			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
@@ -399,20 +399,24 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * EVENT: new base node priority
+	 * EVENT: new connectivity node priority
 	 * 
-	 * @param pNewBaseNodePriority the new base node priority
+	 * @param pNewConnectivityNodePriority the new connectivity node priority
 	 */
-	public void eventBaseNodePriorityUpdate(long pNewBaseNodePriority)
+	public void eventConnectivityNodePriorityUpdate(long pNewConnectivityNodePriority)
 	{
-		Logging.log(this, "EVENT: base node priority update");
+		Logging.log(this, "EVENT: base node priority update to:  " + pNewConnectivityNodePriority);
 		
-		/**
-		 * Set the new priority if it differs from the old one
-		 */
-		if((getPriority() != null) && (getPriority().getValue() != pNewBaseNodePriority)){
-			Logging.log(this, "Got new base node priority, updating own priority from " + getPriority().getValue() + " to " + pNewBaseNodePriority);
-			setPriority(BullyPriority.create(this, pNewBaseNodePriority));
+		if(getHierarchyLevel().isBaseLevel()){
+			/**
+			 * Set the new priority if it differs from the old one
+			 */
+			if((getPriority() != null) && (getPriority().getValue() != pNewConnectivityNodePriority)){
+				Logging.log(this, "Got new connectivity node priority, updating own priority from " + getPriority().getValue() + " to " + pNewConnectivityNodePriority);
+				setPriority(BullyPriority.create(this, pNewConnectivityNodePriority));
+			}
+		}else{
+			throw new RuntimeException("Got a call to ClusterMemeber::eventConnectivityNodePriorityUpdate at higher hierarchy level " + getHierarchyLevel().getValue());
 		}
 	}
 

@@ -76,7 +76,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores the node specific graph decorator for HRM node base priority
 	 */
-	private NodeDecorator mDecoratorForBaseNodePriorities = null;
+	private NodeDecorator mDecoratorForNodePriorities = null;
 
 	/**
 	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance.
@@ -173,6 +173,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private static boolean mFoGSiEmSimulationCreationFinished = false;
 	
 	/**
+	 * Stores the hierarchy node priority
+	 */
+	private long mNodeHierarchyPriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
+	
+	/**
+	 * Stores the connectivity node priority
+	 */
+	private long mNodeConnectivityPriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
+
+	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
@@ -205,9 +215,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mDecoratorForCoordinatorsAndClusters = new NodeDecorator();
 		
 		/**
-		 * Create the node specific decorator for HRM base node priorities
+		 * Create the node specific decorator for HRM node priorities
 		 */
-		mDecoratorForBaseNodePriorities = new NodeDecorator();
+		mDecoratorForNodePriorities = new NodeDecorator();
 		
 		/**
 		 * Set the node decorations
@@ -219,9 +229,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// create own decoration for HRM coordinators and clusters
 		tDecoration = Decoration.getInstance(DECORATION_NAME_COORDINATORS_AND_CLUSTERS);
 		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndClusters);
-		// create own decoration for HRM base node priorities
-		tDecoration = Decoration.getInstance(DECORATION_NAME_BASE_NODE_PRIORITIES);
-		tDecoration.setDecorator(mNode,  mDecoratorForBaseNodePriorities);
+		// create own decoration for HRM node priorities
+		tDecoration = Decoration.getInstance(DECORATION_NAME_NODE_PRIORITIES);
+		tDecoration.setDecorator(mNode,  mDecoratorForNodePriorities);
 		// overwrite default decoration
 		tDecoration = Decoration.getInstance(GraphViewer.DEFAULT_DECORATION);
 		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndClusters);
@@ -246,9 +256,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// store the reference to the local instance of hierarchical routing service
 		mHierarchicalRoutingService = pHierarchicalRoutingService;
 		
-		// set the Bully priority 
-		BullyPriority.configureNode(pNode);
-
 		// create local loopback session
 		ComSession.createLoopback(this);
 		
@@ -345,8 +352,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		// are we at base hierarchy level
 		if(pCoordinatorProxy.getHierarchyLevel().isBaseLevel()){
-			// increase base node priority
-			increaseBaseNodePriority_KnownBaseCoordinator(pCoordinatorProxy.getDistance());
+			// increase hierarchy node priority
+			increaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinatorProxy.getDistance());
 		}
 
 		// updates the GUI decoration for this node
@@ -384,8 +391,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			// are we at base hierarchy level
 			if(pCoordinator.getHierarchyLevel().isBaseLevel()){
-				// increase base node priority
-				increaseBaseNodePriority_KnownBaseCoordinator(0);
+				// increase hierarchy node priority
+				increaseHierarchyNodePriority_KnownBaseCoordinator(0);
 			}
 	
 			// updates the GUI decoration for this node
@@ -421,8 +428,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		// are we at base hierarchy level
 		if(pCoordinator.getHierarchyLevel().isBaseLevel()){
-			// increase base node priority
-			decreaseBaseNodePriority_KnownBaseCoordinator(0);
+			// increase hierarchy node priority
+			decreaseHierarchyNodePriority_KnownBaseCoordinator(0);
 		}
 
 		// updates the GUI decoration for this node
@@ -536,7 +543,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Set the decoration texts
 		 */
-		mDecoratorForBaseNodePriorities.setText(Long.toString(getBaseNodePriority()));
+		mDecoratorForNodePriorities.setText("Hier.: " + Long.toString(getHierarchyNodePriority()) + "/ Conn.: " + Long.toString(getConnectivityNodePriority()));
 		
 		String tNodeText = "";
 		synchronized (mRegisteredOwnHRMIDs) {
@@ -584,7 +591,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tHighestCoordinatorLevel = tCoordLevel;
 			}
 		}
-		mDecoratorForBaseNodePriorities.setImage(tHighestCoordinatorLevel);
+		mDecoratorForNodePriorities.setImage(tHighestCoordinatorLevel);
 		mDecoratorForCoordinatorsAndHRMIDs.setImage(tHighestCoordinatorLevel);
 		mDecoratorForCoordinatorsAndClusters.setImage(tHighestCoordinatorLevel);
 	}
@@ -692,7 +699,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
 			// make sure the Bully priority is the right one, avoid race conditions here
-			pCoordinatorAsClusterMember.setPriority(BullyPriority.create(this, getBaseNodePriority()));
+			pCoordinatorAsClusterMember.setPriority(BullyPriority.create(this, getHierarchyNodePriority()));
 
 			// register as known coordinator-as-cluster-member
 			mLocalCoordinatorAsClusterMemebers.add(pCoordinatorAsClusterMember);			
@@ -727,7 +734,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		synchronized (mLocalClusterMembers) {
 			
 			// make sure the Bully priority is the right one, avoid race conditions here
-			pClusterMember.setPriority(BullyPriority.create(this, getBaseNodePriority()));
+			pClusterMember.setPriority(BullyPriority.create(this, getConnectivityNodePriority()));
 
 			// register as known cluster member
 			mLocalClusterMembers.add(pClusterMember);			
@@ -1601,28 +1608,37 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * Determines the base node priority for Election processes
+	 * Determines the hierarchy node priority for Election processes
 	 * 
-	 * @return the base node priority
+	 * @return the hierarchy node priority
 	 */
-	public long getBaseNodePriority()
+	public long getHierarchyNodePriority()
 	{
-		return (long) mNode.getParameter().get(BullyPriority.NODE_PARAMETER_PREFIX, HRMConfig.Election.DEFAULT_BULLY_PRIORITY);
+		return mNodeHierarchyPriority;
 	}
 	
 	/**
-	 * Sets new base node priority for Election processes
+	 * Determines the connectivity node priority for Election processes
 	 * 
-	 * @param pPriority the new base node priority
+	 * @return the connectivity node priority
 	 */
-	private int mPriorityUpdates = 0;
-	@SuppressWarnings("unchecked")
-	private synchronized void setBaseNodePriority(long pPriority)
+	public long getConnectivityNodePriority()
 	{
-		Logging.log(this, "Setting new base node priority: " + pPriority);
-		mNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, pPriority);
+		return mNodeConnectivityPriority;
+	}
+	
+	/**
+	 * Sets new connectivity node priority for Election processes
+	 * 
+	 * @param pPriority the new connectivity node priority
+	 */
+	private int mConnectivityPriorityUpdates = 0;
+	private synchronized void setConnectivityPriority(long pPriority)
+	{
+		Logging.log(this, "Setting new connectivity node priority: " + pPriority);
+		mNodeConnectivityPriority = pPriority;
 
-		mPriorityUpdates++;
+		mConnectivityPriorityUpdates++;
 		
 		/**
 		 * Inform all local cluster members about the change
@@ -1632,16 +1648,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 *       formerly known ones)
 		 */
 		synchronized (mLocalClusterMembers) {
-			LinkedList<ClusterMember> tLocalClusterMembers = (LinkedList<ClusterMember>) mLocalClusterMembers.clone();
-			Logging.log(this, "Informing these cluser members about the priority (" + pPriority + ") update (" + mPriorityUpdates + "): " + tLocalClusterMembers);
+			Logging.log(this, "Informing these cluser members about the priority (" + pPriority + ") update (" + mConnectivityPriorityUpdates + "): " + mLocalClusterMembers);
 			int i = 0;
-			for(ClusterMember tClusterMember : tLocalClusterMembers){
-				Logging.log(this, "      ..update (" + mPriorityUpdates + ") - informing[" + i + "]: " + tClusterMember);
-				tClusterMember.eventBaseNodePriorityUpdate(pPriority);
+			for(ClusterMember tClusterMember : mLocalClusterMembers){
+				Logging.log(this, "      ..update (" + mConnectivityPriorityUpdates + ") - informing[" + i + "]: " + tClusterMember);
+				tClusterMember.eventConnectivityNodePriorityUpdate(pPriority);
 				i++;
 			}
 		}
+	}
+	
+	/**
+	 * Sets new hierarchy node priority for Election processes
+	 * 
+	 * @param pPriority the new hierarchy node priority
+	 */
+	private int mHierarchyPriorityUpdates = 0;
+	@SuppressWarnings("unchecked")
+	private synchronized void setHierarchyPriority(long pPriority)
+	{
+		Logging.log(this, "Setting new hierarchy node priority: " + pPriority);
+		mNodeHierarchyPriority = pPriority;
 
+		mHierarchyPriorityUpdates++;
+		
 		/**
 		 * Inform all local CoordinatorAsClusterMemeber objects about the change
 		 * HINT: we have to enforce a permanent lock of mLocalCoordinatorAsClusterMemebers, 
@@ -1651,7 +1681,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
 			for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mLocalCoordinatorAsClusterMemebers){
-				tCoordinatorAsClusterMember.eventBaseNodePriorityUpdate(pPriority);
+				tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(pPriority);
 			}
 		}
 	}
@@ -1659,65 +1689,76 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Increases base Bully priority
 	 */
-	private void increaseBaseNodePriority_Connectivity()
+	private synchronized void increaseNodePriority_Connectivity()
 	{
 		// get the current priority
-		long tPriority = getBaseNodePriority();
+		long tPriority = getConnectivityNodePriority();
 		
-		Logging.log(this, "Increasing base node priority (CONNECTIVITY) by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
+		Logging.log(this, "Increasing node priority (CONNECTIVITY) by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
 
 		// increase priority
 		tPriority += BullyPriority.OFFSET_FOR_CONNECTIVITY;
 		
 		// update priority
-		setBaseNodePriority(tPriority);
+		setConnectivityPriority(tPriority);
+
+		Logging.log(this, "Increasing hierarchy node priority (CONNECTIVITY) by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
+		
+		// get the current priority
+		long tBasePriority = getHierarchyNodePriority();
+
+		// increase priority
+		tBasePriority += BullyPriority.OFFSET_FOR_CONNECTIVITY;
+
+		// update priority
+		setHierarchyPriority(tBasePriority);
 	}
 	
 	/**
-	 * Increases base Bully priority
+	 * Increases hierarchy Bully priority
 	 * 
 	 * @param pDistance the distance to this base coordinator
 	 */
-	public void increaseBaseNodePriority_KnownBaseCoordinator(int pDistance)
+	public void increaseHierarchyNodePriority_KnownBaseCoordinator(int pDistance)
 	{
 		if((pDistance >= 0) && (pDistance <= HRMConfig.Hierarchy.EXPANSION_RADIUS)){
 			// get the current priority
-			long tPriority = getBaseNodePriority();
+			long tPriority = getHierarchyNodePriority();
 			
 			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance);
 					
-			Logging.log(this, "Increasing base node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+			Logging.log(this, "Increasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 	
 			// increase priority
 			tPriority += (long)(tOffset);
 			
 			// update priority
-			setBaseNodePriority(tPriority);
+			setHierarchyPriority(tPriority);
 		}else{
 			Logging.err(this, "Detected invalid distance: " + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 		}
 	}
 
 	/**
-	 * Decreases base Bully priority
+	 * Decreases hierarchy Bully priority
 	 * 
 	 * @param pDistance the distance to this base coordinator
 	 */
-	public void decreaseBaseNodePriority_KnownBaseCoordinator(int pDistance)
+	public void decreaseHierarchyNodePriority_KnownBaseCoordinator(int pDistance)
 	{
 		if((pDistance >= 0) && (pDistance <= HRMConfig.Hierarchy.EXPANSION_RADIUS)){
 			// get the current priority
-			long tPriority = getBaseNodePriority();
+			long tPriority = getHierarchyNodePriority();
 			
 			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance);
 			
-			Logging.log(this, "Decreasing base node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+			Logging.log(this, "Decreasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 	
 			// increase priority
 			tPriority -= (long)((float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance));
 			
 			// update priority
-			setBaseNodePriority(tPriority);
+			setHierarchyPriority(tPriority);
 		}else{
 			Logging.err(this, "Detected invalid distance: " + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 		}
@@ -1767,7 +1808,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					tParentCluster = Cluster.createBaseCluster(tHRMController);
 					tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
 					
-					increaseBaseNodePriority_Connectivity();
+					increaseNodePriority_Connectivity();
 				}
 
 				/**
@@ -2482,9 +2523,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private final static String DECORATION_NAME_COORDINATORS_AND_HRMIDS = "HRM coordinators & HRMIDs";
 
 	/**
-	 * Stores the identification string for HRM specific routing graph decorations (base node priorities)
+	 * Stores the identification string for HRM specific routing graph decorations (node priorities)
 	 */
-	private final static String DECORATION_NAME_BASE_NODE_PRIORITIES = "HRM base node priorities";
+	private final static String DECORATION_NAME_NODE_PRIORITIES = "HRM connectivity/hierarchy priorities";
 	
 	/**
 	 * Stores the identification string for HRM specific routing graph decorations (coordinators & clusters)

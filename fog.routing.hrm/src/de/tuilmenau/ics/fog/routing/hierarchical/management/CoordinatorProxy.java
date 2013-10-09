@@ -113,11 +113,11 @@ public class CoordinatorProxy extends ClusterMember
 				// distance is the init. value?
 				if(mDistance != -1){
 					// decrease base node priority
-					mHRMController.decreaseBaseNodePriority_KnownBaseCoordinator(mDistance);
+					mHRMController.decreaseHierarchyNodePriority_KnownBaseCoordinator(mDistance);
 				}
 	
 				// increase base node priority
-				mHRMController.increaseBaseNodePriority_KnownBaseCoordinator(pDistance);
+				mHRMController.increaseHierarchyNodePriority_KnownBaseCoordinator(pDistance);
 			}
 			
 			Logging.log(this, "Updating the distance (hop count) to the coordinator node to: " + pDistance);
@@ -145,7 +145,7 @@ public class CoordinatorProxy extends ClusterMember
 	@Override
 	public String getText()
 	{
-		return "RemoteCoordinator" + getGUICoordinatorID() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue() + "(Cluster" + getGUIClusterID() + ", Hops=" + mDistance + ", " + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
+		return "RemoteCoordinator" + getGUICoordinatorID() + "@" + getHierarchyLevel().getValue() +  "(" + idToString() + ")";
 	}
 
 	/**
@@ -177,9 +177,9 @@ public class CoordinatorProxy extends ClusterMember
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "Cluster=" + getGUIClusterID() + ", CoordNode.=" + getCoordinatorNodeL2Address();
+			return "Cluster" + getGUIClusterID() + ", CoordNode.=" + getCoordinatorNodeL2Address();
 		}else{
-			return "Cluster=" + getGUIClusterID() + ", CoordNode.=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
+			return "Cluster" + getGUIClusterID() + ", CoordNode.=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
 		}
 	}
 }

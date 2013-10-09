@@ -12,7 +12,9 @@ package de.tuilmenau.ics.fog.routing.hierarchical.election;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterMember;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorAsClusterMember;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -36,11 +38,6 @@ public class BullyPriority
 	 * Allow for a better debugging based on messages each time such an object is created.
 	 */
 	private static boolean DEBUG_CREATION = false;
-	
-	/**
-	 * The value defines the prefix for the node specific configuration parameters for Bully algorithm.
-	 */
-	public static String NODE_PARAMETER_PREFIX = "BASE_BULLY_PRIORITY";
 	
 	/**
 	 * This value represents an undefined priority.
@@ -74,19 +71,6 @@ public class BullyPriority
 	private long mPriorityId = sNextFreePriorityID++;
 	
 	/**
-	 * Service function for the node configurator
-	 * 
-	 * @param pNode the node which should be configured
-	 */
-	public static void configureNode(Node pNode)
-	{
-		long tNodePriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
-		
-		// set the Bully priority 
-		pNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, tNodePriority);
-	}
-
-	/**
 	 * Factory function: initializes the Bully priority for a cluster depending on the node configuration and the hierarchy level.
 	 * 
 	 * @param pCluster the cluster to which this Bully priority belongs to.
@@ -98,7 +82,14 @@ public class BullyPriority
 			return null;
 		}
 
-		BullyPriority tResult = new BullyPriority(pHRMController.getBaseNodePriority());
+		BullyPriority tResult = new BullyPriority(pHRMController.getHierarchyNodePriority());
+
+		/**
+		 * Overwrite the Bully priority by the connectivity priority for simple ClusterMember objects at base hierarchy level
+		 */
+		if((pControlEntity instanceof ClusterMember) && (!(pControlEntity instanceof CoordinatorAsClusterMember)) && (pControlEntity.getHierarchyLevel().isBaseLevel())){
+			tResult = new BullyPriority(pHRMController.getConnectivityNodePriority());
+		}
 		
 		if (DEBUG_CREATION){
 			Logging.log(pControlEntity, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
@@ -114,7 +105,7 @@ public class BullyPriority
 	 */
 	public static BullyPriority createForSuperiorControlEntity(HRMController pHRMController, ControlEntity pControlEntity)
 	{
-		BullyPriority tResult = new BullyPriority(pHRMController.getBaseNodePriority());
+		BullyPriority tResult = new BullyPriority(pHRMController.getHierarchyNodePriority());
 		
 		if (DEBUG_CREATION){
 			Logging.log(pControlEntity, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
@@ -157,7 +148,7 @@ public class BullyPriority
 
 		BullyPriority tResult = new BullyPriority(pPredefinedPriority);
 
-		Logging.log(pParent, "Created BullyPriority object (predefined priority " + pPredefinedPriority + ")");
+		//Logging.log(pParent, "Created BullyPriority object (predefined priority " + pPredefinedPriority + ")");
 		
 		return tResult;
 	}
