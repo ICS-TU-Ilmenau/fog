@@ -37,12 +37,12 @@ public interface EventSource
 	public boolean unregisterListener(EventListener observer);
 	
 	/**
-	 * Inferface for observer of the event source
+	 * Interface for observer of the event source
 	 */
 	public interface EventListener
 	{
 		/**
-		 * Called if an event is occuring at the event source.
+		 * Called if an event is occurring at the event source.
 		 * This callback method is NOT allowed to block.
 		 * It MUST return as fast as possible since it it
 		 * executed in the thread of the event source.
