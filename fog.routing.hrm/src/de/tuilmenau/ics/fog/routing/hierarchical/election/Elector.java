@@ -152,6 +152,7 @@ public class Elector implements Localization
 			//reset ELECT BROADCAST timer
 			mTimestampLastElectBroadcast = new Double(0);
 			
+			Logging.log(this, "REELECTION");
 			elect();
 		}else{
 			Logging.log(this, "Reelection needed but we aren't the cluster head, we hope that the other local Cluster object will trigger a reelection" );
@@ -323,7 +324,7 @@ public class Elector implements Localization
 					Logging.log(this, "SENDELECTIONS()-END");
 				}
 			}else{
-				Logging.log(this, "signalElectBroadcast() was triggered too frequently, timeout isn't reached yet, skipping this action");
+				Logging.warn(this, "signalElectBroadcast() was triggered too frequently, timeout isn't reached yet, skipping this action");
 			}
 
 		}else{
@@ -587,6 +588,15 @@ public class Elector implements Localization
 		if(mState == ElectorState.ELECTING){
 			checkForWinner();
 		}else{
+			/**
+			 *  we received a delayed reply, this can happen if:
+			 *      0.) we send an ELECT to all peers
+			 *      1.) we receive BullyPriorityUpdates from all peers
+			 *        ==> we know the priority of all peers
+			 *        ==> we have the highest priority
+			 *        ==> we decide to be the winner
+			 *      2.) a peer answers a former ELECT
+			 */
 			Logging.warn(this, "Received delayed REPLY via: " + pSourceComChannel);
 		}
 	}
@@ -640,30 +650,8 @@ public class Elector implements Localization
 					/**
 					 * Is the local priority higher?
 					 */
-					if (mParent.getPriority().isHigher(this, tHighestPrio)){
-						Logging.log(this, "	        ..HAVING HIGHER PRIORITY than " + tExternalWinner.getPeerL2Address());
-			
-						// we are the absolute winner
-						tIsWinner = true;
-					}else{
-						if (mParent.getPriority().equals(tHighestPrio)){
-							Logging.log(this, "	        ..HAVING SAME PRIORITY like " + tExternalWinner.getPeerL2Address());
-			
-							if (mHRMController.getNodeL2Address().isHigher(tExternalWinner.getPeerL2Address())){
-								Logging.log(this, "	        ..HAVING HIGHER L2 address than " + tExternalWinner.getPeerL2Address());
-			
-								// mark as winner
-								tIsWinner = true;
-							}else{
-								if (mHRMController.getNodeL2Address().isLower(tExternalWinner.getPeerL2Address())){
-									Logging.log(this, "	        ..HAVING LOWER L2 address " + mHRMController.getNodeL2Address() + " than " +  tExternalWinner.getPeerL2Address());
-								}else{
-									Logging.err(this, "	        ..HAVING SAME L2 address " + mHRMController.getNodeL2Address() + " like " +  tExternalWinner.getPeerL2Address());
-								}
-							}
-						}
-					}
-					
+					tIsWinner = havingHigherPrioriorityThan(tExternalWinner);
+
 					/**
 					 * React on the result
 					 */
@@ -791,7 +779,7 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
 				}
 				
-				eventReceivedPriorityUpdate(pComChannel, tPacketBullyPriorityUpdate.getSenderPriority());
+				eventReceivedPriorityUpdate(pComChannel);
 			}
 			
 			/**
@@ -841,22 +829,24 @@ public class Elector implements Localization
 	 * @param pComChannel
 	 * @param pSenderPriority
 	 */
-	private void eventReceivedPriorityUpdate(ComChannel pComChannel, BullyPriority pSenderPriority)
+	private void eventReceivedPriorityUpdate(ComChannel pComChannel)
 	{
-		// update the peer priority stored in the communication channel
-		pComChannel.setPeerPriority(pSenderPriority);
+		// get the priority of the sender
+		BullyPriority tSenderPriority = pComChannel.getPeerPriority();
 		
-		if (pSenderPriority.isHigher(this, mParent.getPriority())){
-			Logging.log(this, "Got a priority update and remote priority " + pSenderPriority.getValue() + " is higher than local " + mParent.getPriority().getValue() + ", triggering re-election");
-			
+		Logging.log(this, "Got priority " + tSenderPriority.getValue() + " via comm. channel: " + pComChannel);
+
+		// do we have the higher priority?
+		if (havingHigherPrioriorityThan(pComChannel)){
+			Logging.log(this, "Received remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue());
+		}else{
 			/**
 			 * Trigger: new election round if we are the current winner
 			 */
 			if(isWinner()){
+				Logging.log(this, "Received remote priority " + tSenderPriority.getValue() + " is higher than local " + mParent.getPriority().getValue() + ", triggering re-election");
 				startElection();
 			}
-		}else{
-			Logging.log(this, "Got priority " + pSenderPriority.getValue() + " via comm. channel: " + pComChannel);
 		}
 	}
 
@@ -870,10 +860,10 @@ public class Elector implements Localization
 	private boolean havingHigherPrioriorityThan(ComChannel pComChannel)
 	{
 		boolean tResult = false;
-		
+
 		if (mParent.getPriority().isHigher(this, pComChannel.getPeerPriority())){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-				Logging.log(this, "	        ..the local priority is HIGHER than the remote, starting ELECTION by ourself");
+				Logging.log(this, "	        ..HAVING HIGHER PRIORITY than " + pComChannel.getPeerL2Address());
 			}
 			
 			tResult = true;
@@ -886,7 +876,18 @@ public class Elector implements Localization
 
 					tResult = true;
 				}else{
-					Logging.log(this, "	        ..HAVING LOWER/EQUAL priority ID " + mParent.getPriority().getUniqueID() + " than " +  pComChannel.getPeerPriority().getUniqueID() + " of " + pComChannel.getPeerL2Address());
+					if (mHRMController.getNodeL2Address().isLower(pComChannel.getPeerL2Address())){
+						Logging.log(this, "	        ..HAVING LOWER L2 address " + mHRMController.getNodeL2Address() + " than " +  pComChannel.getPeerL2Address());
+					}else{
+						Logging.log(this, "	        ..DETECTED OWN LOCAL L2 address " + mHRMController.getNodeL2Address());
+						if(mParent instanceof Cluster){
+							// we are the cluster head and have won the election
+							tResult = true;
+						}else{
+							// we are a ClusterMember and have lost the game
+							tResult = false;
+						}
+					}
 				}
 			}
 		}
@@ -902,7 +903,7 @@ public class Elector implements Localization
 	@Override
 	public String toString()
 	{
-		return toLocation() + (mParent != null ? "(Cluster=" + mParent.toString() + ")" : "");
+		return toLocation() + "@" + mParent.toString();
 	}
 
 	/**
@@ -915,11 +916,7 @@ public class Elector implements Localization
 	{
 		String tResult = null;
 		
-		if (mParent != null){
-			tResult = getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + mParent.getHierarchyLevel().getValue();
-		}else{
-			tResult = getClass().getSimpleName();
-		}			
+		tResult = getClass().getSimpleName();
 		
 		return tResult;
 	}
