@@ -9,7 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.editors;
 
-import java.io.Serializable;
 import java.text.Collator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -39,7 +38,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -50,6 +48,7 @@ import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Point;
 
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
@@ -63,6 +62,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterMember;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannelPacketMetaData;
@@ -94,6 +94,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Display mDisplay = null;
     private Composite mContainerRoutingTable = null;
 	private Composite mContainerHRMID2L2ADDRTable = null;
+	
+	private boolean mShowClusterMembers = false;
 	
     /**
      * Stores the simulation time for the next GUI update.
@@ -143,7 +145,41 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			Logging.log(this, "Found clusters: " + mHRMController.getAllClusters().size());
 			Logging.log(this, "Found coordinators: " + mHRMController.getAllCoordinators().size());
 		}
-		
+
+		/**
+		 * Context menu
+		 */
+		mScroller.addMenuDetectListener(new MenuDetectListener()
+		{
+			@Override
+			public void menuDetected(MenuDetectEvent pEvent)
+			{
+				/**
+				 * Create the context menu
+				 */
+				Menu tMenu = new Menu(mScroller);
+				MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
+				if (mShowClusterMembers){
+					tMenuItem.setText("Hide cluster members");
+				}else{
+					tMenuItem.setText("Show cluster members");
+				}
+				tMenuItem.addSelectionListener(new SelectionListener() {
+					public void widgetDefaultSelected(SelectionEvent pEvent)
+					{
+						mShowClusterMembers = !mShowClusterMembers;
+						startGUIUpdateTimer();
+					}
+					public void widgetSelected(SelectionEvent pEvent)
+					{
+						mShowClusterMembers = !mShowClusterMembers;
+						startGUIUpdateTimer();
+					}
+				});
+				mScroller.setMenu(tMenu);
+			}
+		});
+
 		/**
 		 * GUI part 0: list clusters
 		 */
@@ -151,10 +187,22 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			// show only those cluster which also have a coordinator
 			if((HRM_VIEWER_SHOW_ALWAYS_ALL_CLUSTERS) || (tCluster.hasLocalCoordinator())){
 				// print info. about cluster
-				printCluster(tCluster);
+				printClusterMember(tCluster);
 			}
 		}
 
+		/**
+		 * GUI part: list cluster members
+		 */
+		if (mShowClusterMembers){
+			for(ClusterMember tClusterMemeber : mHRMController.getAllClusterMembers()){
+				if (!(tClusterMemeber instanceof Cluster)){
+					// print info. about cluster
+					printClusterMember(tClusterMemeber);
+				}
+			}
+		}
+		
 		/**
 		 * GUI part 1: list coordinators
 		 */
@@ -724,36 +772,36 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 * 
 	 * @param pCluster selected cluster 
 	 */
-	private void printCluster(Cluster pCluster)
+	private void printClusterMember(ClusterMember pClusterMember)
 	{
 		// on which hierarchy level are we?
-		int tHierarchyLevel = pCluster.getHierarchyLevel().getValue();
+		int tHierarchyLevel = pClusterMember.getHierarchyLevel().getValue();
 
 		if (HRM_VIEWER_DEBUGGING)
-			Logging.log(this, "Printing cluster \"" + pCluster.toString() +"\"");
+			Logging.log(this, "Printing cluster (member) \"" + pClusterMember.toString() +"\"");
 
 		/**
 		 * GUI part 0: name of the cluster 
 		 */
-		printNAME(pCluster);
+		printNAME(pClusterMember);
 		
 		/**
 		 * GUI part 1: tool box 
 		 */
-		if(pCluster != null) {
+		if(pClusterMember != null) {
 			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
 
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS){
-				if ((pCluster.getElector() != null) && (!pCluster.getElector().isCoordinatorValid())){
+				if ((pClusterMember.getElector() != null) && (!pClusterMember.getElector().isCoordinatorValid())){
 					ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
 				    toolItem1.setText("[Elect coordinator]");
-				    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(this, pCluster));
+				    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(this, pClusterMember));
 				}
 			}
 
 			ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
 		    toolItem2.setText("[Elect all level " + tHierarchyLevel + " coordinators]");
-		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(this, pCluster));
+		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(this, pClusterMember));
 		    
 		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
@@ -761,7 +809,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 2: table about CEPs 
 		 */
-		printComChannels(pCluster);
+		printComChannels(pClusterMember);
 	
 		Label separator = new Label (mContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
 		separator.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
@@ -884,9 +932,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				//switches to different thread
 				mDisplay.asyncExec(this);
 			} else {
+				Point tOldScrollPosition = mScroller.getOrigin();
+				
 				destroyPartControl();
 				
 				createPartControl(mShell);
+				
+				mScroller.setOrigin(tOldScrollPosition);
 			}
 		}
 	}
@@ -949,13 +1001,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 */
 	private class ListenerElectCoordinator implements Listener
 	{
-		private Cluster mCluster = null;
+		private ClusterMember ClusterMember = null;
 		private HRMViewer mHRMViewer = null;
 		
-		private ListenerElectCoordinator(HRMViewer pHRMViewer, Cluster pCluster)
+		private ListenerElectCoordinator(HRMViewer pHRMViewer, ClusterMember pClusterMember)
 		{
 			super();
-			mCluster = pCluster;
+			ClusterMember = pClusterMember;
 			mHRMViewer = pHRMViewer;
 		}
 		
@@ -963,11 +1015,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		public void handleEvent(Event event)
 		{
 			if (HRM_VIEWER_DEBUGGING){
-				Logging.log(this, "GUI-TRIGGER: Starting election for " + mCluster);
+				Logging.log(this, "GUI-TRIGGER: Starting election for " + ClusterMember);
 			}
 			
 			// start the election for the selected cluster
-			mCluster.getElector().startElection();
+			ClusterMember.getElector().startElection();
 		}
 	
 		public String toString()
@@ -981,13 +1033,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 */
 	private class ListenerElectHierarchyLevelCoordinators implements Listener
 	{
-		private Cluster mCluster = null;
+		private ClusterMember mClusterMember = null;
 		private HRMViewer mHRMViewer = null;
 
-		private ListenerElectHierarchyLevelCoordinators(HRMViewer pHRMViewer, Cluster pCluster)
+		private ListenerElectHierarchyLevelCoordinators(HRMViewer pHRMViewer, ClusterMember pClusterMember)
 		{
 			super();
-			mCluster = pCluster;
+			mClusterMember = pClusterMember;
 			mHRMViewer = pHRMViewer;
 		}
 		
@@ -995,7 +1047,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		public void handleEvent(Event event)
 		{
 			// get the hierarchy level of the selected cluster
-			HierarchyLevel tLocalClusterLevel = mCluster.getHierarchyLevel();
+			HierarchyLevel tLocalClusterLevel = mClusterMember.getHierarchyLevel();
 			
 			// iterate over all HRMControllers
 			for(HRMController tHRMController : HRMController.getALLHRMControllers()) {
