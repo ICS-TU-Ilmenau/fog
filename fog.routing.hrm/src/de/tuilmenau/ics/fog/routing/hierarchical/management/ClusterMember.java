@@ -411,6 +411,7 @@ public class ClusterMember extends ClusterName
 		 * Set the new priority if it differs from the old one
 		 */
 		if((getPriority() != null) && (getPriority().getValue() != pNewBaseNodePriority)){
+			Logging.log(this, "Got new base node priority, updating own priority from " + getPriority().getValue() + " to " + pNewBaseNodePriority);
 			setPriority(BullyPriority.create(this, pNewBaseNodePriority));
 		}
 	}
@@ -482,6 +483,8 @@ public class ClusterMember extends ClusterName
 			 */
 			if ((tOldPriority != null) && (!tOldPriority.isUndefined()) && (!tOldPriority.equals(pPriority))){
 				mElector.eventPriorityUpdate();
+			}else{
+				Logging.log(this, "First priority was set: " + pPriority.getValue());
 			}
 		}else{
 			Logging.err(this, "REQUEST FOR SETTING UNDEFINED PRIORITY");

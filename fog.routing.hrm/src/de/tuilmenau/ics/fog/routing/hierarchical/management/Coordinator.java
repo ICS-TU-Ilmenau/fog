@@ -545,6 +545,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			for(Cluster tCluster : tClusters){
 				tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
 			}
+		}else{
+			Logging.warn(this, "HRMConfig->COORDINATOR_ANNOUNCEMENTS is set to false, this prevents the HRM system from creating a correct hierarchy");
 		}
 	}
 
