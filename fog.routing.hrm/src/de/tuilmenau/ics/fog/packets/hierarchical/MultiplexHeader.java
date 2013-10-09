@@ -13,6 +13,7 @@ import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This header is used for inter-HRMController communication. It encapsulates a payload which 
@@ -41,6 +42,16 @@ public class MultiplexHeader implements ProtocolHeader
 	private Serializable mPayload = null;
 
 	/**
+	 * Counts the multiplex headers
+	 */
+	private static int mMultiplexMessagesCounter = 0;
+
+	/**
+	 * Stores the HRM message number
+	 */
+	private int mMessageNumber = -1;
+
+	/**
 	 * Constructor
 	 * 
 	 * @param pSourceClusterName the ClusterName of the sender
@@ -52,8 +63,35 @@ public class MultiplexHeader implements ProtocolHeader
 		mSenderClusterName = pSenderClusterName;
 		mReceiverClusterName = pReceiverClusterName;
 		mPayload = pPayload;
+		mMessageNumber = createMessageNumber();
 	}
 	
+	/**
+	 * Creates an HRM message number
+	 * 
+	 * @return the create HRM message number
+	 */
+	private static synchronized int createMessageNumber()
+	{
+		int tResult = -1;		
+		
+		tResult = ++mMultiplexMessagesCounter;
+		
+		Logging.log("########### CREATING MULTIPLEX HEADER nr. " + tResult);
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the HRM message number
+	 * 
+	 * @return the HRM message number
+	 */
+	public int getMessageNumber()
+	{
+		return mMessageNumber;
+	}
+
 	/**
 	 * Returns the ClusterName of the sender
 	 * 
@@ -103,6 +141,6 @@ public class MultiplexHeader implements ProtocolHeader
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Source=" + mSenderClusterName + ", Dest.=" + mReceiverClusterName + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Source=" + mSenderClusterName + ", Dest.=" + mReceiverClusterName + ")";
 	}
 }
