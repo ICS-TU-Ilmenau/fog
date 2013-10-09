@@ -13,6 +13,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
@@ -203,6 +204,21 @@ public class Cluster extends ClusterMember
 		return mCoordinator;
 	}
 	
+	/**
+	 * Returns the correct connectivity/hierarchy Bully priority of the node
+	 * 
+	 * @return the Bully priority
+	 */
+	@Override
+	public BullyPriority getPriority() 
+	{
+		if(getHierarchyLevel().isBaseLevel()){
+			return BullyPriority.create(this, mHRMController.getConnectivityNodePriority());
+		}else{
+			return BullyPriority.create(this, mHRMController.getHierarchyNodePriority());
+		}
+	}
+
 	/**
 	 * Determines if a coordinator is known.
 	 * 

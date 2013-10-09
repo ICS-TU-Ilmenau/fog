@@ -806,15 +806,14 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
-	 * Returns the Bully priority of the parent cluster
+	 * Returns the hierarchy Bully priority of the node
 	 * 
 	 * @return the Bully priority
 	 */
 	@Override
 	public BullyPriority getPriority() 
 	{
-		// return the Bully priority of the managed cluster object
-		return mParentCluster.getPriority();
+		return BullyPriority.create(this, mHRMController.getHierarchyNodePriority());
 	}
 	
 	/**
