@@ -68,6 +68,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannelPacketMetaData;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorAsClusterMember;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -96,6 +97,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private Composite mContainerHRMID2L2ADDRTable = null;
 	
 	private boolean mShowClusterMembers = false;
+	private boolean mShowCoordinatorAsClusterMembers = false;
 	
     /**
      * Stores the simulation time for the next GUI update.
@@ -176,6 +178,24 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						startGUIUpdateTimer();
 					}
 				});
+				MenuItem tMenuItem1 = new MenuItem(tMenu, SWT.NONE);
+				if (mShowClusterMembers){
+					tMenuItem1.setText("Hide coordinators as cluster members");
+				}else{
+					tMenuItem1.setText("Show coordinators as cluster members");
+				}
+				tMenuItem1.addSelectionListener(new SelectionListener() {
+					public void widgetDefaultSelected(SelectionEvent pEvent)
+					{
+						mShowCoordinatorAsClusterMembers = !mShowCoordinatorAsClusterMembers;
+						startGUIUpdateTimer();
+					}
+					public void widgetSelected(SelectionEvent pEvent)
+					{
+						mShowCoordinatorAsClusterMembers = !mShowCoordinatorAsClusterMembers;
+						startGUIUpdateTimer();
+					}
+				});
 				mScroller.setMenu(tMenu);
 			}
 		});
@@ -203,6 +223,15 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 		}
 		
+		/**
+		 * GUI part: list coordinator as cluster members
+		 */
+		if(mShowCoordinatorAsClusterMembers){
+			for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mHRMController.getAllCoordinatorAsClusterMemebers()){
+				// print info. about cluster
+				printClusterMember(tCoordinatorAsClusterMember);
+			}
+		}
 		/**
 		 * GUI part 1: list coordinators
 		 */

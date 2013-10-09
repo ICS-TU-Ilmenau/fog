@@ -972,6 +972,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns a list of known coordinator as cluster members.
+	 * 
+	 * @return the list of known coordinator as cluster members
+	 */
+	public LinkedList<CoordinatorAsClusterMember> getAllCoordinatorAsClusterMemebers()
+	{
+		LinkedList<CoordinatorAsClusterMember> tResult = null;
+		
+		synchronized (mLocalCoordinatorAsClusterMemebers) {
+			tResult = (LinkedList<CoordinatorAsClusterMember>) mLocalCoordinatorAsClusterMemebers.clone();
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Returns a list of known cluster members.
 	 * 
 	 * @return the list of known cluster members
@@ -1601,7 +1617,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private int mPriorityUpdates = 0;
 	@SuppressWarnings("unchecked")
-	private void setBaseNodePriority(long pPriority)
+	private synchronized void setBaseNodePriority(long pPriority)
 	{
 		Logging.log(this, "Setting new base node priority: " + pPriority);
 		mNode.getParameter().put(BullyPriority.NODE_PARAMETER_PREFIX, pPriority);
@@ -1616,11 +1632,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 *       formerly known ones)
 		 */
 		synchronized (mLocalClusterMembers) {
-			LinkedList<ClusterMember> tLocalClusterMemebers = (LinkedList<ClusterMember>) mLocalClusterMembers.clone();
-			Logging.log(this, "Informing these cluser members about the priority (" + pPriority + ") update (" + mPriorityUpdates + "): " + tLocalClusterMemebers);
+			LinkedList<ClusterMember> tLocalClusterMembers = (LinkedList<ClusterMember>) mLocalClusterMembers.clone();
+			Logging.log(this, "Informing these cluser members about the priority (" + pPriority + ") update (" + mPriorityUpdates + "): " + tLocalClusterMembers);
 			int i = 0;
-			for(ClusterMember tClusterMember : tLocalClusterMemebers){
-				Logging.log(this, "      ..update " + mPriorityUpdates + " - informing[" + i + "]: " + tClusterMember);
+			for(ClusterMember tClusterMember : tLocalClusterMembers){
+				Logging.log(this, "      ..update (" + mPriorityUpdates + ") - informing[" + i + "]: " + tClusterMember);
 				tClusterMember.eventBaseNodePriorityUpdate(pPriority);
 				i++;
 			}
