@@ -554,17 +554,19 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public void fire()
 	{
-		Logging.log(this, "###########################");
-		Logging.log(this, "###### FIRE FIRE FIRE #####");
-		Logging.log(this, "###########################");
-		
-		/**
-		 * Trigger: ClusterAnnounce distribution
-		 */
-		distributeCoordinatorAnnouncement();
-		
-		// register next trigger for 
-		mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS, this);
+		if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
+			Logging.log(this, "###########################");
+			Logging.log(this, "###### FIRE FIRE FIRE #####");
+			Logging.log(this, "###########################");
+			
+			/**
+			 * Trigger: ClusterAnnounce distribution
+			 */
+			distributeCoordinatorAnnouncement();
+			
+			// register next trigger for 
+			mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS, this);
+		}
 	}
 
 	/**
