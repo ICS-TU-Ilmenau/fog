@@ -434,13 +434,16 @@ public class ComSession extends Session
 	 * 
 	 * @return the found comm. channel or null
 	 */
-	private ComChannel getComChannelByDestination(ClusterName pDestinationClusterName)
+	private ComChannel getComChannel(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
 	{
 		ComChannel tResult = null;
 		
 		LinkedList<ComChannel> tComChannels = getAllComChannels();
 		for (ComChannel tComChannel : tComChannels){
-			if((tComChannel.getParent().getClusterID().equals(pDestinationClusterName.getClusterID())) && (tComChannel.getParent().getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel()))) {
+			if((tComChannel.getParent().getClusterID().equals(pDestinationClusterName.getClusterID())) && 
+			   (tComChannel.getParent().getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
+			   (tComChannel.getRemoteClusterName().getClusterID().equals(pSourceClusterName.getClusterID())) && 
+			   (tComChannel.getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel()))) {
 				tResult = tComChannel;
 				break;
 			}
@@ -450,31 +453,9 @@ public class ComSession extends Session
 	}
 	
 	/**
-	 * Searches for a registered communication channel which is identified by its remote clusterID
+	 * Handles a multiplex-header of received packets, delivers the packet payload as signaling packet to the correct comm. channel
 	 * 
-	 * @param pClusterID the remote clusterID
-	 * 
-	 * @return the found comm. channel or null
-	 */
-	public ComChannel getComChannelByRemoteClusterID(Long pClusterID)
-	{
-		ComChannel tResult = null;
-		
-		LinkedList<ComChannel> tComChannels = getAllComChannels();
-		for (ComChannel tComChannel : tComChannels){
-			if(tComChannel.getRemoteClusterName().getClusterID().equals(pClusterID)) {
-				tResult = tComChannel;
-				break;
-			}
-		}
-		
-		return tResult;
-	}
-
-	/**
-	 * Handles a multiplex-packet
-	 * 
-	 * @param pMultiplexHeader the multiplex-packet
+	 * @param pMultiplexHeader the multiplex-header
 	 */
 	private void handleMultiplexHeader(MultiplexHeader pMultiplexHeader)
 	{
@@ -483,6 +464,11 @@ public class ComSession extends Session
 		 */
 		ClusterName tDestination = pMultiplexHeader.getReceiverClusterName();
 
+		/**
+		 * Get the source from the Multiplex-Header
+		 */
+		ClusterName tSource = pMultiplexHeader.getSenderClusterName();
+
 		if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
 			Logging.log(this, "RECEIVING MULTIPLEX HEADER with destination: " + tDestination  + ", payload=" + pMultiplexHeader.getPayload());
 		}
@@ -490,7 +476,7 @@ public class ComSession extends Session
 		/**
 		 * Iterate over all communication channels and find the correct channel towards the destination
 		 */
-		ComChannel tDestinationComChannel = getComChannelByDestination(tDestination); //TODO: in/out beachten und hier die RemoteClusterID auswerten
+		ComChannel tDestinationComChannel = getComChannel(tDestination, tSource);
 		Logging.log(this, "       ..found communication channel: " + tDestinationComChannel);
 
 		/**
