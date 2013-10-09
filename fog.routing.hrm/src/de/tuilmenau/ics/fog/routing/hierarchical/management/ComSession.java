@@ -87,7 +87,7 @@ public class ComSession extends Session
 	public ComSession(HRMController pHRMController, boolean pIncomingConnection)
 	{
 		// call the Session constructor
-		super(false, Logging.getInstance(), null);
+		super(false /* event handler not in an own tread */, Logging.getInstance(), null);
 		
 		// store a reference to the HRMController application
 		mHRMController = pHRMController;
@@ -143,7 +143,7 @@ public class ComSession extends Session
 			MultiplexHeader tMultiplexHeader = (MultiplexHeader)pData;
 			
 			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-				Logging.log(this, "SENDING MULTIPLEX HEADER with destination: " + tMultiplexHeader.getReceiverClusterName()  + ", payload=" + tMultiplexHeader.getPayload());
+				Logging.log(this, "SENDING MULTIPLEX HEADER: " + tMultiplexHeader  + ", payload=" + tMultiplexHeader.getPayload());
 			}
 			
 			if(tMultiplexHeader.getPayload() instanceof SignalingMessageHrm){
@@ -182,13 +182,6 @@ public class ComSession extends Session
 	private void eventSessionAvailable()
 	{
 		Logging.log(this, "EVENT: session is available now");
-		
-		for(ComChannel tComChannel : getAllComChannels()){
-			/**
-			 * TRIGGER: inform the ComChannel about the established communication session
-			 */
-			tComChannel.eventCommunicationAvailable();
-		}
 	}
 
 	/**
@@ -508,6 +501,11 @@ public class ComSession extends Session
 	@Override
 	public boolean receiveData(Object pData)
 	{
+		if(pData == null){
+			Logging.err(this, "Received invalid data");
+			return true;
+		}
+		
 		Logging.log(this, "RECEIVED PACKET: " + pData.getClass().getSimpleName());
 		
 		/**
@@ -681,6 +679,17 @@ public class ComSession extends Session
 		// tell the neighbor about the FN
 		Logging.log(mHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
 		write(tAnnouncePhysicalEndPoint);
+	}
+
+	/**
+	 * Handles error events for the parent connection
+	 * 
+	 * @param pExc the exception which caused the error
+	 */
+	@Override
+	public void error(Exception pExc)
+	{
+		throw new RuntimeException("Error occurred, stack trace is: " + pExc.toString());
 	}
 
 	/**

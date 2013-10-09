@@ -590,19 +590,6 @@ public class ComChannel
 	}
 	
 	/**
-	 * EVENT: communication available
-	 */
-	public void eventCommunicationAvailable()
-	{
-		Logging.log(this, "EVENT: communication available");
-		
-		/**
-		 * TRIGGER: inform the parental ControlEntity about the established communication session and its inferior channels
-		 */
-		getParent().eventComChannelEstablished(this);
-	}
-
-	/**
 	 * Revokes all formerly assigned HRMIDs
 	 * 
 	 * @param pHRMID 

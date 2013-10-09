@@ -368,16 +368,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
-	 * EVENT: notifies that a communication channel is became available
-	 * 
-	 * @param pComChannel the communication channel which became available
-	 */
-	public void eventComChannelEstablished(ComChannel pComChannel)
-	{
-		Logging.log(this, "EVENT: ComChannel established for " + pComChannel);
-	}
-	
-	/**
 	 * Registers a neighbor of this control entity within the ARG of the HRMController instance
 	 *  
 	 * @param pNeighbor the neighbor, which should be registered
