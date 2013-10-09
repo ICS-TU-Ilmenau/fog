@@ -1118,7 +1118,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				tResultRoute.add(tRouteSegmentPath);
 			}
 		}else{
-			Logging.log(this, "getL2Route() delivers an empty route because source and destination are equal: " + pFromL2Address);
+			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				Logging.log(this, "getL2Route() delivers an empty route because source and destination are equal: " + pFromL2Address);
+			}
 			
 			// create a new empty route because we have already reached the destination
 			tResultRoute = new Route();
@@ -1463,7 +1465,9 @@ public class HRMRoutingService implements RoutingService, Localization
 					pRoute.add(new RouteSegmentAddress(new SimpleName(tPropDestApp.getAppNamespace())));
 				}
 			}else{
-				Logging.log(this, "    ..no destination application property found");
+				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					Logging.log(this, "    ..no destination application property found");
+				}
 			}
 		}
 	}
