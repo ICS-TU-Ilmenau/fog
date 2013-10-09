@@ -760,19 +760,19 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private void printNAME(ControlEntity pEntity)
 	{
 		StyledText tClusterLabel = new StyledText(mContainer, SWT.BORDER);;
-		if (pEntity instanceof Cluster){
-			Cluster tCluster = (Cluster) pEntity;
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr());
-		}else{
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue());
-		}
 		tClusterLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
+		boolean tClusterHeadWithoutCoordinator = false;
 		if (GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES){
 			boolean tBackgroundSet = false;
 			if (pEntity instanceof Cluster){
 				Cluster tCluster =(Cluster) pEntity;
 				if ((tCluster.getElector() != null) && (tCluster.getElector().isCoordinatorValid())){
-					tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 111));
+					if(tCluster.hasLocalCoordinator()){
+						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 111));
+					}else{
+						tClusterHeadWithoutCoordinator = true;
+						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 222));
+					}
 					tBackgroundSet = true;
 				}
 			}
@@ -788,6 +788,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 		}else{
 			tClusterLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
+		}
+		if (pEntity instanceof Cluster){
+			Cluster tCluster = (Cluster) pEntity;
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? "   (inactive cluster)" : ""));
+		}else{
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue());
 		}
 	    StyleRange style1 = new StyleRange();
 	    style1.start = 0;
