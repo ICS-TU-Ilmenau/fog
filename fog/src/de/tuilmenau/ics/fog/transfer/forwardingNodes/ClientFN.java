@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
@@ -34,6 +35,7 @@ import de.tuilmenau.ics.fog.transfer.gates.GateIterator;
 import de.tuilmenau.ics.fog.transfer.gates.HorizontalGate;
 import de.tuilmenau.ics.fog.transfer.manager.Process;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessConnection;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Viewable;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -172,6 +174,9 @@ public class ClientFN implements ForwardingNode
 			}
 
 			packet.forwarded(mOutgoingGate);
+			if(Config.Connection.LOG_PACKET_STATIONS){
+				Logging.log(this, "Sending: " + packet);
+			}
 			mOutgoingGate.handlePacket(packet, this);
 		} else {
 			throw new NetworkException(this, "No connection to tranfer plane. Can not send data.");

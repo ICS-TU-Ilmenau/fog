@@ -44,6 +44,7 @@ import de.tuilmenau.ics.fog.topology.RemoteMedium;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.headers.NumberingHeader;
 import de.tuilmenau.ics.fog.ui.IPacketObserver;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.PacketLogger;
 import de.tuilmenau.ics.fog.ui.Viewable;
 import de.tuilmenau.ics.fog.ui.PacketQueue.PacketQueueEntry;
@@ -328,6 +329,10 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	@Override
 	public SendResult sendPacketTo(NeighborInformation destination, Packet packet, NeighborInformation from)
 	{
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Sending: " + packet + ", source: " + from + ", destination: " + destination);
+		}
+
 		if(destination != null) {
 			if(!broken) {
 				if(!isPacketLost(packet)) {
@@ -402,6 +407,9 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		
 					for(HigherLayerRegistration hl : nodelist) {
 						if(hl.getNeighbor().equals(destination) || (destination.equals(BROADCAST))) {
+							if(Config.Connection.LOG_PACKET_STATIONS){
+								Logging.log(this, "Storing: " + packet + ", in higher layer: " + hl);
+							}
 							numberOfMatchingNeighbors++;
 							// Inform queue for higher layer about packet.
 							// Packet will be cloned later, during the delivery process. 

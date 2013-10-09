@@ -444,6 +444,9 @@ public class Packet implements Serializable
 	
 	public void addBus(String bus)
 	{
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Packet " + getId() + " passes: " + bus);
+		}
 		mLowerLayers.add(bus);
 	}
 	
@@ -617,6 +620,9 @@ public class Packet implements Serializable
 	 */
 	public void forwarded(ForwardingNode handler)
 	{
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Packet " + getId() + " passes: " + handler);
+		}
 		registerForwarding(handler, ExperimentAgent.FN_NODE);
 	}
 	
@@ -627,6 +633,9 @@ public class Packet implements Serializable
 	 */
 	public void forwarded(AbstractGate handler)
 	{
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Packet " + getId() + " passes: " + handler);
+		}
 		registerForwarding(handler, ExperimentAgent.GATE);
 	}
 	

@@ -35,6 +35,7 @@ import de.tuilmenau.ics.fog.facade.events.ServiceDegradationEvent;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.PleaseCloseConnection;
 import de.tuilmenau.ics.fog.packets.PleaseUpdateRoute;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.EventSourceBase;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -113,6 +114,9 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 				}
 				
 				Packet packet = new Packet(data);
+				if(Config.Connection.LOG_PACKET_STATIONS){
+					Logging.log(this, "Sending: " + packet);
+				}
 				forwardingNode.send(packet);
 			} else {
 				throw new NetworkException(this, "Connection end point is not connected. Write operation failed.");

@@ -24,6 +24,7 @@ import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.topology.Breakable.Status;
 import de.tuilmenau.ics.fog.topology.ILowerLayerReceive;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.RateLimitedAction;
 import de.tuilmenau.ics.fog.util.RateMeasurement;
@@ -62,7 +63,16 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 		@Override
 		public void fire()
 		{
+			if(Config.Connection.LOG_PACKET_STATIONS){
+				Logging.log(this, "Got FIRE delivery event for: " + packet.mPacket);
+			}
+
 			deliverPacket(packet, getEventHandler().now());
+		}
+		
+		public String toString()
+		{
+			return getClass().getSimpleName() + " for packet: " + packet.mPacket;
 		}
 		
 		private Envelope packet;
@@ -81,6 +91,10 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 				Status tStatus = mHL.isBroken();
 				
 				if(tStatus == Status.OK) {
+					if(Config.Connection.LOG_PACKET_STATIONS){
+						Logging.log(this, "Sheduling delivery of: " + packet.mPacket + ", delay: "+ packet.mDeliverDuration);
+					}
+
 					//
 					// handling via event queue
 					// Note: It is important to sort packets with same time
@@ -89,6 +103,10 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 					//       order. Therefore, use ">" and not ">="!
 					//
 					getEventHandler().scheduleIn(packet.mDeliverDuration, new PacketDeliveryEvent(packet));
+				}else{
+					if(Config.Connection.LOG_PACKET_STATIONS){
+						Logging.log(this, "Sheduling delivery of: " + packet + " CANCELD, bus state: " + tStatus);
+					}
 				}
 
 				return tStatus;
@@ -147,6 +165,10 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 		// calculate difference between scheduled time and actual delivery time
 		double delayMSec = (packet.mTimeToDeliver -now) *1000.0d;
 		
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Delivering: " + packet + ", delay: "+ packet.mDeliverDuration + ", now: " + now);
+		}
+
 		if(Config.Transfer.DEBUG_PACKETS) {
 			mLogger.debug(this, "deliver " +packet.mPacket +" from " +packet.mFrom +" to " +mHL +" (delay [msec] = " +Math.round(delayMSec) +")");
 		}

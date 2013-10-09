@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.authentication.IdentityManagement;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -27,6 +28,7 @@ import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.transfer.gates.TransparentGate;
 import de.tuilmenau.ics.fog.transfer.manager.Controller;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.PacketLogger;
 import de.tuilmenau.ics.fog.ui.Viewable;
 
@@ -117,6 +119,10 @@ public class Multiplexer extends GateContainer
 	
 	final public void handlePacket(Packet packet, ForwardingElement lastHop)
 	{
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Forwarding: " + packet);
+		}
+
 		// log packet for statistic
 		mPacketLog.add(packet);
 

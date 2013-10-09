@@ -202,10 +202,16 @@ public class EventHandler extends Thread
 							
 							if( (timeToEventSec <= 0) || (mFastMode && !Double.isInfinite(nextEventTime)) ) {
 								tEvent = mEventQueue.poll();
-								
+								if (Config.Connection.LOG_PACKET_STATIONS){
+									Logging.log(this, "Polled event: " + tEvent.mEvent + ", id: " + tEvent.mId);
+									for(EventHolder tEventHolder : mEventQueue){
+										Logging.log(this, "     ..holding event: " + tEventHolder.mEvent + ", time: " + tEventHolder.mTime);
+									}
+								}
 								if(DEBUG_OUTPUT) {
 									mLogger.trace(this, "polled event with time " +tEvent.mTime);
 								}
+								
 								setNewTime(tEvent.mTime);
 							} else {
 								// cut too long waiting times
