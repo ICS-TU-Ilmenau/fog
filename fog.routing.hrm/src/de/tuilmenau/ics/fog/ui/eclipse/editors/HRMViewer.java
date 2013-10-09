@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.editors;
 
+import java.io.Serializable;
 import java.text.Collator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -24,6 +25,10 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -32,6 +37,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -57,6 +65,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannelPacketMetaData;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
@@ -473,10 +482,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 	}
 	
-	private void printComChannels(ControlEntity pControlEntity)
+	private void printComChannels(final ControlEntity pControlEntity)
 	{
-		Table tTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+		final Table tTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		
+		/**
+		 * The table header
+		 */
 		TableColumn tColumnCoordinator = new TableColumn(tTable, SWT.NONE, 0);
 		tColumnCoordinator.setText("Peer");
 		
@@ -507,6 +519,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
 		
+		/**
+		 * The table content
+		 */
 		LinkedList<ComChannel> tComChannels = pControlEntity.getComChannels();
 		if(pControlEntity instanceof Coordinator){
 			Coordinator tCoordinator = (Coordinator)pControlEntity;
@@ -611,8 +626,60 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn[] cols = tTable.getColumns();
 		for(int k=0; k < cols.length; k++) cols[k].pack();
 		tTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
+		
+		/**
+		 * The table context menu
+		 */
+		final LinkedList<ComChannel> tfComChannels = tComChannels;
+		tTable.addMenuDetectListener(new MenuDetectListener()
+		{
+			@Override
+			public void menuDetected(MenuDetectEvent pEvent)
+			{
+				final int tSelectedIndex = tTable.getSelectionIndex();
+				// was there a row selected?
+				if (tSelectedIndex != -1){
+					// identify which row was clicked.
+					TableItem tSelectedRow = tTable.getItem(tSelectedIndex);
+					tSelectedRow.getData();
+				
+					//Logging.log(this, "Context menu for comm. channels of entity: " + pControlEntity + ", index: " + tSelectedIndex + ", row data: " + tSelectedRow);
+					
+					/**
+					 * Create the context menu
+					 */
+					Menu tMenu = new Menu(tTable);
+					MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem.setText("Show packet I/O");
+					tMenuItem.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showPackets(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showPackets(tfComChannels.get(tSelectedIndex));
+						}
+					});
+					tTable.setMenu(tMenu);
+				}
+			}
+		});
 	}
 	
+	private void showPackets(ComChannel pComChannel)
+	{
+		Logging.log(this, "Packet I/O for: " + pComChannel);
+		LinkedList<ComChannelPacketMetaData> tPacketsMetaData = pComChannel.getPacketsStorage();
+		int i = 0;
+		for (ComChannelPacketMetaData tPacketMetaData: tPacketsMetaData){
+			Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + "): " + tPacketMetaData.getPacket());
+			i++;
+		}		
+	}
+
 	private void printNAME(ControlEntity pEntity)
 	{
 		StyledText tClusterLabel = new StyledText(mContainer, SWT.BORDER);;
