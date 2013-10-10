@@ -32,11 +32,6 @@ public class ClusterMember extends ClusterName
 	private static final long serialVersionUID = -8746079632866375924L;
 
 	/**
-	 * Stores if the neighborhood is already initialized
-	 */
-	protected boolean mNeighborhoodInitialized = false;
-
-	/**
 	 * Stores the L2 address of the node where the coordinator of the addressed cluster is located
 	 */
 	private L2Address mCoordinatorNodeL2Address = null;
@@ -77,9 +72,6 @@ public class ClusterMember extends ClusterName
 	{	
 		ClusterMember tResult = new ClusterMember(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pClusterHeadNodeL2Address);
 		
-		// detect neighbor clusters (members), increase the Bully priority based on the local connectivity
-		tResult.initializeNeighborhood();
-
 		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER MEMBER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
 		// register at HRMController's internal database
@@ -89,41 +81,6 @@ public class ClusterMember extends ClusterName
 		tResult.mElector = new Elector(pHRMController, tResult);
 		
 		return tResult;
-	}
-
-	/**
-	 * Detects neighbor clusters and increases the cluster's Bully priority based on the local connectivity. 
-	 */
-	protected void initializeNeighborhood()
-	{
-		Logging.log(this, "Checking local neighborhood");
-
-		/**
-		 * Store neighborhood in ARG for every locally known cluster at this hierarchy level 
-		 */
-		for(ClusterMember tClusterMember : mHRMController.getAllClusterMembers(getHierarchyLevel()))
-		{
-			// store only cluster members for a remote cluster head
-			if ((tClusterMember != this) && (!(tClusterMember instanceof CoordinatorAsClusterMember))){
-				Logging.log(this, "      ..found known neighbor cluster (member): " + tClusterMember);
-				
-				// add this cluster as neighbor to the already known one
-				tClusterMember.registerLocalNeighborARG(this);
-			}
-		}
-		
-		mNeighborhoodInitialized = true;
-	}
-
-	/**
-	 * Returns true if the neighborhood is already initialized - otherwise false
-	 * This function is used by the elector to make sure that the local neighborhood is already probed and initialized.
-	 *  
-	 * @return true of false
-	 */
-	public boolean isNeighborHoodInitialized()
-	{
-		return mNeighborhoodInitialized;
 	}
 
 	/**
@@ -162,29 +119,17 @@ public class ClusterMember extends ClusterName
 			 * Forward the announcement within the same hierarchy level ("to the side")
 			 */
 			// get locally known neighbors for this cluster and hierarchy level
-			LinkedList<ControlEntity> tLocallyKnownNeighbors = getNeighborsARG();
-			if(tLocallyKnownNeighbors.size() > 0){
-				Logging.log(this, "     ..found " + tLocallyKnownNeighbors.size() + " neighbors");
+			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
+			if(tLocalClusters.size() > 0){
+				Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
 	
-				for(ControlEntity tLocallyKnownNeighbor: tLocallyKnownNeighbors){
+				for(Cluster tLocalCluster: tLocalClusters){
 					/**
-					 * Forward only to clusters where this node is the head
-					 */					
-					if(tLocallyKnownNeighbor instanceof Cluster){
-						/**
-						 * Get the neighbor Cluster object
-						 */
-						Cluster tLocallyKnownNeighborCluster = (Cluster)tLocallyKnownNeighbor;
-						
-						/**
-						 * Forward the announcement
-						 * HINT: wet avoid loops by excluding the sender from the forwarding process
-						 */
-						Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocallyKnownNeighborCluster);
-						tLocallyKnownNeighborCluster.forwardCoordinatorAnnouncement(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pAnnounceCoordinator);
-					}else{
-						//Logging.log(this, "Ignoring stored neighbor of uninteresting type in ARG: " + tLocallyKnownNeighbor);
-					}
+					 * Forward the announcement
+					 * HINT: we avoid loops by excluding the sender from the forwarding process
+					 */
+					Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+					tLocalCluster.forwardCoordinatorAnnouncement(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pAnnounceCoordinator);
 				}
 			}else{
 				Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCoordinator);

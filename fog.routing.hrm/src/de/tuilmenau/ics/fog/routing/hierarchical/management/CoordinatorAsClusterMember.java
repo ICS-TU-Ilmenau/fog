@@ -63,9 +63,6 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		
 		Logging.log(tResult, "\n\n\n################ CREATED COORDINATOR AS CLUSTER MEMBER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
-		// detect neighbor clusters (members), increase the Bully priority based on the local connectivity
-		tResult.initializeNeighborhood();
-
 		// register at HRMController's internal database
 		pHRMController.registerCoordinatorAsClusterMember(tResult);
 
@@ -73,19 +70,6 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		tResult.mElector = new Elector(pHRMController, tResult);
 
 		return tResult;
-	}
-
-	/**
-	 * Detects neighbor clusters and increases the cluster's Bully priority based on the local connectivity. 
-	 */
-	@Override
-	protected void initializeNeighborhood()
-	{
-		if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
-			super.initializeNeighborhood();
-		}else{
-			mNeighborhoodInitialized = true;
-		}
 	}
 
 	/**

@@ -105,9 +105,6 @@ public class Cluster extends ClusterMember
 	{
 		Cluster tResult = new Cluster(pHRMController, pHierarchyLevel, pClusterID);
 		
-		// detect neighbor clusters (members), increase the Bully priority based on the local connectivity
-		tResult.initializeNeighborhood();
-
 		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
 		// register at HRMController's internal database

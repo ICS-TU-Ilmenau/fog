@@ -368,36 +368,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
-	 * Registers a neighbor of this control entity within the ARG of the HRMController instance
-	 *  
-	 * @param pNeighbor the neighbor, which should be registered
-	 */
-	public void registerLocalNeighborARG(ControlEntity pNeighbor)
-	{
-		// avoid registration of neighbors of type "CoordinatorAsClusterMember"
-		if(!(this instanceof CoordinatorAsClusterMember)){
-			Logging.log(this, "Registering neighbor (ARG): " + pNeighbor);
-	
-			AbstractRoutingGraphLink.LinkType tLinkType = AbstractRoutingGraphLink.LinkType.DB_REF;
-	
-			/**
-			 * Register a link to the neighbor and tell the neighbor about it 
-			 */
-			LinkedList<ControlEntity> tNeighbors = getNeighborsARG(); 
-			if(!tNeighbors.contains(pNeighbor))
-			{
-				AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(tLinkType);
-				mHRMController.registerLinkARG(pNeighbor, this, tLink);
-	
-				// backward call
-				pNeighbor.registerLocalNeighborARG(this);
-			}else{
-				Logging.log(this, "Neighbor " + pNeighbor + " is already known");
-			}
-		}
-	}
-
-	/**
 	 * Determines all registered neighbors for this control entity, which can be found withing the ARG of the HRMController instance
 	 * 
 	 * @return the found neighbors of the ARG
@@ -863,8 +833,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			return false;
 		}
 		
-		ControlEntity tComparedObj = (ControlEntity) pObj;
-
 		if (pObj instanceof Long){
 			Long tOtherClusterID = (Long)pObj;
 
@@ -875,18 +843,21 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			}
 		}
 		
-		if (this instanceof Coordinator){
-			Coordinator tThisCoordinator = (Coordinator)this;
-			if(tThisCoordinator.getCoordinatorID() == tComparedObj.getCoordinatorID()){
+		if(pObj instanceof ControlEntity){
+			ControlEntity tComparedObj = (ControlEntity) pObj;
+			if (this instanceof Coordinator){
+				Coordinator tThisCoordinator = (Coordinator)this;
+				if(tThisCoordinator.getCoordinatorID() == tComparedObj.getCoordinatorID()){
+					return true;
+				}
+			}
+					
+			//Logging.log(this, "EQUALS COMPARING with " + pObj + ": " + tICluster.getClusterID() + "<=>" + tThisICluster.getClusterID() + ", " + tICluster.getToken() + "<=>" + tThisICluster.getToken() + ", " + tICluster.getHierarchyLevel().getValue() + "<=>" + getHierarchyLevel().getValue());
+	
+			//HINT: we ignore the coordinator ID because the clusterID is unique enough for identification
+			if (tComparedObj.getClusterID().equals(getClusterID()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
 				return true;
 			}
-		}
-				
-		//Logging.log(this, "EQUALS COMPARING with " + pObj + ": " + tICluster.getClusterID() + "<=>" + tThisICluster.getClusterID() + ", " + tICluster.getToken() + "<=>" + tThisICluster.getToken() + ", " + tICluster.getHierarchyLevel().getValue() + "<=>" + getHierarchyLevel().getValue());
-
-		//HINT: we ignore the coordinator ID because the clusterID is unique enough for identification
-		if (tComparedObj.getClusterID().equals(getClusterID()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
-			return true;
 		}
 
 		return false;

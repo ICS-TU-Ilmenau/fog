@@ -168,36 +168,27 @@ public class Elector implements Localization
 		
 		// is the parent the cluster head?
 		if(mParent instanceof ClusterMember){
-			ClusterMember tParentClusterMember = (ClusterMember)mParent;
-			
-			// was the cluster already locally registered as neighbor? 
-			if (tParentClusterMember.isNeighborHoodInitialized()){
-				switch(mState){
-					case IDLE:
-						elect();
-						break;
-					case ELECTED:
-						if (isCoordinatorValid()){
-							Logging.log(this, "RESTARTING ELECTION, old coordinator was valid: " + isCoordinatorValid());
-							reelect();
-						}
-						break;
-					case ELECTING:
-						Logging.log(this, "Election is already running");
-						break;
-					case ERROR:
-						Logging.err(this, "Election is in ERROR state");
-						break;
-					case START:
-						Logging.err(this, "Election is stuck");
-						break;
-					default:
-						break;
-				}
-			}else{
-				Logging.err(this, "Neighborhood of cluster " + mParent + " has to be already initialized when calling startElection()");
-				
-				setElectorState(ElectorState.ERROR);
+			switch(mState){
+				case IDLE:
+					elect();
+					break;
+				case ELECTED:
+					if (isCoordinatorValid()){
+						Logging.log(this, "RESTARTING ELECTION, old coordinator was valid: " + isCoordinatorValid());
+						reelect();
+					}
+					break;
+				case ELECTING:
+					Logging.log(this, "Election is already running");
+					break;
+				case ERROR:
+					Logging.err(this, "Election is in ERROR state");
+					break;
+				case START:
+					Logging.err(this, "Election is stuck");
+					break;
+				default:
+					break;
 			}
 		}else{
 			Logging.warn(this, "We skipped election start because parent isn't a cluster member: " + mParent);
