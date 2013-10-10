@@ -1320,53 +1320,57 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	final Object mClusterMutex = new Object(); 
 	public synchronized void cluster(final HierarchyLevel pHierarchyLevel)
 	{
-		Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel.getValue());
-
-		if(pHierarchyLevel.isValid()){
-			// search for an existing cluster at this hierarchy level
-			Cluster tCluster = getCluster(pHierarchyLevel);
-			
-			/**
-			 * Create a new superior cluster
-			 */
-			if(tCluster == null){
-				tCluster = Cluster.create(this, pHierarchyLevel, Cluster.createClusterID());
-			}
-			
-			/**
-			 * Helper for having access to the HRMController within the created thread
-			 */
-			final HRMController tHRMController = this;
-			final Cluster tTargetCluster = tCluster;
-			
-			/**
-			 * Create connection thread
-			 */
-			Thread tThread = new Thread() {
-				public String toString()
-				{
-					return tHRMController.toString();
+		if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
+			Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel.getValue());
+	
+			if(pHierarchyLevel.isValid()){
+				// search for an existing cluster at this hierarchy level
+				Cluster tCluster = getCluster(pHierarchyLevel);
+				
+				/**
+				 * Create a new superior cluster
+				 */
+				if(tCluster == null){
+					tCluster = Cluster.create(this, pHierarchyLevel, Cluster.createClusterID());
 				}
 				
-				public void run()
-				{
-					Thread.currentThread().setName("Clustering@" + tHRMController.getNodeGUIName() + "@" + pHierarchyLevel.getValue());
-
-					synchronized (mClusterMutex) {
-						/**
-						 * Distribute membership requests
-						 */
-						tTargetCluster.distributeMembershipRequests();
+				/**
+				 * Helper for having access to the HRMController within the created thread
+				 */
+				final HRMController tHRMController = this;
+				final Cluster tTargetCluster = tCluster;
+				
+				/**
+				 * Create connection thread
+				 */
+				Thread tThread = new Thread() {
+					public String toString()
+					{
+						return tHRMController.toString();
 					}
-				}
-			};
-			
-			/**
-			 * Start the connection thread
-			 */
-			tThread.start();
+					
+					public void run()
+					{
+						Thread.currentThread().setName("Clustering@" + tHRMController.getNodeGUIName() + "@" + pHierarchyLevel.getValue());
+	
+						synchronized (mClusterMutex) {
+							/**
+							 * Distribute membership requests
+							 */
+							tTargetCluster.distributeMembershipRequests();
+						}
+					}
+				};
+				
+				/**
+				 * Start the connection thread
+				 */
+				tThread.start();
+			}else{
+				Logging.err(this, "cluster() cannot start for a hierarchy level  of: " + pHierarchyLevel.getValue());
+			}
 		}else{
-			Logging.err(this, "cluster() cannot start for a hierarchy level  of: " + pHierarchyLevel.getValue());
+			Logging.warn(this, "cluster() canceled clustering because height limitation is reached at level: " + pHierarchyLevel.getValue());
 		}
 	}
 
