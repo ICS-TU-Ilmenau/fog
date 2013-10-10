@@ -156,7 +156,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					}
 				});
 				MenuItem tMenuItem1 = new MenuItem(tMenu, SWT.NONE);
-				if (mShowClusterMembers){
+				if (mShowCoordinatorAsClusterMembers){
 					tMenuItem1.setText("Hide coordinators as cluster members");
 				}else{
 					tMenuItem1.setText("Show coordinators as cluster members");
