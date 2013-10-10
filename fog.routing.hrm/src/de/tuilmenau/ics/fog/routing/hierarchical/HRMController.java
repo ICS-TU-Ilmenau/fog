@@ -349,9 +349,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void registerCoordinatorProxy(CoordinatorProxy pCoordinatorProxy)
 	{
-		int tLevel = pCoordinatorProxy.getHierarchyLevel().getValue() - 1; //TODO: die Hierarchieebenen im Koordinator richtig verwalten 
-		
-		Logging.log(this, "Registering coordinator proxy " + pCoordinatorProxy + " at level " + tLevel);
+		Logging.log(this, "Registering coordinator proxy " + pCoordinatorProxy + " at level " + pCoordinatorProxy.getHierarchyLevel().getValue());
 
 		synchronized (mLocalCoordinatorProxies) {
 			// register as known coordinator proxy
@@ -369,6 +367,36 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// register the coordinator prxy in the local ARG
 		registerNodeARG(pCoordinatorProxy);
+
+		// it's time to update the GUI
+		notifyGUI(pCoordinatorProxy);
+	}
+
+	/**
+	 * Unregisters a coordinator proxy from the local database.
+	 * 
+	 * @param pCoordinatorProxy the coordinator proxy for a defined coordinator
+	 */
+	public synchronized void unregisterCoordinatorProxy(CoordinatorProxy pCoordinatorProxy)
+	{
+		Logging.log(this, "Unregistering coordinator proxy " + pCoordinatorProxy + " at level " + pCoordinatorProxy.getHierarchyLevel().getValue());
+
+		synchronized (mLocalCoordinatorProxies) {
+			// unregister as known coordinator proxy
+			mLocalCoordinatorProxies.remove(pCoordinatorProxy);
+		}
+		
+		// are we at base hierarchy level
+		if(pCoordinatorProxy.getHierarchyLevel().isBaseLevel()){
+			// increase hierarchy node priority
+			decreaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinatorProxy.getDistance());
+		}
+
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
+		
+		// register the coordinator prxy in the local ARG
+		unregisterNodeARG(pCoordinatorProxy);
 
 		// it's time to update the GUI
 		notifyGUI(pCoordinatorProxy);
@@ -734,6 +762,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Unregister a coordinator-as-cluster-member from the local database
+	 * 
+	 * @param pCoordinatorAsClusterMember the coordinator-as-cluster-member which should be unregistered
+	 */
+	public synchronized void unregisterCoordinatorAsClusterMember(CoordinatorAsClusterMember pCoordinatorAsClusterMember)
+	{
+		Logging.log(this, "Unregistering coordinator-as-cluster-member " + pCoordinatorAsClusterMember);
+
+		synchronized (mLocalCoordinatorAsClusterMemebers) {
+			// unregister from list of known cluster members
+			mLocalCoordinatorAsClusterMemebers.remove(pCoordinatorAsClusterMember);
+		}
+
+		if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
+			// updates the GUI decoration for this node
+			updateGUINodeDecoration();
+	
+			// register at the ARG
+			unregisterNodeARG(pCoordinatorAsClusterMember);
+	
+			// it's time to update the GUI
+			notifyGUI(pCoordinatorAsClusterMember);
+		}
+	}
+
+	/**
 	 * Registers a cluster member at the local database.
 	 * 
 	 * @param pClusterMember the cluster member which should be registered
@@ -775,7 +829,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void unregisterClusterMember(ClusterMember pClusterMember)
 	{
-		Logging.log(this, "Unregistering cluster member" + pClusterMember);
+		Logging.log(this, "Unregistering cluster member " + pClusterMember);
 
 		synchronized (mLocalClusterMembers) {
 			// unregister from list of known cluster members
