@@ -1614,7 +1614,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public long getHierarchyNodePriority()
 	{
-		return mNodeHierarchyPriority;
+		if (HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY){
+			return mNodeHierarchyPriority;
+		}else{
+			return getConnectivityNodePriority();
+		}
 	}
 	
 	/**
@@ -1652,7 +1656,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			int i = 0;
 			for(ClusterMember tClusterMember : mLocalClusterMembers){
 				Logging.log(this, "      ..update (" + mConnectivityPriorityUpdates + ") - informing[" + i + "]: " + tClusterMember);
-				tClusterMember.eventConnectivityNodePriorityUpdate(pPriority);
+				tClusterMember.eventConnectivityNodePriorityUpdate(getConnectivityNodePriority());
 				i++;
 			}
 		}
@@ -1681,7 +1685,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
 			for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mLocalCoordinatorAsClusterMemebers){
-				tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(pPriority);
+				tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority());
 			}
 		}
 	}

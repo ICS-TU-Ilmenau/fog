@@ -135,7 +135,7 @@ public class HRMConfig
 		/**
 		 * Maximum radius that is allowed during cluster expansion phase 
 		 */
-		public static final int EXPANSION_RADIUS = 2;
+		public static final int EXPANSION_RADIUS = 4;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
@@ -170,7 +170,7 @@ public class HRMConfig
 		 * Defines if coordinators should announce their existences among cluster members/neighbors
 		 * IMPORTANT: If this is disabled, the hierarchy creation won't be correct.
 		 */
-		public static final boolean COORDINATOR_ANNOUNCEMENTS = false;
+		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
 
 		/**
 		 * Defines the time period for CoordinatorAnnounce distributions
@@ -187,6 +187,14 @@ public class HRMConfig
 		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated network topology.
 		 */
 		public static final boolean TOPOLOGY_REPORTS = false;
+
+		/**
+		 * Defines if elections at higher hierarchy levels should be based on a separate hierarchy priority per node.
+		 * This values is computed based on the received L0 coordinator announcements. It expresses the L0 clustering
+		 * neighborhood. The more neighbor L0 regions exist within the given max. radius (EXPANSION_RADIUS), the higher
+		 * is this value.
+		 */
+		public static final boolean USE_SEPARATE_HIERARCHY_NODE_PRIORITY = false;
 	}
 	
 	/**
