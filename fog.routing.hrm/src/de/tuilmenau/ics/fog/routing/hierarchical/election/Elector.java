@@ -606,16 +606,15 @@ public class Elector implements Localization
 	 */
 	private void checkForWinner()
 	{
-		BullyPriority tHighestPrio = null;
-		ComChannel tExternalWinner = null;
-		boolean tIsWinner = false;
+		boolean tIsWinner = true;
 		boolean tElectionComplete = true;
+		ComChannel tExternalWinner = null;
 		
 		if(mState == ElectorState.ELECTING){
 			// do we know more than 0 external cluster members?
 			if (mParent.countConnectedRemoteClusterMembers() > 0){
 				/**
-				 * Find the highest priority of all external cluster members
+				 * Iterate over all cluster members and check if their priority is available, check every cluster member if it has a higher priority
 				 */
 				Logging.log(this, "Searching for highest priority...");
 				for(ComChannel tComChannel : mParent.getComChannels()) {
@@ -635,11 +634,11 @@ public class Elector implements Localization
 					Logging.log(this, "		..cluster member " + tComChannel + " has priority " + tPriority.getValue()); 
 					
 					/**
-					 * find the highest priority in the cluster
+					 * compare our priority with each priority of a cluster member 
 					 */
-					if((tHighestPrio == null) || (tPriority.isHigher(this, tHighestPrio))) {
-						tHighestPrio = tPriority;
+					if(!havingHigherPrioriorityThan(tComChannel)) {
 						tExternalWinner = tComChannel;
+						tIsWinner = false;
 					}
 				}
 				
@@ -648,11 +647,6 @@ public class Elector implements Localization
 				 */
 				if (tElectionComplete){
 					/**
-					 * Is the local priority higher?
-					 */
-					tIsWinner = havingHigherPrioriorityThan(tExternalWinner);
-
-					/**
 					 * React on the result
 					 */
 					if(tIsWinner) {
@@ -660,7 +654,7 @@ public class Elector implements Localization
 						eventElectionWon();
 					}else{
 						if (tExternalWinner != null){
-							Logging.log(this, "	        ..seeing " + tExternalWinner.getPeerL2Address() + " as election winner");
+							Logging.log(this, "	        ..seeing " + tExternalWinner.getPeerL2Address() + " as better coordinator candidate");
 						}else{
 							Logging.err(this, "External winner is unknown but also I am not the winner");
 						}
