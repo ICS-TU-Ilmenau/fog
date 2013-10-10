@@ -183,6 +183,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private long mNodeConnectivityPriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
 
 	/**
+	 * Stores the central node for the ARG
+	 */
+	private CentralNodeARG mCentralARGNode = null;
+	
+	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
@@ -256,6 +261,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// store the reference to the local instance of hierarchical routing service
 		mHierarchicalRoutingService = pHierarchicalRoutingService;
 		
+		// create central node in the local ARG
+		mCentralARGNode = new CentralNodeARG(this);
+
 		// create local loopback session
 		ComSession.createLoopback(this);
 		
@@ -715,6 +723,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			// register the link in the local ARG
 			registerLinkARG(pCoordinatorAsClusterMember, pCoordinatorAsClusterMember.getCoordinator(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
 
+			// register link to central node in the ARG
+			if (HRMConfig.DebugOutput.SHOW_ALL_OBJECT_REFS_TO_CENTRAL_NODE_IN_ARG){
+				registerLinkARG(mCentralARGNode, pCoordinatorAsClusterMember, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+			}
+
 			// it's time to update the GUI
 			notifyGUI(pCoordinatorAsClusterMember);
 		}
@@ -745,6 +758,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		// register the cluster in the local ARG
 		registerNodeARG(pClusterMember);
+
+		// register link to central node in the ARG
+		if (HRMConfig.DebugOutput.SHOW_ALL_OBJECT_REFS_TO_CENTRAL_NODE_IN_ARG){
+			registerLinkARG(mCentralARGNode, pClusterMember, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+		}
 
 		// it's time to update the GUI
 		notifyGUI(pClusterMember);
@@ -800,6 +818,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		// register the cluster in the local ARG
 		registerNodeARG(pCluster);
+
+		// register link to central node in the ARG
+		if (HRMConfig.DebugOutput.SHOW_ALL_OBJECT_REFS_TO_CENTRAL_NODE_IN_ARG){
+			registerLinkARG(mCentralARGNode, pCluster, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+		}
 
 		// it's time to update the GUI
 		notifyGUI(pCluster);
@@ -2166,7 +2189,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pTo the ending point of the link
 	 * @param pLink the link between the two nodes
 	 */
-	public void registerLinkARG(ControlEntity pFrom, ControlEntity pTo, AbstractRoutingGraphLink pLink)
+	public void registerLinkARG(AbstractRoutingGraphNode pFrom, AbstractRoutingGraphNode pTo, AbstractRoutingGraphLink pLink)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "REGISTERING LINK (ARG):  source=" + pFrom + " ## dest.=" + pTo + " ## link=" + pLink);

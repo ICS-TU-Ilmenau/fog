@@ -104,6 +104,11 @@ public class HRMConfig
 		 * Defines if the hierarchy creation should start once the entire simulation was created. 
 		 */
 		public static final boolean BLOCK_HIERARCHY_UNTIL_END_OF_SIMULATION_CREATION = false;
+
+		/**
+		 * Defines if all HRM entities should be linked to a central node in the ARG
+		 */
+		public static final boolean SHOW_ALL_OBJECT_REFS_TO_CENTRAL_NODE_IN_ARG = false;
 	}
 	
 	public class Addressing
