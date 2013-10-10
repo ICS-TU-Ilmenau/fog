@@ -189,6 +189,8 @@ public class EventHandler extends Thread
 	{
 		EventHolder tEvent = null;
 		
+		Thread.currentThread().setName("EventHandler");
+
 		if(Simulator.MODE != SimulatorMode.STEP_SIM) {
 			// increase thread priority in order to favor it over
 			// application threads doing stupid stuff, which would
@@ -275,7 +277,7 @@ public class EventHandler extends Thread
 						}
 					}
 				}
-			} // elihw
+			} 
 		}
 		// else: nothing to do -> step mode
 	}
