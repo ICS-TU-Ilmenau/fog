@@ -42,7 +42,11 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 */
 	public BullyPriority getSenderPriority()
 	{
-		return mSenderPriority.clone();
+		if(mSenderPriority != null){
+			return mSenderPriority.clone();
+		}else{
+			return BullyPriority.create(this);
+		}
 	}
 
 	/**
@@ -66,6 +70,6 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + (getSenderPriority() != null ? ", SenderPrio=" + getSenderPriority().getValue() : "") + ")";
 	}
 }
