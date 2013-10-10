@@ -447,7 +447,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * Revoke own HRMID
 		 */ 
-		eventRevokedHRMID(this, getHRMID());
+		if(!getHRMID().isZero()){
+			eventRevokedHRMID(this, getHRMID());
+		}
 		
 		/**
 		 * Revoke all assigned HRMIDs of all cluster members
