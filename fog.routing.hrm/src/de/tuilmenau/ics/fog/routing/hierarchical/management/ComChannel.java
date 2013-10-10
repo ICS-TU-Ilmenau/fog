@@ -220,7 +220,7 @@ public class ComChannel
 	/**
 	 * Limits the size of the packet storage
 	 */
-	private static int MAX_PACKET_STORAGE_SIZE = 20;
+	private static int MAX_PACKET_STORAGE_SIZE = 64;
 	
 	/**
 	 * Constructor
@@ -839,6 +839,6 @@ public class ComChannel
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "@" + mParent.toString() + "(Peer="+ (getPeerL2Address() != null ? getPeerL2Address() + " <#> " + getPeerHRMID() : "") + ")";
+		return getClass().getSimpleName() + "@" + mParent.toString() + "(Peer="+ (getPeerL2Address() != null ? (getPeer() != null ? getPeer() : getPeerL2Address()) + " <#> " + getPeerHRMID() : "") + ")";
 	}
 }
