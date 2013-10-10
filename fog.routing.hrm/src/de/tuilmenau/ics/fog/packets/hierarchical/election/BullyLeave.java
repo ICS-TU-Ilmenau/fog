@@ -32,5 +32,4 @@ public class BullyLeave extends SignalingMessageBully
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 	}
-
 }
