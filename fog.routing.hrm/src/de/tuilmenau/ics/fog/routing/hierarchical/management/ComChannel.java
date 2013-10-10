@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.LeaveCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
@@ -789,6 +790,28 @@ public class ComChannel
 				tCluster.eventClusterMemberJoined(this);		
 			}else{
 				Logging.err(this, "Expected a Cluster object as parent for processing RequestClusterMembershipAck data but parent is " + getParent());
+			}
+			
+			return true;
+		}
+		
+		/**
+		 * LeaveCluster
+		 */
+		if(pData instanceof LeaveCluster) {
+			LeaveCluster tLeaveClusterPacket = (LeaveCluster)pData;
+
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "LEAVE_CLUSTER-received from \"" + getPeerHRMID() + "\"");
+
+			// is the parent a coordinator or a cluster?
+			if (getParent() instanceof Cluster){
+				Cluster tCluster = (Cluster)getParent();
+				
+				// trigger event "cluster member joined"
+				tCluster.eventClusterMemberLost(this);		
+			}else{
+				Logging.err(this, "Expected a Cluster object as parent for processing LeaveCluster data but parent is " + getParent());
 			}
 			
 			return true;

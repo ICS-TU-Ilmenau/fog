@@ -290,22 +290,27 @@ public class Cluster extends ClusterMember
 		
 		// unregister the comm. channel
 		unregisterComChannel(pComChannel);
-		
-		ControlEntity tComChannelPeer = pComChannel.getPeer(); 
-		if(tComChannelPeer != null){
+
+		/**
+		 * Update ARG
+		 */
+		ControlEntity tChannelPeer = pComChannel.getPeer(); 
+		if (tChannelPeer != null){
+			mHRMController.unregisterLinkARG(this, tChannelPeer);
+
 			// does this comm. channel end at a local coordinator?
-			if(tComChannelPeer instanceof Coordinator){
+			if(tChannelPeer instanceof Coordinator){
 				synchronized (mInferiorLocalCoordinators) {
-					mInferiorLocalCoordinators.remove(tComChannelPeer);					
+					mInferiorLocalCoordinators.remove(tChannelPeer);					
 				}
 			}else
 			// does this comm. channel end at a remote coordinator (a coordinator proxy)?
-			if(tComChannelPeer instanceof CoordinatorProxy){
+			if(tChannelPeer instanceof CoordinatorProxy){
 				synchronized (mInferiorRemoteCoordinators) {
-					mInferiorRemoteCoordinators.remove(tComChannelPeer);					
+					mInferiorRemoteCoordinators.remove(tChannelPeer);					
 				}
 			}else{
-				Logging.err(this, "Comm. channel peer has unsupported type: " + tComChannelPeer);
+				Logging.err(this, "Comm. channel peer has unsupported type: " + tChannelPeer);
 			}
 		}
 		Logging.log(this, "      ..remaining comm. channels: " + getComChannels());
@@ -357,7 +362,21 @@ public class Cluster extends ClusterMember
 	{
 		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
 		
-		//TODO: should we do something additional here?
+		/**
+		 * Update ARG
+		 */
+		ControlEntity tChannelPeer = pComChannel.getPeer(); 
+		if (tChannelPeer != null){
+			if (tChannelPeer instanceof Coordinator){
+				mHRMController.registerLinkARG(this, tChannelPeer, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOCAL_CONNECTION));
+			}else if(tChannelPeer instanceof CoordinatorProxy){
+				mHRMController.registerLinkARG(this, tChannelPeer, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_CONNECTION));	
+			}else{
+				Logging.err(this, "Peer (" + pComChannel.getPeer() + " is unsuported for channel: " + pComChannel);
+			}
+		}else{
+			Logging.err(this, "Cannot link to invalid peer for channel: " + pComChannel);
+		}
 
 		/**
 		 * Trigger: comm. channel established 
@@ -441,11 +460,6 @@ public class Cluster extends ClusterMember
 					ComSession tComSession = mHRMController.getCreateComSession(mHRMController.getNodeL2Address());		
 					if (tComSession != null){
 						/**
-						 * Update ARG
-						 */
-						mHRMController.registerLinkARG(this, tCoordinator, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.LOCAL_CONNECTION));
-
-						/**
 						 * Create coordinator name for this coordinator
 						 */
 						ClusterName tRemoteEndPointName = tCoordinator.createCoordinatorName();
@@ -487,10 +501,6 @@ public class Cluster extends ClusterMember
 						
 						ComSession tComSession = mHRMController.getCreateComSession(tCoordinatorProxy.getCoordinatorNodeL2Address());		
 						if (tComSession != null){
-							/**
-							 * Update ARG
-							 */
-							mHRMController.registerLinkARG(this, tCoordinatorProxy, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_CONNECTION));	
 							/**
 							 * Create coordinator name for this coordinator proxy
 							 */

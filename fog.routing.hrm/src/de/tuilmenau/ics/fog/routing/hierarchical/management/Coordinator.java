@@ -467,7 +467,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		
 		synchronized (mClusterMemberships) {
 			for (ClusterMember tClusterMember : mClusterMemberships){
-				tClusterMember.eventMembershipInvalid();
+				tClusterMember.eventClusterMembershipInvalid();
 			}
 		}
 	}

@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.LeaveCluster;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
@@ -367,45 +368,18 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * EVENT: membership invalid 
+	 * EVENT: cluster membership invalid 
 	 */
-	public void eventMembershipInvalid()
+	public void eventClusterMembershipInvalid()
 	{
+		Logging.log(this, "EVENT: cluster membership invalid");
+		
 		/**
-		 * Send: "Bully Leave" to all superior clusters
+		 * Send: "Leave" to all superior clusters
 		 */
-		// create signaling packet for signaling that we leave the Bully group
-		BullyLeave tBullyLeavePacket = new BullyLeave(mHRMController.getNodeName(), getPriority());
+		LeaveCluster tLeaveClusterPacket = new LeaveCluster(mHRMController.getNodeName(), getHRMID(), null, null);
+		sendClusterBroadcast(tLeaveClusterPacket, true);
 
-		// get all communication channels
-		LinkedList<ComChannel> tComChannels = getComChannels();
-
-		// get the L2Addres of the local host
-		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
-		
-		Logging.log(this, "CLUSTER MEMBERSHIP invalid, sending Bully leave: " + tBullyLeavePacket);
-		
-		int tUsedChannels = 0;
-		for(ComChannel tComChannel : tComChannels) {
-			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
-			
-			if (!tIsLoopback){
-				Logging.log(this, "       ..to " + tComChannel);
-			}else{
-				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
-			}
-
-			// send the packet to one of the possible cluster members
-			tComChannel.sendPacket(tBullyLeavePacket);
-			
-			tUsedChannels++;
-		}
-		
-		// drop the warning in case too many comm. channels were used
-		if (tUsedChannels > 1){
-			Logging.warn(this, "Found " + tUsedChannels + " instead of ONLY ONE channel twoards the cluster head");
-		}
-		
 		/**
 		 * Unregister from the HRMController's internal database
 		 */ 

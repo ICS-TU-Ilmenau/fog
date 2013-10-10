@@ -546,11 +546,8 @@ public class Elector implements Localization
 	private void eventElectionLeft(ComChannel pComChannel)
 	{
 		Logging.log(this, "EVENT: cluster member left, comm. channel was: " + pComChannel);
-
-		/**
-		 * TRIGGER: all cluster members are gone, we destroy the cluster
-		 */
-		mParent.eventClusterMemberLost(pComChannel);
+		
+		//TODO: 
 	}
 	
 	/**
