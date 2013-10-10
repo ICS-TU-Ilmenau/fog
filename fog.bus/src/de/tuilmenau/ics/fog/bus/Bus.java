@@ -296,12 +296,14 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	 * @param newnode Gate, which should be added.
 	 */
 	@Override
-	public synchronized NeighborInformation attach(String name, ILowerLayerReceive receivingNode)
+	public NeighborInformation attach(String name, ILowerLayerReceive receivingNode)
 	{
 		if(!broken) {
 			HigherLayerRegistration higherLayer = new HigherLayerRegistration(getTimeBase(), mDatarateMeasurement, getLogger(), name, getNewID(), receivingNode);
 			
-			nodelist.add(higherLayer);
+			synchronized (nodelist) {
+				nodelist.add(higherLayer);
+			}
 			
 			for(LayerObserverCallback obs : observerList) {
 				try {
@@ -405,15 +407,17 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 					// log packet for statistic
 					packetLog.add(packet);
 		
-					for(HigherLayerRegistration hl : nodelist) {
-						if(hl.getNeighbor().equals(destination) || (destination.equals(BROADCAST))) {
-							if(Config.Connection.LOG_PACKET_STATIONS){
-								Logging.log(this, "Storing: " + packet + ", in higher layer: " + hl);
+					synchronized (nodelist) {
+						for(HigherLayerRegistration hl : nodelist) {
+							if(hl.getNeighbor().equals(destination) || (destination.equals(BROADCAST))) {
+								if(Config.Connection.LOG_PACKET_STATIONS){
+									Logging.log(this, "Storing: " + packet + ", in higher layer: " + hl);
+								}
+								numberOfMatchingNeighbors++;
+								// Inform queue for higher layer about packet.
+								// Packet will be cloned later, during the delivery process. 
+								storeRes = hl.storePacket(delivery);
 							}
-							numberOfMatchingNeighbors++;
-							// Inform queue for higher layer about packet.
-							// Packet will be cloned later, during the delivery process. 
-							storeRes = hl.storePacket(delivery);
 						}
 					}
 					
@@ -477,27 +481,29 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		do {
 			found = false;
 			
-			for(HigherLayerRegistration hl : nodelist) {
-				if(hl.is(receivingNode)) {
-					if(!broken) {
-						//
-						// inform observer about removed neighbor
-						//
-						for(LayerObserverCallback obs : observerList) {
-							try {
-								obs.neighborDisappeared(hl.getNeighbor());
-							}
-							catch(Exception tExc) {
-								// ignore exceptions; just report them
-								mLogger.err(this, "Ignoring exception from observer " +obs +" while detach.", tExc);
+			synchronized (nodelist) {
+				for(HigherLayerRegistration hl : nodelist) {
+					if(hl.is(receivingNode)) {
+						if(!broken) {
+							//
+							// inform observer about removed neighbor
+							//
+							for(LayerObserverCallback obs : observerList) {
+								try {
+									obs.neighborDisappeared(hl.getNeighbor());
+								}
+								catch(Exception tExc) {
+									// ignore exceptions; just report them
+									mLogger.err(this, "Ignoring exception from observer " +obs +" while detach.", tExc);
+								}
 							}
 						}
+						
+						found = true;
+						nodelist.remove(hl);
+						// iterator is invalid after removing -> leave for loop
+						break;
 					}
-					
-					found = true;
-					nodelist.remove(hl);
-					// iterator is invalid after removing -> leave for loop
-					break;
 				}
 			}
 		}
@@ -516,11 +522,13 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	{
 		if(forNeighbor != null) {
 			// search in list for this neighbor
-			for(HigherLayerRegistration hl : nodelist) {
-				NeighborInformation neighbor = hl.getNeighbor();
-				
-				if(forNeighbor.equals(neighbor)) {
-					return hl.getLowerLayerReceive();
+			synchronized (nodelist) {
+				for(HigherLayerRegistration hl : nodelist) {
+					NeighborInformation neighbor = hl.getNeighbor();
+					
+					if(forNeighbor.equals(neighbor)) {
+						return hl.getLowerLayerReceive();
+					}
 				}
 			}
 		}
@@ -536,18 +544,20 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		if(broken) {
 			neighborlist = new NeighborList(this);
 			
-			// copy elements from entity list
-			for(HigherLayerRegistration hl : nodelist) {
-				NeighborInformation neighbor = hl.getNeighbor();
-				
-				if(neighbor != null) {
-					// filter an entry from list?
-					if(forMe != null) {
-						if(!hl.getNeighbor().equals(forMe)) {
+			synchronized (nodelist) {
+				// copy elements from entity list
+				for(HigherLayerRegistration hl : nodelist) {
+					NeighborInformation neighbor = hl.getNeighbor();
+					
+					if(neighbor != null) {
+						// filter an entry from list?
+						if(forMe != null) {
+							if(!hl.getNeighbor().equals(forMe)) {
+								neighborlist.add(hl.getNeighbor());
+							}
+						} else {
 							neighborlist.add(hl.getNeighbor());
 						}
-					} else {
-						neighborlist.add(hl.getNeighbor());
 					}
 				}
 			}
@@ -578,7 +588,9 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	@Override
 	public synchronized void close()
 	{
-		nodelist.clear();
+		synchronized (nodelist) {
+			nodelist.clear();
+		}
 		observerList.clear();
 		
 		setBroken(true, Config.Routing.ERROR_TYPE_VISIBLE);
