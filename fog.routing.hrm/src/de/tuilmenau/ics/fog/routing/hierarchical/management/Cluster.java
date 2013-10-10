@@ -12,9 +12,11 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -58,6 +60,11 @@ public class Cluster extends ClusterMember
 	 * Stores the connect inferior local coordinators.
 	 */
 	private LinkedList<CoordinatorProxy> mInferiorRemoteCoordinators = new LinkedList<CoordinatorProxy>();
+
+	/**
+	 * Stores if the cluster role is still valid
+	 */
+	private boolean mClusterRoleValid = true;
 
 	/**
 	/**
@@ -191,6 +198,25 @@ public class Cluster extends ClusterMember
 	}
 	
 	/**
+	 * Forwards a coordinator announcement by sending it to all cluster members
+	 * @param pSourceL2Address 
+	 * 
+	 * @param pAnnounceCoordinator the coordinator announcement
+	 */
+	public void forwardCoordinatorInvalidation(L2Address pSourceL2Address, InvalidCoordinator pInvalidCoordinator)
+	{
+		Logging.log(this, "Forwarding coordinator invalidation: " + pInvalidCoordinator);
+	
+		// check the TTL once more
+		if(pInvalidCoordinator.isTTLOkay()){
+			// forward this invalidation to all cluster members
+			sendClusterBroadcast(pInvalidCoordinator, pSourceL2Address /* do NOT forward to the source */);
+		}else{
+			Logging.err(this, "forwardCoordinatorInvalidation() found invalid TTL for: " + pInvalidCoordinator);
+		}
+	}
+
+	/**
 	 * Determines the coordinator of this cluster. It is "null" if the election was lost or hasn't finished yet. 
 	 * 
 	 * @return the cluster's coordinator
@@ -301,12 +327,14 @@ public class Cluster extends ClusterMember
 			// does this comm. channel end at a local coordinator?
 			if(tChannelPeer instanceof Coordinator){
 				synchronized (mInferiorLocalCoordinators) {
+					Logging.log(this, "      ..removing local cluster member: " + tChannelPeer);
 					mInferiorLocalCoordinators.remove(tChannelPeer);					
 				}
 			}else
 			// does this comm. channel end at a remote coordinator (a coordinator proxy)?
 			if(tChannelPeer instanceof CoordinatorProxy){
 				synchronized (mInferiorRemoteCoordinators) {
+					Logging.log(this, "      ..removing remote cluster member: " + tChannelPeer);
 					mInferiorRemoteCoordinators.remove(tChannelPeer);					
 				}
 			}else{
@@ -322,14 +350,14 @@ public class Cluster extends ClusterMember
 			/**
 			 * TRIGGER: cluster invalid
 			 */
-			eventClusterInvalid();
+			eventClusterRoleInvalid();
 		}
 	}
 
 	/**
-	 * EVENT: coordinator invalid
+	 * EVENT: cluster role invalid
 	 */
-	private void eventClusterInvalid()
+	private synchronized void eventClusterRoleInvalid()
 	{
 		Logging.log(this, "============ EVENT: cluster role invalid");
 		
@@ -337,9 +365,17 @@ public class Cluster extends ClusterMember
 		 * TRIGGER: event coordinator role invalid
 		 */
 		if (getCoordinator() != null){
+			Logging.log(this, "     ..eventClusterRoleInvalid() invalidates now the local coordinator: " + getCoordinator());
 			getCoordinator().eventCoordinatorRoleInvalid();
 		}else{
 			Logging.warn(this, "eventClusterInvalid() can't find the coordinator");
+		}
+		
+		Logging.log(this, "============ EVENT: canceling all memberships");
+		LinkedList<ComChannel> tcomChannels = getComChannels();
+		for(ComChannel tComChannel: tcomChannels){
+			Logging.log(this, "     ..canceling: " + tComChannel);
+			destroyComChannel(tComChannel);
 		}
 		
 		Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
@@ -360,7 +396,7 @@ public class Cluster extends ClusterMember
 	 */
 	public synchronized void eventClusterMemberJoined(ComChannel pComChannel)
 	{
-		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
+		Logging.log(this, "EVENT: joined cluster member, comm. channel: " + pComChannel);
 		
 		/**
 		 * Update ARG
@@ -375,7 +411,11 @@ public class Cluster extends ClusterMember
 				Logging.err(this, "Peer (" + pComChannel.getPeer() + " is unsuported for channel: " + pComChannel);
 			}
 		}else{
-			Logging.err(this, "Cannot link to invalid peer for channel: " + pComChannel);
+			if(!getHierarchyLevel().isBaseLevel()){
+				Logging.err(this, "Cannot link to invalid peer for channel: " + pComChannel);
+			}else{
+				// we are at base hierarchy level: the peer object is a ClusterMember object at a foreign node, there doesn't exist a representation for this entity on this node 
+			}
 		}
 
 		/**
@@ -393,6 +433,22 @@ public class Cluster extends ClusterMember
 		}
 	}
 
+	/**
+	 * Destroys a communication channel
+	 * 
+	 * @param pComChannel the communication channel
+	 */
+	private void destroyComChannel(ComChannel pComChannel)
+	{
+		Logging.log(this, "Destroying comm. channel to peer=" + pComChannel.getPeer() + "(remoteEP=" + pComChannel.getRemoteClusterName() +")");
+		
+		/**
+		 * Send "InformClusterMembershipCanceled" along the comm. channel
+		 */
+		InformClusterMembershipCanceled tInformClusterMembershipCanceled = new InformClusterMembershipCanceled(mHRMController.getNodeName(), mHRMController.getNodeName(), createClusterName(), pComChannel.getRemoteClusterName());
+	    Logging.log(this, "       ..sending membership canceled: " + tInformClusterMembershipCanceled);
+	}
+	
 	/**
 	 * Establishes a communication channel
 	 * 
@@ -440,90 +496,95 @@ public class Cluster extends ClusterMember
 		 * Request for local coordinators
 		 ************************************/
 		Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR LOCAL COORDINATORS STARTED (call nr: " + mCountDistributeMembershipRequests + ")");
-		LinkedList<Coordinator> tCoordinators = mHRMController.getAllCoordinators(new HierarchyLevel(this,  getHierarchyLevel().getValue() - 1));
-		
-		/**
-		 * Iterate over all found local coordinators
-		 */
-		synchronized (mInferiorLocalCoordinators) {
-			if(mCountDistributeMembershipRequests > 1){
-				Logging.log(this, "      ..having connections to these inferior local coordinators: " + mInferiorLocalCoordinators.toString());
-			}
-			for (Coordinator tCoordinator : tCoordinators){
-				if (!mInferiorLocalCoordinators.contains(tCoordinator)){
-					Logging.log(this, "      ..found inferior local coordinator [NEW]: " + tCoordinator);
-					
-					// add this local coordinator to the list of connected coordinators
-					mInferiorLocalCoordinators.add(tCoordinator);
 
-				    Logging.log(this, "      ..get/create communication session");
-					ComSession tComSession = mHRMController.getCreateComSession(mHRMController.getNodeL2Address());		
-					if (tComSession != null){
-						/**
-						 * Create coordinator name for this coordinator
-						 */
-						ClusterName tRemoteEndPointName = tCoordinator.createCoordinatorName();
-						ClusterName tLocalEndPointName = new ClusterName(mHRMController, new HierarchyLevel(this, tRemoteEndPointName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordiantorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
-
-						/**
-						 * Establish the comm. channel
-						 */
-						establishComChannel(tComSession, tRemoteEndPointName, tLocalEndPointName, tCoordinator);
-					}else{
-						Logging.err(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + mHRMController.getNodeName() + " for local coordinator: " + tCoordinator);
-					}
-				}else{
-					Logging.log(this, "      ..found inferior local coordinator [already connected]: " + tCoordinator);
-				}
-			}
-		}
-
-		/************************************
-		 * Requests for remote coordinators
-		 ************************************/
-		Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR REMOTE COORDINATORS STARTED");
-		LinkedList<CoordinatorProxy> tCoordinatorProxies = mHRMController.getAllCoordinatorProxies(new HierarchyLevel(this,  getHierarchyLevel().getValue() - 1));
-		
-		if(tCoordinatorProxies.size() > 0){
+		if(mClusterRoleValid){
+			LinkedList<Coordinator> tCoordinators = mHRMController.getAllCoordinators(new HierarchyLevel(this,  getHierarchyLevel().getValue() - 1));
+			
 			/**
-			 * Iterate over all found remote coordinators
+			 * Iterate over all found local coordinators
 			 */
-			synchronized (mInferiorRemoteCoordinators) {
+			synchronized (mInferiorLocalCoordinators) {
 				if(mCountDistributeMembershipRequests > 1){
-					Logging.log(this, "      ..having connections to these inferior remote coordinators: " + mInferiorRemoteCoordinators.toString());
+					Logging.log(this, "      ..having connections to these inferior local coordinators: " + mInferiorLocalCoordinators.toString());
 				}
-				for (CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
-					if (!mInferiorRemoteCoordinators.contains(tCoordinatorProxy)){
-						Logging.log(this, "      ..found remote inferior coordinator[NEW]: " + tCoordinatorProxy);
+				for (Coordinator tCoordinator : tCoordinators){
+					if (!mInferiorLocalCoordinators.contains(tCoordinator)){
+						Logging.log(this, "      ..found inferior local coordinator [NEW]: " + tCoordinator);
 						
-						// add this remote coordinator to the list of connected coordinators
-						mInferiorRemoteCoordinators.add(tCoordinatorProxy);
-						
-						ComSession tComSession = mHRMController.getCreateComSession(tCoordinatorProxy.getCoordinatorNodeL2Address());		
+						// add this local coordinator to the list of connected coordinators
+						mInferiorLocalCoordinators.add(tCoordinator);
+	
+					    Logging.log(this, "      ..get/create communication session");
+						ComSession tComSession = mHRMController.getCreateComSession(mHRMController.getNodeL2Address());		
 						if (tComSession != null){
 							/**
-							 * Create coordinator name for this coordinator proxy
+							 * Create coordinator name for this coordinator
 							 */
-							ClusterName tRemoteEndPointName = tCoordinatorProxy.createCoordinatorName();
+							ClusterName tRemoteEndPointName = tCoordinator.createCoordinatorName();
 							ClusterName tLocalEndPointName = new ClusterName(mHRMController, new HierarchyLevel(this, tRemoteEndPointName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordiantorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
-							
+	
 							/**
 							 * Establish the comm. channel
 							 */
-							establishComChannel(tComSession, tRemoteEndPointName, tLocalEndPointName, tCoordinatorProxy);
+							establishComChannel(tComSession, tRemoteEndPointName, tLocalEndPointName, tCoordinator);
 						}else{
-							Logging.err(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + mHRMController.getNodeName() + " for remote coordinator: " + tCoordinatorProxy);
+							Logging.err(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + mHRMController.getNodeName() + " for local coordinator: " + tCoordinator);
 						}
 					}else{
-						Logging.log(this, "      ..found inferior remote coordinator [already connected]: " + tCoordinatorProxy);
+						Logging.log(this, "      ..found inferior local coordinator [already connected]: " + tCoordinator);
 					}
 				}
 			}
+	
+			/************************************
+			 * Requests for remote coordinators
+			 ************************************/
+			Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR REMOTE COORDINATORS STARTED");
+			LinkedList<CoordinatorProxy> tCoordinatorProxies = mHRMController.getAllCoordinatorProxies(new HierarchyLevel(this,  getHierarchyLevel().getValue() - 1));
+			
+			if(tCoordinatorProxies.size() > 0){
+				/**
+				 * Iterate over all found remote coordinators
+				 */
+				synchronized (mInferiorRemoteCoordinators) {
+					if(mCountDistributeMembershipRequests > 1){
+						Logging.log(this, "      ..having connections to these inferior remote coordinators: " + mInferiorRemoteCoordinators.toString());
+					}
+					for (CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
+						if (!mInferiorRemoteCoordinators.contains(tCoordinatorProxy)){
+							Logging.log(this, "      ..found remote inferior coordinator[NEW]: " + tCoordinatorProxy);
+							
+							// add this remote coordinator to the list of connected coordinators
+							mInferiorRemoteCoordinators.add(tCoordinatorProxy);
+							
+							ComSession tComSession = mHRMController.getCreateComSession(tCoordinatorProxy.getCoordinatorNodeL2Address());		
+							if (tComSession != null){
+								/**
+								 * Create coordinator name for this coordinator proxy
+								 */
+								ClusterName tRemoteEndPointName = tCoordinatorProxy.createCoordinatorName();
+								ClusterName tLocalEndPointName = new ClusterName(mHRMController, new HierarchyLevel(this, tRemoteEndPointName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordiantorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
+								
+								/**
+								 * Establish the comm. channel
+								 */
+								establishComChannel(tComSession, tRemoteEndPointName, tLocalEndPointName, tCoordinatorProxy);
+							}else{
+								Logging.err(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + mHRMController.getNodeName() + " for remote coordinator: " + tCoordinatorProxy);
+							}
+						}else{
+							Logging.log(this, "      ..found inferior remote coordinator [already connected]: " + tCoordinatorProxy);
+						}
+					}
+				}
+			}else{
+				/**
+				 * Trigger: detected local isolation
+				 */
+				eventDetectedIsolation();
+			}
 		}else{
-			/**
-			 * Trigger: detected local isolation
-			 */
-			eventDetectedIsolation();
+			Logging.warn(this, "distributeMembershipRequests() skipped because cluster role is already invalidated");
 		}
 	}
 

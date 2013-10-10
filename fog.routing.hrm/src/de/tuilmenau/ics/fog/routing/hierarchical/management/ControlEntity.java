@@ -16,6 +16,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -109,6 +110,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	private static long sIDMachineMultiplier = -1;
 
+	private static boolean DEBUG_EQUALS = false;
 	/**
 	 * Constructor
 	 */
@@ -397,6 +399,18 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	{
 		Logging.warn(this, "Fired event COORDINATOR_ANNOUNCEMENT: " + pAnnounceCoordinator);
 		Logging.warn(this, "Ignoring COORDINATOR_ANNOUNCEMENT from comm. channel: " + pComChannel);
+	}
+
+	/**
+	 * EVENT: coordinator invalidation
+	 * 
+	 * @param pComChannel the source comm. channel
+	 * @param pInvalidCoordinator the received invalidation
+	 */
+	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
+	{
+		Logging.warn(this, "Fired event COORDINATOR_INVALIDATION: " + pInvalidCoordinator);
+		Logging.warn(this, "Ignoring COORDINATOR_INVALIDATION from comm. channel: " + pComChannel);
 	}
 
 	/**
@@ -810,7 +824,35 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				}
 			}
 		}else{
-			Logging.log(this, "Avoiding redundant registration of locally instantiated coordinator: " + pAnnounceCoordinator);
+			Logging.warn(this, "Avoiding redundant registration of locally instantiated coordinator: " + pAnnounceCoordinator);
+		}
+	}
+
+	/**
+	 * Removes an announced coordinator from the local ARG
+	 * 
+	 * @param pSourceEntity the source of the invalidation (corresponds to the next hop towards the announcer)
+	 * @param pInvalidCoordinator the invalidation
+	 */
+	protected void unregisterAnnouncedCoordinatorARG(ControlEntity pSourceEntity, InvalidCoordinator pInvalidCoordinator)
+	{
+		ClusterName tRemoteClusterName = pInvalidCoordinator.getSenderClusterName();
+		Logging.log(this, "Unregistering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
+		
+		// check if the "remote" coordinator isn't stored at this physical node
+		if(!pInvalidCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(mHRMController.getNodeL2Address())){
+			// search for an already existing CoordintorProxy instance
+			CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
+			if(tCoordinatorProxy != null){
+				Logging.log(this, "REMOVING PROXY FOR ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
+			
+				/**
+				 * Trigger: remote coordinator role invalid
+				 */
+				tCoordinatorProxy.eventRemoteCoordinatorRoleInvalid();
+			}
+		}else{
+			Logging.warn(this, "Avoiding unregistration of locally instantiated coordinator: " + pInvalidCoordinator);
 		}
 	}
 
@@ -822,6 +864,10 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	@Override
 	public boolean equals(Object pObj)
 	{
+		if(DEBUG_EQUALS){
+			Logging.log(this, "EQUALS COMPARING with " + pObj);
+		}
+
 		if (((this instanceof Cluster) && (pObj instanceof Coordinator)) ||
 			((this instanceof Cluster) && (pObj instanceof CoordinatorAsClusterMember)) ||
 			((this instanceof ClusterMember) && (pObj instanceof Coordinator)) ||
@@ -830,15 +876,19 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			((this instanceof Coordinator) && (pObj instanceof ClusterMember)) ||
 			((this instanceof CoordinatorAsClusterMember) && (pObj instanceof Cluster)) ||
 			((this instanceof Coordinator) && (pObj instanceof Cluster))){
+			if(DEBUG_EQUALS){
+				Logging.log(this, "  ..false!");
+			}
 			return false;
 		}
 		
 		if (pObj instanceof Long){
 			Long tOtherClusterID = (Long)pObj;
 
-			Logging.log(this, "EQUALS CLUSTER_ID COMPARING with " + pObj + ": " + tOtherClusterID + "<=>" + getClusterID());
-
 			if (tOtherClusterID.equals(getClusterID())) {
+				if(DEBUG_EQUALS){
+					Logging.log(this, "  ..true!");
+				}
 				return true;
 			}
 		}
@@ -848,18 +898,25 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			if (this instanceof Coordinator){
 				Coordinator tThisCoordinator = (Coordinator)this;
 				if(tThisCoordinator.getCoordinatorID() == tComparedObj.getCoordinatorID()){
+					if(DEBUG_EQUALS){
+						Logging.log(this, "  ..true!");
+					}
 					return true;
 				}
 			}
 					
-			//Logging.log(this, "EQUALS COMPARING with " + pObj + ": " + tICluster.getClusterID() + "<=>" + tThisICluster.getClusterID() + ", " + tICluster.getToken() + "<=>" + tThisICluster.getToken() + ", " + tICluster.getHierarchyLevel().getValue() + "<=>" + getHierarchyLevel().getValue());
-	
 			//HINT: we ignore the coordinator ID because the clusterID is unique enough for identification
 			if (tComparedObj.getClusterID().equals(getClusterID()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
+				if(DEBUG_EQUALS){
+					Logging.log(this, "  ..true!");
+				}
 				return true;
 			}
 		}
 
+		if(DEBUG_EQUALS){
+			Logging.log(this, "  ..false!");
+		}
 		return false;
 	}	
 

@@ -15,12 +15,14 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
-import de.tuilmenau.ics.fog.packets.hierarchical.clustering.LeaveCluster;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -796,13 +798,13 @@ public class ComChannel
 		}
 		
 		/**
-		 * LeaveCluster
+		 * InformClusterLeft
 		 */
-		if(pData instanceof LeaveCluster) {
-			LeaveCluster tLeaveClusterPacket = (LeaveCluster)pData;
+		if(pData instanceof InformClusterLeft) {
+			InformClusterLeft tLeaveClusterPacket = (InformClusterLeft)pData;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "LEAVE_CLUSTER-received from \"" + getPeerHRMID() + "\"");
+				Logging.log(this, "INFORM_CLUSTER_LEFT-received from \"" + getPeerHRMID() + "\"");
 
 			// is the parent a coordinator or a cluster?
 			if (getParent() instanceof Cluster){
@@ -812,6 +814,28 @@ public class ComChannel
 				tCluster.eventClusterMemberLost(this);		
 			}else{
 				Logging.err(this, "Expected a Cluster object as parent for processing LeaveCluster data but parent is " + getParent());
+			}
+			
+			return true;
+		}
+		
+		/**
+		 * InformClusterMembershipCanceled
+		 */
+		if(pData instanceof InformClusterMembershipCanceled) {
+			InformClusterMembershipCanceled tInformClusterMembershipCanceledPacket = (InformClusterMembershipCanceled)pData;
+
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "INFORM_CLUSTER_MEMBERSHIP_CANCELED-received from \"" + getPeerHRMID() + "\"");
+
+			// is the parent a coordinator or a cluster?
+			if (getParent() instanceof ClusterMember){
+				ClusterMember tClusterMember = (ClusterMember)getParent();
+				
+				// trigger event "cluster member joined"
+				tClusterMember.eventClusterMemberLost(this);		
+			}else{
+				Logging.err(this, "Expected a ClusterMember object as parent for processing LeaveCluster data but parent is " + getParent());
 			}
 			
 			return true;
@@ -831,6 +855,20 @@ public class ComChannel
 			return true;
 		}
 		
+		/**
+		 * InvalidCoordinator
+		 */
+		if(pData instanceof InvalidCoordinator) {
+			InvalidCoordinator tInvalidCoordinatorPacket = (InvalidCoordinator)pData;
+
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "INVALID_COORDINATOR-received from \"" + getPeerHRMID() + "\", invalidation is: " + tInvalidCoordinatorPacket);
+		
+			getParent().eventCoordinatorInvalidation(this, tInvalidCoordinatorPacket);
+			
+			return true;
+		}
+
 		Logging.warn(this, ">>>>>>>>>>>>> Found unsupported packet: " + pData);
 		return true;
 	}

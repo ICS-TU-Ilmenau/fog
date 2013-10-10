@@ -14,10 +14,11 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.packets.hierarchical.clustering.LeaveCluster;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
@@ -136,7 +137,58 @@ public class ClusterMember extends ClusterName
 				Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCoordinator);
 			}
 		}else{
-			Logging.log(this, "TTL exceeded for cluster announcement: " + pAnnounceCoordinator);
+			Logging.log(this, "TTL exceeded for coordinator announcement: " + pAnnounceCoordinator);
+		}
+	}
+
+	/**
+	 * EVENT: coordinator announcement, we react on this by:
+	 *       1.) store the topology information locally
+	 *       2.) forward the announcement within the same hierarchy level ("to the side")
+	 * 
+	 * @param pComChannel the source comm. channel
+	 * @param pAnnounceCoordinator the received announcement
+	 */
+	@Override
+	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
+	{
+		Logging.log(this, "EVENT: coordinator invalidation (from side): " + pInvalidCoordinator);
+		
+		/**
+		 * Store the announced remote coordinator in the ARG 
+		 */
+		unregisterAnnouncedCoordinatorARG(this, pInvalidCoordinator);
+		
+		/**
+		 * transition from one cluster to the next one => decrease TTL value
+		 */
+		pInvalidCoordinator.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
+	
+		/**
+		 * forward the announcement if the TTL is still okay
+		 */
+		if(pInvalidCoordinator.isTTLOkay()){
+			/**
+			 * Forward the announcement within the same hierarchy level ("to the side")
+			 */
+			// get locally known neighbors for this cluster and hierarchy level
+			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
+			if(tLocalClusters.size() > 0){
+				Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+	
+				for(Cluster tLocalCluster: tLocalClusters){
+					/**
+					 * Forward the announcement
+					 * HINT: we avoid loops by excluding the sender from the forwarding process
+					 */
+					Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+					tLocalCluster.forwardCoordinatorInvalidation(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pInvalidCoordinator);
+				}
+			}else{
+				Logging.log(this, "No neighbors found, ending forwarding of: " + pInvalidCoordinator);
+			}
+		}else{
+			Logging.log(this, "TTL exceeded for coordinator invalidation: " + pInvalidCoordinator);
 		}
 	}
 
@@ -368,18 +420,12 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * EVENT: cluster membership invalid 
+	 * EVENT: cluster membership canceled (by cluster head) 
 	 */
-	public void eventClusterMembershipInvalid()
+	public void eventClusterMembershipCanceled()
 	{
-		Logging.log(this, "EVENT: cluster membership invalid");
+		Logging.log(this, "EVENT: cluster membership canceled");
 		
-		/**
-		 * Send: "Leave" to all superior clusters
-		 */
-		LeaveCluster tLeaveClusterPacket = new LeaveCluster(mHRMController.getNodeName(), getHRMID(), null, null);
-		sendClusterBroadcast(tLeaveClusterPacket, true);
-
 		/**
 		 * Unregister from the HRMController's internal database
 		 */ 

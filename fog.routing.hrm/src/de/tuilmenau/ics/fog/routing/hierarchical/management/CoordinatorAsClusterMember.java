@@ -9,7 +9,9 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
@@ -99,6 +101,22 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 
 	/**
+	 * EVENT: coordinator invalidation, we react on this by:
+	 *       1.) forward this packet to the coordinator for which this cluster membership was created
+	 * 
+	 * @param pComChannel the source comm. channel
+	 * @param pInvalidCoordinator the received invalidation
+	 */
+	@Override
+	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
+	{
+		Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
+		Logging.log(this, "       ..fowarding invalidation to coordinator object: " + mCoordinatorAsClusterMember);
+		
+		mCoordinatorAsClusterMember.eventCoordinatorInvalidation(pComChannel, pInvalidCoordinator);
+	}
+
+	/**
 	 * EVENT: new hierarchy node priority
 	 * 
 	 * @param pNewHierarchyNodePriority the new hierarchy node priority
@@ -114,6 +132,25 @@ public class CoordinatorAsClusterMember extends ClusterMember
 			Logging.log(this, "Got new base node priority, updating own priority from " + getPriority().getValue() + " to " + pNewHierarchyNodePriority);
 			setPriority(BullyPriority.create(this, pNewHierarchyNodePriority));
 		}
+	}
+
+	/**
+	 * EVENT: cluster membership invalid 
+	 */
+	public void eventClusterMembershipInvalid()
+	{
+		Logging.log(this, "EVENT: cluster membership invalid");
+		
+		/**
+		 * Send: "Leave" to all superior clusters
+		 */
+		InformClusterLeft tLeaveClusterPacket = new InformClusterLeft(mHRMController.getNodeName(), getHRMID(), null, null);
+		sendClusterBroadcast(tLeaveClusterPacket, true);
+
+		/**
+		 * Unregister from the HRMController's internal database
+		 */ 
+		mHRMController.unregisterCoordinatorAsClusterMember(this);
 	}
 
 	/**
@@ -156,9 +193,9 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "Cluster=" + getGUIClusterID() + ", Peer Node=" + getCoordinatorNodeL2Address();
+			return "Cluster" + getGUIClusterID() + ", Peer Node=" + getCoordinatorNodeL2Address();
 		}else{
-			return "Cluster=" + getGUIClusterID() + ", Peer Node=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
+			return "Cluster" + getGUIClusterID() + ", Peer Node=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
 		}
 	}
 }

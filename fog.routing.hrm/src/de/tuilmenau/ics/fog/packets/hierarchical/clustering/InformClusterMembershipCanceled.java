@@ -14,17 +14,17 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 
 /**
- * PACKET: This packet is used to request the remote side to join a local cluster. It is send from a coordinator to another coordinator.
+ * PACKET: This packet is used to request the remote side to leave the local cluster. It is send from a cluster head to all cluster members
  * 
  * ****************************************************************************************************************************
  * ****************************************** Explanation of the packet usage *************************************************
  * ****************************************************************************************************************************
  * 
- *                                 "1. request packet " 
+ *                                 "1. cancel packet " 
  *
  *                                      
  *               /==========\
- *               |L2 cluster| ------- REQUEST PACKET -----------+
+ *               |L2 cluster| -------- CANCEL PACKET -----------+
  *               \==========/                                   |
  *                    |                                         |
  *                   \|/                                       \|/
@@ -42,9 +42,9 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
  * ****************************************************************************************************************************
  *       
  */
-public class RequestClusterMembership extends SignalingMessageHrm
+public class InformClusterMembershipCanceled extends SignalingMessageHrm
 {
-	private static final long serialVersionUID = 445881657397476245L;
+	private static final long serialVersionUID = -5548938370118859121L;
 
 	/**
 	 * Store the ClusterName of the sending cluster head
@@ -64,7 +64,7 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	 * @param pRequestingCluster the ClusterName of the sender (a Cluster object)
 	 * @param pDestination the ClusterName of the target (a Coordinator or a new ClusterMember object)
 	 */
-	public RequestClusterMembership(Name pSenderName, Name pReceiverName, ClusterName pRequestingCluster, ClusterName pDestination)
+	public InformClusterMembershipCanceled(Name pSenderName, Name pReceiverName, ClusterName pRequestingCluster, ClusterName pDestination)
 	{
 		super(pSenderName, pReceiverName);
 		

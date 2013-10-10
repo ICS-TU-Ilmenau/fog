@@ -18,6 +18,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
@@ -75,6 +76,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * Stores the cluster memberships of this coordinator
 	 */
 	private LinkedList<CoordinatorAsClusterMember> mClusterMemberships = new LinkedList<CoordinatorAsClusterMember>();
+	
+	/**
+	 * Stores if the coordinator role is still valid
+	 */
+	private boolean mCoordinatorRoleValid = true;
 	
 	private static final long serialVersionUID = 6824959379284820010L;
 	
@@ -418,10 +424,17 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * 	 	1.) create signaling packet "BullyLeave"
 	 * 		2.) send the packet to the superior coordinator 
 	 */
-	public void eventCoordinatorRoleInvalid()
+	public synchronized void eventCoordinatorRoleInvalid()
 	{
 		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid");
 
+		mCoordinatorRoleValid = false;
+		
+		/**
+		 * Trigger: invalid coordinator
+		 */
+		distributeCoordinatorInvalidation();
+		
 		/**
 		 * Inform all superior clusters about the event and trigger the invalidation of this coordinator instance -> we leave all Bully elections because we are no longer a possible election winner
 		 */
@@ -466,8 +479,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		Logging.log(this, "EVENT: all cluster memberships invalid");
 		
 		synchronized (mClusterMemberships) {
-			for (ClusterMember tClusterMember : mClusterMemberships){
-				tClusterMember.eventClusterMembershipInvalid();
+			Logging.log(this, "     ..invalidating these cluster memberships: " + mClusterMemberships);
+			for (CoordinatorAsClusterMember tCoordinatorAsClusterMember : mClusterMemberships){
+				tCoordinatorAsClusterMember.eventClusterMembershipInvalid();
 			}
 		}
 	}
@@ -533,23 +547,48 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * SEND: distribute AnnounceCoordinator messages among the neighbors which are within the given max. radius (see HRMConfig)        
 	 */
 	public static boolean USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
-	private void distributeCoordinatorAnnouncement()
+	private synchronized void distributeCoordinatorAnnouncement()
+	{
+		if(mCoordinatorRoleValid){
+			// trigger periodic Cluster announcements
+			if((HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS) && (USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
+				AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
+				Logging.log(this, "\n\n########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
+				
+				/**
+				 * Send broadcasts in all locally known clusters at this hierarchy level
+				 */
+				LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0);
+				Logging.log(this, "     ..distributing in clusters: " + tClusters);
+				for(Cluster tCluster : tClusters){
+					tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+				}
+			}else{
+				Logging.warn(this, "HRMConfig->COORDINATOR_ANNOUNCEMENTS is set to false, this prevents the HRM system from creating a correct hierarchy");
+			}
+		}else{
+			Logging.warn(this, "distributeCoordinatorAnnouncement() skipped because coordinator role is already invalidated");
+		}
+	}
+
+	/**
+	 * SEND: distribute InvalidCoordinator messages among the neighbors which are within the given max. radius (see HRMConfig)        
+	 */
+	private synchronized void distributeCoordinatorInvalidation()
 	{
 		// trigger periodic Cluster announcements
 		if((HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS) && (USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
-			AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
-			Logging.log(this, "\n\n########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
+			InvalidCoordinator tInvalidCoordinatorPacket = new InvalidCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
+			Logging.log(this, "\n\n########## Distributing Coordinator invalidation (to the bottom): " + tInvalidCoordinatorPacket);
 			
 			/**
 			 * Send broadcasts in all locally known clusters at this hierarchy level
 			 */
-			LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel());
+			LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0);
 			Logging.log(this, "     ..distributing in clusters: " + tClusters);
 			for(Cluster tCluster : tClusters){
-				tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+				tCluster.sendClusterBroadcast(tInvalidCoordinatorPacket, true);
 			}
-		}else{
-			Logging.warn(this, "HRMConfig->COORDINATOR_ANNOUNCEMENTS is set to false, this prevents the HRM system from creating a correct hierarchy");
 		}
 	}
 
@@ -559,20 +598,24 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public void fire()
 	{
-		if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
-			if(USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-				Logging.log(this, "###########################");
-				Logging.log(this, "###### FIRE FIRE FIRE #####");
-				Logging.log(this, "###########################");
+		if(mCoordinatorRoleValid){
+			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
+				if(USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+					Logging.log(this, "###########################");
+					Logging.log(this, "###### FIRE FIRE FIRE #####");
+					Logging.log(this, "###########################");
+					
+					/**
+					 * Trigger: ClusterAnnounce distribution
+					 */
+					distributeCoordinatorAnnouncement();
+				}
 				
-				/**
-				 * Trigger: ClusterAnnounce distribution
-				 */
-				distributeCoordinatorAnnouncement();
+				// register next trigger for 
+				mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS, this);
 			}
-			
-			// register next trigger for 
-			mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS, this);
+		}else{
+			Logging.warn(this, "fire() skipped because coordinator role is already invalidated");
 		}
 	}
 
@@ -650,6 +693,39 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 	
 	/**
+	 * EVENT: coordinator invalidation, we react on this by:
+	 *       1.) remove the topology information locally
+	 *       2.) forward the invalidation downward the hierarchy to all locally known clusters (where this node is the head) ("to the bottom")
+	 * 
+	 * @param pComChannel the source comm. channel
+	 * @param pInvalidCoordinator the received invalidation
+	 */
+	@Override
+	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
+	{
+		Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
+		
+		/**
+		 * Store the announced remote coordinator in the ARG 
+		 */
+		if(!pInvalidCoordinator.getSenderClusterName().equals(this)){
+			unregisterAnnouncedCoordinatorARG(this, pInvalidCoordinator);
+		}else{
+			Logging.err(this, "eventCoordinatorInvalidation() was triggered for an invalidation of ourself, announcement: " + pInvalidCoordinator);
+		}
+
+		/**
+		 * Forward the coordinator invalidation to all locally known clusters at this hierarchy level
+		 */
+		Logging.log(this, "\n\n########## Forwarding Coordinator invalidation: " + pInvalidCoordinator);
+		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel());
+		Logging.log(this, "     ..distributing in clusters: " + tClusters);
+		for(Cluster tCluster : tClusters){
+			tCluster.sendClusterBroadcast(pInvalidCoordinator, true);
+		}
+	}
+
+	/**
 	 * Creates a ClusterName object which describes this coordinator
 	 * 
 	 * @return the new ClusterName object
@@ -669,51 +745,58 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * @param pRemoteClusterName the description of the possible new cluster member
 	 * @param pSourceComSession the comm. session where the packet was received
 	 */
-	public void eventClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
+	private int mClusterMembershipRequestNr = 0;
+	public synchronized void eventClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
 	{
-		Logging.log(this, "EVENT: got cluster membership request from: " + pRemoteClusterName);
+		mClusterMembershipRequestNr++;
 		
-		/**
-		 * Create new cluster (member) object
-		 */
-		Logging.log(this, "    ..creating new local cluster member for: " + pRemoteClusterName); 
-		CoordinatorAsClusterMember tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
-		synchronized (mClusterMemberships) {
-			if(!mClusterMemberships.contains(tClusterMembership)){
+		Logging.log(this, "EVENT: got cluster membership request (" + mClusterMembershipRequestNr + ") from: " + pRemoteClusterName);
+		
+		if(mCoordinatorRoleValid){
+			/**
+			 * Create new cluster (member) object
+			 */
+			Logging.log(this, "    ..creating new local cluster membership for: " + pRemoteClusterName + ", remote node: " + pSourceComSession.getPeerL2Address()); 
+			CoordinatorAsClusterMember tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
+			synchronized (mClusterMemberships) {
+				Logging.log(this, "    ..know already these cluster memberships: " + mClusterMemberships);
+				
+				//HINT: a check for already existing cluster memberships has to be done based on equals AND a check of the peer ClusterName
+				Logging.log(this, "    ..adding cluster membership: " + tClusterMembership);
+				
 				// add this cluster membership
 				mClusterMemberships.add(tClusterMembership);
-				
-			}else{
-				Logging.err(this, "Cluster membership ALREADY EXISTS for " + pRemoteClusterName);
-			}			
+			}
+			
+			/**
+			 * Create the communication channel for the described cluster member
+			 */
+			Logging.log(this, "     ..creating communication channel");
+			ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
+	
+			/**
+			 * Set the remote ClusterName of the communication channel
+			 */
+			tComChannel.setRemoteClusterName(pRemoteClusterName);
+	
+			/**
+			 * Trigger: comm. channel established 
+			 */
+			tClusterMembership.eventComChannelEstablished(tComChannel);
+	
+			/**
+			 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
+			 */
+			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), createCoordinatorName());
+			tComChannel.sendPacket(tRequestClusterMembershipAckPacket);
+			
+			/**
+			 * Trigger: joined a remote cluster (sends a Bully priority update)
+			 */
+			eventJoinedRemoteCluster(tComChannel);
+		}else{
+			Logging.warn(this, "eventClusterMembershipRequest() skipped because coordinator role is already invalidated");
 		}
-		
-		/**
-		 * Create the communication channel for the described cluster member
-		 */
-		Logging.log(this, "     ..creating communication channel");
-		ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
-
-		/**
-		 * Set the remote ClusterName of the communication channel
-		 */
-		tComChannel.setRemoteClusterName(pRemoteClusterName);
-
-		/**
-		 * Trigger: comm. channel established 
-		 */
-		tClusterMembership.eventComChannelEstablished(tComChannel);
-
-		/**
-		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
-		 */
-		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), createCoordinatorName());
-		tComChannel.sendPacket(tRequestClusterMembershipAckPacket);
-		
-		/**
-		 * Trigger: joined a remote cluster (sends a Bully priority update)
-		 */
-		eventJoinedRemoteCluster(tComChannel);
 	}
 
 	/**

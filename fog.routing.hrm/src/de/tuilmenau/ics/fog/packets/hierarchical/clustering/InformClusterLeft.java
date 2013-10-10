@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.packets.hierarchical.clustering;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -45,7 +44,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * ****************************************************************************************************************************
  *       
  */
-public class LeaveCluster extends SignalingMessageHrm implements ISignalingMessageHrmBroadcastable
+public class InformClusterLeft extends SignalingMessageHrm implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = 445881657397476245L;
 
@@ -67,7 +66,7 @@ public class LeaveCluster extends SignalingMessageHrm implements ISignalingMessa
 	 * @param pLeavingMember the ClusterName of the sender (a ClusterMember object)
 	 * @param pDestination the ClusterName of the target (a Cluster object)
 	 */
-	public LeaveCluster(Name pSenderName, Name pReceiverName, ClusterName pLeavingMember, ClusterName pDestination)
+	public InformClusterLeft(Name pSenderName, Name pReceiverName, ClusterName pLeavingMember, ClusterName pDestination)
 	{
 		super(pSenderName, pReceiverName);
 		
@@ -103,7 +102,7 @@ public class LeaveCluster extends SignalingMessageHrm implements ISignalingMessa
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		LeaveCluster tResult = new LeaveCluster(getSenderName(), getReceiverName(), getLeavingClusterMember(), getDestination());
+		InformClusterLeft tResult = new InformClusterLeft(getSenderName(), getReceiverName(), getLeavingClusterMember(), getDestination());
 		
 		super.duplicate(tResult);
 
