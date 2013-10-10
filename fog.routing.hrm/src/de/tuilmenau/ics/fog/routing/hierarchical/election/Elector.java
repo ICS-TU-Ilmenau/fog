@@ -111,7 +111,7 @@ public class Elector implements Localization
 		if(mParent instanceof Cluster){
 			// do we know more than 0 external cluster members?
 			if (mParent.countConnectedRemoteClusterMembers() > 0){
-				Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Bully priority");
+				Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Bully priority: " + mParent.getComChannels());
 				signalElectBroadcast();
 			}else{
 				// we don'T have external members - but do we have local members?
@@ -318,7 +318,7 @@ public class Elector implements Localization
 				BullyElect tPacketBullyElect = new BullyElect(mHRMController.getNodeName(), mParent.getPriority());
 				
 				// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority				
-				mParent.sendClusterBroadcast(tPacketBullyElect);
+				mParent.sendClusterBroadcast(tPacketBullyElect, true);
 				
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 					Logging.log(this, "SENDELECTIONS()-END");
@@ -408,7 +408,7 @@ public class Elector implements Localization
 			BullyAlive tPacketBullyAlive = new BullyAlive(mHRMController.getNodeName(), mParent.getPriority());
 	
 			// send broadcast
-			mParent.sendClusterBroadcast(tPacketBullyAlive);
+			mParent.sendClusterBroadcast(tPacketBullyAlive, true);
 	
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 				Logging.log(this, "SENDALIVE()-END");
