@@ -56,6 +56,8 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		mReceiverName = pReceiverName;
 		mMessageNumber = createMessageNumber();
 		
+		Logging.log(this, "\n########### NEW HRM MESSAGE nr. " + mMessageNumber);
+
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
 			Logging.log(getClass().getSimpleName() + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + "): CREATED");
 		}
@@ -71,8 +73,6 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		int tResult = -1;		
 		
 		tResult = ++mHRMMessagesCounter;
-		
-		Logging.log("\n########### CREATING HRM MESSAGE nr. " + tResult);
 		
 		return tResult;
 	}
