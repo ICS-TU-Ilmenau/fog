@@ -337,6 +337,7 @@ public class ClusterMember extends ClusterName
 	}
 	public void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket)
 	{
+		Logging.warn(this, "Sending cluster broadcast excluding local host, packet: " + pPacket);
 		sendClusterBroadcast(pPacket, false);
 	}
 
