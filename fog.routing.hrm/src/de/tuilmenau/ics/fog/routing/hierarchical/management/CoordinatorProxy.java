@@ -157,7 +157,7 @@ public class CoordinatorProxy extends ClusterMember
 	@Override
 	public String getText()
 	{
-		return "RemoteCoordinator" + getGUICoordinatorID() + "@" + getHierarchyLevel().getValue() +  "(r=" + mDistance + " " + idToString() + ")";
+		return "RemoteCoordinator" + getGUICoordinatorID() + "@" + getHierarchyLevel().getValue() +  "(hops=" + mDistance + ", " + idToString() + ")";
 	}
 
 	/**

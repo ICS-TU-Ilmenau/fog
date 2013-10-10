@@ -111,6 +111,7 @@ public class ClusterMember extends ClusterName
 		/**
 		 * transition from one cluster to the next one => decrease TTL value
 		 */
+		Logging.log(this, "Deacreasing TTL of: " + pAnnounceCoordinator);
 		pAnnounceCoordinator.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
 	
 		/**
