@@ -2201,6 +2201,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Unregisters a logical link between clusters/coordinators from the locally stored abstract routing graph (ARG)
+	 * 
+	 * @param pFrom the starting point of the link
+	 * @param pTo the ending point of the link
+	 */
+	public void unregisterLinkARG(AbstractRoutingGraphNode pFrom, AbstractRoutingGraphNode pTo)
+	{
+		AbstractRoutingGraphLink tLink = getLinkARG(pFrom, pTo);
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "UNREGISTERING LINK (ARG):  source=" + pFrom + " ## dest.=" + pTo + " ## link=" + tLink);
+		}
+
+		if(tLink != null){
+			synchronized (mAbstractRoutingGraph) {
+				mAbstractRoutingGraph.unlink(tLink);
+			}
+		}
+	}
+
+	/**
 	 * Determines the link between two clusters/coordinators from the locally stored abstract routing graph (ARG)
 	 * 
 	 * @param pFrom the starting point of the link
@@ -2208,7 +2229,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the link between the two nodes
 	 */
-	public AbstractRoutingGraphLink getLinkARG(ControlEntity pFrom, ControlEntity pTo)
+	public AbstractRoutingGraphLink getLinkARG(AbstractRoutingGraphNode pFrom, AbstractRoutingGraphNode pTo)
 	{
 		AbstractRoutingGraphLink tResult = null;
 		
