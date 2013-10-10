@@ -169,6 +169,18 @@ public class EventHandler extends Thread
 		}
 	}
 	
+	public void logSheduledEvents() 
+	{
+		int i = 0;
+		synchronized (mEventQueue) {
+			mLogger.log(this, "Holding " + mEventQueue.size() + " events:");
+			for(EventHolder tEventHolder : mEventQueue){
+				mLogger.log(this, "     ..holding event [" + i + "]: " + tEventHolder.mEvent + ", time: " + tEventHolder.mTime);
+				i++;
+			}
+		}
+	}
+
 	/**
 	 * Real time mode of the event handler. This method tries
 	 * to execute the events based on the real system time.
@@ -204,9 +216,7 @@ public class EventHandler extends Thread
 								tEvent = mEventQueue.poll();
 								if (Config.Connection.LOG_PACKET_STATIONS){
 									Logging.log(this, "Polled event: " + tEvent.mEvent + ", id: " + tEvent.mId);
-									for(EventHolder tEventHolder : mEventQueue){
-										Logging.log(this, "     ..holding event: " + tEventHolder.mEvent + ", time: " + tEventHolder.mTime);
-									}
+									logSheduledEvents();
 								}
 								if(DEBUG_OUTPUT) {
 									mLogger.trace(this, "polled event with time " +tEvent.mTime);

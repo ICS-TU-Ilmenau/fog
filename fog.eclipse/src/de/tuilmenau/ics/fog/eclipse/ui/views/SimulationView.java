@@ -57,6 +57,7 @@ public class SimulationView extends ViewPart
 	private static final String TEXT_EVENT_HANDLER_TIME   = "Current time:";
 	private static final String TEXT_EVENT_HANDLER_DIFF   = "Ahead of real time:";
 	private static final String TEXT_EVENT_HANDLER_EVENTS = "Processed events:";
+	private static final String TEXT_SHOW_QUEUE_BUTTON    = "Show event queue";
 	
 	private static final String TEXT_REFRESH_BUTTON       = "Refresh list";
 
@@ -325,6 +326,17 @@ public class SimulationView extends ViewPart
 
 		eventHandlerNumberEvents = new Label(comp, SWT.NONE);
 		eventHandlerNumberEvents.setLayoutData(createGridData(true, 1));
+		
+		Button showQueueButton = new Button(comp, SWT.PUSH);
+		showQueueButton.setText(TEXT_SHOW_QUEUE_BUTTON);
+		showQueueButton.setLayoutData(createGridData(false, 1));
+		showQueueButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(org.eclipse.swt.events.SelectionEvent evt) {
+				showQueue();
+			}
+		});
+
 	}
 	
 	private long toMilliSeconds(double time)
@@ -370,6 +382,15 @@ public class SimulationView extends ViewPart
 			}
 		} else {
 			display.syncExec(simControlUpdateRunnable);
+		}
+	}
+	
+	private void showQueue()
+	{
+		if(currentSim != null) {
+			EventHandler timeBase = currentSim.getTimeBase();
+			
+			timeBase.logSheduledEvents();
 		}
 	}
 	
