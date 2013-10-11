@@ -248,6 +248,14 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			mScroller.setExpandHorizontal(true);
 			mScroller.setLayout(new GridLayout());
 			mScroller.setLayoutData(tScrollerLayoutData);
+			// fix the mouse wheel function
+			mScroller.addListener(SWT.Activate, new Listener() {
+			    public void handleEvent(Event e) {
+			    	mScroller.setFocus();
+			    }
+			});
+			// fix the vertical scrolling speed
+			mScroller.getVerticalBar().setIncrement(mScroller.getVerticalBar().getIncrement() * 10 /* 10 times faster */);
 		}
 
 		mContainer = new Composite(mScroller, SWT.NONE);
