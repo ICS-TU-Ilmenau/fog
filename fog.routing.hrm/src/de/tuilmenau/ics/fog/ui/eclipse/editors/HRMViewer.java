@@ -163,11 +163,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mGuiCounter == 1){
 			mBtnClusterMembers = new Button(mToolBtnContainer, SWT.CHECK);
 		}
+		mBtnClusterMembers.setText("ClusterMembers");
 		if(mShowClusterMembers){
-			mBtnClusterMembers.setText("Hide cluster members");
 			mBtnClusterMembers.setSelection(true);
 		}else{
-			mBtnClusterMembers.setText("Show cluster members");
 			mBtnClusterMembers.setSelection(false);
 		}
 		if(mGuiCounter == 1){
@@ -184,11 +183,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mGuiCounter == 1){
 			mBtnCoordClusterMembers = new Button(mToolBtnContainer, SWT.CHECK);
 		}
+		mBtnCoordClusterMembers.setText("CoordinatorAsClusterMembers");
 		if(mShowCoordinatorAsClusterMembers){
-			mBtnCoordClusterMembers.setText("Hide coordinators-as-cluster-members");
 			mBtnCoordClusterMembers.setSelection(true);
 		}else{
-			mBtnCoordClusterMembers.setText("Show coordinators-as-cluster-members");
 			mBtnCoordClusterMembers.setSelection(false);
 		}
 		if(mGuiCounter == 1){
@@ -205,11 +203,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mGuiCounter == 1){
 			mBtnCoordAnnounce = new Button(mToolBtnContainer, SWT.CHECK);
 		}
+		mBtnCoordAnnounce.setText("Announce coordinators");
 		if (Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-			mBtnCoordAnnounce.setText("Deactive coord. announce.");
 			mBtnCoordAnnounce.setSelection(true);
 		}else{
-			mBtnCoordAnnounce.setText("Active coord. announce.");
 			mBtnCoordAnnounce.setSelection(false);
 		}
 		if(mGuiCounter == 1){
