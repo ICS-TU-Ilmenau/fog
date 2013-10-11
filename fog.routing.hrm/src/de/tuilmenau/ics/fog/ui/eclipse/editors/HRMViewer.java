@@ -390,7 +390,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		for (int k = 0; k < columns4.length; k++){
 			columns4[k].pack();
 		}
-		tTableMappingTable.setLayoutData(new GridData(GridData.FILL_BOTH));//SWT.FILL, SWT.TOP, true, true, 1, 1));
+		tTableMappingTable.setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		// create the container layout
 		TableColumnLayout tLayoutMappingTable = new TableColumnLayout();
@@ -656,25 +656,31 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	
 	private void printComChannels(Composite pParent, final ControlEntity pControlEntity)
 	{
-		final Table tTable = new Table(pParent, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+	    // create the container
+		Composite tContainerComChannels = new Composite(pParent, SWT.NONE);
+	    GridData tLayoutDataMappingTable = new GridData(SWT.FILL, SWT.FILL, true, true);
+	    tLayoutDataMappingTable.horizontalSpan = 1;
+	    tContainerComChannels.setLayoutData(tLayoutDataMappingTable); 
+
+		final Table tTable = new Table(tContainerComChannels, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		
 		/**
 		 * The table header
 		 */
-		TableColumn tColumnCoordinator = new TableColumn(tTable, SWT.NONE, 0);
-		tColumnCoordinator.setText("Peer");
+		TableColumn tColumnPeer = new TableColumn(tTable, SWT.NONE, 0);
+		tColumnPeer.setText("Peer");
 		
-		TableColumn tColumnCEP = new TableColumn(tTable, SWT.NONE, 1);
-		tColumnCEP.setText("Peer Node");
+		TableColumn tColumnPeerNode = new TableColumn(tTable, SWT.NONE, 1);
+		tColumnPeerNode.setText("Peer Node");
 		
-		TableColumn tColumnTargetCovered = new TableColumn(tTable, SWT.NONE, 2);
-		tColumnTargetCovered.setText("Active link");
+		TableColumn tColumnActiveLink = new TableColumn(tTable, SWT.NONE, 2);
+		tColumnActiveLink.setText("Active link");
 		
 		TableColumn tColumnPeerPriority = new TableColumn(tTable, SWT.NONE, 3);
 		tColumnPeerPriority.setText("Peer Priority");
 		
-		TableColumn tColumnNegotiator = new TableColumn(tTable, SWT.NONE, 4);
-		tColumnNegotiator.setText("Peer End Point");
+		TableColumn tColumnPeerEP = new TableColumn(tTable, SWT.NONE, 4);
+		tColumnPeerEP.setText("Peer End Point");
 		
 		TableColumn tColumnRoute = new TableColumn(tTable, SWT.NONE, 5);
 		tColumnRoute.setText("Route to peer");
@@ -797,8 +803,22 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 		TableColumn[] cols = tTable.getColumns();
 		for(int k=0; k < cols.length; k++) cols[k].pack();
-		tTable.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
+		tTable.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
+		// create the container layout
+		TableColumnLayout tLayoutMappingTable = new TableColumnLayout();
+		tContainerComChannels.setLayout(tLayoutMappingTable);
+		// assign each column a layout weight
+		tLayoutMappingTable.setColumnData(tColumnPeer, new ColumnWeightData(3));
+		tLayoutMappingTable.setColumnData(tColumnPeerNode, new ColumnWeightData(3));
+		tLayoutMappingTable.setColumnData(tColumnActiveLink, new ColumnWeightData(1));
+		tLayoutMappingTable.setColumnData(tColumnPeerPriority, new ColumnWeightData(1));
+		tLayoutMappingTable.setColumnData(tColumnPeerEP, new ColumnWeightData(3));
+		tLayoutMappingTable.setColumnData(tColumnRoute, new ColumnWeightData(3));
+		tLayoutMappingTable.setColumnData(tColumnDirection, new ColumnWeightData(1));
+		tLayoutMappingTable.setColumnData(tColumnSendPackets, new ColumnWeightData(1));		
+		tLayoutMappingTable.setColumnData(tColumnReceivedPackets, new ColumnWeightData(1));		
+
 		/**
 		 * The table context menu
 		 */
