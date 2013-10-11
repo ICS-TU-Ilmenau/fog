@@ -111,7 +111,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     
 	private boolean mShowClusterMembers = false;
 	private boolean mShowCoordinatorAsClusterMembers = false;
-	
+
+	/**
+	 * Stores the time stamp of the last GUI update
+	 */
+	private Double mTimestampLastGUIUpdate =  new Double(0);
+
     /**
      * Stores the simulation time for the next GUI update.
      */
@@ -197,7 +202,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
 					Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS = !Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS;
-					startGUIUpdateTimer();
+					if (Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+						mBtnCoordAnnounce.setText("Deactive coord. announce.");
+					}else{
+						mBtnCoordAnnounce.setText("Active coord. announce.");
+					}
 				}
 			});
 		}
@@ -1048,6 +1057,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 */
 	private void resetGUI()
 	{
+		// store the time of this (last) GUI update
+		mTimestampLastGUIUpdate = mHRMController.getSimulationTime();
+
+		// reset stored GUI update time
+		mTimeNextGUIUpdate = 0;
+
 		if(!mDisplay.isDisposed()) {
 			if(Thread.currentThread() != mDisplay.getThread()) {
 				//switches to different thread
@@ -1081,14 +1096,26 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 * Starts the timer for the "update GUI" event.
 	 * If the timer is already started nothing is done.
 	 */
-	private void startGUIUpdateTimer()
+	private synchronized void startGUIUpdateTimer()
 	{
+		// is a GUI update already planned?
 		if (mTimeNextGUIUpdate == 0){
-			// determine the time when a "share phase" has to be started 
-			mTimeNextGUIUpdate = mHRMController.getSimulationTime() + HRMConfig.DebugOutput.GUI_NODE_DISPLAY_UPDATE_INTERVAL;
+			// when was the last GUI update? is the time period okay for a new update? -> determine a timeout for a new GUI update
+			double tNow = mHRMController.getSimulationTime();
+			double tTimeout = mTimestampLastGUIUpdate.longValue() + HRMConfig.DebugOutput.GUI_NODE_DISPLAY_UPDATE_INTERVAL;
 
-			// register next trigger
-			mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.DebugOutput.GUI_NODE_DISPLAY_UPDATE_INTERVAL, this);
+			if ((mTimestampLastGUIUpdate.doubleValue() == 0) || (tNow > tTimeout)){
+				mTimeNextGUIUpdate = tNow;
+
+				// register next trigger
+				mHRMController.getAS().getTimeBase().scheduleIn(0, this);
+			}else{
+				mTimeNextGUIUpdate = tTimeout;
+			
+				// register next trigger
+				mHRMController.getAS().getTimeBase().scheduleIn(tTimeout - tNow, this);
+			}
+
 		}else{
 			// timer is already started, we ignore the repeated request
 		}
