@@ -98,7 +98,7 @@ public class HRMConfig
 		/**
 		 * Defines the time period between two updates of the node specific HRM display.
 		 */
-		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 1.0;
+		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 3.0;
 
 		/**
 		 * Defines if the hierarchy creation should start once the entire simulation was created. 

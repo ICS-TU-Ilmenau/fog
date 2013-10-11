@@ -277,7 +277,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			    }
 			});
 			// fix the vertical scrolling speed
-			mScroller.getVerticalBar().setIncrement(mScroller.getVerticalBar().getIncrement() * 10 /* 10 times faster */);
+			mScroller.getVerticalBar().setIncrement(mScroller.getVerticalBar().getIncrement() * 20 /* 20 times faster */);
 		}
 
 		mContainer = new Composite(mScroller, SWT.NONE);
