@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.editors;
 
+import java.io.FileNotFoundException;
 import java.text.Collator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -29,11 +30,8 @@ import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowData;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -52,10 +50,12 @@ import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
+import de.tuilmenau.ics.fog.eclipse.utils.Resources;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
@@ -122,6 +122,16 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
      */
     private double mTimeNextGUIUpdate = 0;
     
+	/**
+	 * Stores the ID of the HRM plug-in
+	 */
+	private static final String PLUGIN_ID = "de.tuilmenau.ics.fog.routing.hrm";
+	
+	/**
+	 * Stores the path to the HRM icons
+	 */
+	private static final String PATH_ICONS = "/icons/";
+
 	public HRMViewer()
 	{
 		
@@ -650,7 +660,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		
 		/**
-		 * GUI part 2: table about CEPs 
+		 * GUI part 2: table about comm. channels 
 		 */
 		printComChannels(pParent, pCoordinator);
 			
@@ -715,7 +725,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 		int j = 0;		
 		if (HRM_VIEWER_DEBUGGING)
-			Logging.log(this, "Amount of participating CEPs is " + tComChannels.size());
+			Logging.log(this, "Amount of known comm. channels is " + tComChannels.size());
 		for(ComChannel tComChannel : tComChannels) {
 			if (HRM_VIEWER_DEBUGGING)
 				Logging.log(this, "Updating table item number " + j);
@@ -880,7 +890,48 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 	private void printNAME(Composite pParent, ControlEntity pEntity)
 	{
-		StyledText tClusterLabel = new StyledText(pParent, SWT.BORDER);;
+		Composite tContainerName = new Composite(pParent, SWT.NONE);
+		GridLayout tLayout1 = new GridLayout(2, false);
+		tContainerName.setLayout(tLayout1);
+
+		/**
+		 * name part 0: front image
+		 */
+		if(pEntity instanceof Coordinator){
+			String tImagePath = "";
+			try {
+				tImagePath = Resources.locateInPlugin(PLUGIN_ID, PATH_ICONS, "Coordinator_Level" + Integer.toString(pEntity.getHierarchyLevel().getValue()) + ".gif");
+			} catch (FileNotFoundException e) {
+				//ignore
+			}
+			//Logging.log(this, "Loading front image: " + tImagePath);		
+			Image tFrontImage = new Image(mDisplay, tImagePath);
+			Label tFronImageLabel = new Label(tContainerName, SWT.NONE);
+			tFronImageLabel.setSize(16, 20);
+			tFronImageLabel.setImage(tFrontImage);
+
+			tFronImageLabel.setLayoutData(createGridData(true, 1));
+		}
+		if(pEntity instanceof Cluster){
+			String tImagePath = "";
+			try {
+				tImagePath = Resources.locateInPlugin(PLUGIN_ID, PATH_ICONS, "Cluster_Level" + Integer.toString(pEntity.getHierarchyLevel().getValue()) + ".png");
+			} catch (FileNotFoundException e) {
+				//ignore
+			}
+			//Logging.log(this, "Loading front image: " + tImagePath);		
+			Image tFrontImage = new Image(mDisplay, tImagePath);
+			Label tFronImageLabel = new Label(tContainerName, SWT.NONE);
+			tFronImageLabel.setSize(45, 20);
+			tFronImageLabel.setImage(tFrontImage);
+
+			tFronImageLabel.setLayoutData(createGridData(true, 1));
+		}
+
+		/**
+		 * name part 1: the name
+		 */
+		StyledText tClusterLabel = new StyledText(tContainerName, SWT.BORDER);;
 		tClusterLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		boolean tClusterHeadWithoutCoordinator = false;
 		if (GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES){
@@ -921,6 +972,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	    style1.length = tClusterLabel.getText().length();
 	    style1.fontStyle = SWT.BOLD;
 	    tClusterLabel.setStyleRange(style1);
+		if((pEntity instanceof Coordinator) || (pEntity instanceof Cluster)){
+			tClusterLabel.setLayoutData(createGridData(true, 1));
+		}else{
+			tClusterLabel.setLayoutData(createGridData(true, 2));
+		}
+
 	}
 	
 	/**
@@ -963,7 +1020,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		
 		/**
-		 * GUI part 2: table about CEPs 
+		 * GUI part 2: table about comm. channels 
 		 */
 		printComChannels(pParent, pClusterMember);
 	
@@ -972,6 +1029,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		separator.setVisible(true);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void init(IEditorSite pSite, IEditorInput pInput) throws PartInitException
 	{
