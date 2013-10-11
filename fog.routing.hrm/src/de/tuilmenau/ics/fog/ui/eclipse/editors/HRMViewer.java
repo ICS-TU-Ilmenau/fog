@@ -26,11 +26,15 @@ import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
+import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowData;
+import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -90,12 +94,21 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 	private HRMController mHRMController = null;
     private Composite mShell = null;
-    private ScrolledComposite mScroller = null;
-    private Composite mContainer = null;
     private Display mDisplay = null;
+
     private Composite mContainerRoutingTable = null;
 	private Composite mContainerHRMID2L2ADDRTable = null;
-	
+	private Composite mGlobalContainer = null;
+    private Composite mContainer = null;
+    private Composite mToolBtnContainer = null;
+    private ScrolledComposite mScroller = null;
+    
+    private Button mBtnClusterMembers = null;
+    private Button mBtnCoordlusterMembers = null;
+    private Button mBtnCoordAnnounce = null;
+    
+    private int mGuiCounter = 0;
+    
 	private boolean mShowClusterMembers = false;
 	private boolean mShowCoordinatorAsClusterMembers = false;
 	
@@ -109,93 +122,99 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 	}
 	
+	private GridData createGridData(boolean grabSpace, int colSpan)
+	{
+		GridData gridData = new GridData();
+		gridData.horizontalAlignment = SWT.FILL;
+		gridData.grabExcessHorizontalSpace = grabSpace;
+		gridData.horizontalSpan = colSpan;
+		return gridData;
+	}
+
+	private void createToolButtons(Composite pParent)
+	{
+		if(mGuiCounter == 1){
+			mToolBtnContainer = new Composite(pParent, SWT.NONE);
+	
+			GridLayout tLayout1 = new GridLayout(4, false);
+			mToolBtnContainer.setLayout(tLayout1);
+			mToolBtnContainer.setLayoutData(createGridData(true, 1));
+		}
+		
+		/**
+		 * Tool buttons
+		 */
+		// **** hide/show cluster members ****
+		if(mGuiCounter == 1){
+			mBtnClusterMembers = new Button(mToolBtnContainer, SWT.PUSH);
+		}
+		if(mShowClusterMembers){
+			mBtnClusterMembers.setText("Hide cluster members");
+		}else{
+			mBtnClusterMembers.setText("Show cluster members");
+		}
+		if(mGuiCounter == 1){
+			mBtnClusterMembers.setLayoutData(createGridData(false, 1));
+			mBtnClusterMembers.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					mShowClusterMembers = !mShowClusterMembers;
+					startGUIUpdateTimer();
+				}
+			});
+		}
+		// **** hide/show coordinators-as-cluster-members ****
+		if(mGuiCounter == 1){
+			mBtnCoordlusterMembers = new Button(mToolBtnContainer, SWT.PUSH);
+		}
+		if(mShowCoordinatorAsClusterMembers){
+			mBtnCoordlusterMembers.setText("Hide coordinators-as-cluster-members");
+		}else{
+			mBtnCoordlusterMembers.setText("Show coordinators-as-cluster-members");
+		}
+		if(mGuiCounter == 1){
+			mBtnCoordlusterMembers.setLayoutData(createGridData(false, 1));
+			mBtnCoordlusterMembers.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					mShowCoordinatorAsClusterMembers = !mShowCoordinatorAsClusterMembers;
+					startGUIUpdateTimer();
+				}
+			});
+		}
+		// **** deactivate/activate coordinator announcements ****
+		if(mGuiCounter == 1){
+			mBtnCoordAnnounce = new Button(mToolBtnContainer, SWT.PUSH);
+		}
+		if (Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+			mBtnCoordAnnounce.setText("Deactive coord. announce.");
+		}else{
+			mBtnCoordAnnounce.setText("Active coord. announce.");
+		}
+		if(mGuiCounter == 1){
+			mBtnCoordAnnounce.setLayoutData(createGridData(false, 1));
+			mBtnCoordAnnounce.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS = !Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS;
+					startGUIUpdateTimer();
+				}
+			});
+		}
+	}
+	
 	/**
 	 * Resets all parts of the EditorPart
 	 */
 	private void destroyPartControl()
 	{
 		mContainer.dispose();
-
+		
 		//HINT: don't dispose the mScroller object here, this would lead to GUI display problems
 		
 		mShell.redraw();
 	}
-	
-	/**
-	 * Assigns a hide/show menu for a given composite object
-	 * 
-	 * @param pComposite the composite for which the context menu should be available
-	 */
-	private void assignContextMenu(final Composite pComposite)
-	{
-		pComposite.addMenuDetectListener(new MenuDetectListener()
-		{
-			@Override
-			public void menuDetected(MenuDetectEvent pEvent)
-			{
-				/**
-				 * Create the context menu
-				 */
-				Menu tMenu = new Menu(pComposite);
-				MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
-				if (mShowClusterMembers){
-					tMenuItem.setText("Hide cluster members");
-				}else{
-					tMenuItem.setText("Show cluster members");
-				}
-				tMenuItem.addSelectionListener(new SelectionListener() {
-					public void widgetDefaultSelected(SelectionEvent pEvent)
-					{
-						mShowClusterMembers = !mShowClusterMembers;
-						startGUIUpdateTimer();
-					}
-					public void widgetSelected(SelectionEvent pEvent)
-					{
-						mShowClusterMembers = !mShowClusterMembers;
-						startGUIUpdateTimer();
-					}
-				});
-				MenuItem tMenuItem1 = new MenuItem(tMenu, SWT.NONE);
-				if (mShowCoordinatorAsClusterMembers){
-					tMenuItem1.setText("Hide coordinators as cluster members");
-				}else{
-					tMenuItem1.setText("Show coordinators as cluster members");
-				}
-				tMenuItem1.addSelectionListener(new SelectionListener() {
-					public void widgetDefaultSelected(SelectionEvent pEvent)
-					{
-						mShowCoordinatorAsClusterMembers = !mShowCoordinatorAsClusterMembers;
-						startGUIUpdateTimer();
-					}
-					public void widgetSelected(SelectionEvent pEvent)
-					{
-						mShowCoordinatorAsClusterMembers = !mShowCoordinatorAsClusterMembers;
-						startGUIUpdateTimer();
-					}
-				});
-				MenuItem tMenuItem2 = new MenuItem(tMenu, SWT.NONE);
-				if (Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-					tMenuItem2.setText("Deactivate coordinator announcements");
-				}else{
-					tMenuItem2.setText("Activate coordinator announcements");
-				}
-				tMenuItem2.addSelectionListener(new SelectionListener() {
-					public void widgetDefaultSelected(SelectionEvent pEvent)
-					{
-						Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS = !Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS;
-						startGUIUpdateTimer();
-					}
-					public void widgetSelected(SelectionEvent pEvent)
-					{
-						Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS = !Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS;
-						startGUIUpdateTimer();
-					}
-				});
-				pComposite.setMenu(tMenu);
-			}
-		});
-	}
-	
+
 	/**
 	 * Creates all needed parts of the EditorPart.
 	 * 
@@ -204,20 +223,41 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	@Override
 	public void createPartControl(Composite pParent)
 	{
+		mGuiCounter++;
+		
 		// get the HRS instance
 		HRMRoutingService tHRS = mHRMController.getHRS();
 
 		mShell = pParent;
 		mDisplay = pParent.getDisplay();
-		mShell.setLayout(new FillLayout());
-		if (mScroller == null){
-			mScroller = new ScrolledComposite(mShell, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+
+		if (mGuiCounter == 1){
+			mGlobalContainer = new Composite(pParent, SWT.NONE);
+		    GridLayout gridLayout = new GridLayout(1, false);
+		    mGlobalContainer.setLayout(gridLayout);
 		}
+	    
+		if (mGuiCounter == 1){
+			mScroller = new ScrolledComposite(mGlobalContainer, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+			GridData tScrollerLayoutData = new GridData();
+			tScrollerLayoutData.horizontalAlignment = SWT.FILL;
+			tScrollerLayoutData.verticalAlignment = SWT.FILL;
+			tScrollerLayoutData.grabExcessVerticalSpace = true;
+			tScrollerLayoutData.grabExcessHorizontalSpace = true;
+			tScrollerLayoutData.horizontalSpan = 1;
+			mScroller.setExpandHorizontal(true);
+			mScroller.setLayout(new GridLayout());
+			mScroller.setLayoutData(tScrollerLayoutData);
+		}
+
 		mContainer = new Composite(mScroller, SWT.NONE);
+		mContainer.setLayout(new GridLayout(1, false));
+		mContainer.setLayoutData(new GridData(GridData.FILL_BOTH));
 		mScroller.setContent(mContainer);
-		GridLayout tLayout = new GridLayout(1, true);
-		mContainer.setLayout(tLayout);
-		
+
+		/**
+		 * Clusters, coordinators, ...
+		 */
 		if (HRM_VIEWER_DEBUGGING){
 			Logging.log(this, "Found clusters: " + mHRMController.getAllClusters().size());
 			Logging.log(this, "Found coordinators: " + mHRMController.getAllCoordinators().size());
@@ -230,7 +270,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			// show only those cluster which also have a coordinator
 			if((HRM_VIEWER_SHOW_ALWAYS_ALL_CLUSTERS) || (tCluster.hasLocalCoordinator())){
 				// print info. about cluster
-				printClusterMember(tCluster);
+				printClusterMember(mContainer, tCluster);
 			}
 		}
 
@@ -241,7 +281,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			for(ClusterMember tClusterMemeber : mHRMController.getAllClusterMembers()){
 				if (!(tClusterMemeber instanceof Cluster)){
 					// print info. about cluster
-					printClusterMember(tClusterMemeber);
+					printClusterMember(mContainer, tClusterMemeber);
 				}
 			}
 		}
@@ -252,7 +292,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mShowCoordinatorAsClusterMembers){
 			for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mHRMController.getAllCoordinatorAsClusterMemebers()){
 				// print info. about cluster
-				printClusterMember(tCoordinatorAsClusterMember);
+				printClusterMember(mContainer, tCoordinatorAsClusterMember);
 			}
 		}
 		/**
@@ -260,7 +300,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 */
 		for (Coordinator tCoordinator: mHRMController.getAllCoordinators()) {
 			// print info. about cluster
-			printCoordinator(tCoordinator);
+			printCoordinator(mContainer, tCoordinator);
 		}
 
 		/**
@@ -527,17 +567,19 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 	    });
 		
+		/**
+		 * Tool buttons
+		 */
+		createToolButtons(mGlobalContainer);
+		
 		// arrange the GUI content in order to full the entire space
+		if (mGuiCounter == 1){
+			mScroller.setSize(mScroller.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+		}
         mContainer.setSize(mContainer.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         mContainerRoutingTable.setSize(mContainerRoutingTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         mContainerHRMID2L2ADDRTable.setSize(mContainerHRMID2L2ADDRTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-		/**
-		 * Context menu
-		 */
-        assignContextMenu(mScroller);
-        assignContextMenu(mContainer);
-        assignContextMenu(mContainerRoutingTable);
-        assignContextMenu(mContainerHRMID2L2ADDRTable);
+        //mToolBtnContainer.setSize(mToolBtnContainer.computeSize(SWT.DEFAULT, 20));
 	}
 
 	/**
@@ -545,7 +587,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 * 
 	 * @param pCoordinator selected coordinator 
 	 */
-	private void printCoordinator(Coordinator pCoordinator)
+	private void printCoordinator(Composite pParent, Coordinator pCoordinator)
 	{
 		if (HRM_VIEWER_DEBUGGING)
 			Logging.log(this, "Printing coordinator \"" + pCoordinator.toString() +"\"");
@@ -553,13 +595,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 0: name of the coordinator 
 		 */
-		printNAME(pCoordinator);
+		printNAME(pParent, pCoordinator);
 
 		/**
 		 * GUI part 1: tool box 
 		 */
 		if(pCoordinator != null) {
-			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
+			ToolBar tToolbar = new ToolBar(pParent, SWT.NONE);
 
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS){
 				if(!pCoordinator.getHierarchyLevel().isHighest()) {
@@ -581,17 +623,17 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 2: table about CEPs 
 		 */
-		printComChannels(pCoordinator);
+		printComChannels(pParent, pCoordinator);
 			
-		Label separator = new Label (mContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
+		Label separator = new Label (pParent, SWT.SEPARATOR | SWT.HORIZONTAL);
 		separator.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		separator.setVisible(true);
 		
 	}
 	
-	private void printComChannels(final ControlEntity pControlEntity)
+	private void printComChannels(Composite pParent, final ControlEntity pControlEntity)
 	{
-		final Table tTable = new Table(mContainer, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+		final Table tTable = new Table(pParent, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		
 		/**
 		 * The table header
@@ -787,9 +829,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}		
 	}
 
-	private void printNAME(ControlEntity pEntity)
+	private void printNAME(Composite pParent, ControlEntity pEntity)
 	{
-		StyledText tClusterLabel = new StyledText(mContainer, SWT.BORDER);;
+		StyledText tClusterLabel = new StyledText(pParent, SWT.BORDER);;
 		tClusterLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		boolean tClusterHeadWithoutCoordinator = false;
 		if (GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES){
@@ -837,7 +879,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 * 
 	 * @param pCluster selected cluster 
 	 */
-	private void printClusterMember(ClusterMember pClusterMember)
+	private void printClusterMember(Composite pParent, ClusterMember pClusterMember)
 	{
 		// on which hierarchy level are we?
 		int tHierarchyLevel = pClusterMember.getHierarchyLevel().getValue();
@@ -848,13 +890,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 0: name of the cluster 
 		 */
-		printNAME(pClusterMember);
+		printNAME(pParent, pClusterMember);
 		
 		/**
 		 * GUI part 1: tool box 
 		 */
 		if(pClusterMember != null) {
-			ToolBar tToolbar = new ToolBar(mContainer, SWT.NONE);
+			ToolBar tToolbar = new ToolBar(pParent, SWT.NONE);
 
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS){
 				if ((pClusterMember.getElector() != null) && (!pClusterMember.getElector().isCoordinatorValid())){
@@ -874,9 +916,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 2: table about CEPs 
 		 */
-		printComChannels(pClusterMember);
+		printComChannels(pParent, pClusterMember);
 	
-		Label separator = new Label (mContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
+		Label separator = new Label (pParent, SWT.SEPARATOR | SWT.HORIZONTAL);
 		separator.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		separator.setVisible(true);
 	}
