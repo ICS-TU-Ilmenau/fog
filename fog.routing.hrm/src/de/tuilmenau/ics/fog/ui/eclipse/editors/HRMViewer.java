@@ -274,11 +274,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 0: list clusters
 		 */
-		for (Cluster tCluster: mHRMController.getAllClusters()) {
-			// show only those cluster which also have a coordinator
-			if((HRM_VIEWER_SHOW_ALWAYS_ALL_CLUSTERS) || (tCluster.hasLocalCoordinator())){
-				// print info. about cluster
-				printClusterMember(mContainer, tCluster);
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			for (Cluster tCluster: mHRMController.getAllClusters(i)) {
+				// show only those cluster which also have a coordinator
+				if((HRM_VIEWER_SHOW_ALWAYS_ALL_CLUSTERS) || (tCluster.hasLocalCoordinator())){
+					// print info. about cluster
+					printClusterMember(mContainer, tCluster);
+				}
 			}
 		}
 
@@ -306,9 +308,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 1: list coordinators
 		 */
-		for (Coordinator tCoordinator: mHRMController.getAllCoordinators()) {
-			// print info. about cluster
-			printCoordinator(mContainer, tCoordinator);
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			for (Coordinator tCoordinator: mHRMController.getAllCoordinators(i)) {
+				// print info. about cluster
+				printCoordinator(mContainer, tCoordinator);
+			}
 		}
 
 		/**
