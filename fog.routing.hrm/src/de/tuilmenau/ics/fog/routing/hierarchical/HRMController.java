@@ -1109,6 +1109,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public LinkedList<ClusterMember> getAllClusterMembers(HierarchyLevel pHierarchyLevel)
 	{
+		return getAllClusterMembers(pHierarchyLevel.getValue());
+	}
+	
+	/**
+	 * Returns a list of known cluster members (including local Cluster objects) for a given hierarchy level.
+	 * 
+	 * @param pHierarchyLevel the hierarchy level
+	 * 
+	 * @return the list of cluster members
+	 */
+	public LinkedList<ClusterMember> getAllClusterMembers(int pHierarchyLevel)
+	{
 		LinkedList<ClusterMember> tResult = new LinkedList<ClusterMember>();
 		
 		// get a list of all known coordinators
@@ -1117,7 +1129,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// iterate over all known coordinators
 		for (ClusterMember tClusterMember : tAllClusterMembers){
 			// have we found a matching coordinator?
-			if (tClusterMember.getHierarchyLevel().equals(pHierarchyLevel)){
+			if (tClusterMember.getHierarchyLevel().getValue() == pHierarchyLevel){
 				// add this coordinator to the result
 				tResult.add(tClusterMember);
 			}
