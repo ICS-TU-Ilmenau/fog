@@ -186,6 +186,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores the central node for the ARG
 	 */
 	private CentralNodeARG mCentralARGNode = null;
+
+	/**
+	 * Stores a description about all connectivity priority updates
+	 */
+	private String mDesriptionConnectivityPriorityUpdates = new String();
+
+	/**
+	 * Stores a description about all hierarchy priority updates
+	 */
+	private String mDesriptionHierarchyPriorityUpdates = new String();
 	
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
@@ -359,7 +369,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// are we at base hierarchy level
 		if(pCoordinatorProxy.getHierarchyLevel().isBaseLevel()){
 			// increase hierarchy node priority
-			increaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinatorProxy.getDistance());
+			increaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinatorProxy);
 		}
 
 		// updates the GUI decoration for this node
@@ -389,7 +399,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// are we at base hierarchy level
 		if(pCoordinatorProxy.getHierarchyLevel().isBaseLevel()){
 			// increase hierarchy node priority
-			decreaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinatorProxy.getDistance());
+			decreaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinatorProxy);
 		}
 
 		// updates the GUI decoration for this node
@@ -428,7 +438,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			// are we at base hierarchy level
 			if(pCoordinator.getHierarchyLevel().isBaseLevel()){
 				// increase hierarchy node priority
-				increaseHierarchyNodePriority_KnownBaseCoordinator(0);
+				increaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinator);
 			}
 	
 			// updates the GUI decoration for this node
@@ -465,7 +475,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// are we at base hierarchy level
 		if(pCoordinator.getHierarchyLevel().isBaseLevel()){
 			// increase hierarchy node priority
-			decreaseHierarchyNodePriority_KnownBaseCoordinator(0);
+			decreaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinator);
 		}
 
 		// updates the GUI decoration for this node
@@ -579,7 +589,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Set the decoration texts
 		 */
-		mDecoratorForNodePriorities.setText("Hier.: " + Long.toString(mNodeHierarchyPriority) + "/ Conn.: " + Long.toString(getConnectivityNodePriority()));
+		mDecoratorForNodePriorities.setText(" [Hier.: " + Long.toString(mNodeHierarchyPriority) + "/ Conn.: " + Long.toString(getConnectivityNodePriority()) + "]");
 		
 		String tNodeText = "";
 		synchronized (mRegisteredOwnHRMIDs) {
@@ -1783,8 +1793,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 	/**
 	 * Increases base Bully priority
+	 * 
+	 * @param pCausingInterfaceToNeighbor the update causing interface to a neighbor
 	 */
-	private synchronized void increaseNodePriority_Connectivity()
+	private synchronized void increaseNodePriority_Connectivity(NetworkInterface pCausingInterfaceToNeighbor)
 	{
 		// get the current priority
 		long tPriority = getConnectivityNodePriority();
@@ -1794,69 +1806,107 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// increase priority
 		tPriority += BullyPriority.OFFSET_FOR_CONNECTIVITY;
 		
+		mDesriptionConnectivityPriorityUpdates += "\n + " + BullyPriority.OFFSET_FOR_CONNECTIVITY + " ==> " + pCausingInterfaceToNeighbor;
+		
 		// update priority
 		setConnectivityPriority(tPriority);
 
 		Logging.log(this, "Increasing hierarchy node priority (CONNECTIVITY) by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
 		
 		// get the current priority
-		long tBasePriority = getHierarchyNodePriority();
+		long tHierarchyPriority = mNodeHierarchyPriority;
 
 		// increase priority
-		tBasePriority += BullyPriority.OFFSET_FOR_CONNECTIVITY;
+		tHierarchyPriority += BullyPriority.OFFSET_FOR_CONNECTIVITY;
+
+		mDesriptionHierarchyPriorityUpdates += "\n + " + BullyPriority.OFFSET_FOR_CONNECTIVITY + " <== Cause: " + pCausingInterfaceToNeighbor;
 
 		// update priority
-		setHierarchyPriority(tBasePriority);
+		setHierarchyPriority(tHierarchyPriority);
 	}
 	
 	/**
 	 * Increases hierarchy Bully priority
 	 * 
-	 * @param pDistance the distance to this base coordinator
+	 * @param pCausingEntity the update causing entity
 	 */
-	public void increaseHierarchyNodePriority_KnownBaseCoordinator(int pDistance)
+	public void increaseHierarchyNodePriority_KnownBaseCoordinator(ControlEntity pCausingEntity)
 	{
-		if((pDistance >= 0) && (pDistance <= HRMConfig.Hierarchy.EXPANSION_RADIUS)){
+		int tDistance = 0;
+		if(pCausingEntity instanceof CoordinatorProxy){
+			tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
+		}
+
+		if((tDistance >= 0) && (tDistance <= HRMConfig.Hierarchy.EXPANSION_RADIUS)){
 			// get the current priority
-			long tPriority = getHierarchyNodePriority();
+			long tPriority = mNodeHierarchyPriority;
 			
-			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance);
+			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (1 + HRMConfig.Hierarchy.EXPANSION_RADIUS - tDistance);
 					
-			Logging.log(this, "Increasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+			Logging.log(this, "Increasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + tDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 	
 			// increase priority
 			tPriority += (long)(tOffset);
 			
+			mDesriptionHierarchyPriorityUpdates += "\n + " + tOffset + " <== HOPS: " + tDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS + ", Cause: " + pCausingEntity;
+
 			// update priority
 			setHierarchyPriority(tPriority);
 		}else{
-			Logging.err(this, "Detected invalid distance: " + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+			Logging.err(this, "Detected invalid distance: " + tDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 		}
 	}
 
 	/**
 	 * Decreases hierarchy Bully priority
 	 * 
-	 * @param pDistance the distance to this base coordinator
+	 * @param pCausingEntity the update causing entity
 	 */
-	public void decreaseHierarchyNodePriority_KnownBaseCoordinator(int pDistance)
+	public void decreaseHierarchyNodePriority_KnownBaseCoordinator(ControlEntity pCausingEntity)
 	{
-		if((pDistance >= 0) && (pDistance <= HRMConfig.Hierarchy.EXPANSION_RADIUS)){
+		int tDistance = 0;
+		if(pCausingEntity instanceof CoordinatorProxy){
+			tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
+		}
+		
+		if((tDistance >= 0) && (tDistance <= HRMConfig.Hierarchy.EXPANSION_RADIUS)){
 			// get the current priority
-			long tPriority = getHierarchyNodePriority();
+			long tPriority = mNodeHierarchyPriority;
 			
-			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance);
+			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (1 + HRMConfig.Hierarchy.EXPANSION_RADIUS - tDistance);
 			
-			Logging.log(this, "Decreasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+			Logging.log(this, "Decreasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + tDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 	
-			// increase priority
-			tPriority -= (long)((float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (HRMConfig.Hierarchy.EXPANSION_RADIUS - pDistance));
+			// decrease priority
+			tPriority -= (long)(tOffset);
 			
+			mDesriptionHierarchyPriorityUpdates += "\n - " + tOffset + " <== HOPS: " + tDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS + ", Cause: " + pCausingEntity;
+
 			// update priority
 			setHierarchyPriority(tPriority);
 		}else{
-			Logging.err(this, "Detected invalid distance: " + pDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
+			Logging.err(this, "Detected invalid distance: " + tDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 		}
+	}
+
+	/**
+	 * Returns a description about all connectivity priority updates
+	 * 
+	 * @return the description
+	 */
+	public String getGUIDescriptionConnectivityPriorityUpdates()
+	{
+		return mDesriptionConnectivityPriorityUpdates;
+	}
+
+	/**
+	 * Returns a description about all hierarchy priority updates
+	 * 
+	 * @return the description
+	 */
+	public String getGUIDescriptionHierarchyPriorityUpdates()
+	{
+		return mDesriptionHierarchyPriorityUpdates;
 	}
 
 	/**
@@ -1903,7 +1953,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					tParentCluster = Cluster.createBaseCluster(tHRMController);
 					tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
 					
-					increaseNodePriority_Connectivity();
+					increaseNodePriority_Connectivity(pInterfaceToNeighbor);
 				}
 
 				/**

@@ -103,6 +103,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Composite mToolBtnContainer = null;
     private ScrolledComposite mScroller = null;
     
+    private Button mBtnPriorityLog = null;
+
     private Button mBtnClusterMembers = null;
     private Button mBtnCoordClusterMembers = null;
     private Button mBtnCoordAnnounce = null;
@@ -132,6 +134,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 */
 	private static final String PATH_ICONS = "/icons/";
 
+	/**
+	 * Reference pointer to ourself
+	 */
+	private HRMViewer mHRMViewer = this;
+	
 	public HRMViewer()
 	{
 		
@@ -146,7 +153,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		return gridData;
 	}
 
-	private void createToolButtons(Composite pParent)
+	private void createButtons(Composite pParent)
 	{
 		if(mGuiCounter == 1){
 			mToolBtnContainer = new Composite(pParent, SWT.NONE);
@@ -157,7 +164,28 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		
 		/**
-		 * Tool buttons
+		 * Push buttons
+		 */
+		// **** hide/show cluster members ****
+		if(mGuiCounter == 1){
+			mBtnPriorityLog = new Button(mToolBtnContainer, SWT.PUSH);
+			mBtnPriorityLog.setText("Show priority update log");
+			mBtnPriorityLog.setLayoutData(createGridData(false, 1));
+			mBtnPriorityLog.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					Logging.log(this, "Connectivity priority updates: " + mHRMController.getGUIDescriptionConnectivityPriorityUpdates());
+					Logging.log(this, "Hierarchy priority updates: " + mHRMController.getGUIDescriptionHierarchyPriorityUpdates());
+				}
+				public String toString()
+				{
+					return mHRMViewer.toString();
+				}
+			});
+		}
+
+		/**
+		 * Check buttons
 		 */
 		// **** hide/show cluster members ****
 		if(mGuiCounter == 1){
@@ -606,7 +634,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * Tool buttons
 		 */
-		createToolButtons(mGlobalContainer);
+		createButtons(mGlobalContainer);
 		
 		// arrange the GUI content in order to full the entire space
 		if (mGuiCounter == 1){
