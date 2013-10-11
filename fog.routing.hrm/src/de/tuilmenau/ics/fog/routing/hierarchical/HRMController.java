@@ -579,7 +579,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Set the decoration texts
 		 */
-		mDecoratorForNodePriorities.setText("Hier.: " + Long.toString(getHierarchyNodePriority()) + "/ Conn.: " + Long.toString(getConnectivityNodePriority()));
+		mDecoratorForNodePriorities.setText("Hier.: " + Long.toString(mNodeHierarchyPriority) + "/ Conn.: " + Long.toString(getConnectivityNodePriority()));
 		
 		String tNodeText = "";
 		synchronized (mRegisteredOwnHRMIDs) {
