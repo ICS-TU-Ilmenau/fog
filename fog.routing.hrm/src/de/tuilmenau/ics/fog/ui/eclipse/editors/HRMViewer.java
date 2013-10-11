@@ -288,10 +288,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 * GUI part: list cluster members
 		 */
 		if (mShowClusterMembers){
-			for(ClusterMember tClusterMemeber : mHRMController.getAllClusterMembers()){
-				if (!(tClusterMemeber instanceof Cluster)){
-					// print info. about cluster
-					printClusterMember(mContainer, tClusterMemeber);
+			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+				for(ClusterMember tClusterMemeber : mHRMController.getAllClusterMembers(i)){
+					if (!(tClusterMemeber instanceof Cluster)){
+						// print info. about cluster
+						printClusterMember(mContainer, tClusterMemeber);
+					}
 				}
 			}
 		}
