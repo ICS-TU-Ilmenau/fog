@@ -2619,16 +2619,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Stores the ID of the HRM plug-in
-	 */
-	private static final String PLUGIN_ID = "de.tuilmenau.ics.fog.routing.hrm";
-	
-	/**
-	 * Stores the path to the HRM icons
-	 */
-	private static final String PATH_ICONS = "/icons/";
-
-	/**
 	 * The global name space which is used to identify the HRM instances on nodes.
 	 */
 	public final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
