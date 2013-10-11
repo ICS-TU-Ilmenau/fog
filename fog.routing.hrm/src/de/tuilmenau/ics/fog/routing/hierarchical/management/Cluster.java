@@ -498,7 +498,7 @@ public class Cluster extends ClusterMember
 		Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR LOCAL COORDINATORS STARTED (call nr: " + mCountDistributeMembershipRequests + ")");
 
 		if(mClusterRoleValid){
-			LinkedList<Coordinator> tCoordinators = mHRMController.getAllCoordinators(new HierarchyLevel(this,  getHierarchyLevel().getValue() - 1));
+			LinkedList<Coordinator> tCoordinators = mHRMController.getAllCoordinators(getHierarchyLevel().getValue() - 1);
 			
 			/**
 			 * Iterate over all found local coordinators
