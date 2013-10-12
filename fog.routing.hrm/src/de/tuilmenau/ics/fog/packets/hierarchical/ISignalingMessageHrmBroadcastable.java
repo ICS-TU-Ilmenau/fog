@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical;
 
 /**
  * This is abstract interface marks packets as broadcastable and provides some kind of type safety when sendBroadcast*() is used.
- * It is used to enforce the implementation of "clone()" for packets, which may be broadcasted
+ * It is used to enforce the implementation of "duplicate()" for packets, which may be broadcasted
  */
 public interface ISignalingMessageHrmBroadcastable
 {
