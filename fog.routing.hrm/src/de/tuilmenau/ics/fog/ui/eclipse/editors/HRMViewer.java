@@ -104,6 +104,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private ScrolledComposite mScroller = null;
     
     private Button mBtnPriorityLog = null;
+    private Button mBtnClusteringLog = null;
 
     private Button mBtnClusterMembers = null;
     private Button mBtnCoordClusterMembers = null;
@@ -158,7 +159,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mGuiCounter == 1){
 			mToolBtnContainer = new Composite(pParent, SWT.NONE);
 	
-			GridLayout tLayout1 = new GridLayout(4, false);
+			GridLayout tLayout1 = new GridLayout(5, false);
 			mToolBtnContainer.setLayout(tLayout1);
 			mToolBtnContainer.setLayoutData(createGridData(true, 1));
 		}
@@ -166,7 +167,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * Push buttons
 		 */
-		// **** hide/show cluster members ****
+		// **** show priority update log ****
 		if(mGuiCounter == 1){
 			mBtnPriorityLog = new Button(mToolBtnContainer, SWT.PUSH);
 			mBtnPriorityLog.setText("Show priority update log");
@@ -176,6 +177,22 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				public void widgetSelected(SelectionEvent pEvent) {
 					Logging.log(this, "Connectivity priority updates: " + mHRMController.getGUIDescriptionConnectivityPriorityUpdates());
 					Logging.log(this, "Hierarchy priority updates: " + mHRMController.getGUIDescriptionHierarchyPriorityUpdates());
+				}
+				public String toString()
+				{
+					return mHRMViewer.toString();
+				}
+			});
+		}
+		// **** show update cluster log ****
+		if(mGuiCounter == 1){
+			mBtnClusteringLog = new Button(mToolBtnContainer, SWT.PUSH);
+			mBtnClusteringLog.setText("Show update cluster log");
+			mBtnClusteringLog.setLayoutData(createGridData(false, 1));
+			mBtnClusteringLog.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					Logging.log(this, "Clustering updates: " + mHRMController.getGUIDescriptionClusterUpdates());
 				}
 				public String toString()
 				{
@@ -1356,7 +1373,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 				// iterate over all HRMControllers
 				for(HRMController tHRMController : HRMController.getALLHRMControllers()) {
-					tHRMController.cluster(new HierarchyLevel(this, tLocalClusterLevel.getValue() + 1));
+					tHRMController.cluster(null, new HierarchyLevel(this, tLocalClusterLevel.getValue() + 1));
 				}
 			}else{
 				Logging.err(this, "Maximum hierarchy height " + (tLocalClusterLevel.getValue()) + " is already reached.");
@@ -1395,7 +1412,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					}
 					
 					// start the clustering of the selected cluster's coordinator and its neighbors
-					mHRMController.cluster(new HierarchyLevel(this, mCoordinator.getHierarchyLevel().getValue() + 1));
+					mHRMController.cluster(null, new HierarchyLevel(this, mCoordinator.getHierarchyLevel().getValue() + 1));
 				}else{
 					Logging.err(this, "Coordinator is invalid, skipping clustering request");
 				}

@@ -198,6 +198,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private String mDesriptionHierarchyPriorityUpdates = new String();
 	
 	/**
+	 * Stores the thread for clustering tasks
+	 */
+	private ClustererThread mClustererThread = null;
+	
+	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
@@ -251,6 +256,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tDecoration = Decoration.getInstance(GraphViewer.DEFAULT_DECORATION);
 		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndClusters);
 		
+		/**
+		 * Create clusterer thread
+		 */
+		mClustererThread = new ClustererThread(this);
+		/**
+		 * Start the clusterer thread
+		 */
+		mClustererThread.start();
+
 		/**
 		 * Create communication service
 		 */
@@ -1231,12 +1245,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the found Cluster object
 	 */
-	public Cluster getCluster(HierarchyLevel pHierarchyLevel)
+	public Cluster getCluster(int pHierarchyLevel)
 	{
 		Cluster tResult = null;
 
 		for(Cluster tKnownCluster : getAllClusters()) {
-			if(tKnownCluster.getHierarchyLevel().equals(pHierarchyLevel)) {
+			if(tKnownCluster.getHierarchyLevel().getValue() == pHierarchyLevel) {
 				tResult = tKnownCluster;
 				break;
 			}
@@ -1336,64 +1350,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pHierarchyLevel the hierarchy level where a clustering should be done
 	 */
-	// HINT: we use the following object to enforce that only one clustering thread is running at a time
-	final Object mClusterMutex = new Object(); 
-	public synchronized void cluster(final HierarchyLevel pHierarchyLevel)
+	public void cluster(ControlEntity pCause, final HierarchyLevel pHierarchyLevel)
 	{
 		if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-			Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel.getValue());
-	
-			if(pHierarchyLevel.isValid()){
-				// search for an existing cluster at this hierarchy level
-				Cluster tCluster = getCluster(pHierarchyLevel);
-				
-				/**
-				 * Create a new superior cluster
-				 */
-				if(tCluster == null){
-					tCluster = Cluster.create(this, pHierarchyLevel, Cluster.createClusterID());
-				}
-				
-				/**
-				 * Helper for having access to the HRMController within the created thread
-				 */
-				final HRMController tHRMController = this;
-				final Cluster tTargetCluster = tCluster;
-				
-				/**
-				 * Create connection thread
-				 */
-				Thread tThread = new Thread() {
-					public String toString()
-					{
-						return tHRMController.toString();
-					}
-					
-					public void run()
-					{
-						Thread.currentThread().setName("Clustering@" + tHRMController.getNodeGUIName() + "@" + pHierarchyLevel.getValue());
-	
-						synchronized (mClusterMutex) {
-							/**
-							 * Distribute membership requests
-							 */
-							tTargetCluster.distributeMembershipRequests();
-						}
-					}
-				};
-				
-				/**
-				 * Start the connection thread
-				 */
-				tThread.start();
-			}else{
-				Logging.err(this, "cluster() cannot start for a hierarchy level  of: " + pHierarchyLevel.getValue());
-			}
-		}else{
-			Logging.warn(this, "cluster() canceled clustering because height limitation is reached at level: " + pHierarchyLevel.getValue());
+			Logging.log(this, "CLUSTERING TRIGGERED at hierarchy level: " + pHierarchyLevel.getValue());
+			mClustererThread.eventUpdateCluster(pCause, pHierarchyLevel);
 		}
 	}
-
+	
 	/**
 	 * Registers an outgoing communication session
 	 * 
@@ -1910,6 +1874,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns a log about "update cluster" events
+	 */
+	public String getGUIDescriptionClusterUpdates()
+	{
+		return mClustererThread.getGUIDescriptionClusterUpdates();
+	}
+	
+	/**
 	 * Reacts on a detected new physical neighbor. A new connection to this neighbor is created.
 	 * HINT: "pNeighborL2Address" doesn't correspond to the neighbor's central FN!
 	 * 
@@ -2148,28 +2120,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			if((tRoute != null) && (!tRoute.isEmpty())) {
 				// get the first route part, which corresponds to the link between the central FN and the searched first FN towards the neighbor 
 				RouteSegmentPath tPath = (RouteSegmentPath) tRoute.getFirst();
-				// get the gate ID of the link
-				GateID tGateID= tPath.getFirst();						
-				// get all outgoing links from the central FN
-				Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
-				
-				RoutingServiceLink tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = null;
-	
-				// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
-				for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
-					// compare the GateIDs
-					if(tLink.equals(tGateID)) {
-						// found!
-						tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = tLink;
+				// check if route has entries
+				if((tPath != null) && (!tPath.isEmpty())){
+					// get the gate ID of the link
+					GateID tGateID= tPath.getFirst();						
+					// get all outgoing links from the central FN
+					Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
+					
+					RoutingServiceLink tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = null;
+		
+					// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
+					for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
+						// compare the GateIDs
+						if(tLink.equals(tGateID)) {
+							// found!
+							tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = tLink;
+						}
 					}
-				}
-				// determine the searched FN, which comes first when routing towards the neighbor
-				HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getL2LinkDestination(tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor);
-				if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
-					// get the L2 address
-					tResult = (L2Address)tFirstNodeBeforeBusToNeighbor;
+					// determine the searched FN, which comes first when routing towards the neighbor
+					HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getL2LinkDestination(tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor);
+					if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
+						// get the L2 address
+						tResult = (L2Address)tFirstNodeBeforeBusToNeighbor;
+					}else{
+						Logging.err(this, "getL2AddressOfFirstFNTowardsNeighbor() found a first FN (" + tFirstNodeBeforeBusToNeighbor + ") towards the neighbor " + pNeighborName + " but it has the wrong class type");
+					}
 				}else{
-					Logging.err(this,  "getL2AddressOfFirstFNTowardsNeighbor() found a first FN (" + tFirstNodeBeforeBusToNeighbor + ") towards the neighbor " + pNeighborName + " but it has the wrong class type");
+					Logging.warn(this, "getL2AddressOfFirstFNTowardsNeighbor() found an empty route to \"neighbor\": " + pNeighborName);
 				}
 			}else{
 				Logging.warn(this, "Got as route to neighbor: " + tRoute); //HINT: this could also be a local loop -> throw only a warning				

@@ -651,7 +651,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
 
 					// start the clustering at the hierarchy level
-					mHRMController.cluster(new HierarchyLevel(this, getHierarchyLevel().getValue() + 1));
+					mHRMController.cluster(this, new HierarchyLevel(this, getHierarchyLevel().getValue() + 1));
 				}else{
 					Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + getHierarchyLevel().getValue());
 				}
@@ -888,7 +888,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public boolean isClustered()
 	{
 		// search for an existing cluster at this hierarchy level
-		Cluster tSuperiorCluster = mHRMController.getCluster(new HierarchyLevel(this, getHierarchyLevel().getValue() + 1));
+		Cluster tSuperiorCluster = mHRMController.getCluster(getHierarchyLevel().getValue() + 1);
 		
 		return ((getHierarchyLevel().isHighest()) || ((tSuperiorCluster != null) && (hasMembership(tSuperiorCluster))));
 	}
