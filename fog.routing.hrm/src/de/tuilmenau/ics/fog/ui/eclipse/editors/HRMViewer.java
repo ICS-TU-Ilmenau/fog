@@ -754,7 +754,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tColumnPeerNode.setText("Peer Node");
 		
 		TableColumn tColumnActiveLink = new TableColumn(tTable, SWT.NONE, 2);
-		tColumnActiveLink.setText("Tied");
+		tColumnActiveLink.setText("Active");
 		
 		TableColumn tColumnPeerPriority = new TableColumn(tTable, SWT.NONE, 3);
 		tColumnPeerPriority.setText("Peer Priority");
