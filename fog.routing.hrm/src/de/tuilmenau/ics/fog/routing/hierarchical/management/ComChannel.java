@@ -859,6 +859,13 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "ANNOUNCE_COORDINATOR-received from \"" + getPeerHRMID() + "\", announcement is: " + tAnnounceClusterPacket);
 		
+			/**
+			 * update tie state
+			 */
+			if(tAnnounceClusterPacket.getSenderClusterName().equals(mRemoteClusterName)){
+				setTied(true);
+			}
+			
 			getParent().eventCoordinatorAnnouncement(this, tAnnounceClusterPacket);
 			
 			return true;
@@ -874,6 +881,13 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "INVALID_COORDINATOR-received from \"" + getPeerHRMID() + "\", invalidation is: " + tInvalidCoordinatorPacket);
 		
+			/**
+			 * update tie state
+			 */
+			if(tInvalidCoordinatorPacket.getSenderClusterName().equals(mRemoteClusterName)){
+				setTied(false);
+			}
+
 			getParent().eventCoordinatorInvalidation(this, tInvalidCoordinatorPacket);
 			
 			return true;
