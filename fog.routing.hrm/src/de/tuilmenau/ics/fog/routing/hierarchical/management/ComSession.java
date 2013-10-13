@@ -509,7 +509,8 @@ public class ComSession extends Session
 		Logging.log(this, "RECEIVED PACKET: " + pData.getClass().getSimpleName());
 		
 		/**
-		 * PACKET: AnnouncePhysicalNeighborhood
+		 * AnnouncePhysicalNeighborhood:
+		 * 			ComSession ==> ComSession
 		 */
 		if(pData instanceof AnnouncePhysicalEndPoint) {
 			// get the packet
@@ -525,7 +526,9 @@ public class ComSession extends Session
 		} 
 		
 		/**
-		 * RequestClusterMembership
+		 * RequestClusterMembership:
+		 * 			L0: a node (HRMController) ==> other node (HRMController)
+		 *  		L1+: Cluster at level n ==> Coordinator at level (n-1)
 		 */
 		if(pData instanceof RequestClusterMembership) {
 			RequestClusterMembership tRequestClusterMembershipPacket = (RequestClusterMembership)pData;
@@ -576,7 +579,8 @@ public class ComSession extends Session
 		}
 
 		/**
-		 * PACKET: MultiplexHeader
+		 * MultiplexHeader:
+		 * 			ComChannel ==> ComChannel 
 		 */
 		if (pData instanceof MultiplexHeader) {
 			MultiplexHeader tMultiplexHeader = (MultiplexHeader) pData;

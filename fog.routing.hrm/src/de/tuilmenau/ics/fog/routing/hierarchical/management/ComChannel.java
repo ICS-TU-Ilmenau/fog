@@ -694,7 +694,9 @@ public class ComChannel
 		}
 		
 		/**
-		 * Bully signaling message
+		 * Bully signaling message:
+		 * 			Cluster ==> ClusterMember
+		 * 			ClusterMember ==> Cluster
 		 */
 		if (pData instanceof SignalingMessageBully) {
 			// cast to a Bully signaling message
@@ -731,7 +733,7 @@ public class ComChannel
 		}
 
 		/**
-		 * RoutingInformation
+		 * RoutingInformation:
 		 */
 		if (pData instanceof RoutingInformation){
 			// cast to a RoutingInformation signaling message
@@ -744,7 +746,8 @@ public class ComChannel
 		}
 		
 		/**
-		 * AssignHRMID
+		 * AssignHRMID:
+		 * 			Coordinator (via Cluster) ==> all inferior local/remote ClusterMember
 		 */
 		if(pData instanceof AssignHRMID) {
 			AssignHRMID tAssignHRMIDPacket = (AssignHRMID)pData;
@@ -759,7 +762,8 @@ public class ComChannel
 		}
 
 		/**
-		 * RevokeHRMIDs
+		 * RevokeHRMIDs:
+		 * 			Coordinator (via Cluster) ==> all inferior local/remote ClusterMember
 		 */
 		if(pData instanceof RevokeHRMIDs){
 			RevokeHRMIDs tRevokeHRMIDsPacket = (RevokeHRMIDs)pData;
@@ -776,7 +780,9 @@ public class ComChannel
 		}
 		
 		/**
-		 * RequestClusterMembershipAck
+		 * RequestClusterMembershipAck:
+		 * 			ClusterMember(CoordinatorAsClusterMember) ==> Cluster
+		 *  
 		 */
 		if(pData instanceof RequestClusterMembershipAck) {
 			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)pData;
@@ -798,7 +804,8 @@ public class ComChannel
 		}
 		
 		/**
-		 * InformClusterLeft
+		 * InformClusterLeft:
+		 * 			ClusterMember ==> Cluster
 		 */
 		if(pData instanceof InformClusterLeft) {
 			InformClusterLeft tLeaveClusterPacket = (InformClusterLeft)pData;
@@ -820,7 +827,8 @@ public class ComChannel
 		}
 		
 		/**
-		 * InformClusterMembershipCanceled
+		 * InformClusterMembershipCanceled:
+		 * 			Cluster ==> ClusterMember
 		 */
 		if(pData instanceof InformClusterMembershipCanceled) {
 			InformClusterMembershipCanceled tInformClusterMembershipCanceledPacket = (InformClusterMembershipCanceled)pData;
@@ -843,6 +851,7 @@ public class ComChannel
 		
 		/**
 		 * AnnounceCluster
+		 * 			Coordinator (via Cluster) ==> all inferior local/remote ClusterMember
 		 */
 		if(pData instanceof AnnounceCoordinator) {
 			AnnounceCoordinator tAnnounceClusterPacket = (AnnounceCoordinator)pData;
@@ -857,6 +866,7 @@ public class ComChannel
 		
 		/**
 		 * InvalidCoordinator
+		 * 			Coordinator (via Cluster) ==> all inferior local/remote ClusterMember
 		 */
 		if(pData instanceof InvalidCoordinator) {
 			InvalidCoordinator tInvalidCoordinatorPacket = (InvalidCoordinator)pData;
