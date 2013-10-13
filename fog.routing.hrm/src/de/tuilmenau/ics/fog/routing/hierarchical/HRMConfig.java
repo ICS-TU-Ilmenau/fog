@@ -41,7 +41,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for each received packet of a channel.
 		 */
-		public static final boolean SHOW_RECEIVED_CHANNEL_PACKETS = true;
+		public static final boolean SHOW_RECEIVED_CHANNEL_PACKETS = false;
 
 		/**
 		 * Shows debug outputs for each received RoutingInformation packet.
@@ -56,22 +56,22 @@ public class HRMConfig
 		/**
 		 * Show debug outputs about node/link detection
 		 */
-		public static final boolean GUI_SHOW_TOPOLOGY_DETECTION = true;
+		public static final boolean GUI_SHOW_TOPOLOGY_DETECTION = false;
 
 		/**
 		 * Shows debug outputs about multiplex packets 
 		 */
-		public static final boolean GUI_SHOW_MULTIPLEX_PACKETS = true;
+		public static final boolean GUI_SHOW_MULTIPLEX_PACKETS = false;
 
 		/**
 		 * Shows general debug outputs about signaling messages
 		 */
-		public static final boolean GUI_SHOW_SIGNALING = true;
+		public static final boolean GUI_SHOW_SIGNALING = false;
 
 		/**
 		 * Shows detailed debug outputs about Bully related signaling messages
 		 */
-		public static final boolean GUI_SHOW_SIGNALING_BULLY = true;
+		public static final boolean GUI_SHOW_SIGNALING_BULLY = false;
 
 		/**
 		 * Shows detailed debug outputs about HRMID signaling messages
@@ -110,6 +110,11 @@ public class HRMConfig
 		 * Defines if all HRM entities should be linked to a central node in the ARG
 		 */
 		public static final boolean SHOW_ALL_OBJECT_REFS_TO_CENTRAL_NODE_IN_ARG = false;
+
+		/**
+		 * Defines if the route of "AnnounceCoordinator" packets should be shown
+		 */
+		public static final boolean SHOW_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE = false;
 	}
 	
 	public class Addressing
