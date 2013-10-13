@@ -411,6 +411,27 @@ public class Elector implements Localization
 
 	/**
 	 * SIGNAL: report itself as alive by signaling BULLY ALIVE to all cluster members
+	 */
+	private void signalLeaveBroadcast()
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+			Logging.log(this, "SENDLEAVE()-START, electing cluster is " + mParent);
+			Logging.log(this, "SENDLEAVE(), cluster members: " + mParent.getComChannels().size());
+		}
+
+		// create the packet
+		BullyLeave tPacketBullyLeave = new BullyLeave(mHRMController.getNodeName(), mParent.getPriority());
+
+		// send broadcast
+		mParent.sendClusterBroadcast(tPacketBullyLeave, true);
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+			Logging.log(this, "SENDLEAVE()-END");
+		}
+	}
+
+	/**
+	 * SIGNAL: report itself as alive by signaling BULLY ALIVE to all cluster members
 	 * 
 	 * @param pComChannel the communication channel along which the RESPONSE should be send
 	 */
@@ -508,6 +529,14 @@ public class Elector implements Localization
 			 */
 			if(mParent instanceof Cluster){
 				if (mParent.getCoordinator() != null){
+					/**
+					 * Trigger: broadcast of "BullyLeave"
+					 */
+					signalLeaveBroadcast();
+					
+					/**
+					 * Invalidate the coordinator
+					 */
 					mParent.getCoordinator().eventCoordinatorRoleInvalid();
 				}else{
 					Logging.err(this, "We were the former winner of the election but the coordinator is invalid");
@@ -547,7 +576,10 @@ public class Elector implements Localization
 	{
 		Logging.log(this, "EVENT: cluster member left, comm. channel was: " + pComChannel);
 		
-		//TODO: 
+		/**
+		 * deactivate the HRM link
+		 */
+		pComChannel.setHRMLinkActivation(false);
 	}
 	
 	/**
