@@ -201,9 +201,9 @@ public class ComChannel
 	private int mSentPackets = 0;
 	
 	/**
-	 * Stores if the parent is tied to the peer
+	 * Stores if this comm. channel is end-point of an active HRM link between the parent and the peer
 	 */
-	private boolean mTied = false;
+	private boolean mLinkActivation = false;
 	
 	/**
 	 * Stores the HRMController reference
@@ -923,7 +923,7 @@ public class ComChannel
 	 */
 	public void setHRMLinkActivation(boolean pState)
 	{
-		mTied = pState;
+		mLinkActivation = pState;
 	}
 	
 	/**
@@ -933,7 +933,7 @@ public class ComChannel
 	 */
 	public boolean isUsedHRMLink()
 	{
-		return mTied;
+		return mLinkActivation;
 	}	
 	
 	/**
