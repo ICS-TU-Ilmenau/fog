@@ -201,9 +201,9 @@ public class ComChannel
 	private int mSentPackets = 0;
 	
 	/**
-	 * Stores the linking state of the parent and the peer
+	 * Stores if the parent is tied to the peer
 	 */
-	private boolean mLinking = false;
+	private boolean mTied = false;
 	
 	/**
 	 * Stores the HRMController reference
@@ -874,23 +874,23 @@ public class ComChannel
 	}
 	
 	/**
-	 * Sets the linking
+	 * (De-)activates the tie.
 	 * 
-	 * @param pState the new linking state
+	 * @param pState the new state
 	 */
-	public void setLinking(boolean pState)
+	public void setTied(boolean pState)
 	{
-		mLinking = pState;
+		mTied = pState;
 	}
 	
 	/**
-	 * Returns true if the parent and the peer are link (e.g., a cluster member is linked to a cluster)
+	 * Returns true if the parent and the peer are tied (e.g., a cluster member is tied to a cluster)
 	 * 
 	 * @return true or false
 	 */
-	public boolean getLinking()
+	public boolean isTied()
 	{
-		return mLinking;
+		return mTied;
 	}	
 	
 	/**
