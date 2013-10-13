@@ -525,9 +525,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			}else
 				Logging.log(this, "    ..assigning new HRMID " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
 	
-			// create new AssignHRMID packet for the cluster member
-			AssignHRMID tAssignHRMIDPacket = new AssignHRMID(mHRMController.getNodeName(), pComChannel.getPeerHRMID(), tHRMID);
-			
 			// register this new HRMID in the local HRS and create a mapping to the right L2Address
 			Logging.log(this, "    ..creating MAPPING " + tHRMID.toString() + " to " + pComChannel.getPeerL2Address());
 			mHRMController.getHRS().mapHRMIDToL2Address(tHRMID, pComChannel.getPeerL2Address());
@@ -539,7 +536,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			pComChannel.storeAssignedHRMID(tHRMID);
 			
 			// send the packet
-			pComChannel.sendPacket(tAssignHRMIDPacket);
+			pComChannel.signalAssignHRMID(tHRMID);
 		}else{
 			Logging.log(this, "Address distribution is deactivated, no new assigned HRMID for: " + pComChannel);
 		}
@@ -789,8 +786,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			/**
 			 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
 			 */
-			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), createCoordinatorName());
-			tComChannel.sendPacket(tRequestClusterMembershipAckPacket);
+			tComChannel.signalRequestClusterMembershipAck(createCoordinatorName());
 			
 			/**
 			 * Trigger: joined a remote cluster (sends a Bully priority update)
@@ -820,47 +816,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
-	 * Sends a packet towards the superior cluster
-	 * If there is more than one comm. channel an error occurs but the message is sent
+	 * Checks if a membership to a given cluster does already exist 
 	 * 
-	 * @param pPacket the packet
-	 */
-	private void sendSuperiorCluster(SignalingMessageHrm pPacket)
-	{
-		Logging.log(this, "SENDING TO SUPERIOR CLUSTER: " + pPacket);
-		
-		// get all communication channels
-		LinkedList<ComChannel> tComChannels = getComChannels();
-
-		// get the L2Addres of the local host
-		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
-		
-		Logging.log(this, "Sending TOWARDS SUPERIOR CLUSTER from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels");
-		
-		int tUsedChannels = 0;
-		for(ComChannel tComChannel : tComChannels) {
-			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
-			
-			if (!tIsLoopback){
-				Logging.log(this, "       ..to " + tComChannel);
-			}else{
-				Logging.log(this, "       ..to LOOPBACK " + tComChannel);
-			}
-
-			// send the packet to one of the possible cluster members
-			tComChannel.sendPacket(pPacket);
-			
-			tUsedChannels++;
-		}
-		
-		// drop the warning in case too many comm. channels were used
-		if (tUsedChannels > 1){
-			Logging.warn(this, "Found " + tUsedChannels + " instead of ONLY ONE channel twoards the top of the hierarchy");
-		}
-	}
-
-	/**
-	 * 
+	 * @param pCluster the ClusterName of a cluster for which the membership is searched
 	 */
 	private boolean hasMembership(ClusterName pCluster)
 	{

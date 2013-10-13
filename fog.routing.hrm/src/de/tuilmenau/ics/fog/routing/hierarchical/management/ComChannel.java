@@ -588,9 +588,33 @@ public class ComChannel
 	}
 	
 	/**
-	 * Revokes all formerly assigned HRMIDs
+	 * Sends "AssignHRMID"
 	 * 
-	 * @param pHRMID 
+	 * @param pHRMID the HRMID which is to be assigned
+	 */
+	public void signalAssignHRMID(HRMID pHRMID)
+	{
+		// create new AssignHRMID packet for the cluster member
+		AssignHRMID tAssignHRMIDPacket = new AssignHRMID(mHRMController.getNodeName(), getPeerHRMID(), pHRMID);
+		// send the packet
+		sendPacket(tAssignHRMIDPacket);
+	}
+
+	/**
+	 * Acknowledges a RequestClusterMembership packet
+	 * 
+	 * @param pSource the source of the acknowledgment (e.g., a coordinator description)
+	 */
+	public void signalRequestClusterMembershipAck(ClusterName pSource)
+	{
+		// create the packet
+		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getPeerHRMID(), pSource);
+		// send the packet
+		sendPacket(tRequestClusterMembershipAckPacket);
+	}
+
+	/**
+	 * Revokes all formerly assigned HRMIDs
 	 */	
 	public void signalRevokeHRMIDs()
 	{

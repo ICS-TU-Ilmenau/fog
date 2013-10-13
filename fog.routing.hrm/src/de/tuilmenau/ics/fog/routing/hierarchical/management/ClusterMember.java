@@ -292,8 +292,7 @@ public class ClusterMember extends ClusterName
 		/**
 		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
 		 */
-		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getHRMID(), null);
-		tComChannel.sendPacket(tRequestClusterMembershipAckPacket);
+		tComChannel.signalRequestClusterMembershipAck(null);
 		
 		/**
 		 * Trigger: joined a remote cluster (sends a Bully priority update)
