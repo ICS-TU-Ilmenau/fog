@@ -833,7 +833,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				}
 			}
 		}else{
-			Logging.warn(this, "Avoiding redundant registration of locally instantiated coordinator: " + pAnnounceCoordinator);
+			//Logging.warn(this, "Avoiding redundant registration of locally instantiated coordinator: " + pAnnounceCoordinator);
 		}
 	}
 
@@ -868,7 +868,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				tCoordinatorProxy.eventRemoteCoordinatorRoleInvalid();
 			}
 		}else{
-			Logging.warn(this, "Avoiding unregistration of locally instantiated coordinator: " + pInvalidCoordinator);
+			//Logging.warn(this, "Avoiding unregistration of locally instantiated coordinator: " + pInvalidCoordinator);
 		}
 	}
 
