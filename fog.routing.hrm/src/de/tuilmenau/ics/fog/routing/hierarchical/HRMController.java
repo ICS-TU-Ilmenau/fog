@@ -1103,6 +1103,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void registerSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
 	{
+		Logging.log(this, "Registering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
 		synchronized (mSuperiorCoordinators) {
 			if(!mSuperiorCoordinators.contains(pSuperiorCoordinatorClusterName)){
 				Logging.log(this, "Adding superior coordinator: " + pSuperiorCoordinatorClusterName);
@@ -1126,6 +1127,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void unregisterSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
 	{
+		Logging.log(this, "Unregistering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
 		synchronized (mSuperiorCoordinators) {
 			if(mSuperiorCoordinators.contains(pSuperiorCoordinatorClusterName)){
 				Logging.log(this, "Removing superior coordinator: " + pSuperiorCoordinatorClusterName);
