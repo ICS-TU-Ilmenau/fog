@@ -586,7 +586,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			/**
 			 * Send broadcasts in all locally known clusters at this hierarchy level
 			 */
-			LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue());
+			LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0); //HINT: we have to broadcast via level 0, otherwise, an inferior could already be destroyed and the invalidation message might get dropped
 			Logging.log(this, "     ..distributing in clusters: " + tClusters);
 			for(Cluster tCluster : tClusters){
 				tCluster.sendClusterBroadcast(tInvalidCoordinatorPacket, true);
