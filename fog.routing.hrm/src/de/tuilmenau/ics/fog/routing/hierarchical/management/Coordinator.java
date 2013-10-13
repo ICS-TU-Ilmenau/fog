@@ -493,7 +493,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private void revokeAssignedHRMIDsFromClusterMembers()
 	{
-		Logging.log(this, "###### Revoking assigned HRMIDs for all clsuter members");
+		Logging.log(this, "###### Revoking assigned HRMIDs for all cluster members");
 
 		LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
 		for (ComChannel tcomChannel : tComChannels){
