@@ -187,12 +187,17 @@ public class Cluster extends ClusterMember
 	{
 		Logging.log(this, "Forwarding coordinator announcement: " + pAnnounceCoordinator);
 	
-		// check the TTL once more
-		if(pAnnounceCoordinator.isTTLOkay()){
-			// forward this announcement to all cluster members
-			sendClusterBroadcast(pAnnounceCoordinator, true, pSourceL2Address /* do NOT forward to the source */);
+		// do we have a loop?
+		if(!pAnnounceCoordinator.knowsCluster(getClusterID())){
+			// check the TTL once more
+			if(pAnnounceCoordinator.isTTLOkay()){
+				// forward this announcement to all cluster members
+				sendClusterBroadcast(pAnnounceCoordinator, true, pSourceL2Address /* do NOT forward to the source */);
+			}else{
+				Logging.err(this, "forwardCoordinatorAnnouncement() found invalid TTL for: " + pAnnounceCoordinator);
+			}
 		}else{
-			Logging.err(this, "forwardCoordinatorAnnouncement() found invalid TTL for: " + pAnnounceCoordinator);
+			Logging.warn(this, "forwardCoordinatorAnnouncement() found a forwarding loop for: " + pAnnounceCoordinator);
 		}
 	}
 	
@@ -206,12 +211,17 @@ public class Cluster extends ClusterMember
 	{
 		Logging.log(this, "Forwarding coordinator invalidation: " + pInvalidCoordinator);
 	
-		// check the TTL once more
-		if(pInvalidCoordinator.isTTLOkay()){
-			// forward this invalidation to all cluster members
-			sendClusterBroadcast(pInvalidCoordinator, true, pSourceL2Address /* do NOT forward to the source */);
+		// do we have a loop?
+		if(!pInvalidCoordinator.knowsCluster(getClusterID())){
+			// check the TTL once more
+			if(pInvalidCoordinator.isTTLOkay()){
+				// forward this invalidation to all cluster members
+				sendClusterBroadcast(pInvalidCoordinator, true, pSourceL2Address /* do NOT forward to the source */);
+			}else{
+				Logging.err(this, "forwardCoordinatorInvalidation() found invalid TTL for: " + pInvalidCoordinator);
+			}
 		}else{
-			Logging.err(this, "forwardCoordinatorInvalidation() found invalid TTL for: " + pInvalidCoordinator);
+			Logging.warn(this, "forwardCoordinatorInvalidation() found a forwarding loop for: " + pInvalidCoordinator);
 		}
 	}
 

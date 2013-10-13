@@ -9,6 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
+import java.util.LinkedList;
+
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
@@ -108,6 +110,11 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	private boolean mEnteredSidewardForwarding = false;
 	
 	/**
+	 * Stores the passed clusters
+	 */
+	private LinkedList<Long> mPassedClusters = new LinkedList<Long>();
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
@@ -120,6 +127,34 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		
 		mSenderClusterName = pSenderClusterName;
 		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
+	}
+	
+	/**
+	 * Record the passed clusters
+	 * 
+	 * @param pClusterID the unique ID of the passed cluster
+	 */
+	public void addPassedCluster(Long pClusterID)
+	{
+		synchronized (mPassedClusters) {
+			mPassedClusters.add(pClusterID);
+		}
+	}
+
+	/**
+	 * Checks if a cluster was already passed
+	 * 
+	 * @param pClusterID the unique ID of the passed cluster
+	 */
+	public boolean knowsCluster(Long pClusterID)
+	{
+		boolean tResult = false;
+		
+		synchronized (mPassedClusters) {
+			tResult = mPassedClusters.contains(pClusterID);
+		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -246,6 +281,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	 * 
 	 * @return the duplicate packet
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
@@ -267,6 +303,9 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		
 		// add an entry to the recorded source route
 		tResult.addSourceRoute("[route]: (" + mRoute + ") -> (" + tResult.mRoute + ")");
+
+		// update the recorded cluster ID
+		tResult.mPassedClusters = (LinkedList<Long>) mPassedClusters.clone();
 
 		Logging.log(this, "Created duplicate packet: " + tResult);
 		

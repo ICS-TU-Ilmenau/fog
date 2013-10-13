@@ -102,6 +102,11 @@ public class ClusterMember extends ClusterName
 		pAnnounceCoordinator.addRouteHop(pComChannel.getRouteToPeer());
 		
 		/**
+		 * Record the passed clusters
+		 */
+		pAnnounceCoordinator.addPassedCluster(getClusterID());
+		
+		/**
 		 * Store the announced remote coordinator in the ARG 
 		 */
 		registerAnnouncedCoordinatorARG(this, pAnnounceCoordinator);
@@ -116,10 +121,23 @@ public class ClusterMember extends ClusterName
 		 * forward the announcement if the TTL is still okay
 		 */
 		if(pAnnounceCoordinator.isTTLOkay()){
-			/**
-			 * mark packet as "sideward forwarded"
-			 */
-			pAnnounceCoordinator.setSidewardForwarding();
+			// check if this announcement is already on its way sidewards
+			if(!pAnnounceCoordinator.enteredSidewardForwarding()){
+				// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
+				if (pComChannel.getPeerL2Address().equals(pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address())){
+					/**
+					 * mark packet as "sideward forwarded"
+					 */
+					pAnnounceCoordinator.setSidewardForwarding();
+				}else{
+					// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
+					
+					/**
+					 * drop the packet and return immediately
+					 */ 
+					return;
+				}
+			}
 
 			/**
 			 * Forward the announcement within the same hierarchy level ("to the side")
@@ -164,6 +182,11 @@ public class ClusterMember extends ClusterName
 		unregisterAnnouncedCoordinatorARG(this, pInvalidCoordinator);
 		
 		/**
+		 * Record the passed clusters
+		 */
+		pInvalidCoordinator.addPassedCluster(getClusterID());
+
+		/**
 		 * transition from one cluster to the next one => decrease TTL value
 		 */
 		Logging.log(this, "Deacreasing TTL of: " + pInvalidCoordinator);
@@ -173,10 +196,23 @@ public class ClusterMember extends ClusterName
 		 * forward the announcement if the TTL is still okay
 		 */
 		if(pInvalidCoordinator.isTTLOkay()){
-			/**
-			 * mark packet as "sideward forwarded"
-			 */
-			pInvalidCoordinator.setSidewardForwarding();
+			// check if this announcement is already on its way sidewards
+			if(!pInvalidCoordinator.enteredSidewardForwarding()){
+				// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
+				if (pComChannel.getPeerL2Address().equals(pInvalidCoordinator.getSenderClusterCoordinatorNodeL2Address())){
+					/**
+					 * mark packet as "sideward forwarded"
+					 */
+					pInvalidCoordinator.setSidewardForwarding();
+				}else{
+					// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
+					
+					/**
+					 * drop the packet and return immediately
+					 */ 
+					return;
+				}
+			}
 
 			/**
 			 * Forward the announcement within the same hierarchy level ("to the side")
