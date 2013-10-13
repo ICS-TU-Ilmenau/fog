@@ -221,11 +221,6 @@ public class ComChannel
 	private LinkedList<ComChannelPacketMetaData> mPackets = new LinkedList<ComChannelPacketMetaData>();
 	
 	/**
-	 * Limits the size of the packet storage
-	 */
-	private static int MAX_PACKET_STORAGE_SIZE = 64;
-	
-	/**
 	 * Constructor
 	 * 
 	 * @param pHRMController is the HRMController instance of this node
@@ -515,7 +510,7 @@ public class ComChannel
 	{
 		synchronized (mPackets) {
 			// limit the storage size
-			while(mPackets.size() > MAX_PACKET_STORAGE_SIZE){
+			while(mPackets.size() > HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE){
 				mPackets.removeFirst();
 			}
 			

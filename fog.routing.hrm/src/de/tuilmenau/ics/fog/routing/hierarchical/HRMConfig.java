@@ -13,6 +13,11 @@ public class HRMConfig
 {
 	public class DebugOutput
 	{
+		/**
+		 * Limits the size of the packet storage in a comm. channel
+		 */
+		public static final int COM_CHANNELS_MAX_PACKET_STORAGE_SIZE = 64;
+
 		/** 
 		 * Show debug outputs about observable/observer construct, which is used to inform GUIs about HRMController internal changes.
 		 */
