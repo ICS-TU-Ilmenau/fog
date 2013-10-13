@@ -117,10 +117,16 @@ public class ClustererThread extends Thread
 				Cluster tTargetCluster = mHRMController.getCluster(pHierarchyLevel);
 				
 				/**
-				 * Create a new superior cluster
+				 * Create a new superior cluster if none does already exist
 				 */
 				if(tTargetCluster == null){
-					tTargetCluster = Cluster.create(mHRMController, new HierarchyLevel(this, pHierarchyLevel), Cluster.createClusterID());
+					// does a local inferior coordinator exist?
+					if(!mHRMController.getAllCoordinators(pHierarchyLevel - 1).isEmpty()){
+						tTargetCluster = Cluster.create(mHRMController, new HierarchyLevel(this, pHierarchyLevel), Cluster.createClusterID());
+					}else{
+						Logging.log(this, "No local inferior coordinator found, skipping clustering request at hierarchy level: " + pHierarchyLevel);
+						return;
+					}
 				}
 				
 				/**
