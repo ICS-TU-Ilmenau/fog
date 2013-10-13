@@ -307,7 +307,7 @@ public class ClusterMember extends ClusterName
 					Logging.log(this, "       ..to LOOPBACK " + tComChannel);
 				}
 	
-				if ((HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST) || (pIncludeLoopback) || (!tIsLoopback)){
+				if ((pIncludeLoopback) || (!tIsLoopback)){
 					if(tComChannel.isEstablished()){
 						SignalingMessageHrm tNewPacket = pPacket.duplicate();
 						Logging.log(this, "           ..sending duplicate packet: " + tNewPacket);
@@ -373,11 +373,6 @@ public class ClusterMember extends ClusterName
 	{
 		int tResult = 0;
 
-		// if the local host is also treated as cluster member, we return an additional cluster member 
-		if (HRMConfig.Hierarchy.SIGNALING_INCLUDES_LOCALHOST){
-			tResult++;
-		}
-		
 		// get all communication channels
 		LinkedList<ComChannel> tComChannels = getComChannels();
 

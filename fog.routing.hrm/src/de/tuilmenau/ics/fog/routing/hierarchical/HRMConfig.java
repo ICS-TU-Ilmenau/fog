@@ -97,6 +97,7 @@ public class HRMConfig
 
 		/**
 		 * Defines the time period between two updates of the node specific HRM display.
+		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might block the entire FoGSiEm environment.
 		 */
 		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 3.0;
 
@@ -116,6 +117,7 @@ public class HRMConfig
 		/**
 		 * Specifies whether the address are assigned automatically,
 		 * otherwise it has to be triggered step by step via the GUI.
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean ASSIGN_AUTOMATICALLY = false;
 		
@@ -144,12 +146,14 @@ public class HRMConfig
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean START_AUTOMATICALLY_BASE_LEVEL = true; 
 
 		/**
 		 * This specifies whether the hierarchy build process is continued automatically.
 		 * Otherwise, it is done step by step by the help of GUI and user inputs.
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean CONTINUE_AUTOMATICALLY = true;
 		
@@ -160,20 +164,15 @@ public class HRMConfig
 		public static final int CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT = 99;
 
 		/**
-		 * Defines if signaling (e.g., broadcasts) also includes the local host.
-		 * In this case, signaling also sends packets in a loop back to the sender.
-		 * This causes ADDITIONAL LOOPBACK SIGNALING.
-		 */
-		public static final boolean SIGNALING_INCLUDES_LOCALHOST = false;
-
-		/**
 		 * Defines if connection should remain open or be automatically closed if the last inferior comm. channel was closed
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean AUTO_CLEANUP_FOR_CONNECTIONS = true;
 
 		/**
 		 * Defines if coordinators should announce their existences among cluster members/neighbors
 		 * IMPORTANT: If this is disabled, the hierarchy creation won't be correct.
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
 
@@ -184,12 +183,14 @@ public class HRMConfig
 
 		/**
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean PERIODIC_COORDINATOR_ANNOUNCEMENTS = true;
 
 		/**
 		 * Defines if an HRM entity should report its topology knowledge to the superior entity.
 		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated network topology.
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean TOPOLOGY_REPORTS = false;
 
@@ -210,6 +211,7 @@ public class HRMConfig
 		/**
 		 * Should each HRS instance try to avoid duplicates in its internal routing tables?
 		 * In this case, also updates of routing table entries are made if the new route has better QoS values than the old one.
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean AVOID_DUPLICATES_IN_ROUTING_TABLES = true;
 
@@ -227,6 +229,7 @@ public class HRMConfig
 		/**
 		 * Should the packets of the "share phase" be send periodically?
 		 * If a distributed simulation (span a network over multiple physical nodes) is used, this value has to be set to "true". 
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean PERIODIC_SHARE_PHASES = false;
 
@@ -248,6 +251,7 @@ public class HRMConfig
 		
 		/**
 		 * (De-)activate sending of BullyAlive messages in order to detect dead cluster members.
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean SEND_BULLY_ALIVES = true;
 	}
