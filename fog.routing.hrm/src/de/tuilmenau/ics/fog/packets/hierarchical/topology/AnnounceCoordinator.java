@@ -198,12 +198,16 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		if(pRoute != null){
 			increaseRouteHopCount();
 			
-			Logging.log(this, "Adding route head");
-			Logging.log(this, "      ..old route to sender: " + mRoute);
+			if(HRMConfig.DebugOutput.SHOW_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE){
+				Logging.log(this, "Adding route head");
+				Logging.log(this, "      ..old route to sender: " + mRoute);
+			}
 			Route tNewRoute = pRoute.clone();
 			tNewRoute.add(mRoute);
 			mRoute = tNewRoute;
-			Logging.log(this, "      ..new route to sender: " + mRoute);
+			if(HRMConfig.DebugOutput.SHOW_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE){
+				Logging.log(this, "      ..new route to sender: " + mRoute);
+			}
 		}else{
 			Logging.warn(this, "Cannot add an invalid route head");
 		}
