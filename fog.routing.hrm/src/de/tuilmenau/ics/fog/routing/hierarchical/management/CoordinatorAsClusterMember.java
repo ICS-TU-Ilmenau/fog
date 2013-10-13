@@ -28,7 +28,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	/**
 	 * Stores the coordinator for which this cluster membership was created 
 	 */
-	private Coordinator mCoordinatorAsClusterMember = null;
+	private Coordinator mCoordinator = null;
 
 	/**
 	 * Constructor
@@ -44,7 +44,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		super(pHRMController, pJoinedClusterName.getHierarchyLevel() /* use the hierarchy level of the joined cluster here */, pCoordinatorClusterName.getClusterID(), pCoordinatorClusterName.getCoordinatorID(), pCoordinatorNodeL2Address);
 
 		// update the coordinator for which this membership was created
-		mCoordinatorAsClusterMember = pCoordinator;
+		mCoordinator = pCoordinator;
 
 		Logging.log(this, "CREATED");
 	}
@@ -80,7 +80,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 */
 	public Coordinator getCoordinator()
 	{
-		return mCoordinatorAsClusterMember;
+		return mCoordinator;
 	}
 	
 	/**
@@ -94,9 +94,9 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
 		Logging.log(this, "EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
-		Logging.log(this, "       ..fowarding announcement to coordinator object: " + mCoordinatorAsClusterMember);
+		Logging.log(this, "       ..fowarding announcement to coordinator object: " + mCoordinator);
 		
-		mCoordinatorAsClusterMember.eventCoordinatorAnnouncement(pComChannel, pAnnounceCoordinator);
+		mCoordinator.eventCoordinatorAnnouncement(pComChannel, pAnnounceCoordinator);
 	}
 
 	/**
@@ -110,9 +110,9 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
 	{
 		Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
-		Logging.log(this, "       ..fowarding invalidation to coordinator object: " + mCoordinatorAsClusterMember);
+		Logging.log(this, "       ..fowarding invalidation to coordinator object: " + mCoordinator);
 		
-		mCoordinatorAsClusterMember.eventCoordinatorInvalidation(pComChannel, pInvalidCoordinator);
+		mCoordinator.eventCoordinatorInvalidation(pComChannel, pInvalidCoordinator);
 	}
 
 	/**
@@ -160,7 +160,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	@Override
 	public String getText()
 	{
-		return "CoordAsClusterMember" + mCoordinatorAsClusterMember.getGUICoordinatorID() + "@" + mHRMController.getNodeGUIName() + "@" + mCoordinatorAsClusterMember.getHierarchyLevel().getValue() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
+		return "CoordAsClusterMember" + mCoordinator.getGUICoordinatorID() + "@" + mHRMController.getNodeGUIName() + "@" + mCoordinator.getHierarchyLevel().getValue() + "(" + idToString() + ", Coord.=" + getCoordinatorNodeL2Address()+ ")";
 	}
 
 	/**
