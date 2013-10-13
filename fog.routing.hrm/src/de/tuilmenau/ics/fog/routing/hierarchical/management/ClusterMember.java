@@ -117,6 +117,11 @@ public class ClusterMember extends ClusterName
 		 */
 		if(pAnnounceCoordinator.isTTLOkay()){
 			/**
+			 * mark packet as "sideward forwarded"
+			 */
+			pAnnounceCoordinator.setSidewardForwarding();
+
+			/**
 			 * Forward the announcement within the same hierarchy level ("to the side")
 			 */
 			// get locally known neighbors for this cluster and hierarchy level
@@ -161,12 +166,18 @@ public class ClusterMember extends ClusterName
 		/**
 		 * transition from one cluster to the next one => decrease TTL value
 		 */
+		Logging.log(this, "Deacreasing TTL of: " + pInvalidCoordinator);
 		pInvalidCoordinator.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
 	
 		/**
 		 * forward the announcement if the TTL is still okay
 		 */
 		if(pInvalidCoordinator.isTTLOkay()){
+			/**
+			 * mark packet as "sideward forwarded"
+			 */
+			pInvalidCoordinator.setSidewardForwarding();
+
 			/**
 			 * Forward the announcement within the same hierarchy level ("to the side")
 			 */
@@ -285,9 +296,9 @@ public class ClusterMember extends ClusterName
 	 * 
 	 * @param pPacket the packet which has to be broadcasted
 	 * @param pIncludeLoopback should loopback communication be included?
-	 * @param pExcludeL2Address describe a node which shouldn't receive this broadcast
+	 * @param pExcludeL2Address describe a node which shouldn't receive this broadcast if we are at base hierarchy level
 	 */
-	private void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, L2Address pExcludeL2Address)
+	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, L2Address pExcludeL2Address)
 	{
 		// get all communication channels
 		LinkedList<ComChannel> tComChannels = getComChannels();
@@ -300,7 +311,7 @@ public class ClusterMember extends ClusterName
 		for(ComChannel tComChannel : tComChannels) {
 			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
 			
-			if((pExcludeL2Address == null) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()))){
+			if((pExcludeL2Address == null /* excluded peer address is null, we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */) || (pIncludeLoopback)){
 				if (!tIsLoopback){
 					Logging.log(this, "       ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
 				}else{
@@ -324,18 +335,9 @@ public class ClusterMember extends ClusterName
 			}
 		}
 	}
-	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, L2Address pExcludeL2Address)
-	{
-		sendClusterBroadcast(pPacket, false, pExcludeL2Address);
-	}
 	public void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback)
 	{
 		sendClusterBroadcast(pPacket, pIncludeLoopback, null);
-	}
-	public void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket)
-	{
-		Logging.warn(this, "Sending cluster broadcast excluding local host, packet: " + pPacket);
-		sendClusterBroadcast(pPacket, false);
 	}
 
 	/**

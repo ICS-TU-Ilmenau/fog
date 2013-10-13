@@ -203,6 +203,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private ClustererThread mClustererThread = null;
 	
 	/**
+	 * Stores a database about all known superior coordinators
+	 */
+	private LinkedList<ClusterName> mSuperiorCoordinators = new LinkedList<ClusterName>();
+	
+	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
@@ -1089,6 +1094,68 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			// we are at a higher hierarchy level and don't need the HRMID revocation
 			Logging.warn(this, "Skipping HRMID revocation of " + pHRMID.toString() + " for " + pCluster);
 		}
+	}
+
+	/**
+	 * Registers a superior coordinator at the local database
+	 * 
+	 * @param pSuperiorCoordinatorClusterName a description of the announced superior coordinator
+	 */
+	public void registerSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
+	{
+		synchronized (mSuperiorCoordinators) {
+			if(!mSuperiorCoordinators.contains(pSuperiorCoordinatorClusterName)){
+				Logging.log(this, "Adding superior coordinator: " + pSuperiorCoordinatorClusterName);
+				mSuperiorCoordinators.add(pSuperiorCoordinatorClusterName);
+			}else{
+				// already registered
+			}
+		}
+		
+		/**
+		 * Update the GUI
+		 */
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
+	}
+
+	/**
+	 * Unregisters a formerly registered superior coordinator from the local database
+	 * 
+	 * @param pSuperiorCoordinatorClusterName a description of the invalid superior coordinator
+	 */
+	public void unregisterSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
+	{
+		synchronized (mSuperiorCoordinators) {
+			if(mSuperiorCoordinators.contains(pSuperiorCoordinatorClusterName)){
+				Logging.log(this, "Removing superior coordinator: " + pSuperiorCoordinatorClusterName);
+				mSuperiorCoordinators.remove(pSuperiorCoordinatorClusterName);
+			}else{
+				// already removed or never registered
+			}
+		}
+		
+		/**
+		 * Update the GUI
+		 */
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
+	}
+
+	/**
+	 * Returns all superior coordinators
+	 * 
+	 * @return the superior coordinators
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<ClusterName> getAllSuperiorCoordinators()
+	{
+		LinkedList<ClusterName> tResult = null;
+		
+		synchronized (mSuperiorCoordinators) {
+			tResult = (LinkedList<ClusterName>) mSuperiorCoordinators.clone();
+		}
+		return tResult;
 	}
 
 	/**
@@ -2337,7 +2404,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			if(tRoute.size() == 1){
 				tResult = tRoute.get(0);
 			}else{
-				Logging.err(this, "Expected a route with one entry but got: \nSOURCE=" + pFrom + "\nDESTINATION: " + pTo + "\nROUTE: " + tRoute);
+				Logging.warn(this, "getLinkARG() expected a route with one entry but got: \nSOURCE=" + pFrom + "\nDESTINATION: " + pTo + "\nROUTE: " + tRoute);
 			}
 		}
 		

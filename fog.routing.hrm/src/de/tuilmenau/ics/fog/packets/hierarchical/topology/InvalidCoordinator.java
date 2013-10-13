@@ -81,6 +81,11 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	private int mTTL = HRMConfig.Hierarchy.EXPANSION_RADIUS; //TODO: set the max. INT value if it is the highest hierarchy level -> tell everyone about this coordinator!
 	
 	/**
+	 * Stores if the packet is still forward top-downward or sidewards
+	 */
+	private boolean mEnteredSidewardForwarding = false;
+
+	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
@@ -115,6 +120,24 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		return mCoordinatorNodeL2Address;
 	}
 	
+	/**
+	 * Returns if the sideward forwarding was already started
+	 * 
+	 * @return true or false
+	 */
+	public boolean enteredSidewardForwarding()
+	{
+		return mEnteredSidewardForwarding;
+	}
+	
+	/**
+	 * Marks this packet as currently in sideward forwarding
+	 */
+	public void setSidewardForwarding()
+	{
+		mEnteredSidewardForwarding = true;	
+	}
+
 	/**
 	 * Decreases the TTL value by one 
 	 */
@@ -158,6 +181,9 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		// update TTL
 		tResult.mTTL = getTTL();
 		
+		// update "sideward forwarding" marker
+		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
+
 		Logging.log(this, "Created duplicate packet: " + tResult);
 		
 		return tResult;

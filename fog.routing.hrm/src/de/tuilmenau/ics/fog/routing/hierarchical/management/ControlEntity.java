@@ -754,10 +754,19 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	{
 		ClusterName tRemoteClusterName = pAnnounceCoordinator.getSenderClusterName();
 		Logging.log(this, "Registering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
-		Logging.log(this, "     ..announcement took the following route: " + pAnnounceCoordinator.getSourceRoute());
+		if(HRMConfig.DebugOutput.SHOW_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE){
+			Logging.log(this, "     ..announcement took the following route: " + pAnnounceCoordinator.getSourceRoute());
+		}
 		
 		// check if the "remote" coordinator isn't stored at this physical node
 		if(!pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(mHRMController.getNodeL2Address())){
+			/**
+			 * Storing if the announce coordinator is a superior one of this node
+			 */
+			if(!pAnnounceCoordinator.enteredSidewardForwarding()){
+				mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderClusterName());
+			}
+			
 			/**
 			 * Storing the ARG node for this announced remote coordinator
 			 */
@@ -841,6 +850,13 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		
 		// check if the "remote" coordinator isn't stored at this physical node
 		if(!pInvalidCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(mHRMController.getNodeL2Address())){
+			/**
+			 * Remove the invalid coordinator as superior one of this node from the HRMController database
+			 */
+			if(!pInvalidCoordinator.enteredSidewardForwarding()){
+				mHRMController.unregisterSuperiorCoordinator(pInvalidCoordinator.getSenderClusterName());
+			}
+
 			// search for an already existing CoordintorProxy instance
 			CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
 			if(tCoordinatorProxy != null){

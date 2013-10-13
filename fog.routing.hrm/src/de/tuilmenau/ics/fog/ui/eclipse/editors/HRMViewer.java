@@ -105,7 +105,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     
     private Button mBtnPriorityLog = null;
     private Button mBtnClusteringLog = null;
-
+    private Button mBtnSuperiorCoordinatorsLog = null;
+    
     private Button mBtnClusterMembers = null;
     private Button mBtnCoordClusterMembers = null;
     private Button mBtnCoordAnnounce = null;
@@ -159,7 +160,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mGuiCounter == 1){
 			mToolBtnContainer = new Composite(pParent, SWT.NONE);
 	
-			GridLayout tLayout1 = new GridLayout(5, false);
+			GridLayout tLayout1 = new GridLayout(6, false);
 			mToolBtnContainer.setLayout(tLayout1);
 			mToolBtnContainer.setLayoutData(createGridData(true, 1));
 		}
@@ -170,7 +171,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		// **** show priority update log ****
 		if(mGuiCounter == 1){
 			mBtnPriorityLog = new Button(mToolBtnContainer, SWT.PUSH);
-			mBtnPriorityLog.setText("Show priority update log");
+			mBtnPriorityLog.setText("Show priority update events");
 			mBtnPriorityLog.setLayoutData(createGridData(false, 1));
 			mBtnPriorityLog.addSelectionListener(new SelectionAdapter() {
 				@Override
@@ -187,12 +188,33 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		// **** show update cluster log ****
 		if(mGuiCounter == 1){
 			mBtnClusteringLog = new Button(mToolBtnContainer, SWT.PUSH);
-			mBtnClusteringLog.setText("Show update cluster log");
+			mBtnClusteringLog.setText("Show clustering events");
 			mBtnClusteringLog.setLayoutData(createGridData(false, 1));
 			mBtnClusteringLog.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
 					Logging.log(this, "Clustering updates: " + mHRMController.getGUIDescriptionClusterUpdates());
+				}
+				public String toString()
+				{
+					return mHRMViewer.toString();
+				}
+			});
+		}
+		// **** show superior coordinators ****
+		if(mGuiCounter == 1){
+			mBtnSuperiorCoordinatorsLog = new Button(mToolBtnContainer, SWT.PUSH);
+			mBtnSuperiorCoordinatorsLog.setText("Show superior coordinators");
+			mBtnSuperiorCoordinatorsLog.setLayoutData(createGridData(false, 1));
+			mBtnSuperiorCoordinatorsLog.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {					
+					LinkedList<ClusterName> tSuperiorCoordinators = mHRMController.getAllSuperiorCoordinators();
+					Logging.log(this, "Superior coordinators:");
+					int i = 0;
+					for(ClusterName tSuperiorCoordinator : tSuperiorCoordinators){
+						Logging.log(this, "    ..[" + i + "]: Coordinator" + tSuperiorCoordinator.getGUICoordinatorID() + "@" + tSuperiorCoordinator.getHierarchyLevel().getValue() + "(Cluster" + tSuperiorCoordinator.getGUIClusterID() + ")");
+					}					
 				}
 				public String toString()
 				{

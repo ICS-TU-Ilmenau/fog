@@ -103,6 +103,11 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	private Route mRoute = new Route();
 	
 	/**
+	 * Stores if the packet is still forward top-downward or sidewards
+	 */
+	private boolean mEnteredSidewardForwarding = false;
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
@@ -135,6 +140,24 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	public L2Address getSenderClusterCoordinatorNodeL2Address()
 	{
 		return mCoordinatorNodeL2Address;
+	}
+	
+	/**
+	 * Returns if the sideward forwarding was already started
+	 * 
+	 * @return true or false
+	 */
+	public boolean enteredSidewardForwarding()
+	{
+		return mEnteredSidewardForwarding;
+	}
+	
+	/**
+	 * Marks this packet as currently in sideward forwarding
+	 */
+	public void setSidewardForwarding()
+	{
+		mEnteredSidewardForwarding = true;	
 	}
 	
 	/**
@@ -234,6 +257,9 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		
 		// update the route hop costs 
 		tResult.mRouteHopCount = getRouteHopCount();
+		
+		// update "sideward forwarding" marker
+		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
 		
 		// add an entry to the recorded source route
 		tResult.addSourceRoute("[route]: (" + mRoute + ") -> (" + tResult.mRoute + ")");
