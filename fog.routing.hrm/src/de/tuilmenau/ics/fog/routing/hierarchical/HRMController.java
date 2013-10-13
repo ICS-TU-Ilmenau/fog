@@ -735,9 +735,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the list of coordinator proies at the defined hierarchy level
 	 */
-	public LinkedList<CoordinatorProxy> getAllCoordinatorProxies(HierarchyLevel pHierarchyLevel)
+	public LinkedList<CoordinatorProxy> getAllCoordinatorProxies(int pHierarchyLevel)
 	{
-		Logging.log(this, "Searching for coordinator proxies at hierarchy level: " + pHierarchyLevel.getValue());
+		Logging.log(this, "Searching for coordinator proxies at hierarchy level: " + pHierarchyLevel);
 		
 		LinkedList<CoordinatorProxy> tResult = new LinkedList<CoordinatorProxy>();
 		
@@ -747,7 +747,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// iterate over all known coordinator proxies
 		for (CoordinatorProxy tCoordinatorProxy : tAllCoordinatorProxies){
 			// have we found a matching coordinator proxy?
-			if (tCoordinatorProxy.getHierarchyLevel().equals(pHierarchyLevel)){
+			if (tCoordinatorProxy.getHierarchyLevel().getValue() == pHierarchyLevel){
 				// add this coordinator proxy to the result
 				tResult.add(tCoordinatorProxy);
 			}

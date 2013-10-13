@@ -539,7 +539,7 @@ public class Cluster extends ClusterMember
 			 * Requests for remote coordinators
 			 ************************************/
 			Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR REMOTE COORDINATORS STARTED");
-			LinkedList<CoordinatorProxy> tCoordinatorProxies = mHRMController.getAllCoordinatorProxies(new HierarchyLevel(this,  getHierarchyLevel().getValue() - 1));
+			LinkedList<CoordinatorProxy> tCoordinatorProxies = mHRMController.getAllCoordinatorProxies(getHierarchyLevel().getValue() - 1);
 			
 			if(tCoordinatorProxies.size() > 0){
 				/**
