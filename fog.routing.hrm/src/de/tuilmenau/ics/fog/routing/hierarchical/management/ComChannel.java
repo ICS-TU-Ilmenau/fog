@@ -858,7 +858,7 @@ public class ComChannel
 			 * update tie state
 			 */
 			if(tAnnounceClusterPacket.getSenderClusterName().equals(mRemoteClusterName)){
-				setTied(true);
+				setHRMLinkActivation(true);
 			}
 			
 			getParent().eventCoordinatorAnnouncement(this, tAnnounceClusterPacket);
@@ -880,7 +880,7 @@ public class ComChannel
 			 * update tie state
 			 */
 			if(tInvalidCoordinatorPacket.getSenderClusterName().equals(mRemoteClusterName)){
-				setTied(false);
+				setHRMLinkActivation(false);
 			}
 
 			getParent().eventCoordinatorInvalidation(this, tInvalidCoordinatorPacket);
@@ -893,21 +893,21 @@ public class ComChannel
 	}
 	
 	/**
-	 * (De-)activates the tie.
+	 * (De-)activates the HRM link.
 	 * 
 	 * @param pState the new state
 	 */
-	public void setTied(boolean pState)
+	public void setHRMLinkActivation(boolean pState)
 	{
 		mTied = pState;
 	}
 	
 	/**
-	 * Returns true if the parent and the peer are tied (e.g., a cluster member is tied to a cluster)
+	 * Returns true if the parent and the peer use actively this link for HRM topology distribution (e.g., a cluster member is link to a cluster)
 	 * 
 	 * @return true or false
 	 */
-	public boolean isTied()
+	public boolean isUsedHRMLink()
 	{
 		return mTied;
 	}	

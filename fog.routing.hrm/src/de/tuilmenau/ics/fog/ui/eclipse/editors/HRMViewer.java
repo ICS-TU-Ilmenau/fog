@@ -754,7 +754,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tColumnPeerNode.setText("Peer Node");
 		
 		TableColumn tColumnActiveLink = new TableColumn(tTable, SWT.NONE, 2);
-		tColumnActiveLink.setText("Active");
+		tColumnActiveLink.setText("Used HRM Link");
 		
 		TableColumn tColumnPeerPriority = new TableColumn(tTable, SWT.NONE, 3);
 		tColumnPeerPriority.setText("Peer Priority");
@@ -820,7 +820,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 2: active link 
 			 */
-			tRow.setText(2, tComChannel.isTied() ? "yes" : "no");
+			tRow.setText(2, tComChannel.isUsedHRMLink() ? "yes" : "no");
 			
 			/**
 			 * Column 3:  
