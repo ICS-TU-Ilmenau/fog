@@ -44,6 +44,11 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_TIMING_ROUTE_DISTRIBUTION = false;
 
 		/**
+		 * Shows debug outputs for each received packet of a session.
+		 */
+		public static final boolean SHOW_RECEIVED_SESSION_PACKETS = false;
+
+		/**
 		 * Shows debug outputs for each received packet of a channel.
 		 */
 		public static final boolean SHOW_RECEIVED_CHANNEL_PACKETS = false;

@@ -470,7 +470,9 @@ public class ComSession extends Session
 		 * Iterate over all communication channels and find the correct channel towards the destination
 		 */
 		ComChannel tDestinationComChannel = getComChannel(tDestination, tSource);
-		Logging.log(this, "       ..found communication channel: " + tDestinationComChannel);
+		if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
+			Logging.log(this, "       ..found communication channel: " + tDestinationComChannel);
+		}
 
 		/**
 		 * Get the payload
@@ -481,8 +483,10 @@ public class ComSession extends Session
 		 * Forward the payload to the correct communication channel
 		 */
 		if (tDestinationComChannel != null){
-			try {
+			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
 				Logging.log(this, "       ..delivering received payload: " + tPayload);
+			}
+			try {
 				tDestinationComChannel.receiveData(tPayload);
 			} catch (NetworkException tExc) {
 				Logging.err(this, "Unable to forward payload " + tPayload + " to " + tDestination + " via " + tDestinationComChannel);
@@ -506,7 +510,9 @@ public class ComSession extends Session
 			return true;
 		}
 		
-		Logging.log(this, "RECEIVED PACKET: " + pData.getClass().getSimpleName());
+		if(HRMConfig.DebugOutput.SHOW_RECEIVED_SESSION_PACKETS){
+			Logging.log(this, "RECEIVED PACKET: " + pData.getClass().getSimpleName());
+		}
 		
 		/**
 		 * AnnouncePhysicalNeighborhood:
