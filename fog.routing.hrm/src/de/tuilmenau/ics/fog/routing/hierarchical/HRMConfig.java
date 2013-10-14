@@ -54,6 +54,11 @@ public class HRMConfig
 		public static final boolean SHOW_RECEIVED_CHANNEL_PACKETS = false;
 
 		/**
+		 * Shows debug outputs for each sent packet of a channel.
+		 */
+		public static final boolean SHOW_SENT_CHANNEL_PACKETS = false;
+
+		/**
 		 * Shows debug outputs for each received RoutingInformation packet.
 		 */
 		public static final boolean SHOW_SHARE_PHASE = false;

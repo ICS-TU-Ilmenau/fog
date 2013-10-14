@@ -532,7 +532,9 @@ public class ComChannel
 			ClusterName tDestinationClusterName = getRemoteClusterName();
 			
 			if (tDestinationClusterName != null){
-				Logging.log(this, "SENDING DATA " + pPacket + " to destination " + tDestinationClusterName);
+				if (HRMConfig.DebugOutput.SHOW_SENT_CHANNEL_PACKETS){
+					Logging.log(this, "SENDING DATA " + pPacket + " to destination " + tDestinationClusterName);
+				}
 		
 				// create the source description
 				ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().getClusterID(), getParent().superiorCoordinatorID());
