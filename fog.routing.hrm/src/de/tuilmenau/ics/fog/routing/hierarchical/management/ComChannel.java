@@ -675,7 +675,7 @@ public class ComChannel
 	 * @throws NetworkException
 	 */
 	@SuppressWarnings("unused")
-	public boolean receiveData(Serializable pData) throws NetworkException
+	public synchronized boolean receiveData(Serializable pData) throws NetworkException
 	{
 		/**
 		 * count the packets
