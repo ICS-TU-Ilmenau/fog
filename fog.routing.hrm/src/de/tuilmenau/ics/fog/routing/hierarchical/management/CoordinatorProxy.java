@@ -49,7 +49,7 @@ public class CoordinatorProxy extends ClusterMember
 		// store the L2 address of the node where the coordinator is located
 		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
 
-		Logging.log(this, "CREATED");
+		//Logging.log(this, "CREATED");
 	}
 
 	/**

@@ -308,7 +308,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		boolean tResult = true;
 		
-		Logging.log(this, "REGISTERING LINK: dest.=" + pToL2Address + ", route=\"" + pRoute + "\"");
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "REGISTERING LINK: dest.=" + pToL2Address + ", route=\"" + pRoute + "\"");
+		}
 
 		if (pToL2Address != null){
 			
@@ -328,7 +330,9 @@ public class HRMRoutingService implements RoutingService, Localization
 					// get the old route from the logical L2 link description
 					tOldRoute = tOldL2Link.getRoute();					
 
-					Logging.log(this, "      ..found old route: " + tOldRoute + " to direct neighbor: " + pToL2Address);
+					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+						Logging.log(this, "      ..found old route: " + tOldRoute + " to direct neighbor: " + pToL2Address);
+					}
 				}
 			}
 
@@ -342,12 +346,16 @@ public class HRMRoutingService implements RoutingService, Localization
 				tNewLogicalLink = false;
 
 				if (pRoute.isShorter(tOldRoute)){
-					Logging.log(this, "      ..updating to better ROUTE \"" + pRoute + "\" to direct neighbor: " + pToL2Address);
+					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+						Logging.log(this, "      ..updating to better ROUTE \"" + pRoute + "\" to direct neighbor: " + pToL2Address);
+					}
 										
 					// update the old logical link
 					tOldL2Link.setRoute(pRoute);
 				}else{
-					Logging.log(this, "      ..dropping new ROUTE \"" + pRoute + "\" to direct neighbor: " + pToL2Address);
+					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+						Logging.log(this, "      ..dropping new ROUTE \"" + pRoute + "\" to direct neighbor: " + pToL2Address);
+					}
 				}
 			}
 			

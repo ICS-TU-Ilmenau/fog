@@ -345,23 +345,29 @@ public class Cluster extends ClusterMember
 			// does this comm. channel end at a local coordinator?
 			if(tChannelPeer instanceof Coordinator){
 				synchronized (mInferiorLocalCoordinators) {
-					Logging.log(this, "      ..removing local cluster member: " + tChannelPeer);
+					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+						Logging.log(this, "      ..removing local cluster member: " + tChannelPeer);
+					}
 					mInferiorLocalCoordinators.remove(tChannelPeer);					
 				}
 			}else
 			// does this comm. channel end at a remote coordinator (a coordinator proxy)?
 			if(tChannelPeer instanceof CoordinatorProxy){
 				synchronized (mInferiorRemoteCoordinators) {
-					Logging.log(this, "      ..removing remote cluster member: " + tChannelPeer);
+					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+						Logging.log(this, "      ..removing remote cluster member: " + tChannelPeer);
+					}
 					mInferiorRemoteCoordinators.remove(tChannelPeer);					
 				}
 			}else{
 				Logging.err(this, "Comm. channel peer has unsupported type: " + tChannelPeer);
 			}
 		}
-		Logging.log(this, "      ..remaining comm. channels: " + getComChannels());
-		Logging.log(this, "      ..remaining connected local coordiantors: " + mInferiorLocalCoordinators);
-		Logging.log(this, "      ..remaining connected remote coordiantors: " + mInferiorRemoteCoordinators);
+		if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+			Logging.log(this, "      ..remaining comm. channels: " + getComChannels());
+			Logging.log(this, "      ..remaining connected local coordiantors: " + mInferiorLocalCoordinators);
+			Logging.log(this, "      ..remaining connected remote coordiantors: " + mInferiorRemoteCoordinators);
+		}
 
 		// check necessity
 		checkClusterNecessity();

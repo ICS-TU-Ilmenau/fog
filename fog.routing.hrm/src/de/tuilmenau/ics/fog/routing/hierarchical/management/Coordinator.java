@@ -552,13 +552,15 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			// trigger periodic Cluster announcements
 			if((HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS) && (USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
 				AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
-				Logging.log(this, "\n\n########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
 				
 				/**
 				 * Send broadcasts in all locally known clusters at this hierarchy level
 				 */
 				LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue());
-				Logging.log(this, "     ..distributing in clusters: " + tClusters);
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+					Logging.log(this, "\n\n########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
+					Logging.log(this, "     ..distributing in clusters: " + tClusters);
+				}
 				for(Cluster tCluster : tClusters){
 					tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
 				}
@@ -566,7 +568,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				Logging.warn(this, "HRMConfig->COORDINATOR_ANNOUNCEMENTS is set to false, this prevents the HRM system from creating a correct hierarchy");
 			}
 		}else{
-			Logging.warn(this, "distributeCoordinatorAnnouncement() skipped because coordinator role is already invalidated");
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+				Logging.warn(this, "distributeCoordinatorAnnouncement() skipped because coordinator role is already invalidated");
+			}
 		}
 	}
 
@@ -578,13 +582,14 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// trigger periodic Cluster announcements
 		if((HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS) && (USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
 			InvalidCoordinator tInvalidCoordinatorPacket = new InvalidCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
-			Logging.log(this, "\n\n########## Distributing Coordinator invalidation (to the bottom): " + tInvalidCoordinatorPacket);
-			
 			/**
 			 * Send broadcasts in all locally known clusters at this hierarchy level
 			 */
 			LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0); //HINT: we have to broadcast via level 0, otherwise, an inferior could already be destroyed and the invalidation message might get dropped
-			Logging.log(this, "     ..distributing in clusters: " + tClusters);
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+				Logging.log(this, "\n\n########## Distributing Coordinator invalidation (to the bottom): " + tInvalidCoordinatorPacket);
+				Logging.log(this, "     ..distributing in clusters: " + tClusters);
+			}
 			for(Cluster tCluster : tClusters){
 				tCluster.sendClusterBroadcast(tInvalidCoordinatorPacket, true);
 			}
@@ -616,7 +621,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS, this);
 			}
 		}else{
-			Logging.warn(this, "fire() skipped because coordinator role is already invalidated");
+			if(USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+				Logging.warn(this, "fire() skipped because coordinator role is already invalidated");
+			}
 		}
 	}
 
@@ -625,17 +632,18 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	public void eventAnnouncedAsCoordinator()
 	{
+		Logging.log(this, "EVENT: announced as coordinator");
+
 		/**
 		 * Trigger: explicit cluster announcement to neighbors
 		 */ 
-		Logging.log(this, "EVENT ANNOUNCED - triggering distribution of ClusterAnnounces");
 		distributeCoordinatorAnnouncement();
 
 		/**
 		 * AUTO ADDRESS DISTRIBUTION
 		 */
 		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
-			Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + mParentCluster.getComChannels().size() + " cluster members");
+			//Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + mParentCluster.getComChannels().size() + " cluster members");
 
 			distributeAddresses();
 		}
@@ -647,15 +655,15 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		if(!getHierarchyLevel().isHighest()) {
 			if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){ 
 				if(getHierarchyLevel().getValue() < HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-					Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
+					//Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
 
 					// start the clustering at the hierarchy level
 					mHRMController.cluster(this, new HierarchyLevel(this, getHierarchyLevel().getValue() + 1));
 				}else{
-					Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + getHierarchyLevel().getValue());
+					//Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + getHierarchyLevel().getValue());
 				}
 			}else{
-				Logging.log(this, "EVENT ANNOUNCED - stopping clustering because automatic continuation is deactivated");
+				Logging.warn(this, "EVENT ANNOUNCED - stopping clustering because automatic continuation is deactivated");
 			}
 		}
 	}
@@ -765,13 +773,17 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			/**
 			 * Create new cluster (member) object
 			 */
-			Logging.log(this, "    ..creating new local cluster membership for: " + pRemoteClusterName + ", remote node: " + pSourceComSession.getPeerL2Address()); 
+			if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+				Logging.log(this, "    ..creating new local cluster membership for: " + pRemoteClusterName + ", remote node: " + pSourceComSession.getPeerL2Address());
+			}
 			CoordinatorAsClusterMember tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
 			synchronized (mClusterMemberships) {
-				Logging.log(this, "    ..know already these cluster memberships: " + mClusterMemberships);
+				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+					Logging.log(this, "    ..know already these cluster memberships: " + mClusterMemberships);
 				
-				//HINT: a check for already existing cluster memberships has to be done based on equals AND a check of the peer ClusterName
-				Logging.log(this, "    ..adding cluster membership: " + tClusterMembership);
+					//HINT: a check for already existing cluster memberships has to be done based on equals AND a check of the peer ClusterName
+					Logging.log(this, "    ..adding cluster membership: " + tClusterMembership);
+				}
 				
 				// add this cluster membership
 				mClusterMemberships.add(tClusterMembership);
@@ -780,7 +792,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			/**
 			 * Create the communication channel for the described cluster member
 			 */
-			Logging.log(this, "     ..creating communication channel");
+			if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+				Logging.log(this, "     ..creating communication channel");
+			}
 			ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
 	
 			/**
