@@ -1144,11 +1144,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void registerSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
 	{
-		Logging.log(this, "Registering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
+		boolean tUpdateGui = false;
 		synchronized (mSuperiorCoordinators) {
 			if(!mSuperiorCoordinators.contains(pSuperiorCoordinatorClusterName)){
-				Logging.log(this, "Adding superior coordinator: " + pSuperiorCoordinatorClusterName);
+				Logging.log(this, "Registering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
 				mSuperiorCoordinators.add(pSuperiorCoordinatorClusterName);
+				tUpdateGui = true;
 			}else{
 				// already registered
 			}
@@ -1158,7 +1159,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Update the GUI
 		 */
 		// updates the GUI decoration for this node
-		updateGUINodeDecoration();
+		if(tUpdateGui){
+			updateGUINodeDecoration();
+		}
 	}
 
 	/**
@@ -1168,11 +1171,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void unregisterSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
 	{
-		Logging.log(this, "Unregistering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
+		boolean tUpdateGui = false;
 		synchronized (mSuperiorCoordinators) {
 			if(mSuperiorCoordinators.contains(pSuperiorCoordinatorClusterName)){
-				Logging.log(this, "Removing superior coordinator: " + pSuperiorCoordinatorClusterName);
+				Logging.log(this, "Unregistering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
 				mSuperiorCoordinators.remove(pSuperiorCoordinatorClusterName);
+				tUpdateGui = true;
 			}else{
 				// already removed or never registered
 			}
@@ -1182,7 +1186,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Update the GUI
 		 */
 		// updates the GUI decoration for this node
-		updateGUINodeDecoration();
+		if(tUpdateGui){
+			updateGUINodeDecoration();
+		}
 	}
 
 	/**
