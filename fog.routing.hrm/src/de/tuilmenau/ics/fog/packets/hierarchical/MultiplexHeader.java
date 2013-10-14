@@ -77,7 +77,7 @@ public class MultiplexHeader implements ProtocolHeader
 		
 		tResult = ++mMultiplexMessagesCounter;
 		
-		Logging.log("########### CREATING MULTIPLEX HEADER nr. " + tResult);
+		//Logging.log("########### CREATING MULTIPLEX HEADER nr. " + tResult);
 		
 		return tResult;
 	}

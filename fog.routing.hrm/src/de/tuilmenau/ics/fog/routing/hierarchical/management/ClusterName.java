@@ -33,7 +33,7 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	{
 		super(pHRMController, pHierarchyLevel);
 		
-		Logging.log(this, "Creating ClusterName for cluster: " + pClusterID + " and coordinator: " + pCoordinatorID);
+		//Logging.log(this, "Creating ClusterName for cluster: " + pClusterID + " and coordinator: " + pCoordinatorID);
 
 		setClusterID(pClusterID);
 		setSuperiorCoordinatorID(pCoordinatorID);

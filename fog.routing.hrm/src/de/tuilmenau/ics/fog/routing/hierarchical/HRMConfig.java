@@ -49,6 +49,11 @@ public class HRMConfig
 		public static final boolean SHOW_RECEIVED_SESSION_PACKETS = false;
 
 		/**
+		 * Shows debug outputs for each sent packet of a session.
+		 */
+		public static final boolean SHOW_SENT_SESSION_PACKETS = false;
+
+		/**
 		 * Shows debug outputs for each received packet of a channel.
 		 */
 		public static final boolean SHOW_RECEIVED_CHANNEL_PACKETS = false;
@@ -57,6 +62,11 @@ public class HRMConfig
 		 * Shows debug outputs for each sent packet of a channel.
 		 */
 		public static final boolean SHOW_SENT_CHANNEL_PACKETS = false;
+
+		/**
+		 * Shows debug outputs for each clustering process.
+		 */
+		public static final boolean SHOW_CLUSTERING_STEPS = false;
 
 		/**
 		 * Shows debug outputs for each received RoutingInformation packet.

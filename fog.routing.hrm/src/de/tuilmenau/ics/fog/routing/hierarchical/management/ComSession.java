@@ -157,7 +157,9 @@ public class ComSession extends Session
 		if(!mLocalLoopback){
 			if(mParentConnection != null && mParentConnection.isConnected()) {
 				try	{
-					Logging.log(this, "SENDING PACKET: " + pData.getClass().getSimpleName());
+					if(HRMConfig.DebugOutput.SHOW_SENT_SESSION_PACKETS){
+						Logging.log(this, "SENDING PACKET: " + pData.getClass().getSimpleName());
+					}
 	
 					mParentConnection.write(pData);
 					tResult = true;
@@ -168,7 +170,9 @@ public class ComSession extends Session
 				Logging.err(this, "Unable to send " + pData + " because of invalid connection: " + mParentConnection);
 			}
 		}else{
-			Logging.log(this, "SENDING local (per loopback) PACKET: " + pData.getClass().getSimpleName());
+			if(HRMConfig.DebugOutput.SHOW_SENT_SESSION_PACKETS){
+				Logging.log(this, "SENDING local (per loopback) PACKET: " + pData.getClass().getSimpleName());
+			}
 			receiveData(pData);
 			tResult = true;
 		}

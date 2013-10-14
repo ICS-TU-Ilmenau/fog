@@ -307,7 +307,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		// update the recorded cluster ID
 		tResult.mPassedClusters = (LinkedList<Long>) mPassedClusters.clone();
 
-		Logging.log(this, "Created duplicate packet: " + tResult);
+		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
 		return tResult;
 	}

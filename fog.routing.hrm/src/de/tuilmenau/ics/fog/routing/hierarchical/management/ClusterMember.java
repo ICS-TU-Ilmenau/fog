@@ -55,8 +55,6 @@ public class ClusterMember extends ClusterName
 
 		// store the L2 address of the node where the coordinator is located
 		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
-
-		Logging.log(this, "CREATED");
 	}
 
 	/**
@@ -281,7 +279,7 @@ public class ClusterMember extends ClusterName
 		boolean tStartBaseLevel =  ((getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
 		// start coordinator election for the created HRM instance if desired
 		if(((!getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
-			Logging.log(this, "      ..starting ELECTION");
+			//Logging.log(this, "      ..starting ELECTION");
 			mElector.startElection();
 		}
 	}
@@ -364,32 +362,44 @@ public class ClusterMember extends ClusterName
 		// get the L2Addres of the local host
 		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
 		
-		Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getHierarchyNodePriority());
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+			Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getHierarchyNodePriority());
+		}
 		
 		for(ComChannel tComChannel : tComChannels) {
 			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
 			
 			if((pExcludeL2Address == null /* excluded peer address is null, we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */) || (pIncludeLoopback)){
-				if (!tIsLoopback){
-					Logging.log(this, "       ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
-				}else{
-					Logging.log(this, "       ..to LOOPBACK " + tComChannel);
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+					if (!tIsLoopback){
+						Logging.log(this, "       ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
+					}else{
+						Logging.log(this, "       ..to LOOPBACK " + tComChannel);
+					}
 				}
 	
 				if ((pIncludeLoopback) || (!tIsLoopback)){
 					if(tComChannel.isEstablished()){
 						SignalingMessageHrm tNewPacket = pPacket.duplicate();
-						Logging.log(this, "           ..sending duplicate packet: " + tNewPacket);
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+							Logging.log(this, "           ..sending duplicate packet: " + tNewPacket);
+						}
 						// send the packet to one of the possible cluster members
 						tComChannel.sendPacket(tNewPacket);
 					}else{
-						Logging.log(this, "             ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+							Logging.log(this, "             ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
+						}
 					}
 				}else{
-					Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+						Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
+					}
 				}
 			}else{
-				Logging.log(this, "              ..skipping EXCLUDED DESTINATION: " + pExcludeL2Address);
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+					Logging.log(this, "              ..skipping EXCLUDED DESTINATION: " + pExcludeL2Address);
+				}
 			}
 		}
 	}

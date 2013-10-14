@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
@@ -45,8 +46,6 @@ public class CoordinatorAsClusterMember extends ClusterMember
 
 		// update the coordinator for which this membership was created
 		mCoordinator = pCoordinator;
-
-		Logging.log(this, "CREATED");
 	}
 
 	/**
@@ -93,8 +92,10 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	@Override
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
-		Logging.log(this, "EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
-		Logging.log(this, "       ..fowarding announcement to coordinator object: " + mCoordinator);
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+			Logging.log(this, "EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
+			Logging.log(this, "       ..fowarding announcement to coordinator object: " + mCoordinator);
+		}
 		
 		mCoordinator.eventCoordinatorAnnouncement(pComChannel, pAnnounceCoordinator);
 	}
@@ -109,8 +110,10 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	@Override
 	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
 	{
-		Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
-		Logging.log(this, "       ..fowarding invalidation to coordinator object: " + mCoordinator);
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+			Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
+			Logging.log(this, "       ..fowarding invalidation to coordinator object: " + mCoordinator);
+		}
 		
 		mCoordinator.eventCoordinatorInvalidation(pComChannel, pInvalidCoordinator);
 	}

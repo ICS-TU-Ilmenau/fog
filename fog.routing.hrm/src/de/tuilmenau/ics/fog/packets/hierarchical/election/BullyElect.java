@@ -47,7 +47,7 @@ public class BullyElect extends SignalingMessageBully implements ISignalingMessa
 		
 		super.duplicate(tResult);
 		
-		Logging.log(this, "Created duplicate packet: " + tResult);
+		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
 		return tResult;
 	}

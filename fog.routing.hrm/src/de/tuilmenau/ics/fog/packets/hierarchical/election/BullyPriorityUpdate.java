@@ -47,7 +47,7 @@ public class BullyPriorityUpdate extends SignalingMessageBully implements ISigna
 		
 		super.duplicate(tResult);
 
-		Logging.log(this, "Created duplicate packet: " + tResult);
+		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
 		return tResult;
 	}

@@ -783,7 +783,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public LinkedList<CoordinatorProxy> getAllCoordinatorProxies(int pHierarchyLevel)
 	{
-		Logging.log(this, "Searching for coordinator proxies at hierarchy level: " + pHierarchyLevel);
+		//Logging.log(this, "Searching for coordinator proxies at hierarchy level: " + pHierarchyLevel);
 		
 		LinkedList<CoordinatorProxy> tResult = new LinkedList<CoordinatorProxy>();
 		
@@ -799,7 +799,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 		
-		Logging.log(this, "      ..found: " + tResult);
+		//Logging.log(this, "      ..found: " + tResult);
 				
 		return tResult;
 	}
@@ -1516,33 +1516,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// is the destination valid?
 		if (pDestinationL2Address != null){
-			Logging.log(this, "Searching for outgoing comm. session to: " + pDestinationL2Address);
+			//Logging.log(this, "Searching for outgoing comm. session to: " + pDestinationL2Address);
 			synchronized (mLocalOutgoingSessions) {
 				for (ComSession tComSession : mLocalOutgoingSessions){
-					Logging.log(this, "   ..ComSession: " + tComSession);
+					//Logging.log(this, "   ..ComSession: " + tComSession);
 					
 					// get the L2 address of the comm. session peer
 					L2Address tPeerL2Address = tComSession.getPeerL2Address();
 							
 					if(pDestinationL2Address.equals(tPeerL2Address)){
-						Logging.log(this, "     ..found match");
+						//Logging.log(this, "     ..found match");
 						tResult = tComSession;
 						break;
 					}else{
-						Logging.log(this, "     ..uninteresting");
+						//Logging.log(this, "     ..uninteresting");
 					}
 				}
 			}
 			
 			// have we found an already existing connection?
 			if(tResult == null){
-				Logging.log(this, "getCreateComSession() could find a comm. session for destination: " + pDestinationL2Address + ", knowing these sessions and their channels:");
+				//Logging.log(this, "getCreateComSession() could find a comm. session for destination: " + pDestinationL2Address + ", knowing these sessions and their channels:");
 				synchronized (mLocalOutgoingSessions) {
 					for (ComSession tComSession : mLocalOutgoingSessions){
-						Logging.log(this, "   ..ComSession: " + tComSession);
+						//Logging.log(this, "   ..ComSession: " + tComSession);
 						for(ComChannel tComChannel : tComSession.getAllComChannels()){
-							Logging.log(this, "     ..ComChannel: " + tComChannel);
-							Logging.log(this, "        ..RemoteCluster: " + tComChannel.getRemoteClusterName().toString());
+							//Logging.log(this, "     ..ComChannel: " + tComChannel);
+							//Logging.log(this, "        ..RemoteCluster: " + tComChannel.getRemoteClusterName().toString());
 						}
 					}
 				}
@@ -1550,11 +1550,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				/**
 				 * Create the new connection
 				 */
-				Logging.log(this, "   ..creating new connection and session to: " + pDestinationL2Address);
+				//Logging.log(this, "   ..creating new connection and session to: " + pDestinationL2Address);
 				tResult = createOutgoingComSession(pDestinationL2Address);
 			}
 		}else{
-			Logging.err(this, "getCreateComSession() detected invalid destination L2 address");
+			//Logging.err(this, "getCreateComSession() detected invalid destination L2 address");
 		}
 		return tResult;
 	}

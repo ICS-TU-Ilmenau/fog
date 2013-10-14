@@ -1280,20 +1280,23 @@ public class HRMRoutingService implements RoutingService, Localization
 						}
 					}else{
 						// no route found
-						Logging.log(this, "Couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
-						// list known topology
-						synchronized (mL2RoutingGraph) {
-							Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
-							int i = 0;
-							for (L2Address tL2Address : tGraphNodes){
-								Logging.log(this, "     ..node[" + i + "]: " + tL2Address);
-								i++;
-							}
-							Collection<RoutingServiceLink> tGraphLinks = mL2RoutingGraph.getEdges();
-							i = 0;
-							for (RoutingServiceLink tLink : tGraphLinks){
-								Logging.log(this, "     ..gate[" + i + "]: " + tLink.getID());
-								i++;
+						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							Logging.log(this, "Couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
+							
+							// list known topology
+							synchronized (mL2RoutingGraph) {
+								Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
+								int i = 0;
+								for (L2Address tL2Address : tGraphNodes){
+									Logging.log(this, "     ..node[" + i + "]: " + tL2Address);
+									i++;
+								}
+								Collection<RoutingServiceLink> tGraphLinks = mL2RoutingGraph.getEdges();
+								i = 0;
+								for (RoutingServiceLink tLink : tGraphLinks){
+									Logging.log(this, "     ..gate[" + i + "]: " + tLink.getID());
+									i++;
+								}
 							}
 						}
 					}

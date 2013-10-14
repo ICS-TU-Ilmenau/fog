@@ -73,7 +73,7 @@ public class BullyAnnounce extends SignalingMessageBully implements ISignalingMe
 		
 		super.duplicate(tResult);
 
-		Logging.log(this, "Created duplicate packet: " + tResult);
+		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
 		return tResult;
 	}

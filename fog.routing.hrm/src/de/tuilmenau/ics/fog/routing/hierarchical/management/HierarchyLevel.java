@@ -129,6 +129,7 @@ public class HierarchyLevel
 	 * @param pOtherLevel the other given hierarchy level
 	 * @return return "true" if the hierarchy level is higher than the other one, otherwise return "false"
 	 */
+	@SuppressWarnings("unused")
 	public boolean isHigher(Object pCheckLocation, HierarchyLevel pOtherLevel)
 	{
 		String pLocationDescription = pCheckLocation.getClass().getSimpleName();
@@ -138,11 +139,11 @@ public class HierarchyLevel
 		}
 
 		if (pOtherLevel == null){
-			Logging.log(pLocationDescription + ": COMPARING HIERARCHY LEVEL " + mLevel + " with NULL POINTER, returning always \"true\" for isHigher()");
+			Logging.warn(pCheckLocation, "COMPARING HIERARCHY LEVEL " + mLevel + " with NULL POINTER, returning always \"true\" for isHigher()");
 			return true;
 		}
 		
-		Logging.log(pLocationDescription + ": COMPARING HIERARCHY LEVEL " + mLevel + " with alternative " + pOtherLevel.getValue());
+		//Logging.log(pLocationDescription + ": COMPARING HIERARCHY LEVEL " + mLevel + " with alternative " + pOtherLevel.getValue());
 		
 		// if the priority values are equal, we return "true"
 		if (mLevel > pOtherLevel.getValue()){

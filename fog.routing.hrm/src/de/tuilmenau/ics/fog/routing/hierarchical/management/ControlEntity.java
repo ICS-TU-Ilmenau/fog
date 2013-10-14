@@ -331,11 +331,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void registerComChannel(ComChannel pComChannel)
 	{
-		Logging.log(this, "Registering comm. channel: " + pComChannel);
-		
 		synchronized (mComChannels) {
 			if(!mComChannels.contains(pComChannel)) {
-				Logging.log(this, "Registering communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels already registered");
+				//Logging.log(this, "Registering communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels already registered");
 
 				// add the channel to the database
 				mComChannels.add(pComChannel);
@@ -352,8 +350,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void unregisterComChannel(ComChannel pComChannel)
 	{
-		Logging.log(this, "Unregistering comm. channel: " + pComChannel);
-
 		// close the communication channel to the peer
 		pComChannel.closeChannel();
 
@@ -362,7 +358,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				// add the channel to the database
 				mComChannels.remove(pComChannel);
 
-				Logging.log(this, "Unregistered communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels still registered");
+				//Logging.log(this, "Unregistered communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels still registered");
 			}else{
 				Logging.err(this, "Communication channel " + pComChannel + " isn't known");
 			}			
@@ -500,7 +496,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	private void setSuperiorCoordinatorNodeName(Name pNodeName)
 	{
-		Logging.log(this, "Setting superior coordinator node name: " + pNodeName);
+		//Logging.log(this, "Setting superior coordinator node name: " + pNodeName);
 		mSuperiorCoordinatorNodeName = pNodeName;
 	}
 	
@@ -511,7 +507,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	protected void setSuperiorCoordinatorID(int pCoordinatorID)
 	{
-		Logging.log(this, "Setting superior coordinator ID: " + pCoordinatorID);
+		//Logging.log(this, "Setting superior coordinator ID: " + pCoordinatorID);
 		mSuperiorCoordinatorID = pCoordinatorID;
 	}
 
@@ -534,7 +530,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	private void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
 	{
-		Logging.log(this, "Setting superior comm. channel: " + pComChannel);
+		//Logging.log(this, "Setting superior comm. channel: " + pComChannel);
 		mSuperiorCoordinatorComChannel = pComChannel;
 	}
 	
@@ -624,7 +620,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	protected void setCoordinatorID(int pNewCoordinatorID)
 	{
-		Logging.log(this, "Setting coordinator ID: " + pNewCoordinatorID);
+		//Logging.log(this, "Setting coordinator ID: " + pNewCoordinatorID);
 		mCoordinatorID = pNewCoordinatorID;
 	}
 	
@@ -774,15 +770,15 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			// search for an already existing CoordintorProxy instance
 			CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
 			if(tCoordinatorProxy == null){
-				Logging.log(this, "STORING PROXY FOR ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
-	
 				tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address(), pAnnounceCoordinator.getRouteHopCount());
 			}else{
-				// did we receive a coordinator announcement from our own coordinator?
-				if(!equals(tRemoteClusterName)){
-					Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName);
-				}else{
-					Logging.log(this, "     ..ignoring announcement of own remote coordinator: " + tRemoteClusterName);
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+					// did we receive a coordinator announcement from our own coordinator?
+					if(!equals(tRemoteClusterName)){
+						Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName);
+					}else{
+						Logging.log(this, "     ..ignoring announcement of own remote coordinator: " + tRemoteClusterName);
+					}
 				}
 			}
 			
@@ -829,7 +825,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				 */
 				if((!tCoordinatorProxy.getHierarchyLevel().isHighest() /* is a higher cluster possible? */) && (mHRMController.getCoordinator(tCoordinatorProxy.getHierarchyLevel()) != null /* does a local coordinator at this hierarchy level exist? */)){
 					HierarchyLevel tSuperiorClusterLevel = new HierarchyLevel(this, tCoordinatorProxy.getHierarchyLevel().getValue() + 1);
-					Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
+					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+						Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
+					}
 					mHRMController.cluster(this, tSuperiorClusterLevel);
 				}
 			}

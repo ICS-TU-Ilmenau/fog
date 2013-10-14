@@ -600,9 +600,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		if(mCoordinatorRoleValid){
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
 				if(USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-					Logging.log(this, "###########################");
-					Logging.log(this, "###### FIRE FIRE FIRE #####");
-					Logging.log(this, "###########################");
+					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+						Logging.log(this, "###########################");
+						Logging.log(this, "###### FIRE FIRE FIRE #####");
+						Logging.log(this, "###########################");
+					}
 					
 					/**
 					 * Trigger: ClusterAnnounce distribution
