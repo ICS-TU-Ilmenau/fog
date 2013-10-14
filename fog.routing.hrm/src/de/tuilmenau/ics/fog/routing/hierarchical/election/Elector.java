@@ -605,7 +605,7 @@ public class Elector implements Localization
 		/**
 		 * deactivate the HRM link
 		 */
-		pComChannel.setHRMLinkActivation(false);
+		pComChannel.setLinkActivation(false);
 	}
 	
 	/**

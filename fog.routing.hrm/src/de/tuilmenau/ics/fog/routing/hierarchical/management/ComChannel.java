@@ -203,7 +203,7 @@ public class ComChannel
 	/**
 	 * Stores if this comm. channel is end-point of an active HRM link between the parent and the peer
 	 */
-	private boolean mLinkActivation = false;
+	private boolean mLinkActivation = true;
 	
 	/**
 	 * Stores the HRMController reference
@@ -881,10 +881,10 @@ public class ComChannel
 				Logging.log(this, "ANNOUNCE_COORDINATOR-received from \"" + getPeerHRMID() + "\", announcement is: " + tAnnounceClusterPacket);
 		
 			/**
-			 * update tie state
+			 * update link state
 			 */
 			if(tAnnounceClusterPacket.getSenderClusterName().equals(mRemoteClusterName)){
-				setHRMLinkActivation(true);
+				setLinkActivation(true);
 			}
 			
 			getParent().eventCoordinatorAnnouncement(this, tAnnounceClusterPacket);
@@ -903,10 +903,10 @@ public class ComChannel
 				Logging.log(this, "INVALID_COORDINATOR-received from \"" + getPeerHRMID() + "\", invalidation is: " + tInvalidCoordinatorPacket);
 		
 			/**
-			 * update tie state
+			 * update link state
 			 */
 			if(tInvalidCoordinatorPacket.getSenderClusterName().equals(mRemoteClusterName)){
-				setHRMLinkActivation(false);
+				setLinkActivation(false);
 			}
 
 			getParent().eventCoordinatorInvalidation(this, tInvalidCoordinatorPacket);
@@ -923,7 +923,7 @@ public class ComChannel
 	 * 
 	 * @param pState the new state
 	 */
-	public void setHRMLinkActivation(boolean pState)
+	public void setLinkActivation(boolean pState)
 	{
 		mLinkActivation = pState;
 	}
@@ -933,7 +933,7 @@ public class ComChannel
 	 * 
 	 * @return true or false
 	 */
-	public boolean isUsedHRMLink()
+	public boolean getLinkActivation()
 	{
 		return mLinkActivation;
 	}	

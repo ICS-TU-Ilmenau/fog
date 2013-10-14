@@ -820,7 +820,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 2: active link 
 			 */
-			tRow.setText(2, tComChannel.isUsedHRMLink() ? "yes" : "no");
+			tRow.setText(2, tComChannel.getLinkActivation() ? "yes" : "no");
 			
 			/**
 			 * Column 3:  
