@@ -9,6 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.election;
 
+import java.util.LinkedList;
+
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAlive;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyAnnounce;
@@ -468,8 +470,9 @@ public class Elector implements Localization
 		BullyReply tReplyPacket = new BullyReply(mHRMController.getNodeName(), pComChannel.getPeerHRMID(), mParent.getPriority());
 			
 		// send the answer packet
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "BULLY-sending to \"" + pComChannel + "\" a REPLY: " + tReplyPacket);
+		}
 
 		// send message
 		pComChannel.sendPacket(tReplyPacket);
@@ -527,6 +530,21 @@ public class Elector implements Localization
 	}
 	
 	/**
+	 * EVENT: all links to cluster members are inactive 
+	 */
+	public void eventAllParentComChannelsHaveInactiveLinks()
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+			Logging.log(this, "EVENT: all parent comm. channels have inactive links");
+		}
+		
+		LinkedList<ComChannel> tComChannels = mParent.getComChannels();
+		for (ComChannel tComChannel : tComChannels){
+			tComChannel.setLinkActivation(false);
+		}
+	}
+
+	/**
 	 * EVENT: sets the local node as simple cluster member.
 	 */
 	private void eventElectionLost()
@@ -550,7 +568,14 @@ public class Elector implements Localization
 			 * TRIGGER: invalidate the local coordinator because it was deselected by another coordinator
 			 */
 			if(mParent instanceof Cluster){
+				Cluster tCluster = (Cluster)mParent;
+				
 				if (mParent.getCoordinator() != null){
+					/**
+					 * Trigger: all parent comm. channels have inactive links
+					 */
+					eventAllParentComChannelsHaveInactiveLinks();
+					
 					/**
 					 * Trigger: broadcast of "BullyLeave"
 					 */
@@ -786,7 +811,7 @@ public class Elector implements Localization
 	 * @param pComChannel the communication channel from where the message was received
 	 */
 	@SuppressWarnings("unused")
-	public void handleSignalingMessageBully(SignalingMessageBully pPacketBully, ComChannel pComChannel)
+	public synchronized void handleSignalingMessageBully(SignalingMessageBully pPacketBully, ComChannel pComChannel)
 	{
 		Node tNode = mHRMController.getNode();
 		Name tLocalNodeName = mHRMController.getNodeName(); 
