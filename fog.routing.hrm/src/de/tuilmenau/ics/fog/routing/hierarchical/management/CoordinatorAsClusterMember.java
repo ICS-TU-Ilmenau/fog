@@ -9,7 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
-import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
+import java.util.LinkedList;
+
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -65,6 +66,9 @@ public class CoordinatorAsClusterMember extends ClusterMember
 
 		// register at HRMController's internal database
 		pHRMController.registerCoordinatorAsClusterMember(tResult);
+
+		// register at the parent Coordinator
+		pCoordinator.registerClusterMembership(tResult);
 
 		// creates new elector object, which is responsible for Bully based election processes
 		tResult.mElector = new Elector(pHRMController, tResult);
@@ -142,17 +146,11 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	public void eventClusterMembershipInvalid()
 	{
 		Logging.log(this, "EVENT: cluster membership invalid");
-		
-		/**
-		 * Send: "Leave" to all superior clusters
-		 */
-		InformClusterLeft tLeaveClusterPacket = new InformClusterLeft(mHRMController.getNodeName(), getHRMID(), null, null);
-		sendClusterBroadcast(tLeaveClusterPacket, true);
 
 		/**
-		 * Unregister from the HRMController's internal database
-		 */ 
-		mHRMController.unregisterCoordinatorAsClusterMember(this);
+		 * Trigger: cluster member role invalid
+		 */
+		eventClusterMemberRoleInvalid();
 	}
 
 	/**
@@ -163,14 +161,39 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	@Override
 	public void eventClusterMembershipCanceled(ComChannel pComChannel)
 	{
-		Logging.log(this, "EVENT: cluster membership canceled");
+		Logging.log(this, "EVENT: cluster membership canceled: " + pComChannel);
 		
+		/**
+		 * Trigger: cluster member role invalid
+		 */
+		eventClusterMemberRoleInvalid();
+	}
+
+	/**
+	 * EVENT: cluster member role invalid
+	 */
+	public synchronized void eventClusterMemberRoleInvalid()
+	{
+		Logging.log(this, "============ EVENT: ClusterMember_Role_Invalid");
+
+		LinkedList<ComChannel> tComChannels = getComChannels();
+		for(ComChannel tComChannel : tComChannels){
+			unregisterComChannel(tComChannel);
+		}
+		
+		Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
+
 		/**
 		 * Unregister from the HRMController's internal database
 		 */ 
 		mHRMController.unregisterCoordinatorAsClusterMember(this);
-	}
 
+		/**
+		 * Unregister from the parent coordinator's internal database
+		 */ 
+		mCoordinator.unregisterClusterMembership(this);
+	}
+	
 	/**
 	 * Defines the decoration text for the ARG viewer
 	 * 

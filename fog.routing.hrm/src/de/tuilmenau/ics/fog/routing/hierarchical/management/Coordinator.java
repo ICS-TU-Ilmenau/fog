@@ -480,11 +480,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		Logging.log(this, "EVENT: all cluster memberships invalid");
 		
-		synchronized (mClusterMemberships) {
-			Logging.log(this, "     ..invalidating these cluster memberships: " + mClusterMemberships);
-			for (CoordinatorAsClusterMember tCoordinatorAsClusterMember : mClusterMemberships){
-				tCoordinatorAsClusterMember.eventClusterMembershipInvalid();
-			}
+		Logging.log(this, "     ..invalidating these cluster memberships: " + mClusterMemberships);
+		while(mClusterMemberships.size() > 0) {
+			CoordinatorAsClusterMember tCoordinatorAsClusterMember = mClusterMemberships.getLast();
+			tCoordinatorAsClusterMember.eventClusterMembershipInvalid();
 		}
 	}
 	
@@ -557,8 +556,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				 * Send broadcasts in all locally known clusters at this hierarchy level
 				 */
 				LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue());
+				Logging.log(this, "########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-					Logging.log(this, "\n\n########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
 					Logging.log(this, "     ..distributing in clusters: " + tClusters);
 				}
 				for(Cluster tCluster : tClusters){
@@ -586,8 +585,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 * Send broadcasts in all locally known clusters at this hierarchy level
 			 */
 			LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0); //HINT: we have to broadcast via level 0, otherwise, an inferior could already be destroyed and the invalidation message might get dropped
+			Logging.log(this, "########## Distributing Coordinator invalidation (to the bottom): " + tInvalidCoordinatorPacket);
 			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-				Logging.log(this, "\n\n########## Distributing Coordinator invalidation (to the bottom): " + tInvalidCoordinatorPacket);
 				Logging.log(this, "     ..distributing in clusters: " + tClusters);
 			}
 			for(Cluster tCluster : tClusters){
@@ -777,17 +776,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				Logging.log(this, "    ..creating new local cluster membership for: " + pRemoteClusterName + ", remote node: " + pSourceComSession.getPeerL2Address());
 			}
 			CoordinatorAsClusterMember tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
-			synchronized (mClusterMemberships) {
-				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-					Logging.log(this, "    ..know already these cluster memberships: " + mClusterMemberships);
-				
-					//HINT: a check for already existing cluster memberships has to be done based on equals AND a check of the peer ClusterName
-					Logging.log(this, "    ..adding cluster membership: " + tClusterMembership);
-				}
-				
-				// add this cluster membership
-				mClusterMemberships.add(tClusterMembership);
-			}
 			
 			/**
 			 * Create the communication channel for the described cluster member
@@ -818,6 +806,44 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			eventJoinedRemoteCluster(tComChannel);
 		}else{
 			Logging.warn(this, "eventClusterMembershipRequest() skipped because coordinator role is already invalidated");
+		}
+	}
+
+	/**
+	 * Registers a new cluster membership for this coordinator
+	 * 
+	 * @param pMembership the new cluster membership
+	 */
+	public void registerClusterMembership(CoordinatorAsClusterMember pMembership)
+	{
+		synchronized (mClusterMemberships) {
+			if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+				Logging.log(this, "Registering cluster membership for: " + pMembership);
+			
+				//HINT: a check for already existing cluster memberships has to be done based on equals AND a check of the peer ClusterName
+			}
+			
+			// add this cluster membership
+			mClusterMemberships.add(pMembership);
+		}
+	}
+	
+	/**
+	 * Unregisters a new cluster membership for this coordinator
+	 * 
+	 * @param pMembership the cluster membership which should be removed
+	 */
+	public void unregisterClusterMembership(CoordinatorAsClusterMember pMembership)
+	{
+		synchronized (mClusterMemberships) {
+			if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+				Logging.log(this, "Unregistering cluster membership for: " + pMembership);
+			
+				//HINT: a check for already existing cluster memberships has to be done based on equals AND a check of the peer ClusterName
+			}
+			
+			// remove this cluster membership
+			mClusterMemberships.remove(pMembership);
 		}
 	}
 
