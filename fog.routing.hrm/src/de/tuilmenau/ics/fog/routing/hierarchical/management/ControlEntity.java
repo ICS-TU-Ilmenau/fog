@@ -333,7 +333,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	{
 		synchronized (mComChannels) {
 			if(!mComChannels.contains(pComChannel)) {
-				//Logging.log(this, "Registering communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels already registered");
+				Logging.log(this, "Registering communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels already registered");
 
 				// add the channel to the database
 				mComChannels.add(pComChannel);
@@ -350,17 +350,15 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void unregisterComChannel(ComChannel pComChannel)
 	{
-		// close the communication channel to the peer
-		pComChannel.closeChannel();
-
 		synchronized (mComChannels) {
 			if(mComChannels.contains(pComChannel)) {
+				Logging.log(this, "Unregistering communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels still registered");
+
+				// close the communication channel to the peer
+				pComChannel.closeChannel();
+
 				// add the channel to the database
 				mComChannels.remove(pComChannel);
-
-				//Logging.log(this, "Unregistered communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels still registered");
-			}else{
-				Logging.err(this, "Communication channel " + pComChannel + " isn't known");
 			}			
 		}
 	}
@@ -800,6 +798,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 					// is the new route shorter than the old one?
 					if(tNewLinkRoute.isShorter(tOldLinkRoute)){
 						// replace the stored route by the new route which is shorter than the old one
+						Logging.log(this, "Updating ARG link: " + tLink);
+						Logging.log(this, "          ..new route: " + tNewLinkRoute);
 						tLink.setRoute(tNewLinkRoute);
 						
 						// update L2 link (update is automatically done in registerLinkL2() )
@@ -811,8 +811,12 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			}
 			// have we updated an old link?
 			if(tRegisterNewLink){
+				AbstractRoutingGraphLink tNewLink = new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute());
+				
+				Logging.log(this, "Registering new ARG link: " + tNewLink);
+
 				// register the link to the announced coordinator
-				mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute()));
+				mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, tNewLink);
 				
 				// register L2 link
 				mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), pAnnounceCoordinator.getRoute());
@@ -911,8 +915,25 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			}
 		}
 		
+		if(this instanceof CoordinatorAsClusterMember){
+			CoordinatorAsClusterMember tThisCoordinatorAsClusterMember = (CoordinatorAsClusterMember)this;
+			CoordinatorAsClusterMember tComparedCoordinatorAsClusterMember = (CoordinatorAsClusterMember)pObj;
+			if ((tThisCoordinatorAsClusterMember.getCoordinator().equals(tComparedCoordinatorAsClusterMember.getCoordinator())) && (tThisCoordinatorAsClusterMember.getCoordinatorNodeL2Address().equals(tComparedCoordinatorAsClusterMember.getCoordinatorNodeL2Address()))){
+				if(DEBUG_EQUALS){
+					Logging.log(this, "  ..true!");
+				}
+				return true;
+			}else{
+				if(DEBUG_EQUALS){
+					Logging.log(this, "  ..false!");
+				}
+				return false;
+			}
+		}
+
 		if(pObj instanceof ControlEntity){
 			ControlEntity tComparedObj = (ControlEntity) pObj;
+			
 			if (this instanceof Coordinator){
 				Coordinator tThisCoordinator = (Coordinator)this;
 				if(tThisCoordinator.getCoordinatorID() == tComparedObj.getCoordinatorID()){

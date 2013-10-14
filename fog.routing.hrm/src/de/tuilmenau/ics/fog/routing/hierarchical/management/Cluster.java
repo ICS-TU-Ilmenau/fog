@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
@@ -310,7 +309,7 @@ public class Cluster extends ClusterMember
 	 */
 	public void eventCoordinatorLost()
 	{
-		Logging.log(this, "EVENT: coordiantor was lost");
+		Logging.log(this, "EVENT: coordinator was lost");
 		
 		/**
 		 * Revoke HRMID of physical node if we are on base hierarchy level
@@ -364,8 +363,8 @@ public class Cluster extends ClusterMember
 		}
 		if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 			Logging.log(this, "      ..remaining comm. channels: " + getComChannels());
-			Logging.log(this, "      ..remaining connected local coordiantors: " + mInferiorLocalCoordinators);
-			Logging.log(this, "      ..remaining connected remote coordiantors: " + mInferiorRemoteCoordinators);
+			Logging.log(this, "      ..remaining connected local coordinators: " + mInferiorLocalCoordinators);
+			Logging.log(this, "      ..remaining connected remote coordinators: " + mInferiorRemoteCoordinators);
 		}
 
 		// check necessity
@@ -404,14 +403,13 @@ public class Cluster extends ClusterMember
 		}
 		
 		Logging.log(this, "============ EVENT: canceling all memberships");
+		Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
 		LinkedList<ComChannel> tcomChannels = getComChannels();
 		for(ComChannel tComChannel: tcomChannels){
 			Logging.log(this, "     ..canceling: " + tComChannel);
 			destroyComChannel(tComChannel);
 		}
 		
-		Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
-
 		/**
 		 * Unregister from local databases
 		 */
@@ -474,12 +472,8 @@ public class Cluster extends ClusterMember
 	{
 		Logging.log(this, "Destroying comm. channel to peer=" + pComChannel.getPeer() + "(remoteEP=" + pComChannel.getRemoteClusterName() +")");
 		
-		/**
-		 * Send "InformClusterMembershipCanceled" along the comm. channel
-		 */
-		InformClusterMembershipCanceled tInformClusterMembershipCanceled = new InformClusterMembershipCanceled(mHRMController.getNodeName(), mHRMController.getNodeName(), createClusterName(), pComChannel.getRemoteClusterName());
-	    Logging.log(this, "       ..sending membership canceled: " + tInformClusterMembershipCanceled);
-	    pComChannel.sendPacket(tInformClusterMembershipCanceled);
+		// unregister the comm. channel
+		unregisterComChannel(pComChannel);
 	}
 	
 	/**
@@ -492,16 +486,12 @@ public class Cluster extends ClusterMember
 	 */
 	private void establishComChannel(ComSession pComSession, ClusterName pRemoteEndPointName, ClusterName pLocalEndpointName, ControlEntity pPeer)
 	{
-		if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-			Logging.log(this, "Establishing comm. channel to peer=" + pPeer + "(remoteEP=" + pRemoteEndPointName + ", localEP=" + pLocalEndpointName +")");
-		}
+		Logging.log(this, "Establishing comm. channel to peer=" + pPeer + "(remoteEP=" + pRemoteEndPointName + ", localEP=" + pLocalEndpointName +")");
 		
 	    /**
 	     * Create communication channel
 	     */
-		if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-			Logging.log(this, "       ..creating new communication channel");
-		}
+		Logging.log(this, "       ..creating new communication channel");
 		ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, pComSession, pPeer); //TODO: statt sofort den kanal aufzubauen lieber auf das ACK warten und dann aufbauen, andernfalls koennen karteileichen entstehen wenn der remote bereits den zielkoordinator nicht mehr kennt und nie ein ACK schickt
 		tComChannel.setRemoteClusterName(pLocalEndpointName);
 		tComChannel.setPeerPriority(pPeer.getPriority());
@@ -511,13 +501,9 @@ public class Cluster extends ClusterMember
 		 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
 		 */
 		RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeName(), mHRMController.getNodeName(), createClusterName(), pRemoteEndPointName);
-		if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-			Logging.log(this, "       ..sending membership request: " + tRequestClusterMembership);
-		}
+		Logging.log(this, "       ..sending membership request: " + tRequestClusterMembership);
 		if (pComSession.write(tRequestClusterMembership)){
-			if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-				Logging.log(this, "      ..requested sucessfully for membership of: " + pPeer);
-			}
+			Logging.log(this, "      ..requested sucessfully for membership of: " + pPeer);
 		}else{
 			Logging.err(this, "      ..failed to request for membership of: " + pPeer);
 		}
@@ -570,7 +556,7 @@ public class Cluster extends ClusterMember
 							 * Create coordinator name for this coordinator
 							 */
 							ClusterName tRemoteEndPointName = tCoordinator.createCoordinatorName();
-							ClusterName tLocalEndPointName = new ClusterName(mHRMController, new HierarchyLevel(this, tRemoteEndPointName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordiantorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
+							ClusterName tLocalEndPointName = new ClusterName(mHRMController, new HierarchyLevel(this, tRemoteEndPointName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
 	
 							/**
 							 * Establish the comm. channel
@@ -620,7 +606,7 @@ public class Cluster extends ClusterMember
 										 * Create coordinator name for this coordinator proxy
 										 */
 										ClusterName tRemoteEndPointName = tCoordinatorProxy.createCoordinatorName();
-										ClusterName tLocalEndPointName = new ClusterName(mHRMController, new HierarchyLevel(this, tRemoteEndPointName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordiantorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
+										ClusterName tLocalEndPointName = new ClusterName(mHRMController, new HierarchyLevel(this, tRemoteEndPointName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
 										
 										/**
 										 * Establish the comm. channel
