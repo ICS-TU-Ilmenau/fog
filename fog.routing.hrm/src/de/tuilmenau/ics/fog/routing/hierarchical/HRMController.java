@@ -647,7 +647,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tActiveHRMInfrastructureText += "^";	
 			}			
 		}
-		mDecoratorActiveHRMInfrastructure.setText(" [Active clusters: " + tActiveHRMInfrastructureText);
+		mDecoratorActiveHRMInfrastructure.setText(" [Active clusters: " + tActiveHRMInfrastructureText + "]");
 		mDecoratorForNodePriorities.setText(" [Hier.: " + Long.toString(mNodeHierarchyPriority) + "/ Conn.: " + Long.toString(getConnectivityNodePriority()) + "]");
 		
 		String tNodeText = "";
