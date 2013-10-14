@@ -763,7 +763,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			/**
 			 * Storing if the announce coordinator is a superior one of this node
 			 */
-			if(!pAnnounceCoordinator.enteredSidewardForwarding()){
+			// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
+			if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderClusterName().getHierarchyLevel().isBaseLevel())){
 				mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderClusterName());
 			}
 			
@@ -853,7 +854,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			/**
 			 * Remove the invalid coordinator as superior one of this node from the HRMController database
 			 */
-			if(!pInvalidCoordinator.enteredSidewardForwarding()){
+			// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
+			if((!pInvalidCoordinator.enteredSidewardForwarding()) && (!pInvalidCoordinator.getSenderClusterName().getHierarchyLevel().isBaseLevel())){
 				mHRMController.unregisterSuperiorCoordinator(pInvalidCoordinator.getSenderClusterName());
 			}
 
