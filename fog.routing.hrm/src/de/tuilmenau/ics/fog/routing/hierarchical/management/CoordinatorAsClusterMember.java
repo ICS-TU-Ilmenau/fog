@@ -137,7 +137,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 
 	/**
-	 * EVENT: cluster membership invalid 
+	 * EVENT: cluster membership invalidated, triggered by parent coordinator 
 	 */
 	public void eventClusterMembershipInvalid()
 	{
@@ -149,6 +149,22 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		InformClusterLeft tLeaveClusterPacket = new InformClusterLeft(mHRMController.getNodeName(), getHRMID(), null, null);
 		sendClusterBroadcast(tLeaveClusterPacket, true);
 
+		/**
+		 * Unregister from the HRMController's internal database
+		 */ 
+		mHRMController.unregisterCoordinatorAsClusterMember(this);
+	}
+
+	/**
+	 * EVENT: cluster membership canceled, triggered by cluster head
+	 * 
+	 *  @param: pComChannel the comm. channel from where the cancellation was received
+	 */
+	@Override
+	public void eventClusterMembershipCanceled(ComChannel pComChannel)
+	{
+		Logging.log(this, "EVENT: cluster membership canceled");
+		
 		/**
 		 * Unregister from the HRMController's internal database
 		 */ 

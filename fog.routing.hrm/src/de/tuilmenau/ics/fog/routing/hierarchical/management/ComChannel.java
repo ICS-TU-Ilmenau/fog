@@ -862,7 +862,7 @@ public class ComChannel
 				ClusterMember tClusterMember = (ClusterMember)getParent();
 				
 				// trigger event "cluster member joined"
-				tClusterMember.eventClusterMemberLost(this);		
+				tClusterMember.eventClusterMembershipCanceled(this);		
 			}else{
 				Logging.err(this, "Expected a ClusterMember object as parent for processing LeaveCluster data but parent is " + getParent());
 			}
@@ -883,9 +883,9 @@ public class ComChannel
 			/**
 			 * update link state
 			 */
-			if(tAnnounceClusterPacket.getSenderClusterName().equals(mRemoteClusterName)){
-				setLinkActivation(true);
-			}
+//			if(tAnnounceClusterPacket.getSenderClusterName().equals(mRemoteClusterName)){
+//				setLinkActivation(true);
+//			}
 			
 			getParent().eventCoordinatorAnnouncement(this, tAnnounceClusterPacket);
 			
@@ -905,9 +905,9 @@ public class ComChannel
 			/**
 			 * update link state
 			 */
-			if(tInvalidCoordinatorPacket.getSenderClusterName().equals(mRemoteClusterName)){
-				setLinkActivation(false);
-			}
+//			if(tInvalidCoordinatorPacket.getSenderClusterName().equals(mRemoteClusterName)){
+//				setLinkActivation(false);
+//			}
 
 			getParent().eventCoordinatorInvalidation(this, tInvalidCoordinatorPacket);
 			

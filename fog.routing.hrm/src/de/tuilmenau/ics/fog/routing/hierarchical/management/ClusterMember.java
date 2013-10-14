@@ -322,16 +322,6 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * EVENT: "lost cluster member", triggered by Elector in case a member left the election 
-
-	 * @param pComChannel the comm. channel of the lost cluster member
-	 */
-	public void eventClusterMemberLost(ComChannel pComChannel)
-	{
-		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
-	}
-
-	/**
 	 * Sends a packet to the coordinator
 	 * 
 	 * @param pPacket the packet
@@ -484,9 +474,11 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * EVENT: cluster membership canceled (by cluster head) 
+	 * EVENT: cluster membership canceled (by cluster head)
+	 * 
+	 *  @param: pComChannel the comm. channel from where the cancellation was received
 	 */
-	public void eventClusterMembershipCanceled()
+	public void eventClusterMembershipCanceled(ComChannel pComChannel)
 	{
 		Logging.log(this, "EVENT: cluster membership canceled");
 		
