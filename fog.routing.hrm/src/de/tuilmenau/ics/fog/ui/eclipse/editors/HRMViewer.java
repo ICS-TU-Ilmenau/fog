@@ -391,7 +391,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 * GUI part: list coordinator as cluster members
 		 */
 		if(mShowCoordinatorAsClusterMembers){
-			for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mHRMController.getAllCoordinatorAsClusterMemebers()){
+			for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mHRMController.getAllCoordinatorAsClusterMembers()){
 				// print info. about cluster
 				printClusterMember(mContainer, tCoordinatorAsClusterMember);
 			}

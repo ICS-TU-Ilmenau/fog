@@ -815,31 +815,38 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		Logging.log(this, "Registering coordinator-as-cluster-member " + pCoordinatorAsClusterMember + " at level " + tLevel);
 		
+		boolean tNewEntry = false;
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
 			// make sure the Bully priority is the right one, avoid race conditions here
 			pCoordinatorAsClusterMember.setPriority(BullyPriority.create(this, getHierarchyNodePriority()));
 
-			// register as known coordinator-as-cluster-member
-			mLocalCoordinatorAsClusterMemebers.add(pCoordinatorAsClusterMember);			
+			if(!mLocalCoordinatorAsClusterMemebers.contains(pCoordinatorAsClusterMember)){				
+				// register as known coordinator-as-cluster-member
+				mLocalCoordinatorAsClusterMemebers.add(pCoordinatorAsClusterMember);
+				
+				tNewEntry = true;
+			}
 		}
 		
-		if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
-			// updates the GUI decoration for this node
-			updateGUINodeDecoration();
-
-			// register the node in the local ARG
-			registerNodeARG(pCoordinatorAsClusterMember);
-
-			// register the link in the local ARG
-			registerLinkARG(pCoordinatorAsClusterMember, pCoordinatorAsClusterMember.getCoordinator(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
-
-			// register link to central node in the ARG
-			if (HRMConfig.DebugOutput.SHOW_ALL_OBJECT_REFS_TO_CENTRAL_NODE_IN_ARG){
-				registerLinkARG(mCentralARGNode, pCoordinatorAsClusterMember, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+		if(tNewEntry){
+			if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
+				// updates the GUI decoration for this node
+				updateGUINodeDecoration();
+	
+				// register the node in the local ARG
+				registerNodeARG(pCoordinatorAsClusterMember);
+	
+				// register the link in the local ARG
+				registerLinkARG(pCoordinatorAsClusterMember, pCoordinatorAsClusterMember.getCoordinator(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+	
+				// register link to central node in the ARG
+				if (HRMConfig.DebugOutput.SHOW_ALL_OBJECT_REFS_TO_CENTRAL_NODE_IN_ARG){
+					registerLinkARG(mCentralARGNode, pCoordinatorAsClusterMember, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+				}
+	
+				// it's time to update the GUI
+				notifyGUI(pCoordinatorAsClusterMember);
 			}
-
-			// it's time to update the GUI
-			notifyGUI(pCoordinatorAsClusterMember);
 		}
 	}
 	
@@ -852,20 +859,29 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(this, "Unregistering coordinator-as-cluster-member " + pCoordinatorAsClusterMember);
 
+		boolean tFoundEntry = false;
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
-			// unregister from list of known cluster members
-			mLocalCoordinatorAsClusterMemebers.remove(pCoordinatorAsClusterMember);
+			if(mLocalCoordinatorAsClusterMemebers.contains(pCoordinatorAsClusterMember)){				
+				// unregister from list of known cluster members
+				mLocalCoordinatorAsClusterMemebers.remove(pCoordinatorAsClusterMember);
+				
+				Logging.log(this, "    ..unregistered: " + pCoordinatorAsClusterMember);
+			}else{
+				Logging.log(this, "    ..not found: " + pCoordinatorAsClusterMember);
+			}
 		}
 
-		if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
-			// updates the GUI decoration for this node
-			updateGUINodeDecoration();
-	
-			// register at the ARG
-			unregisterNodeARG(pCoordinatorAsClusterMember);
-	
-			// it's time to update the GUI
-			notifyGUI(pCoordinatorAsClusterMember);
+		if(tFoundEntry){
+			if(HRMConfig.DebugOutput.GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG){
+				// updates the GUI decoration for this node
+				updateGUINodeDecoration();
+		
+				// register at the ARG
+				unregisterNodeARG(pCoordinatorAsClusterMember);
+		
+				// it's time to update the GUI
+				notifyGUI(pCoordinatorAsClusterMember);
+			}
 		}
 	}
 
@@ -880,28 +896,35 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		Logging.log(this, "Registering cluster member " + pClusterMember + " at level " + tLevel);
 		
+		boolean tNewEntry = false;
 		synchronized (mLocalClusterMembers) {
-			
+
 			// make sure the Bully priority is the right one, avoid race conditions here
 			pClusterMember.setPriority(BullyPriority.create(this, getConnectivityNodePriority()));
 
-			// register as known cluster member
-			mLocalClusterMembers.add(pClusterMember);			
-		}
-		
-		// updates the GUI decoration for this node
-		updateGUINodeDecoration();
-
-		// register the cluster in the local ARG
-		registerNodeARG(pClusterMember);
-
-		// register link to central node in the ARG
-		if (HRMConfig.DebugOutput.SHOW_ALL_OBJECT_REFS_TO_CENTRAL_NODE_IN_ARG){
-			registerLinkARG(mCentralARGNode, pClusterMember, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+			if(!mLocalClusterMembers.contains(pClusterMember)){
+				// register as known cluster member
+				mLocalClusterMembers.add(pClusterMember);
+				
+				tNewEntry = true;
+			}
 		}
 
-		// it's time to update the GUI
-		notifyGUI(pClusterMember);
+		if(tNewEntry){
+			// updates the GUI decoration for this node
+			updateGUINodeDecoration();
+	
+			// register the cluster in the local ARG
+			registerNodeARG(pClusterMember);
+	
+			// register link to central node in the ARG
+			if (HRMConfig.DebugOutput.SHOW_ALL_OBJECT_REFS_TO_CENTRAL_NODE_IN_ARG){
+				registerLinkARG(mCentralARGNode, pClusterMember, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+			}
+	
+			// it's time to update the GUI
+			notifyGUI(pClusterMember);
+		}
 	}
 
 	/**
@@ -913,19 +936,26 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(this, "Unregistering cluster member " + pClusterMember);
 
+		boolean tFoundEntry = false;
 		synchronized (mLocalClusterMembers) {
-			// unregister from list of known cluster members
-			mLocalClusterMembers.remove(pClusterMember);
+			if(mLocalClusterMembers.contains(pClusterMember)){
+				// unregister from list of known cluster members
+				mLocalClusterMembers.remove(pClusterMember);
+				
+				tFoundEntry = true;
+			}
 		}
 
-		// updates the GUI decoration for this node
-		updateGUINodeDecoration();
-
-		// register at the ARG
-		unregisterNodeARG(pClusterMember);
-
-		// it's time to update the GUI
-		notifyGUI(pClusterMember);
+		if(tFoundEntry){
+			// updates the GUI decoration for this node
+			updateGUINodeDecoration();
+	
+			// register at the ARG
+			unregisterNodeARG(pClusterMember);
+	
+			// it's time to update the GUI
+			notifyGUI(pClusterMember);
+		}
 	}
 
 	/**
@@ -1212,7 +1242,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the list of known coordinator as cluster members
 	 */
-	public LinkedList<CoordinatorAsClusterMember> getAllCoordinatorAsClusterMemebers()
+	@SuppressWarnings("unchecked")
+	public LinkedList<CoordinatorAsClusterMember> getAllCoordinatorAsClusterMembers()
 	{
 		LinkedList<CoordinatorAsClusterMember> tResult = null;
 		
