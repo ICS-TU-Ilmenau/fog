@@ -669,7 +669,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
-		Logging.log(this, "EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+			Logging.log(this, "EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
+		}
 		
 		/**
 		 * Store the announced remote coordinator in the ARG 
@@ -683,9 +685,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * Forward the coordinator announcement to all locally known clusters at this hierarchy level
 		 */
-		Logging.log(this, "\n\n########## Forwarding Coordinator announcement: " + pAnnounceCoordinator);
 		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel());
-		Logging.log(this, "     ..distributing in clusters: " + tClusters);
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+			Logging.log(this, "\n\n########## Forwarding Coordinator announcement: " + pAnnounceCoordinator);
+			Logging.log(this, "     ..distributing in clusters: " + tClusters);
+		}
 		for(Cluster tCluster : tClusters){
 			tCluster.sendClusterBroadcast(pAnnounceCoordinator, true);
 		}
@@ -702,7 +706,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
 	{
-		Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+			Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
+		}
 		
 		/**
 		 * Store the announced remote coordinator in the ARG 
@@ -716,9 +722,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * Forward the coordinator invalidation to all locally known clusters at this hierarchy level
 		 */
-		Logging.log(this, "\n\n########## Forwarding Coordinator invalidation: " + pInvalidCoordinator);
 		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel());
-		Logging.log(this, "     ..distributing in clusters: " + tClusters);
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+			Logging.log(this, "\n\n########## Forwarding Coordinator invalidation: " + pInvalidCoordinator);
+			Logging.log(this, "     ..distributing in clusters: " + tClusters);
+		}
 		for(Cluster tCluster : tClusters){
 			tCluster.sendClusterBroadcast(pInvalidCoordinator, true);
 		}

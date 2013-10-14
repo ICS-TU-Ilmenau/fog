@@ -124,7 +124,12 @@ public class HRMConfig
 		/**
 		 * Defines if the route of "AnnounceCoordinator" packets should be shown
 		 */
-		public static final boolean SHOW_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE = false;
+		public static final boolean SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS = false;
+
+		/**
+		 * Defines if the route of "InvalidCoordinator" packets should be shown
+		 */
+		public static final boolean SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS = false;
 	}
 	
 	public class Addressing

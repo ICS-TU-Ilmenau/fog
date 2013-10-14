@@ -752,14 +752,14 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	protected void registerAnnouncedCoordinatorARG(ControlEntity pSourceEntity, AnnounceCoordinator pAnnounceCoordinator)
 	{
-		ClusterName tRemoteClusterName = pAnnounceCoordinator.getSenderClusterName();
-		Logging.log(this, "Registering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
-		if(HRMConfig.DebugOutput.SHOW_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE){
-			Logging.log(this, "     ..announcement took the following route: " + pAnnounceCoordinator.getSourceRoute());
-		}
-		
 		// check if the "remote" coordinator isn't stored at this physical node
 		if(!pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(mHRMController.getNodeL2Address())){
+			ClusterName tRemoteClusterName = pAnnounceCoordinator.getSenderClusterName();
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+				Logging.log(this, "Registering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
+				Logging.log(this, "     ..announcement took the following route: " + pAnnounceCoordinator.getSourceRoute());
+			}
+
 			/**
 			 * Storing if the announce coordinator is a superior one of this node
 			 */
@@ -846,11 +846,13 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	protected void unregisterAnnouncedCoordinatorARG(ControlEntity pSourceEntity, InvalidCoordinator pInvalidCoordinator)
 	{
-		ClusterName tRemoteClusterName = pInvalidCoordinator.getSenderClusterName();
-		Logging.log(this, "Unregistering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
-		
 		// check if the "remote" coordinator isn't stored at this physical node
 		if(!pInvalidCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(mHRMController.getNodeL2Address())){
+			ClusterName tRemoteClusterName = pInvalidCoordinator.getSenderClusterName();
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+				Logging.log(this, "Unregistering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
+			}
+
 			/**
 			 * Remove the invalid coordinator as superior one of this node from the HRMController database
 			 */

@@ -233,14 +233,14 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		if(pRoute != null){
 			increaseRouteHopCount();
 			
-			if(HRMConfig.DebugOutput.SHOW_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE){
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 				Logging.log(this, "Adding route head");
 				Logging.log(this, "      ..old route to sender: " + mRoute);
 			}
 			Route tNewRoute = pRoute.clone();
 			tNewRoute.add(mRoute);
 			mRoute = tNewRoute;
-			if(HRMConfig.DebugOutput.SHOW_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE){
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 				Logging.log(this, "      ..new route to sender: " + mRoute);
 			}
 		}else{

@@ -94,7 +94,9 @@ public class ClusterMember extends ClusterName
 	@Override
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
-		Logging.log(this, "EVENT: coordinator announcement (from side): " + pAnnounceCoordinator);
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+			Logging.log(this, "EVENT: coordinator announcement (from side): " + pAnnounceCoordinator);
+		}
 		
 		/**
 		 * Enlarge the stored route towards the announcer
@@ -114,7 +116,9 @@ public class ClusterMember extends ClusterName
 		/**
 		 * transition from one cluster to the next one => decrease TTL value
 		 */
-		Logging.log(this, "Deacreasing TTL of: " + pAnnounceCoordinator);
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+			Logging.log(this, "Deacreasing TTL of: " + pAnnounceCoordinator);
+		}
 		pAnnounceCoordinator.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
 	
 		/**
@@ -145,21 +149,29 @@ public class ClusterMember extends ClusterName
 			// get locally known neighbors for this cluster and hierarchy level
 			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
 			if(tLocalClusters.size() > 0){
-				Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+					Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+				}
 	
 				for(Cluster tLocalCluster: tLocalClusters){
 					/**
 					 * Forward the announcement
 					 * HINT: we avoid loops by excluding the sender from the forwarding process
 					 */
-					Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+						Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+					}
 					tLocalCluster.forwardCoordinatorAnnouncement(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pAnnounceCoordinator);
 				}
 			}else{
-				Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCoordinator);
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+					Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCoordinator);
+				}
 			}
 		}else{
-			Logging.log(this, "TTL exceeded for coordinator announcement: " + pAnnounceCoordinator);
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+				Logging.log(this, "TTL exceeded for coordinator announcement: " + pAnnounceCoordinator);
+			}
 		}
 	}
 
@@ -174,7 +186,9 @@ public class ClusterMember extends ClusterName
 	@Override
 	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
 	{
-		Logging.log(this, "EVENT: coordinator invalidation (from side): " + pInvalidCoordinator);
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+			Logging.log(this, "EVENT: coordinator invalidation (from side): " + pInvalidCoordinator);
+		}
 		
 		/**
 		 * Store the announced remote coordinator in the ARG 
@@ -189,7 +203,9 @@ public class ClusterMember extends ClusterName
 		/**
 		 * transition from one cluster to the next one => decrease TTL value
 		 */
-		Logging.log(this, "Deacreasing TTL of: " + pInvalidCoordinator);
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+			Logging.log(this, "Deacreasing TTL of: " + pInvalidCoordinator);
+		}
 		pInvalidCoordinator.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
 	
 		/**
@@ -220,21 +236,29 @@ public class ClusterMember extends ClusterName
 			// get locally known neighbors for this cluster and hierarchy level
 			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
 			if(tLocalClusters.size() > 0){
-				Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+					Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+				}
 	
 				for(Cluster tLocalCluster: tLocalClusters){
 					/**
 					 * Forward the announcement
 					 * HINT: we avoid loops by excluding the sender from the forwarding process
 					 */
-					Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+						Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+					}
 					tLocalCluster.forwardCoordinatorInvalidation(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pInvalidCoordinator);
 				}
 			}else{
-				Logging.log(this, "No neighbors found, ending forwarding of: " + pInvalidCoordinator);
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+					Logging.log(this, "No neighbors found, ending forwarding of: " + pInvalidCoordinator);
+				}
 			}
 		}else{
-			Logging.log(this, "TTL exceeded for coordinator invalidation: " + pInvalidCoordinator);
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+				Logging.log(this, "TTL exceeded for coordinator invalidation: " + pInvalidCoordinator);
+			}
 		}
 	}
 
