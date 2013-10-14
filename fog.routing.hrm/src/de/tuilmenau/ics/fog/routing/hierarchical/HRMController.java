@@ -74,6 +74,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private NodeDecorator mDecoratorForCoordinatorsAndClusters = null;
 	
 	/**
+	 * Stores the node specific graph decorator for the active HRM infrastructure
+	 */
+	private NodeDecorator mDecoratorActiveHRMInfrastructure = null;
+
+	/**
 	 * Stores the node specific graph decorator for HRM node base priority
 	 */
 	private NodeDecorator mDecoratorForNodePriorities = null;
@@ -245,6 +250,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mDecoratorForNodePriorities = new NodeDecorator();
 		
 		/**
+		 * Create the node specific decorator for the active HRM infrastructure
+		 */
+		mDecoratorActiveHRMInfrastructure = new NodeDecorator();
+		
+		
+		/**
 		 * Set the node decorations
 		 */
 		Decoration tDecoration = null;
@@ -257,6 +268,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// create own decoration for HRM node priorities
 		tDecoration = Decoration.getInstance(DECORATION_NAME_NODE_PRIORITIES);
 		tDecoration.setDecorator(mNode,  mDecoratorForNodePriorities);
+		// create own decoration for HRM node priorities
+		tDecoration = Decoration.getInstance(DECORATION_NAME_ACTIVE_HRM_INFRASTRUCTURE);
+		tDecoration.setDecorator(mNode,  mDecoratorActiveHRMInfrastructure);
 		// overwrite default decoration
 		tDecoration = Decoration.getInstance(GraphViewer.DEFAULT_DECORATION);
 		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndClusters);
@@ -608,6 +622,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Set the decoration texts
 		 */
+		String tActiveHRMInfrastructureText = "";
+		for (int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			LinkedList<Cluster> tClusters = getAllClusters(i);
+			for(Cluster tCluster : tClusters){
+				if(tCluster.hasLocalCoordinator()){
+					if (tActiveHRMInfrastructureText != ""){
+						tActiveHRMInfrastructureText += ", ";
+					}
+					tActiveHRMInfrastructureText += "<" + Long.toString(tCluster.getGUIClusterID()) + ">";
+					for(int j = 0; j < tCluster.getHierarchyLevel().getValue(); j++){
+						tActiveHRMInfrastructureText += "^";	
+					}
+				}
+			}
+		}
+		LinkedList<ClusterName> tSuperiorCoordiantors = getAllSuperiorCoordinators();
+		for(ClusterName tSuperiorCoordinator : tSuperiorCoordiantors){
+			if (tActiveHRMInfrastructureText != ""){
+				tActiveHRMInfrastructureText += ", ";
+			}
+			tActiveHRMInfrastructureText += Long.toString(tSuperiorCoordinator.getGUIClusterID());
+			for(int i = 0; i < tSuperiorCoordinator.getHierarchyLevel().getValue(); i++){
+				tActiveHRMInfrastructureText += "^";	
+			}			
+		}
+		mDecoratorActiveHRMInfrastructure.setText(" [Active clusters: " + tActiveHRMInfrastructureText);
 		mDecoratorForNodePriorities.setText(" [Hier.: " + Long.toString(mNodeHierarchyPriority) + "/ Conn.: " + Long.toString(getConnectivityNodePriority()) + "]");
 		
 		String tNodeText = "";
@@ -659,6 +699,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mDecoratorForNodePriorities.setImage(tHighestCoordinatorLevel);
 		mDecoratorForCoordinatorsAndHRMIDs.setImage(tHighestCoordinatorLevel);
 		mDecoratorForCoordinatorsAndClusters.setImage(tHighestCoordinatorLevel);
+		mDecoratorActiveHRMInfrastructure.setImage(tHighestCoordinatorLevel);
 	}
 
 	/**
@@ -2728,6 +2769,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores the identification string for HRM specific routing graph decorations (node priorities)
 	 */
 	private final static String DECORATION_NAME_NODE_PRIORITIES = "HRM connectivity/hierarchy priorities";
+	
+	/**
+	 * Stores the identification string for the active HRM infrastructure
+	 */
+	private final static String DECORATION_NAME_ACTIVE_HRM_INFRASTRUCTURE = "HRM active infrastructure";
 	
 	/**
 	 * Stores the identification string for HRM specific routing graph decorations (coordinators & clusters)
