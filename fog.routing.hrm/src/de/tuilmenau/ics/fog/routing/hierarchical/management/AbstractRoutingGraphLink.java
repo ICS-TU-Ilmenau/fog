@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.routing.Route;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -81,9 +82,13 @@ public class AbstractRoutingGraphLink implements Serializable
 	 */
 	public void setRoute(Route pNewRoute)
 	{
-		Logging.log(this, ">>> Old route: " + mRoute);
+		if(HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, ">>> Old route: " + mRoute);
+		}
 		mRoute = pNewRoute;
-		Logging.log(this, ">>> New route: " + mRoute);
+		if(HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, ">>> New route: " + mRoute);
+		}
 	}
 	
 	/**
