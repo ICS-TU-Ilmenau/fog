@@ -430,9 +430,9 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SIGNAL: report itself as alive by signaling BULLY ALIVE to all cluster members
+	 * SEND: report itself as alive by signaling BULLY ALIVE to all cluster members
 	 */
-	private void signalLeaveBroadcast()
+	private void distributeLEAVE()
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "SENDLEAVE()-START, electing cluster is " + mParent);
@@ -554,7 +554,7 @@ public class Elector implements Localization
 					/**
 					 * Trigger: broadcast of "BullyLeave"
 					 */
-					signalLeaveBroadcast();
+					distributeLEAVE();
 					
 					/**
 					 * Invalidate the coordinator
@@ -570,12 +570,12 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * EVENT: priority update, triggered by ClusterMember when the priority is changed (e.g., if the base node priority was changed)
+	 * SEND: priority update, triggered by ClusterMember when the priority is changed (e.g., if the base node priority was changed)
 	 */
-	public void eventPriorityUpdate()
+	public void distributePRIORITY_UPDATE()
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-			Logging.log(this, "EVENT: priority update");
+			Logging.log(this, "SEND: priority updates");
 		}
 		
 		/**
@@ -596,7 +596,7 @@ public class Elector implements Localization
 	 * 
 	 * @param pComChannel the communication channel to the cluster member which left the election
 	 */
-	private void eventElectionLeft(ComChannel pComChannel)
+	private void eventLEAVE(ComChannel pComChannel)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "EVENT: cluster member left, comm. channel was: " + pComChannel);
@@ -611,7 +611,7 @@ public class Elector implements Localization
 	/**
 	 * EVENT: the election process was triggered by another cluster member
 	 */
-	private void eventReceivedElect()
+	private void eventELECT()
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "EVENT: received ELECT");
@@ -626,7 +626,7 @@ public class Elector implements Localization
 	 * 
 	 * @param pSourceComChannel the source comm. channel 
 	 */
-	private void eventReceivedReply(ComChannel pSourceComChannel)
+	private void eventREPLY(ComChannel pSourceComChannel)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "EVENT: received REPLY");
@@ -651,6 +651,55 @@ public class Elector implements Localization
 		}
 	}
 	
+	/**
+	 * EVENT: announce
+	 * 
+	 * @param pComChannel the comm. channel from where the packet was received
+	 * @param pAnnouncePacket the packet itself
+	 */
+	private void eventANNOUNCE(ComChannel pComChannel, BullyAnnounce pAnnouncePacket)
+	{
+		ControlEntity tControlEntity = pComChannel.getParent();
+
+		// trigger "election lost"
+		eventElectionLost();
+
+		// trigger: superior coordinator available	
+		tControlEntity.eventClusterCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
+	}
+	
+	/**
+	 * EVENT: priority update
+	 * 
+	 * @param pComChannel the comm. channel from where the packet was received
+	 */
+	private void eventPRIORITY_UPDATE(ComChannel pComChannel)
+	{
+		// get the priority of the sender
+		BullyPriority tSenderPriority = pComChannel.getPeerPriority();
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+			Logging.log(this, "EVENT: priority " + tSenderPriority.getValue() + " via comm. channel: " + pComChannel);
+		}
+
+		// do we have the higher priority?
+		if (havingHigherPrioriorityThan(pComChannel)){
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "Received remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue());
+			}
+		}else{
+			/**
+			 * Trigger: new election round if we are the current winner
+			 */
+			if(isWinner()){
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "Received remote priority " + tSenderPriority.getValue() + " is higher than local " + mParent.getPriority().getValue() + ", triggering re-election");
+				}
+				startElection();
+			}
+		}
+	}
+
 	/**
 	 * Checks for a winner
 	 */
@@ -774,7 +823,7 @@ public class Elector implements Localization
 				}
 	
 				// update the state
-				eventReceivedElect();
+				eventELECT();
 			
 				// answer the "elect" message
 				signalResponse(pComChannel);
@@ -800,7 +849,7 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a REPLY: " + tReplyPacket);
 				}
 	
-				eventReceivedReply(pComChannel);
+				eventREPLY(pComChannel);
 			}
 			
 			/**
@@ -814,10 +863,7 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
 				}
 	
-				eventElectionLost();
-
-				// trigger: superior coordinator available	
-				tControlEntity.eventClusterCoordinatorAvailable(pComChannel, tAnnouncePacket.getSenderName(), tAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), tAnnouncePacket.getCoordinatorDescription());
+				eventANNOUNCE(pComChannel, tAnnouncePacket);
 			}
 	
 			/**
@@ -831,7 +877,7 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a PRIORITY UPDATE: " + tPacketBullyPriorityUpdate);
 				}
 				
-				eventReceivedPriorityUpdate(pComChannel);
+				eventPRIORITY_UPDATE(pComChannel);
 			}
 			
 			/**
@@ -845,7 +891,7 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a LEAVE: " + tLeavePacket);
 				}
 	
-				eventElectionLeft(pComChannel);
+				eventLEAVE(pComChannel);
 			}
 		}else{
 			Logging.log(this, "HIGHER LEVEL SENT BULLY MESSAGE " + pPacketBully.getClass().getSimpleName() + " FROM " + pComChannel);
@@ -875,37 +921,6 @@ public class Elector implements Localization
 			}
 		}
 
-	}
-
-	/**
-	 * @param pComChannel
-	 * @param pSenderPriority
-	 */
-	private void eventReceivedPriorityUpdate(ComChannel pComChannel)
-	{
-		// get the priority of the sender
-		BullyPriority tSenderPriority = pComChannel.getPeerPriority();
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-			Logging.log(this, "Got priority " + tSenderPriority.getValue() + " via comm. channel: " + pComChannel);
-		}
-
-		// do we have the higher priority?
-		if (havingHigherPrioriorityThan(pComChannel)){
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-				Logging.log(this, "Received remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue());
-			}
-		}else{
-			/**
-			 * Trigger: new election round if we are the current winner
-			 */
-			if(isWinner()){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-					Logging.log(this, "Received remote priority " + tSenderPriority.getValue() + " is higher than local " + mParent.getPriority().getValue() + ", triggering re-election");
-				}
-				startElection();
-			}
-		}
 	}
 
 	/**

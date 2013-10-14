@@ -516,7 +516,7 @@ public class ClusterMember extends ClusterName
 			 * Send priority update if necessary 
 			 */
 			if ((tOldPriority != null) && (!tOldPriority.isUndefined()) && (!tOldPriority.equals(pPriority))){
-				mElector.eventPriorityUpdate();
+				mElector.distributePRIORITY_UPDATE();
 			}else{
 				Logging.log(this, "First priority was set: " + pPriority.getValue());
 			}
