@@ -2769,20 +2769,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores the identification string for HRM specific routing graph decorations (coordinators & HRMIDs)
 	 */
-	private final static String DECORATION_NAME_COORDINATORS_AND_HRMIDS = "HRM coordinators & HRMIDs";
+	private final static String DECORATION_NAME_COORDINATORS_AND_HRMIDS = "HRM(1) - coordinators & HRMIDs";
 
 	/**
 	 * Stores the identification string for HRM specific routing graph decorations (node priorities)
 	 */
-	private final static String DECORATION_NAME_NODE_PRIORITIES = "HRM connectivity/hierarchy priorities";
+	private final static String DECORATION_NAME_NODE_PRIORITIES = "HRM(3) - node priorities";
 	
 	/**
 	 * Stores the identification string for the active HRM infrastructure
 	 */
-	private final static String DECORATION_NAME_ACTIVE_HRM_INFRASTRUCTURE = "HRM active infrastructure";
+	private final static String DECORATION_NAME_ACTIVE_HRM_INFRASTRUCTURE = "HRM(4) - active infrastructure";
 	
 	/**
 	 * Stores the identification string for HRM specific routing graph decorations (coordinators & clusters)
 	 */
-	private final static String DECORATION_NAME_COORDINATORS_AND_CLUSTERS = "HRM coordinators & clusters";
+	private final static String DECORATION_NAME_COORDINATORS_AND_CLUSTERS = "HRM(2) - coordinators & clusters";
 }
