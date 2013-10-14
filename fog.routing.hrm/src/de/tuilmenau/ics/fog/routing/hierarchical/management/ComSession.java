@@ -563,7 +563,7 @@ public class ComSession extends Session
 					if (tCoordinator != null){
 						tCoordinator.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), this);
 					}else{
-						Logging.err(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + tRequestClusterMembershipPacket);
+						Logging.warn(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + tRequestClusterMembershipPacket + ", coordinator has gone in the meanwhile?");
 					}
 				}else{
 					Logging.err(this, "Detected an invalid coordinator ID in the cluster membrship request: " + tRequestClusterMembershipPacket);

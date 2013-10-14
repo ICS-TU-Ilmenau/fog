@@ -480,7 +480,7 @@ public class ClusterMember extends ClusterName
 	 */
 	public void eventClusterMembershipCanceled(ComChannel pComChannel)
 	{
-		Logging.log(this, "EVENT: cluster membership canceled");
+		Logging.log(this, "EVENT: cluster membership canceled: " + pComChannel);
 		
 		/**
 		 * Unregister from the HRMController's internal database
