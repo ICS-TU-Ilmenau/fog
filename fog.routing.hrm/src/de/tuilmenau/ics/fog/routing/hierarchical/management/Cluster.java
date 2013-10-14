@@ -502,7 +502,7 @@ public class Cluster extends ClusterMember
 		if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 			Logging.log(this, "       ..creating new communication channel");
 		}
-		ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, pComSession, pPeer);
+		ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, pComSession, pPeer); //TODO: statt sofort den kanal aufzubauen lieber auf das ACK warten und dann aufbauen, andernfalls koennen karteileichen entstehen wenn der remote bereits den zielkoordinator nicht mehr kennt und nie ein ACK schickt
 		tComChannel.setRemoteClusterName(pLocalEndpointName);
 		tComChannel.setPeerPriority(pPeer.getPriority());
 		

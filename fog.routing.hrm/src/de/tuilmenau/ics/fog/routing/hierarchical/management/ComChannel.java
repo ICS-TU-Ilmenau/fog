@@ -83,7 +83,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  *                                                                       |                    |
  *                                                                       \== Cluster4@2 ======/
  *                                                                                 |
- *   A CONNECTION is needed as parent --->                                         |CHANNEL
+ *   A CONNECTION/Session is needed as parent --->                                 |CHANNEL
  *   for each channel                                                             \|/
  *                                                                             +-------+        
  *                                                                             |Coord.3|        
@@ -97,7 +97,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  *                                  |                  +---- CHANNEL --- | instance on node 2 |
  *                                  |                  |                 |                    |
  *   both channels are summarized --+                  |                 \== Cluster3@1 ======/
- *   in ONE CONNECTION in order to  |                  |                           |                 
+ *   in ONE CONNECTION/Session to   |                  |                           |                 
  *   reduce connection complexity   |                  |                           |   
  *                                  |                  |                           |CHANNEL   
  *                                  \--               \|/                         \|/   
