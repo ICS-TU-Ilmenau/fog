@@ -1921,7 +1921,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			// get the current priority
 			long tPriority = mNodeHierarchyPriority;
 			
-			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (1 + HRMConfig.Hierarchy.EXPANSION_RADIUS - tDistance);
+			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (2 + HRMConfig.Hierarchy.EXPANSION_RADIUS - tDistance);
 					
 			Logging.log(this, "Increasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + tDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 	
@@ -1953,7 +1953,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			// get the current priority
 			long tPriority = mNodeHierarchyPriority;
 			
-			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (1 + HRMConfig.Hierarchy.EXPANSION_RADIUS - tDistance);
+			float tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR * (2 + HRMConfig.Hierarchy.EXPANSION_RADIUS - tDistance);
 			
 			Logging.log(this, "Decreasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + tDistance + "/" + HRMConfig.Hierarchy.EXPANSION_RADIUS);
 	
