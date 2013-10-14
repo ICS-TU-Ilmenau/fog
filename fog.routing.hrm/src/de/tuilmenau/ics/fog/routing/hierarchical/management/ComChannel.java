@@ -181,9 +181,10 @@ public class ComChannel
 	private LinkedList<HRMID> mAssignedHRMIDs = new LinkedList<HRMID>();
 	
 	/**
-	 * Stores if the comm. channel is established
+	 * Stores the comm. channel state
 	 */
-	private boolean mChannelEstablished = false;
+	enum ChannelState{CLOSED, HALF_OPEN, OPEN};
+	private ChannelState mChannelEstablished = ChannelState.HALF_OPEN;
 	
 	/**
 	 * Stores the peer entity
@@ -321,11 +322,11 @@ public class ComChannel
 	/**
 	 * EVENT: established
 	 */
-	public void eventEstablished()
+	public synchronized void eventEstablished()
 	{
 		Logging.log(this, "EVENT: established");
 		
-		mChannelEstablished = true;
+		mChannelEstablished = ChannelState.OPEN;
 	}
 	
 	/**
@@ -335,7 +336,7 @@ public class ComChannel
 	 */
 	public boolean isEstablished()
 	{
-		return mChannelEstablished;
+		return (mChannelEstablished == ChannelState.OPEN);
 	}
 	
 	/**
@@ -509,6 +510,17 @@ public class ComChannel
 	private void storePacket(Serializable pPacket, boolean pWasSent)
 	{
 		synchronized (mPackets) {
+			if (pWasSent){
+				/**
+				 * count the packets
+				 */
+				mSentPackets++;
+			}else{
+				/**
+				 * count the packets
+				 */
+				mReceivedPackets++;
+			}
 			// limit the storage size
 			while(mPackets.size() > HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE){
 				mPackets.removeFirst();
@@ -527,7 +539,7 @@ public class ComChannel
 	 */
 	public boolean sendPacket(SignalingMessageHrm pPacket)
 	{
-		if(mChannelEstablished){
+		if(mChannelEstablished != ChannelState.CLOSED /* at least, "half_open" is needed */){
 			// create destination description
 			ClusterName tDestinationClusterName = getRemoteClusterName();
 			
@@ -545,11 +557,6 @@ public class ComChannel
 				// create the Multiplex-Header
 				MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pPacket);
 					
-				/**
-				 * count the packets
-				 */
-				mSentPackets++;
-				
 				/**
 				 * Store the packet 
 				 */
@@ -660,10 +667,39 @@ public class ComChannel
 	/**
 	 * Closes the comm. channel
 	 */
-	public void closeChannel()
+	public synchronized void closeChannel()
 	{
-		//TODO: should we inform the peer about our death?
+		Logging.log(this, "Closing this channel");
+		if(mChannelEstablished != ChannelState.CLOSED){
+			/**
+			 * Inform the peer
+			 */
+			if(mParent instanceof Cluster){
+				Cluster tParentCluster = (Cluster)mParent;
+				
+				/**
+				 * Send "InformClusterMembershipCanceled" along the comm. channel
+				 */
+				InformClusterMembershipCanceled tInformClusterMembershipCanceled = new InformClusterMembershipCanceled(mHRMController.getNodeName(), mHRMController.getNodeName(), tParentCluster.createClusterName(), getRemoteClusterName());
+			    Logging.log(this, "       ..sending membership canceled: " + tInformClusterMembershipCanceled);
+			    sendPacket(tInformClusterMembershipCanceled);
+			}else if(mParent instanceof ClusterMember){
+				/**
+				 * Send: "Leave" to all superior clusters
+				 */
+				InformClusterLeft tInformClusterLeft = new InformClusterLeft(mHRMController.getNodeName(), getPeerHRMID(), null, null);
+			    Logging.log(this, "       ..sending cluster left: " + tInformClusterLeft);
+				sendPacket(tInformClusterLeft);
+			}
 
+			/**
+			 * Change the channel state
+			 */
+			mChannelEstablished = ChannelState.CLOSED;
+		}else{
+		    Logging.log(this, "       ..channel is already closed");
+		}
+		
 		// unregister from the parent comm. session
 		mParentComSession.unregisterComChannel(this);
 	}
@@ -677,11 +713,6 @@ public class ComChannel
 	@SuppressWarnings("unused")
 	public synchronized boolean receiveData(Serializable pData) throws NetworkException
 	{
-		/**
-		 * count the packets
-		 */
-		mReceivedPackets++;
-
 		/**
 		 * Store the packet 
 		 */
@@ -834,6 +865,9 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "INFORM_CLUSTER_LEFT-received from \"" + getPeerHRMID() + "\"");
 
+			// no further transmissions
+			mChannelEstablished = ChannelState.CLOSED;
+
 			// is the parent a coordinator or a cluster?
 			if (getParent() instanceof Cluster){
 				Cluster tCluster = (Cluster)getParent();
@@ -843,7 +877,7 @@ public class ComChannel
 			}else{
 				Logging.err(this, "Expected a Cluster object as parent for processing LeaveCluster data but parent is " + getParent());
 			}
-			
+
 			return true;
 		}
 		
@@ -857,6 +891,9 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "INFORM_CLUSTER_MEMBERSHIP_CANCELED-received from \"" + getPeerHRMID() + "\"");
 
+			// no further transmissions
+			mChannelEstablished = ChannelState.CLOSED;
+			
 			// is the parent a coordinator or a cluster?
 			if (getParent() instanceof ClusterMember){
 				ClusterMember tClusterMember = (ClusterMember)getParent();
