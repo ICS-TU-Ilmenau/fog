@@ -327,7 +327,6 @@ public class Cluster extends ClusterMember
 
 	 * @param pComChannel the comm. channel of the lost cluster member
 	 */
-	@Override
 	public synchronized void eventClusterMemberLost(ComChannel pComChannel)
 	{
 		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
@@ -480,6 +479,7 @@ public class Cluster extends ClusterMember
 		 */
 		InformClusterMembershipCanceled tInformClusterMembershipCanceled = new InformClusterMembershipCanceled(mHRMController.getNodeName(), mHRMController.getNodeName(), createClusterName(), pComChannel.getRemoteClusterName());
 	    Logging.log(this, "       ..sending membership canceled: " + tInformClusterMembershipCanceled);
+	    pComChannel.sendPacket(tInformClusterMembershipCanceled);
 	}
 	
 	/**
