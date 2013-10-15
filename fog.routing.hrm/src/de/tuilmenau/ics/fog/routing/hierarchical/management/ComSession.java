@@ -498,6 +498,7 @@ public class ComSession extends Session
 		} else {
 			Logging.warn(this, "Unable to find the communication channel for destination: " + tDestination + ", known communication channels are:");
 			Logging.warn(this, getAllComChannels().toString());
+			Logging.warn(this, "Due to missing communication channel, dropping packet: " + pMultiplexHeader);
 		}
 	}
 
