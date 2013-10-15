@@ -338,6 +338,11 @@ public class HRMRoutingService implements RoutingService, Localization
 			}
 
 			/**
+			 * Clone the route
+			 */
+			Route tNewRoute = pRoute.clone();
+			
+			/**
 			 * Check if the new route is shorter than the old known one.
 			 * In the latter case, update the old logical link.
 			 */
@@ -346,16 +351,16 @@ public class HRMRoutingService implements RoutingService, Localization
 				// mark as an update instead of a new link
 				tNewLogicalLink = false;
 
-				if (pRoute.isShorter(tOldRoute)){
+				if (tNewRoute.isShorter(tOldRoute)){
 					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-						Logging.log(this, "      ..updating to better ROUTE \"" + pRoute + "\" to direct neighbor: " + pToL2Address);
+						Logging.log(this, "      ..updating to better ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
 					}
 										
 					// update the old logical link
-					tOldL2Link.setRoute(pRoute);
+					tOldL2Link.setRoute(tNewRoute);
 				}else{
 					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-						Logging.log(this, "      ..dropping new ROUTE \"" + pRoute + "\" to direct neighbor: " + pToL2Address);
+						Logging.log(this, "      ..dropping new ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
 					}
 				}
 			}
@@ -364,10 +369,10 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * Create a new logical link
 			 */
 			if(tNewLogicalLink){
-				Logging.log(this, "      ..storing new ROUTE \"" + pRoute + "\" to direct neighbor: " + pToL2Address);
+				Logging.log(this, "      ..storing new ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
 
 				// store the new route
-				storeL2Link(getCentralFNL2Address(), pToL2Address, new L2LogicalLink(pRoute));
+				storeL2Link(getCentralFNL2Address(), pToL2Address, new L2LogicalLink(tNewRoute));
 			}
 
 		}else{
@@ -1113,7 +1118,7 @@ public class HRMRoutingService implements RoutingService, Localization
 						L2LogicalLink tLogicalLink = (L2LogicalLink)tLink;
 						
 						// store the route as immediate result
-						return tLogicalLink.getRoute();
+						return tLogicalLink.getRoute().clone();
 					}else{
 						// store the Gate ID in the route segment
 						tRouteSegmentPath.add(tLink.getID());
