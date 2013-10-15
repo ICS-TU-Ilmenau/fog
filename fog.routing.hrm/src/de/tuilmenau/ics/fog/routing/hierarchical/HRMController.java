@@ -1718,16 +1718,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Adds a route to the local HRM routing table.
-	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
+	 * Adds a route to the local L2 routing table.
 	 * 
-	 * @param pNeighborL2Address the L2Address of the direct neighbor
+	 * @param pToL2Address the L2Address of the destination
 	 * @param pRoute the route to the direct neighbor
 	 */
-	public void registerLinkL2(L2Address pNeighborL2Address, Route pRoute)
+	public void registerLinkL2(L2Address pToL2Address, Route pRoute)
 	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+    		Logging.log(this, "REGISTERING LINK (L2):\n  DEST.=" + pToL2Address + "\n  LINK=" + pRoute);
+    	}
+
 		// inform the HRS about the new route
-		if(getHRS().registerLinkL2(pNeighborL2Address, pRoute)){
+		if(getHRS().registerLinkL2(pToL2Address, pRoute)){
 			// it's time to update the GUI
 			notifyGUI(this);
 		}
@@ -2434,7 +2437,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public void registerLinkARG(AbstractRoutingGraphNode pFrom, AbstractRoutingGraphNode pTo, AbstractRoutingGraphLink pLink)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-			Logging.log(this, "REGISTERING LINK (ARG):  source=" + pFrom + " ## dest.=" + pTo + " ## link=" + pLink);
+			Logging.log(this, "REGISTERING LINK (ARG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  LINK=" + pLink);
 		}
 
 		synchronized (mAbstractRoutingGraph) {
@@ -2453,7 +2456,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		AbstractRoutingGraphLink tLink = getLinkARG(pFrom, pTo);
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-			Logging.log(this, "UNREGISTERING LINK (ARG):  source=" + pFrom + " ## dest.=" + pTo + " ## link=" + tLink);
+			Logging.log(this, "UNREGISTERING LINK (ARG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  LINK=" + tLink);
 		}
 
 		if(tLink != null){
