@@ -17,8 +17,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * PACKET: This packet is used to inform the superior coordinator that a cluster member will leave the group.
- * 		   Alternatively, the coordinator could wait until the BullyAlive is missing. However, with this packet the convergence time is shortened.
+ * PACKET: This packet is used to inform that a cluster member wants to be a passive candidate of an election.
  */
 public class BullyLeave extends SignalingMessageBully implements ISignalingMessageHrmBroadcastable
 {
