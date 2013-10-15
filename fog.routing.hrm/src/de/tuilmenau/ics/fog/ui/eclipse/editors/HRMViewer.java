@@ -935,6 +935,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							showPackets(tfComChannels.get(tSelectedIndex));
 						}
 					});
+					MenuItem tMenuItem1 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem1.setText("Show session");
+					tMenuItem1.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showSession(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showSession(tfComChannels.get(tSelectedIndex));
+						}
+					});
 					tTable.setMenu(tMenu);
 				}
 			}
@@ -950,6 +964,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + "): " + tPacketMetaData.getPacket());
 			i++;
 		}		
+	}
+
+	private void showSession(ComChannel pComChannel)
+	{
+		Logging.log(this, "Session for: " + pComChannel);
+		Logging.log(this, "     ..session: " + pComChannel.getParentComSession());
 	}
 
 	private void printNAME(Composite pParent, ControlEntity pEntity)
