@@ -104,6 +104,9 @@ public class ClusterMember extends ClusterName
 			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderClusterName());
 		}
 
+		/**
+		 * Check if we should forward this announcement "to the side"
+		 */
 		// is this the 2+ passed ClusterMember OR (in case it is the first passed ClusterMember) the peer is the origin of the announce -> forward the announcement 
 		Route tRoute = pAnnounceCoordinator.getRoute();
 		if(((tRoute != null) && (!tRoute.isEmpty()) && (tRoute.getFirst() != null)) || (pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(pComChannel.getPeerL2Address()))){
