@@ -110,8 +110,6 @@ public class ClustererThread extends Thread
 	private void cluster(int pHierarchyLevel)
 	{
 		if(pHierarchyLevel <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-			Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel);
-
 			if((pHierarchyLevel >= 0) && (pHierarchyLevel < HRMConfig.Hierarchy.HEIGHT)){
 				// search for an existing cluster at this hierarchy level
 				Cluster tTargetCluster = mHRMController.getCluster(pHierarchyLevel);
@@ -124,15 +122,17 @@ public class ClustererThread extends Thread
 					if(!mHRMController.getAllCoordinators(pHierarchyLevel - 1).isEmpty()){
 						tTargetCluster = Cluster.create(mHRMController, new HierarchyLevel(this, pHierarchyLevel), Cluster.createClusterID());
 					}else{
-						Logging.log(this, "No local inferior coordinator found, skipping clustering request at hierarchy level: " + pHierarchyLevel);
-						return;
+						Logging.log(this, "No local inferior coordinator found, skipping clustering request at hierarchy level: " + pHierarchyLevel);						
 					}
 				}
 				
 				/**
 				 * Distribute membership requests
 				 */
-				tTargetCluster.distributeMembershipRequests();
+				if(tTargetCluster != null){
+					Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel);
+					tTargetCluster.distributeMembershipRequests();
+				}
 				
 			}else{
 				Logging.err(this, "cluster() cannot start for a hierarchy level  of: " + pHierarchyLevel);
