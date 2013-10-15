@@ -212,16 +212,6 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * Returns true if the election process was already started
-	 *  
-	 * @return true or false
-	 */
-	public boolean wasStarted()
-	{
-		return (mState != ElectorState.IDLE);
-	}
-	
-	/**
 	 * Sets the current elector state
 	 * 
 	 * @param pNewState the new state
@@ -628,22 +618,37 @@ public class Elector implements Localization
 		}
 		
 		/**
-		 * deactivate the HRM link
+		 * deactivate the link
 		 */
 		pComChannel.setLinkActivation(false);
 	}
 	
 	/**
 	 * EVENT: the election process was triggered by another cluster member
+	 * 
+	 * @param pComChannel the source comm. channel
 	 */
-	private void eventELECT()
+	private void eventELECT(ComChannel pComChannel)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "EVENT: received ELECT");
 		}
 		
-		// set correct elector state
-		setElectorState(ElectorState.ELECTING);
+		/**
+		 * activate the link
+		 */
+		pComChannel.setLinkActivation(true);
+
+		// answer the "elect" message
+		signalResponse(pComChannel);
+			
+		/**
+		 * do we have a higher priority than the peer?
+		 */
+		if (havingHigherPrioriorityThan(pComChannel)){
+			// start re-election
+			reelect();
+		}
 	}
 	
 	/**
@@ -848,18 +853,7 @@ public class Elector implements Localization
 				}
 	
 				// update the state
-				eventELECT();
-			
-				// answer the "elect" message
-				signalResponse(pComChannel);
-					
-				/**
-				 * do we have a higher priority than the peer?
-				 */
-				if (havingHigherPrioriorityThan(pComChannel)){
-					// start re-election
-					reelect();
-				}
+				eventELECT(pComChannel);
 			}
 			
 			/**
