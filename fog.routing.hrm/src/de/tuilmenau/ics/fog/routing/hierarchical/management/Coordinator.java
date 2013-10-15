@@ -683,13 +683,15 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 		
 		/**
-		 * Store the announced remote coordinator in the ARG 
+		 * Storing that the announced coordinator is a superior one of this node
 		 */
-		if(!pAnnounceCoordinator.getSenderClusterName().equals(this)){
-			registerAnnouncedCoordinatorARG(this, pAnnounceCoordinator);
-		}else{
-			Logging.err(this, "eventCoordinatorAnnouncement() was triggered for an announcement of ourself, announcement: " + pAnnounceCoordinator);
+		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
+		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderClusterName().getHierarchyLevel().isBaseLevel())){
+			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderClusterName());
 		}
+
+		//HINT: we don't store the announced remote coordinator in the ARG here because we are waiting for the side-ward forwarding of the announcement
+		//      otherwise, we would store [] routes between this local coordinator and the announced remote one
 
 		/**
 		 * Forward the coordinator announcement to all locally known clusters at this hierarchy level

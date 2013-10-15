@@ -16,6 +16,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastab
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
+import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
@@ -91,83 +92,98 @@ public class ClusterMember extends ClusterName
 	@Override
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+		//if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 			Logging.log(this, "EVENT: coordinator announcement (from side): " + pAnnounceCoordinator);
+		//}
+		
+		/**
+		 * Storing that the announced coordinator is a superior one of this node
+		 */
+		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
+		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderClusterName().getHierarchyLevel().isBaseLevel())){
+			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderClusterName());
 		}
-		
-		/**
-		 * Enlarge the stored route towards the announcer
-		 */
-		pAnnounceCoordinator.addRouteHop(pComChannel.getRouteToPeer());
-		
-		/**
-		 * Record the passed clusters
-		 */
-		pAnnounceCoordinator.addPassedCluster(getClusterID());
-		
-		/**
-		 * Store the announced remote coordinator in the ARG 
-		 */
-		registerAnnouncedCoordinatorARG(this, pAnnounceCoordinator);
-		
-		/**
-		 * transition from one cluster to the next one => decrease TTL value
-		 */
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-			Logging.log(this, "Deacreasing TTL of: " + pAnnounceCoordinator);
-		}
-		pAnnounceCoordinator.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
-	
-		/**
-		 * forward the announcement if the TTL is still okay
-		 */
-		if(pAnnounceCoordinator.isTTLOkay()){
-			// check if this announcement is already on its way sidewards
-			if(!pAnnounceCoordinator.enteredSidewardForwarding()){
-				// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
-				if (pComChannel.getPeerL2Address().equals(pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address())){
-					/**
-					 * mark packet as "sideward forwarded"
-					 */
-					pAnnounceCoordinator.setSidewardForwarding();
-				}else{
-					// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
-					
-					/**
-					 * drop the packet and return immediately
-					 */ 
-					return;
-				}
-			}
 
+		// is this the 2+ passed ClusterMember OR (in case it is the first passed ClusterMember) the peer is the origin of the announce -> forward the announcement 
+		Route tRoute = pAnnounceCoordinator.getRoute();
+		if(((tRoute != null) && (!tRoute.isEmpty()) && (tRoute.getFirst() != null)) || (pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(pComChannel.getPeerL2Address()))){
 			/**
-			 * Forward the announcement within the same hierarchy level ("to the side")
+			 * Record the passed clusters
 			 */
-			// get locally known neighbors for this cluster and hierarchy level
-			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
-			if(tLocalClusters.size() > 0){
-				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-					Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+			pAnnounceCoordinator.addPassedCluster(getClusterID());
+	
+			/**
+			 * Enlarge the stored route towards the announcer
+			 */
+			//if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+				Logging.log(this, "      ..adding route: " + pComChannel.getRouteToPeer());
+			//}
+			pAnnounceCoordinator.addRouteHop(pComChannel.getRouteToPeer());
+			
+			/**
+			 * Store the announced remote coordinator in the ARG 
+			 */
+			registerAnnouncedCoordinatorARG(this, pAnnounceCoordinator);
+			
+			/**
+			 * transition from one cluster to the next one => decrease TTL value
+			 */
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+				Logging.log(this, "Deacreasing TTL of: " + pAnnounceCoordinator);
+			}
+			pAnnounceCoordinator.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
+		
+			/**
+			 * forward the announcement if the TTL is still okay
+			 */
+			if(pAnnounceCoordinator.isTTLOkay()){
+				// check if this announcement is already on its way sidewards
+				if(!pAnnounceCoordinator.enteredSidewardForwarding()){
+					// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
+					if (pComChannel.getPeerL2Address().equals(pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address())){
+						/**
+						 * mark packet as "sideward forwarded"
+						 */
+						pAnnounceCoordinator.setSidewardForwarding();
+					}else{
+						// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
+						
+						/**
+						 * drop the packet and return immediately
+						 */ 
+						return;
+					}
 				}
 	
-				for(Cluster tLocalCluster: tLocalClusters){
-					/**
-					 * Forward the announcement
-					 * HINT: we avoid loops by excluding the sender from the forwarding process
-					 */
+				/**
+				 * Forward the announcement within the same hierarchy level ("to the side")
+				 */
+				// get locally known neighbors for this cluster and hierarchy level
+				LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
+				if(tLocalClusters.size() > 0){
 					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-						Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+						Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
 					}
-					tLocalCluster.forwardCoordinatorAnnouncement(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pAnnounceCoordinator);
+		
+					for(Cluster tLocalCluster: tLocalClusters){
+						/**
+						 * Forward the announcement
+						 * HINT: we avoid loops by excluding the sender from the forwarding process
+						 */
+						if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+							Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+						}
+						tLocalCluster.forwardCoordinatorAnnouncement(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pAnnounceCoordinator);
+					}
+				}else{
+					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+						Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCoordinator);
+					}
 				}
 			}else{
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-					Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCoordinator);
+					Logging.log(this, "TTL exceeded for coordinator announcement: " + pAnnounceCoordinator);
 				}
-			}
-		}else{
-			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-				Logging.log(this, "TTL exceeded for coordinator announcement: " + pAnnounceCoordinator);
 			}
 		}
 	}
