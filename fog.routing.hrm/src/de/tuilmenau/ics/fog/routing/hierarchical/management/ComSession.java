@@ -55,7 +55,12 @@ public class ComSession extends Session
 	 * Stores the registered ComChannel objects
 	 */
 	private LinkedList<ComChannel> mRegisteredComChannels = new LinkedList<ComChannel>();
-	
+
+	/**
+	 * Stores the unregistered ComChannel objects
+	 */
+	private LinkedList<ComChannel> mUnregisteredComChannels = new LinkedList<ComChannel>();
+
 	/**
 	 * Stores a reference to the parent FoG connection
 	 */
@@ -284,6 +289,10 @@ public class ComSession extends Session
 			}
 		}
 		
+		synchronized (mUnregisteredComChannels) {
+			mUnregisteredComChannels.add(pComChannel);
+		}
+		
 		if(tLastChannelClosed){
 			/**
 			 * Trigger the event "all channels lost"
@@ -450,6 +459,32 @@ public class ComSession extends Session
 	}
 	
 	/**
+	 * Searches for an unregistered communication channel which is identified by its local clusterID
+	 * 
+	 * @param pDestinationClusterName the destination ClusterName
+	 * 
+	 * @return the found comm. channel or null
+	 */
+	private ComChannel getDeletedComChannel(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
+	{
+		ComChannel tResult = null;
+		
+		synchronized (mUnregisteredComChannels) {
+			for (ComChannel tComChannel : mUnregisteredComChannels){
+				if((tComChannel.getParent().getClusterID().equals(pDestinationClusterName.getClusterID())) && 
+				   (tComChannel.getParent().getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
+				   (tComChannel.getRemoteClusterName().getClusterID().equals(pSourceClusterName.getClusterID())) && 
+				   (tComChannel.getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel()))) {
+					tResult = tComChannel;
+					break;
+				}
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Handles a multiplex-header of received packets, delivers the packet payload as signaling packet to the correct comm. channel
 	 * 
 	 * @param pMultiplexHeader the multiplex-header
@@ -496,9 +531,12 @@ public class ComSession extends Session
 				Logging.err(this, "Unable to forward payload " + tPayload + " to " + tDestination + " via " + tDestinationComChannel);
 			}
 		} else {
-			Logging.warn(this, "Unable to find the communication channel for destination: " + tDestination + ", known communication channels are:");
-			Logging.warn(this, getAllComChannels().toString());
-			Logging.warn(this, "Due to missing communication channel, dropping packet: " + pMultiplexHeader);
+			ComChannel tDeletedComChannel = getDeletedComChannel(tDestination, tSource);
+			if (tDeletedComChannel != null){
+				Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + ", old comm. channel is: " + tDeletedComChannel);
+			}else{
+				throw new RuntimeException("Unable to find the communication channel for destination: " + tDestination + ", known communication channels are: " + getAllComChannels().toString());
+			}
 		}
 	}
 
