@@ -185,12 +185,10 @@ public class Elector implements Localization
 					elect();
 					break;
 				case ELECTED:
-					if (isCoordinatorValid()){
-						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-							Logging.log(this, "RESTARTING ELECTION, old coordinator was valid: " + isCoordinatorValid());
-						}
-						reelect();
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+						Logging.log(this, "RESTARTING ELECTION, old coordinator was valid: " + finished());
 					}
+					reelect();
 					break;
 				case ELECTING:
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
@@ -262,11 +260,11 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Determines if the coordinator for this election domain (=cluster) is (still) valid-
+	 * Determines if the election process was already finished
 	 * 
-	 * @return true if valid, otherwise false
+	 * @return true or false
 	 */
-	public boolean isCoordinatorValid()
+	public boolean finished()
 	{
 		return (mState == ElectorState.ELECTED);
 	}
@@ -478,7 +476,7 @@ public class Elector implements Localization
 	 */
 	private void eventElectionWon()
 	{
-		if ((!isWinner()) || (!isCoordinatorValid())){
+		if ((!isWinner()) || (!finished())){
 			Logging.log(this, "ELECTION WON for cluster " + mParent);
 			
 			// mark as election winner

@@ -1017,7 +1017,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			boolean tBackgroundSet = false;
 			if (pEntity instanceof Cluster){
 				Cluster tCluster =(Cluster) pEntity;
-				if ((tCluster.getElector() != null) && (tCluster.getElector().isCoordinatorValid())){
+				if ((tCluster.getElector() != null) && (tCluster.getElector().finished())){
 					if(tCluster.hasLocalCoordinator()){
 						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 111));
 					}else{
@@ -1084,7 +1084,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			ToolBar tToolbar = new ToolBar(pParent, SWT.NONE);
 
 			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS){
-				if ((pClusterMember.getElector() != null) && (!pClusterMember.getElector().isCoordinatorValid())){
+				if ((pClusterMember.getElector() != null) && (!pClusterMember.getElector().finished())){
 					ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
 				    toolItem1.setText("[Elect coordinator]");
 				    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(this, pClusterMember));
