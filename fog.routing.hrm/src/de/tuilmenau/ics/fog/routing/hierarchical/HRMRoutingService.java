@@ -302,6 +302,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * 
 	 * @param pToL2Address the L2Address of the destination
 	 * @param pRoute the route to the direct neighbor
+	 * 
 	 * @return returns true if the route was stored and an GUI update is needed
 	 */
 	public boolean registerLinkL2(L2Address pToL2Address, Route pRoute)
