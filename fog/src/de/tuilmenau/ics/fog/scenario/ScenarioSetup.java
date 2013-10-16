@@ -64,6 +64,9 @@ public class ScenarioSetup
 					// a bus with 3 connected nodes
 					case 33: scenario33(sim); break;
 
+					// a bus with 4 connected nodes
+					case 34: scenario34(sim); break;
+
 					// a bus with 5 connected nodes
 					case 35: scenario35(sim); break;
 
@@ -275,6 +278,24 @@ public class ScenarioSetup
 		pSim.executeCommand("connect A bus");
 		pSim.executeCommand("connect B bus");
 		pSim.executeCommand("connect C bus");
+	}
+
+	public static void scenario34(Simulation pSim)
+	{
+		pSim.executeCommand("@ - create as default");
+		pSim.executeCommand("switch default");
+
+		pSim.executeCommand("create node A");
+		pSim.executeCommand("create node B");
+		pSim.executeCommand("create node C");
+		pSim.executeCommand("create node D");
+		
+		pSim.executeCommand("create bus bus");
+		
+		pSim.executeCommand("connect A bus");
+		pSim.executeCommand("connect B bus");
+		pSim.executeCommand("connect C bus");
+		pSim.executeCommand("connect D bus");
 	}
 
 	public static void scenario35(Simulation pSim)
