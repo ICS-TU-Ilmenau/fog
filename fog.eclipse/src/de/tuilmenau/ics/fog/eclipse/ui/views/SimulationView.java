@@ -368,7 +368,7 @@ public class SimulationView extends ViewPart
 					}
 				}
 				
-				eventHandlerTime.setText(Long.toString(toMilliSeconds(timeBase.now())));
+				eventHandlerTime.setText(Double.toString(((double)toMilliSeconds(timeBase.now())) / 1000) + " s");
 				eventHandlerDiff.setText(toMilliSeconds(timeBase.getLastEventDiff()) +" msec");
 				eventHandlerNumberEvents.setText(timeBase.getEventCounter() +" (queued: " +timeBase.getNumberScheduledEvents() +")");
 			} else {
