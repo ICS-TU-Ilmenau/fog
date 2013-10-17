@@ -213,6 +213,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private LinkedList<ClusterName> mSuperiorCoordinators = new LinkedList<ClusterName>();
 	
 	/**
+	 * Stores a database about all known network interfaces of this node
+	 */
+	private LinkedList<NetworkInterface> mLocalNetworkInterfaces = new LinkedList<NetworkInterface>();
+	
+	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
@@ -2090,18 +2095,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * Create/get the cluster on base hierarchy level
 				 */
 				Cluster tParentCluster = null;
-				//HINT: we make sure that we use only one Cluster object per Bus
-				Cluster tExistingCluster = getBaseHierarchyLevelCluster(pInterfaceToNeighbor);
-				if (tExistingCluster != null){
-				    Logging.log(this, "    ..using existing level0 cluster: " + tExistingCluster);
-					tParentCluster = tExistingCluster;
-				}else{
-				    Logging.log(this, "    ..knowing level0 clusters: " + getAllClusters(0));
-				    Logging.log(this, "    ..creating new level0 cluster");
-					tParentCluster = Cluster.createBaseCluster(tHRMController);
-					tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
-					
-					increaseNodePriority_Connectivity(pInterfaceToNeighbor);
+				synchronized (mLocalNetworkInterfaces) {
+					if(!mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
+						Logging.log(this, "\n#########Detected new network interface: " + pInterfaceToNeighbor);
+						mLocalNetworkInterfaces.add(pInterfaceToNeighbor);
+					}
+					//HINT: we make sure that we use only one Cluster object per Bus
+					Cluster tExistingCluster = getBaseHierarchyLevelCluster(pInterfaceToNeighbor);
+					if (tExistingCluster != null){
+					    Logging.log(this, "    ..using existing level0 cluster: " + tExistingCluster);
+						tParentCluster = tExistingCluster;
+					}else{
+					    Logging.log(this, "    ..knowing level0 clusters: " + getAllClusters(0));
+					    Logging.log(this, "    ..creating new level0 cluster");
+						tParentCluster = Cluster.createBaseCluster(tHRMController);
+						tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
+						
+						increaseNodePriority_Connectivity(pInterfaceToNeighbor);
+					}
 				}
 
 				/**
