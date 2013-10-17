@@ -92,9 +92,9 @@ public class ClusterMember extends ClusterName
 	@Override
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
-		//if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 			Logging.log(this, "EVENT: coordinator announcement (from side): " + pAnnounceCoordinator);
-		//}
+		}
 		
 		/**
 		 * Storing that the announced coordinator is a superior one of this node
@@ -118,9 +118,9 @@ public class ClusterMember extends ClusterName
 			/**
 			 * Enlarge the stored route towards the announcer
 			 */
-			//if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 				Logging.log(this, "      ..adding route: " + pComChannel.getRouteToPeer());
-			//}
+			}
 			pAnnounceCoordinator.addRouteHop(pComChannel.getRouteToPeer());
 			
 			/**
