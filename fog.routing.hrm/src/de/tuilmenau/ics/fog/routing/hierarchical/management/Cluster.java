@@ -399,7 +399,7 @@ public class Cluster extends ClusterMember
 			Logging.log(this, "     ..eventClusterRoleInvalid() invalidates now the local coordinator: " + getCoordinator());
 			getCoordinator().eventCoordinatorRoleInvalid();
 		}else{
-			Logging.warn(this, "eventClusterInvalid() can't find the coordinator");
+			Logging.log(this, "eventClusterInvalid() can't deactivate the coordinator because there is none");
 		}
 		
 		Logging.log(this, "============ EVENT: canceling all memberships");
