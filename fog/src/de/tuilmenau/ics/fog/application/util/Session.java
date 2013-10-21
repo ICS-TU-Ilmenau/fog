@@ -99,7 +99,9 @@ public class Session extends ApplicationEventHandler<Connection> implements Rece
 	{
 		Connection conn = getEventSource();
 		if(conn != null) {
-			conn.close();
+			if(conn.isConnected()){
+				conn.close();
+			}
 		}
 		
 		super.stop();
