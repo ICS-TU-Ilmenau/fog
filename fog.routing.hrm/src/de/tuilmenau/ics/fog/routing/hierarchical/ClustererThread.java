@@ -40,6 +40,11 @@ public class ClustererThread extends Thread
 	private int mNumberUpdateRequests = 0;
 	
 	/**
+	 * Allow to exit the clusterer thread
+	 */
+	private boolean mClusterThreadNeeded = true;
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param pHRMController the HRMController instance
@@ -66,26 +71,28 @@ public class ClustererThread extends Thread
 	 */
 	public synchronized void eventUpdateCluster(ControlEntity pCause, HierarchyLevel pHierarchyLevel)
 	{
-		if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-			Logging.log(this, "\n\n################ CLUSTERING TRIGGERED at hierarchy level: " + pHierarchyLevel.getValue());
-			mPendingClusterRequests[pHierarchyLevel.getValue()]++;
-			
-			mDescriptionClusterUpdates += "\n [" + mNumberUpdateRequests + "]: (L" + pHierarchyLevel.getValue() + ") <== " + pCause; 
-			mNumberUpdateRequests++;
-			
-			// trigger wake-up
-			notify();
+		if(mClusterThreadNeeded){
+			if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
+				Logging.log(this, "\n\n################ CLUSTERING TRIGGERED at hierarchy level: " + pHierarchyLevel.getValue());
+				mPendingClusterRequests[pHierarchyLevel.getValue()]++;
+				
+				mDescriptionClusterUpdates += "\n [" + mNumberUpdateRequests + "]: (L" + pHierarchyLevel.getValue() + ") <== " + pCause; 
+				mNumberUpdateRequests++;
+				
+				// trigger wake-up
+				notify();
+			}
 		}
 	}
 
 	/**
 	 * Returns the next "cluster event" (uses passive waiting)
 	 * 
-	 * @return the next cluster event
+	 * @return the next cluster event (a hierarchy level)
 	 */
 	private synchronized int getNextClusterEvent()
 	{
-		while(true){
+		while(mClusterThreadNeeded){
 			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
 				if(mPendingClusterRequests[i] > 0){
 					mPendingClusterRequests[i]--;
@@ -100,6 +107,8 @@ public class ClustererThread extends Thread
 				Logging.warn(this, "getNextClusterEvent() got an interrupt", tExc);
 			}
 		}
+		
+		return -1;
 	}
 	
 	/**
@@ -149,7 +158,7 @@ public class ClustererThread extends Thread
 	{
 		Thread.currentThread().setName("Clusterer@" + mHRMController);
 
-		while(true){
+		while(mClusterThreadNeeded){
 			/**
 			 * Get the next cluster event
 			 */
@@ -159,10 +168,19 @@ public class ClustererThread extends Thread
 			/**
 			 * Process the next cluster event
 			 */
-			cluster(tNextClusterEvent);
+			// check for valid hierarchy level
+			if(tNextClusterEvent >= 0){ 
+				cluster(tNextClusterEvent);
+			}
 		}
 	}
 
+	public synchronized void exit()
+	{
+		mClusterThreadNeeded = false;
+		notify();
+	}
+	
 	public String toString()
 	{
 		return getClass().getSimpleName() + "@" + mHRMController;
