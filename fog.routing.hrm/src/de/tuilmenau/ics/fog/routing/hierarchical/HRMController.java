@@ -1891,19 +1891,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mConnectivityPriorityUpdates++;
 		
 		/**
-		 * Inform all local cluster members about the change
+		 * Inform all local cluster members at level 0 about the change
 		 * HINT: we have to enforce a permanent lock of mLocalClusterMembers, 
 		 *       otherwise race conditions might be caused (another ClusterMemeber 
 		 *       could be created while we are updating the priorities of all the 
 		 *       formerly known ones)
 		 */
 		synchronized (mLocalClusterMembers) {
-			Logging.log(this, "Informing these cluser members about the priority (" + pPriority + ") update (" + mConnectivityPriorityUpdates + "): " + mLocalClusterMembers);
+			Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mConnectivityPriorityUpdates + ")");
 			int i = 0;
 			for(ClusterMember tClusterMember : mLocalClusterMembers){
-				Logging.log(this, "      ..update (" + mConnectivityPriorityUpdates + ") - informing[" + i + "]: " + tClusterMember);
-				tClusterMember.eventConnectivityNodePriorityUpdate(getConnectivityNodePriority());
-				i++;
+				// only base hierarchy level!
+				if(tClusterMember.getHierarchyLevel().isBaseLevel()){
+					Logging.log(this, "      ..update (" + mConnectivityPriorityUpdates + ") - informing[" + i + "]: " + tClusterMember);
+					tClusterMember.eventConnectivityNodePriorityUpdate(getConnectivityNodePriority());
+					i++;
+				}
 			}
 		}
 	}
@@ -1914,7 +1917,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pPriority the new hierarchy node priority
 	 */
 	private int mHierarchyPriorityUpdates = 0;
-	@SuppressWarnings("unchecked")
 	private synchronized void setHierarchyPriority(long pPriority)
 	{
 		Logging.log(this, "Setting new hierarchy node priority: " + pPriority);
@@ -1930,8 +1932,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 *       formerly known ones)
 		 */
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
+			Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mHierarchyPriorityUpdates + ")");
+			int i = 0;
 			for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mLocalCoordinatorAsClusterMemebers){
+				Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tCoordinatorAsClusterMember);
 				tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority());
+				i++;
 			}
 		}
 	}
