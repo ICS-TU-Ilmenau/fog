@@ -310,7 +310,7 @@ public class ComSession extends Session
 		
 		if(!mLocalLoopback){
 			if (HRMConfig.Hierarchy.AUTO_CLEANUP_FOR_CONNECTIONS){
-				Logging.log(this, "\n\n\n########### closing the parent connection(destination=" + mPeerL2Address + ", requirements=" + mParentConnection.getRequirements() + ")");
+				Logging.log(this, "\n\n\n########### Closing the parent connection(destination=" + mPeerL2Address + ", requirements=" + mParentConnection.getRequirements() + ")");
 				
 				//stop the session (closes the connection)
 				stop();
@@ -667,7 +667,7 @@ public class ComSession extends Session
 	 * @param pTargetL2Address the L2Address of the target, which should be used as routing target
 	 * @param pConnection the superior connection
 	 */
-	public void startConnection(L2Address pTargetL2Address, Connection pConnection)
+	public synchronized void startConnection(L2Address pTargetL2Address, Connection pConnection)
 	{
 		Logging.log(this, "\n\n###### STARTING connection for target: " + pTargetL2Address);
 		
@@ -734,6 +734,21 @@ public class ComSession extends Session
 		write(tAnnouncePhysicalEndPoint);
 	}
 
+	public synchronized void stopConnection()
+	{
+		/**
+		 * close all comm. channels
+		 */
+		while(mRegisteredComChannels.size() > 0)
+		{
+			mRegisteredComChannels.getLast().closeChannel();
+		}
+		
+		/**
+		 * Session::close() will be automatically called by the last closeChannel() call
+		 */
+	}
+	
 	/**
 	 * Handles error events for the parent connection
 	 * 
