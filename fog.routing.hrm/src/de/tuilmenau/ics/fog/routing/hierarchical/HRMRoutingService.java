@@ -950,6 +950,13 @@ public class HRMRoutingService implements RoutingService, Localization
 		}
 	}
 	
+	/**
+	 * Unregisters a link from the local L2 specific routing graph
+	 * HINT: This function must not block. Otherwise, the entire FoGSiEm GUI will hang until this functions returns.
+	 * 
+	 *  @param pFrom the FN where the link begins
+	 *  @param pGate the Gate (link) which is to be unregistered
+	 */  
 	@Override
 	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate)
 	{
@@ -961,10 +968,29 @@ public class HRMRoutingService implements RoutingService, Localization
 		 * Check if the link is one to another physical neighbor node or not.
 		 * Determine the L2Address of the ending point of the link
 		 */
+		L2Address tToL2Address = null;
 		boolean tIsLinkToPhysicalNeigborNode = false;
+		NetworkInterface tInterfaceToNeighbor = null;
 		if( pGate instanceof DirectDownGate){
+			// get the direct down gate
+			DirectDownGate tDirectDownGate = (DirectDownGate)pGate;
+			
+			// get the network interface to the neighbor
+			tInterfaceToNeighbor = tDirectDownGate.getNetworkInterface();
+
 			// mark as link to another node
 			tIsLinkToPhysicalNeigborNode = true;
+			
+			// determine the L2Address of the destination FN for this gate
+			// HINT: For DirectDownGate gates, this address is defined in "DirectDownGate" by a call to "RoutingService.getL2AddressFor(ILowerLayer.getMultiplexerGate())".
+			//       However, there will occur two calls to registerLink():
+			//				* 1.) the DirectDownGate is created
+			//				* 2.) the peer has answered by a packet of "OpenGateResponse" and the peer name is now known
+			//       Therefore, we ignore the first registerLink() request and wait for the (hopefully) appearing second request.
+			tToL2Address = (L2Address) pGate.getRemoteDestinationName();
+			if (tToL2Address == null){
+				Logging.warn(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this unregisterLink() request and wait until the peer is known");
+			}
 		}else{
 			// mark as node-internal link
 			tIsLinkToPhysicalNeigborNode = false;
@@ -975,13 +1001,6 @@ public class HRMRoutingService implements RoutingService, Localization
 		 */
 		L2Address tFromL2Address = mFNToL2AddressMapping.get(pFrom);
 
-		/**
-		 * Remove the connections to this neighbor node
-		 */
-		if (tIsLinkToPhysicalNeigborNode){
-			//TODO: implement this when nodes can be broken
-		}
-		
 		/**
 		 * Remove the link from the L2 specific routing graph
 		 */
@@ -1001,6 +1020,26 @@ public class HRMRoutingService implements RoutingService, Localization
 			}
 		}
 		
+		/**
+		 * DIRECT NEIGHBOR FOUND: create a HRM connection to it
+		 */
+		if(tIsLinkToPhysicalNeigborNode) {
+			L2Address tThisHostL2Address = getL2AddressFor(getCentralFN());
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				Logging.log(this, "      ..NODE " + tThisHostL2Address + " FOUND POSSIBLE DIRECT NEIGHBOR: " + tToL2Address + "?");
+			}
+
+			if((!pFrom.equals(tThisHostL2Address)) && (!tToL2Address.equals(tThisHostL2Address))) {
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "    ..actually found an interesting lost link from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
+				}
+				getHRMController().eventLostPhysicalNeighborNode(tInterfaceToNeighbor, tToL2Address);
+			}else{
+				Logging.warn(this, "unregisterLink() ignores the lost link to the neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is linked to the central FN " + tThisHostL2Address);
+			}
+		}
+
 		return false;
 	}
 

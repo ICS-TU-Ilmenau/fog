@@ -1971,6 +1971,40 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Decreases base Bully priority
+	 * 
+	 * @param pCausingInterfaceToNeighbor the update causing interface to a neighbor
+	 */
+	private synchronized void decreaseNodePriority_Connectivity(NetworkInterface pCausingInterfaceToNeighbor)
+	{
+		// get the current priority
+		long tPriority = getConnectivityNodePriority();
+		
+		Logging.log(this, "Decreasing node priority (CONNECTIVITY) by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
+
+		// increase priority
+		tPriority -= BullyPriority.OFFSET_FOR_CONNECTIVITY;
+		
+		mDesriptionConnectivityPriorityUpdates += "\n - " + BullyPriority.OFFSET_FOR_CONNECTIVITY + " ==> " + pCausingInterfaceToNeighbor;
+		
+		// update priority
+		setConnectivityPriority(tPriority);
+
+		Logging.log(this, "Decreasing hierarchy node priority (CONNECTIVITY) by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
+		
+		// get the current priority
+		long tHierarchyPriority = mNodeHierarchyPriority;
+
+		// increase priority
+		tHierarchyPriority -= BullyPriority.OFFSET_FOR_CONNECTIVITY;
+
+		mDesriptionHierarchyPriorityUpdates += "\n - " + BullyPriority.OFFSET_FOR_CONNECTIVITY + " <== Cause: " + pCausingInterfaceToNeighbor;
+
+		// update priority
+		setHierarchyPriority(tHierarchyPriority);
+	}
+
+	/**
 	 * Increases hierarchy Bully priority
 	 * 
 	 * @param pCausingEntity the update causing entity
@@ -2060,6 +2094,26 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public String getGUIDescriptionClusterUpdates()
 	{
 		return mClustererThread.getGUIDescriptionClusterUpdates();
+	}
+	
+	/**
+	 * Reacts on a lost physical neighbor.
+	 * HINT: "pNeighborL2Address" doesn't correspond to the neighbor's central FN!
+	 * 
+	 * @param pInterfaceToNeighbor the network interface to the neighbor 
+	 * @param pNeighborL2Address the L2 address of the detected physical neighbor's first FN towards the common bus.
+	 */
+	public synchronized void eventLostPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, final L2Address pNeighborL2Address)
+	{
+		Logging.log(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
+		
+		synchronized (mLocalNetworkInterfaces) {
+			if(mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
+				Logging.log(this, "\n#########Detected lost network interface: " + pInterfaceToNeighbor);
+				mLocalNetworkInterfaces.remove(pInterfaceToNeighbor); //TODO: multiple nodes!?
+			}
+			decreaseNodePriority_Connectivity(pInterfaceToNeighbor);
+		}
 	}
 	
 	/**
