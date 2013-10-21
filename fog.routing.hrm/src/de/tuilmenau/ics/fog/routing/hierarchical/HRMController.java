@@ -2365,6 +2365,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	@Override
 	public synchronized void exit() 
 	{
+		mApplicationStarted = false;
+		
 		Logging.log(this, "\n\n\n############## Exiting..");
 		
 		Logging.log(this, "     ..destroying clusterer-thread");
@@ -2381,13 +2383,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mLocalOutgoingSessions) {
 			for (ComSession tComSession : mLocalOutgoingSessions){
-				//tComSession.stopConnection();
+				tComSession.stopConnection();
 			}
 		}
 		
 		synchronized (mLocalIncomingSessions) {
 			for (ComSession tComSession : mLocalIncomingSessions){
-				//tComSession.stopConnection();
+				tComSession.stopConnection();
 			}			
 		}
 	
