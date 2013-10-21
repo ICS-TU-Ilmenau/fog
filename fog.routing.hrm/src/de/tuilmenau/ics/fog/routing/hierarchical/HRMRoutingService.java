@@ -985,15 +985,17 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * Remove the link from the L2 specific routing graph
 		 */
-		// determine which links are outgoing from the FN "pFrom"
-		Collection<RoutingServiceLink> tOutgoingLinksFromFN = mL2RoutingGraph.getOutEdges(tFromL2Address);
-		// have we found at least one outgoing link?
-		if(tOutgoingLinksFromFN != null) {
-			for(RoutingServiceLink tOutgoingLink : tOutgoingLinksFromFN) {
-				// have we found the right outgoing link? (we check the GateIDs)
-				if(tOutgoingLink.equals(pGate)) {
-					// remove the link from the L2 specific routing graph
-					mL2RoutingGraph.unlink(tOutgoingLink);
+		synchronized (mL2RoutingGraph) {
+			// determine which links are outgoing from the FN "pFrom"
+			Collection<RoutingServiceLink> tOutgoingLinksFromFN = mL2RoutingGraph.getOutEdges(tFromL2Address);
+			// have we found at least one outgoing link?
+			if(tOutgoingLinksFromFN != null) {
+				for(RoutingServiceLink tOutgoingLink : tOutgoingLinksFromFN) {
+					// have we found the right outgoing link? (we check the GateIDs)
+					if(tOutgoingLink.equals(pGate)) {
+						// remove the link from the L2 specific routing graph
+						mL2RoutingGraph.unlink(tOutgoingLink);
+					}
 				}
 			}
 		}
