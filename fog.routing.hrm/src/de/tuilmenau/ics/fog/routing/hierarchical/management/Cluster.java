@@ -388,7 +388,7 @@ public class Cluster extends ClusterMember
 	/**
 	 * EVENT: cluster role invalid
 	 */
-	private synchronized void eventClusterRoleInvalid()
+	public synchronized void eventClusterRoleInvalid()
 	{
 		Logging.log(this, "============ EVENT: cluster role invalid");
 		
