@@ -51,43 +51,47 @@ public class LowerLayerReceiveGate extends AbstractGate implements ILowerLayerRe
 	}
 	
 	@Override
-	public void handlePacket(Packet packet, NeighborInformation from)
+	public synchronized void handlePacket(Packet packet, NeighborInformation from)
 	{
-		NeighborInformation ni = mNetworkInterface.getLowerLayerID();
+		if(mNetworkInterface != null){
+			NeighborInformation ni = mNetworkInterface.getLowerLayerID();
+			
+			// do we have a valid address?
+			if(ni != null) {
+				// am I not the sender?
+				if(!ni.equals(from)) {
+					packet.setReceivingLowerLayer(mNetworkInterface, from);
+					
+					if(Config.Transfer.DEBUG_PACKETS) {
+						mLogger.debug(this, "received packet " +packet + " from " +from);
+					}
+					
+					if(packet.isInvisible()) {
+						((Invisible) packet.getData()).execute(this, packet);
+					} else {
+						incMessageCounter();
+						packetLog.add(packet);
+					}
 		
-		// do we have a valid address?
-		if(ni != null) {
-			// am I not the sender?
-			if(!ni.equals(from)) {
-				packet.setReceivingLowerLayer(mNetworkInterface, from);
-				
-				if(Config.Transfer.DEBUG_PACKETS) {
-					mLogger.debug(this, "received packet " +packet + " from " +from);
+					// debug check for broken lower layer
+					if(mEntity.getNode().isBroken() != de.tuilmenau.ics.fog.topology.Breakable.Status.OK) {
+						mLogger.err(this, "Internal error: Received packet " + packet + " while broken.");
+						return;
+					}
+					
+					// check if peer inserted correct backward route
+					checkReturnRoute(packet);
+					
+					// do not insert the "lastHop" argument, because the receiving
+					// gate is transparent for the forwarding
+					handlePacket(packet, (ForwardingElement)null);
 				}
-				
-				if(packet.isInvisible()) {
-					((Invisible) packet.getData()).execute(this, packet);
-				} else {
-					incMessageCounter();
-					packetLog.add(packet);
-				}
-	
-				// debug check for broken lower layer
-				if(mEntity.getNode().isBroken() != de.tuilmenau.ics.fog.topology.Breakable.Status.OK) {
-					mLogger.err(this, "Internal error: Received packet " + packet + " while broken.");
-					return;
-				}
-				
-				// check if peer inserted correct backward route
-				checkReturnRoute(packet);
-				
-				// do not insert the "lastHop" argument, because the receiving
-				// gate is transparent for the forwarding
-				handlePacket(packet, (ForwardingElement)null);
+				// else: ignore it, because node itself was sender
+			} else {
+				mLogger.err(this, "Packet received but no valid LL ID available. Packet '" +packet +"' ignored.");
 			}
-			// else: ignore it, because node itself was sender
 		} else {
-			mLogger.err(this, "Packet received but no valid LL ID available. Packet '" +packet +"' ignored.");
+			mLogger.err(this, "Packet received but no valid network interface available. Packet '" +packet +"' ignored.");
 		}
 	}
 
@@ -172,13 +176,17 @@ public class LowerLayerReceiveGate extends AbstractGate implements ILowerLayerRe
 	}
 	
 	@Override
-	protected void delete()
+	protected synchronized void delete()
 	{
-		if(mNetworkInterface != null) mNetworkInterface.remove();
-		mNetworkInterface = null;
+		if(mNetworkInterface != null){
+			mNetworkInterface.remove();
+			mNetworkInterface = null;
+		}
 		
-		if(packetLog != null) packetLog.close();
-		packetLog = null;
+		if(packetLog != null){
+			packetLog.close();			
+			packetLog = null;
+		}
 		
 		super.delete();
 	}
