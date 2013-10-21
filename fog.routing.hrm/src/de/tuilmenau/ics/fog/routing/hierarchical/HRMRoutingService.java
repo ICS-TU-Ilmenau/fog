@@ -995,6 +995,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					if(tOutgoingLink.equals(pGate)) {
 						// remove the link from the L2 specific routing graph
 						mL2RoutingGraph.unlink(tOutgoingLink);
+						break;
 					}
 				}
 			}
