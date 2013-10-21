@@ -11,13 +11,12 @@ package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
 import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 public class DeleteNode extends EclipseCommand
-{
-	private Node mNode = null;
-			
+{			
 	public DeleteNode()
 	{
 	}
@@ -31,42 +30,23 @@ public class DeleteNode extends EclipseCommand
 	public void execute(Object pObject)
 	{
 		Logging.log(this, "INIT - object parameter is " + pObject);
-
+		Node tNode = null;
+		
 		if(pObject instanceof Node) {
-			mNode = (Node) pObject;
+			tNode = (Node) pObject;
 		} else if(pObject instanceof HRMController) {
-			mNode = ((HRMController)pObject).getNode();
+			tNode = ((HRMController)pObject).getNode();
 		} else {
 			throw new RuntimeException(this +" requires a Node object instead of " + pObject +" to proceed.");
 		}
 		
-		if(mNode != null) {
-			showAckDialog();
+		if(tNode != null) {
+			// delete the node
+			AutonomousSystem tAS = tNode.getAS();
 			
-			deleteNode();
+			tAS.executeCommand("remove node " + tNode.toString());
 		} else {
 			Logging.err(this, "Missing reference to a Node. Can not run 'remove node' command.");
 		}
-	}
-
-	/**
-	 * Triggers the actual deletion process.
-	 */
-	private void deleteNode()
-	{
-		if (mNode != null){
-			// delete the node
-			mNode.getAS().executeCommand("remove node " + mNode.toString());
-		}else{
-			Logging.warn(this,  "Invalid bus selection found");
-		}
-	}
-	
-	/**
-	 * Shows a dialog to allow the user to acknowledge/cancel the deletion process.
-	 */
-	private void showAckDialog()
-	{
-		
 	}
 }
