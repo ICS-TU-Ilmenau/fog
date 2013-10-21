@@ -2363,9 +2363,29 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * This function gets called if the HRMController appl. should exit/terminate right now
 	 */
 	@Override
-	public void exit() 
+	public synchronized void exit() 
 	{
-		Logging.warn(this, "Exit the HRMController application isn't supported");
+		Logging.log(this, "\n\n\n############## Exiting..");
+		
+		Logging.log(this, "     ..destroying all clusters/coordinators");
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			LinkedList<Cluster> tClusters = getAllClusters(i);
+			for(Cluster tCluster : tClusters){
+				tCluster.eventClusterRoleInvalid();
+			}
+		}
+		
+		synchronized (mLocalOutgoingSessions) {
+			for (ComSession tComSession : mLocalOutgoingSessions){
+				//tComSession.stopConnection();
+			}
+		}
+		
+		synchronized (mLocalIncomingSessions) {
+			for (ComSession tComSession : mLocalIncomingSessions){
+				//tComSession.stopConnection();
+			}			
+		}
 	}
 
 	/**
