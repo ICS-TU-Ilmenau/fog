@@ -243,35 +243,39 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		Logging.log(this, "REVOKING HRMID=" + pHRMID + " (caller=" + pCaller + ")");
 
 		if (pHRMID != null){
-			// update the HRMID
-			if (mHRMID.equals(pHRMID)){
-				Logging.log(this, "     ..revoking local HRMID: " + pHRMID);
-				mHRMID = null;
-			}
-			
-			if (this instanceof Cluster){
-				Cluster tCluster = (Cluster)this;
-	
-				// inform HRM controller about the address change
-				mHRMController.revokeClusterAddress(tCluster, pHRMID);
-	
-				return;
-			}
-			if (this instanceof Coordinator){
-				Coordinator tCoordinator = (Coordinator)this;
-	
-				// inform HRM controller about the address change
-				mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
-	
-				return;
-			}
-			if(this instanceof CoordinatorAsClusterMember){
-				Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
-	
-				// inform HRM controller about the address change
-				mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
-	
-				return;
+			if(!pHRMID.isZero()){
+				// update the HRMID
+				if (mHRMID.equals(pHRMID)){
+					Logging.log(this, "     ..revoking local HRMID: " + pHRMID);
+					mHRMID = null;
+				}
+				
+				if (this instanceof Cluster){
+					Cluster tCluster = (Cluster)this;
+		
+					// inform HRM controller about the address change
+					mHRMController.revokeClusterAddress(tCluster, pHRMID);
+		
+					return;
+				}
+				if (this instanceof Coordinator){
+					Coordinator tCoordinator = (Coordinator)this;
+		
+					// inform HRM controller about the address change
+					mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
+		
+					return;
+				}
+				if(this instanceof CoordinatorAsClusterMember){
+					Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
+		
+					// inform HRM controller about the address change
+					mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
+		
+					return;
+				}
+			}else{
+				Logging.log(this, "Got a zero HRMID: " + pHRMID.toString());
 			}
 		}else{
 			Logging.warn(this, "Cannot revoke invalid HRMID");
