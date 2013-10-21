@@ -731,7 +731,11 @@ public class ComSession extends Session
 		AnnouncePhysicalEndPoint tAnnouncePhysicalEndPoint = new AnnouncePhysicalEndPoint(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.INIT_PACKET);
 		// tell the neighbor about the FN
 		Logging.log(mHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
-		write(tAnnouncePhysicalEndPoint);
+		if(write(tAnnouncePhysicalEndPoint)){
+			Logging.log(mHRMController, "     ..sent ANNOUNCE PHYSICAL NEIGHBORHOOD: " + tAnnouncePhysicalEndPoint);	
+		}else{
+			Logging.err(mHRMController, "     ..unable to send ANNOUNCE PHYSICAL NEIGHBORHOOD: " + tAnnouncePhysicalEndPoint);	
+		}
 	}
 
 	public synchronized void stopConnection()
