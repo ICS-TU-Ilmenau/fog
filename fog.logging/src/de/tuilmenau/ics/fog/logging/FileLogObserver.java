@@ -38,8 +38,8 @@ public class FileLogObserver implements LogObserver
 	
 	public void open(String path, String filename) throws IOException
 	{
-		if(path == null) path = "./";
-		if(filename == null) filename = "log.txt";
+		if(path == null) path = "~/";
+		if(filename == null) filename = "FoGSiEm-log.txt";
 		
 		System.out.println("Writing log file to: " + path + filename);
 		mLogFile = new BufferedWriter(new FileWriter(path +filename, true));
