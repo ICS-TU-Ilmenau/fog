@@ -28,7 +28,7 @@ public class L2Address extends HRMName
 	 * Stores the physical simulation machine specific multiplier, which is used to create unique L2Addresses, even if multiple physical simulation machines are connected by FoGSiEm instances
 	 * The value "-1" is important for initialization!
 	 */
-	private static long sL2AddressMachineMultiplier = -1;
+	private static long sIDMachineMultiplier = -1;
 
 	/**
 	 * Create an address that is used to identify a node at the MAC layer.
@@ -45,18 +45,18 @@ public class L2Address extends HRMName
 	 * 
 	 * @return the generated multiplier
 	 */
-	private static long l2addressIDMachineMultiplier()
+	private static long idMachineMultiplier()
 	{
-		if (sL2AddressMachineMultiplier < 0){
+		if (sIDMachineMultiplier < 0){
 			String tHostName = HRMController.getHostName();
 			if (tHostName != null){
-				sL2AddressMachineMultiplier = (tHostName.hashCode() % 10000) * 10000;
+				sIDMachineMultiplier = Math.abs((tHostName.hashCode() % 10000) * 10000);
 			}else{
 				Logging.err(null, "Unable to determine the machine-specific L2Address multiplier because host name couldn't be indentified");
 			}
 		}
 
-		return sL2AddressMachineMultiplier;
+		return sIDMachineMultiplier;
 	}
 
 	/**
@@ -67,7 +67,7 @@ public class L2Address extends HRMName
 	public static L2Address createL2Address()
 	{
 		// get the current address counter
-		long tAddr = sNextFreeAddress * l2addressIDMachineMultiplier();
+		long tAddr = sNextFreeAddress * idMachineMultiplier();
 
 		// make sure the next address isn't equal
 		sNextFreeAddress++;
@@ -113,7 +113,7 @@ public class L2Address extends HRMName
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + (mAddress.longValue() / l2addressIDMachineMultiplier()) + "(\"" + mOptionalDescr + "\")";
+		return getClass().getSimpleName() + (mAddress.longValue() / idMachineMultiplier()) + "(\"" + mOptionalDescr + "\")";
 	}
 
 	/**
@@ -126,7 +126,8 @@ public class L2Address extends HRMName
 	{
 		boolean tResult = false;
 
-		if(getComplexAddress().longValue() > pOtherL2Address.getComplexAddress().longValue()) {
+		//Logging.log(this, mAddress.longValue() + " >>?>> " + pOtherL2Address.mAddress.longValue());
+		if(mAddress.longValue() > pOtherL2Address.mAddress.longValue()) {
 			tResult = true;
 		}
 		
@@ -143,7 +144,7 @@ public class L2Address extends HRMName
 	{
 		boolean tResult = false;
 
-		if(getComplexAddress().longValue() < pOtherL2Address.getComplexAddress().longValue()) {
+		if(mAddress.longValue() < pOtherL2Address.mAddress.longValue()) {
 			tResult = true;
 		}
 		
