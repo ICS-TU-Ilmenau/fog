@@ -41,6 +41,7 @@ public class FileLogObserver implements LogObserver
 		if(path == null) path = "./";
 		if(filename == null) filename = "log.txt";
 		
+		System.out.println("Writing log file to: " + path + filename);
 		mLogFile = new BufferedWriter(new FileWriter(path +filename, true));
 	}
 	
