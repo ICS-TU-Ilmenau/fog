@@ -177,7 +177,7 @@ public class HRMConfig
 		/**
 		 * Maximum radius that is allowed during cluster expansion phase 
 		 */
-		public static final int EXPANSION_RADIUS = 4;
+		public static final int EXPANSION_RADIUS = 2;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level

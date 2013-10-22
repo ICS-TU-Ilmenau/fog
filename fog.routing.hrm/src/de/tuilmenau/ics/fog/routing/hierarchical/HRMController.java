@@ -217,6 +217,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private LinkedList<NetworkInterface> mLocalNetworkInterfaces = new LinkedList<NetworkInterface>();
 	
+		/**
+	 * Stores the active cluster membership for higher hierarchy levels.
+	 * Only one membership may exist per hierarchy level.
+	 */
+	private ControlEntity[] mActiveHigherEntities = new ControlEntity[HRMConfig.Hierarchy.HEIGHT];
+	
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
