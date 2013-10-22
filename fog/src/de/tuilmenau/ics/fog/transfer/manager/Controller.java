@@ -1045,6 +1045,7 @@ public class Controller
 	 * @param pPacket packet to be delivered when broken node was detected
 	 * @param pFrom last used gate
 	 */
+	@SuppressWarnings("unused")
 	public void handleBrokenElement(BrokenType pType, NetworkInterface pNetworkInterface, Packet pPacket, DirectDownGate pFrom)
 	{
 		Config tConfig = mEntity.getNode().getConfig();
