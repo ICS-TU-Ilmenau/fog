@@ -358,13 +358,13 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			if(mComChannels.contains(pComChannel)) {
 				Logging.log(this, "Unregistering communication channel " + pComChannel + ", " + mComChannels.size() + " communication channels still registered");
 
-				// close the communication channel to the peer
-				pComChannel.closeChannel();
-
 				// add the channel to the database
 				mComChannels.remove(pComChannel);
 			}			
 		}
+
+		// close the communication channel to the peer
+		pComChannel.closeChannel();
 	}
 
 	/**
