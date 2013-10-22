@@ -337,7 +337,7 @@ public class Config
 		 * Enables the creation of horizontal gates for rerouting. They store the
 		 * alternative/backup route for relaying packets "around" an failed element.
 		 */
-		public static final boolean REROUTE_USE_HORIZONTAL_GATES = true;
+		public static final boolean REROUTE_USE_HORIZONTAL_GATES = false;
 		
 		/**
 		 * Enable the following flag if you want the rerouting executor to establish connections that require a given bandwidth.
