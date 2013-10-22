@@ -585,7 +585,7 @@ public class Elector implements Localization
 	/**
 	 * SEND: priority update, triggered by ClusterMember when the priority is changed (e.g., if the base node priority was changed)
 	 */
-	public void distributePRIORITY_UPDATE()
+	public synchronized void distributePRIORITY_UPDATE()
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "SEND: priority updates");

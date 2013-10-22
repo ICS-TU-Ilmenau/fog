@@ -513,7 +513,7 @@ public class ClusterMember extends ClusterName
 	 * @param pPriority the new Bully priority
 	 */
 	@Override
-	public synchronized void setPriority(BullyPriority pPriority)
+	public void setPriority(BullyPriority pPriority)
 	{
 		BullyPriority tOldPriority = getPriority();
 		
