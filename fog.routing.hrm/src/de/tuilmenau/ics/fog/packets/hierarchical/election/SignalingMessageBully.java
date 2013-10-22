@@ -70,6 +70,6 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + (getSenderPriority() != null ? ", SenderPrio=" + getSenderPriority().getValue() : "") + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + (getSenderPriority() != null ? ", SenderPrio=" + getSenderPriority().getValue() : "") + ")";
 	}
 }

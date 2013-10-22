@@ -40,6 +40,11 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	private int mMessageNumber = -1;
 	
 	/**
+	 * Stores the original HRM message number
+	 */
+	private int mOriginalMessageNumber = -1;
+	
+	/**
 	 * Stores the recorded source route.
 	 * This is only used for debugging. It is not part of the HRM concept. 
 	 */
@@ -55,6 +60,7 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		mSenderName = pSenderName;
 		mReceiverName = pReceiverName;
 		mMessageNumber = createMessageNumber();
+		mOriginalMessageNumber = mMessageNumber;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
 			Logging.log(this, "\n########### NEW HRM MESSAGE nr. " + mMessageNumber + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ")");
@@ -83,6 +89,16 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	public int getMessageNumber()
 	{
 		return mMessageNumber;
+	}
+	
+	/**
+	 * Returns the original HRM message number
+	 * 
+	 * @return the original HRM message number
+	 */
+	public int getOriginalMessageNumber()
+	{
+		return mOriginalMessageNumber;
 	}
 	
 	/**
@@ -135,6 +151,9 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		// update the recorded source route
 		pOtherPacket.mSourceRoute = getSourceRoute();
 		
+		// update the original message number
+		pOtherPacket.mOriginalMessageNumber = getOriginalMessageNumber();
+		
 		// add an entry to the recorded source route
 		pOtherPacket.addSourceRoute("[duplicated]: (" + getMessageNumber() + ") -> (" + pOtherPacket.getMessageNumber() + ")");
 	}
@@ -147,6 +166,6 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ")";
 	}
 }
