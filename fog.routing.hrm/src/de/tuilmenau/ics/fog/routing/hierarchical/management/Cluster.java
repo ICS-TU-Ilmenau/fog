@@ -424,7 +424,7 @@ public class Cluster extends ClusterMember
 	 * 
 	 * @param pComChannel the comm. channel of the new cluster member
 	 */
-	public void eventClusterMemberJoined(ComChannel pComChannel)
+	public synchronized void eventClusterMemberJoined(ComChannel pComChannel)
 	{
 		Logging.log(this, "EVENT: joined cluster member, comm. channel: " + pComChannel);
 		

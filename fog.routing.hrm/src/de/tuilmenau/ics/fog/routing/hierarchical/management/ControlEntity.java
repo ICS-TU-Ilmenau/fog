@@ -108,7 +108,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * Stores the physical simulation machine specific multiplier, which is used to create unique IDs even if multiple physical simulation machines are connected by FoGSiEm instances
 	 * The value "-1" is important for initialization!
 	 */
-	private static long sIDMachineMultiplier = -1;
+	private static int sIDMachineMultiplier = -1;
 
 	private static boolean DEBUG_EQUALS = false;
 	/**
@@ -238,7 +238,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * @param pCaller the caller who assigns the new HRMID
 	 * @param pHRMID the revoked HRMID
 	 */
-	public void eventRevokedHRMID(Object pCaller, HRMID pHRMID)
+	public synchronized void eventRevokedHRMID(Object pCaller, HRMID pHRMID)
 	{
 		Logging.log(this, "REVOKING HRMID=" + pHRMID + " (caller=" + pCaller + ")");
 
@@ -393,7 +393,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * @param pComChannel the source comm. channel
 	 * @param pAnnounceCoordinator the received announcement
 	 */
-	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
+	public synchronized void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
 		Logging.warn(this, "Fired event COORDINATOR_ANNOUNCEMENT: " + pAnnounceCoordinator);
 		Logging.warn(this, "Ignoring COORDINATOR_ANNOUNCEMENT from comm. channel: " + pComChannel);
@@ -405,23 +405,10 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * @param pComChannel the source comm. channel
 	 * @param pInvalidCoordinator the received invalidation
 	 */
-	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
+	public synchronized void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
 	{
 		Logging.warn(this, "Fired event COORDINATOR_INVALIDATION: " + pInvalidCoordinator);
 		Logging.warn(this, "Ignoring COORDINATOR_INVALIDATION from comm. channel: " + pComChannel);
-	}
-
-	/**
-	 * EVENT: we have joined the superior cluster, triggered by ourself a request for cluster membership was ack'ed
-	 * 
-	 * @param pSourceComChannel the source comm. channel
-	 */
-	protected void eventJoinedRemoteCluster(ComChannel pComChannelToRemoteCluster)
-	{
-		Logging.log(this, "HAVE JOINED remote cluster");
-		
-		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), BullyPriority.createForSuperiorControlEntity(mHRMController,  this));
-		pComChannelToRemoteCluster.sendPacket(tBullyPriorityUpdatePacket);
 	}
 	
 	/**
@@ -438,7 +425,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void eventClusterCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorNodeName, int pCoordinatorID, L2Address pCoordinatorHostL2Address, String pCoordinatorDescription)
 	{
-		Logging.log(this, "EVENT: superior coordinator available (update " + (++mSuperiorCoordinatorUpdateCounter) + "): " + pCoordinatorNodeName + "/" + pCoordinatorComChannel + " with L2Address " + pCoordinatorHostL2Address);
+		Logging.log(this, "EVENT: superior coordinator available (update " + (++mSuperiorCoordinatorUpdateCounter) + ", node=" + pCoordinatorNodeName + ", comm. chann.=" + pCoordinatorComChannel + ", L2Address=" + pCoordinatorHostL2Address + ")");
 
 		// store the communication channel to the superior coordinator
 		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
@@ -571,7 +558,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @return the generated multiplier
 	 */
-	static protected long idMachineMultiplier()
+	static protected int idMachineMultiplier()
 	{
 		if (sIDMachineMultiplier < 0){
 			String tHostName = HRMController.getHostName();
@@ -689,7 +676,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @param pHRMID the new HRMID
 	 */
-	public void eventNewHRMIDAssigned(HRMID pHRMID)
+	public synchronized void eventNewHRMIDAssigned(HRMID pHRMID)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
 			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());

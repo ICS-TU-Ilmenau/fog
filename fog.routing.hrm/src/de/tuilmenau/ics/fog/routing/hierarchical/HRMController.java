@@ -1465,7 +1465,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Returns the locally known Coordinator object for a given hierarchy level
+	 * Returns a locally known Coordinator object for a given hierarchy level.
+	 * HINT: For base hierarchy level, there could exist more than one local coordinator!
 	 * 
 	 * @param pHierarchyLevel the hierarchy level for which the Coordinator object is searched
 	 * 
@@ -1537,7 +1538,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public void cluster(ControlEntity pCause, final HierarchyLevel pHierarchyLevel)
 	{
 		if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-			Logging.log(this, "CLUSTERING TRIGGERED at hierarchy level: " + pHierarchyLevel.getValue());
+			Logging.log(this, "\n\n################ CLUSTERING TRIGGERED at hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
 			mClustererThread.eventUpdateCluster(pCause, pHierarchyLevel);
 		}
 	}

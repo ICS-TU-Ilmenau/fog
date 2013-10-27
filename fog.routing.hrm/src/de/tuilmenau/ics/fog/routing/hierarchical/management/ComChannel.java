@@ -207,6 +207,11 @@ public class ComChannel
 	private boolean mLinkActivation = true;
 	
 	/**
+	 * Stores a description about all link activation changes
+	 */
+	private String mDesccriptionLinkActivation = "";
+	
+	/**
 	 * Stores the HRMController reference
 	 */
 	private HRMController mHRMController = null;
@@ -361,7 +366,7 @@ public class ComChannel
 	 * 
 	 * @param pRoutingInformationPacket the packet
 	 */
-	private void handleSignalingMessageSharePhase(RoutingInformation pRoutingInformationPacket)
+	private synchronized void handleSignalingMessageSharePhase(RoutingInformation pRoutingInformationPacket)
 	{
 		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRoutingInformationPacket);
@@ -382,11 +387,13 @@ public class ComChannel
 	 * 
 	 * @param pPeerPriority the Bully priority
 	 */
-	public void setPeerPriority(BullyPriority pPeerPriority)
+	public boolean setPeerPriority(BullyPriority pPeerPriority)
 	{
+		boolean tResult = false;
+		
 		if (pPeerPriority == null){
 			Logging.warn(this, "Trying to set a NULL POINTER as peer priority, ignoring this request, current priority: " + getPeerPriority());
-			return;
+			return false;
 		}
 
 		if(pPeerPriority.getValue() < 0){
@@ -405,7 +412,12 @@ public class ComChannel
 	
 			// update the peer Bully priority itself
 			mPeerPriority = pPeerPriority;
+			
+			// we have a new priority
+			tResult = true;
 		}
+		
+		return tResult;
 	}
 
 	/**
@@ -433,6 +445,27 @@ public class ComChannel
 	{
 		return mParentComSession.getPeerL2Address();
 	}
+	
+	/**
+	 * Returns true if this comm. channel leads to a remote node
+	 *  
+	 * @return true or false
+	 */
+	public boolean toRemoteNode()
+	{
+		return (!mHRMController.getNodeL2Address().equals(getPeerL2Address()));
+	}
+
+	/**
+	 * Returns true if this comm. channel leads to the local node
+	 *  
+	 * @return true or false
+	 */
+	public boolean toLocalNode()
+	{
+		return (mHRMController.getNodeL2Address().equals(getPeerL2Address()));
+	}
+	
 	/**
 	 * Returns the parental control entity
 	 * 
@@ -711,7 +744,7 @@ public class ComChannel
 	 * @throws NetworkException
 	 */
 	@SuppressWarnings("unused")
-	public synchronized boolean receiveData(Serializable pData) throws NetworkException
+	public boolean receiveData(Serializable pData) throws NetworkException
 	{
 		/**
 		 * Store the packet 
@@ -959,10 +992,24 @@ public class ComChannel
 	 * (De-)activates the HRM link.
 	 * 
 	 * @param pState the new state
+	 * @param pCause describes the cause for this change
 	 */
-	public void setLinkActivation(boolean pState)
+	public void setLinkActivation(boolean pState, String pCause)
 	{
+		Logging.log(this, "Updating link activation from: " + mLinkActivation + " to: " + pState);
 		mLinkActivation = pState;
+		
+		mDesccriptionLinkActivation += "\n - [" +pState +"] <== " + pCause;
+	}
+	
+	/**
+	 * Returns a description about all link activation changes
+	 * 
+	 * @return the description about all changes
+	 */
+	public String getDescriptionLinkActivation()
+	{
+		return mDesccriptionLinkActivation;
 	}
 	
 	/**

@@ -931,8 +931,22 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						}
 					});
 					MenuItem tMenuItem1 = new MenuItem(tMenu, SWT.NONE);
-					tMenuItem1.setText("Show session");
+					tMenuItem1.setText("Show link activation events");
 					tMenuItem1.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showLinkActivationEvents(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showLinkActivationEvents(tfComChannels.get(tSelectedIndex));
+						}
+					});
+					MenuItem tMenuItem2 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem2.setText("Show session");
+					tMenuItem2.addSelectionListener(new SelectionListener() {
 						public void widgetDefaultSelected(SelectionEvent pEvent)
 						{
 							//Logging.log(this, "Default selected: " + pEvent);
@@ -959,6 +973,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + "): " + tPacketMetaData.getPacket());
 			i++;
 		}		
+	}
+
+	private void showLinkActivationEvents(ComChannel pComChannel)
+	{
+		Logging.log(this, "Link activation events for: " + pComChannel + pComChannel.getDescriptionLinkActivation());
 	}
 
 	private void showSession(ComChannel pComChannel)

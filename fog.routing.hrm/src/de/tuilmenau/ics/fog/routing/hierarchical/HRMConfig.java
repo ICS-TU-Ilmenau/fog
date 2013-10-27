@@ -167,7 +167,7 @@ public class HRMConfig
 		/**
 		 * amount of hierarchical levels in the simulation
 		 */
-		public static final int HEIGHT = 3;
+		public static final int HEIGHT = 2;
 
 		/**
 		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level
@@ -289,5 +289,10 @@ public class HRMConfig
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean SEND_BULLY_ALIVES = true;
+
+		/**
+		 * Defines if link states should be used.
+		 */
+		public static final boolean USE_LINK_STATES = true;
 	}
 }

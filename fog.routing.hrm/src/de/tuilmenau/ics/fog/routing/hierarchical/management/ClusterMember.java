@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -296,9 +297,9 @@ public class ClusterMember extends ClusterName
 		 * Trigger: start coordinator election
 		 */
 		boolean tStartBaseLevel =  ((getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
-		// start coordinator election for the created HRM instance if desired
+		// start coordinator election for the created HRM instance if the configuration allows this
 		if(((!getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
-			//Logging.log(this, "      ..starting ELECTION");
+			Logging.log(this, "      ..starting ELECTION");
 			mElector.startElection();
 		}
 	}
@@ -328,16 +329,31 @@ public class ClusterMember extends ClusterName
 		 * Trigger: comm. channel established 
 		 */
 		eventComChannelEstablished(tComChannel);
-
+		
 		/**
 		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
 		 */
 		tComChannel.signalRequestClusterMembershipAck(null);
-		
+
 		/**
 		 * Trigger: joined a remote cluster (sends a Bully priority update)
 		 */
 		eventJoinedRemoteCluster(tComChannel);
+	}
+
+	/**
+	 * EVENT: we have joined the superior cluster, triggered by ourself or the CoordinatorAsClusterMemeber if a request for cluster membership was ack'ed
+	 * 
+	 * @param pComChannelToRemoteCluster the comm. channel to the cluster
+	 */
+	protected void eventJoinedRemoteCluster(ComChannel pComChannelToRemoteCluster)
+	{
+		Logging.log(this, "HAVE JOINED remote cluster");
+		
+		/**
+		 * Trigger: joined remote cluster (in Elector)
+		 */
+		mElector.eventJoinedRemoteCluster(pComChannelToRemoteCluster);
 	}
 
 	/**
@@ -376,7 +392,7 @@ public class ClusterMember extends ClusterName
 		}
 		
 		for(ComChannel tComChannel : tComChannels) {
-			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
+			boolean tIsLoopback = tComChannel.toLocalNode();
 			
 			if((pExcludeL2Address == null /* excluded peer address is null, we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */) || (pIncludeLoopback)){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
@@ -418,6 +434,45 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
+	 * Sets a new link state for all comm. channels
+	 * 
+	 * @param pState the new state
+	 * @param pCause the cause for this change
+	 */
+	public void setLAllinksActivation(boolean pState, String pCause)
+	{
+		// get all communication channels
+		LinkedList<ComChannel> tComChannels = getComChannels();
+		
+		Logging.log(this, "Setting new link state (" + pState + ") to all " + tComChannels.size() + " comm. channels");
+
+		for(ComChannel tComChannel : tComChannels) {
+			tComChannel.setLinkActivation(pState, pCause);
+		}
+	}
+
+	/**
+	 * Returns all active links
+	 * 
+	 * @return the active links
+	 */
+	public LinkedList<ComChannel> getActiveLinks()
+	{
+		LinkedList<ComChannel> tResult = new LinkedList<ComChannel>();
+		
+		// get all communication channels
+		LinkedList<ComChannel> tComChannels = getComChannels();
+		
+		for(ComChannel tComChannel : tComChannels) {
+			if(tComChannel.getLinkActivation()){
+				tResult.add(tComChannel);
+			}
+		}
+
+		return tResult;
+	}
+
+	/**
 	 * Determines the coordinator of this cluster. It is "null" if the election was lost or hasn't finished yet. 
 	 * 
 	 * @return the cluster's coordinator
@@ -455,14 +510,9 @@ public class ClusterMember extends ClusterName
 		// get all communication channels
 		LinkedList<ComChannel> tComChannels = getComChannels();
 
-		// get the L2Addres of the local host
-		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
-		
 		for(ComChannel tComChannel : tComChannels) {
-			boolean tIsLoopback = tLocalL2Address.equals(tComChannel.getPeerL2Address());
-			
 			// filter loopback channels
-			if (!tIsLoopback){
+			if (tComChannel.toRemoteNode()){
 				tResult++;
 			}
 		}
@@ -497,7 +547,7 @@ public class ClusterMember extends ClusterName
 	 * 
 	 *  @param: pComChannel the comm. channel from where the cancellation was received
 	 */
-	public void eventClusterMembershipCanceled(ComChannel pComChannel)
+	public synchronized void eventClusterMembershipCanceled(ComChannel pComChannel)
 	{
 		Logging.log(this, "EVENT: cluster membership canceled: " + pComChannel);
 		
@@ -527,7 +577,7 @@ public class ClusterMember extends ClusterName
 			 * Send priority update if necessary 
 			 */
 			if ((tOldPriority != null) && (!tOldPriority.isUndefined()) && (!tOldPriority.equals(pPriority))){
-				mElector.distributePRIORITY_UPDATE();
+				mElector.updatePriority();
 			}else{
 				Logging.log(this, "First priority was set: " + pPriority.getValue());
 			}
