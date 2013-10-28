@@ -18,6 +18,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyReply;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyResign;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageBully;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -404,6 +405,44 @@ public class Elector implements Localization
 	}
 	
 	/**
+	 * SEND: ends the election by signaling BULLY RESIGN to all cluster members 		
+	 */
+	private void distributeRESIGN()
+	{
+		if (mState == ElectorState.ELECTED){
+			// get the size of the cluster
+			int tKnownClusterMembers = mParent.countConnectedClusterMembers();
+			
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "SENDRESIGN()-START, electing cluster is " + mParent);
+				Logging.log(this, "SENDRESIGN(), cluster members: " + tKnownClusterMembers);
+			}
+	
+			// HINT: the coordinator has to be already created here
+
+			if (mParent.getCoordinator() != null){
+				// create the packet
+				BullyResign tPacketBullyResign = new BullyResign(mHRMController.getNodeName(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+		
+				// send broadcast
+				mParent.sendClusterBroadcast(tPacketBullyResign, true);
+			}else{
+				Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION END, ELECTED expected");
+				
+				// set correct elector state
+				setElectorState(ElectorState.ERROR);
+			}
+	
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "SENDRESIGN()-END");
+			}
+		}else{
+			// elector state is ELECTED
+			Logging.warn(this, "Election state isn't ELECTING, we cannot finishe an election which wasn't started yet, error in state machine");
+		}			
+	}
+
+	/**
 	 * SEND: BullyPriorityUpdate
 	 */
 	private void distributePRIRORITY_UPDATE()
@@ -688,6 +727,9 @@ public class Elector implements Localization
 			if(head()){
 				Coordinator tCoordinator = mParent.getCoordinator();
 				if (tCoordinator != null){
+					// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
+					distributeRESIGN();
+
 					/**
 					 * Invalidate the coordinator
 					 */
@@ -822,7 +864,7 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * EVENT: announce
+	 * EVENT: the remote (we are not the coordinator!) coordinator was announced
 	 * 
 	 * @param pComChannel the comm. channel from where the packet was received
 	 * @param pAnnouncePacket the packet itself
@@ -845,6 +887,20 @@ public class Elector implements Localization
 		tControlEntity.eventClusterCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
 	}
 	
+	/**
+	 * EVENT: the remote (we are not the coordinator!) coordinator resigned
+	 * 
+	 * @param pComChannel the comm. channel from where the packet was received
+	 * @param pResignPacket the packet itself
+	 */
+	private void eventRESIGN(ComChannel pComChannel, BullyResign pResignPacket)
+	{
+		ControlEntity tControlEntity = pComChannel.getParent();
+
+		// fake (for reset) trigger: superior coordinator available	
+		tControlEntity.eventClusterCoordinatorAvailable(null, pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
+	}
+
 	/**
 	 * EVENT: priority update
 	 * 
@@ -1057,6 +1113,24 @@ public class Elector implements Localization
 				}
 			}
 	
+			/**
+			 * RESIGN
+			 */
+			if(pPacketBully instanceof BullyResign)  {
+				// cast to Bully replay packet
+				BullyResign tResignPacket = (BullyResign)pPacketBully;
+	
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an RESIGN: " + tResignPacket);
+				}
+	
+				if(!head()){
+					eventRESIGN(pComChannel, tResignPacket);
+				}else{
+					throw new RuntimeException("Got a RESIGN as cluster head");
+				}
+			}
+
 			/**
 			 * PRIORITY UPDATE
 			 */
