@@ -748,7 +748,7 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * EVENT: a candidate left the election process
+	 * EVENT: a cluster member left the election process
 	 * 
 	 * @param pComChannel the communication channel to the cluster member which left the election
 	 * @param pLeavePacket the received packet
@@ -770,22 +770,17 @@ public class Elector implements Localization
 				Logging.warn(this, "Ignoring LEAVE for: " + mParent);
 			}
 			
-			if(HRMConfig.Election.USE_LINK_STATES){
-				if (head()){
-					//if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-						Logging.log(this, "     ..REELECTING, maybe a change should happen");
-					//}
-					// maybe we can now win a formerly lost election? or we are the winner but a new election would result in a "lost"? -> start a new election
-					startElection();
-				}			
-			}
+			/**
+			 * Trigger : reelect
+			 */
+			reelect();
 		}
 	}
 	
 	/**
-	 * EVENT: the election process was triggered by another cluster member
+	 * EVENT: a cluster member returned to the election process
 	 * 
-	 * @param pComChannel the source comm. channel
+	 * @param pComChannel the communication channel to the cluster member which returned to the election
 	 * @param pReturnPacket the received packet
 	 */
 	private void eventRETURN(ComChannel pComChannel, BullyReturn pReturnPacket)
@@ -794,20 +789,22 @@ public class Elector implements Localization
 			Logging.log(this, "EVENT: cluster member returned: " + pComChannel);
 		//}
 		
-		/**
-		 * activate the link for the remote cluster member 
-		 */
-		if(head()){
-			pComChannel.setLinkActivation(true, "RETURN[" + pReturnPacket.getOriginalMessageNumber() + "] received");
-		}else{
-			Logging.warn(this, "Ignoring RETURN for: " + mParent);
+		// check if the link state has changed	
+		if(!pComChannel.getLinkActivation()){
+			/**
+			 * activate the link for the remote cluster member 
+			 */
+			if(head()){
+				pComChannel.setLinkActivation(true, "RETURN[" + pReturnPacket.getOriginalMessageNumber() + "] received");
+			}else{
+				Logging.warn(this, "Ignoring RETURN for: " + mParent);
+			}
+	
+			/**
+			 * Trigger : reelect
+			 */
+			reelect();
 		}
-
-		/**
-		 * Trigger : reelect
-		 */
-		// start re-election
-		reelect();
 	}
 
 	/**
