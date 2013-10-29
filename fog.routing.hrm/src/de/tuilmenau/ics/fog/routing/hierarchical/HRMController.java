@@ -40,6 +40,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
@@ -217,11 +218,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private LinkedList<NetworkInterface> mLocalNetworkInterfaces = new LinkedList<NetworkInterface>();
 	
-		/**
-	 * Stores the active cluster membership for higher hierarchy levels.
-	 * Only one membership may exist per hierarchy level.
+	/**
+	 * Stores the node-global election state
 	 */
-	private ControlEntity[] mActiveHigherEntities = new ControlEntity[HRMConfig.Hierarchy.HEIGHT];
+	private Object mNodeElectionState = null;
 	
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
@@ -244,6 +244,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// reference to the AutonomousSystem object 
 		mAS = pAS;
+		
+		// set the node-global election state
+		mNodeElectionState = Elector.createNodeElectionState();
 		
 		/**
 		 * Create the node specific decorator for HRM coordinators and HRMIDs
@@ -2233,6 +2236,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public AutonomousSystem getAS()
 	{
 		return mAS;
+	}
+	
+	/**
+	 * Returns the node-global election state
+	 * 
+	 * @return the node-global election state
+	 */
+	public Object getNodeElectionState()
+	{
+		return mNodeElectionState;
 	}
 	
 	/**
