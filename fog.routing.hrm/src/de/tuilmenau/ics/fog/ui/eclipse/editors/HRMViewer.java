@@ -1032,6 +1032,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		StyledText tClusterLabel = new StyledText(tContainerName, SWT.BORDER);;
 		tClusterLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		boolean tClusterHeadWithoutCoordinator = false;
+		boolean tClusterMemberOfInactiveCluster = false;
 		if (GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES){
 			boolean tBackgroundSet = false;
 			if (pEntity instanceof Cluster){
@@ -1043,6 +1044,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						tClusterHeadWithoutCoordinator = true;
 						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 222));
 					}
+					tBackgroundSet = true;
+				}
+			}else{
+				if(pEntity instanceof ClusterMember){
+					ClusterMember tClusterMember = (ClusterMember)pEntity;
+					
+					tClusterMemberOfInactiveCluster = !tClusterMember.getClusterActivation();
+
+					if(tClusterMemberOfInactiveCluster){
+						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 222));
+					}else{
+						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 151, 222, 151));
+					}
+
 					tBackgroundSet = true;
 				}
 			}
@@ -1063,7 +1078,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			Cluster tCluster = (Cluster) pEntity;
 			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? "   (inactive cluster)" : ""));
 		}else{
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue());
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : ""));
 		}
 	    StyleRange style1 = new StyleRange();
 	    style1.start = 0;

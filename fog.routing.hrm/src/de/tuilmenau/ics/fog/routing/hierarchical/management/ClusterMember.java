@@ -43,6 +43,11 @@ public class ClusterMember extends ClusterName
 	protected Elector mElector = null;
 
 	/**
+	 * Returns the cluster activation
+	 */
+	private boolean mClusterActivation = false;
+	
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
@@ -618,6 +623,30 @@ public class ClusterMember extends ClusterName
 		return mCoordinatorNodeL2Address;
 	}
 	
+	/**
+	 * Sets the cluster activation
+	 * 
+	 * @param pState the new state
+	 */
+	public void setClusterActivation(boolean pState)
+	{
+		if(mClusterActivation != pState){
+			Logging.log(this, "Setting cluster activation to: " + pState);
+			
+			mClusterActivation = pState;
+		}
+	}
+	
+	/**
+	 * Returns the cluster activation
+	 *  
+	 * @return true or false
+	 */
+	public boolean getClusterActivation()
+	{
+		return mClusterActivation;
+	}
+
 	/**
 	 * Defines the decoration text for the ARG viewer
 	 * 

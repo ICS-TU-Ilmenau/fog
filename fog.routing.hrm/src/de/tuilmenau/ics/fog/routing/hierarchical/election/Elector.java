@@ -871,7 +871,8 @@ public class Elector implements Localization
 	 */
 	private void eventANNOUNCE(ComChannel pComChannel, BullyAnnounce pAnnouncePacket)
 	{
-		ControlEntity tControlEntity = pComChannel.getParent();
+		if(!head()){
+			ControlEntity tControlEntity = pComChannel.getParent();
 
 		// we have a winner -> leave all other election processes
 //		if(!head()){
@@ -880,11 +881,17 @@ public class Elector implements Localization
 //			}
 //		}
 
-		// trigger "election lost"
-		eventElectionLost();
+			// mark this cluster as active
+			mParent.setClusterActivation(true);
 
-		// trigger: superior coordinator available	
-		tControlEntity.eventClusterCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
+			// trigger "election lost"
+			eventElectionLost();
+		
+			// trigger: superior coordinator available	
+			tControlEntity.eventClusterCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
+		}else{
+			throw new RuntimeException("Got an ANNOUNCE as cluster head");
+		}
 	}
 	
 	/**
@@ -895,10 +902,17 @@ public class Elector implements Localization
 	 */
 	private void eventRESIGN(ComChannel pComChannel, BullyResign pResignPacket)
 	{
-		ControlEntity tControlEntity = pComChannel.getParent();
+		if(!head()){
+			ControlEntity tControlEntity = pComChannel.getParent();
 
-		// fake (for reset) trigger: superior coordinator available	
-		tControlEntity.eventClusterCoordinatorAvailable(null, pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
+			// mark this cluster as active
+			mParent.setClusterActivation(false);
+
+			// fake (for reset) trigger: superior coordinator available	
+			tControlEntity.eventClusterCoordinatorAvailable(null, pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
+		}else{
+			throw new RuntimeException("Got a RESIGN as cluster head");
+		}
 	}
 
 	/**
@@ -1106,11 +1120,7 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
 				}
 	
-				if(!head()){
-					eventANNOUNCE(pComChannel, tAnnouncePacket);
-				}else{
-					throw new RuntimeException("Got an ANNOUNCE as cluster head");
-				}
+				eventANNOUNCE(pComChannel, tAnnouncePacket);
 			}
 	
 			/**
@@ -1124,11 +1134,7 @@ public class Elector implements Localization
 					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an RESIGN: " + tResignPacket);
 				}
 	
-				if(!head()){
-					eventRESIGN(pComChannel, tResignPacket);
-				}else{
-					throw new RuntimeException("Got a RESIGN as cluster head");
-				}
+				eventRESIGN(pComChannel, tResignPacket);
 			}
 
 			/**
