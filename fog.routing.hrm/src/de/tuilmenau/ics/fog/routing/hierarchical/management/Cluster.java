@@ -515,7 +515,7 @@ public class Cluster extends ClusterMember
 	 * 
 	 */
 	private int mCountDistributeMembershipRequests = 0;
-	public synchronized void distributeMembershipRequests()
+	public void distributeMembershipRequests()
 	{
 		mCountDistributeMembershipRequests ++;
 		
