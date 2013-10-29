@@ -1299,42 +1299,52 @@ public class Elector implements Localization
 	 *  
 	 * @return true of false
 	 */
-	private boolean isAllowedToWin()
+	public boolean isAllowedToWin()
 	{
 		boolean tAllowedToWin = true;
 		
 		Logging.log(this, "Checking if election win is allowed..");
 		
-		synchronized (mNodeActiveClusterMembers) {
-			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
-			Logging.log(this, "       ..found list of known active ClusterMember entries: " + tLevelList);
-					
-			/**
-			 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
-			 */
-			if(tLevelList.size() > 0){
-				// plausibility check
-				if(tLevelList.size() > 1){
-					Logging.err(this, "Found an unplausible list of active ClusterMember instances: " + tLevelList);
-				}
-					
+		if(mParent.getHierarchyLevel().isHigherLevel()){
+			synchronized (mNodeActiveClusterMembers) {
+				LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
+				Logging.log(this, "       ..found list of known active ClusterMember entries: " + tLevelList);
+						
 				/**
-				 * Iterate over all known active ClusterMember entries
-				 */ 
-				for(ClusterMember tClusterMember : tLevelList){
-					Elector tElectorClusterMember = tClusterMember.getElector();
-					
-					if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority())){
-						Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
-						tAllowedToWin = false;
-						break;
+				 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
+				 */
+				if(tLevelList.size() > 0){
+					// plausibility check
+					if(tLevelList.size() > 1){
+						Logging.err(this, "Found an unplausible list of active ClusterMember instances: " + tLevelList);
 					}
-				}								
-			}else{
-				// no active ClusterMember is known and the Cluster/ClusterMember is allowed to win
-				Logging.log(this, "       ..no active ClusterMember is known and the Cluster/ClusterMember is allowed to win");
+						
+					/**
+					 * Iterate over all known active ClusterMember entries
+					 */ 
+					for(ClusterMember tClusterMember : tLevelList){
+						/**
+						 * Only proceed for memberships of foreign clusters
+						 */
+						if(tClusterMember.isRemoteCluster()){
+							Elector tElectorClusterMember = tClusterMember.getElector();
+							/**
+							 * Only proceed if the remote cluster has a higher priority
+							 */
+							if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority())){
+								Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
+								tAllowedToWin = false;
+								break;
+							}
+						}
+					}								
+				}else{
+					// no active ClusterMember is known and the Cluster/ClusterMember is allowed to win
+					Logging.log(this, "       ..no active ClusterMember is known and the Cluster/ClusterMember is allowed to win");
+				}
 			}
 		}
+		
 		return tAllowedToWin;
 	}
 	
