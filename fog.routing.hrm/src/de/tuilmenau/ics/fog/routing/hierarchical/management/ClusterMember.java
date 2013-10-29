@@ -526,6 +526,20 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
+	 * Returns if this ClusterMember belongs to a remote cluster
+	 * 
+	 * @return true or false
+	 */
+	public boolean isRemoteCluster()
+	{
+		if(this instanceof Cluster){
+			return false;
+		}
+		
+		return (countConnectedRemoteClusterMembers() > 0);
+	}
+	
+	/**
 	 * EVENT: new connectivity node priority
 	 * 
 	 * @param pNewConnectivityNodePriority the new connectivity node priority
