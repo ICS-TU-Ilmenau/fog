@@ -796,7 +796,7 @@ public class ComChannel
 				ClusterMember tParentClusterProxy = (ClusterMember)mParent;
 				
 				if (tParentClusterProxy.getElector() != null){
-					tParentClusterProxy.getElector().handleSignalingMessageBully(tBullyMessage, this);
+					tParentClusterProxy.getElector().handleElectionMessage(tBullyMessage, this);
 				}else{
 					Logging.warn(this, "Elector is still invalid");
 				}
@@ -807,7 +807,7 @@ public class ComChannel
 			if (mParent instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)mParent;
 				
-				tCoordinator.getCluster().getElector().handleSignalingMessageBully(tBullyMessage, this);
+				tCoordinator.getCluster().getElector().handleElectionMessage(tBullyMessage, this);
 				
 				return true;
 			}

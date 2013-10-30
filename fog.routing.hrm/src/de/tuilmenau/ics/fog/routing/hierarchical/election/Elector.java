@@ -95,7 +95,8 @@ public class Elector implements Localization
 	
 	/**
 	 * Stores the node-global election state: the active ClusterMember instance per hierarchy level.
-	 * Only one entry is allowed for a higher hierarchy level. This fact is enforced by leaveWorseAlternativeElections().
+	 * All entries per hierarchy level have to be part of the same superior cluster. This fact is enforced by leaveWorseAlternativeElections().
+	 * For example, two or more ClusterAsClusterMember instances can be registered, which are aprt of the same local superior cluster.
 	 */
 	private LinkedList<ClusterMember>[] mNodeActiveClusterMembers = null;
 
@@ -909,11 +910,6 @@ public class Elector implements Localization
 						 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
 						 */
 						if(tLevelList.size() > 0){
-							// plausibility check
-							if(tLevelList.size() > 1){
-								Logging.err(this, "Found an unplausible list of active ClusterMember instances: " + tLevelList);
-							}
-								
 							/**
 							 * Iterate over all known active ClusterMember entries
 							 */ 
@@ -1314,11 +1310,6 @@ public class Elector implements Localization
 				 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
 				 */
 				if(tLevelList.size() > 0){
-					// plausibility check
-					if(tLevelList.size() > 1){
-						Logging.err(this, "Found an unplausible list of active ClusterMember instances: " + tLevelList);
-					}
-						
 					/**
 					 * Iterate over all known active ClusterMember entries
 					 */ 
@@ -1446,7 +1437,7 @@ public class Elector implements Localization
 	 * @param pComChannel the communication channel from where the message was received
 	 */
 	@SuppressWarnings("unused")
-	public synchronized void handleSignalingMessageBully(SignalingMessageBully pPacketBully, ComChannel pComChannel)
+	public synchronized void handleElectionMessage(SignalingMessageBully pPacketBully, ComChannel pComChannel)
 	{
 		Node tNode = mHRMController.getNode();
 		Name tLocalNodeName = mHRMController.getNodeName(); 
