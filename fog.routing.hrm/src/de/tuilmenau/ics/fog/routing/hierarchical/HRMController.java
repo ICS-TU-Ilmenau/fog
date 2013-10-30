@@ -224,6 +224,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private Object mNodeElectionState = null;
 	
 	/**
+	 * Stores the node-global election state change description
+	 */
+	private String mDescriptionNodeElectionState = new String();
+
+	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
@@ -2085,7 +2090,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Returns a description about all connectivity priority updates
+	 * Returns a description about all connectivity priority updates.
+	 * This function is only used within the GUI. It is not part of the concept.
 	 * 
 	 * @return the description
 	 */
@@ -2096,6 +2102,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 	/**
 	 * Returns a description about all hierarchy priority updates
+	 * This function is only used within the GUI. It is not part of the concept.
 	 * 
 	 * @return the description
 	 */
@@ -2106,6 +2113,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 	/**
 	 * Returns a log about "update cluster" events
+	 * This function is only used within the GUI. It is not part of the concept.
+	 * 
+	 * @return the description
 	 */
 	public String getGUIDescriptionClusterUpdates()
 	{
@@ -2246,6 +2256,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public Object getNodeElectionState()
 	{
 		return mNodeElectionState;
+	}
+	
+	/**
+	 * Returns the node-global election state change description
+	 * This function is only used within the GUI. It is not part of the concept.
+	 * 
+	 * @return the description
+	 */
+	public Object getGUIDescriptionNodeElectionStateChanges()
+	{
+		return mDescriptionNodeElectionState;
+	}
+	
+	/**
+	 * Adds a description to the node-global election state change description
+	 * 
+	 * @param pAdd the additive string
+	 */
+	public void addGUIDescriptionNodeElectionStateChange(String pAdd)
+	{
+		mDescriptionNodeElectionState += pAdd;
 	}
 	
 	/**

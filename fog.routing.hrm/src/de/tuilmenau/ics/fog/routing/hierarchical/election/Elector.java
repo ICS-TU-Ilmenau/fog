@@ -94,9 +94,10 @@ public class Elector implements Localization
 	private Double mTimestampLastElectBroadcast =  new Double(0);
 	
 	/**
-	 * Stores the node-global election state: the active ClusterMember instance per hierarchy level.
-	 * All entries per hierarchy level have to be part of the same superior cluster. This fact is enforced by leaveWorseAlternativeElections().
-	 * For example, two or more ClusterAsClusterMember instances can be registered, which are aprt of the same local superior cluster.
+	 * Stores the node-global election state: the active best ClusterMember instances per hierarchy level.
+	 * All entries per higher (!) hierarchy level have to be part of the same superior cluster. This fact is enforced by leaveWorseAlternativeElections().
+	 * For example, two or more ClusterAsClusterMember instances can be registered, which are part of the same local superior cluster.
+	 * In general, this list stores the best choices for the distributed election process for each higher hierarchy level.
 	 */
 	private LinkedList<ClusterMember>[] mNodeActiveClusterMembers = null;
 
@@ -121,7 +122,7 @@ public class Elector implements Localization
 	
 	/**
 	 * Creates the node-global election state object.
-	 * It is creates once a node is initialized and its HRMController instance is created.
+	 * It is created once a node is initialized and its HRMController instance is created.
 	 * 
 	 * @return the node-global election state
 	 */
@@ -137,13 +138,30 @@ public class Elector implements Localization
 		
 		return tResult;	
 	}
-	
+
+	/**
+	 * Creates the node-global election state change description object.
+	 * It is created once a node is initialized and its HRMController instance is created.
+	 * 
+	 * @return the description object
+	 */
+	@SuppressWarnings("unchecked")
+	public static Object createDescriptionNodeElectionState()
+	{
+		String tResult = null;
+
+		tResult = new String();
+		
+		return tResult;	
+	}
+
 	/**
 	 * Adds a ClusterMember as active entity to the database
 	 * 
 	 * @param pClusterMember the new active ClusterMember
+	 * @param pCause the cause for this call
 	 */
-	private void addActiveClusterMember(ClusterMember pClusterMember)
+	private void addActiveClusterMember(ClusterMember pClusterMember, String pCause)
 	{
 		if(mNodeActiveClusterMembers == null){
 			throw new RuntimeException("Invalid node-global election state");
@@ -152,12 +170,17 @@ public class Elector implements Localization
 		if (pClusterMember instanceof Cluster){
 			throw new RuntimeException("Invalid active ClusterMember: " + pClusterMember);
 		}
-		
+	
+		Logging.log(this, "Adding active ClusterMember: " + pClusterMember);
 		synchronized (mNodeActiveClusterMembers) {
 			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[pClusterMember.getHierarchyLevel().getValue()];
 			
 			if(!tLevelList.contains(pClusterMember)){
 				tLevelList.add(pClusterMember);
+				Logging.log(this, "    ..added");
+				mHRMController.addGUIDescriptionNodeElectionStateChange("\n + " + pClusterMember + " <== " + pCause);
+			}else{
+				Logging.log(this, "    ..NOT added");
 			}
 		}
 	}
@@ -166,18 +189,24 @@ public class Elector implements Localization
 	 * Removes a ClusterMember as active entity from the database
 	 * 
 	 * @param pClusterMember the formerly active ClusterMember
+	 * @param pCause the cause for this call
 	 */
-	private void removeActiveClusterMember(ClusterMember pClusterMember)
+	private void removeActiveClusterMember(ClusterMember pClusterMember, String pCause)
 	{
 		if(mNodeActiveClusterMembers == null){
 			throw new RuntimeException("Invalid node-global election state");
 		}
 
+		Logging.log(this, "Removing active ClusterMember: " + pClusterMember);
 		synchronized (mNodeActiveClusterMembers) {
 			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[pClusterMember.getHierarchyLevel().getValue()];
 			
 			if(tLevelList.contains(pClusterMember)){
 				tLevelList.remove(pClusterMember);
+				Logging.log(this, "    ..removed");
+				mHRMController.addGUIDescriptionNodeElectionStateChange("\n - " + pClusterMember + " <== " + pCause);
+			}else{
+				Logging.log(this, "    ..NOT removed");
 			}
 		}
 	}
@@ -679,8 +708,9 @@ public class Elector implements Localization
 	 * 
 	 * @param pSourceL2Address the L2Address of the source
 	 * @param pSourcePriority the priority of the source
+	 * @param pCause the cause for this call
 	 */
-	private void leaveWorseAlternativeElections(L2Address pSourceL2Address, BullyPriority pSourcePriority)
+	private void leaveWorseAlternativeElections(L2Address pSourceL2Address, BullyPriority pSourcePriority, String pCause)
 	{
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// do this only for higher hierarchy levels!
@@ -720,13 +750,13 @@ public class Elector implements Localization
 											 * Mark/remove this ClusterMember because it's not active anymore
 											 */ 
 											Logging.log(this, "      ..losing active ClusterMember: " + tLevelClusterMember);
-											removeActiveClusterMember(tLevelClusterMember);
+											removeActiveClusterMember(tLevelClusterMember, "leaveWorseAlternativeElections() [Prio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + "] <== " + pCause);
 
 											/**
 											 * Distribute "LEAVE" for the alternative election process
 											 */
 											Logging.log(this, "      ..LEAVING: " + tAlternativeElection);
-											tAlternativeElection.distributeLEAVE("leaveWorseAlternativeElections() [Prio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + "] called by election winner: " + this);
+											tAlternativeElection.distributeLEAVE("leaveWorseAlternativeElections() [Prio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + "] <== " + pCause);
 										}else{
 											Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
 										}
@@ -781,15 +811,17 @@ public class Elector implements Localization
 	/**
 	 * Leaves alternative elections with a lower priority than this ClusterMember.
 	 * This function is triggered if an ANNOUNCE is simulated by an external leaveReturnOnNewPeerPriority().
+	 * 
+	 * @param pCause the cause for the call
 	 */
-	private void leaveWorseAlternativeElections()
+	private void leaveWorseAlternativeElections(String pCause)
 	{
 		LinkedList<ComChannel> tChannels = mParent.getComChannels();
 
 		if(tChannels.size() == 1){
 			ComChannel tComChannelToCoordinator = tChannels.getFirst();
 			
-			leaveWorseAlternativeElections(tComChannelToCoordinator.getPeerL2Address(), tComChannelToCoordinator.getPeerPriority());
+			leaveWorseAlternativeElections(tComChannelToCoordinator.getPeerL2Address(), tComChannelToCoordinator.getPeerPriority(), pCause);
 		}else{
 			throw new RuntimeException("Found an unplausible amount of comm. channels: " + tChannels);
 		}
@@ -801,17 +833,21 @@ public class Elector implements Localization
 	 * 
 	 * @param pSourceL2Address the L2Address of the source
 	 * @param pSourcePriority the priority of the source
+	 * @param pCause the cause for this call
 	 */
-	private void returnToAlternativeElections(L2Address pSourceL2Address, BullyPriority pSourcePriority)
+	private void returnToAlternativeElections(L2Address pSourceL2Address, BullyPriority pSourcePriority, String pCause)
 	{
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
 			if(mParent.getHierarchyLevel().isHigherLevel()){
+				Logging.log(this, "Returning to elections..");
 				/**
 				 * AVOID multiple RETURNS
 				 */
 				synchronized (mNodeActiveClusterMembers){
 					LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
+					Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tLevelList);
+					
 					/**
 					 * ONLY PROCEED IF THE PARENT IS AN ACTIVE ClusterMember!
 					 */
@@ -819,12 +855,11 @@ public class Elector implements Localization
 						/**
 						 * Mark/remove this ClusterMember (best choice election) because it's not active anymore
 						 */ 
-						Logging.log(this, "      ..losing active (best choice) ClusterMember: " + mParent);
-						removeActiveClusterMember(mParent);
+						Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
 						
 						// get all possible elections
 						LinkedList<CoordinatorAsClusterMember> tLevelClusterMembers = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
-						Logging.log(this, "Distributing RETURN, found ClusterMembers: " + tLevelClusterMembers);
+						Logging.log(this, "Distributing RETURN, found CoordinatorAsClusterMembers: " + tLevelClusterMembers);
 						
 						// have we found elections?
 						if(tLevelClusterMembers.size() > 0){					
@@ -837,7 +872,7 @@ public class Elector implements Localization
 								 */ 
 								if(!mParent.equals(tLevelClusterMember)){
 									// are we the coordinator (so, the coordinator is on this node!)?
-									if(!mHRMController.getNodeL2Address().equals(tLevelClusterMember.getCoordinatorNodeL2Address())){
+									//if(!mHRMController.getNodeL2Address().equals(tLevelClusterMember.getCoordinatorNodeL2Address())){
 										// get the elector
 										Elector tAlternativeElection = tLevelClusterMember.getElector();
 										if(tAlternativeElection != null){
@@ -845,15 +880,15 @@ public class Elector implements Localization
 											 * Distribute "RETURN" for the alternative election process
 											 */
 											Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
-											tAlternativeElection.distributeRETURN("returnToAlternativeElections() called by election loser: " + this);
+											tAlternativeElection.distributeRETURN("returnToAlternativeElections() <== " + pCause);
 										}else{
 											throw new RuntimeException("Found invalid elector for: " + tLevelClusterMember);
 										}
-									}else{
-										// we have found a local cluster member which belongs to the same cluster like we do
-									}
+//									}else{
+//										Logging.log(this, "      ..skipping reference to local cluster member which belongs to the same cluster like we do: " + tLevelClusterMember + ", coordinator=" + tLevelClusterMember.getCoordinatorNodeL2Address());
+//									}
 								}else{
-									// we have found this election process
+									Logging.log(this, "      ..skipping reference to ourself");
 								}
 							}// for
 						}else{
@@ -896,7 +931,7 @@ public class Elector implements Localization
 							 * We behave like we would do if we receive an ANNOUNCE packet
 							 */
 							Logging.log(this, "      ..leave all alternative election processes with a lower priority than the peer");
-							leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority());
+							leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), this + "::leaveReturnOnNewPeerPriority()");
 						}else{
 							/**
 							 * We behave like we would do if we receive a RESIGN packet
@@ -916,8 +951,8 @@ public class Elector implements Localization
 							for(ClusterMember tClusterMember : tLevelList){
 								Elector tElectorClusterMember = tClusterMember.getElector();
 								
-								Logging.log(this, "      ..leave all alternative election processes in realtion to foreign election: " + tElectorClusterMember);
-								tElectorClusterMember.leaveWorseAlternativeElections();
+								Logging.log(this, "      ..leave all alternative election processes in relation to foreign election: " + tElectorClusterMember);
+								tElectorClusterMember.leaveWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()");
 							}								
 						}else{
 							// no active ClusterMember is known and the priority update affects only the current ClusterMember
@@ -1162,13 +1197,13 @@ public class Elector implements Localization
 				Logging.log(this, "    ..we received the ANNOUNCE via an active link");
 
 				// mark/store as active ClusterMember
-				addActiveClusterMember(mParent);
+				addActiveClusterMember(mParent, this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
 				
 				// check local cluster head if it is active and has a lower priority than the peer -> in this case we have to deactivate it 
 				deactivateWorseActiveCluster(pComChannel);
 				
 				// leave all alternative election processes with a lower priority than the peer
-				leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority());
+				leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
 			}
 	
 			// mark this cluster as active
@@ -1205,11 +1240,11 @@ public class Elector implements Localization
 			if(pComChannel.getLinkActivation()){
 				Logging.log(this, "    ..we received the RESIGN via an active link");
 
-				// mark/store as inactive ClusterMember
-				removeActiveClusterMember(mParent);
-	
 				// return to all other election processes because we have lost this coordinator at this hierarchy level
-				returnToAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority());
+				returnToAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), this + "::eventReceivedRESIGN() for " + pResignPacket);
+
+				// mark/store as inactive ClusterMember
+				removeActiveClusterMember(mParent, this + "::eventReceivedRESIGN() for " + pResignPacket);
 			}
 	
 			// mark this cluster as active

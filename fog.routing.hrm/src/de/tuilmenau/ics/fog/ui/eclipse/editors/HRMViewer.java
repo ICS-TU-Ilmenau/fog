@@ -105,6 +105,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     
     private Button mBtnPriorityLog = null;
     private Button mBtnClusteringLog = null;
+    private Button mBtnClusterMembersLog = null;
     private Button mBtnSuperiorCoordinatorsLog = null;
     
     private Button mBtnClusterMembers = null;
@@ -160,7 +161,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mGuiCounter == 1){
 			mToolBtnContainer = new Composite(pParent, SWT.NONE);
 	
-			GridLayout tLayout1 = new GridLayout(6, false);
+			GridLayout tLayout1 = new GridLayout(7, false);
 			mToolBtnContainer.setLayout(tLayout1);
 			mToolBtnContainer.setLayoutData(createGridData(true, 1));
 		}
@@ -194,6 +195,22 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
 					Logging.log(this, "Clustering updates: " + mHRMController.getGUIDescriptionClusterUpdates());
+				}
+				public String toString()
+				{
+					return mHRMViewer.toString();
+				}
+			});
+		}
+		// **** show active ClusterMember manipulation log ****
+		if(mGuiCounter == 1){
+			mBtnClusterMembersLog = new Button(mToolBtnContainer, SWT.PUSH);
+			mBtnClusterMembersLog.setText("Show active ClusterMember events");
+			mBtnClusterMembersLog.setLayoutData(createGridData(false, 1));
+			mBtnClusterMembersLog.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					Logging.log(this, "ClusterMember updates: " + ((String)mHRMController.getGUIDescriptionNodeElectionStateChanges()));
 				}
 				public String toString()
 				{
