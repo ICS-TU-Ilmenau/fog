@@ -207,7 +207,7 @@ public class InterfaceMAC extends Interface
 		boolean tNewPacket = false;
 		MACAddress tSourceMacAddr = null;
 
-		// TODO check is a fragment is the first fragment in order to
+		// TODO check if a fragment is the first fragment in order to
 		//      be more robust in case of packet loss
 		do {
 			//
