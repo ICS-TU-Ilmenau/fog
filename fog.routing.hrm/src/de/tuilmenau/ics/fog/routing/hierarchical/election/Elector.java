@@ -772,7 +772,7 @@ public class Elector implements Localization
 							}
 						}// for
 					}else{
-						Logging.err(this, "We haven't even found our parent as ClusterMember at hierarchy level: " + mParent.getHierarchyLevel().getValue());
+						// we haven't even found our parent as ClusterMember at this hierarchy level
 					}
 				}
 			}
