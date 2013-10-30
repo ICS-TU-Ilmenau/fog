@@ -535,7 +535,7 @@ public class ComSession extends Session
 			if (tDeletedComChannel != null){
 				Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + ", old comm. channel is: " + tDeletedComChannel);
 			}else{
-				throw new RuntimeException("Unable to find the communication channel for destination: " + tDestination + ", known communication channels are: " + getAllComChannels().toString());
+				throw new RuntimeException("Unable to find the communication channel for destination: " + tDestination + ", known communication channels are: " + getAllComChannels().toString() + ", dropped packet payload: " + pMultiplexHeader.getPayload());				
 			}
 		}
 	}
