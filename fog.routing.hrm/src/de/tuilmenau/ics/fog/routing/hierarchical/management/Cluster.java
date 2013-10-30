@@ -388,7 +388,7 @@ public class Cluster extends ClusterMember
 	/**
 	 * EVENT: cluster role invalid
 	 */
-	public synchronized void eventClusterRoleInvalid()
+	public void eventClusterRoleInvalid()
 	{
 		Logging.log(this, "============ EVENT: cluster role invalid");
 		
@@ -530,22 +530,32 @@ public class Cluster extends ClusterMember
 			LinkedList<Coordinator> tCoordinators = mHRMController.getAllCoordinators(getHierarchyLevel().getValue() - 1);
 			
 			/**
-			 * Iterate over all found local coordinators
+			 * Copy list of inferior local coordinators
 			 */
+			LinkedList<Coordinator> tInferiorLocalCoordinators = null;
 			synchronized (mInferiorLocalCoordinators) {
+				tInferiorLocalCoordinators = (LinkedList<Coordinator>) mInferiorLocalCoordinators.clone();
+			}
+
+			/**
+			 * Iterate over all found inferior local coordinators
+			 */
+			synchronized (tInferiorLocalCoordinators) {
 				if(mCountDistributeMembershipRequests > 1){
 					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-						Logging.log(this, "      ..having connections to these inferior local coordinators: " + mInferiorLocalCoordinators.toString());
+						Logging.log(this, "      ..having connections to these inferior local coordinators: " + tInferiorLocalCoordinators.toString());
 					}
 				}
 				for (Coordinator tCoordinator : tCoordinators){
-					if (!mInferiorLocalCoordinators.contains(tCoordinator)){
+					if (!tInferiorLocalCoordinators.contains(tCoordinator)){
 						if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 							Logging.log(this, "      ..found inferior local coordinator [NEW]: " + tCoordinator);
 						}
 						
 						// add this local coordinator to the list of connected coordinators
-						mInferiorLocalCoordinators.add(tCoordinator);
+						synchronized (mInferiorLocalCoordinators) {
+							mInferiorLocalCoordinators.add(tCoordinator);
+						}
 	
 						if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 							Logging.log(this, "      ..get/create communication session");
@@ -575,7 +585,7 @@ public class Cluster extends ClusterMember
 				/************************************
 				 * Requests for remote coordinators
 				 ************************************/
-				if(mInferiorLocalCoordinators.size() > 0){
+				if(tInferiorLocalCoordinators.size() > 0){
 					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 						Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR REMOTE COORDINATORS STARTED");
 					}
@@ -583,22 +593,32 @@ public class Cluster extends ClusterMember
 					
 					if(tCoordinatorProxies.size() > 0){
 						/**
+						 * Copy list of inferior local coordinators
+						 */
+						LinkedList<Coordinator> tInferiorRemoteCoordinators = null;
+						synchronized (mInferiorRemoteCoordinators) {
+							tInferiorRemoteCoordinators = (LinkedList<Coordinator>) mInferiorRemoteCoordinators.clone();
+						}
+
+						/**
 						 * Iterate over all found remote coordinators
 						 */
-						synchronized (mInferiorRemoteCoordinators) {
+						synchronized (tInferiorRemoteCoordinators) {
 							if(mCountDistributeMembershipRequests > 1){
 								if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-									Logging.log(this, "      ..having connections to these inferior remote coordinators: " + mInferiorRemoteCoordinators.toString());
+									Logging.log(this, "      ..having connections to these inferior remote coordinators: " + tInferiorRemoteCoordinators.toString());
 								}
 							}
 							for (CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
-								if (!mInferiorRemoteCoordinators.contains(tCoordinatorProxy)){
+								if (!tInferiorRemoteCoordinators.contains(tCoordinatorProxy)){
 									if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 										Logging.log(this, "      ..found remote inferior coordinator[NEW]: " + tCoordinatorProxy);
 									}
 									
 									// add this remote coordinator to the list of connected coordinators
-									mInferiorRemoteCoordinators.add(tCoordinatorProxy);
+									synchronized (mInferiorRemoteCoordinators) {
+										mInferiorRemoteCoordinators.add(tCoordinatorProxy);
+									}
 									
 									ComSession tComSession = mHRMController.getCreateComSession(tCoordinatorProxy.getCoordinatorNodeL2Address());		
 									if (tComSession != null){
