@@ -786,6 +786,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn tColumnReceivedPackets = new TableColumn(tTable, SWT.NONE, 8);
 		tColumnReceivedPackets.setText("Received packets");
 
+		TableColumn tColumnState = new TableColumn(tTable, SWT.NONE, 9);
+		tColumnState.setText("State");
+
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
 		
@@ -890,6 +893,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			 */
 			tRow.setText(8, Integer.toString(tComChannel.countReceivedPackets()));
 
+			/**
+			 * Column 9:  
+			 */
+			tRow.setText(9, tComChannel.getState().toString());
+
 			j++;
 		}
 		
@@ -910,6 +918,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutMappingTable.setColumnData(tColumnDirection, new ColumnWeightData(1));
 		tLayoutMappingTable.setColumnData(tColumnSendPackets, new ColumnWeightData(1));		
 		tLayoutMappingTable.setColumnData(tColumnReceivedPackets, new ColumnWeightData(1));		
+		tLayoutMappingTable.setColumnData(tColumnState, new ColumnWeightData(1));		
 
 		/**
 		 * The table context menu

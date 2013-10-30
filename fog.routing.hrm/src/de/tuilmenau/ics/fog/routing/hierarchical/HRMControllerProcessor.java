@@ -9,15 +9,18 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
+import java.util.LinkedList;
+
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class is implemented as thread. It is responsible for clustering tasks of an HRMController.
+ * This class is implemented as thread. It is responsible for clustering tasks and packet processing of an HRMController.
  */
-public class ClustererThread extends Thread
+public class HRMControllerProcessor extends Thread
 {
 	/**
 	 * Stores the HRMController reference
@@ -30,6 +33,11 @@ public class ClustererThread extends Thread
 	private int[] mPendingClusterRequests = new int[HRMConfig.Hierarchy.HEIGHT]; 
 
 	/**
+	 * Stores pending requests for packet processing
+	 */
+	private LinkedList<ComChannel> mPendingPacketRequests = new LinkedList<ComChannel>();
+	
+	/**
 	 * Stores a log about "update" events
 	 */
 	private String mDescriptionClusterUpdates = new String();
@@ -40,16 +48,16 @@ public class ClustererThread extends Thread
 	private int mNumberUpdateRequests = 0;
 	
 	/**
-	 * Allow to exit the clusterer thread
+	 * Allow to exit the processor thread
 	 */
-	private boolean mClusterThreadNeeded = true;
+	private boolean mProcessorNeeded = true;
 	
 	/**
 	 * Constructor
 	 * 
 	 * @param pHRMController the HRMController instance
 	 */
-	ClustererThread(HRMController pHRMController)
+	HRMControllerProcessor(HRMController pHRMController)
 	{
 		mHRMController = pHRMController;
 		Logging.log(this, "##### Created clusterer thread for: " + mHRMController);
@@ -71,7 +79,7 @@ public class ClustererThread extends Thread
 	 */
 	public synchronized void eventUpdateCluster(ControlEntity pCause, HierarchyLevel pHierarchyLevel)
 	{
-		if(mClusterThreadNeeded){
+		if(mProcessorNeeded){
 			if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
 				Logging.log(this, "\n\n################ CLUSTERING TRIGGERED at hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
 				mPendingClusterRequests[pHierarchyLevel.getValue()]++;
@@ -86,29 +94,49 @@ public class ClustererThread extends Thread
 	}
 
 	/**
+	 * EVENT: "received packet"
+	 * 
+	 * @param pComChannel the comm. channel which received a new packet
+	 */
+	public synchronized void eventReceivedPacket(ComChannel pComChannel)
+	{
+		mPendingPacketRequests.add(pComChannel);
+
+		// trigger wake-up
+		notify();
+	}
+
+	/**
 	 * Returns the next "cluster event" (uses passive waiting)
 	 * 
 	 * @return the next cluster event (a hierarchy level)
 	 */
 	private synchronized int getNextClusterEvent()
 	{
-		while(mClusterThreadNeeded){
-			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
-				if(mPendingClusterRequests[i] > 0){
-					mPendingClusterRequests[i]--;
-					return i;
-				}
-			}
-			
-			// suspend until next trigger
-			try {
-				wait();
-			} catch (InterruptedException tExc) {
-				Logging.warn(this, "getNextClusterEvent() got an interrupt", tExc);
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			if(mPendingClusterRequests[i] > 0){
+				mPendingClusterRequests[i]--;
+				return i;
 			}
 		}
 		
 		return -1;
+	}
+
+	/**
+	 * Returns the next comm. channel which has pending packet data
+	 * 
+	 * @return the next comm. channel
+	 */
+	private synchronized ComChannel getNextComChannel()
+	{
+		ComChannel tResult = null;
+		
+		if(mPendingPacketRequests.size() > 0){
+			tResult = mPendingPacketRequests.removeFirst();
+		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -151,33 +179,61 @@ public class ClustererThread extends Thread
 		}
 	}
 	
+	private synchronized void waitForNextEvent()
+	{
+		// suspend until next trigger
+		try {
+			wait();
+		} catch (InterruptedException tExc) {
+			Logging.warn(this, "waitForNextEvent() got an interrupt", tExc);
+		}
+	}
+
 	/**
 	 * main function
 	 */
 	public void run()
 	{
-		Thread.currentThread().setName("Clusterer@" + mHRMController);
+		Thread.currentThread().setName("Processor@" + mHRMController);
 
-		while(mClusterThreadNeeded){
-			/**
-			 * Get the next cluster event
-			 */
+		while(mProcessorNeeded){
+			boolean tFoundEvent = false;
+			
+			/************************
+			 * Packet processing
+			 ***********************/
+			ComChannel tNextCommChannel = getNextComChannel();
+			while(tNextCommChannel != null){
+				tFoundEvent = true;
+				
+				// process the next comm. channel data
+				tNextCommChannel.processOnePacket();
+
+				// get the next waiting comm. channel
+				tNextCommChannel = getNextComChannel();
+			}	
+
+			/***********************
+			 * Clustering
+			 ***********************/
 			int tNextClusterEvent = getNextClusterEvent();
-			
+			if(tNextClusterEvent >= 0){
+				tFoundEvent = true;
+				cluster(tNextClusterEvent);
+			}
 			
 			/**
-			 * Process the next cluster event
+			 * Wait for next event
 			 */
-			// check for valid hierarchy level
-			if(tNextClusterEvent >= 0){ 
-				cluster(tNextClusterEvent);
+			if(!tFoundEvent){
+				waitForNextEvent();
 			}
 		}
 	}
 
 	public synchronized void exit()
 	{
-		mClusterThreadNeeded = false;
+		mProcessorNeeded = false;
 		notify();
 	}
 	

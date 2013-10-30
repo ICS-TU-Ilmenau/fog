@@ -204,9 +204,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private String mDesriptionHierarchyPriorityUpdates = new String();
 	
 	/**
-	 * Stores the thread for clustering tasks
+	 * Stores the thread for clustering tasks and packet processing
 	 */
-	private ClustererThread mClustererThread = null;
+	private HRMControllerProcessor mProcessorThread = null;
 	
 	/**
 	 * Stores a database about all known superior coordinators
@@ -297,11 +297,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Create clusterer thread
 		 */
-		mClustererThread = new ClustererThread(this);
+		mProcessorThread = new HRMControllerProcessor(this);
 		/**
 		 * Start the clusterer thread
 		 */
-		mClustererThread.start();
+		mProcessorThread.start();
 
 		/**
 		 * Create communication service
@@ -1547,10 +1547,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
 			Logging.log(this, "\n\n################ CLUSTERING TRIGGERED at hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
-			mClustererThread.eventUpdateCluster(pCause, pHierarchyLevel);
+			mProcessorThread.eventUpdateCluster(pCause, pHierarchyLevel);
 		}
 	}
 	
+	/**
+	 * Notifies packet processor about a new packet
+	 * 
+	 * @param pComChannel the comm. channel which has a new received packet
+	 */
+	public void notifyPacketProcessor(ComChannel pComChannel)
+	{
+		mProcessorThread.eventReceivedPacket(pComChannel);
+	}
+
 	/**
 	 * Registers an outgoing communication session
 	 * 
@@ -2119,7 +2129,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public String getGUIDescriptionClusterUpdates()
 	{
-		return mClustererThread.getGUIDescriptionClusterUpdates();
+		return mProcessorThread.getGUIDescriptionClusterUpdates();
 	}
 	
 	/**
@@ -2481,8 +2491,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Logging.log(this, "\n\n\n############## Exiting..");
 		
 		Logging.log(this, "     ..destroying clusterer-thread");
-		mClustererThread.exit();
-		mClustererThread = null;
+		mProcessorThread.exit();
+		mProcessorThread = null;
 
 		Logging.log(this, "     ..destroying all clusters/coordinators");
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){

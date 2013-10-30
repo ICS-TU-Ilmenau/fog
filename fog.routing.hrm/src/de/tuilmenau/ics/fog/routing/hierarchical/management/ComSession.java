@@ -312,6 +312,13 @@ public class ComSession extends Session
 			if (HRMConfig.Hierarchy.AUTO_CLEANUP_FOR_CONNECTIONS){
 				Logging.log(this, "\n\n\n########### Closing the parent connection(destination=" + mPeerL2Address + ", requirements=" + mParentConnection.getRequirements() + ")");
 				
+				// register at the HRMController as incoming or outgoing session
+				if (mIncomingConnection){
+				    mHRMController.unregisterIncomingSession(this);
+				}else{
+				    mHRMController.unregisterOutgoingSession(this);
+				}
+
 				//stop the session (closes the connection)
 				stop();
 			}
@@ -525,11 +532,9 @@ public class ComSession extends Session
 			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
 				Logging.log(this, "       ..delivering received payload: " + tPayload);
 			}
-			try {
-				tDestinationComChannel.receiveData(tPayload);
-			} catch (NetworkException tExc) {
-				Logging.err(this, "Unable to forward payload " + tPayload + " to " + tDestination + " via " + tDestinationComChannel);
-			}
+
+			// finally, forward the payload
+			tDestinationComChannel.receivePacket(tPayload);
 		} else {
 			ComChannel tDeletedComChannel = getDeletedComChannel(tDestination, tSource);
 			if (tDeletedComChannel != null){
@@ -754,6 +759,22 @@ public class ComSession extends Session
 	}
 	
 	/**
+	 * Returns true if this session is running.
+	 * 
+	 * @return true or false
+	 */
+	public boolean isRunning()
+	{
+		if(mParentConnection != null){
+			if(mParentConnection.isConnected()){
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
 	 * Handles error events for the parent connection
 	 * 
 	 * @param pExc the exception which caused the error
@@ -772,7 +793,7 @@ public class ComSession extends Session
 	public String toString()
 	{
 		if(getPeerL2Address() != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + (mLocalLoopback ? "@LOOP" : "") + "(Peer=" + getPeerL2Address() + ")";
+			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + (mLocalLoopback ? "@LOOP" : "") + "(Peer=" + getPeerL2Address() + (isRunning() ? ", RUNNING" : "") + ")";
 		} else {
 			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + (mLocalLoopback ? "@LOOP" : "");
 		}

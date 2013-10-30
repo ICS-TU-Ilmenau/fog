@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.io.Serializable;
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
@@ -183,8 +182,8 @@ public class ComChannel
 	/**
 	 * Stores the comm. channel state
 	 */
-	enum ChannelState{CLOSED, HALF_OPEN, OPEN};
-	private ChannelState mChannelEstablished = ChannelState.HALF_OPEN;
+	public enum ChannelState{CLOSED, HALF_OPEN, OPEN};
+	private ChannelState mChannelState = ChannelState.HALF_OPEN;
 	
 	/**
 	 * Stores the peer entity
@@ -225,6 +224,11 @@ public class ComChannel
 	 * Stores the send/received packets
 	 */
 	private LinkedList<ComChannelPacketMetaData> mPackets = new LinkedList<ComChannelPacketMetaData>();
+	
+	/**
+	 * Stores the packet queue
+	 */
+	private LinkedList<Serializable> mPacketQueue = new LinkedList<Serializable>();
 	
 	/**
 	 * Constructor
@@ -331,7 +335,7 @@ public class ComChannel
 	{
 		Logging.log(this, "EVENT: established");
 		
-		mChannelEstablished = ChannelState.OPEN;
+		mChannelState = ChannelState.OPEN;
 	}
 	
 	/**
@@ -341,7 +345,17 @@ public class ComChannel
 	 */
 	public boolean isEstablished()
 	{
-		return (mChannelEstablished == ChannelState.OPEN);
+		return (mChannelState == ChannelState.OPEN);
+	}
+	
+	/**
+	 * Returns the state of the channel
+	 * 
+	 * @return the channel state
+	 */
+	public ChannelState getState()
+	{
+		return mChannelState;
 	}
 	
 	/**
@@ -572,7 +586,7 @@ public class ComChannel
 	 */
 	public boolean sendPacket(SignalingMessageHrm pPacket)
 	{
-		if(mChannelEstablished != ChannelState.CLOSED /* at least, "half_open" is needed */){
+		if(mChannelState != ChannelState.CLOSED /* at least, "half_open" is needed */){
 			// create destination description
 			ClusterName tDestinationClusterName = getRemoteClusterName();
 			
@@ -602,8 +616,8 @@ public class ComChannel
 				return false;
 			}
 		}else{
-			throw new RuntimeException("CHANNEL IS STILL UNAVAILABLE, cannot send packet: " + pPacket);
-			//return false;
+			Logging.err(this, "sendPacket() found closed channel, dropping packet: " + pPacket);
+			return false;
 		}
 	}
 
@@ -728,7 +742,7 @@ public class ComChannel
 			/**
 			 * Change the channel state
 			 */
-			mChannelEstablished = ChannelState.CLOSED;
+			mChannelState = ChannelState.CLOSED;
 		}else{
 		    Logging.log(this, "       ..channel wasn't established");
 		}
@@ -738,36 +752,83 @@ public class ComChannel
 	}
 	
 	/**
+	 * Main packet receive function. It is used by the parent ComSession.
+	 *  
+	 * @param pPacket the packet
 	 * 
-	 * @param pData is the data that should be sent to the receiver side of this connection end point
-	 * @return true if the packet left the central multiplexer and the forwarding node that is attached to a direct down gate
-	 * @throws NetworkException
+	 * @return true
+	 */
+	public boolean receivePacket(Serializable pPacket)
+	{
+		/**
+		 * Store the packet in queue
+		 */
+		synchronized (mPacketQueue) {
+			mPacketQueue.add(pPacket);
+			
+			mHRMController.notifyPacketProcessor(this);
+		}
+		
+		return true;
+	}
+
+	/**
+	 * Processes one packet, triggered by packet processor (HRMController)
+	 */
+	public void processOnePacket()
+	{
+		Serializable tNextPacket = null;
+		
+		synchronized (mPacketQueue) {
+			if(mPacketQueue.size() > 0){
+				tNextPacket = mPacketQueue.removeFirst();
+			}
+		}
+		
+		if(tNextPacket != null){
+			if(getParent().isThisEntityValid()){
+				handlePacket(tNextPacket);
+			}else{
+				Logging.warn(this, "Parent control entity is already invalidated, dropping received packet: " + tNextPacket);
+			}
+		}else{
+			Logging.err(this, "Cannot process an invalid packet");
+		}
+	}
+	
+	/**
+	 * Processes one packet 
+	 * 
+	 * @param pPacket the packet
+	 * 
+	 * @return true if everything worked fine
 	 */
 	@SuppressWarnings("unused")
-	public boolean receiveData(Serializable pData) throws NetworkException
+	private boolean handlePacket(Serializable pPacket)
 	{
 		/**
 		 * Store the packet 
 		 */
-		storePacket(pData, false);
+		storePacket(pPacket, false);
 		
 		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
-			Logging.log(this, "RECEIVED DATA (" + pData.getClass().getSimpleName() + ") from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pData);
+			Logging.log(this, "RECEIVED DATA (" + pPacket.getClass().getSimpleName() + ") from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pPacket);
 		}
 			
 		/*
 		 * Invalid data
 		 */
-		if(pData == null) {
-			throw new NetworkException("Received invalid null pointer as data");
+		if(pPacket == null) {
+			Logging.err(this, "Received invalid null pointer as data");
+			return false;
 		}
 
 		/**
 		 * HRM signaling message
 		 */
-		if (pData instanceof SignalingMessageHrm){
+		if (pPacket instanceof SignalingMessageHrm){
 			// cast to a SignalingMessageHrm signaling message
-			SignalingMessageHrm tSignalingMessageHrmPacket = (SignalingMessageHrm)pData;
+			SignalingMessageHrm tSignalingMessageHrmPacket = (SignalingMessageHrm)pPacket;
 		
 			// process SignalingMessageHrm message
 			getPeerHRMIDFromHRMSignalingMessage(tSignalingMessageHrmPacket);
@@ -783,9 +844,9 @@ public class ComChannel
 		 * 			Cluster ==> ClusterMember
 		 * 			ClusterMember ==> Cluster
 		 */
-		if (pData instanceof SignalingMessageBully) {
+		if (pPacket instanceof SignalingMessageBully) {
 			// cast to a Bully signaling message
-			SignalingMessageBully tBullyMessage = (SignalingMessageBully)pData;
+			SignalingMessageBully tBullyMessage = (SignalingMessageBully)pPacket;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
 				Logging.log(this, "RECEIVED BULLY MESSAGE " + tBullyMessage.getClass().getSimpleName());
@@ -820,9 +881,9 @@ public class ComChannel
 		/**
 		 * RoutingInformation:
 		 */
-		if (pData instanceof RoutingInformation){
+		if (pPacket instanceof RoutingInformation){
 			// cast to a RoutingInformation signaling message
-			RoutingInformation tRoutingInformationPacket = (RoutingInformation)pData;
+			RoutingInformation tRoutingInformationPacket = (RoutingInformation)pPacket;
 
 			// process Bully message
 			handleSignalingMessageSharePhase(tRoutingInformationPacket);
@@ -834,8 +895,8 @@ public class ComChannel
 		 * AssignHRMID:
 		 * 			Coordinator (via Cluster) ==> all inferior local/remote ClusterMember
 		 */
-		if(pData instanceof AssignHRMID) {
-			AssignHRMID tAssignHRMIDPacket = (AssignHRMID)pData;
+		if(pPacket instanceof AssignHRMID) {
+			AssignHRMID tAssignHRMIDPacket = (AssignHRMID)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "ASSIGN_HRMID-received from \"" + getPeerHRMID() + "\" assigned HRMID: " + tAssignHRMIDPacket.getHRMID().toString());
@@ -850,8 +911,8 @@ public class ComChannel
 		 * RevokeHRMIDs:
 		 * 			Coordinator (via Cluster) ==> all inferior local/remote ClusterMember
 		 */
-		if(pData instanceof RevokeHRMIDs){
-			RevokeHRMIDs tRevokeHRMIDsPacket = (RevokeHRMIDs)pData;
+		if(pPacket instanceof RevokeHRMIDs){
+			RevokeHRMIDs tRevokeHRMIDsPacket = (RevokeHRMIDs)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "REVOKE_HRMIDS-received from \"" + getPeerHRMID() + "\" revoked HRMIDs: " + tRevokeHRMIDsPacket.getHRMIDs().toString());
@@ -869,8 +930,8 @@ public class ComChannel
 		 * 			ClusterMember(CoordinatorAsClusterMember) ==> Cluster
 		 *  
 		 */
-		if(pData instanceof RequestClusterMembershipAck) {
-			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)pData;
+		if(pPacket instanceof RequestClusterMembershipAck) {
+			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP_ACK-received from \"" + getPeerHRMID() + "\"");
@@ -892,14 +953,14 @@ public class ComChannel
 		 * InformClusterLeft:
 		 * 			ClusterMember ==> Cluster
 		 */
-		if(pData instanceof InformClusterLeft) {
-			InformClusterLeft tLeaveClusterPacket = (InformClusterLeft)pData;
+		if(pPacket instanceof InformClusterLeft) {
+			InformClusterLeft tLeaveClusterPacket = (InformClusterLeft)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "INFORM_CLUSTER_LEFT-received from \"" + getPeerHRMID() + "\"");
 
 			// no further transmissions
-			mChannelEstablished = ChannelState.CLOSED;
+			mChannelState = ChannelState.CLOSED;
 
 			// is the parent a coordinator or a cluster?
 			if (getParent() instanceof Cluster){
@@ -918,14 +979,14 @@ public class ComChannel
 		 * InformClusterMembershipCanceled:
 		 * 			Cluster ==> ClusterMember
 		 */
-		if(pData instanceof InformClusterMembershipCanceled) {
-			InformClusterMembershipCanceled tInformClusterMembershipCanceledPacket = (InformClusterMembershipCanceled)pData;
+		if(pPacket instanceof InformClusterMembershipCanceled) {
+			InformClusterMembershipCanceled tInformClusterMembershipCanceledPacket = (InformClusterMembershipCanceled)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "INFORM_CLUSTER_MEMBERSHIP_CANCELED-received from \"" + getPeerHRMID() + "\"");
 
 			// no further transmissions
-			mChannelEstablished = ChannelState.CLOSED;
+			mChannelState = ChannelState.CLOSED;
 			
 			// is the parent a coordinator or a cluster?
 			if (getParent() instanceof ClusterMember){
@@ -944,8 +1005,8 @@ public class ComChannel
 		 * AnnounceCluster
 		 * 			Coordinator (via Cluster) ==> all inferior local/remote ClusterMember
 		 */
-		if(pData instanceof AnnounceCoordinator) {
-			AnnounceCoordinator tAnnounceClusterPacket = (AnnounceCoordinator)pData;
+		if(pPacket instanceof AnnounceCoordinator) {
+			AnnounceCoordinator tAnnounceClusterPacket = (AnnounceCoordinator)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "ANNOUNCE_COORDINATOR-received from \"" + getPeerHRMID() + "\", announcement is: " + tAnnounceClusterPacket);
@@ -966,8 +1027,8 @@ public class ComChannel
 		 * InvalidCoordinator
 		 * 			Coordinator (via Cluster) ==> all inferior local/remote ClusterMember
 		 */
-		if(pData instanceof InvalidCoordinator) {
-			InvalidCoordinator tInvalidCoordinatorPacket = (InvalidCoordinator)pData;
+		if(pPacket instanceof InvalidCoordinator) {
+			InvalidCoordinator tInvalidCoordinatorPacket = (InvalidCoordinator)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "INVALID_COORDINATOR-received from \"" + getPeerHRMID() + "\", invalidation is: " + tInvalidCoordinatorPacket);
@@ -984,7 +1045,7 @@ public class ComChannel
 			return true;
 		}
 
-		Logging.warn(this, ">>>>>>>>>>>>> Found unsupported packet: " + pData);
+		Logging.warn(this, ">>>>>>>>>>>>> Found unsupported packet: " + pPacket);
 		return true;
 	}
 	

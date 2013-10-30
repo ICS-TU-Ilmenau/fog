@@ -165,9 +165,10 @@ public class HRMConfig
 	public class Hierarchy
 	{
 		/**
-		 * amount of hierarchical levels in the simulation
+		 * This defines the amount of hierarchical levels in the simulation.
+		 * A maximum value of 5 is allowed.
 		 */
-		public static final int HEIGHT = 2;
+		public static final int HEIGHT = 4;
 
 		/**
 		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level
@@ -175,7 +176,8 @@ public class HRMConfig
 		public static final int USED_BITS_PER_LEVEL = 8;
 
 		/**
-		 * Maximum radius that is allowed during cluster expansion phase 
+		 * Maximum radius that is allowed during cluster expansion phase.
+		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
 		public static final int EXPANSION_RADIUS = 2;
 
@@ -202,7 +204,7 @@ public class HRMConfig
 		 * Defines if connection should remain open or be automatically closed if the last inferior comm. channel was closed
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean AUTO_CLEANUP_FOR_CONNECTIONS = true;
+		public static final boolean AUTO_CLEANUP_FOR_CONNECTIONS = false; //TODO: fuehrt zu race conditions wenn letzter Kanal geht und neuer sofort wieder hinzu kommt
 
 		/**
 		 * Defines if coordinators should announce their existences among cluster members/neighbors
@@ -214,7 +216,7 @@ public class HRMConfig
 		/**
 		 * Defines the time period for CoordinatorAnnounce distributions
 		 */
-		public static final double PERIOD_COORDINATOR_ANNOUNCEMENTS = 5.0;
+		public static final double PERIOD_COORDINATOR_ANNOUNCEMENTS = 3.0;
 
 		/**
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
@@ -235,7 +237,7 @@ public class HRMConfig
 		 * neighborhood. The more neighbor L0 regions exist within the given max. radius (EXPANSION_RADIUS), the higher
 		 * is this value.
 		 */
-		public static final boolean USE_SEPARATE_HIERARCHY_NODE_PRIORITY = false;
+		public static final boolean USE_SEPARATE_HIERARCHY_NODE_PRIORITY = true;
 	}
 	
 	/**
