@@ -505,7 +505,7 @@ public class RequirementsToGatesMapper
 			@Override
 			public void remove()
 			{
-				// TODO Auto-generated method stub
+
 			}
 			
 			private Iterator<Object> iterator;

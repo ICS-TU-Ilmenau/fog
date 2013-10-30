@@ -236,7 +236,6 @@ public class TopologyParserDIMES extends TopologyParser
 	 */
 	@Override
 	public float getDelay() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 

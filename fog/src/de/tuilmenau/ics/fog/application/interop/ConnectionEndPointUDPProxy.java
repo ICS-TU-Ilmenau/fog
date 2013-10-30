@@ -440,7 +440,7 @@ public class ConnectionEndPointUDPProxy extends Session
 		@Override
 		public void error(Exception pExc)
 		{
-			// TODO Auto-generated method stub	
+	
 		}
 		
 	}

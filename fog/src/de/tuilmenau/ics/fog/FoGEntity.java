@@ -246,7 +246,6 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	@Override
 	public Description getCapabilities(Name name, Description requirements) throws NetworkException
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
@@ -379,21 +378,18 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	@Override
 	public NeighborList getNeighbors(Name namePrefix) throws NetworkException
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void registerObserverNeighborList(LayerObserverCallback observer)
 	{
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public boolean unregisterObserverNeighborList(LayerObserverCallback observer)
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 	
