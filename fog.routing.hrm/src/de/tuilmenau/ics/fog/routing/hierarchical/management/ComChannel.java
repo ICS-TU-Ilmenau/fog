@@ -703,7 +703,7 @@ public class ComChannel
 	public synchronized void closeChannel()
 	{
 		Logging.log(this, "Closing this channel");
-		if(mChannelEstablished != ChannelState.CLOSED){
+		if(isEstablished()){
 			/**
 			 * Inform the peer
 			 */
@@ -730,7 +730,7 @@ public class ComChannel
 			 */
 			mChannelEstablished = ChannelState.CLOSED;
 		}else{
-		    Logging.log(this, "       ..channel is already closed");
+		    Logging.log(this, "       ..channel wasn't established");
 		}
 		
 		// unregister from the parent comm. session
