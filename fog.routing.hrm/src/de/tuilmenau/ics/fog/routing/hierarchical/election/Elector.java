@@ -818,13 +818,13 @@ public class Elector implements Localization
 	{
 		LinkedList<ComChannel> tChannels = mParent.getComChannels();
 
-		if(tChannels.size() == 1){
-			ComChannel tComChannelToCoordinator = tChannels.getFirst();
-			
-			leaveWorseAlternativeElections(tComChannelToCoordinator.getPeerL2Address(), tComChannelToCoordinator.getPeerPriority(), pCause);
-		}else{
-			throw new RuntimeException("Found an unplausible amount of comm. channels: " + tChannels);
+		if(tChannels.size() > 1){
+			Logging.err(this, "Found an unplausible amount of comm. channels: " + tChannels);
 		}
+
+		ComChannel tComChannelToCoordinator = tChannels.getFirst();
+		
+		leaveWorseAlternativeElections(tComChannelToCoordinator.getPeerL2Address(), tComChannelToCoordinator.getPeerPriority(), pCause);
 	}
 	
 	/**
