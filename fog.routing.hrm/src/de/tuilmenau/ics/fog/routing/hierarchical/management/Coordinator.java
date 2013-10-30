@@ -768,7 +768,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * @param pSourceComSession the comm. session where the packet was received
 	 */
 	private int mClusterMembershipRequestNr = 0;
-	public synchronized void eventClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
+	public void eventClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
 	{
 		mClusterMembershipRequestNr++;
 		

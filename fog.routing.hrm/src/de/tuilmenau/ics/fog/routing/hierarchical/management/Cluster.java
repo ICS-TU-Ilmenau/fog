@@ -326,7 +326,7 @@ public class Cluster extends ClusterMember
 
 	 * @param pComChannel the comm. channel of the lost cluster member
 	 */
-	public synchronized void eventClusterMemberLost(ComChannel pComChannel)
+	public void eventClusterMemberLost(ComChannel pComChannel)
 	{
 		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
 		
