@@ -818,13 +818,13 @@ public class Elector implements Localization
 	{
 		LinkedList<ComChannel> tChannels = mParent.getComChannels();
 
-		if(tChannels.size() > 1){
-			Logging.err(this, "Found an unplausible amount of comm. channels: " + tChannels);
+		if(tChannels.size() == 1){
+			ComChannel tComChannelToCoordinator = tChannels.getFirst();
+			
+			leaveWorseAlternativeElections(tComChannelToCoordinator.getPeerL2Address(), tComChannelToCoordinator.getPeerPriority(), pCause);
+		}else{
+			Logging.err(this, "leaveWorseAlternativeElections() found an unplausible amount of comm. channels: " + tChannels + ", call cause=" + pCause);
 		}
-
-		ComChannel tComChannelToCoordinator = tChannels.getFirst();
-		
-		leaveWorseAlternativeElections(tComChannelToCoordinator.getPeerL2Address(), tComChannelToCoordinator.getPeerPriority(), pCause);
 	}
 	
 	/**
@@ -1752,8 +1752,10 @@ public class Elector implements Localization
 				
 			return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer);
 		}else{
-			throw new RuntimeException("Found an invalid comm. channel list: " + tChannels);
+			Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
 		}
+		
+		return false;
 	}
 
 	/**
