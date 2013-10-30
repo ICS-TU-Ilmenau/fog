@@ -478,36 +478,36 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Check if the hierarchy is continuous
 		 */
-		if((pCoordinator.getHierarchyLevel().isBaseLevel()) || (tFoundAnInferiorCoordinator != null)){
-			// register a route to the coordinator as addressable target
-			getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
-			
-			synchronized (mLocalCoordinators) {
-				// register as known coordinator
-				mLocalCoordinators.add(pCoordinator);
-			}
-			
-			// are we at base hierarchy level
-			if(pCoordinator.getHierarchyLevel().isBaseLevel()){
-				// increase hierarchy node priority
-				increaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinator);
-			}
-	
-			// updates the GUI decoration for this node
-			updateGUINodeDecoration();
-			
-			// register the coordinator in the local ARG
-			if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG){
-				registerNodeARG(pCoordinator);
-				
-				registerLinkARG(pCoordinator, pCoordinator.getCluster(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
-			}
-	
-			// it's time to update the GUI
-			notifyGUI(pCoordinator);
-		}else{
-			throw new RuntimeException("Hierarchy is non continuous, detected an error in the Matrix");
+		if((!pCoordinator.getHierarchyLevel().isBaseLevel()) && (tFoundAnInferiorCoordinator == null)){
+			Logging.err(this, "Hierarchy is temporary non continuous, detected an error in the Matrix!?");
 		}
+			
+		// register a route to the coordinator as addressable target
+		getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
+		
+		synchronized (mLocalCoordinators) {
+			// register as known coordinator
+			mLocalCoordinators.add(pCoordinator);
+		}
+		
+		// are we at base hierarchy level
+		if(pCoordinator.getHierarchyLevel().isBaseLevel()){
+			// increase hierarchy node priority
+			increaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinator);
+		}
+
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
+		
+		// register the coordinator in the local ARG
+		if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG){
+			registerNodeARG(pCoordinator);
+			
+			registerLinkARG(pCoordinator, pCoordinator.getCluster(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
+		}
+
+		// it's time to update the GUI
+		notifyGUI(pCoordinator);
 	}
 	
 	/**
