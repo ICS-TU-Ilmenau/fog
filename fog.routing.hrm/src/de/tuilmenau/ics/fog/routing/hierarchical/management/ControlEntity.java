@@ -110,6 +110,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	private static int sIDMachineMultiplier = -1;
 
+	/**
+	 * Stores if the role of this entity is still valid
+	 */
+	private boolean mRoleValid = true;
+
 	private static boolean DEBUG_EQUALS = false;
 	/**
 	 * Constructor
@@ -230,6 +235,25 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		}else{
 			Logging.warn(this, "Got an invalid HRMID" );
 		}
+	}
+
+	/**
+	 * EVENT: role invalid
+	 */
+	protected void eventInvalidation()
+	{
+		Logging.log(this, "Invalidation");
+		mRoleValid = false;
+	}
+	
+	/**
+	 * Returns if the role is still valid
+	 * 
+	 * @return
+	 */
+	protected boolean isThisEntityValid()
+	{
+		return mRoleValid;
 	}
 
 	/**

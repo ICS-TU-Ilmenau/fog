@@ -176,6 +176,11 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	{
 		Logging.log(this, "============ EVENT: ClusterMember_Role_Invalid");
 
+		/**
+		 * Trigger: role invalid
+		 */
+		eventInvalidation();
+
 		LinkedList<ComChannel> tComChannels = getComChannels();
 		for(ComChannel tComChannel : tComChannels){
 			unregisterComChannel(tComChannel);

@@ -61,11 +61,6 @@ public class Cluster extends ClusterMember
 	private LinkedList<CoordinatorProxy> mInferiorRemoteCoordinators = new LinkedList<CoordinatorProxy>();
 
 	/**
-	 * Stores if the cluster role is still valid
-	 */
-	private boolean mClusterRoleValid = true;
-
-	/**
 	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
 	 * ID and the hierarchical level. Later on - once a coordinator is found, it is additionally identified
@@ -393,6 +388,11 @@ public class Cluster extends ClusterMember
 		Logging.log(this, "============ EVENT: cluster role invalid");
 		
 		/**
+		 * Trigger: role invalid
+		 */
+		eventInvalidation();
+		
+		/**
 		 * TRIGGER: event coordinator role invalid
 		 */
 		if (getCoordinator() != null){
@@ -526,7 +526,7 @@ public class Cluster extends ClusterMember
 			Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR LOCAL COORDINATORS STARTED (call nr: " + mCountDistributeMembershipRequests + ")");
 		}
 
-		if(mClusterRoleValid){
+		if(isThisEntityValid()){
 			LinkedList<Coordinator> tCoordinators = mHRMController.getAllCoordinators(getHierarchyLevel().getValue() - 1);
 			
 			/**

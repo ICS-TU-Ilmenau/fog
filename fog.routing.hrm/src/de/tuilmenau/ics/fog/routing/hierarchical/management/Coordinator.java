@@ -77,11 +77,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private LinkedList<CoordinatorAsClusterMember> mClusterMemberships = new LinkedList<CoordinatorAsClusterMember>();
 	
-	/**
-	 * Stores if the coordinator role is still valid
-	 */
-	private boolean mCoordinatorRoleValid = true;
-	
 	private static final long serialVersionUID = 6824959379284820010L;
 	
 	/**
@@ -428,7 +423,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid");
 
-		mCoordinatorRoleValid = false;
+		/**
+		 * Trigger: role invalid
+		 */
+		eventInvalidation();
 		
 		/**
 		 * Trigger: invalid coordinator
@@ -547,7 +545,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public static boolean USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
 	private synchronized void distributeCoordinatorAnnouncement()
 	{
-		if(mCoordinatorRoleValid){
+		if(isThisEntityValid()){
 			// trigger periodic Cluster announcements
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
 				if (USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
@@ -605,7 +603,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public void fire()
 	{
-		if(mCoordinatorRoleValid){
+		if(isThisEntityValid()){
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
 				if(USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
@@ -774,7 +772,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		
 		Logging.log(this, "EVENT: got cluster membership request (" + mClusterMembershipRequestNr + ") from: " + pRemoteClusterName);
 		
-		if(mCoordinatorRoleValid){
+		if(isThisEntityValid()){
 			/**
 			 * Create new cluster (member) object
 			 */
