@@ -559,7 +559,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					mSentAnnounces++;
 					
 					/**
-					 * Send broadcasts in all locally known clusters at this hierarchy level
+					 * Send cluster broadcast (to the bottom) -> this informs all inferior clusters and let them forward the data towards the side
 					 */
 					LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue());
 					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
@@ -567,6 +567,24 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						Logging.log(this, "     ..distributing in clusters: " + tClusters);
 					}
 					for(Cluster tCluster : tClusters){
+						tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+					}
+
+					/**
+					 * Send cluster broadcast in all known inactive base hierarchy level clusters
+					 */
+					LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
+					LinkedList<Cluster> tInactiveL0Clusters = new LinkedList<Cluster>();
+					for(Cluster tCluster : tL0Clusters){
+						if(!tCluster.getClusterActivation()){
+							tInactiveL0Clusters.add(tCluster);
+						}
+					}					
+					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+						Logging.log(this, "########## Distributing Coordinator announcement (to the side): " + tAnnounceCoordinatorPacket);
+						Logging.log(this, "     ..distributing in inactive clusters: " + tClusters);
+					}
+					for(Cluster tCluster : tInactiveL0Clusters){
 						tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
 					}
 				}else{
