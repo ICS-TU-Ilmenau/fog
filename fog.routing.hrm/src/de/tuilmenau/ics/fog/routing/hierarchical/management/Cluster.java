@@ -185,7 +185,7 @@ public class Cluster extends ClusterMember
 		}
 	
 		// do we have a loop?
-		if(!pAnnounceCoordinator.knowsCluster(getClusterID())){
+		if(!pAnnounceCoordinator.hasPassedCluster(getClusterID())){
 			// check the TTL once more
 			if(pAnnounceCoordinator.isTTLOkay()){
 				// forward this announcement to all cluster members
@@ -213,7 +213,7 @@ public class Cluster extends ClusterMember
 		}
 	
 		// do we have a loop?
-		if(!pInvalidCoordinator.knowsCluster(getClusterID())){
+		if(!pInvalidCoordinator.hasPassedCluster(getClusterID())){
 			// check the TTL once more
 			if(pInvalidCoordinator.isTTLOkay()){
 				// forward this invalidation to all cluster members
@@ -492,7 +492,7 @@ public class Cluster extends ClusterMember
 	     * Create communication channel
 	     */
 		Logging.log(this, "       ..creating new communication channel");
-		ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, pComSession, pPeer); //TODO: statt sofort den kanal aufzubauen lieber auf das ACK warten und dann aufbauen, andernfalls koennen karteileichen entstehen wenn der remote bereits den zielkoordinator nicht mehr kennt und nie ein ACK schickt
+		ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, pComSession, pPeer); //TODO: statt sofort den kanal aufzubauen lieber auf das ACK warten und dann aufbauen, andernfalls koennen karteileichen entstehen wenn der remote bereits den zielkoordinator nicht mehr kennt und nie ein ACK schickt -> UPDATE: der remote schickt jetzt autonmatisch eine verweigerung sobald der einen request bekommt, wo der koordinator bereits gekillt ist
 		tComChannel.setRemoteClusterName(pLocalEndpointName);
 		tComChannel.setPeerPriority(pPeer.getPriority());
 		

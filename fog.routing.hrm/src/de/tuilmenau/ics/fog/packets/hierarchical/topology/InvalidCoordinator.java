@@ -80,7 +80,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	/**
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
 	 */
-	private int mTTL = HRMConfig.Hierarchy.EXPANSION_RADIUS; //TODO: set the max. INT value if it is the highest hierarchy level -> tell everyone about this coordinator!
+	private int mTTL = HRMConfig.Hierarchy.EXPANSION_RADIUS;
 	
 	/**
 	 * Stores if the packet is still forward top-downward or sidewards
@@ -124,7 +124,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	 * 
 	 * @param pClusterID the unique ID of the passed cluster
 	 */
-	public boolean knowsCluster(Long pClusterID)
+	public boolean hasPassedCluster(Long pClusterID)
 	{
 		boolean tResult = false;
 		
@@ -188,6 +188,23 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	 */
 	public boolean isTTLOkay()
 	{
+		/**
+		 * Return always true for the highest hierarchy level
+		 */
+		if(getSenderClusterName().getHierarchyLevel().isHighest()){
+			return true;
+		}
+
+		/**
+		 * Return always true for the second highest hierarchy level
+		 */
+		if(getSenderClusterName().getHierarchyLevel().getValue() == HRMConfig.Hierarchy.HEIGHT -2){
+			return true;
+		}
+		
+		/**
+		 * Return true depending on the TTL value
+		 */
 		return (mTTL > 0);
 	}
 	
