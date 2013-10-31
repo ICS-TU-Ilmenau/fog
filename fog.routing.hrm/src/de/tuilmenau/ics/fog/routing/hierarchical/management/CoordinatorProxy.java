@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -29,6 +30,11 @@ public class CoordinatorProxy extends ClusterMember
 	 * Stores the L2 address of the node where the coordinator is located
 	 */
 	private L2Address mCoordinatorNodeL2Address = null;
+	
+	/**
+	 * Defines which priority value is reported
+	 */
+	private final long PRIORITY = 0;
 	
 	/**
 	 * Constructor
@@ -85,6 +91,17 @@ public class CoordinatorProxy extends ClusterMember
 		mHRMController.unregisterCoordinatorProxy(this);
 	}
 	
+	/**
+	 * Returns the Bully priority of this node for this cluster
+	 * 
+	 * @return the Bully priority
+	 */
+	@Override
+	public BullyPriority getPriority()
+	{
+		return BullyPriority.create(this, PRIORITY);
+	}
+
 	/**
 	 * Creates a ClusterName object which describes this coordinator
 	 * 
