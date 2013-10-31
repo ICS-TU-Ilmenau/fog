@@ -1771,7 +1771,7 @@ public class Elector implements Localization
 		if(tChannels.size() == 1){
 			ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 				
-			return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer, false);
+			return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer, true);
 		}else{
 			Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
 		}
