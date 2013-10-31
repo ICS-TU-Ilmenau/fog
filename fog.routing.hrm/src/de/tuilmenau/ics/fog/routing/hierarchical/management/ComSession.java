@@ -186,14 +186,6 @@ public class ComSession extends Session
 	}
 
 	/**
-	 * This function gets called when the physical end point at remote side is locally known
-	 */
-	private void eventSessionAvailable()
-	{
-		Logging.log(this, "EVENT: session is available now");
-	}
-
-	/**
 	 * Determines the route to the peer (its central FN)
 	 *  
 	 * @return the route to the central FN of the peer
@@ -302,6 +294,82 @@ public class ComSession extends Session
 	}
 	
 	/**
+	 * Returns all registered communication channels
+	 * 
+	 * @return the list of known communication channels
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<ComChannel> getAllComChannels()
+	{
+		LinkedList<ComChannel> tResult = new LinkedList<ComChannel>();
+		
+		synchronized (mRegisteredComChannels) {
+			tResult = (LinkedList<ComChannel>) mRegisteredComChannels.clone();
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Searches for a registered communication channel which is identified by its local clusterID
+	 * 
+	 * @param pDestinationClusterName the destination ClusterName
+	 * 
+	 * @return the found comm. channel or null
+	 */
+	private ComChannel getComChannel(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
+	{
+		ComChannel tResult = null;
+		
+		LinkedList<ComChannel> tComChannels = getAllComChannels();
+		for (ComChannel tComChannel : tComChannels){
+			if((tComChannel.getParent().getClusterID().equals(pDestinationClusterName.getClusterID())) && 
+			   (tComChannel.getParent().getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
+			   (tComChannel.getRemoteClusterName().getClusterID().equals(pSourceClusterName.getClusterID())) && 
+			   (tComChannel.getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel()))) {
+				tResult = tComChannel;
+				break;
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Searches for an unregistered communication channel which is identified by its local clusterID
+	 * 
+	 * @param pDestinationClusterName the destination ClusterName
+	 * 
+	 * @return the found comm. channel or null
+	 */
+	private ComChannel getDeletedComChannel(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
+	{
+		ComChannel tResult = null;
+		
+		synchronized (mUnregisteredComChannels) {
+			for (ComChannel tComChannel : mUnregisteredComChannels){
+				if((tComChannel.getParent().getClusterID().equals(pDestinationClusterName.getClusterID())) && 
+				   (tComChannel.getParent().getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
+				   (tComChannel.getRemoteClusterName().getClusterID().equals(pSourceClusterName.getClusterID())) && 
+				   (tComChannel.getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel()))) {
+					tResult = tComChannel;
+					break;
+				}
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * This function gets called when the physical end point at remote side is locally known
+	 */
+	private void eventSessionAvailable()
+	{
+		Logging.log(this, "EVENT: session is available now");
+	}
+
+	/**
 	 * EVENT: all inferior channels were closed
 	 */
 	private void eventAllChannelsClosed()
@@ -326,28 +394,115 @@ public class ComSession extends Session
 	}
 
 	/**
-	 * Returns all registered communication channels
+	 * EVENT: MultiplexHeader
+	 * This function handles a multiplex-header of received packets by delivering the packet payload as signaling packet to the correct comm. channel.
 	 * 
-	 * @return the list of known communication channels
+	 * @param pMultiplexHeader the multiplex-header
 	 */
-	@SuppressWarnings("unchecked")
-	public LinkedList<ComChannel> getAllComChannels()
+	private void eventMultiplexPacket(MultiplexHeader pMultiplexHeader)
 	{
-		LinkedList<ComChannel> tResult = new LinkedList<ComChannel>();
-		
-		synchronized (mRegisteredComChannels) {
-			tResult = (LinkedList<ComChannel>) mRegisteredComChannels.clone();
+		/**
+		 * Get the target from the Multiplex-Header
+		 */
+		ClusterName tDestination = pMultiplexHeader.getReceiverClusterName();
+
+		/**
+		 * Get the source from the Multiplex-Header
+		 */
+		ClusterName tSource = pMultiplexHeader.getSenderClusterName();
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
+			Logging.log(this, "RECEIVING MULTIPLEX HEADER with destination: " + tDestination  + ", payload=" + pMultiplexHeader.getPayload());
 		}
 		
-		return tResult;
+		/**
+		 * Iterate over all communication channels and find the correct channel towards the destination
+		 */
+		ComChannel tDestinationComChannel = getComChannel(tDestination, tSource);
+		if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
+			Logging.log(this, "       ..found communication channel: " + tDestinationComChannel);
+		}
+
+		/**
+		 * Get the payload
+		 */
+		Serializable tPayload = pMultiplexHeader.getPayload();
+
+		/**
+		 * Forward the payload to the correct communication channel
+		 */
+		if (tDestinationComChannel != null){
+			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
+				Logging.log(this, "       ..delivering received payload: " + tPayload);
+			}
+
+			// finally, forward the payload
+			tDestinationComChannel.receivePacket(tPayload);
+		} else {
+			ComChannel tDeletedComChannel = getDeletedComChannel(tDestination, tSource);
+			if (tDeletedComChannel != null){
+				Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + ", old comm. channel is: " + tDeletedComChannel);
+			}else{
+				throw new RuntimeException("Unable to find the communication channel for destination: " + tDestination + ", known communication channels are: " + getAllComChannels().toString() + ", dropped packet payload: " + pMultiplexHeader.getPayload());				
+			}
+		}
 	}
-	
+
 	/**
-	 * Handles the packet "AnnouncePhysicalNeighborhood"
+	 * EVENT: RequestClusterMembership
+	 * 
+	 * @param pRequestClusterMembershipPacket the request packet
+	 */
+	private void eventRequestClusterMembership(RequestClusterMembership pRequestClusterMembershipPacket)
+	{
+		/**
+		 * Is the requester located at a higher hierarchy level? ==> a coordinator is addressed, which should be member of the remote Cluster object
+		 */ 
+		if (pRequestClusterMembershipPacket.getRequestingCluster().getHierarchyLevel().isHigherLevel()){
+			int tTargetCoordinatorID = pRequestClusterMembershipPacket.getDestination().getCoordinatorID();
+
+			// check the coordinator ID
+			if (tTargetCoordinatorID > 0){
+				
+				/**
+				 * Search for the coordinator and inform him about the cluster membership request
+				 */
+				Coordinator tCoordinator = mHRMController.getCoordinatorByID(tTargetCoordinatorID);
+				
+				// is the parent a coordinator or a cluster?
+				if (tCoordinator != null){
+					tCoordinator.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
+				}else{
+					Logging.warn(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + pRequestClusterMembershipPacket + ", coordinator has gone in the meanwhile?");
+				}
+			}else{
+				Logging.err(this, "Detected an invalid coordinator ID in the cluster membrship request: " + pRequestClusterMembershipPacket);
+			}
+		}else{// the requester is located at base hierarchy level -> a new ClusterMember object has to be created, which should be member of the remote Cluster object
+			/**
+			 * Create ClusterName for the signaled cluster
+			 */
+			ClusterName tSignaledClusterName = new ClusterName(mHRMController, pRequestClusterMembershipPacket.getDestination().getHierarchyLevel(), pRequestClusterMembershipPacket.getDestination().getClusterID(), -1);
+
+			/**
+			 * Create new cluster member object
+			 */
+			Logging.log(this, "    ..creating new local cluster member for: " + tSignaledClusterName); 
+			ClusterMember tClusterMember = ClusterMember.create(mHRMController, tSignaledClusterName, null);
+
+			/**
+			 * Trigger: "cluster membership request" within the new ClusterMember object
+			 */
+			tClusterMember.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
+		}
+	}
+
+	/**
+	 * EVENT: AnnouncePhysicalNeighborhood
 	 * 
 	 * @param pAnnouncePhysicalNeighborhood the packet
 	 */
-	private void handleAnnouncePhysicalEndPoint(AnnouncePhysicalEndPoint pAnnouncePhysicalNeighborhood)
+	private void eventAnnouncePhysicalEndPoint(AnnouncePhysicalEndPoint pAnnouncePhysicalNeighborhood)
 	{
 		// get the L2Address of the peer
 		setPeerL2Address(pAnnouncePhysicalNeighborhood.getSenderCentralAddress());
@@ -441,111 +596,6 @@ public class ComSession extends Session
 	}
 
 	/**
-	 * Searches for a registered communication channel which is identified by its local clusterID
-	 * 
-	 * @param pDestinationClusterName the destination ClusterName
-	 * 
-	 * @return the found comm. channel or null
-	 */
-	private ComChannel getComChannel(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
-	{
-		ComChannel tResult = null;
-		
-		LinkedList<ComChannel> tComChannels = getAllComChannels();
-		for (ComChannel tComChannel : tComChannels){
-			if((tComChannel.getParent().getClusterID().equals(pDestinationClusterName.getClusterID())) && 
-			   (tComChannel.getParent().getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
-			   (tComChannel.getRemoteClusterName().getClusterID().equals(pSourceClusterName.getClusterID())) && 
-			   (tComChannel.getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel()))) {
-				tResult = tComChannel;
-				break;
-			}
-		}
-		
-		return tResult;
-	}
-	
-	/**
-	 * Searches for an unregistered communication channel which is identified by its local clusterID
-	 * 
-	 * @param pDestinationClusterName the destination ClusterName
-	 * 
-	 * @return the found comm. channel or null
-	 */
-	private ComChannel getDeletedComChannel(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
-	{
-		ComChannel tResult = null;
-		
-		synchronized (mUnregisteredComChannels) {
-			for (ComChannel tComChannel : mUnregisteredComChannels){
-				if((tComChannel.getParent().getClusterID().equals(pDestinationClusterName.getClusterID())) && 
-				   (tComChannel.getParent().getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
-				   (tComChannel.getRemoteClusterName().getClusterID().equals(pSourceClusterName.getClusterID())) && 
-				   (tComChannel.getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel()))) {
-					tResult = tComChannel;
-					break;
-				}
-			}
-		}
-		
-		return tResult;
-	}
-
-	/**
-	 * Handles a multiplex-header of received packets, delivers the packet payload as signaling packet to the correct comm. channel
-	 * 
-	 * @param pMultiplexHeader the multiplex-header
-	 */
-	private void handleMultiplexHeader(MultiplexHeader pMultiplexHeader)
-	{
-		/**
-		 * Get the target from the Multiplex-Header
-		 */
-		ClusterName tDestination = pMultiplexHeader.getReceiverClusterName();
-
-		/**
-		 * Get the source from the Multiplex-Header
-		 */
-		ClusterName tSource = pMultiplexHeader.getSenderClusterName();
-
-		if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-			Logging.log(this, "RECEIVING MULTIPLEX HEADER with destination: " + tDestination  + ", payload=" + pMultiplexHeader.getPayload());
-		}
-		
-		/**
-		 * Iterate over all communication channels and find the correct channel towards the destination
-		 */
-		ComChannel tDestinationComChannel = getComChannel(tDestination, tSource);
-		if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-			Logging.log(this, "       ..found communication channel: " + tDestinationComChannel);
-		}
-
-		/**
-		 * Get the payload
-		 */
-		Serializable tPayload = pMultiplexHeader.getPayload();
-
-		/**
-		 * Forward the payload to the correct communication channel
-		 */
-		if (tDestinationComChannel != null){
-			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-				Logging.log(this, "       ..delivering received payload: " + tPayload);
-			}
-
-			// finally, forward the payload
-			tDestinationComChannel.receivePacket(tPayload);
-		} else {
-			ComChannel tDeletedComChannel = getDeletedComChannel(tDestination, tSource);
-			if (tDeletedComChannel != null){
-				Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + ", old comm. channel is: " + tDeletedComChannel);
-			}else{
-				throw new RuntimeException("Unable to find the communication channel for destination: " + tDestination + ", known communication channels are: " + getAllComChannels().toString() + ", dropped packet payload: " + pMultiplexHeader.getPayload());				
-			}
-		}
-	}
-
-	/**
 	 * Processes incoming packet data and forward it to the right ComChannel
 	 * 
 	 * @param pData the packet payload
@@ -574,7 +624,7 @@ public class ComSession extends Session
 				Logging.log(this, "ANNOUNCE PHYSICAL NEIGHBORHOOD received: " + tAnnouncePhysicalNeighborhood);
 			}
 			
-			handleAnnouncePhysicalEndPoint(tAnnouncePhysicalNeighborhood);
+			eventAnnouncePhysicalEndPoint(tAnnouncePhysicalNeighborhood);
 
 			return true;
 		} 
@@ -590,45 +640,9 @@ public class ComSession extends Session
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRequestClusterMembershipPacket.getRequestingCluster());
 			}
+
+			eventRequestClusterMembership(tRequestClusterMembershipPacket);
 			
-			// is the requester located at a higher hierarchy level? -> a coordinator is addressed, which should be member of the remote Cluster object
-			if (tRequestClusterMembershipPacket.getRequestingCluster().getHierarchyLevel().isHigherLevel()){
-				int tTargetCoordinatorID = tRequestClusterMembershipPacket.getDestination().getCoordinatorID();
-
-				// check the coordinator ID
-				if (tTargetCoordinatorID > 0){
-					
-					/**
-					 * Search for the coordinator and inform him about the cluster membership request
-					 */
-					Coordinator tCoordinator = mHRMController.getCoordinatorByID(tTargetCoordinatorID);
-					
-					// is the parent a coordinator or a cluster?
-					if (tCoordinator != null){
-						tCoordinator.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), this);
-					}else{
-						Logging.warn(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + tRequestClusterMembershipPacket + ", coordinator has gone in the meanwhile?");
-					}
-				}else{
-					Logging.err(this, "Detected an invalid coordinator ID in the cluster membrship request: " + tRequestClusterMembershipPacket);
-				}
-			}else{// the requester is located at base hierarchy level -> a new ClusterMember object has to be created, which should be member of the remote Cluster object
-				/**
-				 * Create ClusterName for the signaled cluster
-				 */
-				ClusterName tSignaledClusterName = new ClusterName(mHRMController, tRequestClusterMembershipPacket.getDestination().getHierarchyLevel(), tRequestClusterMembershipPacket.getDestination().getClusterID(), -1);
-
-				/**
-				 * Create new cluster member object
-				 */
-				Logging.log(this, "    ..creating new local cluster member for: " + tSignaledClusterName); 
-				ClusterMember tClusterMember = ClusterMember.create(mHRMController, tSignaledClusterName, null);
-
-				/**
-				 * Trigger: "cluster membership request" within the new ClusterMember object
-				 */
-				tClusterMember.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), this);
-			}
 			return true;
 		}
 
@@ -637,23 +651,23 @@ public class ComSession extends Session
 		 * 			ComChannel ==> ComChannel 
 		 */
 		if (pData instanceof MultiplexHeader) {
-			MultiplexHeader tMultiplexHeader = (MultiplexHeader) pData;
+			MultiplexHeader tMultiplexPacket = (MultiplexHeader) pData;
 			
 			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-				Logging.log(this, "MULTIPLEX PACKET received: " + tMultiplexHeader);
+				Logging.log(this, "MULTIPLEX PACKET received: " + tMultiplexPacket);
 			}
 			
 			/**
 			 * SignalingMessageHRM
 			 */
-			if(tMultiplexHeader.getPayload() instanceof SignalingMessageHrm){
-				SignalingMessageHrm tSignalingHRMPacket = (SignalingMessageHrm)tMultiplexHeader.getPayload();
+			if(tMultiplexPacket.getPayload() instanceof SignalingMessageHrm){
+				SignalingMessageHrm tSignalingHRMPacket = (SignalingMessageHrm)tMultiplexPacket.getPayload();
 				
 				// add source route entry
 				tSignalingHRMPacket.addSourceRoute("[R]: " + this.toString());
 			}
 
-			handleMultiplexHeader(tMultiplexHeader);
+			eventMultiplexPacket(tMultiplexPacket);
 
 			return true;
 		}
