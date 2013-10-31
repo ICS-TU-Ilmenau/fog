@@ -444,7 +444,11 @@ public class ComSession extends Session
 			if (tDeletedComChannel != null){
 				Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + ", old comm. channel is: " + tDeletedComChannel);
 			}else{
-				throw new RuntimeException("Unable to find the communication channel for destination: " + tDestination + ", known communication channels are: " + getAllComChannels().toString() + ", dropped packet payload: " + pMultiplexHeader.getPayload());				
+				String tKnownChannels = "";
+				for (ComChannel tComChannel: getAllComChannels()){
+					tKnownChannels += "\n      .." + tComChannel.toString() + " [Peer=" + tComChannel.getRemoteClusterName() + "]";
+				}
+				throw new RuntimeException("\n" + this + " >> is unable to find the communication channel\n   ..packet destination: " + tDestination + "\n   ..packet source: " + tSource + "\n   ..known communication channels are: " + tKnownChannels + "\n   ..known deleted channels are: " + mUnregisteredComChannels + "\n   ..dropped packet payload: " + pMultiplexHeader.getPayload());				
 			}
 		}
 	}
@@ -619,7 +623,8 @@ public class ComSession extends Session
 		/**
 		 * Create "MultiplexHeader"
 		 */
-		MultiplexHeader tMultiplexPacket = new MultiplexHeader(pSource, pDestination, tInformClusterLeft);
+		ClusterName tSignaledSourceClusterName = new ClusterName(mHRMController, new HierarchyLevel(this, pSource.getHierarchyLevel().getValue() + 1 /* we answer for a CoordinatorAsClusterMember instance which is always one level higher than its parent Coordinator instance*/), pSource.getClusterID(), pSource.getCoordinatorID());
+		MultiplexHeader tMultiplexPacket = new MultiplexHeader(tSignaledSourceClusterName, pDestination, tInformClusterLeft);
 
 		/**
 		 * Send the final packet
