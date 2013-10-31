@@ -1059,6 +1059,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tClusterLabel.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		boolean tClusterHeadWithoutCoordinator = false;
 		boolean tClusterMemberOfInactiveCluster = false;
+		/**
+		 * BACKGROUND COLOR
+		 */
 		if (GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES){
 			boolean tBackgroundSet = false;
 			if (pEntity instanceof Cluster){
@@ -1100,13 +1103,25 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}else{
 			tClusterLabel.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 		}
+		/**
+		 * TEXT
+		 */
 		if (pEntity instanceof Cluster){
 			Cluster tCluster = (Cluster) pEntity;
 			boolean tClusterCanBeActive = tCluster.getElector().isAllowedToWin();
 			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? "   (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : ""));
 		}else{
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : ""));
+			if(pEntity instanceof Coordinator){
+				Coordinator tCoordinator = (Coordinator)pEntity;
+				
+				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + " Announces=" + tCoordinator.countAnnounces());
+			}else{
+				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : ""));
+			}
 		}
+		/**
+		 * STYLE/LAYOUT
+		 */
 	    StyleRange style1 = new StyleRange();
 	    style1.start = 0;
 	    style1.length = tClusterLabel.getText().length();

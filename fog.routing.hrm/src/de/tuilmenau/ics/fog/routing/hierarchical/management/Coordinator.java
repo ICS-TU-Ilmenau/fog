@@ -77,6 +77,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private LinkedList<CoordinatorAsClusterMember> mClusterMemberships = new LinkedList<CoordinatorAsClusterMember>();
 	
+	/**
+	 * Stores how many announces were already sent
+	 */
+	private int mSentAnnounces = 0;
+	
 	private static final long serialVersionUID = 6824959379284820010L;
 	
 	/**
@@ -552,6 +557,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
 					
 					/**
+					 * Count the sent announces
+					 */
+					mSentAnnounces++;
+					
+					/**
 					 * Send broadcasts in all locally known clusters at this hierarchy level
 					 */
 					LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue());
@@ -597,6 +607,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 	}
 
+	/**
+	 * Returns how many announces were already sent
+	 * 
+	 * @return the number of announces
+	 */
+	public int countAnnounces()
+	{
+		return mSentAnnounces;
+	}
+	
 	/**
 	 * Implementation for IEvent::fire()
 	 */
