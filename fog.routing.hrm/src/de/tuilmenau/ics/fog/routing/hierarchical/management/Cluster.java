@@ -61,6 +61,11 @@ public class Cluster extends ClusterMember
 	private LinkedList<CoordinatorProxy> mInferiorRemoteCoordinators = new LinkedList<CoordinatorProxy>();
 
 	/**
+	 * Stores a description of former GUICoordinatorIDs
+	 */
+	private String mDescriptionFormerGUICoordinatorIDs = "";
+	
+	/**
 	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
 	 * ID and the hierarchical level. Later on - once a coordinator is found, it is additionally identified
@@ -314,6 +319,22 @@ public class Cluster extends ClusterMember
 			
 			eventRevokedHRMID(this, getHRMID());
 		}
+		
+		// store the former coordinator ID
+		mDescriptionFormerGUICoordinatorIDs += " " + Long.toString(getGUICoordinatorID());
+		
+		// unregister coordinator
+		eventNewLocalCoordinator(null);
+	}
+	
+	/**
+	 * Returns a description of the former GUICoordinatorIDs
+	 * 
+	 * @return the description
+	 */
+	public String getDescriptionFormerGUICoordinatorIDs()
+	{
+		return mDescriptionFormerGUICoordinatorIDs;
 	}
 	
 	/**

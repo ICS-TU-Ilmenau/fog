@@ -464,9 +464,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 */
 		Logging.log(this, "============ Destroying this coordinator now...");
 		
-		// unregister itself as coordinator for the managed cluster
-		mParentCluster.eventNewLocalCoordinator(null);
-
 		// unregister from HRMController's internal database
 		mHRMController.unregisterCoordinator(this);
 		
