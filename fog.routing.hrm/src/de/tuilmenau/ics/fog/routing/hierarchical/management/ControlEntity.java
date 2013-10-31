@@ -773,9 +773,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			 * Storing the ARG node for this announced remote coordinator
 			 */
 			// search for an already existing CoordintorProxy instance
+			boolean tNewCoordinatorProxy = false;
 			CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
 			if(tCoordinatorProxy == null){
 				tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address(), pAnnounceCoordinator.getRouteHopCount());
+				tNewCoordinatorProxy = true;
 			}else{
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 					// did we receive a coordinator announcement from our own coordinator?
@@ -791,12 +793,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			 * Storing the route to the announced remote coordinator
 			 * HINT: we provide a minimum hop count for the routing
 			 */
-			boolean tRegisterNewLink = true;
 			AbstractRoutingGraphLink tLink = mHRMController.getLinkARG(pSourceEntity, tCoordinatorProxy);
 			// do we know an already stored link in the ARG?
 			if(tLink != null){
-				tRegisterNewLink = false;
-
 				Route tOldLinkRoute = tLink.getRoute();
 				Route tNewLinkRoute = pAnnounceCoordinator.getRoute();
 				
@@ -816,8 +815,10 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 					}
 				}
 			}
-			// have we updated an old link?
-			if(tRegisterNewLink){
+			/**
+			 * Do we have a new CoordinatorProxy?
+			 */ 
+			if(tNewCoordinatorProxy){
 				AbstractRoutingGraphLink tNewLink = new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute());
 				
 				Logging.log(this, "Registering new ARG link: " + tNewLink);
