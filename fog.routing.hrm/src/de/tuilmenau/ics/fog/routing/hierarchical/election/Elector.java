@@ -784,7 +784,7 @@ public class Elector implements Localization
 	 * 
 	 * @param pComChannel the comm. channel to the possible better peer
 	 */
-	private void deactivateWorseActiveCluster(ComChannel pComChannel)
+	private void deactivateWorseLocalActiveCluster(ComChannel pComChannel)
 	{
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
@@ -798,7 +798,7 @@ public class Elector implements Localization
 					if(tLocalCluster != null){
 						Logging.log(this, "     ..found locally active cluster: " + tLocalCluster);
 						Elector tElectorCluster = tLocalCluster.getElector();
-						if(!tElectorCluster.havingHigherPrioriorityThan(pComChannel)){
+						if(!tElectorCluster.havingHigherPrioriorityThan(pComChannel, true)){
 							Logging.log(this, "     ..found locally worse active cluster: " + tLocalCluster);
 							tElectorCluster.eventElectionLost();
 						}
@@ -1200,7 +1200,7 @@ public class Elector implements Localization
 				addActiveClusterMember(mParent, this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
 				
 				// check local cluster head if it is active and has a lower priority than the peer -> in this case we have to deactivate it 
-				deactivateWorseActiveCluster(pComChannel);
+				deactivateWorseLocalActiveCluster(pComChannel);
 				
 				// leave all alternative election processes with a lower priority than the peer
 				leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
@@ -1310,6 +1310,11 @@ public class Elector implements Localization
 					startElection();
 				}
 			}
+			
+			/**
+			 * Deactivate local active cluster if it has a lower priority than the currently received priority from the peer 
+			 */
+			deactivateWorseLocalActiveCluster(pComChannel);
 		}
 		
 		return tNewPriorityCouldInfluenceElectionResult;
@@ -1645,10 +1650,11 @@ public class Elector implements Localization
 	 * @param pSourceL2Address the L2Address of the source (to which the priority should be compared to)
 	 * @param pSourcePriority the priority of the source (to which the priority should be compared to)
 	 * @param pComChannelToPeer the communication channel to the peer
+	 * @param pIgnoreLinkState defines if the link state should be ignored
 	 * 
 	 * @return true or false
 	 */
-	private synchronized boolean hasSourceHigherPrioriorityThan(L2Address pSourceL2Address, BullyPriority pSourcePriority, ComChannel pComChannelToPeer)
+	private synchronized boolean hasSourceHigherPrioriorityThan(L2Address pSourceL2Address, BullyPriority pSourcePriority, ComChannel pComChannelToPeer, boolean pIgnoreLinkState)
 	{
 		boolean tResult = false;
 		boolean tDEBUG = true;
@@ -1657,8 +1663,10 @@ public class Elector implements Localization
 		 * Return true if the comm. channel has a deactivated link
 		 */
 		if(HRMConfig.Election.USE_LINK_STATES){
-			if (!pComChannelToPeer.getLinkActivation()){
-				return true;
+			if (!pIgnoreLinkState){
+				if (!pComChannelToPeer.getLinkActivation()){
+					return true;
+				}
 			}
 		}
 		
@@ -1727,12 +1735,25 @@ public class Elector implements Localization
 	 * Returns true if the local priority is higher than the one of the peer (from the communication channel)
 	 * 
 	 * @param pComChannelToPeer the comm. channel to the peer
+	 * @param pIgnoreLinkState define if the link state should be ignored
+	 * 
+	 * @return true or false
+	 */
+	private synchronized boolean havingHigherPrioriorityThan(ComChannel pComChannelToPeer, boolean pIgnoreLinkState)
+	{
+		return hasSourceHigherPrioriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), pComChannelToPeer, pIgnoreLinkState);
+	}
+
+	/**
+	 * Returns true if the local priority is higher than the one of the peer (from the communication channel)
+	 * 
+	 * @param pComChannelToPeer the comm. channel to the peer
 	 * 
 	 * @return true or false
 	 */
 	private synchronized boolean havingHigherPrioriorityThan(ComChannel pComChannelToPeer)
 	{
-		return hasSourceHigherPrioriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), pComChannelToPeer);
+		return hasSourceHigherPrioriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), pComChannelToPeer, false);
 	}
 
 	/**
@@ -1750,7 +1771,7 @@ public class Elector implements Localization
 		if(tChannels.size() == 1){
 			ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 				
-			return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer);
+			return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer, false);
 		}else{
 			Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
 		}
