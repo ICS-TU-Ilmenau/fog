@@ -182,7 +182,7 @@ public class ComChannel
 	/**
 	 * Stores the comm. channel state
 	 */
-	public enum ChannelState{CLOSED, HALF_OPEN, ESTABLISHED};
+	public enum ChannelState{CLOSED, HALF_OPEN, OPEN};
 	private ChannelState mChannelState = ChannelState.HALF_OPEN;
 	
 	/**
@@ -335,7 +335,7 @@ public class ComChannel
 	{
 		Logging.log(this, "EVENT: established");
 		
-		mChannelState = ChannelState.ESTABLISHED;
+		mChannelState = ChannelState.OPEN;
 	}
 	
 	/**
@@ -345,7 +345,7 @@ public class ComChannel
 	 */
 	public boolean isEstablished()
 	{
-		return (mChannelState == ChannelState.ESTABLISHED);
+		return (mChannelState == ChannelState.OPEN);
 	}
 	
 	/**
