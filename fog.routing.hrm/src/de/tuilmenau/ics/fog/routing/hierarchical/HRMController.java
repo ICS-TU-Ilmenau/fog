@@ -2677,7 +2677,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			if(tRoute.size() == 1){
 				tResult = tRoute.get(0);
 			}else{
-				Logging.warn(this, "getLinkARG() expected a route with one entry but got: \nSOURCE=" + pFrom + "\nDESTINATION: " + pTo + "\nROUTE: " + tRoute);
+				/**
+				 * We haven't found a direct link - we found a multi-hop route instead.
+				 */
+				//Logging.warn(this, "getLinkARG() expected a route with one entry but got: \nSOURCE=" + pFrom + "\nDESTINATION: " + pTo + "\nROUTE: " + tRoute);
 			}
 		}
 		
