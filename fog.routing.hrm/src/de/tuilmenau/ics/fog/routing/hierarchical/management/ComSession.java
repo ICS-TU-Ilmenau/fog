@@ -18,6 +18,7 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.AnnouncePhysicalEndPoint;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
@@ -455,6 +456,8 @@ public class ComSession extends Session
 	 */
 	private void eventRequestClusterMembership(RequestClusterMembership pRequestClusterMembershipPacket)
 	{
+		Logging.log(this, "EVENT: RequestClusterMembership: " + pRequestClusterMembershipPacket);
+		
 		/**
 		 * Is the requester located at a higher hierarchy level? ==> a coordinator is addressed, which should be member of the remote Cluster object
 		 */ 
@@ -474,6 +477,7 @@ public class ComSession extends Session
 					tCoordinator.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
 				}else{
 					Logging.warn(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + pRequestClusterMembershipPacket + ", coordinator has gone in the meanwhile?");
+					denyClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), pRequestClusterMembershipPacket.getDestination());
 				}
 			}else{
 				Logging.err(this, "Detected an invalid coordinator ID in the cluster membrship request: " + pRequestClusterMembershipPacket);
@@ -593,6 +597,35 @@ public class ComSession extends Session
 		 * TRIGGER: session is available now
 		 */
 		eventSessionAvailable();		
+	}
+
+	/**
+	 * Deny a ClusterMembership request by sending 
+	 * @param pDestination the destination
+	 * @param pSource the source
+	 */
+	private void denyClusterMembershipRequest(ClusterName pDestination, ClusterName pSource)
+	{
+		Logging.log(this, "Denying RequestClusterMembership from: " + pDestination);
+		
+		/**
+		 * Create "InformClusterLeft" packet
+		 */
+		InformClusterLeft tInformClusterLeft = new InformClusterLeft(mHRMController.getNodeName(), null, null, null);
+	    
+		// add source route entry
+		tInformClusterLeft.addSourceRoute("[S]: " + this.toString());
+		
+		/**
+		 * Create "MultiplexHeader"
+		 */
+		MultiplexHeader tMultiplexPacket = new MultiplexHeader(pSource, pDestination, tInformClusterLeft);
+
+		/**
+		 * Send the final packet
+		 */
+		Logging.log(this, "       ..sending cluster left: " + tMultiplexPacket + ", payload=" + tMultiplexPacket.getPayload());
+		write(tMultiplexPacket);
 	}
 
 	/**

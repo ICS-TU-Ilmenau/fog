@@ -954,11 +954,15 @@ public class ComChannel
 		 * 			ClusterMember ==> Cluster
 		 */
 		if(pPacket instanceof InformClusterLeft) {
-			InformClusterLeft tLeaveClusterPacket = (InformClusterLeft)pPacket;
+			InformClusterLeft tInformClusterLeftPacket = (InformClusterLeft)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "INFORM_CLUSTER_LEFT-received from \"" + getPeerHRMID() + "\"");
 
+			if(!isEstablished()){
+				Logging.warn(this, "Received InformClusterLeft in state " + mChannelState.toString() + ": " + tInformClusterLeftPacket);
+			}
+			
 			// no further transmissions
 			mChannelState = ChannelState.CLOSED;
 
