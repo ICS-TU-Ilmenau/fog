@@ -339,11 +339,11 @@ public class ComChannel
 	}
 	
 	/**
-	 * Returns if the comm. channel is established
+	 * Returns if the comm. channel is open
 	 * 
 	 * @return true or false
 	 */
-	public boolean isEstablished()
+	public boolean isOpen()
 	{
 		return (mChannelState == ChannelState.OPEN);
 	}
@@ -717,7 +717,7 @@ public class ComChannel
 	public synchronized void closeChannel()
 	{
 		Logging.log(this, "Closing this channel");
-		if(isEstablished()){
+		if(isOpen()){
 			/**
 			 * Inform the peer
 			 */
@@ -959,7 +959,7 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "INFORM_CLUSTER_LEFT-received from \"" + getPeerHRMID() + "\"");
 
-			if(!isEstablished()){
+			if(!isOpen()){
 				Logging.warn(this, "Received InformClusterLeft in state " + mChannelState.toString() + ": " + tInformClusterLeftPacket);
 			}
 			

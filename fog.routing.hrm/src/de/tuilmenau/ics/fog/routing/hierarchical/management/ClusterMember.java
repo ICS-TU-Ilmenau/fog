@@ -408,7 +408,7 @@ public class ClusterMember extends ClusterName
 				}
 	
 				if ((pIncludeLoopback) || (!tIsLoopback)){
-					if(tComChannel.isEstablished()){
+					if(tComChannel.isOpen()){
 						SignalingMessageHrm tNewPacket = pPacket.duplicate();
 						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
 							Logging.log(this, "           ..sending duplicate packet: " + tNewPacket);
