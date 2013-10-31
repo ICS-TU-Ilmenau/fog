@@ -145,13 +145,13 @@ public class CoordinatorProxy extends ClusterMember
 					mHRMController.decreaseHierarchyNodePriority_KnownBaseCoordinator(this);
 				}
 	
-				Logging.log(this, "Updating the distance (hop count) to the coordinator node to: " + pDistance);
+				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
 				mDistance = pDistance;
 
 				// increase base node priority
 				mHRMController.increaseHierarchyNodePriority_KnownBaseCoordinator(this);
 			}else{
-				Logging.log(this, "Updating the distance (hop count) to the coordinator node to: " + pDistance);
+				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
 				mDistance = pDistance;
 			}
 			

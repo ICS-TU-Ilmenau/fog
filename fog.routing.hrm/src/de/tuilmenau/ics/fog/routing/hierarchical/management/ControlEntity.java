@@ -793,8 +793,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			 * Storing the route to the announced remote coordinator
 			 * HINT: we provide a minimum hop count for the routing
 			 */
+			
+			/**
+			 * Update an already existing link
+			 */ 
 			AbstractRoutingGraphLink tLink = mHRMController.getLinkARG(pSourceEntity, tCoordinatorProxy);
-			// do we know an already stored link in the ARG?
 			if(tLink != null){
 				Route tOldLinkRoute = tLink.getRoute();
 				Route tNewLinkRoute = pAnnounceCoordinator.getRoute();
@@ -804,8 +807,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 					// is the new route shorter than the old one?
 					if(tNewLinkRoute.isShorter(tOldLinkRoute)){
 						// replace the stored route by the new route which is shorter than the old one
-						Logging.log(this, "Updating ARG link: " + tLink);
-						Logging.log(this, "          ..new route: " + tNewLinkRoute);
+						//Logging.log(this, "Updating ARG link: " + tLink);
+						//Logging.log(this, "          ..new route: " + tNewLinkRoute);
 						tLink.setRoute(tNewLinkRoute);
 						
 						// update L2 link (update is automatically done in registerLinkL2() )
@@ -841,6 +844,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
 					}
 					mHRMController.cluster(this, tSuperiorClusterLevel);
+				}else{
+					Logging.warn(this, "Skipped clustering at hierarchy level " + (tCoordinatorProxy.getHierarchyLevel().getValue() + 1) + " for remote coordinator: " + tCoordinatorProxy);
 				}
 			}
 		}else{
