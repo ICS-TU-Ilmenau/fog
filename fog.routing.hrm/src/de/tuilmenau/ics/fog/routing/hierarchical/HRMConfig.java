@@ -97,6 +97,11 @@ public class HRMConfig
 		 * Shows detailed debug outputs about Bully related signaling messages
 		 */
 		public static final boolean GUI_SHOW_SIGNALING_BULLY = false;
+		
+		/**
+		 * Shows detailed debug outputs about distributed Bully related signaling messages
+		 */
+		public static final boolean GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY = false;
 
 		/**
 		 * Shows detailed debug outputs about HRMID signaling messages
@@ -168,7 +173,7 @@ public class HRMConfig
 		 * This defines the amount of hierarchical levels in the simulation.
 		 * A maximum value of 5 is allowed.
 		 */
-		public static final int HEIGHT = 4;
+		public static final int HEIGHT = 3;
 
 		/**
 		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level

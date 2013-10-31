@@ -726,7 +726,9 @@ public class Elector implements Localization
 				synchronized (mNodeActiveClusterMembers){
 					// get all possible elections
 					LinkedList<CoordinatorAsClusterMember> tLevelClusterMembers = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
-					Logging.log(this, "Distributing LEAVE, found ClusterMembers: " + tLevelClusterMembers);
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+						Logging.log(this, "Distributing LEAVE, found ClusterMembers: " + tLevelClusterMembers);
+					}
 					
 					// have we found elections?
 					if(tLevelClusterMembers.size() > 0){					
@@ -753,16 +755,22 @@ public class Elector implements Localization
 											/**
 											 * Mark/remove this ClusterMember because it's not active anymore
 											 */ 
-											Logging.log(this, "      ..losing active ClusterMember: " + tLevelClusterMember);
+											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+												Logging.log(this, "      ..losing active ClusterMember: " + tLevelClusterMember);
+											}
 											removeActiveClusterMember(tLevelClusterMember, "leaveWorseAlternativeElections() [Prio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + "] <== " + pCause);
 
 											/**
 											 * Distribute "LEAVE" for the alternative election process
 											 */
-											Logging.log(this, "      ..LEAVING: " + tAlternativeElection);
+											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+												Logging.log(this, "      ..LEAVING: " + tAlternativeElection);
+											}
 											tAlternativeElection.distributeLEAVE("leaveWorseAlternativeElections() [Prio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + "] <== " + pCause);
 										}else{
-											Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
+											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+												Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
+											}
 										}
 										/**********************************************************************************************************************************/
 									}else{
@@ -793,17 +801,23 @@ public class Elector implements Localization
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
 			if(mParent.getHierarchyLevel().isHigherLevel()){
-				Logging.log(this, "Deactivating worse active clusters..");
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+					Logging.log(this, "Deactivating worse active clusters..");
+				}
 				/**
 				 * AVOID multiple RETURNS
 				 */
 				synchronized (mNodeActiveClusterMembers){
 					Cluster tLocalCluster = mHRMController.getCluster(mParent.getHierarchyLevel().getValue());
 					if(tLocalCluster != null){
-						Logging.log(this, "     ..found locally active cluster: " + tLocalCluster);
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+							Logging.log(this, "     ..found locally active cluster: " + tLocalCluster);
+						}
 						Elector tElectorCluster = tLocalCluster.getElector();
 						if(!tElectorCluster.havingHigherPrioriorityThan(pComChannel, true)){
-							Logging.log(this, "     ..found locally worse active cluster: " + tLocalCluster);
+							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+								Logging.log(this, "     ..found locally worse active cluster: " + tLocalCluster);
+							}
 							tElectorCluster.eventElectionLost();
 						}
 					}
@@ -844,13 +858,17 @@ public class Elector implements Localization
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
 			if(mParent.getHierarchyLevel().isHigherLevel()){
-				Logging.log(this, "Returning to elections..");
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+					Logging.log(this, "Returning to elections..");
+				}
 				/**
 				 * AVOID multiple RETURNS
 				 */
 				synchronized (mNodeActiveClusterMembers){
 					LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
-					Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tLevelList);
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+						Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tLevelList);
+					}
 					
 					/**
 					 * ONLY PROCEED IF THE PARENT IS AN ACTIVE ClusterMember!
@@ -859,11 +877,15 @@ public class Elector implements Localization
 						/**
 						 * Mark/remove this ClusterMember (best choice election) because it's not active anymore
 						 */ 
-						Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+							Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
+						}
 						
 						// get all possible elections
 						LinkedList<CoordinatorAsClusterMember> tLevelClusterMembers = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
-						Logging.log(this, "Distributing RETURN, found CoordinatorAsClusterMembers: " + tLevelClusterMembers);
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+							Logging.log(this, "Distributing RETURN, found CoordinatorAsClusterMembers: " + tLevelClusterMembers);
+						}
 						
 						// have we found elections?
 						if(tLevelClusterMembers.size() > 0){					
@@ -883,7 +905,9 @@ public class Elector implements Localization
 											/**
 											 * Distribute "RETURN" for the alternative election process
 											 */
-											Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
+											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+												Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
+											}
 											tAlternativeElection.distributeRETURN("returnToAlternativeElections() <== " + pCause);
 										}else{
 											throw new RuntimeException("Found invalid elector for: " + tLevelClusterMember);
@@ -892,7 +916,9 @@ public class Elector implements Localization
 //										Logging.log(this, "      ..skipping reference to local cluster member which belongs to the same cluster like we do: " + tLevelClusterMember + ", coordinator=" + tLevelClusterMember.getCoordinatorNodeL2Address());
 //									}
 								}else{
-									Logging.log(this, "      ..skipping reference to ourself");
+									if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+										Logging.log(this, "      ..skipping reference to ourself");
+									}
 								}
 							}// for
 						}else{
@@ -914,7 +940,9 @@ public class Elector implements Localization
 	 */
 	private void leaveReturnOnNewPeerPriority(ComChannel pComChannel)
 	{
-		Logging.log(this, "LEAVE/RETURN because of new priority from: " + pComChannel);
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+			Logging.log(this, "LEAVE/RETURN because of new priority from: " + pComChannel);
+		}
 
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
@@ -934,7 +962,9 @@ public class Elector implements Localization
 							/**
 							 * We behave like we would do if we receive an ANNOUNCE packet
 							 */
-							Logging.log(this, "      ..leave all alternative election processes with a lower priority than the peer");
+							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+								Logging.log(this, "      ..leave all alternative election processes with a lower priority than the peer");
+							}
 							leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), this + "::leaveReturnOnNewPeerPriority()");
 						}else{
 							/**
@@ -955,7 +985,9 @@ public class Elector implements Localization
 							for(ClusterMember tClusterMember : tLevelList){
 								Elector tElectorClusterMember = tClusterMember.getElector();
 								
-								Logging.log(this, "      ..leave all alternative election processes in relation to foreign election: " + tElectorClusterMember);
+								if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+									Logging.log(this, "      ..leave all alternative election processes in relation to foreign election: " + tElectorClusterMember);
+								}
 								tElectorClusterMember.leaveWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()");
 							}								
 						}else{
