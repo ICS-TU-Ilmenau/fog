@@ -766,7 +766,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			ClusterName tRemoteClusterName = pAnnounceCoordinator.getSenderClusterName();
 			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 				Logging.log(this, "Registering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
-				Logging.log(this, "     ..announcement took the following route: " + pAnnounceCoordinator.getSourceRoute());
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE){
+					Logging.log(this, "     ..announcement took the following route: " + pAnnounceCoordinator.getSourceRoute());
+				}
 			}
 
 			/**
