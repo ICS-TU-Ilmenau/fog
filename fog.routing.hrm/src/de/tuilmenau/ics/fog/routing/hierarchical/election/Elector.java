@@ -1693,7 +1693,7 @@ public class Elector implements Localization
 	private synchronized boolean hasSourceHigherPrioriorityThan(L2Address pSourceL2Address, BullyPriority pSourcePriority, ComChannel pComChannelToPeer, boolean pIgnoreLinkState)
 	{
 		boolean tResult = false;
-		boolean tDEBUG = true;
+		boolean tDEBUG = false;
 		
 		/**
 		 * Return true if the comm. channel has a deactivated link
