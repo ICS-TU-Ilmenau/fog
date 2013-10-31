@@ -599,10 +599,10 @@ public class Elector implements Localization
 	 */
 	private void distributeLEAVE(String pCause)
 	{
-		//if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "SENDLEAVE()-START, electing cluster is " + mParent);
 			Logging.log(this, "SENDLEAVE(), cluster members: " + mParent.getComChannels().size());
-		//}
+		}
 
 		if(!head()){
 			LinkedList<ComChannel> tChannels = mParent.getComChannels();
@@ -620,16 +620,18 @@ public class Elector implements Localization
 					// send
 					tComChannelToPeer.sendPacket(tPacketBullyLeave);
 				}else{
-					Logging.log(this, "    ..skipped LEAVE");
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+						Logging.log(this, "    ..skipped LEAVE");
+					}
 				}
 			}else{
 				throw new RuntimeException("Found an invalid comm. channel list: " + tChannels);
 			}
 		}
 		
-		//if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "SENDLEAVE()-END");
-		//}
+		}
 	}
 
 	/**
@@ -639,10 +641,10 @@ public class Elector implements Localization
 	 */
 	private void distributeRETURN(String pCause)
 	{
-		//if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "SENDRETURN()-START, electing cluster is " + mParent);
 			Logging.log(this, "SENDRETURN(), cluster members: " + mParent.getComChannels().size());
-		//}
+		}
 
 		if(!head()){
 			LinkedList<ComChannel> tChannels = mParent.getComChannels();
@@ -660,16 +662,18 @@ public class Elector implements Localization
 					// send
 					tComChannelToPeer.sendPacket(tPacketBullyReturn);
 				}else{
-					Logging.log(this, "    ..skipped RETURN");
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+						Logging.log(this, "    ..skipped RETURN");
+					}
 				}
 			}else{
 				throw new RuntimeException("Found an invalid comm. channel list: " + tChannels);
 			}
 		}
 
-		//if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "SENDRETURN()-END");
-		//}
+		}
 	}
 
 	/**
@@ -1060,9 +1064,9 @@ public class Elector implements Localization
 	 */
 	private void eventReceivedLEAVE(ComChannel pComChannel, BullyLeave pLeavePacket)
 	{
-		//if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "EVENT: cluster member left election: " + pComChannel);
-		//}
+		}
 
 		// check if the link state has changed	
 		if(pComChannel.getLinkActivation()){
@@ -1100,9 +1104,9 @@ public class Elector implements Localization
 	 */
 	private void eventReceivedRETURN(ComChannel pComChannel, BullyReturn pReturnPacket)
 	{
-		//if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
 			Logging.log(this, "EVENT: cluster member returned: " + pComChannel);
-		//}
+		}
 		
 		// check if the link state has changed	
 		if(!pComChannel.getLinkActivation()){

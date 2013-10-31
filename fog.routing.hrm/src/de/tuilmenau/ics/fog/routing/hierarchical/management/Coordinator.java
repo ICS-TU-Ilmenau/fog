@@ -640,7 +640,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			}
 		}else{
 			if(USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-				Logging.warn(this, "fire() skipped because coordinator role is already invalidated");
+				//Logging.warn(this, "fire() skipped because coordinator role is already invalidated");
 			}
 		}
 	}

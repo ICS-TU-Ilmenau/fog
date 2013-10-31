@@ -167,7 +167,9 @@ public class HRMControllerProcessor extends Thread
 				 * Distribute membership requests
 				 */
 				if(tTargetCluster != null){
-					Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel);
+					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+						Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel);
+					}
 					tTargetCluster.distributeMembershipRequests();
 				}
 				

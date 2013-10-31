@@ -845,7 +845,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 					}
 					mHRMController.cluster(this, tSuperiorClusterLevel);
 				}else{
-					Logging.warn(this, "Skipped clustering at hierarchy level " + (tCoordinatorProxy.getHierarchyLevel().getValue() + 1) + " for remote coordinator: " + tCoordinatorProxy);
+					//Logging.warn(this, "Skipped clustering at hierarchy level " + (tCoordinatorProxy.getHierarchyLevel().getValue() + 1) + " for remote coordinator: " + tCoordinatorProxy);
 				}
 			}
 		}else{
