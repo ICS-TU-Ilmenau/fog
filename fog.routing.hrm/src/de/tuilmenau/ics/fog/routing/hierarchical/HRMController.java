@@ -3102,6 +3102,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the name of the central FN
 	 */
+	@SuppressWarnings("deprecation")
 	public Name getNodeName()
 	{
 		// get the name of the central FN of this node
