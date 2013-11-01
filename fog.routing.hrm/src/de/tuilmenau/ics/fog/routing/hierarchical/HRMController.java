@@ -586,7 +586,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						// it's time to update the GUI
 						notifyGUI(pCoordinator);
 					}else{
-						Logging. warn(this, "Skipping HRMID duplicate " + tHRMID.toString() +", additional registration is triggered by " + pCoordinator);
+						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							Logging. warn(this, "Skipping HRMID duplicate " + tHRMID.toString() +", additional registration is triggered by " + pCoordinator);
+						}
 					}
 				}
 			}else{
@@ -1140,12 +1142,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					// it's time to update the GUI
 					notifyGUI(pCluster);
 				}else{
-					Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCluster);
+					if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCluster);
+					}
 				}
 			}
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
-			Logging.warn(this, "Skipping HRMID registration " + tHRMID.toString() + " for " + pCluster);
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				Logging.warn(this, "Skipping HRMID registration " + tHRMID.toString() + " for " + pCluster);
+			}
 		}
 	}
 
@@ -1214,7 +1220,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID revocation
-			Logging.warn(this, "Skipping HRMID revocation of " + pHRMID.toString() + " for " + pCluster);
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				Logging.warn(this, "Skipping HRMID revocation of " + pHRMID.toString() + " for " + pCluster);
+			}
 		}
 	}
 

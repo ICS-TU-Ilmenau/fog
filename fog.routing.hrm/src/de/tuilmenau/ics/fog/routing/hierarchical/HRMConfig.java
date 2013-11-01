@@ -104,11 +104,6 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY = false;
 
 		/**
-		 * Shows detailed debug outputs about HRMID signaling messages
-		 */
-		public static final boolean GUI_SHOW_SIGNALING_ADDRESSING = false;
-
-		/**
 		 * Shows detailed debug outputs about HRMViewer steps
 		 */
 		public static final boolean GUI_SHOW_VIEWER_STEPS = false;
@@ -155,6 +150,11 @@ public class HRMConfig
 		 * Defines if the route of "InvalidCoordinator" packets should be shown
 		 */
 		public static final boolean SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS = false;
+		
+		/**
+		 * Defines if signaling messages for address distribution are shown
+		 */
+		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = false;
 	}
 	
 	public class Addressing
@@ -164,7 +164,7 @@ public class HRMConfig
 		 * otherwise it has to be triggered step by step via the GUI.
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean ASSIGN_AUTOMATICALLY = false;
+		public static final boolean ASSIGN_AUTOMATICALLY = true;
 		
 		/**
 		 * Defines the address which is used for cluster broadcasts

@@ -702,7 +702,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public synchronized void eventNewHRMIDAssigned(HRMID pHRMID)
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
+		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION)
 			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
 
 		/**
@@ -710,7 +710,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		 */
 		// we process such packets for cluster only on base hierarchy level and on all hierarchy level for coordinators
 		if ((getHierarchyLevel().isBaseLevel()) || (this instanceof Coordinator) || (this instanceof CoordinatorAsClusterMember)){
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION)
 				Logging.log(this, "     ..setting assigned HRMID " + pHRMID.toString());
 			
 			// update the local HRMID
@@ -743,12 +743,12 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if (tCoordinator != null){
 			// we should automatically continue the address distribution?
 			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
+				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION)
 					Logging.log(this, "     ..continuing the address distribution process via the coordinator " + tCoordinator);
 				tCoordinator.distributeAddresses();				
 			}			
 		}else{
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ADDRESSING)
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION)
 				Logging.log(this, "     ..stopping address propagation here because node " + mHRMController.getNodeGUIName() + " is only a cluster member");
 		}
 	}
