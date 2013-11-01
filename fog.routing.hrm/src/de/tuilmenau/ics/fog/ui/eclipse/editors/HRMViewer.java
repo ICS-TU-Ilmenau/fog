@@ -60,6 +60,7 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -993,10 +994,16 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private void showPackets(ComChannel pComChannel)
 	{
 		Logging.log(this, "Packet I/O for: " + pComChannel);
-		LinkedList<ComChannelPacketMetaData> tPacketsMetaData = pComChannel.getPacketsStorage();
+		LinkedList<ComChannelPacketMetaData> tPacketsMetaData = pComChannel.getSeenPackets();
 		int i = 0;
 		for (ComChannelPacketMetaData tPacketMetaData: tPacketsMetaData){
-			Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + "): " + tPacketMetaData.getPacket());
+			if(tPacketMetaData.getPacket() instanceof AnnounceCoordinator){
+				AnnounceCoordinator tAnnounceCoordinatorPacket = (AnnounceCoordinator)tPacketMetaData.getPacket();
+
+				Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket() + "\n   ..passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ "\n   ..passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
+			}else{
+				Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket());
+			}
 			i++;
 		}		
 	}

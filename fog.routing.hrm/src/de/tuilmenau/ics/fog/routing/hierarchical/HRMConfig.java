@@ -142,10 +142,15 @@ public class HRMConfig
 		public static final boolean SHOW_ALL_OBJECT_REFS_TO_CENTRAL_NODE_IN_ARG = false;
 
 		/**
-		 * Defines if the route of "AnnounceCoordinator" packets should be shown
+		 * Defines if data about "AnnounceCoordinator" packets should be shown
 		 */
 		public static final boolean SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS = false;
 
+		/**
+		 * Defines if the route of "AnnounceCoordinator" packets should be shown
+		 */
+		public static final boolean SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE = false;
+		
 		/**
 		 * Defines if the route of "InvalidCoordinator" packets should be shown
 		 */
