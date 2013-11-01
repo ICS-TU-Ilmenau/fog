@@ -547,56 +547,193 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * Updates the registered HRMID for a defined coordinator.
+	 * Registers an HRMID at local database
 	 * 
-	 * @param pCluster the cluster whose HRMID is updated
+	 * @param pEntity the entity for which the HRMID should be registered
 	 */
-	public void updateCoordinatorAddress(Coordinator pCoordinator)
+	private void registerHRMID(ControlEntity pEntity)
 	{
-		HRMID tHRMID = pCoordinator.getHRMID();
-		
+		/**
+		 * Get the new HRMID
+		 */
+		HRMID tHRMID = pEntity.getHRMID();
+
+		/**
+		 * Some validations
+		 */
 		if(tHRMID != null){
+			// ignore "0.0.0"
 			if(!tHRMID.isZero()){
-				Logging.log(this, "Updating address to " + tHRMID.toString() + " for coordinator " + pCoordinator);
-				
+				/**
+				 * Register the HRMID
+				 */
 				synchronized(mRegisteredOwnHRMIDs){
 					if ((!mRegisteredOwnHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
-						
-						if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-							Logging.log(this, "Updating the HRMID to " + tHRMID.toString() + " for " + pCoordinator);
-						}
-			
 						/**
 						 * Update the local address DB with the given HRMID
 						 */
+						if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+							Logging.log(this, "Updating the HRMID to: " + tHRMID.toString() + " for: " + pEntity);
+						}
+						
 						// register the new HRMID
 						mRegisteredOwnHRMIDs.add(tHRMID);
-			
+						
 						/**
 						 * Register a local loopback route for the new address 
 						 */
 						// register a route to the cluster member as addressable target
 						getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(tHRMID));
-			
+		
+						/**
+						 * Update the DNS for L0
+						 */
+						if((pEntity instanceof ClusterMember) && (pEntity.getHierarchyLevel().isBaseLevel())){
+							/**
+							 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
+							 * registered in the DNS as address for the name of this node. 
+							 */
+							// register the HRMID in the hierarchical DNS for the local router
+							HierarchicalNameMappingService<HRMID> tNMS = null;
+							try {
+								tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation());
+							} catch (RuntimeException tExc) {
+								HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
+							}				
+							// get the local router's human readable name (= DNS name)
+							Name tLocalRouterName = getNodeName();				
+							// register HRMID for the given DNS name
+							tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
+							// give some debug output about the current DNS state
+							String tString = new String();
+							for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
+								if (!tString.isEmpty()){
+									tString += ", ";
+								}
+								tString += tEntry;
+							}
+							Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
+						}
+						
+						
 						/**
 						 * Update the GUI
 						 */
 						// updates the GUI decoration for this node
 						updateGUINodeDecoration();
 						// it's time to update the GUI
-						notifyGUI(pCoordinator);
+						notifyGUI(pEntity);
 					}else{
 						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-							Logging. warn(this, "Skipping HRMID duplicate " + tHRMID.toString() +", additional registration is triggered by " + pCoordinator);
+							Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pEntity);
 						}
 					}
 				}
 			}else{
-				Logging.err(this, "Got a zero HRMID " + tHRMID.toString() + " for the coordinator: " + pCoordinator);
+				Logging.err(this, "Got a zero HRMID " + tHRMID.toString() + " for: " + pEntity);
 			}
 		}else{
-			Logging.err(this, "Got an invalid HRMID for the coordinator: " + pCoordinator);
+			Logging.err(this, "Got an invalid HRMID for: " + pEntity);
 		}
+	}
+	
+	/**
+	 * Unregisters an HRMID at local database
+	 * 
+	 * @param pEntity the entity for which the HRMID should be registered
+	 */
+	private void unregisterHRMID(ControlEntity pEntity)
+	{
+		/**
+		 * Get the new HRMID
+		 */
+		HRMID tHRMID = pEntity.getHRMID();
+
+		/**
+		 * Some validations
+		 */
+		if(tHRMID != null){
+			// ignore "0.0.0"
+			if(!tHRMID.isZero()){
+				/**
+				 * Unregister the HRMID
+				 */
+				synchronized(mRegisteredOwnHRMIDs){
+					if (mRegisteredOwnHRMIDs.contains(tHRMID)){
+						/**
+						 * Update the local address DB with the given HRMID
+						 */
+						if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
+							Logging.log(this, "Revoking the HRMID: " + tHRMID.toString() + " of: " + pEntity);
+						}
+						
+						mRegisteredOwnHRMIDs.remove(tHRMID);
+						
+						/**
+						 * Unregister the local loopback route for the address 
+						 */
+						// register a route to the cluster member as addressable target
+						getHRS().delHRMRoute(RoutingEntry.createLocalhostEntry(tHRMID));
+			
+						/**
+						 * Update the DNS for L0
+						 */
+						if((pEntity instanceof ClusterMember) && (pEntity.getHierarchyLevel().isBaseLevel())){
+							/**
+							 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
+							 * registered in the DNS as address for the name of this node. 
+							 */
+				//TODO				// register the HRMID in the hierarchical DNS for the local router
+				//			HierarchicalNameMappingService<HRMID> tNMS = null;
+				//			try {
+				//				tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation());
+				//			} catch (RuntimeException tExc) {
+				//				HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
+				//			}				
+				//			// get the local router's human readable name (= DNS name)
+				//			Name tLocalRouterName = getNodeName();				
+				//			// register HRMID for the given DNS name
+				//			tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
+				//			// give some debug output about the current DNS state
+				//			String tString = new String();
+				//			for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
+				//				if (!tString.isEmpty()){
+				//					tString += ", ";
+				//				}
+				//				tString += tEntry;
+				//			}
+				//			Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
+						}
+						
+						/**
+						 * Update the GUI
+						 */
+						// updates the GUI decoration for this node
+						updateGUINodeDecoration();
+						// it's time to update the GUI
+						notifyGUI(pEntity);
+					}else{
+						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							Logging.warn(this, "Skipping unknown HRMID, unregistration is triggered by " + pEntity);
+						}
+					}
+				}
+			}else{
+				Logging.err(this, "Got a zero HRMID " + tHRMID.toString() + " for: " + pEntity);
+			}
+		}else{
+			Logging.err(this, "Got an invalid HRMID for: " + pEntity);
+		}
+	}
+	
+	/**
+	 * Updates the registered HRMID for a defined coordinator.
+	 * 
+	 * @param pCluster the cluster whose HRMID is updated
+	 */
+	public void updateCoordinatorAddress(Coordinator pCoordinator)
+	{
+		registerHRMID(pCoordinator);
 	}
 
 	/**
@@ -621,40 +758,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Revokes a coordinator address
 	 * 
 	 * @param pCoordinator the coordinator for which the address is revoked
-	 * @param pHRMID the revoked address
 	 */
-	public void revokeCoordinatorAddress(Coordinator pCoordinator, HRMID pHRMID)
+	public void revokeCoordinatorAddress(Coordinator pCoordinator)
 	{
-		Logging.log(this, "Revoking address to " + pHRMID.toString() + " for coordinator " + pCoordinator);
-		
-		synchronized(mRegisteredOwnHRMIDs){
-			if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-				Logging.log(this, "Revoking the HRMID to " + pHRMID.toString() + " for " + pCoordinator);
-			}
+		HRMID tHRMID = pCoordinator.getHRMID();
 
-			/**
-			 * Update the local address DB with the given HRMID
-			 */
-			if (mRegisteredOwnHRMIDs.contains(pHRMID)){
-				mRegisteredOwnHRMIDs.remove(pHRMID);
-			}else{
-				Logging.err(this, "Cannot revoke unknown HRMID " + pHRMID);
-			}
+		Logging.log(this, "Revoking address to " + tHRMID.toString() + " for coordinator " + pCoordinator);
 
-			/**
-			 * Register a local loopback route for the new address 
-			 */
-			// register a route to the cluster member as addressable target
-			getHRS().delHRMRoute(RoutingEntry.createLocalhostEntry(pHRMID));
-
-			/**
-			 * Update the GUI
-			 */
-			// updates the GUI decoration for this node
-			updateGUINodeDecoration();
-			// it's time to update the GUI
-			notifyGUI(pCoordinator);
-		}			
+		unregisterHRMID(pCoordinator);
 	}
 
 	/**
@@ -1077,76 +1188,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * Updates the registered HRMID for a defined cluster.
+	 * Updates the registered HRMID for a defined Cluster.
 	 * 
-	 * @param pCluster the cluster whose HRMID is updated
+	 * @param pCluster the Cluster whose HRMID is updated
 	 */
 	public void updateClusterAddress(Cluster pCluster)
 	{
 		HRMID tHRMID = pCluster.getHRMID();
 
-		Logging.log(this, "Updating address to " + tHRMID.toString() + " for cluster " + pCluster);
+		Logging.log(this, "Updating address to " + tHRMID.toString() + " for Cluster " + pCluster);
 
 		// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
 		// the corresponding coordinator instance
 		if (pCluster.getHierarchyLevel().isBaseLevel()){
-			synchronized(mRegisteredOwnHRMIDs){
-				if ((!mRegisteredOwnHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
-					
-					/**
-					 * Update the local address DB with the given HRMID
-					 */
-					if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-						Logging.log(this, "Updating the HRMID to " + pCluster.getHRMID().toString() + " for " + pCluster);
-					}
-					
-					// register the new HRMID
-					mRegisteredOwnHRMIDs.add(tHRMID);
-					
-					/**
-					 * Register a local loopback route for the new address 
-					 */
-					// register a route to the cluster member as addressable target
-					getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(tHRMID));
-	
-					/**
-					 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
-					 * registered in the DNS as address for the name of this node. 
-					 */
-					// register the HRMID in the hierarchical DNS for the local router
-					HierarchicalNameMappingService<HRMID> tNMS = null;
-					try {
-						tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation());
-					} catch (RuntimeException tExc) {
-						HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
-					}				
-					// get the local router's human readable name (= DNS name)
-					Name tLocalRouterName = getNodeName();				
-					// register HRMID for the given DNS name
-					tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
-					// give some debug output about the current DNS state
-					String tString = new String();
-					for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
-						if (!tString.isEmpty()){
-							tString += ", ";
-						}
-						tString += tEntry;
-					}
-					Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
-					
-					/**
-					 * Update the GUI
-					 */
-					// updates the GUI decoration for this node
-					updateGUINodeDecoration();
-					// it's time to update the GUI
-					notifyGUI(pCluster);
-				}else{
-					if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-						Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pCluster);
-					}
-				}
-			}
+			registerHRMID(pCluster);
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
 			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
@@ -1156,72 +1211,66 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Updates the registered HRMID for a defined ClusterMember.
+	 * 
+	 * @param pClusterMember the ClusterMember whose HRMID is updated
+	 */
+	public void updateClusterMemberAddress(ClusterMember pClusterMember)
+	{
+		HRMID tHRMID = pClusterMember.getHRMID();
+
+		Logging.log(this, "Updating address to " + tHRMID.toString() + " for ClusterMember " + pClusterMember);
+
+		// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
+		// the corresponding coordinator instance
+		if (pClusterMember.getHierarchyLevel().isBaseLevel()){
+			registerHRMID(pClusterMember);
+		}else{
+			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				Logging.warn(this, "Skipping HRMID registration " + tHRMID.toString() + " for " + pClusterMember);
+			}
+		}
+	}
+
+	/**
 	 * Revokes a cluster address
 	 * 
-	 * @param pCluster the cluster for which the address is revoked
-	 * @param pHRMID the revoked address
+	 * @param pClusterMember the ClusterMember for which the address is revoked
 	 */
-	public void revokeClusterAddress(Cluster pCluster, HRMID pHRMID)
+	public void revokeClusterMemberAddress(ClusterMember pClusterMember)
 	{
-		Logging.log(this, "Revoking address " + pHRMID.toString() + " for cluster " + pCluster);
+		HRMID tHRMID = pClusterMember.getHRMID();
 
-		if (pCluster.getHierarchyLevel().isBaseLevel()){
-			synchronized(mRegisteredOwnHRMIDs){
-				/**
-				 * Update the local address DB with the given HRMID
-				 */
-				if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-					Logging.log(this, "Revoking the HRMID to " + pCluster.getHRMID().toString() + " for " + pCluster);
-				}
-				if (mRegisteredOwnHRMIDs.contains(pHRMID)){
-					mRegisteredOwnHRMIDs.remove(pHRMID);
-				}else{
-					Logging.err(this, "Cannot revoke unknown HRMID " + pHRMID);
-				}
-				
-				/**
-				 * Unregister the local loopback route for the address 
-				 */
-				// register a route to the cluster member as addressable target
-				getHRS().delHRMRoute(RoutingEntry.createLocalhostEntry(pHRMID));
-	
-				/**
-				 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
-				 * registered in the DNS as address for the name of this node. 
-				 */
-//TODO				// register the HRMID in the hierarchical DNS for the local router
-	//			HierarchicalNameMappingService<HRMID> tNMS = null;
-	//			try {
-	//				tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation());
-	//			} catch (RuntimeException tExc) {
-	//				HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
-	//			}				
-	//			// get the local router's human readable name (= DNS name)
-	//			Name tLocalRouterName = getNodeName();				
-	//			// register HRMID for the given DNS name
-	//			tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
-	//			// give some debug output about the current DNS state
-	//			String tString = new String();
-	//			for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
-	//				if (!tString.isEmpty()){
-	//					tString += ", ";
-	//				}
-	//				tString += tEntry;
-	//			}
-	//			Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
-				
-				/**
-				 * Update the GUI
-				 */
-				// updates the GUI decoration for this node
-				updateGUINodeDecoration();
-				// it's time to update the GUI
-				notifyGUI(pCluster);
-			}
+		Logging.log(this, "Revoking address " + tHRMID.toString() + " for ClusterMember " + pClusterMember);
+
+		if (pClusterMember.getHierarchyLevel().isBaseLevel()){
+			unregisterHRMID(pClusterMember);
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID revocation
 			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-				Logging.warn(this, "Skipping HRMID revocation of " + pHRMID.toString() + " for " + pCluster);
+				Logging.warn(this, "Skipping HRMID revocation of " + tHRMID.toString() + " for " + pClusterMember);
+			}
+		}
+	}
+
+	/**
+	 * Revokes a cluster address
+	 * 
+	 * @param pCluster the Cluster for which the address is revoked
+	 */
+	public void revokeClusterAddress(Cluster pCluster)
+	{
+		HRMID tHRMID = pCluster.getHRMID();
+
+		Logging.log(this, "Revoking address " + tHRMID.toString() + " for Cluster " + pCluster);
+
+		if (pCluster.getHierarchyLevel().isBaseLevel()){
+			unregisterHRMID(pCluster);
+		}else{
+			// we are at a higher hierarchy level and don't need the HRMID revocation
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				Logging.warn(this, "Skipping HRMID revocation of " + tHRMID.toString() + " for " + pCluster);
 			}
 		}
 	}

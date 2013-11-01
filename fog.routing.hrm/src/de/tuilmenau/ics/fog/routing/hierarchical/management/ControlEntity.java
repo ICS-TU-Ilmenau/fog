@@ -219,10 +219,10 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						return;
 					}
 					if (this instanceof ClusterMember){
-						ClusterMember tClusterProxy = (ClusterMember)this;
+						ClusterMember tClusterMember = (ClusterMember)this;
 			
 						// inform HRM controller about the address change
-						//TODO: mHRMController.updateClusterAddress(tClusterProxy);
+						mHRMController.updateClusterMemberAddress(tClusterMember);
 						
 						return;
 					}
@@ -270,33 +270,35 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			if(!pHRMID.isZero()){
 				// update the HRMID
 				if (mHRMID.equals(pHRMID)){
-					Logging.log(this, "     ..revoking local HRMID: " + pHRMID);
-					mHRMID = null;
-				}
+					Logging.log(this, "     ..revoking local HRMID: " + mHRMID);
 				
-				if (this instanceof Cluster){
-					Cluster tCluster = (Cluster)this;
-		
-					// inform HRM controller about the address change
-					mHRMController.revokeClusterAddress(tCluster, pHRMID);
-		
-					return;
-				}
-				if (this instanceof Coordinator){
-					Coordinator tCoordinator = (Coordinator)this;
-		
-					// inform HRM controller about the address change
-					mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
-		
-					return;
-				}
-				if(this instanceof CoordinatorAsClusterMember){
-					Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
-		
-					// inform HRM controller about the address change
-					mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
-		
-					return;
+					if (this instanceof Cluster){
+						Cluster tCluster = (Cluster)this;
+			
+						// inform HRM controller about the address change
+						mHRMController.revokeClusterAddress(tCluster);
+					}else if (this instanceof ClusterMember){
+						ClusterMember tClusterMember = (ClusterMember)this;
+						
+						// inform HRM controller about the address change
+						mHRMController.revokeClusterMemberAddress(tClusterMember);
+					}
+					if (this instanceof Coordinator){
+						Coordinator tCoordinator = (Coordinator)this;
+			
+						// inform HRM controller about the address change
+						mHRMController.revokeCoordinatorAddress(tCoordinator);
+					}
+					if(this instanceof CoordinatorAsClusterMember){
+						Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
+			
+						// inform HRM controller about the address change
+						mHRMController.revokeCoordinatorAddress(tCoordinator);
+					}
+					
+					mHRMID = null;
+				}else{
+					throw new RuntimeException(this + "cannot revoke unknown HRMID: " + pHRMID);
 				}
 			}else{
 				Logging.log(this, "Got a zero HRMID: " + pHRMID.toString());
