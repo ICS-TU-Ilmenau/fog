@@ -16,6 +16,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastab
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -122,16 +123,24 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	/**
 	 * Constructor
 	 * 
+	 * @param pHRMController the HRMController instance
 	 * @param pSenderName the name of the message sender
 	 * @param pSenderClusterName the ClusterName of the sender
 	 * @param pCoordinatorNodeL2Address the L2 address of the node where the coordinator is located
 	 */
-	public AnnounceCoordinator(Name pSenderName, ClusterName pSenderClusterName, L2Address pCoordinatorNodeL2Address)
+	public AnnounceCoordinator(HRMController pHRMController, Name pSenderName, ClusterName pSenderClusterName, L2Address pCoordinatorNodeL2Address)
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
 		mSenderClusterName = pSenderClusterName;
 		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
+		
+		/**
+		 * Record the sender node
+		 */
+		if(pHRMController != null){
+			addPassedNode(pHRMController.getNodeL2Address());
+		}
 	}
 	
 	/**
@@ -355,7 +364,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		AnnounceCoordinator tResult = new AnnounceCoordinator(getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
+		AnnounceCoordinator tResult = new AnnounceCoordinator(null, getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
 		
 		super.duplicate(tResult);
 

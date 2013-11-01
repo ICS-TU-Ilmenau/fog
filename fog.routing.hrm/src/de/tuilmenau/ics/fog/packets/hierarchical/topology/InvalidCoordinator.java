@@ -15,6 +15,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -95,16 +96,24 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	/**
 	 * Constructor
 	 * 
+	 * @param pHRMController the HRMController instance
 	 * @param pSenderName the name of the message sender
 	 * @param pSenderClusterName the ClusterName of the sender
 	 * @param pCoordinatorNodeL2Address the L2 address of the node where the coordinator is located
 	 */
-	public InvalidCoordinator(Name pSenderName, ClusterName pSenderClusterName, L2Address pCoordinatorNodeL2Address)
+	public InvalidCoordinator(HRMController pHRMController, Name pSenderName, ClusterName pSenderClusterName, L2Address pCoordinatorNodeL2Address)
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
 		mSenderClusterName = pSenderClusterName;
 		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
+		
+		/**
+		 * Record the sender node
+		 */
+		if(pHRMController != null){
+			addPassedNode(pHRMController.getNodeL2Address());
+		}
 	}
 	
 	/**
@@ -245,7 +254,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		InvalidCoordinator tResult = new InvalidCoordinator(getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
+		InvalidCoordinator tResult = new InvalidCoordinator(null, getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
 		
 		super.duplicate(tResult);
 
