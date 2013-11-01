@@ -1000,9 +1000,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			if(tPacketMetaData.getPacket() instanceof AnnounceCoordinator){
 				AnnounceCoordinator tAnnounceCoordinatorPacket = (AnnounceCoordinator)tPacketMetaData.getPacket();
 
-				Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket() + "\n   ..passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ "\n   ..passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
+				Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket() + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
 			}else{
-				Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket());
+				Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket());
 			}
 			i++;
 		}		
