@@ -200,9 +200,9 @@ public class ClusterMember extends ClusterName
 						}
 					}
 				}else{
-					//if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-						Logging.log(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + pAnnounceCoordinator + "\n   ..passed clusters: " + pAnnounceCoordinator.getGUIPassedClusters()+ "\n   ..passed nodes: " + pAnnounceCoordinator.getPassedNodes());
-					//}
+					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+						Logging.warn(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + pAnnounceCoordinator + "\n   ..passed clusters: " + pAnnounceCoordinator.getGUIPassedClusters()+ "\n   ..passed nodes: " + pAnnounceCoordinator.getPassedNodes());
+					}
 				}
 			}else{
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
@@ -299,9 +299,9 @@ public class ClusterMember extends ClusterName
 					}
 				}
 			}else{
-				//if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-					Logging.log(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + pInvalidCoordinator + "\n   ..passed nodes: " + pInvalidCoordinator.getPassedNodes());
-				//}
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+					Logging.warn(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + pInvalidCoordinator + "\n   ..passed nodes: " + pInvalidCoordinator.getPassedNodes());
+				}
 			}
 		}else{
 			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
