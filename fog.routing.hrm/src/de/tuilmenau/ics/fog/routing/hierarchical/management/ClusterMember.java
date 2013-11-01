@@ -425,7 +425,7 @@ public class ClusterMember extends ClusterName
 		for(ComChannel tComChannel : tComChannels) {
 			boolean tIsLoopback = tComChannel.toLocalNode();
 			
-			if((pExcludeL2Address == null /* excluded peer address is null, we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */) || (pIncludeLoopback)){
+			if((pExcludeL2Address == null /* excluded peer address is null, we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */)){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
 					if (!tIsLoopback){
 						Logging.log(this, "       ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
