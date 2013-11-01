@@ -77,12 +77,12 @@ public class ClusterMember extends ClusterName
 		
 		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER MEMBER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
+		// creates new elector object, which is responsible for Bully based election processes
+		tResult.mElector = new Elector(pHRMController, tResult);
+
 		// register at HRMController's internal database
 		pHRMController.registerClusterMember(tResult);
 
-		// creates new elector object, which is responsible for Bully based election processes
-		tResult.mElector = new Elector(pHRMController, tResult);
-		
 		return tResult;
 	}
 
