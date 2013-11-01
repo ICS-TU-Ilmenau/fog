@@ -353,6 +353,11 @@ public class Cluster extends ClusterMember
 		Logging.log(this, "============ EVENT: cluster role invalid");
 		
 		/**
+		 * Trigger: Elector invalid
+		 */
+		getElector().eventInvalidation();
+
+		/**
 		 * Trigger: role invalid
 		 */
 		eventInvalidation();

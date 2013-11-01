@@ -177,6 +177,11 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		Logging.log(this, "============ EVENT: ClusterMember_Role_Invalid");
 
 		/**
+		 * Trigger: Elector invalid
+		 */
+		getElector().eventInvalidation();
+
+		/**
 		 * Trigger: role invalid
 		 */
 		eventInvalidation();

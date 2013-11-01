@@ -89,6 +89,11 @@ public class Elector implements Localization
 	private HRMController mHRMController = null;
 	
 	/**
+	 * Stores if the parent is an active member
+	 */
+	private boolean mParentIsActiveMember = false;
+	
+	/**
 	 * Stores the timestamp of the last ElectBroadcast signaling
 	 */
 	private Double mTimestampLastElectBroadcast =  new Double(0);
@@ -161,24 +166,26 @@ public class Elector implements Localization
 	 * @param pClusterMember the new active ClusterMember
 	 * @param pCause the cause for this call
 	 */
-	private void addActiveClusterMember(ClusterMember pClusterMember, String pCause)
+	private void addActiveClusterMember(String pCause)
 	{
 		if(mNodeActiveClusterMembers == null){
 			throw new RuntimeException("Invalid node-global election state");
 		}
 
-		if (pClusterMember instanceof Cluster){
-			throw new RuntimeException("Invalid active ClusterMember: " + pClusterMember);
+		if (mParent instanceof Cluster){
+			throw new RuntimeException("Invalid active ClusterMember: " + mParent);
 		}
 	
-		Logging.log(this, "Adding active ClusterMember: " + pClusterMember);
+		Logging.log(this, "Adding active ClusterMember: " + mParent);
 		synchronized (mNodeActiveClusterMembers) {
-			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[pClusterMember.getHierarchyLevel().getValue()];
+			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
 			
-			if(!tLevelList.contains(pClusterMember)){
-				tLevelList.add(pClusterMember);
+			if(!tLevelList.contains(mParent)){
+				tLevelList.add(mParent);
 				Logging.log(this, "    ..added");
-				mHRMController.addGUIDescriptionNodeElectionStateChange("\n + " + pClusterMember + " <== " + pCause);
+				mHRMController.addGUIDescriptionNodeElectionStateChange("\n + " + mParent + " <== " + pCause);
+				
+				mParentIsActiveMember = true;
 			}else{
 				Logging.log(this, "    ..NOT added");
 			}
@@ -248,6 +255,23 @@ public class Elector implements Localization
 		}
 	}
 	
+
+	/**
+	 * EVENT: elector is invalidated
+	 */
+	public void eventInvalidation()
+	{
+		Logging.log(this, "EVENT: invalidation");
+		
+		if(mParentIsActiveMember){
+			Logging.log(this, "   ..removing as active ClusterMember");
+			removeActiveClusterMember(mParent, this + "::eventInvalidation()");
+		}
+	}
+
+	/**
+	 * EVENT: all links were deactivated
+	 */
 	private void eventAllLinksInactive()
 	{
 		Logging.log(this, "EVENT: all links inactive");
@@ -1233,7 +1257,7 @@ public class Elector implements Localization
 				Logging.log(this, "    ..we received the ANNOUNCE via an active link");
 
 				// mark/store as active ClusterMember
-				addActiveClusterMember(mParent, this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
+				addActiveClusterMember(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
 				
 				// check local cluster head if it is active and has a lower priority than the peer -> in this case we have to deactivate it 
 				deactivateWorseLocalActiveCluster(pComChannel);
