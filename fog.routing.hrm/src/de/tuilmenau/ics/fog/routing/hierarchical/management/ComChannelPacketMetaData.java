@@ -19,6 +19,7 @@ public class ComChannelPacketMetaData
 {
 	private boolean mSent = false;
 	private Serializable mPacket = null;
+	private double mTimestamp = 0;
 	
 	/**
 	 * Constructor
@@ -26,10 +27,11 @@ public class ComChannelPacketMetaData
 	 * @param pPacket the packet
 	 * @param pWasSent the I/O direction
 	 */
-	ComChannelPacketMetaData(Serializable pPacket, boolean pWasSent)
+	ComChannelPacketMetaData(Serializable pPacket, boolean pWasSent, double pTimestamp)
 	{
 		mPacket = pPacket;
 		mSent = pWasSent;
+		mTimestamp = ((double)Math.round(pTimestamp * 100)) / 100;
 	}
 	
 	/**
@@ -50,6 +52,16 @@ public class ComChannelPacketMetaData
 	public boolean wasReceived()
 	{
 		return !mSent;
+	}
+	
+	/**
+	 * Returns the timestamp of the packet
+	 * 
+	 * @return the timestamp
+	 */
+	public double getTimetstamp()
+	{
+		return mTimestamp;
 	}
 	
 	/**

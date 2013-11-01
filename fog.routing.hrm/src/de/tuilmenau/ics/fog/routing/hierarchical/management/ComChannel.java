@@ -536,7 +536,7 @@ public class ComChannel
 	 * @return the packet I/O storage
 	 */
 	@SuppressWarnings("unchecked")
-	public LinkedList<ComChannelPacketMetaData> getPacketsStorage()
+	public LinkedList<ComChannelPacketMetaData> getSeenPackets()
 	{
 		LinkedList<ComChannelPacketMetaData> tResult = null;
 		
@@ -574,7 +574,7 @@ public class ComChannel
 			}
 			
 			// add the packet to the storage
-			mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent));			
+			mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent, mHRMController.getSimulationTime()));			
 		}
 	}
 	/**
