@@ -9,7 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
-import java.io.Serializable;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 
 /**
  * This class stores the meta data about a packet.
@@ -18,7 +18,7 @@ import java.io.Serializable;
 public class ComChannelPacketMetaData
 {
 	private boolean mSent = false;
-	private Serializable mPacket = null;
+	private SignalingMessageHrm mPacket = null;
 	private double mTimestamp = 0;
 	
 	/**
@@ -27,7 +27,7 @@ public class ComChannelPacketMetaData
 	 * @param pPacket the packet
 	 * @param pWasSent the I/O direction
 	 */
-	ComChannelPacketMetaData(Serializable pPacket, boolean pWasSent, double pTimestamp)
+	ComChannelPacketMetaData(SignalingMessageHrm pPacket, boolean pWasSent, double pTimestamp)
 	{
 		mPacket = pPacket;
 		mSent = pWasSent;
@@ -69,7 +69,7 @@ public class ComChannelPacketMetaData
 	 * 
 	 * @return the packet
 	 */
-	public Serializable getPacket()
+	public SignalingMessageHrm getPacket()
 	{
 		return mPacket;
 	}
