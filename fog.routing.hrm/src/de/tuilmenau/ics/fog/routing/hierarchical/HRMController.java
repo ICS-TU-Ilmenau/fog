@@ -702,7 +702,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		synchronized (mRegisteredOwnHRMIDs) {
 			for (HRMID tHRMID: mRegisteredOwnHRMIDs){
 				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
-					tNodeText += ", " + tHRMID.toString();
+					if (tNodeText != ""){
+						tNodeText += ", ";
+					}
+					tNodeText += tHRMID.toString();
 				}
 			}			
 		}
