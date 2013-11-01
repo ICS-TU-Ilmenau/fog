@@ -39,7 +39,7 @@ public class MultiplexHeader implements ProtocolHeader
 	/**
 	 * Stores the packet payload
 	 */
-	private Serializable mPayload = null;
+	private SignalingMessageHrm mPayload = null;
 
 	/**
 	 * Counts the multiplex headers
@@ -58,7 +58,7 @@ public class MultiplexHeader implements ProtocolHeader
 	 * @param pDestinationCluster the ClusterNane of the Receiver
 	 * @param pData the packet payload
 	 */
-	public MultiplexHeader(ClusterName pSenderClusterName, ClusterName pReceiverClusterName, Serializable pPayload)
+	public MultiplexHeader(ClusterName pSenderClusterName, ClusterName pReceiverClusterName, SignalingMessageHrm pPayload)
 	{
 		mSenderClusterName = pSenderClusterName;
 		mReceiverClusterName = pReceiverClusterName;
@@ -117,7 +117,7 @@ public class MultiplexHeader implements ProtocolHeader
 	 * 
 	 * @return the packet payload
 	 */
-	public Serializable getPayload()
+	public SignalingMessageHrm getPayload()
 	{
 		return mPayload;
 	}

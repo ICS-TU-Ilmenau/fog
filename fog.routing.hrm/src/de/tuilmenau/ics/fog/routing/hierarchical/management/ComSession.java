@@ -427,7 +427,7 @@ public class ComSession extends Session
 		/**
 		 * Get the payload
 		 */
-		Serializable tPayload = pMultiplexHeader.getPayload();
+		SignalingMessageHrm tPayload = pMultiplexHeader.getPayload();
 
 		/**
 		 * Forward the payload to the correct communication channel
@@ -448,7 +448,7 @@ public class ComSession extends Session
 				for (ComChannel tComChannel: getAllComChannels()){
 					tKnownChannels += "\n      .." + tComChannel.toString() + " [Peer=" + tComChannel.getRemoteClusterName() + "]";
 				}
-				throw new RuntimeException("\n" + this + " >> is unable to find the communication channel\n   ..packet destination: " + tDestination + "\n   ..packet source: " + tSource + "\n   ..known communication channels are: " + tKnownChannels + "\n   ..known deleted channels are: " + mUnregisteredComChannels + "\n   ..dropped packet payload: " + pMultiplexHeader.getPayload());				
+				throw new RuntimeException("\n" + this + " >> is unable to find the communication channel\n   ..packet destination: " + tDestination + "\n   ..packet source: " + tSource + " @" + pMultiplexHeader.getPayload().getSenderName() + "\n   ..known communication channels are: " + tKnownChannels + "\n   ..known deleted channels are: " + mUnregisteredComChannels + "\n   ..dropped packet payload: " + pMultiplexHeader.getPayload());				
 			}
 		}
 	}
@@ -699,7 +699,7 @@ public class ComSession extends Session
 			 * SignalingMessageHRM
 			 */
 			if(tMultiplexPacket.getPayload() instanceof SignalingMessageHrm){
-				SignalingMessageHrm tSignalingHRMPacket = (SignalingMessageHrm)tMultiplexPacket.getPayload();
+				SignalingMessageHrm tSignalingHRMPacket = tMultiplexPacket.getPayload();
 				
 				// add source route entry
 				tSignalingHRMPacket.addSourceRoute("[R]: " + this.toString());

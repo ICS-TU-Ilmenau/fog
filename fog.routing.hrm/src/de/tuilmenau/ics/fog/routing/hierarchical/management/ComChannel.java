@@ -228,7 +228,7 @@ public class ComChannel
 	/**
 	 * Stores the packet queue
 	 */
-	private LinkedList<Serializable> mPacketQueue = new LinkedList<Serializable>();
+	private LinkedList<SignalingMessageHrm> mPacketQueue = new LinkedList<SignalingMessageHrm>();
 	
 	/**
 	 * Constructor
@@ -554,7 +554,7 @@ public class ComChannel
 	 * 
 	 * @param pPacket the packet
 	 */
-	private void storePacket(Serializable pPacket, boolean pWasSent)
+	private void storePacket(SignalingMessageHrm pPacket, boolean pWasSent)
 	{
 		synchronized (mPackets) {
 			if (pWasSent){
@@ -758,7 +758,7 @@ public class ComChannel
 	 * 
 	 * @return true
 	 */
-	public boolean receivePacket(Serializable pPacket)
+	public boolean receivePacket(SignalingMessageHrm pPacket)
 	{
 		/**
 		 * Store the packet in queue
@@ -777,7 +777,7 @@ public class ComChannel
 	 */
 	public void processOnePacket()
 	{
-		Serializable tNextPacket = null;
+		SignalingMessageHrm tNextPacket = null;
 		
 		synchronized (mPacketQueue) {
 			if(mPacketQueue.size() > 0){
@@ -804,7 +804,7 @@ public class ComChannel
 	 * @return true if everything worked fine
 	 */
 	@SuppressWarnings("unused")
-	private boolean handlePacket(Serializable pPacket)
+	private boolean handlePacket(SignalingMessageHrm pPacket)
 	{
 		/**
 		 * Store the packet 
