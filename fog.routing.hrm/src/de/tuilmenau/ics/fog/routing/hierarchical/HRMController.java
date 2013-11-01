@@ -117,6 +117,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private LinkedList<Coordinator> mLocalCoordinators = new LinkedList<Coordinator>();
 
 	/**
+	 * Stores all former known Coordinator IDs
+	 */
+	private LinkedList<Long> mFormerLocalCoordinatorIDs = new LinkedList<Long>();
+	
+	/**
 	 * Stores a database about all registered coordinator proxies.
 	 */
 	private LinkedList<CoordinatorProxy> mLocalCoordinatorProxies = new LinkedList<CoordinatorProxy>();
@@ -520,6 +525,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		synchronized (mLocalCoordinators) {
 			// unregister from list of known coordinators
 			mLocalCoordinators.remove(pCoordinator);
+			
+			synchronized (mFormerLocalCoordinatorIDs) {
+				mFormerLocalCoordinatorIDs.add(pCoordinator.getGUICoordinatorID());	
+			}
 		}
 
 		// increase hierarchy node priority
@@ -588,6 +597,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 	}
 
+	/**
+	 * Returns if a coordinator ID is a formerly known one
+	 *  
+	 * @param pCoordinatorID the coordinator ID
+	 * 
+	 * @return true or false
+	 */
+	public boolean isGUIFormerCoordiantorID(long pCoordinatorID)
+	{
+		boolean tResult = false;
+		
+		synchronized (mFormerLocalCoordinatorIDs) {
+			tResult = mFormerLocalCoordinatorIDs.contains(pCoordinatorID);	
+		}
+		
+		return tResult;
+	}
+	
 	/**
 	 * Revokes a coordinator address
 	 * 

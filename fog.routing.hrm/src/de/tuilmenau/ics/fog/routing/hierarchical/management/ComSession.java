@@ -444,11 +444,15 @@ public class ComSession extends Session
 			if (tDeletedComChannel != null){
 				Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + ", old comm. channel is: " + tDeletedComChannel);
 			}else{
-				String tKnownChannels = "";
-				for (ComChannel tComChannel: getAllComChannels()){
-					tKnownChannels += "\n      .." + tComChannel.toString() + " [Peer=" + tComChannel.getRemoteClusterName() + "]";
+				if (mHRMController.isGUIFormerCoordiantorID(tDestination.getGUICoordinatorID())){
+					Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pMultiplexHeader + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
+				}else{
+					String tKnownChannels = "";
+					for (ComChannel tComChannel: getAllComChannels()){
+						tKnownChannels += "\n      .." + tComChannel.toString() + " [Peer=" + tComChannel.getRemoteClusterName() + "]";
+					}
+					throw new RuntimeException("\n" + this + " >> is unable to find the communication channel\n   ..packet destination: " + tDestination + "\n   ..packet source: " + tSource + " @" + pMultiplexHeader.getPayload().getSenderName() + "\n   ..known communication channels are: " + tKnownChannels + "\n   ..known deleted channels are: " + mUnregisteredComChannels + "\n   ..dropped packet payload: " + pMultiplexHeader.getPayload());
 				}
-				throw new RuntimeException("\n" + this + " >> is unable to find the communication channel\n   ..packet destination: " + tDestination + "\n   ..packet source: " + tSource + " @" + pMultiplexHeader.getPayload().getSenderName() + "\n   ..known communication channels are: " + tKnownChannels + "\n   ..known deleted channels are: " + mUnregisteredComChannels + "\n   ..dropped packet payload: " + pMultiplexHeader.getPayload());				
 			}
 		}
 	}
