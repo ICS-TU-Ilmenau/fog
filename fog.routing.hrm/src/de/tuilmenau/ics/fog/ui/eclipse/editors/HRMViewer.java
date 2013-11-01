@@ -778,16 +778,19 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn tColumnRoute = new TableColumn(tTable, SWT.NONE, 5);
 		tColumnRoute.setText("Route to peer");
 		
-		TableColumn tColumnDirection = new TableColumn(tTable, SWT.NONE, 6);
+		TableColumn tColumnPeerHRMID = new TableColumn(tTable, SWT.NONE, 6);
+		tColumnPeerHRMID.setText("Peer HRMID");
+
+		TableColumn tColumnDirection = new TableColumn(tTable, SWT.NONE, 7);
 		tColumnDirection.setText("Connected");
 
-		TableColumn tColumnSendPackets = new TableColumn(tTable, SWT.NONE, 7);
+		TableColumn tColumnSendPackets = new TableColumn(tTable, SWT.NONE, 8);
 		tColumnSendPackets.setText("Sent packets");
 
-		TableColumn tColumnReceivedPackets = new TableColumn(tTable, SWT.NONE, 8);
+		TableColumn tColumnReceivedPackets = new TableColumn(tTable, SWT.NONE, 9);
 		tColumnReceivedPackets.setText("Received packets");
 
-		TableColumn tColumnState = new TableColumn(tTable, SWT.NONE, 9);
+		TableColumn tColumnState = new TableColumn(tTable, SWT.NONE, 10);
 		tColumnState.setText("State");
 
 		tTable.setHeaderVisible(true);
@@ -882,22 +885,28 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 6:  
 			 */
-			tRow.setText(6, tComChannel.getDirection().toString());
+			HRMID tHRMID = tComChannel.getPeerHRMID();
+			tRow.setText(6, (tHRMID != null ? tHRMID.toString() : "undef."));
 
 			/**
 			 * Column 7:  
 			 */
-			tRow.setText(7, Integer.toString(tComChannel.countSentPackets()));
+			tRow.setText(7, tComChannel.getDirection().toString());
 
 			/**
 			 * Column 8:  
 			 */
-			tRow.setText(8, Integer.toString(tComChannel.countReceivedPackets()));
+			tRow.setText(8, Integer.toString(tComChannel.countSentPackets()));
 
 			/**
 			 * Column 9:  
 			 */
-			tRow.setText(9, tComChannel.getState().toString());
+			tRow.setText(9, Integer.toString(tComChannel.countReceivedPackets()));
+
+			/**
+			 * Column 10:  
+			 */
+			tRow.setText(10, tComChannel.getState().toString());
 
 			j++;
 		}
@@ -916,6 +925,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutMappingTable.setColumnData(tColumnPeerPriority, new ColumnWeightData(1));
 		tLayoutMappingTable.setColumnData(tColumnPeerEP, new ColumnWeightData(3));
 		tLayoutMappingTable.setColumnData(tColumnRoute, new ColumnWeightData(3));
+		tLayoutMappingTable.setColumnData(tColumnPeerHRMID, new ColumnWeightData(1));
 		tLayoutMappingTable.setColumnData(tColumnDirection, new ColumnWeightData(1));
 		tLayoutMappingTable.setColumnData(tColumnSendPackets, new ColumnWeightData(1));		
 		tLayoutMappingTable.setColumnData(tColumnReceivedPackets, new ColumnWeightData(1));		
