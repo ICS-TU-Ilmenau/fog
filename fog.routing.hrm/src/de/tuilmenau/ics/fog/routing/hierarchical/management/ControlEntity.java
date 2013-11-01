@@ -242,7 +242,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	protected void eventInvalidation()
 	{
-		Logging.log(this, "Invalidation");
+		Logging.log(this, "================ Invalidation ============== ");
 		mRoleValid = false;
 	}
 	
