@@ -88,9 +88,9 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	private boolean mEnteredSidewardForwarding = false;
 
 	/**
-	 * Stores the passed clusters
+	 * Stores the passed node
 	 */
-	private LinkedList<Long> mPassedClusters = new LinkedList<Long>();
+	private LinkedList<L2Address> mPassedNodes = new LinkedList<L2Address>();
 
 	/**
 	 * Constructor
@@ -108,30 +108,48 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	}
 	
 	/**
-	 * Record the passed clusters
+	 * Record the passed nodes
 	 * 
-	 * @param pClusterID the unique ID of the passed cluster
+	 * @param pNode the unique ID of the passed node
 	 */
-	public void addPassedCluster(Long pClusterID)
+	public void addPassedNode(L2Address pNode)
 	{
-		synchronized (mPassedClusters) {
-			mPassedClusters.add(pClusterID);
+		synchronized (mPassedNodes) {
+			mPassedNodes.add(pNode);
 		}
 	}
 
 	/**
 	 * Checks if a cluster was already passed
 	 * 
-	 * @param pClusterID the unique ID of the passed cluster
+	 * @param pNode the unique ID of the passed node
 	 */
-	public boolean hasPassedCluster(Long pClusterID)
+	public boolean hasPassedNode(L2Address pNode)
 	{
 		boolean tResult = false;
 		
-		synchronized (mPassedClusters) {
-			tResult = mPassedClusters.contains(pClusterID);
+		synchronized (mPassedNodes) {
+			tResult = mPassedNodes.contains(pNode);
 		}
 		
+		return tResult;
+	}
+
+	/**
+	 * Returns a list of passed nodes
+	 * 
+	 * @return the list of passed nodes
+	 */
+	public String getPassedNodes()
+	{
+		String tResult = "";
+		
+		synchronized (mPassedNodes) {
+			for(L2Address tPassedNode : mPassedNodes){
+				tResult += " " + tPassedNode;
+			}
+		}
+
 		return tResult;
 	}
 
@@ -237,8 +255,8 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		// update "sideward forwarding" marker
 		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
 
-		// update the recorded cluster ID
-		tResult.mPassedClusters = (LinkedList<Long>) mPassedClusters.clone();
+		// update the recorded nodes
+		tResult.mPassedNodes = (LinkedList<L2Address>) mPassedNodes.clone();
 				
 		//Logging.log(this, "Created duplicate packet: " + tResult);
 		

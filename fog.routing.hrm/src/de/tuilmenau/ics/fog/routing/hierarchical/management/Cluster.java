@@ -178,62 +178,6 @@ public class Cluster extends ClusterMember
 	}
 
 	/**
-	 * Forwards a coordinator announcement by sending it to all cluster members
-	 * @param pSourceL2Address 
-	 * 
-	 * @param pAnnounceCoordinator the coordinator announcement
-	 */
-	public void forwardCoordinatorAnnouncement(L2Address pSourceL2Address, AnnounceCoordinator pAnnounceCoordinator)
-	{
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-			Logging.log(this, "Forwarding coordinator announcement: " + pAnnounceCoordinator);
-		}
-	
-		// do we have a loop?
-		if(!pAnnounceCoordinator.hasPassedCluster(getClusterID())){
-			// check the TTL once more
-			if(pAnnounceCoordinator.isTTLOkay()){
-				// forward this announcement to all cluster members
-				sendClusterBroadcast(pAnnounceCoordinator, true, pSourceL2Address /* do NOT forward to the source */);
-			}else{
-				Logging.err(this, "forwardCoordinatorAnnouncement() found invalid TTL for: " + pAnnounceCoordinator);
-			}
-		}else{
-			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-				Logging.log(this, "forwardCoordinatorAnnouncement() found a forwarding loop for: " + pAnnounceCoordinator + ", dropping this packet");
-			}
-		}
-	}
-	
-	/**
-	 * Forwards a coordinator announcement by sending it to all cluster members
-	 * @param pSourceL2Address 
-	 * 
-	 * @param pAnnounceCoordinator the coordinator announcement
-	 */
-	public void forwardCoordinatorInvalidation(L2Address pSourceL2Address, InvalidCoordinator pInvalidCoordinator)
-	{
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-			Logging.log(this, "Forwarding coordinator invalidation: " + pInvalidCoordinator);
-		}
-	
-		// do we have a loop?
-		if(!pInvalidCoordinator.hasPassedCluster(getClusterID())){
-			// check the TTL once more
-			if(pInvalidCoordinator.isTTLOkay()){
-				// forward this invalidation to all cluster members
-				sendClusterBroadcast(pInvalidCoordinator, true, pSourceL2Address /* do NOT forward to the source */);
-			}else{
-				Logging.err(this, "forwardCoordinatorInvalidation() found invalid TTL for: " + pInvalidCoordinator);
-			}
-		}else{
-			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-				Logging.log(this, "forwardCoordinatorInvalidation() found a forwarding loop for: " + pInvalidCoordinator + ", dropping this packet");
-			}
-		}
-	}
-
-	/**
 	 * Determines the coordinator of this cluster. It is "null" if the election was lost or hasn't finished yet. 
 	 * 
 	 * @return the cluster's coordinator

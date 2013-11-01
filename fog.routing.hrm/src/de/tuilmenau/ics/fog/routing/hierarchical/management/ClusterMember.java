@@ -118,7 +118,7 @@ public class ClusterMember extends ClusterName
 			/**
 			 * Record the passed clusters
 			 */
-			pAnnounceCoordinator.addPassedCluster(getClusterID());
+			pAnnounceCoordinator.addGUIPassedCluster(new Long(getGUIClusterID()));
 	
 			/**
 			 * Enlarge the stored route towards the announcer
@@ -145,48 +145,64 @@ public class ClusterMember extends ClusterName
 			 * forward the announcement if the TTL is still okay
 			 */
 			if(pAnnounceCoordinator.isTTLOkay()){
-				// check if this announcement is already on its way sidewards
-				if(!pAnnounceCoordinator.enteredSidewardForwarding()){
-					// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
-					if (pComChannel.getPeerL2Address().equals(pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address())){
-						/**
-						 * mark packet as "sideward forwarded"
-						 */
-						pAnnounceCoordinator.setSidewardForwarding();
-					}else{
-						// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
-						
-						/**
-						 * drop the packet and return immediately
-						 */ 
-						return;
-					}
-				}
-	
-				/**
-				 * Forward the announcement within the same hierarchy level ("to the side")
-				 */
-				// get locally known neighbors for this cluster and hierarchy level
-				LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
-				if(tLocalClusters.size() > 0){
-					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-						Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+				// do we have a loop?
+				if(!pAnnounceCoordinator.hasPassedNode(mHRMController.getNodeL2Address())){
+					/**
+					 * Record the passed nodes
+					 */
+					pAnnounceCoordinator.addPassedNode(mHRMController.getNodeL2Address());
+					
+					/**
+					 * Check if this announcement is already on its way sidewards
+					 */
+					if(!pAnnounceCoordinator.enteredSidewardForwarding()){
+						// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
+						if (pComChannel.getPeerL2Address().equals(pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address())){
+							/**
+							 * mark packet as "sideward forwarded"
+							 */
+							pAnnounceCoordinator.setSidewardForwarding();
+						}else{
+							// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
+							
+							/**
+							 * drop the packet and return immediately
+							 */ 
+							return;
+						}
 					}
 		
-					for(Cluster tLocalCluster: tLocalClusters){
-						/**
-						 * Forward the announcement
-						 * HINT: we avoid loops by excluding the sender from the forwarding process
-						 */
+					/**
+					 * Forward the announcement within the same hierarchy level ("to the side")
+					 */
+					// get locally known neighbors for this cluster and hierarchy level
+					LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
+					if(tLocalClusters.size() > 0){
 						if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-							Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+							Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
 						}
-						tLocalCluster.forwardCoordinatorAnnouncement(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pAnnounceCoordinator);
+			
+						for(Cluster tLocalCluster: tLocalClusters){
+							/**
+							 * Forward the announcement
+							 * HINT: we avoid loops by excluding the sender from the forwarding process
+							 */
+							if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+								Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+							}
+							
+							// forward this announcement to all cluster members
+							tLocalCluster.sendClusterBroadcast(pAnnounceCoordinator, true, pComChannel.getPeerL2Address() /* exclude this from the forwarding process */);
+						}
+					}else{
+						if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+							Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCoordinator);
+						}
 					}
 				}else{
-					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-						Logging.log(this, "No neighbors found, ending forwarding of: " + pAnnounceCoordinator);
-					}
+					//if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+						Logging.log(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + pAnnounceCoordinator + "\n   ..passed clusters: " + pAnnounceCoordinator.getGUIPassedClusters()+ "\n   ..passed nodes: " + pAnnounceCoordinator.getPassedNodes());
+					//}
 				}
 			}else{
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
@@ -217,11 +233,6 @@ public class ClusterMember extends ClusterName
 		unregisterAnnouncedCoordinatorARG(this, pInvalidCoordinator);
 		
 		/**
-		 * Record the passed clusters
-		 */
-		pInvalidCoordinator.addPassedCluster(getClusterID());
-
-		/**
 		 * transition from one cluster to the next one => decrease TTL value
 		 */
 		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
@@ -233,48 +244,64 @@ public class ClusterMember extends ClusterName
 		 * forward the announcement if the TTL is still okay
 		 */
 		if(pInvalidCoordinator.isTTLOkay()){
-			// check if this announcement is already on its way sidewards
-			if(!pInvalidCoordinator.enteredSidewardForwarding()){
-				// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
-				if (pComChannel.getPeerL2Address().equals(pInvalidCoordinator.getSenderClusterCoordinatorNodeL2Address())){
-					/**
-					 * mark packet as "sideward forwarded"
-					 */
-					pInvalidCoordinator.setSidewardForwarding();
-				}else{
-					// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
-					
-					/**
-					 * drop the packet and return immediately
-					 */ 
-					return;
-				}
-			}
+			// do we have a loop?
+			if(!pInvalidCoordinator.hasPassedNode(mHRMController.getNodeL2Address())){
+				/**
+				 * Record the passed nodes
+				 */
+				pInvalidCoordinator.addPassedNode(mHRMController.getNodeL2Address());
 
-			/**
-			 * Forward the announcement within the same hierarchy level ("to the side")
-			 */
-			// get locally known neighbors for this cluster and hierarchy level
-			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
-			if(tLocalClusters.size() > 0){
-				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-					Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+				/**
+				 * Check if this announcement is already on its way sidewards
+				 */
+				if(!pInvalidCoordinator.enteredSidewardForwarding()){
+					// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
+					if (pComChannel.getPeerL2Address().equals(pInvalidCoordinator.getSenderClusterCoordinatorNodeL2Address())){
+						/**
+						 * mark packet as "sideward forwarded"
+						 */
+						pInvalidCoordinator.setSidewardForwarding();
+					}else{
+						// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
+						
+						/**
+						 * drop the packet and return immediately
+						 */ 
+						return;
+					}
 				}
 	
-				for(Cluster tLocalCluster: tLocalClusters){
-					/**
-					 * Forward the announcement
-					 * HINT: we avoid loops by excluding the sender from the forwarding process
-					 */
+				/**
+				 * Forward the announcement within the same hierarchy level ("to the side")
+				 */
+				// get locally known neighbors for this cluster and hierarchy level
+				LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
+				if(tLocalClusters.size() > 0){
 					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-						Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+						Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
 					}
-					tLocalCluster.forwardCoordinatorInvalidation(pComChannel.getPeerL2Address() /* exclude this from the forwarding process */, pInvalidCoordinator);
+		
+					for(Cluster tLocalCluster: tLocalClusters){
+						/**
+						 * Forward the announcement
+						 * HINT: we avoid loops by excluding the sender from the forwarding process
+						 */
+						if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+							Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+						}
+						
+						// forward this announcement to all cluster members
+						tLocalCluster.sendClusterBroadcast(pInvalidCoordinator, true, pComChannel.getPeerL2Address() /* exclude this from the forwarding process */);
+					}
+				}else{
+					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+						Logging.log(this, "No neighbors found, ending forwarding of: " + pInvalidCoordinator);
+					}
 				}
 			}else{
-				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-					Logging.log(this, "No neighbors found, ending forwarding of: " + pInvalidCoordinator);
-				}
+				//if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+					Logging.log(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + pInvalidCoordinator + "\n   ..passed nodes: " + pInvalidCoordinator.getPassedNodes());
+				//}
 			}
 		}else{
 			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){

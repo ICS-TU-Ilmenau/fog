@@ -110,10 +110,15 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	private boolean mEnteredSidewardForwarding = false;
 	
 	/**
-	 * Stores the passed clusters
+	 * Stores the passed clusters for the GUI
 	 */
-	private LinkedList<Long> mPassedClusters = new LinkedList<Long>();
+	private LinkedList<Long> mGUIPassedClusters = new LinkedList<Long>();
 	
+	/**
+	 * Stores the passed node
+	 */
+	private LinkedList<L2Address> mPassedNodes = new LinkedList<L2Address>();
+
 	/**
 	 * Constructor
 	 * 
@@ -134,29 +139,77 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	 * 
 	 * @param pClusterID the unique ID of the passed cluster
 	 */
-	public void addPassedCluster(Long pClusterID)
+	public void addGUIPassedCluster(Long pClusterID)
 	{
-		synchronized (mPassedClusters) {
-			mPassedClusters.add(pClusterID);
+		synchronized (mGUIPassedClusters) {
+			mGUIPassedClusters.add(pClusterID);
+		}
+	}
+
+	/**
+	 * Returns a list of passed clusters
+	 * 
+	 * @return the list of passed clusters (their IDs)
+	 */
+	public String getGUIPassedClusters()
+	{
+		String tResult = "";
+		
+		synchronized (mGUIPassedClusters) {
+			for(Long tPassedCluster : mGUIPassedClusters){
+				tResult += " " + Long.toString(tPassedCluster);
+			}
+		}
+
+		return tResult;
+	}
+	
+	/**
+	 * Record the passed nodes
+	 * 
+	 * @param pNode the unique ID of the passed node
+	 */
+	public void addPassedNode(L2Address pNode)
+	{
+		synchronized (mPassedNodes) {
+			mPassedNodes.add(pNode);
 		}
 	}
 
 	/**
 	 * Checks if a cluster was already passed
 	 * 
-	 * @param pClusterID the unique ID of the passed cluster
+	 * @param pNode the unique ID of the passed node
 	 */
-	public boolean hasPassedCluster(Long pClusterID)
+	public boolean hasPassedNode(L2Address pNode)
 	{
 		boolean tResult = false;
 		
-		synchronized (mPassedClusters) {
-			tResult = mPassedClusters.contains(pClusterID);
+		synchronized (mPassedNodes) {
+			tResult = mPassedNodes.contains(pNode);
 		}
 		
 		return tResult;
 	}
 	
+	/**
+	 * Returns a list of passed nodes
+	 * 
+	 * @return the list of passed nodes
+	 */
+	public String getPassedNodes()
+	{
+		String tResult = "";
+		
+		synchronized (mPassedNodes) {
+			for(L2Address tPassedNode : mPassedNodes){
+				tResult += " " + tPassedNode;
+			}
+		}
+
+		return tResult;
+	}
+
 	/**
 	 * Returns the ClusterName of the sender
 	 * 
@@ -322,7 +375,10 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		tResult.addSourceRoute("[route]: (" + mRoute + ") -> (" + tResult.mRoute + ")");
 
 		// update the recorded cluster ID
-		tResult.mPassedClusters = (LinkedList<Long>) mPassedClusters.clone();
+		tResult.mGUIPassedClusters = (LinkedList<Long>) mGUIPassedClusters.clone();
+
+		// update the recorded nodes
+		tResult.mPassedNodes = (LinkedList<L2Address>) mPassedNodes.clone();
 
 		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
