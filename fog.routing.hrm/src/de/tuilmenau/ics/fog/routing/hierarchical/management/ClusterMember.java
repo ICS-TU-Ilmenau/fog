@@ -419,7 +419,7 @@ public class ClusterMember extends ClusterName
 		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
-			Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getHierarchyNodePriority());
+			Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
 		}
 		
 		for(ComChannel tComChannel : tComChannels) {

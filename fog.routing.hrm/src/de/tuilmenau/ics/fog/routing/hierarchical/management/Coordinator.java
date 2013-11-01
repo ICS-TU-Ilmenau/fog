@@ -962,7 +962,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public BullyPriority getPriority() 
 	{
-		return BullyPriority.create(this, mHRMController.getHierarchyNodePriority());
+		return BullyPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
 	}
 	
 	/**

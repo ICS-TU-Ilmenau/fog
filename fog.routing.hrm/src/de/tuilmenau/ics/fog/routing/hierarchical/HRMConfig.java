@@ -248,6 +248,11 @@ public class HRMConfig
 		 * is this value.
 		 */
 		public static final boolean USE_SEPARATE_HIERARCHY_NODE_PRIORITY = true;
+
+		/**
+		 * Defines if a separate priority per hierarchy level should be used
+		 */
+		public static final boolean USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL = false;
 	}
 	
 	/**

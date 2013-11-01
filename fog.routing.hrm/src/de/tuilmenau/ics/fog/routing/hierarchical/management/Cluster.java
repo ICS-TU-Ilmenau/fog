@@ -199,7 +199,7 @@ public class Cluster extends ClusterMember
 		if(getHierarchyLevel().isBaseLevel()){
 			return BullyPriority.create(this, mHRMController.getConnectivityNodePriority());
 		}else{
-			return BullyPriority.create(this, mHRMController.getHierarchyNodePriority());
+			return BullyPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
 		}
 	}
 

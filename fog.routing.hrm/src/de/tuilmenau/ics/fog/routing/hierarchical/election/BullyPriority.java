@@ -51,7 +51,12 @@ public class BullyPriority
 	/**
 	 * This value represents the closeness to level 0 coordinators. It is used when a remote coordinator announcement is received ==> instantiate coordinators far away from one-way network parts, instantiate them close to the network core
 	 */
-	public static int OFFSET_FOR_KNOWN_BASE_REMOTE_COORDINATOR = 10000;
+	public static int OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR = 10000;
+
+	/**
+	 * This value represents the closeness to level 1+ coordinators. It is used when a remote coordinator announcement is received ==> instantiate coordinators far away from one-way network parts, instantiate them close to the network core
+	 */
+	public static int OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR = 10;
 
 	/**
 	 * This is the priority counter, which allows for globally (related to a physical simulation machine) unique BullyPriority IDs.
@@ -81,7 +86,7 @@ public class BullyPriority
 			return null;
 		}
 
-		BullyPriority tResult = new BullyPriority(pHRMController.getHierarchyNodePriority());
+		BullyPriority tResult = new BullyPriority(pHRMController.getHierarchyNodePriority(pControlEntity.getHierarchyLevel()));
 
 		/**
 		 * Overwrite the Bully priority by the connectivity priority for simple ClusterMember objects at base hierarchy level
@@ -97,22 +102,6 @@ public class BullyPriority
 		return tResult;
 	}
 	
-	/**
-	 * Factory function: initializes the Bully priority for a cluster depending on the node configuration and the hierarchy level.
-	 * 
-	 * @param pCluster the cluster to which this Bully priority belongs to.
-	 */
-	public static BullyPriority createForSuperiorControlEntity(HRMController pHRMController, ControlEntity pControlEntity)
-	{
-		BullyPriority tResult = new BullyPriority(pHRMController.getHierarchyNodePriority());
-		
-		if (DEBUG_CREATION){
-			Logging.log(pControlEntity, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
-		}
-		
-		return tResult;
-	}
-
 	/**
 	 * Factory function: initializes the Bully priority with "undefined"
 	 */
