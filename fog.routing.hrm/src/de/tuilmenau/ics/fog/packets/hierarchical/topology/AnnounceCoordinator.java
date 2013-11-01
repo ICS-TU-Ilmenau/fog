@@ -135,11 +135,16 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		mSenderClusterName = pSenderClusterName;
 		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
 		
-		/**
-		 * Record the sender node
-		 */
 		if(pHRMController != null){
+			/**
+			 * Record the sender node
+			 */
 			addPassedNode(pHRMController.getNodeL2Address());
+		
+			/**
+			 * Record the passed clusters
+			 */
+			addGUIPassedCluster(new Long(pSenderClusterName.getGUIClusterID()));
 		}
 	}
 	
