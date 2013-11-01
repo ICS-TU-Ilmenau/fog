@@ -814,7 +814,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		String tNodeText = "";
 		synchronized (mRegisteredOwnHRMIDs) {
 			for (HRMID tHRMID: mRegisteredOwnHRMIDs){
-				if ((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)){
+				if (((!tHRMID.isRelativeAddress()) || (HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES)) && (!tHRMID.isClusterAddress())){
 					if (tNodeText != ""){
 						tNodeText += ", ";
 					}

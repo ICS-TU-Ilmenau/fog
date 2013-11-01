@@ -201,6 +201,17 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	}
 	
 	/**
+	 * Determines if this HRMID has a suffix of a cluster/coordinator address, e.g., "2.1.0"
+	 * 
+	 * @return true or false
+	 */
+	public boolean isClusterAddress()
+	{
+		// true if the first character is a leading zero
+		return toString().endsWith(".0");
+	}
+
+	/**
 	 * Generate an HRMID output, e.g., "4.7.2.3"
 	 */
 	@Override
