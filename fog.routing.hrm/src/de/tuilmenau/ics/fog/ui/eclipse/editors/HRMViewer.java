@@ -773,7 +773,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 2: table about comm. channels 
 		 */
-		printComChannels(pParent, pCoordinator);
+		if(!pCoordinator.getHierarchyLevel().isHighest()){
+			printComChannels(pParent, pCoordinator);
+		}
 			
 		Label separator = new Label (pParent, SWT.SEPARATOR | SWT.HORIZONTAL);
 		separator.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
