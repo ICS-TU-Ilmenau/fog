@@ -39,6 +39,11 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_RELATIVE_ADDRESSES = false;
 
 		/**
+		 * Show cluster addresses in the GUI? (e.g., "3.7.0")
+		 */
+		public static final boolean GUI_SHOW_CLUSTER_ADDRESSES = true;
+
+		/**
 		 * Show debug outputs about the timing of report/share phases of each existing coordinator.
 		 */
 		public static final boolean GUI_SHOW_TIMING_ROUTE_DISTRIBUTION = false;
