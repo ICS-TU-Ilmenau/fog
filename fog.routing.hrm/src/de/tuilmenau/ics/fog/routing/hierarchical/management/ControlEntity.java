@@ -268,7 +268,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if (pHRMID != null){
 			if(!pHRMID.isZero()){
 				// update the HRMID
-				if (mHRMID.equals(pHRMID)){
+				if (pHRMID.equals(mHRMID)){
 					Logging.log(this, "     ..revoking local HRMID: " + mHRMID);
 				
 					if (this instanceof Cluster){
