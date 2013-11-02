@@ -86,6 +86,11 @@ public class Cluster extends ClusterMember
 	private HRMID mHRMIDLastDistribution = null;	
 	
 	/**
+	 * Stores a description about the HRMID allocations
+	 */
+	private String mDescriptionHRMIDAllocation = new String();
+	
+	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
 	 * ID and the hierarchical level. Later on - once a coordinator is found, it is additionally identified
 	 * by a token the coordinator sends to all participants. In contrast to the cluster token the identity is used
@@ -281,7 +286,8 @@ public class Cluster extends ClusterMember
 	
 					// create new HRMID for ourself
 					HRMID tThisNodesAddress = allocateClusterMemberAddress();
-		
+					mDescriptionHRMIDAllocation += "\n     .." + tThisNodesAddress.toString() + " for " + this;
+					
 					Logging.log(this, "    ..setting local HRMID " + tThisNodesAddress.toString());
 		
 					// store the new HRMID for this node
@@ -448,6 +454,8 @@ public class Cluster extends ClusterMember
 	{
 		LinkedList<Integer> tResult = null;
 		
+		Logging.log(this, "Having allocated these HRMIDs: " + mDescriptionHRMIDAllocation);
+		
 		synchronized (mUsedAddresses) {
 			tResult = (LinkedList<Integer>) mUsedAddresses.clone();
 		}
@@ -475,9 +483,10 @@ public class Cluster extends ClusterMember
 			/**
 			 * Create a new HRMID for the peer
 			 */
-//			if((tHRMIDForPeer == null) || (tHRMIDForPeer.isZero()) || (tHRMIDForPeer.isRelativeAddress())){
+			if((tHRMIDForPeer == null) || (tHRMIDForPeer.isZero()) || (tHRMIDForPeer.isRelativeAddress()) || (!tHRMIDForPeer.hasPrefix(getHRMID(), getHierarchyLevel()))){
 				tHRMIDForPeer = allocateClusterMemberAddress();
-				
+				mDescriptionHRMIDAllocation += "\n     .." + tHRMIDForPeer.toString() + " for " + pComChannel + ", cause=" + pCause;
+
 				/**
 				 * Abort if we shouldn't distribute relative addresses
 				 */
@@ -499,9 +508,9 @@ public class Cluster extends ClusterMember
 				
 				// share the route to this cluster member with all other cluster members
 				//shareRouteToClusterMember(pComChannel);
-//			}else{
-//				Logging.log(this, "    ..reassigning " + tHRMIDForPeer.toString() + " for " + pComChannel);
-//			}
+			}else{
+				Logging.log(this, "    ..reassigning " + tHRMIDForPeer.toString() + " for " + pComChannel);
+			}
 	
 			if ((pComChannel.getPeerHRMID() != null) && (!pComChannel.getPeerHRMID().equals(tHRMIDForPeer))){
 				Logging.log(this, "    ..replacing HRMID " + pComChannel.getPeerHRMID().toString() + " and assign new HRMID " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
