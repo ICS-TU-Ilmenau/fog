@@ -665,6 +665,36 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
+	 * EVENT: new HRMID assigned
+     * The function is called when an address update was received.
+	 * 
+	 * @param pHRMID the new HRMID
+	 */
+	@Override
+	public void eventAssignedHRMID(HRMID pHRMID)
+	{
+		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
+		}
+
+		if(pHRMID != null){
+			// setHRMID()
+			super.eventAssignedHRMID(pHRMID);
+		
+			/**
+			 * Automatic address distribution via the cluster
+			 */
+			// we should automatically continue the address distribution?
+			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					Logging.log(this, "     ..continuing the address distribution process via this cluster");
+				}
+				getCluster().distributeAddresses();				
+			}			
+		}
+	}
+
+	/**
 	 * EVENT: cluster membership request, a cluster requests of a coordinator to acknowledge cluster membership, triggered by the comm. session
 	 * 
 	 * @param pRemoteClusterName the description of the possible new cluster member

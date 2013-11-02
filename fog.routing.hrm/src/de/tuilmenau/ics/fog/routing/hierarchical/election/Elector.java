@@ -634,7 +634,7 @@ public class Elector implements Localization
 			if(tChannels.size() == 1){
 				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 
-				if(tComChannelToPeer.getLinkActivation()){
+				if(tComChannelToPeer.isLinkActive()){
 					// create the packet
 					BullyLeave tPacketBullyLeave = new BullyLeave(mHRMController.getNodeName(), mParent.getPriority());
 			
@@ -676,7 +676,7 @@ public class Elector implements Localization
 			if(tChannels.size() == 1){
 				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 				
-				if(!tComChannelToPeer.getLinkActivation()){
+				if(!tComChannelToPeer.isLinkActive()){
 					// create the packet
 					BullyReturn tPacketBullyReturn = new BullyReturn(mHRMController.getNodeName(), mParent.getPriority());
 	
@@ -1125,7 +1125,7 @@ public class Elector implements Localization
 		}
 
 		// check if the link state has changed	
-		if(pComChannel.getLinkActivation()){
+		if(pComChannel.isLinkActive()){
 			/**
 			 * deactivate the link for the remote cluster member
 			 */
@@ -1165,7 +1165,7 @@ public class Elector implements Localization
 		}
 		
 		// check if the link state has changed	
-		if(!pComChannel.getLinkActivation()){
+		if(!pComChannel.isLinkActive()){
 			/**
 			 * activate the link for the remote cluster member 
 			 */
@@ -1253,7 +1253,7 @@ public class Elector implements Localization
 			/**
 			 * For an active link we do extended processing of this event for distributed election 
 			 */
-			if(pComChannel.getLinkActivation()){
+			if(pComChannel.isLinkActive()){
 				Logging.log(this, "    ..we received the ANNOUNCE via an active link");
 
 				// mark/store as active ClusterMember
@@ -1297,7 +1297,7 @@ public class Elector implements Localization
 			/**
 			 * For an active link we do extended processing of this event for distributed election 
 			 */
-			if(pComChannel.getLinkActivation()){
+			if(pComChannel.isLinkActive()){
 				Logging.log(this, "    ..we received the RESIGN via an active link");
 
 				// return to all other election processes because we have lost this coordinator at this hierarchy level
@@ -1358,7 +1358,7 @@ public class Elector implements Localization
 				/**
 				 * React only if the link is active
 				 */
-				if(pComChannel.getLinkActivation()){
+				if(pComChannel.isLinkActive()){
 					/**
 					 * New received peer priority could influence the election result
 					 */
@@ -1724,7 +1724,7 @@ public class Elector implements Localization
 		 */
 		if(HRMConfig.Election.USE_LINK_STATES){
 			if (!pIgnoreLinkState){
-				if (!pComChannelToPeer.getLinkActivation()){
+				if (!pComChannelToPeer.isLinkActive()){
 					return true;
 				}
 			}

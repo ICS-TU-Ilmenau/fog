@@ -313,6 +313,43 @@ public class Cluster extends ClusterMember
 	}
 
 	/**
+	 * EVENT: new HRMID assigned
+     * The function is called when an address update was received.
+	 * 
+	 * @param pHRMID the new HRMID
+	 */
+	@Override
+	public void eventAssignedHRMID(HRMID pHRMID)
+	{
+		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
+		}
+
+		if(pHRMID != null){
+
+			// setHRMID()
+			super.eventAssignedHRMID(pHRMID);
+		
+			/**
+			 * Automatic address distribution via this cluster
+			 */
+			if (hasLocalCoordinator()){
+				// we should automatically continue the address distribution?
+				if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+					if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						Logging.log(this, "     ..continuing the address distribution process via this cluster");
+					}
+					distributeAddresses();				
+				}			
+			}else{
+				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					Logging.log(this, "     ..stopping address propagation here");
+				}
+			}
+		}
+	}
+
+	/**
 	 * Assign new HRMID for being addressable.
 	 *  
 	 * @param pCaller the caller who assigns the new HRMID
@@ -423,6 +460,7 @@ public class Cluster extends ClusterMember
 	 * 
 	 * @param pComChannel the comm. channel towards the cluster member, which needs a new HRMID
 	 * @param pCause the cause for this event
+	 * @param pForceUpdate flag to enforce an HRMID update
 	 */
 	public void eventClusterMemberNeedsHRMID(ComChannel pComChannel, String pCause)
 	{
@@ -437,7 +475,7 @@ public class Cluster extends ClusterMember
 			/**
 			 * Create a new HRMID for the peer
 			 */
-			if((tHRMIDForPeer == null) || (tHRMIDForPeer.isZero()) || (tHRMIDForPeer.isRelativeAddress())){
+//			if((tHRMIDForPeer == null) || (tHRMIDForPeer.isZero()) || (tHRMIDForPeer.isRelativeAddress())){
 				tHRMIDForPeer = allocateClusterMemberAddress();
 				
 				/**
@@ -461,9 +499,9 @@ public class Cluster extends ClusterMember
 				
 				// share the route to this cluster member with all other cluster members
 				//shareRouteToClusterMember(pComChannel);
-			}else{
-				Logging.log(this, "    ..reassigning " + tHRMIDForPeer.toString() + " for " + pComChannel);
-			}
+//			}else{
+//				Logging.log(this, "    ..reassigning " + tHRMIDForPeer.toString() + " for " + pComChannel);
+//			}
 	
 			if ((pComChannel.getPeerHRMID() != null) && (!pComChannel.getPeerHRMID().equals(tHRMIDForPeer))){
 				Logging.log(this, "    ..replacing HRMID " + pComChannel.getPeerHRMID().toString() + " and assign new HRMID " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
@@ -516,6 +554,17 @@ public class Cluster extends ClusterMember
 		
 		// set the coordinator
 		mCoordinator = pCoordinator;
+		
+		/**
+		 * Update cluster activation
+		 */
+		if(pCoordinator != null){
+			// mark this cluster as active
+			setClusterActivation(true);
+		}else{
+			// mark this cluster as inactive
+			setClusterActivation(false);
+		}
 		
 		// update the stored unique ID for the coordinator
 		if (pCoordinator != null){

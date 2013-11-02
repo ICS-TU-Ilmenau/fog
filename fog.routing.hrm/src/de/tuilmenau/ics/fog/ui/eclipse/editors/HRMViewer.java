@@ -829,6 +829,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn tColumnState = new TableColumn(tTable, SWT.NONE, 10);
 		tColumnState.setText("State");
 
+		TableColumn tColumnParentHRMID = new TableColumn(tTable, SWT.NONE, 11);
+		tColumnParentHRMID.setText("Parent HRMID");
+
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
 		
@@ -875,7 +878,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 2: active link 
 			 */
-			tRow.setText(2, tComChannel.getLinkActivation() ? "yes" : "no");
+			tRow.setText(2, tComChannel.isLinkActive() ? "yes" : "no");
 			
 			/**
 			 * Column 3:  
@@ -921,8 +924,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 6:  
 			 */
-			HRMID tHRMID = tComChannel.getPeerHRMID();
-			tRow.setText(6, (tHRMID != null ? tHRMID.toString() : "undef."));
+			HRMID tPeerHRMID = tComChannel.getPeerHRMID();
+			tRow.setText(6, (tPeerHRMID != null ? tPeerHRMID.toString() : "undef."));
 
 			/**
 			 * Column 7:  
@@ -943,6 +946,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			 * Column 10:  
 			 */
 			tRow.setText(10, tComChannel.getState().toString());
+
+			/**
+			 * Column 11:  
+			 */
+			HRMID tParentHRMID = tComChannel.getParent().getHRMID();
+			tRow.setText(11, (tParentHRMID != null ? tParentHRMID.toString() : "undef."));
 
 			j++;
 		}
@@ -966,7 +975,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutMappingTable.setColumnData(tColumnSendPackets, new ColumnWeightData(1));		
 		tLayoutMappingTable.setColumnData(tColumnReceivedPackets, new ColumnWeightData(1));		
 		tLayoutMappingTable.setColumnData(tColumnState, new ColumnWeightData(1));		
-
+		tLayoutMappingTable.setColumnData(tColumnParentHRMID, new ColumnWeightData(1));		
+		
 		/**
 		 * The table context menu
 		 */
@@ -1056,16 +1066,18 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	{
 		Logging.log(this, "Packet I/O for: " + pComChannel);
 		LinkedList<ComChannelPacketMetaData> tPacketsMetaData = pComChannel.getSeenPackets();
-		int i = 0;
-		for (ComChannelPacketMetaData tPacketMetaData: tPacketsMetaData){
-			if(tPacketMetaData.getPacket() instanceof AnnounceCoordinator){
-				AnnounceCoordinator tAnnounceCoordinatorPacket = (AnnounceCoordinator)tPacketMetaData.getPacket();
-
-				Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket() + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
-			}else{
-				Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket());
+		if(tPacketsMetaData != null){
+			int i = 0;
+			for (ComChannelPacketMetaData tPacketMetaData: tPacketsMetaData){
+				if(tPacketMetaData.getPacket() instanceof AnnounceCoordinator){
+					AnnounceCoordinator tAnnounceCoordinatorPacket = (AnnounceCoordinator)tPacketMetaData.getPacket();
+	
+					Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket() + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
+				}else{
+					Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket());
+				}
+				i++;
 			}
-			i++;
 		}		
 	}
 
@@ -1078,6 +1090,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	{
 		Logging.log(this, "Session for: " + pComChannel);
 		Logging.log(this, "     ..session: " + pComChannel.getParentComSession());
+		LinkedList<ComChannel> tChannels = pComChannel.getParentComSession().getAllComChannels();
+		for(ComChannel tComChannel : tChannels){
+			Logging.log(this, "       ..channel: " + tComChannel);
+		}
 	}
 	
 	private void showPeerHRMIDs(ComChannel pComChannel)

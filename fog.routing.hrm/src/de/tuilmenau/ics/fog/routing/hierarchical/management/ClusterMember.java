@@ -505,7 +505,7 @@ public class ClusterMember extends ClusterName
 		LinkedList<ComChannel> tComChannels = getComChannels();
 		
 		for(ComChannel tComChannel : tComChannels) {
-			if(tComChannel.getLinkActivation()){
+			if(tComChannel.isLinkActive()){
 				tResult.add(tComChannel);
 			}
 		}
@@ -632,7 +632,11 @@ public class ClusterMember extends ClusterName
 			 * Send priority update if necessary 
 			 */
 			if ((tOldPriority != null) && (!tOldPriority.isUndefined()) && (!tOldPriority.equals(pPriority))){
-				mElector.updatePriority();
+				if(mElector != null){
+					mElector.updatePriority();
+				}else{
+					Logging.warn(this, "Elector is still invalid");
+				}
 			}else{
 				Logging.log(this, "First priority was set: " + pPriority.getValue());
 			}

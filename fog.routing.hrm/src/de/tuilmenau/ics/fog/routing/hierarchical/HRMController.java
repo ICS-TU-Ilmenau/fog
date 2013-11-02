@@ -563,7 +563,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		HRMID tHRMID = pEntity.getHRMID();
 		
-		registerHRMID(pEntity, tHRMID);
+		if((tHRMID != null) && (!tHRMID.isZero())){
+			registerHRMID(pEntity, tHRMID);
+		}
 	}
 	
 	/**
@@ -647,7 +649,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 			}else{
-				Logging.err(this, "registerHRMID() got a zero HRMID " + pHRMID.toString() + " for: " + pEntity);
+				throw new RuntimeException(this + "registerHRMID() got a zero HRMID " + pHRMID.toString() + " for: " + pEntity);
 			}
 		}else{
 			Logging.err(this, "registerHRMID() got an invalid HRMID for: " + pEntity);
@@ -788,9 +790,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		HRMID tHRMID = pCoordinator.getHRMID();
 
-		Logging.log(this, "Revoking address to " + tHRMID.toString() + " for coordinator " + pCoordinator);
-
-		unregisterHRMID(pCoordinator, pOldHRMID);
+		if(tHRMID != null){
+			Logging.log(this, "Revoking address to " + tHRMID.toString() + " for coordinator " + pCoordinator);
+	
+			unregisterHRMID(pCoordinator, pOldHRMID);
+		}
 	}
 
 	/**
@@ -1294,14 +1298,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		HRMID tHRMID = pClusterMember.getHRMID();
 
-		Logging.log(this, "Revoking address " + tHRMID.toString() + " for ClusterMember " + pClusterMember);
-
-		if (pClusterMember.getHierarchyLevel().isBaseLevel()){
-			unregisterHRMID(pClusterMember, pOldHRMID);
-		}else{
-			// we are at a higher hierarchy level and don't need the HRMID revocation
-			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-				Logging.warn(this, "Skipping HRMID revocation of " + tHRMID.toString() + " for " + pClusterMember);
+		if(tHRMID != null){
+			Logging.log(this, "Revoking address " + tHRMID.toString() + " for ClusterMember " + pClusterMember);
+	
+			if (pClusterMember.getHierarchyLevel().isBaseLevel()){
+				unregisterHRMID(pClusterMember, pOldHRMID);
+			}else{
+				// we are at a higher hierarchy level and don't need the HRMID revocation
+				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					Logging.warn(this, "Skipping HRMID revocation of " + tHRMID.toString() + " for " + pClusterMember);
+				}
 			}
 		}
 	}
@@ -1316,14 +1322,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		HRMID tHRMID = pCluster.getHRMID();
 
-		Logging.log(this, "Revoking address " + tHRMID.toString() + " for Cluster " + pCluster);
-
-		if (pCluster.getHierarchyLevel().isBaseLevel()){
-			unregisterHRMID(pCluster, pOldHRMID);
-		}else{
-			// we are at a higher hierarchy level and don't need the HRMID revocation
-			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-				Logging.warn(this, "Skipping HRMID revocation of " + tHRMID.toString() + " for " + pCluster);
+		if(tHRMID != null){
+			Logging.log(this, "Revoking address " + tHRMID.toString() + " for Cluster " + pCluster);
+	
+			if (pCluster.getHierarchyLevel().isBaseLevel()){
+				unregisterHRMID(pCluster, pOldHRMID);
+			}else{
+				// we are at a higher hierarchy level and don't need the HRMID revocation
+				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					Logging.warn(this, "Skipping HRMID revocation of " + tHRMID.toString() + " for " + pCluster);
+				}
 			}
 		}
 	}

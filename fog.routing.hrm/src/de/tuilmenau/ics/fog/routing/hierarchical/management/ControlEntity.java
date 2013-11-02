@@ -212,9 +212,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 					if (this instanceof CoordinatorAsClusterMember){
 						Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
 						
-						// also update the HRMID of the coordinator which is the parent of this CoordinatorAsClusterMember object
-						tCoordinator.setHRMID(this, mHRMID);
-			
 						// inform HRM controller about the address change
 						mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
 			
@@ -705,59 +702,26 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @param pHRMID the new HRMID
 	 */
-	public synchronized void eventNewHRMIDAssigned(HRMID pHRMID)
+	public void eventAssignedHRMID(HRMID pHRMID)
 	{
 		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
 		}
 
-		/**
-		 * Store the new HRMID
-		 */
-		// we process such packets for cluster only on base hierarchy level and on all hierarchy level for coordinators
-		if ((getHierarchyLevel().isBaseLevel()) || (this instanceof Coordinator) || (this instanceof CoordinatorAsClusterMember)){
-			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-				Logging.log(this, "     ..setting assigned HRMID " + pHRMID.toString());
-			}
-			
-			// update the local HRMID
-			setHRMID(this, pHRMID);
-		}else{
-			Logging.warn(this, "     ..ignoring assigned HRMID " + pHRMID + " at hierachy level " + getHierarchyLevel().getValue());
-		}
-
-		/**
-		 * Get the coordinator
-		 */
-		Coordinator tCoordinator = null;
-		if (this instanceof Cluster){
-			Cluster tCluster = (Cluster)this;
-			if (tCluster.hasLocalCoordinator()){
-				tCoordinator = tCluster.getCoordinator();
-			}
-		}
-		if (this instanceof Coordinator){
-			tCoordinator = (Coordinator)this;
-		}
-		if(this instanceof CoordinatorAsClusterMember){
-			tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
-		}
-		
-		/**
-		 * Automatic address distribution via the coordinator
-		 */
-		// the local router has also the coordinator instance for this cluster?
-		if (tCoordinator != null){
-			// we should automatically continue the address distribution?
-			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+		if(pHRMID != null){
+			/**
+			 * Store the new HRMID
+			 */
+			// we process such packets for cluster only on base hierarchy level and on all hierarchy level for coordinators
+			if ((getHierarchyLevel().isBaseLevel()) || (this instanceof Coordinator) || (this instanceof CoordinatorAsClusterMember)){
 				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-					Logging.log(this, "     ..continuing the address distribution process via the coordinator " + tCoordinator);
+					Logging.log(this, "     ..setting assigned HRMID " + pHRMID.toString());
 				}
-				tCoordinator.getCluster().distributeAddresses();				
-			}			
-		}else{
-			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-				Logging.log(this, "     ..stopping address propagation here because node " + mHRMController.getNodeGUIName() + " is only a cluster member");
+				
+				// update the local HRMID
+				setHRMID(this, pHRMID);
+			}else{
+				Logging.warn(this, "     ..ignoring assigned HRMID " + pHRMID + " at hierachy level " + getHierarchyLevel().getValue());
 			}
 		}
 	}

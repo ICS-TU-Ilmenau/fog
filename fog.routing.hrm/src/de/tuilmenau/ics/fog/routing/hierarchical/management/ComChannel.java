@@ -557,9 +557,7 @@ public class ComChannel
 		LinkedList<ComChannelPacketMetaData> tResult = null;
 		
 		synchronized (mPackets) {
-			if(mPackets.size() > 0){
-				tResult = (LinkedList<ComChannelPacketMetaData>) mPackets.clone();
-			}
+			tResult = (LinkedList<ComChannelPacketMetaData>) mPackets.clone();
 		}
 
 		return tResult;
@@ -678,26 +676,27 @@ public class ComChannel
 	public void signalRevokeHRMIDs()
 	{
 		// debug output
-		synchronized (mPeerHRMIDs) {
-			if (mPeerHRMIDs.size() > 0){
-				Logging.log(this, "Revoking assigned HRMIDs...");
-				int i = 0;
-				for(HRMID tHRMID : mPeerHRMIDs){
-					Logging.log(this, "    ..[" + i + "]: " + tHRMID);
-					i++;
-				}
-	
-				/**
-				 * Revoke the HRMIDs from the peer
-				 */
-				// create the packet
-				RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), mPeerHRMIDs);
-				// send the packet
-				sendPacket(tRevokeHRMIDsPacket);
-				
-				/**
-				 * Clear the list of stored assigned HRMID
-				 */
+		LinkedList<HRMID >tPeerHRMIDs = getPeerHRMIDs();
+		if (tPeerHRMIDs.size() > 0){
+			Logging.log(this, "Revoking assigned HRMIDs...");
+			int i = 0;
+			for(HRMID tHRMID : tPeerHRMIDs){
+				Logging.log(this, "    ..[" + i + "]: " + tHRMID);
+				i++;
+			}
+
+			/**
+			 * Revoke the HRMIDs from the peer
+			 */
+			// create the packet
+			RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), tPeerHRMIDs);
+			// send the packet
+			sendPacket(tRevokeHRMIDsPacket);
+			
+			/**
+			 * Clear the list of stored assigned HRMID
+			 */
+			synchronized (mPeerHRMIDs) {
 				mPeerHRMIDs.clear();
 				mUsedClusterAddresses.clear();
 			}
@@ -969,8 +968,34 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "ASSIGN_HRMID-received from \"" + getPeerHRMID() + "\" assigned HRMID: " + tAssignHRMIDPacket.getHRMID().toString());
 
+			HRMID tAssignedHRMID = tAssignHRMIDPacket.getHRMID();
+			
 			// let the coordinator process the HRMID assignment
-			getParent().eventNewHRMIDAssigned(tAssignHRMIDPacket.getHRMID());
+			getParent().eventAssignedHRMID(tAssignedHRMID);
+			
+			if(getParent() instanceof CoordinatorAsClusterMember){
+				CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)getParent();
+				
+				/**
+				 * Automatic address distribution via the coordinator
+				 */
+				// we should automatically continue the address distribution?
+				if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+					// does the CoordinatorAsClusterMember belong to an active cluster?
+					if(isLinkActive()){
+						if(tAssignedHRMID != null){
+							Coordinator tCoordinator = tCoordinatorAsClusterMember.getCoordinator();
+							if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+								Logging.log(this, "     ..got new HRMID for CoordinatorAsClusterMember: " + tCoordinatorAsClusterMember);
+								Logging.log(this, "     ..continuing the address distribution process via the coordinator: " + tCoordinator);
+							}
+							tCoordinator.eventAssignedHRMID(tAssignedHRMID);
+						}			
+					}
+
+				}
+				
+			}
 			
 			return true;
 		}
@@ -1116,6 +1141,42 @@ public class ComChannel
 	public void setLinkActivation(boolean pState, String pCause)
 	{
 		Logging.log(this, "Updating link activation from: " + mLinkActivation + " to: " + pState);
+
+		if(getParent() instanceof CoordinatorAsClusterMember){
+			CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)getParent();
+			
+			HRMID tHRMID = tCoordinatorAsClusterMember.getHRMID();
+			
+			/**
+			 * State transition from "true" to "false"? -> do the following
+			 *   	1.) unregister the local HRMID
+			 */
+			if ((isLinkActive()) && (!pState)){
+				/**
+				 * Unregister the local HRMID
+				 */
+				if(tHRMID != null){
+					mHRMController.unregisterHRMID(tCoordinatorAsClusterMember, tHRMID);
+				}
+			}
+
+			/**
+			 * State transition from "false" to "true"? -> do the following
+			 *   	1.) update coordinator address by triggering "assigned HRMID"
+			 */
+			if ((!isLinkActive()) && (pState)){
+				/**
+				 * Unregister the local HRMID
+				 */
+				if(tHRMID != null){
+					/**
+					 * Trigger: "assigned HRMID"
+					 */
+					tCoordinatorAsClusterMember.getCoordinator().eventAssignedHRMID(tHRMID);
+				}
+			}
+		}
+
 		mLinkActivation = pState;
 		
 		mDesccriptionLinkActivation += "\n - [" +pState +"] <== " + pCause;
@@ -1136,7 +1197,7 @@ public class ComChannel
 	 * 
 	 * @return true or false
 	 */
-	public boolean getLinkActivation()
+	public boolean isLinkActive()
 	{
 		return mLinkActivation;
 	}	

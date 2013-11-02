@@ -17,6 +17,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -64,14 +65,14 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		
 		Logging.log(tResult, "\n\n\n################ CREATED COORDINATOR AS CLUSTER MEMBER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
+		// creates new elector object, which is responsible for Bully based election processes
+		tResult.mElector = new Elector(pHRMController, tResult);
+
 		// register at HRMController's internal database
 		pHRMController.registerCoordinatorAsClusterMember(tResult);
 
 		// register at the parent Coordinator
 		pCoordinator.registerClusterMembership(tResult);
-
-		// creates new elector object, which is responsible for Bully based election processes
-		tResult.mElector = new Elector(pHRMController, tResult);
 
 		return tResult;
 	}
@@ -203,7 +204,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		 */ 
 		mCoordinator.unregisterClusterMembership(this);
 	}
-	
+
 	/**
 	 * Defines the decoration text for the ARG viewer
 	 * 
