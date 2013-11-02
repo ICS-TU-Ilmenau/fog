@@ -692,7 +692,7 @@ public class ClusterMember extends ClusterName
 	 *  
 	 * @return true or false
 	 */
-	public boolean getClusterActivation()
+	public boolean isActiveCluster()
 	{
 		return mClusterActivation;
 	}

@@ -716,8 +716,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		 */
 		// we process such packets for cluster only on base hierarchy level and on all hierarchy level for coordinators
 		if ((getHierarchyLevel().isBaseLevel()) || (this instanceof Coordinator) || (this instanceof CoordinatorAsClusterMember)){
-			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION)
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 				Logging.log(this, "     ..setting assigned HRMID " + pHRMID.toString());
+			}
 			
 			// update the local HRMID
 			setHRMID(this, pHRMID);

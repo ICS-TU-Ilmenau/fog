@@ -982,7 +982,7 @@ public class Elector implements Localization
 						/**
 						 * Do we belong to an active cluster with an existing (remote) coordinator?
 						 */
-						if(mParent.getClusterActivation()){
+						if(mParent.isActiveCluster()){
 							/**
 							 * We behave like we would do if we receive an ANNOUNCE packet
 							 */

@@ -1158,7 +1158,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				if(pEntity instanceof ClusterMember){
 					ClusterMember tClusterMember = (ClusterMember)pEntity;
 					
-					tClusterMemberOfInactiveCluster = !tClusterMember.getClusterActivation();
+					tClusterMemberOfInactiveCluster = !tClusterMember.isActiveCluster();
 
 					if(tClusterMemberOfInactiveCluster){
 						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 222));

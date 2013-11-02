@@ -440,7 +440,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						 */
 						LinkedList<Cluster> tInactiveL0Clusters = new LinkedList<Cluster>();
 						for(Cluster tCluster : tL0Clusters){
-							if(!tCluster.getClusterActivation()){
+							if(!tCluster.isActiveCluster()){
 								tInactiveL0Clusters.add(tCluster);
 							}
 						}					
