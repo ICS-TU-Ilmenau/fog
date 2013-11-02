@@ -14,6 +14,7 @@ import java.math.BigInteger;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This class is used to identify a node in the HRM graph.
@@ -108,6 +109,62 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		return tID;
 	}
 	
+	/**
+	 * Returns the hierarchy level at which this HRMID differs from another given one
+	 * 
+	 * @param pAddress the address that should be compared to this one
+	 * 
+	 * @return The first occurrence at which a difference was found will be returned.
+	 */
+	private int getPrefixDifference(HRMID pAddress)
+	{
+		int tResult = -1;
+		
+		//Logging.log(this, "Comparing with HRMID: " + pAddress);
+
+		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i >= 0; i--) {
+			BigInteger tOtherLevelAddress = pAddress.getLevelAddress(i);
+			BigInteger tLevelAddress = getLevelAddress(i);
+			
+			if(!tLevelAddress.equals(tOtherLevelAddress)) {
+				// return the hierarchy level as result
+				tResult = i;
+				
+				// return immediately
+				break;
+			}
+		}
+		
+		//Logging.log(this, "   ..result: " + tResult);
+
+		return tResult;
+	}
+	
+	/**
+	 * Returns if a given HRMID has the same prefix like this one - the compared prefix ends at the given hierarchy level
+	 * 
+	 * @param pOtherAddress the other HRMID
+	 * @param pHierarchyLevel the hierarchy level which marks the end of the compared prefix
+	 * 
+	 * @return true or false
+	 */
+	public boolean hasPrefix(HRMID pOtherAddress, HierarchyLevel pHierarchyLevel)
+	{
+		boolean tResult = false;
+		
+		//Logging.log(this, "Comparing with prefix of HRMID: " + pOtherAddress + ", prefix for level: " + pHierarchyLevel.getValue());
+		
+		int tDiffLevel = getPrefixDifference(pOtherAddress);
+		
+		if((tDiffLevel < 0) || (tDiffLevel <= pHierarchyLevel.getValue())){
+			tResult = true;
+		}
+		
+		//Logging.log(this, "   ..result: " + tResult);
+		
+		return tResult;
+	}
+
 	
 	
 	
@@ -119,36 +176,10 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		return mAddress.bitLength();
 	}
 
-	/**
-	 * Use this method to find out the descending difference in relation to another address.
-	 * 
-	 * @param pAddressToCompare Provide the address that should be compared to this entity, here.
-	 * @return The first occurrence at which a difference was found will be returned.
-	 */
-	//TODO
-	private int getDescendingDifference(HRMID pAddressToCompare)
-	{
-		for(int i = HRMConfig.Hierarchy.HEIGHT; i >= 0; i--) {
-			BigInteger tOtherAddress = pAddressToCompare.getLevelAddress(i);
-			BigInteger tMyAddress = getLevelAddress(i);
-			if(tOtherAddress.equals(tMyAddress)) {
-				/*
-				 * Do nothing, just continue
-				 */
-			} else {
-				/*
-				 * return value where addresses differ
-				 */
-				return i;
-			}
-		}
-		return -1;
-	}
-	
 	@Override
 	//TODO
 	public int compareTo(HRMID pCompareTo) {
-		return getLevelAddress(pCompareTo.getDescendingDifference(this)).subtract(pCompareTo.getLevelAddress(pCompareTo.getDescendingDifference(this))).intValue();
+		return getLevelAddress(pCompareTo.getPrefixDifference(this)).subtract(pCompareTo.getLevelAddress(pCompareTo.getPrefixDifference(this))).intValue();
 	}
 	
 	
