@@ -107,7 +107,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Button mBtnPriorityLog = null;
     private Button mBtnClusteringLog = null;
     private Button mBtnClusterMembersLog = null;
+    private Button mBtnHRMIDLog = null;
     private Button mBtnSuperiorCoordinatorsLog = null;
+    private Button mBtnUsedClusterAddressesLog = null;
     
     private Button mBtnClusterMembers = null;
     private Button mBtnCoordClusterMembers = null;
@@ -162,7 +164,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mGuiCounter == 1){
 			mToolBtnContainer = new Composite(pParent, SWT.NONE);
 	
-			GridLayout tLayout1 = new GridLayout(7, false);
+			GridLayout tLayout1 = new GridLayout(9, false);
 			mToolBtnContainer.setLayout(tLayout1);
 			mToolBtnContainer.setLayoutData(createGridData(true, 1));
 		}
@@ -219,6 +221,22 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				}
 			});
 		}
+		// **** show HRMID update log ****
+		if(mGuiCounter == 1){
+			mBtnHRMIDLog = new Button(mToolBtnContainer, SWT.PUSH);
+			mBtnHRMIDLog.setText("Show HRMID events");
+			mBtnHRMIDLog.setLayoutData(createGridData(false, 1));
+			mBtnHRMIDLog.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					Logging.log(this, "HRMID updates: " + mHRMController.getGUIDescriptionHRMIDChanges());
+				}
+				public String toString()
+				{
+					return mHRMViewer.toString();
+				}
+			});
+		}
 		// **** show superior coordinators ****
 		if(mGuiCounter == 1){
 			mBtnSuperiorCoordinatorsLog = new Button(mToolBtnContainer, SWT.PUSH);
@@ -233,6 +251,22 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					for(ClusterName tSuperiorCoordinator : tSuperiorCoordinators){
 						Logging.log(this, "    ..[" + i + "]: Coordinator" + tSuperiorCoordinator.getGUICoordinatorID() + "@" + tSuperiorCoordinator.getHierarchyLevel().getValue() + "(Cluster" + tSuperiorCoordinator.getGUIClusterID() + ")");
 					}					
+				}
+				public String toString()
+				{
+					return mHRMViewer.toString();
+				}
+			});
+		}
+		// **** show superior coordinators ****
+		if(mGuiCounter == 1){
+			mBtnUsedClusterAddressesLog = new Button(mToolBtnContainer, SWT.PUSH);
+			mBtnUsedClusterAddressesLog.setText("Show used addresses");
+			mBtnUsedClusterAddressesLog.setLayoutData(createGridData(false, 1));
+			mBtnUsedClusterAddressesLog.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {					
+					Logging.log(this, "Used cluster addresses: " + mHRMController.getGUIDEscriptionUsedAddresses());
 				}
 				public String toString()
 				{
@@ -995,6 +1029,21 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							showSession(tfComChannels.get(tSelectedIndex));
 						}
 					});
+					MenuItem tMenuItem3 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem3.setText("Show peer HRMIDs");
+					tMenuItem3.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showPeerHRMIDs(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showPeerHRMIDs(tfComChannels.get(tSelectedIndex));
+						}
+					});
+
 					tTable.setMenu(tMenu);
 				}
 			}
@@ -1028,6 +1077,17 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		Logging.log(this, "Session for: " + pComChannel);
 		Logging.log(this, "     ..session: " + pComChannel.getParentComSession());
 	}
+	
+	private void showPeerHRMIDs(ComChannel pComChannel)
+	{
+		Logging.log(this, "Peer HRMIDs of: " + pComChannel);
+		int i = 0;
+		for (HRMID tHRMID : pComChannel.getPeerHRMIDs()){
+			Logging.log(this, "    ..[" + i + "]: " + tHRMID);
+			i++;
+		}
+	}
+
 
 	private void printNAME(Composite pParent, ControlEntity pEntity)
 	{
@@ -1131,7 +1191,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			if(pEntity instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)pEntity;
 				
-				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + " Announces=" + tCoordinator.countAnnounces());
+				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + " Announces=" + tCoordinator.countAnnounces() + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts());
 			}else{
 				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : ""));
 			}

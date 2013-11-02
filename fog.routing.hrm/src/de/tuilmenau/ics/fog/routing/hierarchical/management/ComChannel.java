@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
@@ -177,7 +178,13 @@ public class ComChannel
 	/**
 	 * Stores a list of assigned HRMIDs
 	 */
-	private LinkedList<HRMID> mAssignedHRMIDs = new LinkedList<HRMID>();
+	private LinkedList<HRMID> mPeerHRMIDs = new LinkedList<HRMID>();
+	
+	/**
+	 * Stores a list of used cluster address for this comm. channel.
+	 * We could also use "mPeerHRMIDs" for having an overview about the used cluster addresses. But this way, the life is easier.
+	 */
+	private LinkedList<Integer> mUsedClusterAddresses = new LinkedList<Integer>();
 	
 	/**
 	 * Stores the comm. channel state
@@ -295,7 +302,16 @@ public class ComChannel
 	 */
 	public void setPeerHRMID(HRMID pHRMID)
 	{
-		mPeerHRMID = pHRMID.clone();		
+		Logging.log(this, "Setting new peer HRMID: " + pHRMID);
+		
+		if((pHRMID != null) && (!pHRMID.equals(mPeerHRMID))){
+			// store the assignment for this comm. channel
+			storePeerHRMID(pHRMID);
+	
+			mPeerHRMID = pHRMID.clone();
+		}else{
+			Logging.warn(this, "Ignoring set-request of HRMID: " + pHRMID);
+		}
 	}
 	
 	/**
@@ -657,6 +673,100 @@ public class ComChannel
 	}
 
 	/**
+	 * Revokes all formerly assigned HRMIDs
+	 */	
+	public void signalRevokeHRMIDs()
+	{
+		// debug output
+		synchronized (mPeerHRMIDs) {
+			if (mPeerHRMIDs.size() > 0){
+				Logging.log(this, "Revoking assigned HRMIDs...");
+				int i = 0;
+				for(HRMID tHRMID : mPeerHRMIDs){
+					Logging.log(this, "    ..[" + i + "]: " + tHRMID);
+					i++;
+				}
+	
+				/**
+				 * Revoke the HRMIDs from the peer
+				 */
+				// create the packet
+				RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), mPeerHRMIDs);
+				// send the packet
+				sendPacket(tRevokeHRMIDsPacket);
+				
+				/**
+				 * Clear the list of stored assigned HRMID
+				 */
+				mPeerHRMIDs.clear();
+				mUsedClusterAddresses.clear();
+			}
+		}
+	}
+
+	/**
+	 * Stores an assigned HRMID for the peer
+	 * 
+	 * @param pHRMID the assigned HRMID
+	 */
+	private void storePeerHRMID(HRMID pHRMID)
+	{
+		Logging.log(this, "Storing assigned HRMID: " + pHRMID);
+		
+		synchronized(mPeerHRMIDs){
+			if(!mPeerHRMIDs.contains(pHRMID)){
+				mPeerHRMIDs.add(pHRMID);
+
+				int tUsedClusterAddress = pHRMID.getLevelAddress(mParent.getHierarchyLevel().getValue()).intValue();
+				Logging.log(this, "storePeerHRMID() stores for " + pHRMID + " the used cluster address: " + tUsedClusterAddress);
+				if(tUsedClusterAddress > 0){
+					synchronized (mUsedClusterAddresses) {
+						if(!mUsedClusterAddresses.contains(tUsedClusterAddress)){
+							mUsedClusterAddresses.add(tUsedClusterAddress);
+						}
+					}
+				}
+			}else{
+				Logging.warn(this, "storePeerHRMID() skips storing the already known HRMID: " + pHRMID); 
+			}
+		}
+	}
+	
+	/**
+	 * Returns a list of used cluster addresses
+	 * 
+	 * @return the list
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<Integer> getUsedClusterAddresses()
+	{
+		LinkedList<Integer> tResult = null;
+		
+		synchronized (mUsedClusterAddresses) {
+			tResult = (LinkedList<Integer>) mUsedClusterAddresses.clone();
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Returns the list of known peer HRMIDs
+	 * 
+	 * @return the list
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<HRMID> getPeerHRMIDs()
+	{
+		LinkedList<HRMID> tResult = null;
+		
+		synchronized (mPeerHRMIDs) {
+			tResult = (LinkedList<HRMID>) mPeerHRMIDs.clone();
+		}
+		
+		return tResult; 
+	}
+	
+	/**
 	 * Acknowledges a RequestClusterMembership packet
 	 * 
 	 * @param pSource the source of the acknowledgment (e.g., a coordinator description)
@@ -669,48 +779,6 @@ public class ComChannel
 		sendPacket(tRequestClusterMembershipAckPacket);
 	}
 
-	/**
-	 * Revokes all formerly assigned HRMIDs
-	 */	
-	public void signalRevokeHRMIDs()
-	{
-		// debug output
-		synchronized (mAssignedHRMIDs) {
-			if (mAssignedHRMIDs.size() > 0){
-				for(HRMID tHRMID : mAssignedHRMIDs){
-					Logging.log(this, "Revoking assigned HRMID: " + tHRMID);
-				}
-	
-				/**
-				 * Revoke the HRMIDs from the peer
-				 */
-				// create the packet
-				RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), mAssignedHRMIDs);
-				// send the packet
-				sendPacket(tRevokeHRMIDsPacket);
-				
-				/**
-				 * Clear the list of stored assigned HRMID
-				 */
-				mAssignedHRMIDs.clear();
-			}
-		}
-	}
-
-	/**
-	 * Stores an assigned HRMID
-	 * 
-	 * @param pHRMID the assigned HRMID
-	 */
-	public void storeAssignedHRMID(HRMID pHRMID)
-	{
-		Logging.log(this, "Storing assigned HRMID: " + pHRMID);
-		
-		synchronized(mAssignedHRMIDs){
-			mAssignedHRMIDs.add(pHRMID);
-		}
-	}
-	
 	/**
 	 * Closes the comm. channel
 	 */

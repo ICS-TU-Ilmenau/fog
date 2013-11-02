@@ -9,14 +9,10 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
-import java.math.BigInteger;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
-import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
@@ -62,16 +58,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private static int sNextFreeCoordinatorID = 1;
 
-	/**
-	 * Count the outgoing connections
-	 */
-	private int mCounterOutgoingConnections = 0;
-
-	/**
-	 * Stores the next free address for a cluster member
-	 */
-	private int mNextFreeClusterMemberAddress = 1;
-	
 	/**
 	 * Stores the cluster memberships of this coordinator
 	 */
@@ -140,82 +126,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		return tResult;
 	}
 
-	/**
-	 * Creates a new HRMID for a cluster member depending on the given member number.
-	 * 
-	 * @param pMemberNumber the member number
-	 * @return the new HRMID for the cluster member
-	 */
-	private HRMID createClusterMemberAddress(int pMemberNumber)
-	{
-		HRMID tHRMID = getHRMID().clone();
-		
-		// transform the member number to a BigInteger
-		BigInteger tAddress = BigInteger.valueOf(pMemberNumber);
-
-		// set the member number for the given hierarchy level
-		tHRMID.setLevelAddress(super.getHierarchyLevel(), tAddress);
-
-		// some debug outputs
-		if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-			Logging.log(this, "Set " + tAddress + " on hierarchy level " + super.getHierarchyLevel().getValue() + " for HRMID " + tHRMID.toString());
-			Logging.log(this, "Created for a cluster member the NEW HRMID=" + tHRMID.toString());
-		}
-		
-		return tHRMID;
-	}
-
-	/**
-	 * DISTRIBUTE: distribute addresses among cluster members if:
-	 *           + an HRMID was received from a superior coordinator, used to distribute HRMIDs downwards the hierarchy,
-	 *           + we were announced as coordinator
-	 * This function is called for distributing HRMIDs among the cluster members.
-	 */
-	public void distributeAddresses()
-	{
-		/**
-		 * The following value is used to assign monotonously growing addresses to all cluster members.
-		 * The addressing has to start with "1".
-		 */
-		mNextFreeClusterMemberAddress = 1;
-
-		Logging.log(this, "DISTRIBUTING ADDRESSES to entities at level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
-		
-		/**
-		 * Assign ourself an HRMID address
-		 */
-		// are we at the base level?
-		if(super.getHierarchyLevel().isBaseLevel()) {
-			
-			// create new HRMID for ourself
-			HRMID tOwnAddress = createClusterMemberAddress(mNextFreeClusterMemberAddress++);
-
-			Logging.log(this, "    ..setting local HRMID " + tOwnAddress.toString());
-
-			//HINT: don't update the HRMID of the coordinator here!
-			
-			// update the HRMID of the managed cluster by direct call and avoid additional communication overhead
-			mParentCluster.setHRMID(this, tOwnAddress);
-		}
-
-		/**
-		 * Distribute AssignHRMID packets among the cluster members 
-		 */
-		LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
-		
-		Logging.log(this, "    ..distributing HRMIDs among cluster members: " + tComChannels);
-		for(ComChannel tComChannel : tComChannels) {
-
-			//TODO: don't send this update in a loop to ourself!
-			//TODO: check if cluster members already have an address and distribute only free addresses here
-			
-			/**
-			 * Trigger: cluster member needs HRMID
-			 */
-			eventClusterMemberNeedsHRMID(tComChannel);
-		}
-	}
-	
 	/**
 	 * Shares a route to a cluster cluster member with other cluster members
 	 * 
@@ -455,9 +365,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 		
 		/**
-		 * Revoke all assigned HRMIDs of all cluster members
+		 * Trigger: revoke all assigned HRMIDs from all cluster members
 		 */
-		revokeAssignedHRMIDsFromClusterMembers();
+		mParentCluster.eventAllClusterMembersLostHRMIDs();
 		
 		/**
 		 * Unregister from local databases
@@ -487,68 +397,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 	}
 	
-	/**
-	 * Revokes all HRMIDs per comm. channel
-	 */
-	private void revokeAssignedHRMIDsFromClusterMembers()
-	{
-		Logging.log(this, "###### Revoking assigned HRMIDs for all cluster members");
-
-		LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
-		for (ComChannel tcomChannel : tComChannels){
-			tcomChannel.signalRevokeHRMIDs();
-		}
-	}
-	
-	/**
-	 * EVENT: cluster member needs HRMID
-	 * 
-	 * @param pComChannel the comm. channel towards the cluster member, which needs a new HRMID
-	 */
-	public void eventClusterMemberNeedsHRMID(ComChannel pComChannel)
-	{
-		Logging.log(this, "EVENT: Cluster_Member_Needs_HRMID for: " + pComChannel);
-		
-		/**
-		 * AUTO ADDRESS DISTRIBUTION
-		 */
-		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
-			HRMID tHRMIDForPeer = pComChannel.getPeerHRMID(); 
-
-			/**
-			 * Create a new HRMID for the peer
-			 */
-			if((tHRMIDForPeer == null) || (tHRMIDForPeer.isZero()) || (tHRMIDForPeer.isRelativeAddress())){
-				tHRMIDForPeer = createClusterMemberAddress(mNextFreeClusterMemberAddress++);
-
-				// store the HRMID under which the peer will be addressable from now 
-				pComChannel.setPeerHRMID(tHRMIDForPeer);
-
-				// register this new HRMID in the local HRS and create a mapping to the right L2Address
-				Logging.log(this, "    ..creating MAPPING " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
-				mHRMController.getHRS().mapHRMIDToL2Address(tHRMIDForPeer, pComChannel.getPeerL2Address());
-				
-				// share the route to this cluster member with all other cluster members
-				shareRouteToClusterMember(pComChannel);
-				
-				// store the assignment for this comm. channel
-				pComChannel.storeAssignedHRMID(tHRMIDForPeer);
-			}else{
-				// re-assign the same HRMID to the peer
-			}
-	
-			if ((pComChannel.getPeerHRMID() != null) && (!pComChannel.getPeerHRMID().equals(tHRMIDForPeer))){
-				Logging.log(this, "    ..replacing HRMID " + pComChannel.getPeerHRMID().toString() + " and assign new HRMID " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
-			}else
-				Logging.log(this, "    ..assigning new HRMID " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
-	
-			// send the packet in every case
-			pComChannel.signalAssignHRMID(tHRMIDForPeer);
-		}else{
-			Logging.log(this, "Address distribution is deactivated, no new assigned HRMID for: " + pComChannel);
-		}
-	}
-
 	/**
 	 * SEND: distribute AnnounceCoordinator messages among the neighbors which are within the given max. radius (see HRMConfig)        
 	 */
@@ -698,7 +546,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
 			//Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + mParentCluster.getComChannels().size() + " cluster members");
 
-			distributeAddresses();
+			getCluster().distributeAddresses();
 		}
 		
 
@@ -989,6 +837,31 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		
 		// update the Bully priority of the parent cluster, which is managed by this coordinator
 		mParentCluster.setPriority(pPriority);
+	}
+
+	/**
+	 * Assign new HRMID for being addressable.
+	 * HINT: We use the HRMID of the managed cluster.
+	 *  
+	 * @param pCaller the caller who assigns the new HRMID
+	 * @param pHRMID the new HRMID
+	 */
+	@Override
+	public void setHRMID(Object pCaller, HRMID pHRMID)
+	{
+		// update the Bully priority of the parent cluster, which is managed by this coordinator
+		mParentCluster.setHRMID(pCaller, pHRMID);
+	}
+
+	/**
+	 * Returns the HRMID under which this node is addressable for this cluster
+	 * HINT: We use the HRMID of the managed cluster.
+	 * 
+	 * @return the HRMID
+	 */
+	@Override
+	public HRMID getHRMID() {
+		return mParentCluster.getHRMID();
 	}
 
 	/**

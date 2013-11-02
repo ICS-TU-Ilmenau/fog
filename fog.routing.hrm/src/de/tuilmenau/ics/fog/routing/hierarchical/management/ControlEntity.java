@@ -182,6 +182,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
+		HRMID tOldHRMID = getHRMID();
+		
 		if(pHRMID != null){
 			if(!pHRMID.isZero()){
 				Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (old=" + (mHRMID != null ? mHRMID.toString() : "null") + ", assigner=" + pCaller + ")");
@@ -195,7 +197,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						Cluster tCluster = (Cluster)this;
 			
 						// inform HRM controller about the address change
-						mHRMController.updateClusterAddress(tCluster);
+						mHRMController.updateClusterAddress(tCluster, tOldHRMID);
 			
 						return;
 					}
@@ -203,7 +205,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						Coordinator tCoordinator = (Coordinator)this;
 			
 						// inform HRM controller about the address change
-						mHRMController.updateCoordinatorAddress(tCoordinator);
+						mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
 			
 						return;
 					}
@@ -214,7 +216,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						tCoordinator.setHRMID(this, mHRMID);
 			
 						// inform HRM controller about the address change
-						mHRMController.updateCoordinatorAddress(tCoordinator);
+						mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
 			
 						return;
 					}
@@ -222,7 +224,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						ClusterMember tClusterMember = (ClusterMember)this;
 			
 						// inform HRM controller about the address change
-						mHRMController.updateClusterMemberAddress(tClusterMember);
+						mHRMController.updateClusterMemberAddress(tClusterMember, tOldHRMID);
 						
 						return;
 					}
@@ -233,7 +235,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				Logging.log(this, "Got a zero HRMID: " + pHRMID.toString());
 			}
 		}else{
-			Logging.warn(this, "Got an invalid HRMID" );
+			mHRMID = null;
 		}
 	}
 
@@ -276,29 +278,30 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						Cluster tCluster = (Cluster)this;
 			
 						// inform HRM controller about the address change
-						mHRMController.revokeClusterAddress(tCluster);
+						mHRMController.revokeClusterAddress(tCluster, pHRMID);
 					}else if (this instanceof ClusterMember){
 						ClusterMember tClusterMember = (ClusterMember)this;
 						
 						// inform HRM controller about the address change
-						mHRMController.revokeClusterMemberAddress(tClusterMember);
+						mHRMController.revokeClusterMemberAddress(tClusterMember, pHRMID);
 					}
 					if (this instanceof Coordinator){
 						Coordinator tCoordinator = (Coordinator)this;
 			
 						// inform HRM controller about the address change
-						mHRMController.revokeCoordinatorAddress(tCoordinator);
+						mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
 					}
 					if(this instanceof CoordinatorAsClusterMember){
 						Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
 			
 						// inform HRM controller about the address change
-						mHRMController.revokeCoordinatorAddress(tCoordinator);
+						mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
 					}
 					
-					mHRMID = null;
+					setHRMID(this, null);
 				}else{
-					throw new RuntimeException(this + "cannot revoke unknown HRMID: " + pHRMID);
+					//throw new RuntimeException(this + "cannot revoke unknown HRMID: " + pHRMID);
+					Logging.err(this, "Cannot revoke unknown HRMID: " + pHRMID);
 				}
 			}else{
 				Logging.log(this, "Got a zero HRMID: " + pHRMID.toString());
@@ -704,8 +707,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public synchronized void eventNewHRMIDAssigned(HRMID pHRMID)
 	{
-		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION)
+		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
+		}
 
 		/**
 		 * Store the new HRMID
@@ -745,13 +749,15 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if (tCoordinator != null){
 			// we should automatically continue the address distribution?
 			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
-				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION)
+				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 					Logging.log(this, "     ..continuing the address distribution process via the coordinator " + tCoordinator);
-				tCoordinator.distributeAddresses();				
+				}
+				tCoordinator.getCluster().distributeAddresses();				
 			}			
 		}else{
-			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION)
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 				Logging.log(this, "     ..stopping address propagation here because node " + mHRMController.getNodeGUIName() + " is only a cluster member");
+			}
 		}
 	}
 

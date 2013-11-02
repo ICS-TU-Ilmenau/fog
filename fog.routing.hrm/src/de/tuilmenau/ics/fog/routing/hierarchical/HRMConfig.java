@@ -154,7 +154,7 @@ public class HRMConfig
 		/**
 		 * Defines if signaling messages for address distribution are shown
 		 */
-		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = false;
+		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = true;
 	}
 	
 	public class Addressing
@@ -170,6 +170,11 @@ public class HRMConfig
 		 * Defines the address which is used for cluster broadcasts
 		 */
 		public static final long BROADCAST_ADDRESS = 0;
+
+		/**
+		 * Defines if relative addresses should be distributed if a coordinators doesn't have superior coordinators
+		 */
+		public static final boolean DISTRIBUTE_RELATIVE_ADDRESSES = false;
 	}
 	
 	public class Hierarchy

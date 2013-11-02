@@ -205,6 +205,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private String mDesriptionConnectivityPriorityUpdates = new String();
 
 	/**
+	 * Stores a description about all HRMID updates
+	 */
+	private String mDescriptionHRMIDUpdates = new String();
+	
+	/**
 	 * Stores a description about all hierarchy priority updates
 	 */
 	private String mDesriptionHierarchyPriorityUpdates = new String();
@@ -557,33 +562,45 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Get the new HRMID
 		 */
 		HRMID tHRMID = pEntity.getHRMID();
-
+		
+		registerHRMID(pEntity, tHRMID);
+	}
+	
+	/**
+	 * Registers an HRMID at local database
+	 * 
+	 * @param pEntity the entity for which the HRMID should be registered
+	 */
+	public void registerHRMID(ControlEntity pEntity, HRMID pHRMID)
+	{
 		/**
 		 * Some validations
 		 */
-		if(tHRMID != null){
+		if(pHRMID != null){
 			// ignore "0.0.0"
-			if(!tHRMID.isZero()){
+			if(!pHRMID.isZero()){
 				/**
 				 * Register the HRMID
 				 */
 				synchronized(mRegisteredOwnHRMIDs){
-					if ((!mRegisteredOwnHRMIDs.contains(tHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
+					if ((!mRegisteredOwnHRMIDs.contains(pHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
 						/**
 						 * Update the local address DB with the given HRMID
 						 */
 						if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-							Logging.log(this, "Updating the HRMID to: " + tHRMID.toString() + " for: " + pEntity);
+							Logging.log(this, "Updating the HRMID to: " + pHRMID.toString() + " for: " + pEntity);
 						}
 						
 						// register the new HRMID
-						mRegisteredOwnHRMIDs.add(tHRMID);
+						mRegisteredOwnHRMIDs.add(pHRMID);
 						
+						mDescriptionHRMIDUpdates += "\n + " + pHRMID.toString() + " <== " + pEntity;
+
 						/**
 						 * Register a local loopback route for the new address 
 						 */
 						// register a route to the cluster member as addressable target
-						getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(tHRMID));
+						getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pHRMID));
 		
 						/**
 						 * Update the DNS for L0
@@ -603,7 +620,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							// get the local router's human readable name (= DNS name)
 							Name tLocalRouterName = getNodeName();				
 							// register HRMID for the given DNS name
-							tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
+							tNMS.registerName(tLocalRouterName, pHRMID, NamingLevel.NAMES);				
 							// give some debug output about the current DNS state
 							String tString = new String();
 							for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
@@ -630,10 +647,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 			}else{
-				Logging.err(this, "Got a zero HRMID " + tHRMID.toString() + " for: " + pEntity);
+				Logging.err(this, "registerHRMID() got a zero HRMID " + pHRMID.toString() + " for: " + pEntity);
 			}
 		}else{
-			Logging.err(this, "Got an invalid HRMID for: " + pEntity);
+			Logging.err(this, "registerHRMID() got an invalid HRMID for: " + pEntity);
 		}
 	}
 	
@@ -641,39 +658,37 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Unregisters an HRMID at local database
 	 * 
 	 * @param pEntity the entity for which the HRMID should be registered
+	 * @param pOldHRMID the old HRMID which should be unregistered
 	 */
-	private void unregisterHRMID(ControlEntity pEntity)
+	public void unregisterHRMID(ControlEntity pEntity, HRMID pOldHRMID)
 	{
-		/**
-		 * Get the new HRMID
-		 */
-		HRMID tHRMID = pEntity.getHRMID();
-
 		/**
 		 * Some validations
 		 */
-		if(tHRMID != null){
+		if(pOldHRMID != null){
 			// ignore "0.0.0"
-			if(!tHRMID.isZero()){
+			if(!pOldHRMID.isZero()){
 				/**
 				 * Unregister the HRMID
 				 */
 				synchronized(mRegisteredOwnHRMIDs){
-					if (mRegisteredOwnHRMIDs.contains(tHRMID)){
+					if (mRegisteredOwnHRMIDs.contains(pOldHRMID)){
 						/**
 						 * Update the local address DB with the given HRMID
 						 */
 						if (HRMConfig.DebugOutput.GUI_HRMID_UPDATES){
-							Logging.log(this, "Revoking the HRMID: " + tHRMID.toString() + " of: " + pEntity);
+							Logging.log(this, "Revoking the HRMID: " + pOldHRMID.toString() + " of: " + pEntity);
 						}
 						
-						mRegisteredOwnHRMIDs.remove(tHRMID);
+						mRegisteredOwnHRMIDs.remove(pOldHRMID);
 						
+						mDescriptionHRMIDUpdates += "\n - " + pOldHRMID.toString() + " <== " + pEntity;
+
 						/**
 						 * Unregister the local loopback route for the address 
 						 */
 						// register a route to the cluster member as addressable target
-						getHRS().delHRMRoute(RoutingEntry.createLocalhostEntry(tHRMID));
+						getHRS().delHRMRoute(RoutingEntry.createLocalhostEntry(pOldHRMID));
 			
 						/**
 						 * Update the DNS for L0
@@ -693,7 +708,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				//			// get the local router's human readable name (= DNS name)
 				//			Name tLocalRouterName = getNodeName();				
 				//			// register HRMID for the given DNS name
-				//			tNMS.registerName(tLocalRouterName, tHRMID, NamingLevel.NAMES);				
+				//			tNMS.registerName(tLocalRouterName, pOldHRMID, NamingLevel.NAMES);				
 				//			// give some debug output about the current DNS state
 				//			String tString = new String();
 				//			for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
@@ -718,11 +733,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 					}
 				}
-			}else{
-				Logging.err(this, "Got a zero HRMID " + tHRMID.toString() + " for: " + pEntity);
 			}
 		}else{
-			Logging.err(this, "Got an invalid HRMID for: " + pEntity);
+			Logging.err(this, "unregisterHRMID() got an invalid HRMID for: " + pEntity);
 		}
 	}
 	
@@ -730,9 +743,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Updates the registered HRMID for a defined coordinator.
 	 * 
 	 * @param pCluster the cluster whose HRMID is updated
+	 * @param pOldHRMID the old HRMID which should be unregistered
 	 */
-	public void updateCoordinatorAddress(Coordinator pCoordinator)
+	public void updateCoordinatorAddress(Coordinator pCoordinator, HRMID pOldHRMID)
 	{
+		/**
+		 * Unregister old
+		 */
+		if(pOldHRMID != null){
+			unregisterHRMID(pCoordinator, pOldHRMID);
+		}
+		
+		/**
+		 * Register new
+		 */
 		registerHRMID(pCoordinator);
 	}
 
@@ -758,14 +782,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Revokes a coordinator address
 	 * 
 	 * @param pCoordinator the coordinator for which the address is revoked
+	 * @param pOldHRMID the old HRMID which should be unregistered
 	 */
-	public void revokeCoordinatorAddress(Coordinator pCoordinator)
+	public void revokeCoordinatorAddress(Coordinator pCoordinator, HRMID pOldHRMID)
 	{
 		HRMID tHRMID = pCoordinator.getHRMID();
 
 		Logging.log(this, "Revoking address to " + tHRMID.toString() + " for coordinator " + pCoordinator);
 
-		unregisterHRMID(pCoordinator);
+		unregisterHRMID(pCoordinator, pOldHRMID);
 	}
 
 	/**
@@ -1026,6 +1051,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		boolean tFoundEntry = false;
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
 			if(mLocalCoordinatorAsClusterMemebers.contains(pCoordinatorAsClusterMember)){				
+				// unregister the old HRMID
+				revokeClusterMemberAddress(pCoordinatorAsClusterMember, pCoordinatorAsClusterMember.getHRMID());
+
 				// unregister from list of known cluster members
 				mLocalCoordinatorAsClusterMemebers.remove(pCoordinatorAsClusterMember);
 				
@@ -1103,6 +1131,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		boolean tFoundEntry = false;
 		synchronized (mLocalClusterMembers) {
 			if(mLocalClusterMembers.contains(pClusterMember)){
+				// unregister the old HRMID
+				revokeClusterMemberAddress(pClusterMember, pClusterMember.getHRMID());
+				
 				// unregister from list of known cluster members
 				mLocalClusterMembers.remove(pClusterMember);
 				
@@ -1191,12 +1222,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Updates the registered HRMID for a defined Cluster.
 	 * 
 	 * @param pCluster the Cluster whose HRMID is updated
+	 * @param pOldHRMID the old HRMID
 	 */
-	public void updateClusterAddress(Cluster pCluster)
+	public void updateClusterAddress(Cluster pCluster, HRMID pOldHRMID)
 	{
+		/**
+		 * Unregister old
+		 */
+		if(pOldHRMID != null){
+			unregisterHRMID(pCluster, pOldHRMID);
+		}
+		
+		/**
+		 * Register new
+		 */
 		HRMID tHRMID = pCluster.getHRMID();
-
-		Logging.log(this, "Updating address to " + tHRMID.toString() + " for Cluster " + pCluster);
+		Logging.log(this, "Updating address from " + pOldHRMID + " to " + tHRMID.toString() + " for Cluster " + pCluster);
 
 		// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
 		// the corresponding coordinator instance
@@ -1214,12 +1255,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Updates the registered HRMID for a defined ClusterMember.
 	 * 
 	 * @param pClusterMember the ClusterMember whose HRMID is updated
+	 * @param pOldHRMID the old HRMID which should be unregistered
 	 */
-	public void updateClusterMemberAddress(ClusterMember pClusterMember)
+	public void updateClusterMemberAddress(ClusterMember pClusterMember, HRMID pOldHRMID)
 	{
+		/**
+		 * Unregister old
+		 */
+		if(pOldHRMID != null){
+			unregisterHRMID(pClusterMember, pOldHRMID);
+		}
+		
+		/**
+		 * Register new
+		 */
 		HRMID tHRMID = pClusterMember.getHRMID();
-
-		Logging.log(this, "Updating address to " + tHRMID.toString() + " for ClusterMember " + pClusterMember);
+		Logging.log(this, "Updating address from " + pOldHRMID.toString() + " to " + tHRMID.toString() + " for ClusterMember " + pClusterMember);
 
 		// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
 		// the corresponding coordinator instance
@@ -1237,15 +1288,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Revokes a cluster address
 	 * 
 	 * @param pClusterMember the ClusterMember for which the address is revoked
+	 * @param pOldHRMID the old HRMID which should be unregistered
 	 */
-	public void revokeClusterMemberAddress(ClusterMember pClusterMember)
+	public void revokeClusterMemberAddress(ClusterMember pClusterMember, HRMID pOldHRMID)
 	{
 		HRMID tHRMID = pClusterMember.getHRMID();
 
 		Logging.log(this, "Revoking address " + tHRMID.toString() + " for ClusterMember " + pClusterMember);
 
 		if (pClusterMember.getHierarchyLevel().isBaseLevel()){
-			unregisterHRMID(pClusterMember);
+			unregisterHRMID(pClusterMember, pOldHRMID);
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID revocation
 			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
@@ -1258,15 +1310,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Revokes a cluster address
 	 * 
 	 * @param pCluster the Cluster for which the address is revoked
+	 * @param pOldHRMID the old HRMID which should be unregistered
 	 */
-	public void revokeClusterAddress(Cluster pCluster)
+	public void revokeClusterAddress(Cluster pCluster, HRMID pOldHRMID)
 	{
 		HRMID tHRMID = pCluster.getHRMID();
 
 		Logging.log(this, "Revoking address " + tHRMID.toString() + " for Cluster " + pCluster);
 
 		if (pCluster.getHierarchyLevel().isBaseLevel()){
-			unregisterHRMID(pCluster);
+			unregisterHRMID(pCluster, pOldHRMID);
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID revocation
 			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
@@ -2253,6 +2306,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns a description about all HRMID updates.
+	 * 
+	 * @return the description
+	 */
+	public String getGUIDescriptionHRMIDChanges()
+	{
+		return mDescriptionHRMIDUpdates;
+	}
+
+	/**
 	 * Returns a description about all hierarchy priority updates
 	 * This function is only used within the GUI. It is not part of the concept.
 	 * 
@@ -2274,6 +2337,29 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		return mProcessorThread.getGUIDescriptionClusterUpdates();
 	}
 	
+	/**
+	 * Returns a description about all used cluster addresses
+	 * 
+	 * @return the description
+	 */
+	public String getGUIDEscriptionUsedAddresses()
+	{
+		String tResult = "";
+		
+		LinkedList<Cluster> tAllClusters = getAllClusters();
+		for (Cluster tCluster : tAllClusters){
+			tResult += "\n .." + tCluster + " uses these addresses:";
+			LinkedList<Integer> tUsedAddresses = tCluster.getUsedAddresses();
+			int i = 0;
+			for (int tUsedAddress : tUsedAddresses){
+				tResult += "\n     ..[" + i + "]: " + tUsedAddress;
+				i++;
+			}
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Reacts on a lost physical neighbor.
 	 * HINT: "pNeighborL2Address" doesn't correspond to the neighbor's central FN!

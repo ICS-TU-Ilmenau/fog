@@ -66,7 +66,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	 * 
 	 * @return the determined address of the specified hierarchical level
 	 */
-	private BigInteger getLevelAddress(int pHierarchyLevel)
+	public BigInteger getLevelAddress(int pHierarchyLevel)
 	{
 		return (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pHierarchyLevel + 1))).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pHierarchyLevel))));
 	}
