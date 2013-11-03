@@ -585,14 +585,14 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if ((tRoutingTable != null) && (!tRoutingTable.isEmpty())) {
 			int tRowNumber = 0;
 			for(RoutingEntry tEntry : tRoutingTable) {
-				if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (!tEntry.getDest().isRelativeAddress())){
+				if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (tEntry.getDest() == null) || (!tEntry.getDest().isRelativeAddress())){
 					// create the table row
 					TableItem tTableRow = new TableItem(tTableRoutingTable, SWT.NONE, tRowNumber);
 					
 					/**
 					 * Column 0: destination
 					 */
-					tTableRow.setText(0, tEntry.getDest() != null ? tEntry.getDest().toString() : "");
+					tTableRow.setText(0, tEntry.getDest() != null ? tEntry.getDest().toString() : "undef.");
 	
 					/**
 					 * Column 1: next hop 

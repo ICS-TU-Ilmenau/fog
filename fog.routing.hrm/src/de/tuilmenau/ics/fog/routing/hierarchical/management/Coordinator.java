@@ -85,9 +85,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// create an ID for the cluster
 		setCoordinatorID(createCoordinatorID());
 		
-		// clone the HRMID of the managed cluster because it can already contain the needed HRMID prefix address
-		setHRMID(this,  mParentCluster.getHRMID().clone());
-		
 		// update the cluster ID
 		setClusterID(mParentCluster.getClusterID());
 		
@@ -360,14 +357,14 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * Revoke own HRMID
 		 */ 
-		if(!getHRMID().isZero()){
+		if((getHRMID() != null) && (!getHRMID().isZero())){
 			eventRevokedHRMID(this, getHRMID());
 		}
 		
 		/**
 		 * Trigger: revoke all assigned HRMIDs from all cluster members
 		 */
-		mParentCluster.eventAllClusterMembersLostHRMIDs();
+		mParentCluster.eventAllClusterAddressesInvalid();
 		
 		/**
 		 * Unregister from local databases

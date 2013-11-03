@@ -14,7 +14,6 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.BullyPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -184,55 +183,47 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	{
 		HRMID tOldHRMID = getHRMID();
 		
-		if(pHRMID != null){
-			if(!pHRMID.isZero()){
-				Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (old=" + (mHRMID != null ? mHRMID.toString() : "null") + ", assigner=" + pCaller + ")");
-
-				// is this a new HRMID?
-				if(!pHRMID.equals(mHRMID)){
-					// update the HRMID
-					mHRMID = pHRMID.clone();
-					
-					if (this instanceof Cluster){
-						Cluster tCluster = (Cluster)this;
+		Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (old=" + (mHRMID != null ? mHRMID.toString() : "null") + ", assigner=" + pCaller + ")");
+	
+		// is this a new HRMID?
+		if((pHRMID == null) || (!pHRMID.equals(mHRMID))){
+			// update the HRMID
+			mHRMID = (pHRMID != null ? pHRMID.clone() : null);
 			
-						// inform HRM controller about the address change
-						mHRMController.updateClusterAddress(tCluster, tOldHRMID);
-			
-						return;
-					}
-					if (this instanceof Coordinator){
-						Coordinator tCoordinator = (Coordinator)this;
-			
-						// inform HRM controller about the address change
-						mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
-			
-						return;
-					}
-					if (this instanceof CoordinatorAsClusterMember){
-						Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
-						
-						// inform HRM controller about the address change
-						mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
-			
-						return;
-					}
-					if (this instanceof ClusterMember){
-						ClusterMember tClusterMember = (ClusterMember)this;
-			
-						// inform HRM controller about the address change
-						mHRMController.updateClusterMemberAddress(tClusterMember, tOldHRMID);
-						
-						return;
-					}
-				}else{
-					Logging.log(this, "Got the same HRMID assignement again: " + pHRMID);
-				}
-			}else{
-				Logging.log(this, "Got a zero HRMID: " + pHRMID.toString());
+			if (this instanceof Cluster){
+				Cluster tCluster = (Cluster)this;
+	
+				// inform HRM controller about the address change
+				mHRMController.updateClusterAddress(tCluster, tOldHRMID);
+	
+				return;
+			}
+			if (this instanceof Coordinator){
+				Coordinator tCoordinator = (Coordinator)this;
+	
+				// inform HRM controller about the address change
+				mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
+	
+				return;
+			}
+			if (this instanceof CoordinatorAsClusterMember){
+				Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
+				
+				// inform HRM controller about the address change
+				mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
+	
+				return;
+			}
+			if (this instanceof ClusterMember){
+				ClusterMember tClusterMember = (ClusterMember)this;
+	
+				// inform HRM controller about the address change
+				mHRMController.updateClusterMemberAddress(tClusterMember, tOldHRMID);
+				
+				return;
 			}
 		}else{
-			mHRMID = null;
+			Logging.log(this, "Got the same HRMID assignement again: " + pHRMID);
 		}
 	}
 
@@ -268,8 +259,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if (pHRMID != null){
 			if(!pHRMID.isZero()){
 				// update the HRMID
-				if (pHRMID.equals(mHRMID)){
-					Logging.log(this, "     ..revoking local HRMID: " + mHRMID);
+				if (pHRMID.equals(getHRMID())){
+					Logging.log(this, "     ..revoking local HRMID: " + pHRMID.toString());
 				
 					if (this instanceof Cluster){
 						Cluster tCluster = (Cluster)this;
