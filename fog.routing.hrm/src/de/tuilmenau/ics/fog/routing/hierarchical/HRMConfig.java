@@ -126,8 +126,8 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_COORDINATOR_CLUSTER_MEMBERS_IN_ARG = false;
 
 		/**
-		 * Defines the time period between two updates of the node specific HRM display.
-		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might block the entire FoGSiEm environment.
+		 * Defines the minimum time period between two updates of the node specific HRM viewer.
+		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
 		 */
 		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 3.0;
 
@@ -234,9 +234,9 @@ public class HRMConfig
 		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
 
 		/**
-		 * Defines the time period for CoordinatorAnnounce distributions
+		 * Defines the base time period for CoordinatorAnnounce distributions
 		 */
-		public static final double PERIOD_COORDINATOR_ANNOUNCEMENTS = 3.0;
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 3.0;
 
 		/**
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
@@ -319,6 +319,7 @@ public class HRMConfig
 
 		/**
 		 * Defines if link states should be used.
+		 * This is used for distributed election processes.
 		 */
 		public static final boolean USE_LINK_STATES = true;
 	}

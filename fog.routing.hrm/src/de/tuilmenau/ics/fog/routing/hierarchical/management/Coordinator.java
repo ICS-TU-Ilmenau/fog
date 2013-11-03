@@ -102,7 +102,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				Logging.log(this, "Activating periodic coordinator announcements");
 				
 				// register next trigger for 
-				mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS * 2, this);
+				mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL * 2, this);
 			}
 		}
 	}
@@ -516,7 +516,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				}
 				
 				// register next trigger for 
-				mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.PERIOD_COORDINATOR_ANNOUNCEMENTS, this);
+				mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL, this);
 			}
 		}else{
 			if(USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
