@@ -612,7 +612,7 @@ public class ComSession extends Session
 	 * @param pDestination the destination
 	 * @param pSource the source
 	 */
-	private void denyClusterMembershipRequest(ClusterName pDestination, ClusterName pSource)
+	public void denyClusterMembershipRequest(ClusterName pDestination, ClusterName pSource)
 	{
 		Logging.log(this, "Denying RequestClusterMembership from: " + pDestination);
 		
