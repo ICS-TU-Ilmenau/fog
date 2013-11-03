@@ -122,17 +122,21 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		
 		//Logging.log(this, "Comparing with HRMID: " + pAddress);
 
-		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i >= 0; i--) {
-			BigInteger tOtherLevelAddress = pAddress.getLevelAddress(i);
-			BigInteger tLevelAddress = getLevelAddress(i);
-			
-			if(!tLevelAddress.equals(tOtherLevelAddress)) {
-				// return the hierarchy level as result
-				tResult = i;
+		if(pAddress != null){
+			for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i >= 0; i--) {
+				BigInteger tOtherLevelAddress = pAddress.getLevelAddress(i);
+				BigInteger tLevelAddress = getLevelAddress(i);
 				
-				// return immediately
-				break;
+				if(!tLevelAddress.equals(tOtherLevelAddress)) {
+					// return the hierarchy level as result
+					tResult = i;
+					
+					// return immediately
+					break;
+				}
 			}
+		}else{
+			tResult = HRMConfig.Hierarchy.HEIGHT;
 		}
 		
 		//Logging.log(this, "   ..result: " + tResult);
