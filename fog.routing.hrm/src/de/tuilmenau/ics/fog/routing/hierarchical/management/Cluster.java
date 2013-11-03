@@ -858,7 +858,7 @@ public class Cluster extends ClusterMember
 	
 	/**
 	 * Distributes cluster membership requests
-	 * HINT: This function has to be called in a separate thread!
+	 * HINT: This function has to be called in a separate thread because it starts new connections and calls blocking functions
 	 * 
 	 */
 	private int mCountDistributeMembershipRequests = 0;
