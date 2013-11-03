@@ -186,6 +186,11 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		boolean tResult = false;
 		
+		if(pRoutingTableEntry.getDest() == null){
+			Logging.err(this, "addHRMRoute() got an entry with an invalid destination");
+			return false;
+		}
+		
 		synchronized(mRoutingTable){
 			/**
 			 * Check for duplicates
@@ -193,16 +198,17 @@ public class HRMRoutingService implements RoutingService, Localization
 			boolean tFoundDuplicate = false;
 			if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
 				for (RoutingEntry tEntry: mRoutingTable){
-					// have we found a route to the same destination which uses the same next hop?
-					//TODO: what about multiple links to the same next hop?
-					if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) /* same destination? */ &&
-						(tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop())) /* same next hop? */){
-
-						//Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
-						tFoundDuplicate = true;
-						
-						break;						
-						
+					if(tEntry.getDest() != null){
+						// have we found a route to the same destination which uses the same next hop?
+						//TODO: what about multiple links to the same next hop?
+						if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) /* same destination? */ &&
+							(tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop())) /* same next hop? */){
+	
+							//Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
+							tFoundDuplicate = true;
+							
+							break;						
+						}							
 					}
 				}
 			}
@@ -275,9 +281,11 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * Go over the RIB database and search for matching entries, mark them for deletion
 			 */
 			for(RoutingEntry tEntry: mRoutingTable){
-				// do the destinations and next hops match?
-				if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) && (tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop()))){
-					tRemoveThese.add(tEntry);
+				if((tEntry.getDest() != null) && (tEntry.getNextHop() != null)){
+					// do the destinations and next hops match?
+					if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) && (tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop()))){
+						tRemoveThese.add(tEntry);
+					}
 				}
 			}
 			
