@@ -847,12 +847,12 @@ public class Cluster extends ClusterMember
 		 * Send "RequestClusterMembership" along the comm. session
 		 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
 		 */
-		RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeName(), mHRMController.getNodeName(), createClusterName(), pRemoteEndPointName);
+		RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeName(), pComSession.getPeerL2Address(), createClusterName(), pRemoteEndPointName);
 		Logging.log(this, "       ..sending membership request: " + tRequestClusterMembership);
 		if (pComSession.write(tRequestClusterMembership)){
-			Logging.log(this, "      ..requested sucessfully for membership of: " + pPeer);
+			Logging.log(this, "       ..requested sucessfully for membership of: " + pPeer);
 		}else{
-			Logging.err(this, "      ..failed to request for membership of: " + pPeer);
+			Logging.err(this, "       ..failed to request for membership of: " + pPeer);
 		}
 	}
 	
