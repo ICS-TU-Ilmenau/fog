@@ -9,8 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
-import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
@@ -610,7 +608,7 @@ public class ComChannel
 				}
 		
 				// create the source description
-				ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().getClusterID(), getParent().superiorCoordinatorID());
+				ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().getClusterID(), getParent().getCoordinatorID());
 				
 				// add source route entry
 				pPacket.addSourceRoute("[S]: " + this.toString());
@@ -775,6 +773,7 @@ public class ComChannel
 		// create the packet
 		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getPeerHRMID(), pSource);
 		// send the packet
+		Logging.log(this, "Acknowledging cluster membership: " + tRequestClusterMembershipAckPacket + " for " + getRemoteClusterName());
 		sendPacket(tRequestClusterMembershipAckPacket);
 	}
 
@@ -879,7 +878,7 @@ public class ComChannel
 		storePacket(pPacket, false);
 		
 		if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS){
-			Logging.log(this, "RECEIVED DATA (" + pPacket.getClass().getSimpleName() + ") from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pPacket);
+			Logging.log(this, "RECEIVED DATA (" + pPacket + ") from \"" + getPeerL2Address() + "/" + getPeerHRMID() + "\": " + pPacket);
 		}
 			
 		/*
