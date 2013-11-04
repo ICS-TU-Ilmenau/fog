@@ -458,7 +458,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 */
 		// create the headline
 		StyledText tSignaturesLabel4 = new StyledText(mContainer, SWT.BORDER);
-		tSignaturesLabel4.setText("Mappings from HRMID to L2Address - Node " + mHRMController.getNodeGUIName());
+		tSignaturesLabel4.setText("Mappings from HRMID to L2Address");
 		tSignaturesLabel4.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel4.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style4 = new StyleRange();
@@ -531,7 +531,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 */
 		// create the headline
 		StyledText tSignaturesLabel2 = new StyledText(mContainer, SWT.BORDER);
-		tSignaturesLabel2.setText("HRM Routing Table - Node " + mHRMController.getNodeGUIName());
+		tSignaturesLabel2.setText("HRM Routing Table");
 		tSignaturesLabel2.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel2.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style3 = new StyleRange();
