@@ -529,7 +529,7 @@ public class Cluster extends ClusterMember
 	
 				pComChannel.signalAssignHRMID(tHRMIDForPeer);
 			}else{
-				Logging.warn(this, "eventClusterMemberNeedsHRMID() detected invalid cluster HRMID and cannot HRMID to: " + pComChannel);
+				Logging.warn(this, "eventClusterMemberNeedsHRMID() detected invalid cluster HRMID and cannot signal new HRMID to: " + pComChannel);
 			}
 		}else{
 			Logging.log(this, "Address distribution is deactivated, no new assigned HRMID for: " + pComChannel);
