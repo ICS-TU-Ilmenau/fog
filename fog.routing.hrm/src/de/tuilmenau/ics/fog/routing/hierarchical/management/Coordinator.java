@@ -120,6 +120,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// make sure the next ID isn't equal
 		sNextFreeCoordinatorID++;
 	
+		if(tResult < 1){
+			throw new RuntimeException("Created an invalid coordinator ID " + tResult);
+		}
+		
 		return tResult;
 	}
 
@@ -727,15 +731,15 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			tComChannel.setRemoteClusterName(pRemoteClusterName);
 	
 			/**
+			 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
+			 */
+			tComChannel.signalRequestClusterMembershipAck(createCoordinatorName());
+
+			/**
 			 * Trigger: comm. channel established 
 			 */
 			tClusterMembership.eventComChannelEstablished(tComChannel);
 	
-			/**
-			 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
-			 */
-			tComChannel.signalRequestClusterMembershipAck(createCoordinatorName());
-			
 			/**
 			 * Trigger: joined a remote cluster (sends a Bully priority update)
 			 */
