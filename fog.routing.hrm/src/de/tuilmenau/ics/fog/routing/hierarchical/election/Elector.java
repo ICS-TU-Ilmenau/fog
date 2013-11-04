@@ -1223,7 +1223,7 @@ public class Elector implements Localization
 			checkForWinner();
 		}else{
 			/**
-			 *  we received a delayed reply, this can happen if:
+			 *  If we are in ELECTED state, we received a delayed reply. This can happen if:
 			 *      0.) we send an ELECT to all peers
 			 *      1.) we receive BullyPriorityUpdates from all peers
 			 *        ==> we know the priority of all peers
@@ -1231,7 +1231,9 @@ public class Elector implements Localization
 			 *        ==> we decide to be the winner
 			 *      2.) a peer answers a former ELECT
 			 */
-			Logging.warn(this, "Received delayed REPLY via: " + pSourceComChannel);
+			if (mState != ElectorState.ELECTED){
+				Logging.err(this, "Received REPLY in state " + mState + " via: " + pSourceComChannel);
+			}
 		}
 	}
 	
