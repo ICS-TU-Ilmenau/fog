@@ -1687,7 +1687,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public void cluster(ControlEntity pCause, final HierarchyLevel pHierarchyLevel)
 	{
 		if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-			Logging.log(this, "\n\n################ CLUSTERING TRIGGERED at hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
+			Logging.log(this, "CLUSTERING REQUEST for hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
 			mProcessorThread.eventUpdateCluster(pCause, pHierarchyLevel);
 		}
 	}
