@@ -913,6 +913,20 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if(pObj instanceof ControlEntity){
 			ControlEntity tComparedObj = (ControlEntity) pObj;
 			
+			if(this instanceof CoordinatorProxy){
+				if ((tComparedObj.getClusterID().equals(getClusterID())) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel())) && (tComparedObj.getCoordinatorID() == getCoordinatorID())) {
+					if(DEBUG_EQUALS){
+						Logging.log(this, "  ..true!");
+					}
+					return true;
+				}else{
+					if(DEBUG_EQUALS){
+						Logging.log(this, "  ..false!");
+					}
+					return false;
+				}
+			}
+
 			if (this instanceof Coordinator){
 				Coordinator tThisCoordinator = (Coordinator)this;
 				if(tThisCoordinator.getCoordinatorID() == tComparedObj.getCoordinatorID()){
@@ -924,7 +938,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			}
 					
 			//HINT: we ignore the coordinator ID because the clusterID is unique enough for identification
-			if (tComparedObj.getClusterID().equals(getClusterID()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
+			if ((tComparedObj.getClusterID().equals(getClusterID())) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
 				if(DEBUG_EQUALS){
 					Logging.log(this, "  ..true!");
 				}
