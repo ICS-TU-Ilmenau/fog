@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical.clustering;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This packet is used to request the remote side to join a local cluster. It is send from a coordinator to another coordinator.
@@ -70,6 +71,8 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		
 		mRequestingClusterName = pRequestingCluster;
 		mRequestDestination = pDestination;
+
+		Logging.log(this, "CREATED");
 	}
 
 	/**

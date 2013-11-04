@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical.clustering;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This packet is used to acknowledge a RequestComChannel packet. It is send after the comm. channel was established.
@@ -62,6 +63,8 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 		super(pSenderName, pReceiverName);
 		
 		mSource = pSource;
+		
+		Logging.log(this, "CREATED");
 	}
 
 	/**
