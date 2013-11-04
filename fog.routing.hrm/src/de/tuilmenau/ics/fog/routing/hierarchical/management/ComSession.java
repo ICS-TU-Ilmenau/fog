@@ -324,10 +324,16 @@ public class ComSession extends Session
 		
 		LinkedList<ComChannel> tComChannels = getAllComChannels();
 		for (ComChannel tComChannel : tComChannels){
-			if((tComChannel.getParent().getClusterID().equals(pDestinationClusterName.getClusterID())) && 
-			   (tComChannel.getParent().getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
-			   (tComChannel.getRemoteClusterName().getClusterID().equals(pSourceClusterName.getClusterID())) && 
-			   (tComChannel.getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel()))) {
+			ControlEntity tParent = tComChannel.getParent();
+			ClusterName tRemoteName = tComChannel.getRemoteClusterName();
+			
+			if((tParent.getClusterID().equals(pDestinationClusterName.getClusterID())) && 
+			   (tParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
+			   ((tParent.getCoordinatorID() == pDestinationClusterName.getCoordinatorID()) || (tParent.getCoordinatorID() < 1) || (pDestinationClusterName.getCoordinatorID() < 1) || (tParent instanceof Cluster /* a higher cluster receives a packet from one of its members (CoordinatorAsClusterMember) and the local coordinator changed since the comm. channel creation */)) &&
+			   (tRemoteName.getClusterID().equals(pSourceClusterName.getClusterID())) && 
+			   (tRemoteName.getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel())) &&
+			   ((tRemoteName.getCoordinatorID() == pSourceClusterName.getCoordinatorID()) || (tRemoteName.getCoordinatorID() < 1) || (pSourceClusterName.getCoordinatorID() < 1) || (tParent instanceof CoordinatorAsClusterMember /* a higher cluster sends a packet to one of its members (CoordinatorAsClusterMember) and the remote coordinator changed since the comm. channel creation */))
+			   ) {
 				tResult = tComChannel;
 				break;
 			}
@@ -349,10 +355,13 @@ public class ComSession extends Session
 		
 		synchronized (mUnregisteredComChannels) {
 			for (ComChannel tComChannel : mUnregisteredComChannels){
-				if((tComChannel.getParent().getClusterID().equals(pDestinationClusterName.getClusterID())) && 
-				   (tComChannel.getParent().getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
-				   (tComChannel.getRemoteClusterName().getClusterID().equals(pSourceClusterName.getClusterID())) && 
-				   (tComChannel.getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel()))) {
+				ControlEntity tParent = tComChannel.getParent();
+				ClusterName tRemoteName = tComChannel.getRemoteClusterName();
+
+				if((tParent.getClusterID().equals(pDestinationClusterName.getClusterID())) && 
+				   (tParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
+				   (tRemoteName.getClusterID().equals(pSourceClusterName.getClusterID())) && 
+				   (tRemoteName.getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel()))) {
 					tResult = tComChannel;
 					break;
 				}
@@ -442,7 +451,7 @@ public class ComSession extends Session
 		} else {
 			ComChannel tDeletedComChannel = getDeletedComChannel(tDestination, tSource);
 			if (tDeletedComChannel != null){
-				Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + ", old comm. channel is: " + tDeletedComChannel);
+				Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + " with payload " + pMultiplexHeader.getPayload() + ", old comm. channel is: " + tDeletedComChannel);
 			}else{
 				if (mHRMController.isGUIFormerCoordiantorID(tDestination.getGUICoordinatorID())){
 					Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pMultiplexHeader + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
