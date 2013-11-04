@@ -557,8 +557,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Registers an HRMID at local database
 	 * 
 	 * @param pEntity the entity for which the HRMID should be registered
+	 * @param pCause the cause for the registration
 	 */
-	private void registerHRMID(ControlEntity pEntity)
+	private void registerHRMID(ControlEntity pEntity, String pCause)
 	{
 		/**
 		 * Get the new HRMID
@@ -566,7 +567,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		HRMID tHRMID = pEntity.getHRMID();
 		
 		if((tHRMID != null) && (!tHRMID.isZero())){
-			registerHRMID(pEntity, tHRMID);
+			registerHRMID(pEntity, tHRMID, pCause);
 		}
 	}
 	
@@ -574,8 +575,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Registers an HRMID at local database
 	 * 
 	 * @param pEntity the entity for which the HRMID should be registered
+	 * @param pHRMID the new HRMID
+	 * @param pCause the cause for the registration
 	 */
-	public void registerHRMID(ControlEntity pEntity, HRMID pHRMID)
+	public void registerHRMID(ControlEntity pEntity, HRMID pHRMID, String pCause)
 	{
 		/**
 		 * Some validations
@@ -598,7 +601,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						// register the new HRMID
 						mRegisteredOwnHRMIDs.add(pHRMID);
 						
-						mDescriptionHRMIDUpdates += "\n + " + pHRMID.toString() + " <== " + pEntity;
+						mDescriptionHRMIDUpdates += "\n + " + pHRMID.toString() + " <== " + pEntity + ", cause=" + pCause;
 
 						/**
 						 * Register a local loopback route for the new address 
@@ -646,7 +649,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						notifyGUI(pEntity);
 					}else{
 						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-							Logging.warn(this, "Skipping HRMID duplicate, additional registration is triggered by " + pEntity);
+							Logging.warn(this, "Skipping HRMID duplicate for " + pHRMID.toString() + ", additional registration is triggered by " + pEntity);
 						}
 					}
 				}
@@ -733,7 +736,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						notifyGUI(pEntity);
 					}else{
 						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-							Logging.warn(this, "Skipping unknown HRMID, unregistration is triggered by " + pEntity);
+							Logging.warn(this, "Skipping unknown HRMID " + pOldHRMID.toString() + ", unregistration is triggered by " + pEntity);
 						}
 					}
 				}
@@ -763,7 +766,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		HRMID tHRMID = pCoordinator.getHRMID();
 		Logging.log(this, "Updating address from " + pOldHRMID + " to " + (tHRMID != null ? tHRMID.toString() : "null") + " for Coordinator " + pCoordinator);
-		registerHRMID(pCoordinator);
+		registerHRMID(pCoordinator, "updateCoordinatorAddress()");
 	}
 
 	/**
@@ -1247,7 +1250,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		HRMID tHRMID = pCluster.getHRMID();
 		Logging.log(this, "Updating address from " + pOldHRMID + " to " + (tHRMID != null ? tHRMID.toString() : "null") + " for Cluster " + pCluster);
-		registerHRMID(pCluster);
+		registerHRMID(pCluster, "updateClusterAddress()");
 	}
 
 	/**
@@ -1274,7 +1277,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
 		// the corresponding coordinator instance
 		if (pClusterMember.getHierarchyLevel().isBaseLevel()){
-			registerHRMID(pClusterMember);
+			registerHRMID(pClusterMember, "updateClusterMemberAddress()");
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
 			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){

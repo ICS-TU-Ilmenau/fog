@@ -295,7 +295,7 @@ public class Cluster extends ClusterMember
 						mAssignedHRMIDForThisNode = tThisNodesAddress;
 						
 						// inform the HRMController about the new HRMID
-						mHRMController.registerHRMID(this, mAssignedHRMIDForThisNode);
+						mHRMController.registerHRMID(this, mAssignedHRMIDForThisNode, "distributeAddresses()");
 					}else{
 						Logging.err(this, "distributeAddresses() cannot assign a new HRMID to this node because cluster HRMID is invalid");
 					}
