@@ -588,9 +588,11 @@ public class ClusterMember extends ClusterName
 			/**
 			 * Set the new priority if it differs from the old one
 			 */
-			if((getPriority() != null) && (getPriority().getValue() != pNewConnectivityNodePriority)){
-				Logging.log(this, "Got new connectivity node priority, updating own priority from " + getPriority().getValue() + " to " + pNewConnectivityNodePriority);
+			if((getPriority() == null) || (getPriority().getValue() != pNewConnectivityNodePriority) || (this instanceof Cluster /* a Cluster always reports the current priority! */)){
+				Logging.log(this, "Got new connectivity node priority, updating own priority from " + (getPriority() != null ? getPriority().getValue() : "null") + " to " + pNewConnectivityNodePriority);
 				setPriority(BullyPriority.create(this, pNewConnectivityNodePriority));
+			}else{
+				Logging.log(this, "   ..skipping priority update, current priority: " + getPriority());
 			}
 		}else{
 			throw new RuntimeException("Got a call to ClusterMemeber::eventConnectivityNodePriorityUpdate at higher hierarchy level " + getHierarchyLevel().getValue());
@@ -645,7 +647,7 @@ public class ClusterMember extends ClusterName
 			/**
 			 * Send priority update if necessary 
 			 */
-			if ((tOldPriority != null) && (!tOldPriority.isUndefined()) && (!tOldPriority.equals(pPriority))){
+			if (((tOldPriority != null) && (!tOldPriority.isUndefined()) && (!tOldPriority.equals(pPriority))) || (this instanceof Cluster)){
 				if(mElector != null){
 					mElector.updatePriority();
 				}else{
