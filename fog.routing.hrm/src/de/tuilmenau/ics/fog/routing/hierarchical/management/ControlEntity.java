@@ -157,10 +157,12 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		// store the old one
 		BullyPriority tBullyPriority = mBullyPriority;
 		
-		// update to the new one
-		mBullyPriority = pPriority;
-		
-		Logging.log(this, "ASSIGNED BULLY PRIORITY for cluster " + toString() + " updated from " + (tBullyPriority != null ? tBullyPriority.getValue() : "null") + " to " + (mBullyPriority != null ? mBullyPriority.getValue() : "null"));
+		if((tBullyPriority == null) || (!tBullyPriority.equals(pPriority))){
+			// update to the new one
+			mBullyPriority = pPriority;
+			
+			Logging.log(this, "ASSIGNED BULLY PRIORITY for cluster " + toString() + " updated from " + (tBullyPriority != null ? tBullyPriority.getValue() : "null") + " to " + (mBullyPriority != null ? mBullyPriority.getValue() : "null"));
+		}
 	}
 
 	/**

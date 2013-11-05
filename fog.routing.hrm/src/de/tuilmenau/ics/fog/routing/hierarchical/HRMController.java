@@ -2398,7 +2398,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				Cluster tParentCluster = null;
 				synchronized (mLocalNetworkInterfaces) {
 					if(!mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
-						Logging.log(this, "\n#########Detected new network interface: " + pInterfaceToNeighbor);
+						Logging.log(this, "\n######### Detected new network interface: " + pInterfaceToNeighbor);
 						mLocalNetworkInterfaces.add(pInterfaceToNeighbor);
 					}
 					//HINT: we make sure that we use only one Cluster object per Bus
