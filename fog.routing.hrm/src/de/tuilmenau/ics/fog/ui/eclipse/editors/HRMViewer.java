@@ -1102,6 +1102,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		for(ComChannel tComChannel : tChannels){
 			Logging.log(this, "       ..channel: " + tComChannel);
 		}
+		tChannels = pComChannel.getParentComSession().getAllFormerChannels();
+		for(ComChannel tComChannel : tChannels){
+			Logging.log(this, "       ..former channel: " + tComChannel);
+		}
 	}
 	
 	private void showPeerHRMIDs(ComChannel pComChannel)
