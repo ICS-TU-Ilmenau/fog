@@ -1209,7 +1209,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		synchronized (mLocalClusters) {
 			// unregister the old HRMID
-			revokeClusterMemberAddress(pCluster, pCluster.getHRMID());
+			revokeClusterAddress(pCluster, pCluster.getHRMID());
 
 			// unregister from list of known clusters
 			mLocalClusters.remove(pCluster);
@@ -2369,10 +2369,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pInterfaceToNeighbor the network interface to the neighbor 
 	 * @param pNeighborL2Address the L2 address of the detected physical neighbor's first FN towards the common bus.
 	 */
-	public synchronized void eventLostPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, final L2Address pNeighborL2Address)
+	public synchronized void eventLostPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, L2Address pNeighborL2Address)
 	{
 		Logging.log(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 		
+		synchronized (mLocalOutgoingSessions) {
+			for (ComSession tComSession : mLocalOutgoingSessions){
+				if(tComSession.isPeer(pNeighborL2Address)){
+					Logging.log(this, "   ..stopping session: " + tComSession);
+					tComSession.stopConnection();
+				}
+			}
+		}
+
 		synchronized (mLocalNetworkInterfaces) {
 			if(mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
 				Logging.log(this, "\n#########Detected lost network interface: " + pInterfaceToNeighbor);
@@ -2380,6 +2389,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 			decreaseNodePriority_Connectivity(pInterfaceToNeighbor);
 		}
+		
+		// updates the GUI decoration for this node
+		updateGUINodeDecoration();
 	}
 	
 	/**
@@ -2432,6 +2444,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
 						
 						increaseNodePriority_Connectivity(pInterfaceToNeighbor);
+						
+						// updates the GUI decoration for this node
+						updateGUINodeDecoration();
 					}
 				}
 

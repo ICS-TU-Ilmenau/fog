@@ -598,13 +598,13 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * EVENT: cluster membership canceled (by cluster head)
+	 * EVENT: cluster memeber role invalid
 	 * 
-	 *  @param: pComChannel the comm. channel from where the cancellation was received
+	 *  @param: pComChannel the comm. channel towards the cluster head
 	 */
-	public synchronized void eventClusterMembershipCanceled(ComChannel pComChannel)
+	public void eventClusterMemberRoleInvalid(ComChannel pComChannel)
 	{
-		Logging.log(this, "EVENT: cluster membership canceled: " + pComChannel);
+		Logging.log(this, "============ EVENT: cluster member role invalid, channel: " + pComChannel);
 		
 		/**
 		 * Unregister from the HRMController's internal database

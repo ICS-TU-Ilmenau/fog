@@ -160,9 +160,9 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 *  @param: pComChannel the comm. channel from where the cancellation was received
 	 */
 	@Override
-	public void eventClusterMembershipCanceled(ComChannel pComChannel)
+	public void eventClusterMemberRoleInvalid(ComChannel pComChannel)
 	{
-		Logging.log(this, "EVENT: cluster membership canceled: " + pComChannel);
+		Logging.log(this, "============ EVENT: cluster member role invalid, channel: " + pComChannel);
 		
 		/**
 		 * Trigger: cluster member role invalid
@@ -173,7 +173,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	/**
 	 * EVENT: cluster member role invalid
 	 */
-	public synchronized void eventClusterMemberRoleInvalid()
+	public void eventClusterMemberRoleInvalid()
 	{
 		Logging.log(this, "============ EVENT: ClusterMember_Role_Invalid");
 

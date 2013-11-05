@@ -46,7 +46,12 @@ public class ComSession extends Session
 	 * Stores the L2Address of the peer - this reference is used within getPeerL2Address() of ComChannel
 	 */
 	private L2Address mPeerL2Address = null;
-
+	
+	/**
+	 * Stores a list of peer describing L2Addresses 
+	 */
+	private LinkedList<L2Address> mPeerDescriptions = new LinkedList<L2Address>();
+	
 	/**
 	 * Stores a reference to the HRMController application.
 	 */
@@ -225,6 +230,13 @@ public class ComSession extends Session
 	 */
 	private void setPeerL2Address(L2Address pL2Address)
 	{
+		if(pL2Address != null){
+			synchronized (mPeerDescriptions) {
+				if(!mPeerDescriptions.contains(pL2Address)){
+					mPeerDescriptions.add(pL2Address);
+				}
+			}
+		}
 		mPeerL2Address = pL2Address;
 	}
 	
@@ -236,6 +248,26 @@ public class ComSession extends Session
 	public L2Address getPeerL2Address()
 	{
 		return mPeerL2Address;
+	}
+	
+	/**
+	 * Returns if a given L2Address describes this ComSession's peer. 
+	 * 
+	 * @param pPeerL2Address the possible peer describing address
+	 * 
+	 * @return true or false
+	 */
+	public boolean isPeer(L2Address pPeerL2Address)
+	{
+		boolean tResult = false;
+		
+		synchronized (mPeerDescriptions) {
+			if(mPeerDescriptions.contains(pPeerL2Address)){
+				tResult = true;
+			}
+		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -372,6 +404,7 @@ public class ComSession extends Session
 	}
 
 	/**
+	 * EVENT: available
 	 * This function gets called when the physical end point at remote side is locally known
 	 */
 	private void eventSessionAvailable()
@@ -379,6 +412,14 @@ public class ComSession extends Session
 		Logging.log(this, "EVENT: session is available now");
 	}
 
+	/**
+	 * EVENT: invalid
+	 */
+	public void eventSessionInvalid()
+	{
+		Logging.log(this, "EVENT: session is invalid");
+	}
+	
 	/**
 	 * EVENT: all inferior channels were closed
 	 */
@@ -815,7 +856,20 @@ public class ComSession extends Session
 		 */
 		while(mRegisteredComChannels.size() > 0)
 		{
-			mRegisteredComChannels.getLast().closeChannel();
+			// get the channel
+			ComChannel tChannel = mRegisteredComChannels.getLast();
+			// get the channel parent
+			ControlEntity tParent = tChannel.getParent();
+			if(tParent instanceof Cluster){
+				Cluster tCluster =(Cluster)tParent;
+				// trigger: cluster member is lost
+				tCluster.eventClusterMemberLost(tChannel);
+			}else{
+				if(tParent instanceof ClusterMember){					
+					ClusterMember tMember = (ClusterMember)tParent;
+					tMember.eventClusterMemberRoleInvalid(tChannel);
+				}
+			}
 		}
 		
 		/**

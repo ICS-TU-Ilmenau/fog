@@ -1089,7 +1089,7 @@ public class ComChannel
 				ClusterMember tClusterMember = (ClusterMember)getParent();
 				
 				// trigger event "cluster member joined"
-				tClusterMember.eventClusterMembershipCanceled(this);		
+				tClusterMember.eventClusterMemberRoleInvalid(this);		
 			}else{
 				Logging.err(this, "Expected a ClusterMember object as parent for processing LeaveCluster data but parent is " + getParent());
 			}
