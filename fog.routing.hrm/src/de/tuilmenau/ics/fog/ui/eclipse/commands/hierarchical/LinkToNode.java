@@ -66,22 +66,24 @@ public class LinkToNode extends EclipseCommand
 	 */
 	private void createBusAndLinkToNodes()
 	{
-		// create name for bus
-		String tBusName = "bus_" + mSourceNode.toString() + "_" + mSelectedDestinationNode.toString();			
-		
-		// create the bus, allow multiple bus between same nodes here
-		String tBusNameTmp = tBusName;
-		int i = 0;
-		while(mSourceNode.getAS().containsBus(tBusNameTmp)){
-			tBusNameTmp = tBusName + "_" + Integer.toString(i);
-			i++;
+		if(mSelectedDestinationNode != null){
+			// create name for bus
+			String tBusName = "bus_" + mSourceNode.toString() + "_" + mSelectedDestinationNode.toString();			
+			
+			// create the bus, allow multiple bus between same nodes here
+			String tBusNameTmp = tBusName;
+			int i = 0;
+			while(mSourceNode.getAS().containsBus(tBusNameTmp)){
+				tBusNameTmp = tBusName + "_" + Integer.toString(i);
+				i++;
+			}
+			tBusName = tBusNameTmp;
+			mSourceNode.getAS().executeCommand("create bus " + tBusName /* TODO: QoS parameter */);
+			
+			// connect the nodes at both end points of the link
+			mSourceNode.getAS().executeCommand("connect " + mSourceNode.toString() + " " + tBusName);
+			mSourceNode.getAS().executeCommand("connect " + mSelectedDestinationNode.toString() + " " + tBusName);
 		}
-		tBusName = tBusNameTmp;
-		mSourceNode.getAS().executeCommand("create bus " + tBusName /* TODO: QoS parameter */);
-		
-		// connect the nodes at both end points of the link
-		mSourceNode.getAS().executeCommand("connect " + mSourceNode.toString() + " " + tBusName);
-		mSourceNode.getAS().executeCommand("connect " + mSelectedDestinationNode.toString() + " " + tBusName);
 	}
 	
 	/**
