@@ -338,6 +338,9 @@ public class Elector implements Localization
 			Logging.log(this, "#### STARTING ELECTION");
 		}
 		
+		/**
+		 * Broadcast "ELECT"
+		 */
 		if(mParent instanceof ClusterMember){
 			switch(mState){
 				case IDLE:
@@ -1844,10 +1847,10 @@ public class Elector implements Localization
 	/**
 	 * SEND: priority update, triggered by ClusterMember when the priority is changed (e.g., if the base node priority was changed)
 	 */
-	public synchronized void updatePriority()
+	public void updatePriority()
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-			Logging.log(this, "SEND: priority updates");
+			Logging.log(this, "Updating local priority");
 		}
 		
 		/**
@@ -1860,6 +1863,8 @@ public class Elector implements Localization
 		 */
 		if(mState == ElectorState.ELECTING){
 			checkForWinner();
+		}else if(mState == ElectorState.ELECTED){
+			startElection();
 		}
 	}
 
