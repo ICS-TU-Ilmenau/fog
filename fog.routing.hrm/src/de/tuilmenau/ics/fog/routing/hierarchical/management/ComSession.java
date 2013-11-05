@@ -78,46 +78,41 @@ public class ComSession extends Session
 	private boolean mLocalLoopback = false;
 	
 	/**
-	 * Stores if this an outgoing or incoming connection
-	 */
-	private boolean mIncomingConnection = false;
-
-	/**
 	 * Stores the route to the peer.
 	 */
 	private Route mRouteToPeer;
 	
 	/**
-	 * 
+	 * This is the session counter, which allows for globally (related to a physical simulation machine) unique session IDs.
+	 */
+	private static int sNextFreeSessionID = 1;
+
+	/**
+	 * Stores the unique session ID
+	 */
+	private int mSessionID = -1;
+
+	/**
+	 * Constructor
+	 *  
 	 * @param pHRMController is the HRMController instance this connection end point is associated to
-	 * @param pIncomingConnection indicates whether the connection is incoming or outgoing
-	 * @param pLevel the hierarchy level of this session
-	 * @param pComChannelMuxer the communication multiplexer to use
 	 * 
 	 */
-	public ComSession(HRMController pHRMController, boolean pIncomingConnection)
+	public ComSession(HRMController pHRMController)
 	{
 		// call the Session constructor
 		super(false /* event handler not in an own tread */, Logging.getInstance(), null);
 		
+		// create the unique session ID
+		mSessionID = createSessionID();
+		
 		// store a reference to the HRMController application
 		mHRMController = pHRMController;
 		
-		// store the connection direction
-		mIncomingConnection = pIncomingConnection;
-		
-		// register at the HRMController as incoming or outgoing session
-		if (mIncomingConnection){
-		    mHRMController.registerIncomingSession(this);
-		}else{
-		    mHRMController.registerOutgoingSession(this);
-		}
+		// register at the HRMController
+	    mHRMController.registerSession(this);
 			
-		if (mIncomingConnection){
-			Logging.log(this, "SERVER SESSION CREATED");
-		}else{
-			Logging.log(this, "CLIENT SESSION CREATED");
-		}
+		Logging.log(this, "SESSION CREATED");
 	}
 	
 	/**
@@ -129,7 +124,7 @@ public class ComSession extends Session
 	 */
 	static public ComSession createLoopback(HRMController pHRMController)
 	{
-		ComSession tResult = new ComSession(pHRMController, false);
+		ComSession tResult = new ComSession(pHRMController);
 		
 		// mark as local loopback session
 		tResult.mLocalLoopback = true;
@@ -138,6 +133,50 @@ public class ComSession extends Session
 		tResult.startConnection(pHRMController.getNodeL2Address(), null);
 		
 		return tResult;
+	}
+	
+	/**
+	 * Generates a new SessionID
+	 * 
+	 * @return the SessionID
+	 */
+	static private synchronized int createSessionID()
+	{
+		// get the current unique ID counter
+		int tResult = sNextFreeSessionID * ControlEntity.idMachineMultiplier();
+
+		// make sure the next ID isn't equal
+		sNextFreeSessionID++;
+	
+		if(tResult < 1){
+			throw new RuntimeException("Created an invalid coordinator ID " + tResult);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the full SessionID (including the machine specific multiplier)
+	 * 
+	 *  @return the full SessionID
+	 */
+	public int getSessionID()
+	{
+		return mSessionID;
+	}
+	
+	/**
+	 * Returns the machine-local SessionID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local SessionID
+	 */
+	public long getGUISessionID()
+	{
+		//TODO: bei signalisierten ClusterName-Objekten stimmt hier der Bezug zum richtigen MachineMultiplier nicht
+		if (getSessionID() != 0)
+			return getSessionID() / ControlEntity.idMachineMultiplier();
+		else
+			return -1;
 	}
 	
 	/**
@@ -218,7 +257,7 @@ public class ComSession extends Session
 		 * Inform the HRS about the complete route to the peer
 		 */
 		Logging.log(this, "      ..registering route to peer: " + pRouteToPeer);
-		mHRMController.registerLinkL2(mPeerL2Address, pRouteToPeer);
+		mHRMController.registerLinkL2(getPeerL2Address(), pRouteToPeer);
 		
 		mRouteToPeer = pRouteToPeer;
 	}
@@ -260,7 +299,8 @@ public class ComSession extends Session
 	public boolean isPeer(L2Address pPeerL2Address)
 	{
 		boolean tResult = false;
-		
+	
+		Logging.log(this, "Searching peer L2Address " + pPeerL2Address + " in " + mPeerDescriptions);
 		synchronized (mPeerDescriptions) {
 			if(mPeerDescriptions.contains(pPeerL2Address)){
 				tResult = true;
@@ -338,6 +378,23 @@ public class ComSession extends Session
 		
 		synchronized (mRegisteredComChannels) {
 			tResult = (LinkedList<ComChannel>) mRegisteredComChannels.clone();
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns all unregistered communication channels
+	 * 
+	 * @return the list of known former communication channels
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<ComChannel> getAllFormerChannels()
+	{
+		LinkedList<ComChannel> tResult = new LinkedList<ComChannel>();
+		
+		synchronized (mUnregisteredComChannels) {
+			tResult = (LinkedList<ComChannel>) mUnregisteredComChannels.clone();
 		}
 		
 		return tResult;
@@ -429,14 +486,10 @@ public class ComSession extends Session
 		
 		if(!mLocalLoopback){
 			if (HRMConfig.Hierarchy.AUTO_CLEANUP_FOR_CONNECTIONS){
-				Logging.log(this, "\n\n\n########### Closing the parent connection(destination=" + mPeerL2Address + ", requirements=" + mParentConnection.getRequirements() + ")");
+				Logging.log(this, "\n\n\n########### Closing the parent connection(destination=" + getPeerL2Address() + ", requirements=" + mParentConnection.getRequirements() + ")");
 				
-				// register at the HRMController as incoming or outgoing session
-				if (mIncomingConnection){
-				    mHRMController.unregisterIncomingSession(this);
-				}else{
-				    mHRMController.unregisterOutgoingSession(this);
-				}
+				// unregister from the HRMController
+			    mHRMController.unregisterSession(this);
 
 				//stop the session (closes the connection)
 				stop();
@@ -601,7 +654,7 @@ public class ComSession extends Session
 						// get the L2Address from the last entry
 						L2Address tLastAddress = (L2Address)tRouteToPeerLastAddress.getAddress();
 						// is the found L2Address the same like what we would add in the next step?
-						if(tLastAddress.equals(mPeerL2Address)){
+						if(tLastAddress.equals(getPeerL2Address())){
 							tPeerL2AddressAlreadyKnown = true;
 						}
 					}
@@ -610,12 +663,12 @@ public class ComSession extends Session
 				if(!tPeerL2AddressAlreadyKnown){
 					Logging.log(this, ">>> Old route to peer was: " + tRouteToPeer);
 					// add the peer L2Address as last entry in the route to the peer node
-					tRouteToPeer.add(new RouteSegmentAddress(mPeerL2Address));
+					tRouteToPeer.add(new RouteSegmentAddress(getPeerL2Address()));
 					Logging.log(this, ">>> New route to peer is: " + tRouteToPeer);
 					
 					eventRouteToPeerAvailable(tRouteToPeer);
 				}else{
-					Logging.log(this, ">>> Old route to peer: " + tRouteToPeer + " includes already the entry " + mPeerL2Address + " as last entry");
+					Logging.log(this, ">>> Old route to peer: " + tRouteToPeer + " includes already the entry " + getPeerL2Address() + " as last entry");
 				}
 			}else{
 				Logging.warn(this, "Couldn't determine the route to the peer: " + tSenderAddress);
@@ -851,6 +904,8 @@ public class ComSession extends Session
 
 	public synchronized void stopConnection()
 	{
+		Logging.log(this, "STOPPING the connection now...");
+		
 		/**
 		 * close all comm. channels
 		 */
@@ -858,15 +913,18 @@ public class ComSession extends Session
 		{
 			// get the channel
 			ComChannel tChannel = mRegisteredComChannels.getLast();
+			Logging.log(this, "   ..found comm. channel: " + tChannel);
 			// get the channel parent
 			ControlEntity tParent = tChannel.getParent();
 			if(tParent instanceof Cluster){
 				Cluster tCluster =(Cluster)tParent;
+				Logging.log(this, "   ..invalidating Cluster: " + tCluster);
 				// trigger: cluster member is lost
 				tCluster.eventClusterMemberLost(tChannel);
 			}else{
-				if(tParent instanceof ClusterMember){					
+				if(tParent instanceof ClusterMember){
 					ClusterMember tMember = (ClusterMember)tParent;
+					Logging.log(this, "   ..invalidating ClusterMember: " + tMember);
 					tMember.eventClusterMemberRoleInvalid(tChannel);
 				}
 			}
@@ -876,7 +934,25 @@ public class ComSession extends Session
 		 * Session::close() will be automatically called by the last closeChannel() call
 		 */
 	}
-	
+
+	/**
+	 * Returns if both objects address the same session
+	 * 
+	 * @return true or false
+	 */
+	@Override
+	public boolean equals(Object pObj)
+	{
+		if(pObj instanceof ComSession){
+			ComSession tOtherSession = (ComSession)pObj;
+			if(getSessionID() == tOtherSession.getSessionID()){
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
 	/**
 	 * Returns true if this session is running.
 	 * 
@@ -912,9 +988,9 @@ public class ComSession extends Session
 	public String toString()
 	{
 		if(getPeerL2Address() != null ) {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + (mLocalLoopback ? "@LOOP" : "") + "(Peer=" + getPeerL2Address() + (isRunning() ? ", RUNNING" : "") + ")";
+			return getClass().getSimpleName() + getGUISessionID() + "@" + mHRMController.getNodeGUIName() + (mLocalLoopback ? "@LOOP" : "") + "(Peer=" + getPeerL2Address() + (isRunning() ? ", RUNNING" : "") + ")";
 		} else {
-			return getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + (mLocalLoopback ? "@LOOP" : "");
+			return getClass().getSimpleName() + getGUISessionID() + "@" + mHRMController.getNodeGUIName() + (mLocalLoopback ? "@LOOP" : "");
 		}
 		 
 	}
