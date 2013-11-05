@@ -607,6 +607,20 @@ public class ClusterMember extends ClusterName
 		Logging.log(this, "============ EVENT: cluster member role invalid, channel: " + pComChannel);
 		
 		/**
+		 * Trigger: Elector invalid
+		 */
+		getElector().eventInvalidation();
+
+		/**
+		 * Trigger: role invalid
+		 */
+		eventInvalidation();
+
+		unregisterComChannel(pComChannel);
+
+		Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
+
+		/**
 		 * Unregister from the HRMController's internal database
 		 */ 
 		mHRMController.unregisterClusterMember(this);
