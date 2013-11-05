@@ -1213,17 +1213,23 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * TEXT
 		 */
+		String tNetworkInterface = "";
+		
+		if (pEntity instanceof ClusterMember){
+			ClusterMember tClusterMember = (ClusterMember) pEntity;
+			tNetworkInterface = (tClusterMember.getBaseHierarchyLevelNetworkInterface() != null ? tClusterMember.getBaseHierarchyLevelNetworkInterface().toString() : "");
+		}
 		if (pEntity instanceof Cluster){
 			Cluster tCluster = (Cluster) pEntity;
 			boolean tClusterCanBeActive = tCluster.getElector().isAllowedToWin();
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? "   (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : ""));
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? "   (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : "") + (tNetworkInterface != "" ? "  (" + tNetworkInterface + ")": ""));
 		}else{
 			if(pEntity instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)pEntity;
 				
 				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + " Announces=" + tCoordinator.countAnnounces() + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts());
 			}else{
-				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : ""));
+				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + (tNetworkInterface != "" ? "  (" + tNetworkInterface + ")": ""));
 			}
 		}
 		/**
