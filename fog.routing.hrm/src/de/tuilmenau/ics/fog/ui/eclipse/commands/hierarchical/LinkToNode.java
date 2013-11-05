@@ -116,15 +116,19 @@ public class LinkToNode extends EclipseCommand
 
 		Logging.log(this, "Source node: " + mSourceNode);
 
-		String tNodeName = tPossibleNodeNames.get(tSelectedNodeNr);
-		mSelectedDestinationNode = mAs.getNodeByName(tNodeName);
-		Logging.log(this, "Selected destination node: " + mSelectedDestinationNode.toString() + "(" + tNodeName + ")");
-
-		if (mSelectedDestinationNode != null){
-			// store the selected bus name for the next time
-			sLastSelectedNodeName = tNodeName;
+		if(tSelectedNodeNr > 0){
+			String tNodeName = tPossibleNodeNames.get(tSelectedNodeNr);
+			mSelectedDestinationNode = mAs.getNodeByName(tNodeName);
+			Logging.log(this, "Selected destination node: " + mSelectedDestinationNode.toString() + "(" + tNodeName + ")");
+	
+			if (mSelectedDestinationNode != null){
+				// store the selected bus name for the next time
+				sLastSelectedNodeName = tNodeName;
+			}else{
+				Logging.warn(this,  "Invalid destination node found");
+			}
 		}else{
-			Logging.warn(this,  "Invalid destination node found");
+			Logging.log(this, "User canceled the dialog");
 		}
 	}
 	
