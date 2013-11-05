@@ -1890,7 +1890,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @return the list of HRMIDs
 	 */
 	@SuppressWarnings("unchecked")
-	public LinkedList<HRMID> getOwnHRMIDs()
+	public LinkedList<HRMID> getHRMIDs()
 	{
 		LinkedList<HRMID> tResult = null;
 		

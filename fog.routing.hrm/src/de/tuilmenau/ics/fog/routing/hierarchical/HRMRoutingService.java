@@ -245,7 +245,10 @@ public class HRMRoutingService implements RoutingService, Localization
 							if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 								Logging.log(this, "     ..add mapping from " + tHRMID + " to " + tL2Address);
 							}
-							mapHRMIDToL2Address(tHRMID, tL2Address);
+							/**
+							 * Update mapping HRMID-2-L2Address
+							 */
+							mapHRMID(tHRMID, tL2Address);
 						}
 					}
 				}
@@ -295,6 +298,33 @@ public class HRMRoutingService implements RoutingService, Localization
 			if (tRemoveThese.size() > 0){
 				for(RoutingEntry tEntry: tRemoveThese){
 					mRoutingTable.remove(tEntry);
+				}
+				
+				// get the HRMID of the direct neighbor
+				HRMID tDestHRMID = pRoutingTableEntry.getDest().clone();
+
+				if (pRoutingTableEntry.isRouteToDirectNeighbor()){
+					// add address for a direct neighbor
+					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+						Logging.log(this, "     ..removing " + tDestHRMID + " as address of a direct neighbor");
+					}
+					mDirectNeighborAddresses.remove(tDestHRMID);
+
+					// add L2 address for this direct neighbor
+					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+						Logging.log(this, "     ..remove HRMID-2-L2Address mapping for " + tDestHRMID);
+					}
+					/**
+					 * Update mapping HRMID-2-L2Address
+					 */
+					unmapHRMID(tDestHRMID);
+				}
+				
+				if(pRoutingTableEntry.isLocalLoop()){
+					/**
+					 * Update mapping HRMID-2-L2Address
+					 */
+					unmapHRMID(tDestHRMID);
 				}
 			}else{
 				Logging.warn(this, "Couldn't remove RIB entry: " + pRoutingTableEntry.toString());
@@ -575,7 +605,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pHRMID the HRMID 
 	 * @param pL2Address the L2Address
 	 */
-	public void mapHRMIDToL2Address(HRMID pHRMID, L2Address pL2Address)
+	public void mapHRMID(HRMID pHRMID, L2Address pL2Address)
 	{
 		boolean tDuplicateFound = false;
 		
@@ -590,6 +620,23 @@ public class HRMRoutingService implements RoutingService, Localization
 				mHRMIDToL2AddressMapping.put(pHRMID, pL2Address);
 			}else{
 				// HRMID is already known, mapping already exists
+			}
+		}
+	}
+
+	/**
+	 * Removes a mapping for a given HRMID
+	 * 
+	 * @param pHRMID the HRMID for which the mapping should be removed
+	 */
+	public void unmapHRMID(HRMID pHRMID)
+	{
+		synchronized (mHRMIDToL2AddressMapping) {
+			for (HRMID tHRMID: mHRMIDToL2AddressMapping.keySet()){
+				if (tHRMID.equals(pHRMID)){
+					mHRMIDToL2AddressMapping.remove(pHRMID);
+					break;
+				}
 			}
 		}
 	}
@@ -968,9 +1015,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate)
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+		//if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "UNREGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
-		}
+		//}
 
 		/**
 		 * Check if the link is one to another physical neighbor node or not.

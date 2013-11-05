@@ -511,7 +511,7 @@ public class Cluster extends ClusterMember
 	
 					// register this new HRMID in the local HRS and create a mapping to the right L2Address
 					Logging.log(this, "    ..creating MAPPING " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
-					mHRMController.getHRS().mapHRMIDToL2Address(tHRMIDForPeer, pComChannel.getPeerL2Address());
+					mHRMController.getHRS().mapHRMID(tHRMIDForPeer, pComChannel.getPeerL2Address());
 					
 					// share the route to this cluster member with all other cluster members
 					//shareRouteToClusterMember(pComChannel);
@@ -551,6 +551,15 @@ public class Cluster extends ClusterMember
 		LinkedList<ComChannel> tComChannels = getComChannels();
 		int i = 0;
 		for (ComChannel tComChannel : tComChannels){
+			/**
+			 * Unregister all HRMID-2-L2Address mappings
+			 */
+			for(HRMID tHRMIDForPeer:tComChannel.getPeerHRMIDs()){
+				// register this new HRMID in the local HRS and create a mapping to the right L2Address
+				Logging.log(this, "    ..removing MAPPING " + tHRMIDForPeer.toString() + " to " + tComChannel.getPeerL2Address());
+				mHRMController.getHRS().unmapHRMID(tHRMIDForPeer);
+			}
+
 			/**
 			 * Free all formerly used addresses
 			 */
@@ -658,6 +667,15 @@ public class Cluster extends ClusterMember
 		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
 		
 		/**
+		 * Unregister all HRMID-2-L2Address mappings
+		 */
+		for(HRMID tHRMIDForPeer : pComChannel.getPeerHRMIDs()){
+			// register this new HRMID in the local HRS and create a mapping to the right L2Address
+			Logging.log(this, "    ..removing MAPPING " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
+			mHRMController.getHRS().unmapHRMID(tHRMIDForPeer);
+		}
+
+		/**
 		 * Free all formerly used addresses
 		 */
 		LinkedList<Integer> tUsedAddresses = pComChannel.getUsedClusterAddresses();
@@ -762,6 +780,15 @@ public class Cluster extends ClusterMember
 		 */
 		Logging.log(this, "============ Destroying this cluster now...");
 		
+		// unregister the HRMID for this node from the HRM controller
+		if(mAssignedHRMIDForThisNode != null){
+			
+			int tUsedClusterAddress = mAssignedHRMIDForThisNode.getLevelAddress(getHierarchyLevel().getValue()).intValue();
+			freeClusterMemberAddress(tUsedClusterAddress);
+
+			mHRMController.unregisterHRMID(this, mAssignedHRMIDForThisNode);					
+		}
+
 		// unregister from HRMController's internal database
 		mHRMController.unregisterCluster(this);
 	}

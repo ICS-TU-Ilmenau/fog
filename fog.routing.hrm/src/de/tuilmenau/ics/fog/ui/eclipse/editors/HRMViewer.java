@@ -458,7 +458,15 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 */
 		// create the headline
 		StyledText tSignaturesLabel4 = new StyledText(mContainer, SWT.BORDER);
-		tSignaturesLabel4.setText("Mappings from HRMID to L2Address");
+		String tHRMIDsStr = "";
+		LinkedList<HRMID> tListHRMIDs = mHRMController.getHRMIDs();
+		for(HRMID tHRMID : tListHRMIDs){
+			if(tHRMIDsStr != ""){
+				tHRMIDsStr += ", ";
+			}
+			tHRMIDsStr += tHRMID.toString();
+		}
+		tSignaturesLabel4.setText("Mappings from HRMID to L2Address (local HRMIDs: " + tHRMIDsStr + ")");
 		tSignaturesLabel4.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel4.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style4 = new StyleRange();
