@@ -224,35 +224,42 @@ public class HRMRoutingService implements RoutingService, Localization
 				// add the route to the routing table
 				mRoutingTable.add(pRoutingTableEntry.clone());
 				
+				// get the HRMID of the direct neighbor
+				HRMID tDestHRMID = pRoutingTableEntry.getDest().clone();
+
 				// save HRMID of the given route if it belongs to a direct neighbor node
 				if (pRoutingTableEntry.isRouteToDirectNeighbor())
 				{
 					synchronized(mDirectNeighborAddresses){
-						// get the HRMID of the direct neighbor
-						HRMID tHRMID = pRoutingTableEntry.getDest().clone();
-
 						// get the L2 address of the next (might be null)
 						L2Address tL2Address = pRoutingTableEntry.getNextHopL2Address();
 						
 						// add address for a direct neighbor
 						if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-							Logging.log(this, "     ..adding " + tHRMID + " as address of a direct neighbor");
+							Logging.log(this, "     ..adding " + tDestHRMID + " as address of a direct neighbor");
 						}
-						mDirectNeighborAddresses.add(tHRMID);
+						mDirectNeighborAddresses.add(tDestHRMID);
 
 						if (tL2Address != null){
 							// add L2 address for this direct neighbor
 							if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-								Logging.log(this, "     ..add mapping from " + tHRMID + " to " + tL2Address);
+								Logging.log(this, "     ..add mapping from " + tDestHRMID + " to " + tL2Address);
 							}
 							/**
 							 * Update mapping HRMID-2-L2Address
 							 */
-							mapHRMID(tHRMID, tL2Address);
+							mapHRMID(tDestHRMID, tL2Address);
 						}
 					}
 				}
 				
+				if(pRoutingTableEntry.isLocalLoop()){
+					/**
+					 * Update mapping HRMID-2-L2Address
+					 */
+					mapHRMID(tDestHRMID, mHRMController.getNodeL2Address());
+				}
+
 				tResult = true;
 			}else{
 				//TODO: support for updates
