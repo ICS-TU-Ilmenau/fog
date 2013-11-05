@@ -22,6 +22,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -46,6 +47,11 @@ public class ClusterMember extends ClusterName
 	 */
 	private boolean mClusterActivation = false;
 	
+	/**
+	 * Stores the network interface for base hierarchy level
+	 */
+	private NetworkInterface mBaseHierarchyLevelNetworkInterface = null;
+
 	/**
 	 * Constructor
 	 *  
@@ -84,6 +90,27 @@ public class ClusterMember extends ClusterName
 		pHRMController.registerClusterMember(tResult);
 
 		return tResult;
+	}
+
+	/**
+	 * Sets the network interface of this cluster (only for base hierarchy level)
+	 * 
+	 * @param pInterfaceToNeighbor the network interface
+	 */
+	public void setBaseHierarchyLevelNetworkInterface(NetworkInterface pInterfaceToNeighbor)
+	{
+		Logging.log(this, "Setting network interface (base hierarchy level) to: " + pInterfaceToNeighbor);
+		mBaseHierarchyLevelNetworkInterface = pInterfaceToNeighbor;		
+	}
+	
+	/**
+	 * Returns the network interface of this cluster (only for base hierarchy level)
+	 * 
+	 * @return the network interface
+	 */
+	public NetworkInterface getBaseHierarchyLevelNetworkInterface()
+	{
+		return mBaseHierarchyLevelNetworkInterface;
 	}
 
 	/**

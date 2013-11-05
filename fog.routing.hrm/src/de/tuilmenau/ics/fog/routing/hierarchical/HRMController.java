@@ -896,6 +896,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns a list of all known network interfaces
+	 * 
+	 * @return the list of known network interfaces
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<NetworkInterface> getAllNetworkInterfaces()
+	{
+		LinkedList<NetworkInterface> tResult = null;
+
+		synchronized (mLocalNetworkInterfaces) {
+			tResult = (LinkedList<NetworkInterface>) mLocalNetworkInterfaces.clone();
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Returns a list of all known local coordinators.
 	 * 
 	 * @return the list of known local coordinators

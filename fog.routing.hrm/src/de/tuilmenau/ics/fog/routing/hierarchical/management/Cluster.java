@@ -38,11 +38,6 @@ public class Cluster extends ClusterMember
 	 * This is the cluster counter, which allows for globally (related to a physical simulation machine) unique cluster IDs.
 	 */
 	private static long sNextFreeClusterID = 1;
-
-	/**
-	 * Stores the network interface for base hierarchy level
-	 */
-	private NetworkInterface mBaseHierarchyLevelNetworkInterface = null;
 	
 	/**
 	 * Stores a reference to the local coordinator instance if the local router is also the coordinator for this cluster
@@ -512,9 +507,6 @@ public class Cluster extends ClusterMember
 					// register this new HRMID in the local HRS and create a mapping to the right L2Address
 					Logging.log(this, "    ..creating MAPPING " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
 					mHRMController.getHRS().mapHRMID(tHRMIDForPeer, pComChannel.getPeerL2Address());
-					
-					// share the route to this cluster member with all other cluster members
-					//shareRouteToClusterMember(pComChannel);
 				}
 			}else{
 				Logging.log(this, "    ..reassigning " + tHRMIDForPeer.toString() + " for " + pComChannel);
@@ -1042,27 +1034,6 @@ public class Cluster extends ClusterMember
 		Logging.log(this, "EVENT: detected local isolation");
 	}
 
-	/**
-	 * Sets the network interface of this cluster (only for base hierarchy level)
-	 * 
-	 * @param pInterfaceToNeighbor the network interface
-	 */
-	public void setBaseHierarchyLevelNetworkInterface(NetworkInterface pInterfaceToNeighbor)
-	{
-		Logging.log(this, "Setting network interface (base hierarchy level) to: " + pInterfaceToNeighbor);
-		mBaseHierarchyLevelNetworkInterface = pInterfaceToNeighbor;		
-	}
-	
-	/**
-	 * Returns the network interface of this cluster (only for base hierarchy level)
-	 * 
-	 * @return the network interface
-	 */
-	public NetworkInterface getBaseHierarchyLevelNetworkInterface()
-	{
-		return mBaseHierarchyLevelNetworkInterface;
-	}
-	
 	/**
 	 * Defines the decoration text for the ARG viewer
 	 * 

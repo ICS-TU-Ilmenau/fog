@@ -29,6 +29,7 @@ import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -603,12 +604,24 @@ public class ComSession extends Session
 			 * Create new cluster member object
 			 */
 			Logging.log(this, "    ..creating new local cluster member for: " + tSignaledClusterName); 
-			ClusterMember tClusterMember = ClusterMember.create(mHRMController, tSignaledClusterName, null);
-
+			ClusterMember tNewClusterMember = ClusterMember.create(mHRMController, tSignaledClusterName, null);
+			
+			/**
+			 * Set the network interface for this ClusterMember
+			 */
+			Logging.log(this, "    ..created new ClusterMember " + tNewClusterMember + " for network interface towards: " + getPeerL2Address());
+			LinkedList<NetworkInterface> tNetworkInterfaces = mHRMController.getAllNetworkInterfaces();
+			Logging.log(this, "    ..knowing these network interfaces:");
+			int i = 0;
+			for(NetworkInterface tInterface: tNetworkInterfaces){
+				Logging.log(this, "      ..[" + i + "]: " + tInterface);
+				i++;
+			}
+			
 			/**
 			 * Trigger: "cluster membership request" within the new ClusterMember object
 			 */
-			tClusterMember.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
+			tNewClusterMember.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
 		}
 	}
 
