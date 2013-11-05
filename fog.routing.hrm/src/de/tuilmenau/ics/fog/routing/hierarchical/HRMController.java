@@ -143,15 +143,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private LinkedList<CoordinatorAsClusterMember> mLocalCoordinatorAsClusterMemebers = new LinkedList<CoordinatorAsClusterMember>();
 	
 	/**
-	 * Stores a database about all registered outgoing comm. sessions.
+	 * Stores a database about all registered comm. sessions.
 	 */
-	private LinkedList<ComSession> mLocalOutgoingSessions = new LinkedList<ComSession>();
+	private LinkedList<ComSession> mCommunicationSessions = new LinkedList<ComSession>();
 	
-	/**
-	 * Stores a database about all registered incoming comm. sessions.
-	 */
-	private LinkedList<ComSession> mLocalIncomingSessions = new LinkedList<ComSession>();
-
 	/**
 	 * Stores a reference to the local instance of the hierarchical routing service.
 	 */
@@ -1710,26 +1705,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pComSession the new session
 	 */
-	public void registerOutgoingSession(ComSession pComSession)
+	public void registerSession(ComSession pComSession)
 	{
-		Logging.log(this, "Registering outgoing communication session: " + pComSession);
+		Logging.log(this, "Registering communication session: " + pComSession);
 		
-		synchronized (mLocalOutgoingSessions) {
-			mLocalOutgoingSessions.add(pComSession);
-		}
-	}
-	
-	/**
-	 * Registers an incoming communication session
-	 * 
-	 * @param pComSession the new session
-	 */
-	public void registerIncomingSession(ComSession pComSession)
-	{
-		Logging.log(this, "Registering incoming communication session: " + pComSession);
-		
-		synchronized (mLocalIncomingSessions) {
-			mLocalIncomingSessions.add(pComSession);
+		synchronized (mCommunicationSessions) {
+			mCommunicationSessions.add(pComSession);
 		}
 	}
 	
@@ -1748,8 +1729,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// is the destination valid?
 		if (pDestinationL2Address != null){
 			//Logging.log(this, "Searching for outgoing comm. session to: " + pDestinationL2Address);
-			synchronized (mLocalOutgoingSessions) {
-				for (ComSession tComSession : mLocalOutgoingSessions){
+			synchronized (mCommunicationSessions) {
+				for (ComSession tComSession : mCommunicationSessions){
 					//Logging.log(this, "   ..ComSession: " + tComSession);
 					
 					// get the L2 address of the comm. session peer
@@ -1768,8 +1749,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			// have we found an already existing connection?
 			if(tResult == null){
 				//Logging.log(this, "getCreateComSession() could find a comm. session for destination: " + pDestinationL2Address + ", knowing these sessions and their channels:");
-				synchronized (mLocalOutgoingSessions) {
-					for (ComSession tComSession : mLocalOutgoingSessions){
+				synchronized (mCommunicationSessions) {
+					for (ComSession tComSession : mCommunicationSessions){
 						//Logging.log(this, "   ..ComSession: " + tComSession);
 						for(ComChannel tComChannel : tComSession.getAllComChannels()){
 							//Logging.log(this, "     ..ComChannel: " + tComChannel);
@@ -1782,7 +1763,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * Create the new connection
 				 */
 				//Logging.log(this, "   ..creating new connection and session to: " + pDestinationL2Address);
-				tResult = createOutgoingComSession(pDestinationL2Address);
+				tResult = createComSession(pDestinationL2Address);
 			}
 		}else{
 			//Logging.err(this, "getCreateComSession() detected invalid destination L2 address");
@@ -1798,7 +1779,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the new comm. session or null
 	 */
-	private ComSession createOutgoingComSession(L2Address pDestinationL2Address)
+	private ComSession createComSession(L2Address pDestinationL2Address)
 	{
 		ComSession tResult = null;
 
@@ -1813,7 +1794,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Create communication session
 		 */
 	    Logging.log(this, "    ..creating new communication session");
-	    ComSession tComSession = new ComSession(this, false);
+	    ComSession tComSession = new ComSession(this);
 		
 	    /**
 	     * Wait until the FoGSiEm simulation is created
@@ -1861,29 +1842,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pComSession the session
 	 */
-	public void unregisterOutgoingSession(ComSession pComSession)
+	public void unregisterSession(ComSession pComSession)
 	{
 		Logging.log(this, "Unregistering outgoing communication session: " + pComSession);
 		
-		synchronized (mLocalOutgoingSessions) {
-			mLocalOutgoingSessions.remove(pComSession);
+		synchronized (mCommunicationSessions) {
+			mCommunicationSessions.remove(pComSession);
 		}
 	}
 	
-	/**
-	 * Unregisters an incoming communication session
-	 * 
-	 * @param pComSession the session
-	 */
-	public void unregisterIncomingSession(ComSession pComSession)
-	{
-		Logging.log(this, "Unregistering incoming communication session: " + pComSession);
-		
-		synchronized (mLocalIncomingSessions) {
-			mLocalIncomingSessions.remove(pComSession);
-		}
-	}
-
 	/**
 	 * Returns the list of registered own HRMIDs which can be used to address the physical node on which this instance is running.
 	 *  
@@ -2373,18 +2340,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 		
-		synchronized (mLocalOutgoingSessions) {
-			for (ComSession tComSession : mLocalOutgoingSessions){
+		synchronized (mCommunicationSessions) {
+			Logging.log(this, "   ..known sessions: " + mCommunicationSessions);
+			for (ComSession tComSession : mCommunicationSessions){
 				if(tComSession.isPeer(pNeighborL2Address)){
 					Logging.log(this, "   ..stopping session: " + tComSession);
 					tComSession.stopConnection();
+				}else{
+					Logging.log(this, "   ..leaving session: " + tComSession);
 				}
 			}
 		}
-
 		synchronized (mLocalNetworkInterfaces) {
 			if(mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
-				Logging.log(this, "\n#########Detected lost network interface: " + pInterfaceToNeighbor);
+				Logging.log(this, "\n######### Detected lost network interface: " + pInterfaceToNeighbor);
 				mLocalNetworkInterfaces.remove(pInterfaceToNeighbor); //TODO: multiple nodes!?
 			}
 			decreaseNodePriority_Connectivity(pInterfaceToNeighbor);
@@ -2747,18 +2716,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 		
-		synchronized (mLocalOutgoingSessions) {
-			for (ComSession tComSession : mLocalOutgoingSessions){
+		synchronized (mCommunicationSessions) {
+			for (ComSession tComSession : mCommunicationSessions){
 				tComSession.stopConnection();
 			}
 		}
 		
-		synchronized (mLocalIncomingSessions) {
-			for (ComSession tComSession : mLocalIncomingSessions){
-				tComSession.stopConnection();
-			}			
-		}
-	
 		// register in the global HRMController database
 		Logging.log(this, "     ..removing from the global HRMController database");
 		synchronized (mRegisteredHRMControllers) {
@@ -3151,7 +3114,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Create the communication session
 			 */
 			Logging.log(this, "     ..creating communication session");
-			ComSession tComSession = new ComSession(this, true);
+			ComSession tComSession = new ComSession(this);
 
 			/**
 			 * Start the communication session
