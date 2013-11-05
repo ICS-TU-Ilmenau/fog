@@ -74,8 +74,6 @@ public class LinkToBus extends EclipseCommand
 			} catch (RemoteException e) {
 				Logging.err(this, "Got a remote exception when attaching node " + mSourceNode.toString() + " to bus " + mSelectedBus.toString());
 			}
-		}else{
-			Logging.warn(this,  "Invalid bus selection found");
 		}
 	}
 	
@@ -111,13 +109,17 @@ public class LinkToBus extends EclipseCommand
 
 		Logging.log(this, "Source node: " + mSourceNode);
 
-		String tBusName = tPossibleBusNames.get(tSelectedBusNr);
-		mSelectedBus = mAs.getBusByName(tBusName);
-		Logging.log(this, "Selected bus: " + mSelectedBus + "(" + tBusName + ")");
-
-		if (mSelectedBus != null){
-			// store the selected bus name for the next time
-			sLastSelectedBusName = tBusName;
+		if(tSelectedBusNr > 0){
+			String tBusName = tPossibleBusNames.get(tSelectedBusNr);
+			mSelectedBus = mAs.getBusByName(tBusName);
+			Logging.log(this, "Selected bus: " + mSelectedBus + "(" + tBusName + ")");
+	
+			if (mSelectedBus != null){
+				// store the selected bus name for the next time
+				sLastSelectedBusName = tBusName;
+			}
+		}else{
+			Logging.log(this, "User canceled the dialog");
 		}
 	}
 }
