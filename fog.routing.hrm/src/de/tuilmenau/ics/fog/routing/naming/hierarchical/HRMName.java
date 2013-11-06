@@ -19,7 +19,7 @@ import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
  * This is the base class for the addresses that are used within the HRM system.
  * It is inherited by L2Address and HRMID objects.
  */
-public class HRMName implements Name
+public class HRMName extends RoutingServiceAddress
 {
 	protected BigInteger mAddress;
 	
@@ -38,6 +38,7 @@ public class HRMName implements Name
 	 */
 	public HRMName(BigInteger pAddress)
 	{
+		super(pAddress);
 		mAddress = pAddress;
 	}
 	
