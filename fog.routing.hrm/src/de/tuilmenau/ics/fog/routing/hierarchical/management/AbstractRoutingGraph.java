@@ -20,7 +20,7 @@ import edu.uci.ics.jung.algorithms.shortestpath.DijkstraShortestPath;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
 /**
- * Data storage for an abstracted topology view of higher hierarchy levels. 
+ * Data storage for an abstracted topology view. 
  * See http://jung.sourceforge.net/site/apidocs/edu/uci/ics/jung/graph/Graph.html for documentation about inherited member functions.
  * 
  * @param <NodeObject> define what is used as node objects
@@ -34,13 +34,23 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	}
 
 	/**
+	 * Returns the neighbors of a graph node.
 	 * 
-	 * @param pSource is the node you want to know all neighbors for.
-	 * @return
+	 * @param pNode the node for which the neighbors should be determined
+	 * 
+	 * @return a collection of found neighbor node
 	 */
-	public synchronized Collection<NodeObject> getNeighbors(NodeObject pSource)
+	public Collection<NodeObject> getNeighbors(NodeObject pNode)
 	{
-		return (mRoutingGraph.containsVertex(pSource) ? mRoutingGraph.getNeighbors(pSource) : new LinkedList<NodeObject>());
+		LinkedList<NodeObject> tResult = new LinkedList<NodeObject>();
+		
+		synchronized (mRoutingGraph) {
+			if (mRoutingGraph.containsVertex(pNode)){
+				tResult = (LinkedList<NodeObject>) mRoutingGraph.getNeighbors(pNode);
+			}
+		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -128,6 +138,55 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 		return tResult;
 	}
 	
+	/**
+	 * Determines a route between two nodes
+	 * 
+	 * @param pFrom the starting point of the route
+	 * @param pTo the ending point of the route
+	 * 
+	 * @return the route between the two nodes
+	 */
+	@Override
+	public synchronized List<LinkObject> getRoute(NodeObject pFrom, NodeObject pTo)
+	{
+		List<LinkObject> tResult = null;
+
+		pFrom = containsVertex(pFrom);
+		pTo = containsVertex(pTo);
+
+		if((pFrom != null) && (pTo != null)) {
+			// use Djikstra over the routing graph
+			DijkstraShortestPath<NodeObject, LinkObject> tRoutingAlgo = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph);
+			tResult = tRoutingAlgo.getPath(pFrom, pTo);
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns a list of nodes which are ordered by their graph distance to a given root node  
+
+	 * @param pRootNode the root node
+	 * 
+	 * @return the list of nodes
+	 */
+	public List<NodeObject> getVerticesInOrderRadius(NodeObject pRootNode)
+	{
+		List<NodeObject> tResult = null;
+		
+		//HINT: http://jung.sourceforge.net/doc/api/edu/uci/ics/jung/algorithms/shortestpath/BFSDistanceLabeler.html
+		
+		// create "Breadth-First Search" (BFS) object
+		BFSDistanceLabeler<NodeObject, LinkObject> tBreadthFirstSearch = new BFSDistanceLabeler<NodeObject, LinkObject>();
+
+		// compute the distances of all the node from the specified root node (parent cluster).
+		tBreadthFirstSearch.labelDistances(getGraphForGUI(), pRootNode);
+
+		// the result
+		tResult = tBreadthFirstSearch.getVerticesInOrderVisited();
+		
+		return tResult;
+	}
 
 	/**
 	 * Checks if two nodes have a known link.
@@ -164,45 +223,5 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	public String toString()
 	{
 		return getClass().getSimpleName();
-	}
-
-	@Override
-	public synchronized List<LinkObject> getRoute(NodeObject pFrom, NodeObject pTo)
-	{
-		List<LinkObject> tResult = null;
-
-		pFrom = containsVertex(pFrom);
-		pTo = containsVertex(pTo);
-
-		if((pFrom != null) && (pTo != null)) {
-			// use Djikstra over the routing graph
-			DijkstraShortestPath<NodeObject, LinkObject> tRoutingAlgo = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph);
-			tResult = tRoutingAlgo.getPath(pFrom, pTo);
-		}
-
-		return tResult;
-	}
-
-	/**
-	 * @param pFromRadius
-	 * @param pToRadius
-	 * @return
-	 */
-	public List<NodeObject> getVerticesInOrderRadius(NodeObject pRootVertex)
-	{
-		List<NodeObject> tResult = null;
-		
-		//HINT: http://jung.sourceforge.net/doc/api/edu/uci/ics/jung/algorithms/shortestpath/BFSDistanceLabeler.html
-		
-		// create "Breadth-First Search" (BFS) object
-		BFSDistanceLabeler<NodeObject, LinkObject> tBreadthFirstSearch = new BFSDistanceLabeler<NodeObject, LinkObject>();
-
-		// compute the distances of all the node from the specified root node (parent cluster).
-		tBreadthFirstSearch.labelDistances(getGraphForGUI(), pRootVertex);
-
-		// the result
-		tResult = tBreadthFirstSearch.getVerticesInOrderVisited();
-		
-		return tResult;
 	}
 }
