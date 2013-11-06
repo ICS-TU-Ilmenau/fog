@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 
+import java.awt.Color;
 import java.math.BigInteger;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -149,5 +150,16 @@ public class L2Address extends HRMName
 		}
 		
 		return tResult;
+	}
+	
+	/**
+	 * Defines the decoration color for the ARG viewer
+	 * 
+	 * @return color for the HRMID
+	 */
+	@Override
+	public Color getColor()
+	{
+		return Color.ORANGE;
 	}
 }

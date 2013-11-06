@@ -1852,7 +1852,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public Namespace getNamespace()
 	{
-		return HRMID.HRMNamespace;
+		return HRMName.NAMESPACE_HRM;
 	}
 
 	/**

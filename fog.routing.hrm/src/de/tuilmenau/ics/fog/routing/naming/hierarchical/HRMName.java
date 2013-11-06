@@ -9,17 +9,18 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 
+import java.awt.Color;
 import java.math.BigInteger;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
+import de.tuilmenau.ics.fog.ui.Decorator;
 
 /**
  * This is the base class for the addresses that are used within the HRM system.
  * It is inherited by L2Address and HRMID objects.
  */
-public class HRMName extends RoutingServiceAddress
+public class HRMName extends RoutingServiceAddress implements Decorator
 {
 	protected BigInteger mAddress;
 	
@@ -29,8 +30,9 @@ public class HRMName extends RoutingServiceAddress
 	 */
 	protected String mOptionalDescr;
 	
+	public static final Namespace NAMESPACE_HRM = new Namespace("HRM");
+
 	private static final long serialVersionUID = 6612145890128148511L;
-	private static final Namespace NAMESPACE_HRM = new Namespace("HRM");
 	
 	/**
 	 * 
@@ -99,5 +101,38 @@ public class HRMName extends RoutingServiceAddress
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Defines the decoration text for the ARG viewer
+	 * 
+	 * @return text for the control entity or null if no text is available
+	 */
+	@Override
+	public String getText()
+	{
+		return null;
+	}
+
+	/**
+	 * Defines the decoration color for the ARG viewer
+	 * 
+	 * @return color for the HRMID
+	 */
+	@Override
+	public Color getColor()
+	{
+		return Color.WHITE;
+	}
+
+	/**
+	 * Defines the decoration image for the ARG viewer
+	 *  
+	 * @return file name of image for the control entity or null if no specific image is available
+	 */
+	@Override
+	public String getImageName()
+	{
+		return null;
 	}
 }

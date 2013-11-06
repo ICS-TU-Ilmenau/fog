@@ -12,11 +12,8 @@ package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 import java.awt.Color;
 import java.math.BigInteger;
 
-import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
-import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -26,12 +23,10 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * 	1.) a physical node, e.g., "1.1.5"
  *  2.) a coordinator or a cluster as a whole, e.g., "1.1.0" *
  */
-public class HRMID extends HRMName implements Comparable<HRMID>, Decorator
+public class HRMID extends HRMName implements Comparable<HRMID>
 {
 	private static final long serialVersionUID = -8441496024628988477L;
 
-	public static Namespace HRMNamespace = new Namespace("HRM", false);
-	
 	/**
 	 * Create an HRMID instance based on a BigInteger value.
 	 * 
@@ -280,17 +275,6 @@ public class HRMID extends HRMName implements Comparable<HRMID>, Decorator
 	
 	
 	/**
-	 * Defines the decoration text for the ARG viewer
-	 * 
-	 * @return text for the control entity or null if no text is available
-	 */
-	@Override
-	public String getText()
-	{
-		return null;
-	}
-
-	/**
 	 * Defines the decoration color for the ARG viewer
 	 * 
 	 * @return color for the HRMID
@@ -298,24 +282,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>, Decorator
 	@Override
 	public Color getColor()
 	{
-		return new Color((float)0.3, (float)0.3, (float)0.3);
-	}
-
-	/**
-	 * Defines the decoration image for the ARG viewer
-	 *  
-	 * @return file name of image for the control entity or null if no specific image is available
-	 */
-	@Override
-	public String getImageName()
-	{
-		return null;
-	}
-
-	@Override
-	public Namespace getNamespace()
-	{
-		return HRMNamespace;
+		return Color.PINK;
 	}
 
 	/**
