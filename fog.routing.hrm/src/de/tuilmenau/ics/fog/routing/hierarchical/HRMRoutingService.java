@@ -195,7 +195,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			/**
 			 * Check for duplicates
 			 */
-			boolean tFoundDuplicate = false;
+			RoutingEntry tFoundDuplicate = null;
 			if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
 				for (RoutingEntry tEntry: mRoutingTable){
 					if(tEntry.getDest() != null){
@@ -205,7 +205,7 @@ public class HRMRoutingService implements RoutingService, Localization
 							(tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop())) /* same next hop? */){
 	
 							//Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
-							tFoundDuplicate = true;
+							tFoundDuplicate = tEntry;
 							
 							break;						
 						}							
@@ -216,7 +216,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			/**
 			 * Add the entry to the local routing table
 			 */
-			if (!tFoundDuplicate){
+			if (tFoundDuplicate == null){
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "ADDING ROUTE      : " + pRoutingTableEntry);
 				}
@@ -262,7 +262,7 @@ public class HRMRoutingService implements RoutingService, Localization
 
 				tResult = true;
 			}else{
-				//TODO: support for updates
+				//TODO: support for updates tFoundDuplicate
 			}
 		}
 		
