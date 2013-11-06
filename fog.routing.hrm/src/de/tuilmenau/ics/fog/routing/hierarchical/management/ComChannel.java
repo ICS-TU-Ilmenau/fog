@@ -236,6 +236,11 @@ public class ComChannel
 	private LinkedList<SignalingMessageHrm> mPacketQueue = new LinkedList<SignalingMessageHrm>();
 	
 	/**
+	 * Stores the routing data which is shared with the peer (only used for cluster members)
+	 */
+	private LinkedList<RoutingEntry> mSharedRoutingData = new LinkedList<RoutingEntry>();
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param pHRMController is the HRMController instance of this node
@@ -394,7 +399,7 @@ public class ComChannel
 	 * 
 	 * @param pRoutingInformationPacket the packet
 	 */
-	private synchronized void eventRoutingInformation(RoutingInformation pRoutingInformationPacket)
+	private synchronized void eventReceivedRoutingInformation(RoutingInformation pRoutingInformationPacket)
 	{
 		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRoutingInformationPacket);
@@ -714,7 +719,7 @@ public class ComChannel
 			if(!mPeerHRMIDs.contains(pHRMID)){
 				mPeerHRMIDs.add(pHRMID);
 
-				int tUsedClusterAddress = pHRMID.getLevelAddress(mParent.getHierarchyLevel().getValue()).intValue();
+				int tUsedClusterAddress = pHRMID.getLevelAddress(mParent.getHierarchyLevel());
 				Logging.log(this, "storePeerHRMID() stores for " + pHRMID + " the used cluster address: " + tUsedClusterAddress);
 				if(tUsedClusterAddress > 0){
 					synchronized (mUsedClusterAddresses) {
@@ -952,7 +957,7 @@ public class ComChannel
 			RoutingInformation tRoutingInformationPacket = (RoutingInformation)pPacket;
 
 			// process Bully message
-			eventRoutingInformation(tRoutingInformationPacket);
+			eventReceivedRoutingInformation(tRoutingInformationPacket);
 			
 			return true;
 		}
@@ -1131,6 +1136,80 @@ public class ComChannel
 		return true;
 	}
 	
+	/**
+	 * @param pRoutingEntryForMember
+	 */
+	public boolean storeRouteForPeer(RoutingEntry pRoutingEntryForMember)
+	{
+		boolean tResult = false;
+		
+		if(pRoutingEntryForMember.getDest() == null){
+			Logging.err(this, "storeRouteForPeer() got an entry with an invalid destination");
+			return false;
+		}
+		
+		synchronized (mSharedRoutingData) {
+			/**
+			 * Check for duplicates
+			 */
+			RoutingEntry tFoundDuplicate = null;
+			if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
+				for (RoutingEntry tEntry: mSharedRoutingData){
+					if(tEntry.getDest() != null){
+						// have we found a route to the same destination which uses the same next hop?
+						//TODO: what about multiple links to the same next hop?
+						if ((tEntry.getDest().equals(pRoutingEntryForMember.getDest())) /* same destination? */ &&
+							(tEntry.getNextHop().equals(pRoutingEntryForMember.getNextHop())) /* same next hop? */){
+	
+							//Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
+							tFoundDuplicate = tEntry;
+							
+							break;						
+						}							
+					}
+				}
+			}
+			
+			/**
+			 * Add the entry to the local routing table
+			 */
+			if (tFoundDuplicate == null){
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "ADDING ROUTE      : " + pRoutingEntryForMember);
+				}
+
+				// add the route to the routing table
+				mSharedRoutingData.add(pRoutingEntryForMember.clone());
+
+				// the entry was stored
+				tResult = true;
+			}else{
+				//TODO: support for updates tFoundDuplicate
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * SEND: RoutingInformation to a cluster member
+	 */
+	public void distributeRoutingInformation()
+	{
+		// create new RoutingInformation packet for the cluster member
+		RoutingInformation tRoutingInformationPacket = new RoutingInformation(mHRMController.getNodeName(), getPeerHRMID());
+		
+		// fill the RoutingInformation packet with routing entries
+		synchronized (mSharedRoutingData) {
+			for(RoutingEntry tEntry : mSharedRoutingData){
+				tRoutingInformationPacket.addRoute(tEntry.clone());
+			}
+		}
+		
+		// send the packet
+		sendPacket(tRoutingInformationPacket);
+	}
+
 	/**
 	 * (De-)activates the HRM link.
 	 * 
