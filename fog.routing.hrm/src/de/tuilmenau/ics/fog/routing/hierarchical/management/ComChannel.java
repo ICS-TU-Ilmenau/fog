@@ -26,6 +26,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -238,7 +239,7 @@ public class ComChannel
 	/**
 	 * Stores the routing data which is shared with the peer (only used for cluster members)
 	 */
-	private LinkedList<RoutingEntry> mSharedRoutingData = new LinkedList<RoutingEntry>();
+	private RoutingTable mSharedRoutingData = new RoutingTable();
 	
 	/**
 	 * Constructor
@@ -1141,52 +1142,10 @@ public class ComChannel
 	 */
 	public boolean storeRouteForPeer(RoutingEntry pRoutingEntryForMember)
 	{
-		boolean tResult = false;
-		
-		if(pRoutingEntryForMember.getDest() == null){
-			Logging.err(this, "storeRouteForPeer() got an entry with an invalid destination");
-			return false;
-		}
-		
-		synchronized (mSharedRoutingData) {
-			/**
-			 * Check for duplicates
-			 */
-			RoutingEntry tFoundDuplicate = null;
-			if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
-				for (RoutingEntry tEntry: mSharedRoutingData){
-					if(tEntry.getDest() != null){
-						// have we found a route to the same destination which uses the same next hop?
-						//TODO: what about multiple links to the same next hop?
-						if ((tEntry.getDest().equals(pRoutingEntryForMember.getDest())) /* same destination? */ &&
-							(tEntry.getNextHop().equals(pRoutingEntryForMember.getNextHop())) /* same next hop? */){
-	
-							//Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
-							tFoundDuplicate = tEntry;
-							
-							break;						
-						}							
-					}
-				}
-			}
-			
-			/**
-			 * Add the entry to the local routing table
-			 */
-			if (tFoundDuplicate == null){
-				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-					Logging.log(this, "ADDING ROUTE      : " + pRoutingEntryForMember);
-				}
-
-				// add the route to the routing table
-				mSharedRoutingData.add(pRoutingEntryForMember.clone());
-
-				// the entry was stored
-				tResult = true;
-			}else{
-				//TODO: support for updates tFoundDuplicate
-			}
-		}
+		/**
+		 * Store the routing entry in the routing table
+		 */
+		boolean tResult = mSharedRoutingData.addEntry(pRoutingEntryForMember);
 		
 		return tResult;
 	}

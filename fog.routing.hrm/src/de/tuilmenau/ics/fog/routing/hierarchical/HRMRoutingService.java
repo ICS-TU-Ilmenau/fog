@@ -99,7 +99,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	/**
 	 * Stores the HRM based routing table which is used for hop-by-hop routing.
 	 */
-	private LinkedList<RoutingEntry> mRoutingTable = new LinkedList<RoutingEntry>();
+	private RoutingTable mRoutingTable = new RoutingTable();
 	
 	/**
 	 * Stores the local L2 addresses based routing graph (consisting of FNs and Gates from local node and links to direct physical neighbors)
@@ -186,89 +186,50 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	public boolean addHRMRoute(RoutingEntry pRoutingTableEntry)
 	{
-		boolean tResult = false;
+		/**
+		 * Store the routing entry in the routing table
+		 */
+		boolean tResult = mRoutingTable.addEntry(pRoutingTableEntry);
 		
-		if(pRoutingTableEntry.getDest() == null){
-			Logging.err(this, "addHRMRoute() got an entry with an invalid destination");
-			return false;
-		}
-		
-		if(pRoutingTableEntry.getDest().isZero()){
-			throw new RuntimeException(this + "::addHRMRoute() got an entry with a wildcard destination");
-		}
+		/**
+		 * Store the destination HRMID in the HRMID-2-L2Address mapping and as direct neighbor
+		 */
+		// is this routing entry new to us?
+		if(tResult){
+			// get the HRMID of the destination
+			HRMID tDestHRMID = pRoutingTableEntry.getDest().clone();
 
-		synchronized(mRoutingTable){
-			/**
-			 * Check for duplicates
-			 */
-			RoutingEntry tFoundDuplicate = null;
-			if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
-				for (RoutingEntry tEntry: mRoutingTable){
-					if(tEntry.getDest() != null){
-						// have we found a route to the same destination which uses the same next hop?
-						//TODO: what about multiple links to the same next hop?
-						if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) /* same destination? */ &&
-							(tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop())) /* same next hop? */){
-	
-							//Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
-							tFoundDuplicate = tEntry;
-							
-							break;						
-						}							
+			// save HRMID of the given route if it belongs to a direct neighbor node
+			if (pRoutingTableEntry.isRouteToDirectNeighbor())
+			{
+				synchronized(mDirectNeighborAddresses){
+					// get the L2 address of the next (might be null)
+					L2Address tL2Address = pRoutingTableEntry.getNextHopL2Address();
+					
+					// add address for a direct neighbor
+					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+						Logging.log(this, "     ..adding " + tDestHRMID + " as address of a direct neighbor");
+					}
+					mDirectNeighborAddresses.add(tDestHRMID);
+
+					if (tL2Address != null){
+						// add L2 address for this direct neighbor
+						if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+							Logging.log(this, "     ..add mapping from " + tDestHRMID + " to " + tL2Address);
+						}
+						/**
+						 * Update mapping HRMID-2-L2Address
+						 */
+						mapHRMID(tDestHRMID, tL2Address);
 					}
 				}
 			}
 			
-			/**
-			 * Add the entry to the local routing table
-			 */
-			if (tFoundDuplicate == null){
-				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-					Logging.log(this, "ADDING ROUTE      : " + pRoutingTableEntry);
-				}
-
-				// add the route to the routing table
-				mRoutingTable.add(pRoutingTableEntry.clone());
-				
-				// get the HRMID of the direct neighbor
-				HRMID tDestHRMID = pRoutingTableEntry.getDest().clone();
-
-				// save HRMID of the given route if it belongs to a direct neighbor node
-				if (pRoutingTableEntry.isRouteToDirectNeighbor())
-				{
-					synchronized(mDirectNeighborAddresses){
-						// get the L2 address of the next (might be null)
-						L2Address tL2Address = pRoutingTableEntry.getNextHopL2Address();
-						
-						// add address for a direct neighbor
-						if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-							Logging.log(this, "     ..adding " + tDestHRMID + " as address of a direct neighbor");
-						}
-						mDirectNeighborAddresses.add(tDestHRMID);
-
-						if (tL2Address != null){
-							// add L2 address for this direct neighbor
-							if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-								Logging.log(this, "     ..add mapping from " + tDestHRMID + " to " + tL2Address);
-							}
-							/**
-							 * Update mapping HRMID-2-L2Address
-							 */
-							mapHRMID(tDestHRMID, tL2Address);
-						}
-					}
-				}
-				
-				if(pRoutingTableEntry.isLocalLoop()){
-					/**
-					 * Update mapping HRMID-2-L2Address
-					 */
-					mapHRMID(tDestHRMID, mHRMController.getNodeL2Address());
-				}
-
-				tResult = true;
-			}else{
-				//TODO: support for updates tFoundDuplicate
+			if(pRoutingTableEntry.isLocalLoop()){
+				/**
+				 * Update mapping HRMID-2-L2Address
+				 */
+				mapHRMID(tDestHRMID, mHRMController.getNodeL2Address());
 			}
 		}
 		
@@ -284,63 +245,40 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	boolean delHRMRoute(RoutingEntry pRoutingTableEntry)
 	{
-		boolean tResult = false;
+		/**
+		 * Remove the routing entry from the routing table
+		 */
+		boolean tResult = mRoutingTable.delEntry(pRoutingTableEntry);
 		
-		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-			Logging.log(this, "REMOVING ROUTE: " + pRoutingTableEntry);
-		}
+		/**
+		 * Remove the destination HRMID from the HRMID-2-L2Address mapping and as direct neighbor
+		 */
+		if(tResult){
+			// get the HRMID of the direct neighbor
+			HRMID tDestHRMID = pRoutingTableEntry.getDest().clone();
 
-		LinkedList<RoutingEntry> tRemoveThese = new LinkedList<RoutingEntry>();
-		
-		synchronized(mRoutingTable){
-			/**
-			 * Go over the RIB database and search for matching entries, mark them for deletion
-			 */
-			for(RoutingEntry tEntry: mRoutingTable){
-				if((tEntry.getDest() != null) && (tEntry.getNextHop() != null)){
-					// do the destinations and next hops match?
-					if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) && (tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop()))){
-						tRemoveThese.add(tEntry);
-					}
+			if (pRoutingTableEntry.isRouteToDirectNeighbor()){
+				// add address for a direct neighbor
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..removing " + tDestHRMID + " as address of a direct neighbor");
 				}
+				mDirectNeighborAddresses.remove(tDestHRMID);
+
+				// add L2 address for this direct neighbor
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..remove HRMID-2-L2Address mapping for " + tDestHRMID);
+				}
+				/**
+				 * Update mapping HRMID-2-L2Address
+				 */
+				unmapHRMID(tDestHRMID);
 			}
 			
-			/**
-			 * Remove all marked RIB entries
-			 */
-			if (tRemoveThese.size() > 0){
-				for(RoutingEntry tEntry: tRemoveThese){
-					mRoutingTable.remove(tEntry);
-				}
-				
-				// get the HRMID of the direct neighbor
-				HRMID tDestHRMID = pRoutingTableEntry.getDest().clone();
-
-				if (pRoutingTableEntry.isRouteToDirectNeighbor()){
-					// add address for a direct neighbor
-					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-						Logging.log(this, "     ..removing " + tDestHRMID + " as address of a direct neighbor");
-					}
-					mDirectNeighborAddresses.remove(tDestHRMID);
-
-					// add L2 address for this direct neighbor
-					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-						Logging.log(this, "     ..remove HRMID-2-L2Address mapping for " + tDestHRMID);
-					}
-					/**
-					 * Update mapping HRMID-2-L2Address
-					 */
-					unmapHRMID(tDestHRMID);
-				}
-				
-				if(pRoutingTableEntry.isLocalLoop()){
-					/**
-					 * Update mapping HRMID-2-L2Address
-					 */
-					unmapHRMID(tDestHRMID);
-				}
-			}else{
-				Logging.warn(this, "Couldn't remove RIB entry: " + pRoutingTableEntry.toString());
+			if(pRoutingTableEntry.isLocalLoop()){
+				/**
+				 * Update mapping HRMID-2-L2Address
+				 */
+				unmapHRMID(tDestHRMID);
 			}
 		}
 		
@@ -1347,7 +1285,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			}
 
 			/*************************************
-			 * FIND NEXT HOP
+			 * FIND NEXT HRMID
 			 * Determine the next hop of the desired route
 			 *************************************/
 			HRMID tNextHopHRMID = null;
@@ -1358,32 +1296,65 @@ public class HRMRoutingService implements RoutingService, Localization
 				 * Iterate over all routing entries and search for a correct destination cluster
 				 */
 				int tBestDiffLevel = 99;//TODO: use fixed constant here
-				for(RoutingEntry tEntry : mRoutingTable){
-					/**
-					 * Check if the destination belongs to the cluster of this entry
-					 */ 
-					if(tDestHRMID.isCluster(tEntry.getDest())){
-						if(!tEntry.isLocalLoop()){
-							int tCurDiffLevel = tDestHRMID.getPrefixDifference(tEntry.getDest());
-	
-							if(tCurDiffLevel < tBestDiffLevel){
-								// use the next hop from this entry
-								tNextHopHRMID = tEntry.getNextHop();
-								
-								// use the source from this entry
-								tThisHop = tEntry.getSource();
+				if(mRoutingTable.size() > 0){
+					RoutingEntry tLoopEntry = null;
+					for(RoutingEntry tEntry : mRoutingTable){
+						/**
+						 * Check if the destination belongs to the cluster of this entry
+						 */ 
+						if(tDestHRMID.isCluster(tEntry.getDest())){
+							if(!tEntry.isLocalLoop()){
+								int tCurDiffLevel = tDestHRMID.getPrefixDifference(tEntry.getDest());
+		
+								if(tCurDiffLevel < tBestDiffLevel){
+									// use the next hop from this entry
+									tNextHopHRMID = tEntry.getNextHop();
+									
+									// use the source from this entry
+									tThisHop = tEntry.getSource();
+									
+									if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+										Logging.log(this, "      ..found better matching entry: " + tEntry);
+									}
+								}else{
+									if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+										Logging.log(this, "      ..found uninteresting entry: " + tEntry);
+									}
+								}
+							}else{
+								// we found a local loop for this HRMID -> this HRMID is a local one
+								tLoopEntry = tEntry;
 							}
 						}else{
-							// we found a local loop for this HRMID -> this HRMID is a local one
-							tIsLocalHRMID = true;
+							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								Logging.log(this, "      ..ignoring entry: " + tEntry);
+							}
+						}
+					}
+					if(tNextHopHRMID == null){
+						if(tLoopEntry != null){
+							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								Logging.log(this, "      ..found matching loop entry: " + tLoopEntry);
+							}
 							
+							// use the next hop from this entry
+							tNextHopHRMID = tLoopEntry.getNextHop();
+							
+							// use the source from this entry
+							tThisHop = tLoopEntry.getSource();
+
 							/**
 							 * Record the HRM based route
 							 */
 							recordHRMRoute(pRequirements, tDestHRMID, tDestHRMID);	
 
-							break;
+							// mark HRMID as local
+							tIsLocalHRMID = true; 
 						}
+					}
+				}else{
+					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+						Logging.log(this, "      ..found empty routing table");
 					}
 				}
 			}
@@ -1402,6 +1373,10 @@ public class HRMRoutingService implements RoutingService, Localization
 					if(tThisHop != null){
 						Logging.log(this, "      ..VIA: " + tThisHop);
 					}
+				}
+			}else{
+				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					Logging.log(this, "      ..haven't found next hop (HRMID) for destination: " + tDestHRMID);
 				}
 			}
 
@@ -1456,6 +1431,10 @@ public class HRMRoutingService implements RoutingService, Localization
 					}
 				}
 			}else{
+				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					Logging.log(this, "      ..haven't found next hop(L2Adress) for destination: " + tDestHRMID);
+				}
+				
 				/**
 				 * ERROR MESSAGE
 				 */
