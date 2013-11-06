@@ -9,11 +9,14 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 
+import java.awt.Color;
 import java.math.BigInteger;
 
 import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
+import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -23,7 +26,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * 	1.) a physical node, e.g., "1.1.5"
  *  2.) a coordinator or a cluster as a whole, e.g., "1.1.0" *
  */
-public class HRMID extends HRMName implements Comparable<HRMID>
+public class HRMID extends HRMName implements Comparable<HRMID>, Decorator
 {
 	private static final long serialVersionUID = -8441496024628988477L;
 
@@ -67,11 +70,39 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	 * 
 	 * @return the determined address of the specified hierarchical level
 	 */
-	public BigInteger getLevelAddress(int pHierarchyLevel)
+	private BigInteger getLevelAddressBigInteger(int pHierarchyLevel)
 	{
 		return (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pHierarchyLevel + 1))).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pHierarchyLevel))));
 	}
 	
+	/**
+	 * Determine the address part at a specific hierarchical level.
+	 * 
+	 * @param pHierarchyLevel the hierarchy level
+	 * 
+	 * @return the determined address of the specified hierarchical level
+	 */
+	public int getLevelAddress(int pHierarchyLevel)
+	{
+		BigInteger tAdr = getLevelAddressBigInteger(pHierarchyLevel);
+		
+		int tResult = tAdr.intValue();
+		
+		return tResult;
+	}
+
+	/**
+	 * Determine the address part at a specific hierarchical level.
+	 * 
+	 * @param pHierarchyLevel the hierarchy level
+	 * 
+	 * @return the determined address of the specified hierarchical level
+	 */
+	public int getLevelAddress(HierarchyLevel pHierarchyLevel)
+	{
+		return getLevelAddress(pHierarchyLevel.getValue());
+	}
+
 	/**
 	 * Set the address part for a specific hierarchy level.
 	 * 
@@ -81,7 +112,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	public void setLevelAddress(HierarchyLevel pHierarchyLevel, BigInteger pAddress)
 	{
 		int tLevel = pHierarchyLevel.getValue();
-		BigInteger tLevelAddr = getLevelAddress(tLevel);
+		BigInteger tLevelAddr = getLevelAddressBigInteger(tLevel);
 		
 		if(pHierarchyLevel.isHigherLevel()) { // higher hierarchy level
 			if(!tLevelAddr.equals(BigInteger.valueOf(0))) {
@@ -116,7 +147,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	 * 
 	 * @return The first occurrence at which a difference was found will be returned.
 	 */
-	private int getPrefixDifference(HRMID pAddress)
+	public int getPrefixDifference(HRMID pAddress)
 	{
 		int tResult = -1;
 		
@@ -124,8 +155,8 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 
 		if(pAddress != null){
 			for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i >= 0; i--) {
-				BigInteger tOtherLevelAddress = pAddress.getLevelAddress(i);
-				BigInteger tLevelAddress = getLevelAddress(i);
+				BigInteger tOtherLevelAddress = pAddress.getLevelAddressBigInteger(i);
+				BigInteger tLevelAddress = getLevelAddressBigInteger(i);
 				
 				if(!tLevelAddress.equals(tOtherLevelAddress)) {
 					// return the hierarchy level as result
@@ -169,7 +200,63 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		return tResult;
 	}
 
-	
+	/**
+	 * Returns true if this HRMID belongs to the cluster of a given cluster address
+	 * 
+	 * @param pClusterAddress the address of the cluster
+	 * 
+	 * @return true or false
+	 */
+	public boolean isCluster(HRMID pClusterAddress)
+	{
+		boolean tResult = true;
+		boolean tDebug = false;
+		
+		if(tDebug){
+			Logging.log(this, "isCluster() for " + pClusterAddress);
+		}
+		
+		/**
+		 * Search for the start of the cluster prefix
+		 */
+		int tCheckLevel = -1;
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			int tClusterAddressLevelValue = pClusterAddress.getLevelAddress(i);
+			// are we still searching for the cluster prefix?
+			if (tClusterAddressLevelValue == 0){
+				tCheckLevel = i;
+			}else{
+				// we found a value unequal to 0
+				break;
+			}
+		}
+		
+		if(tDebug){
+			Logging.log(this, "   ..cluster address prefix found at: " + tCheckLevel);
+		}
+
+		for(int i = tCheckLevel + 1; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			int tClusterAddressLevelValue = pClusterAddress.getLevelAddress(i);
+			int tLevelValue = getLevelAddress(i);
+			
+			// have we found a difference between both values?
+			if(tClusterAddressLevelValue != tLevelValue){
+				if(tDebug){
+					Logging.log(this, "   ..found difference (" + tClusterAddressLevelValue + " != " + tLevelValue + ") at level " + i);
+				}
+				tResult = false;
+				// return immediately
+				break;
+			}
+		}
+		
+		if(tDebug){
+			Logging.log(this, "   ..result: " + tResult);
+		}
+				
+		return tResult;
+	}
+
 	
 	
 	
@@ -183,7 +270,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	@Override
 	//TODO
 	public int compareTo(HRMID pCompareTo) {
-		return getLevelAddress(pCompareTo.getPrefixDifference(this)).subtract(pCompareTo.getLevelAddress(pCompareTo.getPrefixDifference(this))).intValue();
+		return getLevelAddressBigInteger(pCompareTo.getPrefixDifference(this)).subtract(pCompareTo.getLevelAddressBigInteger(pCompareTo.getPrefixDifference(this))).intValue();
 	}
 	
 	
@@ -192,7 +279,39 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	
 	
 	
-	
+	/**
+	 * Defines the decoration text for the ARG viewer
+	 * 
+	 * @return text for the control entity or null if no text is available
+	 */
+	@Override
+	public String getText()
+	{
+		return null;
+	}
+
+	/**
+	 * Defines the decoration color for the ARG viewer
+	 * 
+	 * @return color for the HRMID
+	 */
+	@Override
+	public Color getColor()
+	{
+		return new Color((float)0.3, (float)0.3, (float)0.3);
+	}
+
+	/**
+	 * Defines the decoration image for the ARG viewer
+	 *  
+	 * @return file name of image for the control entity or null if no specific image is available
+	 */
+	@Override
+	public String getImageName()
+	{
+		return null;
+	}
+
 	@Override
 	public Namespace getNamespace()
 	{
