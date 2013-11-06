@@ -168,6 +168,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private AbstractRoutingGraph<AbstractRoutingGraphNode, AbstractRoutingGraphLink> mAbstractRoutingGraph = new AbstractRoutingGraph<AbstractRoutingGraphNode, AbstractRoutingGraphLink>();
 	
 	/**
+	 * Stores the hierarchical routing graph (HRG), which provides a hierarchical overview about the network topology.
+	 */
+	private AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink> mHierarchicalRoutingGraph = new AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink>();
+
+	/**
 	 * Count the outgoing connections
 	 */
 	private int mCounterOutgoingConnections = 0;
@@ -593,8 +598,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							Logging.log(this, "Updating the HRMID to: " + pHRMID.toString() + " for: " + pEntity);
 						}
 						
-						// register the new HRMID
+						// register the new HRMID as local one
 						mRegisteredOwnHRMIDs.add(pHRMID);
+						
+						// register the new in the HRG
+						registerNodeHRG(pHRMID);
 						
 						mDescriptionHRMIDUpdates += "\n + " + pHRMID.toString() + " <== " + pEntity + ", cause=" + pCause;
 
@@ -682,8 +690,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							Logging.log(this, "Revoking the HRMID: " + pOldHRMID.toString() + " of: " + pEntity);
 						}
 						
+						// unregister the HRMID as local one
 						mRegisteredOwnHRMIDs.remove(pOldHRMID);
 						
+						// unregister the HRMID from the HRG
+						unregisterNodeHRG(pOldHRMID);
+
 						mDescriptionHRMIDUpdates += "\n - " + pOldHRMID.toString() + " <== " + pEntity;
 
 						/**
@@ -2544,7 +2556,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void reportAndShare()
 	{	
-		if(HRMConfig.Hierarchy.TOPOLOGY_REPORTS){
+		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
 			if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
 				Logging.log(this, "REPORT AND SHARE TRIGGER received");
 			}
@@ -3101,6 +3113,170 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mAbstractRoutingGraph) {
 			tResult = mAbstractRoutingGraph; //TODO: use a new clone() method here
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Registers an HRMID to the locally stored hiearchical routing graph (HRG)
+	 *  
+	 * @param pNode the node (HRMID) which should be stored in the HRG
+	 */
+	private synchronized void registerNodeHRG(HRMID pNode)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "REGISTERING NODE ADDRESS (HRG): " + pNode );
+		}
+
+		synchronized (mHierarchicalRoutingGraph) {
+			if(!mHierarchicalRoutingGraph.contains(pNode)) {
+				mHierarchicalRoutingGraph.add(pNode);
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..added to HRG");
+				}
+			}else{
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..node for HRG already known: " + pNode);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Unregisters an HRMID from the locally stored hierarchical routing graph (HRG)
+	 *  
+	 * @param pNode the node (HRMID) which should be removed from the HRG
+	 */
+	private void unregisterNodeHRG(HRMID pNode)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "UNREGISTERING NODE ADDRESS (HRG): " + pNode );
+		}
+		
+		synchronized (mHierarchicalRoutingGraph) {
+			if(mHierarchicalRoutingGraph.contains(pNode)) {
+				mHierarchicalRoutingGraph.remove(pNode);
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..removed from HRG");
+				}
+			}else{
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "     ..node for HRG wasn't known: " + pNode);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Registers a logical link between HRMIDs to the locally stored hierarchical routing graph (HRG)
+	 * 
+	 * @param pFrom the starting point of the link
+	 * @param pTo the ending point of the link
+	 * @param pLink the link between the two HRMIDs
+	 */
+	public void registerLinkHRG(HRMID pFrom, HRMID pTo, AbstractRoutingGraphLink pLink)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "REGISTERING LINK (HRG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  LINK=" + pLink);
+		}
+
+		synchronized (mHierarchicalRoutingGraph) {
+			mHierarchicalRoutingGraph.link(pFrom, pTo, pLink);
+		}
+	}
+
+	/**
+	 * Unregisters a logical link between HRMIDs from the locally stored hierarchical routing graph (HRG)
+	 * 
+	 * @param pFrom the starting point of the link
+	 * @param pTo the ending point of the link
+	 */
+	public void unregisterLinkHRG(HRMID pFrom, HRMID pTo)
+	{
+		AbstractRoutingGraphLink tLink = getLinkHRG(pFrom, pTo);
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "UNREGISTERING LINK (HRG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  LINK=" + tLink);
+		}
+
+		if(tLink != null){
+			synchronized (mHierarchicalRoutingGraph) {
+				mHierarchicalRoutingGraph.unlink(tLink);
+			}
+		}
+	}
+
+	/**
+	 * Determines the link between two HRMIDs from the locally stored hierarchical routing graph (HRG)
+	 * 
+	 * @param pFrom the starting point of the link
+	 * @param pTo the ending point of the link
+	 * 
+	 * @return the link between the two HRMIDs
+	 */
+	public AbstractRoutingGraphLink getLinkHRG(HRMID pFrom, HRMID pTo)
+	{
+		AbstractRoutingGraphLink tResult = null;
+		
+		List<AbstractRoutingGraphLink> tRoute = null;
+		synchronized (mHierarchicalRoutingGraph) {
+			tRoute = mHierarchicalRoutingGraph.getRoute(pFrom, pTo);
+		}
+		
+		if((tRoute != null) && (!tRoute.isEmpty())){
+			if(tRoute.size() == 1){
+				tResult = tRoute.get(0);
+			}else{
+				/**
+				 * We haven't found a direct link - we found a multi-hop route instead.
+				 */
+				//Logging.warn(this, "getLinkHRG() expected a route with one entry but got: \nSOURCE=" + pFrom + "\nDESTINATION: " + pTo + "\nROUTE: " + tRoute);
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Determines a route in the locally stored hierarchical routing graph (HRG).
+	 * 
+	 * @param pSource the source of the desired route
+	 * @param pDestination the destination of the desired route
+	 * 
+	 * @return the determined route, null if no route could be found
+	 */
+	public List<AbstractRoutingGraphLink> getRouteHRG(HRMID pSource, HRMID pDestination)
+	{
+		List<AbstractRoutingGraphLink> tResult = null;
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "GET ROUTE (HRG) from \"" + pSource + "\" to \"" + pDestination +"\"");
+		}
+
+		synchronized (mHierarchicalRoutingGraph) {
+			tResult = mHierarchicalRoutingGraph.getRoute(pSource, pDestination);
+		}
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "        ..result: " + tResult);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the HRG for the GraphViewer.
+	 * (only for GUI!)
+	 * 
+	 * @return the HRG
+	 */
+	public AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink> getHRGForGraphViewer()
+	{
+		AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink> tResult = null;
+		
+		synchronized (mHierarchicalRoutingGraph) {
+			tResult = mHierarchicalRoutingGraph; //TODO: use a new clone() method here
 		}
 		
 		return tResult;
