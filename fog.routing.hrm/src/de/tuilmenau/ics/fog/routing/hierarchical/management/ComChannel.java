@@ -394,7 +394,7 @@ public class ComChannel
 	 * 
 	 * @param pRoutingInformationPacket the packet
 	 */
-	private synchronized void handleSignalingMessageSharePhase(RoutingInformation pRoutingInformationPacket)
+	private synchronized void eventRoutingInformation(RoutingInformation pRoutingInformationPacket)
 	{
 		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRoutingInformationPacket);
@@ -952,7 +952,7 @@ public class ComChannel
 			RoutingInformation tRoutingInformationPacket = (RoutingInformation)pPacket;
 
 			// process Bully message
-			handleSignalingMessageSharePhase(tRoutingInformationPacket);
+			eventRoutingInformation(tRoutingInformationPacket);
 			
 			return true;
 		}
