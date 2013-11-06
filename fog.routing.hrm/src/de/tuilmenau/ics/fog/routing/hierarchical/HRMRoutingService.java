@@ -25,6 +25,7 @@ import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
+import de.tuilmenau.ics.fog.routing.RouteSegmentDescription;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
@@ -33,6 +34,7 @@ import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.*;
+import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -191,6 +193,10 @@ public class HRMRoutingService implements RoutingService, Localization
 			return false;
 		}
 		
+		if(pRoutingTableEntry.getDest().isZero()){
+			throw new RuntimeException(this + "::addHRMRoute() got an entry with a wildcard destination");
+		}
+
 		synchronized(mRoutingTable){
 			/**
 			 * Check for duplicates
@@ -672,9 +678,9 @@ public class HRMRoutingService implements RoutingService, Localization
 			tResult = mFNToL2AddressMapping.get(pNode);			
 		}
 	
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "Determined name for " + pNode.toString() + " as " + tResult);
-		}
+//		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+//			Logging.log(this, "Determined name for " + pNode.toString() + " as " + tResult);
+//		}
 		
 		return tResult;
 	}	
@@ -1271,6 +1277,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pRequester the getRoute() caller
 	 * @return the determined route
 	 */
+	@SuppressWarnings("unused")
 	@Override
 	public Route getRoute(ForwardingNode pSource, Name pDestination, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException
 	{		
@@ -1312,9 +1319,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		// count call
 		//TODO: mCounterGetRoute.write(+1.0, mTimeBase.nowStream());
 
-		/**
+		/************************************************************************
 		 * HRM based routing to an HRMID
-		 */
+		 ************************************************************************/
 		if (pDestination instanceof HRMID){
 			HRMID tDestHRMID = (HRMID)pDestination;
 			
@@ -1322,10 +1329,10 @@ public class HRMRoutingService implements RoutingService, Localization
 				Logging.log(this, "      ..HRM based routing to " + tDestHRMID);
 			}
 			
-			/**
+			/*************************************
 			 * CHECK NEIGHBORHOD
 			 * Check if the destination is a direct neighbor
-			 */
+			 ************************************/
 			boolean tDestinationIsDirectNeighbor = false;
 			synchronized (mDirectNeighborAddresses) {
 				for (HRMID tHRMID : mDirectNeighborAddresses){
@@ -1339,105 +1346,167 @@ public class HRMRoutingService implements RoutingService, Localization
 				}
 			}
 
-			/**
+			/*************************************
 			 * FIND NEXT HOP
 			 * Determine the next hop of the desired route
-			 */
+			 *************************************/
 			HRMID tNextHopHRMID = null;
-			if(!tDestinationIsDirectNeighbor){
+			HRMID tThisHop = null;
+			boolean tIsLocalHRMID = false;
+			synchronized (mRoutingTable) { //TODO: separate class for RoutingTable object
+				/**
+				 * Iterate over all routing entries and search for a correct destination cluster
+				 */
+				int tBestDiffLevel = 99;//TODO: use fixed constant here
+				for(RoutingEntry tEntry : mRoutingTable){
+					/**
+					 * Check if the destination belongs to the cluster of this entry
+					 */ 
+					if(tDestHRMID.isCluster(tEntry.getDest())){
+						if(!tEntry.isLocalLoop()){
+							int tCurDiffLevel = tDestHRMID.getPrefixDifference(tEntry.getDest());
+	
+							if(tCurDiffLevel < tBestDiffLevel){
+								// use the next hop from this entry
+								tNextHopHRMID = tEntry.getNextHop();
+								
+								// use the source from this entry
+								tThisHop = tEntry.getSource();
+							}
+						}else{
+							// we found a local loop for this HRMID -> this HRMID is a local one
+							tIsLocalHRMID = true;
+							
+							/**
+							 * Record the HRM based route
+							 */
+							recordHRMRoute(pRequirements, tDestHRMID, tDestHRMID);	
 
-				//TODO
-				//tNextHopHRMID = ??
-			}else{
-				// the next hop is the final destination
-				tNextHopHRMID = tDestHRMID;
-				
-				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-					Logging.log(this, "      ..NEXT HOP(HRMID): " + tNextHopHRMID);
+							break;
+						}
+					}
 				}
 			}
 			
-			if (tNextHopHRMID != null){
+			if(tNextHopHRMID != null){
 				/**
 				 * Record the HRM based route
 				 */
-				if (HRMConfig.Routing.RECORD_ROUTE_FOR_PROBES){
-					recordHRMRoute(pRequirements, tNextHopHRMID);	
+				recordHRMRoute(pRequirements, tThisHop, tNextHopHRMID);	
+				
+				/**
+				 * Show debug output
+				 */
+				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					Logging.log(this, "      ..NEXT HOP: " + tNextHopHRMID);
+					if(tThisHop != null){
+						Logging.log(this, "      ..VIA: " + tThisHop);
+					}
+				}
+			}
+
+			
+			/*************************************
+			 * FIND NEXT L2 ADDRESS
+			 * Determine the L2 specific gates towards the neighbor node
+			 *************************************/
+			L2Address tNextHopL2Address = null;
+			if (tNextHopHRMID != null){
+				tNextHopL2Address = getL2AddressFor(tNextHopHRMID);
+			}else{
+				if(!tIsLocalHRMID){
+					Logging.log(this, "getRoute() wasn't able to determine the HRMID of the next hop in order to route towards " + tDestHRMID.toString());
+				}
+			}
+
+			/*************************************
+			 * GET ROUTE to next L2 address
+			 *************************************/
+			if (tNextHopL2Address != null){
+				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					Logging.log(this, "      ..NEXT HOP(L2ADDRESS): " + tNextHopL2Address);
+				}
+				if (tNextHopL2Address != null){
+					// get a route to the neighbor
+					tResultRoute = getL2Route(getCentralFNL2Address(), tNextHopL2Address);
+				}
+				
+				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					Logging.log(this, "      ..ROUTE TO NEXT HOP: " + tResultRoute);
 				}
 
-				/**
-				 * FIND NEXT L2 ADDRESS
-				 * Determine the L2 specific gates towards the neighbor node
-				 */
-				L2Address tNextHopL2Address = getL2AddressFor(tNextHopHRMID);
-				if (tNextHopL2Address != null){
-					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-						Logging.log(this, "      ..NEXT HOP(L2ADDRESS): " + tNextHopL2Address);
+				if (tResultRoute != null){
+					/**
+					 * RE-ENCODE the destination HRMID
+					 */
+					// do we route to a direct neighbor?
+					if(!tDestinationIsDirectNeighbor){
+						// do we already reached the destination?
+						if(!tResultRoute.isEmpty()){
+							tResultRoute.addLast(new RouteSegmentAddress(tDestHRMID));
+						}
 					}
 
 					/**
-					 * GET ROUTE to L2 address
+					 * ENCODE the original requirements
 					 */
-					if (tNextHopL2Address != null){
-						// get a route to the neighbor
-						tResultRoute = getL2Route(getCentralFNL2Address(), tNextHopL2Address);
-					}
-					
-					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-						Logging.log(this, "      ..ROUTE TO NEXT HOP(neighbor): " + tResultRoute);
-					}
-
-					if (tResultRoute != null){
-						// do we route to a direct neighbor?
-						if (tDestinationIsDirectNeighbor){
-							encodeDestinationApplication(tResultRoute, pRequirements);
-
-							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-								Logging.log(this, "      ..ROUTE TO NEXT HOP(neighbor with destination app.): " + tResultRoute);
-							}
-						}
-					}else{
-						// no route found
-						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-							Logging.log(this, "Couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
-							
-							// list known topology
-							synchronized (mL2RoutingGraph) {
-								Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
-								int i = 0;
-								for (L2Address tL2Address : tGraphNodes){
-									Logging.log(this, "     ..node[" + i + "]: " + tL2Address);
-									i++;
-								}
-								Collection<RoutingServiceLink> tGraphLinks = mL2RoutingGraph.getEdges();
-								i = 0;
-								for (RoutingServiceLink tLink : tGraphLinks){
-									Logging.log(this, "     ..gate[" + i + "]: " + tLink.getID());
-									i++;
-								}
-							}
-						}
-					}
-				}else{
-					Logging.err(this, "getRoute() wasn't able to determine the L2 address of the next hop in the following mapping");
-					synchronized (mHRMIDToL2AddressMapping) {
-						for (HRMID tHRMID : mHRMIDToL2AddressMapping.keySet()){
-							Logging.log(this, "       ..mapping " + tHRMID + " to " + mHRMIDToL2AddressMapping.get(tHRMID));
-						}
+					// do we already reached the destination?
+					if(!tResultRoute.isEmpty()){
+						tResultRoute.addLast(new RouteSegmentDescription(pRequirements));
 					}
 				}
 			}else{
-				Logging.err(this, "getRoute() wasn't able to determine the HRMID of the next hop");
+				/**
+				 * ERROR MESSAGE
+				 */
+				if((tNextHopHRMID != null) && (!tIsLocalHRMID)){
+					Logging.err(this, "getRoute() wasn't able to determine the L2 address of the next hop " + tNextHopHRMID + " in the following mapping: ");
+
+					synchronized (mHRMIDToL2AddressMapping) {
+						if(mHRMIDToL2AddressMapping.size() > 0){
+							for (HRMID tHRMID : mHRMIDToL2AddressMapping.keySet()){
+								Logging.log(this, "       ..mapping " + tHRMID + " to " + mHRMIDToL2AddressMapping.get(tHRMID));
+							}
+						}else{
+							Logging.log(this, "   ..no mapping entries found");
+						}
+					}
+				}
 			}
 
-			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-				Logging.log(this, "      ..RESULT(getRoute() to HRMID): " + tResultRoute);
+			/***************************************************************************
+			 * FALL-BACK: encode the destination application as destination if possible
+			 ***************************************************************************/
+			if(tNextHopHRMID == null){
+				if(!tIsLocalHRMID){
+					Logging.log(this, "    ..haven't found the next hop towards: " + pDestination);
+				}
+						
+				/**
+				 * Check if a destination application is encoded in the requirements and use it for routing
+				 */
+				pDestination = getDestinationApp(pRequirements);
+				if(pDestination == null){
+					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+						Logging.log(this, "    ..no HRMID-based routing possible and no destination application property found");
+					}
+				}
+			}else{
+				/**
+				 * show result
+				 */
+				if(tResultRoute != null){
+					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+						Logging.log(this, "      ..RESULT(getRoute() to HRMID): " + tResultRoute);
+					}
+				}
 			}
-			
-		}else{
-			/**
-			 * L2 based routing to a FoG name
-			 */
+		}
+
+		/***********************************************************************
+		 * L2 based routing to a FoG name
+		 ***********************************************************************/
+		if(tResultRoute == null){
 			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 				Logging.log(this, "      ..L2 based routing to " + pDestination);
 			}
@@ -1510,6 +1579,32 @@ public class HRMRoutingService implements RoutingService, Localization
 			}
 		}
 
+		/**
+		 * CATCH ROUTING ERROR
+		 */
+		if(tResultRoute == null){
+			// no route found
+			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				Logging.log(this, "Couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
+				
+				// list known topology
+				synchronized (mL2RoutingGraph) {
+					Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
+					int i = 0;
+					for (L2Address tL2Address : tGraphNodes){
+						Logging.log(this, "     ..node[" + i + "]: " + tL2Address);
+						i++;
+					}
+					Collection<RoutingServiceLink> tGraphLinks = mL2RoutingGraph.getEdges();
+					i = 0;
+					for (RoutingServiceLink tLink : tGraphLinks){
+						Logging.log(this, "     ..gate[" + i + "]: " + tLink.getID());
+						i++;
+					}
+				}
+			}
+		}
+		
 		// return immediately
 		return tResultRoute;
 	}
@@ -1520,39 +1615,106 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pRequirements the requirements of the getRoute() request
 	 * @param pHopHRMID the HRMID of the hop, which should be recorded
 	 */
-	private void recordHRMRoute(Description pRequirements, HRMID pHopHRMID)
+	private void recordHRMRoute(Description pRequirements, HRMID pThisHop, HRMID pNextHopHRMID)
 	{
-		// check if we have valid requirements
-		if (pRequirements != null){
-			// search for the ProbeRoutingProperty property
-			ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) pRequirements.get(ProbeRoutingProperty.class);
-			if(tPropProbeRouting != null) {
-				HRMID tLastHopHRMID = tPropProbeRouting.getLastHop();
-				
-				/**
-				 * Check if last and current hop have the same HRMID
-				 */
-				boolean tDuplicate = false;
-				if ((tLastHopHRMID != null) && (tLastHopHRMID.equals(pHopHRMID))){
-					tDuplicate = true;
-				}
-				
-				/**
-				 * Store the HRMID of the current hop
-				 */
-				if (!tDuplicate){
-					// store the HRMID
-					tPropProbeRouting.addHop(pHopHRMID);
+		if (HRMConfig.Routing.RECORD_ROUTE_FOR_PROBES){
+			// check if we have valid requirements
+			if (pRequirements != null){
+				// search for the ProbeRoutingProperty property
+				ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) pRequirements.get(ProbeRoutingProperty.class);
+				if(tPropProbeRouting != null) {
+					HRMID tLastHopHRMID = tPropProbeRouting.getLastHop();
+					
+					/**
+					 * Check if last and current hop have the same HRMID
+					 */
+					boolean tDuplicate = false;
+					if ((tLastHopHRMID != null) && (tLastHopHRMID.equals(pNextHopHRMID))){
+						tDuplicate = true;
+					}
+					
+					/**
+					 * Store the HRMID of this node
+					 */
+					if(pThisHop != null){
+						tPropProbeRouting.addHop(pThisHop);
+					}
+					
+					/**
+					 * Store the HRMID of the next hop
+					 */
+					if (!tDuplicate){
+						// don't store the same entry two times
+						if(!pNextHopHRMID.equals(pThisHop)){
+							// store the HRMID
+							tPropProbeRouting.addHop(pNextHopHRMID);
+						}
+					}else{
+						// we have the same hop like last time
+					}
 				}else{
-					// we have the same hop like last time
+					Logging.warn(this, "Cannot record HRM Route (next=" + pNextHopHRMID + " via " + pThisHop + ") because the needed property wasn't found within the requirements");
 				}
+			}else{
+				Logging.warn(this, "Cannot record HRM Route (next=" + pNextHopHRMID + " via " + pThisHop + ") because no requirements were found");
 			}
 		}
 	}
 
 	/**
+	 * Determines the destination application from a requirements description
+	 * 
+	 * @param pRequirements the requirements
+	 * 
+	 * @return the app. name
+	 */
+	private Name getDestinationApp(Description pRequirements)
+	{
+		Name tResult = null;
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			Logging.log(this, "getDestinationApp() is deriving the destination app from: " + pRequirements);
+		}
+		
+		/**
+		 * Check if a destination application is encoded in the requirements
+		 */
+		DestinationApplicationProperty tPropDestApp = (DestinationApplicationProperty) pRequirements.get(DestinationApplicationProperty.class);
+		if(tPropDestApp != null) {
+			Logging.log(this, "    ..found destination application property: " + tPropDestApp);
+			
+			// remove the found property from the requirements
+			pRequirements.remove(tPropDestApp);
+		
+			/**
+			 * Add the destination application as FoG name to the route
+			 */
+			if(tPropDestApp.getAppName() != null) {
+				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					Logging.log(this, "    ..encoding as getRoute() destination the destination  appl. name: " + tPropDestApp.getAppName());
+				}
+				tResult = tPropDestApp.getAppName();
+			} else {
+				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					Logging.log(this, "    ..encoding as getRoute() destination the destination  appl. name space: " + tPropDestApp.getAppNamespace());
+				}
+				tResult = new SimpleName(tPropDestApp.getAppNamespace());
+			}
+			Logging.log(this, "    ..found destination app.: " + tResult);
+		}else{
+			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				Logging.log(this, "getDestinationApp() wasn't able to derive the destination app. from: " + pRequirements);
+			}
+		}
+		
+		return tResult;
+	}
+
+
+	/**
 	 * Encodes the destination application in the given route. The destination application is 
 	 * derived from the data of the given requirements.
+	 * This function should be used if the destination node was reached.
 	 * 
 	 * @param pRoute the current route
 	 * @param pRequirements the requirements, which can include a description for the destination application
