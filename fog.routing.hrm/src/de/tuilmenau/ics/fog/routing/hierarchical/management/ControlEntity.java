@@ -307,7 +307,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * @return the HRMID
 	 */
 	public HRMID getHRMID() {
-		return mHRMID;
+		return mHRMID.clone();
 	}
 	
 	/**
