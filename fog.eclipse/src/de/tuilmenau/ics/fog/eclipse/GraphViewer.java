@@ -444,10 +444,6 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 				if (i instanceof GateContainer) return colorGreen;
 				if (i instanceof ILowerLayer) return colorYellow;
 				
-				if (i instanceof PartialRoutingService) return Color.ORANGE;
-				if (i instanceof RemoteRoutingService) return colorBlue;
-				if (i instanceof RoutingServiceAddress) return colorBlue;
-				
 				// does the object define its color by itself?
 				if(i instanceof Decorator) {
 					Color decColor = ((Decorator) i).getColor();
@@ -467,6 +463,10 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 					}
 				}
 				
+				if (i instanceof PartialRoutingService) return Color.ORANGE;
+				if (i instanceof RemoteRoutingService) return colorBlue;
+				if (i instanceof RoutingServiceAddress) return colorBlue;
+
 				return Color.WHITE;
 			}
 		};
