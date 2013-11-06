@@ -272,8 +272,7 @@ public class Cluster extends ClusterMember
 					// inform HRM controller about the address change
 					if(mAssignedHRMIDForThisNode != null){
 						
-						int tUsedClusterAddress = mAssignedHRMIDForThisNode.getLevelAddress(getHierarchyLevel().getValue()).intValue();
-						freeClusterMemberAddress(tUsedClusterAddress);
+						freeClusterMemberAddress(mAssignedHRMIDForThisNode.getLevelAddress(getHierarchyLevel()));
 	
 						mHRMController.unregisterHRMID(this, mAssignedHRMIDForThisNode);					
 					}
@@ -494,8 +493,7 @@ public class Cluster extends ClusterMember
 					if((!HRMConfig.Addressing.DISTRIBUTE_RELATIVE_ADDRESSES) && (tHRMIDForPeer.isRelativeAddress())){
 						Logging.warn(this, "eventClusterMemberNeedsHRMID() aborted because the relative address shouldn't be distributed: " + tHRMIDForPeer);
 						
-						int tUsedClusterAddress = tHRMIDForPeer.getLevelAddress(getHierarchyLevel().getValue()).intValue();
-						freeClusterMemberAddress(tUsedClusterAddress);
+						freeClusterMemberAddress(tHRMIDForPeer.getLevelAddress(getHierarchyLevel()));
 						
 						return;
 					}
@@ -774,8 +772,7 @@ public class Cluster extends ClusterMember
 		// unregister the HRMID for this node from the HRM controller
 		if(mAssignedHRMIDForThisNode != null){
 			
-			int tUsedClusterAddress = mAssignedHRMIDForThisNode.getLevelAddress(getHierarchyLevel().getValue()).intValue();
-			freeClusterMemberAddress(tUsedClusterAddress);
+			freeClusterMemberAddress(mAssignedHRMIDForThisNode.getLevelAddress(getHierarchyLevel()));
 
 			mHRMController.unregisterHRMID(this, mAssignedHRMIDForThisNode);					
 		}
