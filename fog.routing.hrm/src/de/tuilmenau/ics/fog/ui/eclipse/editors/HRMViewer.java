@@ -584,6 +584,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		// col. 7
 		TableColumn tTableColDirectNeighbor = new TableColumn(tTableRoutingTable, SWT.NONE, 7);
 		tTableColDirectNeighbor.setText("Route to neighbor");
+		// col. 8
+		TableColumn tTableColSource = new TableColumn(tTableRoutingTable, SWT.NONE, 8);
+		tTableColSource.setText("Source");
+		// col. 9
+		TableColumn tTableColNextL2 = new TableColumn(tTableRoutingTable, SWT.NONE, 9);
+		tTableColNextL2.setText("NextL2");
 		
 		LinkedList<RoutingEntry> tRoutingTable = tHRS.routingTable();
 		if (HRM_VIEWER_DEBUGGING){
@@ -665,6 +671,24 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						tTableRow.setText(7, "no");
 					}
 	
+					/**
+					 * Column 8: source 
+					 */
+					if (tEntry.getSource() != null) {
+						tTableRow.setText(8, tEntry.getSource().toString());
+					}else{
+						tTableRow.setText(8, "??");
+					}
+
+					/**
+					 * Column 9: next hop 
+					 */
+					if (tEntry.getNextHopL2Address() != null) {
+						tTableRow.setText(9, tEntry.getNextHopL2Address().toString());
+					}else{
+						tTableRow.setText(9, "??");
+					}
+
 					tRowNumber++;
 				}
 			}
@@ -680,14 +704,16 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumnLayout tLayoutRoutingTable2 = new TableColumnLayout();
 		mContainerRoutingTable.setLayout(tLayoutRoutingTable2);
 		// assign each column a layout weight
-		tLayoutRoutingTable2.setColumnData(tTableColDest, new ColumnWeightData(3));
-		tLayoutRoutingTable2.setColumnData(tTableColNext, new ColumnWeightData(3));
+		tLayoutRoutingTable2.setColumnData(tTableColDest, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColNext, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColHops, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColUtil, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColDelay, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColDR, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColLoop, new ColumnWeightData(1));
-		tLayoutRoutingTable2.setColumnData(tTableColDirectNeighbor, new ColumnWeightData(1));		
+		tLayoutRoutingTable2.setColumnData(tTableColDirectNeighbor, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColSource, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColNextL2, new ColumnWeightData(3));
 		
 		/**
 		 * Add a listener to allow re-sorting of the table based on the destination per table row
