@@ -16,6 +16,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
+import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -128,70 +129,72 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
-	 * Shares a route to a cluster cluster member with other cluster members
+	 * Stores a route to a L0 cluster cluster member
 	 * 
-	 * @param pClusterMemberChannel the cluster member to whom we have a sharable route
+	 * @param pComChannel the comm. channel
 	 */
-	private void shareRouteToClusterMember(ComChannel pClusterMemberChannel)
+	private void storeRouteToL0ClusterMember(ComChannel pComChannel)
 	{
 		// determine the HRMID of the cluster member
-		HRMID tMemberHRMID = pClusterMemberChannel.getPeerHRMID();
+		HRMID tMemberHRMID = pComChannel.getPeerHRMID();
 		
 		// are we on base hierarchy level?
 		if (getHierarchyLevel().isBaseLevel()){
 			// create the new routing table entry
 			RoutingEntry tRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tMemberHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
 			// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-			tRoutingEntry.setNextHopL2Address(pClusterMemberChannel.getPeerL2Address());
+			tRoutingEntry.setNextHopL2Address(pComChannel.getPeerL2Address());
 			
-			Logging.log(this, "SHARING ROUTE: " + tRoutingEntry);
+			Logging.log(this, "   ..storing route: " + tRoutingEntry);
 			
+			// register the new in the HRG
+			mHRMController.registerLinkHRG(getHRMID(), tMemberHRMID, new AbstractRoutingGraphLink(new Route( /* TODO: define route */)));
+
 			// add the entry to the local routing table
 			mHRMController.addHRMRoute(tRoutingEntry);
 			
-			// store the entry for route sharing with cluster members
-			synchronized (mSharedRoutes){
-				/**
-				 * Check for duplicates
-				 */
-				if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
-					boolean tRestartNeeded;
-					do{		
-						tRestartNeeded = false;
-						for (RoutingEntry tEntry: mSharedRoutes){
-							// have we found a route to the same destination which uses the same next hop?
-							//TODO: what about multiple links to the same next hop?
-							if ((tEntry.getDest().equals(tRoutingEntry.getDest())) /* same destination? */ &&
-								(tEntry.getNextHop().equals(tRoutingEntry.getNextHop())) /* same next hop? */){
-		
-								Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
-								
-								// remove the route
-								mSharedRoutes.remove(tEntry);
-								
-								// mark "shared phase" data as changed
-								mSharedRoutesHaveChanged = true;
-								
-								// force a restart at the beginning of the routing table
-								tRestartNeeded = true;
-								//TODO: use a better(scalable) method here for removing duplicates
-								break;						
-								
-							}
-						}
-					}while(tRestartNeeded);
-				}
-				
-				/**
-				 * Add the entry to the shared routing table
-				 */
-				mSharedRoutes.add(tRoutingEntry);//TODO: use a database per cluster member here
-				// mark "shared phase" data as changed
-				mSharedRoutesHaveChanged = true;
-			}
+//			// store the entry for route sharing with cluster members
+//			synchronized (mSharedRoutes){
+//				/**
+//				 * Check for duplicates
+//				 */
+//				if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
+//					boolean tRestartNeeded;
+//					do{		
+//						tRestartNeeded = false;
+//						for (RoutingEntry tEntry: mSharedRoutes){
+//							// have we found a route to the same destination which uses the same next hop?
+//							//TODO: what about multiple links to the same next hop?
+//							if ((tEntry.getDest().equals(tRoutingEntry.getDest())) /* same destination? */ &&
+//								(tEntry.getNextHop().equals(tRoutingEntry.getNextHop())) /* same next hop? */){
+//		
+//								Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
+//								
+//								// remove the route
+//								mSharedRoutes.remove(tEntry);
+//								
+//								// mark "shared phase" data as changed
+//								mSharedRoutesHaveChanged = true;
+//								
+//								// force a restart at the beginning of the routing table
+//								tRestartNeeded = true;
+//								//TODO: use a better(scalable) method here for removing duplicates
+//								break;						
+//								
+//							}
+//						}
+//					}while(tRestartNeeded);
+//				}
+//				
+//				/**
+//				 * Add the entry to the shared routing table
+//				 */
+//				mSharedRoutes.add(tRoutingEntry);//TODO: use a database per cluster member here
+//				// mark "shared phase" data as changed
+//				mSharedRoutesHaveChanged = true;
+//			}
 		}else{
-			//TODO
-			Logging.log(this, "IMPLEMENT ME - SHARING ROUTE TO: " + pClusterMemberChannel);
+			Logging.log(this, "    ..storeRouteToL0ClusterMember() skipped because we are at hierarchy level: " + getHierarchyLevel().getValue());
 		}
 	}
 
@@ -238,6 +241,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * This function implements the "share phase".
 	 * It distributes locally stored sharable routing data among the known cluster members
 	 */
+	@SuppressWarnings("unused")
 	public void sharePhase()
 	{
 		// should we start the "share phase"?
@@ -256,9 +260,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				return;
 			}
 			
-			/**
+			/*********************************
 			 * SHARE PHASE 
-			 */
+			 *********************************/
 			// determine own local cluster address
 			HRMID tOwnClusterAddress = mParentCluster.getHRMID();
 	
@@ -266,52 +270,72 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				Logging.log(this, "    ..distributing as " + tOwnClusterAddress.toString() + " aggregated ROUTES among cluster members: " + mParentCluster.getComChannels());
 			}
 			
-			synchronized (mSharedRoutes){
-				// send the routing information to cluster members
-				for(ComChannel tClusterMember : mParentCluster.getComChannels()) {
-					RoutingInformation tRoutingInformationPacket = new RoutingInformation(tOwnClusterAddress, tClusterMember.getPeerHRMID());
-				
-					// are we on base hierarchy level?
-					if (getHierarchyLevel().isBaseLevel()){
-	
-						/**
-						 * ADD ROUTES: routes from the cluster member to this node for every registered local HRMID.
-						 */
-						// determine the L2 address of this physical node
-						L2Address tPhysNodeL2Address = mHRMController.getHRS().getCentralFNL2Address();
-						// iterate over all HRMIDs which are registered for this physical node
-						for (HRMID tHRMID : mHRMController.getHRMIDs()){
-							// create entry for cluster internal routing towards us
-							RoutingEntry tRouteFromClusterMemberToHere = RoutingEntry.createRouteToDirectNeighbor(tHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
-							// define the L2 address of the next hop in order to let the receiver store it in its HRMID-to-L2ADDRESS mapping
-							tRouteFromClusterMemberToHere.setNextHopL2Address(tPhysNodeL2Address);
-							// add the route in the "share phase" signaling
-							tRoutingInformationPacket.addRoute(tRouteFromClusterMemberToHere);
-						}
-						
-						//TODO: need routing graph here!
-						
-						//TODO: routes to other cluster members
-					}else{
-						//TODO: implement me
-					}	
-					
-					/**
-					 * Send the routing data to the cluster member
-					 */
-					// do we have interesting routing information?
-					if (tRoutingInformationPacket.getRoutes().size() > 0){
-						tClusterMember.sendPacket(tRoutingInformationPacket);
-					}else{
-						// no routing information -> no packet is sent
-					}
+//			synchronized (mSharedRoutes){
+//				// send the routing information to cluster members
+//				for(ComChannel tClusterMember : mParentCluster.getComChannels()) {
+//					RoutingInformation tRoutingInformationPacket = new RoutingInformation(tOwnClusterAddress, tClusterMember.getPeerHRMID());
+//				
+//					// are we on base hierarchy level?
+//					if (getHierarchyLevel().isBaseLevel()){
+//	
+//						/**
+//						 * ADD ROUTES: routes from the cluster member to this node for every registered local HRMID.
+//						 */
+//						// determine the L2 address of this physical node
+//						L2Address tPhysNodeL2Address = mHRMController.getHRS().getCentralFNL2Address();
+//						// iterate over all HRMIDs which are registered for this physical node
+//						for (HRMID tHRMID : mHRMController.getHRMIDs()){
+//							// create entry for cluster internal routing towards us
+//							RoutingEntry tRouteFromClusterMemberToHere = RoutingEntry.createRouteToDirectNeighbor(tHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+//							// define the L2 address of the next hop in order to let the receiver store it in its HRMID-to-L2ADDRESS mapping
+//							tRouteFromClusterMemberToHere.setNextHopL2Address(tPhysNodeL2Address);
+//							// add the route in the "share phase" signaling
+//							tRoutingInformationPacket.addRoute(tRouteFromClusterMemberToHere);
+//						}
+//						
+//						//TODO: need routing graph here!
+//						
+//						//TODO: routes to other cluster members
+//					}else{
+//						//TODO: implement me
+//					}	
+//					
+//					/**
+//					 * Send the routing data to the cluster member
+//					 */
+//					// do we have interesting routing information?
+//					if (tRoutingInformationPacket.getRoutes().size() > 0){
+//						tClusterMember.sendPacket(tRoutingInformationPacket);
+//					}else{
+//						// no routing information -> no packet is sent
+//					}
+//				}
+//
+//				/**
+//				 * mark "share phase" data as known
+//				 */
+//				mSharedRoutesHaveChanged = false;
+//			}
+			
+			// are we on base hierarchy level?
+			if (getHierarchyLevel().isBaseLevel()){
+				/**
+				 * Stores object reference for this node's cluster membership in the HRG
+				 */
+				// register the new in the HRG
+				if(mParentCluster.getThisNodeL0Address() != null){
+					mHRMController.registerLinkHRG(getHRMID(), mParentCluster.getThisNodeL0Address(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
 				}
 
 				/**
-				 * mark "share phase" data as known
+				 * Store locally all routes to L0 cluster members 
 				 */
-				mSharedRoutesHaveChanged = false;
+				LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
+				for(ComChannel tComChannel : tComChannels){
+					storeRouteToL0ClusterMember(tComChannel);
+				}
 			}
+			
 		}else{
 			// share phase shouldn't be started, we have to wait until next trigger
 		}
