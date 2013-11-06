@@ -184,6 +184,6 @@ public class HRGViewer extends EditorAWT implements IController
 	 */
 	public String toString()
 	{		
-		return "ARG viewer" + (mHRMController != null ? "@" + mHRMController.getNodeGUIName() : "");
+		return "HRG viewer" + (mHRMController != null ? "@" + mHRMController.getNodeGUIName() : "");
 	}
 }
