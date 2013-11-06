@@ -23,6 +23,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class RoutingInformation extends SignalingMessageHrm
 {
+	private static final long serialVersionUID = 2105684166786450748L;
+	
 	/**
 	 * Stores the database with routing entries.
 	 */
