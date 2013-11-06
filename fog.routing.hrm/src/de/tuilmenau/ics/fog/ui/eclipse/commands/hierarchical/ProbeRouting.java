@@ -181,7 +181,7 @@ public class ProbeRouting extends EclipseCommand
 	@SuppressWarnings("unused")
 	private void sendProbeConnectionRequest(Name pTargetNodeName, Node pTargetNode)
 	{
-		Logging.log(this, "Sending probe packet to " + pTargetNodeName + ", which belongs to node " + pTargetNode);
+		Logging.log(this, "\n\n\n############## Sending probe packet to " + pTargetNodeName + ", which belongs to node " + pTargetNode);
 		
 		// get the recursive FoG layer
 		FoGEntity tFoGLayer = (FoGEntity) mNode.getLayer(FoGEntity.class);
@@ -205,26 +205,32 @@ public class ProbeRouting extends EclipseCommand
 					Logging.log(this, "Found in the NMS the HRMID " + tTargetNodeHRMID.toString() + " for node " + pTargetNode);  
 					
 					if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (!tTargetNodeHRMID.isRelativeAddress())){
-						/**
-						 * Connect to the destination node
-						 */
-						// create requirements with probe-routing property and DestinationApplication property
-						Description tConnectionReqs = new Description();
-						tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString()));
-						tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
-						// probe connection
-						Connection tConnection = null;
-						Logging.log(this, "\n\n\nProbing a connection to " + tTargetNodeHRMID + " with requirements " + tConnectionReqs);
-						tConnection = mNode.getLayer(null).connect(tTargetNodeHRMID, tConnectionReqs, mNode.getIdentity());
-						/**
-						 * Disconnect by closing the connection
-						 */
-						if(tConnection != null) {
-							Logging.log(this, "        ..found valid connection to " + tTargetNodeHRMID + "(" + pTargetNodeName + ")");
-							tConnection.close();
+						if(!tTargetNodeHRMID.isClusterAddress()){
+							/**
+							 * Connect to the destination node
+							 */
+							// create requirements with probe-routing property and DestinationApplication property
+							Description tConnectionReqs = new Description();
+							tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString()));
+							tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
+							// probe connection
+							Connection tConnection = null;
+							Logging.log(this, "\n\n\nProbing a connection to " + tTargetNodeHRMID + " with requirements " + tConnectionReqs);
+							tConnection = mNode.getLayer(null).connect(tTargetNodeHRMID, tConnectionReqs, mNode.getIdentity());
+							/**
+							 * Disconnect by closing the connection
+							 */
+							if(tConnection != null) {
+								Logging.log(this, "        ..found valid connection to " + tTargetNodeHRMID + "(" + pTargetNodeName + ")");
+								tConnection.close();
+							}else{
+								Logging.err(this, "Unable to connecto to " + tTargetNodeHRMID);
+							}
 						}else{
-							Logging.err(this, "Unable to connecto to " + tTargetNodeHRMID);
+							// cluster address
 						}
+
+						Logging.log(this, "############## PROBING END ###########"); 
 					}else{
 						Logging.log(this, "     ..address " + tTargetNodeHRMID + " is ignored because it is a relative one");
 					}
