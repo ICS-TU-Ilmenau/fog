@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
+import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
@@ -21,7 +22,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
  * 			5.) Min. delay [ms]: the additional delay, which is caused minimal from this route
  * 			6.) Max. data rate [Kb/s]: the data rate, which is possible via this route under optimal circumstances
  */
-public class RoutingEntry
+public class RoutingEntry implements RouteSegment
 {
 	/**
 	 * Defines a constant value for "no hop costs".
@@ -49,6 +50,11 @@ public class RoutingEntry
 	 */
 	private HRMID mDestination = null;
 	
+	/**
+	 * Stores the source of this route entry.
+	 */
+	private HRMID mSource = null;
+
 	/**
 	 * Stores the next hop of this route entry.
 	 */
@@ -94,6 +100,7 @@ public class RoutingEntry
 	/**
 	 * Constructor
 	 * 
+	 * @param pSource the source of this route
 	 * @param pDestination the destination of this route
 	 * @param pNextHop the next hop for this route
 	 * @param pHopCount the hop costs
@@ -101,9 +108,10 @@ public class RoutingEntry
 	 * @param pMinDelay the minimum additional delay the described route causes
 	 * @param pMaxDataRate the maximum data rate the described route might provide
 	 */
-	private RoutingEntry(HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate)
+	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate)
 	{
 		mDestination = pDestination;
+		mSource = pSource;
 		mNextHop = pNextHop;
 		mHopCount = pHopCount;
 		mUtilization = pUtilization;
@@ -114,6 +122,21 @@ public class RoutingEntry
 	}
 	
 	/**
+	 * Constructor
+	 * 
+	 * @param pDestination the destination of this route
+	 * @param pNextHop the next hop for this route
+	 * @param pHopCount the hop costs
+	 * @param pUtilization the utilization of the described route
+	 * @param pMinDelay the minimum additional delay the described route causes
+	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 */
+	private RoutingEntry(HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate)
+	{
+		this(null, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate); 
+	}
+	
+	/**
 	 * Factory function: creates a routing loop, which is used for routing traffic on the local host.
 	 * 
 	 * @param pLoopAddress the address which defines the destination and next hop of this route
@@ -121,13 +144,53 @@ public class RoutingEntry
 	public static RoutingEntry createLocalhostEntry(HRMID pLoopAddress)
 	{
 		// create instance
-		RoutingEntry tEntry = new RoutingEntry(pLoopAddress, pLoopAddress, NO_HOP_COSTS, NO_UTILIZATION, NO_DELAY, INFINITE_DATARATE);
-		
+		RoutingEntry tEntry = new RoutingEntry(null, pLoopAddress, pLoopAddress, NO_HOP_COSTS, NO_UTILIZATION, NO_DELAY, INFINITE_DATARATE);
+
 		// mark as local loop
 		tEntry.mLocalLoop = true;
+
+		// set the source of this route
+		tEntry.mSource = pLoopAddress;
 		
 		// return with the entry
 		return tEntry;
+	}
+
+	/**
+	 * Factory function: creates a route to a direct neighbor.
+	 * 
+	 * @param pSource the source of the route
+	 * @param pDestination the direct neighbor
+	 * @param pNextHop the next hop for the route
+	 * @param pUtilization the utilization of the described route
+	 * @param pMinDelay the minimum additional delay the described route causes
+	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 */
+	public static RoutingEntry createRouteToDirectNeighbor(HRMID pSource, HRMID pDestination, HRMID pNextHop, float pUtilization, long pMinDelay, long pMaxDataRate)
+	{
+		// create instance
+		RoutingEntry tEntry = new RoutingEntry(pSource, pDestination, pNextHop, HRMConfig.Routing.HOP_COSTS_TO_A_DIRECT_NEIGHBOR, pUtilization, pMinDelay, pMaxDataRate);
+		
+		// mark as local loop
+		tEntry.mRouteToDirectNeighbor = true;
+		
+		// return with the entry
+		return tEntry;
+	}
+
+	/**
+	 * Factory function: creates a route to a direct neighbor.
+	 * 
+	 * @param pSource the source of the route
+	 * @param pDirectNeighbor the direct neighbor
+	 * @param pUtilization the utilization of the described route
+	 * @param pMinDelay the minimum additional delay the described route causes
+	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 */
+	public static RoutingEntry createRouteToDirectNeighbor(HRMID pSource, HRMID pDirectNeighbor, float pUtilization, long pMinDelay, long pMaxDataRate)
+	{
+		// return with the entry
+		return createRouteToDirectNeighbor(pSource, pDirectNeighbor, pDirectNeighbor, pUtilization, pMinDelay, pMaxDataRate);
 	}
 
 	/**
@@ -140,14 +203,8 @@ public class RoutingEntry
 	 */
 	public static RoutingEntry createRouteToDirectNeighbor(HRMID pDirectNeighbor, float pUtilization, long pMinDelay, long pMaxDataRate)
 	{
-		// create instance
-		RoutingEntry tEntry = new RoutingEntry(pDirectNeighbor, pDirectNeighbor, HRMConfig.Routing.HOP_COSTS_TO_A_DIRECT_NEIGHBOR, pUtilization, pMinDelay, pMaxDataRate);
-		
-		// mark as local loop
-		tEntry.mRouteToDirectNeighbor = true;
-		
 		// return with the entry
-		return tEntry;
+		return createRouteToDirectNeighbor(null, pDirectNeighbor, pUtilization, pMinDelay, pMaxDataRate);
 	}
 
 	/**
@@ -170,6 +227,16 @@ public class RoutingEntry
 		return mNextHopL2Address;
 	}
 	
+	/**
+	 * Returns the source of the route
+	 * 
+	 * @return the source
+	 */
+	public HRMID getSource()
+	{
+		return mSource;
+	}
+
 	/**
 	 * Returns the destination of the route
 	 * 
@@ -259,13 +326,33 @@ public class RoutingEntry
 	 */
 	public RoutingEntry clone()
 	{
-		RoutingEntry tResult = new RoutingEntry(mDestination, mNextHop, mHopCount, mUtilization, mMinDelay, mMaxDataRate);
+		// create object copy
+		RoutingEntry tResult = new RoutingEntry(mSource, mDestination, mNextHop, mHopCount, mUtilization, mMinDelay, mMaxDataRate);
+		
+		// update the flag "route to direct neighbor"
 		tResult.mRouteToDirectNeighbor = mRouteToDirectNeighbor;
+		
+		// update flag "route to local host"
 		tResult.mLocalLoop = mLocalLoop;
+		
+		// update next hop L2 address
+		tResult.mNextHopL2Address = mNextHopL2Address;
 		
 		return tResult;
 	}
 	
+	/**
+	 * Returns the size of a serialized representation
+	 * 
+	 * @return the size
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		// TODO: implement me
+		return 0;
+	}
+
 	/**
 	 * Returns an object describing string
 	 * 
@@ -274,6 +361,6 @@ public class RoutingEntry
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "(Dest.=" + getDest() + ", Next=" + getNextHop() + ", Hops=" + getHopCount() + ", Util.=" + getUtilization() + ", MinDel.=" + getMinDelay() + ", MaxDR.=" + getMaxDataRate() +")"; 
+		return getClass().getSimpleName() + "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + getHopCount() + ", Util.=" + getUtilization() + ", MinDel.=" + getMinDelay() + ", MaxDR.=" + getMaxDataRate() +")"; 
 	}
 }
