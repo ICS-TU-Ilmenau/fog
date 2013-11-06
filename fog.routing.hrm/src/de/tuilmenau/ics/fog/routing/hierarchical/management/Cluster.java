@@ -19,7 +19,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -785,6 +784,16 @@ public class Cluster extends ClusterMember
 		mHRMController.unregisterCluster(this);
 	}
 
+	/**
+	 * Returns the L0 address which was assigned by this L0 (if it is so) cluster for this physical node
+	 *  
+	 * @return the assigned HRMID
+	 */
+	public HRMID getThisNodeL0Address()
+	{
+		return mAssignedHRMIDForThisNode;	
+	}
+	
 	/**
 	 * EVENT: detected additional cluster member, the event is triggered by the comm. channel
 	 * 
