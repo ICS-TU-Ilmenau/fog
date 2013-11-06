@@ -76,7 +76,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for each received RoutingInformation packet.
 		 */
-		public static final boolean SHOW_SHARE_PHASE = false;
+		public static final boolean SHOW_SHARE_PHASE = true;
 
 		/**
 		 * Shows debug outputs about the routing process 
@@ -185,6 +185,24 @@ public class HRMConfig
 	public class Hierarchy
 	{
 		/**
+		 * Defines if coordinators should announce their existences among cluster members/neighbors
+		 * IMPORTANT: If this is disabled, the hierarchy creation won't be correct.
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
+		 */
+		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
+
+		/**
+		 * Defines the base time period for CoordinatorAnnounce distributions
+		 */
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 3.0;
+
+		/**
+		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
+		 */
+		public static final boolean PERIODIC_COORDINATOR_ANNOUNCEMENTS = true;
+
+		/**
 		 * This defines the amount of hierarchical levels in the simulation.
 		 * A maximum value of 5 is allowed.
 		 */
@@ -227,31 +245,6 @@ public class HRMConfig
 		public static final boolean AUTO_CLEANUP_FOR_CONNECTIONS = false; //TODO: fuehrt zu race conditions wenn letzter Kanal geht und neuer sofort wieder hinzu kommt
 
 		/**
-		 * Defines if coordinators should announce their existences among cluster members/neighbors
-		 * IMPORTANT: If this is disabled, the hierarchy creation won't be correct.
-		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
-		 */
-		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
-
-		/**
-		 * Defines the base time period for CoordinatorAnnounce distributions
-		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 3.0;
-
-		/**
-		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
-		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
-		 */
-		public static final boolean PERIODIC_COORDINATOR_ANNOUNCEMENTS = true;
-
-		/**
-		 * Defines if an HRM entity should report its topology knowledge to the superior entity.
-		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated network topology.
-		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
-		 */
-		public static final boolean TOPOLOGY_REPORTS = false;
-
-		/**
 		 * Defines if elections at higher hierarchy levels should be based on a separate hierarchy priority per node.
 		 * This values is computed based on the received L0 coordinator announcements. It expresses the L0 clustering
 		 * neighborhood. The more neighbor L0 regions exist within the given max. radius (EXPANSION_RADIUS), the higher
@@ -271,6 +264,20 @@ public class HRMConfig
 	public class Routing
 	{
 		/**
+		 * Defines if an HRM entity should report its topology knowledge to the superior entity.
+		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated network topology.
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
+		 */
+		public static final boolean REPORT_TOPOLOGY_AUTOMATICALLY = true;
+
+		/**
+		 * Should the packets of the "share phase" be send periodically?
+		 * If a distributed simulation (span a network over multiple physical nodes) is used, this value has to be set to "true". 
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
+		 */
+		public static final boolean PERIODIC_SHARE_PHASES = true;
+
+		/**
 		 * Should each HRS instance try to avoid duplicates in its internal routing tables?
 		 * In this case, also updates of routing table entries are made if the new route has better QoS values than the old one.
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
@@ -289,13 +296,6 @@ public class HRMConfig
 		public static final double GRANULARITY_SHARE_PHASE = 2.0; // in seconds
 		
 		/**
-		 * Should the packets of the "share phase" be send periodically?
-		 * If a distributed simulation (span a network over multiple physical nodes) is used, this value has to be set to "true". 
-		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
-		 */
-		public static final boolean PERIODIC_SHARE_PHASES = false;
-
-		/**
 		 * Define if the HRM based route should be recorded in a ProbeRoutingProperty if the connection  request uses this property.
 		 */		
 		public static final boolean RECORD_ROUTE_FOR_PROBES = true; 
@@ -307,6 +307,12 @@ public class HRMConfig
 	public class Election //TV
 	{
 		/**
+		 * Defines if link states should be used.
+		 * This is used for distributed election processes.
+		 */
+		public static final boolean USE_LINK_STATES = true;
+
+		/**
 		 * Default priority for election process. This value is used when no value is explicitly defined for a node.
 		 */
 		public static final long DEFAULT_BULLY_PRIORITY = 1; //TV
@@ -316,11 +322,5 @@ public class HRMConfig
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean SEND_BULLY_ALIVES = true;
-
-		/**
-		 * Defines if link states should be used.
-		 * This is used for distributed election processes.
-		 */
-		public static final boolean USE_LINK_STATES = true;
 	}
 }
