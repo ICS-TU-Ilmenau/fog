@@ -494,8 +494,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 			
 		// register a route to the coordinator as addressable target
-		if(pCoordinator.getHRMID() != null){
-			getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(pCoordinator.getHRMID()));
+		HRMID tCoordinatorHRMID = pCoordinator.getHRMID();
+		if((tCoordinatorHRMID != null) && (!tCoordinatorHRMID.isZero())){ 
+			getHRS().addHRMRoute(RoutingEntry.createLocalhostEntry(tCoordinatorHRMID));
 		}
 		
 		synchronized (mLocalCoordinators) {
@@ -1903,14 +1904,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * If the L2 address of the next hop is defined, the HRS will update the HRMID-to-L2ADDRESS mapping.
 	 * 
 	 * @param pRoutingEntry the new routing entry
+	 * 
+	 * @return true if the entry had new routing data
 	 */
-	public void addHRMRoute(RoutingEntry pRoutingEntry)
+	public boolean addHRMRoute(RoutingEntry pRoutingEntry)
 	{
+		boolean tResult = false;
+		
 		// inform the HRS about the new route
-		if(getHRS().addHRMRoute(pRoutingEntry)){
+		tResult = getHRS().addHRMRoute(pRoutingEntry);
+
+		if(tResult){
 			// it's time to update the GUI
 			notifyGUI(this);
 		}
+		
+		return tResult;
 	}
 
 	/**
@@ -3174,16 +3183,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pFrom the starting point of the link
 	 * @param pTo the ending point of the link
 	 * @param pLink the link between the two HRMIDs
+	 * 
+	 * @return true if the link is new to the routing graph
 	 */
-	public void registerLinkHRG(HRMID pFrom, HRMID pTo, AbstractRoutingGraphLink pLink)
+	public boolean registerLinkHRG(HRMID pFrom, HRMID pTo, AbstractRoutingGraphLink pLink)
 	{
+		boolean tResult = false;
+		
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "REGISTERING LINK (HRG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  LINK=" + pLink);
 		}
 
 		synchronized (mHierarchicalRoutingGraph) {
 			mHierarchicalRoutingGraph.link(pFrom, pTo, pLink);
+			tResult = true;
 		}
+		
+		return tResult;
 	}
 
 	/**
