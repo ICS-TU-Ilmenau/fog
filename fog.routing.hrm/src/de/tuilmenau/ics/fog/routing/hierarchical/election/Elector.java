@@ -1427,6 +1427,7 @@ public class Elector implements Localization
 							/**
 							 * Only proceed if the remote cluster has a higher priority
 							 */
+							Logging.log(this, "   ..checking if Cluster of ClusterMember " + tClusterMember + " has lower priority than local priority " + mParent.getPriority().getValue()); 
 							if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority())){
 								Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
 								tAllowedToWin = false;
@@ -1441,6 +1442,8 @@ public class Elector implements Localization
 			}
 		}
 		
+		Logging.log(this, "   ..isAllowedToWin() result: " + tAllowedToWin); 
+				
 		return tAllowedToWin;
 	}
 	
