@@ -56,12 +56,7 @@ import org.eclipse.swt.graphics.Point;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.eclipse.utils.Resources;
-import de.tuilmenau.ics.fog.facade.Description;
-import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.RequirementsException;
-import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
-import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
@@ -456,6 +451,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 2: table of known mappings from HRMID to L2Addresses
 		 */
+		if (HRM_VIEWER_DEBUGGING){
+			Logging.log(this, "Printing HRMID-2-L2Address mapping...");
+		}
 		// create the headline
 		StyledText tSignaturesLabel4 = new StyledText(mContainer, SWT.BORDER);
 		String tHRMIDsStr = "";
@@ -535,8 +533,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutMappingTable.setColumnData(tTableL2Addr, new ColumnWeightData(3));
 
 		/**
-		 * GUI part 2: HRM routing table of the node
+		 * GUI part 3: HRM routing table of the node
 		 */
+		if (HRM_VIEWER_DEBUGGING){
+			Logging.log(this, "Printing HRM routing table...");
+		}
 		// create the headline
 		StyledText tSignaturesLabel2 = new StyledText(mContainer, SWT.BORDER);
 		tSignaturesLabel2.setText("HRM Routing Table");
@@ -937,20 +938,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 5:  
 			 */
-			Route tRoute = null;
-			Name tTarget = null;
-			try {
-				tTarget = tComChannel.getPeerL2Address();
-				if(tTarget != null) {
-					tRoute = mHRMController.getHRS().getRoute(tTarget, new Description(), null);
-				}
-			} catch (RoutingException tExc) {
-				Logging.err(this, "Unable to compute route to " + tTarget, tExc);
-			} catch (RequirementsException tExc) {
-				Logging.err(this, "Unable to fulfill requirements for route calculation to " + tTarget, tExc);
-			}			
-			if (tRoute != null){
-				tRow.setText(5, tRoute.toString());
+			if (tComChannel.getRouteToPeer() != null){
+				tRow.setText(5, tComChannel.getRouteToPeer().toString());
 			}else{
 				tRow.setText(5, "??");
 			}
