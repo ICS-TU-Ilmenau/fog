@@ -303,6 +303,11 @@ public class Cluster extends ClusterMember
 					eventClusterMemberNeedsHRMID(tComChannel, "distributeAddresses() [" + mSentAddressBroadcast + "]");
 					i++;
 				}
+				
+				/**
+				 * Announce the local node HRMIDs
+				 */
+				distributeAnnounceHRMIDs();
 			}
 		}else{
 			Logging.log(this, "distributeAddresses() skipped because the own HRMID is still the same: " + getHRMID());

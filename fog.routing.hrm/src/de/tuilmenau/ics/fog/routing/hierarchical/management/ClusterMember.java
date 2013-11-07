@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -129,22 +130,26 @@ public class ClusterMember extends ClusterName
 	@Override
 	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
+		super.setHRMID(pCaller, pHRMID);
+
 		if(getHierarchyLevel().isBaseLevel()){
-			Logging.log(this, "ASSINGED L0 HRMID=" + pHRMID + " (old=" + (mAssignedL0HRMID != null ? mAssignedL0HRMID.toString() : "null") + ", assigner=" + pCaller + ")");
-		
 			// is this a new HRMID?
-			if((pHRMID == null) || (!pHRMID.equals(mAssignedL0HRMID))){
+			if((pHRMID != null) && (!pHRMID.equals(mAssignedL0HRMID)) && (!pHRMID.isClusterAddress())){
+				Logging.log(this, "ASSINGED L0 HRMID=" + pHRMID + " (old=" + (mAssignedL0HRMID != null ? mAssignedL0HRMID.toString() : "null") + ", assigner=" + pCaller + ")");
+		
 				// update the HRMID
 				mAssignedL0HRMID = (pHRMID != null ? pHRMID.clone() : null);
-	
-				Logging.log(this, "    ..setting local HRMID " + (pHRMID != null ? pHRMID.toString() : "null"));
-	
-				// store the new HRMID for this node
-				mAssignedL0HRMID = pHRMID;
+
+				/**
+				 * Announce in all L0 clusters the new set of local node HRMIDs
+				 */				
+				LinkedList<ClusterMember> tL0ClusterMember = mHRMController.getAllL0ClusterMembers();
+				Logging.log(this, "    ..distributing AnnounceHRMIDs in: " + tL0ClusterMember);
+				for(ClusterMember tClusterMember : tL0ClusterMember){
+					tClusterMember.distributeAnnounceHRMIDs();					
+				}
 			}
 		}
-		
-		super.setHRMID(pCaller, pHRMID);
 	}
 
 	/**
@@ -157,6 +162,59 @@ public class ClusterMember extends ClusterName
 		return mAssignedL0HRMID;	
 	}
 
+	/**
+	 * SEND: AnnounceHRMIDs to all known cluster members
+	 */
+	public void distributeAnnounceHRMIDs()
+	{
+		if(getHierarchyLevel().isBaseLevel()){
+			// only announce in active clusters, avoid unnecessary packets here
+			if(isActiveCluster()){
+				Logging.log(this, "Distributing AnnounceHRMIDs...");
+	
+				LinkedList<HRMID >tLocalHRMIDs = mHRMController.getHRMIDs();
+				Logging.err(this, "    ..found local HRMIDs: " + tLocalHRMIDs);
+				
+				/**
+				 * Filter local HRMIDs for L0 node HRMIDs
+				 */
+				LinkedList<HRMID >tLocalL0HRMIDs = new LinkedList<HRMID>();
+				for(HRMID tHRMID : tLocalHRMIDs){
+					// is the HRMID a cluster address?
+					if(!tHRMID.isClusterAddress()){
+						// ignore this ClusterMember's node specific L0 HRMID, which is already known to the peer
+						if(!tHRMID.equals(mAssignedL0HRMID)){
+							Logging.log(this, "    ..found L0 node HRMID: " + tHRMID.toString());
+						}else{
+							Logging.log(this, "    ..ignoring L0 node HRMID: " + tHRMID.toString());
+						}
+						tLocalL0HRMIDs.add(tHRMID);
+					}else{
+						Logging.log(this, "    ..ignoring cluster HRMID: " + tHRMID.toString());
+					}
+				}
+				
+				if (tLocalL0HRMIDs.size() > 0){
+					Logging.log(this, "Distributing AnnounceHRMIDs packets..");
+		
+					HRMID tSenderHRMID = getHRMID();
+					if(mAssignedL0HRMID != null){
+						tSenderHRMID = mAssignedL0HRMID;
+					}
+
+					/**
+					 * Announce the HRMIDs to the peer
+					 */
+					// create the packet
+					AnnounceHRMIDs tAnnounceHRMIDsPacket = new AnnounceHRMIDs(tSenderHRMID, null, tLocalL0HRMIDs);
+					// send the packet
+					Logging.err(this, "    ..broadcasting (L0-HRMID: " + mAssignedL0HRMID + "): " + tAnnounceHRMIDsPacket);
+					sendClusterBroadcast(tAnnounceHRMIDsPacket, false);
+				}
+			}
+		}
+	}
+	
 	/**
 	 * EVENT: coordinator announcement, we react on this by:
 	 *       1.) store the topology information locally
@@ -771,10 +829,22 @@ public class ClusterMember extends ClusterName
 	 */
 	public void setClusterActivation(boolean pState)
 	{
+		boolean tOldState = mClusterActivation;
+		
+		/**
+		 * Update the cluster state 
+		 */
 		if(mClusterActivation != pState){
 			Logging.log(this, "Setting cluster activation to: " + pState);
 			
 			mClusterActivation = pState;
+		}
+
+		/**
+		 * If it is a transition from "false" to " true", then distribute AnnounceHRMIDs
+		 */
+		if((!tOldState) && (pState)){
+			distributeAnnounceHRMIDs();
 		}
 	}
 	

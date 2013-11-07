@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
@@ -314,10 +315,31 @@ public class ComChannel
 		Logging.log(this, "Setting new peer HRMID: " + pHRMID);
 		
 		if((pHRMID != null) && (!pHRMID.equals(mPeerHRMID))){
-			// store the assignment for this comm. channel
-			storePeerHRMID(pHRMID);
-	
 			mPeerHRMID = pHRMID.clone();
+			
+			synchronized(mAssignedPeerHRMIDs){
+				if(!mAssignedPeerHRMIDs.contains(pHRMID)){
+					mAssignedPeerHRMIDs.add(pHRMID);
+
+					int tUsedClusterAddress = pHRMID.getLevelAddress(mParent.getHierarchyLevel());
+					Logging.log(this, "storePeerHRMID() stores for " + pHRMID + " the used cluster address: " + tUsedClusterAddress);
+					if(tUsedClusterAddress > 0){
+						synchronized (mUsedClusterAddresses) {
+							if(!mUsedClusterAddresses.contains(tUsedClusterAddress)){
+								mUsedClusterAddresses.add(tUsedClusterAddress);
+							}
+						}
+					}
+				}else{
+					Logging.warn(this, "storePeerHRMID() skips storing the already known HRMID: " + pHRMID); 
+				}
+			}
+
+			synchronized (mPeerHRMIDs) {
+				if(!mPeerHRMIDs.contains(pHRMID)){
+					mPeerHRMIDs.add(pHRMID);
+				}
+			}
 		}else{
 			Logging.warn(this, "Ignoring set-request of HRMID: " + pHRMID);
 		}
@@ -405,7 +427,7 @@ public class ComChannel
 	 * 
 	 * @param pRoutingInformationPacket the packet
 	 */
-	private synchronized void eventReceivedRoutingInformation(RoutingInformation pRoutingInformationPacket)
+	private void eventReceivedRoutingInformation(RoutingInformation pRoutingInformationPacket)
 	{
 		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRoutingInformationPacket);
@@ -418,6 +440,27 @@ public class ComChannel
 				Logging.log(this, "      ..found route: " + tEntry);
 			
 			mHRMController.addHRMRoute(tEntry);
+		}
+	}
+
+	/**
+	 * Handles a AnnounceHRMIDs packet.
+	 * 
+	 * @param pAnnounceHRMIDsPacket the packet
+	 */
+	@SuppressWarnings("unchecked")
+	private void eventReceivedAnnounceHRMIDs(AnnounceHRMIDs pAnnounceHRMIDsPacket)
+	{
+		Logging.err(this, "Received announced peer HRMIDs: " + pAnnounceHRMIDsPacket.getHRMIDs());
+				
+		synchronized (mPeerHRMIDs) {
+			mPeerHRMIDs = (LinkedList<HRMID>) pAnnounceHRMIDsPacket.getHRMIDs().clone();
+			
+			if(!mPeerHRMIDs.contains(getPeerHRMID())){
+				Logging.err(this, "    ..adding to stored peer HRMID the peer HRMID: " + getPeerHRMID());
+				// add the stored peer HRMID (this HRMID is never signaled via AnnounceHRMIDs!)
+				mPeerHRMIDs.add(getPeerHRMID());
+			}
 		}
 	}
 
@@ -673,8 +716,15 @@ public class ComChannel
 	 */
 	public void signalAssignHRMID(HRMID pHRMID)
 	{
+		HRMID tSenderHRMID = mParent.getHRMID();
+		if(mParent instanceof ClusterMember){
+			ClusterMember tParentClusterMember = (ClusterMember)mParent;
+			if(tParentClusterMember.getL0HRMID() != null){
+				tSenderHRMID = tParentClusterMember.getL0HRMID();
+			}
+		}
 		// create new AssignHRMID packet for the cluster member
-		AssignHRMID tAssignHRMIDPacket = new AssignHRMID(getParent().getHRMID(), getPeerHRMID(), pHRMID);
+		AssignHRMID tAssignHRMIDPacket = new AssignHRMID(tSenderHRMID, getPeerHRMID(), pHRMID);
 		// send the packet
 		sendPacket(tAssignHRMIDPacket);
 	}
@@ -711,38 +761,6 @@ public class ComChannel
 		}
 	}
 
-	/**
-	 * Stores an assigned HRMID for the peer
-	 * 
-	 * @param pHRMID the assigned HRMID
-	 */
-	private void storePeerHRMID(HRMID pHRMID)
-	{
-		Logging.log(this, "Storing assigned HRMID: " + pHRMID);
-		
-		synchronized(mAssignedPeerHRMIDs){
-			if(!mAssignedPeerHRMIDs.contains(pHRMID)){
-				mAssignedPeerHRMIDs.add(pHRMID);
-
-				synchronized (mPeerHRMIDs) {
-					mPeerHRMIDs.add(pHRMID);
-				}
-				
-				int tUsedClusterAddress = pHRMID.getLevelAddress(mParent.getHierarchyLevel());
-				Logging.log(this, "storePeerHRMID() stores for " + pHRMID + " the used cluster address: " + tUsedClusterAddress);
-				if(tUsedClusterAddress > 0){
-					synchronized (mUsedClusterAddresses) {
-						if(!mUsedClusterAddresses.contains(tUsedClusterAddress)){
-							mUsedClusterAddresses.add(tUsedClusterAddress);
-						}
-					}
-				}
-			}else{
-				Logging.warn(this, "storePeerHRMID() skips storing the already known HRMID: " + pHRMID); 
-			}
-		}
-	}
-	
 	/**
 	 * Returns a list of used cluster addresses
 	 * 
@@ -982,6 +1000,9 @@ public class ComChannel
 			// cast to a RoutingInformation signaling message
 			RoutingInformation tRoutingInformationPacket = (RoutingInformation)pPacket;
 
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "ROUTING_INFORMATION-received from \"" + getPeerHRMID() + "\": " + tRoutingInformationPacket);
+
 			// process Bully message
 			eventReceivedRoutingInformation(tRoutingInformationPacket);
 			
@@ -1030,6 +1051,22 @@ public class ComChannel
 			return true;
 		}
 
+		/**
+		 * AnnounceHRMIDs
+		 */
+		if (pPacket instanceof AnnounceHRMIDs){
+			// cast to a RoutingInformation signaling message
+			AnnounceHRMIDs tAnnounceHRMIDsPacket = (AnnounceHRMIDs)pPacket;
+
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "ANNOUNCE_HRMIDS-received from \"" + getPeerHRMID() + "\" revoked HRMIDs: " + tAnnounceHRMIDsPacket.getHRMIDs().toString());
+
+			// process Bully message
+			eventReceivedAnnounceHRMIDs(tAnnounceHRMIDsPacket);
+			
+			return true;
+		}
+		
 		/**
 		 * RevokeHRMIDs:
 		 * 			Coordinator (via Cluster) ==> all inferior local/remote ClusterMember
