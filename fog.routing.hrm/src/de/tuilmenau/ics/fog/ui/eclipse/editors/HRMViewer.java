@@ -1089,6 +1089,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							showPeerHRMIDs(tfComChannels.get(tSelectedIndex));
 						}
 					});
+					MenuItem tMenuItem4 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem4.setText("Show assigned peer HRMIDs");
+					tMenuItem4.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showAssignedPeerHRMIDs(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showAssignedPeerHRMIDs(tfComChannels.get(tSelectedIndex));
+						}
+					});
 
 					tTable.setMenu(tMenu);
 				}
@@ -1144,6 +1158,15 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 	}
 
+	private void showAssignedPeerHRMIDs(ComChannel pComChannel)
+	{
+		Logging.log(this, "Assigned peer HRMIDs of: " + pComChannel);
+		int i = 0;
+		for (HRMID tHRMID : pComChannel.getAssignedPeerHRMIDs()){
+			Logging.log(this, "    ..[" + i + "]: " + tHRMID);
+			i++;
+		}
+	}
 
 	private void printNAME(Composite pParent, ControlEntity pEntity)
 	{
@@ -1240,22 +1263,27 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 * TEXT
 		 */
 		String tNetworkInterface = "";
-		
+		String tL0HRMID = "";
 		if (pEntity instanceof ClusterMember){
 			ClusterMember tClusterMember = (ClusterMember) pEntity;
-			tNetworkInterface = (tClusterMember.getBaseHierarchyLevelNetworkInterface() != null ? tClusterMember.getBaseHierarchyLevelNetworkInterface().toString() : "");
+			tNetworkInterface = (tClusterMember.getBaseHierarchyLevelNetworkInterface() != null ? "  (" + tClusterMember.getBaseHierarchyLevelNetworkInterface().toString() + ")": "");
+			
+			if(tClusterMember.getL0HRMID() != null){
+				tL0HRMID = "  (L0-HRMID: " + tClusterMember.getL0HRMID().toString() + ")";
+			}
 		}
+		
 		if (pEntity instanceof Cluster){
 			Cluster tCluster = (Cluster) pEntity;
 			boolean tClusterCanBeActive = tCluster.getElector().isAllowedToWin();
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? "   (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : "") + (tNetworkInterface != "" ? "  (" + tNetworkInterface + ")": ""));
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? "   (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : "") + tNetworkInterface + tL0HRMID);
 		}else{
 			if(pEntity instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)pEntity;
 				
 				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + " Announces=" + tCoordinator.countAnnounces() + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts());
 			}else{
-				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + (tNetworkInterface != "" ? "  (" + tNetworkInterface + ")": ""));
+				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + tNetworkInterface + tL0HRMID);
 			}
 		}
 		/**

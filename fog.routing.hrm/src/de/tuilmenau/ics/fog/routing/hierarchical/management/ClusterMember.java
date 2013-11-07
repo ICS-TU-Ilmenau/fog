@@ -21,6 +21,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -51,6 +52,12 @@ public class ClusterMember extends ClusterName
 	 * Stores the network interface for base hierarchy level
 	 */
 	private NetworkInterface mBaseHierarchyLevelNetworkInterface = null;
+
+	/**
+	 * Stores the HRMID which is assigned to this node.
+	 * This variable is only used for L0.
+	 */
+	protected HRMID mAssignedL0HRMID = null;
 
 	/**
 	 * Constructor
@@ -111,6 +118,43 @@ public class ClusterMember extends ClusterName
 	public NetworkInterface getBaseHierarchyLevelNetworkInterface()
 	{
 		return mBaseHierarchyLevelNetworkInterface;
+	}
+
+	/**
+	 * Assign new HRMID for being addressable.
+	 *  
+	 * @param pCaller the caller who assigns the new HRMID
+	 * @param pHRMID the new HRMID
+	 */
+	@Override
+	public void setHRMID(Object pCaller, HRMID pHRMID)
+	{
+		if(getHierarchyLevel().isBaseLevel()){
+			Logging.log(this, "ASSINGED L0 HRMID=" + pHRMID + " (old=" + (mAssignedL0HRMID != null ? mAssignedL0HRMID.toString() : "null") + ", assigner=" + pCaller + ")");
+		
+			// is this a new HRMID?
+			if((pHRMID == null) || (!pHRMID.equals(mAssignedL0HRMID))){
+				// update the HRMID
+				mAssignedL0HRMID = (pHRMID != null ? pHRMID.clone() : null);
+	
+				Logging.log(this, "    ..setting local HRMID " + (pHRMID != null ? pHRMID.toString() : "null"));
+	
+				// store the new HRMID for this node
+				mAssignedL0HRMID = pHRMID;
+			}
+		}
+		
+		super.setHRMID(pCaller, pHRMID);
+	}
+
+	/**
+	 * Returns the L0 address which was assigned by this L0 (if it is so) cluster for this physical node
+	 *  
+	 * @return the assigned HRMID
+	 */
+	public HRMID getL0HRMID()
+	{
+		return mAssignedL0HRMID;	
 	}
 
 	/**

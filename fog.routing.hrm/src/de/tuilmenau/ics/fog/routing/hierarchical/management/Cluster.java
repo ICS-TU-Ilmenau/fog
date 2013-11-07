@@ -69,12 +69,6 @@ public class Cluster extends ClusterMember
 	private int mSentAddressBroadcast = 0;
 
 	/**
-	 * Stores the HRMID which is assigned to this node.
-	 * This variable is only used for L0.
-	 */
-	private HRMID mAssignedHRMIDForThisNode = null;
-	
-	/**
 	 * Stores the 
 	 */
 	private HRMID mHRMIDLastDistribution = null;	
@@ -270,11 +264,11 @@ public class Cluster extends ClusterMember
 				// are we at the base level?
 				if(getHierarchyLevel().isBaseLevel()) {
 					// inform HRM controller about the address change
-					if(mAssignedHRMIDForThisNode != null){
+					if(mAssignedL0HRMID != null){
 						
-						freeClusterMemberAddress(mAssignedHRMIDForThisNode.getLevelAddress(getHierarchyLevel()));
+						freeClusterMemberAddress(mAssignedL0HRMID.getLevelAddress(getHierarchyLevel()));
 	
-						mHRMController.unregisterHRMID(this, mAssignedHRMIDForThisNode);					
+						mHRMController.unregisterHRMID(this, mAssignedL0HRMID);					
 					}
 	
 					// create new HRMID for ourself
@@ -285,10 +279,10 @@ public class Cluster extends ClusterMember
 						Logging.log(this, "    ..setting local HRMID " + tThisNodesAddress.toString());
 			
 						// store the new HRMID for this node
-						mAssignedHRMIDForThisNode = tThisNodesAddress;
+						mAssignedL0HRMID = tThisNodesAddress;
 						
 						// inform the HRMController about the new HRMID
-						mHRMController.registerHRMID(this, mAssignedHRMIDForThisNode, "distributeAddresses()");
+						mHRMController.registerHRMID(this, mAssignedL0HRMID, "distributeAddresses()");
 					}else{
 						Logging.err(this, "distributeAddresses() cannot assign a new HRMID to this node because cluster HRMID is invalid");
 					}
@@ -543,7 +537,7 @@ public class Cluster extends ClusterMember
 			/**
 			 * Unregister all HRMID-2-L2Address mappings
 			 */
-			for(HRMID tHRMIDForPeer:tComChannel.getPeerHRMIDs()){
+			for(HRMID tHRMIDForPeer:tComChannel.getAssignedPeerHRMIDs()){
 				// register this new HRMID in the local HRS and create a mapping to the right L2Address
 				Logging.log(this, "    ..removing MAPPING " + tHRMIDForPeer.toString() + " to " + tComChannel.getPeerL2Address());
 				mHRMController.getHRS().unmapHRMID(tHRMIDForPeer);
@@ -561,7 +555,7 @@ public class Cluster extends ClusterMember
 			 * Revoke all assigned HRMIDs from peers
 			 */
 			Logging.log(this, "   ..[" + i + "]: recoking HRMIDs via: " + tComChannel);
-			tComChannel.signalRevokeHRMIDs();
+			tComChannel.signalRevokeAssignedHRMIDs();
 			
 			i++;
 		}
@@ -658,8 +652,8 @@ public class Cluster extends ClusterMember
 		/**
 		 * Unregister all HRMID-2-L2Address mappings
 		 */
-		for(HRMID tHRMIDForPeer : pComChannel.getPeerHRMIDs()){
-			// register this new HRMID in the local HRS and create a mapping to the right L2Address
+		for(HRMID tHRMIDForPeer : pComChannel.getAssignedPeerHRMIDs()){
+			// unregister the old HRMID fom the local HRS and remove the mapping to the corresponding L2Address
 			Logging.log(this, "    ..removing MAPPING " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
 			mHRMController.getHRS().unmapHRMID(tHRMIDForPeer);
 		}
@@ -770,27 +764,17 @@ public class Cluster extends ClusterMember
 		Logging.log(this, "============ Destroying this cluster now...");
 		
 		// unregister the HRMID for this node from the HRM controller
-		if(mAssignedHRMIDForThisNode != null){
+		if(mAssignedL0HRMID != null){
 			
-			freeClusterMemberAddress(mAssignedHRMIDForThisNode.getLevelAddress(getHierarchyLevel()));
+			freeClusterMemberAddress(mAssignedL0HRMID.getLevelAddress(getHierarchyLevel()));
 
-			mHRMController.unregisterHRMID(this, mAssignedHRMIDForThisNode);					
+			mHRMController.unregisterHRMID(this, mAssignedL0HRMID);					
 		}
 
 		// unregister from HRMController's internal database
 		mHRMController.unregisterCluster(this);
 	}
 
-	/**
-	 * Returns the L0 address which was assigned by this L0 (if it is so) cluster for this physical node
-	 *  
-	 * @return the assigned HRMID
-	 */
-	public HRMID getThisNodeL0Address()
-	{
-		return mAssignedHRMIDForThisNode;	
-	}
-	
 	/**
 	 * EVENT: detected additional cluster member, the event is triggered by the comm. channel
 	 * 

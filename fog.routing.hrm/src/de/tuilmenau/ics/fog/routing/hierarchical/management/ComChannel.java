@@ -175,10 +175,15 @@ public class ComChannel
 	private Direction mDirection;
 	
 	/**
-	 * Stores a list of assigned HRMIDs
+	 * Stores a list of known peer HRMIDs
 	 */
 	private LinkedList<HRMID> mPeerHRMIDs = new LinkedList<HRMID>();
 	
+	/**
+	 * Stores a list of assigned peer HRMIDs
+	 */
+	private LinkedList<HRMID> mAssignedPeerHRMIDs = new LinkedList<HRMID>();
+
 	/**
 	 * Stores a list of used cluster address for this comm. channel.
 	 * We could also use "mPeerHRMIDs" for having an overview about the used cluster addresses. But this way, the life is easier.
@@ -669,7 +674,7 @@ public class ComChannel
 	public void signalAssignHRMID(HRMID pHRMID)
 	{
 		// create new AssignHRMID packet for the cluster member
-		AssignHRMID tAssignHRMIDPacket = new AssignHRMID(mHRMController.getNodeName(), getPeerHRMID(), pHRMID);
+		AssignHRMID tAssignHRMIDPacket = new AssignHRMID(getParent().getHRMID(), getPeerHRMID(), pHRMID);
 		// send the packet
 		sendPacket(tAssignHRMIDPacket);
 	}
@@ -677,14 +682,21 @@ public class ComChannel
 	/**
 	 * Revokes all formerly assigned HRMIDs
 	 */	
-	public void signalRevokeHRMIDs()
+	public void signalRevokeAssignedHRMIDs()
 	{
 		// debug output
 		LinkedList<HRMID >tPeerHRMIDs = getPeerHRMIDs();
 		if (tPeerHRMIDs.size() > 0){
 			Logging.log(this, "Revoking assigned HRMIDs...");
 			int i = 0;
-			for(HRMID tHRMID : tPeerHRMIDs){
+			for(HRMID tHRMID : tPeerHRMIDs){				
+				synchronized (mAssignedPeerHRMIDs) {
+					mAssignedPeerHRMIDs.remove(tHRMID);
+				}
+				synchronized (mPeerHRMIDs) {
+					mPeerHRMIDs.remove(tHRMID);
+				}
+
 				Logging.log(this, "    ..[" + i + "]: " + tHRMID);
 				i++;
 			}
@@ -696,14 +708,6 @@ public class ComChannel
 			RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), tPeerHRMIDs);
 			// send the packet
 			sendPacket(tRevokeHRMIDsPacket);
-			
-			/**
-			 * Clear the list of stored assigned HRMID
-			 */
-			synchronized (mPeerHRMIDs) {
-				mPeerHRMIDs.clear();
-				mUsedClusterAddresses.clear();
-			}
 		}
 	}
 
@@ -716,10 +720,14 @@ public class ComChannel
 	{
 		Logging.log(this, "Storing assigned HRMID: " + pHRMID);
 		
-		synchronized(mPeerHRMIDs){
-			if(!mPeerHRMIDs.contains(pHRMID)){
-				mPeerHRMIDs.add(pHRMID);
+		synchronized(mAssignedPeerHRMIDs){
+			if(!mAssignedPeerHRMIDs.contains(pHRMID)){
+				mAssignedPeerHRMIDs.add(pHRMID);
 
+				synchronized (mPeerHRMIDs) {
+					mPeerHRMIDs.add(pHRMID);
+				}
+				
 				int tUsedClusterAddress = pHRMID.getLevelAddress(mParent.getHierarchyLevel());
 				Logging.log(this, "storePeerHRMID() stores for " + pHRMID + " the used cluster address: " + tUsedClusterAddress);
 				if(tUsedClusterAddress > 0){
@@ -752,6 +760,23 @@ public class ComChannel
 		return tResult;
 	}
 	
+	/**
+	 * Returns the list of known assigned peer HRMIDs
+	 * 
+	 * @return the list
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<HRMID> getAssignedPeerHRMIDs()
+	{
+		LinkedList<HRMID> tResult = null;
+		
+		synchronized (mAssignedPeerHRMIDs) {
+			tResult = (LinkedList<HRMID>) mAssignedPeerHRMIDs.clone();
+		}
+		
+		return tResult; 
+	}
+
 	/**
 	 * Returns the list of known peer HRMIDs
 	 * 

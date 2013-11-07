@@ -189,7 +189,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			}
 			
 			// determine the HRMID of this node for a L0 cluster
-			HRMID tThisNodeClusterMemberHRMID = mParentCluster.getThisNodeL0Address();
+			HRMID tThisNodeClusterMemberHRMID = mParentCluster.getL0HRMID();
 
 			// determine own local cluster address
 			HRMID tOwnClusterAddress = mParentCluster.getHRMID();
