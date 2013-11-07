@@ -138,6 +138,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private LinkedList<ClusterMember> mLocalClusterMembers = new LinkedList<ClusterMember>();
 
 	/**
+	 * Stores a database about all registered L0 cluster members (including Cluster objects).
+	 * This list is used for deriving connectivity data for the distribution of topology data.
+	 */
+	private LinkedList<ClusterMember> mLocalL0ClusterMembers = new LinkedList<ClusterMember>();
+
+	/**
 	 * Stores a database about all registered CoordinatorAsClusterMemeber instances.
 	 */
 	private LinkedList<CoordinatorAsClusterMember> mLocalCoordinatorAsClusterMemebers = new LinkedList<CoordinatorAsClusterMember>();
@@ -309,7 +315,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tDecoration.setDecorator(mNode,  mDecoratorActiveHRMInfrastructure);
 		// overwrite default decoration
 		tDecoration = Decoration.getInstance(GraphViewer.DEFAULT_DECORATION);
-		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndClusters);
+		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndHRMIDs);
 		
 		/**
 		 * Create clusterer thread
@@ -1136,6 +1142,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 
+		/**
+		 * Register as L0 ClusterMember
+		 */
+		if(pClusterMember.getHierarchyLevel().isBaseLevel()){
+			synchronized (mLocalL0ClusterMembers) {
+				if(!mLocalL0ClusterMembers.contains(pClusterMember)){
+					// register as known cluster member
+					mLocalL0ClusterMembers.add(pClusterMember);
+				}
+			}
+		}
+		
 		if(tNewEntry){
 			// updates the GUI decoration for this node
 			updateGUINodeDecoration();
@@ -1175,6 +1193,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 
+		/**
+		 * Unregister as L0 ClusterMember
+		 */
+		if(pClusterMember.getHierarchyLevel().isBaseLevel()){
+			synchronized (mLocalL0ClusterMembers) {
+				if(mLocalL0ClusterMembers.contains(pClusterMember)){
+					// register as known cluster member
+					mLocalL0ClusterMembers.remove(pClusterMember);
+				}
+			}
+		}
+
 		if(tFoundEntry){
 			// updates the GUI decoration for this node
 			updateGUINodeDecoration();
@@ -1208,6 +1238,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			mLocalClusterMembers.add(pCluster);			
 		}
 		
+		/**
+		 * Register as L0 ClusterMember
+		 */
+		if(pCluster.getHierarchyLevel().isBaseLevel()){
+			synchronized (mLocalL0ClusterMembers) {
+				if(!mLocalL0ClusterMembers.contains(pCluster)){
+					// register as known cluster member
+					mLocalL0ClusterMembers.add(pCluster);
+				}
+			}
+		}
+
 		// updates the GUI decoration for this node
 		updateGUINodeDecoration();
 
@@ -1243,6 +1285,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		synchronized (mLocalClusterMembers) {
 			// unregister from list of known cluster members
 			mLocalClusterMembers.remove(pCluster);
+		}
+
+		/**
+		 * Unregister as L0 ClusterMember
+		 */
+		if(pCluster.getHierarchyLevel().isBaseLevel()){
+			synchronized (mLocalL0ClusterMembers) {
+				if(mLocalL0ClusterMembers.contains(pCluster)){
+					// register as known cluster member
+					mLocalL0ClusterMembers.remove(pCluster);
+				}
+			}
 		}
 
 		// updates the GUI decoration for this node
@@ -1454,6 +1508,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mLocalClusterMembers) {
 			tResult = (LinkedList<ClusterMember>) mLocalClusterMembers.clone();
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns a list of known L0 cluster members.
+	 * 
+	 * @return the list of known L0 cluster members
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<ClusterMember> getAllL0ClusterMembers()
+	{
+		LinkedList<ClusterMember> tResult = null;
+		
+		synchronized (mLocalL0ClusterMembers) {
+			tResult = (LinkedList<ClusterMember>) mLocalL0ClusterMembers.clone();
 		}
 		
 		return tResult;
