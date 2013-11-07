@@ -249,17 +249,23 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						Logging.log(this, "    ..found parallel cluster: " + tCluster);
 					}
 					
-					// iterate over all comm. channels and store per channel a shared route to the found parallel cluster
-					for (ComChannel tComChannel : tComChannels){
-						// share only with remote nodes
-						if(tComChannel.toRemoteNode()){
-							// create the new routing table entry
-							RoutingEntry tRoutingEntryForMember = RoutingEntry.createRouteToDirectNeighbor(tComChannel.getPeerHRMID(), tClusterHRMID, tNextHopForSharedRoutes, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
-							// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-							//tRoutingEntryForMember.setNextHopL2Address(mHRMController.getNodeL2Address() /* TODO */);
-
-							// add the route entry to the "share phase" of this comm. channel
-							tComChannel.storeRouteForPeer(tRoutingEntryForMember);
+					if(!tClusterHRMID.isZero()){
+						// iterate over all comm. channels and store per channel a shared route to the found parallel cluster
+						for (ComChannel tComChannel : tComChannels){
+							// share only with remote nodes
+							if(tComChannel.toRemoteNode()){
+								// create the new routing table entry
+								RoutingEntry tRoutingEntryForMember = RoutingEntry.createRouteToDirectNeighbor(tComChannel.getPeerHRMID(), tClusterHRMID, tNextHopForSharedRoutes, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+								// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+								//tRoutingEntryForMember.setNextHopL2Address(mHRMController.getNodeL2Address() /* TODO */);
+	
+								// add the route entry to the "share phase" of this comm. channel
+								tComChannel.storeRouteForPeer(tRoutingEntryForMember);
+							}
+						}
+					}else{
+						if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+							Logging.log(this, "      ..cluster has zero HRMID: " + tClusterHRMID);
 						}
 					}
 				}
