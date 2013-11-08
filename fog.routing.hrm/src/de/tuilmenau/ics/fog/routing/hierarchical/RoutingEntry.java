@@ -157,6 +157,26 @@ public class RoutingEntry implements RouteSegment
 	}
 
 	/**
+	 * Factory function: creates a general route
+	 * 
+	 * @param pSource the source of the route
+	 * @param pDestination the direct neighbor
+	 * @param pNextHop the next hop for the route
+	 * @param pHopCount the hop costs
+	 * @param pUtilization the utilization of the described route
+	 * @param pMinDelay the minimum additional delay the described route causes
+	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 */
+	public static RoutingEntry create(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate)
+	{
+		// create instance
+		RoutingEntry tEntry = new RoutingEntry(pSource, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate);
+		
+		// return with the entry
+		return tEntry;
+	}
+
+	/**
 	 * Factory function: creates a route to a direct neighbor.
 	 * 
 	 * @param pSource the source of the route
@@ -169,7 +189,7 @@ public class RoutingEntry implements RouteSegment
 	public static RoutingEntry createRouteToDirectNeighbor(HRMID pSource, HRMID pDestination, HRMID pNextHop, float pUtilization, long pMinDelay, long pMaxDataRate)
 	{
 		// create instance
-		RoutingEntry tEntry = new RoutingEntry(pSource, pDestination, pNextHop, HRMConfig.Routing.HOP_COSTS_TO_A_DIRECT_NEIGHBOR, pUtilization, pMinDelay, pMaxDataRate);
+		RoutingEntry tEntry = create(pSource, pDestination, pNextHop, HRMConfig.Routing.HOP_COSTS_TO_A_DIRECT_NEIGHBOR, pUtilization, pMinDelay, pMaxDataRate);
 		
 		// mark as local loop
 		tEntry.mRouteToDirectNeighbor = true;
