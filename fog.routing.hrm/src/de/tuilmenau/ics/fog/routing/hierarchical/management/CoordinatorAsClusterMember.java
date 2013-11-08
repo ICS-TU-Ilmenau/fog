@@ -13,6 +13,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.TopologyReport;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
@@ -87,6 +88,18 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		return mCoordinator;
 	}
 	
+	/**
+	 * EVENT: TopologyReport from an inferior entity 
+	 * 
+	 * @param pTopologyReportPacket the packet
+	 */
+	public void eventTopologyReport(TopologyReport pTopologyReportPacket)
+	{
+		Logging.log(this, "EVENT: TopologyReport: " + pTopologyReportPacket);
+		
+		mCoordinator.eventTopologyReport(pTopologyReportPacket);
+	}
+
 	/**
 	 * EVENT: coordinator announcement, we react on this by:
 	 *       1.) forward this packet to the coordinator for which this cluster membership was created

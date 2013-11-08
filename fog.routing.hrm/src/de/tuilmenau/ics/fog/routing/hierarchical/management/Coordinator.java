@@ -15,6 +15,8 @@ import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.TopologyReport;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
@@ -456,13 +458,67 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	public void reportPhase()
 	{
+		RoutingTable tReportedRoutingTable = new RoutingTable();
+		
 		if (!getHierarchyLevel().isHighest()){
+			if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+				Logging.log(this, "REPORT PHASE at hierarchy level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+			}
+
+			/**
+			 * Create the routing table for the report
+			 */
+			LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
+			for(ComChannel tComChannel : tComChannels){
+				RoutingTable tComChannelTable = tComChannel.getReportedRoutingTable();
+				if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+					Logging.log(this, "   ..got report: " + tComChannelTable);
+				}
+				tReportedRoutingTable.addEntries(tComChannelTable);
+			}
 			
+			/**
+			 * Report the created routing table to the superior coordinator
+			 */
+			if(tReportedRoutingTable.size() > 0){
+				ComChannel tComChannelToSuperiorCoordinator  = superiorCoordinatorComChannel();
+				if(tComChannelToSuperiorCoordinator != null){
+					if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+						Logging.log(this, "   ..reporting via " + tComChannelToSuperiorCoordinator + " the routing table:");
+						int i = 0;
+						for(RoutingEntry tEntry : tReportedRoutingTable){
+							Logging.log(this, "     ..[" + i +"]: " + tEntry);
+							i++;
+						}
+					}
+					
+					// create new TopologyReport packet for the superior coordinator
+					TopologyReport tTopologyReportPacket = new TopologyReport(getHRMID(), null);
+					// send the packet to the superior coordinator
+					tComChannelToSuperiorCoordinator.sendPacket(tTopologyReportPacket);
+				}else{
+					Logging.err(this, "reportPhase() skipped because the comm. channel to the superior coordinator is invalid");
+				}
+			}else{
+				Logging.log(this, "reportPhase() skipped because no report available");
+			}
 		}else{
 			// we are the highest hierarchy level, no one to send topology reports to
 		}
 	}
 	
+	/**
+	 * EVENT: TopologyReport from an inferior entity 
+	 * 
+	 * @param pTopologyReportPacket the packet
+	 */
+	public void eventTopologyReport(TopologyReport pTopologyReportPacket)
+	{
+		Logging.log(this, "EVENT: TopologyReport: " + pTopologyReportPacket);
+		
+		//TODO
+	}
+
 	/**
 	 * EVENT: "eventCoordinatorRoleInvalid", triggered by the Elector, the reaction is:
 	 * 	 	1.) create signaling packet "BullyLeave"

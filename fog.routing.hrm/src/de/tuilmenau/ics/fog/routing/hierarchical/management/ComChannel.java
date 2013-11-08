@@ -23,6 +23,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.TopologyReport;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -253,6 +254,11 @@ public class ComChannel
 	private RoutingTable mReportedRoutingTablePeerHRMIDs = new RoutingTable();
 
 	/**
+	 * Stores the routing table, which is reported to the coordinator
+	 */
+	private RoutingTable mReportedRoutingTable = new RoutingTable();
+
+	/**
 	 * Constructor
 	 * 
 	 * @param pHRMController is the HRMController instance of this node
@@ -427,13 +433,37 @@ public class ComChannel
 						tNewReportedRoutingTable.addEntry(tRoutingEntry);
 					}
 
-					// FIRST: set the new value for reported routes and inform the HRMController
+					/**
+					 * Step 1: learn new routes:
+					 * 			- set the new value for reported routes based on peer HRMIDs
+					 * 			- and inform the HRMController
+					 * 			- update mReportedRoutingTable
+					 */ 
 					mReportedRoutingTablePeerHRMIDs = tNewReportedRoutingTable;
 					mHRMController.addHRMRoutes(mReportedRoutingTablePeerHRMIDs);
-
-					// SECOND: derive the deprecated routes which should be deleted from the local routing and inform the HRS about the deprecated routing table entries
+					synchronized (mReportedRoutingTable) {
+						mReportedRoutingTable.addEntries(mReportedRoutingTablePeerHRMIDs);
+						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+							Logging.log(this, "Added to reported routing table: " + mReportedRoutingTablePeerHRMIDs);
+							Logging.log(this, "   ..new reported routing table: " + mReportedRoutingTable);
+						}
+					}
+					
+					/**
+					 * Step 2: forget deprecated routes:
+					 * 			- derive the deprecated routes
+					 * 			- inform the HRS about the deprecated routing table entries
+					 * 			- update mReportedRoutingTable
+					 */ 
 					tDeprecatedRoutingTable.delEntries(tNewReportedRoutingTable);
 					mHRMController.delHRMRoutes(tDeprecatedRoutingTable);
+					synchronized (mReportedRoutingTable) {
+						mReportedRoutingTable.delEntries(tDeprecatedRoutingTable);
+						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+							Logging.log(this, "Removed from reported routing table: " + tDeprecatedRoutingTable);
+							Logging.log(this, "       ..new reported routing table: " + mReportedRoutingTable);
+						}
+					}
 				}else{
 					Logging.warn(this, "eventNeighborHRMIDs() skipped because own source HRMID is zero, ignoring neighbor HRMIDs: " + tNeighborHRMIDs);
 				}
@@ -445,6 +475,25 @@ public class ComChannel
 		}
 	}
 
+	/**
+	 * Returns the reported routing table
+	 * 
+	 * @return the reported routing table
+	 */
+	public RoutingTable getReportedRoutingTable()
+	{
+		RoutingTable tResult = null;
+		
+		synchronized (mReportedRoutingTable) {
+			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+				//Logging.err(this, "Reporting routing table: " + mReportedRoutingTable);
+			}
+			tResult = (RoutingTable) mReportedRoutingTable.clone();
+		}
+		
+		return tResult;
+	}
+	
 	/**
 	 * Determines the address of the peer (e.g., a cluster member).
 	 * 
@@ -523,6 +572,27 @@ public class ComChannel
 	}
 
 	/**
+	 * @param pTopologyReportPacket
+	 */
+	private void eventReceivedTopologyReport(TopologyReport pTopologyReportPacket)
+	{
+		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+			Logging.log(this, "REPORT PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pTopologyReportPacket);
+		}
+	
+		if(mParent instanceof Coordinator){
+			Coordinator tParentCoordinator = (Coordinator)mParent;
+			
+			tParentCoordinator.eventTopologyReport(pTopologyReportPacket);
+		}
+		if(mParent instanceof CoordinatorAsClusterMember){
+			CoordinatorAsClusterMember tParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
+			
+			tParentCoordinatorAsClusterMember.eventTopologyReport(pTopologyReportPacket);
+		}
+	}
+
+	/**
 	 * Handles a RoutingInformation packet.
 	 * 
 	 * @param pRoutingInformationPacket the packet
@@ -551,7 +621,9 @@ public class ComChannel
 	@SuppressWarnings("unchecked")
 	private void eventReceivedAnnounceHRMIDs(AnnounceHRMIDs pAnnounceHRMIDsPacket)
 	{
-		Logging.err(this, "Received announced peer HRMIDs: " + pAnnounceHRMIDsPacket.getHRMIDs());
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+			Logging.log(this, "Received announced peer HRMIDs: " + pAnnounceHRMIDsPacket.getHRMIDs());
+		}
 				
 		/**
 		 * Reset peerHRMIDs
@@ -565,7 +637,9 @@ public class ComChannel
 		 */
 		synchronized (mPeerHRMIDs) {
 			if(!mPeerHRMIDs.contains(getPeerHRMID())){
-				Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
+				}
 				mPeerHRMIDs.add(getPeerHRMID());
 			}
 		}
@@ -576,7 +650,7 @@ public class ComChannel
 		if(mParent instanceof ClusterMember){
 			eventNewPeerHRMIDs();
 		}else{
-			Logging.err(this, "Expected a ClusterMember as parent, parent is: " + mParent);
+			Logging.err(this, "eventReceivedAnnounceHRMIDs() expected a ClusterMember as parent, parent is: " + mParent);
 		}
 	}
 
@@ -1106,6 +1180,22 @@ public class ComChannel
 
 			Logging.warn(this, "IGNORING THIS MESSAGE: " + tBullyMessage);
 
+			return true;
+		}
+
+		/**
+		 * TopologyReport
+		 */
+		if (pPacket instanceof TopologyReport){
+			// cast to a TopologyReport signaling message
+			TopologyReport tTopologyReportPacket = (TopologyReport)pPacket;
+
+			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "TOPOLOGY_REPORT-received from \"" + getPeerHRMID() + "\": " + tTopologyReportPacket);
+
+			// process Bully message
+			eventReceivedTopologyReport(tTopologyReportPacket);
+			
 			return true;
 		}
 
