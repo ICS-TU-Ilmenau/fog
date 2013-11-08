@@ -74,7 +74,12 @@ public class HRMConfig
 		public static final boolean SHOW_CLUSTERING_STEPS = false;
 
 		/**
-		 * Shows debug outputs for each received RoutingInformation packet.
+		 * Shows debug outputs for the report phase
+		 */
+		public static final boolean SHOW_REPORT_PHASE = true;
+
+		/**
+		 * Shows debug outputs for the share phase
 		 */
 		public static final boolean SHOW_SHARE_PHASE = false;
 
@@ -159,7 +164,7 @@ public class HRMConfig
 		/**
 		 * Defines if signaling messages for address distribution are shown
 		 */
-		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = true;
+		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = false;
 
 		/**
 		 * Defines if the address aggregation is shown in the debug output
