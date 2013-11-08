@@ -188,7 +188,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				return;
 			}
 			
-			// determine the HRMID of this node for a L0 cluster
+			// determine the HRMID of this node for this L0 cluster
 			HRMID tThisNodeClusterMemberHRMID = mParentCluster.getL0HRMID();
 
 			// determine own local cluster address
@@ -205,7 +205,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 * Determine the HRMID which is used as next hop for shared routes 
 			 ********************************************************************/
 			HRMID tNextHopForSharedRoutes = getHRMID(); // the HRMID of this cluster
-			if(getHierarchyLevel().isBaseLevel()){
+			if((getHierarchyLevel().isBaseLevel()) && (tThisNodeClusterMemberHRMID != null)){
 				// use the L0 cluster member address instead of the cluster address 
 				tNextHopForSharedRoutes = tThisNodeClusterMemberHRMID;//TODO
 			}
