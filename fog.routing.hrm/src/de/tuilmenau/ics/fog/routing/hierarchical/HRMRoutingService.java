@@ -1612,7 +1612,7 @@ public class HRMRoutingService implements RoutingService, Localization
 						i++;
 					}
 				}
-				throw new RuntimeException(this + "::getRoute() failed");
+				//throw new RuntimeException(this + "::getRoute() failed");
 			}
 		}
 		
