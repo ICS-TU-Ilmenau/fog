@@ -134,4 +134,22 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		return tResult;
 	}
 
+	/**
+	 * Deletes a table from the HRM routing table
+	 * 
+	 * @param pRoutingTable the routing table with old entries
+	 * 
+	 * @return true if the table had existing routing data
+	 */
+	public synchronized boolean delEntries(RoutingTable pRoutingTable)
+	{
+		boolean tResult = false;
+		
+		for(RoutingEntry tEntry : pRoutingTable){
+			tResult |= delEntry(tEntry);
+		}
+		
+		return tResult;
+	}
+
 }
