@@ -362,6 +362,26 @@ public class RoutingEntry implements RouteSegment
 	}
 	
 	/**
+	 * Returns if both objects address the same cluster/coordinator
+	 * 
+	 * @return true or false
+	 */
+	@Override
+	public boolean equals(Object pObj)
+	{
+		if(pObj instanceof RoutingEntry){
+			RoutingEntry tOther = (RoutingEntry)pObj;
+			
+			if((getDest() != null) && (getDest().equals(tOther.getDest())) &&
+			   (getNextHop() != null) && (getNextHop().equals(tOther.getNextHop()))){
+				return true;
+			}
+		}
+		
+		return false;
+	}	
+
+	/**
 	 * Returns the size of a serialized representation
 	 * 
 	 * @return the size
