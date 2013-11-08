@@ -340,7 +340,9 @@ public class ComChannel
 			 */
 			synchronized (mPeerHRMIDs) {
 				if(!mPeerHRMIDs.contains(pHRMID)){
-					Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
+					if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
+					}
 					mPeerHRMIDs.add(pHRMID);
 				}
 			}
