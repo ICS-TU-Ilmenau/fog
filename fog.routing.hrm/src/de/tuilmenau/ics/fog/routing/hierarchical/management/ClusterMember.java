@@ -61,11 +61,6 @@ public class ClusterMember extends ClusterName
 	 * This variable is only used for L0.
 	 */
 	protected HRMID mAssignedL0HRMID = null;
-	
-	/**
-	 * Stores the routing table, which is reported during each REPORT/SHARE cycle. 
-	 */
-	private RoutingTable mReportedRoutingTable = new RoutingTable();
 
 	/**
 	 * Constructor
@@ -516,79 +511,6 @@ public class ClusterMember extends ClusterName
 		 * Trigger: joined a remote cluster (sends a Bully priority update)
 		 */
 		eventJoinedRemoteCluster(tComChannel);
-	}
-
-	/**
-	 * EVENT: neighbor HRMIDs update
-	 * 
-	 * @param pComChannelToNeighbor the comm. channel to the neighbor
-	 */
-	public void eventNeighborHRMIDs(ComChannel pComChannelToNeighbor)
-	{
-		// get the list of neighbor HRMIDs
-		LinkedList<HRMID> tNeighborHRMIDs = pComChannelToNeighbor.getPeerHRMIDs();
-
-		Logging.log(this, "EVENT: neighbor HRMIDs for: " + pComChannelToNeighbor);
-		Logging.log(this, "    ..neighbor HRMIDs: " + tNeighborHRMIDs);
-		
-		if(getHierarchyLevel().isBaseLevel()){
-			// determine the HRMID of this node for this L0 cluster
-			HRMID tThisNodeClusterMemberHRMID = getL0HRMID();
-
-			/********************************************************************
-			 * Determine the HRMID which is used as source for reported routes 
-			 ********************************************************************/
-			HRMID tSourceForReportedRoutes = getHRMID(); // the HRMID of this cluster
-			if((getHierarchyLevel().isBaseLevel()) && (tThisNodeClusterMemberHRMID != null)){
-				// use the L0 cluster member address instead of the cluster address 
-				tSourceForReportedRoutes = tThisNodeClusterMemberHRMID;
-			}
-
-			/********************************************************************
-			 * Update routing table
-			 ********************************************************************/
-			if((tSourceForReportedRoutes != null) && (!tSourceForReportedRoutes.isZero())){
-				synchronized (mReportedRoutingTable) {
-					// inform the HRS about the routing table invalidation
-					mHRMController.delHRMRoutes(mReportedRoutingTable);
-					// reset the stored routing table
-					mReportedRoutingTable.clear();
-				}
-				
-				// iterate over all neighbor HRMIDs
-				for(HRMID tNeighborHRMID : tNeighborHRMIDs){
-					RoutingEntry tRoutingEntry = null;
-					
-					// generalize foreign HRMID to its cluster address
-					HRMID tGeneralizedHRMID = mHRMController.aggregateForeignHRMID(tNeighborHRMID); 
-					if(tGeneralizedHRMID.isClusterAddress()){
-						// create the new routing table entry
-						tRoutingEntry = RoutingEntry.create(tSourceForReportedRoutes, tGeneralizedHRMID, pComChannelToNeighbor.getPeerHRMID(), 1 /* TODO */, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
-						// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-						tRoutingEntry.setNextHopL2Address(pComChannelToNeighbor.getPeerL2Address());
-					}else{
-						// create the new routing table entry
-						tRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedHRMID, pComChannelToNeighbor.getPeerHRMID(), 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
-						// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-						tRoutingEntry.setNextHopL2Address(pComChannelToNeighbor.getPeerL2Address());
-					}
-	
-					synchronized (mReportedRoutingTable) {
-						// add the entry to the reported routing table
-						Logging.log(this, "   ..adding reported route: " + tRoutingEntry);
-						mReportedRoutingTable.addEntry(tRoutingEntry);
-						
-						// inform the HRS about the routing table updates
-						Logging.log(this, "   ..adding local route: " + tRoutingEntry);
-						mHRMController.addHRMRoutes(mReportedRoutingTable);
-					}
-				}
-			}else{
-				Logging.warn(this, "eventNeighborHRMIDs() skipped because own source HRMID is zero, ignoring neighbor HRMIDs: " + tNeighborHRMIDs);
-			}
-		}else{
-			// we are at higher hierarchy level
-		}
 	}
 
 	/**

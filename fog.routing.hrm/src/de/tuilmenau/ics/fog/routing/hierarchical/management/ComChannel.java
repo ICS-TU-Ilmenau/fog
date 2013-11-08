@@ -248,6 +248,11 @@ public class ComChannel
 	private RoutingTable mSharedRoutingData = new RoutingTable();
 	
 	/**
+	 * Stores the routing table, which is reported based on peer HRMIDs data
+	 */
+	private RoutingTable mReportedRoutingTablePeerHRMIDs = new RoutingTable();
+
+	/**
 	 * Constructor
 	 * 
 	 * @param pHRMController is the HRMController instance of this node
@@ -351,9 +356,7 @@ public class ComChannel
 			 * Inform the parent ClusterMember about the new peer HRMIDs
 			 */
 			if(mParent instanceof ClusterMember){
-				ClusterMember tClusterMember = (ClusterMember)mParent;
-				
-				tClusterMember.eventNeighborHRMIDs(this);
+				eventNewPeerHRMIDs();
 			}else{
 				Logging.err(this, "Expected a ClusterMember as parent, parent is: " + mParent);
 			}
@@ -361,7 +364,87 @@ public class ComChannel
 			Logging.warn(this, "Ignoring set-request of HRMID: " + pHRMID);
 		}
 	}
-	
+			
+	/**
+	 * EVENT: neighbor HRMIDs update
+	 */
+	private void eventNewPeerHRMIDs()
+	{
+		Logging.log(this, "EVENT: new peer HRMID");
+		if(mParent instanceof ClusterMember){
+			ClusterMember tParentClusterMember = (ClusterMember)mParent;
+			
+			// get the list of neighbor HRMIDs
+			LinkedList<HRMID> tNeighborHRMIDs = getPeerHRMIDs();
+
+			Logging.log(this, "EVENT: neighbor HRMIDs for: " + this);
+			Logging.log(this, "    ..neighbor HRMIDs: " + tNeighborHRMIDs);
+			
+			if(tParentClusterMember.getHierarchyLevel().isBaseLevel()){
+				// determine the HRMID of this node for this L0 cluster
+				HRMID tThisNodeClusterMemberHRMID = tParentClusterMember.getL0HRMID();
+
+				/********************************************************************
+				 * Determine the HRMID which is used as source for reported routes 
+				 ********************************************************************/
+				HRMID tSourceForReportedRoutes = tParentClusterMember.getHRMID(); // the HRMID of this cluster
+				if((tParentClusterMember.getHierarchyLevel().isBaseLevel()) && (tThisNodeClusterMemberHRMID != null)){
+					// use the L0 cluster member address instead of the cluster address 
+					tSourceForReportedRoutes = tThisNodeClusterMemberHRMID;
+				}
+
+				/********************************************************************
+				 * Update routing table
+				 ********************************************************************/
+				if((tSourceForReportedRoutes != null) && (!tSourceForReportedRoutes.isZero())){
+					// backup old reported routing table
+					RoutingTable tDeprecatedRoutingTable = null;
+					synchronized (mReportedRoutingTablePeerHRMIDs) {
+						tDeprecatedRoutingTable = (RoutingTable) mReportedRoutingTablePeerHRMIDs.clone();
+					}
+					
+					// iterate over all neighbor HRMIDs
+					RoutingTable tNewReportedRoutingTable = new RoutingTable();
+					for(HRMID tNeighborHRMID : tNeighborHRMIDs){
+						RoutingEntry tRoutingEntry = null;
+						
+						// generalize foreign HRMID to its cluster address
+						HRMID tGeneralizedHRMID = mHRMController.aggregateForeignHRMID(tNeighborHRMID); 
+						if(tGeneralizedHRMID.isClusterAddress()){
+							// create the new routing table entry
+							tRoutingEntry = RoutingEntry.create(tSourceForReportedRoutes, tGeneralizedHRMID, getPeerHRMID(), 1 /* TODO */, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+							// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+							tRoutingEntry.setNextHopL2Address(getPeerL2Address());
+						}else{
+							// create the new routing table entry
+							tRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedHRMID, getPeerHRMID(), 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+							// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+							tRoutingEntry.setNextHopL2Address(getPeerL2Address());
+						}
+		
+						// add the entry to the reported routing table
+						Logging.log(this, "   ..adding reported route: " + tRoutingEntry);
+						tNewReportedRoutingTable.addEntry(tRoutingEntry);
+					}
+
+					// FIRST: set the new value for reported routes and inform the HRMController
+					mReportedRoutingTablePeerHRMIDs = tNewReportedRoutingTable;
+					mHRMController.addHRMRoutes(mReportedRoutingTablePeerHRMIDs);
+
+					// SECOND: derive the deprecated routes which should be deleted from the local routing and inform the HRS about the deprecated routing table entries
+					tDeprecatedRoutingTable.delEntries(tNewReportedRoutingTable);
+					mHRMController.delHRMRoutes(tDeprecatedRoutingTable);
+				}else{
+					Logging.warn(this, "eventNeighborHRMIDs() skipped because own source HRMID is zero, ignoring neighbor HRMIDs: " + tNeighborHRMIDs);
+				}
+			}else{
+				// we are at higher hierarchy level
+			}
+		}else{
+			Logging.err(this, "eventNewPeerHRMID() expected a ClusterMember as parent, parent is: " + mParent);
+		}
+	}
+
 	/**
 	 * Determines the address of the peer (e.g., a cluster member).
 	 * 
@@ -491,9 +574,7 @@ public class ComChannel
 		 * Inform the parent ClusterMember about the new peer HRMIDs
 		 */
 		if(mParent instanceof ClusterMember){
-			ClusterMember tClusterMember = (ClusterMember)mParent;
-			
-			tClusterMember.eventNeighborHRMIDs(this);
+			eventNewPeerHRMIDs();
 		}else{
 			Logging.err(this, "Expected a ClusterMember as parent, parent is: " + mParent);
 		}
