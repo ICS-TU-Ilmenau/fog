@@ -135,6 +135,24 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	}
 
 	/**
+	 * Adds a table to this routing table
+	 * 
+	 * @param pRoutingTable the routing table with new entries
+	 * 
+	 * @return true if the table had new routing data
+	 */
+	public synchronized boolean addEntries(RoutingTable pRoutingTable)
+	{
+		boolean tResult = false;
+		
+		for(RoutingEntry tEntry : pRoutingTable){
+			tResult |= addEntry(tEntry);
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Deletes a table from the HRM routing table
 	 * 
 	 * @param pRoutingTable the routing table with old entries
@@ -151,5 +169,4 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		
 		return tResult;
 	}
-
 }
