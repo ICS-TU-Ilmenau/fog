@@ -1970,6 +1970,63 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * @param pForeignHRMID
+	 * @return
+	 */
+	public HRMID aggregateForeignHRMID(HRMID pForeignHRMID)
+	{
+		HRMID tResult = null;
+		
+		if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_AGGREGATION){
+			Logging.err(this, "Aggrgating foreign HRMID: " + pForeignHRMID);
+		}
+		
+		synchronized(mRegisteredOwnHRMIDs){
+			int tHierLevel = 99; //TODO: final value here
+			// iterate over all local HRMIDs
+			for(HRMID tLocalHRMID : mRegisteredOwnHRMIDs){
+				// ignore cluster addresses
+				if(!tLocalHRMID.isClusterAddress()){
+					/**
+					 * Is the potentially foreign HRMID a local one?
+					 */ 
+					if(tLocalHRMID.equals(pForeignHRMID)){
+						if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_AGGREGATION){
+							Logging.err(this, "   ..found matching local HRMID: " + tLocalHRMID);
+						}
+						tResult = pForeignHRMID;
+						break;
+					}
+					
+					/**
+					 * Determine the foreign cluster in relation to current local HRMID
+					 */
+					HRMID tForeignCluster = tLocalHRMID.getForeignCluster(pForeignHRMID);
+					if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_AGGREGATION){
+						Logging.err(this, "   ..foreign cluster of " + pForeignHRMID + " for " + tLocalHRMID + " is " + tForeignCluster);
+					}
+					
+					/**
+					 * Update the result value
+					 */
+					if((tResult == null) || (tHierLevel > tForeignCluster.getHierarchyLevel())){
+						tHierLevel = tForeignCluster.getHierarchyLevel();
+						tResult = tForeignCluster;						
+						if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_AGGREGATION){
+							Logging.err(this, "     ..found better result: " + tResult);
+						}
+					}
+				}
+			}
+		}
+		
+		if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_AGGREGATION){
+			Logging.err(this, "   ..result: " + tResult);
+		}
+		return tResult;
+	}
+
+	/**
 	 * Adds an entry to the routing table of the local HRS instance.
 	 * In opposite to addHRMRoute() from the HierarchicalRoutingService class, this function additionally updates the GUI.
 	 * If the L2 address of the next hop is defined, the HRS will update the HRMID-to-L2ADDRESS mapping.
@@ -1984,6 +2041,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// inform the HRS about the new route
 		tResult = getHRS().addHRMRoute(pRoutingEntry);
+
+		if(tResult){
+			// it's time to update the GUI
+			notifyGUI(this);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Adds a table to the routing table of the local HRS instance.
+	 * In opposite to addHRMRoute() from the HierarchicalRoutingService class, this function additionally updates the GUI.
+	 * If the L2 address of the next hop is defined, the HRS will update the HRMID-to-L2ADDRESS mapping.
+	 * 
+	 * @param pRoutingTable the routing table with new entries
+	 * 
+	 * @return true if the table had new routing data
+	 */
+	public boolean addHRMRoutes(RoutingTable pRoutingTable)
+	{
+		boolean tResult = false;
+		
+		// inform the HRS about the new route
+		tResult = getHRS().addHRMRoutes(pRoutingTable);
 
 		if(tResult){
 			// it's time to update the GUI

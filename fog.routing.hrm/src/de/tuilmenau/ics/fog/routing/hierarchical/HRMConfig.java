@@ -76,12 +76,12 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for each received RoutingInformation packet.
 		 */
-		public static final boolean SHOW_SHARE_PHASE = true;
+		public static final boolean SHOW_SHARE_PHASE = false;
 
 		/**
 		 * Shows debug outputs about the routing process 
 		 */
-		public static final boolean GUI_SHOW_ROUTING = false;
+		public static final boolean GUI_SHOW_ROUTING = true;
 
 		/**
 		 * Show debug outputs about node/link detection
@@ -160,6 +160,11 @@ public class HRMConfig
 		 * Defines if signaling messages for address distribution are shown
 		 */
 		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = true;
+
+		/**
+		 * Defines if the address aggregation is shown in the debug output
+		 */
+		public static final boolean GUI_SHOW_ADDRESS_AGGREGATION = false;
 	}
 	
 	public class Addressing

@@ -236,6 +236,25 @@ public class HRMRoutingService implements RoutingService, Localization
 	}	
 
 	/**
+	 * Adds routes to the local HRM routing table.
+	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
+	 * 
+	 * @param pRoutingTable the routing table with new entries
+	 * 
+	 * @return true if the entry is new and was added, otherwise false
+	 */
+	public boolean addHRMRoutes(RoutingTable pRoutingTable)
+	{
+		boolean tResult = false;
+		
+		for(RoutingEntry tEntry : pRoutingTable){
+			tResult |= addHRMRoute(tEntry);
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Deletes a route from the local HRM routing table.
 	 * This function is usually used when a timeout occurred and the corresponding route became too old. 
 	 * 
