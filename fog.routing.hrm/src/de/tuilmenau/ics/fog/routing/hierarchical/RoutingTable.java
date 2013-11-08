@@ -40,6 +40,9 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		if(pRoutingTableEntry.getDest().isZero()){
 			throw new RuntimeException(this + "::addEntry() got an entry with a wildcard destination");
 		}
+		if(pRoutingTableEntry.getSource().isZero()){
+			throw new RuntimeException(this + "::addEntry() got an entry with a wildcard source");
+		}
 	
 		/**
 		 * Check for duplicates
@@ -71,7 +74,11 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			}
 
 			// add the route to the routing table
-			add(pRoutingTableEntry.clone());
+			if(pRoutingTableEntry.isLocalLoop()){
+				addFirst(pRoutingTableEntry.clone());
+			}else{
+				add(pRoutingTableEntry.clone());
+			}
 			
 			tResult = true;
 		}else{
