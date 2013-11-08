@@ -2075,6 +2075,28 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Removes a table from the routing table of the local HRS instance.
+	 * 
+	 * @param pRoutingTable the routing table with old entries
+	 * 
+	 * @return true if the table had existing routing data
+	 */
+	public boolean delHRMRoutes(RoutingTable pRoutingTable)
+	{
+		boolean tResult = false;
+		
+		// inform the HRS about the new route
+		tResult = getHRS().delHRMRoutes(pRoutingTable);
+
+		if(tResult){
+			// it's time to update the GUI
+			notifyGUI(this);
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Adds a route to the local L2 routing table.
 	 * 
 	 * @param pToL2Address the L2Address of the destination

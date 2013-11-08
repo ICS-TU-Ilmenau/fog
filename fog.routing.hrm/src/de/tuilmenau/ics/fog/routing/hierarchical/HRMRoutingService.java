@@ -258,10 +258,11 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * Deletes a route from the local HRM routing table.
 	 * This function is usually used when a timeout occurred and the corresponding route became too old. 
 	 * 
-	 * @param pRoutingTableEntry the routing table entry 
+	 * @param pRoutingTableEntry the routing table entry
+	 *  
 	 * @return true if the entry was found and removed, otherwise false
 	 */
-	boolean delHRMRoute(RoutingEntry pRoutingTableEntry)
+	public boolean delHRMRoute(RoutingEntry pRoutingTableEntry)
 	{
 		/**
 		 * Remove the routing entry from the routing table
@@ -303,6 +304,24 @@ public class HRMRoutingService implements RoutingService, Localization
 		return tResult;
 	}
 	
+	/**
+	 * Deletes routes from the local HRM routing table.
+	 * 
+	 * @param pRoutingTable the routing table with old entries
+	 * 
+	 * @return true if the table had existing routing data
+	 */
+	public boolean delHRMRoutes(RoutingTable pRoutingTable)
+	{
+		boolean tResult = false;
+		
+		for(RoutingEntry tEntry : pRoutingTable){
+			tResult |= delHRMRoute(tEntry);
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Registers a route at the local L2 routing table.
 	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
@@ -1355,8 +1374,7 @@ public class HRMRoutingService implements RoutingService, Localization
 								Logging.log(this, "      ..found matching loop entry: " + tLoopEntry);
 							}
 							
-							// use the next hop from this entry
-							tNextHopHRMID = tLoopEntry.getNextHop();
+							//HINT: we don't use the next hop from the loop entry because we have already reached the destination node -> we try to contact the destination application later
 							
 							// use the source from this entry
 							tThisHop = tLoopEntry.getSource();
@@ -1394,7 +1412,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				}
 			}else{
 				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-					Logging.log(this, "      ..haven't found next hop (HRMID) for destination: " + tDestHRMID);
+					Logging.trace(this, "      ..haven't found next hop (HRMID) for destination: " + tDestHRMID);
 				}
 			}
 
@@ -1449,10 +1467,6 @@ public class HRMRoutingService implements RoutingService, Localization
 					}
 				}
 			}else{
-				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-					Logging.log(this, "      ..haven't found next hop(L2Adress) for destination: " + tDestHRMID);
-				}
-				
 				/**
 				 * ERROR MESSAGE
 				 */
@@ -1472,21 +1486,20 @@ public class HRMRoutingService implements RoutingService, Localization
 			}
 
 			/***************************************************************************
-			 * FALL-BACK: encode the destination application as destination if possible
+			 * IF ENCODE the destination application as destination if possible,
+			 *            use the following L2 based routing
 			 ***************************************************************************/
 			if(tNextHopHRMID == null){
-				if(!tIsLocalHRMID){
-					Logging.log(this, "    ..haven't found the next hop towards: " + pDestination);
-				}
-						
-				/**
-				 * Check if a destination application is encoded in the requirements and use it for routing
-				 */
-				pDestination = getDestinationApp(pRequirements);
-				if(pDestination == null){
-					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-						Logging.log(this, "    ..no HRMID-based routing possible and no destination application property found");
+				if(tIsLocalHRMID){
+					/**
+					 * Check if a destination application is encoded in the requirements and use it for routing
+					 */
+					pDestination = getDestinationApp(pRequirements);
+					if(pDestination == null){
+						Logging.err(this, "getRoute() hasn't found the destination application for a route to " + pDestination + " with requirements: " + pRequirements);
 					}
+				}else{
+					Logging.err(this, "getRoute() wasn't able to determine an HRM based route to " + pDestination + " with requirements: " + pRequirements);
 				}
 			}else{
 				/**
@@ -1582,23 +1595,24 @@ public class HRMRoutingService implements RoutingService, Localization
 		if(tResultRoute == null){
 			// no route found
 			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-				Logging.log(this, "Couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
+				Logging.err(this, "getRoute() couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
 				
 				// list known topology
 				synchronized (mL2RoutingGraph) {
 					Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
 					int i = 0;
 					for (L2Address tL2Address : tGraphNodes){
-						Logging.log(this, "     ..node[" + i + "]: " + tL2Address);
+						Logging.err(this, "     ..node[" + i + "]: " + tL2Address);
 						i++;
 					}
 					Collection<RoutingServiceLink> tGraphLinks = mL2RoutingGraph.getEdges();
 					i = 0;
 					for (RoutingServiceLink tLink : tGraphLinks){
-						Logging.log(this, "     ..gate[" + i + "]: " + tLink.getID());
+						Logging.err(this, "     ..gate[" + i + "]: " + tLink.getID());
 						i++;
 					}
 				}
+				throw new RuntimeException(this + "::getRoute() failed");
 			}
 		}
 		
