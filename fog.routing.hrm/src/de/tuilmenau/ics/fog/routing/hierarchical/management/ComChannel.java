@@ -367,7 +367,7 @@ public class ComChannel
 				Logging.err(this, "Expected a ClusterMember as parent, parent is: " + mParent);
 			}
 		}else{
-			Logging.warn(this, "Ignoring set-request of HRMID: " + pHRMID);
+			//Logging.warn(this, "Ignoring set-request of peer HRMID: " + pHRMID);
 		}
 	}
 			
@@ -576,19 +576,16 @@ public class ComChannel
 	 */
 	private void eventReceivedTopologyReport(TopologyReport pTopologyReportPacket)
 	{
-		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+		if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
 			Logging.log(this, "REPORT PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pTopologyReportPacket);
 		}
 	
-		if(mParent instanceof Coordinator){
-			Coordinator tParentCoordinator = (Coordinator)mParent;
+		if(mParent instanceof Cluster){
+			Cluster tParentCluster = (Cluster)mParent;
 			
-			tParentCoordinator.eventTopologyReport(pTopologyReportPacket);
-		}
-		if(mParent instanceof CoordinatorAsClusterMember){
-			CoordinatorAsClusterMember tParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
-			
-			tParentCoordinatorAsClusterMember.eventTopologyReport(pTopologyReportPacket);
+			tParentCluster.eventTopologyReport(pTopologyReportPacket);
+		}else{
+			Logging.err(this, "eventReceivedTopologyReport() expected a Cluster as parent, parent is: " + mParent);
 		}
 	}
 

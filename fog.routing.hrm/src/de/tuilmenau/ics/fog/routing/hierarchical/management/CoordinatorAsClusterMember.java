@@ -89,18 +89,6 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 	
 	/**
-	 * EVENT: TopologyReport from an inferior entity 
-	 * 
-	 * @param pTopologyReportPacket the packet
-	 */
-	public void eventTopologyReport(TopologyReport pTopologyReportPacket)
-	{
-		Logging.log(this, "EVENT: TopologyReport: " + pTopologyReportPacket);
-		
-		mCoordinator.eventTopologyReport(pTopologyReportPacket);
-	}
-
-	/**
 	 * EVENT: coordinator announcement, we react on this by:
 	 *       1.) forward this packet to the coordinator for which this cluster membership was created
 	 * 
@@ -218,6 +206,51 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		mCoordinator.unregisterClusterMembership(this);
 	}
 
+	/**
+	 * Sets the cluster activation, triggered by the Elector or the Cluster which got a new local Coordinator
+	 * 
+	 * @param pState the new state
+	 */
+	public void setClusterActivation(boolean pState)
+	{
+		boolean tOldState = isActiveCluster();
+		
+		super.setClusterActivation(pState);
+
+		/**
+		 * If it is a transition from "false" to " true", then register as the active cluster membership of the parent coordinator
+		 */
+		if((!tOldState) && (pState)){
+			mCoordinator.eventClusterMembershipActivated(this);
+		}
+
+		/**
+		 * If it is a transition from "true" to " false", then unregister as the active cluster membership of the parent coordinator
+		 */
+		if((tOldState) && (!pState)){
+			mCoordinator.eventClusterMembershipDeactivated(this);
+		}
+	}
+
+	/**
+	 * Returns the comm. channel to the cluster head
+	 * 
+	 * @return the comm. channel
+	 */
+	public ComChannel getComChannelToClusterHead()
+	{
+		ComChannel tResult = null;
+		
+		LinkedList<ComChannel> tChannels = getComChannels();
+		if(tChannels.size() == 1){
+			tResult = tChannels.getFirst();
+		}else{
+			Logging.err(this, "Found an invalid amount of comm. channels: " + tChannels);
+		}
+			
+		return tResult;
+	}
+	
 	/**
 	 * Defines the decoration text for the ARG viewer
 	 * 

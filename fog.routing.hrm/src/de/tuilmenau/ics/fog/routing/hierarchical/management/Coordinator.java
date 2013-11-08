@@ -13,6 +13,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
@@ -64,6 +65,13 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private LinkedList<CoordinatorAsClusterMember> mClusterMemberships = new LinkedList<CoordinatorAsClusterMember>();
 	
+	/**
+	 * Stores the communication channel to the superior coordinator.
+	 * For a base hierarchy level cluster, this is a level 0 coordinator.
+	 * For a level n coordinator, this is a level n+1 coordinator. 
+	 */
+	private ComChannel mSuperiorCoordinatorComChannel = null;
+
 	/**
 	 * Stores how many announces were already sent
 	 */
@@ -126,6 +134,50 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Sets the communication channel to the superior coordinator.
+	 * For a base hierarchy level cluster, this is a level 0 coordinator.
+	 * For a level n coordinator, this is a level n+1 coordinator.
+	 *  
+	 * @param pComChannel the new communication channel
+	 */
+	protected void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
+	{
+		Logging.log(this, "Setting superior comm. channel: " + pComChannel);
+		mSuperiorCoordinatorComChannel = pComChannel;
+	}
+	
+	/**
+	 * Returns a reference to the communication channel towards the superior coordinator.
+	 * 
+	 * @return the communication channel
+	 */
+	public ComChannel superiorCoordinatorComChannel()
+	{
+		return mSuperiorCoordinatorComChannel;
+	}
+
+	/**
+	 * Sends a packet to the superior coordinator
+	 * 
+	 * @param pPacket the packet
+	 */
+	public void sendSuperiorCoordinator(SignalingMessageHrm pPacket)
+	{
+		Logging.log(this, "Sending to superior coordinator: " + pPacket);
+		
+		if(superiorCoordinatorComChannel() != null){
+			superiorCoordinatorComChannel().sendPacket(pPacket);
+		}else{
+			Logging.err(this, "sendSuperiorCoordinator() skipped because the comm. channel to the superior coordinator is invalid");
+			int i = 0;
+			for(CoordinatorAsClusterMember tMembership : mClusterMemberships){
+				Logging.err(this, "  ..possible comm. channel [" + i + "] " + (tMembership.isActiveCluster() ? "(A)" : "") + ":" + tMembership.getComChannelToClusterHead());
+				i++;
+			}
+		}
 	}
 
 	/**
@@ -481,24 +533,19 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 * Report the created routing table to the superior coordinator
 			 */
 			if(tReportedRoutingTable.size() > 0){
-				ComChannel tComChannelToSuperiorCoordinator  = superiorCoordinatorComChannel();
-				if(tComChannelToSuperiorCoordinator != null){
-					if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-						Logging.log(this, "   ..reporting via " + tComChannelToSuperiorCoordinator + " the routing table:");
-						int i = 0;
-						for(RoutingEntry tEntry : tReportedRoutingTable){
-							Logging.log(this, "     ..[" + i +"]: " + tEntry);
-							i++;
-						}
+				if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+					Logging.log(this, "   ..reporting via " + superiorCoordinatorComChannel() + " the routing table:");
+					int i = 0;
+					for(RoutingEntry tEntry : tReportedRoutingTable){
+						Logging.log(this, "     ..[" + i +"]: " + tEntry);
+						i++;
 					}
-					
-					// create new TopologyReport packet for the superior coordinator
-					TopologyReport tTopologyReportPacket = new TopologyReport(getHRMID(), null);
-					// send the packet to the superior coordinator
-					tComChannelToSuperiorCoordinator.sendPacket(tTopologyReportPacket);
-				}else{
-					Logging.err(this, "reportPhase() skipped because the comm. channel to the superior coordinator is invalid");
 				}
+				
+				// create new TopologyReport packet for the superior coordinator
+				TopologyReport tTopologyReportPacket = new TopologyReport(getHRMID(), null, tReportedRoutingTable);
+				// send the packet to the superior coordinator
+				sendSuperiorCoordinator(tTopologyReportPacket);
 			}else{
 				Logging.log(this, "reportPhase() skipped because no report available");
 			}
@@ -507,18 +554,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 	}
 	
-	/**
-	 * EVENT: TopologyReport from an inferior entity 
-	 * 
-	 * @param pTopologyReportPacket the packet
-	 */
-	public void eventTopologyReport(TopologyReport pTopologyReportPacket)
-	{
-		Logging.log(this, "EVENT: TopologyReport: " + pTopologyReportPacket);
-		
-		//TODO
-	}
-
 	/**
 	 * EVENT: "eventCoordinatorRoleInvalid", triggered by the Elector, the reaction is:
 	 * 	 	1.) create signaling packet "BullyLeave"
@@ -940,6 +975,39 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 * Inform the peer by the help of a InformClusterLeft packet
 			 */
 			pSourceComSession.denyClusterMembershipRequest(pRemoteClusterName, createCoordinatorName());			
+		}
+	}
+
+	/**
+	 * EVENT: cluster membership activated
+	 * 
+	 * @param pMembership the membership
+	 */
+	public void eventClusterMembershipActivated(CoordinatorAsClusterMember pMembership)
+	{
+		Logging.log(this, "EVENT: cluster membership activated: " + pMembership);
+		
+		Logging.log(this, "eventClusterMembershipActivated() updates comm. channel to superior coordinator: " + pMembership.getComChannelToClusterHead());
+		setSuperiorCoordinatorComChannel(pMembership.getComChannelToClusterHead());
+	}
+
+	/**
+	 * EVENT: cluster membership deactivated
+	 * 
+	 * @param pMembership the membership
+	 */
+	public void eventClusterMembershipDeactivated(CoordinatorAsClusterMember pMembership)
+	{
+		Logging.log(this, "EVENT: cluster membership deactivated: " + pMembership);
+		
+		for(CoordinatorAsClusterMember tMembership : mClusterMemberships){
+			if(tMembership.isActiveCluster()){
+				if (superiorCoordinatorComChannel() != tMembership.getComChannelToClusterHead()){
+					Logging.log(this, "eventClusterMembershipDeactivated() updates comm. channel to superior coordinator: " + tMembership.getComChannelToClusterHead());
+					setSuperiorCoordinatorComChannel(tMembership.getComChannelToClusterHead());
+				}
+				break;
+			}
 		}
 	}
 

@@ -9,12 +9,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
-import java.util.LinkedList;
-
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -24,17 +23,26 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class TopologyReport extends SignalingMessageHrm
 {
+	private static final long serialVersionUID = -2825988490853163023L;
+	
 	/**
 	 * Stores the database with routing entries.
 	 */
-	private LinkedList<RoutingEntry> mRoutingEntries = new LinkedList<RoutingEntry>();
+	private RoutingTable mRoutingTable = new RoutingTable();
 
 	/**
 	 * Constructor
+	 * 
+	 * @param pSenderName the sender name
+	 * @param pReceiverName the receiver name
+	 * @param pRoutingTable the routing table which is reported
 	 */
-	public TopologyReport(Name pSenderName, Name pReceiverName)
+	public TopologyReport(Name pSenderName, Name pReceiverName, RoutingTable pRoutingTable)
 	{
 		super(pSenderName, pReceiverName);
+		if(pRoutingTable != null){
+			mRoutingTable = pRoutingTable;
+		}
 	}
 	
 	/**
@@ -48,12 +56,12 @@ public class TopologyReport extends SignalingMessageHrm
 			Logging.log(this, "Adding routing entry: " + pRoutingEntry);
 		}
 		
-		if (mRoutingEntries.contains(pRoutingEntry)){
+		if (mRoutingTable.contains(pRoutingEntry)){
 			Logging.err(this, "Duplicated entries detected, skipping this \"addRoute\" request");
 			return;
 		}
 		
-		mRoutingEntries.add(pRoutingEntry);
+		mRoutingTable.add(pRoutingEntry);
 	}
 	
 	/**
@@ -61,9 +69,9 @@ public class TopologyReport extends SignalingMessageHrm
 	 * 
 	 * @return the database
 	 */
-	public LinkedList<RoutingEntry> getRoutes()
+	public RoutingTable getRoutes()
 	{
-		return mRoutingEntries;
+		return mRoutingTable;
 	}
 	
 	/**
@@ -74,6 +82,6 @@ public class TopologyReport extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", "+ mRoutingEntries.size() + " reported routes)";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", "+ mRoutingTable.size() + " reported routes)";
 	}
 }

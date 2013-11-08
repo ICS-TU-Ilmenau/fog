@@ -1278,7 +1278,7 @@ public class Elector implements Localization
 			eventElectionLost();
 			
 			// trigger: superior coordinator available	
-			tControlEntity.eventClusterCoordinatorAvailable(pComChannel, pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
+			tControlEntity.eventClusterCoordinatorAvailable(pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
 		}else{
 			throw new RuntimeException("Got an ANNOUNCE as cluster head");
 		}
@@ -1316,7 +1316,7 @@ public class Elector implements Localization
 			mParent.setClusterActivation(false);
 
 			// fake (for reset) trigger: superior coordinator available	
-			tControlEntity.eventClusterCoordinatorAvailable(null, pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
+			tControlEntity.eventClusterCoordinatorAvailable(pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
 		}else{
 			throw new RuntimeException("Got a RESIGN as cluster head");
 		}
@@ -1693,7 +1693,7 @@ public class Elector implements Localization
 					Coordinator tCoordinator = (Coordinator)tControlEntity;
 					
 					// trigger: superior coordinator available	
-					tCoordinator.eventClusterCoordinatorAvailable(pComChannel, tAnnouncePacket.getSenderName(), tAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), tAnnouncePacket.getCoordinatorDescription());
+					tCoordinator.eventClusterCoordinatorAvailable(tAnnouncePacket.getSenderName(), tAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), tAnnouncePacket.getCoordinatorDescription());
 				}else{
 					// HINT: this case shouldn't occur since the concept includes such messages only from a higher cluster towards its members (which are coordinators again)
 					Logging.err(this, "EXPECTED COORDINATOR as parent control entity for comm. channel: " + pComChannel);

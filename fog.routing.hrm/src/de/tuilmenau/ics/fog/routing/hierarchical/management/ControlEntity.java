@@ -61,13 +61,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private LinkedList<ComChannel> mComChannels = new LinkedList<ComChannel>();
 
 	/**
-	 * Stores the communication channel to the superior coordinator.
-	 * For a base hierarchy level cluster, this is a level 0 coordinator.
-	 * For a level n coordinator, this is a level n+1 coordinator. 
-	 */
-	private ComChannel mSuperiorCoordinatorComChannel = null;
-
-	/**
 	 * Stores the unique ID of the superior coordinator.
 	 * For a Cluster object, this is the coordinator of the cluster's coordinator.
 	 */
@@ -440,19 +433,15 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * For a coordinator instance, this is its superior coordinator.
 	 * For a cluster instance, this is its local coordinator.
 	 * 
-	 * @param pCoordinatorComChannel the communication channel to the coordinator
 	 * @param pCoordinatorNodeName the name of the node where the coordinator is located
 	 * @param pCoordinatorID the unique ID of the coordinator
 	 * @param pCoordinatorHostL2Address the L2Address of the node where the coordinator is located
 	 * @param pCoordinatorDescription a description of the new coordinator
 	 */
-	public void eventClusterCoordinatorAvailable(ComChannel pCoordinatorComChannel, Name pCoordinatorNodeName, int pCoordinatorID, L2Address pCoordinatorHostL2Address, String pCoordinatorDescription)
+	public void eventClusterCoordinatorAvailable(Name pCoordinatorNodeName, int pCoordinatorID, L2Address pCoordinatorHostL2Address, String pCoordinatorDescription)
 	{
-		Logging.log(this, "EVENT: superior coordinator available (update " + (++mSuperiorCoordinatorUpdateCounter) + ", node=" + pCoordinatorNodeName + ", comm. chann.=" + pCoordinatorComChannel + ", L2Address=" + pCoordinatorHostL2Address + ")");
+		Logging.log(this, "EVENT: superior coordinator available (update " + (++mSuperiorCoordinatorUpdateCounter) + ", node=" + pCoordinatorNodeName + ", L2Address=" + pCoordinatorHostL2Address + ")");
 
-		// store the communication channel to the superior coordinator
-		setSuperiorCoordinatorComChannel(pCoordinatorComChannel);
-		
 		// store the L2Address of the superior coordinator
 		setSuperiorCoordinatorHostL2Address(pCoordinatorHostL2Address);
 		
@@ -468,7 +457,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if(this instanceof CoordinatorAsClusterMember){
 			Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
 			
-			tCoordinator.eventClusterCoordinatorAvailable(pCoordinatorComChannel, pCoordinatorNodeName, pCoordinatorID, pCoordinatorHostL2Address, pCoordinatorDescription);
+			tCoordinator.eventClusterCoordinatorAvailable(pCoordinatorNodeName, pCoordinatorID, pCoordinatorHostL2Address, pCoordinatorDescription);
 		}
 	}
 
@@ -533,29 +522,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		return mSuperiorCoordinatorID;
 	}
 
-	/**
-	 * Sets the communication channel to the superior coordinator.
-	 * For a base hierarchy level cluster, this is a level 0 coordinator.
-	 * For a level n coordinator, this is a level n+1 coordinator.
-	 *  
-	 * @param pComChannel the new communication channel
-	 */
-	private void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
-	{
-		//Logging.log(this, "Setting superior comm. channel: " + pComChannel);
-		mSuperiorCoordinatorComChannel = pComChannel;
-	}
-	
-	/**
-	 * Returns a reference to the communication channel towards the superior coordinator.
-	 * 
-	 * @return the communication channel
-	 */
-	public ComChannel superiorCoordinatorComChannel()
-	{
-		return mSuperiorCoordinatorComChannel;
-	}
-	
 	/**
 	 * Sets the L2Address of the superior coordinator.
 	 *  
