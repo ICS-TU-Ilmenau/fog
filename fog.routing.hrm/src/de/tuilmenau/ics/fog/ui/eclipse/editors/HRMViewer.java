@@ -597,6 +597,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			Logging.log(this, "Found " + tRoutingTable.size() + " entries in the local routing table");
 		}
 			
+	    Color tColLoop = new Color(mDisplay, 210, 210, 250);
+	    Color tColNeighbor = new Color(mDisplay, 210, 250, 210);
+	    Color tColGeneral = new Color(mDisplay, 250, 210, 210);
+	    
 		if ((tRoutingTable != null) && (!tRoutingTable.isEmpty())) {
 			int tRowNumber = 0;
 			for(RoutingEntry tEntry : tRoutingTable) {
@@ -690,6 +694,18 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						tTableRow.setText(9, "??");
 					}
 
+					/**
+					 * Cells coloring
+					 */
+					for(int i = 0; i < 10; i++){
+						if(tEntry.isLocalLoop()){
+							tTableRow.setBackground(i, tColLoop);
+						}else if (tEntry.isRouteToDirectNeighbor()){
+							tTableRow.setBackground(i, tColNeighbor);
+						}else{
+							tTableRow.setBackground(i, tColGeneral);
+						}
+					}
 					tRowNumber++;
 				}
 			}
