@@ -243,7 +243,7 @@ public class ComChannel
 	private LinkedList<SignalingMessageHrm> mPacketQueue = new LinkedList<SignalingMessageHrm>();
 	
 	/**
-	 * Stores the routing data which is shared with the peer (only used for cluster members)
+	 * Stores the routing data which is shared with the peer (only used for ClusterMember parent)
 	 */
 	private RoutingTable mSharedRoutingData = new RoutingTable();
 	
@@ -335,10 +335,25 @@ public class ComChannel
 				}
 			}
 
+			/**
+			 * Add peerHRMID to peerHRMIDs
+			 */
 			synchronized (mPeerHRMIDs) {
 				if(!mPeerHRMIDs.contains(pHRMID)){
+					Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
 					mPeerHRMIDs.add(pHRMID);
 				}
+			}
+			
+			/**
+			 * Inform the parent ClusterMember about the new peer HRMIDs
+			 */
+			if(mParent instanceof ClusterMember){
+				ClusterMember tClusterMember = (ClusterMember)mParent;
+				
+				tClusterMember.eventNeighborHRMIDs(this);
+			}else{
+				Logging.err(this, "Expected a ClusterMember as parent, parent is: " + mParent);
 			}
 		}else{
 			Logging.warn(this, "Ignoring set-request of HRMID: " + pHRMID);
@@ -453,14 +468,32 @@ public class ComChannel
 	{
 		Logging.err(this, "Received announced peer HRMIDs: " + pAnnounceHRMIDsPacket.getHRMIDs());
 				
+		/**
+		 * Reset peerHRMIDs
+		 */
 		synchronized (mPeerHRMIDs) {
 			mPeerHRMIDs = (LinkedList<HRMID>) pAnnounceHRMIDsPacket.getHRMIDs().clone();
-			
+		}
+		
+		/**
+		 * Add peerHRMID to peerHRMIDs
+		 */
+		synchronized (mPeerHRMIDs) {
 			if(!mPeerHRMIDs.contains(getPeerHRMID())){
-				Logging.err(this, "    ..adding to stored peer HRMID the peer HRMID: " + getPeerHRMID());
-				// add the stored peer HRMID (this HRMID is never signaled via AnnounceHRMIDs!)
+				Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
 				mPeerHRMIDs.add(getPeerHRMID());
 			}
+		}
+
+		/**
+		 * Inform the parent ClusterMember about the new peer HRMIDs
+		 */
+		if(mParent instanceof ClusterMember){
+			ClusterMember tClusterMember = (ClusterMember)mParent;
+			
+			tClusterMember.eventNeighborHRMIDs(this);
+		}else{
+			Logging.err(this, "Expected a ClusterMember as parent, parent is: " + mParent);
 		}
 	}
 
