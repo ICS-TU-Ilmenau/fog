@@ -104,6 +104,17 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	 * @param pHierarchyLevel the hierarchy level
 	 * @param pAddress the address part for the given hierarchy level
 	 */
+	public void setLevelAddress(int pHierarchyLevel, BigInteger pAddress)
+	{
+		setLevelAddress(new HierarchyLevel(this, pHierarchyLevel), pAddress);
+	}
+
+	/**
+	 * Set the address part for a specific hierarchy level.
+	 * 
+	 * @param pHierarchyLevel the hierarchy level
+	 * @param pAddress the address part for the given hierarchy level
+	 */
 	public void setLevelAddress(HierarchyLevel pHierarchyLevel, BigInteger pAddress)
 	{
 		int tLevel = pHierarchyLevel.getValue();
@@ -196,6 +207,29 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	}
 
 	/**
+	 * Returns the hierarchy level of this cluster address
+	 * 
+	 * @return the hierarchy level, returns -1 is the address is an L0 node address
+	 */
+	public int getHierarchyLevel()
+	{
+		int tResult = -1;
+		
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			int tLevelValue = getLevelAddress(i);
+			// are we still searching for the cluster prefix?
+			if (tLevelValue == 0){
+				tResult = i;
+			}else{
+				// we found a value unequal to 0
+				break;
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Returns true if this HRMID belongs to the cluster of a given cluster address
 	 * 
 	 * @param pClusterAddress the address of the cluster
@@ -214,22 +248,14 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		/**
 		 * Search for the start of the cluster prefix
 		 */
-		int tCheckLevel = -1;
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
-			int tClusterAddressLevelValue = pClusterAddress.getLevelAddress(i);
-			// are we still searching for the cluster prefix?
-			if (tClusterAddressLevelValue == 0){
-				tCheckLevel = i;
-			}else{
-				// we found a value unequal to 0
-				break;
-			}
-		}
-		
+		int tCheckLevel = pClusterAddress.getHierarchyLevel();
 		if(tDebug){
 			Logging.log(this, "   ..cluster address prefix found at: " + tCheckLevel);
 		}
 
+		/**
+		 * Compare the prefix of the cluster address with this address
+		 */
 		for(int i = tCheckLevel + 1; i < HRMConfig.Hierarchy.HEIGHT; i++){
 			int tClusterAddressLevelValue = pClusterAddress.getLevelAddress(i);
 			int tLevelValue = getLevelAddress(i);
@@ -252,6 +278,57 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		return tResult;
 	}
 
+	/**
+	 * Returns the foreign cluster (in relation to this address)
+	 * 
+	 * @param pForeignAddress the foreign address
+	 * 
+	 * @return the foreign cluster address
+	 */
+	public HRMID getForeignCluster(HRMID pForeignAddress)
+	{
+		HRMID tResult = new HRMID(0);
+		boolean tDebug = false;
+		
+		if(tDebug){
+			Logging.log(this, "getForeignCluster() for " + pForeignAddress);
+		}
+		
+		/**
+		 * Search for the start of the cluster prefix
+		 */
+		int tCheckLevel = pForeignAddress.getHierarchyLevel();
+		if(tDebug){
+			Logging.log(this, "   ..cluster address prefix found at: " + tCheckLevel);
+		}
+
+		/**
+		 * Compare the foreign address with this address
+		 */
+		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i > tCheckLevel; i--){
+			int tClusterAddressLevelValue = pForeignAddress.getLevelAddress(i);
+			int tLevelValue = getLevelAddress(i);
+			
+			//add the digit to the result address
+			tResult.setLevelAddress(i, BigInteger.valueOf(tClusterAddressLevelValue));
+
+			// have we found a difference between both values?
+			if(tClusterAddressLevelValue != tLevelValue){
+				if(tDebug){
+					Logging.log(this, "   ..found difference (" + tClusterAddressLevelValue + " != " + tLevelValue + ") at level " + i);
+				}
+				
+				// return immediately
+				break;
+			}
+		}
+		
+		if(tDebug){
+			Logging.log(this, "   ..result: " + tResult);
+		}
+				
+		return tResult;
+	}
 	
 	
 	
