@@ -242,7 +242,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		boolean tDebug = false;
 		
 		if(tDebug){
-			Logging.log(this, "isCluster() for " + pClusterAddress);
+			Logging.err(this, "isCluster() for " + pClusterAddress);
 		}
 		
 		/**
@@ -250,7 +250,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		 */
 		int tCheckLevel = pClusterAddress.getHierarchyLevel();
 		if(tDebug){
-			Logging.log(this, "   ..cluster address prefix found at: " + tCheckLevel);
+			Logging.err(this, "   ..cluster address prefix found at: " + tCheckLevel);
 		}
 
 		/**
@@ -263,7 +263,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 			// have we found a difference between both values?
 			if(tClusterAddressLevelValue != tLevelValue){
 				if(tDebug){
-					Logging.log(this, "   ..found difference (" + tClusterAddressLevelValue + " != " + tLevelValue + ") at level " + i);
+					Logging.err(this, "   ..found difference (" + tClusterAddressLevelValue + " != " + tLevelValue + ") at level " + i);
 				}
 				tResult = false;
 				// return immediately
@@ -272,7 +272,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		}
 		
 		if(tDebug){
-			Logging.log(this, "   ..result: " + tResult);
+			Logging.err(this, "   ..result: " + tResult);
 		}
 				
 		return tResult;

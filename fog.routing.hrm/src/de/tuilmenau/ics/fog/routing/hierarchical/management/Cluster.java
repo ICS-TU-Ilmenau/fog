@@ -1026,7 +1026,9 @@ public class Cluster extends ClusterMember
 	 */
 	private void eventDetectedIsolation()
 	{
-		Logging.log(this, "EVENT: detected local isolation");
+		if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+			Logging.log(this, "EVENT: detected local isolation");
+		}
 	}
 
 	/**
