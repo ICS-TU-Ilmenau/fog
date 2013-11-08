@@ -180,7 +180,7 @@ public class ClusterMember extends ClusterName
 				Logging.log(this, "Distributing AnnounceHRMIDs...");
 	
 				LinkedList<HRMID >tLocalHRMIDs = mHRMController.getHRMIDs();
-				Logging.err(this, "    ..found local HRMIDs: " + tLocalHRMIDs);
+				Logging.log(this, "    ..found local HRMIDs: " + tLocalHRMIDs);
 				
 				/**
 				 * Filter local HRMIDs for L0 node HRMIDs
@@ -548,6 +548,13 @@ public class ClusterMember extends ClusterName
 			 * Update routing table
 			 ********************************************************************/
 			if((tSourceForReportedRoutes != null) && (!tSourceForReportedRoutes.isZero())){
+				synchronized (mReportedRoutingTable) {
+					// inform the HRS about the routing table invalidation
+					mHRMController.delHRMRoutes(mReportedRoutingTable);
+					// reset the stored routing table
+					mReportedRoutingTable.clear();
+				}
+				
 				// iterate over all neighbor HRMIDs
 				for(HRMID tNeighborHRMID : tNeighborHRMIDs){
 					RoutingEntry tRoutingEntry = null;
