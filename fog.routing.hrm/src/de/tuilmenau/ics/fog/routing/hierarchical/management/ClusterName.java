@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This class is used to identify a cluster (independent from its physical location)
