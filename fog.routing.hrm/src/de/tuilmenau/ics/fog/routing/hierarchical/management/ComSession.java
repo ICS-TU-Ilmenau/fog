@@ -278,6 +278,16 @@ public class ComSession extends Session
 			}
 		}
 		mPeerL2Address = pL2Address;
+		
+		/**
+		 * The following is FoGSiEm specific for an easy detection of the network interface of each L0 cluster
+		 */
+		LinkedList<ClusterMember> tMembers = mHRMController.getAllClusterMembers(0);
+		for(ClusterMember tMember : tMembers){
+			if(!(tMember instanceof Cluster)){
+				tMember.detectNetworkInterface();
+			}
+		}
 	}
 	
 	/**

@@ -101,6 +101,55 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
+	 * Detect the network interface
+	 */
+	public void detectNetworkInterface()
+	{
+		if(getHierarchyLevel().isBaseLevel())
+		{
+			if(!(this instanceof Cluster)){
+				if(getBaseHierarchyLevelNetworkInterface() == null){
+
+					/**
+					 * The following is FoGSiEm specific and allows for an easy detection of the network interface for a ClusterMember
+					 */
+					ComChannel tThisClusterChannelToHead = getComChannelToClusterHead();
+//					Logging.err(this, "      ..channel to cluster head: " + tThisClusterChannelToHead);
+					if(tThisClusterChannelToHead != null){
+						L2Address tThisClusterChannelToHeadL2Address = tThisClusterChannelToHead.getPeerL2Address();
+//						Logging.err(this, "        ..peer L2Address: " + tThisClusterChannelToHeadL2Address);
+						if(tThisClusterChannelToHeadL2Address != null){
+							LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0);
+							for(ClusterMember tCluster : tClusters){
+//								Logging.err(this, "   ..found other L0 Cluster: " + tCluster);
+								LinkedList<ComChannel> tThisClusterChannels = tCluster.getComChannels();
+								for(ComChannel tThisClusterChannel : tThisClusterChannels){
+//									Logging.err(this, "      ..channel of this cluster: " + tThisClusterChannel);
+									L2Address tThisClusterChannelPeerL2Address = tThisClusterChannel.getPeerL2Address();
+//									Logging.err(this, "        ..peer L2Address: " + tThisClusterChannelPeerL2Address);
+									if(tThisClusterChannelPeerL2Address != null){
+										if(tThisClusterChannelPeerL2Address.equals(tThisClusterChannelToHeadL2Address)){
+											/**
+											 * We found a Cluster, which has a comm. channel to the same peer node which is also the peer node of this ClusterMember
+											 */
+											if(tCluster.getBaseHierarchyLevelNetworkInterface() != null){
+												// update the network interface
+												setBaseHierarchyLevelNetworkInterface(tCluster.getBaseHierarchyLevelNetworkInterface());
+//												Logging.err(this, "        ..SET: " + tCluster.getBaseHierarchyLevelNetworkInterface());
+												return;
+											}										
+										}
+									}
+								}								
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * Sets the network interface of this cluster (only for base hierarchy level)
 	 * 
 	 * @param pInterfaceToNeighbor the network interface
@@ -108,7 +157,46 @@ public class ClusterMember extends ClusterName
 	public void setBaseHierarchyLevelNetworkInterface(NetworkInterface pInterfaceToNeighbor)
 	{
 		Logging.log(this, "Setting network interface (base hierarchy level) to: " + pInterfaceToNeighbor);
-		mBaseHierarchyLevelNetworkInterface = pInterfaceToNeighbor;		
+		mBaseHierarchyLevelNetworkInterface = pInterfaceToNeighbor;
+		
+		/**
+		 * The following is FoGSiEm specific and allows for an easy detection of the network interface for a ClusterMember
+		 */
+		LinkedList<ClusterMember> tMembers = mHRMController.getAllClusterMembers(0);
+//		Logging.err(this, "   ..found other L0 ClusterMember: " + tMembers);
+		for(ClusterMember tMember : tMembers){
+			// avoid recursive access
+			if(!tMember.equals(this)){
+//				Logging.err(this, "    ..ClusterMember: " + tMember);
+				// we only want to have ClusterMember instances
+				if(!(tMember instanceof Cluster)){
+					ComChannel tMemberChannel = tMember.getComChannelToClusterHead();
+//					Logging.err(this, "      ..channel to cluster head: " + tMemberChannel);
+					if(tMemberChannel != null){
+						L2Address tMemberChannelPeerL2Address = tMemberChannel.getPeerL2Address();
+//						Logging.err(this, "        ..peer L2Address: " + tMemberChannelPeerL2Address);
+						LinkedList<ComChannel> tThisClusterChannels = getComChannels();
+						for(ComChannel tThisClusterChannel : tThisClusterChannels){
+//							Logging.err(this, "      ..channel of this cluster: " + tThisClusterChannel);
+							L2Address tThisClusterChannelPeerL2Address = tThisClusterChannel.getPeerL2Address();
+//							Logging.err(this, "        ..peer L2Address: " + tThisClusterChannelPeerL2Address);
+							if(tThisClusterChannelPeerL2Address != null){
+								if(tThisClusterChannelPeerL2Address.equals(tMemberChannelPeerL2Address))
+								{
+									/**
+									 * We found another ClusterMember, which has a comm channel to the same peer node which is also a peer node of this cluster
+									 */
+									if(tMember.getBaseHierarchyLevelNetworkInterface() == null){
+										// update the network interface
+										tMember.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
+									}
+								}
+							}
+						}
+					}					
+				}
+			}
+		}
 	}
 	
 	/**
@@ -164,6 +252,25 @@ public class ClusterMember extends ClusterName
 		return mAssignedL0HRMID;	
 	}
 
+	/**
+	 * Returns the comm. channel to the cluster head
+	 * 
+	 * @return the comm. channel
+	 */
+	public ComChannel getComChannelToClusterHead()
+	{
+		ComChannel tResult = null;
+		
+		LinkedList<ComChannel> tChannels = getComChannels();
+		if(tChannels.size() == 1){
+			tResult = tChannels.getFirst();
+		}else{
+			Logging.err(this, "Found an invalid amount of comm. channels: " + tChannels);
+		}
+			
+		return tResult;
+	}
+	
 	/**
 	 * SEND: AnnounceHRMIDs to all known cluster members
 	 */
@@ -477,6 +584,16 @@ public class ClusterMember extends ClusterName
 		 */
 		pComChannel.eventEstablished();
 
+		/**
+		 * Trigger: network interface detection
+		 */
+		if(getHierarchyLevel().isBaseLevel())
+		{
+			if(!(this instanceof Cluster)){
+				detectNetworkInterface();
+			}
+		}
+		
 		/**
 		 * Trigger: start coordinator election
 		 */

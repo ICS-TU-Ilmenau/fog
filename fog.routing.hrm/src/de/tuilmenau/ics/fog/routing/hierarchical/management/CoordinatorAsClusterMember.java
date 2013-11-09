@@ -231,25 +231,6 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 
 	/**
-	 * Returns the comm. channel to the cluster head
-	 * 
-	 * @return the comm. channel
-	 */
-	public ComChannel getComChannelToClusterHead()
-	{
-		ComChannel tResult = null;
-		
-		LinkedList<ComChannel> tChannels = getComChannels();
-		if(tChannels.size() == 1){
-			tResult = tChannels.getFirst();
-		}else{
-			Logging.err(this, "Found an invalid amount of comm. channels: " + tChannels);
-		}
-			
-		return tResult;
-	}
-	
-	/**
 	 * Defines the decoration text for the ARG viewer
 	 * 
 	 * @return text for the control entity or null if no text is available
