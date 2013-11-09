@@ -12,11 +12,9 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.IEvent;
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.TopologyReport;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
@@ -30,11 +28,6 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class Coordinator extends ControlEntity implements Localization, IEvent
 {
-	/**
-	 * List of already known neighbor coordinators
-	 */
-	private LinkedList<Name> mConnectedNeighborCoordinators = new LinkedList<Name>();
-	
 	/**
 	 * Stores the simulation timestamp of the last "share phase"
 	 */
@@ -1177,36 +1170,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		return mParentCluster.getClusterID();
 	}
 	
-	/**
-	 * Checks if there already exists a connection to a neighbor coordinator
-	 * 
-	 * @param pCoordinatorName the name of the neighbor coordinator
-	 * 
-	 * @return true or false
-	 */
-	private boolean isConnectedToNeighborCoordinator(Name pCoordinatorName)
-	{
-		boolean tResult = false;
-		
-		synchronized (mConnectedNeighborCoordinators) {
-			tResult = mConnectedNeighborCoordinators.contains(pCoordinatorName);
-		}
-		
-		return tResult;
-	}
-	
-	/**
-	 * Registers an already existing connection to a neighbor coordinator in order to avoid connection duplicates
-	 * 
-	 * @param pCoordinatorName the name of the neighbor coordinator
-	 */
-	private void registerConnectionToNeighborCoordinator(Name pCoordinatorName)
-	{
-		synchronized (mConnectedNeighborCoordinators) {
-			mConnectedNeighborCoordinators.add(pCoordinatorName);
-		}
-	}
-
 	/**
 	 * Generates a descriptive string about this object
 	 * 
