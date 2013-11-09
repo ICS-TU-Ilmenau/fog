@@ -13,9 +13,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
 /**
- * This class is used to identify nodes within the HRM routing. Such an identifier can be either for a cluster, 
- * to which addresses are assigned, or for a CEP that is associated to members of a clusters at the lowest hierarchical level. 
- * It can be either a physical node or a logical node (a cluster) that aggregates multiple physical nodes. 
+ * This class represents a node in an ARG. 
  */
 public interface AbstractRoutingGraphNode extends Name
 {

@@ -16,9 +16,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * Clusters are built up at bus level at the first hierarchical level. Clusters that are not physically connected to the node
- * are attached neighbor clusters. This class is used in order to determine the distance to a cluster.
- *  
+ * This class represents a link in an ARG.  
  */
 public class AbstractRoutingGraphLink implements Serializable
 {
