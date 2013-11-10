@@ -311,6 +311,14 @@ public class HRMConfig
 		public static final boolean RECORD_ROUTE_FOR_PROBES = true; 
 	}
 
+	public class QoS
+	{
+		/**
+		 * Defines if a reported HRM route should include QoS attributes 
+		 */
+		public static final boolean REPORT_QOS_ATTRIBUTES_AUTOMATICALLY = false;		
+	}
+	
 	/**
 	 * Configuration for the election process
 	 */
