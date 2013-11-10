@@ -76,7 +76,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for the report phase
 		 */
-		public static final boolean SHOW_REPORT_PHASE = true;
+		public static final boolean SHOW_REPORT_PHASE = false;
 
 		/**
 		 * Shows debug outputs for the share phase
@@ -164,7 +164,7 @@ public class HRMConfig
 		/**
 		 * Defines if signaling messages for address distribution are shown
 		 */
-		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = false;
+		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = true;
 
 		/**
 		 * Defines if the address aggregation is shown in the debug output

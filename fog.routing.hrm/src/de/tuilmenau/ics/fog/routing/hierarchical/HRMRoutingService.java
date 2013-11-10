@@ -188,6 +188,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * Store the routing entry in the routing table
 		 */
+		Logging.log(this, "Adding HRM route: " + pRoutingTableEntry);
 		boolean tResult = mRoutingTable.addEntry(pRoutingTableEntry);
 		
 		/**
@@ -236,25 +237,6 @@ public class HRMRoutingService implements RoutingService, Localization
 	}	
 
 	/**
-	 * Adds routes to the local HRM routing table.
-	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
-	 * 
-	 * @param pRoutingTable the routing table with new entries
-	 * 
-	 * @return true if the entry is new and was added, otherwise false
-	 */
-	public boolean addHRMRoutes(RoutingTable pRoutingTable)
-	{
-		boolean tResult = false;
-		
-		for(RoutingEntry tEntry : pRoutingTable){
-			tResult |= addHRMRoute(tEntry);
-		}
-		
-		return tResult;
-	}
-
-	/**
 	 * Deletes a route from the local HRM routing table.
 	 * This function is usually used when a timeout occurred and the corresponding route became too old. 
 	 * 
@@ -267,6 +249,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * Remove the routing entry from the routing table
 		 */
+		Logging.log(this, "Deleting HRM route: " + pRoutingTableEntry);
 		boolean tResult = mRoutingTable.delEntry(pRoutingTableEntry);
 		
 		/**
@@ -304,24 +287,6 @@ public class HRMRoutingService implements RoutingService, Localization
 		return tResult;
 	}
 	
-	/**
-	 * Deletes routes from the local HRM routing table.
-	 * 
-	 * @param pRoutingTable the routing table with old entries
-	 * 
-	 * @return true if the table had existing routing data
-	 */
-	public boolean delHRMRoutes(RoutingTable pRoutingTable)
-	{
-		boolean tResult = false;
-		
-		for(RoutingEntry tEntry : pRoutingTable){
-			tResult |= delHRMRoute(tEntry);
-		}
-		
-		return tResult;
-	}
-
 	/**
 	 * Registers a route at the local L2 routing table.
 	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
@@ -1210,11 +1175,8 @@ public class HRMRoutingService implements RoutingService, Localization
 					}
 				}
 				
-				// create new route
-				tResultRoute = new Route();
-				
-				// add the list of Gate IDs to the resulting route
-				tResultRoute.add(tRouteSegmentPath);
+				// create new route with the list of Gate IDs
+				tResultRoute = new Route(tRouteSegmentPath);
 			}
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){

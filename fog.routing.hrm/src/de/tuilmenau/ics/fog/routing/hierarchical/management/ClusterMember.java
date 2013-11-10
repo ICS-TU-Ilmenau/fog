@@ -20,6 +20,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -226,7 +227,7 @@ public class ClusterMember extends ClusterName
 				Logging.log(this, "ASSINGED L0 HRMID=" + pHRMID + " (old=" + (mAssignedL0HRMID != null ? mAssignedL0HRMID.toString() : "null") + ", assigner=" + pCaller + ")");
 		
 				// update the HRMID
-				mAssignedL0HRMID = pHRMID.clone();
+				setL0HRMID(pHRMID.clone());
 
 				/**
 				 * Announce in all L0 clusters the new set of local node HRMIDs
@@ -242,6 +243,54 @@ public class ClusterMember extends ClusterName
 		}
 	}
 
+	/**
+	 * Sets the new L0 address for this physical node
+	 * 
+	 * @param pNewL0HRMID the new L0 HRMID
+	 */
+	protected void setL0HRMID(HRMID pNewL0HRMID)
+	{
+		// is this a new HRMID?
+		if((pNewL0HRMID != null) && (!pNewL0HRMID.equals(mAssignedL0HRMID)) && (!pNewL0HRMID.isClusterAddress()) && (!pNewL0HRMID.isZero())){
+			Logging.log(this, "ASSIGNED new L0 physical node HRMID: " + pNewL0HRMID);
+
+			// set the new L0 address for this physical node
+			mAssignedL0HRMID = pNewL0HRMID;
+			
+			/**
+			 * Update the local HRG: find other active ClusterMember instances and store a local loopback link to them
+			 */
+			LinkedList<ClusterMember> tSiblings = mHRMController.getAllClusterMembers(getHierarchyLevel());
+			// iterate over all siblings
+			for(ClusterMember tSibling : tSiblings){
+				if(tSibling.isActiveCluster()){
+					Logging.log(this, "  ..found active sibling: " + tSibling);
+					HRMID tSiblingL0Address = tSibling.getL0HRMID();
+					// has the sibling a valid L0 address?
+					if((tSiblingL0Address != null) && (!tSiblingL0Address.isZero())){
+						// avoid recursion
+						if(!tSibling.equals(this)){
+							// create the new reported routing table entry
+							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(getL0HRMID() /* this cluster */, tSiblingL0Address /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE);
+							
+							/**
+							 * Update HRG: register L0 link
+							 */ 
+							mHRMController.registerLinkHRG(getL0HRMID(),  tSiblingL0Address, tRoutingEntryToSibling);
+							
+							/**
+							 * Update HRG: register cluster-2-cluster link
+							 */ 
+							HRMID tSiblingClusterAddress = getL0HRMID().getForeignCluster(tSiblingL0Address); 
+							HRMID tThisClusterAddress = tSiblingL0Address.getForeignCluster(getL0HRMID()); 
+							mHRMController.registerCluster2ClusterLinkHRG(tThisClusterAddress, tSiblingClusterAddress, tRoutingEntryToSibling);
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Returns the L0 address which was assigned by this L0 (if it is so) cluster for this physical node
 	 *  
@@ -292,21 +341,21 @@ public class ClusterMember extends ClusterName
 				 * Filter local HRMIDs for L0 node HRMIDs
 				 */
 				LinkedList<HRMID >tLocalL0HRMIDs = new LinkedList<HRMID>();
-				for(HRMID tHRMID : tLocalHRMIDs){
+				for(HRMID tLocalHRMID : tLocalHRMIDs){
 					// is the HRMID a cluster address?
-					if(!tHRMID.isClusterAddress()){
+					if(!tLocalHRMID.isClusterAddress()){
 						// ignore this ClusterMember's node specific L0 HRMID, which is already known to the peer
 						if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-							if(!tHRMID.equals(mAssignedL0HRMID)){
-								Logging.log(this, "    ..found L0 node HRMID: " + tHRMID.toString());
+							if(!tLocalHRMID.equals(mAssignedL0HRMID)){
+								Logging.log(this, "    ..found L0 node HRMID: " + tLocalHRMID.toString());
 							}else{
-								Logging.log(this, "    ..ignoring L0 node HRMID: " + tHRMID.toString());
+								Logging.log(this, "    ..ignoring L0 node HRMID: " + tLocalHRMID.toString());
 							}
 						}
-						tLocalL0HRMIDs.add(tHRMID);
+						tLocalL0HRMIDs.add(tLocalHRMID);
 					}else{
 						if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-							Logging.log(this, "    ..ignoring cluster HRMID: " + tHRMID.toString());
+							Logging.log(this, "    ..ignoring cluster HRMID: " + tLocalHRMID.toString());
 						}
 					}
 				}

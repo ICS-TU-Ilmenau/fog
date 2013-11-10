@@ -15,6 +15,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.TopologyReport;
+import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -266,11 +267,11 @@ public class Cluster extends ClusterMember
 				// are we at the base level?
 				if(getHierarchyLevel().isBaseLevel()) {
 					// inform HRM controller about the address change
-					if(mAssignedL0HRMID != null){
+					if(getL0HRMID() != null){
 						
-						freeClusterMemberAddress(mAssignedL0HRMID.getLevelAddress(getHierarchyLevel()));
+						freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
 	
-						mHRMController.unregisterHRMID(this, mAssignedL0HRMID);					
+						mHRMController.unregisterHRMID(this, getL0HRMID());					
 					}
 	
 					// create new HRMID for ourself
@@ -281,10 +282,10 @@ public class Cluster extends ClusterMember
 						Logging.log(this, "    ..setting local HRMID " + tThisNodesAddress.toString());
 			
 						// store the new HRMID for this node
-						mAssignedL0HRMID = tThisNodesAddress;
+						setL0HRMID(tThisNodesAddress);
 						
 						// inform the HRMController about the new HRMID
-						mHRMController.registerHRMID(this, mAssignedL0HRMID, "distributeAddresses()");
+						mHRMController.registerHRMID(this, getL0HRMID(), "distributeAddresses()");
 					}else{
 						Logging.err(this, "distributeAddresses() cannot assign a new HRMID to this node because cluster HRMID is invalid");
 					}
@@ -307,9 +308,14 @@ public class Cluster extends ClusterMember
 				}
 				
 				/**
-				 * Announce the local node HRMIDs
+				 * Announce the local node HRMIDs if we are at base hierarchy level
 				 */
-				distributeAnnounceHRMIDs();
+				if(getHierarchyLevel().isBaseLevel()){
+					LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
+					for(Cluster tL0Cluster : tL0Clusters){
+						tL0Cluster.distributeAnnounceHRMIDs();
+					}
+				}
 			}
 		}else{
 			Logging.log(this, "distributeAddresses() skipped because the own HRMID is still the same: " + getHRMID());
@@ -378,6 +384,28 @@ public class Cluster extends ClusterMember
 			 * Set the new HRMID
 			 */
 			super.setHRMID(pCaller, pHRMID);
+			
+			/**
+			 * Update the local HRG: find other active Cluster instances and store a local loopback link to them
+			 */
+			LinkedList<Cluster> tSiblings = mHRMController.getAllClusters(getHierarchyLevel());
+			// iterate over all siblings
+			for(Cluster tSibling : tSiblings){
+				if(tSibling.isActiveCluster()){
+					Logging.log(this, "  ..found active sibling: " + tSibling);
+					HRMID tSiblingAddress = tSibling.getHRMID();
+					// has the sibling a valid address?
+					if((tSiblingAddress != null) && (!tSiblingAddress.isZero())){
+						// avoid recursion
+						if(!tSibling.equals(this)){
+							// create the new reported routing table entry
+							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(getHRMID() /* this cluster */, tSiblingAddress /* the sibling */, tSiblingAddress, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE);
+							// register the new HRG entry
+							mHRMController.registerLinkHRG(getHRMID(),  tSiblingAddress, tRoutingEntryToSibling);
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -648,7 +676,7 @@ public class Cluster extends ClusterMember
 	}
 	
 	/**
-	 * EVENT: TopologyReport from an inferior entity 
+	 * EVENT: TopologyReport from an inferior entity received, triggered by the comm. channel
 	 * 
 	 * @param pTopologyReportPacket the packet
 	 */
@@ -656,12 +684,34 @@ public class Cluster extends ClusterMember
 	{
 		Logging.log(this, "EVENT: TopologyReport: " + pTopologyReportPacket);
 		
-		if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-			for(RoutingEntry tEntry : pTopologyReportPacket.getRoutes()){
+		/**
+		 * Iterate over all reported routes and derive new data for the HRG
+		 */
+		for(RoutingEntry tEntry : pTopologyReportPacket.getRoutes()){
+			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
 				Logging.log(this, "   ..received route: " + tEntry);
 			}
+			HRMID tDestHRMID = tEntry.getDest();
+			HRMID tOwnClusterAddress = getHRMID();
+			if(tDestHRMID != null){
+				// search for cluster destinations
+				if(tDestHRMID.isClusterAddress()){
+					// avoid recursion
+					if(!tDestHRMID.equals(tOwnClusterAddress)){
+						if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+							Logging.log(this, "     ..route between clusters found");						
+						}
+						
+						/**
+						 * Store/update link in the HRG
+						 */ 
+						mHRMController.registerCluster2ClusterLinkHRG(tEntry.getSource(), tDestHRMID, tEntry);
+					}
+				}				
+			}else{
+				Logging.err(this,  "Invalid route received: " + tEntry);
+			}
 		}
-		// TODO:
 	}
 
 	/**
@@ -788,11 +838,11 @@ public class Cluster extends ClusterMember
 		Logging.log(this, "============ Destroying this cluster now...");
 		
 		// unregister the HRMID for this node from the HRM controller
-		if(mAssignedL0HRMID != null){
+		if(getL0HRMID() != null){
 			
-			freeClusterMemberAddress(mAssignedL0HRMID.getLevelAddress(getHierarchyLevel()));
+			freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
 
-			mHRMController.unregisterHRMID(this, mAssignedL0HRMID);					
+			mHRMController.unregisterHRMID(this, getL0HRMID());					
 		}
 
 		// unregister from HRMController's internal database

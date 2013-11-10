@@ -254,6 +254,11 @@ public class ComChannel
 	private RoutingTable mReportedRoutingTablePeerHRMIDs = new RoutingTable();
 
 	/**
+	 * Stores the routing table, which is stored locally based on peer HRMIDs data
+	 */
+	private RoutingTable mLocalRoutingTablePeerHRMIDs = new RoutingTable();
+
+	/**
 	 * Stores the routing table, which is reported to the coordinator
 	 */
 	private RoutingTable mReportedRoutingTable = new RoutingTable();
@@ -386,6 +391,9 @@ public class ComChannel
 			Logging.log(this, "EVENT: neighbor HRMIDs for: " + this);
 			Logging.log(this, "    ..neighbor HRMIDs: " + tNeighborHRMIDs);
 			
+			/**
+			 * Continue only for base hierarchy level
+			 */
 			if(tParentClusterMember.getHierarchyLevel().isBaseLevel()){
 				// determine the HRMID of this node for this L0 cluster
 				HRMID tThisNodeClusterMemberHRMID = tParentClusterMember.getL0HRMID();
@@ -404,33 +412,54 @@ public class ComChannel
 				 ********************************************************************/
 				if((tSourceForReportedRoutes != null) && (!tSourceForReportedRoutes.isZero())){
 					// backup old reported routing table
-					RoutingTable tDeprecatedRoutingTable = null;
+					RoutingTable tDeprecatedReportedRoutingTable = null;
 					synchronized (mReportedRoutingTablePeerHRMIDs) {
-						tDeprecatedRoutingTable = (RoutingTable) mReportedRoutingTablePeerHRMIDs.clone();
+						tDeprecatedReportedRoutingTable = (RoutingTable) mReportedRoutingTablePeerHRMIDs.clone();
 					}
 					
+					// backup old locally stored routing table
+					RoutingTable tDeprecatedLocalRoutingTable = null;
+					synchronized (mLocalRoutingTablePeerHRMIDs) {
+						tDeprecatedLocalRoutingTable = (RoutingTable) mLocalRoutingTablePeerHRMIDs.clone();
+					}
+
 					// iterate over all neighbor HRMIDs
 					RoutingTable tNewReportedRoutingTable = new RoutingTable();
+					RoutingTable tNewLocalRoutingTable = new RoutingTable();
 					for(HRMID tNeighborHRMID : tNeighborHRMIDs){
-						RoutingEntry tRoutingEntry = null;
+						RoutingEntry tLocalRoutingEntry = null;
+						RoutingEntry tReportedRoutingEntry = null;
 						
-						// generalize foreign HRMID to its cluster address
+						/**
+						 * Generalize neighbor HRMID to its cluster address, depending on the locally assigned HRMID.
+						 * If the local node owns 1.1.1 and 1.2.1, and the neighbor HRMID is 1.3.1, the result will be 1.3.0 because this cluster is a foreign one for the local node 
+						 */ 
 						HRMID tGeneralizedHRMID = mHRMController.aggregateForeignHRMID(tNeighborHRMID); 
 						if(tGeneralizedHRMID.isClusterAddress()){
 							// create the new routing table entry
-							tRoutingEntry = RoutingEntry.create(tSourceForReportedRoutes, tGeneralizedHRMID, getPeerHRMID(), 1 /* TODO */, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+							tLocalRoutingEntry = RoutingEntry.create(tSourceForReportedRoutes, tGeneralizedHRMID, getPeerHRMID(), 1 /* TODO */, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
 							// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-							tRoutingEntry.setNextHopL2Address(getPeerL2Address());
+							tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+
+							// create the new reported routing table entry
+							tReportedRoutingEntry = RoutingEntry.create(getPeerHRMID() /* the peer belongs to the foreign cluster */, tGeneralizedHRMID /* the foreign cluster address */, tGeneralizedHRMID, 0 /* it's a local loopback routing there */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE);
 						}else{
 							// create the new routing table entry
-							tRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedHRMID, getPeerHRMID(), 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+							tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedHRMID, getPeerHRMID(), 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
 							// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-							tRoutingEntry.setNextHopL2Address(getPeerL2Address());
+							tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+
+							// create the new reported routing table entry
+							tReportedRoutingEntry = tLocalRoutingEntry.clone();
 						}
 		
 						// add the entry to the reported routing table
-						Logging.log(this, "   ..adding reported route: " + tRoutingEntry);
-						tNewReportedRoutingTable.addEntry(tRoutingEntry);
+						Logging.log(this, "   ..adding reported route: " + tReportedRoutingEntry);
+						tNewReportedRoutingTable.addEntry(tReportedRoutingEntry);
+
+						// add the entry to the reported routing table
+						Logging.log(this, "   ..adding local route: " + tReportedRoutingEntry);
+						tNewLocalRoutingTable.addEntry(tLocalRoutingEntry);
 					}
 
 					/**
@@ -440,7 +469,8 @@ public class ComChannel
 					 * 			- update mReportedRoutingTable
 					 */ 
 					mReportedRoutingTablePeerHRMIDs = tNewReportedRoutingTable;
-					mHRMController.addHRMRoutes(mReportedRoutingTablePeerHRMIDs);
+					mLocalRoutingTablePeerHRMIDs = tNewLocalRoutingTable;
+					mHRMController.addHRMRoutes(mLocalRoutingTablePeerHRMIDs);
 					synchronized (mReportedRoutingTable) {
 						mReportedRoutingTable.addEntries(mReportedRoutingTablePeerHRMIDs);
 						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
@@ -455,12 +485,13 @@ public class ComChannel
 					 * 			- inform the HRS about the deprecated routing table entries
 					 * 			- update mReportedRoutingTable
 					 */ 
-					tDeprecatedRoutingTable.delEntries(tNewReportedRoutingTable);
-					mHRMController.delHRMRoutes(tDeprecatedRoutingTable);
+					tDeprecatedReportedRoutingTable.delEntries(tNewReportedRoutingTable);
+					tDeprecatedLocalRoutingTable.delEntries(tNewLocalRoutingTable);
+					mHRMController.delHRMRoutes(tDeprecatedLocalRoutingTable);
 					synchronized (mReportedRoutingTable) {
-						mReportedRoutingTable.delEntries(tDeprecatedRoutingTable);
+						mReportedRoutingTable.delEntries(tDeprecatedReportedRoutingTable);
 						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-							Logging.log(this, "Removed from reported routing table: " + tDeprecatedRoutingTable);
+							Logging.log(this, "Removed from reported routing table: " + tDeprecatedReportedRoutingTable);
 							Logging.log(this, "       ..new reported routing table: " + mReportedRoutingTable);
 						}
 					}
@@ -583,6 +614,19 @@ public class ComChannel
 		if(mParent instanceof Cluster){
 			Cluster tParentCluster = (Cluster)mParent;
 			
+			/**
+			 * Record the routing report
+			 */
+			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+				Logging.err(this, "   ..got routing report: " + pTopologyReportPacket.getRoutes());
+			}
+			synchronized (mReportedRoutingTable) {
+				mReportedRoutingTable = pTopologyReportPacket.getRoutes();
+			}
+
+			/**
+			 * Trigger: inform the cluster about the new routing report
+			 */
 			tParentCluster.eventTopologyReport(pTopologyReportPacket);
 		}else{
 			Logging.err(this, "eventReceivedTopologyReport() expected a Cluster as parent, parent is: " + mParent);
@@ -1457,7 +1501,7 @@ public class ComChannel
 				/**
 				 * Unregister the local HRMID
 				 */
-				if(tHRMID != null){
+				if((tHRMID != null) && (!tHRMID.isZero())){
 					mHRMController.unregisterHRMID(tCoordinatorAsClusterMember, tHRMID);
 				}
 			}
