@@ -280,6 +280,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 
 	/**
 	 * Returns the foreign cluster (in relation to this address)
+	 * For example, if this address is 1.3.7 and the foreign address is 1.4.2, the result will be 1.4.0.  
 	 * 
 	 * @param pForeignAddress the foreign address
 	 * 
@@ -306,16 +307,16 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		 * Compare the foreign address with this address
 		 */
 		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i > tCheckLevel; i--){
-			int tClusterAddressLevelValue = pForeignAddress.getLevelAddress(i);
+			int tForeignClusterAddressLevelValue = pForeignAddress.getLevelAddress(i);
 			int tLevelValue = getLevelAddress(i);
 			
 			//add the digit to the result address
-			tResult.setLevelAddress(i, BigInteger.valueOf(tClusterAddressLevelValue));
+			tResult.setLevelAddress(i, BigInteger.valueOf(tForeignClusterAddressLevelValue));
 
 			// have we found a difference between both values?
-			if(tClusterAddressLevelValue != tLevelValue){
+			if(tForeignClusterAddressLevelValue != tLevelValue){
 				if(tDebug){
-					Logging.log(this, "   ..found difference (" + tClusterAddressLevelValue + " != " + tLevelValue + ") at level " + i);
+					Logging.log(this, "   ..found difference (" + tForeignClusterAddressLevelValue + " != " + tLevelValue + ") at level " + i);
 				}
 				
 				// return immediately
