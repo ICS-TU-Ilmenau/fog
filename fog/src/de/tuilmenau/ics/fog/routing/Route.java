@@ -37,6 +37,14 @@ public class Route extends LinkedList<RouteSegment> implements Serializable
 		super();
 	}
 	
+	public Route(RouteSegment pRouteSegment)
+	{
+		super();
+		
+		add(pRouteSegment);
+		++mRouteLength;
+	}
+	
 	public Route(GateID pShortRoute)
 	{
 		super();
