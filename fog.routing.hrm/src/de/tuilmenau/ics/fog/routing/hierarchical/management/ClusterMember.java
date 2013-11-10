@@ -101,11 +101,11 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * Detect the network interface
+	 * Detect the network interface of the L0 ClusterMember
 	 */
 	public void detectNetworkInterface()
 	{
-		if(getHierarchyLevel().isBaseLevel())
+		if(getHierarchyLevel().isBaseLevel())  
 		{
 			if(!(this instanceof Cluster)){
 				if(getBaseHierarchyLevelNetworkInterface() == null){
