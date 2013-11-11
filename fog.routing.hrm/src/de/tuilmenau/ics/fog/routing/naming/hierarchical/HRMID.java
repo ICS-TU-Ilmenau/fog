@@ -21,7 +21,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * 
  * An HRMID can identify:
  * 	1.) a physical node, e.g., "1.1.5"
- *  2.) a coordinator or a cluster as a whole, e.g., "1.1.0" *
+ *  2.) a coordinator or a cluster as a whole, e.g., "1.1.0"
  */
 public class HRMID extends HRMName implements Comparable<HRMID>
 {
