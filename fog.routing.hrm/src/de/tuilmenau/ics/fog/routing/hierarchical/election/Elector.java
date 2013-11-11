@@ -674,27 +674,33 @@ public class Elector implements Localization
 		}
 
 		if(!head()){
-			LinkedList<ComChannel> tChannels = mParent.getComChannels();
-
-			if(tChannels.size() == 1){
-				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
-				
-				if(!tComChannelToPeer.isLinkActive()){
-					// create the packet
-					BullyReturn tPacketBullyReturn = new BullyReturn(mHRMController.getNodeName(), mParent.getPriority());
+			if(mParent.isThisEntityValid()){
+				LinkedList<ComChannel> tChannels = mParent.getComChannels();
 	
-					// deactivate link
-					tComChannelToPeer.setLinkActivation(true, "RETURN[" + tPacketBullyReturn.getOriginalMessageNumber() + "] broadcast - " + pCause);
-			
-					// send
-					tComChannelToPeer.sendPacket(tPacketBullyReturn);
+				if(tChannels.size() == 1){
+					ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
+					
+					if(!tComChannelToPeer.isLinkActive()){
+						// create the packet
+						BullyReturn tPacketBullyReturn = new BullyReturn(mHRMController.getNodeName(), mParent.getPriority());
+		
+						// deactivate link
+						tComChannelToPeer.setLinkActivation(true, "RETURN[" + tPacketBullyReturn.getOriginalMessageNumber() + "] broadcast - " + pCause);
+				
+						// send
+						tComChannelToPeer.sendPacket(tPacketBullyReturn);
+					}else{
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+							Logging.log(this, "    ..skipped RETURN");
+						}
+					}
 				}else{
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-						Logging.log(this, "    ..skipped RETURN");
+					if(tChannels.size() > 1){
+						throw new RuntimeException("Found an invalid comm. channel list: " + tChannels);
+					}else{
+						Logging.err(this, "Found empty channel list for: " + mParent);
 					}
 				}
-			}else{
-				throw new RuntimeException("Found an invalid comm. channel list: " + tChannels);
 			}
 		}
 

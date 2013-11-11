@@ -51,6 +51,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private HRMID mHRMID = null;
 
 	/**
+	 * Stores a description of former HRMIDs
+	 */
+	private String mDescriptionFormerHRMIDs = "";
+
+	/**
 	 * Stores a reference to the parent HRMController.
 	 */
 	protected HRMController mHRMController = null;
@@ -169,6 +174,16 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
+	 * Returns a description of the former HRMIDs
+	 * 
+	 * @return the description
+	 */
+	public String getDescriptionFormerHRMIDs()
+	{
+		return mDescriptionFormerHRMIDs;
+	}
+
+	/**
 	 * Assign new HRMID for being addressable.
 	 *  
 	 * @param pCaller the caller who assigns the new HRMID
@@ -182,6 +197,10 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	
 		// is this a new HRMID?
 		if((pHRMID == null) || (!pHRMID.equals(mHRMID))){
+			if((tOldHRMID != null) && (!tOldHRMID.isZero())){
+				mDescriptionFormerHRMIDs += " " + tOldHRMID.toString();
+			}
+			
 			// update the HRMID
 			mHRMID = (pHRMID != null ? pHRMID.clone() : null);
 			
@@ -236,7 +255,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @return
 	 */
-	protected boolean isThisEntityValid()
+	public boolean isThisEntityValid()
 	{
 		return mRoleValid;
 	}
