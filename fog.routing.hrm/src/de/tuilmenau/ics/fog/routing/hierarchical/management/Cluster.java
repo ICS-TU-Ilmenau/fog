@@ -335,7 +335,7 @@ public class Cluster extends ClusterMember
 			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
 		}
 
-		if(pHRMID != null){
+		if((pHRMID != null) && (!pHRMID.isZero())){
 
 			// setHRMID()
 			super.eventAssignedHRMID(pHRMID);
@@ -496,9 +496,7 @@ public class Cluster extends ClusterMember
 	 * 
 	 * @param pComChannel the comm. channel towards the cluster member, which needs a new HRMID
 	 * @param pCause the cause for this event
-	 * @param pForceUpdate flag to enforce an HRMID update
 	 */
-	@SuppressWarnings("unused")
 	public void eventClusterMemberNeedsHRMID(ComChannel pComChannel, String pCause)
 	{
 		Logging.log(this, "EVENT: Cluster_Member_Needs_HRMID for: " + pComChannel + ", cause=" + pCause);
@@ -510,9 +508,32 @@ public class Cluster extends ClusterMember
 			HRMID tHRMIDForPeer = pComChannel.getPeerHRMID(); 
 
 			/**
+			 * Check old assignment
+			 */
+			Logging.log(this, "   ..old peer HRMID: " + tHRMIDForPeer);
+			if(!HRMConfig.Addressing.REUSE_ADDRESSES){
+				Logging.log(this, "     ..reseting the old HRMID to null because address reusage is disabled");
+				tHRMIDForPeer = null;
+			}
+			if((tHRMIDForPeer != null) && (!tHRMIDForPeer.isZero()) && ((tHRMIDForPeer.isCluster(getHRMID())) || (getHierarchyLevel().isHighest()))){
+				int tUsedAddress = tHRMIDForPeer.getLevelAddress(getHierarchyLevel());
+				synchronized (mUsedAddresses) {
+					if(!mUsedAddresses.contains(tUsedAddress)){
+						Logging.log(this, "     ..mark the address as used in this cluster");
+						// add the peer address to the used addresses
+						mUsedAddresses.add(tUsedAddress);
+					}else{
+						Logging.log(this, "     ..this address is already used, allocating a new one");
+						// the formerly used address isn't available anymore
+						tHRMIDForPeer = null;
+					}
+				}
+			}
+					
+			/**
 			 * Create a new HRMID for the peer
 			 */
-			if((tHRMIDForPeer == null) || (tHRMIDForPeer.isZero()) || (tHRMIDForPeer.isRelativeAddress()) || (!tHRMIDForPeer.hasPrefix(getHRMID(), getHierarchyLevel()))){
+			if((tHRMIDForPeer == null) || (tHRMIDForPeer.isZero()) || (tHRMIDForPeer.isRelativeAddress()) || (!tHRMIDForPeer.isCluster(getHRMID()))){
 				tHRMIDForPeer = allocateClusterMemberAddress();
 				if(tHRMIDForPeer != null){
 					mDescriptionHRMIDAllocation += "\n     .." + tHRMIDForPeer.toString() + " for " + pComChannel + ", cause=" + pCause;
@@ -888,7 +909,11 @@ public class Cluster extends ClusterMember
 		 * Trigger: assign new HRMID
 		 */
 		if (hasLocalCoordinator()){
-			eventClusterMemberNeedsHRMID(pComChannel, "eventClusterMemberJoined()");
+			if(pComChannel.getPeerHRMID() == null){
+				eventClusterMemberNeedsHRMID(pComChannel, "eventClusterMemberJoined()");
+			}else{
+				Logging.log(this, "eventClusterMemberJoined() found an already existing peer HRMID for joined cluster member behind: " + pComChannel);
+			}
 		}else{
 			Logging.log(this, "Coordinator missing, we cannot assign a new HRMID to the joined cluster member behind comm. channel: " + pComChannel);
 		}

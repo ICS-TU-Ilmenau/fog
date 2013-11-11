@@ -965,8 +965,25 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		Logging.log(this, "EVENT: cluster membership activated: " + pMembership);
 		
-		Logging.log(this, "eventClusterMembershipActivated() updates comm. channel to superior coordinator: " + pMembership.getComChannelToClusterHead());
-		setSuperiorCoordinatorComChannel(pMembership.getComChannelToClusterHead());
+		ComChannel tChannelToSuperiorCoordinator = pMembership.getComChannelToClusterHead();
+		
+		/**
+		 * Set the comm. channel to the superior coordinator
+		 */
+		if(!tChannelToSuperiorCoordinator.equals(superiorCoordinatorComChannel())){
+			Logging.log(this, "eventClusterMembershipActivated() updates comm. channel to superior coordinator: " + pMembership.getComChannelToClusterHead());
+			setSuperiorCoordinatorComChannel(pMembership.getComChannelToClusterHead());
+		}else{
+			Logging.warn(this, "eventClusterMembershipActivated() skipped because the new channel corresponds to the old one: " + superiorCoordinatorComChannel());
+		}
+
+		/**
+		 * Set the HRMID of the CoordinatorAsClusterMember instance
+		 */
+		if((getHRMID() == null) || (getHRMID().isZero()) || (!getHRMID().equals(pMembership.getHRMID()))){
+			Logging.log(this, "eventClusterMembershipActivated() updates HRMID to: " + pMembership.getHRMID());
+			eventAssignedHRMID(pMembership.getHRMID());
+		}
 	}
 
 	/**
@@ -978,13 +995,26 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		Logging.log(this, "EVENT: cluster membership deactivated: " + pMembership);
 		
-		for(CoordinatorAsClusterMember tMembership : mClusterMemberships){
-			if(tMembership.isActiveCluster()){
-				if (superiorCoordinatorComChannel() != tMembership.getComChannelToClusterHead()){
-					Logging.log(this, "eventClusterMembershipDeactivated() updates comm. channel to superior coordinator: " + tMembership.getComChannelToClusterHead());
-					setSuperiorCoordinatorComChannel(tMembership.getComChannelToClusterHead());
+		if ((superiorCoordinatorComChannel() == null) || (superiorCoordinatorComChannel() != pMembership.getComChannelToClusterHead())){
+			for(CoordinatorAsClusterMember tMembership : mClusterMemberships){
+				if(tMembership.isActiveCluster()){
+					/**
+					 * Set the comm. channel to the superior coordinator
+					 */
+					if (superiorCoordinatorComChannel() != tMembership.getComChannelToClusterHead()){
+						Logging.log(this, "eventClusterMembershipDeactivated() updates comm. channel to superior coordinator: " + tMembership.getComChannelToClusterHead());
+						setSuperiorCoordinatorComChannel(tMembership.getComChannelToClusterHead());
+					}
+					
+					/**
+					 * Set the HRMID of the CoordinatorAsClusterMember instance
+					 */
+					if((getHRMID() == null) || (getHRMID().isZero()) || (!getHRMID().equals(tMembership.getHRMID()))){
+						Logging.log(this, "eventClusterMembershipActivated() updates HRMID to: " + tMembership.getHRMID());
+						eventAssignedHRMID(tMembership.getHRMID());
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}

@@ -164,7 +164,7 @@ public class HRMConfig
 		/**
 		 * Defines if signaling messages for address distribution are shown
 		 */
-		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = true;
+		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = false;
 
 		/**
 		 * Defines if the address aggregation is shown in the debug output
@@ -190,6 +190,11 @@ public class HRMConfig
 		 * Defines if relative addresses should be distributed if a coordinators doesn't have superior coordinators
 		 */
 		public static final boolean DISTRIBUTE_RELATIVE_ADDRESSES = false;
+
+		/**
+		 * Defines if already assigned addresses should be reused during address distribution
+		 */
+		public static final boolean REUSE_ADDRESSES = true;
 	}
 	
 	public class Hierarchy
@@ -278,7 +283,7 @@ public class HRMConfig
 		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated network topology.
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean REPORT_TOPOLOGY_AUTOMATICALLY = true;
+		public static final boolean REPORT_TOPOLOGY_AUTOMATICALLY = false;
 
 		/**
 		 * Should the packets of the "share phase" be send periodically?

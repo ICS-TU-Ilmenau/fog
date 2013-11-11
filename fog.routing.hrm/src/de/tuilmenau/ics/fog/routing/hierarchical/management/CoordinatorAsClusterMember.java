@@ -211,21 +211,11 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 */
 	public void setClusterActivation(boolean pState)
 	{
-		boolean tOldState = isActiveCluster();
-		
 		super.setClusterActivation(pState);
 
-		/**
-		 * If it is a transition from "false" to " true", then register as the active cluster membership of the parent coordinator
-		 */
-		if((!tOldState) && (pState)){
+		if(pState){
 			mCoordinator.eventClusterMembershipActivated(this);
-		}
-
-		/**
-		 * If it is a transition from "true" to " false", then unregister as the active cluster membership of the parent coordinator
-		 */
-		if((tOldState) && (!pState)){
+		}else{
 			mCoordinator.eventClusterMembershipDeactivated(this);
 		}
 	}
