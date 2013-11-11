@@ -254,6 +254,10 @@ public class ClusterMember extends ClusterName
 		if((pNewL0HRMID != null) && (!pNewL0HRMID.equals(mAssignedL0HRMID)) && (!pNewL0HRMID.isClusterAddress()) && (!pNewL0HRMID.isZero())){
 			Logging.log(this, "ASSIGNED new L0 physical node HRMID: " + pNewL0HRMID);
 
+			if((mAssignedL0HRMID != null) && (!mAssignedL0HRMID.isZero())){
+				mHRMController.unregisterHRMID(this, mAssignedL0HRMID);
+			}
+			
 			// set the new L0 address for this physical node
 			mAssignedL0HRMID = pNewL0HRMID;
 			
@@ -271,7 +275,7 @@ public class ClusterMember extends ClusterName
 						// avoid recursion
 						if(!tSibling.equals(this)){
 							// create the new reported routing table entry
-							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(getL0HRMID() /* this cluster */, tSiblingL0Address /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE);
+							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(getL0HRMID() /* this cluster */, tSiblingL0Address /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, this + "::setL0HRMID()");
 							
 							/**
 							 * Update HRG: register L0 link

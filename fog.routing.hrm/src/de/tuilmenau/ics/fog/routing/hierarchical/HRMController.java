@@ -502,7 +502,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// register a route to the coordinator as addressable target
 		HRMID tCoordinatorHRMID = pCoordinator.getHRMID();
 		if((tCoordinatorHRMID != null) && (!tCoordinatorHRMID.isZero())){ 
-			addHRMRoute(RoutingEntry.createLocalhostEntry(tCoordinatorHRMID));
+			addHRMRoute(RoutingEntry.createLocalhostEntry(tCoordinatorHRMID, this + "::registerCoordinator()"));
 		}
 		
 		synchronized (mLocalCoordinators) {
@@ -617,7 +617,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * Register a local loopback route for the new address 
 						 */
 						// register a route to the cluster member as addressable target
-						addHRMRoute(RoutingEntry.createLocalhostEntry(pHRMID));
+						addHRMRoute(RoutingEntry.createLocalhostEntry(pHRMID, this + "::registerHRMID()"));
 		
 						/**
 						 * Update the DNS for L0
@@ -709,7 +709,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * Unregister the local loopback route for the address 
 						 */
 						// register a route to the cluster member as addressable target
-						delHRMRoute(RoutingEntry.createLocalhostEntry(pOldHRMID));
+						delHRMRoute(RoutingEntry.createLocalhostEntry(pOldHRMID, this + "::unregisterHRMID()"));
 			
 						/**
 						 * Update the DNS for L0
@@ -2058,39 +2058,52 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				/**
 				 * No local loop
 				 */				
-				if(pRoutingEntry.getDest().isClusterAddress()){
-					Logging.log(this, "  ..registering cluster-2-cluster HRG link for: " + pRoutingEntry);
-					registerCluster2ClusterLinkHRG(pRoutingEntry.getSource(), tDestHRMID, pRoutingEntry);
+				if(tDestHRMID.isClusterAddress()){
+//					// check if is a local cluster-2-cluster link
+//					if(pRoutingEntry.getNextHop().isCluster(tDestHRMID)){
+//						pRoutingEntry.extendCause(this + "addHRMRoute()_1");
+//						Logging.log(this, "  ..registering cluster-2-cluster HRG link for: " + pRoutingEntry);
+//						registerCluster2ClusterLinkHRG(pRoutingEntry.getSource(), tDestHRMID, pRoutingEntry);
+//					}else{// remote cluster-2-cluster link
+						// is it a route from a physical node to the next one, which belongs to the destination cluster? 
+						if(pRoutingEntry.getHopCount() == 1){
+							HRMID tSourceHRMID = pRoutingEntry.getSource();
+							Logging.log(this, "  ..registering cluster-2-cluster HRG link from " + tSourceHRMID + " to " + tDestHRMID + " for: " + pRoutingEntry);
+							RoutingEntry tRoutingEntry = RoutingEntry.create(tSourceHRMID, tDestHRMID, pRoutingEntry.getNextHop(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, this + "::addHRMRoute()_1");
+							registerCluster2ClusterLinkHRG(tSourceHRMID, tDestHRMID, tRoutingEntry);
+						}
+//					}
 				}else{
+					pRoutingEntry.extendCause(this + "addHRMRoute()_2");
 					Logging.log(this, "  ..registering nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
 					registerLinkHRG(pRoutingEntry.getSource(), tDestHRMID, pRoutingEntry);
 				}
 			}else{
-				/**
-				 * Local loop
-				 */
-				int tHierLevel = tDestHRMID.getHierarchyLevel(); 
-				if(tDestHRMID.isClusterAddress()){
-					Logging.log(this, "  ..destination is a cluster address in routing table entry: " + pRoutingEntry);
-					LinkedList<ClusterMember> tClusterMembers = getAllClusterMembers(tHierLevel);
-					for(ClusterMember tClusterMember : tClusterMembers){
-						HRMID tClusterMemberAddress = tClusterMember.getHRMID();
-						if(tClusterMember.isActiveCluster()){
-							Logging.log(this, "  ..ClusterMember " + tClusterMember + " has address: " + tClusterMemberAddress);
-							if((tClusterMemberAddress != null) && (!tClusterMemberAddress.isZero()) && (!tClusterMemberAddress.equals(tDestHRMID))){
-								Logging.log(this, "  ..registering cluster-2-cluster HRG link from " + tDestHRMID + " to " + tClusterMemberAddress + " for: " + pRoutingEntry);
-								RoutingEntry tRoutingEntry = RoutingEntry.create(tDestHRMID, tClusterMemberAddress, tClusterMemberAddress, RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE);
-								registerCluster2ClusterLinkHRG(tDestHRMID, tClusterMemberAddress, tRoutingEntry);
-							}else{
-								Logging.log(this, "  ..ignoring for HRG the link from " + tDestHRMID + " to " + tClusterMemberAddress + " the HRM routing table entry: " + pRoutingEntry);
-							}
-						}else{
-							Logging.log(this, "  ..ignoring for HRG the link from " + tDestHRMID + " to inactive cluster " + tClusterMemberAddress + " the HRM routing table entry: " + pRoutingEntry);
-						}
-					}
-				}else{
-					Logging.log(this, "  ..ignoring for HRG the HRM routing table entry: " + pRoutingEntry);
-				}
+//				/**
+//				 * Local loop
+//				 */
+//				int tHierLevel = tDestHRMID.getHierarchyLevel(); 
+//				if(tDestHRMID.isClusterAddress()){
+//					Logging.log(this, "  ..destination is a cluster address in routing table entry: " + pRoutingEntry);
+//					LinkedList<ClusterMember> tClusterMembers = getAllClusterMembers(tHierLevel);
+//					for(ClusterMember tClusterMember : tClusterMembers){
+//						HRMID tClusterMemberAddress = tClusterMember.getHRMID();
+//						if(tClusterMember.isActiveCluster()){
+//							Logging.log(this, "  ..ClusterMember " + tClusterMember + " has address: " + tClusterMemberAddress);
+//							if((tClusterMemberAddress != null) && (!tClusterMemberAddress.isZero()) && (!tClusterMemberAddress.equals(tDestHRMID))){
+//								Logging.log(this, "  ..registering cluster-2-cluster HRG link from " + tDestHRMID + " to " + tClusterMemberAddress + " for: " + pRoutingEntry);
+//								RoutingEntry tRoutingEntry = RoutingEntry.create(tDestHRMID, tClusterMemberAddress, tClusterMemberAddress, RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, this + "::addHRMRoute()_2");
+//								registerCluster2ClusterLinkHRG(tDestHRMID, tClusterMemberAddress, tRoutingEntry);
+//							}else{
+//								Logging.log(this, "  ..ignoring for HRG the link from " + tDestHRMID + " to " + tClusterMemberAddress + " the HRM routing table entry: " + pRoutingEntry);
+//							}
+//						}else{
+//							Logging.log(this, "  ..ignoring for HRG the link from " + tDestHRMID + " to inactive cluster " + tClusterMemberAddress + " the HRM routing table entry: " + pRoutingEntry);
+//						}
+//					}
+//				}else{
+//					Logging.log(this, "  ..ignoring for HRG the HRM routing table entry: " + pRoutingEntry);
+//				}
 			}
 		}else{
 			Logging.log(this, "  ..ignoring for HRG the old HRM routing table entry: " + pRoutingEntry);
@@ -2149,7 +2162,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Update the hierarchical routing graph (HRG)
 		 */ 
 		if(tResult){
-			//TODO:
+			HRMID tDestHRMID = pRoutingEntry.getDest();
+			// do we have a local loop?
+			if(!pRoutingEntry.isLocalLoop()){
+				/**
+				 * No local loop
+				 */				
+				if(tDestHRMID.isClusterAddress()){
+					if(pRoutingEntry.getHopCount() == 1){
+						HRMID tSourceHRMID = pRoutingEntry.getSource();
+						Logging.log(this, "  ..unregistering cluster-2-cluster HRG link from " + tSourceHRMID + " to " + tDestHRMID + " for: " + pRoutingEntry);
+						unregisterLinkHRG(tSourceHRMID, tDestHRMID);
+					}
+				}else{
+					pRoutingEntry.extendCause(this + "addHRMRoute()_2");
+					Logging.log(this, "  ..unregistering nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
+					unregisterLinkHRG(pRoutingEntry.getSource(), tDestHRMID);
+				}
+			}
 		}
 
 		/**
@@ -3387,7 +3417,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Registers an HRMID to the locally stored hiearchical routing graph (HRG)
+	 * Registers an HRMID to the locally stored hierarchical routing graph (HRG)
 	 *  
 	 * @param pNode the node (HRMID) which should be stored in the HRG
 	 */
@@ -3466,6 +3496,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Do the actual linking
 		 */
 		synchronized (mHierarchicalRoutingGraph) {
+			pRoutingEntry.assignToHRG(mHierarchicalRoutingGraph);
 			mHierarchicalRoutingGraph.link(pFrom, pTo, tLink);
 			tResult = true;
 		}

@@ -385,27 +385,28 @@ public class Cluster extends ClusterMember
 			 */
 			super.setHRMID(pCaller, pHRMID);
 			
-			/**
-			 * Update the local HRG: find other active Cluster instances and store a local loopback link to them
-			 */
-			LinkedList<Cluster> tSiblings = mHRMController.getAllClusters(getHierarchyLevel());
-			// iterate over all siblings
-			for(Cluster tSibling : tSiblings){
-				if(tSibling.isActiveCluster()){
-					Logging.log(this, "  ..found active sibling: " + tSibling);
-					HRMID tSiblingAddress = tSibling.getHRMID();
-					// has the sibling a valid address?
-					if((tSiblingAddress != null) && (!tSiblingAddress.isZero())){
-						// avoid recursion
-						if(!tSibling.equals(this)){
-							// create the new reported routing table entry
-							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(getHRMID() /* this cluster */, tSiblingAddress /* the sibling */, tSiblingAddress, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE);
-							// register the new HRG entry
-							mHRMController.registerLinkHRG(getHRMID(),  tSiblingAddress, tRoutingEntryToSibling);
-						}
-					}
-				}
-			}
+//			/**
+//			 * Update the local HRG: find other active Cluster instances and store a local loopback link to them
+//			 */
+//			LinkedList<Cluster> tSiblings = mHRMController.getAllClusters(getHierarchyLevel());
+//			// iterate over all siblings
+//			for(Cluster tSibling : tSiblings){
+//				if(tSibling.isActiveCluster()){
+//					Logging.log(this, "  ..found active sibling: " + tSibling);
+//					HRMID tSiblingAddress = tSibling.getHRMID();
+//					HRMID tSiblingL0Address = tSibling.getL0HRMID();
+//					// has the sibling a valid address?
+//					if((tSiblingAddress != null) && (!tSiblingAddress.isZero())){
+//						// avoid recursion
+//						if(!tSibling.equals(this)){
+//							// create the new reported routing table entry
+//							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(getL0HRMID() /* this cluster */, tSiblingAddress /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE);
+//							// register the new HRG entry
+//							mHRMController.registerCluster2ClusterLinkHRG(getHRMID(), tSiblingAddress, tRoutingEntryToSibling);
+//						}
+//					}
+//				}
+//			}
 		}
 	}
 
@@ -705,7 +706,7 @@ public class Cluster extends ClusterMember
 						/**
 						 * Store/update link in the HRG
 						 */ 
-						mHRMController.registerCluster2ClusterLinkHRG(tEntry.getSource(), tDestHRMID, tEntry);
+//						mHRMController.registerCluster2ClusterLinkHRG(tEntry.getSource(), tDestHRMID, tEntry);
 					}
 				}				
 			}else{

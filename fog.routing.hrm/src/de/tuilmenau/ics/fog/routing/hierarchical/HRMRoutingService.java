@@ -197,39 +197,48 @@ public class HRMRoutingService implements RoutingService, Localization
 		// is this routing entry new to us?
 		if(tResult){
 			// get the HRMID of the destination
-			HRMID tDestHRMID = pRoutingTableEntry.getDest().clone();
+			HRMID tNextHopHRMID = pRoutingTableEntry.getNextHop().clone();
 
-			// save HRMID of the given route if it belongs to a direct neighbor node
-			if (pRoutingTableEntry.isRouteToDirectNeighbor())
+			/**
+			 * Update neighbor database and HRMID-t-L2Address mapping
+			 */ 
+			if (pRoutingTableEntry.getNextHopL2Address() != null)
 			{
-				synchronized(mDirectNeighborAddresses){
-					// get the L2 address of the next (might be null)
-					L2Address tL2Address = pRoutingTableEntry.getNextHopL2Address();
-					
-					// add address for a direct neighbor
-					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-						Logging.log(this, "     ..adding " + tDestHRMID + " as address of a direct neighbor");
-					}
-					mDirectNeighborAddresses.add(tDestHRMID);
-
-					if (tL2Address != null){
-						// add L2 address for this direct neighbor
-						if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-							Logging.log(this, "     ..add mapping from " + tDestHRMID + " to " + tL2Address);
-						}
+				if(!tNextHopHRMID.isClusterAddress()){
+					synchronized(mDirectNeighborAddresses){
 						/**
-						 * Update mapping HRMID-2-L2Address
+						 * Update neighbor database
 						 */
-						mapHRMID(tDestHRMID, tL2Address);
+						// get the L2 address of the next (might be null)
+						L2Address tNextHopL2Address = pRoutingTableEntry.getNextHopL2Address();
+						// add address for a direct neighbor
+						if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+							Logging.log(this, "     ..adding " + tNextHopHRMID + " as address of a direct neighbor");
+						}
+						mDirectNeighborAddresses.add(tNextHopHRMID);
+	
+						if (tNextHopL2Address != null){
+							// add L2 address for this direct neighbor
+							if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+								Logging.log(this, "     ..add mapping from " + tNextHopHRMID + " to " + tNextHopL2Address);
+							}
+							/**
+							 * Update HRMID-2-L2Address mapping
+							 */
+							mapHRMID(tNextHopHRMID, tNextHopL2Address);
+						}
 					}
 				}
-			}
-			
-			if(pRoutingTableEntry.isLocalLoop()){
+			}else{
 				/**
-				 * Update mapping HRMID-2-L2Address
+				 * For local loopback routes we also learn the HRMID-2-L2Address mapping
 				 */
-				mapHRMID(tDestHRMID, mHRMController.getNodeL2Address());
+				if(pRoutingTableEntry.isLocalLoop()){
+					/**
+					 * Update mapping HRMID-2-L2Address
+					 */
+					mapHRMID(tNextHopHRMID, mHRMController.getNodeL2Address());
+				}
 			}
 		}
 		

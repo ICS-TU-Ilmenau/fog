@@ -294,12 +294,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							// share only with remote nodes
 							if(tComChannel.toRemoteNode()){
 								// create the new routing table entry
-								RoutingEntry tRoutingEntryForMember = RoutingEntry.createRouteToDirectNeighbor(tComChannel.getPeerHRMID(), tClusterHRMID, tNextHopForSharedRoutes, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+//								RoutingEntry tRoutingEntryForMember = RoutingEntry.createRouteToDirectNeighbor(tComChannel.getPeerHRMID(), tClusterHRMID, tNextHopForSharedRoutes, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
 								// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 								//tRoutingEntryForMember.setNextHopL2Address(mHRMController.getNodeL2Address() /* TODO */);
 	
 								// add the route entry to the "share phase" of this comm. channel
-								tComChannel.storeRouteForPeer(tRoutingEntryForMember);
+//								tComChannel.storeRouteForPeer(tRoutingEntryForMember);
 							}
 						}
 					}else{
@@ -316,17 +316,19 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 * 		- store an explicit route entry 
 			 ********************************************************************/
 			if(getHierarchyLevel().isBaseLevel()){
-				// iterate over all comm. channels and store per channel a shared route to the clsuter head
+				// iterate over all comm. channels and store per channel a shared route to the cluster head
 				for (ComChannel tComChannel : tComChannels){
 					// share only with remote nodes
 					if(tComChannel.toRemoteNode()){
-						// create the new routing table entry
-						RoutingEntry tRoutingEntryForMember = RoutingEntry.createRouteToDirectNeighbor(tComChannel.getPeerHRMID(), tNextHopForSharedRoutes, tNextHopForSharedRoutes, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
-						// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-						tRoutingEntryForMember.setNextHopL2Address(mHRMController.getNodeL2Address());
-	
-						// add the route entry to the "share phase" of this comm. channel
-						tComChannel.storeRouteForPeer(tRoutingEntryForMember);
+						if((tComChannel.getPeerHRMID() != null) && (!tComChannel.getPeerHRMID().isZero())){
+							// create the new routing table entry
+							RoutingEntry tRoutingEntryForMember = RoutingEntry.createRouteToDirectNeighbor(tComChannel.getPeerHRMID(), tNextHopForSharedRoutes, tNextHopForSharedRoutes, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::sharePhase()");
+							// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+							tRoutingEntryForMember.setNextHopL2Address(mHRMController.getNodeL2Address());
+		
+							// add the route entry to the "share phase" of this comm. channel
+							tComChannel.storeRouteForPeer(tRoutingEntryForMember);
+						}
 					}
 				}
 			}
@@ -382,7 +384,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 * Iterate over all comm. channels and share routing data
 			 *******************************************************************/ 
 			for (ComChannel tComChannel : tComChannels){
-				tComChannel.distributeRoutingInformation();
+//				tComChannel.distributeRoutingInformation();
 			}
 
 		}else{
@@ -407,7 +409,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			// are we on base hierarchy level?
 			if (getHierarchyLevel().isBaseLevel()){
 				// create the new routing table entry
-				tRoutingEntryForMember = RoutingEntry.createRouteToDirectNeighbor(pSource, tMemberHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */);
+				tRoutingEntryForMember = RoutingEntry.createRouteToDirectNeighbor(pSource, tMemberHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::storeRouteToClusterMember()");
 				// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 				tRoutingEntryForMember.setNextHopL2Address(pComChannel.getPeerL2Address());
 				

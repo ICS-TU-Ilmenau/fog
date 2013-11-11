@@ -10,6 +10,9 @@
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import de.tuilmenau.ics.fog.routing.RouteSegment;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraph;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphLink;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphNode;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 
@@ -98,6 +101,18 @@ public class RoutingEntry implements RouteSegment
 	 * Stores the L2 address of the next hop if known
 	 */
 	private L2Address mNextHopL2Address = null;
+
+	/**
+	 * Stores the cause for this entry.
+	 * This variable is not part of the concept. It is only for GUI/debugging use.
+	 */
+	private String mCause = null;
+	
+	/**
+	 * Stores if this entry belongs to an HRG instance.
+	 * This variable is not part of the concept. It is only used to simplify the implementation. Otherwise, the same class has to be duplicated with very minor differences in order to be used within a HRG
+	 */
+	private boolean mBelongstoHRG = false;
 	
 	/**
 	 * Constructor
@@ -109,8 +124,9 @@ public class RoutingEntry implements RouteSegment
 	 * @param pUtilization the utilization of the described route
 	 * @param pMinDelay the minimum additional delay the described route causes
 	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 * @param pCause the cause for this routing table entry
 	 */
-	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate)
+	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		mDestination = pDestination;
 		mSource = pSource;
@@ -121,6 +137,7 @@ public class RoutingEntry implements RouteSegment
 		mMaxDataRate = pMaxDataRate;
 		mLocalLoop = false;
 		mRouteToDirectNeighbor = false;
+		mCause = pCause;
 	}
 	
 	/**
@@ -132,21 +149,23 @@ public class RoutingEntry implements RouteSegment
 	 * @param pUtilization the utilization of the described route
 	 * @param pMinDelay the minimum additional delay the described route causes
 	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 * @param pCause the cause for this routing table entry
 	 */
-	private RoutingEntry(HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate)
+	private RoutingEntry(HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
-		this(null, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate); 
+		this(null, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate, pCause); 
 	}
 	
 	/**
 	 * Factory function: creates a routing loop, which is used for routing traffic on the local host.
 	 * 
 	 * @param pLoopAddress the address which defines the destination and next hop of this route
+	 * @param pCause the cause for this routing table entry
 	 */
-	public static RoutingEntry createLocalhostEntry(HRMID pLoopAddress)
+	public static RoutingEntry createLocalhostEntry(HRMID pLoopAddress, String pCause)
 	{
 		// create instance
-		RoutingEntry tEntry = new RoutingEntry(null, pLoopAddress, pLoopAddress, NO_HOP_COSTS, NO_UTILIZATION, NO_DELAY, INFINITE_DATARATE);
+		RoutingEntry tEntry = new RoutingEntry(null, pLoopAddress, pLoopAddress, NO_HOP_COSTS, NO_UTILIZATION, NO_DELAY, INFINITE_DATARATE, pCause);
 
 		// mark as local loop
 		tEntry.mLocalLoop = true;
@@ -168,11 +187,12 @@ public class RoutingEntry implements RouteSegment
 	 * @param pUtilization the utilization of the described route
 	 * @param pMinDelay the minimum additional delay the described route causes
 	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 * @param pCause the cause for this routing table entry
 	 */
-	public static RoutingEntry create(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate)
+	public static RoutingEntry create(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		// create instance
-		RoutingEntry tEntry = new RoutingEntry(pSource, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate);
+		RoutingEntry tEntry = new RoutingEntry(pSource, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate, pCause);
 		
 		// return with the entry
 		return tEntry;
@@ -187,11 +207,12 @@ public class RoutingEntry implements RouteSegment
 	 * @param pUtilization the utilization of the described route
 	 * @param pMinDelay the minimum additional delay the described route causes
 	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 * @param pCause the cause for this routing table entry
 	 */
-	public static RoutingEntry createRouteToDirectNeighbor(HRMID pSource, HRMID pDestination, HRMID pNextHop, float pUtilization, long pMinDelay, long pMaxDataRate)
+	public static RoutingEntry createRouteToDirectNeighbor(HRMID pSource, HRMID pDestination, HRMID pNextHop, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		// create instance
-		RoutingEntry tEntry = create(pSource, pDestination, pNextHop, HRMConfig.Routing.HOP_COSTS_TO_A_DIRECT_NEIGHBOR, pUtilization, pMinDelay, pMaxDataRate);
+		RoutingEntry tEntry = create(pSource, pDestination, pNextHop, HRMConfig.Routing.HOP_COSTS_TO_A_DIRECT_NEIGHBOR, pUtilization, pMinDelay, pMaxDataRate, pCause);
 		
 		// mark as local loop
 		tEntry.mRouteToDirectNeighbor = true;
@@ -208,11 +229,12 @@ public class RoutingEntry implements RouteSegment
 	 * @param pUtilization the utilization of the described route
 	 * @param pMinDelay the minimum additional delay the described route causes
 	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 * @param pCause the cause for this routing table entry
 	 */
-	public static RoutingEntry createRouteToDirectNeighbor(HRMID pSource, HRMID pDirectNeighbor, float pUtilization, long pMinDelay, long pMaxDataRate)
+	public static RoutingEntry createRouteToDirectNeighbor(HRMID pSource, HRMID pDirectNeighbor, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		// return with the entry
-		return createRouteToDirectNeighbor(pSource, pDirectNeighbor, pDirectNeighbor, pUtilization, pMinDelay, pMaxDataRate);
+		return createRouteToDirectNeighbor(pSource, pDirectNeighbor, pDirectNeighbor, pUtilization, pMinDelay, pMaxDataRate, pCause);
 	}
 
 	/**
@@ -222,13 +244,32 @@ public class RoutingEntry implements RouteSegment
 	 * @param pUtilization the utilization of the described route
 	 * @param pMinDelay the minimum additional delay the described route causes
 	 * @param pMaxDataRate the maximum data rate the described route might provide
+	 * @param pCause the cause for this routing table entry
 	 */
-	public static RoutingEntry createRouteToDirectNeighbor(HRMID pDirectNeighbor, float pUtilization, long pMinDelay, long pMaxDataRate)
+	public static RoutingEntry createRouteToDirectNeighbor(HRMID pDirectNeighbor, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		// return with the entry
-		return createRouteToDirectNeighbor(null, pDirectNeighbor, pUtilization, pMinDelay, pMaxDataRate);
+		return createRouteToDirectNeighbor(null, pDirectNeighbor, pUtilization, pMinDelay, pMaxDataRate, pCause);
 	}
 
+	/**
+	 * Assigns the entry to an HRG instance
+	 */
+	public void assignToHRG(AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink> pMHierarchicalRoutingGraph)
+	{
+		mBelongstoHRG = true;
+	}
+	
+	/**
+	 * Extends the cause string
+	 * 
+	 * @param pCause the additional cause string
+	 */
+	public void extendCause(String pCause)
+	{
+		mCause += ", " + pCause;
+	}
+	
 	/**
 	 * Defines the L2 address of the next hop
 	 * 
@@ -349,7 +390,7 @@ public class RoutingEntry implements RouteSegment
 	public RoutingEntry clone()
 	{
 		// create object copy
-		RoutingEntry tResult = new RoutingEntry(mSource, mDestination, mNextHop, mHopCount, mUtilization, mMinDelay, mMaxDataRate);
+		RoutingEntry tResult = new RoutingEntry(mSource, mDestination, mNextHop, mHopCount, mUtilization, mMinDelay, mMaxDataRate, mCause);
 		
 		// update the flag "route to direct neighbor"
 		tResult.mRouteToDirectNeighbor = mRouteToDirectNeighbor;
@@ -403,6 +444,10 @@ public class RoutingEntry implements RouteSegment
 	@Override
 	public String toString()
 	{
-		return "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() > 0 ? getMaxDataRate() : "inf.") : "") + ")"; 
+		if(!mBelongstoHRG){
+			return "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() > 0 ? getMaxDataRate() : "inf.") : "") + (mCause != "" ? ", Cause=" + mCause :"") + ")";
+		}else{
+			return getSource() + " <==> " + getNextHop() + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() > 0 ? getMaxDataRate() : "inf.") : "") + (mCause != "" ? ", Cause=" + mCause :"");
+		}
 	}
 }
