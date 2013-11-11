@@ -74,6 +74,35 @@ public class AbstractRoutingGraphLink implements Serializable
 	}
 	
 	/**
+	 * Returns if both objects address the same cluster/coordinator
+	 * 
+	 * @return true or false
+	 */
+	@Override
+	public boolean equals(Object pObj)
+	{
+		if(pObj instanceof AbstractRoutingGraphLink){
+			AbstractRoutingGraphLink tOtherLink = (AbstractRoutingGraphLink)pObj;
+			if(mLinkType.equals(tOtherLink.mLinkType)){
+				if(mLinkType.equals(LinkType.ROUTE)){
+					if (getRoute() != null){
+						// compare the routes of both instances
+						return getRoute().equals(tOtherLink.getRoute());
+					}else{
+						// both routes are "null" ?
+						return (tOtherLink.getRoute() == null); 
+					}
+				}else{
+					// are the object references the same?
+					return super.equals(pObj);
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Updates the stored route to the remote side
 	 * 
 	 * @param pNewRoute the new route to the remote side
