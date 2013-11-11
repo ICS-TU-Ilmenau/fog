@@ -271,6 +271,16 @@ public class RoutingEntry implements RouteSegment
 	}
 	
 	/**
+	 * Returns the cause for this entry
+	 * 
+	 * @return the cause
+	 */
+	public String getCause()
+	{
+		return mCause;
+	}
+	
+	/**
 	 * Defines the L2 address of the next hop
 	 * 
 	 * @param pDestL2Address the L2 address of the next hop
