@@ -104,9 +104,34 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	 * @param pHierarchyLevel the hierarchy level
 	 * @param pAddress the address part for the given hierarchy level
 	 */
+	public void setLevelAddress(int pHierarchyLevel, int pAddress)
+	{
+		setLevelAddress(new HierarchyLevel(this, pHierarchyLevel), BigInteger.valueOf(pAddress));
+	}
+
+	/**
+	 * Set the address part for a specific hierarchy level.
+	 * 
+	 * @param pHierarchyLevel the hierarchy level
+	 * @param pAddress the address part for the given hierarchy level
+	 */
 	public void setLevelAddress(int pHierarchyLevel, BigInteger pAddress)
 	{
-		setLevelAddress(new HierarchyLevel(this, pHierarchyLevel), pAddress);
+		BigInteger tLevelAddr = getLevelAddressBigInteger(pHierarchyLevel);
+		
+		/**
+		 * Subtract the old value
+		 */
+		if(!tLevelAddr.equals(BigInteger.valueOf(0))){
+			mAddress = mAddress.subtract(tLevelAddr.shiftLeft(pHierarchyLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
+		}
+		
+		/**
+		 * Add the new value
+		 */
+		if(!pAddress.equals(BigInteger.valueOf(0))){
+			mAddress = mAddress.add(pAddress.shiftLeft(pHierarchyLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
+		}
 	}
 
 	/**
@@ -117,20 +142,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	 */
 	public void setLevelAddress(HierarchyLevel pHierarchyLevel, BigInteger pAddress)
 	{
-		int tLevel = pHierarchyLevel.getValue();
-		BigInteger tLevelAddr = getLevelAddressBigInteger(tLevel);
-		
-		if(pHierarchyLevel.isHigherLevel()) { // higher hierarchy level
-			if(!tLevelAddr.equals(BigInteger.valueOf(0))) {
-				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((tLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)).divide(BigInteger.valueOf(tLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
-			}
-		} else {// base hierarchy level
-			if(!tLevelAddr.equals(BigInteger.valueOf(0))) {
-				mAddress = mAddress.subtract(mAddress.mod(BigInteger.valueOf((tLevel + 1) * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL)));
-			}
-		}		
-		
-		mAddress = mAddress.add(pAddress.shiftLeft(tLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
+		setLevelAddress(pHierarchyLevel.getValue(), pAddress);
 	}
 	
 	/**
