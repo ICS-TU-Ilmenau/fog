@@ -2037,11 +2037,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return true if the entry had new routing data
 	 */
+	private int mCallsAddHRMRoute = 0;
 	public boolean addHRMRoute(RoutingEntry pRoutingEntry)
 	{
 		boolean tResult = false;
 		
-		Logging.log(this, "Adding HRM routing table entry: " + pRoutingEntry);
+		mCallsAddHRMRoute++;
+		Logging.log(this, "Adding (" + mCallsAddHRMRoute + ") HRM routing table entry: " + pRoutingEntry);
 		
 		/**
 		 * Inform the HRS about the new route
@@ -2052,11 +2054,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Update the hierarchical routing graph (HRG)
 		 */ 
 		if(tResult){
+			// record the cause for the routing entry
+			pRoutingEntry.extendCause(this + "::addHRMRoute()");
+			
 			HRMID tDestHRMID = pRoutingEntry.getDest();
-			// do we have a local loop?
+			/**
+			 * Ignore local loops
+			 */ 
 			if(!pRoutingEntry.isLocalLoop()){
 				/**
-				 * No local loop
+				 * Does the next hop lead to a foreign cluster?
 				 */				
 				if(tDestHRMID.isClusterAddress()){
 //					// check if is a local cluster-2-cluster link
@@ -2066,16 +2073,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //						registerCluster2ClusterLinkHRG(pRoutingEntry.getSource(), tDestHRMID, pRoutingEntry);
 //					}else{// remote cluster-2-cluster link
 						// is it a route from a physical node to the next one, which belongs to the destination cluster? 
-						if(pRoutingEntry.getHopCount() == 1){
-							HRMID tSourceHRMID = pRoutingEntry.getSource();
-							Logging.log(this, "  ..registering cluster-2-cluster HRG link from " + tSourceHRMID + " to " + tDestHRMID + " for: " + pRoutingEntry);
-							RoutingEntry tRoutingEntry = RoutingEntry.create(tSourceHRMID, tDestHRMID, pRoutingEntry.getNextHop(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, this + "::addHRMRoute()_1");
-							registerCluster2ClusterLinkHRG(tSourceHRMID, tDestHRMID, tRoutingEntry);
+						if(pRoutingEntry.isRouteToDirectNeighbor()){
+							// register automatically new links in the HRG based on pRoutingEntry 
+							registerAutoHRG(pRoutingEntry);
+//							HRMID tGeneralizedSourceHRMID = tDestHRMID.getForeignCluster(pRoutingEntry.getSource());
+//							// get the hierarchy level at which this link connects two clusters
+//							int tLinkHierLvl = tGeneralizedSourceHRMID.getHierarchyLevel();
+//							// initialize the source cluster HRMID
+//							HRMID tSourceClusterHRMID = pRoutingEntry.getSource().clone();
+//							// initialize the destination cluster HRMID
+//							HRMID tDestClusterHRMID = pRoutingEntry.getNextHop().clone();
+//							for(int i = 0; i <= tLinkHierLvl; i++){
+//								// reset the value for the corresponding hierarchy level for both the source and destination cluster HRMID
+//								tSourceClusterHRMID.setLevelAddress(i, 0);
+//								tDestClusterHRMID.setLevelAddress(i, 0);
+//
+//								Logging.err(this, "  ..registering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
+//								RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource(), tDestClusterHRMID, pRoutingEntry.getNextHop(), 5 * (i+1)/*RoutingEntry.NO_HOP_COSTS*/, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, this + "::addHRMRoute()_1");
+//								registerCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
+//							}
 						}
 //					}
 				}else{
 					pRoutingEntry.extendCause(this + "addHRMRoute()_2");
-					Logging.log(this, "  ..registering nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
+					Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
 					registerLinkHRG(pRoutingEntry.getSource(), tDestHRMID, pRoutingEntry);
 				}
 			}else{
@@ -2118,6 +2139,36 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Registers automatically new links in the HRG based on a given routing table entry
+	 * 
+	 * @param pRoutingEntry the routing table entry
+	 */
+	public void registerAutoHRG(RoutingEntry pRoutingEntry)
+	{
+		HRMID tDestHRMID = pRoutingEntry.getDest();
+		if(tDestHRMID != null){
+			HRMID tGeneralizedSourceHRMID = tDestHRMID.getForeignCluster(pRoutingEntry.getSource());
+			// get the hierarchy level at which this link connects two clusters
+			int tLinkHierLvl = tGeneralizedSourceHRMID.getHierarchyLevel();
+			// initialize the source cluster HRMID
+			HRMID tSourceClusterHRMID = pRoutingEntry.getSource().clone();
+			// initialize the destination cluster HRMID
+			HRMID tDestClusterHRMID = pRoutingEntry.getNextHop().clone();
+			for(int i = 0; i <= tLinkHierLvl; i++){
+				// reset the value for the corresponding hierarchy level for both the source and destination cluster HRMID
+				tSourceClusterHRMID.setLevelAddress(i, 0);
+				tDestClusterHRMID.setLevelAddress(i, 0);
+	
+				if(!tSourceClusterHRMID.equals(tDestClusterHRMID)){
+					Logging.err(this, "  ..registering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
+					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource(), tDestClusterHRMID, pRoutingEntry.getNextHop(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::registerAutoHRG()");
+					registerCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
+				}
+			}
+		}
 	}
 
 	/**
@@ -2169,15 +2220,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * No local loop
 				 */				
 				if(tDestHRMID.isClusterAddress()){
-					if(pRoutingEntry.getHopCount() == 1){
-						HRMID tSourceHRMID = pRoutingEntry.getSource();
-						Logging.log(this, "  ..unregistering cluster-2-cluster HRG link from " + tSourceHRMID + " to " + tDestHRMID + " for: " + pRoutingEntry);
-						unregisterLinkHRG(tSourceHRMID, tDestHRMID);
+					if(pRoutingEntry.isRouteToDirectNeighbor()){
+						// register automatically new links in the HRG based on pRoutingEntry 
+						unregisterAutoHRG(pRoutingEntry);
 					}
 				}else{
 					pRoutingEntry.extendCause(this + "addHRMRoute()_2");
 					Logging.log(this, "  ..unregistering nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
-					unregisterLinkHRG(pRoutingEntry.getSource(), tDestHRMID);
+					unregisterLinkHRG(pRoutingEntry.getSource(), tDestHRMID, pRoutingEntry);
 				}
 			}
 		}
@@ -2191,6 +2241,36 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Unregisters automatically old links from the HRG based on a given routing table entry
+	 * 
+	 * @param pRoutingEntry the routing table entry
+	 */
+	public void unregisterAutoHRG(RoutingEntry pRoutingEntry)
+	{
+		HRMID tDestHRMID = pRoutingEntry.getDest();
+		if(tDestHRMID != null){
+			HRMID tGeneralizedSourceHRMID = tDestHRMID.getForeignCluster(pRoutingEntry.getSource());
+			// get the hierarchy level at which this link connects two clusters
+			int tLinkHierLvl = tGeneralizedSourceHRMID.getHierarchyLevel();
+			// initialize the source cluster HRMID
+			HRMID tSourceClusterHRMID = pRoutingEntry.getSource().clone();
+			// initialize the destination cluster HRMID
+			HRMID tDestClusterHRMID = pRoutingEntry.getNextHop().clone();
+			for(int i = 0; i <= tLinkHierLvl; i++){
+				// reset the value for the corresponding hierarchy level for both the source and destination cluster HRMID
+				tSourceClusterHRMID.setLevelAddress(i, 0);
+				tDestClusterHRMID.setLevelAddress(i, 0);
+	
+				if(!tSourceClusterHRMID.equals(tDestClusterHRMID)){
+					Logging.err(this, "  ..registering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
+					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource(), tDestClusterHRMID, pRoutingEntry.getNextHop(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::registerAutoHRG()");
+					unregisterCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
+				}
+			}
+		}
 	}
 
 	/**
@@ -3497,7 +3577,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		synchronized (mHierarchicalRoutingGraph) {
 			pRoutingEntry.assignToHRG(mHierarchicalRoutingGraph);
-			mHierarchicalRoutingGraph.link(pFrom, pTo, tLink);
+			mHierarchicalRoutingGraph.link(pFrom.clone(), pTo.clone(), tLink);
 			tResult = true;
 		}
 		
@@ -3509,20 +3589,35 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pFrom the starting point of the link
 	 * @param pTo the ending point of the link
+	 * @param pRoutingEntry the routing entry of the addressed link
 	 */
-	public void unregisterLinkHRG(HRMID pFrom, HRMID pTo)
+	public boolean unregisterLinkHRG(HRMID pFrom, HRMID pTo, RoutingEntry pRoutingEntry)
 	{
-		AbstractRoutingGraphLink tLink = getLinkHRG(pFrom, pTo);
-		
+		boolean tResult = false;
+
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-			Logging.log(this, "UNREGISTERING LINK (HRG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  LINK=" + tLink);
+			Logging.log(this, "UNREGISTERING LINK (HRG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  LINK=" + pRoutingEntry);
+		}
+
+		AbstractRoutingGraphLink tLink = null;
+		synchronized (mHierarchicalRoutingGraph) {
+			if(pRoutingEntry != null){
+				tLink = mHierarchicalRoutingGraph.getEdge(pFrom, pTo, new AbstractRoutingGraphLink(new Route(pRoutingEntry)));
+			}else{
+				tLink = mHierarchicalRoutingGraph.getEdge(pFrom, pTo, null);
+			}
 		}
 
 		if(tLink != null){
 			synchronized (mHierarchicalRoutingGraph) {
 				mHierarchicalRoutingGraph.unlink(tLink);
+				tResult = true;
 			}
+		}else{
+			Logging.err(this, "Haven't found an HRG link between " + pFrom + " and " + pTo);
 		}
+
+		return tResult;
 	}
 
 	/**
@@ -3535,47 +3630,28 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public void registerCluster2ClusterLinkHRG(HRMID pFromHRMID, HRMID pToHRMID, RoutingEntry pRoutingEntry)
 	{
 		/**
-		 * Calculate the cluster address of the link start
-		 */
-		HRMID tLinkStartClusterAddress = pToHRMID.getForeignCluster(pFromHRMID);
-		
-		/**
 		 * Store/update link in the HRG
 		 */ 
-		if(registerLinkHRG(tLinkStartClusterAddress, pToHRMID, pRoutingEntry)){
-			Logging.log(this, "Stored cluster-2-cluster link between " + tLinkStartClusterAddress + " and " + pToHRMID + " in the HRG as: " + pRoutingEntry);
+		if(registerLinkHRG(pFromHRMID, pToHRMID, pRoutingEntry)){
+			Logging.log(this, "Stored cluster-2-cluster link between " + pFromHRMID + " and " + pToHRMID + " in the HRG as: " + pRoutingEntry);
 		}
 	}
 
 	/**
-	 * Determines the link between two HRMIDs from the locally stored hierarchical routing graph (HRG)
+	 * Unregisters a link between two clusters.
 	 * 
-	 * @param pFrom the starting point of the link
-	 * @param pTo the ending point of the link
-	 * 
-	 * @return the link between the two HRMIDs
+	 * @param pFromHRMID the start of the link
+	 * @param pToHRMID the end of the link
+	 * @param pRoutingEntry the routing entry for this link
 	 */
-	public AbstractRoutingGraphLink getLinkHRG(HRMID pFrom, HRMID pTo)
+	private void unregisterCluster2ClusterLinkHRG(HRMID pFromHRMID, HRMID pToHRMID, RoutingEntry pRoutingEntry)
 	{
-		AbstractRoutingGraphLink tResult = null;
-		
-		List<AbstractRoutingGraphLink> tRoute = null;
-		synchronized (mHierarchicalRoutingGraph) {
-			tRoute = mHierarchicalRoutingGraph.getRoute(pFrom, pTo);
+		/**
+		 * Store/update link in the HRG
+		 */ 
+		if(unregisterLinkHRG(pFromHRMID, pToHRMID, pRoutingEntry)){
+			Logging.log(this, "Removed cluster-2-cluster link between " + pFromHRMID + " and " + pToHRMID + " from the HRG as: " + pRoutingEntry);
 		}
-		
-		if((tRoute != null) && (!tRoute.isEmpty())){
-			if(tRoute.size() == 1){
-				tResult = tRoute.get(0);
-			}else{
-				/**
-				 * We haven't found a direct link - we found a multi-hop route instead.
-				 */
-				//Logging.warn(this, "getLinkHRG() expected a route with one entry but got: \nSOURCE=" + pFrom + "\nDESTINATION: " + pTo + "\nROUTE: " + tRoute);
-			}
-		}
-		
-		return tResult;
 	}
 
 	/**
