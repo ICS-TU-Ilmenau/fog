@@ -388,8 +388,11 @@ public class ComChannel
 	/**
 	 * EVENT: neighbor HRMIDs update
 	 */
+	private int mCallsEventNewPeerHRMIDs = 0;
 	private void eventNewPeerHRMIDs()
 	{
+		mCallsEventNewPeerHRMIDs++;
+		
 		Logging.log(this, "EVENT: new peer HRMID");
 		if(mParent instanceof ClusterMember){
 			ClusterMember tParentClusterMember = (ClusterMember)mParent;
@@ -397,8 +400,8 @@ public class ComChannel
 			// get the list of neighbor HRMIDs
 			LinkedList<HRMID> tNeighborHRMIDs = getPeerHRMIDs();
 
-			Logging.log(this, "EVENT: neighbor HRMIDs for: " + this);
-			Logging.log(this, "    ..neighbor HRMIDs: " + tNeighborHRMIDs);
+			Logging.log(this, "EVENT: neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + ") for: " + this);
+			Logging.log(this, "    ..neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + "): " + tNeighborHRMIDs);
 			
 			/**
 			 * Continue only for base hierarchy level
@@ -448,15 +451,15 @@ public class ComChannel
 								HRMID tGeneralizedNeighborHRMID = mHRMController.aggregateForeignHRMID(tNeighborHRMID); 
 								if(tGeneralizedNeighborHRMID.isClusterAddress()){
 									// create the new routing table entry
-									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_1");
+									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, "ComChannel@" + mParent.toLocation() + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ")");
 									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 									tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
 		
 									// create the new reported routing table entry
-									tReportedRoutingEntry = RoutingEntry.create(getPeerHRMID() /* the peer belongs to the foreign cluster */, tGeneralizedNeighborHRMID /* the foreign cluster address */, tGeneralizedNeighborHRMID, 0 /* it's a local loopback routing there */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, this + "::eventNewPeerHRMIDs()_2");
+									tReportedRoutingEntry = RoutingEntry.create(getPeerHRMID() /* the peer belongs to the foreign cluster */, tGeneralizedNeighborHRMID /* the foreign cluster address */, tGeneralizedNeighborHRMID, 0 /* it's a local loopback routing there */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, "ComChannel@" + mParent.toLocation() + "::eventNewPeerHRMIDs()_2(" + mCallsEventNewPeerHRMIDs + ")");
 								}else{
 									// create the new routing table entry
-									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_3");
+									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, "ComChannel@" + mParent.toLocation() + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ")");
 									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 									tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
 		
@@ -465,11 +468,11 @@ public class ComChannel
 								}
 				
 								// add the entry to the reported routing table
-								Logging.log(this, "   ..adding reported route: " + tReportedRoutingEntry);
+								Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") reported route: " + tReportedRoutingEntry);
 								tNewReportedRoutingTable.addEntry(tReportedRoutingEntry);
 		
 								// add the entry to the reported routing table
-								Logging.log(this, "   ..adding local route: " + tReportedRoutingEntry);
+								Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") local route: " + tReportedRoutingEntry);
 								tNewLocalRoutingTable.addEntry(tLocalRoutingEntry);
 							}else{
 								Logging.err(this, "Received zero neighbor address");
@@ -489,8 +492,7 @@ public class ComChannel
 					synchronized (mReportedRoutingTable) {
 						mReportedRoutingTable.addEntries(mReportedRoutingTablePeerHRMIDs);
 						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-							Logging.log(this, "Added to reported routing table: " + mReportedRoutingTablePeerHRMIDs);
-							Logging.log(this, "   ..new reported routing table: " + mReportedRoutingTable);
+							Logging.err(this, "Added (" + mCallsEventNewPeerHRMIDs + ") to local routing table: " + mLocalRoutingTablePeerHRMIDs);
 						}
 					}
 					
@@ -506,18 +508,17 @@ public class ComChannel
 					synchronized (mReportedRoutingTable) {
 						mReportedRoutingTable.delEntries(tDeprecatedReportedRoutingTable);
 						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-							Logging.log(this, "Removed from reported routing table: " + tDeprecatedReportedRoutingTable);
-							Logging.log(this, "       ..new reported routing table: " + mReportedRoutingTable);
+							Logging.err(this, "Removed (" + mCallsEventNewPeerHRMIDs + ") from local routing table: " + tDeprecatedLocalRoutingTable);
 						}
 					}
 				}else{
-					Logging.warn(this, "eventNeighborHRMIDs() skipped because own source HRMID is zero, ignoring neighbor HRMIDs: " + tNeighborHRMIDs);
+					Logging.warn(this, "eventNeighborHRMIDs()(" + mCallsEventNewPeerHRMIDs + ") skipped because own source HRMID is zero, ignoring neighbor HRMIDs: " + tNeighborHRMIDs);
 				}
 			}else{
 				// we are at higher hierarchy level
 			}
 		}else{
-			Logging.err(this, "eventNewPeerHRMID() expected a ClusterMember as parent, parent is: " + mParent);
+			Logging.err(this, "eventNewPeerHRMID()(" + mCallsEventNewPeerHRMIDs + ") expected a ClusterMember as parent, parent is: " + mParent);
 		}
 	}
 

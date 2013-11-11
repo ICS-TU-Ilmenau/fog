@@ -316,8 +316,9 @@ public class ClusterMember extends ClusterName
 							/**
 							 * Update HRG: register L0 link
 							 */
-							tRoutingEntryToSibling.extendCause("registerLinkHRG()");
-							mHRMController.registerLinkHRG(mAssignedL0HRMID,  tSiblingL0Address, tRoutingEntryToSibling);
+							RoutingEntry tRoutingEntryToSibling2 = tRoutingEntryToSibling.clone();
+							tRoutingEntryToSibling2.extendCause("registerLinkHRG()");
+							mHRMController.registerLinkHRG(mAssignedL0HRMID,  tSiblingL0Address, tRoutingEntryToSibling2);
 							
 							/**
 							 * Update HRG: register cluster-2-cluster links

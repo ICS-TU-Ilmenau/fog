@@ -2731,6 +2731,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tResult += "\n     ..[" + i + "]: " + tUsedAddress;
 				i++;
 			}
+
+			LinkedList<ComChannel> tAllClusterChannels = tCluster.getComChannels();
+			tResult += "\n .." + tCluster + " channels:";
+			i = 0;
+			for(ComChannel tComChannel : tAllClusterChannels){
+				tResult += "\n     ..[" + i + "]: " + tComChannel;
+				i++;
+			}
 		}
 		
 		return tResult;
