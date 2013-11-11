@@ -457,7 +457,7 @@ public class RoutingEntry implements RouteSegment
 		if(!mBelongstoHRG){
 			return "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() > 0 ? getMaxDataRate() : "inf.") : "") + (mCause != "" ? ", Cause=" + mCause :"") + ")";
 		}else{
-			return getSource() + " <==> " + getNextHop() + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() > 0 ? getMaxDataRate() : "inf.") : "") + (mCause != "" ? ", Cause=" + mCause :"");
+			return getSource() + " <==> " + getNextHop() + ", Dest.=" + getDest() + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() > 0 ? getMaxDataRate() : "inf.") : "") + (mCause != "" ? ", Cause=" + mCause :"");
 		}
 	}
 }

@@ -239,6 +239,7 @@ public class ComSession extends Session
 	public Route getRouteToPeer()
 	{
 		if(mRouteToPeer == null){
+			Logging.log(this, "getRouteToPeer() found an invalid stored route to peer, will update the route-to-peer");
 			try {
 				mRouteToPeer = mHRMController.getHRS().getRoute(getPeerL2Address(), null, null);
 			} catch (RoutingException e) {
