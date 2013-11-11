@@ -288,22 +288,24 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 			// get equivalent object used for map for pFrom and pTo:
 			Collection<LinkObject> tOutEdges = getOutEdges(pFrom);
 			
-			for(LinkObject tLink : tOutEdges) {
-				NodeObject tTo = getDest(tLink);
-				
-				if(tTo != null) {
-					if(tTo.equals(pTo)) {
-						// check optional link object; if not available
-						// we just look for the nodes
-						if(pLinkValueTemplate != null) {
-							if(pLinkValueTemplate.equals(tLink)) {
+			if(tOutEdges != null){
+				for(LinkObject tLink : tOutEdges) {
+					NodeObject tTo = getDest(tLink);
+					
+					if(tTo != null) {
+						if(tTo.equals(pTo)) {
+							// check optional link object; if not available
+							// we just look for the nodes
+							if(pLinkValueTemplate != null) {
+								if(pLinkValueTemplate.equals(tLink)) {
+									return tLink;
+								}
+							} else {
 								return tLink;
 							}
-						} else {
-							return tLink;
 						}
+						// else: strange; ignore it
 					}
-					// else: strange; ignore it
 				}
 			}
 		}
