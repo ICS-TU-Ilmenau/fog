@@ -331,45 +331,54 @@ public class ComChannel
 		Logging.log(this, "Setting new peer HRMID: " + pHRMID);
 		
 		if((pHRMID != null) && (!pHRMID.equals(mPeerHRMID))){
-			mPeerHRMID = pHRMID.clone();
-			
-			synchronized(mAssignedPeerHRMIDs){
-				if(!mAssignedPeerHRMIDs.contains(pHRMID)){
-					mAssignedPeerHRMIDs.add(pHRMID);
-
-					int tUsedClusterAddress = pHRMID.getLevelAddress(mParent.getHierarchyLevel());
-					Logging.log(this, "storePeerHRMID() stores for " + pHRMID + " the used cluster address: " + tUsedClusterAddress);
-					if(tUsedClusterAddress > 0){
-						synchronized (mUsedClusterAddresses) {
-							if(!mUsedClusterAddresses.contains(tUsedClusterAddress)){
-								mUsedClusterAddresses.add(tUsedClusterAddress);
+			if(!pHRMID.isZero()){
+				mPeerHRMID = pHRMID.clone();
+				
+				boolean tPeerHRMIDIsNew = false;
+				
+				synchronized(mAssignedPeerHRMIDs){
+					if(!mAssignedPeerHRMIDs.contains(pHRMID)){
+						mAssignedPeerHRMIDs.add(pHRMID);
+	
+						int tUsedClusterAddress = pHRMID.getLevelAddress(mParent.getHierarchyLevel());
+						Logging.log(this, "storePeerHRMID() stores for " + pHRMID + " the used cluster address: " + tUsedClusterAddress);
+						if(tUsedClusterAddress > 0){
+							synchronized (mUsedClusterAddresses) {
+								if(!mUsedClusterAddresses.contains(tUsedClusterAddress)){
+									mUsedClusterAddresses.add(tUsedClusterAddress);
+								}
 							}
 						}
+					}else{
+						Logging.warn(this, "storePeerHRMID() skips storing the already known HRMID: " + pHRMID); 
 					}
-				}else{
-					Logging.warn(this, "storePeerHRMID() skips storing the already known HRMID: " + pHRMID); 
 				}
-			}
-
-			/**
-			 * Add peerHRMID to peerHRMIDs
-			 */
-			synchronized (mPeerHRMIDs) {
-				if(!mPeerHRMIDs.contains(pHRMID)){
-					if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-						Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
+	
+				/**
+				 * Add peerHRMID to peerHRMIDs
+				 */
+				synchronized (mPeerHRMIDs) {
+					if(!mPeerHRMIDs.contains(pHRMID)){
+						if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
+						}
+						mPeerHRMIDs.add(pHRMID);
+						tPeerHRMIDIsNew = true;
 					}
-					mPeerHRMIDs.add(pHRMID);
 				}
-			}
-			
-			/**
-			 * Inform the parent ClusterMember about the new peer HRMIDs
-			 */
-			if(mParent instanceof ClusterMember){
-				eventNewPeerHRMIDs();
+				
+				/**
+				 * Inform the parent ClusterMember about the new peer HRMIDs
+				 */
+				if(tPeerHRMIDIsNew){
+					if(mParent instanceof ClusterMember){
+						eventNewPeerHRMIDs();
+					}else{
+						Logging.err(this, "Expected a ClusterMember as parent, parent is: " + mParent);
+					}
+				}
 			}else{
-				Logging.err(this, "Expected a ClusterMember as parent, parent is: " + mParent);
+				throw new RuntimeException(this + "::setPeerHRMID() got a zero HRMID as peer HRMID");
 			}
 		}else{
 			//Logging.warn(this, "Ignoring set-request of peer HRMID: " + pHRMID);
@@ -426,46 +435,48 @@ public class ComChannel
 					// iterate over all neighbor HRMIDs
 					RoutingTable tNewReportedRoutingTable = new RoutingTable();
 					RoutingTable tNewLocalRoutingTable = new RoutingTable();
-					for(HRMID tNeighborHRMID : tNeighborHRMIDs){
-						if(!tNeighborHRMID.isZero()){
-							RoutingEntry tLocalRoutingEntry = null;
-							RoutingEntry tReportedRoutingEntry = null;
-							
-							/**
-							 * Generalize neighbor HRMID to its cluster address, depending on the locally assigned HRMID.
-							 * If the local node owns 1.1.1 and 1.2.1, and the neighbor HRMID is 1.3.1, the result will be 1.3.0 because this cluster is a foreign one for the local node 
-							 */ 
-							HRMID tGeneralizedNeighborHRMID = mHRMController.aggregateForeignHRMID(tNeighborHRMID); 
-							if(tGeneralizedNeighborHRMID.isClusterAddress()){
-								// create the new routing table entry
-								tLocalRoutingEntry = RoutingEntry.create(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 1 /* TODO */, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_1");
-								// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-								tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
-	
-								// create the new reported routing table entry
-								tReportedRoutingEntry = RoutingEntry.create(getPeerHRMID() /* the peer belongs to the foreign cluster */, tGeneralizedNeighborHRMID /* the foreign cluster address */, tGeneralizedNeighborHRMID, 0 /* it's a local loopback routing there */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, this + "::eventNewPeerHRMIDs()_2");
+					if(tNeighborHRMIDs.size() > 0){
+						for(HRMID tNeighborHRMID : tNeighborHRMIDs){
+							if((tNeighborHRMID != null) && (!tNeighborHRMID.isZero())){
+								RoutingEntry tLocalRoutingEntry = null;
+								RoutingEntry tReportedRoutingEntry = null;
+								
+								/**
+								 * Generalize neighbor HRMID to its cluster address, depending on the locally assigned HRMID.
+								 * If the local node owns 1.1.1 and 1.2.1, and the neighbor HRMID is 1.3.1, the result will be 1.3.0 because this cluster is a foreign one for the local node 
+								 */ 
+								HRMID tGeneralizedNeighborHRMID = mHRMController.aggregateForeignHRMID(tNeighborHRMID); 
+								if(tGeneralizedNeighborHRMID.isClusterAddress()){
+									// create the new routing table entry
+									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_1");
+									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+									tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+		
+									// create the new reported routing table entry
+									tReportedRoutingEntry = RoutingEntry.create(getPeerHRMID() /* the peer belongs to the foreign cluster */, tGeneralizedNeighborHRMID /* the foreign cluster address */, tGeneralizedNeighborHRMID, 0 /* it's a local loopback routing there */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, this + "::eventNewPeerHRMIDs()_2");
+								}else{
+									// create the new routing table entry
+									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_3");
+									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+									tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+		
+									// create the new reported routing table entry
+									tReportedRoutingEntry = tLocalRoutingEntry.clone();
+								}
+				
+								// add the entry to the reported routing table
+								Logging.log(this, "   ..adding reported route: " + tReportedRoutingEntry);
+								tNewReportedRoutingTable.addEntry(tReportedRoutingEntry);
+		
+								// add the entry to the reported routing table
+								Logging.log(this, "   ..adding local route: " + tReportedRoutingEntry);
+								tNewLocalRoutingTable.addEntry(tLocalRoutingEntry);
 							}else{
-								// create the new routing table entry
-								tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_3");
-								// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-								tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
-	
-								// create the new reported routing table entry
-								tReportedRoutingEntry = tLocalRoutingEntry.clone();
+								Logging.err(this, "Received zero neighbor address");
 							}
-			
-							// add the entry to the reported routing table
-							Logging.log(this, "   ..adding reported route: " + tReportedRoutingEntry);
-							tNewReportedRoutingTable.addEntry(tReportedRoutingEntry);
-	
-							// add the entry to the reported routing table
-							Logging.log(this, "   ..adding local route: " + tReportedRoutingEntry);
-							tNewLocalRoutingTable.addEntry(tLocalRoutingEntry);
-						}else{
-							Logging.err(this, "Received zero neighbor address");
 						}
 					}
-
+					
 					/**
 					 * Step 1: learn new routes:
 					 * 			- set the new value for reported routes based on peer HRMIDs
@@ -601,8 +612,10 @@ public class ComChannel
 			// get the HRMID of the peer
 			HRMID tPeerHRMID = (HRMID)pSignalingMessageHrmPacket.getSenderName();
 			
-			// update peer's HRMID
-			setPeerHRMID(tPeerHRMID);
+			if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){
+				// update peer's HRMID
+				setPeerHRMID(tPeerHRMID);
+			}
 		}		
 	}
 
