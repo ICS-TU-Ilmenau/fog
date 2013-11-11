@@ -74,16 +74,13 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 			
 			//Logging.trace(this, "Linking from " + pFrom + " to " + pTo + " via " + pLinkObject);
 			
-			// check if link already exists
-			if(!isLinked(pFrom, pTo)) {
-				// check if there already exist a link between these two nodes
-				if(!mRoutingGraph.getNeighbors(pFrom).contains(pTo)) {
-					// add the link to the routing graph
-					if(mRoutingGraph.addEdge(pLinkObject, pFrom, pTo, EdgeType.UNDIRECTED)) {
-						notifyObservers(new Event(EventType.ADDED, pLinkObject));
-					}
+			// check if there already exist a link between these two nodes
+//			if(!isLinked(pFrom, pTo)) {
+				// add the link to the routing graph
+				if(mRoutingGraph.addEdge(pLinkObject, pFrom, pTo, EdgeType.UNDIRECTED)) {
+					notifyObservers(new Event(EventType.ADDED, pLinkObject));
 				}
-			}
+//			}
 		}
 	}
 	
