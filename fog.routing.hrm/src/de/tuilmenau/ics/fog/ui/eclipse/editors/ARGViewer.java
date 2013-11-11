@@ -111,7 +111,7 @@ public class ARGViewer extends EditorAWT implements IController
 		// default: select whole object represented in the view
 		if(selection == null) selection = mHRMController;
 
-		Logging.trace(this, "Selected: " +selection);
+		Logging.trace(this, "Selected (" + selection.getClass().getSimpleName() + "): " + selection);
 		
 		if(pByDefaultButton) {
 			if(selection != null) {
