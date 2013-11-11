@@ -99,7 +99,7 @@ public class AbstractRoutingGraphLink implements Serializable
 		if(mRoute == null){
 			return getLinkType().toString();
 		}else{
-			return getLinkType().toString() +": " + mRoute.toString();				
+			return mRoute.toString();				
 		}
 	}
 }
