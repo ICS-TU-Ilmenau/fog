@@ -238,6 +238,13 @@ public class ComSession extends Session
 	 */
 	public Route getRouteToPeer()
 	{
+		if(mRouteToPeer == null){
+			try {
+				mRouteToPeer = mHRMController.getHRS().getRoute(getPeerL2Address(), null, null);
+			} catch (RoutingException e) {
+			} catch (RequirementsException e) {
+			}
+		}
 		return mRouteToPeer;
 	}
 
