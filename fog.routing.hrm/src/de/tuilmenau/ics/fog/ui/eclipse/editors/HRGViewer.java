@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.ui.eclipse.editors;
 
 import java.awt.PopupMenu;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.swt.widgets.Composite;
@@ -27,6 +28,8 @@ import de.tuilmenau.ics.fog.eclipse.ui.editors.SelectionProvider;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphLink;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -112,6 +115,17 @@ public class HRGViewer extends EditorAWT implements IController
 		if(selection == null) selection = mHRMController;
 
 		Logging.trace(this, "Selected (" + selection.getClass().getSimpleName() + "): " + selection);
+		if(selection instanceof HRMID){
+			HRMID tSelectedHRMID = (HRMID)selection;
+			
+			Logging.trace(this, "   ..related links:");
+			Collection<AbstractRoutingGraphLink> tLinks = mHRMController.getHRGForGraphViewer().getOutEdges(tSelectedHRMID);
+			int i = 0;
+			for(AbstractRoutingGraphLink tLink : tLinks){
+				Logging.trace(this, "     ..[" + i + "]: " + tLink);
+				i++;
+			}
+		}
 		
 		if(pByDefaultButton) {
 			if(selection != null) {
