@@ -170,6 +170,11 @@ public class HRMConfig
 		 * Defines if the address aggregation is shown in the debug output
 		 */
 		public static final boolean GUI_SHOW_ADDRESS_AGGREGATION = false;
+
+		/**
+		 * Defines if HRG updates should be shown
+		 */
+		public static final boolean GUI_SHOW_HRG_UPDATES = false;
 	}
 	
 	public class Addressing

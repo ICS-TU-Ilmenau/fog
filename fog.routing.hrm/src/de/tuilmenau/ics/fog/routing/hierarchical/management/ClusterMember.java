@@ -290,7 +290,7 @@ public class ClusterMember extends ClusterName
 				/**
 				 * Unregister old HRMID
 				 */
-				mHRMController.unregisterHRMID(this, mAssignedL0HRMID);
+				mHRMController.unregisterHRMID(this, mAssignedL0HRMID, this + "::setL0HRMID()");
 			}
 			
 			/**

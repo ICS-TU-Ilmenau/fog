@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Observer;
@@ -214,7 +215,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores a description about all HRMID updates
 	 */
 	private String mDescriptionHRMIDUpdates = new String();
-	
+
+	/**
+	 * Stores a description about all HRG updates
+	 */
+	private String mDescriptionHRGUpdates = new String();
+
 	/**
 	 * Stores a description about all hierarchy priority updates
 	 */
@@ -499,12 +505,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.err(this, "Hierarchy is temporary non continuous, detected an error in the Matrix!?");
 		}
 			
-		// register a route to the coordinator as addressable target
-		HRMID tCoordinatorHRMID = pCoordinator.getHRMID();
-		if((tCoordinatorHRMID != null) && (!tCoordinatorHRMID.isZero())){ 
-			addHRMRoute(RoutingEntry.createLocalhostEntry(tCoordinatorHRMID, this + "::registerCoordinator()"));
-		}
-		
 		synchronized (mLocalCoordinators) {
 			// register as known coordinator
 			mLocalCoordinators.add(pCoordinator);
@@ -608,24 +608,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						// register the new HRMID as local one
 						mRegisteredOwnHRMIDs.add(pHRMID);
 						
-						// register the new in the HRG
-						registerNodeHRG(pHRMID);
-						
-						mDescriptionHRMIDUpdates += "\n + " + pHRMID.toString() + " <== " + pEntity + ", cause=" + pCause;
-
-						/**
-						 * Register a local loopback route for the new address 
-						 */
-						// register a route to the cluster member as addressable target
-						addHRMRoute(RoutingEntry.createLocalhostEntry(pHRMID, this + "::registerHRMID()"));
-		
-						/**
-						 * Update the DNS for L0
-						 */
-						if((pEntity instanceof ClusterMember) && (pEntity.getHierarchyLevel().isBaseLevel())){
+						if(!pHRMID.isClusterAddress()){
 							/**
-							 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
-							 * registered in the DNS as address for the name of this node. 
+							 * Register the new HRMID in the HRG
+							 */ 
+							registerNodeHRG(pHRMID, pCause + ", " + this + "::registerHRMID()");
+						
+							mDescriptionHRMIDUpdates += "\n + " + pHRMID.toString() + " <== " + pEntity + ", cause=" + pCause;
+
+							/**
+							 * Register a local loopback route for the new address 
+							 */
+							// register a route to the cluster member as addressable target
+							addHRMRoute(RoutingEntry.createLocalhostEntry(pHRMID, pCause + ", " + this + "::registerHRMID()"));
+
+							/**
+							 * Update the DNS
 							 */
 							// register the HRMID in the hierarchical DNS for the local router
 							HierarchicalNameMappingService<HRMID> tNMS = null;
@@ -676,8 +674,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pEntity the entity for which the HRMID should be registered
 	 * @param pOldHRMID the old HRMID which should be unregistered
+	 * @param pCause the cause for this call
 	 */
-	public void unregisterHRMID(ControlEntity pEntity, HRMID pOldHRMID)
+	public void unregisterHRMID(ControlEntity pEntity, HRMID pOldHRMID, String pCause)
 	{
 		/**
 		 * Some validations
@@ -700,24 +699,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						// unregister the HRMID as local one
 						mRegisteredOwnHRMIDs.remove(pOldHRMID);
 						
-						// unregister the HRMID from the HRG
-						unregisterNodeHRG(pOldHRMID);
-
-						mDescriptionHRMIDUpdates += "\n - " + pOldHRMID.toString() + " <== " + pEntity;
-
-						/**
-						 * Unregister the local loopback route for the address 
-						 */
-						// register a route to the cluster member as addressable target
-						delHRMRoute(RoutingEntry.createLocalhostEntry(pOldHRMID, this + "::unregisterHRMID()"));
-			
-						/**
-						 * Update the DNS for L0
-						 */
-						if((pEntity instanceof ClusterMember) && (pEntity.getHierarchyLevel().isBaseLevel())){
+						if(!pOldHRMID.isClusterAddress()){
 							/**
-							 * We are at base hierarchy level! Thus, the new HRMID is an address for this physical node and has to be
-							 * registered in the DNS as address for the name of this node. 
+							 * Unregister the old HRMID in the HRG
+							 */ 
+							unregisterNodeHRG(pOldHRMID, pCause + ", " + this + "::unregisterHRMID()");
+
+							mDescriptionHRMIDUpdates += "\n - " + pOldHRMID.toString() + " <== " + pEntity;
+
+							/**
+							 * Unregister the local loopback route for the address 
+							 */
+							// unregister a route to the cluster member as addressable target
+							delHRMRoute(RoutingEntry.createLocalhostEntry(pOldHRMID, pCause + ", " + this + "::unregisterHRMID()"));
+			
+							/**
+							 * Update the DNS
 							 */
 				//TODO				// register the HRMID in the hierarchical DNS for the local router
 				//			HierarchicalNameMappingService<HRMID> tNMS = null;
@@ -774,7 +771,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Unregister old
 		 */
 		if((pOldHRMID != null) && (!pOldHRMID.isZero())){
-			unregisterHRMID(pCoordinator, pOldHRMID);
+			unregisterHRMID(pCoordinator, pOldHRMID, "updateCoordinatorAddress() for " + pCoordinator);
 		}
 		
 		/**
@@ -782,7 +779,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		HRMID tHRMID = pCoordinator.getHRMID();
 		Logging.log(this, "Updating address from " + pOldHRMID + " to " + (tHRMID != null ? tHRMID.toString() : "null") + " for Coordinator " + pCoordinator);
-		registerHRMID(pCoordinator, "updateCoordinatorAddress()");
+		registerHRMID(pCoordinator, "updateCoordinatorAddress() for " + pCoordinator);
 	}
 
 	/**
@@ -814,7 +811,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if((pOldHRMID != null) && (!pOldHRMID.isZero())){
 			Logging.log(this, "Revoking address " + pOldHRMID.toString() + " for coordinator " + pCoordinator);
 	
-			unregisterHRMID(pCoordinator, pOldHRMID);
+			unregisterHRMID(pCoordinator, pOldHRMID, "revokeCoordinatorAddress()");
 		}
 	}
 
@@ -1323,7 +1320,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Unregister old
 		 */
 		if((pOldHRMID != null) && (!pOldHRMID.isZero())){
-			unregisterHRMID(pCluster, pOldHRMID);
+			unregisterHRMID(pCluster, pOldHRMID, "updateClusterAddress() for " + pCluster);
 		}
 		
 		/**
@@ -1331,7 +1328,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		HRMID tHRMID = pCluster.getHRMID();
 		Logging.log(this, "Updating address from " + pOldHRMID + " to " + (tHRMID != null ? tHRMID.toString() : "null") + " for Cluster " + pCluster);
-		registerHRMID(pCluster, "updateClusterAddress()");
+		registerHRMID(pCluster, "updateClusterAddress() for " + pCluster);
 	}
 
 	/**
@@ -1346,7 +1343,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Unregister old
 		 */
 		if((pOldHRMID != null) && (!pOldHRMID.isZero())){
-			unregisterHRMID(pClusterMember, pOldHRMID);
+			unregisterHRMID(pClusterMember, pOldHRMID, "updateClusterMemberAddress() for " + pClusterMember);
 		}
 		
 		/**
@@ -1358,7 +1355,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
 		// the corresponding coordinator instance
 		if (pClusterMember.getHierarchyLevel().isBaseLevel()){
-			registerHRMID(pClusterMember, "updateClusterMemberAddress()");
+			registerHRMID(pClusterMember, "updateClusterMemberAddress() for " + pClusterMember);
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
 			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
@@ -1379,7 +1376,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "Revoking address " + pOldHRMID.toString() + " for ClusterMember " + pClusterMember);
 	
 			if (pClusterMember.getHierarchyLevel().isBaseLevel()){
-				unregisterHRMID(pClusterMember, pOldHRMID);
+				unregisterHRMID(pClusterMember, pOldHRMID, "revokeClusterMemberAddress()");
 			}else{
 				// we are at a higher hierarchy level and don't need the HRMID revocation
 				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
@@ -1401,7 +1398,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "Revoking address " + pOldHRMID.toString() + " for Cluster " + pCluster);
 	
 			if (pCluster.getHierarchyLevel().isBaseLevel()){
-				unregisterHRMID(pCluster, pOldHRMID);
+				unregisterHRMID(pCluster, pOldHRMID, "revokeClusterAddress()");
 			}else{
 				// we are at a higher hierarchy level and don't need the HRMID revocation
 				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
@@ -2045,6 +2042,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mCallsAddHRMRoute++;
 		Logging.log(this, "Adding (" + mCallsAddHRMRoute + ") HRM routing table entry: " + pRoutingEntry);
 		
+		// filter invalid destinations
+		if(pRoutingEntry.getDest() == null){
+			throw new RuntimeException(this + "::addHRMRoute() detected an invalid destination in routing entry: " + pRoutingEntry);
+		}
+		
+		// filter invalid next hop
+		if(pRoutingEntry.getNextHop() == null){
+			throw new RuntimeException(this + "::addHRMRoute() detected an invalid next hop in routing entry: " + pRoutingEntry);
+		}
+		
+		// plausibility check
+		if((!pRoutingEntry.getDest().isClusterAddress()) && (!pRoutingEntry.getDest().equals(pRoutingEntry.getNextHop()))){
+			throw new RuntimeException(this + "::addHRMRoute() detected an invalid destination (should be equal to the next hop) in routing entry: " + pRoutingEntry);
+		}
+			
+			
 		/**
 		 * Inform the HRS about the new route
 		 */
@@ -2095,9 +2108,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 //					}
 				}else{
-					pRoutingEntry.extendCause(this + "addHRMRoute()_2");
-					Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
-					registerLinkHRG(pRoutingEntry.getSource(), tDestHRMID, pRoutingEntry);
+					pRoutingEntry.extendCause(this + "::addHRMRoute()_2");
+					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
+						Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
+					}
+					registerLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
 				}
 			}else{
 //				/**
@@ -2127,7 +2142,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //				}
 			}
 		}else{
-			Logging.log(this, "  ..ignoring for HRG the old HRM routing table entry: " + pRoutingEntry);
+			if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
+				Logging.warn(this, "  ..ignoring for HRG the old HRM routing table entry: " + pRoutingEntry);
+			}
 		}
 
 		/**
@@ -2163,7 +2180,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tDestClusterHRMID.setLevelAddress(i, 0);
 	
 				if(!tSourceClusterHRMID.equals(tDestClusterHRMID)){
-					Logging.err(this, "  ..registering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
+					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
+						Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
+					}
 					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource(), tDestClusterHRMID, pRoutingEntry.getNextHop(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::registerAutoHRG()");
 					registerCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
 				}
@@ -2225,9 +2244,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						unregisterAutoHRG(pRoutingEntry);
 					}
 				}else{
-					pRoutingEntry.extendCause(this + "addHRMRoute()_2");
+					pRoutingEntry.extendCause(this + "::delHRMRoute()");
 					Logging.log(this, "  ..unregistering nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
-					unregisterLinkHRG(pRoutingEntry.getSource(), tDestHRMID, pRoutingEntry);
+					unregisterLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
 				}
 			}
 		}
@@ -2265,8 +2284,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tDestClusterHRMID.setLevelAddress(i, 0);
 	
 				if(!tSourceClusterHRMID.equals(tDestClusterHRMID)){
-					Logging.err(this, "  ..registering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
-					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource(), tDestClusterHRMID, pRoutingEntry.getNextHop(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::registerAutoHRG()");
+					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
+						Logging.log(this, "  ..unregistering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
+					}
+					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource(), tDestClusterHRMID, pRoutingEntry.getNextHop(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::unregisterAutoHRG()");
 					unregisterCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
 				}
 			}
@@ -2692,6 +2713,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns a description about all HRG updates.
+	 * 
+	 * @return the description
+	 */
+	public String getGUIDescriptionHRGChanges()
+	{
+		return mDescriptionHRGUpdates;
+	}
+	
+	/**
 	 * Returns a description about all hierarchy priority updates
 	 * This function is only used within the GUI. It is not part of the concept.
 	 * 
@@ -3060,18 +3091,28 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// check if route has entries
 				if((tPath != null) && (!tPath.isEmpty())){
 					// get the gate ID of the link
-					GateID tGateID= tPath.getFirst();						
-					// get all outgoing links from the central FN
-					Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
+					GateID tGateID = tPath.getFirst();				
 					
 					RoutingServiceLink tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = null;
-		
-					// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
-					for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
-						// compare the GateIDs
-						if(tLink.equals(tGateID)) {
-							// found!
-							tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = tLink;
+
+					boolean tWithoutException = false; //TODO: rework some software structures to avoid this ugly implementation
+					while(!tWithoutException){
+						try{
+							// get all outgoing links from the central FN
+							Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
+							
+							// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
+							for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
+								// compare the GateIDs
+								if(tLink.equals(tGateID)) {
+									// found!
+									tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor = tLink;
+								}
+							}
+							tWithoutException = true;
+						}catch(ConcurrentModificationException tExc){
+							// FoG has manipulated the topology data and called the HRS for updating the L2 routing graph
+							continue;
 						}
 					}
 					// determine the searched FN, which comes first when routing towards the neighbor
@@ -3508,8 +3549,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Registers an HRMID to the locally stored hierarchical routing graph (HRG)
 	 *  
 	 * @param pNode the node (HRMID) which should be stored in the HRG
+	 * @param pCause the cause for this HRG update
 	 */
-	private synchronized void registerNodeHRG(HRMID pNode)
+	private synchronized void registerNodeHRG(HRMID pNode, String pCause)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "REGISTERING NODE ADDRESS (HRG): " + pNode );
@@ -3521,11 +3563,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mHierarchicalRoutingGraph) {
 			if(!mHierarchicalRoutingGraph.contains(pNode)) {
+				mDescriptionHRGUpdates += "\n + " + pNode + " <== " + pCause;
 				mHierarchicalRoutingGraph.add(pNode);
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..added to HRG");
 				}
 			}else{
+				mDescriptionHRGUpdates += "\n +/- " + pNode + " <== " + pCause;
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..node for HRG already known: " + pNode);
 				}
@@ -3537,8 +3581,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Unregisters an HRMID from the locally stored hierarchical routing graph (HRG)
 	 *  
 	 * @param pNode the node (HRMID) which should be removed from the HRG
+	 * @param pCause the cause for this HRG update
 	 */
-	private void unregisterNodeHRG(HRMID pNode)
+	private void unregisterNodeHRG(HRMID pNode, String pCause)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "UNREGISTERING NODE ADDRESS (HRG): " + pNode );
@@ -3546,11 +3591,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mHierarchicalRoutingGraph) {
 			if(mHierarchicalRoutingGraph.contains(pNode)) {
+				mDescriptionHRGUpdates += "\n - " + pNode + " <== " + pCause;
 				mHierarchicalRoutingGraph.remove(pNode);
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..removed from HRG");
 				}
 			}else{
+				mDescriptionHRGUpdates += "\n -/+ " + pNode + " <== " + pCause;
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..node for HRG wasn't known: " + pNode);
 				}
@@ -3574,19 +3621,35 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "REGISTERING LINK (HRG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  ROUTE=" + pRoutingEntry);
 		}
-
-		/**
-		 * Derive the link
-		 */
-		AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(new Route(pRoutingEntry));
-		
-		/**
-		 * Do the actual linking
-		 */
-		synchronized (mHierarchicalRoutingGraph) {
+	
+		if(!pFrom.equals(pTo)){
+			/**
+			 * Derive the link
+			 */
 			pRoutingEntry.assignToHRG(mHierarchicalRoutingGraph);
-			mHierarchicalRoutingGraph.link(pFrom.clone(), pTo.clone(), tLink);
-			tResult = true;
+			AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(new Route(pRoutingEntry));
+				
+			/**
+			 * Do the actual linking
+			 */
+			synchronized (mHierarchicalRoutingGraph) {
+				Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getEdges();
+				if(!tLinks.contains(tLink)){
+					mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
+					mHierarchicalRoutingGraph.link(pFrom.clone(), pTo.clone(), tLink);
+					tResult = true;
+				}else{
+					mDescriptionHRGUpdates += "\n +/- " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
+					Logging.warn(this, "HRG link is already known: " + tLink);
+					for(AbstractRoutingGraphLink tKnownLink : tLinks){
+						if(tKnownLink.equals(tLink)){
+							Logging.warn(this, "  ..known as: " + tKnownLink);		
+						}
+					}
+				}
+			}
+		}else{
+			Logging.warn(this, "registerLinkHRG() skipped because self-loop detected for: " + pRoutingEntry);
 		}
 		
 		return tResult;
@@ -3607,22 +3670,35 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "UNREGISTERING LINK (HRG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  LINK=" + pRoutingEntry);
 		}
 
-		AbstractRoutingGraphLink tLink = null;
-		synchronized (mHierarchicalRoutingGraph) {
-			if(pRoutingEntry != null){
-				tLink = mHierarchicalRoutingGraph.getEdge(pFrom, pTo, new AbstractRoutingGraphLink(new Route(pRoutingEntry)));
+		if(!pFrom.equals(pTo)){
+			pRoutingEntry.assignToHRG(mHierarchicalRoutingGraph);
+	
+			AbstractRoutingGraphLink tLink = null;
+			do{
+				synchronized (mHierarchicalRoutingGraph) {
+					if(pRoutingEntry != null){
+						tLink = mHierarchicalRoutingGraph.getEdge(pFrom, pTo, new AbstractRoutingGraphLink(new Route(pRoutingEntry)));
+					}else{
+						tLink = mHierarchicalRoutingGraph.getEdge(pFrom, pTo, null);
+					}
+				}
+		
+				if(tLink != null){
+					synchronized (mHierarchicalRoutingGraph) {
+						mHierarchicalRoutingGraph.unlink(tLink);
+						tResult = true;
+					}
+				}
+			}while(tLink != null);
+			
+			if(!tResult){
+				mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
+				Logging.err(this, "Haven't found an HRG link between " + pFrom + " and " + pTo);
 			}else{
-				tLink = mHierarchicalRoutingGraph.getEdge(pFrom, pTo, null);
-			}
-		}
-
-		if(tLink != null){
-			synchronized (mHierarchicalRoutingGraph) {
-				mHierarchicalRoutingGraph.unlink(tLink);
-				tResult = true;
+				mDescriptionHRGUpdates += "\n - " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
 			}
 		}else{
-			Logging.err(this, "Haven't found an HRG link between " + pFrom + " and " + pTo);
+			Logging.warn(this, "unregisterLinkHRG() skipped because self-loop detected for: " + pRoutingEntry);
 		}
 
 		return tResult;
