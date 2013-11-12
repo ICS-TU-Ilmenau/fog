@@ -12,9 +12,9 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraph;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphLink;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphNode;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * HRM Routing: The class describes a routing entry consisting of
@@ -422,11 +422,13 @@ public class RoutingEntry implements RouteSegment
 	@Override
 	public boolean equals(Object pObj)
 	{
+		Logging.trace(this, "Comparing routing entry with: " + pObj);
 		if(pObj instanceof RoutingEntry){
 			RoutingEntry tOther = (RoutingEntry)pObj;
 			
-			if((getDest() != null) && (getDest().equals(tOther.getDest())) &&
-			   (getNextHop() != null) && (getNextHop().equals(tOther.getNextHop()))){
+			if(((getDest() == null) || (getDest().equals(tOther.getDest()))) &&
+			   ((getNextHop() == null) || (getNextHop().equals(tOther.getNextHop()))) &&
+			   ((getSource() == null) || (getSource().equals(tOther.getSource())))){
 				return true;
 			}
 		}
