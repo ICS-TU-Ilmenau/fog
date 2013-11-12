@@ -880,7 +880,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
 		}
 
-		if(pHRMID != null){
+		if((pHRMID != null) && (!pHRMID.isZero())){
 			// setHRMID()
 			super.eventAssignedHRMID(pHRMID);
 		

@@ -690,7 +690,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
 		}
 
-		if(pHRMID != null){
+		if((pHRMID != null) && (!pHRMID.equals(getHRMID())) && (!pHRMID.isZero())){
 			/**
 			 * Store the new HRMID
 			 */
