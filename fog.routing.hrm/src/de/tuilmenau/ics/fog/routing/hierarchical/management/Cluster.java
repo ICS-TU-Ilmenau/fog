@@ -266,18 +266,21 @@ public class Cluster extends ClusterMember
 				 */
 				// are we at the base level?
 				if(getHierarchyLevel().isBaseLevel()) {
-					// inform HRM controller about the address change
-					if(getL0HRMID() != null){
-						
-						freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
-	
-						mHRMController.unregisterHRMID(this, getL0HRMID());					
-					}
-	
 					// create new HRMID for ourself
 					HRMID tThisNodesAddress = allocateClusterMemberAddress();
-					if(tThisNodesAddress != null){
-						mDescriptionHRMIDAllocation += "\n     .." + tThisNodesAddress.toString() + " for " + this;
+					if((tThisNodesAddress != null) && (!tThisNodesAddress.equals(getL0HRMID()))){
+						// inform HRM controller about the address change
+						if(getL0HRMID() != null){
+							
+							// free only if the assigned new address has a different used cluster address
+							if(tThisNodesAddress.getLevelAddress(getHierarchyLevel()) != getL0HRMID().getLevelAddress(getHierarchyLevel())){
+								freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
+							}
+		
+							mHRMController.unregisterHRMID(this, getL0HRMID(), this + "::distributeAddresses()");					
+						}
+
+						mDescriptionHRMIDAllocation += "\n     .." + tThisNodesAddress.toString() + " for " + this + ", cause=distributeAddresses() [" + mSentAddressBroadcast + "]";
 						
 						Logging.log(this, "    ..setting local HRMID " + tThisNodesAddress.toString());
 			
@@ -285,9 +288,14 @@ public class Cluster extends ClusterMember
 						setL0HRMID(tThisNodesAddress);
 						
 						// inform the HRMController about the new HRMID
-						mHRMController.registerHRMID(this, getL0HRMID(), "distributeAddresses()");
+						mHRMController.registerHRMID(this, getL0HRMID(),  this + "distributeAddresses()");
 					}else{
-						Logging.err(this, "distributeAddresses() cannot assign a new HRMID to this node because cluster HRMID is invalid");
+						if(tThisNodesAddress == null){
+							throw new RuntimeException(this + "::distributeAddresses() got a zero HRMID from allocateClusterMemberAddress()");
+						}
+						
+						// free the allocated address again
+						freeClusterMemberAddress(tThisNodesAddress.getLevelAddress(getHierarchyLevel()));
 					}
 				}
 		
@@ -336,7 +344,6 @@ public class Cluster extends ClusterMember
 		}
 
 		if((pHRMID != null) && (!pHRMID.isZero())){
-
 			// setHRMID()
 			super.eventAssignedHRMID(pHRMID);
 		
@@ -505,18 +512,18 @@ public class Cluster extends ClusterMember
 		 * AUTO ADDRESS DISTRIBUTION
 		 */
 		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
-			HRMID tHRMIDForPeer = pComChannel.getPeerHRMID(); 
-
+			HRMID tOldHRMIDForPeer = pComChannel.getPeerHRMID(); 
+			HRMID tHRMIDForPeer = null;
 			/**
 			 * Check old assignment
 			 */
-			Logging.log(this, "   ..old peer HRMID: " + tHRMIDForPeer);
+			Logging.log(this, "   ..old peer HRMID: " + tOldHRMIDForPeer);
 			if(!HRMConfig.Addressing.REUSE_ADDRESSES){
 				Logging.log(this, "     ..reseting the old HRMID to null because address reusage is disabled");
-				tHRMIDForPeer = null;
+				tOldHRMIDForPeer = null;
 			}
-			if((tHRMIDForPeer != null) && (!tHRMIDForPeer.isZero()) && ((tHRMIDForPeer.isCluster(getHRMID())) || (getHierarchyLevel().isHighest()))){
-				int tUsedAddress = tHRMIDForPeer.getLevelAddress(getHierarchyLevel());
+			if((tOldHRMIDForPeer != null) && (!tOldHRMIDForPeer.isZero()) && ((tOldHRMIDForPeer.isCluster(getHRMID())) || (getHierarchyLevel().isHighest()))){
+				int tUsedAddress = tOldHRMIDForPeer.getLevelAddress(getHierarchyLevel());
 				synchronized (mUsedAddresses) {
 					if(!mUsedAddresses.contains(tUsedAddress)){
 						Logging.log(this, "     ..mark the address as used in this cluster");
@@ -525,7 +532,7 @@ public class Cluster extends ClusterMember
 					}else{
 						Logging.log(this, "     ..this address is already used, allocating a new one");
 						// the formerly used address isn't available anymore
-						tHRMIDForPeer = null;
+						tOldHRMIDForPeer = null;
 					}
 				}
 			}
@@ -533,31 +540,34 @@ public class Cluster extends ClusterMember
 			/**
 			 * Create a new HRMID for the peer
 			 */
-			if((tHRMIDForPeer == null) || (tHRMIDForPeer.isZero()) || (tHRMIDForPeer.isRelativeAddress()) || (!tHRMIDForPeer.isCluster(getHRMID()))){
-				tHRMIDForPeer = allocateClusterMemberAddress();
-				if(tHRMIDForPeer != null){
-					mDescriptionHRMIDAllocation += "\n     .." + tHRMIDForPeer.toString() + " for " + pComChannel + ", cause=" + pCause;
+			if((tOldHRMIDForPeer == null) || (tOldHRMIDForPeer.isZero()) || (tOldHRMIDForPeer.isRelativeAddress()) || (!tOldHRMIDForPeer.isCluster(getHRMID()))){
+				HRMID tNewHRMIDForPeer = allocateClusterMemberAddress();
+				if(tNewHRMIDForPeer != null){
+					mDescriptionHRMIDAllocation += "\n     .." + tNewHRMIDForPeer.toString() + " for " + pComChannel + ", cause=" + pCause;
 	
 					/**
 					 * Abort if we shouldn't distribute relative addresses
 					 */
-					if((!HRMConfig.Addressing.DISTRIBUTE_RELATIVE_ADDRESSES) && (tHRMIDForPeer.isRelativeAddress())){
-						Logging.warn(this, "eventClusterMemberNeedsHRMID() aborted because the relative address shouldn't be distributed: " + tHRMIDForPeer);
+					if((!HRMConfig.Addressing.DISTRIBUTE_RELATIVE_ADDRESSES) && (tNewHRMIDForPeer.isRelativeAddress())){
+						Logging.warn(this, "eventClusterMemberNeedsHRMID() aborted because the relative address shouldn't be distributed: " + tNewHRMIDForPeer);
 						
-						freeClusterMemberAddress(tHRMIDForPeer.getLevelAddress(getHierarchyLevel()));
+						freeClusterMemberAddress(tNewHRMIDForPeer.getLevelAddress(getHierarchyLevel()));
 						
 						return;
 					}
 					
 					// store the HRMID under which the peer will be addressable from now 
-					pComChannel.setPeerHRMID(tHRMIDForPeer);
+					pComChannel.setPeerHRMID(tNewHRMIDForPeer);
 	
 					// register this new HRMID in the local HRS and create a mapping to the right L2Address
-					Logging.log(this, "    ..creating MAPPING " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
-					mHRMController.getHRS().mapHRMID(tHRMIDForPeer, pComChannel.getPeerL2Address());
+					Logging.log(this, "    ..creating MAPPING " + tNewHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
+					mHRMController.getHRS().mapHRMID(tNewHRMIDForPeer, pComChannel.getPeerL2Address());
+					
+					tHRMIDForPeer = tNewHRMIDForPeer;
 				}
 			}else{
-				Logging.log(this, "    ..reassigning " + tHRMIDForPeer.toString() + " for " + pComChannel);
+				Logging.log(this, "    ..reassigning " + tOldHRMIDForPeer.toString() + " for " + pComChannel);
+				tHRMIDForPeer = tOldHRMIDForPeer;
 			}
 	
 			// send the packet in every case
@@ -598,14 +608,6 @@ public class Cluster extends ClusterMember
 				// register this new HRMID in the local HRS and create a mapping to the right L2Address
 				Logging.log(this, "    ..removing MAPPING " + tHRMIDForPeer.toString() + " to " + tComChannel.getPeerL2Address());
 				mHRMController.getHRS().unmapHRMID(tHRMIDForPeer);
-			}
-
-			/**
-			 * Free all formerly used addresses
-			 */
-			LinkedList<Integer> tUsedAddresses = tComChannel.getUsedClusterAddresses();
-			for(int tUsedAddress : tUsedAddresses){
-				freeClusterMemberAddress(tUsedAddress);
 			}
 
 			/**
@@ -755,14 +757,6 @@ public class Cluster extends ClusterMember
 		}
 
 		/**
-		 * Free all formerly used addresses
-		 */
-		LinkedList<Integer> tUsedAddresses = pComChannel.getUsedClusterAddresses();
-		for(int tUsedAddress : tUsedAddresses){
-			freeClusterMemberAddress(tUsedAddress);
-		}
-
-		/**
 		 * Unregister the comm. channel
 		 */ 
 		unregisterComChannel(pComChannel);
@@ -864,7 +858,7 @@ public class Cluster extends ClusterMember
 			
 			freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
 
-			mHRMController.unregisterHRMID(this, getL0HRMID());					
+			mHRMController.unregisterHRMID(this, getL0HRMID(), this + "::eventClusterRoleInvalid()");					
 		}
 
 		// unregister from HRMController's internal database
