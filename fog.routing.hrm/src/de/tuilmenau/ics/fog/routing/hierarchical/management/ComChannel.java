@@ -185,12 +185,6 @@ public class ComChannel
 	 * Stores a list of assigned peer HRMIDs
 	 */
 	private LinkedList<HRMID> mAssignedPeerHRMIDs = new LinkedList<HRMID>();
-
-	/**
-	 * Stores a list of used cluster address for this comm. channel.
-	 * We could also use "mPeerHRMIDs" for having an overview about the used cluster addresses. But this way, the life is easier.
-	 */
-	private LinkedList<Integer> mUsedClusterAddresses = new LinkedList<Integer>();
 	
 	/**
 	 * Stores the comm. channel state
@@ -338,17 +332,10 @@ public class ComChannel
 				
 				synchronized(mAssignedPeerHRMIDs){
 					if(!mAssignedPeerHRMIDs.contains(pHRMID)){
-						mAssignedPeerHRMIDs.add(pHRMID);
-	
-						int tUsedClusterAddress = pHRMID.getLevelAddress(mParent.getHierarchyLevel());
-						Logging.log(this, "storePeerHRMID() stores for " + pHRMID + " the used cluster address: " + tUsedClusterAddress);
-						if(tUsedClusterAddress > 0){
-							synchronized (mUsedClusterAddresses) {
-								if(!mUsedClusterAddresses.contains(tUsedClusterAddress)){
-									mUsedClusterAddresses.add(tUsedClusterAddress);
-								}
-							}
+						if(!(mParent instanceof Cluster)){
+							mAssignedPeerHRMIDs.clear();
 						}
+						mAssignedPeerHRMIDs.add(pHRMID);
 					}else{
 						Logging.warn(this, "storePeerHRMID() skips storing the already known HRMID: " + pHRMID); 
 					}
@@ -459,7 +446,7 @@ public class ComChannel
 									tReportedRoutingEntry = RoutingEntry.create(getPeerHRMID() /* the peer belongs to the foreign cluster */, tGeneralizedNeighborHRMID /* the foreign cluster address */, tGeneralizedNeighborHRMID, 0 /* it's a local loopback routing there */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, "ComChannel@" + mParent.toLocation() + "::eventNewPeerHRMIDs()_2(" + mCallsEventNewPeerHRMIDs + ")");
 								}else{
 									// create the new routing table entry
-									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, "ComChannel@" + mParent.toLocation() + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ")");
+									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, "ComChannel@" + mParent.toLocation() + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ")");
 									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 									tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
 		
@@ -1011,23 +998,6 @@ public class ComChannel
 	}
 
 	/**
-	 * Returns a list of used cluster addresses
-	 * 
-	 * @return the list
-	 */
-	@SuppressWarnings("unchecked")
-	public LinkedList<Integer> getUsedClusterAddresses()
-	{
-		LinkedList<Integer> tResult = null;
-		
-		synchronized (mUsedClusterAddresses) {
-			tResult = (LinkedList<Integer>) mUsedClusterAddresses.clone();
-		}
-		
-		return tResult;
-	}
-	
-	/**
 	 * Returns the list of known assigned peer HRMIDs
 	 * 
 	 * @return the list
@@ -1520,7 +1490,7 @@ public class ComChannel
 				 * Unregister the local HRMID
 				 */
 				if((tHRMID != null) && (!tHRMID.isZero())){
-					mHRMController.unregisterHRMID(tCoordinatorAsClusterMember, tHRMID);
+					mHRMController.unregisterHRMID(tCoordinatorAsClusterMember, tHRMID, this + "::setLinkActivation()");
 				}
 			}
 
