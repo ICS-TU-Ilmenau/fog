@@ -13,6 +13,7 @@ import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -81,24 +82,48 @@ public class AbstractRoutingGraphLink implements Serializable
 	@Override
 	public boolean equals(Object pObj)
 	{
+		Logging.trace(this, "Comparing with: " + pObj);
 		if(pObj instanceof AbstractRoutingGraphLink){
 			AbstractRoutingGraphLink tOtherLink = (AbstractRoutingGraphLink)pObj;
 			if(mLinkType.equals(tOtherLink.mLinkType)){
-				if(mLinkType.equals(LinkType.ROUTE)){
+				if(mLinkType == LinkType.ROUTE){
 					if (getRoute() != null){
-						// compare the routes of both instances
-						return getRoute().equals(tOtherLink.getRoute());
+						if((getRoute().getFirst() instanceof RoutingEntry) && (tOtherLink.getRoute().getFirst() instanceof RoutingEntry)){
+							Logging.trace(this, "  ..comparing routes");
+							RoutingEntry tThisEntry = (RoutingEntry)getRoute().getFirst();
+							RoutingEntry tOtherEntry = (RoutingEntry)tOtherLink.getRoute().getFirst();
+							// compare the routing entries of both instances
+							if(tThisEntry.equals(tOtherEntry)){
+								Logging.trace(this, "  ..true");
+								return true;
+							}
+						}else{
+							// ??
+						}
 					}else{
 						// both routes are "null" ?
-						return (tOtherLink.getRoute() == null); 
+						if(tOtherLink.getRoute() == null){
+							Logging.trace(this, "  ..true");
+							return true;
+						}else{
+							Logging.trace(this, "  ..false");
+							return false;
+						}
 					}
 				}else{
 					// are the object references the same?
-					return super.equals(pObj);
+					if(super.equals(pObj)){
+						Logging.trace(this, "  ..true");
+						return true;
+					}else{
+						Logging.trace(this, "  ..false");
+						return false;
+					}
 				}
 			}
 		}
 
+		Logging.trace(this, "  ..false");
 		return false;
 	}
 
