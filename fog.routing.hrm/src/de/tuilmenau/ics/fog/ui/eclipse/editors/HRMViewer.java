@@ -103,6 +103,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Button mBtnClusteringLog = null;
     private Button mBtnClusterMembersLog = null;
     private Button mBtnHRMIDLog = null;
+    private Button mBtnHRGLog = null;
     private Button mBtnSuperiorCoordinatorsLog = null;
     private Button mBtnUsedClusterAddressesLog = null;
     
@@ -159,7 +160,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mGuiCounter == 1){
 			mToolBtnContainer = new Composite(pParent, SWT.NONE);
 	
-			GridLayout tLayout1 = new GridLayout(9, false);
+			GridLayout tLayout1 = new GridLayout(10, false);
 			mToolBtnContainer.setLayout(tLayout1);
 			mToolBtnContainer.setLayoutData(createGridData(true, 1));
 		}
@@ -232,6 +233,22 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				}
 			});
 		}
+		// **** show HRG update log ****
+		if(mGuiCounter == 1){
+			mBtnHRGLog = new Button(mToolBtnContainer, SWT.PUSH);
+			mBtnHRGLog.setText("Show HRG events");
+			mBtnHRGLog.setLayoutData(createGridData(false, 1));
+			mBtnHRGLog.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					Logging.log(this, "HRG updates: " + mHRMController.getGUIDescriptionHRGChanges());
+				}
+				public String toString()
+				{
+					return mHRMViewer.toString();
+				}
+			});
+		}		
 		// **** show superior coordinators ****
 		if(mGuiCounter == 1){
 			mBtnSuperiorCoordinatorsLog = new Button(mToolBtnContainer, SWT.PUSH);
