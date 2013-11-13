@@ -380,14 +380,14 @@ public class ComChannel
 	{
 		mCallsEventNewPeerHRMIDs++;
 		
-		Logging.log(this, "EVENT: new peer HRMID");
+		Logging.log(this, "EVENT: new peer HRMIDs");
 		if(mParent instanceof ClusterMember){
 			ClusterMember tParentClusterMember = (ClusterMember)mParent;
 			
 			// get the list of neighbor HRMIDs
 			LinkedList<HRMID> tNeighborHRMIDs = getPeerHRMIDs();
 
-			Logging.log(this, "EVENT: neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + ") for: " + this);
+			Logging.log(this, "EVENT: new neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + ") for: " + this);
 			Logging.log(this, "    ..neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + "): " + tNeighborHRMIDs);
 			
 			/**
