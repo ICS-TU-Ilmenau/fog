@@ -59,6 +59,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.eclipse.NodeDecorator;
 import de.tuilmenau.ics.fog.util.BlockingEventHandling;
 import de.tuilmenau.ics.fog.util.SimpleName;
+import edu.uci.ics.jung.graph.util.Pair;
 
 /**
  * This is the main HRM controller. It provides functions that are necessary to build up the hierarchical structure - every node contains such an object
@@ -609,11 +610,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						mRegisteredOwnHRMIDs.add(pHRMID);
 						
 						if(!pHRMID.isClusterAddress()){
-							/**
-							 * Register the new HRMID in the HRG
-							 */ 
-							registerNodeHRG(pHRMID, pCause + ", " + this + "::registerHRMID()");
-						
 							mDescriptionHRMIDUpdates += "\n + " + pHRMID.toString() + " <== " + pEntity + ", cause=" + pCause;
 
 							/**
@@ -700,11 +696,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						mRegisteredOwnHRMIDs.remove(pOldHRMID);
 						
 						if(!pOldHRMID.isClusterAddress()){
-							/**
-							 * Unregister the old HRMID in the HRG
-							 */ 
-							unregisterNodeHRG(pOldHRMID, pCause + ", " + this + "::unregisterHRMID()");
-
 							mDescriptionHRMIDUpdates += "\n - " + pOldHRMID.toString() + " <== " + pEntity;
 
 							/**
@@ -3591,7 +3582,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mHierarchicalRoutingGraph) {
 			if(mHierarchicalRoutingGraph.contains(pNode)) {
-				mDescriptionHRGUpdates += "\n - " + pNode + " <== " + pCause;
+				mDescriptionHRGUpdates += "\n - " + pNode + " ==> " + pCause;
 				mHierarchicalRoutingGraph.remove(pNode);
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..removed from HRG");
@@ -3673,29 +3664,76 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(!pFrom.equals(pTo)){
 			pRoutingEntry.assignToHRG(mHierarchicalRoutingGraph);
 	
-			AbstractRoutingGraphLink tLink = null;
-			do{
-				synchronized (mHierarchicalRoutingGraph) {
-					if(pRoutingEntry != null){
-						tLink = mHierarchicalRoutingGraph.getEdge(pFrom, pTo, new AbstractRoutingGraphLink(new Route(pRoutingEntry)));
-					}else{
-						tLink = mHierarchicalRoutingGraph.getEdge(pFrom, pTo, null);
+			AbstractRoutingGraphLink tSearchPattern = new AbstractRoutingGraphLink(new Route(pRoutingEntry));
+
+			synchronized (mHierarchicalRoutingGraph) {
+				//Logging.warn(this, "   ..knowing node: " + pFrom + " as " + mHierarchicalRoutingGraph.containsVertex(pFrom));
+				// get all outgoing HRG links of "pFrom"
+				Collection<AbstractRoutingGraphLink> tOutLinks = mHierarchicalRoutingGraph.getOutEdges(pFrom);
+				if(tOutLinks != null){
+					// iterate over all found links
+					for(AbstractRoutingGraphLink tKnownLink : tOutLinks) {
+						//Logging.warn(this, "     ..has link: " + tKnownLink);
+						Pair<HRMID> tEndPoints = mHierarchicalRoutingGraph.getEndpoints(tKnownLink);
+						if (((tEndPoints.getFirst().equals(pFrom)) && (tEndPoints.getSecond().equals(pTo))) ||
+							((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
+							if(tKnownLink.equals(tSearchPattern)){
+								//Logging.warn(this, "       ..MATCH");
+								// remove the link
+								mHierarchicalRoutingGraph.unlink(tKnownLink);
+								// we have a positive result
+								tResult = true;
+								// work is done
+								break;
+							}else{
+								//Logging.warn(this, "       ..NO MATCH");
+							}
+						}
 					}
 				}
-		
-				if(tLink != null){
-					synchronized (mHierarchicalRoutingGraph) {
-						mHierarchicalRoutingGraph.unlink(tLink);
-						tResult = true;
-					}
-				}
-			}while(tLink != null);
-			
+			}
+						
 			if(!tResult){
 				mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
-				Logging.err(this, "Haven't found an HRG link between " + pFrom + " and " + pTo);
+				Logging.err(this, "Haven't found " + pRoutingEntry + " as HRG between " + pFrom + " and " + pTo);
+				synchronized (mHierarchicalRoutingGraph) {
+					Collection<HRMID> tNodes = mHierarchicalRoutingGraph.getVertices();
+					for(HRMID tKnownNode : tNodes){
+						Logging.err(this, "   ..knowing node: " + tKnownNode);
+						Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(tKnownNode);
+						for(AbstractRoutingGraphLink tKnownLink : tLinks){
+							Logging.err(this, "     ..has link: " + tKnownLink);
+							if(tKnownLink.equals(tSearchPattern)){
+								Logging.err(this, "       ..MATCH");
+							}else{
+								Logging.err(this, "       ..NO MATCH");
+							}
+						}
+					}
+				}
 			}else{
 				mDescriptionHRGUpdates += "\n - " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
+
+				/**
+				 * Iterate over all nodes and delete all of them which don't have any links anymore
+				 */
+				synchronized (mHierarchicalRoutingGraph) {
+					boolean tRemovedANode;
+					do{
+						tRemovedANode = false;
+
+						Collection<HRMID> tNodes = mHierarchicalRoutingGraph.getVertices();
+						for(HRMID tKnownNode : tNodes){
+							Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(tKnownNode);
+							if(tLinks.size() == 0){
+								 // unregister the HRMID in the HRG
+								unregisterNodeHRG(tKnownNode, pRoutingEntry + ", " + this + "::unregisterLinkHRG()_autoDel");
+								tRemovedANode = true;
+								break;
+							}
+						}
+					}while(tRemovedANode);
+				}
 			}
 		}else{
 			Logging.warn(this, "unregisterLinkHRG() skipped because self-loop detected for: " + pRoutingEntry);
