@@ -118,7 +118,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				tResult = true;
 			}
 		}else{
-			Logging.warn(this, "Couldn't remove RIB entry: " + pRoutingTableEntry.toString());
+			//Logging.warn(this, "Couldn't remove RIB entry: " + pRoutingTableEntry.toString());
 		}
 		
 		return tResult;
