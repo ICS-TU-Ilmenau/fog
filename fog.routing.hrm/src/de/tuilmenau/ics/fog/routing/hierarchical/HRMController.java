@@ -3579,14 +3579,31 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Do the actual linking
 			 */
 			synchronized (mHierarchicalRoutingGraph) {
-				Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getEdges();
-				if(!tLinks.contains(tLink)){
+				boolean tLinkAlreadyKnown = false;
+				Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(pFrom);
+				if(tLinks != null){
+					for(AbstractRoutingGraphLink tKnownLink : tLinks){
+						// check if both links are equal 
+						if(tKnownLink.equals(tLink)){
+							// check of the end points of the already known link are equal to the pFrom/pTo
+							Pair<HRMID> tEndPoints = mHierarchicalRoutingGraph.getEndpoints(tKnownLink);
+							if (((tEndPoints.getFirst().equals(pFrom)) && (tEndPoints.getSecond().equals(pTo))) ||
+									((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
+								tLinkAlreadyKnown = true;
+							}
+						}
+					}
+				}
+				if(!tLinkAlreadyKnown){
 					mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
 					mHierarchicalRoutingGraph.link(pFrom.clone(), pTo.clone(), tLink);
 					tResult = true;
 				}else{
+					/**
+					 * The link is already known -> this can occur if both end points are located on this node and both of them try to register the same route
+					 */
 					mDescriptionHRGUpdates += "\n +/- " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
-					Logging.warn(this, "HRG link is already known: " + tLink);
+					Logging.warn(this, "registerLinkHRG() aborted, HRG link between " + pFrom + " and " + pTo + " is already known: " + tLink);
 					for(AbstractRoutingGraphLink tKnownLink : tLinks){
 						if(tKnownLink.equals(tLink)){
 							Logging.warn(this, "  ..known as: " + tKnownLink);		
@@ -3649,19 +3666,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 						
 			if(!tResult){
+				/**
+				 * The route was already removed -> this can occur if both end points of a link are located on this node and both of them try to unregister the same route
+				 */
 				mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
-				Logging.err(this, "Haven't found " + pRoutingEntry + " as HRG between " + pFrom + " and " + pTo);
+				Logging.warn(this, "Haven't found " + pRoutingEntry + " as HRG between " + pFrom + " and " + pTo);
 				synchronized (mHierarchicalRoutingGraph) {
 					Collection<HRMID> tNodes = mHierarchicalRoutingGraph.getVertices();
 					for(HRMID tKnownNode : tNodes){
-						Logging.err(this, "   ..knowing node: " + tKnownNode);
+						Logging.warn(this, "   ..knowing node: " + tKnownNode);
 						Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(tKnownNode);
 						for(AbstractRoutingGraphLink tKnownLink : tLinks){
-							Logging.err(this, "     ..has link: " + tKnownLink);
+							Logging.warn(this, "     ..has link: " + tKnownLink);
 							if(tKnownLink.equals(tSearchPattern)){
 								Logging.err(this, "       ..MATCH");
 							}else{
-								Logging.err(this, "       ..NO MATCH");
+								Logging.warn(this, "       ..NO MATCH");
 							}
 						}
 					}
