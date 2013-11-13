@@ -499,7 +499,7 @@ public class ComChannel
 						}
 					}
 				}else{
-					Logging.warn(this, "eventNeighborHRMIDs()(" + mCallsEventNewPeerHRMIDs + ") skipped because own source HRMID is zero, ignoring neighbor HRMIDs: " + tNeighborHRMIDs);
+					//Logging.warn(this, "eventNeighborHRMIDs()(" + mCallsEventNewPeerHRMIDs + ") skipped because own source HRMID is zero, ignoring neighbor HRMIDs: " + tNeighborHRMIDs);
 				}
 			}else{
 				// we are at higher hierarchy level
