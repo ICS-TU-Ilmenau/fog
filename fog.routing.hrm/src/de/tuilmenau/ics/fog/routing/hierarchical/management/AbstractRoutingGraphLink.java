@@ -82,19 +82,27 @@ public class AbstractRoutingGraphLink implements Serializable
 	@Override
 	public boolean equals(Object pObj)
 	{
-		Logging.trace(this, "Comparing with: " + pObj);
+		boolean tDebug = false;
+		
+		if(tDebug){
+			Logging.trace(this, "Comparing with: " + pObj);
+		}
 		if(pObj instanceof AbstractRoutingGraphLink){
 			AbstractRoutingGraphLink tOtherLink = (AbstractRoutingGraphLink)pObj;
 			if(mLinkType.equals(tOtherLink.mLinkType)){
 				if(mLinkType == LinkType.ROUTE){
 					if (getRoute() != null){
 						if((getRoute().getFirst() instanceof RoutingEntry) && (tOtherLink.getRoute().getFirst() instanceof RoutingEntry)){
-							Logging.trace(this, "  ..comparing routes");
+							if(tDebug){
+								Logging.trace(this, "  ..comparing routes");
+							}
 							RoutingEntry tThisEntry = (RoutingEntry)getRoute().getFirst();
 							RoutingEntry tOtherEntry = (RoutingEntry)tOtherLink.getRoute().getFirst();
 							// compare the routing entries of both instances
 							if(tThisEntry.equals(tOtherEntry)){
-								Logging.trace(this, "  ..true");
+								if(tDebug){
+									Logging.trace(this, "  ..true");
+								}
 								return true;
 							}
 						}else{
@@ -103,20 +111,28 @@ public class AbstractRoutingGraphLink implements Serializable
 					}else{
 						// both routes are "null" ?
 						if(tOtherLink.getRoute() == null){
-							Logging.trace(this, "  ..true");
+							if(tDebug){
+								Logging.trace(this, "  ..true");
+							}
 							return true;
 						}else{
-							Logging.trace(this, "  ..false");
+							if(tDebug){
+								Logging.trace(this, "  ..false");
+							}
 							return false;
 						}
 					}
 				}else{
 					// are the object references the same?
 					if(super.equals(pObj)){
-						Logging.trace(this, "  ..true");
+						if(tDebug){
+							Logging.trace(this, "  ..true");
+						}
 						return true;
 					}else{
-						Logging.trace(this, "  ..false");
+						if(tDebug){
+							Logging.trace(this, "  ..false");
+						}
 						return false;
 					}
 				}
