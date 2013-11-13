@@ -3589,6 +3589,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							Pair<HRMID> tEndPoints = mHierarchicalRoutingGraph.getEndpoints(tKnownLink);
 							if (((tEndPoints.getFirst().equals(pFrom)) && (tEndPoints.getSecond().equals(pTo))) ||
 									((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
+								tKnownLink.incRefCounter();
 								tLinkAlreadyKnown = true;
 							}
 						}
@@ -3597,19 +3598,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(!tLinkAlreadyKnown){
 					mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
 					mHierarchicalRoutingGraph.link(pFrom.clone(), pTo.clone(), tLink);
-					tResult = true;
 				}else{
 					/**
 					 * The link is already known -> this can occur if both end points are located on this node and both of them try to register the same route
 					 */
-					mDescriptionHRGUpdates += "\n +/- " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
-					Logging.warn(this, "registerLinkHRG() aborted, HRG link between " + pFrom + " and " + pTo + " is already known: " + tLink);
-					for(AbstractRoutingGraphLink tKnownLink : tLinks){
-						if(tKnownLink.equals(tLink)){
-							Logging.warn(this, "  ..known as: " + tKnownLink);		
-						}
-					}
+					mDescriptionHRGUpdates += "\n +" + (tLinkAlreadyKnown ? "(REF)" : "") + " " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
 				}
+				tResult = true;
 			}
 		}else{
 			//Logging.warn(this, "registerLinkHRG() skipped because self-loop detected for: " + pRoutingEntry);
@@ -3638,6 +3633,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	
 			AbstractRoutingGraphLink tSearchPattern = new AbstractRoutingGraphLink(new Route(pRoutingEntry));
 
+			boolean tChangedRefCounter = false;
 			synchronized (mHierarchicalRoutingGraph) {
 				//Logging.warn(this, "   ..knowing node: " + pFrom + " as " + mHierarchicalRoutingGraph.containsVertex(pFrom));
 				// get all outgoing HRG links of "pFrom"
@@ -3651,8 +3647,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
 							if(tKnownLink.equals(tSearchPattern)){
 								//Logging.warn(this, "       ..MATCH");
-								// remove the link
-								mHierarchicalRoutingGraph.unlink(tKnownLink);
+								if(tKnownLink.getRefCounter() == 1){
+									// remove the link
+									mHierarchicalRoutingGraph.unlink(tKnownLink);
+								}else{
+									if(tKnownLink.getRefCounter() < 1){
+										throw new RuntimeException("Found an HRG link with an invalid ref. counter: " + tKnownLink);
+									}
+									
+									tKnownLink.decRefCounter();
+									tChangedRefCounter = true;
+								}
 								// we have a positive result
 								tResult = true;
 								// work is done
@@ -3687,7 +3692,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 			}else{
-				mDescriptionHRGUpdates += "\n - " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
+				mDescriptionHRGUpdates += "\n -" + (tChangedRefCounter ? "(REF)" : "") +" " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
 
 				/**
 				 * Iterate over all nodes and delete all of them which don't have any links anymore

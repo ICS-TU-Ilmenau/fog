@@ -35,6 +35,11 @@ public class AbstractRoutingGraphLink implements Serializable
 	private Route mRoute = null;
 	
 	/**
+	 * Stores the reference counter
+	 */
+	private int mRefCounter = 1;
+
+	/**
 	 * Constructor of a node (cluster) connection
 	 * 
 	 * @param pType the type of the link between the two ARG entries
@@ -161,6 +166,32 @@ public class AbstractRoutingGraphLink implements Serializable
 		}
 	}
 	
+	/**
+	 * Returns the reference counter
+	 * 
+	 * @return the reference counter
+	 */
+	public int getRefCounter()
+	{
+		return mRefCounter;
+	}
+	
+	/**
+	 * Increases the reference counter
+	 */
+	public void incRefCounter()
+	{
+		mRefCounter++;
+	}
+	
+	/**
+	 * Decreases the reference counter
+	 */
+	public void decRefCounter()
+	{
+		mRefCounter--;
+	}
+
 	/**
 	 * Returns a descriptive string about the object
 	 * 
