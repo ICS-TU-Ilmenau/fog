@@ -13,11 +13,13 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
 import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 import edu.uci.ics.jung.algorithms.shortestpath.DijkstraShortestPath;
 import edu.uci.ics.jung.graph.util.EdgeType;
+import edu.uci.ics.jung.graph.util.Pair;
 
 /**
  * Data storage for an abstracted topology view. 
@@ -28,6 +30,17 @@ import edu.uci.ics.jung.graph.util.EdgeType;
  */
 public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<NodeObject, LinkObject>
 {
+	/**
+	 * Stores if the graph is directed
+	 */
+	private boolean mDirectedGraph = false;
+	
+	public AbstractRoutingGraph(boolean pDirectedGraph)
+	{
+		super(null);
+		mDirectedGraph = pDirectedGraph;
+	}
+
 	public AbstractRoutingGraph()
 	{
 		super(null);
@@ -52,7 +65,35 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 		
 		return tResult;
 	}
-	
+
+	/**
+	 * Determines the destination of a link
+	 * 
+	 * @param pLink the link for which the destination should be determined
+	 * 
+	 * @return the destination node of a given link
+	 */
+	@Override
+	public synchronized NodeObject getDest(LinkObject pLink)
+	{
+		if(!mDirectedGraph){
+			throw new RuntimeException(this + "::getDest() can't determine in an undirected graph the destination of " + pLink);
+		}else{
+			return super.getDest(pLink);
+		}
+	}
+
+	/**
+	 * Determines the end points of a given link
+	 * 
+	 * @param pLink the given link
+	 * @return
+	 */
+	public synchronized Pair<NodeObject> getEndpoints(LinkObject pLink)
+	{
+		return mRoutingGraph.getEndpoints(pLink);
+	}
+
 	/**
 	 * This method registers a link between two nodes in the routing graph. 
 	 * If the nodes don't exist in the routing graph, they are registered implicitly.
@@ -77,7 +118,7 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 			// check if there already exist a link between these two nodes
 //			if(!isLinked(pFrom, pTo)) {
 				// add the link to the routing graph
-				if(mRoutingGraph.addEdge(pLinkObject, pFrom, pTo, EdgeType.UNDIRECTED)) {
+				if(mRoutingGraph.addEdge(pLinkObject, pFrom, pTo, (mDirectedGraph ? EdgeType.DIRECTED : EdgeType.UNDIRECTED))) {
 					notifyObservers(new Event(EventType.ADDED, pLinkObject));
 				}
 //			}
