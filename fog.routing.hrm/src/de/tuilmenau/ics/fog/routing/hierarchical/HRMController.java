@@ -3073,7 +3073,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Logging.warn(this, "getL2AddressOfFirstFNTowardsNeighbor() found an empty route to \"neighbor\": " + pNeighborName);
 				}
 			}else{
-				Logging.warn(this, "Got as route to neighbor: " + tRoute); //HINT: this could also be a local loop -> throw only a warning				
+				Logging.warn(this, "Got for neighbor " + pNeighborName + " the route: " + tRoute); //HINT: this could also be a local loop -> throw only a warning				
 			}
 		}else{
 			Logging.warn(this, "getL2AddressOfFirstFNTowardsNeighbor() found an invalid neighbor name");
@@ -3595,7 +3595,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}
 		}else{
-			Logging.warn(this, "registerLinkHRG() skipped because self-loop detected for: " + pRoutingEntry);
+			//Logging.warn(this, "registerLinkHRG() skipped because self-loop detected for: " + pRoutingEntry);
 		}
 		
 		return tResult;
@@ -3691,7 +3691,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}
 		}else{
-			Logging.warn(this, "unregisterLinkHRG() skipped because self-loop detected for: " + pRoutingEntry);
+			//Logging.warn(this, "unregisterLinkHRG() skipped because self-loop detected for: " + pRoutingEntry);
 		}
 
 		return tResult;

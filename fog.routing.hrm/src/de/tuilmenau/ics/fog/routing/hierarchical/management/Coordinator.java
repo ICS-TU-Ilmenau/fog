@@ -16,7 +16,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.TopologyReport;
-import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -974,7 +973,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			Logging.log(this, "eventClusterMembershipActivated() updates comm. channel to superior coordinator: " + pMembership.getComChannelToClusterHead());
 			setSuperiorCoordinatorComChannel(pMembership.getComChannelToClusterHead());
 		}else{
-			Logging.warn(this, "eventClusterMembershipActivated() skipped because the new channel corresponds to the old one: " + superiorCoordinatorComChannel());
+			//Logging.warn(this, "eventClusterMembershipActivated() skipped because the new channel corresponds to the old one: " + superiorCoordinatorComChannel());
 		}
 
 		/**

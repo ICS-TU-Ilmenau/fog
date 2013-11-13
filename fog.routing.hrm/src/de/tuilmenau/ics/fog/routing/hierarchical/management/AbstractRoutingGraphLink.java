@@ -139,7 +139,9 @@ public class AbstractRoutingGraphLink implements Serializable
 			}
 		}
 
-		Logging.trace(this, "  ..false");
+		if(tDebug){
+			Logging.trace(this, "  ..false");
+		}
 		return false;
 	}
 

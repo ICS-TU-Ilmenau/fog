@@ -896,7 +896,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			//       Therefore, we ignore the first registerLink() request and wait for the (hopefully) appearing second request.
 			tToL2Address = (L2Address) pGate.getRemoteDestinationName();
 			if (tToL2Address == null){
-				Logging.warn(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this registerLink() request and wait until the peer is known");
+				Logging.log(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this registerLink() request and wait until the peer is known");
 			}
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
@@ -1566,20 +1566,20 @@ public class HRMRoutingService implements RoutingService, Localization
 		if(tResultRoute == null){
 			// no route found
 			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-				Logging.err(this, "getRoute() couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
+				Logging.warn(this, "getRoute() couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
 				
 				// list known topology
 				synchronized (mL2RoutingGraph) {
 					Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
 					int i = 0;
 					for (L2Address tL2Address : tGraphNodes){
-						Logging.err(this, "     ..node[" + i + "]: " + tL2Address);
+						Logging.warn(this, "     ..node[" + i + "]: " + tL2Address);
 						i++;
 					}
 					Collection<RoutingServiceLink> tGraphLinks = mL2RoutingGraph.getEdges();
 					i = 0;
 					for (RoutingServiceLink tLink : tGraphLinks){
-						Logging.err(this, "     ..gate[" + i + "]: " + tLink.getID());
+						Logging.warn(this, "     ..gate[" + i + "]: " + tLink.getID());
 						i++;
 					}
 				}

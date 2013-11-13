@@ -1058,7 +1058,7 @@ public class Elector implements Localization
 					// create new coordinator instance
 					tCoordinator = new Coordinator(tParentCluster);
 				}else{
-					Logging.warn(this, "Cluster " + mParent + " has already a coordinator");
+					Logging.log(this, "Cluster " + mParent + " has already a coordinator");
 				}
 	
 				Logging.log(this, "    ..coordinator is: " + tCoordinator);

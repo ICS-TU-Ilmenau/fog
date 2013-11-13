@@ -337,7 +337,7 @@ public class ComChannel
 						}
 						mAssignedPeerHRMIDs.add(pHRMID);
 					}else{
-						Logging.warn(this, "storePeerHRMID() skips storing the already known HRMID: " + pHRMID); 
+						//Logging.warn(this, "storePeerHRMID() skips storing the already known HRMID: " + pHRMID); 
 					}
 				}
 	
