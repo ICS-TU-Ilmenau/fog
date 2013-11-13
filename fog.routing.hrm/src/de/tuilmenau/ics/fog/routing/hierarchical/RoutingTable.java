@@ -50,17 +50,11 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		RoutingEntry tFoundDuplicate = null;
 		if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
 			for (RoutingEntry tEntry: this){
-				if(tEntry.getDest() != null){
-					// have we found a route to the same destination which uses the same next hop?
-					//TODO: what about multiple links to the same next hop?
-					if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) /* same destination? */ &&
-						(tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop())) /* same next hop? */){
-
-						//Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
-						tFoundDuplicate = tEntry;
-						
-						break;						
-					}							
+				if(tEntry.equals(pRoutingTableEntry)){
+					//Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
+					tFoundDuplicate = tEntry;
+					
+					break;						
 				}
 			}
 		}
@@ -82,7 +76,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			
 			tResult = true;
 		}else{
-			//TODO: support for updates tFoundDuplicate
+			//TODO: support for updates of tFoundDuplicate
 		}
 		
 		return tResult;
@@ -109,12 +103,8 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		 * Go over the RIB database and search for matching entries, mark them for deletion
 		 */
 		for(RoutingEntry tEntry: this){
-			if((tEntry.getDest() != null) && (tEntry.getNextHop() != null)){
-				// do the destinations and next hops match?
-				if ((tEntry.getDest().equals(pRoutingTableEntry.getDest())) && 
-					(tEntry.getNextHop().equals(pRoutingTableEntry.getNextHop()))){
-					tRemoveThese.add(tEntry);
-				}
+			if(tEntry.equals(pRoutingTableEntry)){
+				tRemoveThese.add(tEntry);
 			}
 		}
 		
