@@ -384,8 +384,10 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	public boolean equals(Object pObj)
 	{
 		if(pObj instanceof HRMID) {
-			// compare the addresses by the help of getAddress()
-			return getComplexAddress().equals(((HRMID)pObj).getComplexAddress());
+			HRMID tOther = (HRMID)pObj;
+			
+			// compare the addresses
+			return mAddress.intValue() == tOther.mAddress.intValue();
 		}
 		return false;
 	}
