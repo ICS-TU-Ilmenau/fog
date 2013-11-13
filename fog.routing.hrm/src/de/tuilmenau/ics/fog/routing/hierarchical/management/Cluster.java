@@ -277,7 +277,6 @@ public class Cluster extends ClusterMember
 								freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
 							}
 		
-							mHRMController.unregisterHRMID(this, getL0HRMID(), this + "::distributeAddresses()");					
 						}
 
 						mDescriptionHRMIDAllocation += "\n     .." + tThisNodesAddress.toString() + " for " + this + ", cause=distributeAddresses() [" + mSentAddressBroadcast + "]";
@@ -286,9 +285,6 @@ public class Cluster extends ClusterMember
 			
 						// store the new HRMID for this node
 						setL0HRMID(tThisNodesAddress);
-						
-						// inform the HRMController about the new HRMID
-						mHRMController.registerHRMID(this, getL0HRMID(),  this + "distributeAddresses()");
 					}else{
 						if(tThisNodesAddress == null){
 							throw new RuntimeException(this + "::distributeAddresses() got a zero HRMID from allocateClusterMemberAddress()");
