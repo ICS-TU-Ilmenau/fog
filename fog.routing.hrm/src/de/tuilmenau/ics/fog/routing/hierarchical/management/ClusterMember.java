@@ -285,8 +285,10 @@ public class ClusterMember extends ClusterName
 								Logging.err(this, "  ..found active sibling: " + tSibling);
 							}
 							
+							HRMID tGeneralizedSiblingL0Address = mAssignedL0HRMID.getForeignCluster(tSiblingL0Address);
+									
 							// create the new reported routing table entry
-							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(mAssignedL0HRMID /* this cluster */, tSiblingL0Address /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pCause);
+							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(mAssignedL0HRMID /* this cluster */, tGeneralizedSiblingL0Address /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pCause + ", ::eventNeedHRGUpdate()");
 							// even more details about the route to make it distinguishable from others
 							tRoutingEntryToSibling.setNextHopL2Address(mHRMController.getNodeL2Address());
 	
