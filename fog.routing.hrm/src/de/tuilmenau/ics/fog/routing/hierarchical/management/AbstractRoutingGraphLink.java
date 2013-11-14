@@ -202,7 +202,7 @@ public class AbstractRoutingGraphLink implements Serializable
 		if(mRoute == null){
 			return getLinkType().toString();
 		}else{
-			return mRoute.toString();				
+			return (mRefCounter > 1 ? mRefCounter + " REFS: " : "") + mRoute.toString();				
 		}
 	}
 }
