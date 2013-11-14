@@ -126,6 +126,27 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	}
 	
 	/**
+	 * Determines all incoming edges of a graph node
+	 * 
+	 * @param pNode the root node
+	 * 
+	 * @return the list of incoming edges
+	 */
+	public synchronized Collection<LinkObject> getInEdges(NodeObject pNode)
+	{
+		Collection<LinkObject> tResult = null
+				;
+		for(NodeObject tNode : mRoutingGraph.getVertices()) {
+			if(pNode.equals(tNode)) {
+				tResult = mRoutingGraph.getInEdges(tNode);
+				break;
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Get all nodes that are between the source and the target
 	 * 
 	 * @param pFrom This is the source of the path you want to get all nodes for.
