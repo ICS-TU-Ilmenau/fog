@@ -3537,7 +3537,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private synchronized void registerNodeHRG(HRMID pNode, String pCause)
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+		if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
 			Logging.log(this, "REGISTERING NODE ADDRESS (HRG): " + pNode );
 		}
 
@@ -3569,7 +3569,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void unregisterNodeHRG(HRMID pNode, String pCause)
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+		if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
 			Logging.log(this, "UNREGISTERING NODE ADDRESS (HRG): " + pNode );
 		}
 		
@@ -3602,7 +3602,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		boolean tResult = false;
 		
-		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+		if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
 			Logging.log(this, "REGISTERING LINK (HRG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  ROUTE=" + pRoutingEntry);
 		}
 	
@@ -3663,12 +3663,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pFrom the starting point of the link
 	 * @param pTo the ending point of the link
 	 * @param pRoutingEntry the routing entry of the addressed link
+	 * 
+	 * @return if the link was found in the HRG
 	 */
 	public boolean unregisterLinkHRG(HRMID pFrom, HRMID pTo, RoutingEntry pRoutingEntry)
 	{
 		boolean tResult = false;
 
-		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+		if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
 			Logging.log(this, "UNREGISTERING LINK (HRG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  LINK=" + pRoutingEntry);
 		}
 
@@ -3726,7 +3728,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
 				Logging.warn(this, "Haven't found " + pRoutingEntry + " as HRG between " + pFrom + " and " + pTo);
-				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
 					synchronized (mHierarchicalRoutingGraph) {
 						Collection<HRMID> tNodes = mHierarchicalRoutingGraph.getVertices();
 						for(HRMID tKnownNode : tNodes){
@@ -3823,15 +3825,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pFromHRMID the start of the link
 	 * @param pToHRMID the end of the link
 	 * @param pRoutingEntry the routing entry for this link
+	 * 
+	 * @return true if the link is new to the routing graph
 	 */
-	public void registerCluster2ClusterLinkHRG(HRMID pFromHRMID, HRMID pToHRMID, RoutingEntry pRoutingEntry)
+	public boolean registerCluster2ClusterLinkHRG(HRMID pFromHRMID, HRMID pToHRMID, RoutingEntry pRoutingEntry)
 	{
+		boolean tResult = false;
+		
 		/**
 		 * Store/update link in the HRG
 		 */ 
-		if(registerLinkHRG(pFromHRMID, pToHRMID, pRoutingEntry)){
-			Logging.log(this, "Stored cluster-2-cluster link between " + pFromHRMID + " and " + pToHRMID + " in the HRG as: " + pRoutingEntry);
+		tResult = registerLinkHRG(pFromHRMID, pToHRMID, pRoutingEntry);
+		if(tResult){
+			if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
+				Logging.log(this, "Stored cluster-2-cluster link between " + pFromHRMID + " and " + pToHRMID + " in the HRG as: " + pRoutingEntry);
+			}
 		}
+		
+		return tResult;
 	}
 
 	/**
@@ -3840,15 +3851,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pFromHRMID the start of the link
 	 * @param pToHRMID the end of the link
 	 * @param pRoutingEntry the routing entry for this link
+	 * 
+	 * @return if the link was found in the HRG
 	 */
-	private void unregisterCluster2ClusterLinkHRG(HRMID pFromHRMID, HRMID pToHRMID, RoutingEntry pRoutingEntry)
+	private boolean unregisterCluster2ClusterLinkHRG(HRMID pFromHRMID, HRMID pToHRMID, RoutingEntry pRoutingEntry)
 	{
+		boolean tResult = false;
+
 		/**
 		 * Store/update link in the HRG
 		 */ 
-		if(unregisterLinkHRG(pFromHRMID, pToHRMID, pRoutingEntry)){
-			Logging.log(this, "Removed cluster-2-cluster link between " + pFromHRMID + " and " + pToHRMID + " from the HRG as: " + pRoutingEntry);
+		tResult = unregisterLinkHRG(pFromHRMID, pToHRMID, pRoutingEntry);
+		if(tResult){
+			if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
+				Logging.log(this, "Removed cluster-2-cluster link between " + pFromHRMID + " and " + pToHRMID + " from the HRG as: " + pRoutingEntry);
+			}
 		}
+
+		return tResult;
 	}
 
 	/**

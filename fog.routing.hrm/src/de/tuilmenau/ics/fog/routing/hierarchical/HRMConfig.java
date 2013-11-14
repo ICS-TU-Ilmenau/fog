@@ -185,6 +185,11 @@ public class HRMConfig
 		 * Defines if the cause for each routing entry should be shown
 		 */
 		public static final boolean GUI_SHOW_ROUTE_CAUSE = false;
+
+		/**
+		 * Show debug outputs about HRG node/link detection
+		 */
+		public static final boolean GUI_SHOW_HRG_DETECTION = false;
 	}
 	
 	public class Addressing
