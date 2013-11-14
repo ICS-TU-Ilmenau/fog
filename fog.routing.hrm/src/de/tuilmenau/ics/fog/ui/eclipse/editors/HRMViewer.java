@@ -935,8 +935,15 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			
 			/**
 			 * Column 0: peer
-			 */			
-			tRow.setText(0, ((tComChannel.getPeer() != null) ? tComChannel.getPeer().toString() : tComChannel.getRemoteClusterName().toString()));
+			 */
+			String tIsSuperiorCoordinatorChannel = "";
+			if(pControlEntity instanceof Coordinator){
+				Coordinator tCoordinator = (Coordinator)pControlEntity;
+				if(tComChannel == tCoordinator.superiorCoordinatorComChannel()){
+					tIsSuperiorCoordinatorChannel = "*";
+				}
+			}
+			tRow.setText(0, tIsSuperiorCoordinatorChannel + ((tComChannel.getPeer() != null) ? tComChannel.getPeer().toString() : tComChannel.getRemoteClusterName().toString()));
 
 			/**
 			 * Column 1: peer node
