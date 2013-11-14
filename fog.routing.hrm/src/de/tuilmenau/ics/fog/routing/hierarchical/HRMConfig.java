@@ -180,6 +180,11 @@ public class HRMConfig
 		 * Defines if HRG updates should be shown
 		 */
 		public static final boolean GUI_SHOW_HRG_UPDATES = false;
+
+		/**
+		 * Defines if the cause for each routing entry should be shown
+		 */
+		public static final boolean GUI_SHOW_ROUTE_CAUSE = false;
 	}
 	
 	public class Addressing
