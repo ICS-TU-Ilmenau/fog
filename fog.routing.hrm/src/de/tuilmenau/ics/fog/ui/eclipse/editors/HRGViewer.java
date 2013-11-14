@@ -148,7 +148,14 @@ public class HRGViewer extends EditorAWT implements Observer, IController, IEven
 			int i = 0;
 			for(AbstractRoutingGraphLink tLink : tLinks){
 				Pair<HRMID> tEndPoints = mHRMController.getHRGForGraphViewer().getEndpoints(tLink);
-				Logging.trace(this, "     ..[" + i + "]: " + tEndPoints.getFirst() + " to " + tEndPoints.getSecond() + " <== " + tLink);
+				Logging.trace(this, "     ..[" + i + "]: " + tEndPoints.getFirst() + " out to " + tEndPoints.getSecond() + " <== " + tLink);
+				i++;
+			}
+			tLinks = mHRMController.getHRGForGraphViewer().getInEdges(tSelectedHRMID);
+			i = 0;
+			for(AbstractRoutingGraphLink tLink : tLinks){
+				Pair<HRMID> tEndPoints = mHRMController.getHRGForGraphViewer().getEndpoints(tLink);
+				Logging.trace(this, "     ..[" + i + "]: " + tEndPoints.getFirst() + " in from " + tEndPoints.getSecond() + " <== " + tLink);
 				i++;
 			}
 		}
