@@ -726,6 +726,11 @@ public class Cluster extends ClusterMember
 			}
 				
 			/**
+			 * Set the timeout for reported routes
+			 */
+			tEntry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT);
+
+			/**
 			 * Update the HRG
 			 */
 			if(tEntry.getHopCount() == 0){
