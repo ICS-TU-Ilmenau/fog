@@ -37,7 +37,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			return false;
 		}
 		
-		if(pRoutingTableEntry.getDest().isZero()){
+		if((pRoutingTableEntry.getDest() != null) && (pRoutingTableEntry.getDest().isZero())){
 			throw new RuntimeException(this + "::addEntry() got an entry with a wildcard destination");
 		}
 		if(pRoutingTableEntry.getSource().isZero()){
