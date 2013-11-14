@@ -681,15 +681,17 @@ public class ComChannel
 		/**
 		 * Add peerHRMID to peerHRMIDs
 		 */
-		synchronized (mPeerHRMIDs) {
-			if(!mPeerHRMIDs.contains(getPeerHRMID())){
-				if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-					Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
+		if((getPeerHRMID() != null) && (!getPeerHRMID().isZero())){
+			synchronized (mPeerHRMIDs) {
+				if(!mPeerHRMIDs.contains(getPeerHRMID())){
+					if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
+					}
+					mPeerHRMIDs.add(getPeerHRMID());
 				}
-				mPeerHRMIDs.add(getPeerHRMID());
 			}
 		}
-
+		
 		/**
 		 * Inform the parent ClusterMember about the new peer HRMIDs
 		 */
