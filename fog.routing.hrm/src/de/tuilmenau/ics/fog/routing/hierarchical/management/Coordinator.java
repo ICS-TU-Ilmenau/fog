@@ -511,7 +511,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						/**
 						 * Report 1: routes to all neighbors
 						 */
-						RoutingTable tRoutesToNeighbors = mHRMController.getRoutesToNeighborsHRG(getHRMID());
+						RoutingTable tRoutesToNeighbors = mHRMController.getRoutesWithNeighborsHRG(getHRMID());
 						// add the found routes to the report routing table
 						tReportRoutingTable.addEntries(tRoutesToNeighbors);
 						
@@ -556,14 +556,18 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								// send the packet to the superior coordinator
 								sendSuperiorCoordinator(tTopologyReportPacket);
 							}else{
-								Logging.log(this, "reportPhase() aborted because no report for " + superiorCoordinatorComChannel() + " available");
+								if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+									Logging.log(this, "reportPhase() aborted because no report for " + superiorCoordinatorComChannel() + " available");
+								}
 							}
 		//				}
 					}else{
-						Logging.log(this, "reportPhase() aborted because no report in a loopback is allowed");
+						if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+							Logging.log(this, "reportPhase() aborted because no report in a loopback is allowed");
+						}
 					}
 				}else{
-					Logging.log(this, "reportPhase() aborted because channel to superior coordinator is invalid");
+					Logging.warn(this, "reportPhase() aborted because channel to superior coordinator is invalid");
 				}
 			}else{
 				// we are the highest hierarchy level, no one to send topology reports to

@@ -91,7 +91,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs about the routing process 
 		 */
-		public static final boolean GUI_SHOW_ROUTING = true;
+		public static final boolean GUI_SHOW_ROUTING = false;
 
 		/**
 		 * Show debug outputs about node/link detection
@@ -184,7 +184,7 @@ public class HRMConfig
 		/**
 		 * Defines if the cause for each routing entry should be shown
 		 */
-		public static final boolean GUI_SHOW_ROUTE_CAUSE = true;
+		public static final boolean GUI_SHOW_ROUTE_CAUSE = false;
 
 		/**
 		 * Show debug outputs about HRG node/link detection

@@ -183,7 +183,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores the hierarchical routing graph (HRG), which provides a hierarchical overview about the network topology.
 	 */
-	private AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink> mHierarchicalRoutingGraph = new AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink>();
+	private AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink> mHierarchicalRoutingGraph = new AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink>(true);
 
 	/**
 	 * Count the outgoing connections
@@ -3765,27 +3765,31 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					synchronized (mHierarchicalRoutingGraph) {
 						
 						Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(pFrom);
-						if(tLinks.size() > 0){
-							Logging.warn(this, "   ..knowing FROM node: " + pFrom);
-							for(AbstractRoutingGraphLink tKnownLink : tLinks){
-								Logging.warn(this, "     ..has link: " + tKnownLink);
-								if(tKnownLink.equals(tSearchPattern)){
-									Logging.err(this, "       ..MATCH");
-								}else{
-									Logging.warn(this, "       ..NO MATCH");
+						if(tLinks != null){
+							if(tLinks.size() > 0){
+								Logging.warn(this, "   ..knowing FROM node: " + pFrom);
+								for(AbstractRoutingGraphLink tKnownLink : tLinks){
+									Logging.warn(this, "     ..has link: " + tKnownLink);
+									if(tKnownLink.equals(tSearchPattern)){
+										Logging.err(this, "       ..MATCH");
+									}else{
+										Logging.warn(this, "       ..NO MATCH");
+									}
 								}
 							}
 						}
 						
 						tLinks = mHierarchicalRoutingGraph.getOutEdges(pTo);
-						if(tLinks.size() > 0){
-							Logging.warn(this, "   ..knowing TO node: " + pFrom);
-							for(AbstractRoutingGraphLink tKnownLink : tLinks){
-								Logging.warn(this, "     ..has link: " + tKnownLink);
-								if(tKnownLink.equals(tSearchPattern)){
-									Logging.err(this, "       ..MATCH");
-								}else{
-									Logging.warn(this, "       ..NO MATCH");
+						if(tLinks != null){
+							if(tLinks.size() > 0){
+								Logging.warn(this, "   ..knowing TO node: " + pFrom);
+								for(AbstractRoutingGraphLink tKnownLink : tLinks){
+									Logging.warn(this, "     ..has link: " + tKnownLink);
+									if(tKnownLink.equals(tSearchPattern)){
+										Logging.err(this, "       ..MATCH");
+									}else{
+										Logging.warn(this, "       ..NO MATCH");
+									}
 								}
 							}
 						}
@@ -3822,13 +3826,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 				Collection<HRMID> tNodes = mHierarchicalRoutingGraph.getVertices();
 				for(HRMID tKnownNode : tNodes){
-					Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(tKnownNode);
-					if(tLinks.size() == 0){
-						 // unregister the HRMID in the HRG
-						unregisterNodeHRG(tKnownNode, pCause);
-						tRemovedANode = true;
-						tRemovedSomething = true;
-						break;
+					Collection<AbstractRoutingGraphLink> tOutLinks = mHierarchicalRoutingGraph.getOutEdges(tKnownNode);
+					Collection<AbstractRoutingGraphLink> tInLinks = mHierarchicalRoutingGraph.getInEdges(tKnownNode);
+					if((tOutLinks != null) && (tInLinks != null)){
+						if((tInLinks.size() == 0) && (tOutLinks.size() == 0)){
+							 // unregister the HRMID in the HRG
+							unregisterNodeHRG(tKnownNode, pCause);
+							tRemovedANode = true;
+							tRemovedSomething = true;
+							break;
+						}
 					}
 				}
 			}while(tRemovedANode);
@@ -3847,7 +3854,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 *  
 	 * @return the routing table
 	 */
-	public RoutingTable getRoutesToNeighborsHRG(HRMID pHRMID)
+	public RoutingTable getRoutesWithNeighborsHRG(HRMID pHRMID)
 	{
 		RoutingTable tResult = new RoutingTable();
 		
@@ -3858,6 +3865,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			if(tOutLinks != null){
 				// iterate over all found links
 				for(AbstractRoutingGraphLink tKnownLink : tOutLinks) {
+					Route tKnownLinkRoute = tKnownLink.getRoute();
+					if(tKnownLinkRoute.size() == 1){
+						if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
+							RoutingEntry tRouteToNeighbor = (RoutingEntry)tKnownLinkRoute.getFirst();
+							tResult.add(tRouteToNeighbor.clone());
+						}else{
+							throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route type: " + tKnownLinkRoute);
+						}
+					}else{
+						throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route size for: " + tKnownLinkRoute);
+					}
+				}
+			}
+			Collection<AbstractRoutingGraphLink> tInLinks = mHierarchicalRoutingGraph.getInEdges(pHRMID);
+			if(tInLinks != null){
+				// iterate over all found links
+				for(AbstractRoutingGraphLink tKnownLink : tInLinks) {
 					Route tKnownLinkRoute = tKnownLink.getRoute();
 					if(tKnownLinkRoute.size() == 1){
 						if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
