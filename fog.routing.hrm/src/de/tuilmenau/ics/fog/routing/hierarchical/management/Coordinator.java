@@ -542,14 +542,14 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							 * Send the created report routing table to the superior coordinator
 							 */
 							if(tReportRoutingTable.size() > 0){
-								//if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+								if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
 									Logging.log(this, "   ..reporting via " + superiorCoordinatorComChannel() + " the routing table:");
 									int i = 0;
 									for(RoutingEntry tEntry : tReportRoutingTable){
 										Logging.log(this, "     ..[" + i +"]: " + tEntry);
 										i++;
 									}
-								//}
+								}
 								
 								// create new TopologyReport packet for the superior coordinator
 								TopologyReport tTopologyReportPacket = new TopologyReport(getHRMID(), superiorCoordinatorComChannel().getPeerHRMID(), tReportRoutingTable);
