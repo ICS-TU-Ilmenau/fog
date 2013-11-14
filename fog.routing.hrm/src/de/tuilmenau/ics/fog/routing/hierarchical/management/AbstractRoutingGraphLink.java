@@ -38,6 +38,11 @@ public class AbstractRoutingGraphLink implements Serializable
 	 * Stores the reference counter
 	 */
 	private int mRefCounter = 1;
+	
+	/**
+	 * Stores the timeout value of this link
+	 */
+	private double mTimeout = 0;
 
 	/**
 	 * Constructor of a node (cluster) connection
@@ -193,6 +198,26 @@ public class AbstractRoutingGraphLink implements Serializable
 	}
 
 	/**
+	 * Sets a new timeout for this route entry
+	 * 
+	 * @param pTimeout the new timeout
+	 */
+	public void setTimeout(double pTimeout)
+	{
+		mTimeout = pTimeout;
+	}
+	
+	/**
+	 * Returns the timeout for this route entry
+	 * 
+	 * @return the new timeout
+	 */
+	public double getTimeout()
+	{
+		return mTimeout;
+	}
+
+	/**
 	 * Returns a descriptive string about the object
 	 * 
 	 * @return the descriptive string
@@ -202,7 +227,7 @@ public class AbstractRoutingGraphLink implements Serializable
 		if(mRoute == null){
 			return getLinkType().toString();
 		}else{
-			return (mRefCounter > 1 ? mRefCounter + " REFS: " : "") + mRoute.toString();				
+			return (mTimeout > 0 ? "[TO: " + mTimeout + "]": "") + (mRefCounter > 1 ? "[" + mRefCounter + " REFS] " : "") + mRoute.toString();				
 		}
 	}
 }
