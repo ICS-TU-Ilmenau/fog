@@ -253,81 +253,85 @@ public class Cluster extends ClusterMember
 	{
 		HRMID tOwnHRMID = getHRMID();
 
-		// do we have a new HRMID since the last call?
-		if ((mHRMIDLastDistribution == null) || (!mHRMIDLastDistribution.equals(tOwnHRMID))){
-			// update the stored HRMID
-			mHRMIDLastDistribution = tOwnHRMID;
-			
-			/**
-			 * Distribute addresses
-			 */
-			if ((getHierarchyLevel().isHighest() /* top of hierarchy? */) || ((tOwnHRMID != null) && ((HRMConfig.Addressing.DISTRIBUTE_RELATIVE_ADDRESSES) || (!tOwnHRMID.isRelativeAddress()) /* we already have been assigned a valid HRMID? */))){
-				mSentAddressBroadcast++;
-				
-				Logging.log(this, "DISTRIBUTING ADDRESSES [" + mSentAddressBroadcast + "] to entities at level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+		if((tOwnHRMID != null) && (!tOwnHRMID.isZero())){
+			// do we have a new HRMID since the last call?
+			if ((mHRMIDLastDistribution == null) || (!mHRMIDLastDistribution.equals(tOwnHRMID))){
+				// update the stored HRMID
+				mHRMIDLastDistribution = tOwnHRMID;
 				
 				/**
-				 * Assign ourself an HRMID address
+				 * Distribute addresses
 				 */
-				// are we at the base level?
-				if(getHierarchyLevel().isBaseLevel()) {
-					// create new HRMID for ourself
-					HRMID tThisNodesAddress = allocateClusterMemberAddress();
-					if((tThisNodesAddress != null) && (!tThisNodesAddress.equals(getL0HRMID()))){
-						// inform HRM controller about the address change
-						if(getL0HRMID() != null){
-							
-							// free only if the assigned new address has a different used cluster address
-							if(tThisNodesAddress.getLevelAddress(getHierarchyLevel()) != getL0HRMID().getLevelAddress(getHierarchyLevel())){
-								freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
-							}
-		
-						}
-
-						mDescriptionHRMIDAllocation += "\n     .." + tThisNodesAddress.toString() + " for " + this + ", cause=distributeAddresses() [" + mSentAddressBroadcast + "]";
-						
-						Logging.log(this, "    ..setting local HRMID " + tThisNodesAddress.toString());
-			
-						// store the new HRMID for this node
-						setL0HRMID(tThisNodesAddress);
-					}else{
-						if(tThisNodesAddress == null){
-							throw new RuntimeException(this + "::distributeAddresses() got a zero HRMID from allocateClusterMemberAddress()");
-						}
-						
-						// free the allocated address again
-						freeClusterMemberAddress(tThisNodesAddress.getLevelAddress(getHierarchyLevel()));
-					}
-				}
-		
-				/**
-				 * Distribute AssignHRMID packets among the cluster members 
-				 */
-				LinkedList<ComChannel> tComChannels = getComChannels();
-				
-				Logging.log(this, "    ..distributing HRMIDs among cluster members: " + tComChannels);
-				int i = 0;
-				for(ComChannel tComChannel : tComChannels) {
+				if ((getHierarchyLevel().isHighest() /* top of hierarchy? */) || ((tOwnHRMID != null) && ((HRMConfig.Addressing.DISTRIBUTE_RELATIVE_ADDRESSES) || (!tOwnHRMID.isRelativeAddress()) /* we already have been assigned a valid HRMID? */))){
+					mSentAddressBroadcast++;
+					
+					Logging.log(this, "DISTRIBUTING ADDRESSES [" + mSentAddressBroadcast + "] to entities at level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+					
 					/**
-					 * Trigger: cluster member needs HRMID
+					 * Assign ourself an HRMID address
 					 */
-					Logging.log(this, "   ..[" + i + "]: assigning HRMID to: " + tComChannel);
-					eventClusterMemberNeedsHRMID(tComChannel, "distributeAddresses() [" + mSentAddressBroadcast + "]");
-					i++;
-				}
+					// are we at the base level?
+					if(getHierarchyLevel().isBaseLevel()) {
+						// create new HRMID for ourself
+						HRMID tThisNodesAddress = allocateClusterMemberAddress();
+						if((tThisNodesAddress != null) && (!tThisNodesAddress.equals(getL0HRMID()))){
+							// inform HRM controller about the address change
+							if(getL0HRMID() != null){
+								
+								// free only if the assigned new address has a different used cluster address
+								if(tThisNodesAddress.getLevelAddress(getHierarchyLevel()) != getL0HRMID().getLevelAddress(getHierarchyLevel())){
+									freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
+								}
+			
+							}
+	
+							mDescriptionHRMIDAllocation += "\n     .." + tThisNodesAddress.toString() + " for " + this + ", cause=distributeAddresses() [" + mSentAddressBroadcast + "]";
+							
+							Logging.log(this, "    ..setting local HRMID " + tThisNodesAddress.toString());
 				
-				/**
-				 * Announce the local node HRMIDs if we are at base hierarchy level
-				 */
-				if(getHierarchyLevel().isBaseLevel()){
-					LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
-					for(Cluster tL0Cluster : tL0Clusters){
-						tL0Cluster.distributeAnnounceHRMIDs();
+							// store the new HRMID for this node
+							setL0HRMID(tThisNodesAddress);
+						}else{
+							if(tThisNodesAddress == null){
+								throw new RuntimeException(this + "::distributeAddresses() got a zero HRMID from allocateClusterMemberAddress()");
+							}
+							
+							// free the allocated address again
+							freeClusterMemberAddress(tThisNodesAddress.getLevelAddress(getHierarchyLevel()));
+						}
+					}
+			
+					/**
+					 * Distribute AssignHRMID packets among the cluster members 
+					 */
+					LinkedList<ComChannel> tComChannels = getComChannels();
+					
+					Logging.log(this, "    ..distributing HRMIDs among cluster members: " + tComChannels);
+					int i = 0;
+					for(ComChannel tComChannel : tComChannels) {
+						/**
+						 * Trigger: cluster member needs HRMID
+						 */
+						Logging.log(this, "   ..[" + i + "]: assigning HRMID to: " + tComChannel);
+						eventClusterMemberNeedsHRMID(tComChannel, "distributeAddresses() [" + mSentAddressBroadcast + "]");
+						i++;
+					}
+					
+					/**
+					 * Announce the local node HRMIDs if we are at base hierarchy level
+					 */
+					if(getHierarchyLevel().isBaseLevel()){
+						LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
+						for(Cluster tL0Cluster : tL0Clusters){
+							tL0Cluster.distributeAnnounceHRMIDs();
+						}
 					}
 				}
+			}else{
+				Logging.log(this, "distributeAddresses() skipped because the own HRMID is still the same: " + getHRMID());
 			}
 		}else{
-			Logging.log(this, "distributeAddresses() skipped because the own HRMID is still the same: " + getHRMID());
+			Logging.warn(this, "distributeAddresses() skipped because the own HRMID is still invalid: " + getHRMID());
 		}
 	}
 
