@@ -378,17 +378,18 @@ public class ComChannel
 	private int mCallsEventNewPeerHRMIDs = 0;
 	private void eventNewPeerHRMIDs()
 	{
-		mCallsEventNewPeerHRMIDs++;
-		
-		Logging.log(this, "EVENT: new peer HRMIDs");
 		if(mParent instanceof ClusterMember){
+			mCallsEventNewPeerHRMIDs++;
+
 			ClusterMember tParentClusterMember = (ClusterMember)mParent;
 			
 			// get the list of neighbor HRMIDs
 			LinkedList<HRMID> tNeighborHRMIDs = getPeerHRMIDs();
 
-			Logging.log(this, "EVENT: new neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + ") for: " + this);
-			Logging.log(this, "    ..neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + "): " + tNeighborHRMIDs);
+			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
+				Logging.log(this, "EVENT: new neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + ") for: " + this);
+				Logging.log(this, "    ..neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + "): " + tNeighborHRMIDs);
+			}
 			
 			/**
 			 * Continue only for base hierarchy level
@@ -455,11 +456,15 @@ public class ComChannel
 								}
 				
 								// add the entry to the reported routing table
-								Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") reported route: " + tReportedRoutingEntry);
+								if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
+									Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") reported route: " + tReportedRoutingEntry);
+								}
 								tNewReportedRoutingTable.addEntry(tReportedRoutingEntry);
 		
 								// add the entry to the reported routing table
-								Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") local route: " + tReportedRoutingEntry);
+								if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
+									Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") local route: " + tReportedRoutingEntry);
+								}
 								tNewLocalRoutingTable.addEntry(tLocalRoutingEntry);
 							}else{
 								Logging.err(this, "Received zero neighbor address");
