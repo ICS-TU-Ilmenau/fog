@@ -2109,14 +2109,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					// is it a route from a physical node to the next one, which belongs to the destination cluster? 
 					if(pRoutingEntry.isRouteToDirectNeighbor()){
 						// register automatically new links in the HRG based on pRoutingEntry 
-						registerAutoHRG(pRoutingEntry);
+//						registerAutoHRG(pRoutingEntry);
 					}
 				}else{
 					pRoutingEntry.extendCause(this + "::addHRMRoute()_2");
 					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
 						Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
 					}
-					registerLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
+//					registerLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
 				}
 			}else{
 				/**
@@ -2165,7 +2165,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
 						Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
 					}
-					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource(), tDestClusterHRMID, pRoutingEntry.getNextHop(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::registerAutoHRG()");
+					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource().clone(), tDestClusterHRMID.clone(), pRoutingEntry.getNextHop().clone(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::registerAutoHRG()");
+					tRoutingEntry.setTimeout(pRoutingEntry.getTimeout());
 					registerCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
 				}
 			}
@@ -2223,12 +2224,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(tDestHRMID.isClusterAddress()){
 					if(pRoutingEntry.isRouteToDirectNeighbor()){
 						// register automatically new links in the HRG based on pRoutingEntry 
-						unregisterAutoHRG(pRoutingEntry);
+//						unregisterAutoHRG(pRoutingEntry);
 					}
 				}else{
 					pRoutingEntry.extendCause(this + "::delHRMRoute()");
 					Logging.log(this, "  ..unregistering nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
-					unregisterLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
+//					unregisterLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
 				}
 			}
 		}
@@ -2269,7 +2270,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
 						Logging.log(this, "  ..unregistering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
 					}
-					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource(), tDestClusterHRMID, pRoutingEntry.getNextHop(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::unregisterAutoHRG()");
+					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource().clone(), tDestClusterHRMID.clone(), pRoutingEntry.getNextHop().clone(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::unregisterAutoHRG()");
 					unregisterCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
 				}
 			}
@@ -3612,7 +3613,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 */
 			pRoutingEntry.assignToHRG(mHierarchicalRoutingGraph);
 			AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(new Route(pRoutingEntry));
-				
+			tLink.setTimeout(pRoutingEntry.getTimeout());
+
 			/**
 			 * Do the actual linking
 			 */
@@ -3626,9 +3628,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							// check of the end points of the already known link are equal to the pFrom/pTo
 							Pair<HRMID> tEndPoints = mHierarchicalRoutingGraph.getEndpoints(tKnownLink);
 							if (((tEndPoints.getFirst().equals(pFrom)) && (tEndPoints.getSecond().equals(pTo))) ||
-									((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
+								((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
 								tKnownLink.incRefCounter();
 								tLinkAlreadyKnown = true;
+								
+								if(pRoutingEntry.getTimeout() > 0){
+									tKnownLink.setTimeout(pRoutingEntry.getTimeout());
+								}
 								
 								// it's time to update the HRG-GUI
 								notifyHRGGUI(tKnownLink);
@@ -3655,6 +3661,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Unregisters automatically old links from the HRG based on each link's timeout value
+	 */
+	public void unregisterAutoHRG()
+	{
+		Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getEdges();
+		for(AbstractRoutingGraphLink tLink : tLinks){
+			// does the link have a timeout?
+			if(tLink.getTimeout() > 0){
+				// timeout occurred?
+				if(tLink.getTimeout() < getSimulationTime()){
+					Pair<HRMID> tEndPoints = mHierarchicalRoutingGraph.getEndpoints(tLink);
+
+					// remove the link from the HRG
+					mHierarchicalRoutingGraph.unlink(tLink);
+					
+					mDescriptionHRGUpdates += "\n -(AUTO_DEL) " + tEndPoints.getFirst() + " to " + tEndPoints.getSecond() + " ==> " + tLink.getRoute().getFirst();
+				}
+			}
+		}		
+		
+		/**
+		 * Unregister all isolated nodes
+		 */
+		unregisterNodesAutoHRG(this + "::unregisterAutoHRG()");
 	}
 
 	/**
@@ -3728,12 +3761,25 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
 				Logging.warn(this, "Haven't found " + pRoutingEntry + " as HRG between " + pFrom + " and " + pTo);
-				if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
+//				if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
 					synchronized (mHierarchicalRoutingGraph) {
-						Collection<HRMID> tNodes = mHierarchicalRoutingGraph.getVertices();
-						for(HRMID tKnownNode : tNodes){
-							Logging.warn(this, "   ..knowing node: " + tKnownNode);
-							Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(tKnownNode);
+						
+						Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(pFrom);
+						if(tLinks.size() > 0){
+							Logging.warn(this, "   ..knowing FROM node: " + pFrom);
+							for(AbstractRoutingGraphLink tKnownLink : tLinks){
+								Logging.warn(this, "     ..has link: " + tKnownLink);
+								if(tKnownLink.equals(tSearchPattern)){
+									Logging.err(this, "       ..MATCH");
+								}else{
+									Logging.warn(this, "       ..NO MATCH");
+								}
+							}
+						}
+						
+						tLinks = mHierarchicalRoutingGraph.getOutEdges(pTo);
+						if(tLinks.size() > 0){
+							Logging.warn(this, "   ..knowing TO node: " + pFrom);
 							for(AbstractRoutingGraphLink tKnownLink : tLinks){
 								Logging.warn(this, "     ..has link: " + tKnownLink);
 								if(tKnownLink.equals(tSearchPattern)){
@@ -3744,43 +3790,54 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 						}
 					}
-				}
+//				}
 			}else{
 				mDescriptionHRGUpdates += "\n -" + (tChangedRefCounter ? "(REF)" : "") +" " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
 
 				/**
-				 * Iterate over all nodes and delete all of them which don't have any links anymore
+				 * Unregister all isolated nodes
 				 */
-				boolean tRemovedSomething = false;
-				synchronized (mHierarchicalRoutingGraph) {
-					boolean tRemovedANode;
-					do{
-						tRemovedANode = false;
-
-						Collection<HRMID> tNodes = mHierarchicalRoutingGraph.getVertices();
-						for(HRMID tKnownNode : tNodes){
-							Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(tKnownNode);
-							if(tLinks.size() == 0){
-								 // unregister the HRMID in the HRG
-								unregisterNodeHRG(tKnownNode, pRoutingEntry + ", " + this + "::unregisterLinkHRG()_autoDel");
-								tRemovedANode = true;
-								tRemovedSomething = true;
-								break;
-							}
-						}
-					}while(tRemovedANode);
-				}
-				
-				if(tRemovedSomething){
-					// it's time to update the HRG-GUI
-					notifyHRGGUI(null);
-				}
+				unregisterNodesAutoHRG(pRoutingEntry + ", " + this + "::unregisterLinkHRG()_autoDel");
 			}
 		}else{
 			//Logging.warn(this, "unregisterLinkHRG() skipped because self-loop detected for: " + pRoutingEntry);
 		}
 
 		return tResult;
+	}
+
+	/**
+	 * Unregister automatically all HRG nodes which don't have a link anymore 
+	 */
+	private void unregisterNodesAutoHRG(String pCause)
+	{
+		/**
+		 * Iterate over all nodes and delete all of them which don't have any links anymore
+		 */
+		boolean tRemovedSomething = false;
+		synchronized (mHierarchicalRoutingGraph) {
+			boolean tRemovedANode;
+			do{
+				tRemovedANode = false;
+
+				Collection<HRMID> tNodes = mHierarchicalRoutingGraph.getVertices();
+				for(HRMID tKnownNode : tNodes){
+					Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(tKnownNode);
+					if(tLinks.size() == 0){
+						 // unregister the HRMID in the HRG
+						unregisterNodeHRG(tKnownNode, pCause);
+						tRemovedANode = true;
+						tRemovedSomething = true;
+						break;
+					}
+				}
+			}while(tRemovedANode);
+		}
+		
+		if(tRemovedSomething){
+			// it's time to update the HRG-GUI
+			notifyHRGGUI(null);
+		}
 	}
 
 	/**
