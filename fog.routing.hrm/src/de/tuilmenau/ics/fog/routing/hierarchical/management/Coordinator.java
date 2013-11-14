@@ -536,7 +536,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							// send the packet to the superior coordinator
 							sendSuperiorCoordinator(tTopologyReportPacket);
 						}else{
-							Logging.log(this, "reportPhase() skipped because no report for " + superiorCoordinatorHostL2Address() + " available");
+							Logging.log(this, "reportPhase() skipped because no report for " + superiorCoordinatorComChannel() + " available");
 						}
 	//				}
 				}
