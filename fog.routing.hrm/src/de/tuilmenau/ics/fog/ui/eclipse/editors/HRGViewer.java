@@ -38,6 +38,7 @@ import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
+import edu.uci.ics.jung.graph.util.Pair;
 
 public class HRGViewer extends EditorAWT implements Observer, IController, IEvent
 {
@@ -146,7 +147,8 @@ public class HRGViewer extends EditorAWT implements Observer, IController, IEven
 			Collection<AbstractRoutingGraphLink> tLinks = mHRMController.getHRGForGraphViewer().getOutEdges(tSelectedHRMID);
 			int i = 0;
 			for(AbstractRoutingGraphLink tLink : tLinks){
-				Logging.trace(this, "     ..[" + i + "]: " + tLink);
+				Pair<HRMID> tEndPoints = mHRMController.getHRGForGraphViewer().getEndpoints(tLink);
+				Logging.trace(this, "     ..[" + i + "]: " + tEndPoints.getFirst() + " to " + tEndPoints.getSecond() + " <== " + tLink);
 				i++;
 			}
 		}
@@ -225,7 +227,7 @@ public class HRGViewer extends EditorAWT implements Observer, IController, IEven
 			Logging.log(this, "Got notification from " + pSource + " because of \"" + pReason + "\"");
 		}
 
-		startGUIUpdateTimer();
+		//startGUIUpdateTimer();
 	}
 	
 	/**
@@ -238,7 +240,7 @@ public class HRGViewer extends EditorAWT implements Observer, IController, IEven
 		if (mTimeNextGUIUpdate == 0){
 			// when was the last GUI update? is the time period okay for a new update? -> determine a timeout for a new GUI update
 			double tNow = mHRMController.getSimulationTime();
-			double tTimeout = mTimestampLastGUIUpdate.longValue() + HRMConfig.DebugOutput.GUI_NODE_DISPLAY_UPDATE_INTERVAL;
+			double tTimeout = mTimestampLastGUIUpdate.longValue() + HRMConfig.DebugOutput.GUI_NODE_HRG_DISPLAY_UPDATE_INTERVAL;
 
 			if ((mTimestampLastGUIUpdate.doubleValue() == 0) || (tNow > tTimeout)){
 				mTimeNextGUIUpdate = tNow;
