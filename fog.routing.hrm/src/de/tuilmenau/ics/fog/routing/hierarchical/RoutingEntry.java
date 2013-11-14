@@ -115,6 +115,11 @@ public class RoutingEntry implements RouteSegment
 	private boolean mBelongstoHRG = false;
 	
 	/**
+	 * Stores the timeout value of this route entry
+	 */
+	private double mTimeout = 0;
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param pSource the source of this route
@@ -281,6 +286,26 @@ public class RoutingEntry implements RouteSegment
 	}
 	
 	/**
+	 * Sets a new timeout for this route entry
+	 * 
+	 * @param pTimeout the new timeout
+	 */
+	public void setTimeout(double pTimeout)
+	{
+		mTimeout = pTimeout;
+	}
+	
+	/**
+	 * Returns the timeout for this route entry
+	 * 
+	 * @return the new timeout
+	 */
+	public double getTimeout()
+	{
+		return mTimeout;
+	}
+	
+	/**
 	 * Defines the L2 address of the next hop
 	 * 
 	 * @param pDestL2Address the L2 address of the next hop
@@ -428,8 +453,8 @@ public class RoutingEntry implements RouteSegment
 			
 			if(((getDest() == null) || (tOther.getDest() == null) || (getDest().equals(tOther.getDest()))) &&
 			   ((getNextHop() == null) || (tOther.getNextHop() == null) || (getNextHop().equals(tOther.getNextHop()))) &&
-			   ((getSource() == null) || (tOther.getSource() == null) || (getSource().equals(tOther.getSource()))) &&
-			   ((getNextHopL2Address() == null) || (tOther.getNextHopL2Address() == null) || (getNextHopL2Address().equals(tOther.getNextHopL2Address())))){
+			   ((getSource() == null) || (tOther.getSource() == null) || (getSource().equals(tOther.getSource()))) //&&
+			   /*((getNextHopL2Address() == null) || (tOther.getNextHopL2Address() == null) || (getNextHopL2Address().equals(tOther.getNextHopL2Address())))*/){
 				//Logging.trace(this, "  ..true");
 				return true;
 			}
@@ -463,7 +488,7 @@ public class RoutingEntry implements RouteSegment
 		if(!mBelongstoHRG){
 			return "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() > 0 ? getMaxDataRate() : "inf.") : "") + ((HRMConfig.DebugOutput.GUI_SHOW_ROUTE_CAUSE) && (mCause != "") ? ", Cause=" + mCause :"") + ")";
 		}else{
-			return getSource() + " <==> " + getNextHop() + ", Dest.=" + getDest() + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() > 0 ? getMaxDataRate() : "inf.") : "") + ((HRMConfig.DebugOutput.GUI_SHOW_ROUTE_CAUSE) && (mCause != "") ? ", Cause=" + mCause :"");
+			return getSource() + " <==> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() > 0 ? getMaxDataRate() : "inf.") : "") + ((HRMConfig.DebugOutput.GUI_SHOW_ROUTE_CAUSE) && (mCause != "") ? ", Cause=" + mCause :"");
 		}
 	}
 }
