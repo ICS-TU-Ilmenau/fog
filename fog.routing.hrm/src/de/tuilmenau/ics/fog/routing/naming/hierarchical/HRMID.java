@@ -258,6 +258,14 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		}
 		
 		/**
+		 * Catch invalid parameter
+		 */
+		if(pClusterAddress == null){
+			Logging.err(this, "isCluster() cannot operate on a null pointer");
+			return false;
+		}
+		
+		/**
 		 * Search for the start of the cluster prefix
 		 */
 		int tCheckLevel = pClusterAddress.getHierarchyLevel();
