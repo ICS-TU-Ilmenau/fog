@@ -76,8 +76,13 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for the report phase
 		 */
-		public static final boolean SHOW_REPORT_PHASE = false;
+		public static final boolean SHOW_REPORT_PHASE = true;
 
+		/**
+		 * Shows debug outputs for the report phase of comm. channels
+		 */
+		public static final boolean SHOW_REPORT_PHASE_COM_CHANNELS = false;
+		
 		/**
 		 * Shows debug outputs for the share phase
 		 */
@@ -288,7 +293,14 @@ public class HRMConfig
 		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated network topology.
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean REPORT_TOPOLOGY_AUTOMATICALLY = false;
+		public static final boolean REPORT_TOPOLOGY_AUTOMATICALLY = true;
+
+		/**
+		 * Defines if an HRM entity should share its routing knowledge to all inferior entities.
+		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated routes to foreign destinations.
+		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
+		 */
+		public static final boolean SHARE_ROUTES_AUTOMATICALLY = false;
 
 		/**
 		 * Should the packets of the "share phase" be send periodically?

@@ -89,7 +89,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance.
 	 */
-	private HRMControllerObservable mGUIInformer = null;
+	private HRMControllerObservable mGUIInformer = new HRMControllerObservable(this);
+	
+	/**
+	 * Stores the HRG-GUI observable, which is used to notify possible HRG-GUI about changes within the HRG of the HRMController instance.
+	 */
+	private HRMControllerObservable mHRGGUIInformer = new HRMControllerObservable(this);
 	
 	/**
 	 * The name under which the HRMController application is registered on the local node.
@@ -265,9 +270,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// define the local name "routing://"
 		mApplicationName = new SimpleName(ROUTING_NAMESPACE, null);
 
-		// the observable, e.g., it is used to delegate update notifications to the GUI
-		mGUIInformer = new HRMControllerObservable(this);
-		
 		// reference to the physical node
 		mNode = pNode;
 		
@@ -413,6 +415,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Notifies the HRGViewer about essential updates within the HRG graph
+	 */
+	private void notifyHRGGUI(Object pArgument)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
+			Logging.log(this, "Got HRG notification with argument " + pArgument);
+		}
+		
+		mHRGGUIInformer.notifyObservers(pArgument);
+	}
+
+	/**
 	 * Registers a GUI for being notified about HRMController internal changes. 
 	 */
 	public void registerGUI(Observer pGUI)
@@ -424,6 +438,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Registers a HRG-GUI for being notified about HRG internal changes. 
+	 */
+	public void registerHRGGUI(Observer pHRGGUI)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
+			Logging.log(this, "Registering HRG-GUI " + pHRGGUI);
+		}
+		mHRGGUIInformer.addObserver(pHRGGUI);
+	}
+
+	/**
 	 * Unregisters a GUI for being notified about HRMController internal changes. 
 	 */
 	public void unregisterGUI(Observer pGUI)
@@ -432,6 +457,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "Unregistering GUI " + pGUI);
 		}
 		mGUIInformer.deleteObserver(pGUI);
+	}
+
+	/**
+	 * Unregisters a HRG-GUI for being notified about HRG internal changes. 
+	 */
+	public void unregisterHRGGUI(Observer pHRGGUI)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
+			Logging.log(this, "Unregistering HRG-GUI " + pHRGGUI);
+		}
+		mHRGGUIInformer.deleteObserver(pHRGGUI);
 	}
 
 	/**
@@ -2919,25 +2955,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void reportAndShare()
 	{	
-		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
-			if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
-				Logging.log(this, "REPORT AND SHARE TRIGGER received");
-			}
+		if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
+			Logging.log(this, "REPORT AND SHARE TRIGGER received");
+		}
 	
+		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
 			/**
 			 * report phase
 			 */
 			for (Coordinator tCoordinator : getAllCoordinators()) {
 				tCoordinator.reportPhase();
 			}
-			
-			/**
-			 * share phase
-			 */
-			for (Coordinator tCoordinator : getAllCoordinators()) {
-				tCoordinator.sharePhase();
+			if(HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY){
+				/**
+				 * share phase
+				 */
+				for (Coordinator tCoordinator : getAllCoordinators()) {
+					tCoordinator.sharePhase();
+				}
 			}
-			
+		}			
+		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
 			/**
 			 * register next trigger
 			 */
@@ -3591,6 +3629,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
 								tKnownLink.incRefCounter();
 								tLinkAlreadyKnown = true;
+								
+								// it's time to update the HRG-GUI
+								notifyHRGGUI(tKnownLink);
 							}
 						}
 					}
@@ -3598,6 +3639,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(!tLinkAlreadyKnown){
 					mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
 					mHierarchicalRoutingGraph.link(pFrom.clone(), pTo.clone(), tLink);
+					
+					// it's time to update the HRG-GUI
+					notifyHRGGUI(tLink);
 				}else{
 					/**
 					 * The link is already known -> this can occur if both end points are located on this node and both of them try to register the same route
@@ -3650,6 +3694,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								if(tKnownLink.getRefCounter() == 1){
 									// remove the link
 									mHierarchicalRoutingGraph.unlink(tKnownLink);
+									
+									// it's time to update the HRG-GUI
+									notifyHRGGUI(null);
 								}else{
 									if(tKnownLink.getRefCounter() < 1){
 										throw new RuntimeException("Found an HRG link with an invalid ref. counter: " + tKnownLink);
@@ -3657,6 +3704,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									
 									tKnownLink.decRefCounter();
 									tChangedRefCounter = true;
+									
+									// it's time to update the HRG-GUI
+									notifyHRGGUI(tKnownLink);
 								}
 								// we have a positive result
 								tResult = true;
@@ -3697,6 +3747,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				/**
 				 * Iterate over all nodes and delete all of them which don't have any links anymore
 				 */
+				boolean tRemovedSomething = false;
 				synchronized (mHierarchicalRoutingGraph) {
 					boolean tRemovedANode;
 					do{
@@ -3709,14 +3760,56 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								 // unregister the HRMID in the HRG
 								unregisterNodeHRG(tKnownNode, pRoutingEntry + ", " + this + "::unregisterLinkHRG()_autoDel");
 								tRemovedANode = true;
+								tRemovedSomething = true;
 								break;
 							}
 						}
 					}while(tRemovedANode);
 				}
+				
+				if(tRemovedSomething){
+					// it's time to update the HRG-GUI
+					notifyHRGGUI(null);
+				}
 			}
 		}else{
 			//Logging.warn(this, "unregisterLinkHRG() skipped because self-loop detected for: " + pRoutingEntry);
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns routes to neighbors of a given HRG node
+	 * 
+	 * @param pHRMID the HRMID of the HRG root node
+	 *  
+	 * @return the routing table
+	 */
+	public RoutingTable getRoutesToNeighborsHRG(HRMID pHRMID)
+	{
+		RoutingTable tResult = new RoutingTable();
+		
+		synchronized (mHierarchicalRoutingGraph) {
+			//Logging.warn(this, "   ..knowing node: " + pFrom + " as " + mHierarchicalRoutingGraph.containsVertex(pFrom));
+			// get all outgoing HRG links of "pFrom"
+			Collection<AbstractRoutingGraphLink> tOutLinks = mHierarchicalRoutingGraph.getOutEdges(pHRMID);
+			if(tOutLinks != null){
+				// iterate over all found links
+				for(AbstractRoutingGraphLink tKnownLink : tOutLinks) {
+					Route tKnownLinkRoute = tKnownLink.getRoute();
+					if(tKnownLinkRoute.size() == 1){
+						if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
+							RoutingEntry tRouteToNeighbor = (RoutingEntry)tKnownLinkRoute.getFirst();
+							tResult.add(tRouteToNeighbor.clone());
+						}else{
+							throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route type: " + tKnownLinkRoute);
+						}
+					}else{
+						throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route size for: " + tKnownLinkRoute);
+					}
+				}
+			}
 		}
 
 		return tResult;

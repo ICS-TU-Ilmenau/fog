@@ -20,6 +20,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -79,6 +80,11 @@ public class Cluster extends ClusterMember
 	 * Stores a description about the HRMID allocations
 	 */
 	private String mDescriptionHRMIDAllocation = new String();
+	
+	/**
+	 * Stores the report routing table
+	 */
+	private RoutingTable mReceivedReportRoutingTable = new RoutingTable();
 	
 	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
@@ -697,39 +703,67 @@ public class Cluster extends ClusterMember
 	/**
 	 * EVENT: TopologyReport from an inferior entity received, triggered by the comm. channel
 	 * 
+	 * @param pComChannel the source comm. channel 
 	 * @param pTopologyReportPacket the packet
 	 */
-	public void eventTopologyReport(TopologyReport pTopologyReportPacket)
+	public void eventTopologyReport(ComChannel pSourceComChannel, TopologyReport pTopologyReportPacket)
 	{
 		Logging.log(this, "EVENT: TopologyReport: " + pTopologyReportPacket);
 		
 		/**
 		 * Iterate over all reported routes and derive new data for the HRG
 		 */
-		for(RoutingEntry tEntry : pTopologyReportPacket.getRoutes()){
+		RoutingTable tNewReportedRoutingTable = pTopologyReportPacket.getRoutes();
+		for(RoutingEntry tEntry : tNewReportedRoutingTable){
 			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-				Logging.log(this, "   ..received route: " + tEntry);
+				Logging.err(this, "   ..received route: " + tEntry);
 			}
-			HRMID tDestHRMID = tEntry.getDest();
-			HRMID tOwnClusterAddress = getHRMID();
-			if(tDestHRMID != null){
-				// search for cluster destinations
-				if(tDestHRMID.isClusterAddress()){
-					// avoid recursion
-					if(!tDestHRMID.equals(tOwnClusterAddress)){
-						if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-							Logging.log(this, "     ..route between clusters found");						
-						}
-						
-						/**
-						 * Store/update link in the HRG
-						 */ 
-//						mHRMController.registerCluster2ClusterLinkHRG(tEntry.getSource(), tDestHRMID, tEntry);
-					}
-				}				
-			}else{
-				Logging.err(this,  "Invalid route received: " + tEntry);
+				
+			/**
+			 * Update the HRG
+			 */
+			if(tEntry.getHopCount() == 0){
+				tEntry.extendCause(this + "::eventTopologyReport() from " + pSourceComChannel.getPeerHRMID());
+				mHRMController.registerAutoHRG(tEntry);
 			}
+
+//			/**
+//			 * Does the next hop lead to a foreign cluster?
+//			 */				
+//			if(tDestHRMID.isClusterAddress()){
+//				// is it a route from a physical node to the next one, which belongs to the destination cluster? 
+//				if(pRoutingEntry.isRouteToDirectNeighbor()){
+//					// register automatically new links in the HRG based on pRoutingEntry 
+//					registerAutoHRG(pRoutingEntry);
+//				}
+//			}else{
+//				pRoutingEntry.extendCause(this + "::addHRMRoute()_2");
+//				if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
+//					Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
+//				}
+//				registerLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
+//			}
+			
+//			HRMID tDestHRMID = tEntry.getDest();
+//			HRMID tOwnClusterAddress = getHRMID();
+//			if(tDestHRMID != null){
+//				// search for cluster destinations
+//				if(tDestHRMID.isClusterAddress()){
+//					// avoid recursion
+//					if(!tDestHRMID.equals(tOwnClusterAddress)){
+//						if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+//							Logging.log(this, "     ..route between clusters found");						
+//						}
+//						
+//						/**
+//						 * Store/update link in the HRG
+//						 */ 
+////						mHRMController.registerCluster2ClusterLinkHRG(tEntry.getSource(), tDestHRMID, tEntry);
+//					}
+//				}				
+//			}else{
+//				Logging.err(this,  "Invalid route received: " + tEntry);
+//			}
 		}
 	}
 

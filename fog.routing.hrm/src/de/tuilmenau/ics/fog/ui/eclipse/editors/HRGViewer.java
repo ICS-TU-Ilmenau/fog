@@ -13,6 +13,8 @@ package de.tuilmenau.ics.fog.ui.eclipse.editors;
 import java.awt.PopupMenu;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.Observable;
+import java.util.Observer;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.swt.widgets.Composite;
@@ -21,12 +23,14 @@ import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 
 import de.tuilmenau.ics.fog.IController;
+import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.eclipse.GraphViewer;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorAWT;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.SelectionProvider;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphLink;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
@@ -35,12 +39,27 @@ import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
 
-public class HRGViewer extends EditorAWT implements IController
+public class HRGViewer extends EditorAWT implements Observer, IController, IEvent
 {
 	protected HRMController mHRMController = null;
 	private SelectionProvider selectionCache = null;
 	private MenuCreator menuCreator = null;
 
+	/**
+	 * Stores the time stamp of the last GUI update
+	 */
+	private Double mTimestampLastGUIUpdate =  new Double(0);
+
+    /**
+     * Stores the simulation time for the next GUI update.
+     */
+    private double mTimeNextGUIUpdate = 0;
+
+    /**
+     * Stores the GraphViewer reference
+     */
+    private GraphViewer<RoutingServiceAddress, RoutingServiceLink> mGraphViewer = null;
+    
 	public HRGViewer()
 	{
 	}
@@ -85,9 +104,14 @@ public class HRGViewer extends EditorAWT implements IController
 			throw new PartInitException("No input for editor.");
 		}
 		
-		GraphViewer<RoutingServiceAddress, RoutingServiceLink> tViewer = new GraphViewer<RoutingServiceAddress,RoutingServiceLink>(this);
-		tViewer.init((RoutableGraph)mHRMController.getHRGForGraphViewer());
-		setView(tViewer.getComponent());
+		mGraphViewer = new GraphViewer<RoutingServiceAddress,RoutingServiceLink>(this);
+		mGraphViewer.init((RoutableGraph)mHRMController.getHRGForGraphViewer());
+		setView(mGraphViewer.getComponent());
+		
+		// register this GUI at the corresponding HRMController
+		if (mHRMController != null){
+			mHRMController.registerHRGGUI(this);
+		}
 	}
 
 	@Override
@@ -191,6 +215,61 @@ public class HRGViewer extends EditorAWT implements IController
 		}
 	}
 	
+	/**
+	 * Function for receiving notifications about changes in the corresponding HRMController instance
+	 */
+	@Override
+	public void update(Observable pSource, Object pReason)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
+			Logging.log(this, "Got notification from " + pSource + " because of \"" + pReason + "\"");
+		}
+
+		startGUIUpdateTimer();
+	}
+	
+	/**
+	 * Starts the timer for the "update GUI" event.
+	 * If the timer is already started nothing is done.
+	 */
+	private synchronized void startGUIUpdateTimer()
+	{
+		// is a GUI update already planned?
+		if (mTimeNextGUIUpdate == 0){
+			// when was the last GUI update? is the time period okay for a new update? -> determine a timeout for a new GUI update
+			double tNow = mHRMController.getSimulationTime();
+			double tTimeout = mTimestampLastGUIUpdate.longValue() + HRMConfig.DebugOutput.GUI_NODE_DISPLAY_UPDATE_INTERVAL;
+
+			if ((mTimestampLastGUIUpdate.doubleValue() == 0) || (tNow > tTimeout)){
+				mTimeNextGUIUpdate = tNow;
+
+				// register next trigger
+				mHRMController.getAS().getTimeBase().scheduleIn(0, this);
+			}else{
+				mTimeNextGUIUpdate = tTimeout;
+			
+				// register next trigger
+				mHRMController.getAS().getTimeBase().scheduleIn(tTimeout - tNow, this);
+			}
+
+		}else{
+			// timer is already started, we ignore the repeated request
+		}
+	}
+	
+	/**
+	 * This function is called when the event is fired by the main event system.
+	 */
+	@Override
+	public void fire()
+	{
+		// reset stored GUI update time
+		mTimeNextGUIUpdate = 0;
+		
+		// trigger GUI update
+		mGraphViewer.update(null,  null);
+	}
+
 	/**
 	 * Returns a descriptive string about this object
 	 * 

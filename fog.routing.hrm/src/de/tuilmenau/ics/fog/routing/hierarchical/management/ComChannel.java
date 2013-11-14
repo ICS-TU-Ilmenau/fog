@@ -478,7 +478,7 @@ public class ComChannel
 					mHRMController.addHRMRoutes(mLocalRoutingTablePeerHRMIDs);
 					synchronized (mReportedRoutingTable) {
 						mReportedRoutingTable.addEntries(mReportedRoutingTablePeerHRMIDs);
-						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
 							Logging.err(this, "Added (" + mCallsEventNewPeerHRMIDs + ") to local routing table: " + mLocalRoutingTablePeerHRMIDs);
 						}
 					}
@@ -494,7 +494,7 @@ public class ComChannel
 					mHRMController.delHRMRoutes(tDeprecatedLocalRoutingTable);
 					synchronized (mReportedRoutingTable) {
 						mReportedRoutingTable.delEntries(tDeprecatedReportedRoutingTable);
-						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
 							Logging.err(this, "Removed (" + mCallsEventNewPeerHRMIDs + ") from local routing table: " + tDeprecatedLocalRoutingTable);
 						}
 					}
@@ -632,7 +632,7 @@ public class ComChannel
 			/**
 			 * Trigger: inform the cluster about the new routing report
 			 */
-			tParentCluster.eventTopologyReport(pTopologyReportPacket);
+			tParentCluster.eventTopologyReport(this, pTopologyReportPacket);
 		}else{
 			Logging.err(this, "eventReceivedTopologyReport() expected a Cluster as parent, parent is: " + mParent);
 		}
