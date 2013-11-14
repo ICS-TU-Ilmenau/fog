@@ -253,7 +253,7 @@ public class Cluster extends ClusterMember
 	{
 		HRMID tOwnHRMID = getHRMID();
 
-		if((tOwnHRMID != null) && (!tOwnHRMID.isZero())){
+		if(tOwnHRMID != null){
 			// do we have a new HRMID since the last call?
 			if ((mHRMIDLastDistribution == null) || (!mHRMIDLastDistribution.equals(tOwnHRMID))){
 				// update the stored HRMID
@@ -712,7 +712,9 @@ public class Cluster extends ClusterMember
 	 */
 	public void eventTopologyReport(ComChannel pSourceComChannel, TopologyReport pTopologyReportPacket)
 	{
-		Logging.log(this, "EVENT: TopologyReport: " + pTopologyReportPacket);
+		if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+			Logging.log(this, "EVENT: TopologyReport: " + pTopologyReportPacket);
+		}
 		
 		/**
 		 * Iterate over all reported routes and derive new data for the HRG
@@ -790,17 +792,28 @@ public class Cluster extends ClusterMember
 		}
 
 		/**
+		 * Free the previously allocated cluster address
+		 */
+		HRMID tPeerHRMID = pComChannel.getPeerHRMID();
+		if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){
+			freeClusterMemberAddress(tPeerHRMID.getLevelAddress(getHierarchyLevel()));
+		}
+
+		/**
 		 * Unregister the comm. channel
 		 */ 
 		unregisterComChannel(pComChannel);
 
-		/**
-		 * Update ARG
-		 */
 		ControlEntity tChannelPeer = pComChannel.getPeer(); 
 		if (tChannelPeer != null){
+			/**
+			 * Update ARG
+			 */
 			mHRMController.unregisterLinkARG(this, tChannelPeer);
 
+			/**
+			 * Update locally stored database about inferior entities
+			 */
 			// does this comm. channel end at a local coordinator?
 			if(tChannelPeer instanceof Coordinator){
 				synchronized (mInferiorLocalCoordinators) {
@@ -822,6 +835,7 @@ public class Cluster extends ClusterMember
 				Logging.err(this, "Comm. channel peer has unsupported type: " + tChannelPeer);
 			}
 		}
+
 		if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 			Logging.log(this, "      ..remaining comm. channels: " + getComChannels());
 			Logging.log(this, "      ..remaining connected local coordinators: " + mInferiorLocalCoordinators);
