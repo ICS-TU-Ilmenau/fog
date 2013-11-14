@@ -158,7 +158,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	public void sendSuperiorCoordinator(SignalingMessageHrm pPacket)
 	{
-		Logging.log(this, "Sending to superior coordinator: " + pPacket);
+		if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+			Logging.log(this, "Sending to superior coordinator: " + pPacket);
+		}
 		
 		if(superiorCoordinatorComChannel() != null){
 			superiorCoordinatorComChannel().sendPacket(pPacket);
@@ -483,7 +485,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			// the highest coordinator does not have any superior coordinator
 			if (!getHierarchyLevel().isHighest()){
 				// do not report topology data which is already locally known
-				if(!mHRMController.getNodeL2Address().equals(superiorCoordinatorComChannel().getPeerL2Address())){
+				if(!mHRMController.getNodeL2Address().equals(superiorCoordinatorHostL2Address())){
 					RoutingTable tReportRoutingTable = new RoutingTable();
 	
 					/**
@@ -534,7 +536,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							// send the packet to the superior coordinator
 							sendSuperiorCoordinator(tTopologyReportPacket);
 						}else{
-							Logging.log(this, "reportPhase() skipped because no report available");
+							Logging.log(this, "reportPhase() skipped because no report for " + superiorCoordinatorHostL2Address() + " available");
 						}
 	//				}
 				}
