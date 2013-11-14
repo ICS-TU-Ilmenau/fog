@@ -429,8 +429,12 @@ public class ComChannel
 					if(tNeighborHRMIDs.size() > 0){
 						for(HRMID tNeighborHRMID : tNeighborHRMIDs){
 							if((tNeighborHRMID != null) && (!tNeighborHRMID.isZero())){
+//								if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
+									Logging.err(this, "   ..found (" + mCallsEventNewPeerHRMIDs + ") neighbor HRMID: " + tNeighborHRMID);
+//								}
 								RoutingEntry tLocalRoutingEntry = null;
-								RoutingEntry tReportedRoutingEntry = null;
+								RoutingEntry tReportedRoutingEntryForward = null;
+								RoutingEntry tReportedRoutingEntryBackward = null;
 								
 								/**
 								 * Generalize neighbor HRMID to its cluster address, depending on the locally assigned HRMID.
@@ -438,34 +442,55 @@ public class ComChannel
 								 */ 
 								HRMID tGeneralizedNeighborHRMID = mHRMController.aggregateForeignHRMID(tNeighborHRMID); 
 								if(tGeneralizedNeighborHRMID.isClusterAddress()){
+									/**
+									 * HRM routing table entry
+									 */
 									// create the new routing table entry
 									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, "ComChannel@" + mParent.toLocation() + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ")");
 									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 									tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
-		
-									// create the new reported routing table entry
-									tReportedRoutingEntry = RoutingEntry.create(getPeerHRMID() /* the peer belongs to the foreign cluster */, tGeneralizedNeighborHRMID /* the foreign cluster address */, tGeneralizedNeighborHRMID, 0 /* it's a local loopback routing there */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, "ComChannel@" + mParent.toLocation() + "::eventNewPeerHRMIDs()_2(" + mCallsEventNewPeerHRMIDs + ")");
 								}else{
+									/**
+									 * HRM routing table entry
+									 */
 									// create the new routing table entry
 									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, "ComChannel@" + mParent.toLocation() + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ")");
 									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 									tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
 		
-									// create the new reported routing table entry
-									tReportedRoutingEntry = tLocalRoutingEntry.clone();
+									/**
+									 * HRG links: forward and backward link to the direct neighbor
+									 */
+									// create the forward routing table entry
+									tReportedRoutingEntryForward = tLocalRoutingEntry.clone();
+									// create the backward routing table entry
+									tReportedRoutingEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tNeighborHRMID, tSourceForReportedRoutes, tSourceForReportedRoutes, 0 /* TODO */, 1 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, "ComChannel@" + mParent.toLocation() + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ")");
+									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+									tReportedRoutingEntryBackward.setNextHopL2Address(mHRMController.getNodeL2Address());
 								}
 				
-								// add the entry to the reported routing table
-								if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
-									Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") reported route: " + tReportedRoutingEntry);
+								if(tReportedRoutingEntryForward != null){
+									// add the entry to the reported routing table
+//									if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
+										Logging.err(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") reported forward route: " + tReportedRoutingEntryForward);
+//									}
+									tNewReportedRoutingTable.addEntry(tReportedRoutingEntryForward);
 								}
-								tNewReportedRoutingTable.addEntry(tReportedRoutingEntry);
+								if(tReportedRoutingEntryBackward != null){
+									// add the entry to the reported routing table
+//									if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
+										Logging.err(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") reported backward route: " + tReportedRoutingEntryBackward);
+//									}
+									tNewReportedRoutingTable.addEntry(tReportedRoutingEntryBackward);
+								}
 		
-								// add the entry to the reported routing table
-								if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
-									Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") local route: " + tReportedRoutingEntry);
+								if(tLocalRoutingEntry != null){
+									// add the entry to the reported routing table
+									if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
+										Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") local route: " + tLocalRoutingEntry);
+									}
+									tNewLocalRoutingTable.addEntry(tLocalRoutingEntry);
 								}
-								tNewLocalRoutingTable.addEntry(tLocalRoutingEntry);
 							}else{
 								Logging.err(this, "Received zero neighbor address");
 							}
@@ -475,11 +500,16 @@ public class ComChannel
 					/**
 					 * Step 1: learn new routes:
 					 * 			- set the new value for reported routes based on peer HRMIDs
-					 * 			- and inform the HRMController
+					 * 			- inform the HRMController
 					 * 			- update mReportedRoutingTable
 					 */ 
-					mReportedRoutingTablePeerHRMIDs = tNewReportedRoutingTable;
+					mReportedRoutingTablePeerHRMIDs = tNewReportedRoutingTable;					
 					mLocalRoutingTablePeerHRMIDs = tNewLocalRoutingTable;
+					// HRG links
+					for(RoutingEntry tEntry : tNewReportedRoutingTable){
+						mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tEntry);
+					}
+					// HRM routes
 					mHRMController.addHRMRoutes(mLocalRoutingTablePeerHRMIDs);
 					synchronized (mReportedRoutingTable) {
 						mReportedRoutingTable.addEntries(mReportedRoutingTablePeerHRMIDs);
@@ -491,11 +521,16 @@ public class ComChannel
 					/**
 					 * Step 2: forget deprecated routes:
 					 * 			- derive the deprecated routes
-					 * 			- inform the HRS about the deprecated routing table entries
+					 * 			- HRMController about the deprecated routing table entries
 					 * 			- update mReportedRoutingTable
 					 */ 
 					tDeprecatedReportedRoutingTable.delEntries(tNewReportedRoutingTable);
 					tDeprecatedLocalRoutingTable.delEntries(tNewLocalRoutingTable);
+					// HRG links
+					for(RoutingEntry tEntry : tDeprecatedReportedRoutingTable){
+						mHRMController.unregisterLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tEntry);
+					}
+					// HRM routes
 					mHRMController.delHRMRoutes(tDeprecatedLocalRoutingTable);
 					synchronized (mReportedRoutingTable) {
 						mReportedRoutingTable.delEntries(tDeprecatedReportedRoutingTable);

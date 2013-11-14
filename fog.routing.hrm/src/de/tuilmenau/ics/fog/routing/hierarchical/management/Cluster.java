@@ -733,9 +733,24 @@ public class Cluster extends ClusterMember
 			/**
 			 * Update the HRG
 			 */
-			if(tEntry.getHopCount() == 0){
-				tEntry.extendCause(this + "::eventTopologyReport() from " + pSourceComChannel.getPeerHRMID());
-				mHRMController.registerAutoHRG(tEntry);
+			switch(tEntry.getHopCount())
+			{
+				case 0:
+					// it's an inter-cluster link because local loopbacks aren't sent as report
+					tEntry.extendCause(this + "::eventTopologyReport() from " + pSourceComChannel.getPeerHRMID());
+					mHRMController.registerAutoHRG(tEntry);
+					break;
+				case 1:
+					// do we have an intra-cluster link?
+					if(!tEntry.getDest().isClusterAddress()){
+						tEntry.extendCause(this + "::eventTopologyReport() from " + pSourceComChannel.getPeerHRMID());
+						mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tEntry);
+					}else{
+						// strange, an inter-cluster link with ONE hop?!
+					}
+					break;
+				default: // 2+
+					break;
 			}
 
 //			/**
