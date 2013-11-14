@@ -479,55 +479,68 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	public void reportPhase()
 	{
-		RoutingTable tReportedRoutingTable = new RoutingTable();
-		
-		if (!getHierarchyLevel().isHighest()){
-			if(getHierarchyLevel().isBaseLevel()){ //TODO: remove this limitation
-				if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-					Logging.log(this, "REPORT PHASE at hierarchy level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
-				}
+		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
+			// the highest coordinator does not have any superior coordinator
+			if (!getHierarchyLevel().isHighest()){
+				// do not report topology data which is already locally known
+				if(!mHRMController.getNodeL2Address().equals(superiorCoordinatorComChannel().getPeerL2Address())){
+					RoutingTable tReportRoutingTable = new RoutingTable();
 	
-				/**
-				 * Create the routing table for the report
-				 */
-				LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
-				/**
-				 *  Iterate over all comm. channels and fetch the recorded route reports:
-				 *  		- for L0+: from the local data which contains a route to the direct neighbor
-				 *  		- for L1+: from the inferior Coordinator
-				 */			
-				for(ComChannel tComChannel : tComChannels){
-					RoutingTable tComChannelTable = tComChannel.getReportedRoutingTable();
-					if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-						Logging.log(this, "   ..got report: " + tComChannelTable);
-					}
-					// add the found routes to the overall route report, which is later sent to the superior coordinator
-					tReportedRoutingTable.addEntries(tComChannelTable);
-				}
-				
-				/**
-				 * Report the created routing table to the superior coordinator
-				 */
-				if(tReportedRoutingTable.size() > 0){
-					if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-						Logging.log(this, "   ..reporting via " + superiorCoordinatorComChannel() + " the routing table:");
-						int i = 0;
-						for(RoutingEntry tEntry : tReportedRoutingTable){
-							Logging.log(this, "     ..[" + i +"]: " + tEntry);
-							i++;
-						}
-					}
+					/**
+					 * Report 1: routes to all neighbors
+					 */
+					RoutingTable tRoutesToNeighbors = mHRMController.getRoutesToNeighborsHRG(getHRMID());
+					// add the found routes to the report routing table
+					tReportRoutingTable.addEntries(tRoutesToNeighbors);
 					
-					// create new TopologyReport packet for the superior coordinator
-					TopologyReport tTopologyReportPacket = new TopologyReport(getHRMID(), null, tReportedRoutingTable);
-					// send the packet to the superior coordinator
-					sendSuperiorCoordinator(tTopologyReportPacket);
-				}else{
-					Logging.log(this, "reportPhase() skipped because no report available");
+	//				if(getHierarchyLevel().isBaseLevel()){ //TODO: remove this limitation
+	//					if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+	//						Logging.log(this, "REPORT PHASE at hierarchy level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+	//					}
+	//		
+	//					/**
+	//					 * Create the routing table for the report
+	//					 */
+	//					LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
+	//					/**
+	//					 *  Iterate over all comm. channels and fetch the recorded route reports:
+	//					 *  		- for L0+: from the local data which contains a route to the direct neighbor
+	//					 *  		- for L1+: from the inferior Coordinator
+	//					 */			
+	//					for(ComChannel tComChannel : tComChannels){
+	//						RoutingTable tComChannelTable = tComChannel.getReportedRoutingTable();
+	//						if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+	//							Logging.log(this, "   ..got report: " + tComChannelTable);
+	//						}
+	//						// add the found routes to the overall route report, which is later sent to the superior coordinator
+	//						tReportedRoutingTable.addEntries(tComChannelTable);
+	//					}
+	//					
+						/**
+						 * Send the created report routing table to the superior coordinator
+						 */
+						if(tReportRoutingTable.size() > 0){
+							if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+								Logging.log(this, "   ..reporting via " + superiorCoordinatorComChannel() + " the routing table:");
+								int i = 0;
+								for(RoutingEntry tEntry : tReportRoutingTable){
+									Logging.log(this, "     ..[" + i +"]: " + tEntry);
+									i++;
+								}
+							}
+							
+							// create new TopologyReport packet for the superior coordinator
+							TopologyReport tTopologyReportPacket = new TopologyReport(getHRMID(), superiorCoordinatorComChannel().getPeerHRMID(), tReportRoutingTable);
+							// send the packet to the superior coordinator
+							sendSuperiorCoordinator(tTopologyReportPacket);
+						}else{
+							Logging.log(this, "reportPhase() skipped because no report available");
+						}
+	//				}
 				}
+			}else{
+				// we are the highest hierarchy level, no one to send topology reports to
 			}
-		}else{
-			// we are the highest hierarchy level, no one to send topology reports to
 		}
 	}
 	
