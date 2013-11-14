@@ -3726,17 +3726,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
 				Logging.warn(this, "Haven't found " + pRoutingEntry + " as HRG between " + pFrom + " and " + pTo);
-				synchronized (mHierarchicalRoutingGraph) {
-					Collection<HRMID> tNodes = mHierarchicalRoutingGraph.getVertices();
-					for(HRMID tKnownNode : tNodes){
-						Logging.warn(this, "   ..knowing node: " + tKnownNode);
-						Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(tKnownNode);
-						for(AbstractRoutingGraphLink tKnownLink : tLinks){
-							Logging.warn(this, "     ..has link: " + tKnownLink);
-							if(tKnownLink.equals(tSearchPattern)){
-								Logging.err(this, "       ..MATCH");
-							}else{
-								Logging.warn(this, "       ..NO MATCH");
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					synchronized (mHierarchicalRoutingGraph) {
+						Collection<HRMID> tNodes = mHierarchicalRoutingGraph.getVertices();
+						for(HRMID tKnownNode : tNodes){
+							Logging.warn(this, "   ..knowing node: " + tKnownNode);
+							Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(tKnownNode);
+							for(AbstractRoutingGraphLink tKnownLink : tLinks){
+								Logging.warn(this, "     ..has link: " + tKnownLink);
+								if(tKnownLink.equals(tSearchPattern)){
+									Logging.err(this, "       ..MATCH");
+								}else{
+									Logging.warn(this, "       ..NO MATCH");
+								}
 							}
 						}
 					}
