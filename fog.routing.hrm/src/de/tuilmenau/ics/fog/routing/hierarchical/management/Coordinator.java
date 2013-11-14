@@ -45,7 +45,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * Stores the parent cluster, which is managed by this coordinator instance.
 	 */
-	private Cluster mParentCluster = null;;
+	private Cluster mParentCluster = null;
 
 	/**
 	 * This is the coordinator counter, which allows for globally (related to a physical simulation machine) unique coordinator IDs.
@@ -163,9 +163,20 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 		
 		if(superiorCoordinatorComChannel() != null){
-			superiorCoordinatorComChannel().sendPacket(pPacket);
+			// plausibility check if we actually use a link from a CoordinatorAsClusterMember
+			if(superiorCoordinatorComChannel().getParent() instanceof CoordinatorAsClusterMember){				
+				CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)superiorCoordinatorComChannel().getParent();
+				// plausibility check if we actually use an active link
+				if(tCoordinatorAsClusterMember.getComChannelToClusterHead().isLinkActive()){
+					superiorCoordinatorComChannel().sendPacket(pPacket);
+				}else{
+					Logging.err(this, "sendSuperiorCoordinator() expected an active link, link is: " + superiorCoordinatorComChannel());
+				}
+			}else{
+				Logging.err(this, "sendSuperiorCoordinator() expected a CoordinatorAsClusterMember as parent of: " + superiorCoordinatorComChannel());
+			}
 		}else{
-			Logging.err(this, "sendSuperiorCoordinator() skipped because the comm. channel to the superior coordinator is invalid");
+			Logging.err(this, "sendSuperiorCoordinator() aborted because the comm. channel to the superior coordinator is invalid");
 			int i = 0;
 			for(CoordinatorAsClusterMember tMembership : mClusterMemberships){
 				Logging.err(this, "  ..possible comm. channel [" + i + "] " + (tMembership.isActiveCluster() ? "(A)" : "") + ":" + tMembership.getComChannelToClusterHead());
@@ -231,7 +242,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 
 			if ((!HRMConfig.Routing.PERIODIC_SHARE_PHASES) && (!hasNewSharePhaseData())){
 				if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-					Logging.log(this, "SHARE PHASE skipped because routing data hasn't changed since last signaling round");
+					Logging.log(this, "SHARE PHASE aborted because routing data hasn't changed since last signaling round");
 				}
 				return;
 			}
@@ -482,63 +493,77 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public void reportPhase()
 	{
 		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
+			/**
+			 * Auto. delete deprecated routes
+			 */
+			if(getHierarchyLevel().isBaseLevel()){
+				mHRMController.unregisterAutoHRG();
+			}
+			
 			// the highest coordinator does not have any superior coordinator
 			if (!getHierarchyLevel().isHighest()){
-				// do not report topology data which is already locally known
-				if(!mHRMController.getNodeL2Address().equals(superiorCoordinatorHostL2Address())){
-					RoutingTable tReportRoutingTable = new RoutingTable();
-	
-					/**
-					 * Report 1: routes to all neighbors
-					 */
-					RoutingTable tRoutesToNeighbors = mHRMController.getRoutesToNeighborsHRG(getHRMID());
-					// add the found routes to the report routing table
-					tReportRoutingTable.addEntries(tRoutesToNeighbors);
-					
-	//				if(getHierarchyLevel().isBaseLevel()){ //TODO: remove this limitation
-	//					if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-	//						Logging.log(this, "REPORT PHASE at hierarchy level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
-	//					}
-	//		
-	//					/**
-	//					 * Create the routing table for the report
-	//					 */
-	//					LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
-	//					/**
-	//					 *  Iterate over all comm. channels and fetch the recorded route reports:
-	//					 *  		- for L0+: from the local data which contains a route to the direct neighbor
-	//					 *  		- for L1+: from the inferior Coordinator
-	//					 */			
-	//					for(ComChannel tComChannel : tComChannels){
-	//						RoutingTable tComChannelTable = tComChannel.getReportedRoutingTable();
-	//						if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-	//							Logging.log(this, "   ..got report: " + tComChannelTable);
-	//						}
-	//						// add the found routes to the overall route report, which is later sent to the superior coordinator
-	//						tReportedRoutingTable.addEntries(tComChannelTable);
-	//					}
-	//					
+				// do we have a valid channel to the superior coordinator?
+				if(superiorCoordinatorComChannel() != null){
+					// do not report topology data which is already locally known
+					if(!mHRMController.getNodeL2Address().equals(superiorCoordinatorComChannel().getPeerL2Address())){
+						RoutingTable tReportRoutingTable = new RoutingTable();
+		
 						/**
-						 * Send the created report routing table to the superior coordinator
+						 * Report 1: routes to all neighbors
 						 */
-						if(tReportRoutingTable.size() > 0){
-							if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-								Logging.log(this, "   ..reporting via " + superiorCoordinatorComChannel() + " the routing table:");
-								int i = 0;
-								for(RoutingEntry tEntry : tReportRoutingTable){
-									Logging.log(this, "     ..[" + i +"]: " + tEntry);
-									i++;
-								}
+						RoutingTable tRoutesToNeighbors = mHRMController.getRoutesToNeighborsHRG(getHRMID());
+						// add the found routes to the report routing table
+						tReportRoutingTable.addEntries(tRoutesToNeighbors);
+						
+		//				if(getHierarchyLevel().isBaseLevel()){ //TODO: remove this limitation
+		//					if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+		//						Logging.log(this, "REPORT PHASE at hierarchy level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+		//					}
+		//		
+		//					/**
+		//					 * Create the routing table for the report
+		//					 */
+		//					LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
+		//					/**
+		//					 *  Iterate over all comm. channels and fetch the recorded route reports:
+		//					 *  		- for L0+: from the local data which contains a route to the direct neighbor
+		//					 *  		- for L1+: from the inferior Coordinator
+		//					 */			
+		//					for(ComChannel tComChannel : tComChannels){
+		//						RoutingTable tComChannelTable = tComChannel.getReportedRoutingTable();
+		//						if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+		//							Logging.log(this, "   ..got report: " + tComChannelTable);
+		//						}
+		//						// add the found routes to the overall route report, which is later sent to the superior coordinator
+		//						tReportedRoutingTable.addEntries(tComChannelTable);
+		//					}
+		//					
+							/**
+							 * Send the created report routing table to the superior coordinator
+							 */
+							if(tReportRoutingTable.size() > 0){
+								//if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+									Logging.log(this, "   ..reporting via " + superiorCoordinatorComChannel() + " the routing table:");
+									int i = 0;
+									for(RoutingEntry tEntry : tReportRoutingTable){
+										Logging.log(this, "     ..[" + i +"]: " + tEntry);
+										i++;
+									}
+								//}
+								
+								// create new TopologyReport packet for the superior coordinator
+								TopologyReport tTopologyReportPacket = new TopologyReport(getHRMID(), superiorCoordinatorComChannel().getPeerHRMID(), tReportRoutingTable);
+								// send the packet to the superior coordinator
+								sendSuperiorCoordinator(tTopologyReportPacket);
+							}else{
+								Logging.log(this, "reportPhase() aborted because no report for " + superiorCoordinatorComChannel() + " available");
 							}
-							
-							// create new TopologyReport packet for the superior coordinator
-							TopologyReport tTopologyReportPacket = new TopologyReport(getHRMID(), superiorCoordinatorComChannel().getPeerHRMID(), tReportRoutingTable);
-							// send the packet to the superior coordinator
-							sendSuperiorCoordinator(tTopologyReportPacket);
-						}else{
-							Logging.log(this, "reportPhase() skipped because no report for " + superiorCoordinatorComChannel() + " available");
-						}
-	//				}
+		//				}
+					}else{
+						Logging.log(this, "reportPhase() aborted because no report in a loopback is allowed");
+					}
+				}else{
+					Logging.log(this, "reportPhase() aborted because channel to superior coordinator is invalid");
 				}
 			}else{
 				// we are the highest hierarchy level, no one to send topology reports to
@@ -677,7 +702,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			}
 		}else{
 			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-				Logging.warn(this, "distributeCoordinatorAnnouncement() skipped because coordinator role is already invalidated");
+				Logging.warn(this, "distributeCoordinatorAnnouncement() aborted because coordinator role is already invalidated");
 			}
 		}
 	}
@@ -740,7 +765,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			}
 		}else{
 			if(USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-				//Logging.warn(this, "fire() skipped because coordinator role is already invalidated");
+				//Logging.warn(this, "fire() aborted because coordinator role is already invalidated");
 			}
 		}
 	}
@@ -961,7 +986,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 */
 			tClusterMembership.eventJoinedRemoteCluster(tComChannel);
 		}else{
-			Logging.warn(this, "eventClusterMembershipRequest() skipped because coordinator role is already invalidated");
+			Logging.warn(this, "eventClusterMembershipRequest() aborted because coordinator role is already invalidated");
 
 			/**
 			 * Inform the peer by the help of a InformClusterLeft packet
@@ -970,6 +995,27 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 	}
 
+	public void eventClusterMembershipToSuperiorCoordinator(CoordinatorAsClusterMember pMembership)
+	{
+		Logging.log(this, "EVENT: cluster membership to superior coordinator updated to: " + pMembership);
+
+		/**
+		 * Set the comm. channel to the superior coordinator
+		 */
+		if (superiorCoordinatorComChannel() != pMembership.getComChannelToClusterHead()){
+			Logging.log(this, "eventClusterMembershipToSuperiorCoordinator() updates comm. channel to superior coordinator: " + pMembership.getComChannelToClusterHead());
+			setSuperiorCoordinatorComChannel(pMembership.getComChannelToClusterHead());
+		}
+		
+		/**
+		 * Set the HRMID of the CoordinatorAsClusterMember instance
+		 */
+		if((getHRMID() == null) || (getHRMID().isZero()) || (!getHRMID().equals(pMembership.getHRMID()))){
+			Logging.log(this, "eventClusterMembershipToSuperiorCoordinator() updates HRMID to: " + pMembership.getHRMID());
+			eventAssignedHRMID(pMembership.getHRMID());
+		}
+	}
+	
 	/**
 	 * EVENT: cluster membership activated
 	 * 
@@ -978,26 +1024,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public void eventClusterMembershipActivated(CoordinatorAsClusterMember pMembership)
 	{
 		Logging.log(this, "EVENT: cluster membership activated: " + pMembership);
-		
-		ComChannel tChannelToSuperiorCoordinator = pMembership.getComChannelToClusterHead();
-		
-		/**
-		 * Set the comm. channel to the superior coordinator
-		 */
-		if(!tChannelToSuperiorCoordinator.equals(superiorCoordinatorComChannel())){
-			Logging.log(this, "eventClusterMembershipActivated() updates comm. channel to superior coordinator: " + pMembership.getComChannelToClusterHead());
-			setSuperiorCoordinatorComChannel(pMembership.getComChannelToClusterHead());
-		}else{
-			//Logging.warn(this, "eventClusterMembershipActivated() skipped because the new channel corresponds to the old one: " + superiorCoordinatorComChannel());
-		}
-
-		/**
-		 * Set the HRMID of the CoordinatorAsClusterMember instance
-		 */
-		if((getHRMID() == null) || (getHRMID().isZero()) || (!getHRMID().equals(pMembership.getHRMID()))){
-			Logging.log(this, "eventClusterMembershipActivated() updates HRMID to: " + pMembership.getHRMID());
-			eventAssignedHRMID(pMembership.getHRMID());
-		}
 	}
 
 	/**
@@ -1008,28 +1034,25 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public void eventClusterMembershipDeactivated(CoordinatorAsClusterMember pMembership)
 	{
 		Logging.log(this, "EVENT: cluster membership deactivated: " + pMembership);
-		
-		if ((superiorCoordinatorComChannel() == null) || (superiorCoordinatorComChannel() != pMembership.getComChannelToClusterHead())){
-			for(CoordinatorAsClusterMember tMembership : mClusterMemberships){
-				if(tMembership.isActiveCluster()){
-					/**
-					 * Set the comm. channel to the superior coordinator
-					 */
-					if (superiorCoordinatorComChannel() != tMembership.getComChannelToClusterHead()){
-						Logging.log(this, "eventClusterMembershipDeactivated() updates comm. channel to superior coordinator: " + tMembership.getComChannelToClusterHead());
-						setSuperiorCoordinatorComChannel(tMembership.getComChannelToClusterHead());
-					}
-					
-					/**
-					 * Set the HRMID of the CoordinatorAsClusterMember instance
-					 */
-					if((getHRMID() == null) || (getHRMID().isZero()) || (!getHRMID().equals(tMembership.getHRMID()))){
-						Logging.log(this, "eventClusterMembershipActivated() updates HRMID to: " + tMembership.getHRMID());
-						eventAssignedHRMID(tMembership.getHRMID());
-					}
-					break;
-				}
-			}
+
+		/**
+		 * If we have lost the membership to the superior coordinator, we search for the next possible superior coordinator/cluster
+		 */
+		if (superiorCoordinatorComChannel() == pMembership.getComChannelToClusterHead()){
+			Logging.warn(this, "Lost the channel to the superior coordinator, remaining channels to superior clusters: " + getClusterMembershipComChannels());
+//			synchronized (mClusterMemberships) {
+//				// iterate over all known cluster memberships
+//				for(CoordinatorAsClusterMember tMembership : mClusterMemberships){
+//					// do we have a coordinator in this cluster?
+//					if(tMembership.isActiveCluster()){
+//						// do we actively participate in this cluster?
+//						if(tMembership.getComChannelToClusterHead().isLinkActive()){
+//							eventClusterMembershipToSuperiorCoordinator(tMembership);
+//							break;
+//						}
+//					}
+//				}
+//			}
 		}
 	}
 

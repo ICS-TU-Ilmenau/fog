@@ -76,7 +76,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for the report phase
 		 */
-		public static final boolean SHOW_REPORT_PHASE = true;
+		public static final boolean SHOW_REPORT_PHASE = false;
 
 		/**
 		 * Shows debug outputs for the report phase of comm. channels
@@ -184,12 +184,18 @@ public class HRMConfig
 		/**
 		 * Defines if the cause for each routing entry should be shown
 		 */
-		public static final boolean GUI_SHOW_ROUTE_CAUSE = false;
+		public static final boolean GUI_SHOW_ROUTE_CAUSE = true;
 
 		/**
 		 * Show debug outputs about HRG node/link detection
 		 */
 		public static final boolean GUI_SHOW_HRG_DETECTION = false;
+
+		/**
+		 * Defines the minimum time period between two updates of the node specific HRG viewer.
+		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
+		 */
+		public static final double GUI_NODE_HRG_DISPLAY_UPDATE_INTERVAL = 10.0;
 	}
 	
 	public class Addressing
@@ -340,7 +346,12 @@ public class HRMConfig
 		/**
 		 * Define if the HRM based route should be recorded in a ProbeRoutingProperty if the connection  request uses this property.
 		 */		
-		public static final boolean RECORD_ROUTE_FOR_PROBES = true; 
+		public static final boolean RECORD_ROUTE_FOR_PROBES = true;
+
+		/**
+		 * Defines the default timeout for a route. If the route doesn't get any refresh in the defined time period, the route gets deleted.
+		 */
+		public static final double ROUTE_TIMEOUT = GRANULARITY_SHARE_PHASE * 2; 
 	}
 
 	public class QoS

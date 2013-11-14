@@ -220,6 +220,13 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		}
 	}
 
+	public void eventClusterMembershipToSuperiorCoordinator()
+	{
+		Logging.log(this, "EVENT: cluster membership to superior coordinator updated to me");
+
+		mCoordinator.eventClusterMembershipToSuperiorCoordinator(this);
+	}
+	
 	/**
 	 * Defines the decoration text for the ARG viewer
 	 * 

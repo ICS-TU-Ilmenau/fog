@@ -176,6 +176,12 @@ public class Elector implements Localization
 			throw new RuntimeException("Invalid active ClusterMember: " + mParent);
 		}
 	
+		if(mParent instanceof CoordinatorAsClusterMember){
+			CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
+			
+			tCoordinatorAsClusterMember.eventClusterMembershipToSuperiorCoordinator();
+		}
+		
 		Logging.log(this, "Adding active ClusterMember: " + mParent);
 		synchronized (mNodeActiveClusterMembers) {
 			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
@@ -1267,16 +1273,23 @@ public class Elector implements Localization
 			if(pComChannel.isLinkActive()){
 				Logging.log(this, "    ..we received the ANNOUNCE via an active link");
 
-				// mark/store as active ClusterMember
-				addActiveClusterMember(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
+				LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
+
+				// does the previous active ClusterMember for this hier. level has a lower priority than the new candidate?
+				if((tLevelList == null) || (tLevelList.isEmpty()) || 
+				   (tLevelList.getFirst().getElector().hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority())) || // the new ClusterMember is the better choice?
+				   ((tLevelList.getFirst().getComChannelToClusterHead().getPeerL2Address().equals(pComChannel.getPeerL2Address()) /* both have the coordinator at the same node? */) && (mParent.getHierarchyLevel().getValue() == 1 /* this exception is only possible for hierarchy level 1 because two L0 coordinator are allowed to e active ClusterMember simultaneously */))){
+					addActiveClusterMember(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
+				}
 				
 				// check local cluster head if it is active and has a lower priority than the peer -> in this case we have to deactivate it 
 				deactivateWorseLocalActiveCluster(pComChannel);
 				
 				// leave all alternative election processes with a lower priority than the peer
 				leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
-			}
-	
+
+			}	
+
 			// mark this cluster as active
 			mParent.setClusterActivation(true);
 	
@@ -1316,8 +1329,8 @@ public class Elector implements Localization
 
 				// mark/store as inactive ClusterMember
 				removeActiveClusterMember(mParent, this + "::eventReceivedRESIGN() for " + pResignPacket);
-			}
-	
+			}	
+
 			// mark this cluster as active
 			mParent.setClusterActivation(false);
 
@@ -1756,7 +1769,9 @@ public class Elector implements Localization
 		 * Return false if the comm. channel hasn't received a valid priority yet
 		 */
 		if(pComChannelToPeer.getPeerPriority().isUndefined()){
-			Logging.log(this, "	        ..UNDEFINED PRIORITY value for: " + pComChannelToPeer);
+			if (tDEBUG){
+				Logging.log(this, "	        ..UNDEFINED PRIORITY value for: " + pComChannelToPeer);
+			}
 			return false;
 		}
 			
