@@ -322,10 +322,10 @@ public class ComChannel
 	 */
 	public void setPeerHRMID(HRMID pHRMID)
 	{
-		Logging.log(this, "Setting new peer HRMID: " + pHRMID);
-		
 		if((pHRMID != null) && (!pHRMID.equals(mPeerHRMID))){
 			if(!pHRMID.isZero()){
+				Logging.log(this, "Setting new peer HRMID: " + pHRMID);
+
 				mPeerHRMID = pHRMID.clone();
 				
 				boolean tPeerHRMIDIsNew = false;
