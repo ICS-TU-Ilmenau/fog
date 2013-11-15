@@ -376,11 +376,13 @@ public class ClusterMember extends ClusterName
 		if((pNewL0HRMID != null) && (!pNewL0HRMID.equals(mAssignedL0HRMID)) && (!pNewL0HRMID.isClusterAddress()) && (!pNewL0HRMID.isZero())){
 			Logging.log(this, "ASSIGNED new (" + mCallsSetL0HRMID + ") L0 node HRMID: " + pNewL0HRMID);
 
-			if((mAssignedL0HRMID != null) && (!mAssignedL0HRMID.isZero())){
-				/**
-				 * Unregister old HRMID
-				 */
-				mHRMController.unregisterHRMID(this, mAssignedL0HRMID, this + "::setL0HRMID()(" + mCallsSetL0HRMID + ")");
+			/**
+			 * Unregister old HRMID
+			 */
+			if(this instanceof Cluster){
+				if((mAssignedL0HRMID != null) && (!mAssignedL0HRMID.isZero())){
+					mHRMController.unregisterHRMID(this, mAssignedL0HRMID, this + "::setL0HRMID()(" + mCallsSetL0HRMID + ")");
+				}
 			}
 			
 			/**
@@ -391,7 +393,9 @@ public class ClusterMember extends ClusterName
 			/**
 			 * Register new HRMID
 			 */
-			mHRMController.registerHRMID(this, mAssignedL0HRMID, this + "::setL0HRMID()(" + mCallsSetL0HRMID + ")");
+			if(this instanceof Cluster){
+				mHRMController.registerHRMID(this, mAssignedL0HRMID, this + "::setL0HRMID()(" + mCallsSetL0HRMID + ")");
+			}
 
 			/**
 			 * Trigger: update HRG
