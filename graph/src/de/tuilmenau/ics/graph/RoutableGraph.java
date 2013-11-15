@@ -389,7 +389,7 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	 * @param pNewNode node to search for
 	 * @return found node in structure equal to pNewNode OR null
 	 */
-	protected NodeObject containsVertex(NodeObject pNewNode)
+	public synchronized NodeObject containsVertex(NodeObject pNewNode)
 	{
 		if(pNewNode == null) {
 			throw new NullPointerException("TopologyMap.containsVertex with null argument (" +this +")");
