@@ -691,22 +691,32 @@ public class ComChannel
 	{
 		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteSharePacket);
+			Logging.err(this, "   ..got routing share: " + pRouteSharePacket.getRoutes());
 		}
 		
 		if(mParent instanceof CoordinatorAsClusterMember){
 			CoordinatorAsClusterMember tParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
 			
-			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-				Logging.err(this, "   ..got routing share: " + pRouteSharePacket.getRoutes());
-			}
-
 			/**
 			 * Trigger: inform the cluster about the new routing report
 			 */
 			tParentCoordinatorAsClusterMember.getCoordinator().eventRouteShare(this, pRouteSharePacket);
-		}else{
-			Logging.err(this, "eventReceivedRouteShare() expected a CoordinatorAsClusterMember as parent, parent is: " + mParent);
+			
+			return;
 		}
+		
+		if((mParent instanceof ClusterMember) && (!(mParent instanceof Cluster))){
+			ClusterMember tParentClusterMember = (ClusterMember)mParent;
+			
+			/**
+			 * Trigger: inform the cluster about the new routing report
+			 */
+			tParentClusterMember.eventRouteShare(this, pRouteSharePacket);
+			
+			return;
+		}
+
+		Logging.err(this, "eventReceivedRouteShare() expected a CoordinatorAsClusterMember/ClusterMember as parent, parent is: " + mParent);
 	}
 
 	/**

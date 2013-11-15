@@ -2206,6 +2206,58 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Adds interesting parts of a received shared routing table
+	 * 
+	 * @param pReceivedSharedRoutingTable the received shared routing table
+	 */
+	public void addHRMRouteShare(RoutingTable pReceivedSharedRoutingTable)
+	{
+		for(RoutingEntry tNewEntry : pReceivedSharedRoutingTable){
+			if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+				Logging.err(this, "  ..received shared route: " + tNewEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tNewEntry.getDest()));
+			}
+				
+			/**
+			 * Store all routes, which start at this node
+			 */
+			if(isLocal(tNewEntry.getSource())){
+				if(!isLocalCluster(tNewEntry.getDest())){
+					boolean tFoundExistingSameRouteToSameNextHop = false;
+					RoutingTable tExistingRoutingTable = mHierarchicalRoutingService.getRoutingTable();
+					for(RoutingEntry tKnownEntry : tExistingRoutingTable){
+						if((tKnownEntry.getDest().equals(tNewEntry.getDest())) && (tKnownEntry.getNextHopL2Address() != null) && (tKnownEntry.getNextHopL2Address().equals(tNewEntry.getNextHopL2Address()))){
+							tFoundExistingSameRouteToSameNextHop = true;
+						}
+					}
+//					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+					 	Logging.err(this, "  ..storing shared route: " + tNewEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tNewEntry.getDest()));
+//						}
+
+				 	if(!tFoundExistingSameRouteToSameNextHop){
+						RoutingEntry tNewLocalRoutingEntry = tNewEntry.clone();
+						
+						/**
+						 * Set the timeout for the found shared route
+						 */
+						 	tNewLocalRoutingEntry.setTimeout(getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT);
+						
+						/**
+						 * Store the found route
+						 */
+						addHRMRoute(tNewLocalRoutingEntry);
+				 	}else{
+						Logging.warn(this, "   ..dropping uninteresting (has same next hop like an existing entry) route: " + tNewEntry);
+				 	}
+				}else{
+//					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+					Logging.err(this, "   ..dropping uninteresting route: " + tNewEntry);
+//					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * Registers automatically new links in the HRG based on a given routing table entry
 	 * 
 	 * @param pRoutingEntry the routing table entry
@@ -4018,8 +4070,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Route tKnownLinkRoute = tKnownLink.getRoute();
 					if(tKnownLinkRoute.size() == 1){
 						if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
-							RoutingEntry tRouteToNeighbor = (RoutingEntry)tKnownLinkRoute.getFirst();
-							tResult.add(tRouteToNeighbor.clone());
+							RoutingEntry tRouteToNeighbor = ((RoutingEntry)tKnownLinkRoute.getFirst()).clone();
+							tResult.add(tRouteToNeighbor);
 						}else{
 							throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route type: " + tKnownLinkRoute);
 						}
@@ -4035,8 +4087,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Route tKnownLinkRoute = tKnownLink.getRoute();
 					if(tKnownLinkRoute.size() == 1){
 						if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
-							RoutingEntry tRouteToNeighbor = (RoutingEntry)tKnownLinkRoute.getFirst();
-							tResult.add(tRouteToNeighbor.clone());
+							RoutingEntry tRouteToNeighbor = ((RoutingEntry)tKnownLinkRoute.getFirst()).clone();
+							tResult.add(tRouteToNeighbor);
 						}else{
 							throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route type: " + tKnownLinkRoute);
 						}
@@ -4129,6 +4181,34 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		return tResult;
 	}
 
+	/**
+	 * Returns the routing entry from a HRG link between two HRG nodes
+	 * 
+	 * @param pSource the starting point of the searched link
+	 * @param pDestination the ending point of the search link
+	 * 
+	 * @return the search routing entry
+	 */
+	public RoutingEntry getRoutingEntryHRG(HRMID pSource, HRMID pDestination)
+	{
+		RoutingEntry tResult = null;
+		
+		List<AbstractRoutingGraphLink> tPath = getRouteHRG(pSource, pDestination);
+		if(tPath != null){
+			if(tPath.size() == 1){
+				AbstractRoutingGraphLink tLink = tPath.get(0);
+				// get the routing entry from the last gateway to the next one
+				tResult = ((RoutingEntry) tLink.getRoute().getFirst()).clone();
+			}else{
+				Logging.warn(this, "getRoutingEntryHRG() found a complex intra-cluster route: " + tPath + " from " + pSource + " to " + pDestination);
+			}
+		}else{
+			// no route found
+		}
+		
+		return tResult;
+	}
+	
 	/**
 	 * Returns the HRG for the GraphViewer.
 	 * (only for GUI!)

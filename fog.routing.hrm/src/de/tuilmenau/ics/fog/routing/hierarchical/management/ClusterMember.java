@@ -17,6 +17,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -503,6 +504,22 @@ public class ClusterMember extends ClusterName
 		}
 	}
 	
+	/**
+	 * EVENT: RouteShare
+	 * 
+	 * @param pSourceComChannel the source comm. channel
+	 * @param pRouteSharePacket the packet
+	 */
+	public void eventRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
+	{
+		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+			Logging.err(this, "EVENT: RouteShare via: " + pSourceComChannel);
+		}
+		
+		RoutingTable tReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
+		mHRMController.addHRMRouteShare(tReceivedSharedRoutingTable);			
+	}
+
 	/**
 	 * EVENT: coordinator announcement, we react on this by:
 	 *       1.) store the topology information locally

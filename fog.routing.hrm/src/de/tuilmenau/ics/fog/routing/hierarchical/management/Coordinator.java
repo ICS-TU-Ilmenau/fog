@@ -71,6 +71,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private int mSentAnnounces = 0;
 	
+	/**
+	 * Stores the last received routing table from the superior coordinator
+	 */
+	private RoutingTable mReceivedSharedRoutingTable = new RoutingTable();
+	
 	private static final long serialVersionUID = 6824959379284820010L;
 	
 	/**
@@ -249,28 +254,57 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				return;
 			}
 			
-			if(getHierarchyLevel().isBaseLevel()){
-				
-			}else{
-				// get all comm. channels to inferior cluster members
-				LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
-	
-				/*******************************************************************
-				 * Iterate over all comm. channels and share routing data
-				 *******************************************************************/ 
-				for (ComChannel tComChannel : tComChannels){
-					RoutingTable tSharedRoutingTable = new RoutingTable();
+			// get all comm. channels to inferior cluster members
+			LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
 
-					/**
-					 * Only proceed if the link is actually active
-					 */
-					if(tComChannel.isLinkActive()){
-						HRMID tPeerHRMID = tComChannel.getPeerHRMID();
-						if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){
-							if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-								Logging.log(this, "  ..sharing routes with: " + tPeerHRMID);
+			/*******************************************************************
+			 * Iterate over all comm. channels and share routing data
+			 *******************************************************************/ 
+			for (ComChannel tComChannel : tComChannels){
+				/**
+				 * Only proceed if the link is actually active
+				 */
+				if(tComChannel.isLinkActive()){
+					RoutingTable tSharedRoutingTable = new RoutingTable();
+					HRMID tPeerHRMID = tComChannel.getPeerHRMID();
+					if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){
+						if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+							Logging.log(this, "  ..sharing routes with: " + tPeerHRMID);
+						}
+						
+						if(getHierarchyLevel().isBaseLevel()){
+							HRMID tThisNodeHRMID = getCluster().getL0HRMID();
+
+							/*********************************************************************
+							 * SHARE: received routes from superior coordinator
+							 *********************************************************************/
+							// copy the received routing table
+							RoutingTable tReceivedSharedRoutingTable = null;
+							synchronized (mReceivedSharedRoutingTable) {
+								tReceivedSharedRoutingTable = (RoutingTable) mReceivedSharedRoutingTable.clone();	
+							}
+
+							for(RoutingEntry tEntry : tReceivedSharedRoutingTable){
+								// does the received route start at the peer?
+								if(tEntry.getSource().equals(tPeerHRMID)){
+									// share the received entry with the peer
+									tSharedRoutingTable.addEntry(tEntry.clone());
+									
+									continue;
+								}
+								
+								// does the received route start at this node and the next node isn't the peer?
+								if((tEntry.getSource().equals(tThisNodeHRMID)) && (!tEntry.getNextHop().equals(tPeerHRMID))){
+									RoutingEntry tRoutingEntryWithPeer = mHRMController.getRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
+									if(tRoutingEntryWithPeer != null){
+										tRoutingEntryWithPeer.chain(tEntry);
+										// share the received entry with the peer
+										tSharedRoutingTable.addEntry(tRoutingEntryWithPeer);
+									}									
+								}
 							}
 							
+						}else{
 //							/*********************************************************************
 //							 * SHARE: routes to neighbors of ourself
 //							 *********************************************************************/
@@ -288,7 +322,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 //									
 //								}								
 //							}
-
+	
 							/*********************************************************************
 							 * SHARE: routes to neighbors of the peer
 							 *********************************************************************/
@@ -435,12 +469,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									Logging.err(this, "Couldn't determine a route from " + tPeerHRMID + " to " + tPossibleDestination);
 								}
 							}
-							
-							if(tSharedRoutingTable.size() > 0){
-								tComChannel.distributeRouteShare(tSharedRoutingTable);
-							}
 						}
-					}
+						
+						if(tSharedRoutingTable.size() > 0){
+							tComChannel.distributeRouteShare(tSharedRoutingTable);
+						}
+					}	
 				}
 			}
 		}else{
@@ -548,41 +582,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 //		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.err(this, "EVENT: RouteShare via: " + pSourceComChannel);
 //		}
-			
-		RoutingTable tSharedRoutingTable = pRouteSharePacket.getRoutes();
-		for(RoutingEntry tEntry : tSharedRoutingTable){
-			if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-				Logging.err(this, "  ..received shared route: " + tEntry + ", aggregated foreign destination: " + mHRMController.aggregateForeignHRMID(tEntry.getDest()));
-			}
-				
-			/**
-			 * Store all routes, which start at this node
-			 */
-			if(mHRMController.isLocal(tEntry.getSource())){
-				if(!mHRMController.isLocalCluster(tEntry.getDest())){
-					RoutingEntry tLocalRoutingEntry = tEntry.clone();
-					
-//					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-					 	Logging.err(this, "  ..storing shared route: " + tLocalRoutingEntry + ", aggregated foreign destination: " + mHRMController.aggregateForeignHRMID(tLocalRoutingEntry.getDest()));
-//						}
-
-					/**
-					 * Set the timeout for the found shared route
-					 */
-					tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT);
-					
-					/**
-					 * Store the found route
-					 */
-					mHRMController.addHRMRoute(tLocalRoutingEntry);
-				}else{
-//					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-					Logging.err(this, "   ..dropping uninteresting route: " + tEntry);
-//					}
-				}
-			}
-		}
 		
+		synchronized (mReceivedSharedRoutingTable) {
+			mReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
+			mHRMController.addHRMRouteShare(mReceivedSharedRoutingTable);			
+		}		
 	}
 
 	/**
