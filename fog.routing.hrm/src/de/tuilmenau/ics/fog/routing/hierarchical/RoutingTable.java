@@ -80,6 +80,9 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			 * Update the timeout value
 			 */
 			if(pRoutingTableEntry.getTimeout() > 0){
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "Updating timeout for: " + tFoundDuplicate + " to: " + pRoutingTableEntry.getTimeout());
+				}
 				tFoundDuplicate.setTimeout(pRoutingTableEntry.getTimeout());
 			}
 		}
