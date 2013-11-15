@@ -76,7 +76,12 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			
 			tResult = true;
 		}else{
-			//TODO: support for updates of tFoundDuplicate
+			/**
+			 * Update the timeout value
+			 */
+			if(pRoutingTableEntry.getTimeout() > 0){
+				tFoundDuplicate.setTimeout(pRoutingTableEntry.getTimeout());
+			}
 		}
 		
 		return tResult;
