@@ -188,7 +188,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * Store the routing entry in the routing table
 		 */
-		Logging.log(this, "Adding HRM route: " + pRoutingTableEntry);
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "Adding HRM route: " + pRoutingTableEntry);
+		}
 		boolean tResult = mRoutingTable.addEntry(pRoutingTableEntry);
 		
 		/**
@@ -258,7 +260,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * Remove the routing entry from the routing table
 		 */
-		Logging.log(this, "Deleting HRM route: " + pRoutingTableEntry);
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "Deleting HRM route: " + pRoutingTableEntry);
+		}
 		boolean tResult = mRoutingTable.delEntry(pRoutingTableEntry);
 		
 		/**
@@ -1298,11 +1302,11 @@ public class HRMRoutingService implements RoutingService, Localization
 			HRMID tNextHopHRMID = null;
 			HRMID tThisHop = null;
 			boolean tIsLocalHRMID = false;
-			synchronized (mRoutingTable) { //TODO: separate class for RoutingTable object
+			synchronized (mRoutingTable) {
 				/**
 				 * Iterate over all routing entries and search for a correct destination cluster
 				 */
-				int tBestDiffLevel = 99;//TODO: use fixed constant here
+				int tBestDiffLevel = HRMConfig.Hierarchy.HEIGHT_LIMIT;
 				if(mRoutingTable.size() > 0){
 					RoutingEntry tLoopEntry = null;
 					for(RoutingEntry tEntry : mRoutingTable){

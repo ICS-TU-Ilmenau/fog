@@ -258,7 +258,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final int EXPANSION_RADIUS = 2;
+		public static final int EXPANSION_RADIUS = 1;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
@@ -297,6 +297,11 @@ public class HRMConfig
 		 * Defines if a separate priority per hierarchy level should be used
 		 */
 		public static final boolean USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL = false;
+
+		/**
+		 * Defines the limit for the hierarchy height
+		 */
+		public static final int HEIGHT_LIMIT = 99;
 	}
 	
 	/**
@@ -316,7 +321,7 @@ public class HRMConfig
 		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated routes to foreign destinations.
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean SHARE_ROUTES_AUTOMATICALLY = false;
+		public static final boolean SHARE_ROUTES_AUTOMATICALLY = true;
 
 		/**
 		 * Should the packets of the "share phase" be send periodically?

@@ -2011,7 +2011,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pHRMID the HRMID
 	 * 
-	 * @return the list of HRMIDs
+	 * @return true if the given HRMID is a local one
 	 */
 	public boolean isLocal(HRMID pHRMID)
 	{
@@ -2030,6 +2030,35 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns true if the given HRMID is a local one.
+	 * 
+	 * @param pHRMID the HRMID of the Cluster
+	 * 
+	 * @return true if the local node belongs to the given Cluster
+	 */
+	public boolean isLocalCluster(HRMID pHRMID)
+	{
+		boolean tResult = false;
+		
+		if(pHRMID.isClusterAddress()){
+			synchronized(mRegisteredOwnHRMIDs){
+				for(HRMID tKnownHRMID : mRegisteredOwnHRMIDs){
+					//Logging.err(this, "Checking isCluster for " + tKnownHRMID + " and if it is " + pHRMID);
+					if(tKnownHRMID.isCluster(pHRMID)){
+						//Logging.err(this, " ..true");
+						tResult = true;
+						break;
+					}
+				}
+			}
+		}else{
+			Logging.err(this, "isLocalCluster() cannot operate on a given L0 node HRMID");
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * @param pForeignHRMID
 	 * @return
 	 */
@@ -2042,7 +2071,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		synchronized(mRegisteredOwnHRMIDs){
-			int tHierLevel = 99; //TODO: final value here
+			int tHierLevel = HRMConfig.Hierarchy.HEIGHT_LIMIT;
 			// iterate over all local HRMIDs
 			for(HRMID tLocalHRMID : mRegisteredOwnHRMIDs){
 				// ignore cluster addresses
@@ -2069,12 +2098,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * Update the result value
 					 */
-					if((tResult == null) || (tHierLevel > tForeignCluster.getHierarchyLevel())){
+					if((tResult == null) || (tHierLevel < tForeignCluster.getHierarchyLevel())){
+						if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_AGGREGATION){
+							Logging.err(this, "     ..found better result: " + tResult + ", best lvl: " + tHierLevel + ", cur. lvl: " + tForeignCluster.getHierarchyLevel());
+						}
 						tHierLevel = tForeignCluster.getHierarchyLevel();
 						tResult = tForeignCluster;						
-						if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_AGGREGATION){
-							Logging.err(this, "     ..found better result: " + tResult);
-						}
 					}
 				}
 			}
@@ -2101,7 +2130,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		boolean tResult = false;
 		
 		mCallsAddHRMRoute++;
-		Logging.log(this, "Adding (" + mCallsAddHRMRoute + ") HRM routing table entry: " + pRoutingEntry);
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "Adding (" + mCallsAddHRMRoute + ") HRM routing table entry: " + pRoutingEntry);
+		}
 		
 		// filter invalid destinations
 		if(pRoutingEntry.getDest() == null){
@@ -2168,7 +2199,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		if(tResult){
 			// it's time to update the GUI
-			notifyGUI(this);
+//			notifyGUI(pRoutingEntry.getCause());
 		}
 		
 		return tResult;
@@ -2238,7 +2269,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		boolean tResult = false;
 		
-		Logging.log(this, "Deleting HRM routing table entry: " + pRoutingEntry);
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			Logging.log(this, "Deleting HRM routing table entry: " + pRoutingEntry);
+		}
 		
 		/**
 		 * Inform the HRS about the new route
@@ -2273,7 +2306,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		if(tResult){
 			// it's time to update the GUI
-			notifyGUI(this);
+//			notifyGUI(pRoutingEntry.getCause());
 		}
 		
 		return tResult;
@@ -2344,7 +2377,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// inform the HRS about the new route
 		if(getHRS().registerLinkL2(pToL2Address, pRoute)){
 			// it's time to update the GUI
-			notifyGUI(this);
+			notifyGUI(pRoute);
 		}
 	}
 
@@ -2997,7 +3030,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * auto-remove old HRM routes
 		 */
-		delHRMRoutAuto();
+		delHRMRoutesAuto();
+		
+		/**
+		 * generalize all known HRM routes to neighbors 
+		 */
+//		generalizeMeighborHRMRoutesAuto();
 		
 		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
 			/**
@@ -3761,7 +3799,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Unregisters automatically old HRM routes based on each route entrie's timeout value
 	 */
-	public void delHRMRoutAuto()
+	private void delHRMRoutesAuto()
 	{
 		RoutingTable tRoutingTable = mHierarchicalRoutingService.getRoutingTable();
 		for(RoutingEntry tEntry : tRoutingTable){
@@ -3775,6 +3813,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}		
 	}
 
+	/**
+	 * Generalizes all known HRM routes to neighbors
+	 */
+	private void generalizeMeighborHRMRoutesAuto()
+	{
+		RoutingTable tRoutingTable = mHierarchicalRoutingService.getRoutingTable();
+		for(RoutingEntry tEntry : tRoutingTable){
+			if(tEntry.isRouteToDirectNeighbor()){
+				HRMID tGeneralizedDest = aggregateForeignHRMID(tEntry.getDest());
+				if(!tGeneralizedDest.equals(tEntry.getDest())){
+					RoutingEntry tGeneralizedEntry = tEntry.clone();
+					tGeneralizedEntry.setDest(tGeneralizedDest);
+					
+					/**
+					 * Remove the old entry
+					 */
+					delHRMRoute(tEntry);
+					
+					/**
+					 * Add the new entry
+					 */
+					addHRMRoute(tGeneralizedEntry);
+				}
+			}
+		}		
+	}
+	
 	/**
 	 * Unregisters a logical link between HRMIDs from the locally stored hierarchical routing graph (HRG)
 	 * 
