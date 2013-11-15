@@ -81,7 +81,7 @@ public class AbstractRoutingGraphLink implements Serializable
 	 */
 	public Route getRoute()
 	{
-		return mRoute;
+		return mRoute.clone();
 	}
 	
 	/**
