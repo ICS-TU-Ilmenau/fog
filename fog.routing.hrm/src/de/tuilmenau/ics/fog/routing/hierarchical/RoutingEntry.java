@@ -37,17 +37,17 @@ public class RoutingEntry implements RouteSegment
 	/**
 	 * Defines a constant value for "no utilization".
 	 */
-	public static final float NO_UTILIZATION = -1;
+	public static final float NO_UTILIZATION = 0;
 
 	/**
 	 * Defines a constant value for "no delay".
 	 */
-	public static final long NO_DELAY = -1;
+	public static final long NO_DELAY = 0;
 
 	/**
 	 * Defines a constant value for "infinite data rate".
 	 */
-	public static final long INFINITE_DATARATE = -1;
+	public static final long INFINITE_DATARATE = Long.MAX_VALUE;
 
 	
 	/**
@@ -71,7 +71,7 @@ public class RoutingEntry implements RouteSegment
 	private int mHopCount = NO_HOP_COSTS;
 	
 	/**
-	 * Stores the utilization of the described route.
+	 * Stores the utilization[%] of the described route.
 	 */
 	private float mUtilization = NO_UTILIZATION;
 	
@@ -346,6 +346,16 @@ public class RoutingEntry implements RouteSegment
 	}
 	
 	/**
+	 * Sets a new destination
+	 * 
+	 * @param pDestination the new destination
+	 */
+	public void setDest(HRMID pDestination)
+	{
+		mDestination = pDestination;
+	}
+
+	/**
 	 * Returns the next hop of this route
 	 * 
 	 * @return the next hop
@@ -355,6 +365,16 @@ public class RoutingEntry implements RouteSegment
 		return mNextHop;
 	}
 	
+	/**
+	 * Sets a new next hop
+	 * 
+	 * @param pNextHop the new next hop
+	 */
+	public void setNextHop(HRMID pNextHop)
+	{
+		mNextHop = pNextHop;
+	}
+
 	/**
 	 * Returns the hop costs of this route
 	 * 
@@ -417,6 +437,41 @@ public class RoutingEntry implements RouteSegment
 		return mRouteToDirectNeighbor;
 	}
 
+	public void chain(RoutingEntry pOtherEntry)
+	{
+		// HOP COUNT -> add both
+		mHopCount += pOtherEntry.mHopCount;
+		
+		// MIN DELAY -> add both
+		mMinDelay += pOtherEntry.mMinDelay;
+		
+		// MAX DATA RATE -> find the minimum
+		mMaxDataRate = (mMaxDataRate < pOtherEntry.mMaxDataRate ? mMaxDataRate : pOtherEntry.mMaxDataRate);
+		
+		// UTILIZATION -> find the maximum
+		mUtilization = (mUtilization > pOtherEntry.mUtilization ? mUtilization : pOtherEntry.mUtilization);
+
+		// how should we combine both route entries?
+		if(mSource.equals(pOtherEntry.mNextHop)){
+			/**
+			 * we have "other ==> this"
+			 */			
+			mSource = pOtherEntry.mSource;
+			mNextHop = pOtherEntry.mNextHop;
+		}else if(mNextHop.equals(pOtherEntry.mSource)){
+			/**
+			 * we have "this == other"
+			 */ 
+			mDestination = pOtherEntry.mDestination;
+		}
+		
+		// deactivate loopback flag
+		mLocalLoop = false;
+		
+		// deactivate neighbor flag
+		mRouteToDirectNeighbor = false;
+	}
+	
 	/**
 	 * Creates an identical duplicate
 	 * 
@@ -435,6 +490,9 @@ public class RoutingEntry implements RouteSegment
 		
 		// update next hop L2 address
 		tResult.mNextHopL2Address = mNextHopL2Address;
+		
+		// update timeout
+		tResult.mTimeout = mTimeout;
 		
 		return tResult;
 	}
@@ -481,7 +539,6 @@ public class RoutingEntry implements RouteSegment
 	 * 
 	 *  @return the describing string
 	 */
-	@SuppressWarnings("unused")
 	@Override
 	public String toString()
 	{
