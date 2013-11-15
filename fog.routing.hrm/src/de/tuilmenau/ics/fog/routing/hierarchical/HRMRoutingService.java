@@ -390,13 +390,12 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * 
 	 * @return the local HRM routing table
 	 */
-	@SuppressWarnings("unchecked")
-	public LinkedList<RoutingEntry> routingTable()
+	public RoutingTable getRoutingTable()
 	{
-		LinkedList<RoutingEntry> tResult = null;
+		RoutingTable tResult = null;
 		
 		synchronized (mRoutingTable) {
-			tResult = (LinkedList<RoutingEntry>) mRoutingTable.clone();
+			tResult = (RoutingTable) mRoutingTable.clone();
 		}
 		
 		return tResult;		
