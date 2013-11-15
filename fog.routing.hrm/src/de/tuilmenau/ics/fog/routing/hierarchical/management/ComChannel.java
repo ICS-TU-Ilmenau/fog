@@ -432,10 +432,19 @@ public class ComChannel
 								RoutingEntry tReportedRoutingEntryBackward = null;
 								
 								/**
-								 * Generalize neighbor HRMID to its cluster address, depending on the locally assigned HRMID.
-								 * If the local node owns 1.1.1 and 1.2.1, and the neighbor HRMID is 1.3.1, the result will be 1.3.0 because this cluster is a foreign one for the local node 
-								 */ 
-								HRMID tGeneralizedNeighborHRMID = mHRMController.aggregateForeignHRMID(tNeighborHRMID); 
+								 * Determine the correctly aggregated peer description
+								 */
+								HRMID tGeneralizedNeighborHRMID = null;
+								if(!tNeighborHRMID.equals(getPeerHRMID())){
+									/**
+									 * Generalize neighbor HRMID to its cluster address, depending on the locally assigned HRMID.
+									 * If the local node owns 1.1.1 and 1.2.1, and the neighbor HRMID is 1.3.1, the result will be 1.3.0 because this cluster is a foreign one for the local node 
+									 */ 
+									tGeneralizedNeighborHRMID = mHRMController.aggregateForeignHRMID(tNeighborHRMID);
+								}else{
+									// use the peer HRMID directly
+									tGeneralizedNeighborHRMID = getPeerHRMID();
+								}
 								if(tGeneralizedNeighborHRMID.isClusterAddress()){
 									/**
 									 * HRM routing table entry
