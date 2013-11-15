@@ -31,7 +31,9 @@ public class HRMControllerObservable extends Observable
 	public void notifyObservers(Object pArgument)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
-			Logging.log(this, "Got notification with argument " + pArgument + ", will notify " + countObservers() + " observers");
+			if(countObservers() > 0){
+				Logging.log(this, "Got notification with argument " + pArgument + ", will notify " + countObservers() + " observers");
+			}
 		}
 
 		// mark the Observable object as "changed"
