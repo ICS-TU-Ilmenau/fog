@@ -32,6 +32,7 @@ import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphLink;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
@@ -147,15 +148,19 @@ public class HRGViewer extends EditorAWT implements Observer, IController, IEven
 			Collection<AbstractRoutingGraphLink> tLinks = mHRMController.getHRGForGraphViewer().getOutEdges(tSelectedHRMID);
 			int i = 0;
 			for(AbstractRoutingGraphLink tLink : tLinks){
+				RoutingEntry tLinkRouteEntry = (RoutingEntry) tLink.getRoute().getFirst();
 				Pair<HRMID> tEndPoints = mHRMController.getHRGForGraphViewer().getEndpoints(tLink);
 				Logging.trace(this, "     ..[" + i + "]: " + tEndPoints.getFirst() + " out to " + tEndPoints.getSecond() + " <== " + tLink);
+				Logging.trace(this, "       ..cause: " + tLinkRouteEntry.getCause());
 				i++;
 			}
 			tLinks = mHRMController.getHRGForGraphViewer().getInEdges(tSelectedHRMID);
 			i = 0;
 			for(AbstractRoutingGraphLink tLink : tLinks){
+				RoutingEntry tLinkRouteEntry = (RoutingEntry) tLink.getRoute().getFirst();
 				Pair<HRMID> tEndPoints = mHRMController.getHRGForGraphViewer().getEndpoints(tLink);
-				Logging.trace(this, "     ..[" + i + "]: " + tEndPoints.getFirst() + " in from " + tEndPoints.getSecond() + " <== " + tLink);
+				Logging.trace(this, "     ..[" + i + "]: " + tEndPoints.getSecond() + " in from " + tEndPoints.getFirst() + " <== " + tLink);
+				Logging.trace(this, "       ..cause: " + tLinkRouteEntry.getCause());
 				i++;
 			}
 		}
