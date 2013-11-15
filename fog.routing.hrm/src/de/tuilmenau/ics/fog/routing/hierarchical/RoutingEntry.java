@@ -458,6 +458,8 @@ public class RoutingEntry implements RouteSegment
 			 */			
 			mSource = pOtherEntry.mSource;
 			mNextHop = pOtherEntry.mNextHop;
+			mNextHopL2Address = pOtherEntry.mNextHopL2Address;
+			
 		}else if(mNextHop.equals(pOtherEntry.mSource)){
 			/**
 			 * we have "this == other"
