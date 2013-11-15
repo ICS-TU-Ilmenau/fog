@@ -61,6 +61,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterMember;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
@@ -608,8 +609,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		// col. 9
 		TableColumn tTableColNextL2 = new TableColumn(tTableRoutingTable, SWT.NONE, 9);
 		tTableColNextL2.setText("NextL2");
+		// col. 10
+		TableColumn tTableColTimeout = new TableColumn(tTableRoutingTable, SWT.NONE, 10);
+		tTableColTimeout.setText("Timeout");
 		
-		LinkedList<RoutingEntry> tRoutingTable = tHRS.routingTable();
+		RoutingTable tRoutingTable = tHRS.getRoutingTable();
 		if (HRM_VIEWER_DEBUGGING){
 			Logging.log(this, "Found " + tRoutingTable.size() + " entries in the local routing table");
 		}
@@ -703,7 +707,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					}
 
 					/**
-					 * Column 9: next hop 
+					 * Column 9: next hop L2Address
 					 */
 					if (tEntry.getNextHopL2Address() != null) {
 						tTableRow.setText(9, tEntry.getNextHopL2Address().toString());
@@ -712,9 +716,18 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					}
 
 					/**
+					 * Column 10: timeout
+					 */
+					if (tEntry.getTimeout() > 0) {
+						tTableRow.setText(10, Double.toString(tEntry.getTimeout()));
+					}else{
+						tTableRow.setText(10, "none");
+					}
+
+					/**
 					 * Cells coloring
 					 */
-					for(int i = 0; i < 10; i++){
+					for(int i = 0; i < 11; i++){
 						if(tEntry.isLocalLoop()){
 							tTableRow.setBackground(i, tColLoop);
 						}else if (tEntry.isRouteToDirectNeighbor()){
@@ -748,6 +761,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutRoutingTable2.setColumnData(tTableColDirectNeighbor, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColSource, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColNextL2, new ColumnWeightData(3));
+		tLayoutRoutingTable2.setColumnData(tTableColTimeout, new ColumnWeightData(1));
 		
 		/**
 		 * Add a listener to allow re-sorting of the table based on the destination per table row
