@@ -271,10 +271,33 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								Logging.log(this, "  ..sharing routes with: " + tPeerHRMID);
 							}
 							
-							LinkedList<HRMID> tPossibleDestinations = mHRMController.getDestinationsHRG(tPeerHRMID);
-							for(HRMID tPossibleDestination : tPossibleDestinations){
+//							/*********************************************************************
+//							 * SHARE: routes to neighbors of ourself
+//							 *********************************************************************/
+//							// find all siblings of ourself
+//							//HINT: the found siblings have the same hierarchy level like this coordinator
+//							LinkedList<HRMID> tKnownSibblings = mHRMController.getDestinationsHRG(getHRMID());
+//							for(HRMID tPossibleDestination : tKnownSibblings){
+//								if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+//									Logging.log(this, "    ..possible higher destination: " + tPossibleDestination);
+//								}
+//								
+//								// get the inter-cluster path to the possible destination
+//								List<AbstractRoutingGraphLink> tPath = mHRMController.getRouteHRG(getHRMID(), tPossibleDestination);
+//								if(tPath != null){
+//									
+//								}								
+//							}
+
+							/*********************************************************************
+							 * SHARE: routes to neighbors of the peer
+							 *********************************************************************/
+							// find all siblings of the peer
+							//HINT: the peer is one hierarchy level below this coordinator
+							LinkedList<HRMID> tKnownPeerSiblings = mHRMController.getDestinationsHRG(tPeerHRMID);
+							for(HRMID tPossibleDestination : tKnownPeerSiblings){
 								if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-									Logging.log(this, "    ..possible destination: " + tPossibleDestination);
+									Logging.log(this, "    ..possible peer destination: " + tPossibleDestination);
 								}
 	
 								// get the inter-cluster path to the possible destination
@@ -391,7 +414,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										/**
 										 * Set the DESTINATION for the resulting routing entry
 										 */
-										tFinalRoutingEntryToDestination.setDest(tPossibleDestination);
+										tFinalRoutingEntryToDestination.setDest(tPeerHRMID.getForeignCluster(tPossibleDestination) /* aggregate the destination here */);
 			
 										/**
 										 * Set the NEXT HOP for the resulting routing entry 
@@ -522,29 +545,41 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	public void eventRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
 	{
-		Logging.log(this, "EVENT: RouteShare");
-
+//		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+			Logging.err(this, "EVENT: RouteShare via: " + pSourceComChannel);
+//		}
+			
 		RoutingTable tSharedRoutingTable = pRouteSharePacket.getRoutes();
 		for(RoutingEntry tEntry : tSharedRoutingTable){
-//			if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-				Logging.err(this, "  ..received shared route: " + tEntry);
-//			}
+			if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+				Logging.err(this, "  ..received shared route: " + tEntry + ", aggregated foreign destination: " + mHRMController.aggregateForeignHRMID(tEntry.getDest()));
+			}
 				
 			/**
 			 * Store all routes, which start at this node
 			 */
 			if(mHRMController.isLocal(tEntry.getSource())){
-				RoutingEntry tLocalRoutingEntry = tEntry.clone();
-				
-				/**
-				 * Set the timeout for the found shared route
-				 */
-				tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT);
-				
-				/**
-				 * Store the found route
-				 */
-				mHRMController.addHRMRoute(tLocalRoutingEntry);
+				if(!mHRMController.isLocalCluster(tEntry.getDest())){
+					RoutingEntry tLocalRoutingEntry = tEntry.clone();
+					
+//					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+					 	Logging.err(this, "  ..storing shared route: " + tLocalRoutingEntry + ", aggregated foreign destination: " + mHRMController.aggregateForeignHRMID(tLocalRoutingEntry.getDest()));
+//						}
+
+					/**
+					 * Set the timeout for the found shared route
+					 */
+					tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT);
+					
+					/**
+					 * Store the found route
+					 */
+					mHRMController.addHRMRoute(tLocalRoutingEntry);
+				}else{
+//					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+					Logging.err(this, "   ..dropping uninteresting route: " + tEntry);
+//					}
+				}
 			}
 		}
 		
