@@ -9,38 +9,42 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
-import java.util.LinkedList;
-
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * PACKET: This packet is used within the HRM "share" phase. 
- * 		   A coordinator uses this packet in order to share route with cluster members.
+ * PACKET: This packet is used within the HRM "report" phase. 
+ * 		   Either a coordinator uses this packet in order to report topology to a superior coordinator,
+ * 		   or a cluster member of base hierarchy level uses this packet to report topology to its coordinator.
  */
-public class RoutingInformation extends SignalingMessageHrm
+public class RouteReport extends SignalingMessageHrm
 {
-	private static final long serialVersionUID = 2105684166786450748L;
+	private static final long serialVersionUID = -2825988490853163023L;
 	
 	/**
 	 * Stores the database with routing entries.
 	 */
-	private LinkedList<RoutingEntry> mRoutingEntries = new LinkedList<RoutingEntry>();
-	
+	private RoutingTable mRoutingTable = new RoutingTable();
+
 	/**
 	 * Constructor
 	 * 
-	 * @param pSenderName the name of the message sender
-	 * @param pReceiverName the name of the message receiver
+	 * @param pSenderName the sender name
+	 * @param pReceiverName the receiver name
+	 * @param pRoutingTable the routing table which is reported
 	 */
-	public RoutingInformation(Name pSenderName, Name pReceiverName)
+	public RouteReport(Name pSenderName, Name pReceiverName, RoutingTable pRoutingTable)
 	{
 		super(pSenderName, pReceiverName);
+		if(pRoutingTable != null){
+			mRoutingTable = pRoutingTable;
+		}
 	}
-
+	
 	/**
 	 * Adds a route to the database of routing entries.
 	 * 
@@ -48,16 +52,16 @@ public class RoutingInformation extends SignalingMessageHrm
 	 */
 	public void addRoute(RoutingEntry pRoutingEntry)
 	{
-		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+		if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
 			Logging.log(this, "Adding routing entry: " + pRoutingEntry);
 		}
 		
-		if (mRoutingEntries.contains(pRoutingEntry)){
+		if (mRoutingTable.contains(pRoutingEntry)){
 			Logging.err(this, "Duplicated entries detected, skipping this \"addRoute\" request");
 			return;
 		}
 		
-		mRoutingEntries.add(pRoutingEntry);
+		mRoutingTable.add(pRoutingEntry);
 	}
 	
 	/**
@@ -65,9 +69,9 @@ public class RoutingInformation extends SignalingMessageHrm
 	 * 
 	 * @return the database
 	 */
-	public LinkedList<RoutingEntry> getRoutes()
+	public RoutingTable getRoutes()
 	{
-		return mRoutingEntries;
+		return mRoutingTable;
 	}
 	
 	/**
@@ -78,6 +82,6 @@ public class RoutingInformation extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", "+ mRoutingEntries.size() + " shared routes)";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", "+ mRoutingTable.size() + " reported routes)";
 	}
 }

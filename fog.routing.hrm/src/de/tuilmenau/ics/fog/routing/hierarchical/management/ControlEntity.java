@@ -224,7 +224,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
 				
 				// inform HRM controller about the address change
-				mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
+				//do not do: mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
 	
 				return;
 			}
@@ -297,7 +297,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
 			
 						// inform HRM controller about the address change
-						mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
+						//do not do: mHRMController.revokeCoordinatorAddress(tCoordinator, pHRMID);
 					}
 					
 					setHRMID(this, null);
@@ -682,9 +682,10 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * EVENT: new HRMID assigned
      * The function is called when an address update was received.
 	 * 
+	 * @param pSourceComChannel the source comm. channel
 	 * @param pHRMID the new HRMID
 	 */
-	public void eventAssignedHRMID(HRMID pHRMID)
+	public void eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID)
 	{
 		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());

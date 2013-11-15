@@ -9,6 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
+import java.util.LinkedList;
+
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -17,34 +19,33 @@ import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * PACKET: This packet is used within the HRM "report" phase. 
- * 		   Either a coordinator uses this packet in order to report topology to a superior coordinator,
- * 		   or a cluster member of base hierarchy level uses this packet to report topology to its coordinator.
+ * PACKET: This packet is used within the HRM "share" phase. 
+ * 		   A coordinator uses this packet in order to share route with cluster members.
  */
-public class TopologyReport extends SignalingMessageHrm
+public class RouteShare extends SignalingMessageHrm
 {
-	private static final long serialVersionUID = -2825988490853163023L;
+	private static final long serialVersionUID = 2105684166786450748L;
 	
 	/**
 	 * Stores the database with routing entries.
 	 */
 	private RoutingTable mRoutingTable = new RoutingTable();
-
+	
 	/**
 	 * Constructor
 	 * 
-	 * @param pSenderName the sender name
-	 * @param pReceiverName the receiver name
-	 * @param pRoutingTable the routing table which is reported
+	 * @param pSenderName the name of the message sender
+	 * @param pReceiverName the name of the message receiver
+	 * @param pRoutingTable the routing table which is shared
 	 */
-	public TopologyReport(Name pSenderName, Name pReceiverName, RoutingTable pRoutingTable)
+	public RouteShare(Name pSenderName, Name pReceiverName, RoutingTable pRoutingTable)
 	{
 		super(pSenderName, pReceiverName);
 		if(pRoutingTable != null){
 			mRoutingTable = pRoutingTable;
 		}
 	}
-	
+
 	/**
 	 * Adds a route to the database of routing entries.
 	 * 
@@ -82,6 +83,6 @@ public class TopologyReport extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", "+ mRoutingTable.size() + " reported routes)";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", "+ mRoutingTable.size() + " shared routes)";
 	}
 }

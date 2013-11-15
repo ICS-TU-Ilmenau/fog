@@ -22,8 +22,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.RoutingInformation;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.TopologyReport;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -238,11 +238,6 @@ public class ComChannel
 	private LinkedList<SignalingMessageHrm> mPacketQueue = new LinkedList<SignalingMessageHrm>();
 	
 	/**
-	 * Stores the routing data which is shared with the peer (only used for ClusterMember parent)
-	 */
-	private RoutingTable mSharedRoutingData = new RoutingTable();
-	
-	/**
 	 * Stores the routing table, which is reported based on peer HRMIDs data
 	 */
 	private RoutingTable mReportedRoutingTablePeerHRMIDs = new RoutingTable();
@@ -429,9 +424,9 @@ public class ComChannel
 					if(tNeighborHRMIDs.size() > 0){
 						for(HRMID tNeighborHRMID : tNeighborHRMIDs){
 							if((tNeighborHRMID != null) && (!tNeighborHRMID.isZero())){
-//								if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
+								if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
 									Logging.err(this, "   ..found (" + mCallsEventNewPeerHRMIDs + ") neighbor HRMID: " + tNeighborHRMID);
-//								}
+								}
 								RoutingEntry tLocalRoutingEntry = null;
 								RoutingEntry tReportedRoutingEntryForward = null;
 								RoutingEntry tReportedRoutingEntryBackward = null;
@@ -471,16 +466,16 @@ public class ComChannel
 				
 								if(tReportedRoutingEntryForward != null){
 									// add the entry to the reported routing table
-//									if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
+									if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
 										Logging.err(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") reported forward route: " + tReportedRoutingEntryForward);
-//									}
+									}
 									tNewReportedRoutingTable.addEntry(tReportedRoutingEntryForward);
 								}
 								if(tReportedRoutingEntryBackward != null){
 									// add the entry to the reported routing table
-//									if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
+									if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
 										Logging.err(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") reported backward route: " + tReportedRoutingEntryBackward);
-//									}
+									}
 									tNewReportedRoutingTable.addEntry(tReportedRoutingEntryBackward);
 								}
 		
@@ -648,12 +643,12 @@ public class ComChannel
 	}
 
 	/**
-	 * @param pTopologyReportPacket
+	 * @param pRouteReportPacket
 	 */
-	private void eventReceivedTopologyReport(TopologyReport pTopologyReportPacket)
+	private void eventReceivedRouteReport(RouteReport pRouteReportPacket)
 	{
 		if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-			Logging.log(this, "REPORT PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pTopologyReportPacket);
+			Logging.log(this, "REPORT PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteReportPacket);
 		}
 	
 		if(mParent instanceof Cluster){
@@ -663,39 +658,45 @@ public class ComChannel
 			 * Record the routing report
 			 */
 			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-				Logging.err(this, "   ..got routing report: " + pTopologyReportPacket.getRoutes());
+				Logging.err(this, "   ..got routing report: " + pRouteReportPacket.getRoutes());
 			}
 			synchronized (mReportedRoutingTable) {
-				mReportedRoutingTable = pTopologyReportPacket.getRoutes();
+				mReportedRoutingTable = pRouteReportPacket.getRoutes();
 			}
 
 			/**
 			 * Trigger: inform the cluster about the new routing report
 			 */
-			tParentCluster.eventTopologyReport(this, pTopologyReportPacket);
+			tParentCluster.eventRouteReport(this, pRouteReportPacket);
 		}else{
-			Logging.err(this, "eventReceivedTopologyReport() expected a Cluster as parent, parent is: " + mParent);
+			Logging.err(this, "eventReceivedRouteReport() expected a Cluster as parent, parent is: " + mParent);
 		}
 	}
 
 	/**
-	 * Handles a RoutingInformation packet.
+	 * Handles a RouteShare packet.
 	 * 
-	 * @param pRoutingInformationPacket the packet
+	 * @param pRouteSharePacket the packet
 	 */
-	private void eventReceivedRoutingInformation(RoutingInformation pRoutingInformationPacket)
+	private void eventReceivedRouteShare(RouteShare pRouteSharePacket)
 	{
 		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRoutingInformationPacket);
+			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteSharePacket);
 		}
 		
-		//TODO: event in coord./cluster aufrufen
-		
-		for (RoutingEntry tEntry : pRoutingInformationPacket.getRoutes()){
-			if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE)
-				Logging.log(this, "      ..found route: " + tEntry);
+		if(mParent instanceof CoordinatorAsClusterMember){
+			CoordinatorAsClusterMember tParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
 			
-			mHRMController.addHRMRoute(tEntry);
+			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+				Logging.err(this, "   ..got routing share: " + pRouteSharePacket.getRoutes());
+			}
+
+			/**
+			 * Trigger: inform the cluster about the new routing report
+			 */
+			tParentCoordinatorAsClusterMember.getCoordinator().eventRouteShare(this, pRouteSharePacket);
+		}else{
+			Logging.err(this, "eventReceivedRouteShare() expected a CoordinatorAsClusterMember as parent, parent is: " + mParent);
 		}
 	}
 
@@ -1255,33 +1256,33 @@ public class ComChannel
 		}
 
 		/**
-		 * TopologyReport
+		 * RouteReport
 		 */
-		if (pPacket instanceof TopologyReport){
-			// cast to a TopologyReport signaling message
-			TopologyReport tTopologyReportPacket = (TopologyReport)pPacket;
+		if (pPacket instanceof RouteReport){
+			// cast to a RouteReport signaling message
+			RouteReport tRouteReportPacket = (RouteReport)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "TOPOLOGY_REPORT-received from \"" + getPeerHRMID() + "\": " + tTopologyReportPacket);
+				Logging.log(this, "TOPOLOGY_REPORT-received from \"" + getPeerHRMID() + "\": " + tRouteReportPacket);
 
 			// process Bully message
-			eventReceivedTopologyReport(tTopologyReportPacket);
+			eventReceivedRouteReport(tRouteReportPacket);
 			
 			return true;
 		}
 
 		/**
-		 * RoutingInformation:
+		 * RouteShare:
 		 */
-		if (pPacket instanceof RoutingInformation){
-			// cast to a RoutingInformation signaling message
-			RoutingInformation tRoutingInformationPacket = (RoutingInformation)pPacket;
+		if (pPacket instanceof RouteShare){
+			// cast to a RouteShare signaling message
+			RouteShare tRouteSharePacket = (RouteShare)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "ROUTING_INFORMATION-received from \"" + getPeerHRMID() + "\": " + tRoutingInformationPacket);
+				Logging.log(this, "ROUTING_INFORMATION-received from \"" + getPeerHRMID() + "\": " + tRouteSharePacket);
 
 			// process Bully message
-			eventReceivedRoutingInformation(tRoutingInformationPacket);
+			eventReceivedRouteShare(tRouteSharePacket);
 			
 			return true;
 		}
@@ -1299,7 +1300,7 @@ public class ComChannel
 			HRMID tAssignedHRMID = tAssignHRMIDPacket.getHRMID();
 			
 			// let the coordinator process the HRMID assignment
-			getParent().eventAssignedHRMID(tAssignedHRMID);
+			getParent().eventAssignedHRMID(this, tAssignedHRMID);
 			
 			if(getParent() instanceof CoordinatorAsClusterMember){
 				CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)getParent();
@@ -1317,7 +1318,7 @@ public class ComChannel
 								Logging.log(this, "     ..got new HRMID for CoordinatorAsClusterMember: " + tCoordinatorAsClusterMember);
 								Logging.log(this, "     ..continuing the address distribution process via the coordinator: " + tCoordinator);
 							}
-							tCoordinator.eventAssignedHRMID(tAssignedHRMID);
+							tCoordinator.eventAssignedHRMID(this, tAssignedHRMID);
 						}			
 					}
 
@@ -1332,7 +1333,7 @@ public class ComChannel
 		 * AnnounceHRMIDs
 		 */
 		if (pPacket instanceof AnnounceHRMIDs){
-			// cast to a RoutingInformation signaling message
+			// cast to a AnnounceHRMIDs signaling message
 			AnnounceHRMIDs tAnnounceHRMIDsPacket = (AnnounceHRMIDs)pPacket;
 
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
@@ -1477,35 +1478,17 @@ public class ComChannel
 	}
 	
 	/**
-	 * @param pRoutingEntryForMember
+	 * SEND: RouteShare to a cluster member
+	 * 
+	 * @param pRoutingTable the routing table which should be shared
 	 */
-	public boolean storeRouteForPeer(RoutingEntry pRoutingEntryForMember)
+	public void distributeRouteShare(RoutingTable pRoutingTable)
 	{
-		/**
-		 * Store the routing entry in the routing table
-		 */
-		boolean tResult = mSharedRoutingData.addEntry(pRoutingEntryForMember);
-		
-		return tResult;
-	}
-
-	/**
-	 * SEND: RoutingInformation to a cluster member
-	 */
-	public void distributeRoutingInformation()
-	{
-		// create new RoutingInformation packet for the cluster member
-		RoutingInformation tRoutingInformationPacket = new RoutingInformation(mHRMController.getNodeName(), getPeerHRMID());
-		
-		// fill the RoutingInformation packet with routing entries
-		synchronized (mSharedRoutingData) {
-			for(RoutingEntry tEntry : mSharedRoutingData){
-				tRoutingInformationPacket.addRoute(tEntry.clone());
-			}
-		}
+		// create new RouteShare packet for the cluster member
+		RouteShare tRouteSharePacket = new RouteShare(mHRMController.getNodeName(), getPeerHRMID(), pRoutingTable);
 		
 		// send the packet
-		sendPacket(tRoutingInformationPacket);
+		sendPacket(tRouteSharePacket);
 	}
 
 	/**
@@ -1517,41 +1500,6 @@ public class ComChannel
 	public void setLinkActivation(boolean pState, String pCause)
 	{
 		Logging.log(this, "Updating link activation from: " + mLinkActivation + " to: " + pState);
-
-		if(getParent() instanceof CoordinatorAsClusterMember){
-			CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)getParent();
-			
-			HRMID tHRMID = tCoordinatorAsClusterMember.getHRMID();
-			
-			/**
-			 * State transition from "true" to "false"? -> do the following
-			 *   	1.) unregister the local HRMID
-			 */
-			if ((isLinkActive()) && (!pState)){
-				/**
-				 * Unregister the local HRMID
-				 */
-				if((tHRMID != null) && (!tHRMID.isZero())){
-					mHRMController.unregisterHRMID(tCoordinatorAsClusterMember, tHRMID, this + "::setLinkActivation()");
-				}
-			}
-
-			/**
-			 * State transition from "false" to "true"? -> do the following
-			 *   	1.) update coordinator address by triggering "assigned HRMID"
-			 */
-			if ((!isLinkActive()) && (pState)){
-				/**
-				 * Unregister the local HRMID
-				 */
-				if(tHRMID != null){
-					/**
-					 * Trigger: "assigned HRMID"
-					 */
-					tCoordinatorAsClusterMember.getCoordinator().eventAssignedHRMID(tHRMID);
-				}
-			}
-		}
 
 		mLinkActivation = pState;
 		
