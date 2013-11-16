@@ -1801,7 +1801,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the searched coordinator object
 	 */
-	public Coordinator getCoordinatorByID(int pCoordinatorID)
+	public Coordinator getCoordinatorByID(long pCoordinatorID)
 	{
 		Coordinator tResult = null;
 		

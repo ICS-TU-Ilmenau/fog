@@ -23,7 +23,14 @@ public class BullyAnnounce extends SignalingMessageBully implements ISignalingMe
 {
 	private static final long serialVersionUID = 794175467972815277L;
 
-	private int mCoordinatorID;
+	/**
+	 * Stores the unique coordinator ID of the announcing coordinator
+	 */
+	private long mCoordinatorID;
+	
+	/**
+	 * Stores some GUI description about the announcing coordinator
+	 */
 	private String mCoordinatorDescription = null;
 	
 	/**
@@ -34,7 +41,7 @@ public class BullyAnnounce extends SignalingMessageBully implements ISignalingMe
 	 * @param pCoordinatorID the unique ID of the message sender (coordinator)
 	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public BullyAnnounce(Name pSenderName, BullyPriority pSenderPriority, int pCoordinatorID, String pCoordinatorDescription)
+	public BullyAnnounce(Name pSenderName, BullyPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
@@ -56,7 +63,7 @@ public class BullyAnnounce extends SignalingMessageBully implements ISignalingMe
 	 * 
 	 * @return the unique coordinator ID
 	 */
-	public int getCoordinatorID()
+	public long getCoordinatorID()
 	{
 		return mCoordinatorID;
 	}

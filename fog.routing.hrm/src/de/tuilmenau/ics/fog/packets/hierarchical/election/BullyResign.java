@@ -24,7 +24,14 @@ public class BullyResign extends SignalingMessageBully implements ISignalingMess
 {
 	private static final long serialVersionUID = 794175467972815277L;
 
-	private int mCoordinatorID;
+	/**
+	 * Stores the unique coordinator ID of the resigning coordinator
+	 */
+	private long mCoordinatorID;
+	
+	/**
+	 * Stores some GUI description about the resigning coordinator
+	 */
 	private String mCoordinatorDescription = null;
 	
 	/**
@@ -35,7 +42,7 @@ public class BullyResign extends SignalingMessageBully implements ISignalingMess
 	 * @param pCoordinatorID the unique ID of the message sender (coordinator)
 	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public BullyResign(Name pSenderName, BullyPriority pSenderPriority, int pCoordinatorID, String pCoordinatorDescription)
+	public BullyResign(Name pSenderName, BullyPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
@@ -57,7 +64,7 @@ public class BullyResign extends SignalingMessageBully implements ISignalingMess
 	 * 
 	 * @return the unique coordinator ID
 	 */
-	public int getCoordinatorID()
+	public long getCoordinatorID()
 	{
 		return mCoordinatorID;
 	}

@@ -28,7 +28,7 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	 * @param pClusterID the unique ID of the cluster
 	 * @param pCoordinatorID the unique ID of the coordinator
 	 */
-	public ClusterName(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID)
+	public ClusterName(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, long pCoordinatorID)
 	{
 		super(pHRMController, pHierarchyLevel);
 		

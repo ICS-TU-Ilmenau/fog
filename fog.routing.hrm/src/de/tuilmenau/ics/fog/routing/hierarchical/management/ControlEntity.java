@@ -69,7 +69,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * Stores the unique ID of the superior coordinator.
 	 * For a Cluster object, this is the coordinator of the cluster's coordinator.
 	 */
-	private int mSuperiorCoordinatorID = 0;
+	private long mSuperiorCoordinatorID = 0;
 	
 	/**
 	 * Stores the name of the node where the superior coordinator is located.
@@ -99,13 +99,13 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	/**
 	 * Stores the unique coordinator ID
 	 */
-	private int mCoordinatorID = -1;
+	private long mCoordinatorID = -1;
 	
 	/**
 	 * Stores the physical simulation machine specific multiplier, which is used to create unique IDs even if multiple physical simulation machines are connected by FoGSiEm instances
 	 * The value "-1" is important for initialization!
 	 */
-	private static int sIDMachineMultiplier = -1;
+	private static long sIDMachineMultiplier = -1;
 
 	/**
 	 * Stores if the role of this entity is still valid
@@ -457,7 +457,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * @param pCoordinatorHostL2Address the L2Address of the node where the coordinator is located
 	 * @param pCoordinatorDescription a description of the new coordinator
 	 */
-	public void eventClusterCoordinatorAvailable(Name pCoordinatorNodeName, int pCoordinatorID, L2Address pCoordinatorHostL2Address, String pCoordinatorDescription)
+	public void eventClusterCoordinatorAvailable(Name pCoordinatorNodeName, long pCoordinatorID, L2Address pCoordinatorHostL2Address, String pCoordinatorDescription)
 	{
 		Logging.log(this, "EVENT: superior coordinator available (update " + (++mSuperiorCoordinatorUpdateCounter) + ", node=" + pCoordinatorNodeName + ", L2Address=" + pCoordinatorHostL2Address + ")");
 
@@ -525,7 +525,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @param pCoordinatorID the unique ID
 	 */
-	protected void setSuperiorCoordinatorID(int pCoordinatorID)
+	protected void setSuperiorCoordinatorID(long pCoordinatorID)
 	{
 		//Logging.log(this, "Setting superior coordinator ID: " + pCoordinatorID);
 		mSuperiorCoordinatorID = pCoordinatorID;
@@ -536,7 +536,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @return the unique ID of the superior coordinator
 	 */
-	public int superiorCoordinatorID()
+	public long superiorCoordinatorID()
 	{
 		return mSuperiorCoordinatorID;
 	}
@@ -566,7 +566,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @return the generated multiplier
 	 */
-	static protected int idMachineMultiplier()
+	static protected long idMachineMultiplier()
 	{
 		if (sIDMachineMultiplier < 0){
 			String tHostName = HRMController.getHostName();
@@ -605,7 +605,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 *  @return the full CoordinatorID
 	 */
-	public int getCoordinatorID()
+	public long getCoordinatorID()
 	{
 		return mCoordinatorID;
 	}
@@ -615,7 +615,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @param pNewCoordinatorID the new cluster ID
 	 */
-	protected void setCoordinatorID(int pNewCoordinatorID)
+	protected void setCoordinatorID(long pNewCoordinatorID)
 	{
 		//Logging.log(this, "Setting coordinator ID: " + pNewCoordinatorID);
 		mCoordinatorID = pNewCoordinatorID;

@@ -46,7 +46,7 @@ public class CoordinatorProxy extends ClusterMember
 	 * @param pCoordinatorNodeL2Address the node L2 address where the coordinator is located
 	 * @param pHopCount the hop count to the coordinator node
 	 */
-	private CoordinatorProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, int pCoordinatorID, L2Address pCoordinatorNodeL2Address, int pHopCount)
+	private CoordinatorProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, long pCoordinatorID, L2Address pCoordinatorNodeL2Address, int pHopCount)
 	{	
 		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID, pCoordinatorNodeL2Address);
 
