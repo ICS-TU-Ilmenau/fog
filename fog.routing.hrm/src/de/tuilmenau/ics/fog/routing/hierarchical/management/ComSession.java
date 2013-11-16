@@ -91,7 +91,7 @@ public class ComSession extends Session
 	/**
 	 * Stores the unique session ID
 	 */
-	private int mSessionID = -1;
+	private long mSessionID = -1;
 
 	/**
 	 * Constructor
@@ -141,18 +141,29 @@ public class ComSession extends Session
 	 * 
 	 * @return the SessionID
 	 */
-	static private synchronized int createSessionID()
+	static private synchronized long createSessionID()
 	{
-		// get the current unique ID counter
-		int tResult = sNextFreeSessionID * ControlEntity.idMachineMultiplier();
-
-		// make sure the next ID isn't equal
-		sNextFreeSessionID++;
-	
-		if(tResult < 1){
-			throw new RuntimeException("Created an invalid coordinator ID " + tResult);
-		}
+		int i = 0;
+		long tResult = -1;
+		boolean tWarning = false;
 		
+		do{
+			// get the current unique ID counter
+			tResult = sNextFreeSessionID * ControlEntity.idMachineMultiplier();
+	
+			// make sure the next ID isn't equal
+			sNextFreeSessionID++;
+		
+			if(tResult < 1){
+				Logging.warn(null, "Created an invalid coordinator ID: " + tResult + ", machine-ID-multiplier: " + ControlEntity.idMachineMultiplier() + ", will try once more - loop " + i);
+				tWarning = true;
+			}
+			i++;
+		}while(tResult < 1);
+		
+		if(tWarning){
+			Logging.warn(null, " ..final result is ID: " + tResult + ", machine-ID-multiplier: " + ControlEntity.idMachineMultiplier());
+		}
 		return tResult;
 	}
 
@@ -161,7 +172,7 @@ public class ComSession extends Session
 	 * 
 	 *  @return the full SessionID
 	 */
-	public int getSessionID()
+	public long getSessionID()
 	{
 		return mSessionID;
 	}
@@ -592,7 +603,7 @@ public class ComSession extends Session
 		 * Is the requester located at a higher hierarchy level? ==> a coordinator is addressed, which should be member of the remote Cluster object
 		 */ 
 		if (pRequestClusterMembershipPacket.getRequestingCluster().getHierarchyLevel().isHigherLevel()){
-			int tTargetCoordinatorID = pRequestClusterMembershipPacket.getDestination().getCoordinatorID();
+			long tTargetCoordinatorID = pRequestClusterMembershipPacket.getDestination().getCoordinatorID();
 
 			// check the coordinator ID
 			if (tTargetCoordinatorID > 0){
