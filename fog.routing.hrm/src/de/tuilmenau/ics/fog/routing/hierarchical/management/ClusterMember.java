@@ -433,7 +433,12 @@ public class ClusterMember extends ClusterName
 		if(tChannels.size() == 1){
 			tResult = tChannels.getFirst();
 		}else{
-			Logging.err(this, "Found an invalid amount of comm. channels: " + tChannels);
+			if(tChannels.size() > 1){
+				throw new RuntimeException(this + "::getComChannelToClusterHead() found an invalid amount of comm. channels: " + tChannels);
+			}else{
+				// no comm. channel -> can occur if the entity was already invalidated and the object reference is still included in some lists
+				Logging.warn(this, "getComChannelToClusterHead() hasn't found any remaining comm. channel, entity valid?: " + isThisEntityValid() + ", cluster activation: " + isActiveCluster());
+			}
 		}
 			
 		return tResult;
