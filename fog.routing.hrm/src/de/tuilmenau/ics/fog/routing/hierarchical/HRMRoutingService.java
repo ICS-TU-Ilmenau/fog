@@ -768,7 +768,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				 * Generate L2 address for the node
 				 */
 				L2Address tNodeL2Address = L2Address.createL2Address();
-				tNodeL2Address.setDescr(pElement.toString());
+				tNodeL2Address.setDescr(pElement.getOwner().toString() + "@" + HRMController.getHostName()); //pElement.toString());
 				
 
 				if (pElement.equals(getCentralFN())){
@@ -1540,13 +1540,17 @@ public class HRMRoutingService implements RoutingService, Localization
 						encodeDestinationApplication(tResultRoute, pRequirements);
 					}else{
 						// no route found
-						Logging.log(this, "Couldn't determine a route from " + tSourceL2Address + " to " + tDestinationL2Address + ", knowing the following routing graph nodes");
+						Logging.log(this, "Couldn't determine an L2 route from " + tSourceL2Address + " to " + tDestinationL2Address + ", knowing the following routing graph nodes");
 						// list known nodes
 						synchronized (mL2RoutingGraph) {
 							Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
 							int i = 0;
 							for (L2Address tL2Address : tGraphNodes){
 								Logging.log(this, "     ..[" + i + "]: " + tL2Address);
+								Collection<RoutingServiceLink> tOutLinks = mL2RoutingGraph.getOutEdges(tL2Address);
+								for(RoutingServiceLink tOutLink : tOutLinks){
+									Logging.log(this, "      ..out link: " + tOutLink + " [" + tOutLink.getClass().getSimpleName() + "]");	
+								}
 								i++;
 							}
 						}
