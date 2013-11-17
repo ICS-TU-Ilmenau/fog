@@ -100,7 +100,9 @@ public class HRMControllerProcessor extends Thread
 	 */
 	public synchronized void eventReceivedPacket(ComChannel pComChannel)
 	{
-		mPendingPacketRequests.add(pComChannel);
+		synchronized (mPendingPacketRequests) {
+			mPendingPacketRequests.add(pComChannel);
+		}
 
 		// trigger wake-up
 		notify();
@@ -132,8 +134,10 @@ public class HRMControllerProcessor extends Thread
 	{
 		ComChannel tResult = null;
 		
-		if(mPendingPacketRequests.size() > 0){
-			tResult = mPendingPacketRequests.removeFirst();
+		synchronized (mPendingPacketRequests) {
+			if(mPendingPacketRequests.size() > 0){
+				tResult = mPendingPacketRequests.removeFirst();
+			}
 		}
 		
 		return tResult;
