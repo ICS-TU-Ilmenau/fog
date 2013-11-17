@@ -623,10 +623,13 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	@Override
 	public String toString()
 	{
+		String tBandwith = (mBandwidth.intValue() != -1 ? " BW=" + mBandwidth.intValue() + "kbit/s}" : "");
+		String tDelay = (mDelaySec != 0 ? " Del=" + mDelaySec * 1000 + "ms" : "");
+		
 		if (mName != null) {
-			return mName + "(" + busID + ")"; 
+			return mName + "(" + busID + ")" + tBandwith + tDelay; 
 		} else {
-			return "bus(" + busID + ")";
+			return "bus(" + busID + ")" + tBandwith + tDelay;
 		}
 	}
 
