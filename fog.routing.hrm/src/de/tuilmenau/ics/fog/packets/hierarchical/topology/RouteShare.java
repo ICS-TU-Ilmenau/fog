@@ -72,7 +72,7 @@ public class RouteShare extends SignalingMessageHrm
 	 */
 	public RoutingTable getRoutes()
 	{
-		return mRoutingTable;
+		return (RoutingTable) mRoutingTable.clone();
 	}
 	
 	/**
