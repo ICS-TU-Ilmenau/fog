@@ -80,13 +80,17 @@ public class L2Address extends HRMName
 	}
 
 	/**
-	 * Clones the object but uses the same internal address value
+	 * Returns an object clone
 	 * 
 	 * @return the object clone
 	 */
 	public L2Address clone()
 	{
-		return new L2Address(mAddress.longValue());
+		L2Address tResult = new L2Address(mAddress.longValue());
+		
+		tResult.mOptionalDescr = mOptionalDescr;
+		
+		return tResult;
 	}
 	
 	public boolean equals(Object pObj)
