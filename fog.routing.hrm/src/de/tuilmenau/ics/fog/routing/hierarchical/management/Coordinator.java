@@ -173,11 +173,19 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			// plausibility check if we actually use a link from a CoordinatorAsClusterMember
 			if(superiorCoordinatorComChannel().getParent() instanceof CoordinatorAsClusterMember){				
 				CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)superiorCoordinatorComChannel().getParent();
-				// plausibility check if we actually use an active link
-				if(tCoordinatorAsClusterMember.getComChannelToClusterHead().isLinkActive()){
-					superiorCoordinatorComChannel().sendPacket(pPacket);
+				if(tCoordinatorAsClusterMember.isThisEntityValid()){
+					if(tCoordinatorAsClusterMember.getComChannelToClusterHead() != null){
+						// plausibility check if we actually use an active link
+						if(tCoordinatorAsClusterMember.getComChannelToClusterHead().isLinkActive()){
+							superiorCoordinatorComChannel().sendPacket(pPacket);
+						}else{
+							Logging.err(this, "sendSuperiorCoordinator() expected an active link, link is: " + superiorCoordinatorComChannel());
+						}
+					}else{
+						Logging.warn(this, "sendSuperiorCoordinator() aborted because the comm. channel to the cluster head is invalid for: " + tCoordinatorAsClusterMember);
+					}
 				}else{
-					Logging.err(this, "sendSuperiorCoordinator() expected an active link, link is: " + superiorCoordinatorComChannel());
+					Logging.warn(this, "sendSuperiorCoordinator() aborted because of an invalidated CoordinatorAsClusterMember: " + tCoordinatorAsClusterMember);
 				}
 			}else{
 				Logging.err(this, "sendSuperiorCoordinator() expected a CoordinatorAsClusterMember as parent of: " + superiorCoordinatorComChannel());
