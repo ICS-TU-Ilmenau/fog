@@ -239,7 +239,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					/**
 					 * Update mapping HRMID-2-L2Address
 					 */
-					mapHRMID(tNextHopHRMID, mHRMController.getNodeL2Address());
+					mapHRMID(tNextHopHRMID, getHRMController().getNodeL2Address());
 				}
 			}
 		}
@@ -768,7 +768,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				 * Generate L2 address for the node
 				 */
 				L2Address tNodeL2Address = L2Address.createL2Address();
-				tNodeL2Address.setDescr(pElement.getOwner().toString() + "@" + HRMController.getHostName()); //pElement.toString());
+				tNodeL2Address.setDescr(pElement.getOwner().toString() + "@" + HRMController.getHostName() + " => " + pElement.toString());
 				
 
 				if (pElement.equals(getCentralFN())){
@@ -1235,6 +1235,17 @@ public class HRMRoutingService implements RoutingService, Localization
 		L2Address tSourceL2Address = null;
 
 		/**
+		 * Make sure that the HRMController is already started if the routing should lead to an application.
+		 * It can occur that a new node is created and the previous node already wants to connect to this node before the local HRMController is completely started.
+		 * Therefore, if a routing to an application is request, the HRS has to wait until the local HRMController is started completely.
+		 */
+		if(pDestination instanceof SimpleName){
+			Logging.log(this, "\n\n\n########################### Routing to application requested, to: " + pDestination);
+			// wait for the HRMController
+			getHRMController();
+		}
+		
+		/**
 		 * Check parameters
 		 */
 		// check source parameter
@@ -1540,16 +1551,16 @@ public class HRMRoutingService implements RoutingService, Localization
 						encodeDestinationApplication(tResultRoute, pRequirements);
 					}else{
 						// no route found
-						Logging.log(this, "Couldn't determine an L2 route from " + tSourceL2Address + " to " + tDestinationL2Address + ", knowing the following routing graph nodes");
+						Logging.warn(this, "Couldn't determine an L2 route from " + tSourceL2Address + " to " + tDestinationL2Address + ", knowing the following routing graph nodes");
 						// list known nodes
 						synchronized (mL2RoutingGraph) {
 							Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
 							int i = 0;
 							for (L2Address tL2Address : tGraphNodes){
-								Logging.log(this, "     ..[" + i + "]: " + tL2Address);
+								Logging.warn(this, "     ..[" + i + "]: " + tL2Address);
 								Collection<RoutingServiceLink> tOutLinks = mL2RoutingGraph.getOutEdges(tL2Address);
 								for(RoutingServiceLink tOutLink : tOutLinks){
-									Logging.log(this, "      ..out link: " + tOutLink + " [" + tOutLink.getClass().getSimpleName() + "]");	
+									Logging.warn(this, "      ..out link: " + tOutLink + " [" + tOutLink.getClass().getSimpleName() + "]");	
 								}
 								i++;
 							}
