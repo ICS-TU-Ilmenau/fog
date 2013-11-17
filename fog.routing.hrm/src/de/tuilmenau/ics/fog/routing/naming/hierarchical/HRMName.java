@@ -23,13 +23,7 @@ import de.tuilmenau.ics.fog.ui.Decorator;
 public class HRMName extends RoutingServiceAddress implements Decorator
 {
 	protected BigInteger mAddress;
-	
-	/**
-	 * Optional parameter just for making a human readable name.
-	 * This is mainly used for the GUI.
-	 */
-	protected String mOptionalDescr;
-	
+		
 	public static final Namespace NAMESPACE_HRM = new Namespace("HRM");
 
 	private static final long serialVersionUID = 6612145890128148511L;
@@ -64,26 +58,7 @@ public class HRMName extends RoutingServiceAddress implements Decorator
 	{
 		return mAddress.bitLength();
 	}
-	
-	/**
-	 * Set a description of the HRMName via this method.
-	 * 
-	 * @param pDescr
-	 */
-	public void setDescr(String pDescr)
-	{
-		mOptionalDescr = pDescr;
-	}
-	
-	/**
-	 * 
-	 * @return The object used for description is returned.
-	 */
-	public String getDescr()
-	{
-		return mOptionalDescr;
-	}
-	
+		
 	public boolean equals(Object pObj)
 	{
 		if(pObj == null){
