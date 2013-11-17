@@ -21,6 +21,7 @@ import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnouncePhysicalEndPoint;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -562,6 +563,21 @@ public class ComSession extends Session
 		 */
 		SignalingMessageHrm tPayload = pMultiplexHeader.getPayload();
 
+		if(tPayload instanceof InformClusterLeft){
+			InformClusterLeft tInformClusterLeftPacket = (InformClusterLeft)tPayload;
+			
+			Logging.log(this, "Received INFORM_CLUSTER_LEFT: " + pMultiplexHeader);
+			Logging.log(this, "   ..data: " + tInformClusterLeftPacket);
+			Logging.log(this, "   ..destination channel: " + tDestinationComChannel);
+		}
+		
+		if(tPayload instanceof RequestClusterMembershipAck){
+			RequestClusterMembershipAck tRequestClusterMembershipAckPAcket = (RequestClusterMembershipAck)tPayload;
+			
+			Logging.log(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + pMultiplexHeader);
+			Logging.log(this, "   ..data: " + tRequestClusterMembershipAckPAcket);
+			Logging.log(this, "   ..destination channel: " + tDestinationComChannel);
+		}
 		/**
 		 * Forward the payload to the correct communication channel
 		 */
@@ -595,9 +611,9 @@ public class ComSession extends Session
 	 * 
 	 * @param pRequestClusterMembershipPacket the request packet
 	 */
-	private void eventRequestClusterMembership(RequestClusterMembership pRequestClusterMembershipPacket)
+	private void eventReceivedRequestClusterMembership(RequestClusterMembership pRequestClusterMembershipPacket)
 	{
-		Logging.log(this, "EVENT: RequestClusterMembership: " + pRequestClusterMembershipPacket);
+		Logging.log(this, "EVENT: ReceivedRequestClusterMembership: " + pRequestClusterMembershipPacket);
 		
 		/**
 		 * Is the requester located at a higher hierarchy level? ==> a coordinator is addressed, which should be member of the remote Cluster object
@@ -832,7 +848,7 @@ public class ComSession extends Session
 				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRequestClusterMembershipPacket.getRequestingCluster());
 			}
 
-			eventRequestClusterMembership(tRequestClusterMembershipPacket);
+			eventReceivedRequestClusterMembership(tRequestClusterMembershipPacket);
 			
 			return true;
 		}
