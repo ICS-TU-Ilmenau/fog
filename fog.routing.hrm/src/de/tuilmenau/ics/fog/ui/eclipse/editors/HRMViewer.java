@@ -56,6 +56,7 @@ import org.eclipse.swt.graphics.Point;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.eclipse.utils.Resources;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -956,6 +957,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn tColumnParentHRMID = new TableColumn(tTable, SWT.NONE, 11);
 		tColumnParentHRMID.setText("Parent HRMID");
 
+		TableColumn tColumnQueue = new TableColumn(tTable, SWT.NONE, 12);
+		tColumnQueue.setText("Queue");
+
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
 		
@@ -993,13 +997,18 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			 * Column 0: peer
 			 */
 			String tIsSuperiorCoordinatorChannel = "";
+			String tIsActiveCluster = "";
 			if(pControlEntity instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)pControlEntity;
 				if(tComChannel == tCoordinator.superiorCoordinatorComChannel()){
 					tIsSuperiorCoordinatorChannel = "*";
 				}
+				CoordinatorAsClusterMember tCoordinatorAsClusterMember =  (CoordinatorAsClusterMember) tComChannel.getParent();
+				if(tCoordinatorAsClusterMember.isActiveCluster()){
+					tIsActiveCluster = "+";
+				}
 			}
-			tRow.setText(0, tIsSuperiorCoordinatorChannel + ((tComChannel.getPeer() != null) ? tComChannel.getPeer().toString() : tComChannel.getRemoteClusterName().toString()));
+			tRow.setText(0, tIsSuperiorCoordinatorChannel + tIsActiveCluster + ((tComChannel.getPeer() != null) ? tComChannel.getPeer().toString() : tComChannel.getRemoteClusterName().toString()));
 
 			/**
 			 * Column 1: peer node
@@ -1072,6 +1081,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			HRMID tParentHRMID = tComChannel.getParent().getHRMID();
 			tRow.setText(11, (tParentHRMID != null ? tParentHRMID.toString() : "undef."));
 
+			/**
+			 * Column 12:  
+			 */
+			tRow.setText(12, Integer.toString(tComChannel.getPacketQueue().size()));
+
 			j++;
 		}
 		
@@ -1095,6 +1109,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutMappingTable.setColumnData(tColumnReceivedPackets, new ColumnWeightData(1));		
 		tLayoutMappingTable.setColumnData(tColumnState, new ColumnWeightData(1));		
 		tLayoutMappingTable.setColumnData(tColumnParentHRMID, new ColumnWeightData(1));		
+		tLayoutMappingTable.setColumnData(tColumnQueue, new ColumnWeightData(1));		
 		
 		/**
 		 * The table context menu
@@ -1188,6 +1203,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							showAssignedPeerHRMIDs(tfComChannels.get(tSelectedIndex));
 						}
 					});
+					MenuItem tMenuItem5 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem5.setText("Show packet queue");
+					tMenuItem5.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showPacketQueue(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showPacketQueue(tfComChannels.get(tSelectedIndex));
+						}
+					});
 
 					tTable.setMenu(tMenu);
 				}
@@ -1205,6 +1234,16 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 	}
 	
+	private void showPacketQueue(ComChannel pComChannel)
+	{
+		Logging.log(this, "Remaining packets in queue of: " + pComChannel);
+		int i = 0;
+		for (SignalingMessageHrm tPacket : pComChannel.getPacketQueue()){
+			Logging.log(this, "    ..[" + i + "]: " + tPacket);
+			i++;
+		}
+	}
+
 	private void showPeerHRMIDs(ComChannel pComChannel)
 	{
 		Logging.log(this, "Peer HRMIDs of: " + pComChannel);

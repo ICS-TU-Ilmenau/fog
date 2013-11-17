@@ -1171,6 +1171,23 @@ public class ComChannel
 	}
 
 	/**
+	 * Returns the packet queue of this channel
+	 *  
+	 * @return the packet queue
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<SignalingMessageHrm> getPacketQueue()
+	{
+		LinkedList<SignalingMessageHrm> tResult = null;
+		
+		synchronized (mPacketQueue) {
+			tResult = (LinkedList<SignalingMessageHrm>) mPacketQueue.clone();			
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Processes one packet, triggered by packet processor (HRMController)
 	 */
 	public void processOnePacket()
@@ -1368,7 +1385,7 @@ public class ComChannel
 		if(pPacket instanceof RequestClusterMembershipAck) {
 			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)pPacket;
 
-			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+//			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP_ACK-received from \"" + getPeerHRMID() + "\"");
 
 			// is the parent a coordinator or a cluster?
@@ -1530,6 +1547,6 @@ public class ComChannel
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "@" + mParent.toString() + "(Peer="+ (getPeerL2Address() != null ? (getPeer() != null ? getPeer() : getPeerL2Address()) + ", Peer=" + getPeerHRMID() : "") + ")";
+		return getClass().getSimpleName() + "@" + mParent.toString() + "(Peer="+ (getPeerL2Address() != null ? (getPeer() != null ? getPeer() : getPeerL2Address()) + ", PeerHRMID=" + getPeerHRMID() : "") + " " + mChannelState.toString() + ")";
 	}
 }
