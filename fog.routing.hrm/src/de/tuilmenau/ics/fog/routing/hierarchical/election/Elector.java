@@ -1401,12 +1401,19 @@ public class Elector implements Localization
 				}
 			}
 			
-			/**
-			 * Deactivate local active cluster if it has a lower priority than the currently received priority from the peer 
-			 */
-			deactivateWorseLocalActiveCluster(pComChannel);
 		}
-		
+
+		/**
+		 * Deactivate local active cluster if it has a lower priority than the currently received priority from the peer 
+		 */
+		if(pComChannel.getParent() instanceof CoordinatorAsClusterMember){
+			CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)pComChannel.getParent();
+			
+			if(tCoordinatorAsClusterMember.isActiveCluster()){
+				deactivateWorseLocalActiveCluster(pComChannel);
+			}
+		}
+
 		return tNewPriorityCouldInfluenceElectionResult;
 	}
 
