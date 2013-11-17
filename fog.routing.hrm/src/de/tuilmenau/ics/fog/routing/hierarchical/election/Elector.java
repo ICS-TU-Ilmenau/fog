@@ -403,7 +403,7 @@ public class Elector implements Localization
 				mState = pNewState;
 			}
 		} else {
-			throw new RuntimeException(toLocation() + "-cannot change its state from " + mState +" to " + pNewState);
+			throw new RuntimeException(this + "::setElectorState() can't change the state from " + mState +" to " + pNewState);
 		}
 	}
 	
@@ -857,7 +857,13 @@ public class Elector implements Localization
 							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
 								Logging.log(this, "     ..found locally worse active cluster: " + tLocalCluster);
 							}
-							tElectorCluster.eventElectionLost();
+							
+							/**
+							 * Mark the election as "lost" for the cluster elector 
+							 */
+							if(tElectorCluster.isWinner()){
+								tElectorCluster.eventElectionLost();
+							}
 						}
 					}
 				}
