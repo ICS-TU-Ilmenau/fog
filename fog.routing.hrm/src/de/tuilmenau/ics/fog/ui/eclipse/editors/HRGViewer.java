@@ -151,7 +151,10 @@ public class HRGViewer extends EditorAWT implements Observer, IController, IEven
 				RoutingEntry tLinkRouteEntry = (RoutingEntry) tLink.getRoute().getFirst();
 				Pair<HRMID> tEndPoints = mHRMController.getHRGForGraphViewer().getEndpoints(tLink);
 				Logging.trace(this, "     ..[" + i + "]: " + tEndPoints.getFirst() + " out to " + tEndPoints.getSecond() + " <== " + tLink);
-				Logging.trace(this, "       ..cause: " + tLinkRouteEntry.getCause());
+				Logging.trace(this, "       ..cause: ");
+				for (String tCauseString : tLinkRouteEntry.getCause()){
+					Logging.trace(this, "                " + tCauseString);
+				}
 				i++;
 			}
 			tLinks = mHRMController.getHRGForGraphViewer().getInEdges(tSelectedHRMID);

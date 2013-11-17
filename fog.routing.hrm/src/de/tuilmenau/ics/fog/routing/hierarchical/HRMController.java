@@ -2158,41 +2158,41 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Update the hierarchical routing graph (HRG)
 		 */ 
-		if(tResult){
-			// record the cause for the routing entry
-			pRoutingEntry.extendCause(this + "::addHRMRoute()");
-			
-			HRMID tDestHRMID = pRoutingEntry.getDest();
-			/**
-			 * Ignore local loops
-			 */ 
-			if(!pRoutingEntry.isLocalLoop()){
-				/**
-				 * Does the next hop lead to a foreign cluster?
-				 */				
-				if(tDestHRMID.isClusterAddress()){
-					// is it a route from a physical node to the next one, which belongs to the destination cluster? 
-					if(pRoutingEntry.isRouteToDirectNeighbor()){
-						// register automatically new links in the HRG based on pRoutingEntry 
-//						registerAutoHRG(pRoutingEntry);
-					}
-				}else{
-					pRoutingEntry.extendCause(this + "::addHRMRoute()_2");
-					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
-						Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
-					}
-//					registerLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
-				}
-			}else{
-				/**
-				 * Local loop
-				 */
-			}
-		}else{
-			if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
-				Logging.warn(this, "  ..ignoring for HRG the old HRM routing table entry: " + pRoutingEntry);
-			}
-		}
+//		if(tResult){
+//			// record the cause for the routing entry
+//			pRoutingEntry.extendCause(this + "::addHRMRoute()");
+//			
+//			HRMID tDestHRMID = pRoutingEntry.getDest();
+//			/**
+//			 * Ignore local loops
+//			 */ 
+//			if(!pRoutingEntry.isLocalLoop()){
+//				/**
+//				 * Does the next hop lead to a foreign cluster?
+//				 */				
+//				if(tDestHRMID.isClusterAddress()){
+//					// is it a route from a physical node to the next one, which belongs to the destination cluster? 
+//					if(pRoutingEntry.isRouteToDirectNeighbor()){
+//						// register automatically new links in the HRG based on pRoutingEntry 
+////						registerAutoHRG(pRoutingEntry);
+//					}
+//				}else{
+//					pRoutingEntry.extendCause(this + "::addHRMRoute()_2");
+//					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
+//						Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
+//					}
+////					registerLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
+//				}
+//			}else{
+//				/**
+//				 * Local loop
+//				 */
+//			}
+//		}else{
+//			if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
+//				Logging.warn(this, "  ..ignoring for HRG the old HRM routing table entry: " + pRoutingEntry);
+//			}
+//		}
 
 		/**
 		 * Notify GUI
@@ -2209,8 +2209,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Adds interesting parts of a received shared routing table
 	 * 
 	 * @param pReceivedSharedRoutingTable the received shared routing table
+	 * @param pCause the cause for this addition of routes
 	 */
-	public void addHRMRouteShare(RoutingTable pReceivedSharedRoutingTable)
+	public void addHRMRouteShare(RoutingTable pReceivedSharedRoutingTable, String pCause)
 	{
 		for(RoutingEntry tNewEntry : pReceivedSharedRoutingTable){
 			if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
@@ -2229,12 +2230,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							tFoundExistingSameRouteToSameNextHop = true;
 						}
 					}
-//					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 					 	Logging.err(this, "  ..storing shared route: " + tNewEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tNewEntry.getDest()));
-//						}
+					}
 
 				 	if(!tFoundExistingSameRouteToSameNextHop){
 						RoutingEntry tNewLocalRoutingEntry = tNewEntry.clone();
+						tNewLocalRoutingEntry.extendCause(pCause);
+						tNewLocalRoutingEntry.extendCause(this + "::addHRMRouteShare()");
 						
 						/**
 						 * Set the timeout for the found shared route
@@ -2246,12 +2249,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 */
 						addHRMRoute(tNewLocalRoutingEntry);
 				 	}else{
-						Logging.warn(this, "   ..dropping uninteresting (has same next hop like an existing entry) route: " + tNewEntry);
+						if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+				 			Logging.warn(this, "   ..dropping uninteresting (has same next hop like an existing entry) route: " + tNewEntry);
+						}
 				 	}
 				}else{
-//					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 					Logging.err(this, "   ..dropping uninteresting route: " + tNewEntry);
-//					}
+					}
 				}
 			}
 		}
@@ -2282,7 +2287,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
 						Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
 					}
-					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource().clone(), tDestClusterHRMID.clone(), pRoutingEntry.getNextHop().clone(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::registerAutoHRG()");
+					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource().clone(), tDestClusterHRMID.clone(), pRoutingEntry.getNextHop().clone(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause());
+					tRoutingEntry.setNextHopL2Address(pRoutingEntry.getNextHopL2Address());
+					tRoutingEntry.extendCause(this + "::registerAutoHRG()");
 					tRoutingEntry.setTimeout(pRoutingEntry.getTimeout());
 					registerCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
 				}
@@ -2333,25 +2340,25 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Update the hierarchical routing graph (HRG)
 		 */ 
-		if(tResult){
-			HRMID tDestHRMID = pRoutingEntry.getDest();
-			// do we have a local loop?
-			if(!pRoutingEntry.isLocalLoop()){
-				/**
-				 * No local loop
-				 */				
-				if(tDestHRMID.isClusterAddress()){
-					if(pRoutingEntry.isRouteToDirectNeighbor()){
-						// register automatically new links in the HRG based on pRoutingEntry 
-//						unregisterAutoHRG(pRoutingEntry);
-					}
-				}else{
-					pRoutingEntry.extendCause(this + "::delHRMRoute()");
-					Logging.log(this, "  ..unregistering nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
-//					unregisterLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
-				}
-			}
-		}
+//		if(tResult){
+//			HRMID tDestHRMID = pRoutingEntry.getDest();
+//			// do we have a local loop?
+//			if(!pRoutingEntry.isLocalLoop()){
+//				/**
+//				 * No local loop
+//				 */				
+//				if(tDestHRMID.isClusterAddress()){
+//					if(pRoutingEntry.isRouteToDirectNeighbor()){
+//						// register automatically new links in the HRG based on pRoutingEntry 
+////						unregisterAutoHRG(pRoutingEntry);
+//					}
+//				}else{
+//					pRoutingEntry.extendCause(this + "::delHRMRoute()");
+//					Logging.log(this, "  ..unregistering nodeHRMID-2-nodeHRMID HRG link for: " + pRoutingEntry);
+////					unregisterLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), pRoutingEntry);
+//				}
+//			}
+//		}
 
 		/**
 		 * Notify GUI
@@ -2389,7 +2396,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
 						Logging.log(this, "  ..unregistering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
 					}
-					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource().clone(), tDestClusterHRMID.clone(), pRoutingEntry.getNextHop().clone(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause() + ", " + this + "::unregisterAutoHRG()");
+					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource().clone(), tDestClusterHRMID.clone(), pRoutingEntry.getNextHop().clone(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause());
+					tRoutingEntry.extendCause(this + "::unregisterAutoHRG()");
 					unregisterCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
 				}
 			}

@@ -793,11 +793,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							//Logging.log(this, "Default selected: " + pEvent);
 							showRoutingEntryCause(tfRoutingTable.get(tSelectedIndex));
 						}
-						private void showRoutingEntryCause(RoutingEntry pRoutingEntry)
-						{
-							Logging.log(this, "Cause for: " + pRoutingEntry);
-							Logging.log(this, "     ..cause: " + pRoutingEntry.getCause());
-						}
 						public void widgetSelected(SelectionEvent pEvent)
 						{
 							//Logging.log(this, "Widget selected: " + pEvent);
@@ -1136,24 +1131,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							//Logging.log(this, "Widget selected: " + pEvent);
 							showPackets(tfComChannels.get(tSelectedIndex));
 						}
-						private void showPackets(ComChannel pComChannel)
-						{
-							Logging.log(this, "Packet I/O for: " + pComChannel);
-							LinkedList<ComChannelPacketMetaData> tPacketsMetaData = pComChannel.getSeenPackets();
-							if(tPacketsMetaData != null){
-								int i = 0;
-								for (ComChannelPacketMetaData tPacketMetaData: tPacketsMetaData){
-									if(tPacketMetaData.getPacket() instanceof AnnounceCoordinator){
-										AnnounceCoordinator tAnnounceCoordinatorPacket = (AnnounceCoordinator)tPacketMetaData.getPacket();
-						
-										Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket() + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
-									}else{
-										Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket());
-									}
-									i++;
-								}
-							}		
-						}
 					});
 					MenuItem tMenuItem1 = new MenuItem(tMenu, SWT.NONE);
 					tMenuItem1.setText("Show link activation events");
@@ -1167,10 +1144,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						{
 							//Logging.log(this, "Widget selected: " + pEvent);
 							showLinkActivationEvents(tfComChannels.get(tSelectedIndex));
-						}
-						private void showLinkActivationEvents(ComChannel pComChannel)
-						{
-							Logging.log(this, "Link activation events for: " + pComChannel + pComChannel.getDescriptionLinkActivation());
 						}
 					});
 					MenuItem tMenuItem2 = new MenuItem(tMenu, SWT.NONE);
@@ -1186,19 +1159,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							//Logging.log(this, "Widget selected: " + pEvent);
 							showSession(tfComChannels.get(tSelectedIndex));
 						}
-						private void showSession(ComChannel pComChannel)
-						{
-							Logging.log(this, "Session for: " + pComChannel);
-							Logging.log(this, "     ..session: " + pComChannel.getParentComSession());
-							LinkedList<ComChannel> tChannels = pComChannel.getParentComSession().getAllComChannels();
-							for(ComChannel tComChannel : tChannels){
-								Logging.log(this, "       ..channel: " + tComChannel);
-							}
-							tChannels = pComChannel.getParentComSession().getAllFormerChannels();
-							for(ComChannel tComChannel : tChannels){
-								Logging.log(this, "       ..former channel: " + tComChannel);
-							}
-						}
 					});
 					MenuItem tMenuItem3 = new MenuItem(tMenu, SWT.NONE);
 					tMenuItem3.setText("Show peer HRMIDs");
@@ -1212,15 +1172,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						{
 							//Logging.log(this, "Widget selected: " + pEvent);
 							showPeerHRMIDs(tfComChannels.get(tSelectedIndex));
-						}
-						private void showPeerHRMIDs(ComChannel pComChannel)
-						{
-							Logging.log(this, "Peer HRMIDs of: " + pComChannel);
-							int i = 0;
-							for (HRMID tHRMID : pComChannel.getPeerHRMIDs()){
-								Logging.log(this, "    ..[" + i + "]: " + tHRMID);
-								i++;
-							}
 						}
 					});
 					MenuItem tMenuItem4 = new MenuItem(tMenu, SWT.NONE);
@@ -1236,15 +1187,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							//Logging.log(this, "Widget selected: " + pEvent);
 							showAssignedPeerHRMIDs(tfComChannels.get(tSelectedIndex));
 						}
-						private void showAssignedPeerHRMIDs(ComChannel pComChannel)
-						{
-							Logging.log(this, "Assigned peer HRMIDs of: " + pComChannel);
-							int i = 0;
-							for (HRMID tHRMID : pComChannel.getAssignedPeerHRMIDs()){
-								Logging.log(this, "    ..[" + i + "]: " + tHRMID);
-								i++;
-							}
-						}
 					});
 
 					tTable.setMenu(tMenu);
@@ -1253,6 +1195,74 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		});
 	}
 		
+	private void showAssignedPeerHRMIDs(ComChannel pComChannel)
+	{
+		Logging.log(this, "Assigned peer HRMIDs of: " + pComChannel);
+		int i = 0;
+		for (HRMID tHRMID : pComChannel.getAssignedPeerHRMIDs()){
+			Logging.log(this, "    ..[" + i + "]: " + tHRMID);
+			i++;
+		}
+	}
+	
+	private void showPeerHRMIDs(ComChannel pComChannel)
+	{
+		Logging.log(this, "Peer HRMIDs of: " + pComChannel);
+		int i = 0;
+		for (HRMID tHRMID : pComChannel.getPeerHRMIDs()){
+			Logging.log(this, "    ..[" + i + "]: " + tHRMID);
+			i++;
+		}
+	}
+	
+	private void showSession(ComChannel pComChannel)
+	{
+		Logging.log(this, "Session for: " + pComChannel);
+		Logging.log(this, "     ..session: " + pComChannel.getParentComSession());
+		LinkedList<ComChannel> tChannels = pComChannel.getParentComSession().getAllComChannels();
+		for(ComChannel tComChannel : tChannels){
+			Logging.log(this, "       ..channel: " + tComChannel);
+		}
+		tChannels = pComChannel.getParentComSession().getAllFormerChannels();
+		for(ComChannel tComChannel : tChannels){
+			Logging.log(this, "       ..former channel: " + tComChannel);
+		}
+	}
+	
+	private void showPackets(ComChannel pComChannel)
+	{
+		Logging.log(this, "Packet I/O for: " + pComChannel);
+		LinkedList<ComChannelPacketMetaData> tPacketsMetaData = pComChannel.getSeenPackets();
+		if(tPacketsMetaData != null){
+			int i = 0;
+			for (ComChannelPacketMetaData tPacketMetaData: tPacketsMetaData){
+				if(tPacketMetaData.getPacket() instanceof AnnounceCoordinator){
+					AnnounceCoordinator tAnnounceCoordinatorPacket = (AnnounceCoordinator)tPacketMetaData.getPacket();
+	
+					Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket() + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
+				}else{
+					Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket());
+				}
+				i++;
+			}
+		}		
+	}
+	
+	private void showLinkActivationEvents(ComChannel pComChannel)
+	{
+		Logging.log(this, "Link activation events for: " + pComChannel + pComChannel.getDescriptionLinkActivation());
+	}
+
+	private void showRoutingEntryCause(RoutingEntry pRoutingEntry)
+	{
+		Logging.log(this, "Cause for: " + pRoutingEntry);
+		int i = 0;
+		for (String tCauseString : pRoutingEntry.getCause()){
+			Logging.trace(this, "    ..[" + i + "]: " + tCauseString);
+			i++;
+		}		
+	}
+
 	private void printNAME(Composite pParent, ControlEntity pEntity)
 	{
 		Composite tContainerName = new Composite(pParent, SWT.NONE);

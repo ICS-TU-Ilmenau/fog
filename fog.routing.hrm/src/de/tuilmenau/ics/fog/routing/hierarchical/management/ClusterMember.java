@@ -289,7 +289,8 @@ public class ClusterMember extends ClusterName
 							HRMID tGeneralizedSiblingL0Address = mAssignedL0HRMID.getForeignCluster(tSiblingL0Address);
 									
 							// create the new reported routing table entry
-							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(mAssignedL0HRMID /* this cluster */, tGeneralizedSiblingL0Address /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pCause + ", ::eventNeedHRGUpdate()");
+							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(mAssignedL0HRMID /* this cluster */, tGeneralizedSiblingL0Address /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pCause);
+							tRoutingEntryToSibling.extendCause(this + "::eventNeedHRGUpdate()");
 							// even more details about the route to make it distinguishable from others
 							tRoutingEntryToSibling.setNextHopL2Address(mHRMController.getNodeL2Address());
 	
@@ -319,14 +320,16 @@ public class ClusterMember extends ClusterName
 					 * Update HRG: register L0 link
 					 */
 					RoutingEntry tRoutingEntryToSibling2 = tEntry.clone();
-					tRoutingEntryToSibling2.extendCause("registerLinkHRG()(" + pCause + ")");
+					tRoutingEntryToSibling2.extendCause(pCause);
+					tRoutingEntryToSibling2.extendCause(this + "::registerLinkHRG()");
 					mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tRoutingEntryToSibling2);
 					
 					/**
 					 * Update HRG: register cluster-2-cluster links
 					 */ 
 					RoutingEntry tRoutingEntryToSibling3 = tEntry.clone();
-					tRoutingEntryToSibling3.extendCause("registerAutoHRG()(" + pCause + ")");
+					tRoutingEntryToSibling3.extendCause(pCause);
+					tRoutingEntryToSibling3.extendCause(this + "::registerAutoHRG()");
 					mHRMController.registerAutoHRG(tRoutingEntryToSibling3);
 				}
 			}
@@ -347,14 +350,16 @@ public class ClusterMember extends ClusterName
 					 * Update HRG: unregister L0 link
 					 */
 					RoutingEntry tRoutingEntryToSibling2 = tEntry.clone();
-					tRoutingEntryToSibling2.extendCause("unregisterLinkHRG()(" + pCause + ")");
+					tRoutingEntryToSibling2.extendCause(pCause);
+					tRoutingEntryToSibling2.extendCause(this + "::unregisterLinkHRG()");
 					mHRMController.unregisterLinkHRG(tEntry.getSource(),  tEntry.getNextHop(), tRoutingEntryToSibling2);
 					
 					/**
 					 * Update HRG: register cluster-2-cluster links
 					 */ 
 					RoutingEntry tRoutingEntryToSibling3 = tEntry.clone();
-					tRoutingEntryToSibling3.extendCause("unregisterAutoHRG()(" + pCause + ")");
+					tRoutingEntryToSibling3.extendCause(pCause);
+					tRoutingEntryToSibling3.extendCause(this + "::unregisterAutoHRG()");
 					mHRMController.unregisterAutoHRG(tRoutingEntryToSibling3);
 				}
 			}
@@ -515,14 +520,14 @@ public class ClusterMember extends ClusterName
 	 * @param pSourceComChannel the source comm. channel
 	 * @param pRouteSharePacket the packet
 	 */
-	public void eventRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
+	public void eventReceivedRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
 	{
 		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-			Logging.err(this, "EVENT: RouteShare via: " + pSourceComChannel);
+			Logging.err(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
 		}
 		
 		RoutingTable tReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
-		mHRMController.addHRMRouteShare(tReceivedSharedRoutingTable);			
+		mHRMController.addHRMRouteShare(tReceivedSharedRoutingTable, this + "::eventRouteShare()");			
 	}
 
 	/**

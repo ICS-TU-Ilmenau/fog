@@ -235,6 +235,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * This function implements the "share phase".
 	 * It distributes locally stored sharable routing data among the known cluster members
 	 */
+	private int mCallsSharePhase = 0;
 	@SuppressWarnings("unused")
 	public void sharePhase()
 	{
@@ -253,6 +254,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				}
 				return;
 			}
+			
+			mCallsSharePhase++;
 			
 			// get all comm. channels to inferior cluster members
 			LinkedList<ComChannel> tComChannels = mParentCluster.getComChannels();
@@ -284,24 +287,34 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								tReceivedSharedRoutingTable = (RoutingTable) mReceivedSharedRoutingTable.clone();	
 							}
 
+							int j = 0;
 							for(RoutingEntry tEntry : tReceivedSharedRoutingTable){
-								// does the received route start at the peer?
+								/**
+								 * does the received route start at the peer?
+								 */
 								if(tEntry.getSource().equals(tPeerHRMID)){
+									RoutingEntry tNewEntry = tEntry.clone();
+									tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_1(" + mCallsSharePhase + ")(" + j + ")");
 									// share the received entry with the peer
-									tSharedRoutingTable.addEntry(tEntry.clone());
+									tSharedRoutingTable.addEntry(tNewEntry);
 									
 									continue;
 								}
 								
-								// does the received route start at this node and the next node isn't the peer?
+								/**
+								 * does the received route start at this node and the next node isn't the peer?
+								 */
 								if((tEntry.getSource().equals(tThisNodeHRMID)) && (!tEntry.getNextHop().equals(tPeerHRMID))){
 									RoutingEntry tRoutingEntryWithPeer = mHRMController.getRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
 									if(tRoutingEntryWithPeer != null){
 										tRoutingEntryWithPeer.chain(tEntry);
+										tRoutingEntryWithPeer.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ")");
 										// share the received entry with the peer
 										tSharedRoutingTable.addEntry(tRoutingEntryWithPeer);
 									}									
 								}
+								
+								j++;
 							}
 							
 						}else{
@@ -463,6 +476,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 											Logging.log(this, "      ..==> routing entry: " + tFinalRoutingEntryToDestination);
 										}
+										tFinalRoutingEntryToDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ")");
 										tSharedRoutingTable.addEntry(tFinalRoutingEntryToDestination);
 									}
 								}else{
@@ -577,15 +591,15 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * @param pSourceComChannel the source comm. channel
 	 * @param pRouteSharePacket the packet
 	 */
-	public void eventRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
+	public void eventReceivedRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
 	{
-//		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-			Logging.err(this, "EVENT: RouteShare via: " + pSourceComChannel);
-//		}
+		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+			Logging.err(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
+		}
 		
 		synchronized (mReceivedSharedRoutingTable) {
 			mReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
-			mHRMController.addHRMRouteShare(mReceivedSharedRoutingTable);			
+			mHRMController.addHRMRouteShare(mReceivedSharedRoutingTable, this + "::eventReceivedRouteShare()");			
 		}		
 	}
 
@@ -1019,13 +1033,36 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		Logging.log(this, "EVENT: cluster membership to superior coordinator updated to: " + pMembership);
 
 		/**
+		 * Deactivate the old membership
+		 */
+		if((superiorCoordinatorComChannel() != null) && (superiorCoordinatorComChannel().getParent() != null)){
+			if(superiorCoordinatorComChannel().getParent() instanceof CoordinatorAsClusterMember){
+				CoordinatorAsClusterMember tOldMembership = (CoordinatorAsClusterMember)superiorCoordinatorComChannel().getParent();
+				
+				tOldMembership.setMembershipActivation(false);
+			}else{
+				Logging.err(this, "Expected a CoordinatorAsClusterMember as parent of: " + superiorCoordinatorComChannel());
+			}
+		}
+		
+		/**
+		 * Activate the new membership
+		 */
+		pMembership.setMembershipActivation(true);
+		
+		/**
 		 * Set the comm. channel to the superior coordinator
 		 */
 		if (superiorCoordinatorComChannel() != pMembership.getComChannelToClusterHead()){
 			Logging.log(this, "eventClusterMembershipToSuperiorCoordinator() updates comm. channel to superior coordinator: " + pMembership.getComChannelToClusterHead());
 			setSuperiorCoordinatorComChannel(pMembership.getComChannelToClusterHead());
 		}
-		
+
+		/**
+		 * Update info. about superior coordinator
+		 */
+		eventClusterCoordinatorAvailable(pMembership.superiorCoordinatorNodeName(), pMembership.getCoordinatorID(), pMembership.superiorCoordinatorHostL2Address(), pMembership.superiorCoordinatorDescription());
+
 		/**
 		 * Set the HRMID of the CoordinatorAsClusterMember instance
 		 */
@@ -1193,6 +1230,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
+		Logging.log(this, "Got new HRMID: " + pHRMID + ", caller=" + pCaller);
+
 		// update the Bully priority of the parent cluster, which is managed by this coordinator
 		mParentCluster.setHRMID(pCaller, pHRMID);
 	}

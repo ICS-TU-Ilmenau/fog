@@ -182,11 +182,6 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_HRG_UPDATES = false;
 
 		/**
-		 * Defines if the cause for each routing entry should be shown
-		 */
-		public static final boolean GUI_SHOW_ROUTE_CAUSE = false;
-
-		/**
 		 * Show debug outputs about HRG node/link detection
 		 */
 		public static final boolean GUI_SHOW_HRG_DETECTION = false;
@@ -364,7 +359,7 @@ public class HRMConfig
 		/**
 		 * Defines if a reported HRM route should include QoS attributes 
 		 */
-		public static final boolean REPORT_QOS_ATTRIBUTES_AUTOMATICALLY = false;		
+		public static final boolean REPORT_QOS_ATTRIBUTES_AUTOMATICALLY = true;		
 	}
 	
 	/**

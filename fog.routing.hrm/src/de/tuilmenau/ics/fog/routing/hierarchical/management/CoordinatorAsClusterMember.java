@@ -17,6 +17,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -32,6 +33,11 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 */
 	private Coordinator mCoordinator = null;
 
+	/**
+	 * Stores if the membership is active
+	 */
+	private boolean mMembershipIsActive = false;
+	
 	/**
 	 * Constructor
 	 *  
@@ -205,21 +211,8 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 
 	/**
-	 * Sets the cluster activation, triggered by the Elector or the Cluster which got a new local Coordinator
-	 * 
-	 * @param pState the new state
+	 * EVENT: cluster membership to superior coordinator
 	 */
-	public void setClusterActivation(boolean pState)
-	{
-		super.setClusterActivation(pState);
-
-		if(pState){
-			mCoordinator.eventClusterMembershipActivated(this);
-		}else{
-			mCoordinator.eventClusterMembershipDeactivated(this);
-		}
-	}
-
 	public void eventClusterMembershipToSuperiorCoordinator()
 	{
 		Logging.log(this, "EVENT: cluster membership to superior coordinator updated to me");
@@ -227,6 +220,62 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		mCoordinator.eventClusterMembershipToSuperiorCoordinator(this);
 	}
 	
+	/**
+	 * EVENT: new HRMID assigned
+     * The function is called when an address update was received.
+	 * 
+	 * @param pSourceComChannel the source comm. channel
+	 * @param pHRMID the new HRMID
+	 */
+	public void eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID)
+	{
+		Logging.log(this, "EVENT: eventAssignedHRMID with assigned HRMID " + pHRMID.toString() + ", source comm. channel: " + pSourceComChannel);
+
+		if(isActiveMembership()){
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				Logging.log(this, "     ..continuing the address distribution process via the coordinator: " + mCoordinator);
+			}
+
+			mCoordinator.eventAssignedHRMID(pSourceComChannel, pHRMID);
+		}
+	}
+	
+	/**
+	 * Updates the membership state
+	 * 
+	 * @param pState the new state
+	 */
+	public void setMembershipActivation(boolean pState)
+	{
+		Logging.log(this, "Updating membership state from " + mMembershipIsActive + " to " + pState);
+		
+		boolean tOldState = mMembershipIsActive;
+
+		/**
+		 * Update the membership
+		 */
+		mMembershipIsActive = pState;
+		
+		/**
+		 * Set our HRMID as the new one for the coordinator if we have a transition from "false" to "true"
+		 */
+		if((!tOldState) && (pState)){
+			if((getHRMID() != null) && (!getHRMID().isZero())){
+//				mCoordinator.eventAssignedHRMID(null, getHRMID());
+			}
+		}
+	}
+	
+	/**
+	 * Returns if the membership is an active one
+	 * 
+	 * @return
+	 */
+	private boolean isActiveMembership()
+	{
+		return mMembershipIsActive;
+	}
+
 	/**
 	 * Defines the decoration text for the ARG viewer
 	 * 

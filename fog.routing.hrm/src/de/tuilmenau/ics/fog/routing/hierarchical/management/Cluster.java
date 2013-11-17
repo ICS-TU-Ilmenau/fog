@@ -389,6 +389,8 @@ public class Cluster extends ClusterMember
 	@Override
 	public void setHRMID(Object pCaller, HRMID pHRMID)
 	{
+		Logging.log(this, "Got new HRMID: " + pHRMID + ", caller=" + pCaller);
+		
 		/**
 		 * Do we have a new HRMID?
 		 */
@@ -397,7 +399,7 @@ public class Cluster extends ClusterMember
 			 * Reset the list of used addresses because we got a new HRMID
 			 */
 			synchronized (mUsedAddresses) {
-				Logging.log(this, "Resetting list of used addresses: " + mUsedAddresses);
+				Logging.log(this, "Reseting list of used addresses: " + mUsedAddresses);
 				mUsedAddresses.clear();
 			}
 			
@@ -724,10 +726,10 @@ public class Cluster extends ClusterMember
 	 * @param pComChannel the source comm. channel 
 	 * @param pRouteReportPacket the packet
 	 */
-	public void eventRouteReport(ComChannel pSourceComChannel, RouteReport pRouteReportPacket)
+	public void eventReceivedRouteReport(ComChannel pSourceComChannel, RouteReport pRouteReportPacket)
 	{
 		if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-			Logging.log(this, "EVENT: RouteReport: " + pRouteReportPacket);
+			Logging.log(this, "EVENT: ReceivedRouteReport: " + pRouteReportPacket);
 		}
 		
 		/**
@@ -751,13 +753,13 @@ public class Cluster extends ClusterMember
 			{
 				case 0:
 					// it's an inter-cluster link because local loopbacks aren't sent as report
-					tEntry.extendCause(this + "::eventRouteReport() from " + pSourceComChannel.getPeerHRMID());
+					tEntry.extendCause(this + "::eventRouteReport()(0 hops) from " + pSourceComChannel.getPeerHRMID());
 					mHRMController.registerAutoHRG(tEntry);
 					break;
 				case 1:
 					// do we have an intra-cluster link?
 					if(!tEntry.getDest().isClusterAddress()){
-						tEntry.extendCause(this + "::eventRouteReport() from " + pSourceComChannel.getPeerHRMID());
+						tEntry.extendCause(this + "::eventRouteReport()(1 hop) from " + pSourceComChannel.getPeerHRMID());
 						mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tEntry);
 					}else{
 						// strange, an inter-cluster link with ONE hop?!
