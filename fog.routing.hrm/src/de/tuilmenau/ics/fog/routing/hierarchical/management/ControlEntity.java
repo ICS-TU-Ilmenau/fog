@@ -472,12 +472,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		
 		// store the description about the new superior coordinator
 		setSuperiorCoordinatorDescription(pCoordinatorDescription);
-		
-		if(this instanceof CoordinatorAsClusterMember){
-			Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
-			
-			tCoordinator.eventClusterCoordinatorAvailable(pCoordinatorNodeName, pCoordinatorID, pCoordinatorHostL2Address, pCoordinatorDescription);
-		}
 	}
 
 	/**
@@ -687,9 +681,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public void eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID)
 	{
-		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
-		}
+		Logging.log(this, "EVENT: eventAssignedHRMID with assigned HRMID " + pHRMID.toString() + ", source comm. channel: " + pSourceComChannel);
 
 		if((pHRMID != null) && (!pHRMID.equals(getHRMID())) && (!pHRMID.isZero())){
 			/**
