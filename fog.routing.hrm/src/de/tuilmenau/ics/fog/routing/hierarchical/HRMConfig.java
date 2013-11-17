@@ -86,7 +86,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for the share phase
 		 */
-		public static final boolean SHOW_SHARE_PHASE = false;
+		public static final boolean SHOW_SHARE_PHASE = true;
 
 		/**
 		 * Shows debug outputs about the routing process 
@@ -291,7 +291,7 @@ public class HRMConfig
 		/**
 		 * Defines if a separate priority per hierarchy level should be used
 		 */
-		public static final boolean USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL = false;
+		public static final boolean USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL = true;
 
 		/**
 		 * Defines the limit for the hierarchy height

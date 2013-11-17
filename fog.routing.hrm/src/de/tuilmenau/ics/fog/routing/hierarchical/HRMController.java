@@ -200,7 +200,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores the node priority per hierarchy level.
 	 * Level 0 isn't used here. (see "mNodeConnectivityPriority")
 	 */
-	private long mNodeHierarchyPriority[] = new long[HRMConfig.Hierarchy.HEIGHT];
+	private long mNodeHierarchyPriority[] = new long[HRMConfig.Hierarchy.HEIGHT + 2];
 	
 	/**
 	 * Stores the connectivity node priority
