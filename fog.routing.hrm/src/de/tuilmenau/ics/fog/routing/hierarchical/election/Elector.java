@@ -637,6 +637,8 @@ public class Elector implements Localization
 			Logging.log(this, "SENDLEAVE(), cluster members: " + mParent.getComChannels().size());
 		}
 
+		Logging.log(this, "Leaving election, cause: " + pCause);
+		
 		if(!head()){
 			LinkedList<ComChannel> tChannels = mParent.getComChannels();
 
@@ -774,8 +776,10 @@ public class Elector implements Localization
 						/**
 						 * Iterate over all alternatives
 						 */
-						int tLefts = 0;
+						int tMemberCount = 0;
 						for (CoordinatorAsClusterMember tLevelClusterMember : tLevelClusterMembers){
+							tMemberCount++;
+							
 							/**
 							 * don't leave this election: is the parent the alternative?
 							 */ 
@@ -792,8 +796,6 @@ public class Elector implements Localization
 										 * DO ONLY LEAVE elections with a lower priority -> incrementally leave all bad possible elections and find the best election
 										 **********************************************************************************************************************************/
 										if(tAlternativeElection.hasClusterLowerPriorityThan(pSourceL2Address, pSourcePriority)){
-											tLefts++;
-											
 											/**
 											 * Mark/remove this ClusterMember because it's not active anymore
 											 */ 
@@ -808,20 +810,23 @@ public class Elector implements Localization
 											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
 												Logging.log(this, "      ..LEAVING: " + tAlternativeElection);
 											}
-											tAlternativeElection.distributeLEAVE("leaveWorseAlternativeElections() for " + tLefts + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "] <== " + pCause);
+											tAlternativeElection.distributeLEAVE("leaveWorseAlternativeElections() for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "] <== " + pCause);
 										}else{
 											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
 												Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
 											}
+											Logging.log(this, "leaveWorseAlternativeElections() aborted for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " > SourcePrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "] <== " + pCause);
 										}
 										/**********************************************************************************************************************************/
 									}else{
 										throw new RuntimeException("Found invalid elector for: " + tLevelClusterMember);
 									}
 								}else{
+									Logging.log(this, "leaveWorseAlternativeElections() aborted (same cluster!) for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " > SourcePrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "] <== " + pCause);
 									// we have found a local cluster member which belongs to the same cluster like we do
 								}
 							}else{
+								Logging.log(this, "leaveWorseAlternativeElections() aborted (same cluster!) for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " > SourcePrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "] <== " + pCause);
 								// we have found this election process
 							}
 						}// for
@@ -1368,42 +1373,53 @@ public class Elector implements Localization
 			Logging.log(this, "EVENT: priority " + tSenderPriority.getValue() + " via comm. channel: " + pComChannel);
 		}
 
-		// do we have the higher priority?
-		if (havingHigherPrioriorityThan(pComChannel)){
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-				Logging.log(this, "Received remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue());
-			}
-			
+		/**
+		 * React only if the link is active
+		 */
+		if(pComChannel.isLinkActive()){
 			/**
-			 * We (still) have the highest priority -> nothing to change here
-			 */
-			// ..
-		}else{
-			
-			/**
-			 * Have we already won the election and the new priority belongs to a better candidate?
+			 * Have we already won the election and the new priority still lower than ours?
 			 */
 			if(isWinner()){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
-					Logging.log(this, "Received remote priority " + tSenderPriority.getValue() + " is higher than local " + mParent.getPriority().getValue() + ", triggering re-election");
-				}
-							
-				/**
-				 * React only if the link is active
-				 */
-				if(pComChannel.isLinkActive()){
+				// do we have the higher priority?
+				if (havingHigherPrioriorityThan(pComChannel)){
+//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+						Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we are already the election winner");
+//					}
+				
+					/**
+					 * We (still) have the highest priority -> nothing to change here
+					 */
+					// ..
+				}else{
 					/**
 					 * New received peer priority could influence the election result
 					 */
 					tNewPriorityCouldInfluenceElectionResult = true;
-					
+				}
+			}else{
+				// do we have the higher priority?
+				if (havingHigherPrioriorityThan(pComChannel)){
+//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+						Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we lost the last election");
+//					}
 					/**
-					 * Trigger: election
+					 * New received peer priority could influence the election result
 					 */
-					startElection();
+					tNewPriorityCouldInfluenceElectionResult = true;
 				}
 			}
-			
+		}
+
+		if(tNewPriorityCouldInfluenceElectionResult){
+//			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				Logging.log(this, "eventReceivedPRIORITY_UPDATE() triggers a re-election");
+//			}
+
+			/**
+			 * Trigger: election
+			 */
+			startElection();
 		}
 
 		/**
