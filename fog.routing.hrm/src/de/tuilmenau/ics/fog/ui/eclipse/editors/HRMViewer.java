@@ -1411,7 +1411,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if (pEntity instanceof Cluster){
 			Cluster tCluster = (Cluster) pEntity;
 			boolean tClusterCanBeActive = tCluster.getElector().isAllowedToWin();
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? "   (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : "") + tFormerHRMIDs + tNetworkInterface + tL0HRMID);
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? " (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : "") + tFormerHRMIDs + tNetworkInterface + tL0HRMID);
 		}else{
 			if(pEntity instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)pEntity;

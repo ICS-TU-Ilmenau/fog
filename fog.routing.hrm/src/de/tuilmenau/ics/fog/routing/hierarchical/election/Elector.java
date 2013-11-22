@@ -774,6 +774,7 @@ public class Elector implements Localization
 						/**
 						 * Iterate over all alternatives
 						 */
+						int tLefts = 0;
 						for (CoordinatorAsClusterMember tLevelClusterMember : tLevelClusterMembers){
 							/**
 							 * don't leave this election: is the parent the alternative?
@@ -791,13 +792,15 @@ public class Elector implements Localization
 										 * DO ONLY LEAVE elections with a lower priority -> incrementally leave all bad possible elections and find the best election
 										 **********************************************************************************************************************************/
 										if(tAlternativeElection.hasClusterLowerPriorityThan(pSourceL2Address, pSourcePriority)){
+											tLefts++;
+											
 											/**
 											 * Mark/remove this ClusterMember because it's not active anymore
 											 */ 
 											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
 												Logging.log(this, "      ..losing active ClusterMember: " + tLevelClusterMember);
 											}
-											removeActiveClusterMember(tLevelClusterMember, "leaveWorseAlternativeElections() [Prio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + "] <== " + pCause);
+											removeActiveClusterMember(tLevelClusterMember, "leaveWorseAlternativeElections() [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + "] <== " + pCause);
 
 											/**
 											 * Distribute "LEAVE" for the alternative election process
@@ -805,7 +808,7 @@ public class Elector implements Localization
 											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
 												Logging.log(this, "      ..LEAVING: " + tAlternativeElection);
 											}
-											tAlternativeElection.distributeLEAVE("leaveWorseAlternativeElections() [Prio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + "] <== " + pCause);
+											tAlternativeElection.distributeLEAVE("leaveWorseAlternativeElections() for " + tLefts + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "] <== " + pCause);
 										}else{
 											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
 												Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
@@ -1798,6 +1801,9 @@ public class Elector implements Localization
 			
 			tResult = true;
 		}else{
+			/**
+			 * Check if both priorities are equal and the L2Addresses have to be checked
+			 */
 			if (pSourcePriority.equals(pComChannelToPeer.getPeerPriority())){
 				if (tDEBUG){
 					Logging.log(this, "	        ..HAVING SAME PRIORITY like " + pComChannelToPeer.getPeerL2Address());
@@ -1826,6 +1832,10 @@ public class Elector implements Localization
 							tResult = false;
 						}
 					}
+				}
+			}else{
+				if (tDEBUG){
+					Logging.log(this, "	        ..HAVING LOWER PRIORITY (" + pSourcePriority.getValue() + " < " + pComChannelToPeer.getPeerPriority().getValue() + ") than " + pComChannelToPeer.getPeerL2Address());
 				}
 			}
 		}

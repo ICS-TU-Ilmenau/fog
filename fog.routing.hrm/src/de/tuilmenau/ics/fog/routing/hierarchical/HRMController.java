@@ -2737,7 +2737,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// increase priority
 				tPriority += (long)(tOffset);
 				
-				mDesriptionHierarchyPriorityUpdates += "\n + " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+				mDesriptionHierarchyPriorityUpdates += "\n + " + tOffset + "-L" + tHierLevel + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
 	
 				// update priority
 				setHierarchyPriority(tPriority, new HierarchyLevel(this, tHierLevel));
@@ -2791,7 +2791,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// decrease priority
 				tPriority -= (long)(tOffset);
 				
-				mDesriptionHierarchyPriorityUpdates += "\n - " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+				mDesriptionHierarchyPriorityUpdates += "\n - " + tOffset + "-L" + tHierLevel + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
 	
 				// update priority
 				setHierarchyPriority(tPriority, new HierarchyLevel(this, tHierLevel));

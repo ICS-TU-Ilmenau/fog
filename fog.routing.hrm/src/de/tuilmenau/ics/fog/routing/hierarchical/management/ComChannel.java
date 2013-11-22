@@ -581,7 +581,11 @@ public class ComChannel
 	 */
 	public HRMID getPeerHRMID()
 	{
-		return mPeerHRMID;
+		if(mPeerHRMID != null){
+			return mPeerHRMID.clone();
+		}else{
+			return null;
+		}
 	}
 	
 	/**
@@ -1517,7 +1521,7 @@ public class ComChannel
 
 		mLinkActivation = pState;
 		
-		mDesccriptionLinkActivation += "\n - [" +pState +"] <== " + pCause;
+		mDesccriptionLinkActivation += "\n ..[" +pState +"] <== " + pCause;
 	}
 	
 	/**
