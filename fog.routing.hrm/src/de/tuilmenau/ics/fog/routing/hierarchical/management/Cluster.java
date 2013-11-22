@@ -459,7 +459,10 @@ public class Cluster extends ClusterMember
 	private HRMID allocateClusterMemberAddress()
 	{
 		HRMID tResult = (getHRMID() != null ? getHRMID().clone() : null);
-
+		if(getHierarchyLevel().isHighest()){
+			tResult = new HRMID(0);
+		}
+		
 		if(tResult != null){
 			/**
 			 * Search for the lowest free address
@@ -490,8 +493,6 @@ public class Cluster extends ClusterMember
 				Logging.log(this, "Set " + tAddress + " on hierarchy level " + getHierarchyLevel().getValue() + " for HRMID " + tResult.toString());
 				Logging.log(this, "Created for a cluster member the NEW HRMID=" + tResult.toString());
 			}
-		}else{
-			tResult = null;
 		}
 		
 		return tResult;
@@ -605,6 +606,8 @@ public class Cluster extends ClusterMember
 					mHRMController.getHRS().mapHRMID(tNewHRMIDForPeer, pComChannel.getPeerL2Address());
 					
 					tHRMIDForPeer = tNewHRMIDForPeer;
+				}else{
+					Logging.err(this, "::eventClusterMemberNeedsHRMID() [" + getHRMID() + "] got an invalid new cluster member address for: " + pComChannel);
 				}
 			}else{
 				mDescriptionHRMIDAllocation += "\n     ..reassigned " + tOldHRMIDForPeer.toString() + " for " + pComChannel + ", cause=" + pCause;
