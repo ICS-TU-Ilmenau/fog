@@ -535,14 +535,15 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					RoutingTable tReportRoutingTable = new RoutingTable();
 	
 					/**
-					 * Report 1: routes to all neighbors
+					 * Report 1: routes to all neighbor clusters based on the local HRG
+					 * 			 If we are "1.2.0", we report forward/backward route with "1.3.0" and with "1.1.0" (if both clusters are direct neighbors)
 					 */
 					RoutingTable tRoutesToNeighbors = mHRMController.getRoutesWithNeighborsHRG(getHRMID());
 					// add the found routes to the report routing table
 					tReportRoutingTable.addEntries(tRoutesToNeighbors);
 
 					/**
-					 * Report 2 (L0): routes to direct neighbors
+					 * Report 2 (L0): routes to remote ClusterMember (physical neighbor nodes) based on node-to-node messages
 					 */							
 					if(getHierarchyLevel().isBaseLevel()){ //TODO: remove this limitation
 						if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
