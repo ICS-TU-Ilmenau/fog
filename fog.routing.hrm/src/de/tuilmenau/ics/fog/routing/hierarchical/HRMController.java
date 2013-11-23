@@ -2211,7 +2211,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		if(tResult){
 			// it's time to update the GUI
-//			notifyGUI(pRoutingEntry.getCause());
+			notifyGUI(pRoutingEntry.getCause());
 		}
 		
 		return tResult;
@@ -2377,7 +2377,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		if(tResult){
 			// it's time to update the GUI
-//			notifyGUI(pRoutingEntry.getCause());
+			notifyGUI(pRoutingEntry.getCause());
 		}
 		
 		return tResult;
