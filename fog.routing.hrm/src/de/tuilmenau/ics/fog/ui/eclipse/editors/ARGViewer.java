@@ -25,8 +25,11 @@ import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorAWT;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.SelectionProvider;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorProxy;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -112,6 +115,19 @@ public class ARGViewer extends EditorAWT implements IController
 		if(selection == null) selection = mHRMController;
 
 		Logging.trace(this, "Selected (" + selection.getClass().getSimpleName() + "): " + selection);
+		
+		if(selection instanceof CoordinatorProxy){
+			CoordinatorProxy tCoordinatorProxy = (CoordinatorProxy)selection;
+			
+			Logging.log(this, tCoordinatorProxy + " has the following freshness:");
+			Logging.log(this, "  ..timeout: " + tCoordinatorProxy.getTimeout());
+			AnnounceCoordinator tAnnounceCoordinator = tCoordinatorProxy.getLastRefresh();
+			if(tAnnounceCoordinator != null){
+				Logging.log(this, "  ..last refresh: " + tAnnounceCoordinator);
+				Logging.log(this, "    ..passed clusters: " + tAnnounceCoordinator.getGUIPassedClusters());
+				Logging.log(this, "    ..passed clusters: " + tAnnounceCoordinator.getPassedNodes());
+			}
+		}
 		
 		if(pByDefaultButton) {
 			if(selection != null) {

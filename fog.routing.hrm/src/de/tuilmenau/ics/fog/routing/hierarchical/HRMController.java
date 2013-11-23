@@ -485,7 +485,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 
 		// increase hierarchy node priority
-		increaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinatorProxy);
+		increaseHierarchyNodePriority_KnownCoordinator(pCoordinatorProxy);
 
 		// updates the GUI decoration for this node
 		updateGUINodeDecoration();
@@ -512,7 +512,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		// increase hierarchy node priority
-		decreaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinatorProxy);
+		decreaseHierarchyNodePriority_KnownCoordinator(pCoordinatorProxy);
 
 		// updates the GUI decoration for this node
 		updateGUINodeDecoration();
@@ -548,7 +548,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		// increase hierarchy node priority
-		increaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinator);
+		increaseHierarchyNodePriority_KnownCoordinator(pCoordinator);
 
 		// updates the GUI decoration for this node
 		updateGUINodeDecoration();
@@ -583,7 +583,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 
 		// increase hierarchy node priority
-		decreaseHierarchyNodePriority_KnownBaseCoordinator(pCoordinator);
+		decreaseHierarchyNodePriority_KnownCoordinator(pCoordinator);
 
 		// updates the GUI decoration for this node
 		updateGUINodeDecoration();
@@ -2698,7 +2698,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pCausingEntity the update causing entity
 	 */
-	public void increaseHierarchyNodePriority_KnownBaseCoordinator(ControlEntity pCausingEntity)
+	public void increaseHierarchyNodePriority_KnownCoordinator(ControlEntity pCausingEntity)
 	{
 		/**
 		 * Are we at base hierarchy level or should we accept all levels?
@@ -2752,7 +2752,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pCausingEntity the update causing entity
 	 */
-	public void decreaseHierarchyNodePriority_KnownBaseCoordinator(ControlEntity pCausingEntity)
+	public void decreaseHierarchyNodePriority_KnownCoordinator(ControlEntity pCausingEntity)
 	{
 		/**
 		 * Are we at base hierarchy level or should we accept all levels?
@@ -3093,6 +3093,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		delHRMRoutesAuto();
 		
 		/**
+		 * auto-remove old coordinator proxies
+		 */
+		delCoordinatorProxiesAuto();
+		
+		/**
 		 * generalize all known HRM routes to neighbors 
 		 */
 //		generalizeMeighborHRMRoutesAuto();
@@ -3113,14 +3118,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}
 		}			
-		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
-			/**
-			 * register next trigger
-			 */
-			mAS.getTimeBase().scheduleIn(HRMConfig.Routing.GRANULARITY_SHARE_PHASE, this);
-		}
+		
+		/**
+		 * register next trigger
+		 */
+		mAS.getTimeBase().scheduleIn(HRMConfig.Routing.GRANULARITY_SHARE_PHASE, this);
 	}
 	
+	/**
+	 * Auto-removes all deprecated coordinator proxies
+	 */
+	private void delCoordinatorProxiesAuto()
+	{
+		LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
+		for(CoordinatorProxy tProxy : tProxies){
+			// does the link have a timeout?
+			if(tProxy.isObsolete()){
+				Logging.log(this, "AUTO REMOVING COORDINATOR PROXY: " + tProxy);
+
+				/**
+				 * Trigger: remote coordinator role invalid
+				 */
+				tProxy.eventRemoteCoordinatorRoleInvalid();
+			}
+		}
+	}
+
 	/**
 	 * Calculate the time period between "share phases" 
 	 *  

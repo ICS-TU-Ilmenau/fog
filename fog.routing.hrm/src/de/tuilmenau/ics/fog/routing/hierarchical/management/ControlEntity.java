@@ -740,6 +740,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			}
 			
 			/**
+			 * Refresh the coordinator proxy
+			 */
+			tCoordinatorProxy.refresh(pAnnounceCoordinator);
+			
+			/**
 			 * Storing the route to the announced remote coordinator
 			 * HINT: we provide a minimum hop count for the routing
 			 */
@@ -814,9 +819,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		// check if the "remote" coordinator isn't stored at this physical node
 		if(!pInvalidCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(mHRMController.getNodeL2Address())){
 			ClusterName tRemoteClusterName = pInvalidCoordinator.getSenderClusterName();
-			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+//			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 				Logging.log(this, "Unregistering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
-			}
+//			}
 
 			/**
 			 * Remove the invalid coordinator as superior one of this node from the HRMController database
@@ -835,9 +840,11 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				 * Trigger: remote coordinator role invalid
 				 */
 				tCoordinatorProxy.eventRemoteCoordinatorRoleInvalid();
+			}else{
+				Logging.err(this, "Couldn't remove the coordinator proxy of unknown remote coordinator: " + tRemoteClusterName);
 			}
 		}else{
-			//Logging.warn(this, "Avoiding unregistration of locally instantiated coordinator: " + pInvalidCoordinator);
+			Logging.warn(this, "Avoiding unregistration of locally instantiated coordinator: " + pInvalidCoordinator);
 		}
 	}
 

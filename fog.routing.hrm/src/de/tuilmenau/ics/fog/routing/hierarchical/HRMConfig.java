@@ -233,6 +233,11 @@ public class HRMConfig
 		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 3.0;
 
 		/**
+		 * Defines the default timeout for a coordinator proxy. If the proxy doesn't get any refresh in the defined time period, the proxy gets deleted.
+		 */
+		public static final double COORDINATOR_TIMEOUT = COORDINATOR_ANNOUNCEMENTS_INTERVAL * 2; 
+
+		/**
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */

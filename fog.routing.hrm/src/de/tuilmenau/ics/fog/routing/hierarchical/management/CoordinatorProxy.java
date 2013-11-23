@@ -9,6 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -35,6 +37,16 @@ public class CoordinatorProxy extends ClusterMember
 	 * Defines which priority value is reported
 	 */
 	private final long PRIORITY = 0;
+	
+	/**
+	 * Stores the timeout of this proxy
+	 */
+	private double mTimeout = 0;
+	
+	/**
+	 * Stores the last received AnnounceCoordinator packet
+	 */
+	private AnnounceCoordinator mLastAnnounceCoordinator = null;
 	
 	/**
 	 * Constructor
@@ -127,6 +139,57 @@ public class CoordinatorProxy extends ClusterMember
 	}
 
 	/**
+	 * Refreshes this proxy and resets the timeout
+	 * 
+	 * @param pAnnounceCoordinatorPacket the current announce packet
+	 */
+	public void refresh(AnnounceCoordinator pAnnounceCoordinatorPacket)
+	{
+		mLastAnnounceCoordinator = (AnnounceCoordinator)pAnnounceCoordinatorPacket.duplicate();
+		
+		mTimeout = mHRMController.getSimulationTime() + HRMConfig.Hierarchy.COORDINATOR_TIMEOUT;
+	}
+	
+	/**
+	 * Returns the last received AnnounceCoordinator packet
+	 *  
+	 * @return the last AnnounceCoordinator packet
+	 */
+	public AnnounceCoordinator getLastRefresh()
+	{
+		return mLastAnnounceCoordinator;
+	}
+	
+	/**
+	 * Returns the timeout of this proxy
+	 * 
+	 * @return the timeout
+	 */
+	public double getTimeout()
+	{
+		return mTimeout;
+	}
+
+	/**
+	 * Returns if this proxy is obsolete due refresh timeout
+	 * 
+	 * @return true or false
+	 */
+	public boolean isObsolete()
+	{
+		boolean tResult = false;
+		
+		if(getTimeout() > 0){
+			// timeout occurred?
+			if(getTimeout() < mHRMController.getSimulationTime()){
+				tResult = true;
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Sets a new distance (hop count to the coordinator node)
 	 * 
 	 * @param pDistance the new distance
@@ -142,14 +205,14 @@ public class CoordinatorProxy extends ClusterMember
 				// distance is the init. value?
 				if(mDistance != -1){
 					// decrease base node priority
-					mHRMController.decreaseHierarchyNodePriority_KnownBaseCoordinator(this);
+					mHRMController.decreaseHierarchyNodePriority_KnownCoordinator(this);
 				}
 	
 				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
 				mDistance = pDistance;
 
 				// increase base node priority
-				mHRMController.increaseHierarchyNodePriority_KnownBaseCoordinator(this);
+				mHRMController.increaseHierarchyNodePriority_KnownCoordinator(this);
 			}else{
 				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
 				mDistance = pDistance;
