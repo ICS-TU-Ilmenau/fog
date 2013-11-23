@@ -261,7 +261,6 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		 * Catch invalid parameter
 		 */
 		if(pClusterAddress == null){
-			Logging.err(this, "isCluster() cannot operate on a null pointer");
 			return false;
 		}
 		
