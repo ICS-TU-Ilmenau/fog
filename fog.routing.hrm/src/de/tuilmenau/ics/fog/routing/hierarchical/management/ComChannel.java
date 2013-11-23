@@ -253,6 +253,11 @@ public class ComChannel
 	private RoutingTable mReportedRoutingTable = new RoutingTable();
 
 	/**
+	 * Stores the routing table, which was shared by the superior cluster
+	 */
+	private RoutingTable mSharedRoutingTable = new RoutingTable();
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param pHRMController is the HRMController instance of this node
@@ -368,7 +373,7 @@ public class ComChannel
 	}
 			
 	/**
-	 * EVENT: neighbor HRMIDs update
+	 * EVENT: new neighbor HRMIDs update
 	 */
 	private int mCallsEventNewPeerHRMIDs = 0;
 	private void eventNewPeerHRMIDs()
@@ -376,8 +381,6 @@ public class ComChannel
 		if(mParent instanceof ClusterMember){
 			mCallsEventNewPeerHRMIDs++;
 
-			ClusterMember tParentClusterMember = (ClusterMember)mParent;
-			
 			// get the list of neighbor HRMIDs
 			LinkedList<HRMID> tNeighborHRMIDs = getPeerHRMIDs();
 
@@ -389,6 +392,7 @@ public class ComChannel
 			/**
 			 * Continue only for base hierarchy level
 			 */
+			ClusterMember tParentClusterMember = (ClusterMember)mParent;
 			if(tParentClusterMember.getHierarchyLevel().isBaseLevel()){
 				// determine the HRMID of this node for this L0 cluster
 				HRMID tThisNodeClusterMemberHRMID = tParentClusterMember.getL0HRMID();
@@ -573,7 +577,28 @@ public class ComChannel
 		
 		return tResult;
 	}
-	
+
+	/**
+	 * Returns the reported routing table
+	 * 
+	 * @return the reported routing table
+	 */
+	public RoutingTable getSharedRoutingTable()
+	{
+		RoutingTable tResult = new RoutingTable();
+		
+		synchronized (mSharedRoutingTable) {
+			if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+				//Logging.err(this, "Reporting routing table: " + mReportedRoutingTable);
+			}
+			for(RoutingEntry tEntry : mSharedRoutingTable){
+				tResult.add(tEntry.clone());
+			}
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Determines the address of the peer (e.g., a cluster member).
 	 * 
@@ -666,6 +691,13 @@ public class ComChannel
 			Logging.log(this, "REPORT PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteReportPacket);
 		}
 	
+		/**
+		 * Store the received reported routing info
+		 */
+		synchronized (mReportedRoutingTable) {
+			mReportedRoutingTable = pRouteReportPacket.getRoutes(); 
+		}
+
 		if(mParent instanceof Cluster){
 			Cluster tParentCluster = (Cluster)mParent;
 			
@@ -700,11 +732,18 @@ public class ComChannel
 			Logging.err(this, "   ..got routing share: " + pRouteSharePacket.getRoutes());
 		}
 		
+		/**
+		 * Store the received shared routing info
+		 */
+		synchronized (mSharedRoutingTable) {
+			mSharedRoutingTable = pRouteSharePacket.getRoutes(); 
+		}
+		
 		if(mParent instanceof CoordinatorAsClusterMember){
 			CoordinatorAsClusterMember tParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
 			
 			/**
-			 * Trigger: inform the cluster about the new routing report
+			 * Trigger: inform the CoordinatorAsClusterMember about the new routing report
 			 */
 			tParentCoordinatorAsClusterMember.getCoordinator().eventReceivedRouteShare(this, pRouteSharePacket);
 			
@@ -715,7 +754,7 @@ public class ComChannel
 			ClusterMember tParentClusterMember = (ClusterMember)mParent;
 			
 			/**
-			 * Trigger: inform the cluster about the new routing report
+			 * Trigger: inform the ClusterMember about the new routing report
 			 */
 			tParentClusterMember.eventReceivedRouteShare(this, pRouteSharePacket);
 			

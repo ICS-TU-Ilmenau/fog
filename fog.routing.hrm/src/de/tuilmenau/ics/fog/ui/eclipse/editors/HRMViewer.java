@@ -1264,7 +1264,35 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							showPacketQueue(tfComChannels.get(tSelectedIndex));
 						}
 					});
-
+					MenuItem tMenuItem6 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem6.setText("Show shared routing table");
+					tMenuItem6.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showSharedRoutes(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showSharedRoutes(tfComChannels.get(tSelectedIndex));
+						}
+					});
+					MenuItem tMenuItem7 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem7.setText("Show reported routing table");
+					tMenuItem7.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showReportedRoutes(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showReportedRoutes(tfComChannels.get(tSelectedIndex));
+						}
+					});
+					
 					tTable.setMenu(tMenu);
 				}
 			}
@@ -1287,6 +1315,26 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		int i = 0;
 		for (SignalingMessageHrm tPacket : pComChannel.getPacketQueue()){
 			Logging.log(this, "    ..[" + i + "]: " + tPacket);
+			i++;
+		}
+	}
+
+	private void showSharedRoutes(ComChannel pComChannel)
+	{
+		Logging.log(this, "Shared routing table received via: " + pComChannel);
+		int i = 0;
+		for (RoutingEntry tEntry : pComChannel.getSharedRoutingTable()){
+			Logging.log(this, "    ..[" + i + "]: " + tEntry);
+			i++;
+		}
+	}
+
+	private void showReportedRoutes(ComChannel pComChannel)
+	{
+		Logging.log(this, "Reported routing table received via: " + pComChannel);
+		int i = 0;
+		for (RoutingEntry tEntry : pComChannel.getReportedRoutingTable()){
+			Logging.log(this, "    ..[" + i + "]: " + tEntry);
 			i++;
 		}
 	}
