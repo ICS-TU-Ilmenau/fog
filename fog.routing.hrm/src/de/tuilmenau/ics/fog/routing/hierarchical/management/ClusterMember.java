@@ -672,9 +672,9 @@ public class ClusterMember extends ClusterName
 	@Override
 	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
 	{
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+//		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
 			Logging.log(this, "EVENT: coordinator invalidation (from side): " + pInvalidCoordinator);
-		}
+//		}
 		
 		/**
 		 * Duplicate the packet and write to the duplicate
