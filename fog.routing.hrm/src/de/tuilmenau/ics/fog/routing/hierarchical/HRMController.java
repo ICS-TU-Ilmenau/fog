@@ -4018,7 +4018,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * The route was already removed -> this can occur if both end points of a link are located on this node and both of them try to unregister the same route
 				 */
 				mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
-				Logging.warn(this, "Haven't found " + pRoutingEntry + " as HRG between " + pFrom + " and " + pTo);
+				Logging.warn(this, "Haven't found " + pRoutingEntry + " as HRG link between " + pFrom + " and " + pTo);
 //				if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
 					synchronized (mHierarchicalRoutingGraph) {
 						
