@@ -221,6 +221,16 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 	
 	/**
+	 * EVENT: cluster membership to superior coordinator lost
+	 */
+	private void eventClusterMembershipToSuperiorCoordinatorLost()
+	{
+		Logging.log(this, "EVENT: cluster membership to superior coordinator lost");
+
+		mCoordinator.eventClusterMembershipToSuperiorCoordinator(null);
+	}
+	
+	/**
 	 * EVENT: new HRMID assigned
      * The function is called when an address update was received.
 	 * 
@@ -274,6 +284,32 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	private boolean isActiveMembership()
 	{
 		return mMembershipIsActive;
+	}
+
+	/**
+	 * Sets the cluster activation, triggered by the Elector or the Cluster which got a new local Coordinator
+	 * 
+	 * @param pState the new state
+	 */
+	@Override
+	public void setClusterActivation(boolean pState)
+	{
+		boolean tOldState = isActiveCluster();
+		
+		super.setClusterActivation(pState);
+		
+		/**
+		 * Is it a transition from "true" to " false"?
+		 */
+		if((tOldState) && (!pState)){
+			// is this the currently active membership towards the superior cluster?
+			if(isActiveMembership()){
+				/**
+				 * Trigger: cluster membership to superior coordinator lost
+				 */
+				eventClusterMembershipToSuperiorCoordinatorLost();	
+			}
+		}
 	}
 
 	/**
