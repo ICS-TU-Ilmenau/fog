@@ -393,18 +393,15 @@ public class Cluster extends ClusterMember
 	 */
 	public void eventHierarchyNodePriorityUpdate(long pNewHierarchyNodePriority)
 	{
-		Logging.log(this, "EVENT: base node priority update to:  " + pNewHierarchyNodePriority);
+		Logging.log(this, "EVENT: hierarchy node priority update to:  " + pNewHierarchyNodePriority);
 		
 		/**
 		 * Set the new priority if it differs from the old one
 		 */
-		if((getPriority() != null) && (getPriority().getValue() != pNewHierarchyNodePriority)){
-			Logging.log(this, "Got new hierarchy node priority, updating own priority to " + pNewHierarchyNodePriority);
-			if(mElector != null){
-				mElector.updatePriority();
-			}else{
-				Logging.warn(this, "Elector is still invalid");
-			}
+		if(mElector != null){
+			mElector.updatePriority();
+		}else{
+			Logging.warn(this, "Elector is still invalid");
 		}
 	}
 
