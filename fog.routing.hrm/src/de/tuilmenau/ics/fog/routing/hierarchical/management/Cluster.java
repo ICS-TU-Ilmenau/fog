@@ -387,6 +387,28 @@ public class Cluster extends ClusterMember
 	}
 
 	/**
+	 * EVENT: new hierarchy node priority
+	 * 
+	 * @param pNewHierarchyNodePriority the new hierarchy node priority
+	 */
+	public void eventHierarchyNodePriorityUpdate(long pNewHierarchyNodePriority)
+	{
+		Logging.log(this, "EVENT: base node priority update to:  " + pNewHierarchyNodePriority);
+		
+		/**
+		 * Set the new priority if it differs from the old one
+		 */
+		if((getPriority() != null) && (getPriority().getValue() != pNewHierarchyNodePriority)){
+			Logging.log(this, "Got new hierarchy node priority, updating own priority to " + pNewHierarchyNodePriority);
+			if(mElector != null){
+				mElector.updatePriority();
+			}else{
+				Logging.warn(this, "Elector is still invalid");
+			}
+		}
+	}
+
+	/**
 	 * Assign new HRMID for being addressable.
 	 *  
 	 * @param pCaller the caller who assigns the new HRMID

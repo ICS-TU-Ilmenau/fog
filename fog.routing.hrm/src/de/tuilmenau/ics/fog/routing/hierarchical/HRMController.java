@@ -2584,11 +2584,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mConnectivityPriorityUpdates++;
 		
 		/**
-		 * Inform all local cluster members at level 0 about the change
+		 * Inform all local ClusterMembers/Clusters at level 0 about the change
 		 * HINT: we have to enforce a permanent lock of mLocalClusterMembers, 
 		 *       otherwise race conditions might be caused (another ClusterMemeber 
 		 *       could be created while we are updating the priorities of all the 
 		 *       formerly known ones)
+		 * HINT: mLocalClusterMembers also contains all local Clusters      
 		 */
 		synchronized (mLocalClusterMembers) {
 			Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mConnectivityPriorityUpdates + ")");
@@ -2624,13 +2625,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 *       could be created while we are updating the priorities of all the 
 		 *       formerly known ones)
 		 */
+		Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mHierarchyPriorityUpdates + ")");
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
-			Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mHierarchyPriorityUpdates + ")");
 			int i = 0;
 			for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mLocalCoordinatorAsClusterMemebers){
 				if((tCoordinatorAsClusterMember.getHierarchyLevel().equals(pLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
 					Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tCoordinatorAsClusterMember);
 					tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pLevel));
+					i++;
+				}
+			}
+		}
+		synchronized (mLocalClusters) {
+			int i = 0;
+			for(Cluster tLocalCluster : mLocalClusters){
+				if((tLocalCluster.getHierarchyLevel().equals(pLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
+					Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tLocalCluster);
+					tLocalCluster.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pLevel));
 					i++;
 				}
 			}
@@ -3750,7 +3761,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mHierarchicalRoutingGraph) {
 			if(mHierarchicalRoutingGraph.contains(pNode)) {
-				mDescriptionHRGUpdates += "\n - " + pNode + " ==> " + pCause;
+				mDescriptionHRGUpdates += "\n - " + pNode + " <== " + pCause;
 				mHierarchicalRoutingGraph.remove(pNode);
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..removed from HRG");
@@ -3817,7 +3828,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 				if(!tLinkAlreadyKnown){
-					mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
+					mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
 					mHierarchicalRoutingGraph.link(pFrom.clone(), pTo.clone(), tLink);
 					
 					// it's time to update the HRG-GUI
@@ -3826,7 +3837,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * The link is already known -> this can occur if both end points are located on this node and both of them try to register the same route
 					 */
-					mDescriptionHRGUpdates += "\n +" + (tLinkAlreadyKnown ? "(REF)" : "") + " " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
+					mDescriptionHRGUpdates += "\n +" + (tLinkAlreadyKnown ? "(REF)" : "") + " " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
 				}
 				tResult = true;
 			}
@@ -3882,7 +3893,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					// remove the link from the HRG
 					mHierarchicalRoutingGraph.unlink(tLink);
 					
-					mDescriptionHRGUpdates += "\n -(AUTO_DEL) " + tEndPoints.getFirst() + " to " + tEndPoints.getSecond() + " ==> " + tLink.getRoute().getFirst();
+					mDescriptionHRGUpdates += "\n -(AUTO_DEL) " + tEndPoints.getFirst() + " to " + tEndPoints.getSecond() + " ==> " + tLink.getRoute().getFirst()  + " <== unregisterAutoHRG()";
 				}
 			}
 		}		
@@ -3973,24 +3984,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
 							if(tKnownLink.equals(tSearchPattern)){
 								//Logging.warn(this, "       ..MATCH");
-								if(tKnownLink.getRefCounter() == 1){
+//								if(tKnownLink.getRefCounter() == 1){
 									// remove the link
 									mHierarchicalRoutingGraph.unlink(tKnownLink);
 									
 									// it's time to update the HRG-GUI
 									notifyHRGGUI(null);
-								}else{
-									if(tKnownLink.getRefCounter() < 1){
-										throw new RuntimeException("Found an HRG link with an invalid ref. counter: " + tKnownLink);
-									}
-									
-									tKnownLink.decRefCounter();
-									tChangedRefCounter = true;
-									
-									// it's time to update the HRG-GUI
-									notifyHRGGUI(tKnownLink);
-								}
-								// we have a positive result
+//								}else{
+//									if(tKnownLink.getRefCounter() < 1){
+//										throw new RuntimeException("Found an HRG link with an invalid ref. counter: " + tKnownLink);
+//									}
+//									
+//									tKnownLink.decRefCounter();
+//									tChangedRefCounter = true;
+//									
+//									// it's time to update the HRG-GUI
+//									notifyHRGGUI(tKnownLink);
+//								}
+//								// we have a positive result
 								tResult = true;
 								// work is done
 								break;
@@ -4006,7 +4017,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				/**
 				 * The route was already removed -> this can occur if both end points of a link are located on this node and both of them try to unregister the same route
 				 */
-				mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
+				mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
 				Logging.warn(this, "Haven't found " + pRoutingEntry + " as HRG between " + pFrom + " and " + pTo);
 //				if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
 					synchronized (mHierarchicalRoutingGraph) {
@@ -4043,7 +4054,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 //				}
 			}else{
-				mDescriptionHRGUpdates += "\n -" + (tChangedRefCounter ? "(REF)" : "") +" " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString();
+				mDescriptionHRGUpdates += "\n -" + (tChangedRefCounter ? "(REF)" : "") +" " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
 
 				/**
 				 * Unregister all isolated nodes
