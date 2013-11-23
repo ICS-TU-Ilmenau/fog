@@ -911,17 +911,17 @@ public class Elector implements Localization
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
 			if(mParent.getHierarchyLevel().isHigherLevel()){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+//				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
 					Logging.log(this, "Returning to elections..");
-				}
+//				}
 				/**
 				 * AVOID multiple RETURNS
 				 */
 				synchronized (mNodeActiveClusterMembers){
 					LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
 						Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tLevelList);
-					}
+//					}
 					
 					/**
 					 * ONLY PROCEED IF THE PARENT IS AN ACTIVE ClusterMember!
