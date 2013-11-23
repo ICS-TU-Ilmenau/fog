@@ -1656,13 +1656,17 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				//switches to different thread
 				mDisplay.asyncExec(this);
 			} else {
-				Point tOldScrollPosition = mScroller.getOrigin();
-				
-				destroyPartControl();
-				
-				createPartControl(mShell);
-				
-				mScroller.setOrigin(tOldScrollPosition);
+				if(!mScroller.isDisposed()){
+					Point tOldScrollPosition = mScroller.getOrigin();
+					
+					destroyPartControl();
+					
+					createPartControl(mShell);
+					
+					mScroller.setOrigin(tOldScrollPosition);
+				}else{
+					Logging.warn(this, "Scroller is already disposed");
+				}
 			}
 		}
 	}
