@@ -808,13 +808,13 @@ public class Cluster extends ClusterMember
 			{
 				case 0:
 					// it's an inter-cluster link because local loopbacks aren't sent as report
-					tEntry.extendCause(this + "::eventRouteReport()(0 hops) from " + pSourceComChannel.getPeerHRMID());
+					tEntry.extendCause(this + "::eventReceivedRouteReport()(0 hops) from " + pSourceComChannel.getPeerHRMID());
 					mHRMController.registerAutoHRG(tEntry);
 					break;
 				case 1:
 					// do we have an intra-cluster link?
 					if(!tEntry.getDest().isClusterAddress()){
-						tEntry.extendCause(this + "::eventRouteReport()(1 hop) from " + pSourceComChannel.getPeerHRMID());
+						tEntry.extendCause(this + "::eventReceivedRouteReport()(1 hop) from " + pSourceComChannel.getPeerHRMID());
 						mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tEntry);
 					}else{
 						// strange, an inter-cluster link with ONE hop?!
