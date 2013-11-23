@@ -258,6 +258,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private String mDescriptionNodeElectionState = new String();
 
 	/**
+	 * Stores if the GUI user has selected to deactivate topology reports.
+	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
+	 */
+	public static boolean GUI_USER_CTRL_TOPOLOGY_REPORTS = true;
+
+	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
@@ -3103,18 +3109,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //		generalizeMeighborHRMRoutesAuto();
 		
 		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
-			/**
-			 * report phase
-			 */
-			for (Coordinator tCoordinator : getAllCoordinators()) {
-				tCoordinator.reportPhase();
-			}
-			if(HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY){
+			if(GUI_USER_CTRL_TOPOLOGY_REPORTS){
 				/**
-				 * share phase
+				 * report phase
 				 */
 				for (Coordinator tCoordinator : getAllCoordinators()) {
-					tCoordinator.sharePhase();
+					tCoordinator.reportPhase();
+				}
+				if(HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY){
+					/**
+					 * share phase
+					 */
+					for (Coordinator tCoordinator : getAllCoordinators()) {
+						tCoordinator.sharePhase();
+					}
 				}
 			}
 		}			

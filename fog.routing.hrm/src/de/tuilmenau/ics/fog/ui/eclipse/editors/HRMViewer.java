@@ -99,6 +99,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private Composite mGlobalContainer = null;
     private Composite mContainer = null;
     private Composite mToolBtnContainer = null;
+    private Composite mToolChlBoxContainer = null;
     private ScrolledComposite mScroller = null;
     
     private Button mBtnPriorityLog = null;
@@ -108,6 +109,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Button mBtnHRGLog = null;
     private Button mBtnSuperiorCoordinatorsLog = null;
     private Button mBtnUsedClusterAddressesLog = null;
+    private Button mBtnTopologyReports = null;
     
     private Button mBtnClusterMembers = null;
     private Button mBtnCoordClusterMembers = null;
@@ -162,9 +164,15 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mGuiCounter == 1){
 			mToolBtnContainer = new Composite(pParent, SWT.NONE);
 	
-			GridLayout tLayout1 = new GridLayout(10, false);
+			GridLayout tLayout1 = new GridLayout(7, false);
 			mToolBtnContainer.setLayout(tLayout1);
 			mToolBtnContainer.setLayoutData(createGridData(true, 1));
+			
+			mToolChlBoxContainer = new Composite(pParent, SWT.NONE);
+			
+			GridLayout tLayout2 = new GridLayout(4, false);
+			mToolChlBoxContainer.setLayout(tLayout2);
+			mToolChlBoxContainer.setLayoutData(createGridData(true, 1));
 		}
 		
 		/**
@@ -294,7 +302,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 */
 		// **** hide/show cluster members ****
 		if(mGuiCounter == 1){
-			mBtnClusterMembers = new Button(mToolBtnContainer, SWT.CHECK);
+			mBtnClusterMembers = new Button(mToolChlBoxContainer, SWT.CHECK);
 		}
 		mBtnClusterMembers.setText("ClusterMembers");
 		if(mShowClusterMembers){
@@ -314,7 +322,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		// **** hide/show coordinators-as-cluster-members ****
 		if(mGuiCounter == 1){
-			mBtnCoordClusterMembers = new Button(mToolBtnContainer, SWT.CHECK);
+			mBtnCoordClusterMembers = new Button(mToolChlBoxContainer, SWT.CHECK);
 		}
 		mBtnCoordClusterMembers.setText("CoordinatorAsClusterMembers");
 		if(mShowCoordinatorAsClusterMembers){
@@ -334,7 +342,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		// **** deactivate/activate coordinator announcements ****
 		if(mGuiCounter == 1){
-			mBtnCoordAnnounce = new Button(mToolBtnContainer, SWT.CHECK);
+			mBtnCoordAnnounce = new Button(mToolChlBoxContainer, SWT.CHECK);
 		}
 		mBtnCoordAnnounce.setText("Coordinator announcements");
 		if (Coordinator.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
@@ -348,6 +356,25 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
 					Coordinator.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = !Coordinator.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS;
+				}
+			});
+		}
+		// **** deactivate/activate topology reports ****
+		if(mGuiCounter == 1){
+			mBtnTopologyReports = new Button(mToolChlBoxContainer, SWT.CHECK);
+		}
+		mBtnTopologyReports.setText("Topology reports");
+		if (HRMController.GUI_USER_CTRL_TOPOLOGY_REPORTS){
+			mBtnTopologyReports.setSelection(true);
+		}else{
+			mBtnTopologyReports.setSelection(false);
+		}
+		if(mGuiCounter == 1){
+			mBtnTopologyReports.setLayoutData(createGridData(false, 1));
+			mBtnTopologyReports.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					HRMController.GUI_USER_CTRL_TOPOLOGY_REPORTS = !HRMController.GUI_USER_CTRL_TOPOLOGY_REPORTS;
 				}
 			});
 		}
