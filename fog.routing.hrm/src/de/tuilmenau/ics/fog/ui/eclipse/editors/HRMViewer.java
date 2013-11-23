@@ -110,6 +110,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Button mBtnSuperiorCoordinatorsLog = null;
     private Button mBtnUsedClusterAddressesLog = null;
     private Button mBtnTopologyReports = null;
+    private Button mBtnShareRoutes = null;
     
     private Button mBtnClusterMembers = null;
     private Button mBtnCoordClusterMembers = null;
@@ -170,7 +171,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			
 			mToolChlBoxContainer = new Composite(pParent, SWT.NONE);
 			
-			GridLayout tLayout2 = new GridLayout(4, false);
+			GridLayout tLayout2 = new GridLayout(5, false);
 			mToolChlBoxContainer.setLayout(tLayout2);
 			mToolChlBoxContainer.setLayoutData(createGridData(true, 1));
 		}
@@ -364,7 +365,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			mBtnTopologyReports = new Button(mToolChlBoxContainer, SWT.CHECK);
 		}
 		mBtnTopologyReports.setText("Topology reports");
-		if (HRMController.GUI_USER_CTRL_TOPOLOGY_REPORTS){
+		if (HRMController.GUI_USER_CTRL_REPORT_TOPOLOGY){
 			mBtnTopologyReports.setSelection(true);
 		}else{
 			mBtnTopologyReports.setSelection(false);
@@ -374,7 +375,26 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			mBtnTopologyReports.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
-					HRMController.GUI_USER_CTRL_TOPOLOGY_REPORTS = !HRMController.GUI_USER_CTRL_TOPOLOGY_REPORTS;
+					HRMController.GUI_USER_CTRL_REPORT_TOPOLOGY = !HRMController.GUI_USER_CTRL_REPORT_TOPOLOGY;
+				}
+			});
+		}
+		// **** deactivate/activate share routes ****
+		if(mGuiCounter == 1){
+			mBtnShareRoutes = new Button(mToolChlBoxContainer, SWT.CHECK);
+		}
+		mBtnShareRoutes.setText("Share routes");
+		if (HRMController.GUI_USER_CTRL_SHARE_ROUTES){
+			mBtnShareRoutes.setSelection(true);
+		}else{
+			mBtnShareRoutes.setSelection(false);
+		}
+		if(mGuiCounter == 1){
+			mBtnShareRoutes.setLayoutData(createGridData(false, 1));
+			mBtnShareRoutes.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					HRMController.GUI_USER_CTRL_SHARE_ROUTES = !HRMController.GUI_USER_CTRL_SHARE_ROUTES;
 				}
 			});
 		}

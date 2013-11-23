@@ -261,7 +261,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores if the GUI user has selected to deactivate topology reports.
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
-	public static boolean GUI_USER_CTRL_TOPOLOGY_REPORTS = true;
+	public static boolean GUI_USER_CTRL_REPORT_TOPOLOGY	= true;
+
+	/**
+	 * Stores if the GUI user has selected to deactivate topology reports.
+	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
+	 */
+	public static boolean GUI_USER_CTRL_SHARE_ROUTES = true;
 
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
@@ -2221,7 +2227,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		for(RoutingEntry tNewEntry : pReceivedSharedRoutingTable){
 			if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-				Logging.err(this, "  ..received shared route: " + tNewEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tNewEntry.getDest()));
+//				Logging.err(this, "  ..received shared route: " + tNewEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tNewEntry.getDest()));
 			}
 				
 			/**
@@ -3109,7 +3115,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //		generalizeMeighborHRMRoutesAuto();
 		
 		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
-			if(GUI_USER_CTRL_TOPOLOGY_REPORTS){
+			if(GUI_USER_CTRL_REPORT_TOPOLOGY){
 				/**
 				 * report phase
 				 */
@@ -3117,11 +3123,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					tCoordinator.reportPhase();
 				}
 				if(HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY){
-					/**
-					 * share phase
-					 */
-					for (Coordinator tCoordinator : getAllCoordinators()) {
-						tCoordinator.sharePhase();
+					if(GUI_USER_CTRL_SHARE_ROUTES){
+						/**
+						 * share phase
+						 */
+						for (Coordinator tCoordinator : getAllCoordinators()) {
+							tCoordinator.sharePhase();
+						}
 					}
 				}
 			}
