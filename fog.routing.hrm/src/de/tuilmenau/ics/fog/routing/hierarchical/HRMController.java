@@ -261,13 +261,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores if the GUI user has selected to deactivate topology reports.
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
-	public static boolean GUI_USER_CTRL_REPORT_TOPOLOGY	= true;
+	public static boolean GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
 
 	/**
 	 * Stores if the GUI user has selected to deactivate topology reports.
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
-	public static boolean GUI_USER_CTRL_SHARE_ROUTES = true;
+	public static boolean GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
 
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
@@ -3114,26 +3114,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 //		generalizeMeighborHRMRoutesAuto();
 		
-		if(HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY){
-			if(GUI_USER_CTRL_REPORT_TOPOLOGY){
+		if(GUI_USER_CTRL_REPORT_TOPOLOGY){
+			/**
+			 * report phase
+			 */
+			for (Coordinator tCoordinator : getAllCoordinators()) {
+				tCoordinator.reportPhase();
+			}
+			if(GUI_USER_CTRL_SHARE_ROUTES){
 				/**
-				 * report phase
+				 * share phase
 				 */
 				for (Coordinator tCoordinator : getAllCoordinators()) {
-					tCoordinator.reportPhase();
-				}
-				if(HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY){
-					if(GUI_USER_CTRL_SHARE_ROUTES){
-						/**
-						 * share phase
-						 */
-						for (Coordinator tCoordinator : getAllCoordinators()) {
-							tCoordinator.sharePhase();
-						}
-					}
+					tCoordinator.sharePhase();
 				}
 			}
-		}			
+		}
 		
 		/**
 		 * register next trigger
