@@ -413,7 +413,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 														}
 														i++;	
 													}else{
-														Logging.warn(this, "sharePhase() found a complex intra-cluster route: " + tIntraClusterPath + " from " + tLastClusterGateway + " to " + tNextClusterGateway + " as: " + tIntraClusterPath + " for a routing from " + tPeerHRMID + " to " + tPossibleDestination);
+														Logging.warn(this, "sharePhase() for " + tPeerHRMID + " found a complex intra-cluster route: " + tIntraClusterPath + " from " + tLastClusterGateway + " to " + tNextClusterGateway + " as: " + tIntraClusterPath + " for a routing from " + tPeerHRMID + " to " + tPossibleDestination);
 														
 														// reset
 														tFinalRoutingEntryToDestination = null;
@@ -424,7 +424,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 														//HINT: do not throw a RuntimeException here because such a situation could have a temporary cause
 													}
 												}else{
-													Logging.warn(this, "sharePhase() couldn't find a route from " + tLastClusterGateway + " to " + tNextClusterGateway + " for a routing from " + tPeerHRMID + " to " + tPossibleDestination);
+													Logging.warn(this, "sharePhase() for " + tPeerHRMID + " couldn't find a route from " + tLastClusterGateway + " to " + tNextClusterGateway + " for a routing from " + tPeerHRMID + " to " + tPossibleDestination);
 													
 													// reset
 													tFinalRoutingEntryToDestination = null;
@@ -468,7 +468,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											i++;	
 										}
 									}else{
-										Logging.err(this, "sharePhase() found an empty path from " + tPeerHRMID + " to " + tPossibleDestination);
+										Logging.err(this, "sharePhase() for " + tPeerHRMID + " found an empty path from " + tPeerHRMID + " to " + tPossibleDestination);
 									}
 									
 									if(tFinalRoutingEntryToDestination != null){
@@ -494,7 +494,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										tSharedRoutingTable.addEntry(tFinalRoutingEntryToDestination);
 									}
 								}else{
-									Logging.err(this, "Couldn't determine a route from " + tPeerHRMID + " to " + tPossibleDestination);
+									Logging.err(this, "sharePhase() for " + tPeerHRMID + " couldn't determine a route from " + tPeerHRMID + " to " + tPossibleDestination);
 								}
 							}
 						}

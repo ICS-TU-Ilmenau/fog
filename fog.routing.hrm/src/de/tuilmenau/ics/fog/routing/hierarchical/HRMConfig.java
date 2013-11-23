@@ -86,7 +86,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for the share phase
 		 */
-		public static final boolean SHOW_SHARE_PHASE = true;
+		public static final boolean SHOW_SHARE_PHASE = false;
 
 		/**
 		 * Shows debug outputs about the routing process 
