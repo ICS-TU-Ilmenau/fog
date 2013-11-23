@@ -3130,16 +3130,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void delCoordinatorProxiesAuto()
 	{
-		LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
-		for(CoordinatorProxy tProxy : tProxies){
-			// does the link have a timeout?
-			if(tProxy.isObsolete()){
-				Logging.log(this, "AUTO REMOVING COORDINATOR PROXY: " + tProxy);
-
-				/**
-				 * Trigger: remote coordinator role invalid
-				 */
-				tProxy.eventRemoteCoordinatorRoleInvalid();
+		if(Coordinator.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+			LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
+			for(CoordinatorProxy tProxy : tProxies){
+				// does the link have a timeout?
+				if(tProxy.isObsolete()){
+					Logging.log(this, "AUTO REMOVING COORDINATOR PROXY: " + tProxy);
+	
+					/**
+					 * Trigger: remote coordinator role invalid
+					 */
+					tProxy.eventRemoteCoordinatorRoleInvalid();
+				}
 			}
 		}
 	}

@@ -337,7 +337,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			mBtnCoordAnnounce = new Button(mToolBtnContainer, SWT.CHECK);
 		}
 		mBtnCoordAnnounce.setText("Coordinator announcements");
-		if (Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+		if (Coordinator.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 			mBtnCoordAnnounce.setSelection(true);
 		}else{
 			mBtnCoordAnnounce.setSelection(false);
@@ -347,7 +347,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			mBtnCoordAnnounce.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
-					Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS = !Coordinator.USER_CTRL_COORDINATOR_ANNOUNCEMENTS;
+					Coordinator.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = !Coordinator.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS;
 				}
 			});
 		}
