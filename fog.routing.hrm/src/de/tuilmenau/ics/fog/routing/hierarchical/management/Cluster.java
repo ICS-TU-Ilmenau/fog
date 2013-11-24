@@ -254,6 +254,7 @@ public class Cluster extends ClusterMember
 		HRMID tOwnHRMID = getHRMID();
 
 		boolean tClusterIsTopOfHierarchy = getHierarchyLevel().isHighest(); 
+		boolean tNewL0HRMID = false;
 		if((tOwnHRMID != null) || (tClusterIsTopOfHierarchy)){
 			// do we have a new HRMID since the last call?
 //			if ((mHRMIDLastDistribution == null) || (!mHRMIDLastDistribution.equals(tOwnHRMID))){
@@ -301,7 +302,10 @@ public class Cluster extends ClusterMember
 								Logging.log(this, "    ..setting local HRMID " + tThisNodesAddress.toString());
 					
 								// store the new HRMID for this node
+								Logging.log(this, "distributeAddresses() [" + mSentAddressBroadcast + "] sets new L0HRMID: " + tThisNodesAddress);
 								setL0HRMID(tThisNodesAddress);
+								
+								tNewL0HRMID = true;
 							}else{
 								if(tThisNodesAddress == null){
 									throw new RuntimeException(this + "::distributeAddresses() got a zero HRMID from allocateClusterMemberAddress()");
@@ -332,10 +336,11 @@ public class Cluster extends ClusterMember
 					/**
 					 * Announce the local node HRMIDs if we are at base hierarchy level
 					 */
-					if(getHierarchyLevel().isBaseLevel()){
-						LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
-						for(Cluster tL0Cluster : tL0Clusters){
-							tL0Cluster.distributeAnnounceHRMIDs();
+					if(tNewL0HRMID){
+						LinkedList<ClusterMember> tL0ClusterMembers = mHRMController.getAllL0ClusterMembers();
+						for(ClusterMember tL0ClusterMember : tL0ClusterMembers){
+							Logging.log(this, "distributeAddresses() [" + mSentAddressBroadcast + "] triggers an AnnounceHRMID for: " + tL0ClusterMember + " with HRMIDs: " + mHRMController.getHRMIDs());
+							tL0ClusterMember.distributeAnnounceHRMIDs();
 						}
 					}
 				}
