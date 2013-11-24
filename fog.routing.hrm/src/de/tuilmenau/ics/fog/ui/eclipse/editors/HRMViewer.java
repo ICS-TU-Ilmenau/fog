@@ -1325,6 +1325,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		int i = 0;
 		for (RoutingEntry tEntry : pComChannel.getSharedRoutingTable()){
 			Logging.log(this, "    ..[" + i + "]: " + tEntry);
+			Logging.log(this, "    ..cause:");
+			int j = 0;
+			for (String tCauseString : tEntry.getCause()){
+				Logging.trace(this, "      ..[" + j + "]: " + tCauseString);
+				j++;
+			}		
 			i++;
 		}
 	}
@@ -1335,6 +1341,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		int i = 0;
 		for (RoutingEntry tEntry : pComChannel.getReportedRoutingTable()){
 			Logging.log(this, "    ..[" + i + "]: " + tEntry);
+			Logging.log(this, "    ..cause:");
+			int j = 0;
+			for (String tCauseString : tEntry.getCause()){
+				Logging.trace(this, "      ..[" + j + "]: " + tCauseString);
+				j++;
+			}		
 			i++;
 		}
 	}
