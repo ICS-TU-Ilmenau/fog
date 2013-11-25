@@ -69,8 +69,10 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 
 			// add the route to the routing table
 			if(pRoutingTableEntry.isLocalLoop()){
+				//Logging.log(null, "Adding as first: " + pRoutingTableEntry + ", cause=" + pRoutingTableEntry.getCause());
 				addFirst(pRoutingTableEntry.clone());
 			}else{
+				//Logging.log(null, "Adding as last: " + pRoutingTableEntry + ", cause=" + pRoutingTableEntry.getCause());
 				add(pRoutingTableEntry.clone());
 			}
 			
@@ -84,6 +86,10 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					Logging.log(this, "Updating timeout for: " + tFoundDuplicate + " to: " + pRoutingTableEntry.getTimeout());
 				}
 				tFoundDuplicate.setTimeout(pRoutingTableEntry.getTimeout());
+
+				tResult = true;
+			}else{
+				//Logging.log(this, "Cannot update timeout value: " + tFoundDuplicate.getTimeout());
 			}
 		}
 		
@@ -121,6 +127,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		 */
 		if (tRemoveThese.size() > 0){
 			for(RoutingEntry tEntry: tRemoveThese){
+				//Logging.log(null, "Removing: " + tEntry + ", cause=" + tEntry.getCause());
 				remove(tEntry);
 				
 				tResult = true;
@@ -162,6 +169,8 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		boolean tResult = false;
 		
 		for(RoutingEntry tEntry : pRoutingTable){
+			tEntry.extendCause("RT::delEntries()");
+
 			tResult |= delEntry(tEntry);
 		}
 		
