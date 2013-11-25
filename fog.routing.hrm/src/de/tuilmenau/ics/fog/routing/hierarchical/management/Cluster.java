@@ -819,7 +819,28 @@ public class Cluster extends ClusterMember
 				case 0:
 					// it's an inter-cluster link because local loopbacks aren't sent as report
 					tEntry.extendCause(this + "::eventReceivedRouteReport()(0 hops) from " + pSourceComChannel.getPeerHRMID());
-					mHRMController.registerAutoHRG(tEntry);
+					/**
+					 * Check if the reported link is already reported by a local inferior coordinator.
+					 * 
+					 * For example, the local coordinator 1.0.0 exists and the foreign coordinator 2.0.0 reports a link from (1.0.0 <==> 2.0.0). 
+					 * In this case, the local coordinator 1.0.0 has already registered the corresponding HRG links.
+					 */
+					HRMID tFromCluster = tEntry.getNextHop().getForeignCluster(tEntry.getSource());
+					HRMID tToCluster = tEntry.getSource().getForeignCluster(tEntry.getNextHop());
+					boolean tLinkAlreadyKnown = false;
+					LinkedList<Coordinator> tLocalInferiorCoordinators = mHRMController.getAllCoordinators(getHierarchyLevel().getValue() - 1);
+					for(Coordinator tCoordinator : tLocalInferiorCoordinators){
+						if((tFromCluster.equals(tCoordinator.getHRMID())) || (tToCluster.equals(tCoordinator.getHRMID()))){
+							tLinkAlreadyKnown = true;
+						}
+					}
+					if(!tLinkAlreadyKnown){
+						mHRMController.registerAutoHRG(tEntry);
+					}else{
+						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+							Logging.log(this, "Dropping uninteresting reported route: " + tEntry);
+						}
+					}
 					break;
 				case 1:
 					// do we have an intra-cluster link?
