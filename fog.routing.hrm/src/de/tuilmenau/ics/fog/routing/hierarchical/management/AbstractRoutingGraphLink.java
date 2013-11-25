@@ -204,7 +204,9 @@ public class AbstractRoutingGraphLink implements Serializable
 	 */
 	public void setTimeout(double pTimeout)
 	{
-		mTimeout = pTimeout;
+		double tTimeout = 100 * pTimeout;
+		long tTimeoutLong = (long) tTimeout;
+		mTimeout = ((double)tTimeoutLong) / 100;
 	}
 	
 	/**
