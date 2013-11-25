@@ -314,7 +314,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 */
 								if(tEntry.getSource().isCluster(tPeerHRMID)){
 									RoutingEntry tNewEntry = tEntry.clone();
-									tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_1(" + mCallsSharePhase + ")(" + j + ")");
+									tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_1(" + mCallsSharePhase + ")(" + j + ") as " + tNewEntry);
 									// share the received entry with the peer
 									tSharedRoutingTable.addEntry(tNewEntry);
 									
@@ -329,7 +329,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									RoutingEntry tRoutingEntryWithPeer = mHRMController.getRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
 									if(tRoutingEntryWithPeer != null){
 										tRoutingEntryWithPeer.chain(tEntry);
-										tRoutingEntryWithPeer.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ")");
+										tRoutingEntryWithPeer.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ") as " + tRoutingEntryWithPeer);
 										// share the received entry with the peer
 										tSharedRoutingTable.addEntry(tRoutingEntryWithPeer);
 									}
