@@ -265,6 +265,13 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 		}
 		
 		/**
+		 * if both are equal, they belong obviously to the same cluster
+		 */
+		if(equals(pClusterAddress)){
+			return true;
+		}
+		
+		/**
 		 * Search for the start of the cluster prefix
 		 */
 		int tCheckLevel = pClusterAddress.getHierarchyLevel();
