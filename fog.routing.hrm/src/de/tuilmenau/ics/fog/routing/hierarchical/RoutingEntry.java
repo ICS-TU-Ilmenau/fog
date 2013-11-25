@@ -165,9 +165,9 @@ public class RoutingEntry implements RouteSegment
 	@SuppressWarnings("unchecked")
 	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, LinkedList<String> pCause)
 	{
-		mDestination = pDestination;
-		mSource = pSource;
-		mNextHop = pNextHop;
+		mDestination = (pDestination != null ? pDestination.clone() : null);
+		mSource = (pSource != null ? pSource.clone() : null);
+		mNextHop = (pNextHop != null ? pNextHop.clone() : null);
 		mHopCount = pHopCount;
 		mUtilization = pUtilization;
 		mMinDelay = pMinDelay;
@@ -193,18 +193,8 @@ public class RoutingEntry implements RouteSegment
 	 */
 	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
-		mDestination = pDestination;
-		mSource = pSource;
-		mNextHop = pNextHop;
-		mHopCount = pHopCount;
-		mUtilization = pUtilization;
-		mMinDelay = pMinDelay;
-		mMaxDataRate = pMaxDataRate;
-		mLocalLoop = false;
-		mRouteToDirectNeighbor = false;
-		if((pCause != null) && (!pCause.isEmpty())){
-			mCause.add(pCause);
-		}
+		this(pSource, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate, (LinkedList<String>)null);
+		mCause.add(pCause);
 	}
 	
 	/**
@@ -485,6 +475,16 @@ public class RoutingEntry implements RouteSegment
 	public void setDest(HRMID pDestination)
 	{
 		mDestination = pDestination;
+	}
+
+	/**
+	 * Sets a new source
+	 * 
+	 * @param pSource the new source
+	 */
+	public void setSource(HRMID pSource)
+	{
+		mSource = pSource;	
 	}
 
 	/**
