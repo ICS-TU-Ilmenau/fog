@@ -34,6 +34,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
@@ -116,7 +117,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Button mBtnCoordClusterMembers = null;
     private Button mBtnCoordAnnounce = null;
     
+    private Table mTableRoutingTable = null;
+    
     private int mGuiCounter = 0;
+
+    private boolean mNextGUIUpdateResetsOnlyRoutingTable = false;
     
 	private boolean mShowClusterMembers = false;
 	private boolean mShowCoordinatorAsClusterMembers = false;
@@ -422,9 +427,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	{
 		mGuiCounter++;
 		
-		// get the HRS instance
-		HRMRoutingService tHRS = mHRMController.getHRS();
-
 		mShell = pParent;
 		mDisplay = pParent.getDisplay();
 
@@ -558,7 +560,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn tTableL2Addr = new TableColumn(tTableMappingTable, SWT.NONE, 1);
 		tTableL2Addr.setText("L2 address");
 		
-		HashMap<HRMID, L2Address> tHRMIDToL2AddressMapping = tHRS.getHRMIDToL2AddressMapping();
+		HashMap<HRMID, L2Address> tHRMIDToL2AddressMapping = mHRMController.getHRS().getHRMIDToL2AddressMapping();
 		if (HRM_VIEWER_DEBUGGING){
 			Logging.log(this, "Found " + tHRMIDToL2AddressMapping.keySet().size() + " HRMID-to-L2Address mappings");
 		}
@@ -601,293 +603,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 3: HRM routing table of the node
 		 */
-		if (HRM_VIEWER_DEBUGGING){
-			Logging.log(this, "Printing HRM routing table...");
-		}
-		// create the headline
-		StyledText tSignaturesLabel2 = new StyledText(mContainer, SWT.BORDER);
-		tSignaturesLabel2.setText("HRM Routing Table");
-		tSignaturesLabel2.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
-		tSignaturesLabel2.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
-	    StyleRange style3 = new StyleRange();
-	    style3.start = 0;
-	    style3.length = tSignaturesLabel2.getText().length();
-	    style3.fontStyle = SWT.BOLD;
-	    tSignaturesLabel2.setStyleRange(style3);
-	    
-	    // create the GUI container
-	    mContainerRoutingTable = new Composite(mContainer, SWT.NONE);
-	    GridData tLayoutDataRoutingTable = new GridData(SWT.FILL, SWT.FILL, true, true);
-	    tLayoutDataRoutingTable.horizontalSpan = 1;
-	    mContainerRoutingTable.setLayoutData(tLayoutDataRoutingTable); 
-	    
-	    // create the table
-		final Table tTableRoutingTable = new Table(mContainerRoutingTable, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
-		tTableRoutingTable.setHeaderVisible(true);
-		tTableRoutingTable.setLinesVisible(true);
-		
-		// create the columns and define the texts for the header row
-		// col. 0
-		TableColumn tTableColDest = new TableColumn(tTableRoutingTable, SWT.NONE, 0);
-		tTableColDest.setText("Dest.");
-		// col. 1
-		TableColumn tTableColNext = new TableColumn(tTableRoutingTable, SWT.NONE, 1);
-		tTableColNext.setText("Next hop");
-		// col. 2
-		TableColumn tTableColHops = new TableColumn(tTableRoutingTable, SWT.NONE, 2);
-		tTableColHops.setText("Hops");
-		// col. 3
-		TableColumn tTableColUtil = new TableColumn(tTableRoutingTable, SWT.NONE, 3);
-		tTableColUtil.setText("Util. [%]");
-		// col. 4
-		TableColumn tTableColDelay = new TableColumn(tTableRoutingTable, SWT.NONE, 4);
-		tTableColDelay.setText("MinDelay [ms]");
-		// col. 5
-		TableColumn tTableColDR = new TableColumn(tTableRoutingTable, SWT.NONE, 5);
-		tTableColDR.setText("MaxDR [Kb/s]");
-		// col. 6
-		TableColumn tTableColLoop = new TableColumn(tTableRoutingTable, SWT.NONE, 6);
-		tTableColLoop.setText("Loopback?");
-		// col. 7
-		TableColumn tTableColDirectNeighbor = new TableColumn(tTableRoutingTable, SWT.NONE, 7);
-		tTableColDirectNeighbor.setText("Route to neighbor");
-		// col. 8
-		TableColumn tTableColSource = new TableColumn(tTableRoutingTable, SWT.NONE, 8);
-		tTableColSource.setText("Source");
-		// col. 9
-		TableColumn tTableColNextL2 = new TableColumn(tTableRoutingTable, SWT.NONE, 9);
-		tTableColNextL2.setText("NextL2");
-		// col. 10
-		TableColumn tTableColTimeout = new TableColumn(tTableRoutingTable, SWT.NONE, 10);
-		tTableColTimeout.setText("Timeout");
-		
-		RoutingTable tRoutingTable = tHRS.getRoutingTable();
-		if (HRM_VIEWER_DEBUGGING){
-			Logging.log(this, "Found " + tRoutingTable.size() + " entries in the local routing table");
-		}
-			
-	    Color tColLoop = new Color(mDisplay, 210, 210, 250);
-	    Color tColNeighbor = new Color(mDisplay, 210, 250, 210);
-	    Color tColGeneral = new Color(mDisplay, 250, 210, 210);
-	    
-		if ((tRoutingTable != null) && (!tRoutingTable.isEmpty())) {
-			int tRowNumber = 0;
-			for(RoutingEntry tEntry : tRoutingTable) {
-				if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (tEntry.getDest() == null) || (!tEntry.getDest().isRelativeAddress())){
-					// create the table row
-					TableItem tTableRow = new TableItem(tTableRoutingTable, SWT.NONE, tRowNumber);
-					
-					/**
-					 * Column 0: destination
-					 */
-					tTableRow.setText(0, tEntry.getDest() != null ? tEntry.getDest().toString() : "undef.");
-	
-					/**
-					 * Column 1: next hop 
-					 */
-					if (tEntry.getNextHop() != null) {
-						tTableRow.setText(1, tEntry.getNextHop().toString());
-					}else{
-						tTableRow.setText(1, "??");
-					}
-					
-					/**
-					 * Column 2: hop costs
-					 */
-					if (tEntry.getHopCount() != RoutingEntry.NO_HOP_COSTS){
-						tTableRow.setText(2, Integer.toString(tEntry.getHopCount()));
-					}else{
-						tTableRow.setText(2, "none");
-					}
-					
-					/**
-					 * Column 3:  utilization
-					 */
-					if (tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION){
-						tTableRow.setText(3,  Float.toString(tEntry.getUtilization() * 100));
-					}else{
-						tTableRow.setText(3, "N/A");
-					}
-					
-					/**
-					 * Column 4: min. delay
-					 */
-					if (tEntry.getMinDelay() != RoutingEntry.NO_DELAY){					
-						tTableRow.setText(4, Long.toString(tEntry.getMinDelay()));
-					}else{
-						tTableRow.setText(4, "none");
-					}
-					
-					/**
-					 * Column 5: max. data rate
-					 */
-					if (tEntry.getMaxDataRate() != RoutingEntry.INFINITE_DATARATE){
-						tTableRow.setText(5, Long.toString(tEntry.getMaxDataRate()));				
-					}else{
-						tTableRow.setText(5, "inf.");
-					}
-					
-					/**
-					 * Column 6: loopback?
-					 */
-					if (tEntry.isLocalLoop()){
-						tTableRow.setText(6, "yes");				
-					}else{
-						tTableRow.setText(6, "no");
-					}
-	
-					/**
-					 * Column 7: direct neighbor?
-					 */
-					if (tEntry.isRouteToDirectNeighbor()){
-						tTableRow.setText(7, "yes");				
-					}else{
-						tTableRow.setText(7, "no");
-					}
-	
-					/**
-					 * Column 8: source 
-					 */
-					if (tEntry.getSource() != null) {
-						tTableRow.setText(8, tEntry.getSource().toString());
-					}else{
-						tTableRow.setText(8, "??");
-					}
-
-					/**
-					 * Column 9: next hop L2Address
-					 */
-					if (tEntry.getNextHopL2Address() != null) {
-						tTableRow.setText(9, tEntry.getNextHopL2Address().toString());
-					}else{
-						tTableRow.setText(9, "??");
-					}
-
-					/**
-					 * Column 10: timeout
-					 */
-					if (tEntry.getTimeout() > 0) {
-						tTableRow.setText(10, Double.toString(tEntry.getTimeout()));
-					}else{
-						tTableRow.setText(10, "none");
-					}
-
-					/**
-					 * Cells coloring
-					 */
-					for(int i = 0; i < 11; i++){
-						if(tEntry.isLocalLoop()){
-							tTableRow.setBackground(i, tColLoop);
-						}else if (tEntry.isRouteToDirectNeighbor()){
-							tTableRow.setBackground(i, tColNeighbor);
-						}else{
-							tTableRow.setBackground(i, tColGeneral);
-						}
-					}
-					tRowNumber++;
-				}
-			}
-		}
-		
-		TableColumn[] columns2 = tTableRoutingTable.getColumns();
-		for (int k = 0; k < columns2.length; k++){
-			columns2[k].pack();
-		}
-		tTableRoutingTable.setLayoutData(new GridData(GridData.FILL_BOTH));//SWT.FILL, SWT.TOP, true, true, 1, 1));
-		
-		// create the container layout
-		TableColumnLayout tLayoutRoutingTable2 = new TableColumnLayout();
-		mContainerRoutingTable.setLayout(tLayoutRoutingTable2);
-		// assign each column a layout weight
-		tLayoutRoutingTable2.setColumnData(tTableColDest, new ColumnWeightData(1));
-		tLayoutRoutingTable2.setColumnData(tTableColNext, new ColumnWeightData(1));
-		tLayoutRoutingTable2.setColumnData(tTableColHops, new ColumnWeightData(1));
-		tLayoutRoutingTable2.setColumnData(tTableColUtil, new ColumnWeightData(1));
-		tLayoutRoutingTable2.setColumnData(tTableColDelay, new ColumnWeightData(1));
-		tLayoutRoutingTable2.setColumnData(tTableColDR, new ColumnWeightData(1));
-		tLayoutRoutingTable2.setColumnData(tTableColLoop, new ColumnWeightData(1));
-		tLayoutRoutingTable2.setColumnData(tTableColDirectNeighbor, new ColumnWeightData(1));
-		tLayoutRoutingTable2.setColumnData(tTableColSource, new ColumnWeightData(1));
-		tLayoutRoutingTable2.setColumnData(tTableColNextL2, new ColumnWeightData(3));
-		tLayoutRoutingTable2.setColumnData(tTableColTimeout, new ColumnWeightData(1));
-		
-		/**
-		 * The table context menu
-		 */
-		final RoutingTable tfRoutingTable = tRoutingTable;
-		tTableRoutingTable.addMenuDetectListener(new MenuDetectListener()
-		{
-			@Override
-			public void menuDetected(MenuDetectEvent pEvent)
-			{
-				final int tSelectedIndex = tTableRoutingTable.getSelectionIndex();
-				// was there a row selected?
-				if (tSelectedIndex != -1){
-					// identify which row was clicked.
-					TableItem tSelectedRow = tTableRoutingTable.getItem(tSelectedIndex);
-					tSelectedRow.getData();
-				
-					//Logging.log(this, "Context menu for comm. channels of entity: " + pControlEntity + ", index: " + tSelectedIndex + ", row data: " + tSelectedRow);
-					
-					/**
-					 * Create the context menu
-					 */
-					Menu tMenu = new Menu(tTableRoutingTable);
-					MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
-					tMenuItem.setText("Show cause for this entry");
-					tMenuItem.addSelectionListener(new SelectionListener() {
-						public void widgetDefaultSelected(SelectionEvent pEvent)
-						{
-							//Logging.log(this, "Default selected: " + pEvent);
-							showRoutingEntryCause(tfRoutingTable.get(tSelectedIndex));
-						}
-						public void widgetSelected(SelectionEvent pEvent)
-						{
-							//Logging.log(this, "Widget selected: " + pEvent);
-							showRoutingEntryCause(tfRoutingTable.get(tSelectedIndex));
-						}
-					});
-
-					tTableRoutingTable.setMenu(tMenu);
-				}
-			}
-		});
-
-		/**
-		 * Add a listener to allow re-sorting of the table based on the destination per table row
-		 */
-		tTableColDest.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(Event e) {
-				// sort column 2
-		        TableItem[] tAllRows = tTableRoutingTable.getItems();
-		        Collator collator = Collator.getInstance(Locale.getDefault());
-		        
-		        for (int i = 1; i < tAllRows.length; i++) {
-		        	String value1 = tAllRows[i].getText(1);
-		          
-		        	for (int j = 0; j < i; j++) {
-		        		String value2 = tAllRows[j].getText(1);
-		            
-		        		if (collator.compare(value1, value2) < 0) {
-							// copy table row data
-							String[] tRowData = { tAllRows[i].getText(0), tAllRows[i].getText(1) };
-							  
-							// delete table row "i"
-							tAllRows[i].dispose();
-							  
-							// create new table row
-							TableItem tRow = new TableItem(tTableRoutingTable, SWT.NONE, j);
-							tRow.setText(tRowData);
-							  
-							// update data of table rows
-							tAllRows = tTableRoutingTable.getItems();
-							  
-							break;
-		        		}
-		        	}
-		        }
-			}
-	    });
+		createRoutingTable(mContainer);
 		
 		/**
 		 * Tool buttons
@@ -905,8 +621,137 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	}
 
 	/**
+	 * Draws the routing table view
+	 * 
+	 * @param pParent the parent GUI container
+	 */
+	private void createRoutingTable(Composite pParent)
+	{
+		if (HRM_VIEWER_DEBUGGING){
+			Logging.log(this, "Printing HRM routing table...");
+		}
+		// create the headline
+		StyledText tSignaturesLabel2 = new StyledText(pParent, SWT.BORDER);
+		tSignaturesLabel2.setText("HRM Routing Table");
+		tSignaturesLabel2.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
+		tSignaturesLabel2.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
+	    StyleRange style3 = new StyleRange();
+	    style3.start = 0;
+	    style3.length = tSignaturesLabel2.getText().length();
+	    style3.fontStyle = SWT.BOLD;
+	    tSignaturesLabel2.setStyleRange(style3);
+	    
+	    // create the GUI container
+	    mContainerRoutingTable = new Composite(pParent, SWT.NONE);
+	    GridData tLayoutDataRoutingTable = new GridData(SWT.FILL, SWT.FILL, true, true);
+	    tLayoutDataRoutingTable.horizontalSpan = 1;
+	    mContainerRoutingTable.setLayoutData(tLayoutDataRoutingTable); 
+
+	    // create the table
+		mTableRoutingTable = new Table(mContainerRoutingTable, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+		mTableRoutingTable.setHeaderVisible(true);
+			mTableRoutingTable.setLinesVisible(true);
+		
+		// create the columns and define the texts for the header row
+		// col. 0
+		TableColumn tTableColDest = new TableColumn(mTableRoutingTable, SWT.NONE, 0);
+		tTableColDest.setText("Dest.");
+		// col. 1
+		TableColumn tTableColNext = new TableColumn(mTableRoutingTable, SWT.NONE, 1);
+		tTableColNext.setText("Next hop");
+		// col. 2
+		TableColumn tTableColHops = new TableColumn(mTableRoutingTable, SWT.NONE, 2);
+		tTableColHops.setText("Hops");
+		// col. 3
+		TableColumn tTableColUtil = new TableColumn(mTableRoutingTable, SWT.NONE, 3);
+		tTableColUtil.setText("Util. [%]");
+		// col. 4
+		TableColumn tTableColDelay = new TableColumn(mTableRoutingTable, SWT.NONE, 4);
+		tTableColDelay.setText("MinDelay [ms]");
+		// col. 5
+		TableColumn tTableColDR = new TableColumn(mTableRoutingTable, SWT.NONE, 5);
+		tTableColDR.setText("MaxDR [Kb/s]");
+		// col. 6
+		TableColumn tTableColLoop = new TableColumn(mTableRoutingTable, SWT.NONE, 6);
+		tTableColLoop.setText("Loopback?");
+		// col. 7
+		TableColumn tTableColDirectNeighbor = new TableColumn(mTableRoutingTable, SWT.NONE, 7);
+		tTableColDirectNeighbor.setText("Route to neighbor");
+		// col. 8
+		TableColumn tTableColSource = new TableColumn(mTableRoutingTable, SWT.NONE, 8);
+		tTableColSource.setText("Source");
+		// col. 9
+		TableColumn tTableColNextL2 = new TableColumn(mTableRoutingTable, SWT.NONE, 9);
+		tTableColNextL2.setText("NextL2");
+		// col. 10
+		TableColumn tTableColTimeout = new TableColumn(mTableRoutingTable, SWT.NONE, 10);
+		tTableColTimeout.setText("Timeout");
+		
+		updateRoutingTable();
+		
+		TableColumn[] columns2 = mTableRoutingTable.getColumns();
+		for (int k = 0; k < columns2.length; k++){
+			columns2[k].pack();
+		}
+		mTableRoutingTable.setLayoutData(new GridData(GridData.FILL_BOTH));//SWT.FILL, SWT.TOP, true, true, 1, 1));
+
+		// create the container layout
+		TableColumnLayout tLayoutRoutingTable2 = new TableColumnLayout();
+		mContainerRoutingTable.setLayout(tLayoutRoutingTable2);
+		// assign each column a layout weight
+		tLayoutRoutingTable2.setColumnData(tTableColDest, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColNext, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColHops, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColUtil, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColDelay, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColDR, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColLoop, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColDirectNeighbor, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColSource, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColNextL2, new ColumnWeightData(3));
+		tLayoutRoutingTable2.setColumnData(tTableColTimeout, new ColumnWeightData(1));
+		
+		/**
+		 * Add a listener to allow re-sorting of the table based on the destination per table row
+		 */
+		tTableColDest.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event e) {
+				// sort column 2
+		        TableItem[] tAllRows = mTableRoutingTable.getItems();
+		        Collator collator = Collator.getInstance(Locale.getDefault());
+		        
+		        for (int i = 1; i < tAllRows.length; i++) {
+		        	String value1 = tAllRows[i].getText(1);
+		          
+		        	for (int j = 0; j < i; j++) {
+		        		String value2 = tAllRows[j].getText(1);
+		            
+		        		if (collator.compare(value1, value2) < 0) {
+							// copy table row data
+							String[] tRowData = { tAllRows[i].getText(0), tAllRows[i].getText(1) };
+							  
+							// delete table row "i"
+							tAllRows[i].dispose();
+							  
+							// create new table row
+							TableItem tRow = new TableItem(mTableRoutingTable, SWT.NONE, j);
+							tRow.setText(tRowData);
+							  
+							// update data of table rows
+							tAllRows = mTableRoutingTable.getItems();
+							  
+							break;
+		        		}
+		        	}
+		        }
+			}
+	    });
+	}
+
+	/**
 	 * Draws GUI elements for depicting coordinator information.
 	 * 
+	 * @param pParent the parent GUI container
 	 * @param pCoordinator selected coordinator 
 	 */
 	private void printCoordinator(Composite pParent, Coordinator pCoordinator)
@@ -1701,6 +1546,209 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	}
 
 	/**
+	 * Destroys the content of the routing table
+	 */
+	private void updateRoutingTable()
+	{
+	    mTableRoutingTable.removeAll();
+	    
+		RoutingTable tRoutingTable = mHRMController.getHRS().getRoutingTable();
+		if (HRM_VIEWER_DEBUGGING){
+			Logging.log(this, "Found " + tRoutingTable.size() + " entries in the local routing table");
+		}
+			
+	    Color tColLoop = new Color(mDisplay, 210, 210, 250);
+	    Color tColNeighbor = new Color(mDisplay, 210, 250, 210);
+	    Color tColGeneral = new Color(mDisplay, 250, 210, 210);
+	    
+		if ((tRoutingTable != null) && (!tRoutingTable.isEmpty())) {
+			int tRowNumber = 0;
+			for(RoutingEntry tEntry : tRoutingTable) {
+				if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (tEntry.getDest() == null) || (!tEntry.getDest().isRelativeAddress())){
+					// create the table row
+					TableItem tTableRow = new TableItem(mTableRoutingTable, SWT.NONE, tRowNumber);
+					
+					/**
+					 * Column 0: destination
+					 */
+					tTableRow.setText(0, tEntry.getDest() != null ? tEntry.getDest().toString() : "undef.");
+	
+					/**
+					 * Column 1: next hop 
+					 */
+					if (tEntry.getNextHop() != null) {
+						tTableRow.setText(1, tEntry.getNextHop().toString());
+					}else{
+						tTableRow.setText(1, "??");
+					}
+					
+					/**
+					 * Column 2: hop costs
+					 */
+					if (tEntry.getHopCount() != RoutingEntry.NO_HOP_COSTS){
+						tTableRow.setText(2, Integer.toString(tEntry.getHopCount()));
+					}else{
+						tTableRow.setText(2, "none");
+					}
+					
+					/**
+					 * Column 3:  utilization
+					 */
+					if (tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION){
+						tTableRow.setText(3,  Float.toString(tEntry.getUtilization() * 100));
+					}else{
+						tTableRow.setText(3, "N/A");
+					}
+					
+					/**
+					 * Column 4: min. delay
+					 */
+					if (tEntry.getMinDelay() != RoutingEntry.NO_DELAY){					
+						tTableRow.setText(4, Long.toString(tEntry.getMinDelay()));
+					}else{
+						tTableRow.setText(4, "none");
+					}
+					
+					/**
+					 * Column 5: max. data rate
+					 */
+					if (tEntry.getMaxDataRate() != RoutingEntry.INFINITE_DATARATE){
+						tTableRow.setText(5, Long.toString(tEntry.getMaxDataRate()));				
+					}else{
+						tTableRow.setText(5, "inf.");
+					}
+					
+					/**
+					 * Column 6: loopback?
+					 */
+					if (tEntry.isLocalLoop()){
+						tTableRow.setText(6, "yes");				
+					}else{
+						tTableRow.setText(6, "no");
+					}
+	
+					/**
+					 * Column 7: direct neighbor?
+					 */
+					if (tEntry.isRouteToDirectNeighbor()){
+						tTableRow.setText(7, "yes");				
+					}else{
+						tTableRow.setText(7, "no");
+					}
+	
+					/**
+					 * Column 8: source 
+					 */
+					if (tEntry.getSource() != null) {
+						tTableRow.setText(8, tEntry.getSource().toString());
+					}else{
+						tTableRow.setText(8, "??");
+					}
+
+					/**
+					 * Column 9: next hop L2Address
+					 */
+					if (tEntry.getNextHopL2Address() != null) {
+						tTableRow.setText(9, tEntry.getNextHopL2Address().toString());
+					}else{
+						tTableRow.setText(9, "??");
+					}
+
+					/**
+					 * Column 10: timeout
+					 */
+					if (tEntry.getTimeout() > 0) {
+						tTableRow.setText(10, Double.toString(tEntry.getTimeout()));
+					}else{
+						tTableRow.setText(10, "none");
+					}
+
+					/**
+					 * Cells coloring
+					 */
+					for(int i = 0; i < 11; i++){
+						if(tEntry.isLocalLoop()){
+							tTableRow.setBackground(i, tColLoop);
+						}else if (tEntry.isRouteToDirectNeighbor()){
+							tTableRow.setBackground(i, tColNeighbor);
+						}else{
+							tTableRow.setBackground(i, tColGeneral);
+						}
+					}
+					tRowNumber++;
+				}
+			}
+		}
+		
+		/**
+		 * The table context menu
+		 */
+		final RoutingTable tfRoutingTable = tRoutingTable;
+		mTableRoutingTable.addMenuDetectListener(new MenuDetectListener()
+		{
+			@Override
+			public void menuDetected(MenuDetectEvent pEvent)
+			{
+				final int tSelectedIndex = mTableRoutingTable.getSelectionIndex();
+				// was there a row selected?
+				if (tSelectedIndex != -1){
+					// identify which row was clicked.
+					TableItem tSelectedRow = mTableRoutingTable.getItem(tSelectedIndex);
+					tSelectedRow.getData();
+				
+					//Logging.log(this, "Context menu for comm. channels of entity: " + pControlEntity + ", index: " + tSelectedIndex + ", row data: " + tSelectedRow);
+					
+					/**
+					 * Create the context menu
+					 */
+					Menu tMenu = new Menu(mTableRoutingTable);
+					MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem.setText("Show cause for this entry");
+					tMenuItem.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showRoutingEntryCause(tfRoutingTable.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showRoutingEntryCause(tfRoutingTable.get(tSelectedIndex));
+						}
+					});
+
+					mTableRoutingTable.setMenu(tMenu);
+				}
+			}
+		});
+	}
+
+	/**
+	 * Resets the routing table and updates it
+	 */
+	private synchronized void redrawRoutingTable()
+	{
+		updateRoutingTable();
+		
+		mNextGUIUpdateResetsOnlyRoutingTable = false;
+	}
+	
+	private synchronized void redrawGUI()
+	{
+		if(!mScroller.isDisposed()){
+			Point tOldScrollPosition = mScroller.getOrigin();
+			
+			destroyPartControl();
+			
+			createPartControl(mShell);
+			
+			mScroller.setOrigin(tOldScrollPosition);
+		}else{
+			Logging.warn(this, "Scroller is already disposed");
+		}
+	}
+	
+	/**
 	 * Resets the GUI and updates everything in this EditorPart
 	 */
 	private void resetGUI()
@@ -1716,16 +1764,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				//switches to different thread
 				mDisplay.asyncExec(this);
 			} else {
-				if(!mScroller.isDisposed()){
-					Point tOldScrollPosition = mScroller.getOrigin();
-					
-					destroyPartControl();
-					
-					createPartControl(mShell);
-					
-					mScroller.setOrigin(tOldScrollPosition);
+				if (mNextGUIUpdateResetsOnlyRoutingTable){
+					redrawRoutingTable();
 				}else{
-					Logging.warn(this, "Scroller is already disposed");
+					redrawGUI();
 				}
 			}
 		}
@@ -1738,9 +1780,32 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	public void update(Observable pSource, Object pReason)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
-			Logging.log(this, "Got notification from " + pSource + " because of \"" + pReason + "\"");
+			if(pReason instanceof RoutingEntry){
+				RoutingEntry tEntry = (RoutingEntry)pReason;
+				Logging.log(this, "Got notification from " + pSource + " because of:");
+				Logging.log(this, "   ..entry: \"" + tEntry + "\"");
+				Logging.log(this, "   ..cause: " + tEntry.getCause());
+			}else{
+				Logging.log(this, "Got notification from " + pSource + " because of \"" + pReason + "\"");
+			}
 		}
 
+		if(pReason instanceof RoutingEntry){
+			startRoutingTableUpdateTimer();
+		}else{
+			startGUIUpdateTimer();
+		}
+	}
+	
+	private synchronized void startRoutingTableUpdateTimer()
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
+			Logging.log(this, "Got a routing table update");
+		}
+		
+		mNextGUIUpdateResetsOnlyRoutingTable = true;
+		
+		// trigger GUI update
 		startGUIUpdateTimer();
 	}
 	

@@ -527,7 +527,7 @@ public class ClusterMember extends ClusterName
 		}
 		
 		RoutingTable tReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
-		mHRMController.addHRMRouteShare(tReceivedSharedRoutingTable, this + "::eventRouteShare()");			
+		mHRMController.addHRMRouteShare(tReceivedSharedRoutingTable, getHierarchyLevel(), pSourceComChannel.getPeerHRMID(), this + "::eventRouteShare()");			
 	}
 
 	/**

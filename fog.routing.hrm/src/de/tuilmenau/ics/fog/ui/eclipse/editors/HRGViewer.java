@@ -150,6 +150,12 @@ public class HRGViewer extends EditorAWT implements Observer, IController, IEven
 			for(AbstractRoutingGraphLink tLink : tLinks){
 				RoutingEntry tLinkRouteEntry = (RoutingEntry) tLink.getRoute().getFirst();
 				Pair<HRMID> tEndPoints = mHRMController.getHRGForGraphViewer().getEndpoints(tLink);
+				if(tLinkRouteEntry.isReportedLink()){
+					Logging.trace(this, "     ..reported link from: " + tLinkRouteEntry.getReportSender());	
+				}
+				if(tLinkRouteEntry.isSharedLink()){
+					Logging.trace(this, "     ..shared link from: " + tLinkRouteEntry.getShareSender());	
+				}
 				Logging.trace(this, "     ..[" + i + "]: " + tEndPoints.getFirst() + " out to " + tEndPoints.getSecond() + " <== " + tLink);
 				Logging.trace(this, "       ..cause: ");
 				for (String tCauseString : tLinkRouteEntry.getCause()){
@@ -162,6 +168,12 @@ public class HRGViewer extends EditorAWT implements Observer, IController, IEven
 			for(AbstractRoutingGraphLink tLink : tLinks){
 				RoutingEntry tLinkRouteEntry = (RoutingEntry) tLink.getRoute().getFirst();
 				Pair<HRMID> tEndPoints = mHRMController.getHRGForGraphViewer().getEndpoints(tLink);
+				if(tLinkRouteEntry.isReportedLink()){
+					Logging.trace(this, "     ..reported link from: " + tLinkRouteEntry.getReportSender());	
+				}
+				if(tLinkRouteEntry.isSharedLink()){
+					Logging.trace(this, "     ..shared link from: " + tLinkRouteEntry.getShareSender());	
+				}
 				Logging.trace(this, "     ..[" + i + "]: " + tEndPoints.getSecond() + " in from " + tEndPoints.getFirst() + " <== " + tLink);
 				Logging.trace(this, "       ..cause: ");
 				for (String tCauseString : tLinkRouteEntry.getCause()){

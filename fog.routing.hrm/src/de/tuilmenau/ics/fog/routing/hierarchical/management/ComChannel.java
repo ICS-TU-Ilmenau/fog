@@ -358,11 +358,7 @@ public class ComChannel
 				 * Inform the parent ClusterMember about the new peer HRMIDs
 				 */
 				if(tPeerHRMIDIsNew){
-					if(mParent instanceof ClusterMember){
-						eventNewPeerHRMIDs();
-					}else{
-						Logging.err(this, "Expected a ClusterMember as parent, parent is: " + mParent);
-					}
+					eventNewPeerHRMIDs();
 				}
 			}else{
 				throw new RuntimeException(this + "::setPeerHRMID() got a zero HRMID as peer HRMID");
@@ -457,12 +453,24 @@ public class ComChannel
 									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 0 /* TODO */, 10 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID);
 									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 									tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+									
+									/**
+									 * HRG links: forward and backward link to the direct neighbor cluster
+									 */
+									// create the forward routing table entry
+									tReportedRoutingEntryForward = RoutingEntry.create(getPeerHRMID(), tGeneralizedNeighborHRMID, tNeighborHRMID, 0, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, this + "::eventNewPeerHRMIDs()_2(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID);
+									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+									tReportedRoutingEntryForward.setNextHopL2Address(getPeerL2Address());
+									// create the backward routing table entry
+									tReportedRoutingEntryBackward = RoutingEntry.create(tNeighborHRMID, tGeneralizedNeighborHRMID.getForeignCluster(getPeerHRMID()), getPeerHRMID(), 0, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, this + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID);
+									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+									tReportedRoutingEntryBackward.setNextHopL2Address(mHRMController.getNodeL2Address());
 								}else{
 									/**
 									 * HRM routing table entry
 									 */
 									// create the new routing table entry
-									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 0 /* TODO */, 10 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_2(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID);
+									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 0 /* TODO */, 10 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_4(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID);
 									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 									tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
 		
@@ -472,7 +480,7 @@ public class ComChannel
 									// create the forward routing table entry
 									tReportedRoutingEntryForward = tLocalRoutingEntry.clone();
 									// create the backward routing table entry
-									tReportedRoutingEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tNeighborHRMID, tSourceForReportedRoutes, tSourceForReportedRoutes, 0 /* TODO */, 10 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID);
+									tReportedRoutingEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tNeighborHRMID, tSourceForReportedRoutes, tSourceForReportedRoutes, 0 /* TODO */, 10 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_5(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID);
 									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 									tReportedRoutingEntryBackward.setNextHopL2Address(mHRMController.getNodeL2Address());
 								}
@@ -515,7 +523,7 @@ public class ComChannel
 					mLocalRoutingTablePeerHRMIDs = tNewLocalRoutingTable;
 					// HRG links
 					for(RoutingEntry tEntry : tNewReportedRoutingTable){
-						mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tEntry);
+						mHRMController.registerAutoHRG(tEntry);
 					}
 					// HRM routes
 					mHRMController.addHRMRoutes(mLocalRoutingTablePeerHRMIDs);
@@ -536,7 +544,7 @@ public class ComChannel
 					tDeprecatedLocalRoutingTable.delEntries(tNewLocalRoutingTable);
 					// HRG links
 					for(RoutingEntry tEntry : tDeprecatedReportedRoutingTable){
-						mHRMController.unregisterLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tEntry);
+						mHRMController.unregisterAutoHRG(tEntry);
 					}
 					// HRM routes
 					mHRMController.delHRMRoutes(tDeprecatedLocalRoutingTable);
@@ -735,8 +743,15 @@ public class ComChannel
 		/**
 		 * Store the received shared routing info
 		 */
+		RoutingTable tDeprecatedSharedRoutingTable = null;
 		synchronized (mSharedRoutingTable) {
-			mSharedRoutingTable = pRouteSharePacket.getRoutes(); 
+			tDeprecatedSharedRoutingTable = mSharedRoutingTable;
+			mSharedRoutingTable = pRouteSharePacket.getRoutes();
+			tDeprecatedSharedRoutingTable.delEntries(mSharedRoutingTable);
+		}
+		
+		if(tDeprecatedSharedRoutingTable.size() > 0){
+			Logging.warn(this, "Lost shared routing data (last message included it): " + tDeprecatedSharedRoutingTable);
 		}
 		
 		if(mParent instanceof CoordinatorAsClusterMember){
@@ -983,7 +998,9 @@ public class ComChannel
 			}
 			
 			// add the packet to the storage
-			mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent, mHRMController.getSimulationTime()));			
+			if(!(pPacket instanceof AnnounceCoordinator)){
+				mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent, mHRMController.getSimulationTime()));
+			}
 		}
 	}
 	/**
@@ -1057,7 +1074,7 @@ public class ComChannel
 	 * 
 	 * @param pHRMID the HRMID which is to be assigned
 	 */
-	public void signalAssignHRMID(HRMID pHRMID)
+	public void distributeAssignHRMID(HRMID pHRMID)
 	{
 		HRMID tSenderHRMID = mParent.getHRMID();
 		if(mParent instanceof ClusterMember){
@@ -1066,10 +1083,26 @@ public class ComChannel
 				tSenderHRMID = tParentClusterMember.getL0HRMID();
 			}
 		}
+		
+		/**
+		 * Send AssignHRMID
+		 */
 		// create new AssignHRMID packet for the cluster member
 		AssignHRMID tAssignHRMIDPacket = new AssignHRMID(tSenderHRMID, getPeerHRMID(), pHRMID);
 		// send the packet
 		sendPacket(tAssignHRMIDPacket);
+		
+		/**
+		 * Store the new HRMID for the peer
+		 */
+		setPeerHRMID(pHRMID);
+		
+		/**
+		 * Trigger: new peer HRMIDs because we got a new HRMID assigned
+		 */
+		if(mParent.getHierarchyLevel().isBaseLevel()){
+			eventNewPeerHRMIDs();
+		}
 	}
 
 	/**
@@ -1382,6 +1415,13 @@ public class ComChannel
 			
 			// let the coordinator process the HRMID assignment
 			getParent().eventAssignedHRMID(this, tAssignedHRMID);
+			
+			/**
+			 * Trigger: new peer HRMIDs because we got a new HRMID assigned
+			 */
+			if(mParent.getHierarchyLevel().isBaseLevel()){
+				eventNewPeerHRMIDs();
+			}
 			
 			return true;
 		}

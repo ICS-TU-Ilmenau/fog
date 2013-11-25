@@ -647,7 +647,7 @@ public class Cluster extends ClusterMember
 				}else
 					Logging.log(this, "    ..assigning new HRMID " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
 	
-				pComChannel.signalAssignHRMID(tHRMIDForPeer);
+				pComChannel.distributeAssignHRMID(tHRMIDForPeer);
 			}else{
 				mDescriptionHRMIDAllocation += "\n     ..invalid HRMID for " + pComChannel + ", cause=" + pCause;
 
@@ -806,6 +806,11 @@ public class Cluster extends ClusterMember
 			 */
 			tEntry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT);
 
+			/**
+			 * Mark as reported entry
+			 */
+			tEntry.setReportedLink(pSourceComChannel.getPeerHRMID());
+			
 			/**
 			 * Update the HRG
 			 */
