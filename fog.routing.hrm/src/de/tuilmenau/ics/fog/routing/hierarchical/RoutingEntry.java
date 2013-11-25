@@ -10,12 +10,14 @@
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import java.util.LinkedList;
+import java.util.List;
 
 import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraph;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphLink;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * HRM Routing: The class describes a routing entry consisting of
@@ -88,16 +90,20 @@ public class RoutingEntry implements RouteSegment
 
 	/**
 	 * Stores if the route describes a local loop.
-	 * (for GUI only)
 	 */
 	private boolean mLocalLoop = false; 
 	
 	/**
 	 * Stores if the route describes a link to a neighbor node.
-	 * (for GUI only)
+	 * ONLY FOR GUI: This value is not part of the concept. It is only used for debugging purposes.
 	 */
 	private boolean mRouteToDirectNeighbor = false;
 
+	/**
+	 * Stores of the route describes a route for traversing a cluster
+	 */
+	private boolean mRouteForClusterTraversal = false;
+	
 	/**
 	 * Stores the L2 address of the next hop if known
 	 */
@@ -120,6 +126,30 @@ public class RoutingEntry implements RouteSegment
 	 */
 	private double mTimeout = 0;
 	
+	/**
+	 * Stores if the link was reported
+	 * ONLY FOR GUI: This value is not part of the concept. It is only used for debugging purposes.
+	 */
+	private boolean mReportedLink = false;
+	
+	/**
+	 * Stores the sender of this shared link
+	 * ONLY FOR GUI: This value is not part of the concept. It is only used for debugging purposes.
+	 */
+	private HRMID mReporter = null;
+
+	/**
+	 * Stores if the link was shared 
+	 * ONLY FOR GUI: This value is not part of the concept. It is only used for debugging purposes.
+	 */
+	private boolean mSharedLink = false;
+
+	/**
+	 * Stores the sender of this shared link
+	 * ONLY FOR GUI: This value is not part of the concept. It is only used for debugging purposes.
+	 */
+	private HRMID mSharer = null;
+
 	/**
 	 * Constructor
 	 * 
@@ -254,6 +284,55 @@ public class RoutingEntry implements RouteSegment
 		
 		// return with the entry
 		return tEntry;
+	}
+
+	/**
+	 * Factory function: creates an aggregated route from a given path
+	 * 
+	 * @param pPath the path of route parts
+	 * 
+	 * @return the aggregated route
+	 */
+	public static RoutingEntry create(List<AbstractRoutingGraphLink> pPath)
+	{
+		RoutingEntry tResult = null;
+		
+		if(pPath != null){
+			if(!pPath.isEmpty()){
+				for(AbstractRoutingGraphLink tLink : pPath){
+					if((tLink.getRoute() != null) && (tLink.getRoute().size() == 1)){
+						RoutingEntry tNextRoutePart = (RoutingEntry) tLink.getRoute().getFirst();
+						if(tResult != null){
+							if(tResult.getNextHop().equals(tNextRoutePart.getSource())){
+								tResult.chain(tNextRoutePart);
+								// aggregate the next hop
+								tResult.setNextHop(tNextRoutePart.getNextHop());
+							}else{
+								Logging.err(null, "Cannot create an aggregated routing entry..");
+								Logging.err(null, "   ..current result: " + tResult);
+								Logging.err(null, "   ..faulty next part: " + tNextRoutePart);
+
+								// reset the result
+								tResult = null;
+								// immediate return
+								break;
+							}
+						}else{
+							// start with first path fragment 
+							tResult = tNextRoutePart;
+						}						
+
+					}else{
+						// reset the result
+						tResult = null;
+						// imediate return
+						break;
+					}
+				}
+			}
+		}
+		
+		return tResult;
 	}
 
 	/**
@@ -490,6 +569,91 @@ public class RoutingEntry implements RouteSegment
 		return mRouteToDirectNeighbor;
 	}
 
+	/**
+	 * Determines if the route ends at a direct neighbor.
+	 * 
+	 * @return true if the route is such a route, otherwise false
+	 */
+	public boolean isRouteForClusterTraversal()
+	{
+		return mRouteForClusterTraversal;
+	}
+	
+	/**
+	 * Marks this routing entry as being used for cluster traversal 
+	 */
+	public void setRouteForClusterTraversal()
+	{
+		mRouteForClusterTraversal = true;
+	}
+
+	/**
+	 * Marks this link as reported from an inferior entity
+	 *  
+	 * @param pSender the sender of this reported link
+	 */
+	public void setReportedLink(HRMID pSender)
+	{
+		mReportedLink = true;
+		mReporter = pSender;
+	}
+
+	/**
+	 * Marks this link as reported from an inferior entity
+	 * 
+	 *  @param pSender the sender of this shared link
+	 */
+	public void setSharedLink(HRMID pSender)
+	{
+		mSharedLink = true;
+		mSharer = pSender;
+	}
+
+	/**
+	 * Returns the sender of this shared link
+	 * 
+	 * @return the sender
+	 */
+	public HRMID getShareSender()
+	{
+		return mSharer;
+	}
+	
+	/**
+	 * Returns the sender of this reported link
+	 *  
+	 * @return the sender
+	 */
+	public HRMID getReportSender()
+	{
+		return mReporter;
+	}
+
+	/**
+	 * Returns if this link was shared
+	 *  
+	 * @return true or false
+	 */
+	public boolean isSharedLink()
+	{
+		return mSharedLink;
+	}
+
+	/**
+	 * Returns if this link was reported
+	 *  
+	 * @return true or false
+	 */
+	public boolean isReportedLink()
+	{
+		return mReportedLink;
+	}
+
+	/**
+	 * Combines this entry with another one
+	 * 
+	 * @param pOtherEntry the other routing entry
+	 */
 	public void chain(RoutingEntry pOtherEntry)
 	{
 		// HOP COUNT -> add both
@@ -549,6 +713,14 @@ public class RoutingEntry implements RouteSegment
 		// update timeout
 		tResult.mTimeout = mTimeout;
 		
+		tResult.mSharedLink = mSharedLink;
+		
+		tResult. mReportedLink = mReportedLink;
+		
+		tResult.mSharer = mSharer;
+		
+		tResult.mReporter = mReporter;
+		
 		return tResult;
 	}
 	
@@ -597,10 +769,14 @@ public class RoutingEntry implements RouteSegment
 	@Override
 	public String toString()
 	{
+		String tResult = (mReportedLink ? "REP: " : "") + (mSharedLink ? "SHA: " : "");
+
 		if(!mBelongstoHRG){
-			return "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() != INFINITE_DATARATE ? getMaxDataRate() : "inf.") : "") + ")";
+			tResult += "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() != INFINITE_DATARATE ? getMaxDataRate() : "inf.") : "") + ")";
 		}else{
-			return getSource() + " <==> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() != INFINITE_DATARATE ? getMaxDataRate() : "inf.") : "");
+			tResult += getSource() + " <=" + (mRouteForClusterTraversal ? "TRAV" : "") + "=> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() != INFINITE_DATARATE ? getMaxDataRate() : "inf.") : "");
 		}
+		
+		return tResult;
 	}
 }
