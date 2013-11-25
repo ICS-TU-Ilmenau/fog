@@ -450,7 +450,7 @@ public class ComChannel
 									 * HRM routing table entry
 									 */
 									// create the new routing table entry
-									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, 0 /* TODO */, 10 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID);
+									tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), 0 /* TODO */, 10 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + "/" + getPeerHRMID());
 									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 									tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
 									
