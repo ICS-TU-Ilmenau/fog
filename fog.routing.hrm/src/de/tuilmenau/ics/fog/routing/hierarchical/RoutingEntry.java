@@ -32,6 +32,8 @@ public class RoutingEntry implements RouteSegment
 {
 	private static final long serialVersionUID = 1328799038900154655L;
 
+	private static boolean RECORD_CAUSES = true;
+	
 	/**
 	 * Defines a constant value for "no hop costs".
 	 */
@@ -194,7 +196,7 @@ public class RoutingEntry implements RouteSegment
 	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		this(pSource, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate, (LinkedList<String>)null);
-		mCause.add(pCause);
+		extendCause(pCause);
 	}
 	
 	/**
@@ -394,7 +396,9 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public void extendCause(String pCause)
 	{
-		mCause.add(pCause);
+		if(RECORD_CAUSES){
+			mCause.add(pCause);
+		}
 	}
 	
 	/**
