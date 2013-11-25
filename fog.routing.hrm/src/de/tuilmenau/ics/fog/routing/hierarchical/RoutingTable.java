@@ -151,6 +151,8 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		boolean tResult = false;
 		
 		for(RoutingEntry tEntry : pRoutingTable){
+			tEntry.extendCause("RT::addEntries()");
+			
 			tResult |= addEntry(tEntry);
 		}
 		
