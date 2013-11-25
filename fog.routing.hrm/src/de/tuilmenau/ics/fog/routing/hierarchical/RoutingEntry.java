@@ -444,7 +444,7 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public L2Address getNextHopL2Address()
 	{
-		return mNextHopL2Address;
+		return (mNextHopL2Address != null ? mNextHopL2Address.clone() : null);
 	}
 	
 	/**
@@ -454,7 +454,7 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public HRMID getSource()
 	{
-		return mSource;
+		return mSource.clone();
 	}
 
 	/**
@@ -464,7 +464,7 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public HRMID getDest()
 	{
-		return mDestination;
+		return mDestination.clone();
 	}
 	
 	/**
@@ -474,7 +474,7 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public void setDest(HRMID pDestination)
 	{
-		mDestination = pDestination;
+		mDestination = pDestination.clone();
 	}
 
 	/**
@@ -484,7 +484,7 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public void setSource(HRMID pSource)
 	{
-		mSource = pSource;	
+		mSource = pSource.clone();	
 	}
 
 	/**
@@ -494,7 +494,7 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public HRMID getNextHop()
 	{
-		return mNextHop;
+		return mNextHop.clone();
 	}
 	
 	/**
@@ -504,7 +504,7 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public void setNextHop(HRMID pNextHop)
 	{
-		mNextHop = pNextHop;
+		mNextHop = pNextHop.clone();
 	}
 
 	/**

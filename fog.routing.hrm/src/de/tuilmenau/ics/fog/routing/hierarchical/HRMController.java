@@ -2295,9 +2295,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			// get the hierarchy level at which this link connects two clusters
 			int tLinkHierLvl = tGeneralizedSourceHRMID.getHierarchyLevel();
 			// initialize the source cluster HRMID
-			HRMID tSourceClusterHRMID = pRoutingEntry.getSource().clone();
+			HRMID tSourceClusterHRMID = pRoutingEntry.getSource();
 			// initialize the destination cluster HRMID
-			HRMID tDestClusterHRMID = pRoutingEntry.getNextHop().clone();
+			HRMID tDestClusterHRMID = pRoutingEntry.getNextHop();
 			for(int i = 0; i <= tLinkHierLvl; i++){
 				// reset the value for the corresponding hierarchy level for both the source and destination cluster HRMID
 				tSourceClusterHRMID.setLevelAddress(i, 0);
@@ -2308,7 +2308,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
 					}
 					RoutingEntry tRoutingEntry = pRoutingEntry.clone();
-					tRoutingEntry.setDest(tDestClusterHRMID.clone());
+					tRoutingEntry.setDest(tDestClusterHRMID);
 //					RoutingEntry.create(pRoutingEntry.getSource().clone(), tDestClusterHRMID.clone(), pRoutingEntry.getNextHop().clone(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause());
 //					tRoutingEntry.setNextHopL2Address(pRoutingEntry.getNextHopL2Address());
 					tRoutingEntry.extendCause(this + "::registerAutoHRG()");
