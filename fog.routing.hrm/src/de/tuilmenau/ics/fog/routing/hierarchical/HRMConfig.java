@@ -16,7 +16,7 @@ public class HRMConfig
 		/**
 		 * Limits the size of the packet storage in a comm. channel
 		 */
-		public static final int COM_CHANNELS_MAX_PACKET_STORAGE_SIZE = 64;
+		public static final int COM_CHANNELS_MAX_PACKET_STORAGE_SIZE = 0;
 
 		/** 
 		 * Show debug outputs about observable/observer construct, which is used to inform GUIs about HRMController internal changes.
@@ -88,6 +88,11 @@ public class HRMConfig
 		 */
 		public static final boolean SHOW_SHARE_PHASE = false;
 
+		/**
+		 * Shows debug outputs for the share phase about redundant route entrie
+		 */
+		public static final boolean SHOW_SHARE_PHASE_REDUNDANT_ROUTES = false;
+		
 		/**
 		 * Shows debug outputs about the routing process 
 		 */
@@ -314,7 +319,7 @@ public class HRMConfig
 		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated network topology.
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean REPORT_TOPOLOGY_AUTOMATICALLY = false;
+		public static final boolean REPORT_TOPOLOGY_AUTOMATICALLY = true;
 
 		/**
 		 * Defines if an HRM entity should share its routing knowledge to all inferior entities.

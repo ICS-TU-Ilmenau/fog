@@ -2071,6 +2071,35 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Determines the local sender address for a route with a given next hop
+	 * 
+	 * @param pSource the given source
+	 * @param pNextHop the given next hop
+	 * 
+	 * @return the local sender address
+	 */
+	private HRMID getLocalSenderAddress(HRMID pSource, HRMID pNextHop)
+	{
+		HRMID tResult = pSource;
+		
+		// figure out the L0 cluster
+		HRMID tNextHopL0Cluster = pNextHop;
+		tNextHopL0Cluster.setLevelAddress(0, 0);
+		
+		synchronized(mRegisteredOwnHRMIDs){
+			// iterate over all local HRMIDs
+			for(HRMID tLocalHRMID : mRegisteredOwnHRMIDs){
+				if(tLocalHRMID.isCluster(tNextHopL0Cluster)){
+					tResult = tLocalHRMID.clone();
+					break;
+				}
+			}
+		}
+		
+		return tResult;	
+	}
+	
+	/**
 	 * @param pForeignHRMID
 	 * @return
 	 */
@@ -2204,27 +2233,39 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Store all routes, which start at this node
 			 */
 			if(isLocal(tSharedEntry.getSource())){
+				/**
+				 * ignore routes to cluster this nodes belong to
+				 * 		=> such routes are already known based on neighborhood detection of the L0 comm. channels (Clusters) 
+				 */				
 				if(!isLocalCluster(tSharedEntry.getDest())){
-					RoutingEntry tNewLocalRoutingEntry = tSharedEntry.clone();
-					tNewLocalRoutingEntry.extendCause(pCause);
-					tNewLocalRoutingEntry.extendCause(this + "::addHRMRouteShare() at lvl: " + pReceiverHierarchyLevel.getValue());
-					
-					/**
-					 * Set the timeout for the found shared route
-					 * 		=> 2 times the time period between two share phase for the sender's hierarchy level
-					 */
-					double tTimeoffset = 2 * getPeriodSharePhase(pReceiverHierarchyLevel.getValue() + 1 /* the sender is one level above */);
-					tNewLocalRoutingEntry.setTimeout(getSimulationTime() + tTimeoffset);
-					
-					/**
-					 * Store the found route
-					 */
-					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-						Logging.log(this, "Adding shared route (timeout=" + tNewLocalRoutingEntry.getTimeout() + ", time-offset=" + tTimeoffset + "): " + tNewLocalRoutingEntry);
-					}
-					addHRMRoute(tNewLocalRoutingEntry);
+					if(tSharedEntry.getHopCount() > 1){
+						RoutingEntry tNewLocalRoutingEntry = tSharedEntry.clone();
+						// patch the source with the correct local sender address
+						tNewLocalRoutingEntry.setSource(getLocalSenderAddress(tNewLocalRoutingEntry.getSource(), tNewLocalRoutingEntry.getNextHop()));
+						tNewLocalRoutingEntry.extendCause(pCause);
+						tNewLocalRoutingEntry.extendCause(this + "::addHRMRouteShare() at lvl: " + pReceiverHierarchyLevel.getValue());
+						
+						/**
+						 * Set the timeout for the found shared route
+						 * 		=> 2 times the time period between two share phase for the sender's hierarchy level
+						 */
+						double tTimeoffset = 2 * getPeriodSharePhase(pReceiverHierarchyLevel.getValue() + 1 /* the sender is one level above */);
+						tNewLocalRoutingEntry.setTimeout(getSimulationTime() + tTimeoffset);
+						
+						/**
+						 * Store the found route
+						 */
+						if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+							Logging.log(this, "Adding shared route (timeout=" + tNewLocalRoutingEntry.getTimeout() + ", time-offset=" + tTimeoffset + "): " + tNewLocalRoutingEntry);
+						}
+						addHRMRoute(tNewLocalRoutingEntry);
+				 	}else{
+						if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE_REDUNDANT_ROUTES){
+				 			Logging.warn(this, "   ..dropping uninteresting (leads to a direct neighbor node/cluster) route: " + tSharedEntry);
+						}
+				 	}
 			 	}else{
-					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE_REDUNDANT_ROUTES){
 			 			Logging.warn(this, "   ..dropping uninteresting (has same next hop like an existing entry) route: " + tSharedEntry);
 					}
 			 	}
@@ -2363,7 +2404,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if(HRMConfig.DebugOutput.GUI_SHOW_HRG_UPDATES){
 						Logging.log(this, "  ..unregistering (" + mCallsAddHRMRoute + ") cluster-2-cluster (lvl: " + i + ") HRG link from " + tSourceClusterHRMID + " to " + tDestClusterHRMID + " for: " + pRoutingEntry);
 					}
-					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource().clone(), tDestClusterHRMID.clone(), pRoutingEntry.getNextHop().clone(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause());
+					RoutingEntry tRoutingEntry = RoutingEntry.create(pRoutingEntry.getSource(), tDestClusterHRMID, pRoutingEntry.getNextHop(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause());
 					tRoutingEntry.extendCause(this + "::unregisterAutoHRG()");
 					unregisterCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
 				}
