@@ -34,7 +34,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
@@ -61,7 +60,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
@@ -1550,6 +1548,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 */
 	private void updateRoutingTable()
 	{
+		int tOldSelectedIndex = mTableRoutingTable.getSelectionIndex();
+
 	    mTableRoutingTable.removeAll();
 	    
 		RoutingTable tRoutingTable = mHRMController.getHRS().getRoutingTable();
@@ -1678,8 +1678,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					tRowNumber++;
 				}
 			}
+			mTableRoutingTable.setItemCount(tRowNumber);
 		}
 		
+		if(tOldSelectedIndex > 0){
+			mTableRoutingTable.select(tOldSelectedIndex);
+		}
+			
 		/**
 		 * The table context menu
 		 */
