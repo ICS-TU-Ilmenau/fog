@@ -333,8 +333,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										RoutingEntry tNewEntry = tRoutingEntryWithPeer.clone(); 
 										// reset L2Address for next hop
 										tNewEntry.setNextHopL2Address(null);
-										tNewEntry.chain(tReceivedSharedRoutingEntry);
-										tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ") as combination of " + tRoutingEntryWithPeer + " and " + tReceivedSharedRoutingEntry);
+										tNewEntry.append(tReceivedSharedRoutingEntry);
+										tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ") as combination of " + tRoutingEntryWithPeer + " and " + tReceivedSharedRoutingEntry + " as " + tNewEntry);
 										// share the received entry with the peer
 										tSharedRoutingTable.addEntry(tNewEntry);
 									}
@@ -389,8 +389,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									if(!tPath.isEmpty()){
 										if (DEBUG_SHARE_PHASE_DETAILS){
 											Logging.log(this, "      ..found inter cluster path:");
+											int i = 0;
 											for(AbstractRoutingGraphLink tLink : tPath){
-												Logging.log(this, "        ..step: " + tLink);	
+												Logging.log(this, "        ..inter-cluster step[" + i + "]: " + tLink);
+												i++;
 											}
 										}
 										for(AbstractRoutingGraphLink tLink : tPath){
@@ -446,7 +448,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 																if (DEBUG_SHARE_PHASE_DETAILS){
 																	Logging.log(this, "        ..step [" + tStep + "] (intra-cluster): " + tLogicalIntraClusterRoutingEntry);
 																}
-																tFinalRoutingEntryToDestination.chain(tLogicalIntraClusterRoutingEntry);
+																tFinalRoutingEntryToDestination.append(tLogicalIntraClusterRoutingEntry);
 																tStep++;
 						
 																/**
@@ -485,7 +487,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 												if (DEBUG_SHARE_PHASE_DETAILS){
 													Logging.log(this, "        ..step [" + tStep + "] (cluster-2-cluster): " + tInterClusterRoutingEntry);
 												}
-												tFinalRoutingEntryToDestination.chain(tInterClusterRoutingEntry);
+												tFinalRoutingEntryToDestination.append(tInterClusterRoutingEntry);
 											}else{
 												/***********************************************************************************************
 												 * ROUTE PART: first step of the resulting path
@@ -535,7 +537,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										}
 										// reset L2Address for next hop
 										tFinalRoutingEntryToDestination.setNextHopL2Address(null);
-										tFinalRoutingEntryToDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ")");
+										tFinalRoutingEntryToDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tFinalRoutingEntryToDestination);
 										tSharedRoutingTable.addEntry(tFinalRoutingEntryToDestination);
 									}
 								}else{
@@ -680,7 +682,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 													if(tFinalRoutingEntryBetweenGateways == null){
 														tFinalRoutingEntryBetweenGateways = tStepRoutingEntry;
 													}else{
-														tFinalRoutingEntryBetweenGateways.chain(tStepRoutingEntry);
+														tFinalRoutingEntryBetweenGateways.append(tStepRoutingEntry);
 													}													
 												}
 												
