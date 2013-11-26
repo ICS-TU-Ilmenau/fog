@@ -348,9 +348,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							}
 							
 						}else{
-//							if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+							if (DEBUG_SHARE_PHASE_DETAILS){
 								Logging.log(this, "  ..sharing routes with coordinator: " + tPeerHRMID);
-//							}
+							}
 								
 							/*********************************************************************
 							 * SHARE 1: received routes from superior coordinator
@@ -358,7 +358,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 
 							int j = -1;
 							for(RoutingEntry tReceivedSharedRoutingEntry : tReceivedSharedRoutingTable){
-								Logging.log(this, "    ..found entry from super coordinator: " + tReceivedSharedRoutingEntry);
+								if (DEBUG_SHARE_PHASE_DETAILS){
+									Logging.log(this, "    ..found entry from super coordinator: " + tReceivedSharedRoutingEntry);
+								}
 								j++;
 
 								/**
@@ -366,7 +368,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * 		=> share: [original route from sup. coordinator]
 								 */
 								if(tReceivedSharedRoutingEntry.getSource().isCluster(tPeerHRMID)){
-									Logging.log(this, "      .." + tReceivedSharedRoutingEntry.getSource() + " belongs to cluster " + tPeerHRMID);
+									if (DEBUG_SHARE_PHASE_DETAILS){
+										Logging.log(this, "      .." + tReceivedSharedRoutingEntry.getSource() + " belongs to cluster " + tPeerHRMID);
+									}
 									RoutingEntry tNewEntry = tReceivedSharedRoutingEntry.clone();
 									// reset L2Address for next hop
 									tNewEntry.setNextHopL2Address(null);
@@ -376,26 +380,34 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									
 									continue;
 								}else{
-									Logging.log(this, "      .." + tReceivedSharedRoutingEntry.getSource() + " DOES NOT BELONG to cluster " + tPeerHRMID);
+									if (DEBUG_SHARE_PHASE_DETAILS){
+										Logging.log(this, "      .." + tReceivedSharedRoutingEntry.getSource() + " DOES NOT BELONG to cluster " + tPeerHRMID);
+									}
 								}
 								
 								/**
 								 * does the received route start in this cluster?
 								 */
 								if(tReceivedSharedRoutingEntry.getSource().isCluster(getHRMID())){
-									Logging.log(this, "      ..source belongs to this topology sharing cluster: " + tReceivedSharedRoutingEntry);
+									if (DEBUG_SHARE_PHASE_DETAILS){
+										Logging.log(this, "      ..source belongs to this topology sharing cluster: " + tReceivedSharedRoutingEntry);
+									}
 											
 									/**
 									 * Determine the destination gateway for the intra-cluster routing
 									 */
 									HRMID tDestinationGatewayForIntraClusterRoute = tReceivedSharedRoutingEntry.getSource(); //NextHop().getClusterAddress(getHierarchyLevel().getValue() - 1);
-									Logging.log(this, "      ..destination gateway for intra-cluster route: " + tDestinationGatewayForIntraClusterRoute);
+									if (DEBUG_SHARE_PHASE_DETAILS){
+										Logging.log(this, "      ..destination gateway for intra-cluster route: " + tDestinationGatewayForIntraClusterRoute);
+									}
 									
 									/**
 									 * Get the route from the local HRG from the peer to its sibling	
 									 */
 									RoutingEntry tIntraClusterRoutingEntry = mHRMController.getRoutingEntryHRG(tPeerHRMID, tDestinationGatewayForIntraClusterRoute, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " ==> ");
-									Logging.log(this, "      ..determined intra-cluster route to gateway: " + tIntraClusterRoutingEntry);
+									if (DEBUG_SHARE_PHASE_DETAILS){
+										Logging.log(this, "      ..determined intra-cluster route to gateway: " + tIntraClusterRoutingEntry);
+									}
 									
 									if(tIntraClusterRoutingEntry != null){
 										RoutingEntry tNewEntry = tIntraClusterRoutingEntry.clone();
@@ -426,10 +438,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							//HINT: the peer is one hierarchy level below this coordinator
 							LinkedList<HRMID> tKnownPeerSiblings = mHRMController.getSiblingsHRG(tPeerHRMID);
 							for(HRMID tPossibleDestination : tKnownPeerSiblings){
-//								if (DEBUG_SHARE_PHASE_DETAILS){
+								if (DEBUG_SHARE_PHASE_DETAILS){
 									Logging.log(this, "    ..possible sibling destination for " + tPeerHRMID + " is: " + tPossibleDestination);
 									Logging.log(this, "      ..determining path from " + tPeerHRMID + " to " + tPossibleDestination);
-//								}
+								}
 
 								/**
 								 * Get the route from the local HRG from the peer to its sibling	
@@ -448,12 +460,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						}
 						
 						if(tSharedRoutingTable.size() > 0){
-//							if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+							if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 								Logging.log(this, "     SHARING with: " + tPeerHRMID);
 								for(RoutingEntry tEntry : tSharedRoutingTable){	
 									Logging.log(this, "      ..==> routing entry: " + tEntry);
 								}
-//							}
+							}
 							
 							tComChannel.distributeRouteShare(tSharedRoutingTable);
 						}

@@ -3910,7 +3910,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public RoutingEntry getRoutingEntryHRG(HRMID pFrom, HRMID pTo, String pCause)
 	{
-		boolean DEBUG = true;
+		boolean DEBUG = false;
 		RoutingEntry tResult = null;
 		
 		if (DEBUG){
@@ -3936,14 +3936,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * 			  (assumption: the found route starts at 1.3.2 and ends at 1.4.1) 
 			 */
 			RoutingEntry tFirstRoutePart = getRoutingEntryHRG(pFrom, tAbstractDestination, pCause);
-			Logging.log(this, "          ..first route part: " + tFirstRoutePart);
+			if (DEBUG){
+				Logging.log(this, "          ..first route part: " + tFirstRoutePart);
+			}
 					
 			if(tFirstRoutePart != null){
 				/**
 				 * EXAMPLE 1: determine the route from 1.4.1 to 1.4.2
 				 */
 				RoutingEntry tIntraClusterRoutePart = getRoutingEntryHRG(tFirstRoutePart.getLastNextHop(), pTo, pCause);
-				Logging.log(this, "          ..second route part: " + tIntraClusterRoutePart);
+				if (DEBUG){
+					Logging.log(this, "          ..second route part: " + tIntraClusterRoutePart);
+				}
 
 				if(tIntraClusterRoutePart != null){
 					// clone the first part and use it as first part of the result
@@ -3953,7 +3957,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 * EXAMPLE 1: combine routes (1.3.2 => 1.4.1) AND (1.4.1 => 1.4.2)
 					 */
 					tResult.append(tIntraClusterRoutePart, pCause);
-					Logging.log(this, "          ..resulting route (" + pFrom + " ==> " + tAbstractDestination + "): " + tResult);
+					if (DEBUG){
+						Logging.log(this, "          ..resulting route (" + pFrom + " ==> " + tAbstractDestination + "): " + tResult);
+					}
 					
 					/**
 					 * EXAMPLE 1: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
