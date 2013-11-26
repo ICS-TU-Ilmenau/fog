@@ -1810,7 +1810,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 	}
 	
-	private synchronized void startRoutingTableUpdateTimer()
+	private void startRoutingTableUpdateTimer()
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
 			Logging.log(this, "Got a routing table update");
@@ -1845,7 +1845,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 * Starts the timer for the "update GUI" event.
 	 * If the timer is already started nothing is done.
 	 */
-	private synchronized void startGUIUpdateTimer(String pCause)
+	private void startGUIUpdateTimer(String pCause)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
 			Logging.log(this, "Starting the GUI reset timer because of: " + pCause);
