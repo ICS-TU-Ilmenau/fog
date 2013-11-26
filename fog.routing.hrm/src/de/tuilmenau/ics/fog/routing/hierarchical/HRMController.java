@@ -2292,7 +2292,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Logging.log(this, "  ..registering (" + mCallsAddHRMRoute + ") node-2-node HRG link from " + pRoutingEntry.getSource() + " to " + pRoutingEntry.getNextHop() + " for: " + pRoutingEntry);
 				}
 				RoutingEntry tRoutingEntry = pRoutingEntry.clone();
-				tRoutingEntry.extendCause(this + "::registerAutoHRG()");
+				tRoutingEntry.extendCause(this + "::registerAutoHRG() as " + tRoutingEntry);
 				tRoutingEntry.setTimeout(pRoutingEntry.getTimeout());
 				registerLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), tRoutingEntry);
 			}
@@ -2317,7 +2317,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					
 //					RoutingEntry.create(pRoutingEntry.getSource().clone(), tDestClusterHRMID.clone(), pRoutingEntry.getNextHop().clone(), RoutingEntry.NO_HOP_COSTS, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pRoutingEntry.getCause());
 //					tRoutingEntry.setNextHopL2Address(pRoutingEntry.getNextHopL2Address());
-					tRoutingEntry.extendCause(this + "::registerAutoHRG() with destination " + tRoutingEntry.getDest() + ", org. destination=" +pRoutingEntry.getDest());
+					tRoutingEntry.extendCause(this + "::registerAutoHRG() with destination " + tRoutingEntry.getDest() + ", org. destination=" +pRoutingEntry.getDest() + " as " + tRoutingEntry);
 //					tRoutingEntry.setTimeout(pRoutingEntry.getTimeout());
 					registerCluster2ClusterLinkHRG(tSourceClusterHRMID, tDestClusterHRMID, tRoutingEntry);
 				}
@@ -2600,16 +2600,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 *       formerly known ones)
 		 * HINT: mLocalClusterMembers also contains all local Clusters      
 		 */
-		synchronized (mLocalClusterMembers) {
-			Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mConnectivityPriorityUpdates + ")");
-			int i = 0;
-			for(ClusterMember tClusterMember : mLocalClusterMembers){
-				// only base hierarchy level!
-				if(tClusterMember.getHierarchyLevel().isBaseLevel()){
-					Logging.log(this, "      ..update (" + mConnectivityPriorityUpdates + ") - informing[" + i + "]: " + tClusterMember);
-					tClusterMember.eventConnectivityNodePriorityUpdate(getConnectivityNodePriority());
-					i++;
-				}
+		// get a copy of the list about local CoordinatorAsClusterMember instances in order to avoid dead lock between HRMControllerProcessor and main EventHandler
+		LinkedList<ClusterMember> tLocalL0ClusterMembers = getAllL0ClusterMembers();
+		Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mConnectivityPriorityUpdates + ")");
+		int i = 0;
+		for(ClusterMember tClusterMember : tLocalL0ClusterMembers){
+			// only base hierarchy level!
+			if(tClusterMember.getHierarchyLevel().isBaseLevel()){
+				Logging.log(this, "      ..update (" + mConnectivityPriorityUpdates + ") - informing[" + i + "]: " + tClusterMember);
+				tClusterMember.eventConnectivityNodePriorityUpdate(getConnectivityNodePriority());
+				i++;
 			}
 		}
 	}
@@ -2635,24 +2635,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 *       formerly known ones)
 		 */
 		Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mHierarchyPriorityUpdates + ")");
-		synchronized (mLocalCoordinatorAsClusterMemebers) {
-			int i = 0;
-			for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mLocalCoordinatorAsClusterMemebers){
-				if((tCoordinatorAsClusterMember.getHierarchyLevel().equals(pLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
-					Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tCoordinatorAsClusterMember);
-					tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pLevel));
-					i++;
-				}
+		// get a copy of the list about local CoordinatorAsClusterMember instances in order to avoid dead lock between HRMControllerProcessor and main EventHandler
+		LinkedList<CoordinatorAsClusterMember> tLocalCoordinatorAsClusterMembers = getAllCoordinatorAsClusterMembers();
+		int i = 0;
+		for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tLocalCoordinatorAsClusterMembers){
+			if((tCoordinatorAsClusterMember.getHierarchyLevel().equals(pLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
+				Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tCoordinatorAsClusterMember);
+				tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pLevel));
+				i++;
 			}
 		}
-		synchronized (mLocalClusters) {
-			int i = 0;
-			for(Cluster tLocalCluster : mLocalClusters){
-				if((tLocalCluster.getHierarchyLevel().equals(pLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
-					Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tLocalCluster);
-					tLocalCluster.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pLevel));
-					i++;
-				}
+		// get a copy of the list about local CoordinatorAsClusterMember instances in order to avoid dead lock between HRMControllerProcessor and main EventHandler
+		LinkedList<Cluster> tLocalClusters = getAllClusters();
+		i = 0;
+		for(Cluster tLocalCluster : tLocalClusters){
+			if((tLocalCluster.getHierarchyLevel().equals(pLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
+				Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tLocalCluster);
+				tLocalCluster.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pLevel));
+				i++;
 			}
 		}
 	}
