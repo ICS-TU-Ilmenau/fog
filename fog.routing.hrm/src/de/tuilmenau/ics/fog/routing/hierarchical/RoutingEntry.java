@@ -196,7 +196,9 @@ public class RoutingEntry implements RouteSegment
 	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		this(pSource, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate, (LinkedList<String>)null);
-		extendCause(pCause);
+		if(pCause != null){
+			extendCause(pCause);
+		}
 	}
 	
 	/**
