@@ -298,7 +298,7 @@ public class RoutingEntry implements RouteSegment
 						RoutingEntry tNextRoutePart = (RoutingEntry) tLink.getRoute().getFirst();
 						if(tResult != null){
 							if(tResult.getNextHop().equals(tNextRoutePart.getSource())){
-								tResult.chain(tNextRoutePart);
+								tResult.append(tNextRoutePart);
 								// aggregate the next hop
 								tResult.setNextHop(tNextRoutePart.getNextHop());
 							}else{
@@ -662,6 +662,8 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public void chain(RoutingEntry pOtherEntry)
 	{
+		RoutingEntry tOldThis = clone();
+		
 		// HOP COUNT -> add both
 		mHopCount += pOtherEntry.mHopCount;
 		
@@ -688,6 +690,8 @@ public class RoutingEntry implements RouteSegment
 			 * we have "this == other"
 			 */ 
 			mDestination = pOtherEntry.mDestination;
+		}else{
+			throw new RuntimeException("Cannot chain these two routing entries: \n   ..entry 1: " + tOldThis + "\n   ..entry 2: " + pOtherEntry);
 		}
 		
 		// deactivate loopback flag
@@ -695,8 +699,56 @@ public class RoutingEntry implements RouteSegment
 		
 		// deactivate neighbor flag
 		mRouteToDirectNeighbor = false;
+		
+		extendCause(" ");
+		extendCause("RoutingEntry::CHAINING()_start with these two entries:");
+		extendCause("   this: " + this);
+		extendCause("   other: " + pOtherEntry);
+		for(String tCauseString : pOtherEntry.getCause()){
+			extendCause("CHAINED ENTRY: " + tCauseString);
+		}
+		extendCause("RoutingEntry::CHAINING()_end as: " + this);
+		extendCause(" ");
 	}
 	
+	/**
+	 * Appends another entry to this one
+	 * 
+	 * @param pOtherEntry the other routing entry
+	 */
+	public void append(RoutingEntry pOtherEntry)
+	{
+		// HOP COUNT -> add both
+		mHopCount += pOtherEntry.mHopCount;
+		
+		// MIN DELAY -> add both
+		mMinDelay += pOtherEntry.mMinDelay;
+		
+		// MAX DATA RATE -> find the minimum
+		mMaxDataRate = (mMaxDataRate < pOtherEntry.mMaxDataRate ? mMaxDataRate : pOtherEntry.mMaxDataRate);
+		
+		// UTILIZATION -> find the maximum
+		mUtilization = (mUtilization > pOtherEntry.mUtilization ? mUtilization : pOtherEntry.mUtilization);
+
+		mDestination = pOtherEntry.mDestination;
+		
+		// deactivate loopback flag
+		mLocalLoop = false;
+		
+		// deactivate neighbor flag
+		mRouteToDirectNeighbor = false;
+		
+		extendCause(" ");
+		extendCause("RoutingEntry::APPENDING()_start with these two entries:");
+		extendCause("   this: " + this);
+		extendCause("   other: " + pOtherEntry);
+		for(String tCauseString : pOtherEntry.getCause()){
+			extendCause("APPENDED ENTRY: " + tCauseString);
+		}
+		extendCause("RoutingEntry::APPENDING()_end as: " + this);
+		extendCause(" ");
+	}
+
 	/**
 	 * Creates an identical duplicate
 	 * 
