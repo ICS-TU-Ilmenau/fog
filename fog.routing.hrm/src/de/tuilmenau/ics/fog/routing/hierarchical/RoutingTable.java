@@ -86,7 +86,8 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					Logging.log(this, "Updating timeout for: " + tFoundDuplicate + " to: " + pRoutingTableEntry.getTimeout());
 				}
 				tFoundDuplicate.setTimeout(pRoutingTableEntry.getTimeout());
-
+				tFoundDuplicate.setCause(pRoutingTableEntry.getCause());
+				
 				tResult = true;
 			}else{
 				//Logging.log(this, "Cannot update timeout value: " + tFoundDuplicate.getTimeout());
