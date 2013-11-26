@@ -1454,13 +1454,18 @@ public class Elector implements Localization
 	public boolean isAllowedToWin()
 	{
 		boolean tAllowedToWin = true;
+		boolean DEBUG = false;
 		
-		Logging.log(this, "Checking if election win is allowed..");
+		if(DEBUG){
+			Logging.log(this, "Checking if election win is allowed..");
+		}
 		
 		if(mParent.getHierarchyLevel().isHigherLevel()){
 			synchronized (mNodeActiveClusterMembers) {
 				LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
-				Logging.log(this, "       ..found list of known active ClusterMember entries: " + tLevelList);
+				if(DEBUG){
+					Logging.log(this, "       ..found list of known active ClusterMember entries: " + tLevelList);
+				}
 						
 				/**
 				 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
@@ -1478,22 +1483,30 @@ public class Elector implements Localization
 							/**
 							 * Only proceed if the remote cluster has a higher priority
 							 */
-							Logging.log(this, "   ..checking if Cluster of ClusterMember " + tClusterMember + " has lower priority than local priority " + mParent.getPriority().getValue()); 
+							if(DEBUG){
+								Logging.log(this, "   ..checking if Cluster of ClusterMember " + tClusterMember + " has lower priority than local priority " + mParent.getPriority().getValue());
+							}
 							if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority())){
-								Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
+								if(DEBUG){
+									Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
+								}
 								tAllowedToWin = false;
 								break;
 							}
 						}
 					}								
 				}else{
-					// no active ClusterMember is known and the Cluster/ClusterMember is allowed to win
-					Logging.log(this, "       ..no active ClusterMember is known and the Cluster/ClusterMember is allowed to win");
+					if(DEBUG){
+						// no active ClusterMember is known and the Cluster/ClusterMember is allowed to win
+						Logging.log(this, "       ..no active ClusterMember is known and the Cluster/ClusterMember is allowed to win");
+					}
 				}
 			}
 		}
 		
-		Logging.log(this, "   ..isAllowedToWin() result: " + tAllowedToWin); 
+		if(DEBUG){
+			Logging.log(this, "   ..isAllowedToWin() result: " + tAllowedToWin);
+		}
 				
 		return tAllowedToWin;
 	}
