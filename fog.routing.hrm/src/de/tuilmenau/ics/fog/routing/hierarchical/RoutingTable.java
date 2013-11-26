@@ -151,9 +151,10 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		boolean tResult = false;
 		
 		for(RoutingEntry tEntry : pRoutingTable){
-			tEntry.extendCause("RT::addEntries() as " + tEntry);
+			RoutingEntry tNewEntry = tEntry.clone();
+			tNewEntry.extendCause("RT::addEntries() as " + tNewEntry);
 			
-			tResult |= addEntry(tEntry);
+			tResult |= addEntry(tNewEntry);
 		}
 		
 		return tResult;
@@ -171,7 +172,6 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		boolean tResult = false;
 		
 		for(RoutingEntry tEntry : pRoutingTable){
-			tEntry.extendCause("RT::delEntries() as " + tEntry);
 
 			tResult |= delEntry(tEntry);
 		}
