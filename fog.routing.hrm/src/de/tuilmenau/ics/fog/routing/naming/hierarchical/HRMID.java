@@ -242,6 +242,26 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	}
 	
 	/**
+	 * Returns the next upper cluster address
+	 * 
+	 * @return the next upper cluster address
+	 */
+	public HRMID getSuperiorClusterAddress()
+	{
+		HRMID tResult = clone();
+		
+		// get the hierarchy level of this HRMID
+		int tHierLvl = getHierarchyLevel();
+		
+		// next upper hierarchy level
+		tHierLvl++;
+		
+		tResult.setLevelAddress(tHierLvl, 0);
+		
+		return tResult;
+	}
+	
+	/**
 	 * Returns true if this HRMID belongs to the cluster of a given cluster address
 	 * 
 	 * @param pClusterAddress the address of the cluster
