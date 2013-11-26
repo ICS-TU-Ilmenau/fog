@@ -23,7 +23,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * 	1.) a physical node, e.g., "1.1.5"
  *  2.) a coordinator or a cluster as a whole, e.g., "1.1.0"
  */
-public class HRMID extends HRMName implements Comparable<HRMID>
+public class HRMID extends HRMName
 {
 	private static final long serialVersionUID = -8441496024628988477L;
 
@@ -263,6 +263,7 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	
 	/**
 	 * Returns true if this HRMID belongs to the cluster of a given cluster address
+	 * For example, if this address is 1.4.3 and the given cluster is 1.4.0, the result will be "true". 
 	 * 
 	 * @param pClusterAddress the address of the cluster
 	 * 
@@ -321,6 +322,24 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 			Logging.err(this, "   ..result: " + tResult);
 		}
 				
+		return tResult;
+	}
+
+	/**
+	 * Returns the cluster address for a given hierarchy level
+	 * 
+	 * @param pHierarchyLevel the hierarchy level
+	 * 
+	 * @return the searched cluster address
+	 */
+	public HRMID getClusterAddress(int pHierarchyLevel)
+	{
+		HRMID tResult = clone();
+		
+		for (int i = 0; (i < HRMConfig.Hierarchy.HEIGHT) && (i <= pHierarchyLevel); i++){
+			tResult.setLevelAddress(i,  0);
+		}
+		
 		return tResult;
 	}
 
@@ -384,12 +403,6 @@ public class HRMID extends HRMName implements Comparable<HRMID>
 	public int getSerialisedSize()
 	{
 		return mAddress.bitLength();
-	}
-
-	@Override
-	//TODO
-	public int compareTo(HRMID pCompareTo) {
-		return getLevelAddressBigInteger(pCompareTo.getPrefixDifference(this)).subtract(pCompareTo.getLevelAddressBigInteger(pCompareTo.getPrefixDifference(this))).intValue();
 	}
 	
 	
