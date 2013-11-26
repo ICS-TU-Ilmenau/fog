@@ -2089,9 +2089,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		synchronized(mRegisteredOwnHRMIDs){
 			// iterate over all local HRMIDs
 			for(HRMID tLocalHRMID : mRegisteredOwnHRMIDs){
-				if(tLocalHRMID.isCluster(tNextHopL0Cluster)){
-					tResult = tLocalHRMID.clone();
-					break;
+				if(!tLocalHRMID.isClusterAddress()){
+					if(tLocalHRMID.isCluster(tNextHopL0Cluster)){
+						tResult = tLocalHRMID.clone();
+						break;
+					}
 				}
 			}
 		}
