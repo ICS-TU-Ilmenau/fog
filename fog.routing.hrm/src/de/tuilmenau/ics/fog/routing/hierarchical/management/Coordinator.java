@@ -305,15 +305,17 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							}
 
 							int j = -1;
-							for(RoutingEntry tEntry : tReceivedSharedRoutingTable){
+							for(RoutingEntry tReceivedSharedRoutingEntry : tReceivedSharedRoutingTable){
 								j++;
 								
 								/**
 								 * does the received route start at the peer? 
 								 * 		=> share: [original route from sup. coordinator]
 								 */
-								if(tEntry.getSource().isCluster(tPeerHRMID)){
-									RoutingEntry tNewEntry = tEntry.clone();
+								if(tReceivedSharedRoutingEntry.getSource().isCluster(tPeerHRMID)){
+									RoutingEntry tNewEntry = tReceivedSharedRoutingEntry.clone();
+									// reset L2Address for next hop
+									tNewEntry.setNextHopL2Address(null);
 									tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_1(" + mCallsSharePhase + ")(" + j + ") as " + tNewEntry);
 									// share the received entry with the peer
 									tSharedRoutingTable.addEntry(tNewEntry);
@@ -325,13 +327,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * does the received route start at this node and the next node isn't the peer?
 								 * 		=> share: [route from peer to this node] ==> [original route from sup. coordinator]
 								 */
-								if((tEntry.getSource().equals(tThisNodeHRMID)) && (!tEntry.getNextHop().equals(tPeerHRMID))){
+								if((tReceivedSharedRoutingEntry.getSource().equals(tThisNodeHRMID)) && (!tReceivedSharedRoutingEntry.getNextHop().equals(tPeerHRMID))){
 									RoutingEntry tRoutingEntryWithPeer = mHRMController.getRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
 									if(tRoutingEntryWithPeer != null){
-										tRoutingEntryWithPeer.chain(tEntry);
-										tRoutingEntryWithPeer.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ") as " + tRoutingEntryWithPeer);
+										RoutingEntry tNewEntry = tRoutingEntryWithPeer.clone(); 
+										// reset L2Address for next hop
+										tNewEntry.setNextHopL2Address(null);
+										tNewEntry.chain(tReceivedSharedRoutingEntry);
+										tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ") as combination of " + tRoutingEntryWithPeer + " and " + tReceivedSharedRoutingEntry);
 										// share the received entry with the peer
-										tSharedRoutingTable.addEntry(tRoutingEntryWithPeer);
+										tSharedRoutingTable.addEntry(tNewEntry);
 									}
 									
 									continue;
@@ -528,6 +533,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 											Logging.log(this, "      ..==> routing entry: " + tFinalRoutingEntryToDestination);
 										}
+										// reset L2Address for next hop
+										tFinalRoutingEntryToDestination.setNextHopL2Address(null);
 										tFinalRoutingEntryToDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ")");
 										tSharedRoutingTable.addEntry(tFinalRoutingEntryToDestination);
 									}
