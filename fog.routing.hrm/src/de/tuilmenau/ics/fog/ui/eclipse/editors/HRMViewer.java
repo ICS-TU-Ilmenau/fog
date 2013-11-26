@@ -119,7 +119,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     
     private int mGuiCounter = 0;
 
-    private boolean mNextGUIUpdateResetsOnlyRoutingTable = false;
+    private boolean mNextGUIUpdateShouldUpdateRoutingTable = false;
+    private boolean mNextGUIUpdateShouldUpdateFullView = false;
     
 	private boolean mShowClusterMembers = false;
 	private boolean mShowCoordinatorAsClusterMembers = false;
@@ -320,7 +321,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
 					mShowClusterMembers = !mShowClusterMembers;
-					startGUIUpdateTimer();
+					startGUIUpdateTimer("show/hide ClusterMembers");
 				}
 			});
 		}
@@ -340,7 +341,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
 					mShowCoordinatorAsClusterMembers = !mShowCoordinatorAsClusterMembers;
-					startGUIUpdateTimer();
+					startGUIUpdateTimer("show/hide CoordinatorAsClusterMember");
 				}
 			});
 		}
@@ -1735,11 +1736,15 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	{
 		updateRoutingTable();
 		
-		mNextGUIUpdateResetsOnlyRoutingTable = false;
+		mNextGUIUpdateShouldUpdateRoutingTable = false;
 	}
 	
 	private synchronized void redrawGUI()
 	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
+			Logging.log(this, "Redrawing GUI");
+		}
+		
 		if(!mScroller.isDisposed()){
 			Point tOldScrollPosition = mScroller.getOrigin();
 			
@@ -1751,6 +1756,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}else{
 			Logging.warn(this, "Scroller is already disposed");
 		}
+		
+		mNextGUIUpdateShouldUpdateFullView = false;
+		mNextGUIUpdateShouldUpdateRoutingTable = false;
 	}
 	
 	/**
@@ -1769,10 +1777,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				//switches to different thread
 				mDisplay.asyncExec(this);
 			} else {
-				if (mNextGUIUpdateResetsOnlyRoutingTable){
+				if(mNextGUIUpdateShouldUpdateFullView){
+					redrawGUI();					
+				}else if (mNextGUIUpdateShouldUpdateRoutingTable){
 					redrawRoutingTable();
-				}else{
-					redrawGUI();
 				}
 			}
 		}
@@ -1798,7 +1806,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(pReason instanceof RoutingEntry){
 			startRoutingTableUpdateTimer();
 		}else{
-			startGUIUpdateTimer();
+			startGUIUpdateTimer("update() because of " + pReason);
 		}
 	}
 	
@@ -1808,20 +1816,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			Logging.log(this, "Got a routing table update");
 		}
 		
-		mNextGUIUpdateResetsOnlyRoutingTable = true;
-		
-		// trigger GUI update
-		startGUIUpdateTimer();
-	}
-	
-	/**
-	 * Starts the timer for the "update GUI" event.
-	 * If the timer is already started nothing is done.
-	 */
-	private synchronized void startGUIUpdateTimer()
-	{
 		// is a GUI update already planned?
 		if (mTimeNextGUIUpdate == 0){
+			mNextGUIUpdateShouldUpdateRoutingTable = true;
+			
 			// when was the last GUI update? is the time period okay for a new update? -> determine a timeout for a new GUI update
 			double tNow = mHRMController.getSimulationTime();
 			double tTimeout = mTimestampLastGUIUpdate.longValue() + HRMConfig.DebugOutput.GUI_NODE_DISPLAY_UPDATE_INTERVAL;
@@ -1844,10 +1842,48 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	}
 	
 	/**
+	 * Starts the timer for the "update GUI" event.
+	 * If the timer is already started nothing is done.
+	 */
+	private synchronized void startGUIUpdateTimer(String pCause)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
+			Logging.log(this, "Starting the GUI reset timer because of: " + pCause);
+			Logging.log(this, "   ..last update: " + mTimestampLastGUIUpdate);
+			Logging.log(this, "   ..next update: " + mTimeNextGUIUpdate);
+		}
+		
+		// is a GUI update already planned?
+		if (mTimeNextGUIUpdate == 0){
+			mNextGUIUpdateShouldUpdateFullView = true;
+			
+			// when was the last GUI update? is the time period okay for a new update? -> determine a timeout for a new GUI update
+			double tNow = mHRMController.getSimulationTime();
+			double tTimeout = mTimestampLastGUIUpdate.longValue() + HRMConfig.DebugOutput.GUI_NODE_DISPLAY_UPDATE_INTERVAL;
+
+			if ((mTimestampLastGUIUpdate.doubleValue() == 0) || (tNow > tTimeout)){
+				mTimeNextGUIUpdate = tNow;
+
+				// register next trigger
+				mHRMController.getAS().getTimeBase().scheduleIn(0, this);
+			}else{
+				mTimeNextGUIUpdate = tTimeout;
+			
+				// register next trigger
+				mHRMController.getAS().getTimeBase().scheduleIn(tTimeout - tNow, this);
+			}
+
+		}else{
+			// timer is already started, we enforce a full update
+			mNextGUIUpdateShouldUpdateFullView = true;
+		}
+	}
+	
+	/**
 	 * This function is called when the event is fired by the main event system.
 	 */
 	@Override
-	public void fire()
+	public synchronized void fire()
 	{
 		// reset stored GUI update time
 		mTimeNextGUIUpdate = 0;
