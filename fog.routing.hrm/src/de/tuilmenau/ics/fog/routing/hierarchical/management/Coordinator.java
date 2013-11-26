@@ -258,7 +258,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		
 		// should we start the "share phase"?
 		if (sharePhaseHasTimeout()){
-			if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+			if (DEBUG_SHARE_PHASE_DETAILS){
 				Logging.log(this, "SHARE PHASE with cluster members on level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
 			}
 
@@ -266,7 +266,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			mTimeOfLastSharePhase = mHRMController.getSimulationTime();
 
 			if ((!HRMConfig.Routing.PERIODIC_SHARE_PHASES) && (!hasNewSharePhaseData())){ //TODO
-				if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+				if (DEBUG_SHARE_PHASE_DETAILS){
 					Logging.log(this, "SHARE PHASE aborted because routing data hasn't changed since last signaling round");
 				}
 				return;
@@ -288,21 +288,25 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					RoutingTable tSharedRoutingTable = new RoutingTable();
 					HRMID tPeerHRMID = tComChannel.getPeerHRMID();
 					if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){
-						if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-							Logging.log(this, "  ..sharing routes with: " + tPeerHRMID);
-						}
 						
+						
+						/**
+						 * copy the received shared routing table from the superior coordinator
+						 */
+						RoutingTable tReceivedSharedRoutingTable = null;
+						synchronized (mReceivedSharedRoutingTable) {
+							tReceivedSharedRoutingTable = (RoutingTable) mReceivedSharedRoutingTable.clone();	
+						}
+
 						if(getHierarchyLevel().isBaseLevel()){
-							HRMID tThisNodeHRMID = getCluster().getL0HRMID();
+							if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+								Logging.log(this, "  ..sharing routes with node: " + tPeerHRMID);
+							}
 
 							/*********************************************************************
 							 * SHARE 1: received routes from superior coordinator
 							 *********************************************************************/
-							// copy the received routing table
-							RoutingTable tReceivedSharedRoutingTable = null;
-							synchronized (mReceivedSharedRoutingTable) {
-								tReceivedSharedRoutingTable = (RoutingTable) mReceivedSharedRoutingTable.clone();	
-							}
+							HRMID tThisNodeHRMID = getCluster().getL0HRMID();
 
 							int j = -1;
 							for(RoutingEntry tReceivedSharedRoutingEntry : tReceivedSharedRoutingTable){
@@ -328,12 +332,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * 		=> share: [route from peer to this node] ==> [original route from sup. coordinator]
 								 */
 								if((tReceivedSharedRoutingEntry.getSource().equals(tThisNodeHRMID)) && (!tReceivedSharedRoutingEntry.getNextHop().equals(tPeerHRMID))){
-									RoutingEntry tRoutingEntryWithPeer = mHRMController.getRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
+									RoutingEntry tRoutingEntryWithPeer = mHRMController.getNeighborRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
 									if(tRoutingEntryWithPeer != null){
 										RoutingEntry tNewEntry = tRoutingEntryWithPeer.clone(); 
 										// reset L2Address for next hop
 										tNewEntry.setNextHopL2Address(null);
-										tNewEntry.append(tReceivedSharedRoutingEntry);
+										tNewEntry.append(tReceivedSharedRoutingEntry, this + "::sharePhase()_append1_route_from_peer_via_me_to_destination(" + mCallsSharePhase + ")");
 										tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ") as combination of " + tRoutingEntryWithPeer + " and " + tReceivedSharedRoutingEntry + " as " + tNewEntry);
 										// share the received entry with the peer
 										tSharedRoutingTable.addEntry(tNewEntry);
@@ -344,8 +348,79 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							}
 							
 						}else{
+//							if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+								Logging.log(this, "  ..sharing routes with coordinator: " + tPeerHRMID);
+//							}
+								
+							/*********************************************************************
+							 * SHARE 1: received routes from superior coordinator
+							 *********************************************************************/
+
+							int j = -1;
+							for(RoutingEntry tReceivedSharedRoutingEntry : tReceivedSharedRoutingTable){
+								Logging.log(this, "    ..found entry from super coordinator: " + tReceivedSharedRoutingEntry);
+								j++;
+
+								/**
+								 * does the received route start at the peer (inferior cluster)? 
+								 * 		=> share: [original route from sup. coordinator]
+								 */
+								if(tReceivedSharedRoutingEntry.getSource().isCluster(tPeerHRMID)){
+									Logging.log(this, "      .." + tReceivedSharedRoutingEntry.getSource() + " belongs to cluster " + tPeerHRMID);
+									RoutingEntry tNewEntry = tReceivedSharedRoutingEntry.clone();
+									// reset L2Address for next hop
+									tNewEntry.setNextHopL2Address(null);
+									tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2_1(" + mCallsSharePhase + ")(" + j + ") as " + tNewEntry);
+									// share the received entry with the peer
+									tSharedRoutingTable.addEntry(tNewEntry);
+									
+									continue;
+								}else{
+									Logging.log(this, "      .." + tReceivedSharedRoutingEntry.getSource() + " DOES NOT BELONG to cluster " + tPeerHRMID);
+								}
+								
+								/**
+								 * does the received route start in this cluster?
+								 */
+								if(tReceivedSharedRoutingEntry.getSource().isCluster(getHRMID())){
+									Logging.log(this, "      ..source belongs to this topology sharing cluster: " + tReceivedSharedRoutingEntry);
+											
+									/**
+									 * Determine the destination gateway for the intra-cluster routing
+									 */
+									HRMID tDestinationGatewayForIntraClusterRoute = tReceivedSharedRoutingEntry.getSource(); //NextHop().getClusterAddress(getHierarchyLevel().getValue() - 1);
+									Logging.log(this, "      ..destination gateway for intra-cluster route: " + tDestinationGatewayForIntraClusterRoute);
+									
+									/**
+									 * Get the route from the local HRG from the peer to its sibling	
+									 */
+									RoutingEntry tIntraClusterRoutingEntry = mHRMController.getRoutingEntryHRG(tPeerHRMID, tDestinationGatewayForIntraClusterRoute, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " ==> ");
+									Logging.log(this, "      ..determined intra-cluster route to gateway: " + tIntraClusterRoutingEntry);
+									
+									if(tIntraClusterRoutingEntry != null){
+										RoutingEntry tNewEntry = tIntraClusterRoutingEntry.clone();
+										
+										/**
+										 * Add the more abstract route which was received in a "share" message from the superior coordinator
+										 */
+										tNewEntry.append(tReceivedSharedRoutingEntry, this + "::sharePhase()_ReceivedRouteShare_2_2(" + mCallsSharePhase + "), appending: " + tReceivedSharedRoutingEntry);
+										
+										/**
+										 * Add the found routing entry to the shared routing table
+										 */
+										// reset L2Address for next hop
+										tNewEntry.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tNewEntry);
+										tSharedRoutingTable.addEntry(tNewEntry);
+									}else{
+										Logging.err(this, "sharePhase() could find a route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute);
+									}
+								}else{
+									Logging.err(this, "sharePhase() detected a shared route which does not start in this cluster: " + tReceivedSharedRoutingEntry);
+								}
+							}
+							
 //							/*********************************************************************
-//							 * SHARE: routes to neighbors of ourself
+//							 * SHARE 1: routes to neighbors of ourself
 //							 *********************************************************************/
 //							// find all siblings of ourself
 //							//HINT: the found siblings have the same hierarchy level like this coordinator
@@ -369,184 +444,204 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							//HINT: the peer is one hierarchy level below this coordinator
 							LinkedList<HRMID> tKnownPeerSiblings = mHRMController.getSiblingsHRG(tPeerHRMID);
 							for(HRMID tPossibleDestination : tKnownPeerSiblings){
-								if (DEBUG_SHARE_PHASE_DETAILS){
-									Logging.log(this, "    ..possible peer destination: " + tPossibleDestination + " for: " + tPeerHRMID);
+//								if (DEBUG_SHARE_PHASE_DETAILS){
+									Logging.log(this, "    ..possible sibling destination for " + tPeerHRMID + " is: " + tPossibleDestination);
 									Logging.log(this, "      ..determining path from " + tPeerHRMID + " to " + tPossibleDestination);
+//								}
+
+								/**
+								 * Get the route from the local HRG from the peer to its sibling	
+								 */
+								RoutingEntry tRoutingEntryToPossibleDestination = mHRMController.getRoutingEntryHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
+							
+								/**
+								 * Add the found routing entry to the shared routing table
+								 */
+								if(tRoutingEntryToPossibleDestination != null){
+									// reset L2Address for next hop
+									tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
+									tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
 								}
-	
-								int tStep = 0;
-								
-								// get the inter-cluster path to the possible destination
-								List<AbstractRoutingGraphLink> tPath = mHRMController.getRouteHRG(tPeerHRMID, tPossibleDestination);
-								if(tPath != null){
-									// the searched routing entry to the possible destination cluster 
-									RoutingEntry tFinalRoutingEntryToDestination = null;
-									
-									// the last cluster gateway
-									HRMID tLastClusterGateway = null;
-									HRMID tFirstForeignGateway = null;
-									
-									if(!tPath.isEmpty()){
-										if (DEBUG_SHARE_PHASE_DETAILS){
-											Logging.log(this, "      ..found inter cluster path:");
-											int i = 0;
-											for(AbstractRoutingGraphLink tLink : tPath){
-												Logging.log(this, "        ..inter-cluster step[" + i + "]: " + tLink);
-												i++;
-											}
-										}
-										for(AbstractRoutingGraphLink tLink : tPath){
-											RoutingEntry tInterClusterRoutingEntry = (RoutingEntry)tLink.getRoute().getFirst();
-											
-											if(tFinalRoutingEntryToDestination != null){
-												if(tLastClusterGateway == null){
-													throw new RuntimeException(this + "::sharePhase() should never reach this point");
-												}
-												
-												/************************************************************************************************
-												 * ROUTE PART: the intra-cluster route from the last gateway to the next one
-												 ***********************************************************************************************/
-												// the next cluster gateway
-												HRMID tNextClusterGateway = tInterClusterRoutingEntry.getSource();
-												if(!tLastClusterGateway.equals(tNextClusterGateway)){
-													// the intra-cluster path
-													List<AbstractRoutingGraphLink> tIntraClusterPath = mHRMController.getRouteHRG(tLastClusterGateway, tNextClusterGateway);
-													if(tIntraClusterPath != null){
-														if(!tIntraClusterPath.isEmpty()){
-															RoutingEntry tLogicalIntraClusterRoutingEntry = null;
-															
-															/**
-															 * Determine the intra-cluster route part
-															 */
-															// check if we have only one hop in intra-cluster route
-															if(tIntraClusterPath.size() == 1){
-																AbstractRoutingGraphLink tIntraClusterLogLink = tIntraClusterPath.get(0);
-																// get the routing entry from the last gateway to the next one
-																tLogicalIntraClusterRoutingEntry = (RoutingEntry) tIntraClusterLogLink.getRoute().getFirst();
-															}else{
-																tLogicalIntraClusterRoutingEntry = RoutingEntry.create(tIntraClusterPath);
-																if(tLogicalIntraClusterRoutingEntry == null){
-																	Logging.warn(this, "sharePhase() for " + tPeerHRMID + " found a complex intra-cluster path and wasn't able to derive an aggregated logical link from it..");
-																	Logging.warn(this, " 	..path: " + tIntraClusterPath);
-																	Logging.warn(this, "      ..from: " + tLastClusterGateway);
-																	Logging.warn(this, "      ..to: " + tNextClusterGateway);
-																	Logging.warn(this, "    ..for a routing from " + tPeerHRMID + " to " + tPossibleDestination);
-																	
-																	// reset
-																	tFinalRoutingEntryToDestination = null;
-					
-																	// abort
-																	break;
-																}
-															}
-	
-															/**
-															 * Add the intra-cluster route part
-															 */
-															if(tLogicalIntraClusterRoutingEntry != null){
-																// chain the routing entries
-																if (DEBUG_SHARE_PHASE_DETAILS){
-																	Logging.log(this, "        ..step [" + tStep + "] (intra-cluster): " + tLogicalIntraClusterRoutingEntry);
-																}
-																tFinalRoutingEntryToDestination.append(tLogicalIntraClusterRoutingEntry);
-																tStep++;
-						
-																/**
-																 * Determine the next hop for the resulting path
-																 */
-																if(tFirstForeignGateway == null){
-																	if(tLogicalIntraClusterRoutingEntry.getHopCount() > 0){
-																		tFirstForeignGateway = tLogicalIntraClusterRoutingEntry.getNextHop();
-																	}
-																}
-															}
-														}else{
-															Logging.warn(this, "sharePhase() for " + tPeerHRMID + " found an empty intra-cluster path..");
-															Logging.warn(this, "      ..from: " + tLastClusterGateway);
-															Logging.warn(this, "      ..to: " + tNextClusterGateway);
-															Logging.warn(this, "    ..for a routing from " + tPeerHRMID + " to " + tPossibleDestination);
-														}
-													}else{
-														Logging.warn(this, "sharePhase() for " + tPeerHRMID + " couldn't find a route from " + tLastClusterGateway + " to " + tNextClusterGateway + " for a routing from " + tPeerHRMID + " to " + tPossibleDestination);
-														
-														// reset
-														tFinalRoutingEntryToDestination = null;
-		
-														// abort
-														break;
-	
-														//HINT: do not throw a RuntimeException here because such a situation could have a temporary cause
-													}
-												}else{
-													// tLastClusterGateway and tNextClusterGateway are equal => empty route for cluster traversal
-												}
-												/***********************************************************************************************
-												 * ROUTE PART: the inter-cluster link
-												 ***********************************************************************************************/
-												// chain the routing entries
-												if (DEBUG_SHARE_PHASE_DETAILS){
-													Logging.log(this, "        ..step [" + tStep + "] (cluster-2-cluster): " + tInterClusterRoutingEntry);
-												}
-												tFinalRoutingEntryToDestination.append(tInterClusterRoutingEntry);
-											}else{
-												/***********************************************************************************************
-												 * ROUTE PART: first step of the resulting path
-												 ***********************************************************************************************/
-												if (DEBUG_SHARE_PHASE_DETAILS){
-													Logging.log(this, "        ..step [" + tStep + "] (cluster-2-cluster): " + tInterClusterRoutingEntry);
-												}
-												tFinalRoutingEntryToDestination = tInterClusterRoutingEntry;
-											}
-											tStep++;
-											
-											/**
-											 * Determine the next hop for the resulting path
-											 */
-											if(tFirstForeignGateway == null){
-												if(tInterClusterRoutingEntry.getHopCount() > 0){
-													tFirstForeignGateway = tInterClusterRoutingEntry.getNextHop();
-												}
-											}
-			
-											
-											//update last cluster gateway
-											tLastClusterGateway = tInterClusterRoutingEntry.getNextHop();
-										}
-									}else{
-										Logging.err(this, "sharePhase() for " + tPeerHRMID + " found an empty path from " + tPeerHRMID + " to " + tPossibleDestination);
-									}
-									
-									if(tFinalRoutingEntryToDestination != null){
-										/**
-										 * Set the DESTINATION for the resulting routing entry
-										 */
-										tFinalRoutingEntryToDestination.setDest(tPeerHRMID.getForeignCluster(tPossibleDestination) /* aggregate the destination here */);
-			
-										/**
-										 * Set the NEXT HOP for the resulting routing entry 
-										 */
-										if(tFirstForeignGateway != null){
-											tFinalRoutingEntryToDestination.setNextHop(tFirstForeignGateway);
-										}
-										
-										/**
-										 * Add the found routing entry to the shared routing table
-										 */
-										if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-											Logging.log(this, "      ..==> routing entry: " + tFinalRoutingEntryToDestination);
-										}
-										// reset L2Address for next hop
-										tFinalRoutingEntryToDestination.setNextHopL2Address(null);
-										tFinalRoutingEntryToDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tFinalRoutingEntryToDestination);
-										tSharedRoutingTable.addEntry(tFinalRoutingEntryToDestination);
-									}
-								}else{
-									Logging.err(this, "sharePhase() for " + tPeerHRMID + " couldn't determine a route from " + tPeerHRMID + " to " + tPossibleDestination);
-								}
-							}
+
+//	
+//								int tStep = 0;
+//								
+//								// get the inter-cluster path to the possible destination
+//								List<AbstractRoutingGraphLink> tPath = mHRMController.getRouteHRG(tPeerHRMID, tPossibleDestination);
+//								if(tPath != null){
+//									// the searched routing entry to the possible destination cluster 
+//									RoutingEntry tFinalRoutingEntryToDestination = null;
+//									
+//									// the last cluster gateway
+//									HRMID tLastClusterGateway = null;
+//									HRMID tFirstForeignGateway = null;
+//									
+//									if(!tPath.isEmpty()){
+//										if (DEBUG_SHARE_PHASE_DETAILS){
+//											Logging.log(this, "      ..found inter cluster path:");
+//											int i = 0;
+//											for(AbstractRoutingGraphLink tLink : tPath){
+//												Logging.log(this, "        ..inter-cluster step[" + i + "]: " + tLink);
+//												i++;
+//											}
+//										}
+//										for(AbstractRoutingGraphLink tLink : tPath){
+//											RoutingEntry tInterClusterRoutingEntry = (RoutingEntry)tLink.getRoute().getFirst().clone();
+//											
+//											if(tFinalRoutingEntryToDestination != null){
+//												if(tLastClusterGateway == null){
+//													throw new RuntimeException(this + "::sharePhase() should never reach this point");
+//												}
+//												
+//												/************************************************************************************************
+//												 * ROUTE PART: the intra-cluster route from the last gateway to the next one
+//												 ***********************************************************************************************/
+//												// the next cluster gateway
+//												HRMID tNextClusterGateway = tInterClusterRoutingEntry.getSource();
+//												if(!tLastClusterGateway.equals(tNextClusterGateway)){
+//													// the intra-cluster path
+//													List<AbstractRoutingGraphLink> tIntraClusterPath = mHRMController.getRouteHRG(tLastClusterGateway, tNextClusterGateway);
+//													if(tIntraClusterPath != null){
+//														if(!tIntraClusterPath.isEmpty()){
+//															RoutingEntry tLogicalIntraClusterRoutingEntry = null;
+//															
+//															/**
+//															 * Determine the intra-cluster route part
+//															 */
+//															// check if we have only one hop in intra-cluster route
+//															if(tIntraClusterPath.size() == 1){
+//																AbstractRoutingGraphLink tIntraClusterLogLink = tIntraClusterPath.get(0);
+//																// get the routing entry from the last gateway to the next one
+//																tLogicalIntraClusterRoutingEntry = (RoutingEntry) tIntraClusterLogLink.getRoute().getFirst();
+//															}else{
+//																tLogicalIntraClusterRoutingEntry = RoutingEntry.create(tIntraClusterPath);
+//																if(tLogicalIntraClusterRoutingEntry == null){
+//																	Logging.warn(this, "sharePhase() for " + tPeerHRMID + " found a complex intra-cluster path and wasn't able to derive an aggregated logical link from it..");
+//																	Logging.warn(this, " 	..path: " + tIntraClusterPath);
+//																	Logging.warn(this, "      ..from: " + tLastClusterGateway);
+//																	Logging.warn(this, "      ..to: " + tNextClusterGateway);
+//																	Logging.warn(this, "    ..for a routing from " + tPeerHRMID + " to " + tPossibleDestination);
+//																	
+//																	// reset
+//																	tFinalRoutingEntryToDestination = null;
+//					
+//																	// abort
+//																	break;
+//																}
+//															}
+//	
+//															/**
+//															 * Add the intra-cluster route part
+//															 */
+//															if(tLogicalIntraClusterRoutingEntry != null){
+//																// chain the routing entries
+//																if (DEBUG_SHARE_PHASE_DETAILS){
+//																	Logging.log(this, "        ..step [" + tStep + "] (intra-cluster): " + tLogicalIntraClusterRoutingEntry);
+//																}
+//																tFinalRoutingEntryToDestination.append(tLogicalIntraClusterRoutingEntry, this + "::sharePhase()_append2_intra_cluster(" + mCallsSharePhase + ") from " + tLastClusterGateway + " to " + tNextClusterGateway);
+//																tStep++;
+//						
+//																/**
+//																 * Determine the next hop for the resulting path
+//																 */
+//																if(tFirstForeignGateway == null){
+//																	if(tLogicalIntraClusterRoutingEntry.getHopCount() > 0){
+//																		tFirstForeignGateway = tLogicalIntraClusterRoutingEntry.getNextHop();
+//																	}
+//																}
+//															}
+//														}else{
+//															Logging.warn(this, "sharePhase() for " + tPeerHRMID + " found an empty intra-cluster path..");
+//															Logging.warn(this, "      ..from: " + tLastClusterGateway);
+//															Logging.warn(this, "      ..to: " + tNextClusterGateway);
+//															Logging.warn(this, "    ..for a routing from " + tPeerHRMID + " to " + tPossibleDestination);
+//														}
+//													}else{
+//														Logging.warn(this, "sharePhase() for " + tPeerHRMID + " couldn't find a route from " + tLastClusterGateway + " to " + tNextClusterGateway + " for a routing from " + tPeerHRMID + " to " + tPossibleDestination);
+//														
+//														// reset
+//														tFinalRoutingEntryToDestination = null;
+//		
+//														// abort
+//														break;
+//	
+//														//HINT: do not throw a RuntimeException here because such a situation could have a temporary cause
+//													}
+//												}else{
+//													// tLastClusterGateway and tNextClusterGateway are equal => empty route for cluster traversal
+//												}
+//												/***********************************************************************************************
+//												 * ROUTE PART: the inter-cluster link
+//												 ***********************************************************************************************/
+//												// chain the routing entries
+//												if (DEBUG_SHARE_PHASE_DETAILS){
+//													Logging.log(this, "        ..step [" + tStep + "] (cluster-2-cluster): " + tInterClusterRoutingEntry);
+//												}
+//												tFinalRoutingEntryToDestination.append(tInterClusterRoutingEntry, this + "::sharePhase()_append3_inter_cluster(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination);
+//											}else{
+//												/***********************************************************************************************
+//												 * ROUTE PART: first step of the resulting path
+//												 ***********************************************************************************************/
+//												if (DEBUG_SHARE_PHASE_DETAILS){
+//													Logging.log(this, "        ..step [" + tStep + "] (cluster-2-cluster): " + tInterClusterRoutingEntry);
+//												}
+//												tInterClusterRoutingEntry.extendCause(this + "::sharePhase()_append4_start_inter_cluster(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination);
+//												tFinalRoutingEntryToDestination = tInterClusterRoutingEntry;
+//											}
+//											tStep++;
+//											
+//											/**
+//											 * Determine the next hop for the resulting path
+//											 */
+//											if(tFirstForeignGateway == null){
+//												if(tInterClusterRoutingEntry.getHopCount() > 0){
+//													tFirstForeignGateway = tInterClusterRoutingEntry.getNextHop();
+//												}
+//											}
+//			
+//											
+//											//update last cluster gateway
+//											tLastClusterGateway = tInterClusterRoutingEntry.getNextHop();
+//										}
+//									}else{
+//										Logging.err(this, "sharePhase() for " + tPeerHRMID + " found an empty path from " + tPeerHRMID + " to " + tPossibleDestination);
+//									}
+//									
+//									if(tFinalRoutingEntryToDestination != null){
+//										/**
+//										 * Set the DESTINATION for the resulting routing entry
+//										 */
+//										tFinalRoutingEntryToDestination.setDest(tPeerHRMID.getForeignCluster(tPossibleDestination) /* aggregate the destination here */);
+//			
+//										/**
+//										 * Set the NEXT HOP for the resulting routing entry 
+//										 */
+//										if(tFirstForeignGateway != null){
+//											tFinalRoutingEntryToDestination.setNextHop(tFirstForeignGateway);
+//										}
+//										
+//										/**
+//										 * Add the found routing entry to the shared routing table
+//										 */
+//										// reset L2Address for next hop
+//										tFinalRoutingEntryToDestination.setNextHopL2Address(null);
+//										tFinalRoutingEntryToDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tFinalRoutingEntryToDestination);
+//										tSharedRoutingTable.addEntry(tFinalRoutingEntryToDestination);
+//									}
+//								}else{
+//									Logging.err(this, "sharePhase() for " + tPeerHRMID + " couldn't determine a route from " + tPeerHRMID + " to " + tPossibleDestination);
+//								}
+							} // for(HRMID tPossibleDestination : tKnownPeerSiblings)
 						}
 						
 						if(tSharedRoutingTable.size() > 0){
+//							if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+								Logging.log(this, "     SHARING with: " + tPeerHRMID);
+								for(RoutingEntry tEntry : tSharedRoutingTable){	
+									Logging.log(this, "      ..==> routing entry: " + tEntry);
+								}
+//							}
+							
 							tComChannel.distributeRouteShare(tSharedRoutingTable);
 						}
 					}	
@@ -595,7 +690,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					/****************************************************************************************************************************
 					 * Report 2: intra-cluster routes between all possible combinations of gateway pairings
 					 ***************************************************************************************************************************/							
-					if(getHierarchyLevel().isBaseLevel()){ //TODO: remove this limitation
+					if(getHierarchyLevel().isBaseLevel()){
 						/***************************************************************
 						 * (L0): routes to remote ClusterMember (physical neighbor nodes) based on node-to-node messages
 						 **************************************************************/
@@ -629,7 +724,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									Logging.log(this, "    ..found neighbor: " + tNeighbor);
 								}
 								// get the link to the neighbor
-								RoutingEntry tRoutingEntryToNeighbor = mHRMController.getRoutingEntryHRG(getHRMID(), tNeighbor);
+								RoutingEntry tRoutingEntryToNeighbor = mHRMController.getNeighborRoutingEntryHRG(getHRMID(), tNeighbor);
 								if(tRoutingEntryToNeighbor != null){
 									HRMID tGateway = tRoutingEntryToNeighbor.getSource();
 									if(!tGateways.contains(tGateway)){
@@ -682,7 +777,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 													if(tFinalRoutingEntryBetweenGateways == null){
 														tFinalRoutingEntryBetweenGateways = tStepRoutingEntry;
 													}else{
-														tFinalRoutingEntryBetweenGateways.append(tStepRoutingEntry);
+														tFinalRoutingEntryBetweenGateways.append(tStepRoutingEntry, this + "::reportPhase()_ReceivedRouteShare_append1");
 													}													
 												}
 												
@@ -699,6 +794,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 													}
 
 													// add the found gate-2-gateway route to the overall route report, which is later sent to the superior coordinator
+													tFinalRoutingEntryBetweenGateways.extendCause(this + "::reportPhase()_inter-gateway-route from " + tSourceGateway + " to " + tDestinationGateway);
 													tReportRoutingTable.addEntry(tFinalRoutingEntryBetweenGateways);
 												}
 											}
