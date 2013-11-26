@@ -806,7 +806,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pCluster the cluster whose HRMID is updated
 	 * @param pOldHRMID the old HRMID which should be unregistered
 	 */
-	int mCallsUpdateCoordinatorAddress = 0;
+	private int mCallsUpdateCoordinatorAddress = 0;
 	public void updateCoordinatorAddress(Coordinator pCoordinator, HRMID pOldHRMID)
 	{
 		mCallsUpdateCoordinatorAddress++;

@@ -43,7 +43,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * Stores the Bully priority of this node for this cluster.
 	 * The value is also used inside the Elector of this cluster.
 	 */
-	protected BullyPriority mBullyPriority = null;
+	private BullyPriority mBullyPriority = null;
 
 	/**
 	 * The HRM ID of this cluster.

@@ -61,7 +61,7 @@ public class ClusterMember extends ClusterName
 	 * Stores the HRMID which is assigned to this node.
 	 * This variable is only used for L0.
 	 */
-	protected HRMID mAssignedL0HRMID = null;
+	private HRMID mAssignedL0HRMID = null;
 
 	/**
 	 * Stores the currently reported routing table based on setL0HRMID calls

@@ -563,7 +563,7 @@ public class Cluster extends ClusterMember
 	 * @param pComChannel the comm. channel towards the cluster member, which needs a new HRMID
 	 * @param pCause the cause for this event
 	 */
-	public void eventClusterMemberNeedsHRMID(ComChannel pComChannel, String pCause)
+	private void eventClusterMemberNeedsHRMID(ComChannel pComChannel, String pCause)
 	{
 		Logging.log(this, "EVENT: Cluster_Member_Needs_HRMID for: " + pComChannel + ", cause=" + pCause);
 		
