@@ -71,7 +71,12 @@ public class RoutingEntry implements RouteSegment
 	private HRMID mNextHop = null;
 	
 	/**
-	 * Stores the hop costs the described route causes.
+	 * Stores the last next hop of a route entry which was determined by combining multiple routing entries and this instance is the result.
+	 */
+	private HRMID mLastNextHop = null;
+
+	/**
+	 * Stores the hop costs (physical hop count) the described route causes.
 	 */
 	private int mHopCount = NO_HOP_COSTS;
 	
@@ -167,9 +172,9 @@ public class RoutingEntry implements RouteSegment
 	@SuppressWarnings("unchecked")
 	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, LinkedList<String> pCause)
 	{
-		mDestination = (pDestination != null ? pDestination.clone() : null);
-		mSource = (pSource != null ? pSource.clone() : null);
-		mNextHop = (pNextHop != null ? pNextHop.clone() : null);
+		setDest(pDestination);
+		setSource(pSource);
+		setNextHop(pNextHop);
 		mHopCount = pHopCount;
 		mUtilization = pUtilization;
 		mMinDelay = pMinDelay;
@@ -298,7 +303,7 @@ public class RoutingEntry implements RouteSegment
 						RoutingEntry tNextRoutePart = (RoutingEntry) tLink.getRoute().getFirst();
 						if(tResult != null){
 							if(tResult.getNextHop().equals(tNextRoutePart.getSource())){
-								tResult.append(tNextRoutePart);
+								tResult.append(tNextRoutePart, "RT::create()_1");
 								// aggregate the next hop
 								tResult.setNextHop(tNextRoutePart.getNextHop());
 							}else{
@@ -313,7 +318,8 @@ public class RoutingEntry implements RouteSegment
 							}
 						}else{
 							// start with first path fragment 
-							tResult = tNextRoutePart;
+							tResult = tNextRoutePart.clone();
+							tResult.extendCause("RT::create()_2");
 						}						
 
 					}else{
@@ -480,7 +486,7 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public void setDest(HRMID pDestination)
 	{
-		mDestination = pDestination.clone();
+		mDestination = (pDestination != null ? pDestination.clone() : null);
 	}
 
 	/**
@@ -490,7 +496,27 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public void setSource(HRMID pSource)
 	{
-		mSource = pSource.clone();	
+		mSource = (pSource != null ? pSource.clone() : null);
+	}
+
+	/**
+	 * Returns the last next hop of this route
+	 * 
+	 * @return the last next hop
+	 */
+	public HRMID getLastNextHop()
+	{
+		return mLastNextHop.clone();
+	}
+	
+	/**
+	 * Sets a new last next hop
+	 * 
+	 * @param pNextHop the new last next hop
+	 */
+	public void setLastNextHop(HRMID pLastNextHop)
+	{
+		mLastNextHop = (pLastNextHop != null ? pLastNextHop.clone() : null);
 	}
 
 	/**
@@ -510,7 +536,18 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public void setNextHop(HRMID pNextHop)
 	{
-		mNextHop = pNextHop.clone();
+		mNextHop = (pNextHop != null ? pNextHop.clone() : null);
+		setLastNextHop(mNextHop);
+	}
+
+	/**
+	 * Sets a new cause description
+	 * 
+	 * @param pCause the new description
+	 */
+	public void setCause(LinkedList<String> pCause)
+	{
+		mCause = pCause;
 	}
 
 	/**
@@ -702,7 +739,7 @@ public class RoutingEntry implements RouteSegment
 		
 		extendCause(" ");
 		extendCause("RoutingEntry::CHAINING()_start with these two entries:");
-		extendCause("   this: " + this);
+		extendCause("   this: " + tOldThis);
 		extendCause("   other: " + pOtherEntry);
 		for(String tCauseString : pOtherEntry.getCause()){
 			extendCause("CHAINED ENTRY: " + tCauseString);
@@ -715,9 +752,27 @@ public class RoutingEntry implements RouteSegment
 	 * Appends another entry to this one
 	 * 
 	 * @param pOtherEntry the other routing entry
+	 * @param pCause the cause for this call
 	 */
-	public void append(RoutingEntry pOtherEntry)
+	public void append(RoutingEntry pOtherEntry, String pCause)
 	{
+		RoutingEntry tOldThis = clone();
+
+		if(pOtherEntry == null){
+			Logging.err(this, "append() got a null pointer");
+			return;
+		}
+		
+		// set the next hop of the other entry as last next hop of the resulting routing entry
+		setLastNextHop(pOtherEntry.mNextHop);
+		
+		/**
+		 * auto-learn the next physical hop
+		 */
+		if(mHopCount == NO_HOP_COSTS){
+			setNextHop(pOtherEntry.mNextHop);
+		}
+
 		// HOP COUNT -> add both
 		mHopCount += pOtherEntry.mHopCount;
 		
@@ -739,8 +794,8 @@ public class RoutingEntry implements RouteSegment
 		mRouteToDirectNeighbor = false;
 		
 		extendCause(" ");
-		extendCause("RoutingEntry::APPENDING()_start with these two entries:");
-		extendCause("   this: " + this);
+		extendCause("RoutingEntry::APPENDING()_start, cause=" + pCause);
+		extendCause("   this: " + tOldThis);
 		extendCause("   other: " + pOtherEntry);
 		for(String tCauseString : pOtherEntry.getCause()){
 			extendCause("APPENDED ENTRY: " + tCauseString);
@@ -758,6 +813,9 @@ public class RoutingEntry implements RouteSegment
 	{
 		// create object copy
 		RoutingEntry tResult = new RoutingEntry(mSource, mDestination, mNextHop, mHopCount, mUtilization, mMinDelay, mMaxDataRate, mCause);
+		
+		// update the last next hop
+		tResult.setLastNextHop(mLastNextHop);
 		
 		// update the flag "route to direct neighbor"
 		tResult.mRouteToDirectNeighbor = mRouteToDirectNeighbor;
@@ -830,7 +888,7 @@ public class RoutingEntry implements RouteSegment
 		String tResult = (mReportedLink ? "REP: " : "") + (mSharedLink ? "SHA: " : "");
 
 		if(!mBelongstoHRG){
-			tResult += "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() != INFINITE_DATARATE ? getMaxDataRate() : "inf.") : "") + ")";
+			tResult += "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getLastNextHop() != null ? ", LastNext=" + getLastNextHop() : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() != INFINITE_DATARATE ? getMaxDataRate() : "inf.") : "") + ")";
 		}else{
 			tResult += getSource() + " <=" + (mRouteForClusterTraversal ? "TRAV" : "") + "=> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() != INFINITE_DATARATE ? getMaxDataRate() : "inf.") : "");
 		}
