@@ -87,7 +87,7 @@ public class CoordinatorProxy extends ClusterMember
 
 		// register at HRMController's internal database
 		pHRMController.registerCoordinatorProxy(tResult);
-		
+
 		return tResult;
 	}
 
@@ -201,7 +201,7 @@ public class CoordinatorProxy extends ClusterMember
 			 * Update the base node priority
 			 */
 			// are we at base hierarchy level
-			if(getHierarchyLevel().isBaseLevel()){
+//			if(getHierarchyLevel().isBaseLevel()){
 				// distance is the init. value?
 				if(mDistance != -1){
 					// decrease base node priority
@@ -213,10 +213,10 @@ public class CoordinatorProxy extends ClusterMember
 
 				// increase base node priority
 				mHRMController.increaseHierarchyNodePriority_KnownCoordinator(this);
-			}else{
-				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
-				mDistance = pDistance;
-			}
+//			}else{
+//				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
+//				mDistance = pDistance;
+//			}
 			
 		}else{
 			// old value == new value
