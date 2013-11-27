@@ -2495,7 +2495,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Marks the FoGSiEm simulation creation as finished.
 	 */
-	public static void simulationCreationHasFinished()
+	public static void eventSimulationCreationHasFinished()
 	{
 		mFoGSiEmSimulationCreationFinished = true;
 
@@ -2504,6 +2504,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
 		GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
+		GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
+		mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
 	}
 	
 	/**
@@ -3188,24 +3190,26 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoDeactivateAnnounceCoordinator()
 	{
-		double tTimeWithFixedHierarchyData = getSimulationTime() - mSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-		//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
-		if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
-
-			if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-				/**
-				 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
-				 */
-				if(tTimeWithFixedHierarchyData > HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2){
-					GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
-					
-					Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-					Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
-					Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + (HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2) + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
-					Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-					
-					if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_REPORTING_SHARING){
-						autoActivateReportingSharing();
+		if(mSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
+			double tTimeWithFixedHierarchyData = getSimulationTime() - mSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+			//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
+			if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
+	
+				if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+					/**
+					 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
+					 */
+					if(tTimeWithFixedHierarchyData > HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2){
+						GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
+						
+						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+						Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
+						Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + (HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2) + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
+						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+						
+						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_REPORTING_SHARING){
+							autoActivateReportingSharing();
+						}
 					}
 				}				
 			}

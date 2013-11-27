@@ -26,7 +26,7 @@ public class SimulationCreatedEvent implements IEvent
 	public void fire()
 	{
 		Logging.log(this, ">>>>>>>>>>>>> SIMULATION CREATION FINISHED <<<<<<<<<<<");
-		HRMController.simulationCreationHasFinished();
+		HRMController.eventSimulationCreationHasFinished();
 	}
 
 	@Override
