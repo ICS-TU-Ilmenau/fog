@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.eclipse.ui.views;
 
 import java.rmi.RemoteException;
 import java.util.LinkedList;
+import java.lang.management.*;
 
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.jface.viewers.DoubleClickEvent;
@@ -73,7 +74,17 @@ public class SimulationView extends ViewPart
 	private static final int EVENT_HANDLER_STATUS_REFRESH_MSEC = 500;
 	
 	private static final int MAX_NUMBER_AS_OPEN_AT_START = 4;
+
+	private static final String TEXT_HW_PROCESSORS = "Processors (cores):";
+	private static final String TEXT_HW_MEM_MAX = "Memory (max. allocated):";
+	private static final String TEXT_HW_MEM_TOTAL = "Memory (allocated):";
+	private static final String TEXT_HW_MEM_FREE = "Memory (free):";
+
+	private static final String TEXT_SHOW_THREAD_STATS_BUTTON = "Show thread stats";
 	
+	private long MB = 1024*1024;
+	
+	private Runtime mRuntime = null;
 	
 	class SimulationContentProvider implements ITreeContentProvider
 	{
@@ -153,6 +164,61 @@ public class SimulationView extends ViewPart
 		if(simulationViewInstance == null) simulationViewInstance = this;
 	}
 
+	public void createPartControlHardware(Composite pParent)
+	{
+		mRuntime = Runtime.getRuntime();
+		
+		Label tLabelHw = new Label(pParent, SWT.NONE);
+		tLabelHw.setText("Simulation hardware:");
+		tLabelHw.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		Composite tContainer = new Composite(pParent, SWT.NONE);
+	    GridLayout gridLayout = new GridLayout(2, false);
+	    tContainer.setLayout(gridLayout);
+	    tContainer.setLayoutData(createGridData(true, 1));
+
+		Label tLabelHwProcs = new Label(tContainer, SWT.NONE);
+		tLabelHwProcs.setText(TEXT_HW_PROCESSORS);
+		tLabelHwProcs.setLayoutData(createGridData(false, 1));
+		
+		Label tValueHwProcs = new Label(tContainer, SWT.NONE);
+		tValueHwProcs.setText(Integer.toString(mRuntime.availableProcessors()));
+		tValueHwProcs.setLayoutData(createGridData(true, 1));
+
+		Label tLabelHwMemMax = new Label(tContainer, SWT.NONE);
+		tLabelHwMemMax.setText(TEXT_HW_MEM_MAX);
+		tLabelHwMemMax.setLayoutData(createGridData(false, 1));
+		
+		Label tValueHwMemMax = new Label(tContainer, SWT.NONE);
+		tValueHwMemMax.setText(Long.toString(mRuntime.maxMemory() / MB) + " MB");
+		tValueHwMemMax.setLayoutData(createGridData(true, 1));
+
+		Label tLabelHwMemTotal = new Label(tContainer, SWT.NONE);
+		tLabelHwMemTotal.setText(TEXT_HW_MEM_TOTAL);
+		tLabelHwMemTotal.setLayoutData(createGridData(false, 1));
+		
+		mValueHwMemTotal = new Label(tContainer, SWT.NONE);
+		mValueHwMemTotal.setLayoutData(createGridData(true, 1));
+
+		Label tLabelHwMemFree = new Label(tContainer, SWT.NONE);
+		tLabelHwMemFree.setText(TEXT_HW_MEM_FREE);
+		tLabelHwMemFree.setLayoutData(createGridData(false, 1));
+		
+		mValueHwMemFree = new Label(tContainer, SWT.NONE);
+		mValueHwMemFree.setLayoutData(createGridData(true, 1));
+		
+		Button showThreadStatsButton = new Button(pParent, SWT.PUSH);
+		showThreadStatsButton.setText(TEXT_SHOW_THREAD_STATS_BUTTON);
+		showThreadStatsButton.setLayoutData(createGridData(false, 1));
+		showThreadStatsButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(org.eclipse.swt.events.SelectionEvent evt) {
+				showThreadStats();
+			}
+		});
+
+	}
+	
 	/**
 	 * Create GUI
 	 */
@@ -164,6 +230,8 @@ public class SimulationView extends ViewPart
 	    GridLayout gridLayout = new GridLayout(1, false);
 	    comp.setLayout(gridLayout);
 		
+	    createPartControlHardware(comp);
+
 		Button startButton = new Button(comp, SWT.PUSH);
 		startButton.setText(TEXT_START_BUTTON);
 		startButton.setLayoutData(createGridData(true, 1));
@@ -344,6 +412,33 @@ public class SimulationView extends ViewPart
 		return Math.round(time *1000.0d);
 	}
 	
+	private void showThreadStats()
+	{
+		double tSimNow = 1;
+		if(currentSim != null){
+			tSimNow = currentSim.getTimeBase().now();
+		}
+		
+		ThreadMXBean tThreadMXBean = ManagementFactory.getThreadMXBean();
+		if(!tThreadMXBean.isThreadContentionMonitoringEnabled()){
+			tThreadMXBean.setThreadContentionMonitoringEnabled(true);
+		}
+		
+		long tThreadIds[] = tThreadMXBean.getAllThreadIds();
+		
+		String tStats = "";
+		for(long tThreadId : tThreadIds){
+			ThreadInfo tThreadInfo = tThreadMXBean.getThreadInfo(tThreadId);
+			long tUsedCpuTime = tThreadMXBean.getThreadCpuTime(tThreadId) / 1000 / 1000;
+			tStats +=   "\nThread [" + tThreadId + "]: " + tThreadInfo.getThreadName() +
+						"\n   ..acquired time: " + tUsedCpuTime + " ms (sim. time: " + tSimNow + " s)" +
+						"\n   ..blocked time: " + tThreadInfo.getBlockedTime() + " ms for " + tThreadInfo.getBlockedCount() + " blocks" +
+						"\n";
+			
+		}
+		Logging.log(tStats);
+	}
+	
 	private void updateSimulationControl()
 	{
 		if(Thread.currentThread() == display.getThread()) {
@@ -371,6 +466,8 @@ public class SimulationView extends ViewPart
 				eventHandlerTime.setText(Double.toString(((double)toMilliSeconds(timeBase.now())) / 1000) + " s");
 				eventHandlerDiff.setText(toMilliSeconds(timeBase.getLastEventDiff()) +" msec");
 				eventHandlerNumberEvents.setText(timeBase.getEventCounter() +" (queued: " +timeBase.getNumberScheduledEvents() +")");
+				mValueHwMemTotal.setText(Long.toString(mRuntime.totalMemory() / MB) + " MB");
+				mValueHwMemFree.setText(Long.toString(mRuntime.freeMemory() / MB) + " MB");
 			} else {
 				pauseButton.setEnabled(false);
 				modeButton.setEnabled(false);
@@ -379,6 +476,8 @@ public class SimulationView extends ViewPart
 				eventHandlerTime.setText("-");
 				eventHandlerDiff.setText("-");
 				eventHandlerNumberEvents.setText("-");
+				mValueHwMemTotal.setText("-");
+				mValueHwMemFree.setText("-");
 			}
 		} else {
 			display.syncExec(simControlUpdateRunnable);
@@ -583,6 +682,8 @@ public class SimulationView extends ViewPart
 	private Label eventHandlerTime;
 	private Label eventHandlerDiff;
 	private Label eventHandlerNumberEvents;
+	private Label mValueHwMemTotal;
+	private Label mValueHwMemFree;
 	private TreeViewer viewer;
 	
 	/**
