@@ -196,13 +196,24 @@ public class HRMConfig
 		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
 		 */
 		public static final double GUI_NODE_HRG_DISPLAY_UPDATE_INTERVAL = 10.0;
-		
+	}
+
+	public class Measurement
+	{
 		/**
 		 * Defines if the AnnounceCoordinator packets should be automatically deactivated if the last packet with impact on the hierarchy data is too far in the past.
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
 		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS = true;
+
+		/**
+		 * Defines if the report/share phase should be automatically started right after AnnounceCoordinator packets were deactivated.
+		 * This works only if "Routing.REPORT_TOPOLOGY_AUTOMATICALLY" is set to false
+		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
+		 * 			  The value influences only the speed of the FoGSiEm environment.
+		 */
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_REPORTING_SHARING = true;
 	}
 	
 	public class Addressing
@@ -326,7 +337,7 @@ public class HRMConfig
 		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated network topology.
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean REPORT_TOPOLOGY_AUTOMATICALLY = true;
+		public static final boolean REPORT_TOPOLOGY_AUTOMATICALLY = false;
 
 		/**
 		 * Defines if an HRM entity should share its routing knowledge to all inferior entities.

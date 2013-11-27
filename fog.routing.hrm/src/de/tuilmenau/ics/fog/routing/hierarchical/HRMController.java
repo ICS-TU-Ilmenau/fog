@@ -3153,7 +3153,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		double tTimeWithFixedHierarchyData = getSimulationTime() - mSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
 		//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
-		if(HRMConfig.DebugOutput.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
+		if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
 
 			if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 				/**
@@ -3163,15 +3163,31 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
 					
 					Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-					Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data ");
+					Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
 					Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + (HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2) + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
 					Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+					
+					if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_REPORTING_SHARING){
+						autoActivateReportingSharing();
+					}
 				}				
 			}
 		}
 		
 	}
 
+	/**
+	 * Auto-activates reporting/sharing after AnnounceCoordinator packets were deactivated.
+	 */
+	private void autoActivateReportingSharing()
+	{
+		Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
+		Logging.warn(this, "+++ Activating reporting/sharing of topology data");
+		Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
+
+		GUI_USER_CTRL_REPORT_TOPOLOGY = true;
+	}
+	
 	/**
 	 * Triggers the "report phase" / "share phase" of all known coordinators
 	 */
