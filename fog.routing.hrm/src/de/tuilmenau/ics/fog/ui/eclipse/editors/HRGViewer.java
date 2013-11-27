@@ -303,6 +303,20 @@ public class HRGViewer extends EditorAWT implements Observer, IController, IEven
 	}
 
 	/**
+	 * overloaded dispose() function for unregistering from the HRMController instance
+	 */
+	public void dispose()
+	{
+		// unregister this GUI at the corresponding HRMController
+		if (mHRMController != null){
+			mHRMController.unregisterHRGGUI(this);
+		}
+		
+		// call the original implementation
+		super.dispose();
+	}
+
+	/**
 	 * Returns a descriptive string about this object
 	 * 
 	 * @return the descriptive string
