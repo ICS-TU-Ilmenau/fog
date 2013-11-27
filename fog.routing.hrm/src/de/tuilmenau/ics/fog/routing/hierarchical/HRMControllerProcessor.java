@@ -82,8 +82,11 @@ public class HRMControllerProcessor extends Thread
 	 * @param pCause the causing control entity
 	 * @param pHierarchyLevel the hierarchy level where a clustering should be done
 	 */
+	private long mEventUpdateCluster = 0;
 	public synchronized void eventUpdateCluster(ControlEntity pCause, HierarchyLevel pHierarchyLevel)
 	{
+		mEventUpdateCluster++;
+		
 		if(mProcessorNeeded){
 			if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
 				Logging.log(this, "\n\n################ CLUSTERING EVENT TRIGGERED at hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
@@ -93,6 +96,7 @@ public class HRMControllerProcessor extends Thread
 				mNumberUpdateRequests++;
 				
 				// trigger wake-up
+				Logging.log(this, "Notify - [" + mEventUpdateCluster + "] - eventUpdateCluster(" + pCause + ", " + pHierarchyLevel + ")");
 				notify();
 			}
 		}
@@ -103,13 +107,17 @@ public class HRMControllerProcessor extends Thread
 	 * 
 	 * @param pComChannel the comm. channel which received a new packet
 	 */
+	private long mEventReceivedPacket = 0;
 	public synchronized void eventReceivedPacket(ComChannel pComChannel)
 	{
+		mEventReceivedPacket++;
+		
 		synchronized (mPendingPacketRequests) {
 			mPendingPacketRequests.add(pComChannel);
 		}
 
 		// trigger wake-up
+		Logging.log(this, "Notify - [" + mEventReceivedPacket + "] - eventReceivedPacket(" + pComChannel + ")");
 		notify();
 	}
 
@@ -118,13 +126,17 @@ public class HRMControllerProcessor extends Thread
 	 * 
 	 * @param pHierarchyLevel the hierarchy level
 	 */
+	private long mEventNewHierarchyPriority = 0;
 	public synchronized void eventNewHierarchyPriority(HierarchyLevel pHierarchyLevel)
 	{
+		mEventNewHierarchyPriority++;
+		
 		synchronized (mPendingHierarchyUpdates) {
 			mPendingHierarchyUpdates.add(pHierarchyLevel);
 		}
 
 		// trigger wake-up
+		Logging.log(this, "Notify - [" + mEventNewHierarchyPriority + "] - eventNewHierarchyPriority(" + pHierarchyLevel + ")");
 		notify();
 	}
 
@@ -228,6 +240,7 @@ public class HRMControllerProcessor extends Thread
 		// suspend until next trigger
 		try {
 			wait();
+			//Logging.log(this, "WakeUp");
 		} catch (InterruptedException tExc) {
 			Logging.warn(this, "waitForNextEvent() got an interrupt", tExc);
 		}
@@ -249,10 +262,16 @@ public class HRMControllerProcessor extends Thread
 			ComChannel tNextCommChannel = getNextComChannel();
 			while(tNextCommChannel != null){
 				tFoundEvent = true;
+
+				double tBefore = HRMController.getRealTime();
 				
 				// process the next comm. channel data
 				tNextCommChannel.processOnePacket();
 
+				double tSpentTime = HRMController.getRealTime() - tBefore;
+
+				Logging.log(this, "Processing a packet took " + tSpentTime + " ms for " + tNextCommChannel);
+				
 				// get the next waiting comm. channel
 				tNextCommChannel = getNextComChannel();
 			}	
@@ -264,8 +283,14 @@ public class HRMControllerProcessor extends Thread
 			while(tNextHierarchyLevel != null){
 				tFoundEvent = true;
 				
+				double tBefore = HRMController.getRealTime();
+
 				// process the next hierarchy priority update
 				mHRMController.distributeHierarchyNodePriorityUpdate(tNextHierarchyLevel);
+
+				double tSpentTime = HRMController.getRealTime() - tBefore;
+
+				Logging.log(this, "Processing an hierarchy priority update for hier. level " + tNextHierarchyLevel + " took " + tSpentTime + " ms");
 
 				// get the next hierarchy priority update
 				tNextHierarchyLevel = getNextHierarchyLevelForPriorityUpdate();
@@ -277,7 +302,14 @@ public class HRMControllerProcessor extends Thread
 			int tNextClusterEvent = getNextClusterEvent();
 			if(tNextClusterEvent >= 0){
 				tFoundEvent = true;
+
+				double tBefore = HRMController.getRealTime();
+
 				cluster(tNextClusterEvent);
+
+				double tSpentTime = HRMController.getRealTime() - tBefore;
+
+				Logging.log(this, "Processing a clustering request for hier. level " + tNextClusterEvent + " took " + tSpentTime + " ms");
 			}
 			
 			/**
