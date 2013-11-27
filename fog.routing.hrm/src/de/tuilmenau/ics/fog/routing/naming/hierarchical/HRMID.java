@@ -434,7 +434,7 @@ public class HRMID extends HRMName
 			HRMID tOther = (HRMID)pObj;
 			
 			// compare the addresses
-			return mAddress.intValue() == tOther.mAddress.intValue();
+			return getAddress() == tOther.getAddress();
 		}
 		return false;
 	}
@@ -446,7 +446,7 @@ public class HRMID extends HRMName
 	 */
 	public boolean isZero()
 	{
-		return (mAddress.longValue() == 0);
+		return (getAddress() == 0);
 	}
 	
 	/**

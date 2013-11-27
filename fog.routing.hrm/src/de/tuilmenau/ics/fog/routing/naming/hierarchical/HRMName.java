@@ -22,8 +22,6 @@ import de.tuilmenau.ics.fog.ui.Decorator;
  */
 public class HRMName extends RoutingServiceAddress implements Decorator
 {
-	protected BigInteger mAddress;
-		
 	public static final Namespace NAMESPACE_HRM = new Namespace("HRM");
 
 	private static final long serialVersionUID = 6612145890128148511L;
@@ -35,16 +33,6 @@ public class HRMName extends RoutingServiceAddress implements Decorator
 	public HRMName(BigInteger pAddress)
 	{
 		super(pAddress);
-		mAddress = pAddress;
-	}
-	
-	/**
-	 * 
-	 * @return The address will be returned by this method.
-	 */
-	public BigInteger getComplexAddress()
-	{
-		return mAddress;
 	}
 	
 	@Override
