@@ -196,6 +196,13 @@ public class HRMConfig
 		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
 		 */
 		public static final double GUI_NODE_HRG_DISPLAY_UPDATE_INTERVAL = 10.0;
+		
+		/**
+		 * Defines if the AnnounceCoordinator packets should be automatically deactivated if the last packet with impact on the hierarchy data is too far in the past.
+		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
+		 * 			  The value influences only the speed of the FoGSiEm environment.
+		 */
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS = true;
 	}
 	
 	public class Addressing
@@ -235,7 +242,7 @@ public class HRMConfig
 		/**
 		 * Defines the base time period for CoordinatorAnnounce distributions
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 3.0;
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 2.0;
 
 		/**
 		 * Defines the default timeout for a coordinator proxy. If the proxy doesn't get any refresh in the defined time period, the proxy gets deleted.

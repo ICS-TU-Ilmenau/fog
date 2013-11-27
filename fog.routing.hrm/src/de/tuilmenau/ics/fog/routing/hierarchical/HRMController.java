@@ -270,6 +270,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static boolean GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
 
 	/**
+	 * Stores if the GUI user has selected to deactivate announcements.
+	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
+	 */
+	public static boolean GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
+
+	/**
+	 * Stores the simulation time of the last AnnounceCoordinator, which had impact on the current hierarchy structure
+	 * This value is not part of the concept. It is only used for debugging purposes and measurement speedup. 
+	 */
+	public static double mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+	
+	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
@@ -634,6 +646,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pHRMID the new HRMID
 	 * @param pCause the cause for the registration
 	 */
+	@SuppressWarnings("unchecked")
 	public void registerHRMID(ControlEntity pEntity, HRMID pHRMID, String pCause)
 	{
 		/**
@@ -991,18 +1004,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		return tResult;
-	}
-	
-	/**
-	 * Returns all known coordinators for a given hierarchy level.
-	 * 
-	 * @param pHierarchyLevel the hierarchy level for which all coordinators have to be determined
-	 * 
-	 * @return the list of coordinators on the defined hierarchy level
-	 */
-	public LinkedList<Coordinator> getAllCoordinators(HierarchyLevel pHierarchyLevel)
-	{
-		return getAllCoordinators(pHierarchyLevel.getValue());
 	}
 	
 	/**
@@ -1699,27 +1700,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Returns the locally known Cluster object, which was identified by its ClusterName
-	 *  
-	 * @param pClusterName the cluster name of the searched cluster
-	 * 
-	 * @return the desired cluster, null if the cluster isn't known
-	 */
-	private Cluster getClusterByName(ClusterName pClusterName)
-	{
-		Cluster tResult = null;
-		
-		for(Cluster tKnownCluster : getAllClusters()) {
-			if(tKnownCluster.equals(pClusterName)) {
-				tResult = tKnownCluster;
-				break;
-			}
-		}
-
-		return tResult;
-	}
-
-	/**
 	 * Returns the locally known Cluster object for a given hierarchy level
 	 * 
 	 * @param pHierarchyLevel the hierarchy level for which the Cluster object is searched
@@ -1747,7 +1727,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the found Coordinator object
 	 */
-	public Coordinator getCoordinator(int pHierarchyLevelValue)
+	private Coordinator getCoordinator(int pHierarchyLevelValue)
 	{
 		Coordinator tResult = null;
 
@@ -1875,6 +1855,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public ComSession getCreateComSession(L2Address pDestinationL2Address)
 	{
 		ComSession tResult = null;
+		boolean DEBUG = false;
 		
 		// is the destination valid?
 		if (pDestinationL2Address != null){
@@ -1898,13 +1879,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			// have we found an already existing connection?
 			if(tResult == null){
-				//Logging.log(this, "getCreateComSession() could find a comm. session for destination: " + pDestinationL2Address + ", knowing these sessions and their channels:");
-				synchronized (mCommunicationSessions) {
-					for (ComSession tComSession : mCommunicationSessions){
-						//Logging.log(this, "   ..ComSession: " + tComSession);
-						for(ComChannel tComChannel : tComSession.getAllComChannels()){
-							//Logging.log(this, "     ..ComChannel: " + tComChannel);
-							//Logging.log(this, "        ..RemoteCluster: " + tComChannel.getRemoteClusterName().toString());
+				if(DEBUG){
+					Logging.log(this, "getCreateComSession() could find a comm. session for destination: " + pDestinationL2Address + ", knowing these sessions and their channels:");
+					synchronized (mCommunicationSessions) {
+						for (ComSession tComSession : mCommunicationSessions){
+							Logging.log(this, "   ..ComSession: " + tComSession);
+							for(ComChannel tComChannel : tComSession.getAllComChannels()){
+								Logging.log(this, "     ..ComChannel: " + tComChannel);
+								Logging.log(this, "        ..RemoteCluster: " + tComChannel.getRemoteClusterName().toString());
+							}
 						}
 					}
 				}
@@ -1912,7 +1895,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				/**
 				 * Create the new connection
 				 */
-				//Logging.log(this, "   ..creating new connection and session to: " + pDestinationL2Address);
+				if(DEBUG){
+					Logging.log(this, "   ..creating new connection and session to: " + pDestinationL2Address);
+				}
 				tResult = createComSession(pDestinationL2Address);
 			}
 		}else{
@@ -2025,7 +2010,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return true if the given HRMID is a local one
 	 */
-	public boolean isLocal(HRMID pHRMID)
+	private boolean isLocal(HRMID pHRMID)
 	{
 		boolean tResult = false;
 		
@@ -2048,7 +2033,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return true if the local node belongs to the given Cluster
 	 */
-	public boolean isLocalCluster(HRMID pHRMID)
+	private boolean isLocalCluster(HRMID pHRMID)
 	{
 		boolean tResult = false;
 		
@@ -2102,10 +2087,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * 
 	 * @param pForeignHRMID
 	 * @return
 	 */
-	public HRMID aggregateForeignHRMID(HRMID pForeignHRMID)
+	private HRMID aggregateForeignHRMID(HRMID pForeignHRMID)
 	{
 		HRMID tResult = null;
 		
@@ -2168,7 +2154,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @return true if the entry had new routing data
 	 */
 	private int mCallsAddHRMRoute = 0;
-	public boolean addHRMRoute(RoutingEntry pRoutingEntry)
+	private boolean addHRMRoute(RoutingEntry pRoutingEntry)
 	{
 		boolean tResult = false;
 		
@@ -2617,6 +2603,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * EVENT: hierarchy data changed
+	 */
+	private void eventHierarchyDataChanged()
+	{
+		/**
+		 * Refresh the stored simulation time describing when the last AnnounceCoordinator packet had impact on the hierarchy
+		 */
+		mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = getSimulationTime();
+		
+		/**
+		 * If GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS is deactivated and the topology changes, we have deactivated the 
+		 * AnnounceCoordinator packets too early or the user has deactivated it too early. -> this leads to faulty results with a high probability 
+		 */
+		if(!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+			Logging.err(this, "##################################################################################################################");
+			Logging.err(this, "### Detected a hierarchy data change when GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS was already set to false ");
+			Logging.err(this, "##################################################################################################################");
+		}
+	}
+
+	/**
 	 * Sets new hierarchy node priority for Election processes
 	 * 
 	 * @param pPriority the new hierarchy node priority
@@ -2657,6 +2664,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				i++;
 			}
 		}
+		
+		/**
+		 * Trigger: hierarchy data changed
+		 */
+		eventHierarchyDataChanged();
 	}
 
 	/**
@@ -3117,6 +3129,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void reportAndShare()
 	{	
+		double tTimeFixedHierarchyData = getSimulationTime() - mSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+		Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeFixedHierarchyData);
+		
 		if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
 			Logging.log(this, "REPORT AND SHARE TRIGGER received");
 		}
@@ -3169,7 +3184,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoRemoveObsoleteCoordinatorProxies()
 	{
-		if(Coordinator.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+		if(HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 			LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
 			for(CoordinatorProxy tProxy : tProxies){
 				// does the link have a timeout?
@@ -3404,7 +3419,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 	 * @return the new description
 	 */
-	public Description createHRMControllerDestinationDescription()
+	private Description createHRMControllerDestinationDescription()
 	{
 		Description tResult = new Description();
 		
@@ -3537,183 +3552,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		return tResult;
 	}
 
-	/**
-	 * Determines a route in the locally stored abstract routing graph (ARG).
-	 * 
-	 * @param pSource the source of the desired route
-	 * @param pDestination the destination of the desired route
-	 * 
-	 * @return the determined route, null if no route could be found
-	 */
-	public List<AbstractRoutingGraphLink> getRouteARG(AbstractRoutingGraphNode pSource, AbstractRoutingGraphNode pDestination)
-	{
-		List<AbstractRoutingGraphLink> tResult = null;
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "GET ROUTE (ARG) from \"" + pSource + "\" to \"" + pDestination +"\"");
-		}
-
-		synchronized (mAbstractRoutingGraph) {
-			tResult = mAbstractRoutingGraph.getRoute(pSource, pDestination);
-		}
-
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "        ..result: " + tResult);
-		}
-		
-		return tResult;
-	}
-
-	/**
-	 * Determines the other end of a link and one known link end
-	 * 
-	 * @param pKnownEnd the known end of the link
-	 * @param pLink the link
-	 * 
-	 * @return the other end of the link
-	 */
-	public AbstractRoutingGraphNode getOtherEndOfLinkARG(AbstractRoutingGraphNode pKnownEnd, AbstractRoutingGraphLink pLink)
-	{
-		AbstractRoutingGraphNode tResult = null;
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "GET OTHER END (ARG) of link \"" + pKnownEnd + "\" connected at \"" + pKnownEnd +"\"");
-		}
-
-		synchronized (mAbstractRoutingGraph) {
-			tResult = mAbstractRoutingGraph.getOtherEndOfLink(pKnownEnd, pLink);
-		}
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "        ..result: " + tResult);
-		}
-
-		return tResult;
-	}
-
-	/**
-	 * Determines all known neighbors of a cluster/coordinator, which are stored in the local abstract routing graph (ARG).
-	 * 
-	 * @param pRoot the root node in the ARG
-	 * 
-	 * @return a collection of found neighbor nodes
-	 */
-	public Collection<AbstractRoutingGraphNode> getNeighborsARG(AbstractRoutingGraphNode pRoot)
-	{
-		Collection<AbstractRoutingGraphNode> tResult = null;
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "GET NEIGHBORS (ARG) from \"" + pRoot + "\"");
-		}
-
-		synchronized (mAbstractRoutingGraph) {
-			tResult = mAbstractRoutingGraph.getNeighbors(pRoot);
-		}
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "      ..result: " + tResult.size() + " entries:");				
-			int i = 0;
-			for (AbstractRoutingGraphNode tName : tResult){
-				Logging.log(this, "      ..[" + i + "]: " + tName);
-				i++;
-			}			
-		}
-
-		return tResult;
-	}
-
-	/**
-	 * Determines all vertices ordered by their distance from a given root vertex
-	 * 
-	 * @param pRootCluster the root cluster from where the vertices are determined
-	 * 
-	 * @return a list of found vertices
-	 */
-	public List<AbstractRoutingGraphNode> getNeighborClustersOrderedByRadiusInARG(Cluster pRootCluster)
-	{
-		List<AbstractRoutingGraphNode> tResult = null;
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "GET VERTICES ORDERED BY RADIUS (ARG) from \"" + pRootCluster + "\"");
-		}
-
-		/**
-		 * Query for neighbors stored in within the ARG
-		 */
-		synchronized (mAbstractRoutingGraph) {
-			tResult = mAbstractRoutingGraph.getVerticesInOrderRadius(pRootCluster);
-		}
-		
-		/**
-		 * Remove the root cluster
-		 */
-		tResult.remove(pRootCluster);
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "      ..result: " + tResult.size() + " entries:");				
-			int i = 0;
-			for (AbstractRoutingGraphNode tName : tResult){
-				Logging.log(this, "      ..[" + i + "]: " + tName);
-				i++;
-			}			
-		}
-
-		return tResult;
-	}
-
-	/**
-	 * Checks if two nodes in the locally stored abstract routing graph are linked.
-	 * 
-	 * @param pFirst first node
-	 * @param pSecond second node
-	 * 
-	 * @return true or false
-	 */
-	public boolean isLinkedARG(ClusterName pFirst, ClusterName pSecond)
-	{
-		boolean tResult = false;
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "IS LINK (ARG) from \"" + pFirst + "\" to \"" + pSecond +"\"");
-		}
-
-		synchronized (mAbstractRoutingGraph) {
-			tResult = mAbstractRoutingGraph.isLinked(pFirst, pSecond);
-		}
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "      ..result: " + tResult);				
-		}
-
-		return tResult;
-	}
-
-	/**
-	 * Checks if a node is locally stored in the abstract routing graph
-	 * 
-	 * @param pNodeARG a possible node of the ARG
-	 * 
-	 * @return true or false
-	 */
-	public boolean isKnownARG(ControlEntity pNodeARG)
-	{
-		boolean tResult = false;
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "IS KNOWN (ARG): \"" + pNodeARG + "\"");
-		}
-
-		synchronized (mAbstractRoutingGraph) {
-			tResult = mAbstractRoutingGraph.contains(pNodeARG);
-		}
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "      ..result: " + tResult);				
-		}
-
-		return tResult;
-	}
-	
 	/**
 	 * Returns the ARG for the GraphViewer.
 	 * (only for GUI!)
@@ -4180,35 +4018,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Generalizes all known HRM routes to neighbors
-	 */
-	private void generalizeMeighborHRMRoutesAuto()
-	{
-		RoutingTable tRoutingTable = mHierarchicalRoutingService.getRoutingTable();
-		for(RoutingEntry tEntry : tRoutingTable){
-			if(tEntry.isRouteToDirectNeighbor()){
-				HRMID tGeneralizedDest = aggregateForeignHRMID(tEntry.getDest());
-				if(!tGeneralizedDest.equals(tEntry.getDest())){
-					RoutingEntry tGeneralizedEntry = tEntry.clone();
-					tGeneralizedEntry.setDest(tGeneralizedDest);
-					
-					/**
-					 * Remove the old entry
-					 */
-					RoutingEntry tDeleteThis = tEntry.clone();
-					tDeleteThis.extendCause(this + "::generalizeMeighborHRMRoutesAuto()");
-					delHRMRoute(tDeleteThis);
-					
-					/**
-					 * Add the new entry
-					 */
-					addHRMRoute(tGeneralizedEntry);
-				}
-			}
-		}		
-	}
-	
-	/**
 	 * Unregisters a logical link between HRMIDs from the locally stored hierarchical routing graph (HRG)
 	 * 
 	 * @param pFrom the starting point of the link
@@ -4455,7 +4264,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return true if the link is new to the routing graph
 	 */
-	public boolean registerCluster2ClusterLinkHRG(HRMID pFromHRMID, HRMID pToHRMID, RoutingEntry pRoutingEntry)
+	private boolean registerCluster2ClusterLinkHRG(HRMID pFromHRMID, HRMID pToHRMID, RoutingEntry pRoutingEntry)
 	{
 		boolean tResult = false;
 		

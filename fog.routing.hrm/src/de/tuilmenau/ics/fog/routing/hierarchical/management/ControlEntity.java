@@ -405,26 +405,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
-	 * Determines all registered neighbors for this control entity, which can be found withing the ARG of the HRMController instance
-	 * 
-	 * @return the found neighbors of the ARG
-	 */
-	public LinkedList<ControlEntity> getNeighborsARG()
-	{
-		LinkedList<ControlEntity> tResult = new LinkedList<ControlEntity>();
-		
-		for(AbstractRoutingGraphNode tNode : mHRMController.getNeighborsARG(this)) {
-			if (tNode instanceof ControlEntity){
-				tResult.add((ControlEntity)tNode);
-			}else{
-				Logging.warn(this, "getNeighborsARG() ignores ARG neighbor: " + tNode);
-			}
-		}
-		
-		return tResult;
-	}
-
-	/**
 	 * EVENT: coordinator announcement
 	 * 
 	 * @param pComChannel the source comm. channel

@@ -77,12 +77,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private RoutingTable mReceivedSharedRoutingTable = new RoutingTable();
 	
-	/**
-	 * Stores if the GUI user has selected to deactivate announcements.
-	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
-	 */
-	public static boolean GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
-
 	private static final long serialVersionUID = 6824959379284820010L;
 	
 	/**
@@ -759,7 +753,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		if(isThisEntityValid()){
 			// trigger periodic Cluster announcements
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
-				if (GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+				if (HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 					LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
 					AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController, mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
 					
@@ -824,7 +818,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	private synchronized void distributeCoordinatorInvalidation()
 	{
 		// trigger periodic Cluster announcements
-		if((HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS) && (GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
+		if((HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS) && (HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
 			InvalidCoordinator tInvalidCoordinatorPacket = new InvalidCoordinator(mHRMController, mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
 			/**
 			 * Send broadcasts in all locally known clusters at this hierarchy level
@@ -858,7 +852,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		if(isThisEntityValid()){
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
-				if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+				if(HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 						Logging.log(this, "###########################");
 						Logging.log(this, "###### FIRE FIRE FIRE #####");
@@ -875,7 +869,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL, this);
 			}
 		}else{
-			if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+			if(HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 				//Logging.warn(this, "fire() aborted because coordinator role is already invalidated");
 			}
 		}
