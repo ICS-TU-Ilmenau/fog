@@ -2278,7 +2278,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				RoutingEntry tRoutingEntry = pRoutingEntry.clone();
 				tRoutingEntry.extendCause(this + "::registerAutoHRG() as " + tRoutingEntry);
 				tRoutingEntry.setTimeout(pRoutingEntry.getTimeout());
+				
+				double tBefore = HRMController.getRealTime();
 				registerLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), tRoutingEntry);
+
+				double tSpentTime = HRMController.getRealTime() - tBefore;
+				if(tSpentTime > 30){
+					Logging.log(this, "      ..registerAutoHRG()::registerLinkHRG() took " + tSpentTime + " ms for processing " + pRoutingEntry);
+				}
 			}
 			HRMID tGeneralizedSourceHRMID = tDestHRMID.getForeignCluster(pRoutingEntry.getSource());
 			// get the hierarchy level at which this link connects two clusters
@@ -3736,22 +3743,40 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			/**
 			 * Derive the link
 			 */
+			double tBefore4 = HRMController.getRealTime();
 			pRoutingEntry.assignToHRG(mHierarchicalRoutingGraph);
 			AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(new Route(pRoutingEntry));
 			tLink.setTimeout(pRoutingEntry.getTimeout());
+			double tSpentTime4 = HRMController.getRealTime() - tBefore4;
+			if(tSpentTime4 > 10){
+				Logging.log(this, "      ..registerLinkHRG()::AbstractRoutingGraphLink() took " + tSpentTime4 + " ms for processing " + pRoutingEntry);
+			}
 
 			/**
 			 * Do the actual linking
 			 */
 			synchronized (mHierarchicalRoutingGraph) {
 				boolean tLinkAlreadyKnown = false;
+
+				double tBefore = HRMController.getRealTime();
 				Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(pFrom);
+				double tSpentTime = HRMController.getRealTime() - tBefore;
+				if(tSpentTime > 10){
+					Logging.log(this, "      ..registerLinkHRG()::getOutEdges() took " + tSpentTime + " ms for processing " + pRoutingEntry);
+				}
+
 				if(tLinks != null){
+					double tBefore3 = HRMController.getRealTime();
 					for(AbstractRoutingGraphLink tKnownLink : tLinks){
 						// check if both links are equal 
 						if(tKnownLink.equals(tLink)){
 							// check of the end points of the already known link are equal to the pFrom/pTo
+							double tBefore2 = HRMController.getRealTime();
 							Pair<HRMID> tEndPoints = mHierarchicalRoutingGraph.getEndpoints(tKnownLink);
+							double tSpentTime2 = HRMController.getRealTime() - tBefore2;
+							if(tSpentTime2 > 10){
+								Logging.log(this, "      ..registerLinkHRG()::getEndpoints() took " + tSpentTime2 + " ms for processing " + pRoutingEntry);
+							}
 							if (((tEndPoints.getFirst().equals(pFrom)) && (tEndPoints.getSecond().equals(pTo))) ||
 								((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
 								tKnownLink.incRefCounter();
@@ -3766,18 +3791,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 						}
 					}
+					double tSpentTime3 = HRMController.getRealTime() - tBefore3;
+					if(tSpentTime3 > 10){
+						Logging.log(this, "      ..registerLinkHRG()::for() took " + tSpentTime3 + " ms for processing " + pRoutingEntry);
+					}
 				}
 				if(!tLinkAlreadyKnown){
 					mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
+
+					double tBefore1 = HRMController.getRealTime();
 					mHierarchicalRoutingGraph.link(pFrom.clone(), pTo.clone(), tLink);
-					
+
 					// it's time to update the HRG-GUI
 					notifyHRGGUI(tLink);
+
+					double tSpentTime1 = HRMController.getRealTime() - tBefore1;
+					if(tSpentTime1 > 10){
+						Logging.log(this, "      ..registerLinkHRG()::link() took " + tSpentTime1 + " ms for processing " + pRoutingEntry);
+					}
 				}else{
 					/**
-					 * The link is already known -> this can occur if both end points are located on this node and both of them try to register the same route
+					 * The link is already known -> this can occur if:
+					 * 		- both end points are located on this node and both of them try to register the same route
+					 *      - a route was reported and received as shared
 					 */
-					mDescriptionHRGUpdates += "\n +" + (tLinkAlreadyKnown ? "(REF)" : "") + " " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
+					if(HRMConfig.DebugOutput.MEMORY_CONSUMING_OPERATIONS){
+						mDescriptionHRGUpdates += "\n +" + (tLinkAlreadyKnown ? "(REF)" : "") + " " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
+					}
 				}
 				tResult = true;
 			}

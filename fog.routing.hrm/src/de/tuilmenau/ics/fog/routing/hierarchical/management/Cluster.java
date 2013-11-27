@@ -801,6 +801,7 @@ public class Cluster extends ClusterMember
 				Logging.err(this, "   ..received route: " + tEntry);
 			}
 				
+			double tBefore = HRMController.getRealTime();
 			/**
 			 * Set the timeout for reported routes
 			 */
@@ -814,7 +815,8 @@ public class Cluster extends ClusterMember
 			/**
 			 * Update the HRG
 			 */
-			switch(tEntry.getHopCount())
+			int tHopCount = tEntry.getHopCount();
+			switch(tHopCount)
 			{
 				case 0:
 					// it's an inter-cluster link because local loopbacks aren't sent as report
@@ -841,6 +843,7 @@ public class Cluster extends ClusterMember
 							Logging.log(this, "Dropping uninteresting reported route: " + tEntry);
 						}
 					}
+
 					break;
 				case 1:
 					// do we have an intra-cluster link?
@@ -853,6 +856,10 @@ public class Cluster extends ClusterMember
 					break;
 				default: // 2+
 					break;
+			}
+			double tSpentTime = HRMController.getRealTime() - tBefore;
+			if(tSpentTime > 30){
+				Logging.log(this, "      ..eventReceivedRouteReport() for entry with " + tHopCount + " hops took " + tSpentTime + " ms for processing " + tEntry + " of route report: " + pRouteReportPacket);
 			}
 
 //			/**

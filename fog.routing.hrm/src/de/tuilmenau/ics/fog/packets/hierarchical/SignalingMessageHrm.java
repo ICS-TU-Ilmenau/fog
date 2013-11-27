@@ -51,6 +51,11 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	private String mSourceRoute = "";
 	
 	/**
+	 * Stores if the route of packets should be recorded
+	 */
+	private static final boolean RECORD_ROUTE = false;
+	
+	/**
 	 * For using the class within (de-)serialization. 
 	 */
 	private static final long serialVersionUID = 7253912074438961613L;
@@ -128,7 +133,9 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	 */
 	public void addSourceRoute(String pRoutePart)
 	{
-		mSourceRoute += "\n(" + getMessageNumber() + ")=> " + pRoutePart; 
+		if(RECORD_ROUTE){
+			mSourceRoute += "\n(" + getMessageNumber() + ")=> " + pRoutePart;
+		}
 	}
 	
 	/**

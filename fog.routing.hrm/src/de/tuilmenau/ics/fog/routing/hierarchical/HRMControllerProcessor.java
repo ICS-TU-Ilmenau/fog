@@ -278,7 +278,7 @@ public class HRMControllerProcessor extends Thread
 
 				double tSpentTime = HRMController.getRealTime() - tBefore;
 
-				if(tSpentTime > 50){
+				if(tSpentTime > 250){
 					Logging.log(this, "Processing a packet took " + tSpentTime + " ms for " + tNextCommChannel);
 				}
 				
@@ -300,7 +300,9 @@ public class HRMControllerProcessor extends Thread
 
 				double tSpentTime = HRMController.getRealTime() - tBefore;
 
-				Logging.log(this, "Processing an hierarchy priority update for hier. level " + tNextHierarchyLevel + " took " + tSpentTime + " ms");
+				if(tSpentTime > 100){
+					Logging.log(this, "Processing an hierarchy priority update for hier. level " + tNextHierarchyLevel + " took " + tSpentTime + " ms");
+				}
 
 				// get the next hierarchy priority update
 				tNextHierarchyLevel = getNextHierarchyLevelForPriorityUpdate();
@@ -319,7 +321,9 @@ public class HRMControllerProcessor extends Thread
 
 				double tSpentTime = HRMController.getRealTime() - tBefore;
 
-				Logging.log(this, "Processing a clustering request for hier. level " + tNextClusterEvent + " took " + tSpentTime + " ms");
+				if(tSpentTime > 100){
+					Logging.log(this, "Processing a clustering request for hier. level " + tNextClusterEvent + " took " + tSpentTime + " ms");
+				}
 			}
 			
 			/**

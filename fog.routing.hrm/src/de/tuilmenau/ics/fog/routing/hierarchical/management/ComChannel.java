@@ -729,7 +729,12 @@ public class ComChannel
 			/**
 			 * Trigger: inform the cluster about the new routing report
 			 */
+//			double tBefore = HRMController.getRealTime();
 			tParentCluster.eventReceivedRouteReport(this, pRouteReportPacket);
+//			double tSpentTime = HRMController.getRealTime() - tBefore;
+//			if(tSpentTime > 30){
+//				Logging.log(this, "      ..eventReceivedRouteReport() took " + tSpentTime + " ms for route report: " + pRouteReportPacket);
+//			}
 		}else{
 			Logging.err(this, "eventReceivedRouteReport() expected a Cluster as parent, parent is: " + mParent);
 		}
@@ -1277,15 +1282,25 @@ public class ComChannel
 	{
 		SignalingMessageHrm tNextPacket = null;
 		
+		double tBefore = HRMController.getRealTime();
 		synchronized (mPacketQueue) {
 			if(mPacketQueue.size() > 0){
 				tNextPacket = mPacketQueue.removeFirst();
 			}
 		}
-		
+		double tSpentTime = HRMController.getRealTime() - tBefore;
+		if(tSpentTime > 10){
+			Logging.log(this, "    ..processOnePacket() took " + tSpentTime + " ms for getting next packet: " + tNextPacket);
+		}
+
 		if(tNextPacket != null){
 			if(getParent().isThisEntityValid()){
+				tBefore = HRMController.getRealTime();
 				handlePacket(tNextPacket);
+				tSpentTime = HRMController.getRealTime() - tBefore;
+				if(tSpentTime > 50){
+					Logging.log(this, "    ..processOnePacket() took " + tSpentTime + " ms for handling packet: " + tNextPacket);
+				}
 			}else{
 				Logging.warn(this, "Parent control entity is already invalidated, dropping received packet: " + tNextPacket);
 			}

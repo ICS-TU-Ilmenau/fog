@@ -185,6 +185,12 @@ public class HRMConfig
 		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
 		 */
 		public static final double GUI_NODE_HRG_DISPLAY_UPDATE_INTERVAL = 10.0;
+
+		/**
+		 * Defines if very verbose debugging should be active.
+		 * WARNING: This consumes more and more memory.
+		 */
+		public static final boolean MEMORY_CONSUMING_OPERATIONS = false;
 	}
 
 	public class Measurement
