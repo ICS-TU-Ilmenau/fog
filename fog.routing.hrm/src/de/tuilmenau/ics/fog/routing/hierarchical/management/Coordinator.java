@@ -418,10 +418,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										tNewEntry.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tNewEntry);
 										tSharedRoutingTable.addEntry(tNewEntry);
 									}else{
-										Logging.err(this, "sharePhase() could find a route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute);
+										Logging.err(this, "sharePhase() for " + tPeerHRMID + " could find an intra-cluster route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " for using the received share route: " + tReceivedSharedRoutingEntry);
 									}
 								}else{
-									Logging.err(this, "sharePhase() detected a shared route which does not start in this cluster: " + tReceivedSharedRoutingEntry);
+									Logging.err(this, "sharePhase() for " + tPeerHRMID + " detected a shared route which does not start in this cluster: " + tReceivedSharedRoutingEntry);
 								}
 							}
 							
