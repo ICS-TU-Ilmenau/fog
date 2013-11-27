@@ -368,7 +368,7 @@ public class RoutingEntry implements RouteSegment
 	 * @param pMaxDataRate the maximum data rate the described route might provide
 	 * @param pCause the cause for this routing table entry
 	 */
-	public static RoutingEntry createRouteToDirectNeighbor(HRMID pSource, HRMID pDirectNeighbor, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
+	private static RoutingEntry createRouteToDirectNeighbor(HRMID pSource, HRMID pDirectNeighbor, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		// return with the entry
 		return createRouteToDirectNeighbor(pSource, pDirectNeighbor, pDirectNeighbor, pUtilization, pMinDelay, pMaxDataRate, pCause);

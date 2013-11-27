@@ -22,11 +22,6 @@ public class HRMConfig
 		 * Show debug outputs about observable/observer construct, which is used to inform GUIs about HRMController internal changes.
 		 */
 		public static final boolean GUI_SHOW_NOTIFICATIONS = false; 
-		
-		/**
-		 * Avoid duplicated HRMIDs in GUI
-		 */
-		public static final boolean GUI_AVOID_HRMID_DUPLICATES = true;
 
 		/** 
 		 * Show debug outputs about HRMID updates for nodes.
@@ -89,7 +84,7 @@ public class HRMConfig
 		public static final boolean SHOW_SHARE_PHASE = false;
 
 		/**
-		 * Shows debug outputs for the share phase about redundant route entrie
+		 * Shows debug outputs for the share phase about redundant route entries
 		 */
 		public static final boolean SHOW_SHARE_PHASE_REDUNDANT_ROUTES = false;
 		
@@ -127,12 +122,6 @@ public class HRMConfig
 		 * Shows detailed debug outputs about HRMViewer steps
 		 */
 		public static final boolean GUI_SHOW_VIEWER_STEPS = false;
-
-		/**
-		 * Shows coordinators in the ARG viewer
-		 * HINT: clusters HAVE TO BE STORED in the ARG, otherwise routing isn't possible
-		 */
-		public static final boolean GUI_SHOW_COORDINATORS_IN_ARG = true;
 
 		/**
 		 * Shows coordinator as cluster members in the ARG viewer

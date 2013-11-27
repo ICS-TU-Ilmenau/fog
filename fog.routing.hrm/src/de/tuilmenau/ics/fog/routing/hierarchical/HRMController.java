@@ -279,7 +279,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores the simulation time of the last AnnounceCoordinator, which had impact on the current hierarchy structure
 	 * This value is not part of the concept. It is only used for debugging purposes and measurement speedup. 
 	 */
-	public static double mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+	private static double mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
 	
 	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
@@ -578,11 +578,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		updateGUINodeDecoration();
 		
 		// register the coordinator in the local ARG
-		if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG){
-			registerNodeARG(pCoordinator);
-			
-			registerLinkARG(pCoordinator, pCoordinator.getCluster(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
-		}
+		registerNodeARG(pCoordinator);
+		registerLinkARG(pCoordinator, pCoordinator.getCluster(), new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.OBJECT_REF));
 
 		// it's time to update the GUI
 		notifyGUI(pCoordinator);
@@ -613,9 +610,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		updateGUINodeDecoration();
 		
 		// unregister from the ARG
-		if (HRMConfig.DebugOutput.GUI_SHOW_COORDINATORS_IN_ARG){
-			unregisterNodeARG(pCoordinator);
-		}
+		unregisterNodeARG(pCoordinator);
 
 		// it's time to update the GUI
 		notifyGUI(pCoordinator);
@@ -659,7 +654,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * Register the HRMID
 				 */
 				synchronized(mRegisteredOwnHRMIDs){
-					if ((!mRegisteredOwnHRMIDs.contains(pHRMID)) || (!HRMConfig.DebugOutput.GUI_AVOID_HRMID_DUPLICATES)){
+					if (!mRegisteredOwnHRMIDs.contains(pHRMID)){
 						/**
 						 * Update the local address DB with the given HRMID
 						 */
