@@ -2617,9 +2617,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * AnnounceCoordinator packets too early or the user has deactivated it too early. -> this leads to faulty results with a high probability 
 		 */
 		if(!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-			Logging.err(this, "##################################################################################################################");
-			Logging.err(this, "### Detected a hierarchy data change when GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS was already set to false ");
-			Logging.err(this, "##################################################################################################################");
+			Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
+			Logging.err(this, "--- Detected a hierarchy data change when GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS was already set to false ");
+			Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
 		}
 	}
 
@@ -3125,17 +3125,67 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Auto-removes all deprecated coordinator proxies
+	 */
+	private void autoRemoveObsoleteCoordinatorProxies()
+	{
+		if(HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+			LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
+			for(CoordinatorProxy tProxy : tProxies){
+				// does the link have a timeout?
+				if(tProxy.isObsolete()){
+					Logging.log(this, "AUTO REMOVING COORDINATOR PROXY: " + tProxy);
+	
+					/**
+					 * Trigger: remote coordinator role invalid
+					 */
+					tProxy.eventRemoteCoordinatorRoleInvalid();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Auto-deactivates AnnounceCoordinator packets.
+	 * This function is only useful for measurement speedup or to ease debugging. It is neither part of the concept nor it is used to derive additional data. It only reduces packet overhead in the network.
+	 */
+	private void autoDeactivateAnnounceCoordinator()
+	{
+		double tTimeWithFixedHierarchyData = getSimulationTime() - mSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+		//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
+		if(HRMConfig.DebugOutput.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
+
+			if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+				/**
+				 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
+				 */
+				if(tTimeWithFixedHierarchyData > HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2){
+					GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
+					
+					Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+					Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data ");
+					Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + (HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2) + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
+					Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+				}				
+			}
+		}
+		
+	}
+
+	/**
 	 * Triggers the "report phase" / "share phase" of all known coordinators
 	 */
 	private void reportAndShare()
 	{	
-		double tTimeFixedHierarchyData = getSimulationTime() - mSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-		Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeFixedHierarchyData);
-		
 		if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
 			Logging.log(this, "REPORT AND SHARE TRIGGER received");
 		}
-	
+
+		/**
+		 * auto-deactivate AnnounceCoordinator 
+		 */
+		autoDeactivateAnnounceCoordinator();
+		
 		/**
 		 * auto-remove old CoordinatorProxies
 		 */
@@ -3179,27 +3229,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mAS.getTimeBase().scheduleIn(HRMConfig.Routing.GRANULARITY_SHARE_PHASE, this);
 	}
 	
-	/**
-	 * Auto-removes all deprecated coordinator proxies
-	 */
-	private void autoRemoveObsoleteCoordinatorProxies()
-	{
-		if(HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-			LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
-			for(CoordinatorProxy tProxy : tProxies){
-				// does the link have a timeout?
-				if(tProxy.isObsolete()){
-					Logging.log(this, "AUTO REMOVING COORDINATOR PROXY: " + tProxy);
-	
-					/**
-					 * Trigger: remote coordinator role invalid
-					 */
-					tProxy.eventRemoteCoordinatorRoleInvalid();
-				}
-			}
-		}
-	}
-
 	/**
 	 * Calculate the time period between "share phases" 
 	 *  
