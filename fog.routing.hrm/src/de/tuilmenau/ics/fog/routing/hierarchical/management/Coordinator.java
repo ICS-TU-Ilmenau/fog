@@ -143,7 +143,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 *  
 	 * @param pComChannel the new communication channel
 	 */
-	protected void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
+	private void setSuperiorCoordinatorComChannel(ComChannel pComChannel)
 	{
 		Logging.log(this, "Setting superior comm. channel: " + pComChannel);
 		mSuperiorCoordinatorComChannel = pComChannel;
@@ -164,7 +164,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * 
 	 * @param pPacket the packet
 	 */
-	public void sendSuperiorCoordinator(SignalingMessageHrm pPacket)
+	private void sendSuperiorCoordinator(SignalingMessageHrm pPacket)
 	{
 		if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
 			Logging.log(this, "Sending to superior coordinator: " + pPacket);
@@ -1153,33 +1153,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 	}
 	
-	/**
-	 * EVENT: cluster membership activated
-	 * 
-	 * @param pMembership the membership
-	 */
-	public void eventClusterMembershipActivated(CoordinatorAsClusterMember pMembership)
-	{
-		Logging.log(this, "EVENT: cluster membership activated: " + pMembership);
-	}
-
-	/**
-	 * EVENT: cluster membership deactivated
-	 * 
-	 * @param pMembership the membership
-	 */
-	public void eventClusterMembershipDeactivated(CoordinatorAsClusterMember pMembership)
-	{
-		Logging.log(this, "EVENT: cluster membership deactivated: " + pMembership);
-
-		/**
-		 * If we have lost the membership to the superior coordinator, we search for the next possible superior coordinator/cluster
-		 */
-		if (superiorCoordinatorComChannel() == pMembership.getComChannelToClusterHead()){
-			Logging.warn(this, "Lost the channel to the superior coordinator, remaining channels to superior clusters: " + getClusterMembershipComChannels());
-		}
-	}
-
 	/**
 	 * Registers a new cluster membership for this coordinator
 	 * 
