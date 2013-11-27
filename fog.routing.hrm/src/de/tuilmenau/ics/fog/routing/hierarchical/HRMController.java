@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Observer;
@@ -3134,6 +3135,21 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public double getSimulationTime()
 	{
 		return mAS.getTimeBase().now();
+	}
+	
+	/**
+	 * Determines the current real time
+	 * 
+	 * @return the real time in [ms]
+	 */
+	public static double getRealTime()
+	{
+		double tResult = 0;
+		
+		Date tDate = new Date();		
+		tResult = tDate.getTime();
+		
+		return tResult;
 	}
 	
 	/* (non-Javadoc)
