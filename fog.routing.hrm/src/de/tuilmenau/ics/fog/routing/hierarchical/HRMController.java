@@ -292,6 +292,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// initialize the application context
 		super(pNode, null, pNode.getIdentity());
 
+		/**
+		 * Reset FoGSiEm configuration
+		 */
+		GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
+		GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
+		GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
+		mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+
+		
 		// define the local name "routing://"
 		mApplicationName = new SimpleName(ROUTING_NAMESPACE, null);
 
@@ -2505,14 +2514,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static void eventSimulationCreationHasFinished()
 	{
 		mFoGSiEmSimulationCreationFinished = true;
-
-		/**
-		 * Reset FoGSiEm configuration
-		 */
-		GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
-		GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
-		GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
-		mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
 	}
 	
 	/**
