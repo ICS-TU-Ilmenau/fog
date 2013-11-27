@@ -2502,6 +2502,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static void simulationCreationHasFinished()
 	{
 		mFoGSiEmSimulationCreationFinished = true;
+
+		/**
+		 * Reset FoGSiEm configuration
+		 */
+		GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
+		GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
 	}
 	
 	/**
@@ -3801,6 +3807,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 
 		/**
+		 * Are the source and destination addresses equal?
+		 */
+		if(pFrom.equals(pTo)){
+			// create a loop route
+			tResult = RoutingEntry.createLocalhostEntry(pFrom, pCause);
+						
+			// describe the cause for the route
+			tResult.extendCause(this + "::getRoutingEntry() with same source and destination address " + pFrom);
+			
+			// immediate return here
+			return tResult;
+		}
+		
+		/**
 		 * Is the source address more abstract than the destination one?
 		 * EXAMPLE 1: we are searching for a route from 1.3.0 to 1.4.2.  
 		 */
@@ -3824,10 +3844,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 					
 			if(tFirstRoutePart != null){
+				HRMID tIngressGatewayToDestinationCluster = tFirstRoutePart.getLastNextHop();
 				/**
 				 * EXAMPLE 1: determine the route from 1.4.1 to 1.4.2
 				 */
-				RoutingEntry tIntraClusterRoutePart = getRoutingEntryHRG(tFirstRoutePart.getLastNextHop(), pTo, pCause);
+				RoutingEntry tIntraClusterRoutePart = getRoutingEntryHRG(tIngressGatewayToDestinationCluster, pTo, pCause);
 				if (DEBUG){
 					Logging.log(this, "          ..second route part: " + tIntraClusterRoutePart);
 				}
@@ -3847,7 +3868,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * EXAMPLE 1: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
 					 */
+				}else{
+					Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
 				}
+			}else{
+				Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
 			}
 			
 			return tResult;
@@ -4009,7 +4034,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tResult.setNextHopL2Address(null);
 			}
 		}else{
-			Logging.err(this, "getRoutingEntryHRG() couldn't determine a route from " + pFrom + " to " + pTo);
+			Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + pTo);
 		}
 		
 		return tResult;
