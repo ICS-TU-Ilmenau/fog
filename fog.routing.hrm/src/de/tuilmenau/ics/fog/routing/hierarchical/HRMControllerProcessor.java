@@ -57,6 +57,8 @@ public class HRMControllerProcessor extends Thread
 	 */
 	private boolean mProcessorNeeded = true;
 	
+	private boolean DEBUG_NOTIFICATION = false;
+	
 	/**
 	 * Constructor
 	 * 
@@ -96,7 +98,9 @@ public class HRMControllerProcessor extends Thread
 				mNumberUpdateRequests++;
 				
 				// trigger wake-up
-				Logging.log(this, "Notify - [" + mEventUpdateCluster + "] - eventUpdateCluster(" + pCause + ", " + pHierarchyLevel + ")");
+				if(DEBUG_NOTIFICATION){
+					Logging.log(this, "Notify - [" + mEventUpdateCluster + "] - eventUpdateCluster(" + pCause + ", " + pHierarchyLevel + ")");
+				}
 				notify();
 			}
 		}
@@ -117,7 +121,9 @@ public class HRMControllerProcessor extends Thread
 		}
 
 		// trigger wake-up
-		Logging.log(this, "Notify - [" + mEventReceivedPacket + "] - eventReceivedPacket(" + pComChannel + ")");
+		if(DEBUG_NOTIFICATION){
+			Logging.log(this, "Notify - [" + mEventReceivedPacket + "] - eventReceivedPacket(" + pComChannel + ")");
+		}
 		notify();
 	}
 
@@ -136,7 +142,9 @@ public class HRMControllerProcessor extends Thread
 		}
 
 		// trigger wake-up
-		Logging.log(this, "Notify - [" + mEventNewHierarchyPriority + "] - eventNewHierarchyPriority(" + pHierarchyLevel + ")");
+		if(DEBUG_NOTIFICATION){
+			Logging.log(this, "Notify - [" + mEventNewHierarchyPriority + "] - eventNewHierarchyPriority(" + pHierarchyLevel + ")");
+		}
 		notify();
 	}
 
@@ -270,7 +278,9 @@ public class HRMControllerProcessor extends Thread
 
 				double tSpentTime = HRMController.getRealTime() - tBefore;
 
-				Logging.log(this, "Processing a packet took " + tSpentTime + " ms for " + tNextCommChannel);
+				if(tSpentTime > 50){
+					Logging.log(this, "Processing a packet took " + tSpentTime + " ms for " + tNextCommChannel);
+				}
 				
 				// get the next waiting comm. channel
 				tNextCommChannel = getNextComChannel();
