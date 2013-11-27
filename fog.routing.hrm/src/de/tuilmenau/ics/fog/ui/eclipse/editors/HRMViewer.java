@@ -1549,184 +1549,188 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 */
 	private void updateRoutingTable()
 	{
-		int tOldSelectedIndex = mTableRoutingTable.getSelectionIndex();
-
-	    mTableRoutingTable.removeAll();
-	    
-		RoutingTable tRoutingTable = mHRMController.getHRS().getRoutingTable();
-		if (HRM_VIEWER_DEBUGGING){
-			Logging.log(this, "Found " + tRoutingTable.size() + " entries in the local routing table");
-		}
-			
-	    Color tColLoop = new Color(mDisplay, 210, 210, 250);
-	    Color tColNeighbor = new Color(mDisplay, 210, 250, 210);
-	    Color tColGeneral = new Color(mDisplay, 250, 210, 210);
-	    
-		if ((tRoutingTable != null) && (!tRoutingTable.isEmpty())) {
-			int tRowNumber = 0;
-			for(RoutingEntry tEntry : tRoutingTable) {
-				if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (tEntry.getDest() == null) || (!tEntry.getDest().isRelativeAddress())){
-					// create the table row
-					TableItem tTableRow = new TableItem(mTableRoutingTable, SWT.NONE, tRowNumber);
-					
-					/**
-					 * Column 0: destination
-					 */
-					tTableRow.setText(0, tEntry.getDest() != null ? tEntry.getDest().toString() : "undef.");
+		if(!mTableRoutingTable.isDisposed()){
+			int tOldSelectedIndex = mTableRoutingTable.getSelectionIndex();
 	
-					/**
-					 * Column 1: next hop 
-					 */
-					if (tEntry.getNextHop() != null) {
-						tTableRow.setText(1, tEntry.getNextHop().toString());
-					}else{
-						tTableRow.setText(1, "??");
-					}
-					
-					/**
-					 * Column 2: hop costs
-					 */
-					if (tEntry.getHopCount() != RoutingEntry.NO_HOP_COSTS){
-						tTableRow.setText(2, Integer.toString(tEntry.getHopCount()));
-					}else{
-						tTableRow.setText(2, "none");
-					}
-					
-					/**
-					 * Column 3:  utilization
-					 */
-					if (tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION){
-						tTableRow.setText(3,  Float.toString(tEntry.getUtilization() * 100));
-					}else{
-						tTableRow.setText(3, "N/A");
-					}
-					
-					/**
-					 * Column 4: min. delay
-					 */
-					if (tEntry.getMinDelay() != RoutingEntry.NO_DELAY){					
-						tTableRow.setText(4, Long.toString(tEntry.getMinDelay()));
-					}else{
-						tTableRow.setText(4, "none");
-					}
-					
-					/**
-					 * Column 5: max. data rate
-					 */
-					if (tEntry.getMaxDataRate() != RoutingEntry.INFINITE_DATARATE){
-						tTableRow.setText(5, Long.toString(tEntry.getMaxDataRate()));				
-					}else{
-						tTableRow.setText(5, "inf.");
-					}
-					
-					/**
-					 * Column 6: loopback?
-					 */
-					if (tEntry.isLocalLoop()){
-						tTableRow.setText(6, "yes");				
-					}else{
-						tTableRow.setText(6, "no");
-					}
-	
-					/**
-					 * Column 7: direct neighbor?
-					 */
-					if (tEntry.isRouteToDirectNeighbor()){
-						tTableRow.setText(7, "yes");				
-					}else{
-						tTableRow.setText(7, "no");
-					}
-	
-					/**
-					 * Column 8: source 
-					 */
-					if (tEntry.getSource() != null) {
-						tTableRow.setText(8, tEntry.getSource().toString());
-					}else{
-						tTableRow.setText(8, "??");
-					}
-
-					/**
-					 * Column 9: next hop L2Address
-					 */
-					if (tEntry.getNextHopL2Address() != null) {
-						tTableRow.setText(9, tEntry.getNextHopL2Address().toString());
-					}else{
-						tTableRow.setText(9, "??");
-					}
-
-					/**
-					 * Column 10: timeout
-					 */
-					if (tEntry.getTimeout() > 0) {
-						tTableRow.setText(10, Double.toString(tEntry.getTimeout()));
-					}else{
-						tTableRow.setText(10, "none");
-					}
-
-					/**
-					 * Cells coloring
-					 */
-					for(int i = 0; i < 11; i++){
-						if(tEntry.isLocalLoop()){
-							tTableRow.setBackground(i, tColLoop);
-						}else if (tEntry.isRouteToDirectNeighbor()){
-							tTableRow.setBackground(i, tColNeighbor);
-						}else{
-							tTableRow.setBackground(i, tColGeneral);
-						}
-					}
-					tRowNumber++;
-				}
+		    mTableRoutingTable.removeAll();
+		    
+			RoutingTable tRoutingTable = mHRMController.getHRS().getRoutingTable();
+			if (HRM_VIEWER_DEBUGGING){
+				Logging.log(this, "Found " + tRoutingTable.size() + " entries in the local routing table");
 			}
-			mTableRoutingTable.setItemCount(tRowNumber);
-		}
-		
-		if(tOldSelectedIndex > 0){
-			mTableRoutingTable.select(tOldSelectedIndex);
-		}
-			
-		/**
-		 * The table context menu
-		 */
-		final RoutingTable tfRoutingTable = tRoutingTable;
-		mTableRoutingTable.addMenuDetectListener(new MenuDetectListener()
-		{
-			@Override
-			public void menuDetected(MenuDetectEvent pEvent)
-			{
-				final int tSelectedIndex = mTableRoutingTable.getSelectionIndex();
-				// was there a row selected?
-				if (tSelectedIndex != -1){
-					// identify which row was clicked.
-					TableItem tSelectedRow = mTableRoutingTable.getItem(tSelectedIndex);
-					tSelectedRow.getData();
 				
-					//Logging.log(this, "Context menu for comm. channels of entity: " + pControlEntity + ", index: " + tSelectedIndex + ", row data: " + tSelectedRow);
-					
-					/**
-					 * Create the context menu
-					 */
-					Menu tMenu = new Menu(mTableRoutingTable);
-					MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
-					tMenuItem.setText("Show cause for this entry");
-					tMenuItem.addSelectionListener(new SelectionListener() {
-						public void widgetDefaultSelected(SelectionEvent pEvent)
-						{
-							//Logging.log(this, "Default selected: " + pEvent);
-							showRoutingEntryCause(tfRoutingTable.get(tSelectedIndex));
+		    Color tColLoop = new Color(mDisplay, 210, 210, 250);
+		    Color tColNeighbor = new Color(mDisplay, 210, 250, 210);
+		    Color tColGeneral = new Color(mDisplay, 250, 210, 210);
+		    
+			if ((tRoutingTable != null) && (!tRoutingTable.isEmpty())) {
+				int tRowNumber = 0;
+				for(RoutingEntry tEntry : tRoutingTable) {
+					if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (tEntry.getDest() == null) || (!tEntry.getDest().isRelativeAddress())){
+						// create the table row
+						TableItem tTableRow = new TableItem(mTableRoutingTable, SWT.NONE, tRowNumber);
+						
+						/**
+						 * Column 0: destination
+						 */
+						tTableRow.setText(0, tEntry.getDest() != null ? tEntry.getDest().toString() : "undef.");
+		
+						/**
+						 * Column 1: next hop 
+						 */
+						if (tEntry.getNextHop() != null) {
+							tTableRow.setText(1, tEntry.getNextHop().toString());
+						}else{
+							tTableRow.setText(1, "??");
 						}
-						public void widgetSelected(SelectionEvent pEvent)
-						{
-							//Logging.log(this, "Widget selected: " + pEvent);
-							showRoutingEntryCause(tfRoutingTable.get(tSelectedIndex));
+						
+						/**
+						 * Column 2: hop costs
+						 */
+						if (tEntry.getHopCount() != RoutingEntry.NO_HOP_COSTS){
+							tTableRow.setText(2, Integer.toString(tEntry.getHopCount()));
+						}else{
+							tTableRow.setText(2, "none");
 						}
-					});
-
-					mTableRoutingTable.setMenu(tMenu);
+						
+						/**
+						 * Column 3:  utilization
+						 */
+						if (tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION){
+							tTableRow.setText(3,  Float.toString(tEntry.getUtilization() * 100));
+						}else{
+							tTableRow.setText(3, "N/A");
+						}
+						
+						/**
+						 * Column 4: min. delay
+						 */
+						if (tEntry.getMinDelay() != RoutingEntry.NO_DELAY){					
+							tTableRow.setText(4, Long.toString(tEntry.getMinDelay()));
+						}else{
+							tTableRow.setText(4, "none");
+						}
+						
+						/**
+						 * Column 5: max. data rate
+						 */
+						if (tEntry.getMaxDataRate() != RoutingEntry.INFINITE_DATARATE){
+							tTableRow.setText(5, Long.toString(tEntry.getMaxDataRate()));				
+						}else{
+							tTableRow.setText(5, "inf.");
+						}
+						
+						/**
+						 * Column 6: loopback?
+						 */
+						if (tEntry.isLocalLoop()){
+							tTableRow.setText(6, "yes");				
+						}else{
+							tTableRow.setText(6, "no");
+						}
+		
+						/**
+						 * Column 7: direct neighbor?
+						 */
+						if (tEntry.isRouteToDirectNeighbor()){
+							tTableRow.setText(7, "yes");				
+						}else{
+							tTableRow.setText(7, "no");
+						}
+		
+						/**
+						 * Column 8: source 
+						 */
+						if (tEntry.getSource() != null) {
+							tTableRow.setText(8, tEntry.getSource().toString());
+						}else{
+							tTableRow.setText(8, "??");
+						}
+	
+						/**
+						 * Column 9: next hop L2Address
+						 */
+						if (tEntry.getNextHopL2Address() != null) {
+							tTableRow.setText(9, tEntry.getNextHopL2Address().toString());
+						}else{
+							tTableRow.setText(9, "??");
+						}
+	
+						/**
+						 * Column 10: timeout
+						 */
+						if (tEntry.getTimeout() > 0) {
+							tTableRow.setText(10, Double.toString(tEntry.getTimeout()));
+						}else{
+							tTableRow.setText(10, "none");
+						}
+	
+						/**
+						 * Cells coloring
+						 */
+						for(int i = 0; i < 11; i++){
+							if(tEntry.isLocalLoop()){
+								tTableRow.setBackground(i, tColLoop);
+							}else if (tEntry.isRouteToDirectNeighbor()){
+								tTableRow.setBackground(i, tColNeighbor);
+							}else{
+								tTableRow.setBackground(i, tColGeneral);
+							}
+						}
+						tRowNumber++;
+					}
 				}
+				mTableRoutingTable.setItemCount(tRowNumber);
 			}
-		});
+			
+			if(tOldSelectedIndex > 0){
+				mTableRoutingTable.select(tOldSelectedIndex);
+			}
+				
+			/**
+			 * The table context menu
+			 */
+			final RoutingTable tfRoutingTable = tRoutingTable;
+			mTableRoutingTable.addMenuDetectListener(new MenuDetectListener()
+			{
+				@Override
+				public void menuDetected(MenuDetectEvent pEvent)
+				{
+					final int tSelectedIndex = mTableRoutingTable.getSelectionIndex();
+					// was there a row selected?
+					if (tSelectedIndex != -1){
+						// identify which row was clicked.
+						TableItem tSelectedRow = mTableRoutingTable.getItem(tSelectedIndex);
+						tSelectedRow.getData();
+					
+						//Logging.log(this, "Context menu for comm. channels of entity: " + pControlEntity + ", index: " + tSelectedIndex + ", row data: " + tSelectedRow);
+						
+						/**
+						 * Create the context menu
+						 */
+						Menu tMenu = new Menu(mTableRoutingTable);
+						MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
+						tMenuItem.setText("Show cause for this entry");
+						tMenuItem.addSelectionListener(new SelectionListener() {
+							public void widgetDefaultSelected(SelectionEvent pEvent)
+							{
+								//Logging.log(this, "Default selected: " + pEvent);
+								showRoutingEntryCause(tfRoutingTable.get(tSelectedIndex));
+							}
+							public void widgetSelected(SelectionEvent pEvent)
+							{
+								//Logging.log(this, "Widget selected: " + pEvent);
+								showRoutingEntryCause(tfRoutingTable.get(tSelectedIndex));
+							}
+						});
+	
+						mTableRoutingTable.setMenu(tMenu);
+					}
+				}
+			});
+		}else{
+			Logging.warn(this, "Widget mTableRoutingTable was already disposed");
+		}
 	}
 
 	/**
