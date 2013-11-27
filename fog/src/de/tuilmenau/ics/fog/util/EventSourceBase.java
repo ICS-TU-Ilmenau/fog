@@ -36,7 +36,12 @@ public class EventSourceBase implements EventSource
 			// relay events occurred previously to new listener
 			if(events != null) {
 				while(!events.isEmpty()) {
-					notifyObservers(events.removeFirst());
+					// maybe notifyObservers() has deleted all observers!
+					if(observers != null){
+						if(!observers.isEmpty()){
+							notifyObservers(events.removeFirst());
+						}
+					}
 				}
 				
 				events = null;
@@ -85,9 +90,11 @@ public class EventSourceBase implements EventSource
 						}
 						catch(Error err) {
 							Logging.getInstance().err(this, "Error in observer '" +obs +"'.", err);
+							System.exit(1);
 						}
 						catch(Exception exc) {
 							Logging.getInstance().err(this, "Exception in observer '" +obs +"'.", exc);
+							System.exit(1);
 						}
 					}
 					
