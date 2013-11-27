@@ -38,6 +38,11 @@ public class HRMControllerProcessor extends Thread
 	private LinkedList<ComChannel> mPendingPacketRequests = new LinkedList<ComChannel>();
 	
 	/**
+	 * Stores pending requests for hierarchy priority update processing 
+	 */
+	private LinkedList<HierarchyLevel> mPendingHierarchyUpdates = new LinkedList<HierarchyLevel>();
+	
+	/**
 	 * Stores a log about "update" events
 	 */
 	private String mDescriptionClusterUpdates = new String();
@@ -109,6 +114,21 @@ public class HRMControllerProcessor extends Thread
 	}
 
 	/**
+	 * EVENT: "new hierarchy priority"
+	 * 
+	 * @param pHierarchyLevel the hierarchy level
+	 */
+	public synchronized void eventNewHierarchyPriority(HierarchyLevel pHierarchyLevel)
+	{
+		synchronized (mPendingHierarchyUpdates) {
+			mPendingHierarchyUpdates.add(pHierarchyLevel);
+		}
+
+		// trigger wake-up
+		notify();
+	}
+
+	/**
 	 * Returns the next "cluster event" (uses passive waiting)
 	 * 
 	 * @return the next cluster event (a hierarchy level)
@@ -143,6 +163,24 @@ public class HRMControllerProcessor extends Thread
 		return tResult;
 	}
 	
+	/**
+	 * Returns the next hierarchy level which has pending priority updates
+	 * 
+	 * @return the next hierarchy level
+	 */
+	private synchronized HierarchyLevel getNextHierarchyLevelForPriorityUpdate()
+	{
+		HierarchyLevel tResult = null;
+		
+		synchronized (mPendingHierarchyUpdates) {
+			if(mPendingHierarchyUpdates.size() > 0){
+				tResult = mPendingHierarchyUpdates.removeFirst();
+			}
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Implements the actual clustering
 	 * 
@@ -217,6 +255,20 @@ public class HRMControllerProcessor extends Thread
 
 				// get the next waiting comm. channel
 				tNextCommChannel = getNextComChannel();
+			}	
+
+			/************************
+			 * Hierarchy priority processing
+			 ***********************/
+			HierarchyLevel tNextHierarchyLevel = getNextHierarchyLevelForPriorityUpdate();
+			while(tNextHierarchyLevel != null){
+				tFoundEvent = true;
+				
+				// process the next hierarchy priority update
+				mHRMController.distributeHierarchyNodePriorityUpdate(tNextHierarchyLevel);
+
+				// get the next hierarchy priority update
+				tNextHierarchyLevel = getNextHierarchyLevelForPriorityUpdate();
 			}	
 
 			/***********************

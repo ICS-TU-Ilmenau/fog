@@ -2630,17 +2630,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Sets new hierarchy node priority for Election processes
+	 * Distributes hierarchy node priority update to all important local entities
 	 * 
-	 * @param pPriority the new hierarchy node priority
+	 * @param pHierarchyLevel the hierarchy level
 	 */
-	private int mHierarchyPriorityUpdates = 0;
-	private synchronized void setHierarchyPriority(long pPriority, HierarchyLevel pLevel)
+	public void distributeHierarchyNodePriorityUpdate(HierarchyLevel pHierarchyLevel)
 	{
-		Logging.log(this, "Setting new hierarchy node priority: " + pPriority);
-		mNodeHierarchyPriority[pLevel.getValue()] = pPriority;
-
-		mHierarchyPriorityUpdates++;
+		long tNewPrio = getHierarchyNodePriority(pHierarchyLevel);
 		
 		/**
 		 * Inform all local CoordinatorAsClusterMemeber objects about the change
@@ -2649,14 +2645,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 *       could be created while we are updating the priorities of all the 
 		 *       formerly known ones)
 		 */
-		Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mHierarchyPriorityUpdates + ")");
+		Logging.log(this, "  ..informing about the priority (" + tNewPrio + ") update (" + mHierarchyPriorityUpdates + ")");
 		// get a copy of the list about local CoordinatorAsClusterMember instances in order to avoid dead lock between HRMControllerProcessor and main EventHandler
 		LinkedList<CoordinatorAsClusterMember> tLocalCoordinatorAsClusterMembers = getAllCoordinatorAsClusterMembers();
 		int i = 0;
 		for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tLocalCoordinatorAsClusterMembers){
-			if((tCoordinatorAsClusterMember.getHierarchyLevel().equals(pLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
+			if((tCoordinatorAsClusterMember.getHierarchyLevel().equals(pHierarchyLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
 				Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tCoordinatorAsClusterMember);
-				tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pLevel));
+				tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pHierarchyLevel));
 				i++;
 			}
 		}
@@ -2664,12 +2660,36 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		LinkedList<Cluster> tLocalClusters = getAllClusters();
 		i = 0;
 		for(Cluster tLocalCluster : tLocalClusters){
-			if((tLocalCluster.getHierarchyLevel().equals(pLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
+			if((tLocalCluster.getHierarchyLevel().equals(pHierarchyLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
 				Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tLocalCluster);
-				tLocalCluster.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pLevel));
+				tLocalCluster.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pHierarchyLevel));
 				i++;
 			}
 		}
+	}
+
+	/**
+	 * Sets new hierarchy node priority for Election processes
+	 * 
+	 * @param pPriority the new hierarchy node priority
+	 * @param pHierarchyLevel the hierarchy level
+	 */
+	private int mHierarchyPriorityUpdates = 0;
+	private synchronized void setHierarchyPriority(long pPriority, HierarchyLevel pHierarchyLevel)
+	{
+		Logging.log(this, "Setting new hierarchy node priority: " + pPriority);
+		mNodeHierarchyPriority[pHierarchyLevel.getValue()] = pPriority;
+
+		mHierarchyPriorityUpdates++;
+		
+		Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mHierarchyPriorityUpdates + ")");
+		/**
+		 * Asynchronous execution of "distributeHierarchyNodePriorityUpdate()" inside context of HRMControllerProcessor.
+		 * This also reduces convergence time for finding the correct network clustering 
+		 */ 
+		mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel);
+		//HINT: for synchronous execution use here "distributeHierarchyNodePriorityUpdate(pHierarchyLevel)"
+		//      instead of "mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel)"
 		
 		/**
 		 * Trigger: hierarchy data changed
