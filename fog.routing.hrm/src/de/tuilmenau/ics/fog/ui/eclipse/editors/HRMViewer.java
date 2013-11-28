@@ -360,7 +360,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			mBtnCoordAnnounce.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
-					HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = !HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS;
+					if(!HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+						mHRMController.resetAnnounceCoordinatorGUI();
+					}else{
+						HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
+					}
 				}
 			});
 		}

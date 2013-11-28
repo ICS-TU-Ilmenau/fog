@@ -180,19 +180,19 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						if(tCoordinatorAsClusterMember.getComChannelToClusterHead().isLinkActive()){
 							superiorCoordinatorComChannel().sendPacket(pPacket);
 						}else{
-							Logging.err(this, "sendSuperiorCoordinator() expected an active link, link is: " + superiorCoordinatorComChannel());
+							Logging.err(this, "sendSuperiorCoordinator() expected an active link, link is: " + superiorCoordinatorComChannel() + ", dropping: " + pPacket);
 						}
 					}else{
-						Logging.warn(this, "sendSuperiorCoordinator() aborted because the comm. channel to the cluster head is invalid for: " + tCoordinatorAsClusterMember);
+						Logging.warn(this, "sendSuperiorCoordinator() aborted because the comm. channel to the cluster head is invalid for: " + tCoordinatorAsClusterMember + ", dropping: " + pPacket);
 					}
 				}else{
-					Logging.warn(this, "sendSuperiorCoordinator() aborted because of an invalidated CoordinatorAsClusterMember: " + tCoordinatorAsClusterMember);
+					Logging.warn(this, "sendSuperiorCoordinator() aborted because of an invalidated CoordinatorAsClusterMember: " + tCoordinatorAsClusterMember + ", channel: "  + superiorCoordinatorComChannel() + ", dropping: " + pPacket);
 				}
 			}else{
-				Logging.err(this, "sendSuperiorCoordinator() expected a CoordinatorAsClusterMember as parent of: " + superiorCoordinatorComChannel());
+				Logging.err(this, "sendSuperiorCoordinator() expected a CoordinatorAsClusterMember as parent of: " + superiorCoordinatorComChannel() + ", dropping: " + pPacket);
 			}
 		}else{
-			Logging.err(this, "sendSuperiorCoordinator() aborted because the comm. channel to the superior coordinator is invalid");
+			Logging.err(this, "sendSuperiorCoordinator() aborted because the comm. channel to the superior coordinator is invalid" + ", dropping: " + pPacket);
 			int i = 0;
 			for(CoordinatorAsClusterMember tMembership : mClusterMemberships){
 				Logging.err(this, "  ..possible comm. channel [" + i + "] " + (tMembership.isActiveCluster() ? "(A)" : "") + ":" + tMembership.getComChannelToClusterHead());
@@ -418,7 +418,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										tNewEntry.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tNewEntry);
 										tSharedRoutingTable.addEntry(tNewEntry);
 									}else{
-										Logging.err(this, "sharePhase() for " + tPeerHRMID + " could find an intra-cluster route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " for using the received share route: " + tReceivedSharedRoutingEntry);
+										Logging.err(this, "sharePhase() for " + tPeerHRMID + " couldn't find an intra-cluster route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " for using the received share route: " + tReceivedSharedRoutingEntry);
 									}
 								}else{
 									Logging.err(this, "sharePhase() for " + tPeerHRMID + " detected a shared route which does not start in this cluster: " + tReceivedSharedRoutingEntry);
@@ -499,7 +499,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					 * Report 1: inter-cluster links to all neighbor clusters based on the local HRG
 					 * 			 If we are "1.2.0", we report forward/backward route with "1.3.0" and with "1.1.0" (if both clusters are direct neighbors)
 					 ***************************************************************************************************************************/
-					RoutingTable tRoutesToNeighbors = mHRMController.getRoutesWithNeighborsHRG(getHRMID());
+					RoutingTable tRoutesToNeighbors = mHRMController.getReportRoutesToNeighborsHRG(getHRMID());
 					if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
 						Logging.log(this, "   ..got inter-cluster routing report: " + tRoutesToNeighbors);
 					}
@@ -574,49 +574,66 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											Logging.log(this, "      ..need a route from " + tSourceGateway + " to " + tDestinationGateway);
 										}
 										
-										List<AbstractRoutingGraphLink> tPath = mHRMController.getRouteHRG(tSourceGateway, tDestinationGateway);
-										if(tPath != null){
-											if(!tPath.isEmpty()){
-												// the searched routing entry between the current two gateways 
-												RoutingEntry tFinalRoutingEntryBetweenGateways = null;
-												
-												/**
-												 * Determine a gateway-2-gateway route
-												 */
-												int tStep = 0;
-												for(AbstractRoutingGraphLink tLink : tPath){
-													RoutingEntry tStepRoutingEntry = (RoutingEntry)tLink.getRoute().getFirst();
+										/**********************************************************************
+										 ** step 2.1: forward route from "outer gateway" to "inner gateway"
+										 ** step 2.2: backward route from "inner gateway" to "outer gateway"
+										 **********************************************************************/
+										int tLoop = 1;
+										while(tLoop < 3){ // -> steps 2.1 and 2.2 need 2 loops
+											List<AbstractRoutingGraphLink> tPath = mHRMController.getRouteHRG(tSourceGateway, tDestinationGateway);
+											if(tPath != null){
+												if(!tPath.isEmpty()){
+													// the searched routing entry between the current two gateways 
+													RoutingEntry tFinalRoutingEntryBetweenGateways = null;
 													
-													// chain the routing entries
-													if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-														Logging.log(this, "        ..step[ " + tStep + "]: " + tStepRoutingEntry);
+													/**
+													 * Determine a gateway-2-gateway route
+													 */
+													int tStep = 0;
+													for(AbstractRoutingGraphLink tLink : tPath){
+														RoutingEntry tStepRoutingEntry = (RoutingEntry)tLink.getRoute().getFirst();
+														
+														// chain the routing entries
+														if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+															Logging.log(this, "        ..step[ " + tStep + "]: " + tStepRoutingEntry);
+														}
+														tStep++;
+														
+														if(tFinalRoutingEntryBetweenGateways == null){
+															tFinalRoutingEntryBetweenGateways = tStepRoutingEntry;
+														}else{
+															tFinalRoutingEntryBetweenGateways.append(tStepRoutingEntry, this + "::reportPhase()_ReceivedRouteShare_append1");
+														}													
 													}
-													tStep++;
 													
-													if(tFinalRoutingEntryBetweenGateways == null){
-														tFinalRoutingEntryBetweenGateways = tStepRoutingEntry;
-													}else{
-														tFinalRoutingEntryBetweenGateways.append(tStepRoutingEntry, this + "::reportPhase()_ReceivedRouteShare_append1");
-													}													
-												}
-												
-												/**
-												 * derive and add an entry to the routing report
-												 */ 
-												if(tFinalRoutingEntryBetweenGateways != null){
-													// enforce the destination gateway as next hop
-													tFinalRoutingEntryBetweenGateways.setNextHop(tDestinationGateway);
-													tFinalRoutingEntryBetweenGateways.setRouteForClusterTraversal();
-
-													if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-														Logging.log(this, "   ..got L1+ intra-cluster routing report entry: " + tFinalRoutingEntryBetweenGateways);
+													/**
+													 * derive and add an entry to the routing report
+													 */ 
+													if(tFinalRoutingEntryBetweenGateways != null){
+														// enforce the destination gateway as next hop
+//														tFinalRoutingEntryBetweenGateways.setNextHop(tDestinationGateway);
+														tFinalRoutingEntryBetweenGateways.setRouteForClusterTraversal();
+	
+														if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+															Logging.log(this, "   ..got L1+ intra-cluster routing report entry: " + tFinalRoutingEntryBetweenGateways);
+														}
+	
+														// add the found gate-2-gateway route to the overall route report, which is later sent to the superior coordinator
+														tFinalRoutingEntryBetweenGateways.extendCause(this + "::reportPhase()_inter-gateway-route from " + tSourceGateway + " to " + tDestinationGateway);
+														// reset next hop L2Address
+														tFinalRoutingEntryBetweenGateways.setNextHopL2Address(null);
+														tReportRoutingTable.addEntry(tFinalRoutingEntryBetweenGateways);
 													}
-
-													// add the found gate-2-gateway route to the overall route report, which is later sent to the superior coordinator
-													tFinalRoutingEntryBetweenGateways.extendCause(this + "::reportPhase()_inter-gateway-route from " + tSourceGateway + " to " + tDestinationGateway);
-													tReportRoutingTable.addEntry(tFinalRoutingEntryBetweenGateways);
 												}
 											}
+											
+											/**********************************************************************
+											 ** prepare step 2.2: backward route
+											 **********************************************************************/
+											tDestinationGateway = tGateways.get(tOuter);
+											tSourceGateway = tGateways.get(tInner);
+											
+											tLoop++;
 										}
 									}
 								}
@@ -652,7 +669,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					}
 				}
 			}else{
-				Logging.warn(this, "reportPhase() aborted because channel to superior coordinator is invalid");
+				Logging.warn(this, "reportPhase() aborted because channel to superior coordinator [" + superiorCoordinatorID() + "] is invalid for: " + superiorCoordinatorDescription());
 			}
 		}else{
 			// nothing to be done here: we are the highest hierarchy level, no one to send topology reports to

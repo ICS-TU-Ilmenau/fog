@@ -297,9 +297,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
 		GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
-		GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
-		mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
-
+		resetAnnounceCoordinatorGUI();
 		
 		// define the local name "routing://"
 		mApplicationName = new SimpleName(ROUTING_NAMESPACE, null);
@@ -402,6 +400,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// start the application
 		start();
+	}
+
+	/**
+	 * Reset the AnnounceCoordinator handling.
+	 * This function is not part of the concept. It is only useful for debugging purposes and user control. 
+	 */
+	public void resetAnnounceCoordinatorGUI()
+	{
+		GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
+		mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
 	}
 
 	/**
@@ -4353,7 +4361,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 *  
 	 * @return the routing table
 	 */
-	public RoutingTable getRoutesWithNeighborsHRG(HRMID pHRMID)
+	public RoutingTable getReportRoutesToNeighborsHRG(HRMID pHRMID)
 	{
 		RoutingTable tResult = new RoutingTable();
 		
@@ -4369,6 +4377,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
 							RoutingEntry tRouteToNeighbor = ((RoutingEntry)tKnownLinkRoute.getFirst()).clone();
 							tRouteToNeighbor.extendCause(this + "::getRoutesWithNeighborsHRG() for " + pHRMID);
+							// reset next hop L2Address
+							tRouteToNeighbor.setNextHopL2Address(null);
 							tResult.add(tRouteToNeighbor);
 						}else{
 							throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route type: " + tKnownLinkRoute);
@@ -4387,6 +4397,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
 							RoutingEntry tRouteToNeighbor = ((RoutingEntry)tKnownLinkRoute.getFirst()).clone();
 							tRouteToNeighbor.extendCause(this + "::getRoutesWithNeighborsHRG() for " + pHRMID);
+							// reset next hop L2Address
+							tRouteToNeighbor.setNextHopL2Address(null);
 							tResult.add(tRouteToNeighbor);
 						}else{
 							throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route type: " + tKnownLinkRoute);
