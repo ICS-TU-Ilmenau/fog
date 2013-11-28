@@ -265,6 +265,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static boolean GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
 
 	/**
+	 * Stores if the GUI user has selected to deactivate address distribution.
+	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
+	 */
+	public static boolean GUI_USER_CTRL_ADDRESS_DISTRUTION = HRMConfig.Addressing.ASSIGN_AUTOMATICALLY;
+	
+	/**
 	 * Stores if the GUI user has selected to deactivate topology reports.
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
@@ -297,6 +303,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
 		GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
+		GUI_USER_CTRL_ADDRESS_DISTRUTION = HRMConfig.Addressing.ASSIGN_AUTOMATICALLY;
 		resetAnnounceCoordinatorGUI();
 		
 		// define the local name "routing://"
@@ -335,7 +342,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Initialize the node hierarchy priority
 		 */
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
-			mNodeHierarchyPriority[i] = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
+			mNodeHierarchyPriority[i] = i;//HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
 		}
 		
 		/**
@@ -2823,7 +2830,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// increase priority
 				tPriority += (long)(tOffset);
 				
-				mDesriptionHierarchyPriorityUpdates += "\n + " + tOffset + "-L" + tHierLevel + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+				String tSpace = "";
+				for(int i = 0; i < tHierLevel; i++){
+					tSpace += "  "; 
+				}
+				mDesriptionHierarchyPriorityUpdates += "\n + " + tSpace + tOffset + "-L" + tHierLevel + ": " + tPriority + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
 	
 				// update priority
 				setHierarchyPriority(tPriority, new HierarchyLevel(this, tHierLevel));
@@ -2877,7 +2888,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// decrease priority
 				tPriority -= (long)(tOffset);
 				
-				mDesriptionHierarchyPriorityUpdates += "\n - " + tOffset + "-L" + tHierLevel + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+				String tSpace = "";
+				for(int i = 0; i < tHierLevel; i++){
+					tSpace += "  "; 
+				}
+				mDesriptionHierarchyPriorityUpdates += "\n - " + tSpace + tOffset + "-L" + tHierLevel + ": " + tPriority + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
 	
 				// update priority
 				setHierarchyPriority(tPriority, new HierarchyLevel(this, tHierLevel));
@@ -3204,6 +3219,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Auto-deactivates AnnounceCoordinator packets.
 	 * This function is only useful for measurement speedup or to ease debugging. It is neither part of the concept nor it is used to derive additional data. It only reduces packet overhead in the network.
 	 */
+	@SuppressWarnings("unused")
 	private void autoDeactivateAnnounceCoordinator()
 	{
 		if(mSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
@@ -3223,7 +3239,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + (HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2) + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
 						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 						
-						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_REPORTING_SHARING){
+						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
+							autoActivateAddressDistribution();
+						}
+						if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
 							autoActivateReportingSharing();
 						}
 					}
@@ -3233,6 +3252,34 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 	}
 
+	private void autoActivateAddressDistribution()
+	{
+		Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
+		Logging.warn(this, "+++ Activating address distribution");
+		Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
+
+		GUI_USER_CTRL_ADDRESS_DISTRUTION = true;
+		
+		// iterate over all HRMControllers
+		int tFound = 0;
+		for(HRMController tHRMController : HRMController.getALLHRMControllers()) {
+			LinkedList<Coordinator> tHighestCoordinators = tHRMController.getAllCoordinators(HRMConfig.Hierarchy.HEIGHT - 1);
+			if(!tHighestCoordinators.isEmpty()){
+				for (Coordinator tHighestCoordinator : tHighestCoordinators){
+					tFound++;
+					if(tFound == 1){
+						tHighestCoordinator.getCluster().distributeAddresses();
+					}else{
+						Logging.err(this, "Found highest coordinator nr. " + tFound + ": " + tHighestCoordinator);
+					}
+				}
+			}
+		}
+		if(tFound == 0){
+			Logging.err(this, "autoActivateAddressDistribution() hasn't found the highest coordinator");
+		}
+	}
+	
 	/**
 	 * Auto-activates reporting/sharing after AnnounceCoordinator packets were deactivated.
 	 */
@@ -3243,6 +3290,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
 
 		GUI_USER_CTRL_REPORT_TOPOLOGY = true;
+		
+		// HINT: the report/share functions are triggered periodically and will start the start the reports/shares without any further setting
 	}
 	
 	/**

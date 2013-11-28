@@ -907,7 +907,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * AUTO ADDRESS DISTRIBUTION
 		 */
-		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+		if (HRMController.GUI_USER_CTRL_ADDRESS_DISTRUTION){
 			//Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + mParentCluster.getComChannels().size() + " cluster members");
 
 			getCluster().distributeAddresses();
@@ -1050,7 +1050,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 * Automatic address distribution via the cluster
 			 */
 			// we should automatically continue the address distribution?
-			if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+			if (HRMController.GUI_USER_CTRL_ADDRESS_DISTRUTION){
 				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 					Logging.log(this, "     ..continuing the address distribution process via this cluster");
 				}
@@ -1271,6 +1271,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public BullyPriority getPriority() 
 	{
 		return BullyPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
+//		return BullyPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel().inc()));
 	}
 	
 	/**

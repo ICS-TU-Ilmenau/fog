@@ -255,6 +255,7 @@ public class Cluster extends ClusterMember
 
 		boolean tClusterIsTopOfHierarchy = getHierarchyLevel().isHighest(); 
 		boolean tNewL0HRMID = false;
+		
 		if((tOwnHRMID != null) || (tClusterIsTopOfHierarchy)){
 			// do we have a new HRMID since the last call?
 //			if ((mHRMIDLastDistribution == null) || (!mHRMIDLastDistribution.equals(tOwnHRMID))){
@@ -377,7 +378,7 @@ public class Cluster extends ClusterMember
 			 */
 			if (hasLocalCoordinator()){
 				// we should automatically continue the address distribution?
-				if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+				if (HRMController.GUI_USER_CTRL_ADDRESS_DISTRUTION){
 					if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 						Logging.log(this, "     ..continuing the address distribution process via this cluster");
 					}
@@ -570,7 +571,7 @@ public class Cluster extends ClusterMember
 		/**
 		 * AUTO ADDRESS DISTRIBUTION
 		 */
-		if (HRMConfig.Addressing.ASSIGN_AUTOMATICALLY){
+		if (HRMController.GUI_USER_CTRL_ADDRESS_DISTRUTION){
 			HRMID tOldHRMIDForPeer = pComChannel.getPeerHRMID(); 
 			HRMID tHRMIDForPeer = null;
 			/**
@@ -626,8 +627,10 @@ public class Cluster extends ClusterMember
 					pComChannel.setPeerHRMID(tNewHRMIDForPeer);
 	
 					// register this new HRMID in the local HRS and create a mapping to the right L2Address
-					Logging.log(this, "    ..creating MAPPING " + tNewHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
-					mHRMController.getHRS().mapHRMID(tNewHRMIDForPeer, pComChannel.getPeerL2Address());
+					if(!tNewHRMIDForPeer.isClusterAddress()){
+						Logging.log(this, "    ..creating MAPPING " + tNewHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
+						mHRMController.getHRS().mapHRMID(tNewHRMIDForPeer, pComChannel.getPeerL2Address());
+					}
 					
 					tHRMIDForPeer = tNewHRMIDForPeer;
 				}else{

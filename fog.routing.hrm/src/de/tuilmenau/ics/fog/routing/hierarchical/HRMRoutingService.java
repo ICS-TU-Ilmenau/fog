@@ -239,6 +239,10 @@ public class HRMRoutingService implements RoutingService, Localization
 					/**
 					 * Update mapping HRMID-2-L2Address
 					 */
+					// add L2 address for this direct neighbor
+					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+						Logging.log(this, "     ..add mapping from " + tNextHopHRMID + " to " + getHRMController().getNodeL2Address());
+					}
 					mapHRMID(tNextHopHRMID, getHRMController().getNodeL2Address());
 				}
 			}
@@ -572,19 +576,21 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	public void mapHRMID(HRMID pHRMID, L2Address pL2Address)
 	{
-		boolean tDuplicateFound = false;
-		
-		synchronized (mHRMIDToL2AddressMapping) {
-			for (HRMID tHRMID: mHRMIDToL2AddressMapping.keySet()){
-				if (tHRMID.equals(pHRMID)){
-					tDuplicateFound = true;
-					break;
+		if(!pHRMID.isClusterAddress()){
+			boolean tDuplicateFound = false;
+			
+			synchronized (mHRMIDToL2AddressMapping) {
+				for (HRMID tHRMID: mHRMIDToL2AddressMapping.keySet()){
+					if (tHRMID.equals(pHRMID)){
+						tDuplicateFound = true;
+						break;
+					}
 				}
-			}
-			if (!tDuplicateFound){
-				mHRMIDToL2AddressMapping.put(pHRMID, pL2Address);
-			}else{
-				// HRMID is already known, mapping already exists
+				if (!tDuplicateFound){
+					mHRMIDToL2AddressMapping.put(pHRMID, pL2Address);
+				}else{
+					// HRMID is already known, mapping already exists
+				}
 			}
 		}
 	}

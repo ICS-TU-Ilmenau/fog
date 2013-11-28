@@ -203,12 +203,20 @@ public class HRMConfig
 		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS = true;
 
 		/**
-		 * Defines if the report/share phase should be automatically started right after AnnounceCoordinator packets were deactivated.
-		 * This works only if "Routing.REPORT_TOPOLOGY_AUTOMATICALLY" is set to false
+		 * Defines if the address distribution should be automatically started right after AnnounceCoordinator packets were deactivated.
+		 * This works only if "Addressing.ASSIGN_AUTOMATICALLY" is set to false.
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_REPORTING_SHARING = true;
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION = true;
+		
+		/**
+		 * Defines if the report/share phase should be automatically started right after AnnounceCoordinator packets were deactivated and addresses are distributed.
+		 * This works only if "Routing.REPORT_TOPOLOGY_AUTOMATICALLY" is set to false.
+		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
+		 * 			  The value influences only the speed of the FoGSiEm environment.
+		 */
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING = true;
 	}
 	
 	public class Addressing
@@ -218,7 +226,7 @@ public class HRMConfig
 		 * otherwise it has to be triggered step by step via the GUI.
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean ASSIGN_AUTOMATICALLY = true;
+		public static final boolean ASSIGN_AUTOMATICALLY = false;
 		
 		/**
 		 * Defines the address which is used for cluster broadcasts
