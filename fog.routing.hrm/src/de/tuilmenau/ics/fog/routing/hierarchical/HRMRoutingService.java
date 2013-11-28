@@ -39,7 +39,9 @@ import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
+import de.tuilmenau.ics.fog.transfer.forwardingNodes.ClientFN;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
+import de.tuilmenau.ics.fog.transfer.forwardingNodes.ServerFN;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.DirectDownGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
@@ -509,7 +511,22 @@ public class HRMRoutingService implements RoutingService, Localization
 		}
 		
 		synchronized (mL2RoutingGraph) {
-			mL2RoutingGraph.link(pFromL2Address, pToL2Address, pRoutingServiceLink);
+			L2Address tFrom = pFromL2Address;
+			L2Address tTo = pToL2Address;
+			if (tFrom.equals(getCentralFNL2Address())){
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "   ..mark as central address: " + tFrom);
+				}
+				tFrom.setHostCentralNode();
+			}
+			if (tTo.equals(getCentralFNL2Address())){
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "   ..mark as central address: " + tTo);
+				}
+				tTo.setHostCentralNode();
+			}
+
+			mL2RoutingGraph.link(tFrom, tTo, pRoutingServiceLink);
 		}
 	}
 
@@ -633,7 +650,10 @@ public class HRMRoutingService implements RoutingService, Localization
 		L2Address tResult = null;
 		
 		synchronized (mFNToL2AddressMapping) {
-			tResult = mFNToL2AddressMapping.get(pNode);			
+			tResult = mFNToL2AddressMapping.get(pNode);
+			if(tResult != null){
+				tResult = tResult.clone();
+			}
 		}
 	
 //		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
@@ -773,10 +793,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				/**
 				 * Generate L2 address for the node
 				 */
-				L2Address tNodeL2Address = L2Address.createL2Address();
+				L2Address tNodeL2Address = L2Address.createL2Address(this);
 				tNodeL2Address.setDescr(pElement.getOwner().toString() + "@" + HRMController.getHostName() + " => " + pElement.toString());
 				
-
 				if (pElement.equals(getCentralFN())){
 					Logging.log(this, "     ..registering L2 address for central FN: " + tNodeL2Address);
 					mCentralFNL2Address = tNodeL2Address;
@@ -787,6 +806,12 @@ public class HRMRoutingService implements RoutingService, Localization
 				 */
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..registering NAME MAPPING for FN \"" + pElement + "\": L2address=\"" + tNodeL2Address + "\", level=" + pLevel);
+				}
+				if(pElement instanceof ServerFN){
+					tNodeL2Address.setServer();
+				}
+				if(pElement instanceof ClientFN){
+					tNodeL2Address.setClient();
 				}
 				mFNToL2AddressMapping.put(pElement, tNodeL2Address);
 				/** 

@@ -18,7 +18,10 @@ import de.tuilmenau.ics.fog.eclipse.GraphViewer;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
 
 public class L2RGViewer extends ARGViewer
@@ -63,6 +66,20 @@ public class L2RGViewer extends ARGViewer
 		setView(tViewer.getComponent());
 	}
 
+	@Override
+	public void selected(Object selection, boolean pByDefaultButton, int clickCount)
+	{
+		// default: select whole object represented in the view
+		if(selection == null) selection = mHRMController;
+
+		Logging.trace(this, "Selected (" + selection.getClass().getSimpleName() + "): " + selection);
+		if(selection instanceof L2Address){
+			L2Address tL2Address = (L2Address)selection;
+			
+			Logging.log(this, "    ..created by: " + tL2Address.	getCreatorDescription());
+		}
+	}
+	
 	/**
 	 * Returns a descriptive string about this object
 	 * 

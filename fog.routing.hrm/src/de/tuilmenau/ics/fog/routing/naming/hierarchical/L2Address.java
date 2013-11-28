@@ -13,6 +13,7 @@ import java.awt.Color;
 import java.math.BigInteger;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 public class L2Address extends HRMName
@@ -31,6 +32,36 @@ public class L2Address extends HRMName
 	 */
 	private static long sIDMachineMultiplier = -1;
 
+	/**
+	 * Is this an address for a server?
+	 * This function is not part of the concept. It is only useful for debugging purposes.
+	 */
+	private boolean mIsServer = false;
+
+	/**
+	 * Is this an address for a client?
+	 * This function is not part of the concept. It is only useful for debugging purposes.
+	 */
+	private boolean mIsClient = false;
+	
+	/**
+	 * Is this an address for a central node?
+	 * This function is not part of the concept. It is only useful for debugging purposes.
+	 */
+	private boolean mIsCentralNode = false;
+
+	/**
+	 * Is this an address for the central node of the host?
+	 * This function is not part of the concept. It is only useful for debugging purposes.
+	 */
+	private boolean mIsThisHostCentralNode = false;
+
+	/**
+	 * The description about the creator
+	 * This function is not part of the concept. It is only useful for debugging purposes.
+	 */
+	private String mCreatorDescription = "";
+	
 	/**
 	 * Create an address that is used to identify a node at the MAC layer.
 	 * 
@@ -65,7 +96,7 @@ public class L2Address extends HRMName
 	 * 
 	 * @return the new L2Address
 	 */
-	public static L2Address createL2Address()
+	public static L2Address createL2Address(HRMRoutingService pHRS)
 	{
 		// get the current address counter
 		long tAddr = sNextFreeAddress * idMachineMultiplier();
@@ -76,7 +107,19 @@ public class L2Address extends HRMName
 		// generate new object with the correct number
 		L2Address tResult = new L2Address(tAddr);
 
+		tResult.setCreatorDescription(pHRS.toString());
+		
 		return tResult;
+	}
+
+	/**
+	 * Sets a new description about the creator of this address
+	 * 
+	 * @param pDescription the description 
+	 */
+	private void setCreatorDescription(String pDescription)
+	{
+		mCreatorDescription = pDescription;
 	}
 
 	/**
@@ -89,6 +132,14 @@ public class L2Address extends HRMName
 		L2Address tResult = new L2Address(mAddress.longValue());
 		
 		tResult.mOptionalDescr = mOptionalDescr;
+		
+		tResult.mIsCentralNode = (mIsCentralNode | mIsThisHostCentralNode);
+		
+		tResult.mIsClient = mIsClient;
+		
+		tResult.mIsServer = mIsServer;
+		
+		tResult.mIsThisHostCentralNode = false;
 		
 		return tResult;
 	}
@@ -164,6 +215,60 @@ public class L2Address extends HRMName
 	@Override
 	public Color getColor()
 	{
+		if(mIsClient){
+			return Color.YELLOW;			
+		}
+		if(mIsServer){
+			return Color.RED;			
+		}
+		if(mIsCentralNode){
+			return Color.CYAN;			
+		}
+		if(mIsThisHostCentralNode){
+			return Color.GREEN;
+		}
 		return Color.ORANGE;
+	}
+
+	/**
+	 * Returns the description about the creator
+	 * 
+	 * @return the description
+	 */
+	public String getCreatorDescription()
+	{
+		return mCreatorDescription;
+	}
+	
+	/**
+	 * Mark as address for a server 
+	 */
+	public void setServer()
+	{
+		mIsServer = true;
+	}
+
+	/**
+	 * Mark as address for a client 
+	 */
+	public void setClient()
+	{
+		mIsClient = true;
+	}
+
+	/**
+	 * Mark as address for a central node 
+	 */
+	public void setCentralNode()
+	{
+		mIsCentralNode = true;
+	}
+
+	/**
+	 * Mark as address for the central node for the host 
+	 */
+	public void setHostCentralNode()
+	{
+		mIsThisHostCentralNode = true;
 	}
 }
