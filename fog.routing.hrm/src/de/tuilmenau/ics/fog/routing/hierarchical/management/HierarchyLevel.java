@@ -123,6 +123,18 @@ public class HierarchyLevel
 	}
 
 	/**
+	 * Returns a hierarchy level which is one above this one
+	 * 
+	 * @return the new hierarchy level
+	 */
+	public HierarchyLevel inc()
+	{
+		HierarchyLevel tResult = new HierarchyLevel(getValue() + 1);
+
+		return tResult;
+	}
+
+	/**
 	 * Check if the hierarchy level is higher than the other given one.
 	 * 
 	 * @param pCheckLocation a reference to the origin object from where the call comes from
