@@ -2013,7 +2013,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 				// iterate over all HRMControllers
 				for(HRMController tHRMController : HRMController.getALLHRMControllers()) {
-					tHRMController.cluster(null, new HierarchyLevel(this, tLocalClusterLevel.getValue() + 1));
+					tHRMController.cluster(null, tLocalClusterLevel.inc());
 				}
 			}else{
 				Logging.err(this, "Maximum hierarchy height " + (tLocalClusterLevel.getValue()) + " is already reached.");
@@ -2052,7 +2052,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					}
 					
 					// start the clustering of the selected cluster's coordinator and its neighbors
-					mHRMController.cluster(null, new HierarchyLevel(this, mCoordinator.getHierarchyLevel().getValue() + 1));
+					mHRMController.cluster(null, mCoordinator.getHierarchyLevel().inc());
 				}else{
 					Logging.err(this, "Coordinator is invalid, skipping clustering request");
 				}

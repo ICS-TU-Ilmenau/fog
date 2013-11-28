@@ -792,7 +792,7 @@ public class ComSession extends Session
 		/**
 		 * Create "MultiplexHeader"
 		 */
-		ClusterName tSignaledSourceClusterName = new ClusterName(mHRMController, new HierarchyLevel(this, pSource.getHierarchyLevel().getValue() + 1 /* we answer for a CoordinatorAsClusterMember instance which is always one level higher than its parent Coordinator instance*/), pSource.getClusterID(), pSource.getCoordinatorID());
+		ClusterName tSignaledSourceClusterName = new ClusterName(mHRMController, pSource.getHierarchyLevel().inc() /* we answer for a CoordinatorAsClusterMember instance which is always one level higher than its parent Coordinator instance*/, pSource.getClusterID(), pSource.getCoordinatorID());
 		MultiplexHeader tMultiplexPacket = new MultiplexHeader(tSignaledSourceClusterName, pDestination, tInformClusterLeft);
 
 		/**

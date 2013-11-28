@@ -1198,7 +1198,7 @@ public class Cluster extends ClusterMember
 							 * Create coordinator name for this coordinator
 							 */
 							ClusterName tRemoteEndPointName = tCoordinator.createCoordinatorName();
-							ClusterName tLocalEndPointName = new ClusterName(mHRMController, new HierarchyLevel(this, tRemoteEndPointName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
+							ClusterName tLocalEndPointName = new ClusterName(mHRMController, tRemoteEndPointName.getHierarchyLevel().inc() /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */, tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
 	
 							/**
 							 * Establish the comm. channel
@@ -1258,7 +1258,7 @@ public class Cluster extends ClusterMember
 										 * Create coordinator name for this coordinator proxy
 										 */
 										ClusterName tRemoteEndPointName = tCoordinatorProxy.createCoordinatorName();
-										ClusterName tLocalEndPointName = new ClusterName(mHRMController, new HierarchyLevel(this, tRemoteEndPointName.getHierarchyLevel().getValue() + 1 /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */ ), tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
+										ClusterName tLocalEndPointName = new ClusterName(mHRMController, tRemoteEndPointName.getHierarchyLevel().inc() /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */, tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
 										
 										/**
 										 * Establish the comm. channel

@@ -923,7 +923,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					//Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
 
 					// start the clustering at the hierarchy level
-					mHRMController.cluster(this, new HierarchyLevel(this, getHierarchyLevel().getValue() + 1));
+					mHRMController.cluster(this, getHierarchyLevel().inc());
 				}else{
 					//Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + getHierarchyLevel().getValue());
 				}
