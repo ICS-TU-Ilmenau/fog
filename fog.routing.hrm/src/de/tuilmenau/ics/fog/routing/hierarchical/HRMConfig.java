@@ -369,10 +369,10 @@ public class HRMConfig
 		public static final int HOP_COSTS_TO_A_DIRECT_NEIGHBOR = 1;
 
 		/**
-		 * Defines the time between two triggers for the HRMController/node specific "share phase"
+		 * Defines the time between two triggers for the HRMController/node specific "report/share phase"
 		 * The higher in the hierarchy a coordinator is, the higher is the multiplier for this value.
 		 */
-		public static final double GRANULARITY_SHARE_PHASE = 2.0; // in seconds
+		public static final double GRANULARITY_REPORT_PHASE = 2.0; // in seconds
 		
 		/**
 		 * Define if the HRM based route should be recorded in a ProbeRoutingProperty if the connection  request uses this property.
@@ -382,7 +382,7 @@ public class HRMConfig
 		/**
 		 * Defines the default timeout for a route. If the route doesn't get any refresh in the defined time period, the route gets deleted.
 		 */
-		public static final double ROUTE_TIMEOUT = GRANULARITY_SHARE_PHASE * 2; 
+		public static final double ROUTE_TIMEOUT = GRANULARITY_REPORT_PHASE * 2; 
 	}
 
 	public class QoS

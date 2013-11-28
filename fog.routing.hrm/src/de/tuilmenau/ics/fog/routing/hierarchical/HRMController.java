@@ -3348,7 +3348,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * register next trigger
 		 */
-		mAS.getTimeBase().scheduleIn(HRMConfig.Routing.GRANULARITY_SHARE_PHASE, this);
+		mAS.getTimeBase().scheduleIn(HRMConfig.Routing.GRANULARITY_REPORT_PHASE, this);
 	}
 	
 	/**
@@ -3359,7 +3359,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getPeriodSharePhase(int pHierarchyLevelValue)
 	{
-		return (double) 2 * HRMConfig.Routing.GRANULARITY_SHARE_PHASE * pHierarchyLevelValue; //TODO: use an exponential time distribution here
+		return (double) 2 * HRMConfig.Routing.GRANULARITY_REPORT_PHASE * pHierarchyLevelValue; //TODO: use an exponential time distribution here
 	}
 	
 	/**
@@ -3370,7 +3370,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getPeriodReportPhase(HierarchyLevel pHierarchyLevel)
 	{
-		return (double) HRMConfig.Routing.GRANULARITY_SHARE_PHASE * (pHierarchyLevel.getValue() - 1); //TODO: use an exponential time distribution here
+		return (double) HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevel.getValue() - 1); //TODO: use an exponential time distribution here
 	}
 	
 	/**
