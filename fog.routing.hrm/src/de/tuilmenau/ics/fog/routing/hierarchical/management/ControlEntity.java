@@ -714,10 +714,17 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 					// did we receive a coordinator announcement from our own coordinator?
 					if(!equals(tRemoteClusterName)){
-						Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName);
+						Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName + " announce has hop count: " + pAnnounceCoordinator.getRouteHopCount());
 					}else{
 						Logging.log(this, "     ..ignoring announcement of own remote coordinator: " + tRemoteClusterName);
 					}
+				}
+				/**
+				 * Update the distance of an already existing coordinator proxy
+				 */
+				if(tCoordinatorProxy.getDistance() > pAnnounceCoordinator.getRouteHopCount()){
+					// update the hop distance of the route to the coordinator node
+					tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
 				}
 			}
 			
@@ -730,15 +737,18 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			 * Storing the route to the announced remote coordinator
 			 * HINT: we provide a minimum hop count for the routing
 			 */
-			
-			/**
-			 * Update an already existing link
-			 */ 
 			AbstractRoutingGraphLink tLink = mHRMController.getLinkARG(pSourceEntity, tCoordinatorProxy);
 			if(tLink != null){
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+					Logging.log(this, "       ..found existing ARG link for: " + tRemoteClusterName + " between " + pSourceEntity + " and " + tCoordinatorProxy);
+				}
+
+				/**
+				 * Update an already existing link
+				 */ 
 				Route tOldLinkRoute = tLink.getRoute();
 				Route tNewLinkRoute = pAnnounceCoordinator.getRoute();
-				
+
 				// does a route exist for the stored link?
 				if(tOldLinkRoute != null){
 					// is the new route shorter than the old one?
@@ -750,27 +760,29 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						
 						// update L2 link (update is automatically done in registerLinkL2() )
 						mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), tNewLinkRoute);
-
-						tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
 					}
 				}
-			}
-			/**
-			 * Do we have a new CoordinatorProxy?
-			 */ 
-			if(tNewCoordinatorProxy){
-				AbstractRoutingGraphLink tNewLink = new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute());
-				
-				Logging.log(this, "Registering new ARG link: " + tNewLink);
-
+			}else{
+				/**
+				 * Create a new link
+				 */ 
 				// register the link to the announced coordinator
+				AbstractRoutingGraphLink tNewLink = new AbstractRoutingGraphLink(pAnnounceCoordinator.getRoute());
+				Logging.log(this, "Registering new ARG link: " + tNewLink);
 				mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, tNewLink);
 				
 				// register L2 link
 				mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), pAnnounceCoordinator.getRoute());
-				
-				// update the hop distance of the route to the coordinator node
-				tCoordinatorProxy.setDistance(pAnnounceCoordinator.getRouteHopCount());
+
+				if(tRemoteClusterName.getGUIClusterID() == 35){
+					Logging.log(this, "       ..haven't found an existing ARG link for: " + tRemoteClusterName + " between " + pSourceEntity + " and " + tCoordinatorProxy);
+				}
+			}
+			
+			/**
+			 * Do we have a new CoordinatorProxy?
+			 */ 
+			if(tNewCoordinatorProxy){
 
 				/**
 				 * Trigger: restart clustering
