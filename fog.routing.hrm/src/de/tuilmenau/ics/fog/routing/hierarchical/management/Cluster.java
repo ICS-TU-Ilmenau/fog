@@ -846,15 +846,14 @@ public class Cluster extends ClusterMember
 
 					break;
 				case 1:
+				default: // 2+
 					// do we have an intra-cluster link?
-					if(!tEntry.getDest().isClusterAddress()){
+					if((!tEntry.getDest().isClusterAddress()) && (tEntry.getDest().equals(tEntry.getLastNextHop()))){
 						tEntry.extendCause(this + "::eventReceivedRouteReport()(1 hop) from " + pSourceComChannel.getPeerHRMID());
-						mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tEntry);
+						mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getLastNextHop(), tEntry);
 					}else{
 						// strange, an inter-cluster link with ONE hop?!
 					}
-					break;
-				default: // 2+
 					break;
 			}
 			double tSpentTime = HRMController.getRealTime() - tBefore;
