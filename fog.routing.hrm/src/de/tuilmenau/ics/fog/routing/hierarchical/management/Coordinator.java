@@ -440,15 +440,29 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								/**
 								 * Get the route from the local HRG from the peer to its sibling	
 								 */
-								RoutingEntry tRoutingEntryToPossibleDestination = mHRMController.getRoutingEntryHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
-							
-								/**
-								 * Add the found routing entry to the shared routing table
-								 */
-								if(tRoutingEntryToPossibleDestination != null){
-									// reset L2Address for next hop
-									tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
-									tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
+								if(HRMConfig.Routing.MULTIPATH_ROUTING){
+									LinkedList<RoutingEntry> tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
+									//Logging.log(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to " + tPossibleDestination);
+									for(RoutingEntry tRoutingEntryToPossibleDestination : tAllRoutingEntriesToPossibleDestination){
+										//Logging.log(this, "     ..entry: " + tRoutingEntryToPossibleDestination);
+	
+										/**
+										 * Add the found routing entry to the shared routing table
+										 */
+										// reset L2Address for next hop
+										tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
+										tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
+									}
+								}else{
+									RoutingEntry tRoutingEntryToPossibleDestination = mHRMController.getRoutingEntryHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
+									/**
+									 * Add the found routing entry to the shared routing table
+									 */
+									if(tRoutingEntryToPossibleDestination != null){
+										// reset L2Address for next hop
+										tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
+										tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
+									}
 								}
 							} // for(HRMID tPossibleDestination : tKnownPeerSiblings)
 						}

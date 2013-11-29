@@ -382,7 +382,13 @@ public class HRMConfig
 		/**
 		 * Defines the default timeout for a route. If the route doesn't get any refresh in the defined time period, the route gets deleted.
 		 */
-		public static final double ROUTE_TIMEOUT = GRANULARITY_REPORT_PHASE * 2; 
+		public static final double ROUTE_TIMEOUT = GRANULARITY_REPORT_PHASE * 2;
+
+		/**
+		 * Defines if multiple paths for the same destination should be distributed
+		 * This value should be set to "true". Otherwise, only the best-effort (hop costs!) route will be shared top-to-down.
+		 */
+		public static final boolean MULTIPATH_ROUTING = true; 
 	}
 
 	public class QoS
