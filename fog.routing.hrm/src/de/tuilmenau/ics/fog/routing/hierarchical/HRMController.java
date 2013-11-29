@@ -174,7 +174,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores a database including all HRMControllers of this physical simulation machine
 	 */
-	private static LinkedList<HRMController> mRegisteredHRMControllers = new LinkedList<HRMController>();
+	public static LinkedList<HRMController> mRegisteredHRMControllers = new LinkedList<HRMController>();
 	
 	/**
 	 * Stores an abstract routing graph (ARG), which provides an abstract overview about logical links between clusters/coordinator.
@@ -2532,6 +2532,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * EVENT: simulation restarted
+	 */
+	public static void eventSimulationRestarted()
+	{
+		// reset the stored HRMController database
+		mRegisteredHRMControllers = new LinkedList<HRMController>();
+	}
+
+	/**
 	 * Checks if the entire simulation was created
 	 * 
 	 * @return true or false
@@ -2617,7 +2626,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		// get a copy of the list about local CoordinatorAsClusterMember instances in order to avoid dead lock between HRMControllerProcessor and main EventHandler
 		LinkedList<ClusterMember> tLocalL0ClusterMembers = getAllL0ClusterMembers();
-		Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mConnectivityPriorityUpdates + ")");
+		Logging.log(this, "  ..informing about the new priority: " + pPriority + " - update nr. " + mConnectivityPriorityUpdates + ")");
 		int i = 0;
 		for(ClusterMember tClusterMember : tLocalL0ClusterMembers){
 			// only base hierarchy level!

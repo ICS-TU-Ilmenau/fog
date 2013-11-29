@@ -9,12 +9,16 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
+import java.util.LinkedList;
+
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.eclipse.SimulationCreatedEvent;
 
@@ -24,6 +28,18 @@ import de.tuilmenau.ics.fog.ui.eclipse.SimulationCreatedEvent;
  */
 public class NodeConfiguratorHRM implements NodeConfigurator
 {
+	
+	/**
+	 * Stores the node which has to be configured
+	 */
+	private Node mNode = null;
+	
+	/**
+	 * This function is not part of the concept.
+	 * It is only used to provide a correct simulation environment.
+	 */	
+	private Simulation sLastSimulation = null;
+
 	/**
 	 * Constructor
 	 */
@@ -41,6 +57,21 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 	@Override
 	public void configure(String pName, AutonomousSystem pAS, Node pNode)
 	{
+		Simulation tCurSimulation = pAS.getSimulation();
+		
+		if(sLastSimulation == null){
+			sLastSimulation = tCurSimulation;
+		}else{
+			if(!tCurSimulation.equals(sLastSimulation)){
+				Logging.log(this, "####################### Detected simulation restart ####################### ");
+				Logging.log(this, "####################### Detected simulation restart ####################### ");
+				Logging.log(this, "####################### Detected simulation restart ####################### ");
+				
+				// trigger event: simulation restart
+				HRMController.eventSimulationRestarted();
+			}
+		}
+		
 		mNode = pNode;
 		
 		Logging.log(this, "###### CONFIGURING NODE " + pName + " -START ###### ");
@@ -61,7 +92,6 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 				// there are already pending events
 			}
 		}
-
 	}
 
 	/**
@@ -75,9 +105,4 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		
 		return tResult;
 	}
-	
-	/**
-	 * Stores the node which has to be configured
-	 */
-	private Node mNode = null;
 }
