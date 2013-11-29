@@ -3268,6 +3268,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				for (Coordinator tHighestCoordinator : tHighestCoordinators){
 					tFound++;
 					if(tFound == 1){
+						Logging.log(this, "Found highest coordinator: " + tHighestCoordinator);
 						tHighestCoordinator.getCluster().distributeAddresses();
 					}else{
 						Logging.err(this, "Found highest coordinator nr. " + tFound + ": " + tHighestCoordinator);
@@ -3651,6 +3652,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 
 		synchronized (mAbstractRoutingGraph) {
+			pLink.setFirstVertex(pFrom);
+			pLink.setSecondVertex(pTo);
 			mAbstractRoutingGraph.link(pFrom, pTo, pLink);
 		}
 	}
@@ -3862,7 +3865,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
 
 					double tBefore1 = HRMController.getRealTime();
-					mHierarchicalRoutingGraph.link(pFrom.clone(), pTo.clone(), tLink);
+					HRMID tFrom = pFrom.clone();
+					HRMID tTo = pTo.clone(); 
+					tLink.setFirstVertex(tFrom);
+					tLink.setSecondVertex(tTo);
+					mHierarchicalRoutingGraph.link(tFrom, tTo, tLink);
 
 					// it's time to update the HRG-GUI
 					notifyHRGGUI(tLink);
@@ -3936,242 +3943,435 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public RoutingEntry getRoutingEntryHRG(HRMID pFrom, HRMID pTo, String pCause)
 	{
+		return getRoutingEntryHRG(mHierarchicalRoutingGraph, pFrom, pTo, pCause, null);
+	}
+	
+	/**
+	 * Determines a route in the HRG from a given node/cluster to another one
+	 * 
+	 * @param pHRG the HRG which should be used
+	 * @param pFrom the starting point
+	 * @param pTo the ending point
+	 * @param pCause the cause for this call
+	 * @param pRefDeletedLinks stores the first used inter-node link which was deleted automatically (used for finding multiple routes to the destination), a value "null" deactivates the automatic deletion of links
+	 * 
+	 * @return the found routing entry
+	 */
+	private RoutingEntry getRoutingEntryHRG(AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink> pHRG, HRMID pFrom, HRMID pTo, String pCause, LinkedList<LinkedList<AbstractRoutingGraphLink>> pRefDeletedLinks)
+	{
 		boolean DEBUG = false;
 		RoutingEntry tResult = null;
+		LinkedList<AbstractRoutingGraphLink> tDeletedLinks = null;
+		if(pRefDeletedLinks != null){
+			tDeletedLinks = pRefDeletedLinks.getFirst();
+		}
 		
 		if (DEBUG){
 			Logging.log(this, "getRoutingEntryHRG() searches a route from " + pFrom + " to " + pTo);
 		}
+		
+		synchronized (pHRG){
+			/**********************************************
+			 * Are the source and destination addresses equal?
+			 *********************************************/
+			if(pFrom.equals(pTo)){
+				// create a loop route
+				tResult = RoutingEntry.createLocalhostEntry(pFrom, pCause);
+							
+				// describe the cause for the route
+				tResult.extendCause(this + "::getRoutingEntry() with same source and destination address " + pFrom);
+				
+				// immediate return here
+				return tResult;
+			}
+			
+			/**********************************************
+			 * Is the source address more abstract than the destination one?
+			 * EXAMPLE 1: we are searching for a route from 1.3.0 to 1.4.2.  
+			 *********************************************/
+			if(pFrom.getHierarchyLevel() > pTo.getHierarchyLevel()){
+				/**
+				 * EXAMPLE 1: derive cluster address 1.4.0 from 1.4.2
+				 */			
+				HRMID tAbstractDestination = pTo.getClusterAddress(pFrom.getHierarchyLevel());
+				
+				if (DEBUG){
+					Logging.log(this, "getRoutingEntryHRG() searches a more abstract route from " + pFrom + " to more abstract destination " + tAbstractDestination);
+				}
+	
+				/**
+				 * EXAMPLE 1: determine the route from 1.3.0 to 1.4.0
+				 * 			  (assumption: the found route starts at 1.3.2 and ends at 1.4.1) 
+				 */
+				RoutingEntry tFirstRoutePart = getRoutingEntryHRG(pHRG, pFrom, tAbstractDestination, pCause, null);
+				if (DEBUG){
+					Logging.log(this, "          ..first route part: " + tFirstRoutePart);
+				}
+						
+				if(tFirstRoutePart != null){
+					HRMID tIngressGatewayToDestinationCluster = tFirstRoutePart.getLastNextHop();
+					/**
+					 * EXAMPLE 1: determine the route from 1.4.1 to 1.4.2
+					 */
+					RoutingEntry tIntraClusterRoutePart = getRoutingEntryHRG(pHRG, tIngressGatewayToDestinationCluster, pTo, pCause, null);
+					if (DEBUG){
+						Logging.log(this, "          ..second route part: " + tIntraClusterRoutePart);
+					}
+	
+					if(tIntraClusterRoutePart != null){
+						// clone the first part and use it as first part of the result
+						tResult = tFirstRoutePart.clone();
+						
+						/**
+						 * EXAMPLE 1: combine routes (1.3.2 => 1.4.1) AND (1.4.1 => 1.4.2)
+						 */
+						tResult.append(tIntraClusterRoutePart, pCause);
+						if (DEBUG){
+							Logging.log(this, "          ..resulting route (" + pFrom + " ==> " + tAbstractDestination + "): " + tResult);
+						}
+						
+						/**
+						 * EXAMPLE 1: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
+						 */
+					}else{
+						Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
+					}
+				}else{
+					Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
+				}
+				
+				return tResult;
+			}
+			
+			int tStep = 0;
+		
+			/*********************************************
+			 * Determine the overall inter-cluster path
+			 *********************************************/ 
+			List<AbstractRoutingGraphLink> tPath = getRouteHRG(pHRG, pFrom, pTo);
+			AbstractRoutingGraphLink tFirstUsedInterNodeLink = null;
+			int tFirstUsedInterNodeLinkHopCount = 0;
+			if(tPath != null){
+				// the last cluster gateway
+				HRMID tLastClusterGateway = null;
+				HRMID tFirstForeignGateway = null;
+				
+				if(!tPath.isEmpty()){
+					if (DEBUG){
+						if (DEBUG){
+							Logging.log(this, "      ..found inter cluster path:");
+						}
+						int i = 0;
+						for(AbstractRoutingGraphLink tLink : tPath){
+							if (DEBUG){
+								Logging.log(this, "        ..inter-cluster step[" + i + "]: " + tLink);
+							}
+							i++;
+						}
+					}
+					
+					for(AbstractRoutingGraphLink tInterClusterLink : tPath){
+						/*****************************************************
+						 * Determine the current INTER-cluster route part
+						 ****************************************************/
+						RoutingEntry tInterClusterRoutingEntry = (RoutingEntry)tInterClusterLink.getRoute().getFirst().clone();
+						
+						if(tResult != null){
+							if(tLastClusterGateway == null){
+								throw new RuntimeException(this + "::getRoutingEntryHRG() should never reach this point");
+							}
+							
+							/************************************************************************************************
+							 * ROUTE PART: the intra-cluster route from the last gateway to the next one if needed
+							 ***********************************************************************************************/
+							// the next cluster gateway
+							HRMID tNextClusterGateway = tInterClusterRoutingEntry.getSource();
+							if(!tLastClusterGateway.equals(tNextClusterGateway)){
+								// the intra-cluster path
+								List<AbstractRoutingGraphLink> tIntraClusterPath = getRouteHRG(pHRG, tLastClusterGateway, tNextClusterGateway);
+								if(tIntraClusterPath != null){
+									if(!tIntraClusterPath.isEmpty()){
+										RoutingEntry tLogicalIntraClusterRoutingEntry = null;
+										AbstractRoutingGraphLink tIntraClusterLogLink = tIntraClusterPath.get(0);
+										
+										/****************************************************
+										 * Determine the INTRA-cluster route part
+										 ****************************************************/
+										// check if we have only one hop in intra-cluster route
+										if(tIntraClusterPath.size() == 1){
+											// get the routing entry from the last gateway to the next one
+											tLogicalIntraClusterRoutingEntry = (RoutingEntry) tIntraClusterLogLink.getRoute().getFirst();
+										}else{
+											tLogicalIntraClusterRoutingEntry = RoutingEntry.create(tIntraClusterPath);
+											if(tLogicalIntraClusterRoutingEntry == null){
+												if(pRefDeletedLinks == null){
+													Logging.warn(this, "getRoutingEntryHRG() for " + pFrom + " found a complex intra-cluster path from " + tLastClusterGateway + " to " + tNextClusterGateway + " and wasn't able to derive an aggregated logical link from it..");
+													Logging.warn(this, " 	..path: " + tIntraClusterPath);
+													Logging.warn(this, "      ..from: " + tLastClusterGateway);
+													Logging.warn(this, "      ..to: " + tNextClusterGateway);
+													Logging.warn(this, "    ..for a routing from " + pFrom + " to " + pTo);
+												}else{
+													// no further alternative route available
+												}
+												
+												// reset
+												tResult = null;
+	
+												// abort
+												break;
+											}
+										}
+	
+										/*****************************************************
+										 * Add the intra-cluster route part
+										 ****************************************************/
+										if(tLogicalIntraClusterRoutingEntry != null){
+											// chain the routing entries
+											if (DEBUG){
+												Logging.log(this, "        ..step [" + tStep + "] (intra-cluster): " + tLogicalIntraClusterRoutingEntry);
+											}
+											tResult.append(tLogicalIntraClusterRoutingEntry, pCause + "append1_intra_cluster from " + tLastClusterGateway + " to " + tNextClusterGateway);
+											tStep++;
+	
+											/**
+											 * Determine the next hop for the resulting path
+											 */
+											if(tFirstForeignGateway == null){
+												if(tLogicalIntraClusterRoutingEntry.getHopCount() > 0){
+													tFirstForeignGateway = tLogicalIntraClusterRoutingEntry.getNextHop();
+												}
+											}
+											
+											/******************************************************
+											 * Store the first used inter-node link (is it an intra-cluster link?)
+											 *****************************************************/
+											if(tFirstUsedInterNodeLink == null){
+												tFirstUsedInterNodeLink = tIntraClusterLogLink;
+												tFirstUsedInterNodeLinkHopCount = tLogicalIntraClusterRoutingEntry.getHopCount();
+											}else{
+												if(tFirstUsedInterNodeLinkHopCount == RoutingEntry.NO_HOP_COSTS){
+													tFirstUsedInterNodeLink = tIntraClusterLogLink;
+													tFirstUsedInterNodeLinkHopCount = tLogicalIntraClusterRoutingEntry.getHopCount();
+												}
+											}
+										}
+									}else{
+										if(pRefDeletedLinks != null){
+											// do we have a gap?
+											if(!tLastClusterGateway.equals(tNextClusterGateway)){
+												// reset
+												tResult = null;
+	
+												// abort
+												break;
+											}else{
+												// actually, it is an empty path because source and destination are the same
+											}
+										}else{
+											Logging.warn(this, "getRoutingEntryHRG() found an empty intra-cluster path..");
+											Logging.warn(this, "      ..from: " + tLastClusterGateway);
+											Logging.warn(this, "      ..to: " + tNextClusterGateway);
+											Logging.warn(this, "    ..for a routing from " + pFrom + " to " + pTo);
+										}
+									}
+								}else{
+									Logging.warn(this, "getRoutingEntryHRG() couldn't find a route from " + tLastClusterGateway + " to " + tNextClusterGateway + " for a routing from " + pFrom + " to " + pTo);
+									
+									// reset
+									tResult = null;
+	
+									// abort
+									break;
+	
+									//HINT: do not throw a RuntimeException here because such a situation could have a temporary cause
+								}
+							}else{
+								// tLastClusterGateway and tNextClusterGateway are equal => empty route for cluster traversal
+							}
+							/***********************************************************************************************
+							 * ROUTE PART: the inter-cluster link
+							 ***********************************************************************************************/
+							// chain the routing entries
+							if (DEBUG){
+								Logging.log(this, "        ..step [" + tStep + "] (cluster-2-cluster): " + tInterClusterRoutingEntry);
+							}
+							tResult.append(tInterClusterRoutingEntry, pCause + "append2_inter_cluster for a route from " + pFrom + " to " + pTo);
+						}else{
+							/***********************************************************************************************
+							 * ROUTE PART: first step of the resulting path
+							 ***********************************************************************************************/
+							if (DEBUG){
+								Logging.log(this, "        ..step [" + tStep + "] (cluster-2-cluster): " + tInterClusterRoutingEntry);
+							}
+							tInterClusterRoutingEntry.extendCause(pCause + "append3_start_inter_cluster for a route from " + pFrom + " to " + pTo);
+							tResult = tInterClusterRoutingEntry;
+							
+						}
+						tStep++;
+						
+						/******************************************************
+						 * Store the first used inter-node link (is it an inter-cluster link?)
+						 *****************************************************/
+						if(tFirstUsedInterNodeLink == null){
+							tFirstUsedInterNodeLink = tInterClusterLink;
+							tFirstUsedInterNodeLinkHopCount = tInterClusterRoutingEntry.getHopCount();
+						}else{
+							if(tFirstUsedInterNodeLinkHopCount == RoutingEntry.NO_HOP_COSTS){
+								tFirstUsedInterNodeLink = tInterClusterLink;
+								tFirstUsedInterNodeLinkHopCount = tInterClusterRoutingEntry.getHopCount();
+							}
+						}
 
-		/**
+						/******************************************************
+						 * Store the first used gateway ("next hop")
+						 *****************************************************/
+						if(tFirstForeignGateway == null){
+							if(tInterClusterRoutingEntry.getHopCount() > 0){
+								tFirstForeignGateway = tInterClusterRoutingEntry.getNextHop();
+							}
+						}
+						
+						//update last cluster gateway
+						tLastClusterGateway = tInterClusterRoutingEntry.getNextHop();
+					} // for()
+				}else{
+					if(pRefDeletedLinks == null){
+						Logging.err(this, "getRoutingEntryHRG() found an empty inter-cluster path from " + pFrom + " to " + pTo);
+					}else{
+						// no further alternative route found
+					}
+				}
+				
+				if(tResult != null){
+					/*******************************************************
+					 * finalize the RESULT
+					 ******************************************************/
+					// set the DESTINATION for the resulting routing entry
+					tResult.setDest(pFrom.getForeignCluster(pTo) /* aggregate the destination here */);
+	
+					// reset L2Address for next hop
+					tResult.setNextHopL2Address(null);
+	
+					/*******************************************************
+					 * Deactivate the first used inter-node link if desired
+					 ******************************************************/
+					if(tFirstUsedInterNodeLink != null){
+						if(tDeletedLinks != null){
+							if (DEBUG){
+								Logging.log(this, "  ..mark as deleted: " + tFirstUsedInterNodeLink);
+							}
+							
+							/**
+							 * Add the first used inter-node link to the list of deleted links
+							 */
+							tDeletedLinks.add(tFirstUsedInterNodeLink);
+							
+							/**
+							 * Delete the first used inter-node link from the HRG
+							 */
+							pHRG.unlink(tFirstUsedInterNodeLink);
+						}
+					}
+				}
+			}else{
+				Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG based inter-cluster route from " + pFrom + " to " + pTo);
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Determines all routes in the HRG from a given node/cluster to another one
+	 * 
+	 * @param pFrom the starting point
+	 * @param pTo the ending point
+	 * @param pCause the cause for this call
+	 * 
+	 * @return the found routing entry
+	 */
+	public LinkedList<RoutingEntry> getAllRoutingEntriesHRG(HRMID pFrom, HRMID pTo, String pCause)
+	{
+		LinkedList<RoutingEntry> tResult = new LinkedList<RoutingEntry>();
+		LinkedList<AbstractRoutingGraphLink> tDeletedLinks = new LinkedList<AbstractRoutingGraphLink>();
+		LinkedList<LinkedList<AbstractRoutingGraphLink>> tRefDeletedLinks = new LinkedList<LinkedList<AbstractRoutingGraphLink>>();
+		tRefDeletedLinks.add(tDeletedLinks);
+		
+		boolean DEBUG = false;
+		
+		if(DEBUG){
+			Logging.log(this, "Searching for all routing entries from " + pFrom + " to " + pTo);
+		}
+		
+		/**********************************************
 		 * Are the source and destination addresses equal?
-		 */
+		 *********************************************/
 		if(pFrom.equals(pTo)){
 			// create a loop route
-			tResult = RoutingEntry.createLocalhostEntry(pFrom, pCause);
+			RoutingEntry tLocalLoopEntry = RoutingEntry.createLocalhostEntry(pFrom, pCause);
 						
 			// describe the cause for the route
-			tResult.extendCause(this + "::getRoutingEntry() with same source and destination address " + pFrom);
+			tLocalLoopEntry.extendCause(this + "::getRoutingEntry() with same source and destination address " + pFrom);
+			
+			// add the RoutingEntry to the result
+			tResult.add(tLocalLoopEntry);
 			
 			// immediate return here
 			return tResult;
 		}
-		
-		/**
-		 * Is the source address more abstract than the destination one?
-		 * EXAMPLE 1: we are searching for a route from 1.3.0 to 1.4.2.  
-		 */
-		if(pFrom.getHierarchyLevel() > pTo.getHierarchyLevel()){
-			/**
-			 * EXAMPLE 1: derive 1.4.0 from 1.4.2
-			 */			
-			HRMID tAbstractDestination = pTo.getClusterAddress(pFrom.getHierarchyLevel());
-			
-			if (DEBUG){
-				Logging.log(this, "getRoutingEntryHRG() searches a more abstract route from " + pFrom + " to more abstract destination " + tAbstractDestination);
-			}
 
-			/**
-			 * EXAMPLE 1: determine the route from 1.3.0 to 1.4.0
-			 * 			  (assumption: the found route starts at 1.3.2 and ends at 1.4.1) 
-			 */
-			RoutingEntry tFirstRoutePart = getRoutingEntryHRG(pFrom, tAbstractDestination, pCause);
-			if (DEBUG){
-				Logging.log(this, "          ..first route part: " + tFirstRoutePart);
-			}
-					
-			if(tFirstRoutePart != null){
-				HRMID tIngressGatewayToDestinationCluster = tFirstRoutePart.getLastNextHop();
-				/**
-				 * EXAMPLE 1: determine the route from 1.4.1 to 1.4.2
-				 */
-				RoutingEntry tIntraClusterRoutePart = getRoutingEntryHRG(tIngressGatewayToDestinationCluster, pTo, pCause);
-				if (DEBUG){
-					Logging.log(this, "          ..second route part: " + tIntraClusterRoutePart);
-				}
-
-				if(tIntraClusterRoutePart != null){
-					// clone the first part and use it as first part of the result
-					tResult = tFirstRoutePart.clone();
-					
-					/**
-					 * EXAMPLE 1: combine routes (1.3.2 => 1.4.1) AND (1.4.1 => 1.4.2)
-					 */
-					tResult.append(tIntraClusterRoutePart, pCause);
-					if (DEBUG){
-						Logging.log(this, "          ..resulting route (" + pFrom + " ==> " + tAbstractDestination + "): " + tResult);
-					}
-					
-					/**
-					 * EXAMPLE 1: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
-					 */
-				}else{
-					Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
-				}
-			}else{
-				Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
-			}
-			
-			return tResult;
-		}
-		
-		int tStep = 0;
-		
-		// get the inter-cluster path to the possible destination
-		List<AbstractRoutingGraphLink> tPath = getRouteHRG(pFrom, pTo);
-		if(tPath != null){
-			// the last cluster gateway
-			HRMID tLastClusterGateway = null;
-			HRMID tFirstForeignGateway = null;
-			
-			if(!tPath.isEmpty()){
-				if (DEBUG){
-					if (DEBUG){
-						Logging.log(this, "      ..found inter cluster path:");
-					}
-					int i = 0;
-					for(AbstractRoutingGraphLink tLink : tPath){
-						if (DEBUG){
-							Logging.log(this, "        ..inter-cluster step[" + i + "]: " + tLink);
+		synchronized (mHierarchicalRoutingGraph) {
+			RoutingEntry tEntry = null;
+			RoutingEntry tLastEntry = null;
+			int i = 0;
+			do{
+				tEntry = getRoutingEntryHRG(mHierarchicalRoutingGraph, pFrom, pTo, pCause, tRefDeletedLinks);
+				if(tEntry != null){
+					if(tLastEntry != null){
+						if(tLastEntry.equals(tEntry)){
+							if(DEBUG){
+								//Logging.log(this, "  ..found repeated entry: " + tEntry);
+							}
+							
+							tEntry = null;
 						}
+					}else{
+						if(DEBUG){
+							Logging.log(this, "  ..found new entry: " + tEntry);
+							Logging.log(this, "    ..deleted " + tDeletedLinks.size() + " links");
+						}
+
+						tLastEntry = tEntry.clone();
+					}
+
+					if(tEntry != null){
+						if(DEBUG){
+							//Logging.log(this, "  ..found entry[" + i + "]: " + tEntry);
+						}
+	
+						// add the RoutingEntry to the result
+						tResult.add(tEntry);					
+						
 						i++;
 					}
 				}
-				for(AbstractRoutingGraphLink tLink : tPath){
-					RoutingEntry tInterClusterRoutingEntry = (RoutingEntry)tLink.getRoute().getFirst().clone();
-					
-					if(tResult != null){
-						if(tLastClusterGateway == null){
-							throw new RuntimeException(this + "::getRoutingEntryHRG() should never reach this point");
-						}
+			}while(tEntry != null);
+		}
+		
+		/**
+		 * Automatically add the previously deleted HRG links
+		 */
+		if(!tDeletedLinks.isEmpty()){
+			for(AbstractRoutingGraphLink tLink : tDeletedLinks){
+				if(DEBUG){
+					Logging.log(this, "  ..restoring HRG link: " + tLink);
+				}
 						
-						/************************************************************************************************
-						 * ROUTE PART: the intra-cluster route from the last gateway to the next one if needed
-						 ***********************************************************************************************/
-						// the next cluster gateway
-						HRMID tNextClusterGateway = tInterClusterRoutingEntry.getSource();
-						if(!tLastClusterGateway.equals(tNextClusterGateway)){
-							// the intra-cluster path
-							List<AbstractRoutingGraphLink> tIntraClusterPath = getRouteHRG(tLastClusterGateway, tNextClusterGateway);
-							if(tIntraClusterPath != null){
-								if(!tIntraClusterPath.isEmpty()){
-									RoutingEntry tLogicalIntraClusterRoutingEntry = null;
-									
-									/**
-									 * Determine the intra-cluster route part
-									 */
-									// check if we have only one hop in intra-cluster route
-									if(tIntraClusterPath.size() == 1){
-										AbstractRoutingGraphLink tIntraClusterLogLink = tIntraClusterPath.get(0);
-										// get the routing entry from the last gateway to the next one
-										tLogicalIntraClusterRoutingEntry = (RoutingEntry) tIntraClusterLogLink.getRoute().getFirst();
-									}else{
-										tLogicalIntraClusterRoutingEntry = RoutingEntry.create(tIntraClusterPath);
-										if(tLogicalIntraClusterRoutingEntry == null){
-											Logging.warn(this, "getRoutingEntryHRG() for " + pFrom + " found a complex intra-cluster path and wasn't able to derive an aggregated logical link from it..");
-											Logging.warn(this, " 	..path: " + tIntraClusterPath);
-											Logging.warn(this, "      ..from: " + tLastClusterGateway);
-											Logging.warn(this, "      ..to: " + tNextClusterGateway);
-											Logging.warn(this, "    ..for a routing from " + pFrom + " to " + pTo);
-											
-											// reset
-											tResult = null;
-
-											// abort
-											break;
-										}
-									}
-
-									/**
-									 * Add the intra-cluster route part
-									 */
-									if(tLogicalIntraClusterRoutingEntry != null){
-										// chain the routing entries
-										if (DEBUG){
-											Logging.log(this, "        ..step [" + tStep + "] (intra-cluster): " + tLogicalIntraClusterRoutingEntry);
-										}
-										tResult.append(tLogicalIntraClusterRoutingEntry, pCause + "append1_intra_cluster from " + tLastClusterGateway + " to " + tNextClusterGateway);
-										tStep++;
-
-										/**
-										 * Determine the next hop for the resulting path
-										 */
-										if(tFirstForeignGateway == null){
-											if(tLogicalIntraClusterRoutingEntry.getHopCount() > 0){
-												tFirstForeignGateway = tLogicalIntraClusterRoutingEntry.getNextHop();
-											}
-										}
-									}
-								}else{
-									Logging.warn(this, "getRoutingEntryHRG() found an empty intra-cluster path..");
-									Logging.warn(this, "      ..from: " + tLastClusterGateway);
-									Logging.warn(this, "      ..to: " + tNextClusterGateway);
-									Logging.warn(this, "    ..for a routing from " + pFrom + " to " + pTo);
-								}
-							}else{
-								Logging.warn(this, "getRoutingEntryHRG() couldn't find a route from " + tLastClusterGateway + " to " + tNextClusterGateway + " for a routing from " + pFrom + " to " + pTo);
-								
-								// reset
-								tResult = null;
-
-								// abort
-								break;
-
-								//HINT: do not throw a RuntimeException here because such a situation could have a temporary cause
-							}
-						}else{
-							// tLastClusterGateway and tNextClusterGateway are equal => empty route for cluster traversal
-						}
-						/***********************************************************************************************
-						 * ROUTE PART: the inter-cluster link
-						 ***********************************************************************************************/
-						// chain the routing entries
-						if (DEBUG){
-							Logging.log(this, "        ..step [" + tStep + "] (cluster-2-cluster): " + tInterClusterRoutingEntry);
-						}
-						tResult.append(tInterClusterRoutingEntry, pCause + "append2_inter_cluster for a route from " + pFrom + " to " + pTo);
-					}else{
-						/***********************************************************************************************
-						 * ROUTE PART: first step of the resulting path
-						 ***********************************************************************************************/
-						if (DEBUG){
-							Logging.log(this, "        ..step [" + tStep + "] (cluster-2-cluster): " + tInterClusterRoutingEntry);
-						}
-						tInterClusterRoutingEntry.extendCause(pCause + "append3_start_inter_cluster for a route from " + pFrom + " to " + pTo);
-						tResult = tInterClusterRoutingEntry;
-					}
-					tStep++;
-					
-					/**
-					 * Determine the next hop for the resulting path
-					 */
-					if(tFirstForeignGateway == null){
-						if(tInterClusterRoutingEntry.getHopCount() > 0){
-							tFirstForeignGateway = tInterClusterRoutingEntry.getNextHop();
-						}
-					}
-					
-					//update last cluster gateway
-					tLastClusterGateway = tInterClusterRoutingEntry.getNextHop();
-				}
-			}else{
-				Logging.err(this, "getRoutingEntryHRG() found an empty path from " + pFrom + " to " + pTo);
+				/**
+				 * Add all previously deleted used inter-node links again to the HRG
+				 */
+				mHierarchicalRoutingGraph.link((HRMID)tLink.getFirstVertex(), (HRMID)tLink.getSecondVertex(), tLink);
 			}
-			
-			if(tResult != null){
-				// set the DESTINATION for the resulting routing entry
-				tResult.setDest(pFrom.getForeignCluster(pTo) /* aggregate the destination here */);
-
-				// set the NEXT HOP for the resulting routing entry 
-				if(tFirstForeignGateway != null){
-//					tResult.setNextHop(tFirstForeignGateway);
-				}
-				
-				// reset L2Address for next hop
-				tResult.setNextHopL2Address(null);
-			}
-		}else{
-			Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + pTo);
 		}
 		
 		return tResult;
@@ -4528,18 +4728,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public List<AbstractRoutingGraphLink> getRouteHRG(HRMID pSource, HRMID pDestination)
 	{
+		return getRouteHRG(mHierarchicalRoutingGraph, pSource, pDestination);
+	}
+	
+	/**
+	 * Determines a path in the locally stored hierarchical routing graph (HRG).
+	 * 
+	 * @param pHRG the HRG which should be used
+	 * @param pSource the source of the desired route
+	 * @param pDestination the destination of the desired route
+	 * 
+	 * @return the determined route, null if no route could be found
+	 */
+	public List<AbstractRoutingGraphLink> getRouteHRG(AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink> pHRG, HRMID pSource, HRMID pDestination)
+	{
 		List<AbstractRoutingGraphLink> tResult = null;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 			Logging.log(this, "GET ROUTE (HRG) from \"" + pSource + "\" to \"" + pDestination +"\"");
 		}
 
-		synchronized (mHierarchicalRoutingGraph) {
-			tResult = mHierarchicalRoutingGraph.getRoute(pSource, pDestination);
+		synchronized (pHRG) {
+			tResult = pHRG.getRoute(pSource, pDestination);
 		}
 
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-			Logging.log(this, "        ..result: " + tResult);
+			Logging.log(this, "        ..getRouteHRG() result: " + tResult);
 		}
 		
 		return tResult;
