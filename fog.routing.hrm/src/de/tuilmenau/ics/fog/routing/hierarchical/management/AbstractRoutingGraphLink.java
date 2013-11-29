@@ -14,6 +14,7 @@ import java.io.Serializable;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -44,6 +45,16 @@ public class AbstractRoutingGraphLink implements Serializable
 	 */
 	private double mTimeout = 0;
 
+	/**
+	 * first vertex
+	 */
+	private Object mFirstVertex = null;
+	
+	/**
+	 * second vertex
+	 */
+	private Object mSecondVertex = null;
+	
 	/**
 	 * Constructor of a node (cluster) connection
 	 * 
@@ -217,6 +228,42 @@ public class AbstractRoutingGraphLink implements Serializable
 	public double getTimeout()
 	{
 		return mTimeout;
+	}
+
+	/**
+	 * Sets the first vertex
+	 */
+	public void setFirstVertex(Object pVertex)
+	{
+		mFirstVertex = pVertex;
+	}
+
+	/**
+	 * Sets the second vertex
+	 */
+	public void setSecondVertex(Object pVertex)
+	{
+		mSecondVertex = pVertex;
+	}
+
+	/**
+	 * Returns the first vertex
+	 * 
+	 * @return the first vertex
+	 */
+	public Object getFirstVertex()
+	{
+		return mFirstVertex;
+	}
+
+	/**
+	 * Returns the second vertex
+	 * 
+	 * @return the second vertex
+	 */
+	public Object getSecondVertex()
+	{
+		return mSecondVertex;
 	}
 
 	/**
