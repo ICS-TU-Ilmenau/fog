@@ -296,20 +296,35 @@ public class RoutingEntry implements RouteSegment
 	{
 		RoutingEntry tResult = null;
 		
+		// is the given path valid?
 		if(pPath != null){
+			// has the given path any data?  
 			if(!pPath.isEmpty()){
+				// iterate over all path parts
 				for(AbstractRoutingGraphLink tLink : pPath){
+					// is the RoutingEntry for the current link valid?
 					if((tLink.getRoute() != null) && (tLink.getRoute().size() == 1)){
+						// get the routing entry of the current link
 						RoutingEntry tNextRoutePart = (RoutingEntry) tLink.getRoute().getFirst();
+						// do we have the first path part? 
 						if(tResult != null){
-							if(tResult.getNextHop().equals(tNextRoutePart.getSource())){
+							if(tResult.getLastNextHop().equals(tNextRoutePart.getSource())){
 								tResult.append(tNextRoutePart, "RT::create()_1");
-								// aggregate the next hop
-								tResult.setNextHop(tNextRoutePart.getNextHop());
+								/**
+								 * auto-learn the next physical hop
+								 */
+								if(tResult.getHopCount() == NO_HOP_COSTS){
+									// aggregate the next hop
+									tResult.setNextHop(tNextRoutePart.getNextHop());
+								}
 							}else{
-								Logging.err(null, "Cannot create an aggregated routing entry..");
-								Logging.err(null, "   ..current result: " + tResult);
-								Logging.err(null, "   ..faulty next part: " + tNextRoutePart);
+//								Logging.err(null, "Cannot create an aggregated routing entry..");
+//								Logging.err(null, "   ..current result: " + tResult);
+//								Logging.err(null, "   ..faulty next part: " + tNextRoutePart);
+//								Logging.err(null, "     ..overall path is:");
+//								for(AbstractRoutingGraphLink tLink2 : pPath){
+//									Logging.err(null, "      .." + tLink2);	
+//								}
 
 								// reset the result
 								tResult = null;
@@ -325,7 +340,7 @@ public class RoutingEntry implements RouteSegment
 					}else{
 						// reset the result
 						tResult = null;
-						// imediate return
+						// immediate return
 						break;
 					}
 				}
