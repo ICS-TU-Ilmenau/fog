@@ -158,7 +158,9 @@ public class L2Address extends HRMName
 		 * L2Address
 		 */
 		if(pObj instanceof L2Address) {
-			return (((L2Address) pObj).mAddress.equals(mAddress));
+			L2Address tOtherL2Addr = (L2Address)pObj;
+			
+			return (tOtherL2Addr.mAddress.longValue() == mAddress.longValue());
 		} 
 		
 		return false;
