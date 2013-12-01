@@ -593,6 +593,7 @@ public class Elector implements Localization
 		BullyPriorityUpdate tBullyPriorityUpdatePacket = new BullyPriorityUpdate(mHRMController.getNodeName(), mParent.getPriority());
 
 		// send broadcast
+		Logging.log(this, "Distributing priority update: " + tBullyPriorityUpdatePacket);
 		mParent.sendClusterBroadcast(tBullyPriorityUpdatePacket, true);
 
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
@@ -603,7 +604,7 @@ public class Elector implements Localization
 	/**
 	 * SEND: BullyAlive, report itself as alive by signaling BULLY ALIVE to all cluster members
 	 */
-	private void distributeALIVE()
+	public void distributeALIVE()
 	{
 		if (HRMConfig.Election.SEND_BULLY_ALIVES){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
@@ -1000,53 +1001,57 @@ public class Elector implements Localization
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
 			if(mParent.getHierarchyLevel().isHigherLevel()){
-				/**
-				 * AVOID multiple LEAVES/RETURNS
-				 */
-				synchronized (mNodeActiveClusterMembers){
+				if((mParent instanceof Cluster) || (mParent.getComChannelToClusterHead().isLinkActive())){
 					/**
-					 * React similar to a received ANNOUNCE/RESIGN if the election is already finished
+					 * AVOID multiple LEAVES/RETURNS
 					 */
-					if(finished()){
+					synchronized (mNodeActiveClusterMembers){
 						/**
-						 * Do we belong to an active cluster with an existing (remote) coordinator?
+						 * React similar to a received ANNOUNCE/RESIGN if the election is already finished
 						 */
-						if(mParent.isActiveCluster()){
+						if(finished()){
 							/**
-							 * We behave like we would do if we receive an ANNOUNCE packet
+							 * Do we belong to an active cluster with an existing (remote) coordinator?
 							 */
-							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
-								Logging.log(this, "      ..leave all alternative election processes with a lower priority than the peer");
-							}
-							leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), this + "::leaveReturnOnNewPeerPriority()");
-						}else{
-							/**
-							 * We behave like we would do if we receive a RESIGN packet
-							 */
-							//we skip returnToAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority()) here because this step was already processed based on the already received RESIGN, a priority update doesn't change anything
-						}
-					}else{
-						LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
-
-						/**
-						 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
-						 */
-						if(tLevelList.size() > 0){
-							/**
-							 * Iterate over all known active ClusterMember entries
-							 */ 
-							for(ClusterMember tClusterMember : tLevelList){
-								Elector tElectorClusterMember = tClusterMember.getElector();
-								
+							if(mParent.isActiveCluster()){
+								/**
+								 * We behave like we would do if we receive an ANNOUNCE packet
+								 */
 								if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
-									Logging.log(this, "      ..leave all alternative election processes in relation to foreign election: " + tElectorClusterMember);
+									Logging.log(this, "      ..leave all alternative election processes with a lower priority than the peer");
 								}
-								tElectorClusterMember.leaveWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()");
-							}								
+								leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), this + "::leaveReturnOnNewPeerPriority()");
+							}else{
+								/**
+								 * We behave like we would do if we receive a RESIGN packet
+								 */
+								//we skip returnToAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority()) here because this step was already processed based on the already received RESIGN, a priority update doesn't change anything
+							}
 						}else{
-							// no active ClusterMember is known and the priority update affects only the current ClusterMember
-						}
-					}					
+							LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
+	
+							/**
+							 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
+							 */
+							if(tLevelList.size() > 0){
+								/**
+								 * Iterate over all known active ClusterMember entries
+								 */ 
+								for(ClusterMember tClusterMember : tLevelList){
+									Elector tElectorClusterMember = tClusterMember.getElector();
+									
+									if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+										Logging.log(this, "      ..leave all alternative election processes in relation to foreign election: " + tElectorClusterMember);
+									}
+									tElectorClusterMember.leaveWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()");
+								}								
+							}else{
+								// no active ClusterMember is known and the priority update affects only the current ClusterMember
+							}
+						}					
+					}
+				}else{
+					// link is not active
 				}
 			}
 		}
