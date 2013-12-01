@@ -1001,11 +1001,6 @@ public class Cluster extends ClusterMember
 		Logging.log(this, "============ EVENT: cluster role invalid");
 		
 		/**
-		 * Trigger: Elector invalid
-		 */
-		getElector().eventInvalidation();
-
-		/**
 		 * Trigger: role invalid
 		 */
 		eventInvalidation();
@@ -1025,7 +1020,19 @@ public class Cluster extends ClusterMember
 		LinkedList<ComChannel> tcomChannels = getComChannels();
 		for(ComChannel tComChannel: tcomChannels){
 			Logging.log(this, "     ..canceling: " + tComChannel);
-			destroyComChannel(tComChannel);
+			/**
+			 * Check if we have already received an ACK for the ClusterMembershipRequest packet
+			 */
+			if(!tComChannel.isOpen()){
+				// enforce "open" state for this comm. channel
+				Logging.log(this, "   ..enforcing OPEN state for this comm. channel: " + tComChannel);
+				tComChannel.eventEstablished();
+			}
+			
+			/**
+			 * Destroy the channel
+			 */
+			unregisterComChannel(tComChannel);
 		}
 		
 		/**
@@ -1095,19 +1102,6 @@ public class Cluster extends ClusterMember
 		}
 	}
 
-	/**
-	 * Destroys a communication channel
-	 * 
-	 * @param pComChannel the communication channel
-	 */
-	private void destroyComChannel(ComChannel pComChannel)
-	{
-		Logging.log(this, "Destroying comm. channel to peer=" + pComChannel.getPeer() + "(remoteEP=" + pComChannel.getRemoteClusterName() +")");
-		
-		// unregister the comm. channel
-		unregisterComChannel(pComChannel);
-	}
-	
 	/**
 	 * Establishes a communication channel
 	 * 
