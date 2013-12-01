@@ -860,13 +860,15 @@ public class ClusterMember extends ClusterName
 	 */
 	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, L2Address pExcludeL2Address)
 	{
+		boolean DEBUG = false;
+		
 		// get all communication channels
 		LinkedList<ComChannel> tComChannels = getComChannels();
 
 		// get the L2Addres of the local host
 		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
 		
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+		if (DEBUG){
 			Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
 		}
 		
@@ -874,7 +876,7 @@ public class ClusterMember extends ClusterName
 			boolean tIsLoopback = tComChannel.toLocalNode();
 			
 			if((pExcludeL2Address == null /* excluded peer address is null, we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */)){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+				if (DEBUG){
 					if (!tIsLoopback){
 						Logging.log(this, "       ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
 					}else{
@@ -885,23 +887,23 @@ public class ClusterMember extends ClusterName
 				if ((pIncludeLoopback) || (!tIsLoopback)){
 					if(tComChannel.isOpen()){
 						SignalingMessageHrm tNewPacket = pPacket.duplicate();
-						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+						if (DEBUG){
 							Logging.log(this, "           ..sending duplicate packet: " + tNewPacket);
 						}
 						// send the packet to one of the possible cluster members
 						tComChannel.sendPacket(tNewPacket);
 					}else{
-						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+						if (DEBUG){
 							Logging.log(this, "             ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
 						}
 					}
 				}else{
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+					if (DEBUG){
 						Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
 					}
 				}
 			}else{
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
+				if (DEBUG){
 					Logging.log(this, "              ..skipping EXCLUDED DESTINATION: " + pExcludeL2Address);
 				}
 			}
@@ -1126,7 +1128,7 @@ public class ClusterMember extends ClusterName
 	 * 
 	 * @return the L2 address
 	 */
-	public Name getCoordinatorNodeL2Address()
+	public L2Address getCoordinatorNodeL2Address()
 	{
 		return mCoordinatorNodeL2Address;
 	}
