@@ -1214,7 +1214,7 @@ public class ComChannel
 				/**
 				 * Send "InformClusterMembershipCanceled" along the comm. channel
 				 */
-				InformClusterMembershipCanceled tInformClusterMembershipCanceled = new InformClusterMembershipCanceled(mHRMController.getNodeName(), mHRMController.getNodeName(), tParentCluster.createClusterName(), getRemoteClusterName());
+				InformClusterMembershipCanceled tInformClusterMembershipCanceled = new InformClusterMembershipCanceled(mHRMController.getNodeL2Address(), mHRMController.getNodeL2Address(), tParentCluster.createClusterName(), getRemoteClusterName());
 			    Logging.log(this, "       ..sending membership canceled: " + tInformClusterMembershipCanceled);
 			    sendPacket(tInformClusterMembershipCanceled);
 			}else if(mParent instanceof ClusterMember){
@@ -1525,8 +1525,7 @@ public class ComChannel
 		if(pPacket instanceof InformClusterLeft) {
 			InformClusterLeft tInformClusterLeftPacket = (InformClusterLeft)pPacket;
 
-			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "INFORM_CLUSTER_LEFT-received from \"" + getPeerHRMID() + "\"");
+			Logging.log(this, "INFORM_CLUSTER_LEFT-received from \"" + getPeerHRMID() + "\": " + tInformClusterLeftPacket);
 
 			if(!isOpen()){
 				Logging.warn(this, "Received InformClusterLeft in state " + mChannelState.toString() + ": " + tInformClusterLeftPacket);
@@ -1555,8 +1554,7 @@ public class ComChannel
 		if(pPacket instanceof InformClusterMembershipCanceled) {
 			InformClusterMembershipCanceled tInformClusterMembershipCanceledPacket = (InformClusterMembershipCanceled)pPacket;
 
-			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "INFORM_CLUSTER_MEMBERSHIP_CANCELED-received from \"" + getPeerHRMID() + "\"");
+			Logging.log(this, "INFORM_CLUSTER_MEMBERSHIP_CANCELED-received from \"" + getPeerHRMID() + "\": " + tInformClusterMembershipCanceledPacket);
 
 			// no further transmissions
 			mChannelState = ChannelState.CLOSED;
@@ -1566,6 +1564,7 @@ public class ComChannel
 				ClusterMember tClusterMember = (ClusterMember)getParent();
 				
 				// trigger event "cluster member joined"
+				Logging.log(this, "   ..invalidating the ClusterMember role of: " + tClusterMember);
 				tClusterMember.eventClusterMemberRoleInvalid(this);		
 			}else{
 				Logging.err(this, "Expected a ClusterMember object as parent for processing LeaveCluster data but parent is " + getParent());
