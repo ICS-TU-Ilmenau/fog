@@ -70,6 +70,7 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 				// trigger event: simulation restart
 				HRMController.eventSimulationRestarted();
 			}
+			sLastSimulation = tCurSimulation;
 		}
 		
 		mNode = pNode;
