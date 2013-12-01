@@ -135,7 +135,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 */
 	public void eventHierarchyNodePriorityUpdate(long pNewHierarchyNodePriority)
 	{
-		Logging.log(this, "EVENT: base node priority update to:  " + pNewHierarchyNodePriority);
+		Logging.log(this, "EVENT: hierarchy node priority update to: " + pNewHierarchyNodePriority);
 		
 		/**
 		 * Set the new priority if it differs from the old one
@@ -144,19 +144,6 @@ public class CoordinatorAsClusterMember extends ClusterMember
 			Logging.log(this, "Got new base node priority, updating own priority from " + getPriority().getValue() + " to " + pNewHierarchyNodePriority);
 			setPriority(BullyPriority.create(this, pNewHierarchyNodePriority));
 		}
-	}
-
-	/**
-	 * EVENT: cluster membership invalidated, triggered by parent coordinator 
-	 */
-	public void eventClusterMembershipInvalid()
-	{
-		Logging.log(this, "EVENT: cluster membership invalid");
-
-		/**
-		 * Trigger: cluster member role invalid
-		 */
-		eventClusterMemberRoleInvalid();
 	}
 
 	/**
@@ -172,15 +159,15 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		/**
 		 * Trigger: cluster member role invalid
 		 */
-		eventClusterMemberRoleInvalid();
+		eventCoordinatorAsClusterMemberRoleInvalid();
 	}
 
 	/**
 	 * EVENT: cluster member role invalid
 	 */
-	public void eventClusterMemberRoleInvalid()
+	public void eventCoordinatorAsClusterMemberRoleInvalid()
 	{
-		Logging.log(this, "============ EVENT: ClusterMember_Role_Invalid");
+		Logging.log(this, "============ EVENT: Coordinator_As_ClusterMember_Role_Invalid");
 
 		/**
 		 * Trigger: Elector invalid
