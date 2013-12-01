@@ -57,6 +57,8 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	 */
 	private ClusterName mRequestDestination = null;
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -71,7 +73,8 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		
 		mRequestingClusterName = pRequestingCluster;
 		mRequestDestination = pDestination;
-
+		sCreatedPackets++;
+		
 		Logging.log(this, "CREATED");
 	}
 

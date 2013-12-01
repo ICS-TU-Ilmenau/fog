@@ -51,6 +51,8 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	 */
 	private ClusterName mSource = null;
 	
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -61,8 +63,8 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	public RequestClusterMembershipAck(Name pSenderName, Name pReceiverName, ClusterName pSource)
 	{
 		super(pSenderName, pReceiverName);
-		
 		mSource = pSource;
+		sCreatedPackets++;
 		
 		Logging.log(this, "CREATED");
 	}

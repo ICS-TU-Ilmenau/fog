@@ -30,6 +30,8 @@ public class RevokeHRMIDs  extends SignalingMessageHrm
 	 */
 	private static final long serialVersionUID = -1674381264586284319L;
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -41,6 +43,7 @@ public class RevokeHRMIDs  extends SignalingMessageHrm
 	{
 		super(pSenderName, pReceiverName);
 		mHRMIDs = pAssignedHRMIDs;
+		sCreatedPackets++;
 	}
 	
 	/**

@@ -33,6 +33,8 @@ public class BullyAnnounce extends SignalingMessageBully implements ISignalingMe
 	 */
 	private String mCoordinatorDescription = null;
 	
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -46,6 +48,7 @@ public class BullyAnnounce extends SignalingMessageBully implements ISignalingMe
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
 		mCoordinatorID = pCoordinatorID;
+		sCreatedPackets++;
 	}
 	
 	/**

@@ -56,6 +56,8 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 	 */
 	private ClusterName mRequestDestination = null;
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -70,6 +72,7 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 		
 		mRequestingClusterName = pRequestingCluster;
 		mRequestDestination = pDestination;
+		sCreatedPackets++;
 	}
 
 	/**

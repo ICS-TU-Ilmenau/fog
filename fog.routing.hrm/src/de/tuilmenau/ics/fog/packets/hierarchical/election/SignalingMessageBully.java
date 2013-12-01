@@ -22,6 +22,8 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 */
 	private BullyPriority mSenderPriority = null;
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -33,6 +35,7 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	{
 		super(pSenderName, pReceiverName);
 		mSenderPriority = pSenderPriority;
+		sCreatedPackets++;
 	}
 	
 	/**

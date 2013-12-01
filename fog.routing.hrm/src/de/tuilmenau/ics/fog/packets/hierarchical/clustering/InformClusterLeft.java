@@ -58,6 +58,8 @@ public class InformClusterLeft extends SignalingMessageHrm implements ISignaling
 	 */
 	private ClusterName mRequestDestination = null;
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -72,6 +74,7 @@ public class InformClusterLeft extends SignalingMessageHrm implements ISignaling
 		
 		mLeavingClusterMember = pLeavingMember;
 		mRequestDestination = pDestination;
+		sCreatedPackets++;
 	}
 
 	/**

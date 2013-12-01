@@ -23,6 +23,8 @@ public class ProbePacket  extends SignalingMessageHrm
 	 */
 	private static final long serialVersionUID = -1674381264586284319L;
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -32,6 +34,7 @@ public class ProbePacket  extends SignalingMessageHrm
 	public ProbePacket(Name pSenderName, Name pReceiverName)
 	{
 		super(pSenderName, pReceiverName);
+		sCreatedPackets++;
 	}
 
 	/**

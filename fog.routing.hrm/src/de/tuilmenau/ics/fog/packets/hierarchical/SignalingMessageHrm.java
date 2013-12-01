@@ -55,6 +55,8 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	 */
 	private static final boolean RECORD_ROUTE = false;
 	
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * For using the class within (de-)serialization. 
 	 */
@@ -66,6 +68,7 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		mReceiverName = pReceiverName;
 		mMessageNumber = createMessageNumber();
 		mOriginalMessageNumber = mMessageNumber;
+		sCreatedPackets++;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
 			Logging.log(this, "\n########### NEW HRM MESSAGE nr. " + mMessageNumber + "(Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ")");

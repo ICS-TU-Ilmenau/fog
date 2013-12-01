@@ -19,6 +19,8 @@ public class BullyReply  extends SignalingMessageBully
 {
 	private static final long serialVersionUID = -4666721123778977947L;
 	
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -29,5 +31,6 @@ public class BullyReply  extends SignalingMessageBully
 	public BullyReply(Name pSenderName, Name pReceiverName, BullyPriority pSenderPriority)
 	{
 		super(pSenderName, pReceiverName, pSenderPriority);
+		sCreatedPackets++;
 	}
 }

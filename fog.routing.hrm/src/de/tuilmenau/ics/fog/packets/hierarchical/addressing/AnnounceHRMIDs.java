@@ -33,6 +33,8 @@ public class AnnounceHRMIDs extends SignalingMessageHrm implements ISignalingMes
 	 */
 	private static final long serialVersionUID = -8757081636576993095L;
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -44,6 +46,7 @@ public class AnnounceHRMIDs extends SignalingMessageHrm implements ISignalingMes
 	{
 		super(pSenderName, pReceiverName);
 		mHRMIDs = pAssignedHRMIDs;
+		sCreatedPackets++;
 	}
 	
 	/**

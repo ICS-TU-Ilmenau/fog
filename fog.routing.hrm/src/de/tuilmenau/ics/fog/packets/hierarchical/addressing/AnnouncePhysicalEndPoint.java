@@ -39,6 +39,8 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 	public static final boolean INIT_PACKET = false;
 	public static final boolean ANSWER_PACKET = true;
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * For using the class within (de-)serialization. 
 	 */
@@ -49,6 +51,7 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 		mCentralFN = pCentralFN;
 		mRoutingTargetFN = pRoutingTargetFN;
 		mIsAnswer = pIsAnswer;
+		sCreatedPackets++;
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
 			Logging.log(getClass().getSimpleName() + "(SenderCentralAddress=" + getSenderCentralAddress()  + ", SenderAddress=" + getSenderAddress() + "): CREATED");

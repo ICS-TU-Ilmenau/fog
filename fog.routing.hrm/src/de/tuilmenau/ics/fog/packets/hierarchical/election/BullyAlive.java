@@ -24,6 +24,8 @@ public class BullyAlive extends SignalingMessageBully implements ISignalingMessa
 {
 	private static final long serialVersionUID = 4870662765189881992L;
 	
+	public static long sCreatedPackets = 0;
+	
 	/**
 	 * Constructor
 	 * 
@@ -33,6 +35,7 @@ public class BullyAlive extends SignalingMessageBully implements ISignalingMessa
 	public BullyAlive(Name pSenderName, BullyPriority pSenderPriority)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
+		sCreatedPackets++;
 	}
 
 	/**

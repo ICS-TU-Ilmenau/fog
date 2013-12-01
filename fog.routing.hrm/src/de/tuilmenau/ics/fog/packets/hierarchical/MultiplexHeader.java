@@ -49,6 +49,8 @@ public class MultiplexHeader implements ProtocolHeader
 	 */
 	private int mMessageNumber = -1;
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -62,6 +64,7 @@ public class MultiplexHeader implements ProtocolHeader
 		mReceiverClusterName = pReceiverClusterName;
 		mPayload = pPayload;
 		mMessageNumber = createMessageNumber();
+		sCreatedPackets++;
 	}
 	
 	/**

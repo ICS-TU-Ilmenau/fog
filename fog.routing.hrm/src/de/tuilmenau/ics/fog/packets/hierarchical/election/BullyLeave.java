@@ -24,6 +24,8 @@ public class BullyLeave extends SignalingMessageBully implements ISignalingMessa
 
 	private static final long serialVersionUID = 7774205916502000178L;
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -33,6 +35,7 @@ public class BullyLeave extends SignalingMessageBully implements ISignalingMessa
 	public BullyLeave(Name pSenderName, BullyPriority pSenderPriority)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
+		sCreatedPackets++;
 	}
 
 	/**

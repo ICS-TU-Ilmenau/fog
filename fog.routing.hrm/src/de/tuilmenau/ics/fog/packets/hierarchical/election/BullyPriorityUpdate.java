@@ -24,6 +24,8 @@ public class BullyPriorityUpdate extends SignalingMessageBully implements ISigna
 {
 	private static final long serialVersionUID = -8819106581802846812L;
 	
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -33,6 +35,7 @@ public class BullyPriorityUpdate extends SignalingMessageBully implements ISigna
 	public BullyPriorityUpdate(Name pSenderName, BullyPriority pSenderPriroity)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriroity);
+		sCreatedPackets++;
 	}
 
 	/**
