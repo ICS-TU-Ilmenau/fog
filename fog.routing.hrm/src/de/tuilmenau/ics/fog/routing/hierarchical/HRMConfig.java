@@ -16,7 +16,7 @@ public class HRMConfig
 		/**
 		 * Limits the size of the packet storage in a comm. channel
 		 */
-		public static final int COM_CHANNELS_MAX_PACKET_STORAGE_SIZE = 0;
+		public static final int COM_CHANNELS_MAX_PACKET_STORAGE_SIZE = 64;
 
 		/** 
 		 * Show debug outputs about observable/observer construct, which is used to inform GUIs about HRMController internal changes.
@@ -208,7 +208,7 @@ public class HRMConfig
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION = true;
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION = false;
 		
 		/**
 		 * Defines if the report/share phase should be automatically started right after AnnounceCoordinator packets were deactivated and addresses are distributed.
@@ -216,7 +216,12 @@ public class HRMConfig
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING = true;
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING = false;
+		
+		/**
+		 * Defines if additional validation checks should be applied.
+		 */
+		public static final boolean VALIDATE_RESULTS = true;
 	}
 	
 	public class Addressing

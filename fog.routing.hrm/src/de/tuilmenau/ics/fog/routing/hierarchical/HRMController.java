@@ -415,6 +415,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void resetAnnounceCoordinatorGUI()
 	{
+		Logging.log(this, "##### Reseting AnnounceCoordinator mechanism");
 		GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
 		mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
 	}
@@ -2843,7 +2844,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				for(int i = 0; i < tHierLevel; i++){
 					tSpace += "  "; 
 				}
-				mDesriptionHierarchyPriorityUpdates += "\n + " + tSpace + tOffset + "-L" + tHierLevel + ": " + tPriority + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+				mDesriptionHierarchyPriorityUpdates += "\n + " + tSpace + tPriority + "-L" + tHierLevel + ": " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
 	
 				// update priority
 				setHierarchyPriority(tPriority, new HierarchyLevel(this, tHierLevel));
@@ -2901,7 +2902,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				for(int i = 0; i < tHierLevel; i++){
 					tSpace += "  "; 
 				}
-				mDesriptionHierarchyPriorityUpdates += "\n - " + tSpace + tOffset + "-L" + tHierLevel + ": " + tPriority + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+				mDesriptionHierarchyPriorityUpdates += "\n - " + tSpace + tPriority + "-L" + tHierLevel + ": " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
 	
 				// update priority
 				setHierarchyPriority(tPriority, new HierarchyLevel(this, tHierLevel));
@@ -3332,6 +3333,43 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * generalize all known HRM routes to neighbors 
 		 */
 //		generalizeMeighborHRMRoutesAuto();
+		
+		if(HRMConfig.Measurement.VALIDATE_RESULTS){
+			for (Coordinator tCoordinator : getAllCoordinators()) {
+				if(!tCoordinator.getHierarchyLevel().isHighest()){
+					if(!tCoordinator.isSuperiorCoordinatorValid()){
+						Logging.err(this, "\n### Detected invalid comm. channel to superior coordinator for: " + tCoordinator);
+					}
+				}
+				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
+					if(tComChannel.getPeerPriority().isUndefined()){
+						Logging.err(this, "\n### Detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
+					}
+				}
+			}
+			for (Cluster tCluster : getAllClusters()) {
+				HierarchyLevel tClusterLevel = tCluster.getHierarchyLevel();
+				
+				if(tClusterLevel.isHigherLevel()){
+					for (ComChannel tComChannel : tCluster.getComChannels()){
+						if(tComChannel.getPeerPriority().isUndefined()){
+							Logging.err(this, "\n### Detected undefined peer priority for Cluster channel: " + tComChannel);
+						}else{
+							BullyPriority tChannelPeerPriority = tComChannel.getPeerPriority();
+							L2Address tChanPeerL2Address = tComChannel.getPeerL2Address();
+							for(HRMController tHRMController : mRegisteredHRMControllers){
+								if(tHRMController.getNodeL2Address().equals(tChanPeerL2Address)){
+									long tFoundPriority = tHRMController.getHierarchyNodePriority(tClusterLevel);
+									if(tFoundPriority != tChannelPeerPriority.getValue()){
+										Logging.err(this, "\n### Detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 		
 		if(GUI_USER_CTRL_REPORT_TOPOLOGY){
 			/**
