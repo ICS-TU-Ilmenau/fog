@@ -170,7 +170,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			Logging.log(this, "Sending to superior coordinator: " + pPacket);
 		}
 		
-		if(superiorCoordinatorComChannel() != null){
+		if(isSuperiorCoordinatorValid()){
 			// plausibility check if we actually use a link from a CoordinatorAsClusterMember
 			if(superiorCoordinatorComChannel().getParent() instanceof CoordinatorAsClusterMember){				
 				CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)superiorCoordinatorComChannel().getParent();
@@ -486,6 +486,24 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
+	 * Checks if the channel to the superior coordinator is valid
+	 * 
+	 *  @return true or false
+	 */
+	public boolean isSuperiorCoordinatorValid()
+	{
+		boolean tResult = false;
+		
+		if (!getHierarchyLevel().isHighest()){
+			if(superiorCoordinatorComChannel() != null){
+				tResult = true;
+			}
+		}
+
+		return tResult;
+	}
+
+	/**
 	 * This function implements the "report phase".
 	 * It sends locally stored sharable routing data to the superior coordinator
 	 */
@@ -504,7 +522,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// the highest coordinator does not have any superior coordinator
 		if (!getHierarchyLevel().isHighest()){
 			// do we have a valid channel to the superior coordinator?
-			if(superiorCoordinatorComChannel() != null){
+			if(isSuperiorCoordinatorValid()){
 				// HINT: we do not report topology data which is already locally known
 				if(!mHRMController.getNodeL2Address().equals(superiorCoordinatorComChannel().getPeerL2Address())){
 					RoutingTable tReportRoutingTable = new RoutingTable();
@@ -728,10 +746,14 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		distributeCoordinatorInvalidation();
 		
 		/**
-		 * Inform all superior clusters about the event and trigger the invalidation of this coordinator instance -> we leave all Bully elections because we are no longer a possible election winner
+		 * Inform all superior clusters about our invalidation and invalidate the cluster membership (we leave all elections because we are no longer a possible election winner)
 		 */
 		if (!getHierarchyLevel().isHighest()){
-			eventAllClusterMembershipsInvalid();
+			Logging.log(this, "     ..invalidating these cluster memberships: " + mClusterMemberships);
+			while(mClusterMemberships.size() > 0) {
+				CoordinatorAsClusterMember tCoordinatorAsClusterMember = mClusterMemberships.getLast();
+				tCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
+			}
 		}else{
 			Logging.log(this, "eventCoordinatorRoleInvalid() skips further signaling because hierarchy end is already reached at: " + getHierarchyLevel().getValue());
 		}
@@ -760,20 +782,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Inform the inferior cluster about our destruction
 		 */
 		mParentCluster.eventCoordinatorLost();
-	}
-	
-	/**
-	 * EVENT: all cluster membership invalid
-	 */
-	private void eventAllClusterMembershipsInvalid()
-	{
-		Logging.log(this, "EVENT: all cluster memberships invalid");
-		
-		Logging.log(this, "     ..invalidating these cluster memberships: " + mClusterMemberships);
-		while(mClusterMemberships.size() > 0) {
-			CoordinatorAsClusterMember tCoordinatorAsClusterMember = mClusterMemberships.getLast();
-			tCoordinatorAsClusterMember.eventClusterMembershipInvalid();
-		}
 	}
 	
 	/**
