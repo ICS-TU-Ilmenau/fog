@@ -60,6 +60,6 @@ public class BullyAlive extends SignalingMessageBully implements ISignalingMessa
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ")";
 	}
 }
