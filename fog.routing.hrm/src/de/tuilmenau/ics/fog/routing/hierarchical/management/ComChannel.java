@@ -18,6 +18,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
+import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
@@ -1424,6 +1425,17 @@ public class ComChannel
 		}
 		
 		/**
+		 * ProbePacket
+		 */
+		if (pPacket instanceof ProbePacket){
+			ProbePacket tProbePacket = (ProbePacket)pPacket;
+			
+			Logging.log(this, "RECEIVED PROBE_PACKET: " + tProbePacket);
+			
+			return true;
+		}
+		
+		/**
 		 * AssignHRMID:
 		 * 			Coordinator (via Cluster) ==> all inferior local/remote ClusterMember
 		 */
@@ -1608,6 +1620,20 @@ public class ComChannel
 		
 		// send the packet
 		sendPacket(tRouteSharePacket);
+	}
+
+	/**
+	 * SEND: ProbePacket
+	 */
+	public void distributeProbePacket()
+	{
+		// create new ProbePacket packet
+		ProbePacket tProbePacket = new ProbePacket(mHRMController.getNodeName(),  getPeerHRMID());
+		
+		// send the packet
+		sendPacket(tProbePacket);
+		
+		Logging.log(this, "SENDING PROBE_PACKET: " + tProbePacket);
 	}
 
 	/**

@@ -1140,6 +1140,34 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							showReportedRoutes(tfComChannels.get(tSelectedIndex));
 						}
 					});
+					MenuItem tMenuItem8 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem8.setText("Send CHANNEL PROBE packet");
+					tMenuItem8.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							sendProbePacket(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							sendProbePacket(tfComChannels.get(tSelectedIndex));
+						}
+					});
+					MenuItem tMenuItem9 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem9.setText("Send ELECTION ALIVE packet");
+					tMenuItem9.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							sendElectionAlive(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							sendElectionAlive(tfComChannels.get(tSelectedIndex));
+						}
+					});					
 					
 					tTable.setMenu(tMenu);
 				}
@@ -1199,6 +1227,21 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 	}
 
+	private void sendProbePacket(ComChannel pComChannel)
+	{
+		pComChannel.distributeProbePacket();
+	}
+
+	private void sendElectionAlive(ComChannel pComChannel)
+	{
+		if(pComChannel.getParent() instanceof ClusterMember){
+			ClusterMember tClusterMember = (ClusterMember)pComChannel.getParent();
+			
+			tClusterMember.getElector().distributeALIVE();
+		}
+			
+	}
+	
 	private void showPeerHRMIDs(ComChannel pComChannel)
 	{
 		Logging.log(this, "Peer HRMIDs of: " + pComChannel);

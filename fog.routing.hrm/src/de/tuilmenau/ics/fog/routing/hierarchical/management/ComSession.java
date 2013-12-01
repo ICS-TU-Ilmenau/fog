@@ -23,6 +23,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
+import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
@@ -203,17 +204,24 @@ public class ComSession extends Session
 		boolean tResult = false;
 		
 		if (pData instanceof MultiplexHeader){
-			MultiplexHeader tMultiplexHeader = (MultiplexHeader)pData;
+			MultiplexHeader tMultiplexPacket = (MultiplexHeader)pData;
 			
 			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-				Logging.log(this, "SENDING MULTIPLEX HEADER: " + tMultiplexHeader  + ", payload=" + tMultiplexHeader.getPayload());
+				Logging.log(this, "SENDING MULTIPLEX HEADER: " + tMultiplexPacket  + ", payload=" + tMultiplexPacket.getPayload());
 			}
 			
-			if(tMultiplexHeader.getPayload() instanceof SignalingMessageHrm){
-				SignalingMessageHrm tSignalingHRMPacket = (SignalingMessageHrm)tMultiplexHeader.getPayload();
+			if(tMultiplexPacket.getPayload() instanceof SignalingMessageHrm){
+				SignalingMessageHrm tSignalingHRMPacket = (SignalingMessageHrm)tMultiplexPacket.getPayload();
 				
 				// add source route entry
 				tSignalingHRMPacket.addSourceRoute("[S]: " + this.toString());
+			}
+			
+			/**
+			 * ProbePacket
+			 */
+			if(tMultiplexPacket.getPayload() instanceof ProbePacket){
+				Logging.log(this, "#### SENDING PROBE_PACKET: " + tMultiplexPacket.getPayload());
 			}
 		}
 		
@@ -872,6 +880,13 @@ public class ComSession extends Session
 				
 				// add source route entry
 				tSignalingHRMPacket.addSourceRoute("[R]: " + this.toString());
+			}
+
+			/**
+			 * ProbePacket
+			 */
+			if(tMultiplexPacket.getPayload() instanceof ProbePacket){
+				Logging.log(this, "#### RECEIVED PROBE_PACKET: " + tMultiplexPacket.getPayload());
 			}
 
 			eventMultiplexPacket(tMultiplexPacket);
