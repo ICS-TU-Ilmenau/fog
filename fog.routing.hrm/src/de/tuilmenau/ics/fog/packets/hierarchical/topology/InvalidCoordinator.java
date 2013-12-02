@@ -92,6 +92,8 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	 */
 	private LinkedList<L2Address> mPassedNodes = new LinkedList<L2Address>();
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -113,6 +115,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		if(pHRMController != null){
 			addPassedNode(pHRMController.getNodeL2Address());
 		}
+		sCreatedPackets++;
 	}
 	
 	/**

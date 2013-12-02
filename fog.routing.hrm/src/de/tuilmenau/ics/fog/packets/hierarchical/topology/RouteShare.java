@@ -31,6 +31,8 @@ public class RouteShare extends SignalingMessageHrm
 	 */
 	private RoutingTable mRoutingTable = new RoutingTable();
 	
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -44,6 +46,7 @@ public class RouteShare extends SignalingMessageHrm
 		if(pRoutingTable != null){
 			mRoutingTable = pRoutingTable;
 		}
+		sCreatedPackets++;
 	}
 
 	/**

@@ -120,6 +120,8 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	 */
 	private LinkedList<L2Address> mPassedNodes = new LinkedList<L2Address>();
 
+	public static long sCreatedPackets = 0;
+
 	/**
 	 * Constructor
 	 * 
@@ -146,6 +148,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 			 */
 			addGUIPassedCluster(new Long(pSenderClusterName.getGUIClusterID()));
 		}
+		sCreatedPackets++;
 	}
 	
 	/**
