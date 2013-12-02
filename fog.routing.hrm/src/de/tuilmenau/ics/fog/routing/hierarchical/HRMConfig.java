@@ -208,7 +208,7 @@ public class HRMConfig
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION = false;
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION = true;
 		
 		/**
 		 * Defines if the report/share phase should be automatically started right after AnnounceCoordinator packets were deactivated and addresses are distributed.
@@ -216,7 +216,7 @@ public class HRMConfig
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING = false;
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING = true;
 		
 		/**
 		 * Defines if additional validation checks should be applied.
