@@ -1121,6 +1121,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				mLocalCoordinatorAsClusterMemebers.add(pCoordinatorAsClusterMember);
 				
 				tNewEntry = true;
+			}else{
+				Logging.err(this, "CoordinatorAsClusterMember already known: " + pCoordinatorAsClusterMember);
 			}
 		}
 		
@@ -2537,6 +2539,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public static void eventSimulationRestarted()
 	{
+		Logging.log(null, "EVENT: simulation restarted");
+		
 		// reset the stored HRMController database
 		mRegisteredHRMControllers = new LinkedList<HRMController>();
 	}
@@ -3241,12 +3245,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
 					 */
-					if(tTimeWithFixedHierarchyData > HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2){
+					if(tTimeWithFixedHierarchyData > HRMConfig.Hierarchy.COORDINATOR_TIMEOUT){
 						GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
 						
 						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 						Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
-						Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + (HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2) + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
+						Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + (HRMConfig.Hierarchy.COORDINATOR_TIMEOUT) + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
 						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 						
 						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
@@ -3306,6 +3310,63 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Validates the hierarchy creation
+	 */
+	private void validateResults()
+	{
+		/**
+		 * Check coordinators
+		 */
+		for (Coordinator tCoordinator : getAllCoordinators()) {
+			if(!tCoordinator.getHierarchyLevel().isHighest()){
+				if(!tCoordinator.isSuperiorCoordinatorValid()){
+					Logging.err(this, "validateResults() detected invalid comm. channel to superior coordinator for: " + tCoordinator);
+				}
+			}
+			for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
+				if(tComChannel.getPeerPriority().isUndefined()){
+					Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
+				}
+			}
+		}
+		
+		/**
+		 * Check cluster
+		 */
+		for (Cluster tCluster : getAllClusters()) {
+			HierarchyLevel tClusterLevel = tCluster.getHierarchyLevel();
+	
+			if(tClusterLevel.isHigherLevel()){
+				for (ComChannel tComChannel : tCluster.getComChannels()){
+					if(tComChannel.getPeerPriority().isUndefined()){
+						Logging.err(this, "validateResults() detected undefined peer priority for Cluster channel: " + tComChannel);
+					}else{
+						BullyPriority tChannelPeerPriority = tComChannel.getPeerPriority();
+						L2Address tChanPeerL2Address = tComChannel.getPeerL2Address();
+						boolean tFound = false;
+						for(HRMController tHRMController : getALLHRMControllers()){
+							if(tHRMController.getNodeL2Address().equals(tChanPeerL2Address)){
+//								Logging.log(this, "MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
+								tFound = true;
+								long tFoundPriority = tHRMController.getHierarchyNodePriority(tClusterLevel);
+								if(tFoundPriority != tChannelPeerPriority.getValue()){
+									Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
+								}
+								break;
+							}else{
+//								Logging.log(this, "NO MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
+							}
+						}
+						if(!tFound){
+							Logging.err(this, "validateResults() wasn't able to find node: " + tChanPeerL2Address + " as peer of: " + tComChannel);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/**
 	 * Triggers the "report phase" / "share phase" of all known coordinators
 	 */
 	private void reportAndShare()
@@ -3335,40 +3396,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //		generalizeMeighborHRMRoutesAuto();
 		
 		if(HRMConfig.Measurement.VALIDATE_RESULTS){
-			for (Coordinator tCoordinator : getAllCoordinators()) {
-				if(!tCoordinator.getHierarchyLevel().isHighest()){
-					if(!tCoordinator.isSuperiorCoordinatorValid()){
-						Logging.err(this, "\n### Detected invalid comm. channel to superior coordinator for: " + tCoordinator);
-					}
-				}
-				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
-					if(tComChannel.getPeerPriority().isUndefined()){
-						Logging.err(this, "\n### Detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
-					}
-				}
-			}
-			for (Cluster tCluster : getAllClusters()) {
-				HierarchyLevel tClusterLevel = tCluster.getHierarchyLevel();
-				
-				if(tClusterLevel.isHigherLevel()){
-					for (ComChannel tComChannel : tCluster.getComChannels()){
-						if(tComChannel.getPeerPriority().isUndefined()){
-							Logging.err(this, "\n### Detected undefined peer priority for Cluster channel: " + tComChannel);
-						}else{
-							BullyPriority tChannelPeerPriority = tComChannel.getPeerPriority();
-							L2Address tChanPeerL2Address = tComChannel.getPeerL2Address();
-							for(HRMController tHRMController : mRegisteredHRMControllers){
-								if(tHRMController.getNodeL2Address().equals(tChanPeerL2Address)){
-									long tFoundPriority = tHRMController.getHierarchyNodePriority(tClusterLevel);
-									if(tFoundPriority != tChannelPeerPriority.getValue()){
-										Logging.err(this, "\n### Detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+			validateResults();
 		}
 		
 		if(GUI_USER_CTRL_REPORT_TOPOLOGY){
