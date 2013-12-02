@@ -222,6 +222,11 @@ public class HRMConfig
 		 * Defines if additional validation checks should be applied.
 		 */
 		public static final boolean VALIDATE_RESULTS = true;
+		
+		/**
+		 * Defines if additionally verbose validation checks should be applied.
+		 */
+		public static final boolean VALIDATE_RESULTS_EXTENSIVE = false;
 	}
 	
 	public class Addressing

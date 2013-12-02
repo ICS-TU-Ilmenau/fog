@@ -1304,7 +1304,9 @@ public class ComChannel
 					Logging.log(this, "    ..processOnePacket() took " + tSpentTime + " ms for handling packet: " + tNextPacket);
 				}
 			}else{
-				Logging.warn(this, "Parent control entity is already invalidated, dropping received packet: " + tNextPacket);
+				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+					Logging.warn(this, "Parent control entity is already invalidated, dropping received packet: " + tNextPacket);
+				}
 			}
 		}else{
 			Logging.err(this, "Cannot process an invalid packet");
@@ -1529,7 +1531,9 @@ public class ComChannel
 			Logging.log(this, "INFORM_CLUSTER_LEFT-received from \"" + getPeerHRMID() + "\": " + tInformClusterLeftPacket);
 
 			if(!isOpen()){
-				Logging.warn(this, "Received InformClusterLeft in state " + mChannelState.toString() + ": " + tInformClusterLeftPacket);
+				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+					Logging.warn(this, "Received InformClusterLeft in state " + mChannelState.toString() + ": " + tInformClusterLeftPacket);
+				}
 			}
 			
 			// no further transmissions

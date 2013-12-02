@@ -1582,18 +1582,20 @@ public class HRMRoutingService implements RoutingService, Localization
 						encodeDestinationApplication(tResultRoute, pRequirements);
 					}else{
 						// no route found
-						Logging.warn(this, "Couldn't determine an L2 route from " + tSourceL2Address + " to " + tDestinationL2Address + ", knowing the following routing graph nodes");
-						// list known nodes
-						synchronized (mL2RoutingGraph) {
-							Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
-							int i = 0;
-							for (L2Address tL2Address : tGraphNodes){
-								Logging.warn(this, "     ..[" + i + "]: " + tL2Address);
-								Collection<RoutingServiceLink> tOutLinks = mL2RoutingGraph.getOutEdges(tL2Address);
-								for(RoutingServiceLink tOutLink : tOutLinks){
-									Logging.warn(this, "      ..out link: " + tOutLink + " [" + tOutLink.getClass().getSimpleName() + "]");	
+						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+							Logging.warn(this, "getRoute() couldn't determine an L2 route from " + tSourceL2Address + " to " + tDestinationL2Address + ", knowing the following routing graph nodes");
+							// list known nodes
+							synchronized (mL2RoutingGraph) {
+								Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
+								int i = 0;
+								for (L2Address tL2Address : tGraphNodes){
+									Logging.warn(this, "     ..[" + i + "]: " + tL2Address);
+									Collection<RoutingServiceLink> tOutLinks = mL2RoutingGraph.getOutEdges(tL2Address);
+									for(RoutingServiceLink tOutLink : tOutLinks){
+										Logging.warn(this, "      ..out link: " + tOutLink + " [" + tOutLink.getClass().getSimpleName() + "]");	
+									}
+									i++;
 								}
-								i++;
 							}
 						}
 					}

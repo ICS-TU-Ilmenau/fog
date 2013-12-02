@@ -838,7 +838,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				//Logging.warn(this, "Couldn't remove the coordinator proxy of unknown remote coordinator: " + tRemoteClusterName);
 			}
 		}else{
-			Logging.warn(this, "Avoiding unregistration of locally instantiated coordinator: " + pInvalidCoordinator);
+			//Logging.warn(this, "Avoiding unregistration of locally instantiated coordinator: " + pInvalidCoordinator);
 		}
 	}
 

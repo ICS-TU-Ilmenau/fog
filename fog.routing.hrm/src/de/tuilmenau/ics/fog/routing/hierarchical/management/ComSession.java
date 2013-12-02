@@ -599,10 +599,14 @@ public class ComSession extends Session
 		} else {
 			ComChannel tDeletedComChannel = getDeletedComChannel(tDestination, tSource);
 			if (tDeletedComChannel != null){
-				Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + " with payload " + pMultiplexHeader.getPayload() + ", old comm. channel is: " + tDeletedComChannel);
+				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+					Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + " with payload " + pMultiplexHeader.getPayload() + ", old comm. channel is: " + tDeletedComChannel);
+				}
 			}else{
 				if (mHRMController.isGUIFormerCoordiantorID(tDestination.getGUICoordinatorID())){
-					Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pMultiplexHeader + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
+					if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+						Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pMultiplexHeader + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
+					}
 				}else{
 					String tKnownChannels = "";
 					for (ComChannel tComChannel: getAllComChannels()){
@@ -641,7 +645,9 @@ public class ComSession extends Session
 				if (tCoordinator != null){
 					tCoordinator.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
 				}else{
-					Logging.warn(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + pRequestClusterMembershipPacket + ", coordinator has gone in the meanwhile?");
+					if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+						Logging.warn(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + pRequestClusterMembershipPacket + ", coordinator has gone in the meanwhile?");
+					}
 					denyClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), pRequestClusterMembershipPacket.getDestination());
 				}
 			}else{
@@ -737,7 +743,9 @@ public class ComSession extends Session
 					Logging.log(this, ">>> Old route to peer: " + tRouteToPeer + " includes already the entry " + getPeerL2Address() + " as last entry");
 				}
 			}else{
-				Logging.warn(this, "Couldn't determine the route to the peer: " + tSenderAddress);
+				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+					Logging.warn(this, "Couldn't determine the route to the peer: " + tSenderAddress);
+				}
 			}
 		}
 		
@@ -760,7 +768,9 @@ public class ComSession extends Session
 			 */
 			if (tFirstFNL2Address == null){
 				if(tSenderAddress != null){
-					Logging.warn(this, "handleAnnouncePhysicalEndPoint() wasn't able to determine the first FN towards: " + tSenderAddress);
+					if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+						Logging.warn(this, "handleAnnouncePhysicalEndPoint() wasn't able to determine the first FN towards: " + tSenderAddress);
+					}
 				}else{
 					// tSenderAddress was already null -> we cannot derive a correct result from that
 				}
