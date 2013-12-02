@@ -2059,20 +2059,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private boolean isLocalCluster(HRMID pHRMID)
 	{
 		boolean tResult = false;
-		
-		if(pHRMID.isClusterAddress()){
-			synchronized(mRegisteredOwnHRMIDs){
-				for(HRMID tKnownHRMID : mRegisteredOwnHRMIDs){
-					//Logging.err(this, "Checking isCluster for " + tKnownHRMID + " and if it is " + pHRMID);
-					if(tKnownHRMID.isCluster(pHRMID)){
-						//Logging.err(this, " ..true");
-						tResult = true;
-						break;
-					}
+
+		if(!pHRMID.isClusterAddress()){
+			pHRMID.setLevelAddress(0, 0);
+		}
+
+		synchronized(mRegisteredOwnHRMIDs){
+			for(HRMID tKnownHRMID : mRegisteredOwnHRMIDs){
+				//Logging.err(this, "Checking isCluster for " + tKnownHRMID + " and if it is " + pHRMID);
+				if(tKnownHRMID.isCluster(pHRMID)){
+					//Logging.err(this, " ..true");
+					tResult = true;
+					break;
 				}
 			}
-		}else{
-			Logging.err(this, "isLocalCluster() cannot operate on a given L0 node HRMID");
 		}
 		
 		return tResult;
@@ -2229,57 +2229,108 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void addHRMRouteShare(RoutingTable pReceivedSharedRoutingTable, HierarchyLevel pReceiverHierarchyLevel, HRMID pSenderHRMID, String pCause)
 	{
-		for(RoutingEntry tNewEntry : pReceivedSharedRoutingTable){
-			RoutingEntry tSharedEntry = tNewEntry.clone();
-			if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-//				Logging.err(this, "  ..received shared route: " + tNewEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tNewEntry.getDest()));
+		boolean DEBUG = false;
+		if(pReceiverHierarchyLevel.isBaseLevel()){
+			if(!getAllCoordinators(2).isEmpty()){
+				DEBUG = true;
+			}
+		}
+		
+		for(RoutingEntry tEntry : pReceivedSharedRoutingTable){
+			RoutingEntry tNewLocalRoutingEntry = tEntry.clone();
+			if(DEBUG){
+				Logging.log(this, "  ..received shared route: " + tNewLocalRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tNewLocalRoutingEntry.getDest()));
 			}
 				
 			/**
 			 * Mark as shared entry
 			 */
-			tSharedEntry.setSharedLink(pSenderHRMID);
+			tNewLocalRoutingEntry.setSharedLink(pSenderHRMID);
 
+			boolean tDropRoute = false;
+			
+			
 			/**
-			 * Store all routes, which start at this node
-			 */
-			if(isLocal(tSharedEntry.getSource())){
-				/**
-				 * ignore routes to cluster this nodes belong to
-				 * 		=> such routes are already known based on neighborhood detection of the L0 comm. channels (Clusters) 
-				 */				
-				if(!isLocalCluster(tSharedEntry.getDest())){
-					if(tSharedEntry.getHopCount() > 1){
-						RoutingEntry tNewLocalRoutingEntry = tSharedEntry.clone();
-						// patch the source with the correct local sender address
-						tNewLocalRoutingEntry.setSource(getLocalSenderAddress(tNewLocalRoutingEntry.getSource(), tNewLocalRoutingEntry.getNextHop()));
-						tNewLocalRoutingEntry.extendCause(pCause);
-						tNewLocalRoutingEntry.extendCause(this + "::addHRMRouteShare() at lvl: " + pReceiverHierarchyLevel.getValue());
-						
-						/**
-						 * Set the timeout for the found shared route
-						 * 		=> 2 times the time period between two share phase for the sender's hierarchy level
-						 */
-						double tTimeoffset = 2 * getPeriodSharePhase(pReceiverHierarchyLevel.getValue() + 1 /* the sender is one level above */);
-						tNewLocalRoutingEntry.setTimeout(getSimulationTime() + tTimeoffset);
-						
-						/**
-						 * Store the found route
-						 */
-						if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-							Logging.log(this, "Adding shared route (timeout=" + tNewLocalRoutingEntry.getTimeout() + ", time-offset=" + tTimeoffset + "): " + tNewLocalRoutingEntry);
+			 * Check if the route starts at this node.
+			 * If the route starts at a direct neighbor node, try to find a combined route and store this one instead of the original shared route.
+			 */ 
+			if(!isLocal(tNewLocalRoutingEntry.getSource())){
+				// check if the route starts - at least - at one of the direct neighbor nodes
+				if(isLocalCluster(tNewLocalRoutingEntry.getSource())){
+					/**
+					 * The received shared route starts at one of the direct neighbor nodes
+					 *  	=> we derive a new route as new combination of: [route to direct neighbor] ==> [received shared route]
+					 */
+					RoutingEntry tSecondRoutePart = tNewLocalRoutingEntry.clone();					
+					RoutingTable tLocalRoutingTable = mHierarchicalRoutingService.getRoutingTable();
+					// search for a routing entry to the direct neighbor node
+					RoutingEntry tFirstRoutePart = tLocalRoutingTable.getDirectNeighborEntry(tNewLocalRoutingEntry.getSource());
+					// have we found an routing entry to the source of the received shared route?
+					if(tFirstRoutePart != null){
+						tNewLocalRoutingEntry = tFirstRoutePart;
+						tNewLocalRoutingEntry.append(tSecondRoutePart, this + "::addHRMRouteShare(pCause) at lvl: " + pReceiverHierarchyLevel);
+					}else{
+						tDropRoute = true;
+
+						if(DEBUG){
+				 			Logging.warn(this, "    ..dropping uninteresting (does start at a direct neighbor node but no route to the direct neighbor could be found) route: " + tNewLocalRoutingEntry);
 						}
-						addHRMRoute(tNewLocalRoutingEntry);
+					}
+				}else{
+					// drop the route
+					tDropRoute = true;
+
+					if(DEBUG){
+			 			Logging.warn(this, "    ..dropping uninteresting (does not start neither at this node nor at a direct neighbor node) route: " + tNewLocalRoutingEntry);
+					}
+				}
+			}
+			
+			/**
+			 * Store only routes which start at this node
+			 */
+			if(!tDropRoute){
+				if(isLocal(tNewLocalRoutingEntry.getSource())){
+					/**
+					 * ignore routes to cluster this nodes belong to
+					 * 		=> such routes are already known based on neighborhood detection of the L0 comm. channels (Clusters) 
+					 */				
+					if(!isLocalCluster(tNewLocalRoutingEntry.getDest())){
+						if(tNewLocalRoutingEntry.getHopCount() > 1){
+							// patch the source with the correct local sender address
+							tNewLocalRoutingEntry.setSource(getLocalSenderAddress(tNewLocalRoutingEntry.getSource(), tNewLocalRoutingEntry.getNextHop()));
+							tNewLocalRoutingEntry.extendCause(pCause);
+							tNewLocalRoutingEntry.extendCause(this + "::addHRMRouteShare() at lvl: " + pReceiverHierarchyLevel.getValue());
+							
+							/**
+							 * Set the timeout for the found shared route
+							 * 		=> 2 times the time period between two share phase for the sender's hierarchy level
+							 */
+							double tTimeoffset = 2 * getPeriodSharePhase(pReceiverHierarchyLevel.getValue() + 1 /* the sender is one level above */);
+							tNewLocalRoutingEntry.setTimeout(getSimulationTime() + tTimeoffset);
+							
+							/**
+							 * Store the found route
+							 */
+							if(DEBUG){
+								Logging.log(this, "    ..adding shared route (timeout=" + tNewLocalRoutingEntry.getTimeout() + ", time-offset=" + tTimeoffset + "): " + tNewLocalRoutingEntry);
+							}
+							addHRMRoute(tNewLocalRoutingEntry);
+					 	}else{
+							if(DEBUG){
+					 			Logging.warn(this, "    ..dropping uninteresting (leads to a direct neighbor node/cluster) route: " + tNewLocalRoutingEntry);
+							}
+					 	}
 				 	}else{
-						if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE_REDUNDANT_ROUTES){
-				 			Logging.warn(this, "   ..dropping uninteresting (leads to a direct neighbor node/cluster) route: " + tSharedEntry);
+						if(DEBUG){
+				 			Logging.warn(this, "    ..dropping uninteresting (this node belongs to the destination cluster) route: " + tNewLocalRoutingEntry);
 						}
 				 	}
-			 	}else{
-					if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE_REDUNDANT_ROUTES){
-			 			Logging.warn(this, "   ..dropping uninteresting (has same next hop like an existing entry) route: " + tSharedEntry);
+				}else{
+					if(DEBUG){
+			 			Logging.err(this, "    ..dropping uninteresting (does not start at this node) route: " + tNewLocalRoutingEntry);
 					}
-			 	}
+				}
 			}
 		}
 	}
@@ -4124,7 +4175,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Determine the overall inter-cluster path
 			 *********************************************/ 
 			List<AbstractRoutingGraphLink> tPath = getRouteHRG(pHRG, pFrom, pTo);
-			AbstractRoutingGraphLink tFirstUsedInterNodeLink = null;
+			AbstractRoutingGraphLink tFirstUsedInterClusterLink = null;
 			int tFirstUsedInterNodeLinkHopCount = 0;
 			if(tPath != null){
 				// the last cluster gateway
@@ -4220,15 +4271,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 											/******************************************************
 											 * Store the first used inter-node link (is it an intra-cluster link?)
 											 *****************************************************/
-											if(tFirstUsedInterNodeLink == null){
-												tFirstUsedInterNodeLink = tIntraClusterLogLink;
-												tFirstUsedInterNodeLinkHopCount = tLogicalIntraClusterRoutingEntry.getHopCount();
-											}else{
-												if(tFirstUsedInterNodeLinkHopCount == RoutingEntry.NO_HOP_COSTS){
-													tFirstUsedInterNodeLink = tIntraClusterLogLink;
-													tFirstUsedInterNodeLinkHopCount = tLogicalIntraClusterRoutingEntry.getHopCount();
-												}
-											}
+//											if(tFirstUsedInterClusterLink == null){
+//												tFirstUsedInterClusterLink = tIntraClusterLogLink;
+//												tFirstUsedInterNodeLinkHopCount = tLogicalIntraClusterRoutingEntry.getHopCount();
+//											}else{
+//												if(tFirstUsedInterNodeLinkHopCount == RoutingEntry.NO_HOP_COSTS){
+//													tFirstUsedInterClusterLink = tIntraClusterLogLink;
+//													tFirstUsedInterNodeLinkHopCount = tLogicalIntraClusterRoutingEntry.getHopCount();
+//												}
+//											}
 										}
 									}else{
 										if(pRefDeletedLinks != null){
@@ -4287,14 +4338,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						/******************************************************
 						 * Store the first used inter-node link (is it an inter-cluster link?)
 						 *****************************************************/
-						if(tFirstUsedInterNodeLink == null){
-							tFirstUsedInterNodeLink = tInterClusterLink;
-							tFirstUsedInterNodeLinkHopCount = tInterClusterRoutingEntry.getHopCount();
-						}else{
-							if(tFirstUsedInterNodeLinkHopCount == RoutingEntry.NO_HOP_COSTS){
-								tFirstUsedInterNodeLink = tInterClusterLink;
-								tFirstUsedInterNodeLinkHopCount = tInterClusterRoutingEntry.getHopCount();
-							}
+						if(tFirstUsedInterClusterLink == null){
+							tFirstUsedInterClusterLink = tInterClusterLink;
+//							tFirstUsedInterNodeLinkHopCount = tInterClusterRoutingEntry.getHopCount();
+//						}else{
+//							if(tFirstUsedInterNodeLinkHopCount == RoutingEntry.NO_HOP_COSTS){
+//								tFirstUsedInterClusterLink = tInterClusterLink;
+//								tFirstUsedInterNodeLinkHopCount = tInterClusterRoutingEntry.getHopCount();
+//							}
 						}
 
 						/******************************************************
@@ -4328,23 +4379,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					tResult.setNextHopL2Address(null);
 	
 					/*******************************************************
-					 * Deactivate the first used inter-node link if desired
+					 * Deactivate the first used inter-cluster link if desired
 					 ******************************************************/
-					if(tFirstUsedInterNodeLink != null){
+					if(tFirstUsedInterClusterLink != null){
 						if(tDeletedLinks != null){
 							if (DEBUG){
-								Logging.log(this, "  ..mark as deleted: " + tFirstUsedInterNodeLink);
+								Logging.log(this, "  ..mark as deleted: " + tFirstUsedInterClusterLink);
 							}
 							
 							/**
 							 * Add the first used inter-node link to the list of deleted links
 							 */
-							tDeletedLinks.add(tFirstUsedInterNodeLink);
+							tDeletedLinks.add(tFirstUsedInterClusterLink);
 							
 							/**
 							 * Delete the first used inter-node link from the HRG
 							 */
-							pHRG.unlink(tFirstUsedInterNodeLink);
+							pHRG.unlink(tFirstUsedInterClusterLink);
 						}
 					}
 				}
