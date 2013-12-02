@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -175,6 +176,30 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		for(RoutingEntry tEntry : pRoutingTable){
 
 			tResult |= delEntry(tEntry);
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Searches for a routing entry which leads to a direct neighbor
+	 * 
+	 * @param pNeighborHRMID the HRMID of the destination neighbor
+	 * 
+	 * @return the found routing entry, null if nothing was found
+	 */
+	public synchronized RoutingEntry getDirectNeighborEntry(HRMID pNeighborHRMID)
+	{
+		RoutingEntry tResult = null;
+		
+		for (RoutingEntry tEntry: this){
+			if(tEntry.isRouteToDirectNeighbor()){
+				if(tEntry.getDest().equals(pNeighborHRMID)){
+					tResult = tEntry.clone();
+					
+					break;						
+				}
+			}
 		}
 		
 		return tResult;
