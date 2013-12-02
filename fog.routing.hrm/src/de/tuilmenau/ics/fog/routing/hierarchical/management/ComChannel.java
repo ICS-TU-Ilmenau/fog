@@ -1554,8 +1554,13 @@ public class ComChannel
 		if(pPacket instanceof InformClusterMembershipCanceled) {
 			InformClusterMembershipCanceled tInformClusterMembershipCanceledPacket = (InformClusterMembershipCanceled)pPacket;
 
-			Logging.log(this, "INFORM_CLUSTER_MEMBERSHIP_CANCELED-received from \"" + getPeerHRMID() + "\": " + tInformClusterMembershipCanceledPacket);
+			Logging.log(this, "INFORM_CLUSTER_MEMBERSHIP_CANCELED-received from \"" + getPeerHRMID() + "\": " + tInformClusterMembershipCanceledPacket + ", remote cluster name=" + getRemoteClusterName());
 
+			if(!tInformClusterMembershipCanceledPacket.getRequestingCluster().equals(getRemoteClusterName())){
+				Logging.err(this, "##########################");
+				Logging.err(this, "### handlePacket() got INFORM_CLUSTER_MEMBERSHIP_CANCELED packet with wrong requesting cluster: " + tInformClusterMembershipCanceledPacket.getRequestingCluster() + ", local remote cluster=" + getRemoteClusterName());
+				Logging.err(this, "##########################");
+			}
 			// no further transmissions
 			mChannelState = ChannelState.CLOSED;
 			

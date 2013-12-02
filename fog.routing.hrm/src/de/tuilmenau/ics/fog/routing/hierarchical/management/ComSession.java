@@ -455,10 +455,10 @@ public class ComSession extends Session
 			ControlEntity tParent = tComChannel.getParent();
 			ClusterName tRemoteName = tComChannel.getRemoteClusterName();
 			
-			if((tParent.getClusterID().equals(pDestinationClusterName.getClusterID())) && 
+			if((tParent.getClusterID().longValue() == pDestinationClusterName.getClusterID().longValue()) && 
 			   (tParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
 			   ((tParent.getCoordinatorID() == pDestinationClusterName.getCoordinatorID()) || (tParent.getCoordinatorID() < 1) || (pDestinationClusterName.getCoordinatorID() < 1) || (tParent instanceof Cluster /* a higher cluster receives a packet from one of its members (CoordinatorAsClusterMember) and the local coordinator changed since the comm. channel creation */)) &&
-			   (tRemoteName.getClusterID().equals(pSourceClusterName.getClusterID())) && 
+			   (tRemoteName.getClusterID().longValue() == pSourceClusterName.getClusterID().longValue()) && 
 			   (tRemoteName.getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel())) &&
 			   ((tRemoteName.getCoordinatorID() == pSourceClusterName.getCoordinatorID()) || (tRemoteName.getCoordinatorID() < 1) || (pSourceClusterName.getCoordinatorID() < 1) || (tParent instanceof CoordinatorAsClusterMember /* a higher cluster sends a packet to one of its members (CoordinatorAsClusterMember) and the remote coordinator changed since the comm. channel creation */))
 			   ) {
@@ -486,9 +486,9 @@ public class ComSession extends Session
 				ControlEntity tParent = tComChannel.getParent();
 				ClusterName tRemoteName = tComChannel.getRemoteClusterName();
 
-				if((tParent.getClusterID().equals(pDestinationClusterName.getClusterID())) && 
+				if((tParent.getClusterID().longValue() == pDestinationClusterName.getClusterID().longValue()) && 
 				   (tParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
-				   (tRemoteName.getClusterID().equals(pSourceClusterName.getClusterID())) && 
+				   (tRemoteName.getClusterID().longValue() == pSourceClusterName.getClusterID().longValue()) && 
 				   (tRemoteName.getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel()))) {
 					tResult = tComChannel;
 					break;
@@ -555,7 +555,7 @@ public class ComSession extends Session
 		ClusterName tSource = pMultiplexHeader.getSenderClusterName();
 
 		if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-			Logging.log(this, "RECEIVING MULTIPLEX HEADER with destination: " + tDestination  + ", payload=" + pMultiplexHeader.getPayload());
+			Logging.log(this, "RECEIVING MULTIPLEX HEADER, destination=" + tDestination  + ", source=" + tSource + ", payload=" + pMultiplexHeader.getPayload());
 		}
 		
 		/**
