@@ -39,6 +39,12 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	private boolean mMembershipIsActive = false;
 	
 	/**
+	 * Stores the remote ClusterName.
+	 * This value is used to make this instance unique and identify the correct remote side.
+	 */
+	private ClusterName mRemoteClusterName = null;
+	
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
@@ -53,6 +59,9 @@ public class CoordinatorAsClusterMember extends ClusterMember
 
 		// update the coordinator for which this membership was created
 		mCoordinator = pCoordinator;
+		
+		// store the ClusterName of the remote cluster
+		mRemoteClusterName = pJoinedClusterName;
 	}
 
 	/**
@@ -90,6 +99,16 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	public Coordinator getCoordinator()
 	{
 		return mCoordinator;
+	}
+	
+	/**
+	 * Returns the remote ClusterName
+	 * 
+	 * @return the remote ClusterName
+	 */
+	public ClusterName getRemoteClusterName()
+	{
+		return mRemoteClusterName;	
 	}
 	
 	/**
@@ -339,7 +358,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "Cluster" + getGUIClusterID() + ", Peer Node=" + getCoordinatorNodeL2Address();
+			return "Cluster" + getGUIClusterID() + ", Peer Node=" + getCoordinatorNodeL2Address() + ", Remote=" + mRemoteClusterName;
 		}else{
 			return "Cluster" + getGUIClusterID() + ", Peer Node=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
 		}

@@ -882,7 +882,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		if(this instanceof CoordinatorAsClusterMember){
 			CoordinatorAsClusterMember tThisCoordinatorAsClusterMember = (CoordinatorAsClusterMember)this;
 			CoordinatorAsClusterMember tComparedCoordinatorAsClusterMember = (CoordinatorAsClusterMember)pObj;
-			if ((tThisCoordinatorAsClusterMember.getCoordinator().equals(tComparedCoordinatorAsClusterMember.getCoordinator())) && (tThisCoordinatorAsClusterMember.getCoordinatorNodeL2Address().equals(tComparedCoordinatorAsClusterMember.getCoordinatorNodeL2Address()))){
+			if ((tThisCoordinatorAsClusterMember.getCoordinator().equals(tComparedCoordinatorAsClusterMember.getCoordinator())) && 
+				(tThisCoordinatorAsClusterMember.getCoordinatorNodeL2Address().equals(tComparedCoordinatorAsClusterMember.getCoordinatorNodeL2Address())) &&
+				(tThisCoordinatorAsClusterMember.getRemoteClusterName().getClusterID().longValue() == tComparedCoordinatorAsClusterMember.getRemoteClusterName().getClusterID().longValue())){
 				if(DEBUG_EQUALS){
 					Logging.log(this, "  ..true!");
 				}
@@ -899,7 +901,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			ControlEntity tComparedObj = (ControlEntity) pObj;
 			
 			if(this instanceof CoordinatorProxy){
-				if ((tComparedObj.getClusterID().equals(getClusterID())) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel())) && (tComparedObj.getCoordinatorID() == getCoordinatorID())) {
+				if ((tComparedObj.getClusterID().longValue() == getClusterID().longValue()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel())) && (tComparedObj.getCoordinatorID() == getCoordinatorID())) {
 					if(DEBUG_EQUALS){
 						Logging.log(this, "  ..true!");
 					}
@@ -923,7 +925,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			}
 					
 			//HINT: we ignore the coordinator ID because the clusterID is unique enough for identification
-			if ((tComparedObj.getClusterID().equals(getClusterID())) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
+			if ((tComparedObj.getClusterID().longValue() == getClusterID().longValue()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
 				if(DEBUG_EQUALS){
 					Logging.log(this, "  ..true!");
 				}
