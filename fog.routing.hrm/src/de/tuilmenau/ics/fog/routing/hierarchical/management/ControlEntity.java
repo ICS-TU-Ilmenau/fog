@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Decorator;
@@ -40,10 +40,10 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private HierarchyLevel mHierarchyLevel = null;
 	
 	/**
-	 * Stores the Bully priority of this node for this cluster.
+	 * Stores the Election priority of this node for this cluster.
 	 * The value is also used inside the Elector of this cluster.
 	 */
-	private BullyPriority mBullyPriority = null;
+	private ElectionPriority mPriority = null;
 
 	/**
 	 * The HRM ID of this cluster.
@@ -127,39 +127,39 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		// update the reference to the HRMController application for internal use
 		mHRMController = pHRMController;
 
-		// create a new standard Bully priority
-		mBullyPriority = BullyPriority.createForControlEntity(mHRMController, this);
+		// create a new standard Election priority
+		mPriority = ElectionPriority.createForControlEntity(mHRMController, this);
 	}
 
 	/**
-	 * Returns the Bully priority of this node for this cluster
+	 * Returns the Election priority of this node for this cluster
 	 * 
-	 * @return the Bully priority
+	 * @return the Election priority
 	 */
-	public BullyPriority getPriority()
+	public ElectionPriority getPriority()
 	{
-		if (mBullyPriority == null){
-			mBullyPriority = BullyPriority.create(this);
+		if (mPriority == null){
+			mPriority = ElectionPriority.create(this);
 		}
 			
-		return mBullyPriority;
+		return mPriority;
 	}
 
 	/**
-	 * Sets a new Bully priority
+	 * Sets a new Election priority
 	 * 
-	 * @param pPriority the new Bully priority
+	 * @param pNewPriority the new Election priority
 	 */
-	public void setPriority(BullyPriority pPriority)
+	public void setPriority(ElectionPriority pNewPriority)
 	{
 		// store the old one
-		BullyPriority tBullyPriority = mBullyPriority;
+		ElectionPriority tOldPriority = mPriority;
 		
-		if((tBullyPriority == null) || (!tBullyPriority.equals(pPriority))){
+		if((tOldPriority == null) || (!tOldPriority.equals(pNewPriority))){
 			// update to the new one
-			mBullyPriority = pPriority;
+			mPriority = pNewPriority;
 			
-			Logging.log(this, "ASSIGNED BULLY PRIORITY for " + toString() + " updated from " + (tBullyPriority != null ? tBullyPriority.getValue() : "null") + " to " + (mBullyPriority != null ? mBullyPriority.getValue() : "null"));
+			Logging.log(this, "ASSIGNED BULLY PRIORITY for " + toString() + " updated from " + (tOldPriority != null ? tOldPriority.getValue() : "null") + " to " + (mPriority != null ? mPriority.getValue() : "null"));
 		}
 	}
 

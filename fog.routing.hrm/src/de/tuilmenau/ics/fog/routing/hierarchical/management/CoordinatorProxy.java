@@ -12,7 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -104,14 +104,14 @@ public class CoordinatorProxy extends ClusterMember
 	}
 	
 	/**
-	 * Returns the Bully priority of this node for this cluster
+	 * Returns the Election priority of this node for this cluster
 	 * 
-	 * @return the Bully priority
+	 * @return the Election priority
 	 */
 	@Override
-	public BullyPriority getPriority()
+	public ElectionPriority getPriority()
 	{
-		return BullyPriority.create(this, PRIORITY);
+		return ElectionPriority.create(this, PRIORITY);
 	}
 
 	/**

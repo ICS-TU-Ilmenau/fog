@@ -11,16 +11,16 @@ package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 
-public class SignalingMessageBully extends SignalingMessageHrm
+public class SignalingMessageElection extends SignalingMessageHrm
 {
 	private static final long serialVersionUID = -7721094891385820251L;
 
 	/**
-	 * This is the Bully priority of the message sender.
+	 * This is the Election priority of the message sender.
 	 */
-	private BullyPriority mSenderPriority = null;
+	private ElectionPriority mSenderPriority = null;
 
 	public static long sCreatedPackets = 0;
 
@@ -28,10 +28,10 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
-	 * @param pSenderPriority the Bully priority of the message sender
+	 * @param pSenderPriority the priority of the message sender
 	 * @param pReceiverName the name of the message receiver
 	 */
-	public SignalingMessageBully(Name pSenderName, Name pReceiverName, BullyPriority pSenderPriority)
+	public SignalingMessageElection(Name pSenderName, Name pReceiverName, ElectionPriority pSenderPriority)
 	{
 		super(pSenderName, pReceiverName);
 		mSenderPriority = pSenderPriority;
@@ -43,12 +43,12 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 * 
 	 * @return the priority of the message sender
 	 */
-	public BullyPriority getSenderPriority()
+	public ElectionPriority getSenderPriority()
 	{
 		if(mSenderPriority != null){
 			return mSenderPriority.clone();
 		}else{
-			return BullyPriority.create(this);
+			return ElectionPriority.create(this);
 		}
 	}
 
@@ -57,7 +57,7 @@ public class SignalingMessageBully extends SignalingMessageHrm
 	 * 
 	 * @param pOtherPacket the other packet
 	 */
-	public void duplicate(SignalingMessageBully pOtherPacket)
+	public void duplicate(SignalingMessageElection pOtherPacket)
 	{
 		super.duplicate(pOtherPacket);
 		

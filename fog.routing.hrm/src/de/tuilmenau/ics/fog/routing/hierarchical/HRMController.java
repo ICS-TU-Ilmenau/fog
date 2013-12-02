@@ -41,7 +41,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMember
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
@@ -206,7 +206,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores the connectivity node priority
 	 */
-	private long mNodeConnectivityPriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
+	private long mNodeConnectivityPriority = HRMConfig.Election.DEFAULT_PRIORITY;
 
 	/**
 	 * Stores the central node for the ARG
@@ -1113,8 +1113,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		boolean tNewEntry = false;
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
-			// make sure the Bully priority is the right one, avoid race conditions here
-			pCoordinatorAsClusterMember.setPriority(BullyPriority.create(this, getHierarchyNodePriority(pCoordinatorAsClusterMember.getHierarchyLevel())));
+			// make sure the Election priority is the right one, avoid race conditions here
+			pCoordinatorAsClusterMember.setPriority(ElectionPriority.create(this, getHierarchyNodePriority(pCoordinatorAsClusterMember.getHierarchyLevel())));
 
 			if(!mLocalCoordinatorAsClusterMemebers.contains(pCoordinatorAsClusterMember)){				
 				// register as known coordinator-as-cluster-member
@@ -1200,8 +1200,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		boolean tNewEntry = false;
 		synchronized (mLocalClusterMembers) {
 
-			// make sure the Bully priority is the right one, avoid race conditions here
-			pClusterMember.setPriority(BullyPriority.create(this, getConnectivityNodePriority()));
+			// make sure the Election priority is the right one, avoid race conditions here
+			pClusterMember.setPriority(ElectionPriority.create(this, getConnectivityNodePriority()));
 
 			if(!mLocalClusterMembers.contains(pClusterMember)){
 				// register as known cluster member
@@ -2733,7 +2733,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Increases base Bully priority
+	 * Increases base Election priority
 	 * 
 	 * @param pCausingInterfaceToNeighbor the update causing interface to a neighbor
 	 */
@@ -2742,32 +2742,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// get the current priority
 		long tPriority = getConnectivityNodePriority();
 		
-		Logging.log(this, "Increasing node priority (CONNECTIVITY) by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
+		Logging.log(this, "Increasing node priority (CONNECTIVITY) by " + ElectionPriority.OFFSET_FOR_CONNECTIVITY);
 
 		// increase priority
-		tPriority += BullyPriority.OFFSET_FOR_CONNECTIVITY;
+		tPriority += ElectionPriority.OFFSET_FOR_CONNECTIVITY;
 		
-		mDesriptionConnectivityPriorityUpdates += "\n + " + BullyPriority.OFFSET_FOR_CONNECTIVITY + " ==> " + pCausingInterfaceToNeighbor;
+		mDesriptionConnectivityPriorityUpdates += "\n + " + ElectionPriority.OFFSET_FOR_CONNECTIVITY + " ==> " + pCausingInterfaceToNeighbor;
 		
 		// update priority
 		setConnectivityPriority(tPriority);
 
-		Logging.log(this, "Increasing hierarchy node priority (CONNECTIVITY) by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
+		Logging.log(this, "Increasing hierarchy node priority (CONNECTIVITY) by " + ElectionPriority.OFFSET_FOR_CONNECTIVITY);
 		
 		// get the current priority
 		long tHierarchyPriority = mNodeHierarchyPriority[1];
 
 		// increase priority
-		tHierarchyPriority += BullyPriority.OFFSET_FOR_CONNECTIVITY;
+		tHierarchyPriority += ElectionPriority.OFFSET_FOR_CONNECTIVITY;
 
-		mDesriptionHierarchyPriorityUpdates += "\n + " + BullyPriority.OFFSET_FOR_CONNECTIVITY + " <== Cause: " + pCausingInterfaceToNeighbor;
+		mDesriptionHierarchyPriorityUpdates += "\n + " + ElectionPriority.OFFSET_FOR_CONNECTIVITY + " <== Cause: " + pCausingInterfaceToNeighbor;
 
 		// update priority
 		setHierarchyPriority(tHierarchyPriority, new HierarchyLevel(this,  1));
 	}
 	
 	/**
-	 * Decreases base Bully priority
+	 * Decreases base Election priority
 	 * 
 	 * @param pCausingInterfaceToNeighbor the update causing interface to a neighbor
 	 */
@@ -2776,32 +2776,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// get the current priority
 		long tPriority = getConnectivityNodePriority();
 		
-		Logging.log(this, "Decreasing node priority (CONNECTIVITY) by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
+		Logging.log(this, "Decreasing node priority (CONNECTIVITY) by " + ElectionPriority.OFFSET_FOR_CONNECTIVITY);
 
 		// increase priority
-		tPriority -= BullyPriority.OFFSET_FOR_CONNECTIVITY;
+		tPriority -= ElectionPriority.OFFSET_FOR_CONNECTIVITY;
 		
-		mDesriptionConnectivityPriorityUpdates += "\n - " + BullyPriority.OFFSET_FOR_CONNECTIVITY + " ==> " + pCausingInterfaceToNeighbor;
+		mDesriptionConnectivityPriorityUpdates += "\n - " + ElectionPriority.OFFSET_FOR_CONNECTIVITY + " ==> " + pCausingInterfaceToNeighbor;
 		
 		// update priority
 		setConnectivityPriority(tPriority);
 
-		Logging.log(this, "Decreasing hierarchy node priority (CONNECTIVITY) by " + BullyPriority.OFFSET_FOR_CONNECTIVITY);
+		Logging.log(this, "Decreasing hierarchy node priority (CONNECTIVITY) by " + ElectionPriority.OFFSET_FOR_CONNECTIVITY);
 		
 		// get the current priority
 		long tHierarchyPriority = mNodeHierarchyPriority[1];
 
 		// increase priority
-		tHierarchyPriority -= BullyPriority.OFFSET_FOR_CONNECTIVITY;
+		tHierarchyPriority -= ElectionPriority.OFFSET_FOR_CONNECTIVITY;
 
-		mDesriptionHierarchyPriorityUpdates += "\n - " + BullyPriority.OFFSET_FOR_CONNECTIVITY + " <== Cause: " + pCausingInterfaceToNeighbor;
+		mDesriptionHierarchyPriorityUpdates += "\n - " + ElectionPriority.OFFSET_FOR_CONNECTIVITY + " <== Cause: " + pCausingInterfaceToNeighbor;
 
 		// update priority
 		setHierarchyPriority(tHierarchyPriority, new HierarchyLevel(this, 1));
 	}
 
 	/**
-	 * Increases hierarchy Bully priority
+	 * Increases hierarchy Election priority
 	 * 
 	 * @param pCausingEntity the update causing entity
 	 */
@@ -2834,9 +2834,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				
 				float tOffset = 0;
 				if (pCausingEntity.getHierarchyLevel().isBaseLevel()){
-					tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
+					tOffset = (float)ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
 				}else{
-					tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
+					tOffset = (float)ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
 				}
 						
 				Logging.log(this, "Increasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + tDistance + "/" + tMaxDistance);
@@ -2859,7 +2859,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Decreases hierarchy Bully priority
+	 * Decreases hierarchy Election priority
 	 * 
 	 * @param pCausingEntity the update causing entity
 	 */
@@ -2892,9 +2892,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				
 				float tOffset = 0;
 				if (pCausingEntity.getHierarchyLevel().isBaseLevel()){
-					tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
+					tOffset = (float)ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
 				}else{
-					tOffset = (float)BullyPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
+					tOffset = (float)ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
 				}
 				
 				Logging.log(this, "Decreasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + tDistance + "/" + tMaxDistance);
@@ -3341,7 +3341,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if(tComChannel.getPeerPriority().isUndefined()){
 						Logging.err(this, "validateResults() detected undefined peer priority for Cluster channel: " + tComChannel);
 					}else{
-						BullyPriority tChannelPeerPriority = tComChannel.getPeerPriority();
+						ElectionPriority tChannelPeerPriority = tComChannel.getPeerPriority();
 						L2Address tChanPeerL2Address = tComChannel.getPeerL2Address();
 						boolean tFound = false;
 						for(HRMController tHRMController : getALLHRMControllers()){

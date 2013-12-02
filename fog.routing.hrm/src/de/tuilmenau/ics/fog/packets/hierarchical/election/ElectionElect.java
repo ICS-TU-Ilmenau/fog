@@ -12,32 +12,32 @@ package de.tuilmenau.ics.fog.packets.hierarchical.election;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * PACKET: If the priority of a node changes this object has to be used to inform other cluster members about the change.
- * 		   The packet has to be send as broadcast.
+ * PACKET: It is used when an election start is signaled.
+ *         The packet has to be send as broadcast.
  */
-public class BullyPriorityUpdate extends SignalingMessageBully implements ISignalingMessageHrmBroadcastable
+public class ElectionElect extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
 {
-	private static final long serialVersionUID = -8819106581802846812L;
-	
+	private static final long serialVersionUID = -335936730603961378L;
+
 	public static long sCreatedPackets = 0;
 
 	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
-	 * @param pSenderPriroity the Bully priority of the message sender
+	 * @param pSenderPriority the priority of the message sender
 	 */
-	public BullyPriorityUpdate(Name pSenderName, BullyPriority pSenderPriroity)
+	public ElectionElect(Name pSenderName, ElectionPriority pSenderPriority)
 	{
-		super(pSenderName, HRMID.createBroadcast(), pSenderPriroity);
+		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		sCreatedPackets++;
 	}
-
+	
 	/**
 	 * Returns a duplicate of this packet
 	 * 
@@ -46,10 +46,10 @@ public class BullyPriorityUpdate extends SignalingMessageBully implements ISigna
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		BullyPriorityUpdate tResult = new BullyPriorityUpdate(getSenderName(), getSenderPriority());
+		ElectionElect tResult = new ElectionElect(getSenderName(), getSenderPriority());
 		
 		super.duplicate(tResult);
-
+		
 		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
 		return tResult;

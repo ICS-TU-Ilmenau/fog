@@ -10,12 +10,12 @@
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 
 /**
- * PACKET: It is used when an answer to BullyElect is signaled.
+ * PACKET: It is used when an answer to ElectionElect should be signaled.
  */
-public class BullyReply  extends SignalingMessageBully
+public class ElectionReply  extends SignalingMessageElection
 {
 	private static final long serialVersionUID = -4666721123778977947L;
 	
@@ -26,9 +26,9 @@ public class BullyReply  extends SignalingMessageBully
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
-	 * @param pSenderPriority the Bully priority of the message sender
+	 * @param pSenderPriority the priority of the message sender
 	 */
-	public BullyReply(Name pSenderName, Name pReceiverName, BullyPriority pSenderPriority)
+	public ElectionReply(Name pSenderName, Name pReceiverName, ElectionPriority pSenderPriority)
 	{
 		super(pSenderName, pReceiverName, pSenderPriority);
 		sCreatedPackets++;

@@ -10,7 +10,7 @@
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
@@ -19,7 +19,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
  * PACKET: It is used when a new coordinator is signaled to all cluster members.
  * 		   The packet has to be send as broadcast.
  */
-public class BullyAnnounce extends SignalingMessageBully implements ISignalingMessageHrmBroadcastable
+public class ElectionAnnounceWinner extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = 794175467972815277L;
 
@@ -43,7 +43,7 @@ public class BullyAnnounce extends SignalingMessageBully implements ISignalingMe
 	 * @param pCoordinatorID the unique ID of the message sender (coordinator)
 	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public BullyAnnounce(Name pSenderName, BullyPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
+	public ElectionAnnounceWinner(Name pSenderName, ElectionPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
@@ -79,7 +79,7 @@ public class BullyAnnounce extends SignalingMessageBully implements ISignalingMe
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		BullyAnnounce tResult = new BullyAnnounce(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
+		ElectionAnnounceWinner tResult = new ElectionAnnounceWinner(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
 		
 		super.duplicate(tResult);
 

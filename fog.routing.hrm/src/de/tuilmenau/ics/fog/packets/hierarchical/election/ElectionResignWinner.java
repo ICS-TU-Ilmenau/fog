@@ -10,7 +10,7 @@
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
  * 		   The packet has to be send as broadcast.
  * 		   This packet was introduced as add-on for the standard Bully algorithm in order to have a shorter convergence phase.
  */
-public class BullyResign extends SignalingMessageBully implements ISignalingMessageHrmBroadcastable
+public class ElectionResignWinner extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = 794175467972815277L;
 
@@ -44,7 +44,7 @@ public class BullyResign extends SignalingMessageBully implements ISignalingMess
 	 * @param pCoordinatorID the unique ID of the message sender (coordinator)
 	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public BullyResign(Name pSenderName, BullyPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
+	public ElectionResignWinner(Name pSenderName, ElectionPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
@@ -80,7 +80,7 @@ public class BullyResign extends SignalingMessageBully implements ISignalingMess
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		BullyResign tResult = new BullyResign(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
+		ElectionResignWinner tResult = new ElectionResignWinner(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
 		
 		super.duplicate(tResult);
 

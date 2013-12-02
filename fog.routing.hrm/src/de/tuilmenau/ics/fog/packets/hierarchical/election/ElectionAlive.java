@@ -12,7 +12,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical.election;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * PACKET: It is used to signal that a peer is still alive.
  * 		   The packet has to be send as broadcast.
  */
-public class BullyAlive extends SignalingMessageBully implements ISignalingMessageHrmBroadcastable
+public class ElectionAlive extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = 4870662765189881992L;
 	
@@ -30,9 +30,9 @@ public class BullyAlive extends SignalingMessageBully implements ISignalingMessa
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
-	 * @param pSenderPriority the Bully priority of the message sender
+	 * @param pSenderPriority the priority of the message sender
 	 */
-	public BullyAlive(Name pSenderName, BullyPriority pSenderPriority)
+	public ElectionAlive(Name pSenderName, ElectionPriority pSenderPriority)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		sCreatedPackets++;
@@ -46,7 +46,7 @@ public class BullyAlive extends SignalingMessageBully implements ISignalingMessa
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		BullyAlive tResult = new BullyAlive(getSenderName(), getSenderPriority());
+		ElectionAlive tResult = new ElectionAlive(getSenderName(), getSenderPriority());
 		
 		super.duplicate(tResult);
 

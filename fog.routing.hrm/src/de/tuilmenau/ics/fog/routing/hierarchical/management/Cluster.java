@@ -15,7 +15,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -136,7 +136,7 @@ public class Cluster extends ClusterMember
 		// register at HRMController's internal database
 		pHRMController.registerCluster(tResult);
 
-		// creates new elector object, which is responsible for Bully based election processes
+		// creates new elector object, which is responsible for election processes
 		tResult.mElector = new Elector(pHRMController, tResult);
 
 		return tResult;
@@ -209,17 +209,17 @@ public class Cluster extends ClusterMember
 	}
 	
 	/**
-	 * Returns the correct connectivity/hierarchy Bully priority of the node
+	 * Returns the correct connectivity/hierarchy Election priority of the node
 	 * 
-	 * @return the Bully priority
+	 * @return the Election priority
 	 */
 	@Override
-	public BullyPriority getPriority() 
+	public ElectionPriority getPriority() 
 	{
 		if(getHierarchyLevel().isBaseLevel()){
-			return BullyPriority.create(this, mHRMController.getConnectivityNodePriority());
+			return ElectionPriority.create(this, mHRMController.getConnectivityNodePriority());
 		}else{
-			return BullyPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
+			return ElectionPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
 		}
 	}
 

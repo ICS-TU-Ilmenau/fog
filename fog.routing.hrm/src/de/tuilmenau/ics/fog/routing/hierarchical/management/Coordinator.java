@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -728,7 +728,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 
 	/**
 	 * EVENT: "eventCoordinatorRoleInvalid", triggered by the Elector, the reaction is:
-	 * 	 	1.) create signaling packet "BullyLeave"
+	 * 	 	1.) create signaling packet "ElectionLeave"
 	 * 		2.) send the packet to the superior coordinator 
 	 */
 	public synchronized void eventCoordinatorRoleInvalid()
@@ -1117,7 +1117,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			tComChannel.setRemoteClusterName(pRemoteClusterName);
 	
 			/**
-			 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
+			 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
 			 */
 			tComChannel.signalRequestClusterMembershipAck(createCoordinatorName());
 
@@ -1127,7 +1127,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			tClusterMembership.eventComChannelEstablished(tComChannel);
 	
 			/**
-			 * Trigger: joined a remote cluster (sends a Bully priority update)
+			 * Trigger: joined a remote cluster (sends an ElectionPriorityUpdate)
 			 */
 			tClusterMembership.eventJoinedRemoteCluster(tComChannel);
 		}else{
@@ -1285,32 +1285,31 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
-	 * Returns the hierarchy Bully priority of the node
+	 * Returns the hierarchy Election priority of the node
 	 * 
-	 * @return the Bully priority
+	 * @return the Election priority
 	 */
 	@Override
-	public BullyPriority getPriority() 
+	public ElectionPriority getPriority() 
 	{
-		return BullyPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
-//		return BullyPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel().inc()));
+		return ElectionPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
 	}
 	
 	/**
-	 * Sets a new Bully priority
+	 * Sets a new Election priority
 	 * 
-	 * @param pPriority the new Bully priority
+	 * @param pPriority the new Election priority
 	 */
 	@Override
-	public void setPriority(BullyPriority pPriority) 
+	public void setPriority(ElectionPriority pPriority) 
 	{
 		if (!getPriority().equals(pPriority)){
-			Logging.err(this, "Updating Bully priority from " + getPriority() + " to " + pPriority);
+			Logging.err(this, "Updating Election priority from " + getPriority() + " to " + pPriority);
 		}else{
-			Logging.log(this, "Trying to set same Bully priority " + getPriority());
+			Logging.log(this, "Trying to set same Election priority " + getPriority());
 		}
 		
-		// update the Bully priority of the parent cluster, which is managed by this coordinator
+		// update the Election priority of the parent cluster, which is managed by this coordinator
 		mParentCluster.setPriority(pPriority);
 	}
 
@@ -1326,7 +1325,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		Logging.log(this, "Got new HRMID: " + pHRMID + ", caller=" + pCaller);
 
-		// update the Bully priority of the parent cluster, which is managed by this coordinator
+		// update the Election priority of the parent cluster, which is managed by this coordinator
 		mParentCluster.setHRMID(pCaller, pHRMID);
 	}
 

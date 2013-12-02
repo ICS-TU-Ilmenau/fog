@@ -52,13 +52,8 @@ public class HierarchyLevel
 		
 		mLevel = pHierarchyLevelValue;
 		
-		/**
-		 * HINT: Be aware of recursion here. The Bully priority is very often used inside toString(). For example, this would lead 
-		 * to recursive calls caused by getBullyPriority in the Cluster/Coordinator class. 
-		 */
-		
 		if (DEBUG_CREATION){
-			Logging.log(this,  "Created object (explicit level is " + pHierarchyLevelValue + ") for class \"" + pParent.getClass().getSimpleName() + "\"");
+			Logging.log(this, "Created object (explicit level is " + pHierarchyLevelValue + ") for class \"" + pParent.getClass().getSimpleName() + "\"");
 		}
 	}
 

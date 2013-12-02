@@ -15,7 +15,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -79,7 +79,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		
 		Logging.log(tResult, "\n\n\n################ CREATED COORDINATOR AS CLUSTER MEMBER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
-		// creates new elector object, which is responsible for Bully based election processes
+		// creates new elector object, which is responsible for election processes
 		tResult.mElector = new Elector(pHRMController, tResult);
 
 		// register at HRMController's internal database
@@ -161,7 +161,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		 */
 		if((getPriority() != null) && (getPriority().getValue() != pNewHierarchyNodePriority)){
 			Logging.log(this, "Got new base node priority, updating own priority from " + getPriority().getValue() + " to " + pNewHierarchyNodePriority);
-			setPriority(BullyPriority.create(this, pNewHierarchyNodePriority));
+			setPriority(ElectionPriority.create(this, pNewHierarchyNodePriority));
 		}
 	}
 

@@ -12,14 +12,14 @@ package de.tuilmenau.ics.fog.packets.hierarchical.election;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This packet is used to inform that a cluster member wants to be a passive candidate of an election.
  */
-public class BullyLeave extends SignalingMessageBully implements ISignalingMessageHrmBroadcastable
+public class ElectionLeave extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
 {
 
 	private static final long serialVersionUID = 7774205916502000178L;
@@ -32,7 +32,7 @@ public class BullyLeave extends SignalingMessageBully implements ISignalingMessa
 	 * @param pSenderName
 	 * @param pReceiverName
 	 */
-	public BullyLeave(Name pSenderName, BullyPriority pSenderPriority)
+	public ElectionLeave(Name pSenderName, ElectionPriority pSenderPriority)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		sCreatedPackets++;
@@ -46,7 +46,7 @@ public class BullyLeave extends SignalingMessageBully implements ISignalingMessa
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		BullyLeave tResult = new BullyLeave(getSenderName(), getSenderPriority());
+		ElectionLeave tResult = new ElectionLeave(getSenderName(), getSenderPriority());
 		
 		super.duplicate(tResult);
 

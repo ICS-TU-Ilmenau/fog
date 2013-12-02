@@ -109,14 +109,14 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_SIGNALING = false;
 
 		/**
-		 * Shows detailed debug outputs about Bully related signaling messages
+		 * Shows detailed debug outputs about Election related signaling messages
 		 */
-		public static final boolean GUI_SHOW_SIGNALING_BULLY = false;
+		public static final boolean GUI_SHOW_SIGNALING_ELECTIONS = false;
 		
 		/**
-		 * Shows detailed debug outputs about distributed Bully related signaling messages
+		 * Shows detailed debug outputs about distributed Election related signaling messages
 		 */
-		public static final boolean GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY = false;
+		public static final boolean GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS = false;
 
 		/**
 		 * Shows detailed debug outputs about HRMViewer steps
@@ -418,12 +418,12 @@ public class HRMConfig
 		/**
 		 * Default priority for election process. This value is used when no value is explicitly defined for a node.
 		 */
-		public static final long DEFAULT_BULLY_PRIORITY = 1; //TV
+		public static final long DEFAULT_PRIORITY = 1; //TV
 		
 		/**
-		 * (De-)activate sending of BullyAlive messages in order to detect dead cluster members.
+		 * (De-)activate sending of "alive" messages in order to detect dead cluster members.
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean SEND_BULLY_ALIVES = true;
+		public static final boolean SEND_ALIVES = true;
 	}
 }

@@ -23,7 +23,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -99,7 +99,7 @@ public class ClusterMember extends ClusterName
 		
 		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER MEMBER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
-		// creates new elector object, which is responsible for Bully based election processes
+		// creates new elector object, which is responsible for election processes
 		tResult.mElector = new Elector(pHRMController, tResult);
 
 		// register at HRMController's internal database
@@ -826,12 +826,12 @@ public class ClusterMember extends ClusterName
 		eventComChannelEstablished(tComChannel);
 		
 		/**
-		 * SEND: acknowledgment -> will be answered by a BullyPriorityUpdate
+		 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
 		 */
 		tComChannel.signalRequestClusterMembershipAck(null);
 
 		/**
-		 * Trigger: joined a remote cluster (sends a Bully priority update)
+		 * Trigger: joined a remote cluster (sends an ElectionPriorityUpdate message)
 		 */
 		eventJoinedRemoteCluster(tComChannel);
 	}
@@ -1030,7 +1030,7 @@ public class ClusterMember extends ClusterName
 			 */
 			if((getPriority() == null) || (getPriority().getValue() != pNewConnectivityNodePriority) || (this instanceof Cluster /* a Cluster always reports the current priority! */)){
 				Logging.log(this, "Got new connectivity node priority, updating own priority from " + (getPriority() != null ? getPriority().getValue() : "null") + " to " + pNewConnectivityNodePriority);
-				setPriority(BullyPriority.create(this, pNewConnectivityNodePriority));
+				setPriority(ElectionPriority.create(this, pNewConnectivityNodePriority));
 			}else{
 				Logging.log(this, "   ..skipping priority update, current priority: " + getPriority());
 			}
@@ -1069,14 +1069,14 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * Sets a new Bully priority
+	 * Sets a new Election priority
 	 * 
-	 * @param pPriority the new Bully priority
+	 * @param pPriority the new Election priority
 	 */
 	@Override
-	public void setPriority(BullyPriority pPriority)
+	public void setPriority(ElectionPriority pPriority)
 	{
-		BullyPriority tOldPriority = getPriority();
+		ElectionPriority tOldPriority = getPriority();
 		
 		if((pPriority != null) && (!pPriority.isUndefined())){
 			/**

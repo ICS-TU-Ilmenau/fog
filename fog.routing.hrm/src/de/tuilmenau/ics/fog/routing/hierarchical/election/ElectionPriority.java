@@ -18,12 +18,12 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorAsCluster
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class is used for a cluster in order to encapsulate the Bully priority computation and all needed adaption in case of topology changes.
+ * This class is used for a cluster in order to encapsulate the Election priority computation and all needed adaption in case of topology changes.
  * 
- * In general, a node has a Bully priority for each hierarchy level. In the beginning, each of those values is 1. However, the administrator of a local
+ * In general, a node has a Election priority for each hierarchy level. In the beginning, each of those values is 1. However, the administrator of a local
  * broadcast domain is allowed to use a different value than 1 as initialization value. The highest allowed initialization value is 99.
  * 
- * The Bully priority is increased:
+ * The Election priority is increased:
  *      + by 100 for each detected physical neighbor node
  *      + by 100*1000 for each known (remote) base hierarchy level coordinator, multiplied by the hop distance
  * 
@@ -31,7 +31,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * HINT: We avoid dependencies from L1+ structures and neighborhood relations because this might cause oscillation effects.
  * 
  */
-public class BullyPriority
+public class ElectionPriority
 {
 	/**
 	 * Allow for a better debugging based on messages each time such an object is created.
@@ -59,7 +59,7 @@ public class BullyPriority
 	public static int OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR = 10;
 
 	/**
-	 * This is the priority counter, which allows for globally (related to a physical simulation machine) unique BullyPriority IDs.
+	 * This is the priority counter, which allows for globally (related to a physical simulation machine) unique ElectionPriority IDs.
 	 */
 	private static long sNextFreePriorityID = 0;
 	
@@ -70,73 +70,73 @@ public class BullyPriority
 	private static long sPriorityIDMachineMultiplier = -1;
 
 	/**
-	 * Stores the unique BullyPriorityID
+	 * Stores the unique ElectionPriorityID
 	 */
 	private long mPriorityId = sNextFreePriorityID++;
 	
 	/**
-	 * Factory function: initializes the Bully priority for a cluster depending on the node configuration and the hierarchy level.
+	 * Factory function: initializes the Election priority for a cluster depending on the node configuration and the hierarchy level.
 	 * 
-	 * @param pCluster the cluster to which this Bully priority belongs to.
+	 * @param pCluster the cluster to which this Election priority belongs to.
 	 */
-	public static BullyPriority createForControlEntity(HRMController pHRMController, ControlEntity pControlEntity)
+	public static ElectionPriority createForControlEntity(HRMController pHRMController, ControlEntity pControlEntity)
 	{
 		if (pHRMController == null) {
-			Logging.log(pControlEntity, "Cannot create Bully priority, invalid reference to HRMController found");
+			Logging.log(pControlEntity, "Cannot create Election priority, invalid reference to HRMController found");
 			return null;
 		}
 
-		BullyPriority tResult = new BullyPriority(pHRMController.getHierarchyNodePriority(pControlEntity.getHierarchyLevel()));
+		ElectionPriority tResult = new ElectionPriority(pHRMController.getHierarchyNodePriority(pControlEntity.getHierarchyLevel()));
 
 		/**
-		 * Overwrite the Bully priority by the connectivity priority for simple ClusterMember objects at base hierarchy level
+		 * Overwrite the Election priority by the connectivity priority for simple ClusterMember objects at base hierarchy level
 		 */
 		if((pControlEntity instanceof ClusterMember) && (!(pControlEntity instanceof CoordinatorAsClusterMember)) && (pControlEntity.getHierarchyLevel().isBaseLevel())){
-			tResult = new BullyPriority(pHRMController.getConnectivityNodePriority());
+			tResult = new ElectionPriority(pHRMController.getConnectivityNodePriority());
 		}
 		
 		if (DEBUG_CREATION){
-			Logging.log(pControlEntity, "Created Bully priority object (initial priority is " + tResult.getValue() + ")");
+			Logging.log(pControlEntity, "Created Election priority object (initial priority is " + tResult.getValue() + ")");
 		}
 		
 		return tResult;
 	}
 	
 	/**
-	 * Factory function: initializes the Bully priority with "undefined"
+	 * Factory function: initializes the Election priority with "undefined"
 	 */
-	public static BullyPriority create(Object pParent)
+	public static ElectionPriority create(Object pParent)
 	{
 		if ((pParent instanceof Integer) || (pParent instanceof Long)){
-			Logging.warn(pParent, "This object is an Integer/Long class, this often means a wrong call to BullyPriority::create()");
+			Logging.warn(pParent, "This object is an Integer/Long class, this often means a wrong call to ElectionPriority::create()");
 		}
 
-		BullyPriority tResult = new BullyPriority(UNDEFINED_PRIORITY);
+		ElectionPriority tResult = new ElectionPriority(UNDEFINED_PRIORITY);
 
 		/**
-		 * HINT: Be aware of recursion here. The Bully priority is very often used inside toString(). For example, this would lead 
-		 * to recursive calls caused by getBullyPriority in the Cluster/Coordinator class. 
+		 * HINT: Be aware of recursion here. The Election priority is very often used inside toString(). For example, this would lead 
+		 * to recursive calls caused by getElectionPriority in the Cluster/Coordinator class. 
 		 */
 		
 		if (DEBUG_CREATION){
-			Logging.log(pParent, "Created BullyPriority object (undefined priority) for class \"" + pParent.getClass().getSimpleName() + "\"");
+			Logging.log(pParent, "Created ElectionPriority object (undefined priority) for class \"" + pParent.getClass().getSimpleName() + "\"");
 		}
 		
 		return tResult;
 	}
 
 	/**
-	 * Factory function: initializes the Bully priority with "undefined"
+	 * Factory function: initializes the Election priority with "undefined"
 	 */
-	public static BullyPriority create(Object pParent, long pPredefinedPriority)
+	public static ElectionPriority create(Object pParent, long pPredefinedPriority)
 	{
 		if ((pParent instanceof Integer) || (pParent instanceof Long)){
-			Logging.warn(pParent, "This object is an Integer/Long class, this often means a wrong call to BullyPriority::create()");
+			Logging.warn(pParent, "This object is an Integer/Long class, this often means a wrong call to ElectionPriority::create()");
 		}
 
-		BullyPriority tResult = new BullyPriority(pPredefinedPriority);
+		ElectionPriority tResult = new ElectionPriority(pPredefinedPriority);
 
-		//Logging.log(pParent, "Created BullyPriority object (predefined priority " + pPredefinedPriority + ")");
+		//Logging.log(pParent, "Created ElectionPriority object (predefined priority " + pPredefinedPriority + ")");
 		
 		return tResult;
 	}
@@ -177,9 +177,9 @@ public class BullyPriority
 	}
 
 	/**
-	 * Returns the Bully priority value.
+	 * Returns the Election priority value.
 	 * 
-	 * @return Bully priority
+	 * @return Election priority
 	 */
 	public long getValue()
 	{
@@ -187,7 +187,7 @@ public class BullyPriority
 	}
 
 	/**
-	 * Returns the unique BullyPriority ID
+	 * Returns the unique ElectionPriority ID
 	 * 
 	 * @return the ID
 	 */
@@ -199,7 +199,7 @@ public class BullyPriority
 	/**
 	 * Check if the priority is still undefined.
 	 * 
-	 * @return true if this Bully priority is undefined.
+	 * @return true if this Election priority is undefined.
 	 */
 	public boolean isUndefined()
 	{
@@ -211,21 +211,21 @@ public class BullyPriority
 	 * 
 	 *  @return the object clone
 	 */
-	public BullyPriority clone()
+	public ElectionPriority clone()
 	{
-		BullyPriority tClone = new BullyPriority(mPriority);
+		ElectionPriority tClone = new ElectionPriority(mPriority);
 		
 		return tClone;
 	}
 
 	/**
-	 * Check if the Bully priority is higher than the other given one.
+	 * Check if the Election priority is higher than the other given one.
 	 * 
 	 * @param pCheckLocation a reference to the origin object from where the call comes from
 	 * @param pOtherPriority the other given priority
-	 * @return return "true" if the Bully priority is higher than the other one, otherwise return "false"
+	 * @return return "true" if the Election priority is higher than the other one, otherwise return "false"
 	 */
-	public boolean isHigher(Object pCheckLocation, BullyPriority pOtherPriority)
+	public boolean isHigher(Object pCheckLocation, ElectionPriority pOtherPriority)
 	{
 		String pLocationDescription = pCheckLocation.getClass().getSimpleName();
 		if (pCheckLocation instanceof Localization){
@@ -252,11 +252,11 @@ public class BullyPriority
 	@Override
 	public boolean equals(Object pObj)
 	{
-		// do we have another Bully priority object?
-		if(pObj instanceof BullyPriority) {
+		// do we have another Election priority object?
+		if(pObj instanceof ElectionPriority) {
 			
-			// cast to BullyPriority object
-			BullyPriority tOtherPrio = (BullyPriority) pObj;
+			// cast to ElectionPriority object
+			ElectionPriority tOtherPrio = (ElectionPriority) pObj;
 			
 			// if the priority values are equal, we return "true"
 			if (tOtherPrio.getValue() == mPriority){
@@ -268,7 +268,7 @@ public class BullyPriority
 		return false;
 	}
 
-	private BullyPriority(long pPriority)
+	private ElectionPriority(long pPriority)
 	{
 		mPriority = pPriority;
 		mPriorityId = createPriorityID();
@@ -276,8 +276,8 @@ public class BullyPriority
 
 	public String toString()
 	{
-		return "BullyPriority(Prio=" + Long.toString(getValue()) + ")";
+		return "ElectionPriority(Prio=" + Long.toString(getValue()) + ")";
 	}
 	
-	private long mPriority = HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
+	private long mPriority = HRMConfig.Election.DEFAULT_PRIORITY;
 }

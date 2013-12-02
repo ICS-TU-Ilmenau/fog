@@ -12,14 +12,14 @@ package de.tuilmenau.ics.fog.packets.hierarchical.election;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This packet is used to inform that a cluster member wants to return as active candidate to an election.
  */
-public class BullyReturn extends SignalingMessageBully implements ISignalingMessageHrmBroadcastable
+public class ElectionReturn extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
 {
 
 	private static final long serialVersionUID = 7774205916502000178L;
@@ -32,7 +32,7 @@ public class BullyReturn extends SignalingMessageBully implements ISignalingMess
 	 * @param pSenderName
 	 * @param pReceiverName
 	 */
-	public BullyReturn(Name pSenderName, BullyPriority pSenderPriority)
+	public ElectionReturn(Name pSenderName, ElectionPriority pSenderPriority)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		sCreatedPackets++;
@@ -46,7 +46,7 @@ public class BullyReturn extends SignalingMessageBully implements ISignalingMess
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		BullyReturn tResult = new BullyReturn(getSenderName(), getSenderPriority());
+		ElectionReturn tResult = new ElectionReturn(getSenderName(), getSenderPriority());
 		
 		super.duplicate(tResult);
 

@@ -30,7 +30,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.BullyPriority;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -163,12 +163,12 @@ public class ComChannel
 	private ComSession mParentComSession = null;
 	
 	/**
-	 * Stores the Bully priority of the peer
+	 * Stores the Election priority of the peer
 	 */
-	private BullyPriority mPeerPriority = null;
+	private ElectionPriority mPeerPriority = null;
 	
 	/**
-	 * Stores the freshness of the Bully priority of the peer
+	 * Stores the freshness of the Election priority of the peer
 	 */
 	private double mPeerPriorityTimestampLastUpdate = 0; 
 	
@@ -278,7 +278,7 @@ public class ComChannel
 		mPeer = null;
 
 		// the peer priority gets initialized by a default value ("undefined")
-		mPeerPriority = BullyPriority.create(this);
+		mPeerPriority = ElectionPriority.create(this);
 
 		// store the parent (owner) of this communication channel
 		mParent = pParent;
@@ -836,11 +836,11 @@ public class ComChannel
 	}
 
 	/**
-	 * Updates the Bully priority of the peer.
+	 * Updates the Election priority of the peer.
 	 * 
-	 * @param pPeerPriority the Bully priority
+	 * @param pPeerPriority the Election priority
 	 */
-	public boolean setPeerPriority(BullyPriority pPeerPriority)
+	public boolean setPeerPriority(ElectionPriority pPeerPriority)
 	{
 		boolean tResult = false;
 		
@@ -863,7 +863,7 @@ public class ComChannel
 			// update the freshness of the peer priority
 			mPeerPriorityTimestampLastUpdate = tNow;
 	
-			// update the peer Bully priority itself
+			// update the peer Election priority itself
 			mPeerPriority = pPeerPriority;
 			
 			// we have a new priority
@@ -874,14 +874,14 @@ public class ComChannel
 	}
 
 	/**
-	 * Returns the Bully priority of the communication peer
+	 * Returns the Election priority of the communication peer
 	 * 
-	 * @return the Bully priority
+	 * @return the Election priority
 	 */
-	public BullyPriority getPeerPriority()
+	public ElectionPriority getPeerPriority()
 	{
 		if (mPeerPriority == null){
-			mPeerPriority = BullyPriority.create(this);
+			mPeerPriority = ElectionPriority.create(this);
 		}
 			
 		//TODO: getPeerPriorityFreshness() integrieren und einen Timeout bauen, so das danach nur null geliefert wird
@@ -1354,16 +1354,16 @@ public class ComChannel
 		}
 		
 		/**
-		 * Bully signaling message:
+		 * Election signaling message:
 		 * 			Cluster ==> ClusterMember
 		 * 			ClusterMember ==> Cluster
 		 */
-		if (pPacket instanceof SignalingMessageBully) {
-			// cast to a Bully signaling message
-			SignalingMessageBully tBullyMessage = (SignalingMessageBully)pPacket;
+		if (pPacket instanceof SignalingMessageElection) {
+			// cast to a Election signaling message
+			SignalingMessageElection tElectionPacket = (SignalingMessageElection)pPacket;
 
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY)
-				Logging.log(this, "RECEIVED BULLY MESSAGE " + tBullyMessage.getClass().getSimpleName());
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS)
+				Logging.log(this, "RECEIVED BULLY MESSAGE " + tElectionPacket.getClass().getSimpleName());
 
 			// the packet is received by a cluster
 			//HINT: this is only possible at base hierarchy level
@@ -1371,7 +1371,7 @@ public class ComChannel
 				ClusterMember tParentClusterProxy = (ClusterMember)mParent;
 				
 				if (tParentClusterProxy.getElector() != null){
-					tParentClusterProxy.getElector().handleElectionMessage(tBullyMessage, this);
+					tParentClusterProxy.getElector().handleElectionMessage(tElectionPacket, this);
 				}else{
 					Logging.warn(this, "Elector is still invalid");
 				}
@@ -1382,12 +1382,12 @@ public class ComChannel
 			if (mParent instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)mParent;
 				
-				tCoordinator.getCluster().getElector().handleElectionMessage(tBullyMessage, this);
+				tCoordinator.getCluster().getElector().handleElectionMessage(tElectionPacket, this);
 				
 				return true;
 			}
 
-			Logging.warn(this, "IGNORING THIS MESSAGE: " + tBullyMessage);
+			Logging.warn(this, "IGNORING THIS MESSAGE: " + tElectionPacket);
 
 			return true;
 		}
@@ -1402,7 +1402,7 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "TOPOLOGY_REPORT-received from \"" + getPeerHRMID() + "\": " + tRouteReportPacket);
 
-			// process Bully message
+			// process RouteReport message
 			eventReceivedRouteReport(tRouteReportPacket);
 			
 			return true;
@@ -1418,7 +1418,7 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "ROUTING_INFORMATION-received from \"" + getPeerHRMID() + "\": " + tRouteSharePacket);
 
-			// process Bully message
+			// process RouteShare message
 			eventReceivedRouteShare(tRouteSharePacket);
 			
 			return true;
@@ -1470,7 +1470,7 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "ANNOUNCE_HRMIDS-received from \"" + getPeerHRMID() + "\" revoked HRMIDs: " + tAnnounceHRMIDsPacket.getHRMIDs().toString());
 
-			// process Bully message
+			// process AnnounceHRMIDs message
 			eventReceivedAnnounceHRMIDs(tAnnounceHRMIDsPacket);
 			
 			return true;
