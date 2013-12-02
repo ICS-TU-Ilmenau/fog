@@ -249,6 +249,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public void sharePhase()
 	{
 		boolean DEBUG_SHARE_PHASE_DETAILS = false;
+//		if(getHierarchyLevel().isHighest()){
+//			DEBUG_SHARE_PHASE_DETAILS = true;
+//		}
 		
 		// should we start the "share phase"?
 		if (sharePhaseHasTimeout()){
@@ -442,9 +445,13 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 */
 								if(HRMConfig.Routing.MULTIPATH_ROUTING){
 									LinkedList<RoutingEntry> tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
-									//Logging.log(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to " + tPossibleDestination);
+									if (DEBUG_SHARE_PHASE_DETAILS){
+										Logging.log(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to " + tPossibleDestination);
+									}
 									for(RoutingEntry tRoutingEntryToPossibleDestination : tAllRoutingEntriesToPossibleDestination){
-										//Logging.log(this, "     ..entry: " + tRoutingEntryToPossibleDestination);
+										if (DEBUG_SHARE_PHASE_DETAILS){
+											Logging.log(this, "     ..entry: " + tRoutingEntryToPossibleDestination);
+										}
 	
 										/**
 										 * Add the found routing entry to the shared routing table
@@ -468,7 +475,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						}
 						
 						if(tSharedRoutingTable.size() > 0){
-							if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+							if (DEBUG_SHARE_PHASE_DETAILS){
 								Logging.log(this, "     SHARING with: " + tPeerHRMID);
 								for(RoutingEntry tEntry : tSharedRoutingTable){	
 									Logging.log(this, "      ..==> routing entry: " + tEntry);
