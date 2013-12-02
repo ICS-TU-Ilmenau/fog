@@ -56,8 +56,30 @@ import org.eclipse.swt.graphics.Point;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.eclipse.utils.Resources;
+import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
+import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnouncePhysicalEndPoint;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAnnounceWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResignWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
@@ -98,7 +120,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private Composite mGlobalContainer = null;
     private Composite mContainer = null;
     private Composite mToolBtnContainer = null;
-    private Composite mToolChlBoxContainer = null;
+    private Composite mToolChkBoxContainer = null;
     private ScrolledComposite mScroller = null;
     
     private Button mBtnPriorityLog = null;
@@ -164,20 +186,49 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		return gridData;
 	}
 
+	private void showPacketStats()
+	{
+		Logging.log(this, "Packet statistic:");
+		Logging.log(this, "    ..AnnouncePhysicalEndPoint: " + AnnouncePhysicalEndPoint.sCreatedPackets);
+		Logging.log(this, "    ..MultiplexHeader: " + MultiplexHeader.sCreatedPackets);
+		Logging.log(this, "    ..SignalingMessageHrm: " + SignalingMessageHrm.sCreatedPackets);
+		Logging.log(this, "      ..ProbePacket: " + ProbePacket.sCreatedPackets);
+		Logging.log(this, "      ..AnnounceHRMIDs: " + AnnounceHRMIDs.sCreatedPackets);
+		Logging.log(this, "      ..AssignHRMID: " + AssignHRMID.sCreatedPackets);
+		Logging.log(this, "      ..RevokeHRMIDs: " + RevokeHRMIDs.sCreatedPackets);
+		Logging.log(this, "      ..InformClusterLeft: " + InformClusterLeft.sCreatedPackets);
+		Logging.log(this, "      ..InformClusterMembershipCanceled: " + InformClusterMembershipCanceled.sCreatedPackets);
+		Logging.log(this, "      ..RequestClusterMembership: " + RequestClusterMembership.sCreatedPackets);
+		Logging.log(this, "      ..RequestClusterMembershipAck: " + RequestClusterMembershipAck.sCreatedPackets);
+		Logging.log(this, "      ..SignalingMessageElection: " + SignalingMessageElection.sCreatedPackets);
+		Logging.log(this, "        ..ElectionAlive: " + ElectionAlive.sCreatedPackets);
+		Logging.log(this, "        ..ElectionAnnounceWinner: " + ElectionAnnounceWinner.sCreatedPackets);
+		Logging.log(this, "        ..ElectionElect: " + ElectionElect.sCreatedPackets);
+		Logging.log(this, "        ..ElectionLeave: " + ElectionLeave.sCreatedPackets);
+		Logging.log(this, "        ..ElectionPriorityUpdate: " + ElectionPriorityUpdate.sCreatedPackets);
+		Logging.log(this, "        ..ElectionReply: " + ElectionReply.sCreatedPackets);
+		Logging.log(this, "        ..ElectionResignWinner: " + ElectionResignWinner.sCreatedPackets);
+		Logging.log(this, "        ..ElectionReturn: " + ElectionReturn.sCreatedPackets);
+		Logging.log(this, "      ..AnnounceCoordinator: " + AnnounceCoordinator.sCreatedPackets);
+		Logging.log(this, "      ..InvalidCoordinator: " + InvalidCoordinator.sCreatedPackets);
+		Logging.log(this, "      ..RouteReport: " + RouteReport.sCreatedPackets);
+		Logging.log(this, "      ..RouteShare: " + RouteShare.sCreatedPackets);
+	}
+	
 	private void createButtons(Composite pParent)
 	{
 		if(mGuiCounter == 1){
 			mToolBtnContainer = new Composite(pParent, SWT.NONE);
 	
-			GridLayout tLayout1 = new GridLayout(7, false);
+			GridLayout tLayout1 = new GridLayout(8, false);
 			mToolBtnContainer.setLayout(tLayout1);
 			mToolBtnContainer.setLayoutData(createGridData(true, 1));
 			
-			mToolChlBoxContainer = new Composite(pParent, SWT.NONE);
+			mToolChkBoxContainer = new Composite(pParent, SWT.NONE);
 			
 			GridLayout tLayout2 = new GridLayout(5, false);
-			mToolChlBoxContainer.setLayout(tLayout2);
-			mToolChlBoxContainer.setLayoutData(createGridData(true, 1));
+			mToolChkBoxContainer.setLayout(tLayout2);
+			mToolChkBoxContainer.setLayoutData(createGridData(true, 1));
 		}
 		
 		/**
@@ -301,13 +352,25 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				}
 			});
 		}
+		// **** show packet statistic ****
+		if(mGuiCounter == 1){
+			mBtnUsedClusterAddressesLog = new Button(mToolBtnContainer, SWT.PUSH);
+			mBtnUsedClusterAddressesLog.setText("Show packet statistic");
+			mBtnUsedClusterAddressesLog.setLayoutData(createGridData(false, 1));
+			mBtnUsedClusterAddressesLog.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {					
+					showPacketStats();
+				}
+			});
+		}
 
 		/**
 		 * Check buttons
 		 */
 		// **** hide/show cluster members ****
 		if(mGuiCounter == 1){
-			mBtnClusterMembers = new Button(mToolChlBoxContainer, SWT.CHECK);
+			mBtnClusterMembers = new Button(mToolChkBoxContainer, SWT.CHECK);
 		}
 		mBtnClusterMembers.setText("ClusterMembers");
 		if(mShowClusterMembers){
@@ -327,7 +390,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		// **** hide/show coordinators-as-cluster-members ****
 		if(mGuiCounter == 1){
-			mBtnCoordClusterMembers = new Button(mToolChlBoxContainer, SWT.CHECK);
+			mBtnCoordClusterMembers = new Button(mToolChkBoxContainer, SWT.CHECK);
 		}
 		mBtnCoordClusterMembers.setText("CoordinatorAsClusterMembers");
 		if(mShowCoordinatorAsClusterMembers){
@@ -347,7 +410,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		// **** deactivate/activate coordinator announcements ****
 		if(mGuiCounter == 1){
-			mBtnCoordAnnounce = new Button(mToolChlBoxContainer, SWT.CHECK);
+			mBtnCoordAnnounce = new Button(mToolChkBoxContainer, SWT.CHECK);
 		}
 		mBtnCoordAnnounce.setText("Coordinator announcements");
 		if (HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
@@ -370,7 +433,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		// **** deactivate/activate topology reports ****
 		if(mGuiCounter == 1){
-			mBtnTopologyReports = new Button(mToolChlBoxContainer, SWT.CHECK);
+			mBtnTopologyReports = new Button(mToolChkBoxContainer, SWT.CHECK);
 		}
 		mBtnTopologyReports.setText("Topology reports");
 		if (HRMController.GUI_USER_CTRL_REPORT_TOPOLOGY){
@@ -389,7 +452,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		// **** deactivate/activate share routes ****
 		if(mGuiCounter == 1){
-			mBtnShareRoutes = new Button(mToolChlBoxContainer, SWT.CHECK);
+			mBtnShareRoutes = new Button(mToolChkBoxContainer, SWT.CHECK);
 		}
 		mBtnShareRoutes.setText("Share routes");
 		if (HRMController.GUI_USER_CTRL_SHARE_ROUTES){
