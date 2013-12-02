@@ -333,6 +333,11 @@ public class HRMConfig
 		 * Defines the limit for the hierarchy height
 		 */
 		public static final int HEIGHT_LIMIT = 99;
+
+		/**
+		 * Defines the maximum for the hop count to a remote coordinator (distance between a local CoordinatorProxy and a distant Coordinator instance) 
+		 */
+		public static final int MAX_HOPS_TO_A_REMOTE_COORDINATOR = 256;
 	}
 	
 	/**

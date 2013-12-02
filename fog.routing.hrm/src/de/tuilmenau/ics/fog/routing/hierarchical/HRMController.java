@@ -2825,7 +2825,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	
 			int tMaxDistance = HRMConfig.Hierarchy.EXPANSION_RADIUS;
 			if(!pCausingEntity.getHierarchyLevel().isBaseLevel()){
-				tMaxDistance = 256; //TODO: use a definition here
+				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 			}
 			
 			if((tDistance >= 0) && (tDistance <= tMaxDistance)){
@@ -2883,7 +2883,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			int tMaxDistance = HRMConfig.Hierarchy.EXPANSION_RADIUS;
 			if(!pCausingEntity.getHierarchyLevel().isBaseLevel()){
-				tMaxDistance = 256; //TODO: use a definition here
+				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 			}
 
 			if((tDistance >= 0) && (tDistance <= tMaxDistance)){
