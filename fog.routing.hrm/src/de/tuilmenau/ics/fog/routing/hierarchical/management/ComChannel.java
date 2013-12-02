@@ -371,6 +371,7 @@ public class ComChannel
 			
 	/**
 	 * EVENT: new neighbor HRMIDs update
+	 * 		  IMPORTANT: This is the main function for determining capacities and link usage
 	 */
 	private int mCallsEventNewPeerHRMIDs = 0;
 	private void eventNewPeerHRMIDs()
