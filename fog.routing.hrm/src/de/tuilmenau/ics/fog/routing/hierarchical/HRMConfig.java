@@ -264,9 +264,32 @@ public class HRMConfig
 		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
 
 		/**
-		 * Defines the base time period for CoordinatorAnnounce distributions
+		 * Defines the base time period for CoordinatorAnnounce distributions. Depending on this value, the following announce periods will be calculated as follows:
+		 * 		announce 				time period
+		 * 			1						x * 1
+		 * 			2						x * 2
+		 *          :						  :	
+		 * 			t						x * t
+		 * 	  	(t + 1)						x * f 
+		 * 	  	(t + 2)						x * f 
+		 *  		:						  :
+		 *  
+		 *  x = COORDINATOR_ANNOUNCEMENTS_INTERVAL
+		 *  t = COORDINATOR_ANNOUNCEMENTS_INITIAL_THRESHOLD
+		 *  f = COORDINATOR_ANNOUNCEMENTS_INTERVAL_LONG_TERM_FACTOR
+		 *  
 		 */
 		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 2.0;
+		
+		/**
+		 * Defines how many initial announces should be sent.
+		 */
+		public static final long COORDINATOR_ANNOUNCEMENTS_INITIAL_THRESHOLD = 10;
+
+		/**
+		 * Defines the factor for long-term announces.
+		 */
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LONG_TERM_FACTOR = 1;
 
 		/**
 		 * Defines the default timeout for a coordinator proxy. If the proxy doesn't get any refresh in the defined time period, the proxy gets deleted.

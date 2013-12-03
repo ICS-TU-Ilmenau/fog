@@ -70,7 +70,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * Stores how many announces were already sent
 	 */
-	private int mSentAnnounces = 0;
+	private long mSentAnnounces = 0;
+	
+	/**
+	 * Stores how many invalidations were already sent
+	 */
+	private long mSentInvalidations = 0;
 	
 	/**
 	 * Stores the last received routing table from the superior coordinator
@@ -866,14 +871,20 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// trigger periodic Cluster announcements
 		if((HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS) && (HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
 			InvalidCoordinator tInvalidCoordinatorPacket = new InvalidCoordinator(mHRMController, mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
+
+			/**
+			 * Count the sent announces
+			 */
+			mSentInvalidations++;
+
 			/**
 			 * Send broadcasts in all locally known clusters at this hierarchy level
 			 */
 			LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0); //HINT: we have to broadcast via level 0, otherwise, an inferior might already be destroyed and the invalidation message might get dropped
-			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-				Logging.log(this, "########## Distributing Coordinator invalidation (to the bottom): " + tInvalidCoordinatorPacket);
+//			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+				Logging.log(this, "########## Distributing Coordinator invalidation [" + mSentInvalidations + "](to the bottom): " + tInvalidCoordinatorPacket);
 				Logging.log(this, "     ..distributing in clusters: " + tClusters);
-			}
+//			}
 			for(Cluster tCluster : tClusters){
 				tCluster.sendClusterBroadcast(tInvalidCoordinatorPacket, true);
 			}
@@ -885,11 +896,21 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * 
 	 * @return the number of announces
 	 */
-	public int countAnnounces()
+	public long countAnnounces()
 	{
 		return mSentAnnounces;
 	}
 	
+	/**
+	 * Returns how many invalidations were already sent
+	 * 
+	 * @return the number of invalidations
+	 */
+	public long countInvalidations()
+	{
+		return mSentInvalidations;
+	}
+
 	/**
 	 * Implementation for IEvent::fire()
 	 */
@@ -911,8 +932,13 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					distributeCoordinatorAnnouncement();
 				}
 				
-				// register next trigger for 
-				mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL, this);
+				if(mSentAnnounces < HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_THRESHOLD){
+					// register next trigger for 
+					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL, this);
+				}else{
+					// register next trigger for 
+					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LONG_TERM_FACTOR, this);
+				}
 			}
 		}else{
 			if(HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
