@@ -383,7 +383,7 @@ public class Elector implements Localization
 			mCounterReelects++;
 
 			synchronized (mReelectCauses) {
-				mReelectCauses.add("[" + mState.toString() + (isWinner() ? " WINNER, prio= " + mParent.getPriority().getValue() : "") + "]" + pCause);
+				mReelectCauses.add("[" + mState.toString() + (isWinner() ? " WINNER, prio=" + mParent.getPriority().getValue() : "") + "]" + pCause);
 			}
 			
 			//reset ELECT BROADCAST timer
@@ -1057,7 +1057,7 @@ public class Elector implements Localization
 								if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 									Logging.log(this, "      ..leave all alternative election processes with a lower priority than the peer");
 								}
-								leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), this + "::leaveReturnOnNewPeerPriority()");
+								leaveWorseAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), this + "::leaveReturnOnNewPeerPriority()_1");
 							}else{
 								/**
 								 * We behave like we would do if we receive a RESIGN packet
@@ -1080,7 +1080,7 @@ public class Elector implements Localization
 									if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 										Logging.log(this, "      ..leave all alternative election processes in relation to foreign election: " + tElectorClusterMember);
 									}
-									tElectorClusterMember.leaveWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()");
+									tElectorClusterMember.leaveWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()_2");
 								}								
 							}else{
 								// no active ClusterMember is known and the priority update affects only the current ClusterMember
@@ -1266,7 +1266,7 @@ public class Elector implements Localization
 					/**
 					 * Trigger : reelect
 					 */
-					reelect("eventReceivedRETURN() from " + pComChannel);
+					reelect("eventReceivedRETURN() from [peerPrio=" + pComChannel.getPeerPriority().getValue() + "]" + pComChannel);
 //				}else{
 //					// we weren't the previous winner and the joined member won't change this
 //					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
