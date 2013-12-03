@@ -44,7 +44,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * ****************************************************************************************************************************
  *       
  */
-public class InformClusterLeft extends SignalingMessageHrm implements ISignalingMessageHrmBroadcastable
+public class InformClusterLeft extends SignalingMessageHrm
 {
 	private static final long serialVersionUID = 445881657397476245L;
 
@@ -95,23 +95,6 @@ public class InformClusterLeft extends SignalingMessageHrm implements ISignaling
 	public ClusterName getDestination()
 	{
 		return mRequestDestination;
-	}
-
-	/**
-	 * Returns a duplicate of this packet
-	 * 
-	 * @return the duplicate packet
-	 */
-	@Override
-	public SignalingMessageHrm duplicate()
-	{
-		InformClusterLeft tResult = new InformClusterLeft(getSenderName(), getReceiverName(), getLeavingClusterMember(), getDestination());
-		
-		super.duplicate(tResult);
-
-		Logging.log(this, "Created duplicate packet: " + tResult);
-		
-		return tResult;
 	}
 
 	/**
