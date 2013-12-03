@@ -209,21 +209,6 @@ public class Cluster extends ClusterMember
 	}
 	
 	/**
-	 * Returns the correct connectivity/hierarchy Election priority of the node
-	 * 
-	 * @return the Election priority
-	 */
-	@Override
-	public ElectionPriority getPriority() 
-	{
-		if(getHierarchyLevel().isBaseLevel()){
-			return ElectionPriority.create(this, mHRMController.getConnectivityNodePriority());
-		}else{
-			return ElectionPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
-		}
-	}
-
-	/**
 	 * Determines if a coordinator is known.
 	 * 
 	 * @return true if the coordinator is elected and known, otherwise false
@@ -389,25 +374,6 @@ public class Cluster extends ClusterMember
 					Logging.log(this, "     ..stopping address propagation here");
 				}
 			}
-		}
-	}
-
-	/**
-	 * EVENT: new hierarchy node priority
-	 * 
-	 * @param pNewHierarchyNodePriority the new hierarchy node priority
-	 */
-	public void eventHierarchyNodePriorityUpdate(long pNewHierarchyNodePriority)
-	{
-		Logging.log(this, "EVENT: hierarchy node priority update to:  " + pNewHierarchyNodePriority);
-		
-		/**
-		 * Set the new priority if it differs from the old one
-		 */
-		if(mElector != null){
-			mElector.updatePriority();
-		}else{
-			Logging.warn(this, "Elector is still invalid");
 		}
 	}
 

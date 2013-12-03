@@ -789,13 +789,12 @@ public class ClusterMember extends ClusterName
 		}
 		
 		/**
-		 * Trigger: start coordinator election
+		 * Trigger: start Election if HRMConfig allows this
 		 */
 		boolean tStartBaseLevel =  ((getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
-		// start coordinator election for the created HRM instance if the configuration allows this
 		if(((!getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
 			Logging.log(this, "      ..starting ELECTION");
-			mElector.startElection();
+			mElector.startElection(this + "::eventComChannelEstablished() for " + pComChannel);
 		}
 	}
 
@@ -1040,6 +1039,24 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
+	 * EVENT: new hierarchy node priority
+	 * 
+	 * @param pNewHierarchyNodePriority the new hierarchy node priority
+	 */
+	public void eventHierarchyNodePriorityUpdate(long pNewHierarchyNodePriority)
+	{
+		Logging.log(this, "EVENT: hierarchy node priority update to: " + pNewHierarchyNodePriority);
+		
+		/**
+		 * Set the new priority if it differs from the old one
+		 */
+		if((getPriority() != null) && (getPriority().getValue() != pNewHierarchyNodePriority)){
+			Logging.log(this, "Got new base node priority, updating own priority from " + getPriority().getValue() + " to " + pNewHierarchyNodePriority);
+			setPriority(ElectionPriority.create(this, pNewHierarchyNodePriority));
+		}
+	}
+	
+	/**
 	 * EVENT: cluster memeber role invalid
 	 * 
 	 *  @param: pComChannel the comm. channel towards the cluster head
@@ -1087,9 +1104,9 @@ public class ClusterMember extends ClusterName
 			/**
 			 * Send priority update if necessary 
 			 */
-			if (((tOldPriority != null) && (!tOldPriority.isUndefined()) && (!tOldPriority.equals(pPriority))) || (this instanceof Cluster)){
+			if ((tOldPriority != null) && (!tOldPriority.isUndefined()) && (!tOldPriority.equals(pPriority))){
 				if(mElector != null){
-					mElector.updatePriority();
+					mElector.updatePriority(this + "::setPriority() from " + tOldPriority.getValue() + " to " + pPriority.getValue());
 				}else{
 					Logging.warn(this, "Elector is still invalid");
 				}

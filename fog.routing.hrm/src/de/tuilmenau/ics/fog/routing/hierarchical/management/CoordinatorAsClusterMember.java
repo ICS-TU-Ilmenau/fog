@@ -148,24 +148,6 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 
 	/**
-	 * EVENT: new hierarchy node priority
-	 * 
-	 * @param pNewHierarchyNodePriority the new hierarchy node priority
-	 */
-	public void eventHierarchyNodePriorityUpdate(long pNewHierarchyNodePriority)
-	{
-		Logging.log(this, "EVENT: hierarchy node priority update to: " + pNewHierarchyNodePriority);
-		
-		/**
-		 * Set the new priority if it differs from the old one
-		 */
-		if((getPriority() != null) && (getPriority().getValue() != pNewHierarchyNodePriority)){
-			Logging.log(this, "Got new base node priority, updating own priority from " + getPriority().getValue() + " to " + pNewHierarchyNodePriority);
-			setPriority(ElectionPriority.create(this, pNewHierarchyNodePriority));
-		}
-	}
-
-	/**
 	 * EVENT: cluster membership canceled, triggered by cluster head
 	 * 
 	 *  @param: pComChannel the comm. channel from where the cancellation was received

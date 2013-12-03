@@ -84,6 +84,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
+import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterMember;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
@@ -1372,6 +1373,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * name part 0: front image
 		 */
+		Image tFrontImage = null;
 		if(pEntity instanceof Coordinator){
 			String tImagePath = "";
 			try {
@@ -1380,7 +1382,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				//ignore
 			}
 			//Logging.log(this, "Loading front image: " + tImagePath);		
-			Image tFrontImage = new Image(mDisplay, tImagePath);
+			tFrontImage = new Image(mDisplay, tImagePath);
 			Label tFronImageLabel = new Label(tContainerName, SWT.NONE);
 			tFronImageLabel.setSize(16, 20);
 			tFronImageLabel.setImage(tFrontImage);
@@ -1395,7 +1397,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				//ignore
 			}
 			//Logging.log(this, "Loading front image: " + tImagePath);		
-			Image tFrontImage = new Image(mDisplay, tImagePath);
+			tFrontImage = new Image(mDisplay, tImagePath);
 			Label tFronImageLabel = new Label(tContainerName, SWT.NONE);
 			tFronImageLabel.setSize(45, 20);
 			tFronImageLabel.setImage(tFrontImage);
@@ -1457,29 +1459,31 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * TEXT
 		 */
-		String tFormerHRMIDs = (pEntity.getDescriptionFormerHRMIDs() != "" ? " (FormerHRMIDs: " + pEntity.getDescriptionFormerHRMIDs() + ")" : "");
+		String tFormerHRMIDs = (pEntity.getDescriptionFormerHRMIDs() != "" ? "  FormerHRMIDs=" + pEntity.getDescriptionFormerHRMIDs() : "");
 		String tNetworkInterface = "";
 		String tL0HRMID = "";
+		String tCountRelects = "";
 		if (pEntity instanceof ClusterMember){
 			ClusterMember tClusterMember = (ClusterMember) pEntity;
-			tNetworkInterface = (tClusterMember.getBaseHierarchyLevelNetworkInterface() != null ? "  (" + tClusterMember.getBaseHierarchyLevelNetworkInterface().toString() + ")": "");
+			tNetworkInterface = (tClusterMember.getBaseHierarchyLevelNetworkInterface() != null ? "  NetIF=" + tClusterMember.getBaseHierarchyLevelNetworkInterface().toString(): "");
+			tCountRelects = "  Reelects=" + Long.toString(tClusterMember.getElector().countReelects());
 			
 			if(tClusterMember.getL0HRMID() != null){
-				tL0HRMID = "  (L0-HRMID: " + tClusterMember.getL0HRMID().toString() + ")";
+				tL0HRMID = "  L0-HRMID=" + tClusterMember.getL0HRMID().toString();
 			}
 		}
 		
 		if (pEntity instanceof Cluster){
 			Cluster tCluster = (Cluster) pEntity;
 			boolean tClusterCanBeActive = tCluster.getElector().isAllowedToWin();
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? " (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : "") + tFormerHRMIDs + tNetworkInterface + tL0HRMID);
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? " (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : "") + tFormerHRMIDs + tNetworkInterface + tL0HRMID + tCountRelects);
 		}else{
 			if(pEntity instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)pEntity;
 				
 				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + " Announces=" + tCoordinator.countAnnounces() + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts());
 			}else{
-				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + tNetworkInterface + tL0HRMID);
+				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + tNetworkInterface + tL0HRMID + tCountRelects);
 			}
 		}
 		/**
@@ -1495,7 +1499,63 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}else{
 			tClusterLabel.setLayoutData(createGridData(true, 2));
 		}
+		
+		/**
+		 * Context menu
+		 */
+		final Composite tfContainerName = tContainerName;
+		final ControlEntity tfControlEntity = pEntity;
+		tContainerName.addMenuDetectListener(new MenuDetectListener()
+		{
+			@Override
+			public void menuDetected(MenuDetectEvent pEvent)
+			{
+				/**
+				 * Create the context menu
+				 */
+				Menu tMenu = new Menu(mTableRoutingTable);
+				if(tfControlEntity instanceof ClusterMember){
+					final ClusterMember tClusterMember = (ClusterMember)tfControlEntity;
+					
+					MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem.setText("Show Election details");
+					tMenuItem.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showElectionDetails(tClusterMember);
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showElectionDetails(tClusterMember);
+						}
+					});
+				}
 
+				tfContainerName.setMenu(tMenu);
+			}
+		});
+	}
+	
+	private void showElectionDetails(ClusterMember pClusterMember)
+	{
+		Elector tElector = pClusterMember.getElector();
+		Logging.log(this, "Amount of re-elects: " + tElector.countReelects() + ", causes:");
+		LinkedList<String> tReelectCauses = tElector.getReelectCauses();
+		int i = 0;
+		for(String tCause : tReelectCauses){
+			Logging.log(this, "   ..[" + i + "]: " + tCause);
+			i++;
+		}
+
+		LinkedList<String> tResultChangeCauses = tElector.getResultChangeCauses();
+		Logging.log(this, "Amount of election result changes: " + tResultChangeCauses.size() + ", causes:");
+		i = 0;
+		for(String tCause : tResultChangeCauses){
+			Logging.log(this, "   ..[" + i + "]: " + tCause);
+			i++;
+		}		
 	}
 	
 	/**
@@ -1628,17 +1688,22 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	{
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Object getAdapter(Class required)
 	{
-		if(getClass().equals(required)) return this;
+		if(getClass().equals(required)){
+			return this;
+		}
 		
 		Object res = super.getAdapter(required);
 		
 		if(res == null) {
 			res = Platform.getAdapterManager().getAdapter(this, required);
 			
-			if(res == null)	res = Platform.getAdapterManager().getAdapter(mHRMController, required);
+			if(res == null){
+				res = Platform.getAdapterManager().getAdapter(mHRMController, required);
+			}
 		}
 		
 		return res;
@@ -2039,7 +2104,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 			
 			// start the election for the selected cluster
-			ClusterMember.getElector().startElection();
+			ClusterMember.getElector().startElection("HRMViewer");
 		}
 	
 		public String toString()
@@ -2081,7 +2146,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						}
 						
 						// start the election for the found cluster
-						tCluster.getElector().startElection();
+						tCluster.getElector().startElection("HRMViewer");
 					}
 				}
 			}
