@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.tuilmenau.ics.fog.FoGEntity;
+import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
@@ -24,6 +25,7 @@ import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
 import de.tuilmenau.ics.fog.routing.Route;
+import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RouteSegmentDescription;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
@@ -1425,6 +1427,53 @@ public class HRMRoutingService implements RoutingService, Localization
 					// do we already reached the destination?
 					if(!tResultRoute.isEmpty()){
 						tResultRoute.addLast(new RouteSegmentDescription(pRequirements));
+					}
+					
+					/**
+					 * Derive the NEXT BUS -> use it to record the gotten QoS values
+					 */
+					Bus tNextNetworkBus = null;
+					if(HRMConfig.Routing.RECORD_ROUTE_FOR_PROBES){
+						if(!tResultRoute.isEmpty()){
+							Multiplexer tCurrentMultiplexer = getCentralFN();
+							RouteSegmentPath tResultRouteFirstPart = (RouteSegmentPath)tResultRoute.getFirst().clone();
+							
+							while(!tResultRouteFirstPart.isEmpty()) {
+								GateID tGateID = tResultRouteFirstPart.removeFirst();
+								AbstractGate tGate = tCurrentMultiplexer.getGate(tGateID);
+								Name tNextName = null;
+								
+								if(tGate != null) {
+									
+									if(tGate instanceof DirectDownGate){
+										// get the direct down gate
+										DirectDownGate tDirectDownGate = (DirectDownGate)tGate;
+										
+										// get the network interface to the neighbor
+										tNextNetworkBus = (Bus)tDirectDownGate.getNextNode();//getNetworkInterface();
+										
+										break;
+									}
+									
+									// jump to next gate
+									tCurrentMultiplexer = (Multiplexer)tGate.getNextNode();
+								} else {
+									
+									// no further data
+									break;
+								}
+							}
+						}
+					}
+					
+					/**
+					 * Get the QOS VALUEs of the next network BUS
+					 */
+					if(tNextNetworkBus != null){
+						Logging.log(this, "NEXT NETWORK BUS IS: " + tNextNetworkBus);
+						Logging.log(this, "   ..delay: " + tNextNetworkBus.getDelayMSec() + " ms");
+						Logging.log(this, "   ..bandwidth: " + tNextNetworkBus.getBandwidth() + " kbit/s");
+						Logging.log(this, "   ..utilization: " + " %");						
 					}
 				}
 			}else{
