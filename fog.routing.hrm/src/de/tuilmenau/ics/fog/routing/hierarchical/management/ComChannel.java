@@ -1049,6 +1049,13 @@ public class ComChannel
 				 */
 				storePacket(pPacket, true);
 
+				/**
+				 * Account network traffic
+				 */
+				// TODO: account network traffic
+				// TODO: account network traffic
+				// TODO: account network traffic
+				
 				// send the final packet (including multiplex-header)
 				return getParentComSession().write(tMultiplexHeader);
 			}else{
