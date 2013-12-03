@@ -47,7 +47,8 @@ public class ElectionLeave extends SignalingMessageElection implements ISignalin
 	public SignalingMessageHrm duplicate()
 	{
 		ElectionLeave tResult = new ElectionLeave(getSenderName(), getSenderPriority());
-		
+		sCreatedPackets--;
+
 		super.duplicate(tResult);
 
 		//Logging.log(this, "Created duplicate packet: " + tResult);

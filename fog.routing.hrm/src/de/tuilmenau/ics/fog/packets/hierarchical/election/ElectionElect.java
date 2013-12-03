@@ -47,7 +47,8 @@ public class ElectionElect extends SignalingMessageElection implements ISignalin
 	public SignalingMessageHrm duplicate()
 	{
 		ElectionElect tResult = new ElectionElect(getSenderName(), getSenderPriority());
-		
+		sCreatedPackets--;
+
 		super.duplicate(tResult);
 		
 		//Logging.log(this, "Created duplicate packet: " + tResult);

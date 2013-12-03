@@ -257,6 +257,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	public SignalingMessageHrm duplicate()
 	{
 		InvalidCoordinator tResult = new InvalidCoordinator(null, getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
+		sCreatedPackets--;
 		
 		super.duplicate(tResult);
 

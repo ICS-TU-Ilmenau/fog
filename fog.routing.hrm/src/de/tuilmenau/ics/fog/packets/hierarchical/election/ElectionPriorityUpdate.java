@@ -47,7 +47,8 @@ public class ElectionPriorityUpdate extends SignalingMessageElection implements 
 	public SignalingMessageHrm duplicate()
 	{
 		ElectionPriorityUpdate tResult = new ElectionPriorityUpdate(getSenderName(), getSenderPriority());
-		
+		sCreatedPackets--;
+
 		super.duplicate(tResult);
 
 		//Logging.log(this, "Created duplicate packet: " + tResult);

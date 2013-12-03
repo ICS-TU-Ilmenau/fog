@@ -59,6 +59,8 @@ public class SignalingMessageElection extends SignalingMessageHrm
 	 */
 	public void duplicate(SignalingMessageElection pOtherPacket)
 	{
+		sCreatedPackets--;
+
 		super.duplicate(pOtherPacket);
 		
 		// update the recorded source route

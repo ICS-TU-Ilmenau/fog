@@ -47,7 +47,8 @@ public class ElectionReturn extends SignalingMessageElection implements ISignali
 	public SignalingMessageHrm duplicate()
 	{
 		ElectionReturn tResult = new ElectionReturn(getSenderName(), getSenderPriority());
-		
+		sCreatedPackets--;
+
 		super.duplicate(tResult);
 
 		//Logging.log(this, "Created duplicate packet: " + tResult);

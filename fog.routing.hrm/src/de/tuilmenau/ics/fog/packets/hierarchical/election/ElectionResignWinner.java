@@ -81,7 +81,8 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 	public SignalingMessageHrm duplicate()
 	{
 		ElectionResignWinner tResult = new ElectionResignWinner(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
-		
+		sCreatedPackets--;
+
 		super.duplicate(tResult);
 
 		//Logging.log(this, "Created duplicate packet: " + tResult);

@@ -158,6 +158,8 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	 */
 	public void duplicate(SignalingMessageHrm pOtherPacket)
 	{
+		sCreatedPackets--;
+
 		// update the recorded source route
 		pOtherPacket.mSourceRoute = getSourceRoute();
 		

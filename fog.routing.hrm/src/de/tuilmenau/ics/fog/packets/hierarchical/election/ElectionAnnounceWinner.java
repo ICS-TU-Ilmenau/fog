@@ -80,7 +80,8 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	public SignalingMessageHrm duplicate()
 	{
 		ElectionAnnounceWinner tResult = new ElectionAnnounceWinner(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
-		
+		sCreatedPackets--;
+
 		super.duplicate(tResult);
 
 		//Logging.log(this, "Created duplicate packet: " + tResult);

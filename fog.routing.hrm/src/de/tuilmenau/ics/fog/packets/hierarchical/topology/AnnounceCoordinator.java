@@ -373,6 +373,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	public SignalingMessageHrm duplicate()
 	{
 		AnnounceCoordinator tResult = new AnnounceCoordinator(null, getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
+		sCreatedPackets--;
 		
 		super.duplicate(tResult);
 
