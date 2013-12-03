@@ -204,4 +204,76 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		
 		return tResult;
 	}
+	
+	public synchronized RoutingEntry getBestEntry(HRMID pDestination)
+	{
+		RoutingEntry tResult = null;
+		RoutingEntry tBestResultHopCount = null;
+		int tBestHopCount = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
+		
+		/**
+		 * Iterate over all routing entries and search for the best entry
+		 */
+		if(size() > 0){
+			for(RoutingEntry tEntry : this){
+				/**
+				 * Check if the destination belongs to the cluster of this entry
+				 */ 
+				if(pDestination.isCluster(tEntry.getDest())){
+					/**
+					 * MATCH: we have found a matching entry
+					 */
+					
+					/**
+					 * best HOP COUNT match
+					 */
+					if(tBestResultHopCount != null){
+						if(tEntry.getHopCount() < tBestHopCount){
+							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								Logging.log(this, "      ..found better matching entry: " + tEntry);
+							}
+
+							tBestResultHopCount = tEntry;
+							tBestHopCount = tEntry.getHopCount();
+						}else{
+							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								Logging.log(this, "      ..found worse entry: " + tEntry);
+							}
+						}
+					}else{
+						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							Logging.log(this, "      ..found first matching entry: " + tEntry);
+						}
+
+						tBestResultHopCount = tEntry;
+						tBestHopCount = tEntry.getHopCount();
+					}
+					
+					/**
+					 * best BANDWIDTH match
+					 */
+					//TODO
+					
+					/**
+					 * best DELAY match
+					 */
+					//TODO
+				}else{
+					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+						Logging.log(this, "      ..ignoring entry: " + tEntry);
+					}
+				}
+			}
+
+			//TODO: QoS values here
+
+			tResult = (tBestResultHopCount != null ? tBestResultHopCount.clone() : null);
+		}else{
+			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				Logging.log(this, "      ..found empty routing table");
+			}
+		}
+		
+		return tResult;
+	}
 }

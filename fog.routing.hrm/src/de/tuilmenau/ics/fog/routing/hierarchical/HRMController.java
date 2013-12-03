@@ -4992,12 +4992,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			// get the recorded route from the property
 			LinkedList<HRMID> tRecordedHRMIDs = tPropProbeRouting.getRecordedHops();
 			
-			Logging.log(this, "       ..detected a probe-routing connection(source=" + tPropProbeRouting.getSourceDescription() + " with " + tRecordedHRMIDs.size() + " recorded hops");
+			Logging.log(this, "     ..detected a probe-routing connection(source=" + tPropProbeRouting.getSourceDescription());
+			Logging.log(this, "       ..source: " + tRecordedHRMIDs.getFirst());
+			Logging.log(this, "       ..destination: " + tPropProbeRouting.getDest());
+			Logging.log(this, "       ..passed " + tPropProbeRouting.getRecordedHopCount() + " nodes");
+			Logging.log(this, "       ..passed " + tRecordedHRMIDs.size() + " HRM hops:");
 
 			// print the recorded route
 			int i = 0;
 			for(HRMID tHRMID : tRecordedHRMIDs){
-				Logging.log(this, "            [" + i + "]: " + tHRMID);
+				if(i % 2 == 0){
+					Logging.log(this, "          ..source[" + i + "]: " + tHRMID);
+				}else{
+					Logging.log(this, "        ..hop[" + i + "]: " + tHRMID);
+				}
 				i++;
 			}
 		}

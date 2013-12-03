@@ -13,6 +13,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This property is used to mark a probe-packet to allow the HRMController application detect this packet type
@@ -22,6 +23,15 @@ public class ProbeRoutingProperty extends AbstractProperty
 	private static final long serialVersionUID = 5927732011559094117L;
 	
 	private LinkedList<HRMID> mRecordedRoute = new LinkedList<HRMID>();
+	
+	private int mRecordedHopCount = 0;
+	
+	private HRMID mDestination = null;
+	
+	/**
+	 * Defines the max. hop count we allow
+	 */
+	public long MAX_HOP_COUNT = 32;
 	
 	/**
 	 * Stores the description of the source of the corresponding packet/connection
@@ -33,9 +43,10 @@ public class ProbeRoutingProperty extends AbstractProperty
 	 * 
 	 * @param pSource the description of the source of the corresponding packet/connection
 	 */
-	public ProbeRoutingProperty(String pSourceDescription)
+	public ProbeRoutingProperty(String pSourceDescription, HRMID pDestination)
 	{
 		mSourceDescription = pSourceDescription;
+		mDestination = pDestination;
 	}
 	
 	/**
@@ -55,7 +66,15 @@ public class ProbeRoutingProperty extends AbstractProperty
 	 */
 	public void addHop(HRMID pHRMID)
 	{
-		mRecordedRoute.add(pHRMID);
+		synchronized (mRecordedRoute) {
+			mRecordedRoute.add(pHRMID);
+			if(mRecordedRoute.size() > MAX_HOP_COUNT){
+				Logging.err(this, "The max. hop count " + MAX_HOP_COUNT + " was reached at: " + mRecordedRoute.size() + ", passed:");
+				for(HRMID tHRMID : mRecordedRoute){
+					Logging.log(this, "   .." + tHRMID);
+				}
+			}
+		}
 	}
 	
 	/**
@@ -73,6 +92,14 @@ public class ProbeRoutingProperty extends AbstractProperty
 	}
 
 	/**
+	 * Increases the recorded hop count 
+	 */
+	public void incHopCount()
+	{
+		mRecordedHopCount++;
+	}
+
+	/**
 	 * Return the list of recorded HRMIDs of passed hops
 	 * 
 	 * @return the list of HRMIDs
@@ -81,6 +108,26 @@ public class ProbeRoutingProperty extends AbstractProperty
 	public LinkedList<HRMID> getRecordedHops()
 	{
 		return (LinkedList<HRMID>) mRecordedRoute.clone();
+	}
+	
+	/**
+	 * Returns the recorded hop count
+	 * 
+	 * @return the recorded hop count
+	 */
+	public int getRecordedHopCount()
+	{
+		return mRecordedHopCount;
+	}
+	
+	/**
+	 * Returns the destination of this probe-request
+	 * 
+	 * @return the destination
+	 */
+	public HRMID getDest()
+	{
+		return mDestination;
 	}
 	
 	/**

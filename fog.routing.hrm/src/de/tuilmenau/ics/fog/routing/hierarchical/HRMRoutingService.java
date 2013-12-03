@@ -1342,88 +1342,34 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * Determine the next hop of the desired route
 			 *************************************/
 			HRMID tNextHopHRMID = null;
-			HRMID tThisHop = null;
-			boolean tIsLocalHRMID = false;
-			synchronized (mRoutingTable) {
-				/**
-				 * Iterate over all routing entries and search for a correct destination cluster
-				 */
-				int tBestDiffLevel = HRMConfig.Hierarchy.HEIGHT_LIMIT;
-				if(mRoutingTable.size() > 0){
-					RoutingEntry tLoopEntry = null;
-					for(RoutingEntry tEntry : mRoutingTable){
-						/**
-						 * Check if the destination belongs to the cluster of this entry
-						 */ 
-						if(tDestHRMID.isCluster(tEntry.getDest())){
-							if(!tEntry.isLocalLoop()){
-								int tCurDiffLevel = tDestHRMID.getPrefixDifference(tEntry.getDest());
-		
-								if(tCurDiffLevel < tBestDiffLevel){
-									// use the next hop from this entry
-									tNextHopHRMID = tEntry.getNextHop();
-									
-									// use the source from this entry
-									tThisHop = tEntry.getSource();
-									
-									if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-										Logging.log(this, "      ..found better matching entry: " + tEntry);
-									}
-								}else{
-									if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-										Logging.log(this, "      ..found uninteresting entry: " + tEntry);
-									}
-								}
-							}else{
-								// we found a local loop for this HRMID -> this HRMID is a local one
-								tLoopEntry = tEntry;
-							}
-						}else{
-							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-								Logging.log(this, "      ..ignoring entry: " + tEntry);
-							}
-						}
-					}
-					if(tNextHopHRMID == null){
-						if(tLoopEntry != null){
-							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-								Logging.log(this, "      ..found matching loop entry: " + tLoopEntry);
-							}
-							
-							//HINT: we don't use the next hop from the loop entry because we have already reached the destination node -> we try to contact the destination application later
-							
-							// use the source from this entry
-							tThisHop = tLoopEntry.getSource();
-
-							/**
-							 * Record the HRM based route
-							 */
-							recordHRMRoute(pRequirements, tDestHRMID, tDestHRMID);	
-
-							// mark HRMID as local
-							tIsLocalHRMID = true; 
-						}
-					}
-				}else{
-					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-						Logging.log(this, "      ..found empty routing table");
-					}
+			HRMID tLocalSourceHRMID = null;
+			boolean tDestHRMIDIsLocalHRMID = false;
+			RoutingEntry tRoutingEntryNextHop = mRoutingTable.getBestEntry(tDestHRMID);
+			if(tRoutingEntryNextHop != null){
+				if(!tRoutingEntryNextHop.isLocalLoop()){
+					// derive the next hop HRMID
+					tNextHopHRMID = tRoutingEntryNextHop.getNextHop();
+	
+					// derive the HRMID of this node - use the source from the found routing entry
+					tLocalSourceHRMID = tRoutingEntryNextHop.getSource();
 				}
+				
+				// mark HRMID as local
+				tDestHRMIDIsLocalHRMID = tRoutingEntryNextHop.isLocalLoop(); 
 			}
-			
+			/**
+			 * Record the HRM based route
+			 */
 			if(tNextHopHRMID != null){
-				/**
-				 * Record the HRM based route
-				 */
-				recordHRMRoute(pRequirements, tThisHop, tNextHopHRMID);	
+				recordHRMRoute(pRequirements, tLocalSourceHRMID, tNextHopHRMID, (tDestHRMIDIsLocalHRMID ? 0 : 1));	
 				
 				/**
 				 * Show debug output
 				 */
 				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 					Logging.log(this, "      ..NEXT HOP: " + tNextHopHRMID);
-					if(tThisHop != null){
-						Logging.log(this, "      ..VIA: " + tThisHop);
+					if(tLocalSourceHRMID != null){
+						Logging.log(this, "      ..VIA: " + tLocalSourceHRMID);
 					}
 				}
 			}else{
@@ -1431,7 +1377,6 @@ public class HRMRoutingService implements RoutingService, Localization
 					Logging.trace(this, "      ..haven't found next hop (HRMID) for destination: " + tDestHRMID);
 				}
 			}
-
 			
 			/*************************************
 			 * FIND NEXT L2 ADDRESS
@@ -1441,7 +1386,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			if (tNextHopHRMID != null){
 				tNextHopL2Address = getL2AddressFor(tNextHopHRMID);
 			}else{
-				if(!tIsLocalHRMID){
+				if(!tDestHRMIDIsLocalHRMID){
 					Logging.log(this, "getRoute() wasn't able to determine the HRMID of the next hop in order to route towards " + tDestHRMID.toString());
 				}
 			}
@@ -1486,7 +1431,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				/**
 				 * ERROR MESSAGE
 				 */
-				if((tNextHopHRMID != null) && (!tIsLocalHRMID)){
+				if((tNextHopHRMID != null) && (!tDestHRMIDIsLocalHRMID)){
 					Logging.err(this, "getRoute() wasn't able to determine the L2 address of the next hop " + tNextHopHRMID + " in the following mapping: ");
 
 					synchronized (mHRMIDToL2AddressMapping) {
@@ -1506,7 +1451,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			 *            use the following L2 based routing
 			 ***************************************************************************/
 			if(tNextHopHRMID == null){
-				if(tIsLocalHRMID){
+				if(tDestHRMIDIsLocalHRMID){
 					/**
 					 * Check if a destination application is encoded in the requirements and use it for routing
 					 */
@@ -1647,8 +1592,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * 
 	 * @param pRequirements the requirements of the getRoute() request
 	 * @param pHopHRMID the HRMID of the hop, which should be recorded
+	 * @param pHopCount
 	 */
-	private void recordHRMRoute(Description pRequirements, HRMID pThisHop, HRMID pNextHopHRMID)
+	private void recordHRMRoute(Description pRequirements, HRMID pSourceHRMID, HRMID pNextHopHRMID, int pHopCount)
 	{
 		if (HRMConfig.Routing.RECORD_ROUTE_FOR_PROBES){
 			// check if we have valid requirements
@@ -1667,10 +1613,10 @@ public class HRMRoutingService implements RoutingService, Localization
 					}
 					
 					/**
-					 * Store the HRMID of this node
+					 * Store the HRMID of the current node
 					 */
-					if(pThisHop != null){
-						tPropProbeRouting.addHop(pThisHop);
+					if(pSourceHRMID != null){
+						tPropProbeRouting.addHop(pSourceHRMID);
 					}
 					
 					/**
@@ -1678,18 +1624,25 @@ public class HRMRoutingService implements RoutingService, Localization
 					 */
 					if (!tDuplicate){
 						// don't store the same entry two times
-						if(!pNextHopHRMID.equals(pThisHop)){
+						if(!pNextHopHRMID.equals(pSourceHRMID)){
 							// store the HRMID
 							tPropProbeRouting.addHop(pNextHopHRMID);
 						}
 					}else{
 						// we have the same hop like last time
 					}
+					
+					/**
+					 * Increase the HOP COUNT
+					 */
+					if(pHopCount > 0){
+						tPropProbeRouting.incHopCount();
+					}					
 				}else{
-					Logging.warn(this, "Cannot record HRM Route (next=" + pNextHopHRMID + " via " + pThisHop + ") because the needed property wasn't found within the requirements");
+					Logging.warn(this, "Cannot record HRM Route (next=" + pNextHopHRMID + " via " + pSourceHRMID + ") because the needed property wasn't found within the requirements");
 				}
 			}else{
-				Logging.warn(this, "Cannot record HRM Route (next=" + pNextHopHRMID + " via " + pThisHop + ") because no requirements were found");
+				Logging.warn(this, "Cannot record HRM Route (next=" + pNextHopHRMID + " via " + pSourceHRMID + ") because no requirements were found");
 			}
 		}
 	}

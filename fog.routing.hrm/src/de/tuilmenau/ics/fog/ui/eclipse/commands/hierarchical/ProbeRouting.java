@@ -211,7 +211,7 @@ public class ProbeRouting extends EclipseCommand
 							 */
 							// create requirements with probe-routing property and DestinationApplication property
 							Description tConnectionReqs = new Description();
-							tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString()));
+							tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), tTargetNodeHRMID));
 							tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
 							// probe connection
 							Connection tConnection = null;
