@@ -277,6 +277,11 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		}
 	}
 	
+	public long getBandwidth()
+	{
+		return mBandwidth.longValue();
+	}
+	
 	public long getDelayMSec()
 	{
 		return Math.round(mDelaySec * 1000.0d);
