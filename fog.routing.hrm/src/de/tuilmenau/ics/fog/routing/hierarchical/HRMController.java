@@ -177,6 +177,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static LinkedList<HRMController> mRegisteredHRMControllers = new LinkedList<HRMController>();
 	
 	/**
+	 * Stores the amount of registered coordinators globally
+	 */
+	public static long sRegisteredCoordinators = 0;
+
+	/**
+	 * Stores the amount of unregistered coordinators globally
+	 */
+	public static long sUnregisteredCoordinators = 0;
+
+	/**
 	 * Stores an abstract routing graph (ARG), which provides an abstract overview about logical links between clusters/coordinator.
 	 */
 	private AbstractRoutingGraph<AbstractRoutingGraphNode, AbstractRoutingGraphLink> mAbstractRoutingGraph = new AbstractRoutingGraph<AbstractRoutingGraphNode, AbstractRoutingGraphLink>();
@@ -598,6 +608,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			mLocalCoordinators.add(pCoordinator);
 		}
 		
+		sRegisteredCoordinators++;
+		
 		// increase hierarchy node priority
 		increaseHierarchyNodePriority_KnownCoordinator(pCoordinator);
 
@@ -629,6 +641,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				mFormerLocalCoordinatorIDs.add(pCoordinator.getGUICoordinatorID());	
 			}
 		}
+
+		sUnregisteredCoordinators++;
 
 		// increase hierarchy node priority
 		decreaseHierarchyNodePriority_KnownCoordinator(pCoordinator);
@@ -2597,6 +2611,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// reset the stored HRMController database
 		mRegisteredHRMControllers = new LinkedList<HRMController>();
+		sRegisteredCoordinators = 0;
+		sUnregisteredCoordinators = 0;
 	}
 
 	/**
@@ -3378,11 +3394,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						Logging.err(this, "validateResults() detected invalid comm. channel to superior coordinator for: " + tCoordinator);
 					}
 				}
-				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
-					if(tComChannel.getPeerPriority().isUndefined()){
-						Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
-					}
-				}
+//				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
+//					if(tComChannel.getPeerPriority().isUndefined()){
+//						Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
+//					}
+//				}
 			}
 			
 			/**
