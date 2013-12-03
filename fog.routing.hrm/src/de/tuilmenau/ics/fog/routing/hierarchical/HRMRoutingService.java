@@ -1467,13 +1467,19 @@ public class HRMRoutingService implements RoutingService, Localization
 					}
 					
 					/**
-					 * Get the QOS VALUEs of the next network BUS
+					 * Get the QOS VALUEs of the next network BUS and record it
 					 */
 					if(tNextNetworkBus != null){
+						long tAdditionalDelay = tNextNetworkBus.getDelayMSec();
+						long tGottenBandwidth = tNextNetworkBus.getBandwidth();
+						double tGottenUtilization = 0.0;
+						
 						Logging.log(this, "NEXT NETWORK BUS IS: " + tNextNetworkBus);
-						Logging.log(this, "   ..delay: " + tNextNetworkBus.getDelayMSec() + " ms");
-						Logging.log(this, "   ..bandwidth: " + tNextNetworkBus.getBandwidth() + " kbit/s");
-						Logging.log(this, "   ..utilization: " + " %");						
+						Logging.log(this, "   ..delay: " + tAdditionalDelay + " ms");
+						Logging.log(this, "   ..bandwidth: " + tGottenBandwidth + " kbit/s");
+						Logging.log(this, "   ..utilization: " + " %");			
+						
+						recordHRMRouteQoS(pRequirements, tAdditionalDelay, tGottenBandwidth, tGottenUtilization);	
 					}
 				}
 			}else{
@@ -1696,6 +1702,37 @@ public class HRMRoutingService implements RoutingService, Localization
 		}
 	}
 
+	/**
+	 * Records the gotten QoS values
+	 * 
+	 * @param pRequirements the requirements of the getRoute() request
+	 * @param pAdditionalDelay the additional delay for the current next link
+	 * @param pGottenBandwidth the gotten bandwidth for the current next link
+	 * @param pGottenUtilization the gotten utilization for the current next link
+	 */
+	private void recordHRMRouteQoS(Description pRequirements, long pAdditionalDelay, long pGottenBandwidth, double pGottenUtilization)
+	{
+		if (HRMConfig.Routing.RECORD_ROUTE_FOR_PROBES){
+			// check if we have valid requirements
+			if (pRequirements != null){
+				// search for the ProbeRoutingProperty property
+				ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) pRequirements.get(ProbeRoutingProperty.class);
+				if(tPropProbeRouting != null) {
+					/**
+					 * Increase the DELAY
+					 */
+					if(pAdditionalDelay > 0){
+						tPropProbeRouting.addDelay(pAdditionalDelay);
+					}					
+				}else{
+					Logging.warn(this, "Cannot record HRM Route QoS because the needed property wasn't found within the requirements");
+				}
+			}else{
+				Logging.warn(this, "Cannot record HRM Route QoS because no requirements were found");
+			}
+		}
+	}
+	
 	/**
 	 * Determines the destination application from a requirements description
 	 * 

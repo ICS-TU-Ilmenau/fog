@@ -4996,6 +4996,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "       ..source: " + tRecordedHRMIDs.getFirst());
 			Logging.log(this, "       ..destination: " + tPropProbeRouting.getDest());
 			Logging.log(this, "       ..passed " + tPropProbeRouting.getRecordedHopCount() + " nodes");
+			Logging.log(this, "       ..E2E delay: " + tPropProbeRouting.getRecordedDelay() + " ms");
 			Logging.log(this, "       ..passed " + tRecordedHRMIDs.size() + " HRM hops:");
 
 			// print the recorded route

@@ -26,6 +26,8 @@ public class ProbeRoutingProperty extends AbstractProperty
 	
 	private int mRecordedHopCount = 0;
 	
+	private long mRecordedDelay = 0;
+	
 	private HRMID mDestination = null;
 	
 	/**
@@ -100,6 +102,16 @@ public class ProbeRoutingProperty extends AbstractProperty
 	}
 
 	/**
+	 * Adds delay to the recorded delay value
+	 * 
+	 * @param pAdditionalDelay the additional delay
+	 */
+	public void addDelay(long pAdditionalDelay)
+	{
+		mRecordedDelay += pAdditionalDelay;
+	}
+
+	/**
 	 * Return the list of recorded HRMIDs of passed hops
 	 * 
 	 * @return the list of HRMIDs
@@ -118,6 +130,16 @@ public class ProbeRoutingProperty extends AbstractProperty
 	public int getRecordedHopCount()
 	{
 		return mRecordedHopCount;
+	}
+	
+	/**
+	 * Returns the recorded overall delay
+	 * 
+	 * @return the recorded overall delay
+	 */
+	public long getRecordedDelay()
+	{
+		return mRecordedDelay;	
 	}
 	
 	/**
