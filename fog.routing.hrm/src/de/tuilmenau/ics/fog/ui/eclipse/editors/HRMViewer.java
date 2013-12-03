@@ -210,8 +210,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		Logging.log(this, "        ..ElectionReply: " + ElectionReply.sCreatedPackets);
 		Logging.log(this, "        ..ElectionResignWinner: " + ElectionResignWinner.sCreatedPackets);
 		Logging.log(this, "        ..ElectionReturn: " + ElectionReturn.sCreatedPackets);
-		Logging.log(this, "      ..AnnounceCoordinator: " + AnnounceCoordinator.sCreatedPackets);
-		Logging.log(this, "      ..InvalidCoordinator: " + InvalidCoordinator.sCreatedPackets);
+		Logging.log(this, "      ..AnnounceCoordinator: " + AnnounceCoordinator.sCreatedPackets + " registered coordinators: " + HRMController.sRegisteredCoordinators);
+		Logging.log(this, "      ..InvalidCoordinator: " + InvalidCoordinator.sCreatedPackets + " unregistered coordinators: " + HRMController.sUnregisteredCoordinators);
 		Logging.log(this, "      ..RouteReport: " + RouteReport.sCreatedPackets);
 		Logging.log(this, "      ..RouteShare: " + RouteShare.sCreatedPackets);
 	}
@@ -1480,8 +1480,16 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}else{
 			if(pEntity instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)pEntity;
+
+				String tBroadcasts = "";
+				if(tCoordinator.countAnnounces() > 0){
+					tBroadcasts += "  Announces=" + tCoordinator.countAnnounces();
+				}
+				if(tCoordinator.countInvalidations() > 0){
+					tBroadcasts += "  Invalidations=" + tCoordinator.countInvalidations();
+				}
 				
-				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + " Announces=" + tCoordinator.countAnnounces() + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts());
+				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + tBroadcasts + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts());
 			}else{
 				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + tNetworkInterface + tL0HRMID + tCountRelects);
 			}
