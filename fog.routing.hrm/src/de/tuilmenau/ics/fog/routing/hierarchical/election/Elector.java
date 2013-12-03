@@ -94,6 +94,11 @@ public class Elector implements Localization
 	private boolean mParentIsActiveMember = false;
 	
 	/**
+	 * Stores a counter for processed "re-elects"
+	 */
+	private long mCounterReelects = 0;
+	
+	/**
 	 * Stores the timestamp of the last ElectBroadcast signaling
 	 */
 	private Double mTimestampLastElectBroadcast =  new Double(0);
@@ -316,11 +321,23 @@ public class Elector implements Localization
 	}
 
 	/**
+	 * Counts the re-elects
+	 * 
+	 * @return the number of processed re-elects
+	 */
+	public long countReelects()
+	{
+		return mCounterReelects;
+	}
+	
+	/**
 	 * Restarts the election process for this cluster
 	 */
 	private void reelect()
 	{
 		if (head()){
+			mCounterReelects++;
+			
 			//reset ELECT BROADCAST timer
 			mTimestampLastElectBroadcast = new Double(0);
 			
