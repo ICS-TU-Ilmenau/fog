@@ -254,7 +254,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public void sharePhase()
 	{
 		boolean DEBUG_SHARE_PHASE_DETAILS = false;
-//		if(getHierarchyLevel().isHighest()){
+//		if(getHierarchyLevel().getValue() == 1){
 //			DEBUG_SHARE_PHASE_DETAILS = true;
 //		}
 		
@@ -291,6 +291,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					HRMID tPeerHRMID = tComChannel.getPeerHRMID();
 					if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){
 						
+//						DEBUG_SHARE_PHASE_DETAILS = false;
+//						if(getHierarchyLevel().getValue() == 1){
+//							if(tPeerHRMID.getLevelAddress(1) == 5){
+//								DEBUG_SHARE_PHASE_DETAILS = true;
+//							}
+//						}
 						
 						/**
 						 * copy the received shared routing table from the superior coordinator
@@ -449,7 +455,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * Get the route from the local HRG from the peer to its sibling	
 								 */
 								if(HRMConfig.Routing.MULTIPATH_ROUTING){
-									LinkedList<RoutingEntry> tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
+									RoutingTable tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
 									if (DEBUG_SHARE_PHASE_DETAILS){
 										Logging.log(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to " + tPossibleDestination);
 									}
