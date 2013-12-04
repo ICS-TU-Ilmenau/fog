@@ -2312,8 +2312,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 * ignore routes to cluster this nodes belong to
 					 * 		=> such routes are already known based on neighborhood detection of the L0 comm. channels (Clusters) 
 					 */				
-					if(!isLocalCluster(tNewLocalRoutingEntry.getDest())){
-						if(tNewLocalRoutingEntry.getHopCount() > 1){
+					if((!tNewLocalRoutingEntry.getDest().isClusterAddress()) || (!isLocalCluster(tNewLocalRoutingEntry.getDest()))){
+						if((!tNewLocalRoutingEntry.getDest().isClusterAddress()) || (tNewLocalRoutingEntry.getHopCount() > 1)){
 							// patch the source with the correct local sender address
 							tNewLocalRoutingEntry.setSource(getLocalSenderAddress(tNewLocalRoutingEntry.getSource(), tNewLocalRoutingEntry.getNextHop()));
 							tNewLocalRoutingEntry.extendCause(pCause);
@@ -3476,10 +3476,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * detect local neighborhood and update HRG/HRMRouting
 			 */
 			for (ClusterMember tClusterMember : getAllL0ClusterMembers()) {
-				LinkedList<ComChannel> tChannels = tClusterMember.getComChannels();
-				for(ComChannel tComChannel : tChannels){
-					tComChannel.detectNeighborhood();
-				}
+				tClusterMember.detectNeighborhood();
 			}
 			
 			/**

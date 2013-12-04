@@ -736,7 +736,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pHRMID the HRMID for which the L2Address has to be determined
 	 * @return the resulting L2Address, returns "null" if no mapping was found
 	 */
-	private L2Address getL2AddressFor(HRMID pHRMID)
+	public L2Address getL2AddressFor(HRMID pHRMID)
 	{
 		L2Address tResult = null;
 		
