@@ -1800,7 +1800,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						 * Column 3:  utilization
 						 */
 						if (tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION){
-							tTableRow.setText(3,  Float.toString(tEntry.getUtilization() * 100));
+							tTableRow.setText(3,  Double.toString(tEntry.getUtilization() * 100));
 						}else{
 							tTableRow.setText(3, "N/A");
 						}
