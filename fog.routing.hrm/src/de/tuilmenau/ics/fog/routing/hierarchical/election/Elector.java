@@ -233,6 +233,7 @@ public class Elector implements Localization
 				tLevelList.remove(pClusterMember);
 				Logging.log(this, "    ..removed");
 				mHRMController.addGUIDescriptionNodeElectionStateChange("\n - " + pClusterMember + " <== " + pCause);
+				pClusterMember.getElector().mParentIsActiveMember = false;
 			}else{
 				Logging.log(this, "    ..NOT removed");
 			}
@@ -278,7 +279,7 @@ public class Elector implements Localization
 	
 
 	/**
-	 * EVENT: elector is invalidated
+	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
 	 */
 	public void eventInvalidation()
 	{
@@ -287,6 +288,23 @@ public class Elector implements Localization
 		if(mParentIsActiveMember){
 			Logging.log(this, "   ..removing as active ClusterMember");
 			removeActiveClusterMember(mParent, this + "::eventInvalidation()");
+			
+			/**
+			 * Has a local coordinator lost its membership for a foreign cluster? -> we have to active another local CoordinatorAsClusterMember instance
+			 */
+			if(mParent instanceof CoordinatorAsClusterMember){
+				mHRMController.addGUIDescriptionNodeElectionStateChange("\n * active ClusterMember gots invalidated: " + mParent);
+
+				Logging.log(this, "    ..active CoordinatorAsClusterMember gots invalidated: " + mParent);
+				Logging.log(this, "    ..will reactive all alternative CoordinatorAsClusterMember at this hierarchy levels..");
+				LinkedList<CoordinatorAsClusterMember> tCoordinatorAsClusterMembers = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
+				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tCoordinatorAsClusterMembers){
+					if(!tCoordinatorAsClusterMember.equals(mParent)){
+						Logging.log(this, "      ..reactivating link for: " + tCoordinatorAsClusterMember);
+						tCoordinatorAsClusterMember.getComChannelToClusterHead().setLinkActivation(true, this + "::eventInvalidation()");
+					}
+				}
+			}
 		}
 	}
 
@@ -1087,10 +1105,15 @@ public class Elector implements Localization
 								for(ClusterMember tClusterMember : tLevelList){
 									Elector tElectorClusterMember = tClusterMember.getElector();
 									
-									if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-										Logging.log(this, "      ..leave all alternative election processes in relation to foreign election: " + tElectorClusterMember);
+									/**
+									 * don't leave this election: is the parent the alternative?
+									 */ 
+									if(!mParent.equals(tClusterMember)){
+										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+											Logging.log(this, "      ..leave all alternative election processes in relation to foreign election: " + tElectorClusterMember);
+										}
+										tElectorClusterMember.leaveWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()_2");
 									}
-									tElectorClusterMember.leaveWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()_2");
 								}								
 							}else{
 								// no active ClusterMember is known and the priority update affects only the current ClusterMember
