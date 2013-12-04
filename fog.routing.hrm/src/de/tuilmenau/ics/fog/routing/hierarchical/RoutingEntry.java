@@ -42,7 +42,7 @@ public class RoutingEntry implements RouteSegment
 	/**
 	 * Defines a constant value for "no utilization".
 	 */
-	public static final float NO_UTILIZATION = 0;
+	public static final double NO_UTILIZATION = 0;
 
 	/**
 	 * Defines a constant value for "no delay".
@@ -83,7 +83,7 @@ public class RoutingEntry implements RouteSegment
 	/**
 	 * Stores the utilization[%] of the described route.
 	 */
-	private float mUtilization = NO_UTILIZATION;
+	private double mUtilization = NO_UTILIZATION;
 	
 	/**
 	 * Stores the minimum additional delay[ms] the described route causes.
@@ -170,7 +170,7 @@ public class RoutingEntry implements RouteSegment
 	 * @param pCause the cause for this routing table entry
 	 */
 	@SuppressWarnings("unchecked")
-	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, LinkedList<String> pCause)
+	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, double pUtilization, long pMinDelay, long pMaxDataRate, LinkedList<String> pCause)
 	{
 		setDest(pDestination);
 		setSource(pSource);
@@ -198,7 +198,7 @@ public class RoutingEntry implements RouteSegment
 	 * @param pMaxDataRate the maximum data rate the described route might provide
 	 * @param pCause the cause for this routing table entry
 	 */
-	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
+	private RoutingEntry(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, double pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		this(pSource, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate, (LinkedList<String>)null);
 		if(pCause != null){
@@ -276,7 +276,7 @@ public class RoutingEntry implements RouteSegment
 	 * @param pMaxDataRate the maximum data rate the described route might provide
 	 * @param pCause the cause for this routing table entry
 	 */
-	public static RoutingEntry create(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, float pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
+	public static RoutingEntry create(HRMID pSource, HRMID pDestination, HRMID pNextHop, int pHopCount, double pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		// create instance
 		RoutingEntry tEntry = new RoutingEntry(pSource, pDestination, pNextHop, pHopCount, pUtilization, pMinDelay, pMaxDataRate, pCause);
@@ -576,15 +576,35 @@ public class RoutingEntry implements RouteSegment
 	}
 	
 	/**
+	 * Sets a new utilization value
+	 * 
+	 * @param pNewUtilization the new utilization value
+	 */
+	public void setUtilization(double pNewUtilization)
+	{
+		mUtilization = pNewUtilization;
+	}
+	
+	/**
 	 * Returns the utilization of this route
 	 *  
 	 * @return the utilization
 	 */
-	public float getUtilization()
+	public double getUtilization()
 	{
 		return mUtilization;
 	}
 	
+	/**
+	 * Sets a new min. delay value.
+	 * 
+	 * @param pNewMinDelay the new min. delay
+	 */
+	public void setMinDelay(long pNewMinDelay)
+	{
+		mMinDelay = pNewMinDelay;
+	}
+
 	/**
 	 * Returns the minimum additional delay this route causes.
 	 * 
@@ -593,6 +613,16 @@ public class RoutingEntry implements RouteSegment
 	public long getMinDelay()
 	{
 		return mMinDelay;
+	}
+
+	/**
+	 * Sets a new max. data rate
+	 * 
+	 * @param pNewMaxDataRate the new max. data rate
+	 */
+	public void setMaxDataRate(long pNewMaxDataRate)
+	{
+		mMaxDataRate = pNewMaxDataRate;
 	}
 	
 	/**
