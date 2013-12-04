@@ -856,7 +856,28 @@ public class RoutingEntry implements RouteSegment
 	}
 	
 	/**
-	 * Returns if both objects address the same cluster/coordinator
+	 * Returns true if both routing entries describe the same route, ignoring the hop count
+	 * 
+	 * @param pOther the other routing entry
+	 * 
+	 * @return true or false
+	 */
+	public boolean equalsOutgoingRoute(RoutingEntry pOther)
+	{
+		boolean tResult = false;
+		
+		if(((getDest() == null) || (pOther.getDest() == null) || (getDest().equals(pOther.getDest()))) &&
+		   ((getNextHop() == null) || (pOther.getNextHop() == null) || (getNextHop().equals(pOther.getNextHop()))) &&
+		   ((getSource() == null) || (pOther.getSource() == null) || (getSource().equals(pOther.getSource())))
+		   ){
+			tResult = true;
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns true if both routing entries describe the same route with the same hop count
 	 * 
 	 * @return true or false
 	 */
@@ -867,9 +888,7 @@ public class RoutingEntry implements RouteSegment
 		if(pObj instanceof RoutingEntry){
 			RoutingEntry tOther = (RoutingEntry)pObj;
 			
-			if(((getDest() == null) || (tOther.getDest() == null) || (getDest().equals(tOther.getDest()))) &&
-			   ((getNextHop() == null) || (tOther.getNextHop() == null) || (getNextHop().equals(tOther.getNextHop()))) &&
-			   ((getSource() == null) || (tOther.getSource() == null) || (getSource().equals(tOther.getSource()))) &&
+			if((equalsOutgoingRoute(tOther)) &&
 			   (getHopCount() == tOther.getHopCount()) //&&
 			   /*((getNextHopL2Address() == null) || (tOther.getNextHopL2Address() == null) || (getNextHopL2Address().equals(tOther.getNextHopL2Address())))*/){
 				//Logging.trace(this, "  ..true");
