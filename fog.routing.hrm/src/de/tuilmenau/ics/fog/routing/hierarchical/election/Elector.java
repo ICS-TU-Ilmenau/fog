@@ -454,9 +454,7 @@ public class Elector implements Localization
 					reelect("startElection() because of " + pCause);
 					break;
 				case ELECTING:
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "Election is already running");
-					}
+					Logging.log(this, "Election is already running");
 					break;
 				case ERROR:
 					Logging.err(this, "Election is in ERROR state");
@@ -1573,7 +1571,14 @@ public class Elector implements Localization
 			/**
 			 * Trigger: election
 			 */
-			startElection("received new priority " + pComChannel.getPeerPriority().getValue() + " from " + pComChannel);
+			reelect("eventReceivedPRIORITY_UPDATE(): received new priority " + pComChannel.getPeerPriority().getValue() + " from " + pComChannel);
+		}else{
+			/**
+			 * If the election wasn't finished yet, maybe all needed priorities are available now and the election could be finished.
+			 */
+			if(!finished()){
+				checkForWinner("eventReceivedPRIORITY_UPDATE(): received new priority " + pComChannel.getPeerPriority().getValue() + " from " + pComChannel);
+			}
 		}
 
 		/**
@@ -1697,6 +1702,8 @@ public class Elector implements Localization
 							 * are we still waiting for the Election priority of some cluster member?
 							 */
 							if ((tPriority == null) || (tPriority.isUndefined())){
+								Logging.log(this, "		   ..missing peer priority for: " + tComChannel);
+								
 								// election is incomplete
 								tElectionComplete = false;
 							
@@ -1732,9 +1739,10 @@ public class Elector implements Localization
 								}else{
 									Logging.err(this, "External winner is unknown but also I am not the winner");
 								}
-								eventElectionLost("checkForWinner() [winner: " + tExternalWinner + "] <== " + pCause);
+								eventElectionLost("checkForWinner() [" + tActiveChannels.size() + " active channels, winner: " + tExternalWinner + "] <== " + pCause);
 							}
 						}else{
+							Logging.log(this, "	        ..incomplete election");
 							// election is incomplete: we are still waiting for some priority value(s)
 						}
 					}else{
