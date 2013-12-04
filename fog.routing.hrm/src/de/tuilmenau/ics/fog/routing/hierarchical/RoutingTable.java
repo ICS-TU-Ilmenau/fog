@@ -102,7 +102,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				tResult = true;
 			}else{
 				/**
-				 * Update the timeout value
+				 * Update TIMEOUT
 				 */
 				if(pRoutingTableEntry.getTimeout() > tFoundDuplicate.getTimeout()){
 					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
@@ -113,8 +113,25 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					
 					tResult = true;
 				}else{
-					//Logging.log(this, "Cannot update timeout value: " + tFoundDuplicate.getTimeout());
+					if (tFoundDuplicate.getTimeout() > 0){
+						//Logging.err(this, "Expected monotonous growing timeout values for: " + pRoutingTableEntry);
+					}
 				}
+				
+				/**
+				 * Update DELAY
+				 */
+				tFoundDuplicate.setMinDelay(pRoutingTableEntry.getMinDelay());
+
+				/**
+				 * Update BANDWIDTH
+				 */
+				tFoundDuplicate.setMaxDataRate(pRoutingTableEntry.getMaxDataRate());
+
+				/**
+				 * Update UTILIZATION
+				 */
+				tFoundDuplicate.setUtilization(pRoutingTableEntry.getUtilization());
 			}
 			
 			/**
@@ -235,6 +252,13 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		return tResult;
 	}
 	
+	/**
+	 * Determines the best entry for the given destination and QoS values
+	 * 
+	 * @param pDestination the desired destination
+	 * 
+	 * @return the found best entry
+	 */
 	public synchronized RoutingEntry getBestEntry(HRMID pDestination)
 	{
 		RoutingEntry tResult = null;
