@@ -32,6 +32,8 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	public synchronized boolean addEntry(RoutingEntry pRoutingTableEntry)
 	{
 		boolean tResult = false;
+		boolean tRouteIsTooLong = false;
+		RoutingEntry tOldTooLongRoute = null;
 		
 		if(pRoutingTableEntry.getDest() == null){
 			Logging.err(this, "addEntry() got an entry with an invalid destination");
@@ -51,8 +53,27 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		RoutingEntry tFoundDuplicate = null;
 		if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
 			for (RoutingEntry tEntry: this){
+				/**
+				 * Search for a SHORTER or LONGER ROUTE DESCRIPTION
+				 */
+				if(tEntry.equalsOutgoingRoute(pRoutingTableEntry)){
+					if(tEntry.getHopCount() < pRoutingTableEntry.getHopCount()){
+						// drop the given routing entry because we already know that the actual route is shorter
+						tRouteIsTooLong = true;
+						
+						break;
+					}
+					if(tEntry.getHopCount() > pRoutingTableEntry.getHopCount()){					
+						tOldTooLongRoute = tEntry;
+					}
+				}
+				
+				/**
+				 * Search for DUPLICATE
+				 */
 				if(tEntry.equals(pRoutingTableEntry)){
 					//Logging.log(this, "REMOVING DUPLICATE: " + tEntry);
+					
 					tFoundDuplicate = tEntry;
 					
 					break;						
@@ -60,38 +81,47 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			}
 		}
 		
-		/**
-		 * Add the entry to the local routing table
-		 */
-		if (tFoundDuplicate == null){
-			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-				Logging.log(this, "ADDING ROUTE      : " + pRoutingTableEntry);
-			}
-
-			// add the route to the routing table
-			if(pRoutingTableEntry.isLocalLoop()){
-				//Logging.log(null, "Adding as first: " + pRoutingTableEntry + ", cause=" + pRoutingTableEntry.getCause());
-				addFirst(pRoutingTableEntry.clone());
-			}else{
-				//Logging.log(null, "Adding as last: " + pRoutingTableEntry + ", cause=" + pRoutingTableEntry.getCause());
-				add(pRoutingTableEntry.clone());
-			}
-			
-			tResult = true;
-		}else{
+		if(!tRouteIsTooLong){
 			/**
-			 * Update the timeout value
+			 * Add the entry to the local routing table
 			 */
-			if(pRoutingTableEntry.getTimeout() > tFoundDuplicate.getTimeout()){
+			if (tFoundDuplicate == null){
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-					Logging.log(this, "Updating timeout for: " + tFoundDuplicate + " to: " + pRoutingTableEntry.getTimeout());
+					Logging.log(this, "ADDING ROUTE      : " + pRoutingTableEntry);
 				}
-				tFoundDuplicate.setTimeout(pRoutingTableEntry.getTimeout());
-				tFoundDuplicate.setCause(pRoutingTableEntry.getCause());
+	
+				// add the route to the routing table
+				if(pRoutingTableEntry.isLocalLoop()){
+					//Logging.log(null, "Adding as first: " + pRoutingTableEntry + ", cause=" + pRoutingTableEntry.getCause());
+					addFirst(pRoutingTableEntry.clone());
+				}else{
+					//Logging.log(null, "Adding as last: " + pRoutingTableEntry + ", cause=" + pRoutingTableEntry.getCause());
+					add(pRoutingTableEntry.clone());
+				}
 				
 				tResult = true;
 			}else{
-				//Logging.log(this, "Cannot update timeout value: " + tFoundDuplicate.getTimeout());
+				/**
+				 * Update the timeout value
+				 */
+				if(pRoutingTableEntry.getTimeout() > tFoundDuplicate.getTimeout()){
+					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+						Logging.log(this, "Updating timeout for: " + tFoundDuplicate + " to: " + pRoutingTableEntry.getTimeout());
+					}
+					tFoundDuplicate.setTimeout(pRoutingTableEntry.getTimeout());
+					tFoundDuplicate.setCause(pRoutingTableEntry.getCause());
+					
+					tResult = true;
+				}else{
+					//Logging.log(this, "Cannot update timeout value: " + tFoundDuplicate.getTimeout());
+				}
+			}
+			
+			/**
+			 * Delete an old routing entry which describes the route as too long
+			 */
+			if(tOldTooLongRoute != null){
+				delEntry(tOldTooLongRoute);
 			}
 		}
 		
