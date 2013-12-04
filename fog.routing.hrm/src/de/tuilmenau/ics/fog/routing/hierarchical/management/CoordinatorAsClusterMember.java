@@ -229,6 +229,11 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	{
 		Logging.log(this, "EVENT: eventAssignedHRMID with assigned HRMID " + pHRMID.toString() + ", source comm. channel: " + pSourceComChannel);
 
+		if((pHRMID != null) && (!pHRMID.isZero())){
+			// setHRMID()
+			super.eventAssignedHRMID(pSourceComChannel, pHRMID);
+		}
+		
 		if(isActiveMembership()){
 			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 				Logging.log(this, "     ..continuing the address distribution process via the coordinator: " + mCoordinator);
