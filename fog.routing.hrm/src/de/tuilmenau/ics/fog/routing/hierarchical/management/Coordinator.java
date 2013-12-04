@@ -355,6 +355,36 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								}
 							}
 							
+							/*********************************************************************
+							 * SHARE 2: routes to known siblings of the peer at hierarchy level 0
+							 *********************************************************************/
+							// find all siblings of the peer
+							//HINT: the peer is one hierarchy level below this coordinator
+							if(mParentCluster.countConnectedRemoteClusterMembers() > 1){
+								LinkedList<HRMID> tKnownPeerSiblings = mHRMController.getSiblingsHRG(tPeerHRMID);
+								for(HRMID tPossibleDestination : tKnownPeerSiblings){
+									if (DEBUG_SHARE_PHASE_DETAILS){
+										Logging.log(this, "    ..possible sibling destination for " + tPeerHRMID + " is: " + tPossibleDestination);
+										Logging.log(this, "      ..determining path from " + tPeerHRMID + " to " + tPossibleDestination);
+									}
+	
+									/**
+									 * Get the route from the local HRG from the peer to its sibling	
+									 */
+									RoutingEntry tRoutingEntryToPossibleDestination = mHRMController.getRoutingEntryHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
+									
+									/**
+									 * Add the found routing entry to the shared routing table
+									 */
+									if(tRoutingEntryToPossibleDestination != null){
+										tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
+										// set the L2Address of the next hop again
+										tRoutingEntryToPossibleDestination.setNextHopL2Address(mHRMController.getHRS().getL2AddressFor(tRoutingEntryToPossibleDestination.getNextHop()));
+										tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
+									}
+								}
+							}
+
 						}else{
 							if (DEBUG_SHARE_PHASE_DETAILS){
 								Logging.log(this, "  ..sharing routes with coordinator: " + tPeerHRMID);
@@ -477,7 +507,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									 * Add the found routing entry to the shared routing table
 									 */
 									if(tRoutingEntryToPossibleDestination != null){
-										// reset L2Address for next hop
 										tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
 										tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
 									}
