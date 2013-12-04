@@ -183,6 +183,33 @@ public class AbstractRoutingGraphLink implements Serializable
 	}
 	
 	/**
+	 * Updates the stored QoS values
+	 * 
+	 * @param pRoutingEntry the routing entry with the QoS update
+	 */
+	public void updateQoS(RoutingEntry pRoutingEntry)
+	{
+		if(mLinkType == LinkType.ROUTE){
+			RoutingEntry tRoutingEntry = (RoutingEntry) mRoute.getFirst();
+
+			/**
+			 * Update DELAY
+			 */
+			tRoutingEntry.setMinDelay(pRoutingEntry.getMinDelay());
+
+			/**
+			 * Update BANDWIDTH
+			 */
+			tRoutingEntry.setMaxDataRate(pRoutingEntry.getMaxDataRate()); 
+
+			/**
+			 * Update UTILIZATION
+			 */
+			tRoutingEntry.setUtilization(pRoutingEntry.getUtilization());
+		}
+	}
+
+	/**
 	 * Returns the reference counter
 	 * 
 	 * @return the reference counter
