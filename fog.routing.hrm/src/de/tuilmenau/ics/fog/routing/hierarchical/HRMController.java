@@ -3315,12 +3315,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
 					 */
-					if(tTimeWithFixedHierarchyData > HRMConfig.Hierarchy.COORDINATOR_TIMEOUT){
+					if(tTimeWithFixedHierarchyData > 2 * HRMConfig.Hierarchy.COORDINATOR_TIMEOUT){
 						GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
 						
 						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 						Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
-						Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + (HRMConfig.Hierarchy.COORDINATOR_TIMEOUT) + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
+						Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + (HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2) + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
 						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 						
 						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
@@ -4002,14 +4002,21 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							if(tSpentTime2 > 10){
 								Logging.log(this, "      ..registerLinkHRG()::getEndpoints() took " + tSpentTime2 + " ms for processing " + pRoutingEntry);
 							}
-							if (((tEndPoints.getFirst().equals(pFrom)) && (tEndPoints.getSecond().equals(pTo))) ||
-								((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
+							if (((tEndPoints.getFirst().equals(pFrom)) && (tEndPoints.getSecond().equals(pTo))) || ((tEndPoints.getFirst().equals(pTo)) && (tEndPoints.getSecond().equals(pFrom)))){
 								tKnownLink.incRefCounter();
 								tLinkAlreadyKnown = true;
 								
+								/**
+								 * Update TIMEOUT
+								 */
 								if(pRoutingEntry.getTimeout() > 0){
 									tKnownLink.setTimeout(pRoutingEntry.getTimeout());
 								}
+								
+								/**
+								 * Update QOS VALUES
+								 */
+								tKnownLink.updateQoS(pRoutingEntry);
 								
 								// it's time to update the HRG-GUI
 								notifyHRGGUI(tKnownLink);
