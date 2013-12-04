@@ -374,7 +374,7 @@ public class ComChannel
 	 * 		  IMPORTANT: This is the main function for determining capacities and link usage
 	 */
 	private int mCallsEventNewPeerHRMIDs = 0;
-	private void eventNewPeerHRMIDs()
+	public void eventNewPeerHRMIDs()
 	{
 		if (mParent.getHierarchyLevel().isBaseLevel()){
 			if(mParent instanceof ClusterMember){
@@ -449,15 +449,17 @@ public class ComChannel
 										tGeneralizedNeighborHRMID = getPeerHRMID();
 									}
 									if(tGeneralizedNeighborHRMID.isClusterAddress()){
-										if(!mHRMController.isLocalCluster(tGeneralizedNeighborHRMID)){
+										if(!tNeighborHRMID.equals(getPeerHRMID())){
 											/**
 											 * HRM routing table entry
 											 */
-											// create the new routing table entry
-											tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), 0 /* TODO */, 10 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, null);
-											tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
-											// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-											tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+											if(!mHRMController.isLocalCluster(tGeneralizedNeighborHRMID)){
+												// create the new routing table entry
+												tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), 0 /* TODO */, 10 /* TODO */, RoutingEntry.INFINITE_DATARATE /* TODO */, null);
+												tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
+												// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+												tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+											}
 											
 											/**
 											 * HRG links: forward and backward link to the direct neighbor cluster
