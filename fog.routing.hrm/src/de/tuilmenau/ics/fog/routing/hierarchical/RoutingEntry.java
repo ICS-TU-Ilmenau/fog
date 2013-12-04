@@ -869,7 +869,8 @@ public class RoutingEntry implements RouteSegment
 			
 			if(((getDest() == null) || (tOther.getDest() == null) || (getDest().equals(tOther.getDest()))) &&
 			   ((getNextHop() == null) || (tOther.getNextHop() == null) || (getNextHop().equals(tOther.getNextHop()))) &&
-			   ((getSource() == null) || (tOther.getSource() == null) || (getSource().equals(tOther.getSource()))) //&&
+			   ((getSource() == null) || (tOther.getSource() == null) || (getSource().equals(tOther.getSource()))) &&
+			   (getHopCount() == tOther.getHopCount()) //&&
 			   /*((getNextHopL2Address() == null) || (tOther.getNextHopL2Address() == null) || (getNextHopL2Address().equals(tOther.getNextHopL2Address())))*/){
 				//Logging.trace(this, "  ..true");
 				return true;
