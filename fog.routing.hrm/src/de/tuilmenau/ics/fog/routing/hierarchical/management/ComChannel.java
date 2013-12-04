@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
@@ -359,7 +360,7 @@ public class ComChannel
 				 * Inform the parent ClusterMember about the new peer HRMIDs
 				 */
 				if(tPeerHRMIDIsNew){
-					eventNewPeerHRMIDs();
+					detectNeighborhood();
 				}
 			}else{
 				throw new RuntimeException(this + "::setPeerHRMID() got a zero HRMID as peer HRMID");
@@ -370,11 +371,11 @@ public class ComChannel
 	}
 			
 	/**
-	 * EVENT: new neighbor HRMIDs update
+	 * Detects the local neighborhood.
 	 * 		  IMPORTANT: This is the main function for determining capacities and link usage
 	 */
 	private int mCallsEventNewPeerHRMIDs = 0;
-	public void eventNewPeerHRMIDs()
+	public void detectNeighborhood()
 	{
 		if (mParent.getHierarchyLevel().isBaseLevel()){
 			if(mParent instanceof ClusterMember){
@@ -392,6 +393,8 @@ public class ComChannel
 				 * Continue only for base hierarchy level
 				 */
 				ClusterMember tParentClusterMember = (ClusterMember)mParent;
+				Bus tPhysicalBus = (Bus)tParentClusterMember.getBaseHierarchyLevelNetworkInterface().getBus();
+				
 				if(tParentClusterMember.getHierarchyLevel().isBaseLevel()){
 					// determine the HRMID of this node for this L0 cluster
 					HRMID tThisNodeClusterMemberHRMID = tParentClusterMember.getL0HRMID();
@@ -459,6 +462,10 @@ public class ComChannel
 												tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
 												// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 												tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+												
+												// set the timeout for the found route to neighborhood
+												double tTimeoffset = 2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
+												tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
 											}
 											
 											/**
@@ -484,6 +491,9 @@ public class ComChannel
 										tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_4(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
 										// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 										tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+										// set the timeout for the found route to neighborhood
+										double tTimeoffset = 2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
+										tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
 			
 										/**
 										 * HRG links: forward and backward link to the direct neighbor
@@ -575,6 +585,8 @@ public class ComChannel
 			}else{
 				Logging.err(this, "eventNewPeerHRMID()(" + mCallsEventNewPeerHRMIDs + ") expected a ClusterMember as parent, parent is: " + mParent);
 			}
+		}else{
+			// higher hierarchy level -> this function is only needed for node-2-node neighborhood and not cluster-2-cluster
 		}
 	}
 
@@ -834,7 +846,7 @@ public class ComChannel
 		 * Inform the parent ClusterMember about the new peer HRMIDs
 		 */
 		if(mParent instanceof ClusterMember){
-			eventNewPeerHRMIDs();
+			detectNeighborhood();
 		}else{
 			Logging.err(this, "eventReceivedAnnounceHRMIDs() expected a ClusterMember as parent, parent is: " + mParent);
 		}
@@ -1126,7 +1138,7 @@ public class ComChannel
 		 * Trigger: new peer HRMIDs because we got a new HRMID assigned
 		 */
 		if(mParent.getHierarchyLevel().isBaseLevel()){
-			eventNewPeerHRMIDs();
+			detectNeighborhood();
 		}
 	}
 
@@ -1468,7 +1480,7 @@ public class ComChannel
 			 * Trigger: new peer HRMIDs because we got a new HRMID assigned
 			 */
 			if(mParent.getHierarchyLevel().isBaseLevel()){
-				eventNewPeerHRMIDs();
+				detectNeighborhood();
 			}
 			
 			return true;

@@ -1234,17 +1234,17 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						}
 					});					
 					MenuItem tMenuItem10 = new MenuItem(tMenu, SWT.NONE);
-					tMenuItem10.setText("EVENT: new peer HRMIDs");
+					tMenuItem10.setText("Detect neighborhood");
 					tMenuItem10.addSelectionListener(new SelectionListener() {
 						public void widgetDefaultSelected(SelectionEvent pEvent)
 						{
 							//Logging.log(this, "Default selected: " + pEvent);
-							eventNewPeerHRMIDS(tfComChannels.get(tSelectedIndex));
+							detectNeighborhood(tfComChannels.get(tSelectedIndex));
 						}
 						public void widgetSelected(SelectionEvent pEvent)
 						{
 							//Logging.log(this, "Widget selected: " + pEvent);
-							eventNewPeerHRMIDS(tfComChannels.get(tSelectedIndex));
+							detectNeighborhood(tfComChannels.get(tSelectedIndex));
 						}
 					});					
 					
@@ -1321,9 +1321,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			
 	}
 	
-	private void eventNewPeerHRMIDS(ComChannel pComChannel)
+	private void detectNeighborhood(ComChannel pComChannel)
 	{
-		pComChannel.eventNewPeerHRMIDs();
+		pComChannel.detectNeighborhood();
 	}
 	
 	private void showPeerHRMIDs(ComChannel pComChannel)

@@ -3473,15 +3473,26 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		if(GUI_USER_CTRL_REPORT_TOPOLOGY){
 			/**
+			 * detect local neighborhood and update HRG/HRMRouting
+			 */
+			for (ClusterMember tClusterMember : getAllL0ClusterMembers()) {
+				LinkedList<ComChannel> tChannels = tClusterMember.getComChannels();
+				for(ComChannel tComChannel : tChannels){
+					tComChannel.detectNeighborhood();
+				}
+			}
+			
+			/**
 			 * report phase
 			 */
 			for (Coordinator tCoordinator : getAllCoordinators()) {
 				tCoordinator.reportPhase();
 			}
+			
+			/**
+			 * share phase
+			 */
 			if(GUI_USER_CTRL_SHARE_ROUTES){
-				/**
-				 * share phase
-				 */
 				for (Coordinator tCoordinator : getAllCoordinators()) {
 					tCoordinator.sharePhase();
 				}
@@ -3507,7 +3518,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getPeriodSharePhase(int pHierarchyLevelValue)
 	{
-		return (double) 2 * HRMConfig.Routing.GRANULARITY_REPORT_PHASE * pHierarchyLevelValue; //TODO: use an exponential time distribution here
+		return (double) 2 * HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevelValue + 1); //TODO: use an exponential time distribution here
 	}
 	
 	/**
@@ -3518,7 +3529,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getPeriodReportPhase(HierarchyLevel pHierarchyLevel)
 	{
-		return (double) HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevel.getValue() - 1); //TODO: use an exponential time distribution here
+		return (double) HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevel.getValue() + 1); //TODO: use an exponential time distribution here
 	}
 	
 	/**
