@@ -114,14 +114,14 @@ public class LinkToNode extends EclipseCommand
 		}
 
 		// ask the user to which bus should the node be attached to
-		int tSelectedNodeNr = SelectFromListDialog.open(getSite().getShell(), "Select destination node", "To which node should node " + mSourceNode.toString() + " have a new link?", tPreSelectedNodeNr, tPossibleNodeNames);
+		int tSelectedNodeNr = SelectFromListDialog.open(getSite().getShell(), "Linking " + mSourceNode + " to: ", "To which node should node " + mSourceNode.toString() + " have a new link?", tPreSelectedNodeNr, tPossibleNodeNames);
 
 		Logging.log(this, "Source node: " + mSourceNode);
 
 		if(tSelectedNodeNr > -1){
 			String tNodeName = tPossibleNodeNames.get(tSelectedNodeNr);
 			mSelectedDestinationNode = mAs.getNodeByName(tNodeName);
-			Logging.log(this, "Selected destination node: " + mSelectedDestinationNode.toString() + "(" + tNodeName + ")");
+			Logging.log(this, "Linking " + mSourceNode + " to: " + mSelectedDestinationNode.toString() + "(" + tNodeName + ")");
 	
 			if (mSelectedDestinationNode != null){
 				// store the selected bus name for the next time

@@ -1233,6 +1233,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							sendElectionAlive(tfComChannels.get(tSelectedIndex));
 						}
 					});					
+					MenuItem tMenuItem10 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem10.setText("EVENT: new peer HRMIDs");
+					tMenuItem10.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							eventNewPeerHRMIDS(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							eventNewPeerHRMIDS(tfComChannels.get(tSelectedIndex));
+						}
+					});					
 					
 					tTable.setMenu(tMenu);
 				}
@@ -1305,6 +1319,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			tClusterMember.getElector().distributeALIVE();
 		}
 			
+	}
+	
+	private void eventNewPeerHRMIDS(ComChannel pComChannel)
+	{
+		pComChannel.eventNewPeerHRMIDs();
 	}
 	
 	private void showPeerHRMIDs(ComChannel pComChannel)
