@@ -173,7 +173,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		/**
 		 * Trigger: Elector invalid
 		 */
-		getElector().eventInvalidation();
+		mElector.eventInvalidation();
 
 		/**
 		 * Trigger: role invalid

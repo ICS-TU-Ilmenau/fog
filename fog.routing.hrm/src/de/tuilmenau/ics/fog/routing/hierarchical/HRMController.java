@@ -2065,24 +2065,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Returns true if the given HRMID is a local one.
+	 * Returns true if the local node belongs to the given Cluster 
 	 * 
 	 * @param pHRMID the HRMID of the Cluster
 	 * 
 	 * @return true if the local node belongs to the given Cluster
 	 */
-	private boolean isLocalCluster(HRMID pHRMID)
+	public boolean isLocalCluster(HRMID pClusterHRMID)
 	{
 		boolean tResult = false;
 
-		if(!pHRMID.isClusterAddress()){
-			pHRMID.setLevelAddress(0, 0);
+		if(!pClusterHRMID.isClusterAddress()){
+			pClusterHRMID.setLevelAddress(0, 0);
 		}
 
 		synchronized(mRegisteredOwnHRMIDs){
 			for(HRMID tKnownHRMID : mRegisteredOwnHRMIDs){
 				//Logging.err(this, "Checking isCluster for " + tKnownHRMID + " and if it is " + pHRMID);
-				if(tKnownHRMID.isCluster(pHRMID)){
+				if(tKnownHRMID.isCluster(pClusterHRMID)){
 					//Logging.err(this, " ..true");
 					tResult = true;
 					break;
@@ -2264,7 +2264,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 			boolean tDropRoute = false;
 			
-			
 			/**
 			 * Check if the route starts at this node.
 			 * If the route starts at a direct neighbor node, try to find a combined route and store this one instead of the original shared route.
@@ -2302,6 +2301,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 			}
+
 			
 			/**
 			 * Store only routes which start at this node
