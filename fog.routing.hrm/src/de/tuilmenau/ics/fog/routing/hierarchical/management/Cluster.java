@@ -943,6 +943,13 @@ public class Cluster extends ClusterMember
 
 		// check necessity
 		checkClusterNecessity();
+		
+		/**
+		 * Trigger: "lost candidate" for election
+		 */		
+		if(isThisEntityValid()){
+			mElector.eventLostCandidate(pComChannel);
+		}
 	}
 
 	/**

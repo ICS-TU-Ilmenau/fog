@@ -331,6 +331,16 @@ public class Elector implements Localization
 	}
 
 	/**
+	 * EVENT: lost candidate
+	 * 
+	 * @param pComChannelToCandidate the comm. channel to the lost candidate (the channel is already removed from all database and this is the last change to get some data from it)
+	 */
+	public void eventLostCandidate(ComChannel pComChannelToCandidate)
+	{
+		//nothing to be done
+	}
+
+	/**
 	 * Counts the re-elects
 	 * 
 	 * @return the number of processed re-elects
