@@ -118,7 +118,7 @@ public class LinkToNode extends EclipseCommand
 
 		Logging.log(this, "Source node: " + mSourceNode);
 
-		if(tSelectedNodeNr > 0){
+		if(tSelectedNodeNr > -1){
 			String tNodeName = tPossibleNodeNames.get(tSelectedNodeNr);
 			mSelectedDestinationNode = mAs.getNodeByName(tNodeName);
 			Logging.log(this, "Selected destination node: " + mSelectedDestinationNode.toString() + "(" + tNodeName + ")");
