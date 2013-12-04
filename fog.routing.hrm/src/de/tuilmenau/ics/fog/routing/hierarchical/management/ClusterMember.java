@@ -158,6 +158,24 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
+	 * Detects the local neighborhood.
+	 * 		  IMPORTANT: This is the main function for determining capacities and link usage
+	 */
+	public void detectNeighborhood()
+	{
+		if(isActiveCluster()){
+			if(getHierarchyLevel().isBaseLevel()){
+				LinkedList<ComChannel> tChannels = getComChannels();
+				for(ComChannel tComChannel : tChannels){
+					tComChannel.detectNeighborhood();
+				}
+			}else{
+				Logging.err(this, "detectNeighborhood() expects base hierarchy level");
+			}
+		}
+	}
+
+	/**
 	 * Sets the network interface of this cluster (only for base hierarchy level)
 	 * 
 	 * @param pInterfaceToNeighbor the network interface

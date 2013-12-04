@@ -13,6 +13,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.math.BigInteger;
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
@@ -700,6 +701,48 @@ public class Cluster extends ClusterMember
 			setSuperiorCoordinatorID(0);
 			setCoordinatorID(0);
 			setSuperiorCoordinatorDescription("");
+		}
+	}
+	
+	/**
+	 * Detects the local neighborhood.
+	 * 		  IMPORTANT: This is the main function for determining capacities and link usage
+	 */
+	@Override
+	public void detectNeighborhood()
+	{
+		if(isActiveCluster()){
+			if(getHierarchyLevel().isBaseLevel()){
+				super.detectNeighborhood();
+				if(countConnectedRemoteClusterMembers() > 1){
+					if(getBaseHierarchyLevelNetworkInterface() != null){
+						// get the physical BUS
+						Bus tPhysicalBus = (Bus)getBaseHierarchyLevelNetworkInterface().getBus();
+	
+						// iterate over all comm. channels
+						for(ComChannel tOuterChannel : getComChannels()){
+							HRMID tOuterHRMID = tOuterChannel.getPeerHRMID();
+							for(ComChannel tInnerChannel : getComChannels()){
+								HRMID tInnerHRMID = tInnerChannel.getPeerHRMID();
+								if((tOuterHRMID != null) && (tInnerHRMID != null)){
+									if(!tOuterHRMID.equals(tInnerHRMID)){
+										//Logging.log(this, "  .." + tOuterHRMID + " is BUS neighbor of: " + tInnerHRMID);
+										RoutingEntry tEntryForward = RoutingEntry.createRouteToDirectNeighbor(tOuterHRMID, tInnerHRMID, tInnerHRMID, 0 /* TODO */, tPhysicalBus.getDelayMSec(), RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::detectNeighborhood()");
+										tEntryForward.setNextHopL2Address(tInnerChannel.getPeerL2Address());
+										mHRMController.registerAutoHRG(tEntryForward);
+
+										RoutingEntry tEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tInnerHRMID, tOuterHRMID, tOuterHRMID, 0 /* TODO */, tPhysicalBus.getDelayMSec(), RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::detectNeighborhood()");
+										tEntryBackward.setNextHopL2Address(tOuterChannel.getPeerL2Address());
+										mHRMController.registerAutoHRG(tEntryBackward);
+									}
+								}
+							}
+						}
+					}
+				}
+			}else{
+				Logging.err(this, "detectNeighborhood() expects base hierarchy level");
+			}
 		}
 	}
 	
