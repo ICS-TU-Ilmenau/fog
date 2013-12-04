@@ -185,6 +185,13 @@ public class CoordinatorAsClusterMember extends ClusterMember
 			unregisterComChannel(tComChannel);
 		}
 		
+		if(isActiveMembership()){
+			/**
+			 * Trigger: cluster membership to superior coordinator lost
+			 */
+			eventClusterMembershipToSuperiorCoordinatorLost();	
+		}
+
 		Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
 
 		/**
