@@ -478,6 +478,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private void destroyPartControl()
 	{
 		mContainer.dispose();
+		mContainerHRMID2L2ADDRTable.dispose();
 		
 		//HINT: don't dispose the mScroller object here, this would lead to GUI display problems
 		
