@@ -109,7 +109,7 @@ public class LinkToBus extends EclipseCommand
 
 		Logging.log(this, "Source node: " + mSourceNode);
 
-		if(tSelectedBusNr > 0){
+		if(tSelectedBusNr > -1){
 			String tBusName = tPossibleBusNames.get(tSelectedBusNr);
 			mSelectedBus = mAs.getBusByName(tBusName);
 			Logging.log(this, "Selected bus: " + mSelectedBus + "(" + tBusName + ")");
