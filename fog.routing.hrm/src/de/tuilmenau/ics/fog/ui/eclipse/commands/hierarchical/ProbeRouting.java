@@ -178,7 +178,6 @@ public class ProbeRouting extends EclipseCommand
 	 * @param pTargetNodeName the name (e.g., HRMID) of the target
 	 * @param pTargetNode the target node (reference is only used for debugging purposes)
 	 */
-	@SuppressWarnings("unused")
 	private void sendProbeConnectionRequest(Name pTargetNodeName, Node pTargetNode)
 	{
 		Logging.log(this, "\n\n\n############## Sending probe packet to " + pTargetNodeName + ", which belongs to node " + pTargetNode);

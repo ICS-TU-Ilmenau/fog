@@ -9,8 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 
-import java.util.LinkedList;
-
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;

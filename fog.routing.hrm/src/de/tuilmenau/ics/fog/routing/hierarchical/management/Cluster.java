@@ -16,7 +16,6 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -141,19 +140,6 @@ public class Cluster extends ClusterMember
 		tResult.mElector = new Elector(pHRMController, tResult);
 
 		return tResult;
-	}
-
-	/**
-	 * Factory function: create a cluster
-	 * 
-	 * @param pHRMController the local HRMController instance
-	 * @param pClusterName the ClusterName for the new cluster object
-	 * 
-	 * @return the new Cluster object
-	 */
-	static public Cluster create(HRMController pHRMController, ClusterName pClusterName)
-	{
-		return create(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID());
 	}
 
 	/**
