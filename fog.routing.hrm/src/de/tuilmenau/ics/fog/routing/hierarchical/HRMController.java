@@ -2212,9 +2212,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		// plausibility check
-		if((!pRoutingEntry.getDest().isClusterAddress()) && (!pRoutingEntry.getDest().equals(pRoutingEntry.getNextHop()))){
-			throw new RuntimeException(this + "::addHRMRoute() detected an invalid destination (should be equal to the next hop) in routing entry: " + pRoutingEntry);
-		}
+//		if((!pRoutingEntry.getDest().isClusterAddress()) && (!pRoutingEntry.getDest().equals(pRoutingEntry.getNextHop()))){
+//			throw new RuntimeException(this + "::addHRMRoute() detected an invalid destination (should be equal to the next hop) in routing entry: " + pRoutingEntry);
+//		}
 			
 			
 		/**
@@ -5030,9 +5030,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "     ..detected a probe-routing connection(source=" + tPropProbeRouting.getSourceDescription());
 			Logging.log(this, "       ..source: " + tRecordedHRMIDs.getFirst());
 			Logging.log(this, "       ..destination: " + tPropProbeRouting.getDest());
-			Logging.log(this, "       ..passed " + tPropProbeRouting.getRecordedHopCount() + " nodes");
-			Logging.log(this, "       ..E2E delay: " + tPropProbeRouting.getRecordedDelay() + " ms");
-			Logging.log(this, "       ..passed " + tRecordedHRMIDs.size() + " HRM hops:");
+			Logging.log(this, "       ..desired E2E data rate: " + tPropProbeRouting.getDesiredDataRate() + " kbit/s");
+			Logging.log(this, "       ..desired E2E delay: " + tPropProbeRouting.getDesiredDelay() + " ms");
+			Logging.log(this, "       ..resulting E2E data rate: " + tPropProbeRouting.getRecordedDataRate() + " ms (this is the best possible valuealong the taken route)");
+			Logging.log(this, "       ..resulting E2E delay: " + tPropProbeRouting.getRecordedDelay() + " ms (this is the sum of all delays of all used links)");
+			Logging.log(this, "       ..resulting HOP count: " + tPropProbeRouting.getRecordedHopCount() + " nodes (this represents the list of passed physical hosts)");
+			Logging.log(this, "       ..passed " + tRecordedHRMIDs.size() + " HRM hops: (this represents the list of passed physical interfaces)");
 
 			// print the recorded route
 			int i = 0;

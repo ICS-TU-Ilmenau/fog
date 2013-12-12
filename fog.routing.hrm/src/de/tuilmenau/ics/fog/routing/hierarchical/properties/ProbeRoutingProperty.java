@@ -28,6 +28,12 @@ public class ProbeRoutingProperty extends AbstractProperty
 	
 	private long mRecordedDelay = 0;
 	
+	private long mRecordedDataRate = 0; //TODO:updaten auf basis der bus-informationen
+	
+	private long mDesiredDelay = 0;
+	
+	private long mDesiredDataRate = 0;
+	
 	private HRMID mDestination = null;
 	
 	/**
@@ -44,11 +50,15 @@ public class ProbeRoutingProperty extends AbstractProperty
 	 * Constructor
 	 * 
 	 * @param pSource the description of the source of the corresponding packet/connection
+	 * @param pDesiredMaxDelay the desired delay limit
+	 * @param pDesiredMinDataRate the desired data rate limit
 	 */
-	public ProbeRoutingProperty(String pSourceDescription, HRMID pDestination)
+	public ProbeRoutingProperty(String pSourceDescription, HRMID pDestination, long pDesiredMaxDelay,long pDesiredMinDataRate)
 	{
 		mSourceDescription = pSourceDescription;
 		mDestination = pDestination;
+		mDesiredDataRate = pDesiredMinDataRate;
+		mDesiredDelay = pDesiredMaxDelay;
 	}
 	
 	/**
@@ -112,6 +122,26 @@ public class ProbeRoutingProperty extends AbstractProperty
 	}
 
 	/**
+	 * Returns the desired min.data rate from the sender
+	 * 
+	 * @return the desired data rate in [kbit/s]
+	 */
+	public long getDesiredDataRate()
+	{
+		return mDesiredDataRate;
+	}
+
+	/**
+	 * Returns the desired max. delay from the sender
+	 * 
+	 * @return the desired delay in [ms]
+	 */
+	public long getDesiredDelay()
+	{
+		return mDesiredDelay;
+	}
+
+	/**
 	 * Return the list of recorded HRMIDs of passed hops
 	 * 
 	 * @return the list of HRMIDs
@@ -142,6 +172,16 @@ public class ProbeRoutingProperty extends AbstractProperty
 		return mRecordedDelay;	
 	}
 	
+	/**
+	 * Returns the recorded resulting data rate
+	 * 
+	 * @return the recorded data rate
+	 */
+	public long getRecordedDataRate()
+	{
+		return mRecordedDataRate;
+	}
+
 	/**
 	 * Returns the destination of this probe-request
 	 * 

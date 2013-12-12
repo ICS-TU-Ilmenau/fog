@@ -126,7 +126,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				/**
 				 * Update BANDWIDTH
 				 */
-				tFoundDuplicate.setMaxDataRate(pRoutingTableEntry.getMaxDataRate());
+				tFoundDuplicate.setMaxAvailableDataRate(pRoutingTableEntry.getMaxAvailableDataRate());
 
 				/**
 				 * Update UTILIZATION
@@ -256,15 +256,29 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	 * Determines the best entry for the given destination and QoS values
 	 * 
 	 * @param pDestination the desired destination
+	 * @param pDesiredMaxDelay the desired max. E2E delay
+	 * @param pDesiredMinDataRate the desired min. data rate
 	 * 
 	 * @return the found best entry
 	 */
-	public synchronized RoutingEntry getBestEntry(HRMID pDestination)
+	public synchronized RoutingEntry getBestEntry(HRMID pDestination, int pDesiredMaxDelay, int pDesiredMinDataRate)
 	{
 		RoutingEntry tResult = null;
 		RoutingEntry tBestResultHopCount = null;
+		RoutingEntry tBestResultDelay = null;
+		RoutingEntry tBestResultDataRate = null;
+		RoutingEntry tBestResultDataRateDelay = null;
 		int tBestHopCount = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
+		long tBestDelay = HRMConfig.QoS.MAX_DELAY;
+		long tBestDataRate = 0;
 		
+		/**
+		 * DATA RATE has the highest priority:
+		 * 		if bandwidth is defined => we want to have a good throughput and little packet loss for multimedia data
+		 * 		if delay is defined => we want to have fast information, mostly short message like sensor data, packet loss is okay but delayed data is bad 
+		 * 		if both is defined => we want to have the golden transmission for some high priority data, in this case we optimize primarily for bandwidth and secondarily for for delay
+		 */
+			
 		/**
 		 * Iterate over all routing entries and search for the best entry
 		 */
@@ -304,24 +318,118 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					}
 					
 					/**
-					 * best BANDWIDTH match
-					 */
-					//TODO
-					
-					/**
 					 * best DELAY match
 					 */
-					//TODO
+					if((pDesiredMaxDelay > 0) && (tEntry.getMinDelay() < pDesiredMaxDelay)){
+						if(tBestResultDelay != null){
+							if(tEntry.getMaxAvailableDataRate() < tBestDelay){
+								if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+									Logging.log(this, "      ..found better matching (DELAY) entry: " + tEntry);
+								}
+	
+								tBestResultDelay = tEntry;
+								tBestDelay = tEntry.getMaxAvailableDataRate();
+							}else{
+								if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+									Logging.log(this, "      ..found worse (DELAY) entry: " + tEntry);
+								}
+							}
+						}else{
+							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								Logging.log(this, "      ..found first matching (DELAY) entry: " + tEntry);
+							}
+	
+							tBestResultDelay = tEntry;
+							tBestDelay = tEntry.getMaxAvailableDataRate();
+						}
+					}
+
+					/**
+					 * best DATA RATE match
+					 */
+					if((pDesiredMinDataRate > 0) && (tEntry.getMaxAvailableDataRate() > pDesiredMinDataRate)){
+						if(tBestResultDataRate != null){
+							if(tEntry.getMaxAvailableDataRate() > tBestDataRate){
+								if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+									Logging.log(this, "      ..found better matching (DATA RATE) entry: " + tEntry);
+								}
+	
+								tBestResultDataRate = tEntry;
+								tBestDataRate = tEntry.getMaxAvailableDataRate();
+							}else{
+								if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+									Logging.log(this, "      ..found worse (DATA RATE) entry: " + tEntry);
+								}
+							}
+						}else{
+							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								Logging.log(this, "      ..found first matching (DATA RATE) entry: " + tEntry);
+							}
+	
+							tBestResultDataRate = tEntry;
+							tBestDataRate = tEntry.getMaxAvailableDataRate();
+						}
+					}
+
+					/**
+					 * best BANDWIDTH and DELAY match
+					 */
+					if((pDesiredMaxDelay > 0) && (tEntry.getMinDelay() < pDesiredMaxDelay) && (pDesiredMinDataRate > 0) && (tEntry.getMaxAvailableDataRate() > pDesiredMinDataRate)){
+						if(tBestResultDataRateDelay != null){
+							if((tEntry.getMaxAvailableDataRate() > tBestDataRate) || ((tEntry.getMaxAvailableDataRate() == tBestDataRate) && (tEntry.getMinDelay() < tBestDelay))){
+								if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+									Logging.log(this, "      ..found better matching (DATA RATE) entry: " + tEntry);
+								}
+	
+								tBestResultDataRateDelay = tEntry;
+								tBestDataRate = tEntry.getMaxAvailableDataRate();
+								tBestDelay = tEntry.getMaxAvailableDataRate();
+							}else{
+								if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+									Logging.log(this, "      ..found worse (DATA RATE) entry: " + tEntry);
+								}
+							}
+						}else{
+							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								Logging.log(this, "      ..found first matching (DATA RATE) entry: " + tEntry);
+							}
+	
+							tBestResultDataRateDelay = tEntry;
+							tBestDataRate = tEntry.getMaxAvailableDataRate();
+							tBestDelay = tEntry.getMaxAvailableDataRate();
+						}
+					}
+					
 				}else{
 					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-						Logging.log(this, "      ..ignoring entry: " + tEntry);
+						Logging.log(this, "      ..ignoring (DELAY) entry: " + tEntry);
 					}
 				}
 			}
 
-			//TODO: QoS values here
-
 			tResult = (tBestResultHopCount != null ? tBestResultHopCount.clone() : null);
+			
+			if(pDesiredMinDataRate > 0){
+				if(pDesiredMaxDelay > 0){
+					/**
+					 * DATA RATE + DELAY
+					 */
+					tResult = tBestResultDataRateDelay;
+				}else{
+					/**
+					 * DATA RATE
+					 */
+					tResult = tBestResultDataRate;
+				}			
+			}else{
+				if(pDesiredMaxDelay > 0){
+					/**
+					 * DELAY
+					 */
+					tResult = tBestResultDelay;
+				}
+			}
+			
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 				Logging.log(this, "      ..found empty routing table");

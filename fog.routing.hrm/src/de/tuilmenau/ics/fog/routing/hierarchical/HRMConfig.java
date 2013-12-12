@@ -426,7 +426,7 @@ public class HRMConfig
 		 * Defines if multiple paths for the same destination should be distributed
 		 * This value should be set to "true". Otherwise, only the best-effort (hop costs!) route will be shared top-to-down.
 		 */
-		public static final boolean MULTIPATH_ROUTING = true; 
+		public static final boolean MULTIPATH_ROUTING = true;
 	}
 
 	public class QoS
@@ -435,6 +435,11 @@ public class HRMConfig
 		 * Defines if a reported HRM route should include QoS attributes 
 		 */
 		public static final boolean REPORT_QOS_ATTRIBUTES_AUTOMATICALLY = true;		
+
+		/**
+		 * Defines the max. allowed delay
+		 */
+		public static final long MAX_DELAY = Long.MAX_VALUE; 
 	}
 	
 	/**

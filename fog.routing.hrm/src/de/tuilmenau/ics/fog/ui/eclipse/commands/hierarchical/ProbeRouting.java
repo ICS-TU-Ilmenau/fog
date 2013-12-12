@@ -43,7 +43,7 @@ public class ProbeRouting extends EclipseCommand
 	/**
 	 * Defines the node name which is used to send a packet to all nodes. 
 	 */
-	private static final String ALL_NODES = "all nodes";
+	private static final String SEND_TO_ALL_ADDRESSES_OF_TARGET_NODE = "all nodes";
 	
 	/**
 	 * Stores a reference to the NMS instance.
@@ -93,7 +93,7 @@ public class ProbeRouting extends EclipseCommand
 			 */
 			// list possible targets
 			LinkedList<String> tPossibilities = new LinkedList<String>();
-			tPossibilities.add(ALL_NODES);
+			tPossibilities.add(SEND_TO_ALL_ADDRESSES_OF_TARGET_NODE);
 			for (Node tNode : tNodeList){
 				tPossibilities.add(tNode.getName());
 			}
@@ -110,7 +110,7 @@ public class ProbeRouting extends EclipseCommand
 				 */
 				// send to all nodes of the simulation?
 				boolean tSendToAllNodes = false;
-				if (tTargetName.equals(ALL_NODES)){
+				if (tTargetName.equals(SEND_TO_ALL_ADDRESSES_OF_TARGET_NODE)){
 					tSendToAllNodes = true;
 				}
 	
@@ -144,7 +144,7 @@ public class ProbeRouting extends EclipseCommand
 					/**
 					 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
 					 */
-					sendProbeConnectionRequest(tTargetNodeName, tTargetNode);
+					sendProbeConnectionRequest(tTargetNodeName, tTargetNode, 53, 1 * 1024);
 				} else {
 					for(Node tTargetNode : tNodeList) {
 						/**
@@ -163,7 +163,7 @@ public class ProbeRouting extends EclipseCommand
 						/**
 						 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
 						 */
-						sendProbeConnectionRequest(tTargetNodeName, tTargetNode);
+						sendProbeConnectionRequest(tTargetNodeName, tTargetNode, 53, 1 * 1024);
 					}
 				}
 			}else{
@@ -177,8 +177,10 @@ public class ProbeRouting extends EclipseCommand
 	 * 
 	 * @param pTargetNodeName the name (e.g., HRMID) of the target
 	 * @param pTargetNode the target node (reference is only used for debugging purposes)
+	 * @param pDesiredDelay the desired delay
+	 * @param pDataRate the desired data rate
 	 */
-	private void sendProbeConnectionRequest(Name pTargetNodeName, Node pTargetNode)
+	private void sendProbeConnectionRequest(Name pTargetNodeName, Node pTargetNode, int pDesiredDelay, int pDataRate)
 	{
 		Logging.log(this, "\n\n\n############## Sending probe packet to " + pTargetNodeName + ", which belongs to node " + pTargetNode);
 		
@@ -193,6 +195,11 @@ public class ProbeRouting extends EclipseCommand
 			Logging.err(this, "Reference to NMS is invalid, cannot send a packet to " + pTargetNodeName);
 			return;
 		}
+		
+		/**
+		 * Create QoS description
+		 */
+		Description tDesiredQoSValues = Description.createQoS(pDesiredDelay, pDataRate);
 		
 		// send a HRM probe-packet to each registered address for the given target name
 		try {
@@ -209,8 +216,8 @@ public class ProbeRouting extends EclipseCommand
 							 * Connect to the destination node
 							 */
 							// create requirements with probe-routing property and DestinationApplication property
-							Description tConnectionReqs = new Description();
-							tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), tTargetNodeHRMID));
+							Description tConnectionReqs = tDesiredQoSValues.clone();
+							tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), tTargetNodeHRMID, pDesiredDelay,pDataRate));
 							tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
 							// probe connection
 							Connection tConnection = null;

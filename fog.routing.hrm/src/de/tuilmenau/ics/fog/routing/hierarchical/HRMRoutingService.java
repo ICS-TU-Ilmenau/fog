@@ -1295,6 +1295,12 @@ public class HRMRoutingService implements RoutingService, Localization
 		}
 
 		/**
+		 * Determine the desired QoS values
+		 */
+		int tDesiredDelay = pRequirements.getDesiredDelay();
+		int tDesiredDataRate = pRequirements.getDesiredDataRate();
+		
+		/**
 		 * Debug output about process start
 		 */
 		// debug output
@@ -1346,7 +1352,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			HRMID tNextHopHRMID = null;
 			HRMID tLocalSourceHRMID = null;
 			boolean tDestHRMIDIsLocalHRMID = false;
-			RoutingEntry tRoutingEntryNextHop = mRoutingTable.getBestEntry(tDestHRMID);
+			RoutingEntry tRoutingEntryNextHop = mRoutingTable.getBestEntry(tDestHRMID, tDesiredDelay, tDesiredDataRate);
 			if(tRoutingEntryNextHop != null){
 				if(!tRoutingEntryNextHop.isLocalLoop()){
 					// derive the next hop HRMID

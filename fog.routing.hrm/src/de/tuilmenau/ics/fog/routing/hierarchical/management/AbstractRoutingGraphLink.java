@@ -199,7 +199,7 @@ public class AbstractRoutingGraphLink implements Serializable
 			/**
 			 * Update BANDWIDTH
 			 */
-			tRoutingEntry.setMaxDataRate(pRoutingEntry.getMaxDataRate()); 
+			tRoutingEntry.setMaxAvailableDataRate(pRoutingEntry.getMaxAvailableDataRate()); 
 
 			/**
 			 * Update UTILIZATION

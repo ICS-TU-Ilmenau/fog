@@ -738,7 +738,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tTableColDelay.setText("MinDelay [ms]");
 		// col. 5
 		TableColumn tTableColDR = new TableColumn(mTableRoutingTable, SWT.NONE, 5);
-		tTableColDR.setText("MaxDR [Kb/s]");
+		tTableColDR.setText("MaxDR [kbit/s]");
 		// col. 6
 		TableColumn tTableColLoop = new TableColumn(mTableRoutingTable, SWT.NONE, 6);
 		tTableColLoop.setText("Loopback?");
@@ -1817,8 +1817,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						/**
 						 * Column 5: max. data rate
 						 */
-						if (tEntry.getMaxDataRate() != RoutingEntry.INFINITE_DATARATE){
-							tTableRow.setText(5, Long.toString(tEntry.getMaxDataRate()));				
+						if (tEntry.getMaxAvailableDataRate() != RoutingEntry.INFINITE_DATARATE){
+							tTableRow.setText(5, Long.toString(tEntry.getMaxAvailableDataRate()));				
 						}else{
 							tTableRow.setText(5, "inf.");
 						}

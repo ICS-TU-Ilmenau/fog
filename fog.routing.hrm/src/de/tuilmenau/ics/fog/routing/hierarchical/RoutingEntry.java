@@ -91,9 +91,9 @@ public class RoutingEntry implements RouteSegment
 	private long mMinDelay = NO_DELAY;
 	
 	/**
-	 * Stores the maximum data rate[Kb/s] the described route might provide.
+	 * Stores the maximum data rate[kbit/s = 1000bit/s] the described route might provide.
 	 */
-	private long mMaxDataRate = INFINITE_DATARATE;
+	private long mMaxAvailableDataRate = INFINITE_DATARATE;
 
 	/**
 	 * Stores if the route describes a local loop.
@@ -178,7 +178,7 @@ public class RoutingEntry implements RouteSegment
 		mHopCount = pHopCount;
 		mUtilization = pUtilization;
 		mMinDelay = pMinDelay;
-		mMaxDataRate = pMaxDataRate;
+		mMaxAvailableDataRate = pMaxDataRate;
 		mLocalLoop = false;
 		mRouteToDirectNeighbor = false;
 		if((pCause != null) && (!pCause.isEmpty())){
@@ -620,9 +620,9 @@ public class RoutingEntry implements RouteSegment
 	 * 
 	 * @param pNewMaxDataRate the new max. data rate
 	 */
-	public void setMaxDataRate(long pNewMaxDataRate)
+	public void setMaxAvailableDataRate(long pNewMaxDataRate)
 	{
-		mMaxDataRate = pNewMaxDataRate;
+		mMaxAvailableDataRate = pNewMaxDataRate;
 	}
 	
 	/**
@@ -630,9 +630,9 @@ public class RoutingEntry implements RouteSegment
 	 * 
 	 * @return the maximum data rate
 	 */
-	public long getMaxDataRate()
+	public long getMaxAvailableDataRate()
 	{
-		return mMaxDataRate;
+		return mMaxAvailableDataRate;
 	}
 	
 	/**
@@ -753,7 +753,7 @@ public class RoutingEntry implements RouteSegment
 		mMinDelay += pOtherEntry.mMinDelay;
 		
 		// MAX DATA RATE -> find the minimum
-		mMaxDataRate = (mMaxDataRate < pOtherEntry.mMaxDataRate ? mMaxDataRate : pOtherEntry.mMaxDataRate);
+		mMaxAvailableDataRate = (mMaxAvailableDataRate < pOtherEntry.mMaxAvailableDataRate ? mMaxAvailableDataRate : pOtherEntry.mMaxAvailableDataRate);
 		
 		// UTILIZATION -> find the maximum
 		mUtilization = (mUtilization > pOtherEntry.mUtilization ? mUtilization : pOtherEntry.mUtilization);
@@ -825,7 +825,7 @@ public class RoutingEntry implements RouteSegment
 		mMinDelay += pOtherEntry.mMinDelay;
 		
 		// MAX DATA RATE -> find the minimum
-		mMaxDataRate = (mMaxDataRate < pOtherEntry.mMaxDataRate ? mMaxDataRate : pOtherEntry.mMaxDataRate);
+		mMaxAvailableDataRate = (mMaxAvailableDataRate < pOtherEntry.mMaxAvailableDataRate ? mMaxAvailableDataRate : pOtherEntry.mMaxAvailableDataRate);
 		
 		// UTILIZATION -> find the maximum
 		mUtilization = (mUtilization > pOtherEntry.mUtilization ? mUtilization : pOtherEntry.mUtilization);
@@ -857,7 +857,7 @@ public class RoutingEntry implements RouteSegment
 	public RoutingEntry clone()
 	{
 		// create object copy
-		RoutingEntry tResult = new RoutingEntry(mSource, mDestination, mNextHop, mHopCount, mUtilization, mMinDelay, mMaxDataRate, mCause);
+		RoutingEntry tResult = new RoutingEntry(mSource, mDestination, mNextHop, mHopCount, mUtilization, mMinDelay, mMaxAvailableDataRate, mCause);
 		
 		// update the last next hop
 		tResult.setLastNextHop(mLastNextHop);
@@ -953,9 +953,9 @@ public class RoutingEntry implements RouteSegment
 		String tResult = (mReportedLink ? "REP: " : "") + (mSharedLink ? "SHA: " : "");
 
 		if(!mBelongstoHRG){
-			tResult += "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getLastNextHop() != null ? ", LastNext=" + getLastNextHop() : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() != INFINITE_DATARATE ? getMaxDataRate() : "inf.") : "") + ")";
+			tResult += "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getLastNextHop() != null ? ", LastNext=" + getLastNextHop() : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxAvailableDataRate() != INFINITE_DATARATE ? getMaxAvailableDataRate() : "inf.") : "") + ")";
 		}else{
-			tResult += getSource() + " <=" + (mRouteForClusterTraversal ? "TRAV" : "") + "=> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxDataRate() != INFINITE_DATARATE ? getMaxDataRate() : "inf.") : "");
+			tResult += getSource() + " <=" + (mRouteForClusterTraversal ? "TRAV" : "") + "=> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxAvailableDataRate() != INFINITE_DATARATE ? getMaxAvailableDataRate() : "inf.") : "");
 		}
 		
 		return tResult;
