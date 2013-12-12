@@ -213,6 +213,46 @@ public class Description implements Iterable<Property>, Serializable
 	}
 	
 	/**
+	 * Searches for DelayProperty property and determines the desired max. delay
+	 * 
+	 * @return the desired delay in [ms]
+	 */
+	public int getDesiredDelay()
+	{
+		int tResult = 0;
+		
+		for(Property tProperty : this) {
+			if (tProperty instanceof DelayProperty) {
+				DelayProperty tPropertyDelay = (DelayProperty)tProperty;
+				
+				tResult = tPropertyDelay.getMax();
+			}
+		}
+
+		return tResult;
+	}
+	
+	/**
+	 * Searches for DatarateProperty property and determines the desired min. data rate
+	 * 
+	 * @return the desired bandwidth in [kbit/s]
+	 */
+	public int getDesiredDataRate()
+	{
+		int tResult = 0;
+		
+		for(Property tProperty : this) {
+			if (tProperty instanceof DatarateProperty) {
+				DatarateProperty tPropertyBandwidth = (DatarateProperty)tProperty;
+				
+				tResult = tPropertyBandwidth.getMin();
+			}
+		}
+
+		return tResult;
+	}
+
+	/**
 	 * Searches for non-functional properties in the description.
 	 * 
 	 * @return Description with the references (!= null)
@@ -416,6 +456,28 @@ public class Description implements Iterable<Property>, Serializable
 		return descr;
 	}
 
+	/**
+	 * Factory method for QoS descriptions.
+	 * 
+	 * @param delayMilliSec Maximum delay in milliseconds
+	 * @param bandwidthKBitSec Minimum bandwidth in kilobits per seconds
+	 * 
+	 * @return Description object
+	 */
+	public static Description createQoS(int pDelayMilliSec, int pBandwidthKBitSec)
+	{
+		Description descr = new Description();
+
+		if(pDelayMilliSec > 0){
+			descr.set(new DelayProperty(pDelayMilliSec, Limit.MAX));
+		}
+		if(pBandwidthKBitSec > 0){
+			descr.set(new DatarateProperty(pBandwidthKBitSec, Limit.MIN));
+		}
+
+		return descr;
+	}
+	
 	/**
 	 * Factory method for QoS descriptions.
 	 * 
