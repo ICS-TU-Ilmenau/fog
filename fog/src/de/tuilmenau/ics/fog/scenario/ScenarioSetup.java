@@ -70,6 +70,8 @@ public class ScenarioSetup
 					// a bus with 5 connected nodes
 					case 35: scenario35(sim); break;
 
+					case 88: scenario88(sim); break;
+					
 					// emulator scenario
 					case 99: emulator(sim); break;
 				}
@@ -87,6 +89,11 @@ public class ScenarioSetup
 	
 	public static void scenarioRow(Simulation sim, String asName, int numberNodes)
 	{
+		scenarioRow(sim,asName,numberNodes, 0);
+	}
+	
+	public static void scenarioRow(Simulation sim, String asName, int numberNodes, long pDataRate)
+	{
 		sim.executeCommand("@ - create as default");
 		sim.executeCommand("switch default");
 
@@ -103,7 +110,10 @@ public class ScenarioSetup
 			// do not create bus for the last one
 			if(i < numberNodes) {
 				String busName = "bus" +i +"_" +(i+1);
-				sim.executeCommand("create bus " +busName);
+				if(pDataRate > 0)
+					sim.executeCommand("create bus " +busName + " " + Long.toString(pDataRate));
+				else
+					sim.executeCommand("create bus " +busName);
 				sim.executeCommand("connect " +nodeName +" " +busName);
 			}
 			
@@ -113,6 +123,26 @@ public class ScenarioSetup
 		}
 	}
 	
+	public static void scenario88(Simulation pSim)
+	{
+		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
+		
+		int tNumberOfNodes = 12;
+		long tDataRate = 100 * 1024 * 1024;
+		
+		scenarioRow(pSim, DEFAULT_AS_NAME, tNumberOfNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String busName = "bus" +tNumberOfNodes +"_1";
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +busName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +busName);
+		
+		pSim.executeCommand("connect node" +tNumberOfNodes +" " +busName);
+		pSim.executeCommand("connect node1 " +busName);
+	}
+
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
 	{
 		scenarioRow(sim, asName, numberNodes);
