@@ -24,10 +24,12 @@ import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
+import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
 import de.tuilmenau.ics.fog.routing.RouteSegmentDescription;
+import de.tuilmenau.ics.fog.routing.RouteSegmentMissingPart;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
@@ -42,6 +44,7 @@ import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ClientFN;
+import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ServerFN;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
@@ -1299,18 +1302,19 @@ public class HRMRoutingService implements RoutingService, Localization
 		 */
 		int tDesiredDelay = pRequirements.getDesiredDelay();
 		int tDesiredDataRate = pRequirements.getDesiredDataRate();
-		
+		Description tNonFunctionalDescription = pRequirements.getNonFunctional();
+
 		/**
 		 * Debug output about process start
 		 */
 		// debug output
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+//		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 			if(pRequirements == null) {
 				Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination +"\"");
 			} else {
 				Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination + "\" with requirements \"" + pRequirements.toString() + "\"");
 			}
-		}
+//		}
 
 		/**
 		 * Count the route request
@@ -1417,12 +1421,41 @@ public class HRMRoutingService implements RoutingService, Localization
 
 				if (tResultRoute != null){
 					/**
+					 * trigger QoS RESERVATION in transfer service
+					 */
+					if(HRMConfig.QoS.QOS_RESERVATIONS){
+						GateContainer tContainer = (GateContainer)pSource;
+						AbstractGate tParallelGate = tContainer.getGate(tResultRoute.getFirst(false));
+						Logging.log(this, "Needing QoS gate parallel to: " + tParallelGate);
+//						Description tCapabilities = tParallelGate.getDescription();
+//						Description tGateRequ;
+//						Description tRemainingRequirements = tNonFunctionalDescription;
+//						
+//						if(tCapabilities != null) {
+//							try {
+//								tGateRequ = tCapabilities.deriveRequirements(tNonFunctionalDescription);
+//								
+//								tRemainingRequirements = tNonFunctionalDescription.removeCapabilities(tGateRequ);
+//							}
+//							catch(PropertyException tExc) {
+//								throw new RoutingException(this, "Requirements " + tNonFunctionalDescription +" can not be fullfilled.", tExc);
+//							}
+//						} else {
+//							tGateRequ = null;
+//						}
+//
+//						RouteSegmentMissingPart tMissingQoSReservationGate = new RouteSegmentMissingPart(tGateRequ, tParallelGate, pRequester);
+
+					}
+					
+					/**
 					 * RE-ENCODE the destination HRMID
 					 */
 					// do we route to a direct neighbor?
 					if(!tDestinationIsDirectNeighbor){
 						// do we already reached the destination?
 						if(!tResultRoute.isEmpty()){
+							Logging.log(this, "   ..encoding original destination: " + tDestHRMID);
 							tResultRoute.addLast(new RouteSegmentAddress(tDestHRMID));
 						}
 					}
@@ -1432,6 +1465,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					 */
 					// do we already reached the destination?
 					if(!tResultRoute.isEmpty()){
+						Logging.log(this, "   ..encoding original requirements: " + pRequirements);
 						tResultRoute.addLast(new RouteSegmentDescription(pRequirements));
 					}
 					
@@ -1477,7 +1511,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					 */
 					if(tNextNetworkBus != null){
 						long tAdditionalDelay = tNextNetworkBus.getDelayMSec();
-						long tGottenBandwidth = tNextNetworkBus.getBandwidth();
+						long tGottenBandwidth = tNextNetworkBus.getAvailableDataRate();
 						double tGottenUtilization = 0.0;
 						
 						Logging.log(this, "NEXT NETWORK BUS IS: " + tNextNetworkBus);
@@ -1528,9 +1562,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				 * show result
 				 */
 				if(tResultRoute != null){
-					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+//					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 						Logging.log(this, "      ..RESULT(getRoute() to HRMID): " + tResultRoute);
-					}
+//					}
 				}
 			}
 		}

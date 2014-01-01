@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.properties;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -36,6 +37,8 @@ public class ProbeRoutingProperty extends AbstractProperty
 	
 	private HRMID mDestination = null;
 	
+	private boolean mUseReservations = false;
+	
 	/**
 	 * Defines the max. hop count we allow
 	 */
@@ -53,12 +56,13 @@ public class ProbeRoutingProperty extends AbstractProperty
 	 * @param pDesiredMaxDelay the desired delay limit
 	 * @param pDesiredMinDataRate the desired data rate limit
 	 */
-	public ProbeRoutingProperty(String pSourceDescription, HRMID pDestination, long pDesiredMaxDelay,long pDesiredMinDataRate)
+	public ProbeRoutingProperty(String pSourceDescription, HRMID pDestination, long pDesiredMaxDelay, long pDesiredMinDataRate, boolean pUseRservations)
 	{
 		mSourceDescription = pSourceDescription;
 		mDestination = pDestination;
 		mDesiredDataRate = pDesiredMinDataRate;
 		mDesiredDelay = pDesiredMaxDelay;
+		mUseReservations = (pUseRservations && HRMConfig.QoS.QOS_RESERVATIONS);
 	}
 	
 	/**
@@ -142,6 +146,16 @@ public class ProbeRoutingProperty extends AbstractProperty
 	}
 
 	/**
+	 * Returns of reservations should be used
+	 * 
+	 * @return true or false
+	 */
+	public boolean useReservations()
+	{
+		return mUseReservations;
+	}
+	
+	/**
 	 * Return the list of recorded HRMIDs of passed hops
 	 * 
 	 * @return the list of HRMIDs
@@ -191,7 +205,16 @@ public class ProbeRoutingProperty extends AbstractProperty
 	{
 		return mDestination;
 	}
-	
+
+	/**
+	 * Return if this property is also needed for intermediate nodes
+	 */
+	@Override
+	public boolean isIntermediateRequirement()
+	{
+		return true;
+	}
+
 	/**
 	 * Returns a descriptive string about the object
 	 * 

@@ -439,7 +439,12 @@ public class HRMConfig
 		/**
 		 * Defines the max. allowed delay
 		 */
-		public static final long MAX_DELAY = Long.MAX_VALUE; 
+		public static final long MAX_DELAY = Long.MAX_VALUE;
+		
+		/**
+		 * Defines if the reservation of data rate (bandwidth) is supported
+		 */
+		public static final boolean QOS_RESERVATIONS = true;
 	}
 	
 	/**
