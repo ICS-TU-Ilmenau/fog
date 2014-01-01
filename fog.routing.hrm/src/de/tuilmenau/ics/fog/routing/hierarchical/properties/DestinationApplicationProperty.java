@@ -92,6 +92,15 @@ public class DestinationApplicationProperty extends AbstractProperty
 	}
 
 	/**
+	 * Return if this property is also needed for intermediate nodes
+	 */
+	@Override
+	public boolean isIntermediateRequirement()
+	{
+		return true;
+	}
+
+	/**
 	 * Generates a descriptive string about this object
 	 * 
 	 * @return the descriptive string
