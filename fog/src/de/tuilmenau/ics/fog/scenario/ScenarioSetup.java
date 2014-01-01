@@ -123,12 +123,12 @@ public class ScenarioSetup
 		}
 	}
 	
-	public static void scenario88(Simulation pSim)
+	public static void scenario88(Simulation pSim) // Thomas for testing/evaluating HRM
 	{
 		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
 		
 		int tNumberOfNodes = 12;
-		long tDataRate = 100 * 1024 * 1024;
+		long tDataRate = 100 * 1000;
 		
 		scenarioRow(pSim, DEFAULT_AS_NAME, tNumberOfNodes, tDataRate);
 		
