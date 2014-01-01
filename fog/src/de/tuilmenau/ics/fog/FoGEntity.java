@@ -43,6 +43,7 @@ import de.tuilmenau.ics.fog.transfer.manager.Controller;
 import de.tuilmenau.ics.fog.transfer.manager.Process;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessConnection;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessRegister;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.EventSourceBase;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.SimpleName;
@@ -206,6 +207,7 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 			 * Calculate route for intermediate functions
 			 */
 			Description tIntermediateDescr = tProcess.getIntermediateDescr();
+			Logging.log(this, "Determined intermediate description: " + tIntermediateDescr + ", ORIGINAL REQS: " + pDescription);
 			Route tRoute = getTransferPlane().getRoute(tMultiplexer, pName, tIntermediateDescr, pRequester);
 	
 			/*

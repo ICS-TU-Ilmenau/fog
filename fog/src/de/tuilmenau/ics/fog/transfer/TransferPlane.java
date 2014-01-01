@@ -33,6 +33,7 @@ import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.CSVWriter;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.graph.RoutableGraph;
@@ -74,6 +75,12 @@ public class TransferPlane implements TransferPlaneObserver
 		Route resRoute = null;
 		boolean internalRequest = false;
 		
+		if(pRequirements == null) {
+			Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination +"\"");
+		} else {
+			Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination + "\" with requirements \"" + pRequirements.toString() + "\"");
+		}
+
 		try {
 			// check if the route is just a local one
 			// within the graph of this instance
