@@ -182,7 +182,7 @@ public class Ethernet implements ILowerLayer, Runnable, IEvent
 	}
 
 	@Override
-	public void modifyBandwidth(int bandwidthModification)
+	public void modifyAvailableDataRate(int bandwidthModification)
 	{
 		throw new RuntimeException(this +" - Resource reservations not supported.");
 	}

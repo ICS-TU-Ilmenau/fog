@@ -115,7 +115,7 @@ public interface ILowerLayer extends Breakable, Remote
 	/**
 	 * Reserves and frees resources in lower layer
 	 */
-	public void modifyBandwidth(int bandwidthModification) throws RemoteException;
+	public void modifyAvailableDataRate(int pDataRateOffset) throws RemoteException;
 	
 	/**
 	 * @return Proxy object for registration in JINI or null, if it is already a proxy.
