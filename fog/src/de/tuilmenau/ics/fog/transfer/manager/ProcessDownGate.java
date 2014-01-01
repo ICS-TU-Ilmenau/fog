@@ -119,7 +119,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 				if(!datarateUsage.isBE()) {
 					// reserve bandwidth
 					try {
-						mInterface.getBus().modifyBandwidth(-datarateUsage.getMax());
+						mInterface.getBus().modifyAvailableDataRate(-datarateUsage.getMax());
 						
 						mInterface.refreshGates();
 					}
@@ -155,7 +155,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 				if(!datarateUsage.isBE()) {
 					// free bandwidth
 					try {
-						mInterface.getBus().modifyBandwidth(+datarateUsage.getMax());
+						mInterface.getBus().modifyAvailableDataRate(+datarateUsage.getMax());
 						
 						mInterface.refreshGates();
 					}
