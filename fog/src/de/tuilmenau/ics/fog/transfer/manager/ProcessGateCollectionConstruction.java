@@ -331,7 +331,8 @@ public class ProcessGateCollectionConstruction extends ProcessConstruction
 				mLogger.info(this, "No intermediate description was generated, using description provided by application");
 				return mDescription;
 			}
-		}
+		}else
+			mLogger.log(this, "Determined intermediate description: " + mIntermediateDescription);
 		
 		return mIntermediateDescription;
 	}
