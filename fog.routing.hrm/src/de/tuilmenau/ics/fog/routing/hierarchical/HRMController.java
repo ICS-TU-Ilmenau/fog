@@ -5032,7 +5032,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "       ..destination: " + tPropProbeRouting.getDest());
 			Logging.log(this, "       ..desired E2E data rate: " + tPropProbeRouting.getDesiredDataRate() + " kbit/s");
 			Logging.log(this, "       ..desired E2E delay: " + tPropProbeRouting.getDesiredDelay() + " ms");
-			Logging.log(this, "       ..resulting E2E data rate: " + tPropProbeRouting.getRecordedDataRate() + " ms (this is the best possible valuealong the taken route)");
+			Logging.log(this, "       ..resulting E2E data rate: " + tPropProbeRouting.getRecordedDataRate() + " ms (this is the best possible value along the taken route)");
 			Logging.log(this, "       ..resulting E2E delay: " + tPropProbeRouting.getRecordedDelay() + " ms (this is the sum of all delays of all used links)");
 			Logging.log(this, "       ..resulting HOP count: " + tPropProbeRouting.getRecordedHopCount() + " nodes (this represents the list of passed physical hosts)");
 			Logging.log(this, "       ..passed " + tRecordedHRMIDs.size() + " HRM hops: (this represents the list of passed physical interfaces)");
@@ -5041,9 +5041,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			int i = 0;
 			for(HRMID tHRMID : tRecordedHRMIDs){
 				if(i % 2 == 0){
-					Logging.log(this, "          ..source[" + i + "]: " + tHRMID);
+					Logging.log(this, "        ..source[" + i + "]: " + tHRMID);
 				}else{
-					Logging.log(this, "        ..hop[" + i + "]: " + tHRMID);
+					Logging.log(this, "          ..hop[" + i + "]: " + tHRMID);
 				}
 				i++;
 			}
