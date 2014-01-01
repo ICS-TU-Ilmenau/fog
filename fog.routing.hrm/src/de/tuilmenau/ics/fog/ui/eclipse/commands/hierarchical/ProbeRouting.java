@@ -144,7 +144,7 @@ public class ProbeRouting extends EclipseCommand
 					/**
 					 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
 					 */
-					sendProbeConnectionRequest(tTargetNodeName, tTargetNode, 53, 1 * 1024);
+					sendProbeConnectionRequest(tTargetNodeName, tTargetNode, 53, 1 * 1000);
 				} else {
 					for(Node tTargetNode : tNodeList) {
 						/**
@@ -163,7 +163,7 @@ public class ProbeRouting extends EclipseCommand
 						/**
 						 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
 						 */
-						sendProbeConnectionRequest(tTargetNodeName, tTargetNode, 53, 1 * 1024);
+						sendProbeConnectionRequest(tTargetNodeName, tTargetNode, 53, 1 * 1000);
 					}
 				}
 			}else{
@@ -217,7 +217,7 @@ public class ProbeRouting extends EclipseCommand
 							 */
 							// create requirements with probe-routing property and DestinationApplication property
 							Description tConnectionReqs = tDesiredQoSValues.clone();
-							tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), tTargetNodeHRMID, pDesiredDelay,pDataRate));
+							tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), tTargetNodeHRMID, pDesiredDelay, pDataRate, true));
 							tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
 							// probe connection
 							Connection tConnection = null;
