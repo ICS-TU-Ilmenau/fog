@@ -82,7 +82,7 @@ public abstract class Process
 								mTimer.restart();
 							}
 						} else {
-							mLogger.log(Process.this, "Check was not successful. Terminating...");
+							mLogger.log(Process.this, "Check of process state was not successful. Terminating process...");
 							terminate(new NetworkException(this, "Status check of gates in process failed."));
 						}
 					}

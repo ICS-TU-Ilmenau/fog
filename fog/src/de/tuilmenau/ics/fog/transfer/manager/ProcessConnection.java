@@ -52,7 +52,7 @@ public class ProcessConnection extends ProcessGateCollectionConstruction
 		if(mEndpointFN == null) {
 			FoGEntity node = getBase().getEntity();
 			
-			mEndpointFN = new ClientFN(node, null, mDescription, getOwner());
+			mEndpointFN = new ClientFN(node, null, mDestination, mDescription, getOwner());
 			mPeer = mEndpointFN;
 			
 			mLogger.log(this, "ClientFN " +mEndpointFN +" created");
