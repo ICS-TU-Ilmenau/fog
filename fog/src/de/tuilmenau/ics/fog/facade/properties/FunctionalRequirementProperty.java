@@ -67,7 +67,7 @@ public abstract class FunctionalRequirementProperty extends AbstractProperty
 			IDirectionPair tNewDirPair = tObj.getDirectionPair();
 			
 			if(tDirPair != tNewDirPair) {
-				// So they are also not both nullpointer.
+				// So they are also not both null pointer.
 				if(tDirPair != null) {
 					if(!tDirPair.equals(tNewDirPair)) {
 						return false;
