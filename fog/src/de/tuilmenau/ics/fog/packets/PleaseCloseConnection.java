@@ -14,6 +14,7 @@
 package de.tuilmenau.ics.fog.packets;
 
 import de.tuilmenau.ics.fog.facade.Identity;
+import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ClientFN;
 
@@ -29,11 +30,22 @@ public class PleaseCloseConnection extends SignallingRequest
 	public boolean execute(ForwardingNode fn, Packet packet, Identity requester)
 	{
 		if(fn instanceof ClientFN) {
+			ClientFN tClientFN = (ClientFN)fn;
+			try {
+				fn.getEntity().getLogger().log(this, "Sending close connection message back to sender"); 
+				//TODO: check if the following can be improved by a better signaling approach
+				tClientFN.getConnectionEndPoint().write(new PleaseCloseConnection());
+			}
+			catch(NetworkException exc) {
+				fn.getEntity().getLogger().err(this, "Can not send close connection message to the sender. Closing without it.", exc);
+			}			
+
 			fn.getEntity().getLogger().log(this, "execute close socket request on " +fn + " @ " + fn.getEntity());
 			((ClientFN) fn).closed();
 			return true;
 		}
 		
+		fn.getEntity().getLogger().log(this, "ignore close socket request on " +fn + " @ " + fn.getEntity());
 		return false;
 	}
 }
