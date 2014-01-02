@@ -18,6 +18,11 @@ import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
+import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
+import de.tuilmenau.ics.fog.facade.events.Event;
+import de.tuilmenau.ics.fog.facade.properties.DedicatedQoSReservationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.DestinationApplicationProperty;
@@ -30,6 +35,7 @@ import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.util.BlockingEventHandling;
 
 /**
  * In order to create simulations this class sends packets from one node to another randomly chosen node. Or from one 
@@ -98,7 +104,7 @@ public class ProbeRouting extends EclipseCommand
 				tPossibilities.add(tNode.getName());
 			}
 			// show dialog
-			int tTargetSelection = SelectFromListDialog.open(getSite().getShell(), "Target(s) selection", "To which target(s) should the probe packet be send?", (sLastTargetSelection >= 0 ? sLastTargetSelection : 1), tPossibilities);
+			int tTargetSelection = SelectFromListDialog.open(getSite().getShell(), "Send probe packet from " + mNode.toString(), "From " + mNode.toString() + " to ..?", (sLastTargetSelection >= 0 ? sLastTargetSelection : 1), tPossibilities);
 			if (tTargetSelection >= 0){
 				sLastTargetSelection = tTargetSelection;			
 				String tTargetName = tPossibilities.get(tTargetSelection);
@@ -219,18 +225,58 @@ public class ProbeRouting extends EclipseCommand
 							Description tConnectionReqs = tDesiredQoSValues.clone();
 							tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), tTargetNodeHRMID, pDesiredDelay, pDataRate, true));
 							tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
+							tConnectionReqs.set(new DedicatedQoSReservationProperty(true));
 							// probe connection
 							Connection tConnection = null;
 							Logging.log(this, "\n\n\nProbing a connection to " + tTargetNodeHRMID + " with requirements " + tConnectionReqs);
 							tConnection = mNode.getLayer(null).connect(tTargetNodeHRMID, tConnectionReqs, mNode.getIdentity());
+
+							/**
+							 * Waiting for connect() result							
+							 */
+							boolean tSuccessfulConnection = false;
+							
+							// create blocking event handler
+							BlockingEventHandling tBlockingEventHandling = new BlockingEventHandling(tConnection, 1);
+							
+							// wait for the first event
+							Event tEvent = tBlockingEventHandling.waitForEvent();
+							Logging.log(this, "        ..=====> got connection " + tTargetNodeHRMID + " event: " + tEvent);
+							
+							if(tEvent instanceof ConnectedEvent) {
+								if(!tConnection.isConnected()) {
+									Logging.log(this, "Received \"connected\" " + tTargetNodeHRMID + " event but connection is not connected.");
+								} else {
+									tSuccessfulConnection = true;
+								}
+							}else if(tEvent instanceof ErrorEvent) {
+								Exception tExc = ((ErrorEvent) tEvent).getException();
+								
+								Logging.err(this, "Got connection " + tTargetNodeHRMID + " exception", tExc);
+							}else{
+								Logging.err(this, "Got connection " + tTargetNodeHRMID + " event: "+ tEvent);
+							}
+
+							/**
+							 * Check if connect request was successful
+							 */
+							if(tSuccessfulConnection){
+								Logging.log(this, "        ..found valid connection to " + tTargetNodeHRMID + "(" + pTargetNodeName + ")");
+								for(int i = 0; i < 5; i++){
+									try {
+										Logging.log(this, "      ..sending test data " + i);
+										tConnection.write("TEST DATA " + Integer.toString(i));
+									} catch (NetworkException tExc) {
+										Logging.err(this, "Couldn't send test data", tExc);
+									}
+								}
+							}
+
 							/**
 							 * Disconnect by closing the connection
 							 */
 							if(tConnection != null) {
-								Logging.log(this, "        ..found valid connection to " + tTargetNodeHRMID + "(" + pTargetNodeName + ")");
 								tConnection.close();
-							}else{
-								Logging.err(this, "Unable to connecto to " + tTargetNodeHRMID);
 							}
 						}else{
 							// cluster address
