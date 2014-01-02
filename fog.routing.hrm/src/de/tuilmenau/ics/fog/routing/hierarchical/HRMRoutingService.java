@@ -24,6 +24,7 @@ import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
+import de.tuilmenau.ics.fog.facade.properties.DedicatedQoSReservationProperty;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
@@ -117,6 +118,11 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	private boolean mWaitOnControllerstart = true;
 
+	/**
+	 * Stores a database about already known links
+	 */
+	private LinkedList<AbstractGate> mRegisteredLinks = new LinkedList<AbstractGate>();
+	
 	/**
 	 * Creates a local HRS instance for a node.
 	 * @param pAS the autonomous system at which the HRS is instantiated 
@@ -320,7 +326,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * 
 	 * @return returns true if the route was stored and an GUI update is needed
 	 */
-	public boolean registerLinkL2(L2Address pToL2Address, Route pRoute)
+	public boolean registerL2Route(L2Address pToL2Address, Route pRoute)
 	{
 		boolean tResult = true;
 		
@@ -508,9 +514,13 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pFromL2Address the starting point of the link
 	 * @param pToL2Address the ending point of the link
 	 * @param pRoutingServiceLink the link description
+	 * 
+	 * @return true if the link was added to the graph, false if the link was already known
 	 */
-	private void storeL2Link(L2Address pFromL2Address, L2Address pToL2Address, RoutingServiceLink pRoutingServiceLink)
+	private boolean storeL2Link(L2Address pFromL2Address, L2Address pToL2Address, RoutingServiceLink pRoutingServiceLink)
 	{
+		boolean tAdded = false;
+		
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "REGISTERING LINK IN L2 GRAPH:  source=" + pFromL2Address + " ## dest.=" + pToL2Address + " ## link=" + pRoutingServiceLink);
 		}
@@ -531,8 +541,13 @@ public class HRMRoutingService implements RoutingService, Localization
 				tTo.setHostCentralNode();
 			}
 
-			mL2RoutingGraph.link(tFrom, tTo, pRoutingServiceLink);
+			tAdded = mL2RoutingGraph.link(tFrom, tTo, pRoutingServiceLink);
+			if(tAdded){
+				Logging.log(this, "  ..stored L2 link " + pRoutingServiceLink + " from " + tFrom + " to " + tTo);
+			}
 		}
+		
+		return tAdded;
 	}
 
 	/**
@@ -915,17 +930,17 @@ public class HRMRoutingService implements RoutingService, Localization
 		 * Determine the L2Address of the ending point of the link
 		 */
 		L2Address tToL2Address = null;
-		boolean tIsLinkToPhysicalNeigborNode = false;
+		// mark as node-internal link
+		boolean tIsPhysicalLinkToPhysicalNeigborNode = false;
 		NetworkInterface tInterfaceToNeighbor = null;
 		if( pGate instanceof DirectDownGate){
 			// get the direct down gate
 			DirectDownGate tDirectDownGate = (DirectDownGate)pGate;
 			
+			Description tGateDescription = tDirectDownGate.getDescription();
+			
 			// get the network interface to the neighbor
 			tInterfaceToNeighbor = tDirectDownGate.getNetworkInterface();
-			
-			// mark as link to another node
-			tIsLinkToPhysicalNeigborNode = true;
 			
 			// determine the L2Address of the destination FN for this gate
 			// HINT: For DirectDownGate gates, this address is defined in "DirectDownGate" by a call to "RoutingService.getL2AddressFor(ILowerLayer.getMultiplexerGate())".
@@ -941,10 +956,24 @@ public class HRMRoutingService implements RoutingService, Localization
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.log(this, "      ..external link, which ends at the physical node: " + tToL2Address);
 			}
-		}else{
-			// mark as node-internal link
-			tIsLinkToPhysicalNeigborNode = false;
 
+			/**
+			 * Detect if the DirectDownGate belongs to a dedicated QoS reservation
+			 */
+			boolean tBelongsToQoSReserveration = false;
+			if(tGateDescription != null){
+				tBelongsToQoSReserveration = tGateDescription.get(DedicatedQoSReservationProperty.class) != null;
+			}
+			
+			if(!tBelongsToQoSReserveration){
+				// mark as link to another node
+				tIsPhysicalLinkToPhysicalNeigborNode = true;
+				
+				Logging.log(this, "Found new physical link: " + tDirectDownGate + ", description=" + tGateDescription);
+			}else{
+				Logging.log(this, "Found new QoS reservation link: " + tDirectDownGate + ", description=" + tGateDescription);
+			}
+		}else{
 			// we have any kind of a gate, we determine its ending point
 			ForwardingNode tToFN = (ForwardingNode)pGate.getNextNode();
 			
@@ -975,11 +1004,22 @@ public class HRMRoutingService implements RoutingService, Localization
 		if(tToL2Address == null) {
 			// return immediately because the peer name is sill unknown
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-				Logging.log(this, "Peer name is still unknown, waiting for the second request (source=" + tFromL2Address + ", gate=" + pGate + ")");
+				Logging.log(this, "registerLink() - peer name is still unknown, waiting for the second request (source=" + tFromL2Address + ", gate=" + pGate + ")");
 			}
 			return;
 		}
 		
+		/**
+		 * Check if the link is new
+		 */
+		boolean tLinkIsNew = true;
+		if(!mRegisteredLinks.contains(pGate)){
+			mRegisteredLinks.add(pGate);
+		}else{
+			Logging.log(this, "   ..link is already known: " + pGate);
+			tLinkIsNew = false;
+		}
+
 		/**
 		 * Add link to L2 specific routing graph
 		 */
@@ -988,20 +1028,24 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * DIRECT NEIGHBOR FOUND: create a HRM connection to it
 		 */
-		if(tIsLinkToPhysicalNeigborNode) {
+		if(tIsPhysicalLinkToPhysicalNeigborNode) {
 			L2Address tThisHostL2Address = getL2AddressFor(getCentralFN());
 
-			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+//			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.log(this, "      ..NODE " + tThisHostL2Address + " FOUND POSSIBLE DIRECT NEIGHBOR: " + tToL2Address + "?");
-			}
+//			}
 
-			if((!pFrom.equals(tThisHostL2Address)) && (!tToL2Address.equals(tThisHostL2Address))) {
-				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-					Logging.log(this, "    ..actually found an interesting link from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
+			if(tLinkIsNew){
+				if((!pFrom.equals(tThisHostL2Address)) && (!tToL2Address.equals(tThisHostL2Address))) {
+					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+						Logging.log(this, "    ..actually found an interesting link from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
+					}
+					getHRMController().eventDetectedPhysicalNeighborNode(tInterfaceToNeighbor, tToL2Address);
+				}else{
+					Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is linked to the central FN " + tThisHostL2Address);
 				}
-				getHRMController().eventDetectedPhysicalNeighborNode(tInterfaceToNeighbor, tToL2Address);
 			}else{
-				Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is linked to the central FN " + tThisHostL2Address);
+				Logging.warn(this, "registerLink() ignores the link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is already known");
 			}
 		}
 	}
@@ -1021,22 +1065,39 @@ public class HRMRoutingService implements RoutingService, Localization
 		//}
 
 		/**
+		 * Determine the L2Address of the starting point.
+		 */
+		L2Address tFromL2Address = null;
+		// check the class type of pFrom
+		if (pFrom instanceof ForwardingNode){
+			// get the FN where the route should start
+			ForwardingNode tFromFN = (ForwardingNode)pFrom;
+			
+			// determine the L2address of the starting point
+			tFromL2Address = getL2AddressFor(tFromFN);
+		}else{
+			// pFrom isn't derived from ForwardingNode
+			throw new RuntimeException(this + " - Source FE " + pFrom + " has the wrong class hierarchy(ForwardingNode is missing).");
+		}
+
+		/**
 		 * Check if the link is one to another physical neighbor node or not.
 		 * Determine the L2Address of the ending point of the link
 		 */
 		L2Address tToL2Address = null;
-		boolean tIsLinkToPhysicalNeigborNode = false;
+		// mark as node-internal link
+		boolean tIsPhysicalLinkToPhysicalNeigborNode = false;
 		NetworkInterface tInterfaceToNeighbor = null;
+
 		if( pGate instanceof DirectDownGate){
 			// get the direct down gate
 			DirectDownGate tDirectDownGate = (DirectDownGate)pGate;
 			
+			Description tGateDescription = tDirectDownGate.getDescription();
+
 			// get the network interface to the neighbor
 			tInterfaceToNeighbor = tDirectDownGate.getNetworkInterface();
 
-			// mark as link to another node
-			tIsLinkToPhysicalNeigborNode = true;
-			
 			// determine the L2Address of the destination FN for this gate
 			// HINT: For DirectDownGate gates, this address is defined in "DirectDownGate" by a call to "RoutingService.getL2AddressFor(ILowerLayer.getMultiplexerGate())".
 			//       However, there will occur two calls to registerLink():
@@ -1047,15 +1108,32 @@ public class HRMRoutingService implements RoutingService, Localization
 			if (tToL2Address == null){
 				Logging.warn(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this unregisterLink() request and wait until the peer is known");
 			}
-		}else{
-			// mark as node-internal link
-			tIsLinkToPhysicalNeigborNode = false;
+
+			/**
+			 * Detect if the DirectDownGate belongs to a dedicated QoS reservation
+			 */
+			boolean tBelongsToQoSReserveration = false;
+			if(tGateDescription != null){
+				tBelongsToQoSReserveration = tGateDescription.get(DedicatedQoSReservationProperty.class) != null;
+			}
+			
+			if(!tBelongsToQoSReserveration){
+				// mark as link to another node
+				tIsPhysicalLinkToPhysicalNeigborNode = true;
+
+				Logging.log(this, "Found deprecated physical link: " + tDirectDownGate + ", description=" + tGateDescription);
+			}else{
+				Logging.log(this, "Found deprecated QoS reservation link: " + tDirectDownGate + ", description=" + tGateDescription);
+			}
 		}
 			
-		/**
-		 * Determine the L2Address of the starting point of the link
-		 */
-		L2Address tFromL2Address = mFNToL2AddressMapping.get(pFrom);
+		if(tToL2Address == null) {
+			// return immediately because the peer name is sill unknown
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				Logging.log(this, "registerLink() - peer name is still unknown, waiting for the second request (source=" + tFromL2Address + ", gate=" + pGate + ")");
+			}
+			return false;
+		}
 
 		/**
 		 * Remove the link from the L2 specific routing graph
@@ -1079,7 +1157,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * DIRECT NEIGHBOR FOUND: create a HRM connection to it
 		 */
-		if(tIsLinkToPhysicalNeigborNode) {
+		if(tIsPhysicalLinkToPhysicalNeigborNode) {
 			L2Address tThisHostL2Address = getL2AddressFor(getCentralFN());
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
@@ -1266,7 +1344,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public Route getRoute(ForwardingNode pSource, Name pDestination, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException
 	{		
-		Route tResultRoute = null;
+		Route tRoutingResult = null;
 		L2Address tDestinationL2Address = null;
 		L2Address tSourceL2Address = null;
 
@@ -1407,56 +1485,185 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * GET ROUTE to next L2 address
 			 *************************************/
 			if (tNextHopL2Address != null){
+				Route tL2RoutingResult = null;
+
 				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 					Logging.log(this, "      ..NEXT HOP(L2ADDRESS): " + tNextHopL2Address);
 				}
 				if (tNextHopL2Address != null){
 					// get a route to the neighbor
-					tResultRoute = getL2Route(getCentralFNL2Address(), tNextHopL2Address);
+					tL2RoutingResult = getL2Route(getCentralFNL2Address(), tNextHopL2Address);
 				}
 				
 				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-					Logging.log(this, "      ..ROUTE TO NEXT HOP: " + tResultRoute);
+					Logging.log(this, "      ..ROUTE TO NEXT HOP: " + tL2RoutingResult);
 				}
 
-				if (tResultRoute != null){
-					/**
-					 * trigger QoS RESERVATION in transfer service
-					 */
-					if(HRMConfig.QoS.QOS_RESERVATIONS){
-						GateContainer tContainer = (GateContainer)pSource;
-						AbstractGate tParallelGate = tContainer.getGate(tResultRoute.getFirst(false));
-						Logging.log(this, "Needing QoS gate parallel to: " + tParallelGate);
-//						Description tCapabilities = tParallelGate.getDescription();
-//						Description tGateRequ;
-//						Description tRemainingRequirements = tNonFunctionalDescription;
-//						
-//						if(tCapabilities != null) {
-//							try {
-//								tGateRequ = tCapabilities.deriveRequirements(tNonFunctionalDescription);
-//								
-//								tRemainingRequirements = tNonFunctionalDescription.removeCapabilities(tGateRequ);
-//							}
-//							catch(PropertyException tExc) {
-//								throw new RoutingException(this, "Requirements " + tNonFunctionalDescription +" can not be fullfilled.", tExc);
-//							}
-//						} else {
-//							tGateRequ = null;
-//						}
-//
-//						RouteSegmentMissingPart tMissingQoSReservationGate = new RouteSegmentMissingPart(tGateRequ, tParallelGate, pRequester);
+				/**
+				 * Search for a DirectDownGate:
+				 * 		+ A.) hard QoS reservations -> FoG-specific: trigger creation of dedicated QoS gate
+				 * 		+ B.) derive the NEXT BUS -> use it later to record the gotten QoS values
+				 */
+				RouteSegmentPath tRoutingResultFirstGateListWithoutDirectDownGates = new RouteSegmentPath();
+				RouteSegmentMissingPart tQoSReservation = null;
+				if (tL2RoutingResult != null){
+					Bus tNextNetworkBus = null;
+					if(!tL2RoutingResult.isEmpty()){
+						Multiplexer tCurrentMultiplexer = getCentralFN();
+						
+						/**
+						 * get the first part of the routing result: [[gateID list], [an L2 address]] => [gateID list]
+						 */
+						RouteSegmentPath tRoutingResultOriginalFirstPart = (RouteSegmentPath)tL2RoutingResult.getFirst().clone();
+						Logging.log(this, "Temporary routing result: " + tL2RoutingResult);
+						for(RouteSegment tRoutingResultPart : tL2RoutingResult){
+							Logging.log(this, "   ..[" + tRoutingResultPart.getClass().getSimpleName() + "]: " + tRoutingResultPart);
+						}
+						Logging.log(this, "Temporary routing result - first part (gate list): " + tRoutingResultOriginalFirstPart);
+						
+						/**
+						 * Search for DedicatedQoSReservationProperty property
+						 */
+						DedicatedQoSReservationProperty tDedicatedQoSReservationProperty = (DedicatedQoSReservationProperty) pRequirements.get(DedicatedQoSReservationProperty.class);
+						if(tDedicatedQoSReservationProperty != null){
+							Logging.log(this, "Found DedicatedQoSReservationProperty property: " + tDedicatedQoSReservationProperty);
+						}else{
+							Logging.log(this, "Havent found DedicatedQoSReservationProperty property");
+						}
 
+						/**
+						 * Iterate over all given gateIDs in [gateID list]
+						 */
+						while(!tRoutingResultOriginalFirstPart.isEmpty()) {
+							GateID tGateID = tRoutingResultOriginalFirstPart.removeFirst();
+							AbstractGate tGate = tCurrentMultiplexer.getGate(tGateID);
+							Name tNextName = null;
+							
+							if(tGate != null) {
+								
+								boolean tHaveDescribedMissingQoSReservation = false;
+								if(tGate instanceof DirectDownGate){
+									// get the direct down gate
+									DirectDownGate tDirectDownGate = (DirectDownGate)tGate;
+									
+									/**
+									 * A.) describe a missing QoS reservation, which is later is used in order to trigger QoS RESERVATION within the FoG transfer service
+									 */
+									if((HRMConfig.QoS.QOS_RESERVATIONS) && (tDedicatedQoSReservationProperty != null)){
+										AbstractGate tParallelGate = tGate;
+										if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+											Logging.log(this, "Needing QoS gate parallel to: " + tParallelGate);
+										}
+										Description tCapabilities = tParallelGate.getDescription();
+										Description tGateRequ;
+										Description tRemainingRequirements = tNonFunctionalDescription;
+										
+										if(tCapabilities != null) {
+											try {
+												tGateRequ = tCapabilities.deriveRequirements(tNonFunctionalDescription);
+												
+												tRemainingRequirements = tNonFunctionalDescription.removeCapabilities(tGateRequ);
+											}
+											catch(PropertyException tExc) {
+												throw new RoutingException(this, "Requirements " + tNonFunctionalDescription +" can not be fullfilled.", tExc);
+											}
+										} else {
+											tGateRequ = null;
+										}
+				
+										// mark the gate as HRM based QoS reservation
+										tGateRequ.set(new DedicatedQoSReservationProperty(tDedicatedQoSReservationProperty.isBidirectional()));
+										
+										// describe the needed QoS reservation										
+										tQoSReservation = new RouteSegmentMissingPart(tGateRequ, tParallelGate, pRequester);
+										
+										// mark as described QoS reservation
+										tHaveDescribedMissingQoSReservation = true;
+									}
+
+									/**
+									 * B.) get the network interface to the neighbor
+									 */ 
+									tNextNetworkBus = (Bus)tDirectDownGate.getNextNode();//getNetworkInterface();
+								}
+								
+								/**
+								 * Add the found gateID to the final routing result
+								 */
+								if(!tHaveDescribedMissingQoSReservation){
+									tRoutingResultFirstGateListWithoutDirectDownGates.add(tGateID);
+								}
+								
+								/**
+								 * jump to next forwarding node
+								 */
+								if(tGate.getNextNode() instanceof Multiplexer){
+									tCurrentMultiplexer = (Multiplexer)tGate.getNextNode();
+								}else{
+									// we reached the Bus
+									break;
+								}
+							} else {
+								
+								// no further data
+								break;
+							}
+						}
 					}
 					
+					
 					/**
-					 * RE-ENCODE the destination HRMID
+					 * CREATE resulting routing result
+					 */
+					tRoutingResult = new Route();
+					
+					/**
+					 * ENCODE the first gate list (unlimited QoS)
+					 */
+					if(!tRoutingResultFirstGateListWithoutDirectDownGates.isEmpty()){
+						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							Logging.log(this, "   ..encoding first gate list: " + tRoutingResultFirstGateListWithoutDirectDownGates);
+						}
+						tRoutingResult.add(tRoutingResultFirstGateListWithoutDirectDownGates);
+					}
+
+					/**
+					 * ENCODE hard QoS reservation (limited QoS)
+					 */
+					if(!tRoutingResultFirstGateListWithoutDirectDownGates.isEmpty()){
+						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							Logging.log(this, "   ..encoding hard QoS reservation: " + tQoSReservation);
+						}
+						tRoutingResult.add(tQoSReservation);
+					}
+
+					/**
+					 * ENCODE the remaining parts of the original routing result
+					 */
+					Logging.log(this, "   ..encoding additional destination description");
+					int i = 0;
+					for(RouteSegment tRoutingResultPart : tL2RoutingResult){
+						// ignore the first gate list
+						if(i > 0){
+							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								Logging.log(this, "     ..encoding [" + tRoutingResultPart.getClass().getSimpleName() + "]: " + tRoutingResultPart);
+							}
+							tRoutingResult.add(tRoutingResultPart);
+						}
+						i++;
+					}
+
+					/**
+					 * ENCODE the destination HRMID
 					 */
 					// do we route to a direct neighbor?
 					if(!tDestinationIsDirectNeighbor){
 						// do we already reached the destination?
-						if(!tResultRoute.isEmpty()){
-							Logging.log(this, "   ..encoding original destination: " + tDestHRMID);
-							tResultRoute.addLast(new RouteSegmentAddress(tDestHRMID));
+						if(!tL2RoutingResult.isEmpty()){
+							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								Logging.log(this, "   ..encoding original destination: " + tDestHRMID);
+							}
+							tRoutingResult.addLast(new RouteSegmentAddress(tDestHRMID));
 						}
 					}
 
@@ -1464,48 +1671,13 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * ENCODE the original requirements
 					 */
 					// do we already reached the destination?
-					if(!tResultRoute.isEmpty()){
-						Logging.log(this, "   ..encoding original requirements: " + pRequirements);
-						tResultRoute.addLast(new RouteSegmentDescription(pRequirements));
-					}
-					
-					/**
-					 * Derive the NEXT BUS -> use it to record the gotten QoS values
-					 */
-					Bus tNextNetworkBus = null;
-					if(HRMConfig.Routing.RECORD_ROUTE_FOR_PROBES){
-						if(!tResultRoute.isEmpty()){
-							Multiplexer tCurrentMultiplexer = getCentralFN();
-							RouteSegmentPath tResultRouteFirstPart = (RouteSegmentPath)tResultRoute.getFirst().clone();
-							
-							while(!tResultRouteFirstPart.isEmpty()) {
-								GateID tGateID = tResultRouteFirstPart.removeFirst();
-								AbstractGate tGate = tCurrentMultiplexer.getGate(tGateID);
-								Name tNextName = null;
-								
-								if(tGate != null) {
-									
-									if(tGate instanceof DirectDownGate){
-										// get the direct down gate
-										DirectDownGate tDirectDownGate = (DirectDownGate)tGate;
-										
-										// get the network interface to the neighbor
-										tNextNetworkBus = (Bus)tDirectDownGate.getNextNode();//getNetworkInterface();
-										
-										break;
-									}
-									
-									// jump to next gate
-									tCurrentMultiplexer = (Multiplexer)tGate.getNextNode();
-								} else {
-									
-									// no further data
-									break;
-								}
-							}
+					if(!tL2RoutingResult.isEmpty()){
+						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							Logging.log(this, "   ..encoding original requirements: " + pRequirements);
 						}
+						tRoutingResult.addLast(new RouteSegmentDescription(pRequirements));
 					}
-					
+
 					/**
 					 * Get the QOS VALUEs of the next network BUS and record it
 					 */
@@ -1514,10 +1686,12 @@ public class HRMRoutingService implements RoutingService, Localization
 						long tGottenBandwidth = tNextNetworkBus.getAvailableDataRate();
 						double tGottenUtilization = 0.0;
 						
-						Logging.log(this, "NEXT NETWORK BUS IS: " + tNextNetworkBus);
-						Logging.log(this, "   ..delay: " + tAdditionalDelay + " ms");
-						Logging.log(this, "   ..bandwidth: " + tGottenBandwidth + " kbit/s");
-						Logging.log(this, "   ..utilization: " + " %");			
+						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							Logging.log(this, "NEXT NETWORK BUS IS: " + tNextNetworkBus);
+							Logging.log(this, "   ..delay: " + tAdditionalDelay + " ms");
+							Logging.log(this, "   ..bandwidth: " + tGottenBandwidth + " kbit/s");
+							Logging.log(this, "   ..utilization: " + " %");			
+						}
 						
 						recordHRMRouteQoS(pRequirements, tAdditionalDelay, tGottenBandwidth, tGottenUtilization);	
 					}
@@ -1561,9 +1735,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				/**
 				 * show result
 				 */
-				if(tResultRoute != null){
+				if(tRoutingResult != null){
 //					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-						Logging.log(this, "      ..RESULT(getRoute() to HRMID): " + tResultRoute);
+						Logging.log(this, "      ..RESULT(getRoute() to HRMID): " + tRoutingResult);
 //					}
 				}
 			}
@@ -1572,7 +1746,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		/***********************************************************************
 		 * L2 based routing to a FoG name
 		 ***********************************************************************/
-		if(tResultRoute == null){
+		if(tRoutingResult == null){
 			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 				Logging.log(this, "      ..L2 based routing to " + pDestination);
 			}
@@ -1616,10 +1790,10 @@ public class HRMRoutingService implements RoutingService, Localization
 					/**
 					 * Get a route from the source to the destination based on their L2 addresses
 					 */
-					tResultRoute = getL2Route(tSourceL2Address, tDestinationL2Address);
+					tRoutingResult = getL2Route(tSourceL2Address, tDestinationL2Address);
 		
-					if (tResultRoute != null){
-						encodeDestinationApplication(tResultRoute, pRequirements);
+					if (tRoutingResult != null){
+						encodeDestinationApplication(tRoutingResult, pRequirements);
 					}else{
 						// no route found
 						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
@@ -1641,7 +1815,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					}
 					
 					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-						Logging.log(this, "      ..RESULT(getRoute() to " + pDestination + "): " + tResultRoute);
+						Logging.log(this, "      ..RESULT(getRoute() to " + pDestination + "): " + tRoutingResult);
 					}
 				}else{
 					Logging.err(this, "getRoute() wasn't able to determine the L2 address of the source " + pSource);
@@ -1654,7 +1828,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * CATCH ROUTING ERROR
 		 */
-		if(tResultRoute == null){
+		if(tRoutingResult == null){
 			// no route found
 			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 				Logging.warn(this, "getRoute() couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
@@ -1679,7 +1853,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		}
 		
 		// return immediately
-		return tResultRoute;
+		return tRoutingResult;
 	}
 	
 	/**

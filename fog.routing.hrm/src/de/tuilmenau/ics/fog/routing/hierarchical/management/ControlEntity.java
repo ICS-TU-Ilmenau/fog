@@ -759,7 +759,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						tLink.setRoute(tNewLinkRoute);
 						
 						// update L2 link (update is automatically done in registerLinkL2() )
-						mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), tNewLinkRoute);
+						mHRMController.registerL2Route(tCoordinatorProxy.getCoordinatorNodeL2Address(), tNewLinkRoute);
 					}
 				}
 			}else{
@@ -772,7 +772,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				mHRMController.registerLinkARG(pSourceEntity, tCoordinatorProxy, tNewLink);
 				
 				// register L2 link
-				mHRMController.registerLinkL2(tCoordinatorProxy.getCoordinatorNodeL2Address(), pAnnounceCoordinator.getRoute());
+				mHRMController.registerL2Route(tCoordinatorProxy.getCoordinatorNodeL2Address(), pAnnounceCoordinator.getRoute());
 
 				if(tRemoteClusterName.getGUIClusterID() == 35){
 					Logging.log(this, "       ..haven't found an existing ARG link for: " + tRemoteClusterName + " between " + pSourceEntity + " and " + tCoordinatorProxy);

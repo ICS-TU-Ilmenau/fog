@@ -2535,14 +2535,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pToL2Address the L2Address of the destination
 	 * @param pRoute the route to the direct neighbor
 	 */
-	public void registerLinkL2(L2Address pToL2Address, Route pRoute)
+	public void registerL2Route(L2Address pToL2Address, Route pRoute)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
     		Logging.log(this, "REGISTERING LINK (L2):\n  DEST.=" + pToL2Address + "\n  LINK=" + pRoute);
     	}
 
 		// inform the HRS about the new route
-		if(getHRS().registerLinkL2(pToL2Address, pRoute)){
+		if(getHRS().registerL2Route(pToL2Address, pRoute)){
 			// it's time to update the GUI
 			notifyGUI(pRoute);
 		}
@@ -2559,14 +2559,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @throws NetworkException
 	 */
-	private Connection connectBlock(Name pDestination, Description pRequirements, Identity pIdentity) throws NetworkException
+	public Connection connectBlock(Name pDestination, Description pRequirements, Identity pIdentity) throws NetworkException
 	{
 		Logging.log(this, "\n\n\n========> OUTGOING CONNECTION REQUEST TO: " + pDestination + " with requirements: " + pRequirements);
 
 		// connect
 		Connection tConnection = getLayer().connect(pDestination, pRequirements, pIdentity);
 		Logging.log(this, "        ..=====> got connection: " + tConnection);
-		
 		
 		// create blocking event handler
 		BlockingEventHandling tBlockingEventHandling = new BlockingEventHandling(tConnection, 1);
