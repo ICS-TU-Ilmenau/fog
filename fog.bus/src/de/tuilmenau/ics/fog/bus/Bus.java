@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.bus;
 
+import java.awt.Color;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Observable;
@@ -43,6 +44,7 @@ import de.tuilmenau.ics.fog.topology.NeighborList;
 import de.tuilmenau.ics.fog.topology.RemoteMedium;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.headers.NumberingHeader;
+import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.IPacketObserver;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.PacketLogger;
@@ -56,7 +58,7 @@ import de.tuilmenau.ics.fog.util.RateMeasurement;
  * Extends ForwardingElement just because of RoutingService and GUI reasons. Only ForwardingElements
  * can be stored in the routing service and only them can be drawn in the GUI.
  */
-public class Bus extends Observable implements ILowerLayer, ForwardingElement, IPacketObserver
+public class Bus extends Observable implements ILowerLayer, ForwardingElement, IPacketObserver, Decorator
 {
 	/**
 	 * It is static in order to enforce global unique bus IDs.
@@ -273,11 +275,19 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		if(tPropDataRate != null) {
 			int tCurDataRate = tPropDataRate.getMax();
 			
+			mAvailableDataRate = tCurDataRate + pDataRateOffset;
+
+			mLogger.log(this, "Modifying available data rate by " + pDataRateOffset + " from " + tCurDataRate + " to " + mAvailableDataRate);
+			
 			if(tCurDataRate >= 0) {
 				tPropDataRate = new DatarateProperty(tCurDataRate + pDataRateOffset, Limit.MAX);
 				
+				//mLogger.log(this, "  ..old description: " + mDescription);	
 				mDescription.set(tPropDataRate);
+				//mLogger.log(this, "  ..new description: " + mDescription);	
 			}
+		}else{
+			mLogger.err(this, "Haven't found the data rate property");
 		}
 	}
 	
@@ -750,6 +760,38 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		return false;
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.ui.Decorator#getText()
+	 */
+	@Override
+	public String getText() 
+	{
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.ui.Decorator#getColor()
+	 */
+	@Override
+	public Color getColor() 
+	{
+		mLogger.log(this, "################### BLA BLA BLA");
+		
+		if(!mAvailableDataRate.equals(mPhysMaxDataRate))
+			return Color.GREEN;
+		else
+			return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.ui.Decorator#getImageName()
+	 */
+	@Override
+	public String getImageName() 
+	{
+		return null;
+	} 
+
 	private Logger mLogger;
 	private double mNextFreeTimeSlot = 0;
 	private Config mConfig;
@@ -807,6 +849,6 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	@Viewable("Loss probability")
 	private float mPacketLossRate;
 	@Viewable("Bit error probability")
-	private float mBitErrorRate; 
+	private float mBitErrorRate;
 }
 
