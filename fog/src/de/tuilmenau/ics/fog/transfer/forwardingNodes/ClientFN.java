@@ -46,12 +46,14 @@ import de.tuilmenau.ics.fog.util.Logger;
  */
 public class ClientFN implements ForwardingNode
 {
-	public ClientFN(FoGEntity pEntity, Name pName, Description pDescription, Identity pOwner)
+	public ClientFN(FoGEntity pEntity, Name pName, Name pServerName, Description pDescription, Identity pOwner)
 	{
 		mEntity = pEntity;
 		mName = pName;
 		mDescription = pDescription;
 		mOwner = pOwner;
+		
+		mServerName = pServerName;
 		
 		mEntity.getTransferPlane().registerNode(this, null, NamingLevel.NONE, pDescription);
 	}
@@ -135,7 +137,7 @@ public class ClientFN implements ForwardingNode
 		if(packet.fetchNextGateID() == null) {
 			final Object data = packet.getData();
 			
-			// normal data or a signalling message?
+			// normal data or a signaling message?
 			if(data instanceof Signalling) {
 				((Signalling) data).execute(this, packet);
 			}
@@ -292,7 +294,10 @@ public class ClientFN implements ForwardingNode
 	@Override
 	public String toString()
 	{
-		return "ClientFN(" +mName +")";
+		if(mName != null)
+			return "ClientFN(" +mName +", peer=" + mPeerRoutingName + ")";
+		else
+			return "ClientFN(peer=" + mPeerRoutingName + ")";
 	}
 	
 	public Logger getLogger()
@@ -313,6 +318,9 @@ public class ClientFN implements ForwardingNode
 	
 	@Viewable("Owner")
 	private Identity mOwner;
+	
+	@Viewable("Server name")
+	private Name mServerName;
 	
 	private ConnectionEndPoint mCEP;
 	private boolean mClosing;
