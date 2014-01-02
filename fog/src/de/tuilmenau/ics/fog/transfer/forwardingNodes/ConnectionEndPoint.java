@@ -238,10 +238,11 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		if(isConnected()) {
 			// inform peer about closing operation
 			try {
+				logger.log(this, "  ..sending PleaseCloseConnection");		
 				write(new PleaseCloseConnection());
 			}
 			catch(NetworkException exc) {
-				logger.err(this, "Can not send close gate message. Closing without it.", exc);
+				logger.err(this, "Can not send close connection message. Closing without it.", exc);
 			}
 			
 			forwardingNode.closed();
