@@ -262,8 +262,10 @@ public class Description implements Iterable<Property>, Serializable
 		Description tResDesc = new Description();
 		
 		for(Property tProperty : this) {
-			if (!(tProperty instanceof FunctionalRequirementProperty)) {				
-				tResDesc.set(tProperty);
+			if(tProperty != null) {
+				if (tProperty instanceof NonFunctionalRequirementsProperty) {				
+					tResDesc.set(tProperty);
+				}
 			}
 		}
 
@@ -279,10 +281,10 @@ public class Description implements Iterable<Property>, Serializable
 	{
 		Description tRequirements = new Description();
 		
-		for(Property tProp : this) {
-			if(tProp != null) {
-				if(tProp instanceof FunctionalRequirementProperty) {
-					tRequirements.set(tProp);
+		for(Property tProperty : this) {
+			if(tProperty != null) {
+				if(tProperty instanceof FunctionalRequirementProperty) {
+					tRequirements.set(tProperty);
 				}
 			}
 		}
