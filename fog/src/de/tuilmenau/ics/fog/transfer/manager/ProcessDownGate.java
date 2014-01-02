@@ -23,6 +23,10 @@ import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
+import de.tuilmenau.ics.fog.facade.properties.DedicatedQoSReservationProperty;
+import de.tuilmenau.ics.fog.facade.properties.FunctionalRequirementProperty;
+import de.tuilmenau.ics.fog.facade.properties.NonFunctionalRequirementsProperty;
+import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.PleaseOpenDownGate;
 import de.tuilmenau.ics.fog.packets.SignallingRequest;
@@ -63,6 +67,39 @@ public class ProcessDownGate extends ProcessGateConstruction
 	 */
 	public void signal(Name ownRoutingServiceName)
 	{
+		boolean tUnidirectionalQoSReservation = false;
+		
+		getLogger().log(this, "Signaling creation of reverse DownGate with requirements: " + mRequirements);
+		
+		/**
+		 * Check if a unidirectional QoS reservation was executed -> abort creation of reverse gate
+		 */
+		DedicatedQoSReservationProperty tQoSReservationProp = (DedicatedQoSReservationProperty)mRequirements.get(DedicatedQoSReservationProperty.class);
+		if(tQoSReservationProp != null){
+			if(!tQoSReservationProp.isBidirectional()){
+				tUnidirectionalQoSReservation = true;
+			}
+		}
+
+		/**
+		 * Abort signaling and ski reverse gate creation
+		 */
+		if(tUnidirectionalQoSReservation){
+			getLogger().log(this, "Unidirectional QoS reservation, removing QoS attributes from original requirements set.");
+			Description tReducedRequirements = new Description();
+			for(Property tProp: mRequirements){
+				if(!(tProp instanceof NonFunctionalRequirementsProperty)){
+					tReducedRequirements.set(tProp);
+				}else if(tProp instanceof NonFunctionalRequirementsProperty){
+					NonFunctionalRequirementsProperty tNonFuncProp = (NonFunctionalRequirementsProperty)tProp;
+					if(tNonFuncProp.isBE()){
+						tReducedRequirements.set(tProp);
+					}
+				}
+			}
+			mRequirements = tReducedRequirements;
+		}
+		
 		if(mRequest == null) {
 			try {
 				mRequest = new PleaseOpenDownGate(this, ownRoutingServiceName, mRequirements);
@@ -119,8 +156,10 @@ public class ProcessDownGate extends ProcessGateConstruction
 				if(!datarateUsage.isBE()) {
 					// reserve bandwidth
 					try {
+						getLogger().log(this, "Modifying available data rate by " + (- datarateUsage.getMax()) + " kbit/s for bus " + mInterface.getBus());
 						mInterface.getBus().modifyAvailableDataRate(-datarateUsage.getMax());
 						
+						getLogger().log(this, "Refreshing gates for  bus " + mInterface.getBus());
 						mInterface.refreshGates();
 					}
 					catch(RemoteException exc) {
