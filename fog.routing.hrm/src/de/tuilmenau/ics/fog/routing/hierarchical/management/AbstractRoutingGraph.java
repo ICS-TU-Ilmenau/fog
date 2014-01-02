@@ -100,10 +100,14 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	 * @param pFrom starting point of the link
 	 * @param pTo the ending point of the link
 	 * @param pLinkObject the link object
+	 * 
+	 * @return true if the link was added to the graph, false if the link was already known
 	 */
 	@Override
-	public synchronized void link(NodeObject pFrom, NodeObject pTo, LinkObject pLinkObject)
+	public synchronized boolean link(NodeObject pFrom, NodeObject pTo, LinkObject pLinkObject)
 	{
+		boolean tAdded = false;
+		
 		// check if parameters are valid
 		if((pFrom != null) && (pTo != null) && (pLinkObject != null)) {
 			// make sure the starting point is known
@@ -117,11 +121,14 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 			// check if there already exist a link between these two nodes
 //			if(!isLinked(pFrom, pTo)) {
 				// add the link to the routing graph
-				if(mRoutingGraph.addEdge(pLinkObject, pFrom, pTo, (mDirectedGraph ? EdgeType.DIRECTED : EdgeType.UNDIRECTED))) {
+				tAdded = mRoutingGraph.addEdge(pLinkObject, pFrom, pTo, (mDirectedGraph ? EdgeType.DIRECTED : EdgeType.UNDIRECTED));
+				if(tAdded){
 					notifyObservers(new Event(EventType.ADDED, pLinkObject));
 				}
 //			}
 		}
+		
+		return tAdded;
 	}
 	
 	/**
