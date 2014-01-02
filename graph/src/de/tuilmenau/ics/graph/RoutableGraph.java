@@ -243,20 +243,27 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	 * @param pFrom link starts at
 	 * @param pTo links end at
 	 * @param pLinkValue link object
+	 * 
+	 * @return true if the link was added to the graph, false if the link is already known
 	 */
-	public synchronized void link(NodeObject pFrom, NodeObject pTo, LinkObject pLinkValue)
+	public synchronized boolean link(NodeObject pFrom, NodeObject pTo, LinkObject pLinkValue)
 	{
+		boolean tAddedToGraph = false;
+		
 		if((pFrom != null) && (pTo != null) && (pLinkValue != null)) {
 			// get equivalent object used for map for pFrom and pTo:
 						
 			pFrom = add(pFrom);
 			pTo = add(pTo);
 			
-			if(mRoutingGraph.addEdge(pLinkValue, pFrom, pTo, EdgeType.DIRECTED)) {
+			tAddedToGraph = mRoutingGraph.addEdge(pLinkValue, pFrom, pTo, EdgeType.DIRECTED);
+			if(tAddedToGraph) {
 				mResetRouting = true;
 				notifyObservers(new Event(EventType.ADDED, pLinkValue));
 			}
 		}
+		
+		return tAddedToGraph;
 	}
 	
 	/**
