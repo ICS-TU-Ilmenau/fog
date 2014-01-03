@@ -120,6 +120,24 @@ public class HierarchicalNameMappingService<Address extends Serializable> implem
 		}
 	}
 
+	/**
+	 * Clears the internal mappings database
+	 */
+	public void clear() 
+	{
+//TODO:	
+//		if(mParentNameMappingService != null) {
+//			try {
+//				mParentNameMappingService.
+//			}
+//			catch(Exception exc) {
+//				// catch it here, since the parent service is more an optional issue
+//				mLogger.err(this, "Can not inform parent name mapping service " +mParentNameMappingService +" about name deletion " +name, exc);
+//			}
+//		}
+		mDNS.clear();
+	}
+
 	@Override
 	public boolean unregisterName(Name name, Address address)
 	{
