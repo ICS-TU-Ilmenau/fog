@@ -209,12 +209,22 @@ public class ProbeRouting extends EclipseCommand
 		
 		// send a HRM probe-packet to each registered address for the given target name
 		try {
+			
 			for(NameMappingEntry<?> tNMSEntryForTarget : mNMS.getAddresses(pTargetNodeName)) {
 				if(tNMSEntryForTarget.getAddress() instanceof HRMID) {
 					// get the HRMID of the target node
 					HRMID tTargetNodeHRMID = (HRMID)tNMSEntryForTarget.getAddress();
 					
-					Logging.log(this, "Found in the NMS the HRMID " + tTargetNodeHRMID.toString() + " for node " + pTargetNode);  
+					Logging.log(this, "Found in the NMS the HRMID " + tTargetNodeHRMID.toString() + " for node " + pTargetNode);
+				}
+			}
+			
+			for(NameMappingEntry<?> tNMSEntryForTarget : mNMS.getAddresses(pTargetNodeName)) {
+				if(tNMSEntryForTarget.getAddress() instanceof HRMID) {
+					// get the HRMID of the target node
+					HRMID tTargetNodeHRMID = (HRMID)tNMSEntryForTarget.getAddress();
+					
+					Logging.log(this, "Probing the HRMID " + tTargetNodeHRMID.toString() + " for node " + pTargetNode);  
 					
 					if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (!tTargetNodeHRMID.isRelativeAddress())){
 						if(!tTargetNodeHRMID.isClusterAddress()){
@@ -225,7 +235,7 @@ public class ProbeRouting extends EclipseCommand
 							Description tConnectionReqs = tDesiredQoSValues.clone();
 							tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), tTargetNodeHRMID, pDesiredDelay, pDataRate, true));
 							tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
-							tConnectionReqs.set(new DedicatedQoSReservationProperty(true));
+							tConnectionReqs.set(new DedicatedQoSReservationProperty(false));
 							// probe connection
 							Connection tConnection = null;
 							Logging.log(this, "\n\n\nProbing a connection to " + tTargetNodeHRMID + " with requirements " + tConnectionReqs);
