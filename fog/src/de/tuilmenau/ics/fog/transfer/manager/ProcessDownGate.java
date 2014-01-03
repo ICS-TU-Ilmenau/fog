@@ -24,7 +24,6 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
 import de.tuilmenau.ics.fog.facade.properties.DedicatedQoSReservationProperty;
-import de.tuilmenau.ics.fog.facade.properties.FunctionalRequirementProperty;
 import de.tuilmenau.ics.fog.facade.properties.NonFunctionalRequirementsProperty;
 import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.packets.Packet;
@@ -82,7 +81,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 		}
 
 		/**
-		 * Abort signaling and ski reverse gate creation
+		 * Trigger creation of a reverse gate without special QoS reservations
 		 */
 		if(tUnidirectionalQoSReservation){
 			getLogger().log(this, "Unidirectional QoS reservation, removing QoS attributes from original requirements set.");
@@ -97,6 +96,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 					}
 				}
 			}
+			tReducedRequirements.set(new DedicatedQoSReservationProperty(false) /* important to tell the DownGate that it belongs to an explicit QoS reservation and should be deleted when it gets deprecated */);
 			mRequirements = tReducedRequirements;
 		}
 		
