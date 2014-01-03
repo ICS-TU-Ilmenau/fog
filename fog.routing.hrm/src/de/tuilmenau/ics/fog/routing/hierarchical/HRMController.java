@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import java.net.UnknownHostException;
+import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
@@ -47,6 +48,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
+import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -76,6 +78,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores the node specific graph decorator for HRM coordinators and clusters
 	 */
 	private NodeDecorator mDecoratorForCoordinatorsAndClusters = null;
+	
+	/**
+	 * Stores the node specific graph decorator for NMS entries
+	 */
+	private NodeDecorator mDecoratorForNMSEntries = null;
 	
 	/**
 	 * Stores the node specific graph decorator for the active HRM infrastructure
@@ -299,6 +306,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private static double mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
 	
 	/**
+	 * Stores if the simulation was restarted and the global NMS should be reset
+	 */
+	private static boolean sResetNMS = false;
+	
+	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
@@ -339,6 +351,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mDecoratorForCoordinatorsAndClusters = new NodeDecorator();
 		
 		/**
+		 * Create the node specific decorator for NMS entries
+		 */
+		mDecoratorForNMSEntries = new NodeDecorator();
+				
+		/**
 		 * Create the node specific decorator for HRM node priorities
 		 */
 		mDecoratorForNodePriorities = new NodeDecorator();
@@ -365,6 +382,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// create own decoration for HRM coordinators and clusters
 		tDecoration = Decoration.getInstance(DECORATION_NAME_COORDINATORS_AND_CLUSTERS);
 		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndClusters);
+		// create own decoration for NMS entries
+		tDecoration = Decoration.getInstance(DECORATION_NAME_NMS_ENTRIES);
+		tDecoration.setDecorator(mNode,  mDecoratorForNMSEntries);		
 		// create own decoration for HRM node priorities
 		tDecoration = Decoration.getInstance(DECORATION_NAME_NODE_PRIORITIES);
 		tDecoration.setDecorator(mNode,  mDecoratorForNodePriorities);
@@ -373,7 +393,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tDecoration.setDecorator(mNode,  mDecoratorActiveHRMInfrastructure);
 		// overwrite default decoration
 		tDecoration = Decoration.getInstance(GraphViewer.DEFAULT_DECORATION);
-		tDecoration.setDecorator(mNode,  mDecoratorForCoordinatorsAndHRMIDs);
+		tDecoration.setDecorator(mNode,  mDecoratorForNMSEntries);
 		
 		/**
 		 * Create clusterer thread
@@ -719,6 +739,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							// get the local router's human readable name (= DNS name)
 							Name tLocalRouterName = getNodeName();				
 							// register HRMID for the given DNS name
+							Logging.log(this, "Registering NMS entry: " + tLocalRouterName + " => " + pHRMID);
 							tNMS.registerName(tLocalRouterName, pHRMID, NamingLevel.NAMES);				
 							// give some debug output about the current DNS state
 							String tString = new String();
@@ -806,26 +827,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							/**
 							 * Update the DNS
 							 */
-				//TODO				// register the HRMID in the hierarchical DNS for the local router
-				//			HierarchicalNameMappingService<HRMID> tNMS = null;
-				//			try {
-				//				tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation());
-				//			} catch (RuntimeException tExc) {
-				//				HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
-				//			}				
-				//			// get the local router's human readable name (= DNS name)
-				//			Name tLocalRouterName = getNodeName();				
-				//			// register HRMID for the given DNS name
-				//			tNMS.registerName(tLocalRouterName, pOldHRMID, NamingLevel.NAMES);				
-				//			// give some debug output about the current DNS state
-				//			String tString = new String();
-				//			for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
-				//				if (!tString.isEmpty()){
-				//					tString += ", ";
-				//				}
-				//				tString += tEntry;
-				//			}
-				//			Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
+							// register the HRMID in the hierarchical DNS for the local router
+							HierarchicalNameMappingService<HRMID> tNMS = null;
+							try {
+								tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation());
+							} catch (RuntimeException tExc) {
+								HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
+							}				
+							// get the local router's human readable name (= DNS name)
+							Name tLocalRouterName = getNodeName();				
+							// register HRMID for the given DNS name
+							Logging.log(this, "Unregistering NMS entry: " + tLocalRouterName + " => " + pOldHRMID);
+							tNMS.unregisterName(tLocalRouterName, pOldHRMID);				
+							// give some debug output about the current DNS state
+							String tString = new String();
+							for(NameMappingEntry<HRMID> tEntry : tNMS.getAddresses(tLocalRouterName)) {
+								if (!tString.isEmpty()){
+									tString += ", ";
+								}
+								tString += tEntry;
+							}
+							Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
 						}
 					}else{
 						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
@@ -943,7 +965,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tActiveHRMInfrastructureText += "^";	
 			}			
 		}
-		mDecoratorActiveHRMInfrastructure.setText(" [Active clusters: " + tActiveHRMInfrastructureText + "]");
+		mDecoratorActiveHRMInfrastructure.setText("- [Active clusters: " + tActiveHRMInfrastructureText + "]");
 		String tHierPrio = "";
 		for(int i = 1; i < HRMConfig.Hierarchy.HEIGHT; i++){
 			if (tHierPrio != ""){
@@ -964,7 +986,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}			
 		}
-		mDecoratorForCoordinatorsAndHRMIDs.setText(tNodeText);
+		mDecoratorForCoordinatorsAndHRMIDs.setText("- " + tNodeText);
 		
 		String tClustersText = "";
 		tClustersText = "";
@@ -991,6 +1013,28 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		mDecoratorForCoordinatorsAndClusters.setText("- clusters: " + tClustersText);
 		
+		NameMappingService tNMS = null;
+		try {
+			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(mNode.getAS().getSimulation());
+		} catch (RuntimeException tExc) {
+			tNMS = HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
+		}
+		String tRegisterNMSEntriesText = "";
+		try {
+			for(NameMappingEntry<?> tNMSEntry : tNMS.getAddresses(getNodeName())) {
+				if(tNMSEntry.getAddress() instanceof HRMID) {
+					// get the HRMID of the target node
+					HRMID tNodeHRMID = (HRMID)tNMSEntry.getAddress();
+					
+					if(tRegisterNMSEntriesText != "")
+						tRegisterNMSEntriesText += ", ";
+					tRegisterNMSEntriesText += tNodeHRMID.toString();
+				}
+			}
+		} catch (RemoteException e) {
+		}
+		mDecoratorForNMSEntries.setText("- " + tRegisterNMSEntriesText);
+
 		/**
 		 * Set the decoration images
 		 */
@@ -1006,6 +1050,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mDecoratorForCoordinatorsAndHRMIDs.setImage(tHighestCoordinatorLevel);
 		mDecoratorForCoordinatorsAndClusters.setImage(tHighestCoordinatorLevel);
 		mDecoratorActiveHRMInfrastructure.setImage(tHighestCoordinatorLevel);
+		mDecoratorForNMSEntries.setImage(tHighestCoordinatorLevel);
 	}
 
 	/**
@@ -2612,6 +2657,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mRegisteredHRMControllers = new LinkedList<HRMController>();
 		sRegisteredCoordinators = 0;
 		sUnregisteredCoordinators = 0;
+		sResetNMS = true;
 	}
 
 	/**
@@ -3660,6 +3706,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// register in the global HRMController database
 		synchronized (mRegisteredHRMControllers) {
 			mRegisteredHRMControllers.add(this);
+		}
+		
+		/**
+		 * Reset global NMS is needed
+		 */
+		if(sResetNMS){
+			/**
+			 * Reset the DNS
+			 */
+			// register the HRMID in the hierarchical DNS for the local router
+			HierarchicalNameMappingService<HRMID> tNMS = null;
+			try {
+				tNMS = (HierarchicalNameMappingService) HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation());
+			} catch (RuntimeException tExc) {
+				HierarchicalNameMappingService.createGlobalNameMappingService(getNode().getAS().getSimulation());
+			}				
+			tNMS.clear();	
+			sResetNMS = false;
 		}
 	}
 	
@@ -5131,4 +5195,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores the identification string for HRM specific routing graph decorations (coordinators & clusters)
 	 */
 	private final static String DECORATION_NAME_COORDINATORS_AND_CLUSTERS = "HRM(2) - coordinators & clusters";
+	
+	/**
+	 * Stores the identification string for HRM specific routing graph decorations (NMS entries)
+	 */
+	private final static String DECORATION_NAME_NMS_ENTRIES = "HRM(5) - NMS entries";
 }
