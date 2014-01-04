@@ -74,6 +74,9 @@ abstract public class DownGate extends AbstractGate
 	{
 		if(getDescription().isBestEffort()) {
 			try {
+				mLogger.log(this, "Updating description..");
+				mLogger.log(this, "  ..old description: " + getDescription());
+				mLogger.log(this, "  ..old description: " + networkInterface.getBus().getDescription());
 				setDescription(networkInterface.getBus().getDescription());
 				
 				return true;

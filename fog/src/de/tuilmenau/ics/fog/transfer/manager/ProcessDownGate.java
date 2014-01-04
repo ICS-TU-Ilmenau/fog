@@ -66,14 +66,16 @@ public class ProcessDownGate extends ProcessGateConstruction
 	 */
 	public void signal(Name ownRoutingServiceName)
 	{
+		Description tRequirementsForReverseDownGate = mRequirements;
+		
 		boolean tUnidirectionalQoSReservation = false;
 		
-		getLogger().log(this, "Signaling creation of reverse DownGate with requirements: " + mRequirements);
+		getLogger().log(this, "Signaling creation of reverse DownGate with requirements: " + tRequirementsForReverseDownGate);
 		
 		/**
 		 * Check if a unidirectional QoS reservation was executed -> abort creation of reverse gate
 		 */
-		DedicatedQoSReservationProperty tQoSReservationProp = (DedicatedQoSReservationProperty)mRequirements.get(DedicatedQoSReservationProperty.class);
+		DedicatedQoSReservationProperty tQoSReservationProp = (DedicatedQoSReservationProperty)tRequirementsForReverseDownGate.get(DedicatedQoSReservationProperty.class);
 		if(tQoSReservationProp != null){
 			if(!tQoSReservationProp.isBidirectional()){
 				tUnidirectionalQoSReservation = true;
@@ -86,7 +88,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 		if(tUnidirectionalQoSReservation){
 			getLogger().log(this, "Unidirectional QoS reservation, removing QoS attributes from original requirements set.");
 			Description tReducedRequirements = new Description();
-			for(Property tProp: mRequirements){
+			for(Property tProp: tRequirementsForReverseDownGate){
 				if(!(tProp instanceof NonFunctionalRequirementsProperty)){
 					tReducedRequirements.set(tProp);
 				}else if(tProp instanceof NonFunctionalRequirementsProperty){
@@ -97,12 +99,15 @@ public class ProcessDownGate extends ProcessGateConstruction
 				}
 			}
 			tReducedRequirements.set(new DedicatedQoSReservationProperty(false) /* important to tell the DownGate that it belongs to an explicit QoS reservation and should be deleted when it gets deprecated */);
-			mRequirements = tReducedRequirements;
+			tRequirementsForReverseDownGate = tReducedRequirements;
 		}
 		
+		/**
+		 * Trigger creation of reverse DownGate
+		 */
 		if(mRequest == null) {
 			try {
-				mRequest = new PleaseOpenDownGate(this, ownRoutingServiceName, mRequirements);
+				mRequest = new PleaseOpenDownGate(this, ownRoutingServiceName, tRequirementsForReverseDownGate);
 			}
 			catch(NetworkException exc) {
 				getLogger().err(this, "Can not prepare signaling message.", exc);
@@ -186,6 +191,8 @@ public class ProcessDownGate extends ProcessGateConstruction
 	@Override
 	protected void finished()
 	{
+		getLogger().log(this, "Finishing ProcessDownGate..");
+		
 		if((mGate != null) && (mRequirements != null)) {
 			// release resources of lower layer
 			DatarateProperty datarateUsage = (DatarateProperty) mRequirements.get(DatarateProperty.class);
@@ -201,9 +208,12 @@ public class ProcessDownGate extends ProcessGateConstruction
 					catch(RemoteException exc) {
 						getLogger().err(this, "Can not free resources at lower layer.", exc);
 					}
-				}
-			}
-		}
+				}else
+					getLogger().log(this, "   ..data rate usage is BE for " + mGate);
+			}else
+				getLogger().log(this, "   ..data rate usage is null for " + mGate);
+		}else
+			getLogger().log(this, "   ..aborted finishing ProcessDownGate");
 		
 		super.finished();
 	}
