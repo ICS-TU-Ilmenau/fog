@@ -45,7 +45,6 @@ import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ClientFN;
-import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.ServerFN;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
@@ -1551,31 +1550,30 @@ public class HRMRoutingService implements RoutingService, Localization
 									 */
 									if((HRMConfig.QoS.QOS_RESERVATIONS) && (tDedicatedQoSReservationProperty != null)){
 										AbstractGate tParallelGate = tGate;
-										if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-											Logging.log(this, "Needing QoS gate parallel to: " + tParallelGate);
-										}
+//										if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+											Logging.log(this, "Needing QoS gate parallel to: " + tParallelGate + " with non-functional requirements: " +tNonFunctionalDescription);
+//										}
 										Description tCapabilities = tParallelGate.getDescription();
-										Description tGateRequ;
-										Description tRemainingRequirements = tNonFunctionalDescription;
+										Logging.log(this, "  ..original gate has caps.: " + tCapabilities);
+										Description tNeededReservationRequirements;
 										
 										if(tCapabilities != null) {
 											try {
-												tGateRequ = tCapabilities.deriveRequirements(tNonFunctionalDescription);
-												
-												tRemainingRequirements = tNonFunctionalDescription.removeCapabilities(tGateRequ);
+												tNeededReservationRequirements = tCapabilities.deriveRequirements(tNonFunctionalDescription);
 											}
 											catch(PropertyException tExc) {
 												throw new RoutingException(this, "Requirements " + tNonFunctionalDescription +" can not be fullfilled.", tExc);
 											}
 										} else {
-											tGateRequ = null;
+											tNeededReservationRequirements = null;
 										}
 				
 										// mark the gate as HRM based QoS reservation
-										tGateRequ.set(new DedicatedQoSReservationProperty(tDedicatedQoSReservationProperty.isBidirectional()));
+										tNeededReservationRequirements.set(new DedicatedQoSReservationProperty(tDedicatedQoSReservationProperty.isBidirectional()));
 										
-										// describe the needed QoS reservation										
-										tQoSReservation = new RouteSegmentMissingPart(tGateRequ, tParallelGate, pRequester);
+										// describe the needed QoS reservation					
+										Logging.log(this, "Creating QoS reservation with requirements: " + tNeededReservationRequirements);
+										tQoSReservation = new RouteSegmentMissingPart(tNeededReservationRequirements, tParallelGate, pRequester);
 										
 										// mark as described QoS reservation
 										tHaveDescribedMissingQoSReservation = true;
@@ -1682,18 +1680,18 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * Get the QOS VALUEs of the next network BUS and record it
 					 */
 					if(tNextNetworkBus != null){
-						long tAdditionalDelay = tNextNetworkBus.getDelayMSec();
-						long tGottenBandwidth = tNextNetworkBus.getAvailableDataRate();
-						double tGottenUtilization = 0.0;
+						long tMinAdditionalDelay = tNextNetworkBus.getDelayMSec();
+						long tMaxAvailableDataRate = tNextNetworkBus.getAvailableDataRate();
+						double tUtilization = 0.0;
 						
 						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 							Logging.log(this, "NEXT NETWORK BUS IS: " + tNextNetworkBus);
-							Logging.log(this, "   ..delay: " + tAdditionalDelay + " ms");
-							Logging.log(this, "   ..bandwidth: " + tGottenBandwidth + " kbit/s");
+							Logging.log(this, "   ..min. additional delay: " + tMinAdditionalDelay + " ms");
+							Logging.log(this, "   ..max. available data rate: " + tMaxAvailableDataRate + " kbit/s");
 							Logging.log(this, "   ..utilization: " + " %");			
 						}
 						
-						recordHRMRouteQoS(pRequirements, tAdditionalDelay, tGottenBandwidth, tGottenUtilization);	
+						recordHRMRouteQoS(pRequirements, tMinAdditionalDelay, tMaxAvailableDataRate, tUtilization);	
 					}
 				}
 			}else{
@@ -1920,11 +1918,11 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * Records the gotten QoS values
 	 * 
 	 * @param pRequirements the requirements of the getRoute() request
-	 * @param pAdditionalDelay the additional delay for the current next link
-	 * @param pGottenBandwidth the gotten bandwidth for the current next link
+	 * @param pMinAdditionalDelay the additional delay for the current next link
+	 * @param pMaxAvailableDataRate the max. available data rate along the current next link
 	 * @param pGottenUtilization the gotten utilization for the current next link
 	 */
-	private void recordHRMRouteQoS(Description pRequirements, long pAdditionalDelay, long pGottenBandwidth, double pGottenUtilization)
+	private void recordHRMRouteQoS(Description pRequirements, long pMinAdditionalDelay, long pMaxAvailableDataRate, double pGottenUtilization)
 	{
 		if (HRMConfig.Routing.RECORD_ROUTE_FOR_PROBES){
 			// check if we have valid requirements
@@ -1933,11 +1931,22 @@ public class HRMRoutingService implements RoutingService, Localization
 				ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) pRequirements.get(ProbeRoutingProperty.class);
 				if(tPropProbeRouting != null) {
 					/**
-					 * Increase the DELAY
+					 * record min. additional DELAY
 					 */
-					if(pAdditionalDelay > 0){
-						tPropProbeRouting.addDelay(pAdditionalDelay);
+					if(pMinAdditionalDelay > 0){
+						tPropProbeRouting.recordAdditionalDelay(pMinAdditionalDelay);
 					}					
+					
+					/**
+					 * record max. available data rate
+					 */
+					if(pMaxAvailableDataRate >= 0){
+						// make sure we store always the minimal detected max. available data rate along the taken route
+						if((tPropProbeRouting.getRecordedDataRate() < 0) || (tPropProbeRouting.getRecordedDataRate() > pMaxAvailableDataRate)){
+							tPropProbeRouting.recordMaxDataRate(pMaxAvailableDataRate);
+						}
+					}
+						
 				}else{
 					Logging.warn(this, "Cannot record HRM Route QoS because the needed property wasn't found within the requirements");
 				}

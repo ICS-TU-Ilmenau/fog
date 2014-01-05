@@ -29,7 +29,7 @@ public class ProbeRoutingProperty extends AbstractProperty
 	
 	private long mRecordedDelay = 0;
 	
-	private long mRecordedDataRate = 0; //TODO:updaten auf basis der bus-informationen
+	private long mRecordedDataRate = -1;
 	
 	private long mDesiredDelay = 0;
 	
@@ -120,11 +120,21 @@ public class ProbeRoutingProperty extends AbstractProperty
 	 * 
 	 * @param pAdditionalDelay the additional delay
 	 */
-	public void addDelay(long pAdditionalDelay)
+	public void recordAdditionalDelay(long pAdditionalDelay)
 	{
 		mRecordedDelay += pAdditionalDelay;
 	}
 
+	/**
+	 * Stores the max. data rate which is available along a taken route
+	 * 
+	 * @param pDataRate the new max. data rate
+	 */
+	public void recordMaxDataRate(long pDataRate)
+	{
+		mRecordedDataRate = pDataRate;
+	}
+	
 	/**
 	 * Returns the desired min.data rate from the sender
 	 * 

@@ -5090,14 +5090,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			// get the recorded route from the property
 			LinkedList<HRMID> tRecordedHRMIDs = tPropProbeRouting.getRecordedHops();
 			
+			String tDesiredDataRate = "";
+			if(tPropProbeRouting.getDesiredDataRate() >= 1000000)
+				tDesiredDataRate += (tPropProbeRouting.getDesiredDataRate() / 1000000) + " Gbit/s";
+			else if(tPropProbeRouting.getDesiredDataRate() >= 1000)
+				tDesiredDataRate += (tPropProbeRouting.getDesiredDataRate() / 1000) + " Mbit/s";
+			else
+				tDesiredDataRate += tPropProbeRouting.getDesiredDataRate() + " kbit/s";
+
+			String tPossibleDataRate = "";
+			if(tPropProbeRouting.getRecordedDataRate() >= 1000000)
+				tPossibleDataRate += (tPropProbeRouting.getRecordedDataRate() / 1000000) + " Gbit/s";
+			else if(tPropProbeRouting.getRecordedDataRate() >= 1000)
+				tPossibleDataRate += (tPropProbeRouting.getRecordedDataRate() / 1000) + " Mbit/s";
+			else
+				tPossibleDataRate += tPropProbeRouting.getRecordedDataRate() + " kbit/s";
+
 			Logging.log(this, "     ..detected a probe-routing connection(source=" + tPropProbeRouting.getSourceDescription());
 			Logging.log(this, "       ..source: " + tRecordedHRMIDs.getFirst());
 			Logging.log(this, "       ..destination: " + tPropProbeRouting.getDest());
-			Logging.log(this, "       ..desired E2E data rate: " + tPropProbeRouting.getDesiredDataRate() + " kbit/s");
+			Logging.log(this, "       ..desired E2E data rate: " + tDesiredDataRate);
 			Logging.log(this, "       ..desired E2E delay: " + tPropProbeRouting.getDesiredDelay() + " ms");
-			Logging.log(this, "       ..resulting E2E data rate: " + tPropProbeRouting.getRecordedDataRate() + " ms (this is the best possible value along the taken route)");
-			Logging.log(this, "       ..resulting E2E delay: " + tPropProbeRouting.getRecordedDelay() + " ms (this is the sum of all delays of all used links)");
-			Logging.log(this, "       ..resulting HOP count: " + tPropProbeRouting.getRecordedHopCount() + " nodes (this represents the list of passed physical hosts)");
+			Logging.log(this, "       ..recorded max. E2E data rate: " + tPossibleDataRate + " (this is the worst max. avilable data rate along the taken route)");
+			Logging.log(this, "       ..recorded min. E2E delay: " + tPropProbeRouting.getRecordedDelay() + " ms (this is the sum of all delays of all used links)");
+			Logging.log(this, "       ..recorded HOP count: " + tPropProbeRouting.getRecordedHopCount() + " nodes (this represents the list of passed physical hosts)");
 			Logging.log(this, "       ..passed " + tRecordedHRMIDs.size() + " HRM hops: (this represents the list of passed physical interfaces)");
 
 			// print the recorded route
