@@ -145,6 +145,7 @@ public abstract class Process
 	 */
 	public final void terminate(Exception pCause)
 	{
+		mLogger.log(this, "Terminating proccess now..");
 		if(!isFinished()) {
 			setState(ProcessState.CLOSING);
 			

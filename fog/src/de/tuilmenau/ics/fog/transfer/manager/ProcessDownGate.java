@@ -59,6 +59,8 @@ public class ProcessDownGate extends ProcessGateConstruction
 		} else {
 			mRequirements = null;
 		}
+		
+		//getLogger().log(this, "Created DownGate process with requirements: " + mRequirements); 
 	}
 	
 	/**
@@ -140,11 +142,16 @@ public class ProcessDownGate extends ProcessGateConstruction
 
 	protected AbstractGate newGate(FoGEntity entity) throws NetworkException
 	{
+		//mLogger.log(this, "Allocating new DownGate..");
+		
 		// Check capabilities of bus
 		try {
+			//mLogger.log(this, "  ..getting description from bus");
 			Description tBusCapab = mInterface.getBus().getDescription();
 			
 			if(tBusCapab != null) {
+				//mLogger.log(this, "  ..having pre-defined requirements: " + mRequirements);
+				//mLogger.log(this, "  ..deriving own requirements from bus descriptions: " + tBusCapab);
 				mRequirements = tBusCapab.deriveRequirements(mRequirements);
 			}
 			// else stick to the original requirements
@@ -154,6 +161,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 		}
 		
 		// Reserve resources in lower layer
+		//mLogger.log(this, "  ..reserving resource in LL");
 		if(mRequirements != null) {
 			DatarateProperty datarateUsage = (DatarateProperty) mRequirements.get(DatarateProperty.class);
 			if(datarateUsage != null) {
@@ -175,6 +183,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 		}
 
 		// Create gate
+		//mLogger.log(this, "  ..actually creating DirectDownGate");
 		DirectDownGate tRes = new DirectDownGate(getID(), entity, mInterface, mLowerLayerID, mRequirements, getOwner());
 		
 		if(Config.Connection.TERMINATE_WHEN_IDLE) {

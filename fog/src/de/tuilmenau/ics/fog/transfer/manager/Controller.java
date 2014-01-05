@@ -744,17 +744,20 @@ public class Controller
 		try {
 			Gate tGate = null;
 			
+			mLogger.log(this, "  ..starting process");
 			tProcess.start();
 			
 			if(pLazyCreation && (pBackup != null)) {
 				// delay creation it until signaling is finished
 			} else {
+				mLogger.log(this, "  ..lazy starting process");
 				tGate = tProcess.create();
 			}
 			
 			// Request reverse gate from peer
 			Name localRoutingName = mEntity.getRoutingService().getNameFor(pFN);
 			
+			mLogger.log(this, "  ..starting process signaling");
 			tProcess.signal(localRoutingName);
 			
 			return tGate;

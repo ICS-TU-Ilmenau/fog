@@ -29,6 +29,7 @@ import de.tuilmenau.ics.fog.facade.properties.OrderedProperty;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.facade.properties.TransportProperty;
 import de.tuilmenau.ics.fog.facade.properties.MinMaxProperty.Limit;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 public class Description implements Iterable<Property>, Serializable
 {
@@ -329,22 +330,28 @@ public class Description implements Iterable<Property>, Serializable
 		
 		if(pDescr != null) {
 			// iterate all elements in capabilities
+			//Logging.getInstance().err(this, "  ..deriveRequirements() iterates over elements and searches for non-functional requirements");
 			for(Property tProp : this) {
 				if(tProp instanceof NonFunctionalRequirementsProperty) {
 					Property tMinusProp = pDescr.get(tProp.getClass());
 					
 					if(tMinusProp != null) {
+						//Logging.getInstance().log(this, "  ..deriveRequirements() adds a requirement (prop: " + tProp + ", mins prop: " + tMinusProp + ")"); 
+						//Logging.getInstance().log(this, "    ..requirement: " + ((NonFunctionalRequirementsProperty)tProp).deriveRequirements(tMinusProp));
 						tRes.add(((NonFunctionalRequirementsProperty)tProp).deriveRequirements(tMinusProp));
+						//Logging.getInstance().log(this, "    ..added requirement");
 					} else {
 						// Requ is not listed in other list. Take over old one without changes.
 						tRes.add(tProp);
 					}
 				} else {
+					//Logging.getInstance().err(this, "Can not handle non-functional");
 					throw new PropertyException(this, "Can not handle non functional " +tProp);
 				}
 			}
 			
 			// check remaining elements in requirements
+			//Logging.getInstance().err(this, "  ..deriveRequirements() checks remaining elements in given description");
 			for(Property tProp : pDescr) {
 				// already handled in first loop?
 				Property alreadyCovered = tRes.get(tProp.getClass());
@@ -477,6 +484,8 @@ public class Description implements Iterable<Property>, Serializable
 			descr.set(new DatarateProperty(pBandwidthKBitSec, Limit.MIN));
 		}
 
+		//Logging.getInstance().log("Created QoS requirements: " + descr);
+		
 		return descr;
 	}
 	

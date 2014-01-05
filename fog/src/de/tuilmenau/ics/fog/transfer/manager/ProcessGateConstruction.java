@@ -38,11 +38,14 @@ public abstract class ProcessGateConstruction extends Process
 	
 	public Gate create() throws NetworkException
 	{
+		mLogger.log(this, "Creating gate..");
+		
 		ForwardingNode tBase = getBase();
 		
 		// synch for test&set of down gates
 		synchronized(tBase) {
 			// create gate
+			mLogger.log(this, "  ..allocating new gate");
 			mGate = newGate(getBase().getEntity());
 			
 			// assign gate a local ID
@@ -59,7 +62,9 @@ public abstract class ProcessGateConstruction extends Process
 					}
 				} else {
 					// init in order to be able to switch to delete
+					mLogger.log(this, "  ..initializing gate");
 					mGate.initialise();
+					mLogger.log(this, "  ..shutting down the gate");
 					mGate.shutdown();
 					mGate = null;
 					
@@ -69,6 +74,7 @@ public abstract class ProcessGateConstruction extends Process
 					throw new NetworkException(this, "Gate " +mReplacementFor +" that should be replaced is not operational. Terminating the construction of a replacement.");
 				}
 			} else {
+				mLogger.log(this, "  ..registering gate");
 				tBase.registerGate(mGate);
 				
 				mLogger.log(this, "gate " +mGate +" created at " +tBase);
