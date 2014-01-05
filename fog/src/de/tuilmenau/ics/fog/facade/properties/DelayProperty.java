@@ -13,6 +13,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.facade.properties;
 
+import de.tuilmenau.ics.fog.ui.Logging;
+
 
 public class DelayProperty extends MinMaxProperty
 {
@@ -51,8 +53,9 @@ public class DelayProperty extends MinMaxProperty
 				if(maxDelay != UNDEFINED) {
 					// min delay introduced and max delay required
 					if(getMin() <= maxDelay) {
-						return create(getMin(), getMin(), getVariance());
+						return create(getMin(), UNDEFINED, getVariance());
 					} else {
+						Logging.getInstance().err(this, "Min of " +this +" exceeds max value " +property);;
 						throw new PropertyException(this, "Min of " +this +" exceeds max value " +property);
 					}
 				} else {
@@ -64,6 +67,7 @@ public class DelayProperty extends MinMaxProperty
 				return create(0, 0, 0);
 			}
 		} else {
+			Logging.getInstance().err(this, "Parameter " +property +" is not a " +DelayProperty.class + " object.");
 			throw new PropertyException(this, "Parameter " +property +" is not a " +DelayProperty.class + " object.");
 		}
 	}
