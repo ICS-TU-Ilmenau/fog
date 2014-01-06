@@ -287,9 +287,27 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					/**
 					 * BE metrics, optimize for:
 					 * 		1.) hop count
+					 * 		2.) data rate
+					 * 		3.) delay
 					 */
 					if(tBestResultHopCount != null){
-						if(tBestResultHopCount.getHopCount() > tEntry.getHopCount()){
+						if( 
+						  // better hop count?
+						  (tBestResultHopCount.getHopCount() > tEntry.getHopCount()) || 
+						  (
+						      // hop count is the same and and another criterion is better?
+							  (tBestResultHopCount.getHopCount() == tEntry.getHopCount()) && 
+							  ( 
+							      // better data rate along the route?		  
+						          (tBestResultHopCount.getMaxAvailableDataRate() < tEntry.getMaxAvailableDataRate()) ||
+								  ( 
+									  // date rate is also the same, but the delay is better along the route?	  
+								      (tBestResultHopCount.getMaxAvailableDataRate() == tEntry.getMaxAvailableDataRate()) && (tBestResultHopCount.getMinDelay() > tEntry.getMinDelay()) 
+								  )
+							  ) 
+						  ) 
+						  ){
+							
 							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 								Logging.log(this, "      ..found better (BE) entry: " + tEntry);
 							}
