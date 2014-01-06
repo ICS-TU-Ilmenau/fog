@@ -14,6 +14,7 @@ import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Observer;
@@ -264,6 +265,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores a database about all known network interfaces of this node
 	 */
 	private LinkedList<NetworkInterface> mLocalNetworkInterfaces = new LinkedList<NetworkInterface>();
+	
+	/**
+	 * Stores a counter for the references per known network interface
+	 */
+	private HashMap<NetworkInterface, Integer> mLocalNetworkInterfacesRefCount = new HashMap<NetworkInterface, Integer>();
 	
 	/**
 	 * Stores the node-global election state
@@ -3139,8 +3145,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		synchronized (mLocalNetworkInterfaces) {
 			if(mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
-				Logging.log(this, "\n######### Detected lost network interface: " + pInterfaceToNeighbor);
-				mLocalNetworkInterfaces.remove(pInterfaceToNeighbor); //TODO: multiple nodes!?
+				Integer tRefCount = mLocalNetworkInterfacesRefCount.get(pInterfaceToNeighbor);
+				
+				/**
+				 * decrease ref counter
+				 */
+				if(tRefCount == null){
+					Logging.err(this, "Invalid ref. count for known network interface: " + pInterfaceToNeighbor); 
+				}
+				tRefCount--;
+				mLocalNetworkInterfacesRefCount.put(pInterfaceToNeighbor, tRefCount);
+				
+				/**
+				 * delete the network interface from the database about known network interfaces
+				 */
+				if(tRefCount.intValue() <= 1){
+					Logging.log(this, "\n######### Detected lost network interface: " + pInterfaceToNeighbor);
+					mLocalNetworkInterfaces.remove(pInterfaceToNeighbor);
+				}
 			}
 			decreaseNodePriority_Connectivity(pInterfaceToNeighbor);
 		}
@@ -3183,10 +3205,25 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				Cluster tParentCluster = null;
 				synchronized (mLocalNetworkInterfaces) {
+					/**
+					 * add the network interface to the database about known network interfaces
+					 */
 					if(!mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
 						Logging.log(this, "\n######### Detected new network interface: " + pInterfaceToNeighbor);
 						mLocalNetworkInterfaces.add(pInterfaceToNeighbor);
 					}
+					
+					/**
+					 * increase the ref. coutner for this network interface
+					 */
+					Integer tRefCount = mLocalNetworkInterfacesRefCount.get(pInterfaceToNeighbor);
+					if(tRefCount == null){
+						tRefCount = new Integer(1);
+					}else{
+						tRefCount++;
+					}
+					mLocalNetworkInterfacesRefCount.put(pInterfaceToNeighbor, tRefCount);
+					
 					//HINT: we make sure that we use only one Cluster object per Bus
 					Cluster tExistingCluster = getBaseHierarchyLevelCluster(pInterfaceToNeighbor);
 					if (tExistingCluster != null){
