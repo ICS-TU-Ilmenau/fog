@@ -5051,6 +5051,57 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		return tResult;
 	}
 
+	/**
+	 * EVENT: probe routing
+	 * 
+	 * @param pProbeRoutingProperty the property of the received incoming connection
+	 */
+	private void eventProbeRouting(ProbeRoutingProperty pProbeRoutingProperty)
+	{
+		/**
+		 * We have a probe-routing connection and will print some additional information about the taken route of the connection request
+		 */
+		// get the recorded route from the property
+		LinkedList<HRMID> tRecordedHRMIDs = pProbeRoutingProperty.getRecordedHops();
+		
+		String tDesiredDataRate = "";
+		if(pProbeRoutingProperty.getDesiredDataRate() >= 1000000)
+			tDesiredDataRate += (pProbeRoutingProperty.getDesiredDataRate() / 1000000) + " Gbit/s";
+		else if(pProbeRoutingProperty.getDesiredDataRate() >= 1000)
+			tDesiredDataRate += (pProbeRoutingProperty.getDesiredDataRate() / 1000) + " Mbit/s";
+		else
+			tDesiredDataRate += pProbeRoutingProperty.getDesiredDataRate() + " kbit/s";
+
+		String tPossibleDataRate = "";
+		if(pProbeRoutingProperty.getRecordedDataRate() >= 1000000)
+			tPossibleDataRate += (pProbeRoutingProperty.getRecordedDataRate() / 1000000) + " Gbit/s";
+		else if(pProbeRoutingProperty.getRecordedDataRate() >= 1000)
+			tPossibleDataRate += (pProbeRoutingProperty.getRecordedDataRate() / 1000) + " Mbit/s";
+		else
+			tPossibleDataRate += pProbeRoutingProperty.getRecordedDataRate() + " kbit/s";
+
+		Logging.log(this, "     ..detected a probe-routing connection(source=" + pProbeRoutingProperty.getSourceDescription());
+		Logging.log(this, "       ..source: " + tRecordedHRMIDs.getFirst());
+		Logging.log(this, "       ..destination: " + pProbeRoutingProperty.getDest());
+		Logging.log(this, "       ..desired E2E data rate: " + tDesiredDataRate);
+		Logging.log(this, "       ..desired E2E delay: " + pProbeRoutingProperty.getDesiredDelay() + " ms");
+		Logging.log(this, "       ..recorded max. E2E data rate: " + tPossibleDataRate + " (this is the worst max. avilable data rate along the taken route)");
+		Logging.log(this, "       ..recorded min. E2E delay: " + pProbeRoutingProperty.getRecordedDelay() + " ms (this is the sum of all delays of all used links)");
+		Logging.log(this, "       ..recorded HOP count: " + pProbeRoutingProperty.getRecordedHopCount() + " nodes (this represents the list of passed physical hosts)");
+		Logging.log(this, "       ..passed " + tRecordedHRMIDs.size() + " HRM hops: (this represents the list of passed physical interfaces)");
+
+		// print the recorded route
+		int i = 0;
+		for(HRMID tHRMID : tRecordedHRMIDs){
+			if(i % 2 == 0){
+				Logging.log(this, "        ..source[" + i + "]: " + tHRMID);
+			}else{
+				Logging.log(this, "          ..hop[" + i + "]: " + tHRMID);
+			}
+			i++;
+		}
+	}
+	
 	/** 
 	 * This method is derived from IServerCallback and is called for incoming connection requests by the HRMController application's ServerFN.
 	 * Such a incoming connection can either be triggered by an HRMController application or by a probe-routing request
@@ -5084,48 +5135,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "     ..starting communication session for the new connection");
 			tComSession.startConnection(null, pConnection);
 		}else{
-			/**
-			 * We have a probe-routing connection and will print some additional information about the taken route of the connection request
-			 */
-			// get the recorded route from the property
-			LinkedList<HRMID> tRecordedHRMIDs = tPropProbeRouting.getRecordedHops();
-			
-			String tDesiredDataRate = "";
-			if(tPropProbeRouting.getDesiredDataRate() >= 1000000)
-				tDesiredDataRate += (tPropProbeRouting.getDesiredDataRate() / 1000000) + " Gbit/s";
-			else if(tPropProbeRouting.getDesiredDataRate() >= 1000)
-				tDesiredDataRate += (tPropProbeRouting.getDesiredDataRate() / 1000) + " Mbit/s";
-			else
-				tDesiredDataRate += tPropProbeRouting.getDesiredDataRate() + " kbit/s";
-
-			String tPossibleDataRate = "";
-			if(tPropProbeRouting.getRecordedDataRate() >= 1000000)
-				tPossibleDataRate += (tPropProbeRouting.getRecordedDataRate() / 1000000) + " Gbit/s";
-			else if(tPropProbeRouting.getRecordedDataRate() >= 1000)
-				tPossibleDataRate += (tPropProbeRouting.getRecordedDataRate() / 1000) + " Mbit/s";
-			else
-				tPossibleDataRate += tPropProbeRouting.getRecordedDataRate() + " kbit/s";
-
-			Logging.log(this, "     ..detected a probe-routing connection(source=" + tPropProbeRouting.getSourceDescription());
-			Logging.log(this, "       ..source: " + tRecordedHRMIDs.getFirst());
-			Logging.log(this, "       ..destination: " + tPropProbeRouting.getDest());
-			Logging.log(this, "       ..desired E2E data rate: " + tDesiredDataRate);
-			Logging.log(this, "       ..desired E2E delay: " + tPropProbeRouting.getDesiredDelay() + " ms");
-			Logging.log(this, "       ..recorded max. E2E data rate: " + tPossibleDataRate + " (this is the worst max. avilable data rate along the taken route)");
-			Logging.log(this, "       ..recorded min. E2E delay: " + tPropProbeRouting.getRecordedDelay() + " ms (this is the sum of all delays of all used links)");
-			Logging.log(this, "       ..recorded HOP count: " + tPropProbeRouting.getRecordedHopCount() + " nodes (this represents the list of passed physical hosts)");
-			Logging.log(this, "       ..passed " + tRecordedHRMIDs.size() + " HRM hops: (this represents the list of passed physical interfaces)");
-
-			// print the recorded route
-			int i = 0;
-			for(HRMID tHRMID : tRecordedHRMIDs){
-				if(i % 2 == 0){
-					Logging.log(this, "        ..source[" + i + "]: " + tHRMID);
-				}else{
-					Logging.log(this, "          ..hop[" + i + "]: " + tHRMID);
-				}
-				i++;
-			}
+			eventProbeRouting(tPropProbeRouting);
 		}
 	}
 	
