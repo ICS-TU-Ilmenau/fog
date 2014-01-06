@@ -3597,7 +3597,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getPeriodSharePhase(int pHierarchyLevelValue)
 	{
-		return (double) 2 * HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevelValue + 1); //TODO: use an exponential time distribution here
+		switch(HRMConfig.Routing.REPORT_SHARE_TIMING){
+			case CONSTANT:
+				return (double) 2 * HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (0 + 1);
+			case LINEAR:
+				return (double) 2 * HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevelValue + 1);
+			case EXPONENTIAL:
+				return (double) 2 * HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevelValue + 1); //TODO: use an exponential time distribution here
+		}
+		
+		return 1;
 	}
 	
 	/**
@@ -3608,8 +3617,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getPeriodReportPhase(HierarchyLevel pHierarchyLevel)
 	{
-		return (double) HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevel.getValue() + 1); //TODO: use an exponential time distribution here
-	}
+		switch(HRMConfig.Routing.REPORT_SHARE_TIMING){
+			case CONSTANT:
+				return (double) HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (0 + 1);
+			case LINEAR:
+				return (double) HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevel.getValue() + 1);
+			case EXPONENTIAL:
+				return (double) HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevel.getValue() + 1); //TODO: use an exponential time distribution here
+		}
+		
+		return 1;
+	}		
 	
 	/**
 	 * This method is derived from IServerCallback. It is called by the ServerFN in order to acquire the acknowledgment from the HRMController about the incoming connection
@@ -3978,7 +3996,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		AbstractRoutingGraph<AbstractRoutingGraphNode, AbstractRoutingGraphLink> tResult = null;
 		
 		synchronized (mAbstractRoutingGraph) {
-			tResult = mAbstractRoutingGraph; //TODO: use a new clone() method here
+			tResult = mAbstractRoutingGraph;
 		}
 		
 		return tResult;
@@ -5082,7 +5100,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink> tResult = null;
 		
 		synchronized (mHierarchicalRoutingGraph) {
-			tResult = mHierarchicalRoutingGraph; //TODO: use a new clone() method here
+			tResult = mHierarchicalRoutingGraph; 
 		}
 		
 		return tResult;

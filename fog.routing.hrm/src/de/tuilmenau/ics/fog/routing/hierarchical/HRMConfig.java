@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 public class HRMConfig
 {
-	public class DebugOutput
+	public static class DebugOutput
 	{
 		/**
 		 * Limits the size of the packet storage in a comm. channel
@@ -193,7 +193,7 @@ public class HRMConfig
 		public static final boolean MEMORY_CONSUMING_OPERATIONS = false;
 	}
 
-	public class Measurement
+	public static class Measurement
 	{
 		/**
 		 * Defines if the AnnounceCoordinator packets should be automatically deactivated if the last packet with impact on the hierarchy data is too far in the past.
@@ -229,7 +229,7 @@ public class HRMConfig
 		public static final boolean VALIDATE_RESULTS_EXTENSIVE = false;
 	}
 	
-	public class Addressing
+	public static class Addressing
 	{
 		/**
 		 * Specifies whether the address are assigned automatically,
@@ -254,7 +254,7 @@ public class HRMConfig
 		public static final boolean REUSE_ADDRESSES = true;
 	}
 	
-	public class Hierarchy
+	public static class Hierarchy
 	{
 		/**
 		 * Defines if coordinators should announce their existences among cluster members/neighbors
@@ -371,7 +371,7 @@ public class HRMConfig
 	/**
 	 * Configuration parameters for the routing process and routing service
 	 */
-	public class Routing
+	public static class Routing
 	{
 		/**
 		 * Defines if an HRM entity should report its topology knowledge to the superior entity.
@@ -427,9 +427,12 @@ public class HRMConfig
 		 * This value should be set to "true". Otherwise, only the best-effort (hop costs!) route will be shared top-to-down.
 		 */
 		public static final boolean MULTIPATH_ROUTING = true;
+
+		public enum REPORT_SHARE_TIMINGS {CONSTANT, LINEAR, EXPONENTIAL}; 
+		public static REPORT_SHARE_TIMINGS REPORT_SHARE_TIMING = REPORT_SHARE_TIMINGS.CONSTANT;
 	}
 
-	public class QoS
+	public static class QoS
 	{
 		/**
 		 * Defines if a reported HRM route should include QoS attributes 
@@ -450,7 +453,7 @@ public class HRMConfig
 	/**
 	 * Configuration for the election process
 	 */
-	public class Election //TV
+	public static class Election //TV
 	{
 		/**
 		 * Defines if link states should be used.
