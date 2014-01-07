@@ -402,7 +402,7 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	{
 		// Debug check: It should not happen, since a node gets at least one
 		//              routing service created by the RoutingServiceFactory.
-		if(transferPlane == null) throw new RuntimeException("Node " +this +" does not have a routing service.");
+		if((!mEntityDeleted) && (transferPlane == null)) throw new RuntimeException("Node " +this +" does not have a routing service.");
 			
 		return transferPlane;
 	}
@@ -493,6 +493,8 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	@Override
 	public void deleted()
 	{
+		mEntityDeleted = true;
+		
 		if(controlgate != null)
 			controlgate.closed();
 		
@@ -510,6 +512,7 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	}
 
 	
+	private boolean mEntityDeleted = false;
 	private Node mNode;
 	private Controller controlgate;
 	private Multiplexer multiplexgate;
