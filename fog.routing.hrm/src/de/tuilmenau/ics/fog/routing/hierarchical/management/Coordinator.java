@@ -778,7 +778,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * 	 	1.) create signaling packet "ElectionLeave"
 	 * 		2.) send the packet to the superior coordinator 
 	 */
-	public synchronized void eventCoordinatorRoleInvalid()
+	public void eventCoordinatorRoleInvalid()
 	{
 		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid");
 
