@@ -1905,7 +1905,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
 			Logging.log(this, "CLUSTERING REQUEST for hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
-			mProcessorThread.eventUpdateCluster(pCause, pHierarchyLevel);
+			if(mProcessorThread != null){
+				mProcessorThread.eventUpdateCluster(pCause, pHierarchyLevel);
+			}
 		}
 	}
 	
@@ -1916,7 +1918,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void notifyPacketProcessor(ComChannel pComChannel)
 	{
-		mProcessorThread.eventReceivedPacket(pComChannel);
+		if(mProcessorThread != null){
+			mProcessorThread.eventReceivedPacket(pComChannel);
+		}
 	}
 
 	/**
@@ -2843,7 +2847,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Asynchronous execution of "distributeHierarchyNodePriorityUpdate()" inside context of HRMControllerProcessor.
 		 * This also reduces convergence time for finding the correct network clustering 
 		 */ 
-		mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel);
+		if(mProcessorThread != null){
+			mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel);
+		}
 		//HINT: for synchronous execution use here "distributeHierarchyNodePriorityUpdate(pHierarchyLevel)"
 		//      instead of "mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel)"
 		
@@ -3788,13 +3794,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	@Override
 	public synchronized void exit() 
 	{
+		if(!mApplicationStarted){
+			Logging.err(this, "This instance is already terminated.");
+			return;
+		}			
+		
 		mApplicationStarted = false;
 		
 		Logging.log(this, "\n\n\n############## Exiting..");
 		
 		Logging.log(this, "     ..destroying clusterer-thread");
-		mProcessorThread.exit();
-		mProcessorThread = null;
+		if(mProcessorThread != null){
+			mProcessorThread.exit();
+			mProcessorThread = null;
+		}
 
 		Logging.log(this, "     ..destroying all clusters/coordinators");
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
