@@ -43,9 +43,16 @@
            name="Forwarding on Gates">
       </category>
       <view
-            name="HRM overview"
-            class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverview"
-            id="de.tuilmenau.ics.fog.hrmOverview"
+            name="HRM packets"
+            class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverviewPackets"
+            id="de.tuilmenau.ics.fog.hrmOverviewPackets"
+            icon="icons/de.tuilmenau.ics.fog.HRMOverview.gif"
+            category="de.tuilmenau.ics.fog.views">
+      </view>
+      <view
+            name="HRM configuration"
+            class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverviewConfig"
+            id="de.tuilmenau.ics.fog.hrmOverviewConfig"
             icon="icons/de.tuilmenau.ics.fog.HRMOverview.gif"
             category="de.tuilmenau.ics.fog.views">
       </view>

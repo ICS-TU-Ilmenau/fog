@@ -133,7 +133,7 @@ public class HRMConfig
 		 * Defines the minimum time period between two updates of the node specific HRM viewer.
 		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
 		 */
-		public static final double GUI_NODE_DISPLAY_UPDATE_INTERVAL = 3.0;
+		public static final double GUI_HRM_VIEWERS_UPDATE_INTERVAL = 3.0;
 
 		/**
 		 * Defines if the hierarchy creation should start once the entire simulation was created. 
@@ -184,7 +184,7 @@ public class HRMConfig
 		 * Defines the minimum time period between two updates of the node specific HRG viewer.
 		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
 		 */
-		public static final double GUI_NODE_HRG_DISPLAY_UPDATE_INTERVAL = 10.0;
+		public static final double GUI_HRG_VIEWERS_UPDATE_INTERVAL = 10.0;
 
 		/**
 		 * Defines if very verbose debugging should be active.
@@ -311,7 +311,7 @@ public class HRMConfig
 		/**
 		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level
 		 */
-		public static final int USED_BITS_PER_LEVEL = 8;
+		public static final int BITS_PER_HIERARCHY_LEVEL = 8;
 
 		/**
 		 * Maximum radius that is allowed during cluster expansion phase.
@@ -410,7 +410,7 @@ public class HRMConfig
 		 * Defines the time between two triggers for the HRMController/node specific "report/share phase"
 		 * The higher in the hierarchy a coordinator is, the higher is the multiplier for this value.
 		 */
-		public static final double GRANULARITY_REPORT_PHASE = 2.0; // in seconds
+		public static final double REPORT_SHARE_PHASE_TIME_BASE = 2.0; // in seconds
 		
 		/**
 		 * Define if the HRM based route should be recorded in a ProbeRoutingProperty if the connection  request uses this property.
@@ -420,7 +420,7 @@ public class HRMConfig
 		/**
 		 * Defines the default timeout for a route. If the route doesn't get any refresh in the defined time period, the route gets deleted.
 		 */
-		public static final double ROUTE_TIMEOUT = GRANULARITY_REPORT_PHASE * 2;
+		public static final double ROUTE_TIMEOUT = REPORT_SHARE_PHASE_TIME_BASE * 2;
 
 		/**
 		 * Defines if multiple paths for the same destination should be distributed
@@ -429,7 +429,7 @@ public class HRMConfig
 		public static final boolean MULTIPATH_ROUTING = true;
 
 		public enum REPORT_SHARE_TIMINGS {CONSTANT, LINEAR, EXPONENTIAL}; 
-		public static REPORT_SHARE_TIMINGS REPORT_SHARE_TIMING = REPORT_SHARE_TIMINGS.CONSTANT;
+		public static REPORT_SHARE_TIMINGS REPORT_SHARE_PHASE_TIMING_SCHEME = REPORT_SHARE_TIMINGS.CONSTANT;
 	}
 
 	public static class QoS

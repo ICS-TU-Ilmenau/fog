@@ -45,63 +45,14 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 
 /**
  * This viewer shows global statistics about HRM.
  */
-public class HRMOverview extends ViewPart
+public class HRMOverviewConfig extends ViewPart
 {
-	private static final String TEXT_ANNOUNCE_PHYSICAL_EP	   				= "AnnouncePhysicalEndPoint: ";
-	private static final String TEXT_MUX_HEADER    			   				= "MultiplexHeader: ";
-	private static final String TEXT_SIG_MSG	   		       				= "SignalingMessageHrm: ";
-	private static final String TEXT_SIG_PROBE_PACKET	       				= "      ProbePacket: ";
-	private static final String TEXT_SIG_ANC_HRMIDS		       				= "      AnnounceHRMIDs: ";
-	private static final String TEXT_SIG_ASG_HRMID 		       				= "      AssignHRMID: ";
-	private static final String TEXT_SIG_REV_HRMID 		      				= "      RevokeHRMIDs: ";
-	private static final String TEXT_SIG_INFO_CLUSTER_LEFT     				= "      InformClusterLeft: ";
-	private static final String TEXT_SIG_INFO_CLUSTER_MEMBERSHIP_CANCELED	= "      InformClusterMembershipCanceled: ";
-	private static final String TEXT_SIG_REQ_CLUSTER_MEMBERSHIP				= "      RequestClusterMembership: ";
-	private static final String TEXT_SIG_REQ_CLUSTER_MEMBERSHIP_ACK			= "      RequestClusterMembershipAck: ";
-	private static final String TEXT_SIG_ELECT								= "      SignalingMessageElection: ";
-	private static final String TEXT_SIG_ELECT_ALIVE						= "            ElectionAlive: ";
-	private static final String TEXT_SIG_ELECT_ANC_WINNER 					= "            ElectionAnnounceWinner: ";
-	private static final String TEXT_SIG_ELECT_LEFT							= "            ElectionElect: ";
-	private static final String TEXT_SIG_ELECT_LEAVE						= "            ElectionLeave: ";
-	private static final String TEXT_SIG_ELECT_PRIO_UPDATE					= "            ElectionPriorityUpdate: ";
-	private static final String TEXT_SIG_ELECT_REPLY						= "            ElectionReply: ";
-	private static final String TEXT_SIG_ELECT_RES_WINNER					= "            ElectionResignWinner: ";
-	private static final String TEXT_SIG_ELECT_RETURN						= "            ElectionReturn: ";
-	private static final String TEXT_SIG_ANC_COORDINATOR					= "      AnnounceCoordinator: ";
-	private static final String TEXT_SIG_INV_COORDINATOR					= "      InvalidCoordinator: ";
-	private static final String TEXT_SIG_ROUTE_REPORT						= "      RouteReport: ";
-	private static final String TEXT_SIG_ROUTE_SHARE						= "      RouteShare: ";
-
-	private Label mAnnouncePhysicalEndPoint = null;
-	private Label mMultiplexHeader = null;
-	private Label mSignalingMessageHrm = null;
-	private Label mProbePacket = null;
-	private Label mAnnounceHRMIDs = null;
-	private Label mAssignHRMID = null;
-	private Label mRevokeHRMIDs = null;
-	private Label mInformClusterLeft = null;
-	private Label mInformClusterMembershipCanceled = null;
-	private Label mRequestClusterMembership = null;
-	private Label mRequestClusterMembershipAck = null;
-	private Label mSignalingMessageElection = null;
-	private Label mElectionAlive = null;
-	private Label mElectionAnnounceWinner = null;
-	private Label mElectionElect = null;
-	private Label mElectionLeave = null;
-	private Label mElectionPriorityUpdate = null;
-	private Label mElectionReply = null;
-	private Label mElectionResignWinner = null;
-	private Label mElectionReturn = null;
-	private Label mAnnounceCoordinator = null;
-	private Label mInvalidCoordinator = null;
-	private Label mRouteReport = null;
-	private Label mRouteShare = null;
-	
 	private static final String TEXT_USER_CTRL_ANC_COORDINATORS		= "Announce coordinators: ";
 	private static final String TEXT_USER_CTRL_DST_ADDRESSES		= "Distribute addresses: ";
 	private static final String TEXT_USER_CTRL_DST_REPORTS			= "Distribute reports: ";
@@ -111,6 +62,26 @@ public class HRMOverview extends ViewPart
 	private Label mUserCtrlAddressDistribution = null;
 	private Label mUserCtrlDistributeReports = null;
 	private Label mUserCtrlDistributeShares = null;
+
+	private static final String TEXT_CFG_RS_TIME_BASE		= "Time base: ";
+	private static final String TEXT_CFG_RS_TIMING_SCHEME	= "Timing scheme: ";
+	private static final String TEXT_CFG_HIER_ANC_COORD_INT	= "AnnounceCoordinator interval: ";
+	private static final String TEXT_CFG_HIER_HEIGHT		= "Hierarchy height: ";
+	private static final String TEXT_CFG_HIER_RADIUS		= "Clustering radius: ";
+	private static final String TEXT_CFG_HIER_BITS_PER_LVL	= "Address width: ";
+	private static final String TEXT_CFG_DBG_CHANNEL_STORAGE= "Channel packet storage: "; // in packets
+	private static final String TEXT_CFG_DBG_HRM_VIEWER_INT	= "HRMViewer update interval: "; // in s
+	private static final String TEXT_CFG_DBG_HRG_VIEWER_INT	= "HRGViewer update interval: "; // in s
+
+	private Label mConfigReportSharePhaseTimeBase = null;
+	private Label mConfigReportSharePhaseTimingScheme = null;
+	private Label mConfigHierarchyAnnounceCoordinatorsInterval = null;
+	private Label mConfigHierarchyHeight = null;
+	private Label mConfigHierarchyExpansionRadius = null;
+	private Label mConfigHierarchyBitsPerLevel = null;
+	private Label mConfigDebugChannelStorage = null;
+	private Label mConfigDebugHRMViewerUpdateInterval = null;
+	private Label mConfigDebugHRGViewerUpdateInterval = null;
 	
 	private static final int VIEW_UPDATE_TIME = 1000; // in ms
 		
@@ -135,31 +106,6 @@ public class HRMOverview extends ViewPart
 		Color tColGreen = mDisplay.getSystemColor(SWT.COLOR_DARK_GREEN);
 		
 		//Logging.log(this, "Update view " + ++sUpdateLoop);
-		
-		mAnnouncePhysicalEndPoint.setText(Long.toString(AnnouncePhysicalEndPoint.sCreatedPackets));
-		mMultiplexHeader.setText(Long.toString(MultiplexHeader.sCreatedPackets));
-		mSignalingMessageHrm.setText(Long.toString(SignalingMessageHrm.sCreatedPackets));
-		mProbePacket.setText(Long.toString(ProbePacket.sCreatedPackets));
-		mAnnounceHRMIDs.setText(Long.toString(AnnounceHRMIDs.sCreatedPackets));
-		mAssignHRMID.setText(Long.toString(AssignHRMID.sCreatedPackets));
-		mRevokeHRMIDs.setText(Long.toString(RevokeHRMIDs.sCreatedPackets));
-		mInformClusterLeft.setText(Long.toString(InformClusterLeft.sCreatedPackets));
-		mInformClusterMembershipCanceled.setText(Long.toString(InformClusterMembershipCanceled.sCreatedPackets));
-		mRequestClusterMembership.setText(Long.toString(RequestClusterMembership.sCreatedPackets));
-		mRequestClusterMembershipAck.setText(Long.toString(RequestClusterMembershipAck.sCreatedPackets));
-		mSignalingMessageElection.setText(Long.toString(SignalingMessageElection.sCreatedPackets));
-		mElectionAlive.setText(Long.toString(ElectionAlive.sCreatedPackets));
-		mElectionAnnounceWinner.setText(Long.toString(ElectionAnnounceWinner.sCreatedPackets));
-		mElectionElect.setText(Long.toString(ElectionElect.sCreatedPackets));
-		mElectionLeave.setText(Long.toString(ElectionLeave.sCreatedPackets));
-		mElectionPriorityUpdate.setText(Long.toString(ElectionPriorityUpdate.sCreatedPackets));
-		mElectionReply.setText(Long.toString(ElectionReply.sCreatedPackets));
-		mElectionResignWinner.setText(Long.toString(ElectionResignWinner.sCreatedPackets));
-		mElectionReturn.setText(Long.toString(ElectionReturn.sCreatedPackets));
-		mAnnounceCoordinator.setText(Long.toString(AnnounceCoordinator.sCreatedPackets));
-		mInvalidCoordinator.setText(Long.toString(InvalidCoordinator.sCreatedPackets));
-		mRouteReport.setText(Long.toString(RouteReport.sCreatedPackets));
-		mRouteShare.setText(Long.toString(RouteShare.sCreatedPackets));
 
 		if(HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 			mUserCtrlCoordinatorAnnouncements.setText("active");
@@ -192,10 +138,20 @@ public class HRMOverview extends ViewPart
 			mUserCtrlDistributeShares.setText("inactive");
 			mUserCtrlDistributeShares.setForeground(tColRed);
 		}
+
+		mConfigReportSharePhaseTimeBase.setText(Double.toString(HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE) + " s");
+		mConfigReportSharePhaseTimingScheme.setText(HRMConfig.Routing.REPORT_SHARE_PHASE_TIMING_SCHEME.toString());
+		mConfigHierarchyAnnounceCoordinatorsInterval.setText(Double.toString(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL) + " s");
+		mConfigHierarchyHeight.setText(Integer.toString(HRMConfig.Hierarchy.HEIGHT) + " level(s)");
+		mConfigHierarchyExpansionRadius.setText(Integer.toString(HRMConfig.Hierarchy.EXPANSION_RADIUS) + " hop(s)");
+		mConfigHierarchyBitsPerLevel.setText(Integer.toString(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL) + " bits/lvl");
+		mConfigDebugChannelStorage.setText(Integer.toString(HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE) + " packets");
+		mConfigDebugHRMViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRM_VIEWERS_UPDATE_INTERVAL) + " s");
+		mConfigDebugHRGViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRG_VIEWERS_UPDATE_INTERVAL) + " s");
 	}
 	
 
-	public HRMOverview()
+	public HRMOverviewConfig()
 	{
 		mDisplay = Display.getCurrent();
 		mShell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
@@ -254,42 +210,6 @@ public class HRMOverview extends ViewPart
 	    tContainer.setLayout(tGridLayout);
 	    tContainer.setLayoutData(createGridData(true, 1));
 	    
-		// grouping HRM packets
-		final GridData tPacketsLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		tPacketsLayoutData.horizontalSpan = 2;
-		Group tGrpPackets = new Group(tContainer, SWT.SHADOW_OUT);
-		tGrpPackets.setText("  HRM packets  ");
-		GridLayout tGrpPacketsLayout = new GridLayout(2, true);
-		tGrpPacketsLayout.marginWidth = 20;
-		tGrpPacketsLayout.marginHeight = 10;
-		tGrpPackets.setLayout(tGrpPacketsLayout);
-		tGrpPackets.setLayoutData(tPacketsLayoutData);
-
-		mAnnouncePhysicalEndPoint = createPartControlLine(tGrpPackets, TEXT_ANNOUNCE_PHYSICAL_EP);
-		mMultiplexHeader = createPartControlLine(tGrpPackets, TEXT_MUX_HEADER);
-		mSignalingMessageHrm = createPartControlLine(tGrpPackets, TEXT_SIG_MSG);
-		mProbePacket = createPartControlLine(tGrpPackets, TEXT_SIG_PROBE_PACKET);
-		mAnnounceHRMIDs = createPartControlLine(tGrpPackets, TEXT_SIG_ANC_HRMIDS);
-		mAssignHRMID = createPartControlLine(tGrpPackets, TEXT_SIG_ASG_HRMID);
-		mRevokeHRMIDs = createPartControlLine(tGrpPackets, TEXT_SIG_REV_HRMID);
-		mInformClusterLeft = createPartControlLine(tGrpPackets, TEXT_SIG_INFO_CLUSTER_LEFT);
-		mInformClusterMembershipCanceled = createPartControlLine(tGrpPackets, TEXT_SIG_INFO_CLUSTER_MEMBERSHIP_CANCELED);
-		mRequestClusterMembership = createPartControlLine(tGrpPackets, TEXT_SIG_REQ_CLUSTER_MEMBERSHIP);
-		mRequestClusterMembershipAck = createPartControlLine(tGrpPackets, TEXT_SIG_REQ_CLUSTER_MEMBERSHIP_ACK);
-		mSignalingMessageElection = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT);
-		mElectionAlive = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT_ALIVE);
-		mElectionAnnounceWinner = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT_ANC_WINNER);
-		mElectionElect = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT_LEFT);
-		mElectionLeave = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT_LEAVE);
-		mElectionPriorityUpdate = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT_PRIO_UPDATE);
-		mElectionReply = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT_REPLY);
-		mElectionResignWinner = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT_RES_WINNER);
-		mElectionReturn = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT_RETURN);
-		mAnnounceCoordinator = createPartControlLine(tGrpPackets, TEXT_SIG_ANC_COORDINATOR);
-		mInvalidCoordinator = createPartControlLine(tGrpPackets, TEXT_SIG_INV_COORDINATOR);
-		mRouteReport = createPartControlLine(tGrpPackets, TEXT_SIG_ROUTE_REPORT);
-		mRouteShare = createPartControlLine(tGrpPackets, TEXT_SIG_ROUTE_SHARE);
-	    
 		// grouping HRM signaling
 		final GridData tGrpSignalingLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		tGrpSignalingLayoutData.horizontalSpan = 2;
@@ -309,6 +229,28 @@ public class HRMOverview extends ViewPart
 		//mUserCtrlDistributeReports.setBackground(tColDGray);
 		mUserCtrlDistributeShares = createPartControlLine(tGrpSignaling, TEXT_USER_CTRL_DST_SHARES);
 		//mUserCtrlDistributeShares.setBackground(tColDGray);
+
+		
+		// grouping HRM configuration
+		final GridData tGrpConfigLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
+		tGrpConfigLayoutData.horizontalSpan = 2;
+		Group tGrpConfig = new Group(tContainer, SWT.SHADOW_OUT);
+		tGrpConfig.setText("  HRM configuration  ");
+		GridLayout tGrpConfigLayout = new GridLayout(2, true);
+		tGrpConfigLayout.marginWidth = 20;
+		tGrpConfigLayout.marginHeight = 10;
+		tGrpConfig.setLayout(tGrpSignalingLayout);
+		tGrpConfig.setLayoutData(tGrpConfigLayoutData);
+
+		mConfigReportSharePhaseTimeBase = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIME_BASE);
+		mConfigReportSharePhaseTimingScheme = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIMING_SCHEME);
+		mConfigHierarchyAnnounceCoordinatorsInterval = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_ANC_COORD_INT);
+		mConfigHierarchyHeight = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_HEIGHT);
+		mConfigHierarchyExpansionRadius = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_RADIUS);
+		mConfigHierarchyBitsPerLevel = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_BITS_PER_LVL);
+		mConfigDebugChannelStorage = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_CHANNEL_STORAGE);
+		mConfigDebugHRMViewerUpdateInterval = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_HRM_VIEWER_INT);
+		mConfigDebugHRGViewerUpdateInterval = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_HRG_VIEWER_INT);
 
 		mDisplay.timerExec(100, ViewRepaintTimer);
 	}

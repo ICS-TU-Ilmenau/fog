@@ -270,7 +270,7 @@ public class HRGViewer extends EditorAWT implements Observer, IController, IEven
 		if (mTimeNextGUIUpdate == 0){
 			// when was the last GUI update? is the time period okay for a new update? -> determine a timeout for a new GUI update
 			double tNow = mHRMController.getSimulationTime();
-			double tTimeout = mTimestampLastGUIUpdate.longValue() + HRMConfig.DebugOutput.GUI_NODE_HRG_DISPLAY_UPDATE_INTERVAL;
+			double tTimeout = mTimestampLastGUIUpdate.longValue() + HRMConfig.DebugOutput.GUI_HRG_VIEWERS_UPDATE_INTERVAL;
 
 			if ((mTimestampLastGUIUpdate.doubleValue() == 0) || (tNow > tTimeout)){
 				mTimeNextGUIUpdate = tNow;

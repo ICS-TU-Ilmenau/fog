@@ -3586,7 +3586,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * register next trigger
 		 */
-		mAS.getTimeBase().scheduleIn(HRMConfig.Routing.GRANULARITY_REPORT_PHASE, this);
+		mAS.getTimeBase().scheduleIn(HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE, this);
 	}
 	
 	/**
@@ -3597,13 +3597,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getPeriodSharePhase(int pHierarchyLevelValue)
 	{
-		switch(HRMConfig.Routing.REPORT_SHARE_TIMING){
+		switch(HRMConfig.Routing.REPORT_SHARE_PHASE_TIMING_SCHEME){
 			case CONSTANT:
-				return (double) 2 * HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (0 + 1);
+				return (double) 2 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (0 + 1);
 			case LINEAR:
-				return (double) 2 * HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevelValue + 1);
+				return (double) 2 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevelValue + 1);
 			case EXPONENTIAL:
-				return (double) 2 * HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevelValue + 1); //TODO: use an exponential time distribution here
+				return (double) 2 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevelValue + 1); //TODO: use an exponential time distribution here
 		}
 		
 		return 1;
@@ -3617,13 +3617,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getPeriodReportPhase(HierarchyLevel pHierarchyLevel)
 	{
-		switch(HRMConfig.Routing.REPORT_SHARE_TIMING){
+		switch(HRMConfig.Routing.REPORT_SHARE_PHASE_TIMING_SCHEME){
 			case CONSTANT:
-				return (double) HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (0 + 1);
+				return (double) HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (0 + 1);
 			case LINEAR:
-				return (double) HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevel.getValue() + 1);
+				return (double) HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevel.getValue() + 1);
 			case EXPONENTIAL:
-				return (double) HRMConfig.Routing.GRANULARITY_REPORT_PHASE * (pHierarchyLevel.getValue() + 1); //TODO: use an exponential time distribution here
+				return (double) HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevel.getValue() + 1); //TODO: use an exponential time distribution here
 		}
 		
 		return 1;

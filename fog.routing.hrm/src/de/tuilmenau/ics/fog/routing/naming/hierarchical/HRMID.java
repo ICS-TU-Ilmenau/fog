@@ -67,7 +67,7 @@ public class HRMID extends HRMName
 	 */
 	private BigInteger getLevelAddressBigInteger(int pHierarchyLevel)
 	{
-		return (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pHierarchyLevel + 1))).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (pHierarchyLevel))));
+		return (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * (pHierarchyLevel + 1))).shiftRight((HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * (pHierarchyLevel))));
 	}
 	
 	/**
@@ -123,14 +123,14 @@ public class HRMID extends HRMName
 		 * Subtract the old value
 		 */
 		if(!tLevelAddr.equals(BigInteger.valueOf(0))){
-			mAddress = mAddress.subtract(tLevelAddr.shiftLeft(pHierarchyLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
+			mAddress = mAddress.subtract(tLevelAddr.shiftLeft(pHierarchyLevel * HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL));
 		}
 		
 		/**
 		 * Add the new value
 		 */
 		if(!pAddress.equals(BigInteger.valueOf(0))){
-			mAddress = mAddress.add(pAddress.shiftLeft(pHierarchyLevel * HRMConfig.Hierarchy.USED_BITS_PER_LEVEL));
+			mAddress = mAddress.add(pAddress.shiftLeft(pHierarchyLevel * HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL));
 		}
 	}
 
@@ -480,11 +480,11 @@ public class HRMID extends HRMName
 		String tOutput = new String();
 		
 		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i > 0; i--){
-			tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * (i + 1))).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * i))).toString();
+			tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * (i + 1))).shiftRight((HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * i))).toString();
 			tOutput += ".";
 		}
 		
-		tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 1)).shiftRight((HRMConfig.Hierarchy.USED_BITS_PER_LEVEL * 0))).toString();
+		tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * 1)).shiftRight((HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * 0))).toString();
 		
 		return tOutput;
 	}
