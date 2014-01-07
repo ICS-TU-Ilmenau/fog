@@ -291,6 +291,14 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		}
 	}
 	
+	/**
+	 * @return
+	 */
+	public double getUtilization() 
+	{
+		return ((double)100 * mAvailableDataRate.doubleValue() / mPhysMaxDataRate.doubleValue());
+	}
+
 	public long getAvailableDataRate()
 	{
 		return mAvailableDataRate.longValue();

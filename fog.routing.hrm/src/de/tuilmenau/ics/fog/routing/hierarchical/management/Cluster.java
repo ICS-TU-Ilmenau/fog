@@ -713,11 +713,11 @@ public class Cluster extends ClusterMember
 								if((tOuterHRMID != null) && (tInnerHRMID != null)){
 									if(!tOuterHRMID.equals(tInnerHRMID)){
 										//Logging.log(this, "  .." + tOuterHRMID + " is BUS neighbor of: " + tInnerHRMID);
-										RoutingEntry tEntryForward = RoutingEntry.createRouteToDirectNeighbor(tOuterHRMID, tInnerHRMID, tInnerHRMID, 0 /* TODO */, tPhysicalBus.getDelayMSec(), RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::detectNeighborhood()");
+										RoutingEntry tEntryForward = RoutingEntry.createRouteToDirectNeighbor(tOuterHRMID, tInnerHRMID, tInnerHRMID, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), this + "::detectNeighborhood()");
 										tEntryForward.setNextHopL2Address(tInnerChannel.getPeerL2Address());
 										mHRMController.registerAutoHRG(tEntryForward);
 
-										RoutingEntry tEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tInnerHRMID, tOuterHRMID, tOuterHRMID, 0 /* TODO */, tPhysicalBus.getDelayMSec(), RoutingEntry.INFINITE_DATARATE /* TODO */, this + "::detectNeighborhood()");
+										RoutingEntry tEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tInnerHRMID, tOuterHRMID, tOuterHRMID, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), this + "::detectNeighborhood()");
 										tEntryBackward.setNextHopL2Address(tOuterChannel.getPeerL2Address());
 										mHRMController.registerAutoHRG(tEntryBackward);
 									}
