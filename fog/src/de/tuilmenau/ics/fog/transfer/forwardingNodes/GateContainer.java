@@ -86,7 +86,9 @@ abstract public class GateContainer implements ForwardingNode
 				newgate.setID(gateID);
 				mGates.put(gateID.GetID(), newgate);
 				
-				mEntity.getTransferPlane().registerLink(this, newgate);
+				if(mEntity.getTransferPlane() != null){
+					mEntity.getTransferPlane().registerLink(this, newgate);
+				}
 				
 				mEntity.getNode().count(newgate.getClass().getName(), true);
 
@@ -144,7 +146,9 @@ abstract public class GateContainer implements ForwardingNode
 	{
 		Integer tID = Helper.removeValueFromHashMap(mGates, oldgate);
 		if(tID != null) {
-			mEntity.getTransferPlane().unregisterLink(this, oldgate);
+			if(mEntity.getTransferPlane() != null){
+				mEntity.getTransferPlane().unregisterLink(this, oldgate);
+			}
 			
 			if(oldgate != null) {
 				StreamTime tNow = mEntity.getTimeBase().nowStream();
@@ -214,7 +218,9 @@ abstract public class GateContainer implements ForwardingNode
 			}
 		}
 		
-		getEntity().getTransferPlane().unregisterNode(this);
+		if(getEntity().getTransferPlane() != null){
+			getEntity().getTransferPlane().unregisterNode(this);
+		}
 	}
 	
 	/**
