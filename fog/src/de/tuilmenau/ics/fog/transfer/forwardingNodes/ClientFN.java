@@ -112,7 +112,9 @@ public class ClientFN implements ForwardingNode
 	public boolean unregisterGate(AbstractGate oldgate)
 	{
 		if((mOutgoingGate == oldgate) && (mOutgoingGate != null)) {
-			mEntity.getTransferPlane().unregisterLink(this, mOutgoingGate);
+			if(mEntity.getTransferPlane() != null){
+				mEntity.getTransferPlane().unregisterLink(this, mOutgoingGate);
+			}
 			
 			mOutgoingGate.setID(null);
 			if(mOutgoingGate.getState() == GateState.START){
@@ -228,7 +230,9 @@ public class ClientFN implements ForwardingNode
 			// remove outgoing gate
 			registerGate(null);
 			
-			mEntity.getTransferPlane().unregisterNode(this);
+			if(mEntity.getTransferPlane() != null){
+				mEntity.getTransferPlane().unregisterNode(this);
+			}
 			
 			if(mCEP != null) {
 				mCEP.closed();
