@@ -422,6 +422,7 @@ public class EventHandler extends Thread
 		} catch(Exception exc) {
 			// do not call toString because that might be the reason for the exception
 			mLogger.err(this, "Exception in event " +event.mEvent.getClass(), exc);
+			System.exit(1);
 		}
 	}
 	
