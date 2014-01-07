@@ -2102,7 +2102,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		FoGEntity tFoGLayer = (FoGEntity) mNode.getLayer(FoGEntity.class);
 		
 		// get the central FN of this node
-		tResult = tFoGLayer.getCentralFN();
+		if(tFoGLayer != null){
+			tResult = tFoGLayer.getCentralFN();
+		}
 		
 		return tResult;
 	}
