@@ -447,68 +447,80 @@ public class ComChannel
 											 * Generalize neighbor HRMID to its cluster address, depending on the locally assigned HRMID.
 											 * If the local node owns 1.1.1 and 1.2.1, and the neighbor HRMID is 1.3.1, the result will be 1.3.0 because this cluster is a foreign one for the local node 
 											 */ 
-											tGeneralizedNeighborHRMID = getPeerHRMID().getForeignCluster(tNeighborHRMID); //mHRMController.aggregateForeignHRMID(tNeighborHRMID);
+											if(getPeerHRMID() != null)
+												tGeneralizedNeighborHRMID = getPeerHRMID().getForeignCluster(tNeighborHRMID); //mHRMController.aggregateForeignHRMID(tNeighborHRMID);
+											else
+												tGeneralizedNeighborHRMID = tNeighborHRMID; //mHRMController.aggregateForeignHRMID(tNeighborHRMID);
 										}else{
 											// use the peer HRMID directly
 											tGeneralizedNeighborHRMID = getPeerHRMID();
 										}
-										//Logging.log(this, "DELAY: " + tPhysicalBus.getDelayMSec());
-										if(tGeneralizedNeighborHRMID.isClusterAddress()){
-											if(!tNeighborHRMID.equals(getPeerHRMID())){
+										
+										/**
+										 * Learn the routes
+										 */
+										if((tGeneralizedNeighborHRMID != null) && (!tGeneralizedNeighborHRMID.isZero())){
+											//Logging.log(this, "DELAY: " + tPhysicalBus.getDelayMSec());
+											if(tGeneralizedNeighborHRMID.isClusterAddress()){
+												if(!tNeighborHRMID.equals(getPeerHRMID())){
+													/**
+													 * HRM routing table entry
+													 */
+													if(!mHRMController.isLocalCluster(tGeneralizedNeighborHRMID)){
+														// create the new routing table entry
+														tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
+														tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
+														// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+														tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+														
+														// set the timeout for the found route to neighborhood
+														double tTimeoffset = 2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
+														tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
+													}
+													
+													/**
+													 * HRG links: forward and backward link between the HRMIDs of the direct neighbor
+													 */
+													// create the forward routing table entry
+													tReportedRoutingEntryForward = RoutingEntry.create(getPeerHRMID(), tGeneralizedNeighborHRMID, tNeighborHRMID, 0, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, (String)null);
+													tReportedRoutingEntryForward.extendCause( this + "::eventNewPeerHRMIDs()_2(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryForward);
+													// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+													tReportedRoutingEntryForward.setNextHopL2Address(getPeerL2Address());
+													// create the backward routing table entry
+													tReportedRoutingEntryBackward = RoutingEntry.create(tNeighborHRMID, tGeneralizedNeighborHRMID.getForeignCluster(getPeerHRMID()), getPeerHRMID(), 0, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, (String)null);
+													tReportedRoutingEntryBackward.extendCause(this + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryBackward);
+													// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+													tReportedRoutingEntryBackward.setNextHopL2Address(mHRMController.getNodeL2Address());
+												}
+											}else{
 												/**
 												 * HRM routing table entry
 												 */
-												if(!mHRMController.isLocalCluster(tGeneralizedNeighborHRMID)){
-													// create the new routing table entry
-													tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
-													tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
-													// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-													tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
-													
-													// set the timeout for the found route to neighborhood
-													double tTimeoffset = 2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
-													tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
-												}
-												
+												// create the new routing table entry
+												tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
+												tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_4(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
+												// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+												tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
+												// set the timeout for the found route to neighborhood
+												double tTimeoffset = 2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
+												tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
+					
 												/**
-												 * HRG links: forward and backward link between the HRMIDs of the direct neighbor
+												 * HRG links: forward and backward link to the direct neighbor
 												 */
 												// create the forward routing table entry
-												tReportedRoutingEntryForward = RoutingEntry.create(getPeerHRMID(), tGeneralizedNeighborHRMID, tNeighborHRMID, 0, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, (String)null);
-												tReportedRoutingEntryForward.extendCause( this + "::eventNewPeerHRMIDs()_2(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryForward);
-												// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-												tReportedRoutingEntryForward.setNextHopL2Address(getPeerL2Address());
+												tReportedRoutingEntryForward = tLocalRoutingEntry.clone();
 												// create the backward routing table entry
-												tReportedRoutingEntryBackward = RoutingEntry.create(tNeighborHRMID, tGeneralizedNeighborHRMID.getForeignCluster(getPeerHRMID()), getPeerHRMID(), 0, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, (String)null);
-												tReportedRoutingEntryBackward.extendCause(this + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryBackward);
+												tReportedRoutingEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tNeighborHRMID, tSourceForReportedRoutes, tSourceForReportedRoutes, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
+												tReportedRoutingEntryBackward.extendCause(this + "::eventNewPeerHRMIDs()_5(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryBackward);
 												// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 												tReportedRoutingEntryBackward.setNextHopL2Address(mHRMController.getNodeL2Address());
 											}
-										}else{
-											/**
-											 * HRM routing table entry
-											 */
-											// create the new routing table entry
-											tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
-											tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_4(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
-											// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-											tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
-											// set the timeout for the found route to neighborhood
-											double tTimeoffset = 2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
-											tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
-				
-											/**
-											 * HRG links: forward and backward link to the direct neighbor
-											 */
-											// create the forward routing table entry
-											tReportedRoutingEntryForward = tLocalRoutingEntry.clone();
-											// create the backward routing table entry
-											tReportedRoutingEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tNeighborHRMID, tSourceForReportedRoutes, tSourceForReportedRoutes, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
-											tReportedRoutingEntryBackward.extendCause(this + "::eventNewPeerHRMIDs()_5(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryBackward);
-											// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
-											tReportedRoutingEntryBackward.setNextHopL2Address(mHRMController.getNodeL2Address());
 										}
 						
+										/**
+										 * Store the learned routes
+										 */
 										if(tReportedRoutingEntryForward != null){
 											// add the entry to the reported routing table
 											if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
@@ -538,7 +550,7 @@ public class ComChannel
 							}
 							
 							/**
-							 * Step 1: learn new routes:
+							 * Step 1: apply new routes:
 							 * 			- set the new value for reported routes based on peer HRMIDs
 							 * 			- inform the HRMController
 							 * 			- update mReportedRoutingTable
