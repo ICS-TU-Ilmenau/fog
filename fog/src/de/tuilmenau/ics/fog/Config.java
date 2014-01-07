@@ -42,8 +42,9 @@ public class Config
 		
 	/**
 	 * Default timeout for processes in seconds.
+	 * [default: 30]
 	 */
-	public static final double PROCESS_STD_TIMEOUT_SEC = 30;
+	public static final double PROCESS_STD_TIMEOUT_SEC = 1;
 	
 	/**
 	 * Indicates if some more extended GUI controls and behavior are enabled. 
