@@ -115,6 +115,9 @@ public class ClientFN implements ForwardingNode
 			mEntity.getTransferPlane().unregisterLink(this, mOutgoingGate);
 			
 			mOutgoingGate.setID(null);
+			if(mOutgoingGate.getState() == GateState.START){
+				mOutgoingGate.initialise();
+			}
 			mOutgoingGate.shutdown();
 			mOutgoingGate = null;
 			mEntity.getLogger().log(this, "Outgoing " + oldgate + " released");
