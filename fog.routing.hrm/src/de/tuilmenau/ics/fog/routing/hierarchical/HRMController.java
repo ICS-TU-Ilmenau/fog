@@ -5240,7 +5240,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public Name getNodeName()
 	{
 		// get the name of the central FN of this node
-		return getHRS().getCentralFN().getName();
+		if(getHRS().getCentralFN() != null){
+			return getHRS().getCentralFN().getName();
+		}else{
+			return null;
+		}
 	}
 	
 	/**
