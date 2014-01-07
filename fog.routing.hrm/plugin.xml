@@ -37,6 +37,21 @@
    </extension>
    
    <extension
+         point="org.eclipse.ui.views">
+	  <category 
+           id="de.tuilmenau.ics.fog.views"
+           name="Forwarding on Gates">
+      </category>
+      <view
+            name="HRM overview"
+            class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverview"
+            id="de.tuilmenau.ics.fog.hrmOverview"
+            icon="icons/de.tuilmenau.ics.fog.HRMOverview.gif"
+            category="de.tuilmenau.ics.fog.views">
+      </view>
+   </extension>     
+   
+   <extension
          point="de.tuilmenau.ics.fog.commands">
        <plugin
             name="Create node"
