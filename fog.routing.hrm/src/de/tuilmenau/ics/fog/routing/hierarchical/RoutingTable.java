@@ -61,6 +61,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 						// drop the given routing entry because we already know that the actual route is shorter
 						tRouteIsTooLong = true;
 						
+						//Logging.log(this, "Route is longer than known ones: " + pRoutingTableEntry);
 						break;
 					}
 					if(tEntry.getHopCount() > pRoutingTableEntry.getHopCount()){					
