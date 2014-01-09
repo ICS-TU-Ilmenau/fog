@@ -4620,7 +4620,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tRefDeletedLinks.add(tDeletedLinks);
 		
 		boolean DEBUG = false;
-//		if(pFrom.getLevelAddress(1) == 5){
+//		if(pFrom.getLevelAddress(2) == 5){
 //			DEBUG = true;
 //		}
 
@@ -4712,7 +4712,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 		// delete entries with "too long routes"
-		tResult.delEntries(tTooLongRoutes);
+///		tResult.delEntries(tTooLongRoutes);
 		
 		return tResult;
 	}
