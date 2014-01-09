@@ -254,7 +254,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public void sharePhase()
 	{
 		boolean DEBUG_SHARE_PHASE_DETAILS = false;
-//		if(getHierarchyLevel().getValue() == 1){
+//		if(getHierarchyLevel().isHighest()){
 //			DEBUG_SHARE_PHASE_DETAILS = true;
 //		}
 		
@@ -779,7 +779,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public void eventReceivedRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
 	{
 		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-			Logging.err(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
+			Logging.log(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
 		}
 		
 		synchronized (mReceivedSharedRoutingTable) {
