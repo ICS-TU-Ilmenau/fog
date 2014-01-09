@@ -289,7 +289,10 @@ public class Cluster extends ClusterMember
 							}
 						}
 					}
-			
+					if(tClusterIsTopOfHierarchy){
+						setHRMID(this, new HRMID(0));
+					}
+					
 					/**
 					 * Distribute AssignHRMID packets among the cluster members 
 					 */
