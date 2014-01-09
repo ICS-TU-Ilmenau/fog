@@ -82,11 +82,6 @@ public class Cluster extends ClusterMember
 	private String mDescriptionHRMIDAllocation = new String();
 	
 	/**
-	 * Stores the report routing table
-	 */
-	private RoutingTable mReceivedReportRoutingTable = new RoutingTable();
-	
-	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
 	 * ID and the hierarchical level. Later on - once a coordinator is found, it is additionally identified
 	 * by a token the coordinator sends to all participants. In contrast to the cluster token the identity is used

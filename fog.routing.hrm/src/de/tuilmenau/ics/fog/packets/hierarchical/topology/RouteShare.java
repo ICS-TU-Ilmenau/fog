@@ -9,8 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
-import java.util.LinkedList;
-
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -49,25 +47,6 @@ public class RouteShare extends SignalingMessageHrm
 		sCreatedPackets++;
 	}
 
-	/**
-	 * Adds a route to the database of routing entries.
-	 * 
-	 * @param pRoutingEntry the new route
-	 */
-	public void addRoute(RoutingEntry pRoutingEntry)
-	{
-		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-			Logging.log(this, "Adding routing entry: " + pRoutingEntry);
-		}
-		
-		if (mRoutingTable.contains(pRoutingEntry)){
-			Logging.err(this, "Duplicated entries detected, skipping this \"addRoute\" request");
-			return;
-		}
-		
-		mRoutingTable.add(pRoutingEntry);
-	}
-	
 	/**
 	 * Returns the database of routing entries.
 	 * 

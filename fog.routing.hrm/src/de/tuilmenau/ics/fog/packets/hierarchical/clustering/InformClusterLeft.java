@@ -10,10 +10,8 @@
 package de.tuilmenau.ics.fog.packets.hierarchical.clustering;
 
 import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
-import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This packet is used to leave a remote cluster. It is used by a cluster member to inform the cluster head.

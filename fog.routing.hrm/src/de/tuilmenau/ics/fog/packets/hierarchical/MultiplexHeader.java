@@ -11,7 +11,6 @@ package de.tuilmenau.ics.fog.packets.hierarchical;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
-import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This header is used for inter-HRMController communication. It encapsulates a payload which 

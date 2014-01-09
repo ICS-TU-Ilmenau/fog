@@ -34,35 +34,23 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	 */
 	private boolean mDirectedGraph = false;
 	
+	/**
+	 * Constructor
+	 * 
+	 * @param pDirectedGraph defines if the graph is directed or not
+	 */
 	public AbstractRoutingGraph(boolean pDirectedGraph)
 	{
 		super(null);
 		mDirectedGraph = pDirectedGraph;
 	}
 
+	/**
+	 * Constructor: constructs an undirected routing graph. 
+	 */
 	public AbstractRoutingGraph()
 	{
 		super(null);
-	}
-
-	/**
-	 * Returns the neighbors of a graph node.
-	 * 
-	 * @param pNode the node for which the neighbors should be determined
-	 * 
-	 * @return a collection of found neighbor node
-	 */
-	public Collection<NodeObject> getNeighbors(NodeObject pNode)
-	{
-		LinkedList<NodeObject> tResult = new LinkedList<NodeObject>();
-		
-		synchronized (mRoutingGraph) {
-			if (mRoutingGraph.containsVertex(pNode)){
-				tResult = (LinkedList<NodeObject>) mRoutingGraph.getNeighbors(pNode);
-			}
-		}
-		
-		return tResult;
 	}
 
 	/**

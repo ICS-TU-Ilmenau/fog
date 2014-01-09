@@ -45,8 +45,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 
 /**
  * This viewer shows global statistics about HRM.
@@ -122,9 +120,6 @@ public class HRMOverviewPackets extends ViewPart
 	
 	void updateView() 
 	{
-		Color tColRed = mDisplay.getSystemColor(SWT.COLOR_DARK_RED);
-		Color tColGreen = mDisplay.getSystemColor(SWT.COLOR_DARK_GREEN);
-		
 		//Logging.log(this, "Update view " + ++sUpdateLoop);
 		
 		mAnnouncePhysicalEndPoint.setText(Long.toString(AnnouncePhysicalEndPoint.sCreatedPackets));
