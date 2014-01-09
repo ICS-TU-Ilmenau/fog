@@ -2328,15 +2328,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //		}
 		
 		for(RoutingEntry tEntry : pReceivedSharedRoutingTable){
-			RoutingEntry tNewLocalRoutingEntry = tEntry.clone();
+			RoutingEntry tReceivedSharedRoutingEntry = tEntry.clone();
 			if(DEBUG){
-				Logging.log(this, "  ..received shared route: " + tNewLocalRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tNewLocalRoutingEntry.getDest()));
+				Logging.log(this, "  ..received shared route: " + tReceivedSharedRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tReceivedSharedRoutingEntry.getDest()));
 			}
 				
 			/**
 			 * Mark as shared entry
 			 */
-			tNewLocalRoutingEntry.setSharedLink(pSenderHRMID);
+			tReceivedSharedRoutingEntry.setSharedLink(pSenderHRMID);
 
 			boolean tDropRoute = false;
 			
@@ -2344,28 +2344,31 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Check if the route starts at this node.
 			 * If the route starts at a direct neighbor node, try to find a combined route and store this one instead of the original shared route.
 			 */ 
-			if(!isLocal(tNewLocalRoutingEntry.getSource())){
+			if(!isLocal(tReceivedSharedRoutingEntry.getSource())){
 				// check if the route starts - at least - at one of the direct neighbor nodes
-				if(isLocalCluster(tNewLocalRoutingEntry.getSource())){
+				if(isLocalCluster(tReceivedSharedRoutingEntry.getSource())){
 					/**
 					 * The received shared route starts at one of the direct neighbor nodes
 					 *  	=> we derive a new route as new combination of: [route to direct neighbor] ==> [received shared route]
 					 */
-					RoutingEntry tSecondRoutePart = tNewLocalRoutingEntry.clone();					
+					RoutingEntry tSecondRoutePart = tReceivedSharedRoutingEntry.clone();					
 					RoutingTable tLocalRoutingTable = mHierarchicalRoutingService.getRoutingTable();
 					// search for a routing entry to the direct neighbor node
-					RoutingEntry tFirstRoutePart = tLocalRoutingTable.getDirectNeighborEntry(tNewLocalRoutingEntry.getSource());
+					RoutingEntry tFirstRoutePart = tLocalRoutingTable.getDirectNeighborEntry(tReceivedSharedRoutingEntry.getSource());
 					// have we found an routing entry to the source of the received shared route?
 					if(tFirstRoutePart != null){
-						tNewLocalRoutingEntry = tFirstRoutePart;
-						tNewLocalRoutingEntry.append(tSecondRoutePart, this + "::addHRMRouteShare(pCause) at lvl: " + pReceiverHierarchyLevel);
+						tReceivedSharedRoutingEntry = tFirstRoutePart;
+						tReceivedSharedRoutingEntry.extendCause(pCause);
+						tReceivedSharedRoutingEntry.append(tSecondRoutePart, this + "::addHRMRouteShare(pCause) at lvl: " + pReceiverHierarchyLevel);
+						// set the origin of the shared routing entry as origin for the resulting local routing entry
+						tReceivedSharedRoutingEntry.setOrigin(tSecondRoutePart.getOrigin());
 						// reset the next hop L2 address
-						tNewLocalRoutingEntry.setNextHopL2Address(null);
+						tReceivedSharedRoutingEntry.setNextHopL2Address(null);
 					}else{
 						tDropRoute = true;
 
 						if(DEBUG){
-				 			Logging.warn(this, "    ..dropping uninteresting (does start at a direct neighbor node but no route to the direct neighbor could be found) route: " + tNewLocalRoutingEntry);
+				 			Logging.warn(this, "    ..dropping uninteresting (does start at a direct neighbor node but no route to the direct neighbor could be found) route: " + tReceivedSharedRoutingEntry);
 						}
 					}
 				}else{
@@ -2373,7 +2376,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					tDropRoute = true;
 
 					if(DEBUG){
-			 			Logging.warn(this, "    ..dropping uninteresting (does not start neither at this node nor at a direct neighbor node) route: " + tNewLocalRoutingEntry);
+			 			Logging.warn(this, "    ..dropping uninteresting (does not start neither at this node nor at a direct neighbor node) route: " + tReceivedSharedRoutingEntry);
 					}
 				}
 			}
@@ -2383,45 +2386,45 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Store only routes which start at this node
 			 */
 			if(!tDropRoute){
-				if(isLocal(tNewLocalRoutingEntry.getSource())){
+				if(isLocal(tReceivedSharedRoutingEntry.getSource())){
 					/**
 					 * ignore routes to cluster this nodes belong to
 					 * 		=> such routes are already known based on neighborhood detection of the L0 comm. channels (Clusters) 
 					 */				
-					if((!tNewLocalRoutingEntry.getDest().isClusterAddress()) || (!isLocalCluster(tNewLocalRoutingEntry.getDest()))){
-						if((!tNewLocalRoutingEntry.getDest().isClusterAddress()) || (tNewLocalRoutingEntry.getHopCount() > 1)){
+					if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (!isLocalCluster(tReceivedSharedRoutingEntry.getDest()))){
+						if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (tReceivedSharedRoutingEntry.getHopCount() > 1)){
 							// patch the source with the correct local sender address
-							tNewLocalRoutingEntry.setSource(getLocalSenderAddress(tNewLocalRoutingEntry.getSource(), tNewLocalRoutingEntry.getNextHop()));
-							tNewLocalRoutingEntry.extendCause(pCause);
-							tNewLocalRoutingEntry.extendCause(this + "::addHRMRouteShare() at lvl: " + pReceiverHierarchyLevel.getValue());
+							tReceivedSharedRoutingEntry.setSource(getLocalSenderAddress(tReceivedSharedRoutingEntry.getSource(), tReceivedSharedRoutingEntry.getNextHop()));
+							tReceivedSharedRoutingEntry.extendCause(pCause);
+							tReceivedSharedRoutingEntry.extendCause(this + "::addHRMRouteShare() at lvl: " + pReceiverHierarchyLevel.getValue());
 							
 							/**
 							 * Set the timeout for the found shared route
 							 * 		=> 2 times the time period between two share phase for the sender's hierarchy level
 							 */
 							double tTimeoffset = 2 * getPeriodSharePhase(pReceiverHierarchyLevel.getValue() + 1 /* the sender is one level above */);
-							tNewLocalRoutingEntry.setTimeout(getSimulationTime() + tTimeoffset);
+							tReceivedSharedRoutingEntry.setTimeout(getSimulationTime() + tTimeoffset);
 							
 							/**
 							 * Store the found route
 							 */
 							if(DEBUG){
-								Logging.log(this, "    ..adding shared route (timeout=" + tNewLocalRoutingEntry.getTimeout() + ", time-offset=" + tTimeoffset + "): " + tNewLocalRoutingEntry);
+								Logging.log(this, "    ..adding shared route (timeout=" + tReceivedSharedRoutingEntry.getTimeout() + ", time-offset=" + tTimeoffset + "): " + tReceivedSharedRoutingEntry);
 							}
-							addHRMRoute(tNewLocalRoutingEntry);
+							addHRMRoute(tReceivedSharedRoutingEntry);
 					 	}else{
 							if(DEBUG){
-					 			Logging.warn(this, "    ..dropping uninteresting (leads to a direct neighbor node/cluster) route: " + tNewLocalRoutingEntry);
+					 			Logging.warn(this, "    ..dropping uninteresting (leads to a direct neighbor node/cluster) route: " + tReceivedSharedRoutingEntry);
 							}
 					 	}
 				 	}else{
 						if(DEBUG){
-				 			Logging.warn(this, "    ..dropping uninteresting (this node belongs to the destination cluster) route: " + tNewLocalRoutingEntry);
+				 			Logging.warn(this, "    ..dropping uninteresting (this node belongs to the destination cluster) route: " + tReceivedSharedRoutingEntry);
 						}
 				 	}
 				}else{
 					if(DEBUG){
-			 			Logging.err(this, "    ..dropping uninteresting (does not start at this node) route: " + tNewLocalRoutingEntry);
+			 			Logging.err(this, "    ..dropping uninteresting (does not start at this node) route: " + tReceivedSharedRoutingEntry);
 					}
 				}
 			}
@@ -4357,6 +4360,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
 				}
 				
+				tResult.extendCause(this + "::getRoutingEntry()");
+						
 				return tResult;
 			}
 			

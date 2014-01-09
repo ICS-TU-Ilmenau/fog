@@ -132,6 +132,11 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				 * Update UTILIZATION
 				 */
 				tFoundDuplicate.setUtilization(pRoutingTableEntry.getUtilization());
+				
+				/**
+				 * Update ORIGIN
+				 */
+				tFoundDuplicate.setOrigin(pRoutingTableEntry.getOrigin());
 			}
 			
 			/**

@@ -752,7 +752,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn tTableColNextL2 = new TableColumn(mTableRoutingTable, SWT.NONE, 9);
 		tTableColNextL2.setText("NextL2");
 		// col. 10
-		TableColumn tTableColTimeout = new TableColumn(mTableRoutingTable, SWT.NONE, 10);
+		TableColumn tTableColOrigin = new TableColumn(mTableRoutingTable, SWT.NONE, 10);
+		tTableColOrigin.setText("Origin");
+		// col. 11
+		TableColumn tTableColTimeout = new TableColumn(mTableRoutingTable, SWT.NONE, 11);
 		tTableColTimeout.setText("Timeout");
 		
 		updateRoutingTable();
@@ -777,6 +780,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutRoutingTable2.setColumnData(tTableColDirectNeighbor, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColSource, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColNextL2, new ColumnWeightData(3));
+		tLayoutRoutingTable2.setColumnData(tTableColOrigin, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColTimeout, new ColumnWeightData(1));
 		
 		/**
@@ -1860,18 +1864,27 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						}
 	
 						/**
-						 * Column 10: timeout
+						 * Column 10: origin
 						 */
 						if (tEntry.getTimeout() > 0) {
-							tTableRow.setText(10, Double.toString(tEntry.getTimeout()));
+							tTableRow.setText(10, (tEntry.getOrigin() != null ? tEntry.getOrigin().toString() : "??"));
 						}else{
 							tTableRow.setText(10, "none");
 						}
 	
 						/**
+						 * Column 11: timeout
+						 */
+						if (tEntry.getTimeout() > 0) {
+							tTableRow.setText(11, Double.toString(tEntry.getTimeout()));
+						}else{
+							tTableRow.setText(11, "none");
+						}
+
+						/**
 						 * Cells coloring
 						 */
-						for(int i = 0; i < 11; i++){
+						for(int i = 0; i < 12; i++){
 							if(tEntry.isLocalLoop()){
 								tTableRow.setBackground(i, tColLoop);
 							}else if (tEntry.isRouteToDirectNeighbor()){

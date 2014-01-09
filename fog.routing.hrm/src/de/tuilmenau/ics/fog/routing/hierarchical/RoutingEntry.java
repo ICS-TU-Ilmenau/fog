@@ -54,7 +54,11 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public static final long INFINITE_DATARATE = Long.MAX_VALUE;
 
-	
+	/**
+	 * Stores the origin of this entry
+	 */
+	private HRMID mOrigin = null;
+
 	/**
 	 * Stores the destination of this route entry.
 	 */
@@ -238,6 +242,9 @@ public class RoutingEntry implements RouteSegment
 
 		// set the source of this route
 		tEntry.mSource = pLoopAddress;
+		
+		// set the origin of this routing entry
+		tEntry.setOrigin(pLoopAddress);
 		
 		// return with the entry
 		return tEntry;
@@ -738,6 +745,26 @@ public class RoutingEntry implements RouteSegment
 	}
 
 	/**
+	 * Returns the origin of this entry
+	 * 
+	 * @return the HRMID of the origin
+	 */
+	public HRMID getOrigin()
+	{
+		return mOrigin;
+	}
+
+	/** 
+	 * Sets a new origin for this entry
+	 * 
+	 * @param pOrigin the new origin
+	 */
+	public void setOrigin(HRMID pOrigin)
+	{
+		mOrigin = pOrigin;
+	}
+	
+	/**
 	 * Combines this entry with another one
 	 * 
 	 * @param pOtherEntry the other routing entry
@@ -882,6 +909,8 @@ public class RoutingEntry implements RouteSegment
 		
 		tResult.mReporter = mReporter;
 		
+		tResult.mOrigin = mOrigin;
+		
 		return tResult;
 	}
 	
@@ -953,10 +982,12 @@ public class RoutingEntry implements RouteSegment
 		String tResult = (mReportedLink ? "REP: " : "") + (mSharedLink ? "SHA: " : "");
 
 		if(!mBelongstoHRG){
-			tResult += "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getLastNextHop() != null ? ", LastNext=" + getLastNextHop() : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxAvailableDataRate() != INFINITE_DATARATE ? getMaxAvailableDataRate() : "inf.") : "") + ")";
+			tResult += "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getLastNextHop() != null ? ", LastNext=" + getLastNextHop() : "") + (getOrigin() != null ? ", Origin=" + getOrigin() : "") + ")";
 		}else{
-			tResult += getSource() + " <=" + (mRouteForClusterTraversal ? "TRAV" : "") + "=> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "") + (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxAvailableDataRate() != INFINITE_DATARATE ? getMaxAvailableDataRate() : "inf.") : "");
+			tResult += getSource() + " <=" + (mRouteForClusterTraversal ? "TRAV" : "") + "=> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "");																																													 
 		}
+		
+		tResult += (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxAvailableDataRate() != INFINITE_DATARATE ? getMaxAvailableDataRate() : "inf.") : "");
 		
 		return tResult;
 	}
