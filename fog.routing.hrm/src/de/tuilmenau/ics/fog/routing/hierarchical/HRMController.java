@@ -4360,7 +4360,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
 				}
 				
-				tResult.extendCause(this + "::getRoutingEntry()");
+				if(tResult != null){
+					tResult.extendCause(this + "::getRoutingEntry()");
+				}
 						
 				return tResult;
 			}
