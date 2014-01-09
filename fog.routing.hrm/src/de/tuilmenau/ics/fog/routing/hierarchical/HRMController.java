@@ -182,7 +182,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores a database including all HRMControllers of this physical simulation machine
 	 */
-	public static LinkedList<HRMController> mRegisteredHRMControllers = new LinkedList<HRMController>();
+	private static LinkedList<HRMController> mRegisteredHRMControllers = new LinkedList<HRMController>();
 	
 	/**
 	 * Stores the amount of registered coordinators globally

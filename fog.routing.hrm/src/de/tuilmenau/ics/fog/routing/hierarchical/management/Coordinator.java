@@ -43,7 +43,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * Stores whether the data of the "shared phase" has changed or not.
 	 */
-	private boolean mSharedRoutesHaveChanged = false;
+	private boolean mSharedRoutesHaveChanged = false; //TODO: update this value according to changes
 	
 	/**
 	 * Stores the parent cluster, which is managed by this coordinator instance.
@@ -268,7 +268,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				// store the time of this "share phase"
 				mTimeOfLastSharePhase = mHRMController.getSimulationTime();
 	
-				if ((!HRMConfig.Routing.PERIODIC_SHARE_PHASES) && (!hasNewSharePhaseData())){ //TODO
+				if ((!HRMConfig.Routing.PERIODIC_SHARE_PHASES) && (!hasNewSharePhaseData())){
 					if (DEBUG_SHARE_PHASE_DETAILS){
 						Logging.log(this, "SHARE PHASE aborted because routing data hasn't changed since last signaling round");
 					}
