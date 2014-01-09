@@ -190,6 +190,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static long sRegisteredCoordinators = 0;
 
 	/**
+	 * Stores a counter about registered coordinators per hierarchy level
+	 */
+	public static HashMap<Integer, Integer> sRegisteredCoordinatorsCounter = new HashMap<Integer, Integer>();
+
+	/**
 	 * Stores the amount of unregistered coordinators globally
 	 */
 	public static long sUnregisteredCoordinators = 0;
@@ -636,6 +641,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		sRegisteredCoordinators++;
 		
+		Integer tCounter = sRegisteredCoordinatorsCounter.get(pCoordinator.getHierarchyLevel().getValue());
+		if(tCounter == null){
+			tCounter = new Integer(1);
+		}else{
+			tCounter++;
+		}
+		sRegisteredCoordinatorsCounter.put(pCoordinator.getHierarchyLevel().getValue(), tCounter);
+		
 		// increase hierarchy node priority
 		increaseHierarchyNodePriority_KnownCoordinator(pCoordinator);
 
@@ -666,6 +679,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mFormerLocalCoordinatorIDs) {
 				mFormerLocalCoordinatorIDs.add(pCoordinator.getGUICoordinatorID());	
 			}
+		}
+
+		Integer tCounter = sRegisteredCoordinatorsCounter.get(pCoordinator.getHierarchyLevel().getValue());
+		if(tCounter != null){
+			tCounter--;
+			sRegisteredCoordinatorsCounter.put(pCoordinator.getHierarchyLevel().getValue(), tCounter);
+		}else{
+			Logging.err(this, "Found an invalid counter about registered coordinators on hierarchy level: " + pCoordinator.getHierarchyLevel().getValue());
 		}
 
 		sUnregisteredCoordinators++;
@@ -2666,6 +2687,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// reset the stored HRMController database
 		mRegisteredHRMControllers = new LinkedList<HRMController>();
 		sRegisteredCoordinators = 0;
+		sRegisteredCoordinatorsCounter = new HashMap<Integer, Integer>();
 		sUnregisteredCoordinators = 0;
 		sResetNMS = true;
 	}
