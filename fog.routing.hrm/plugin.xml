@@ -58,7 +58,7 @@
             name="HRM configuration"
             class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverviewConfig"
             id="de.tuilmenau.ics.fog.hrmOverviewConfig"
-            icon="icons/de.tuilmenau.ics.fog.HRMOverview.gif"
+            icon="icons/HRMOverview.gif"
             category="de.tuilmenau.ics.fog.views">
       </view>
    </extension>     
