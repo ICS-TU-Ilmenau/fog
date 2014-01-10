@@ -2069,11 +2069,21 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		Connection tConnection = null;				
 	    Logging.log(this, "    ..CONNECTING to: " + pDestinationL2Address + " with requirements: " + tConnectionRequirements);
-		try {
-			tConnection = connectBlock(pDestinationL2Address, tConnectionRequirements, getNode().getIdentity());
-		} catch (NetworkException tExc) {
-			Logging.err(this, "Cannot connect to: " + pDestinationL2Address, tExc);
-		}
+	    
+	    boolean tRetryConnection = false;
+	    int tAttemptNr = 1;
+	    do{
+	    	tRetryConnection = false;
+		    try {
+				tConnection = connectBlock(pDestinationL2Address, tConnectionRequirements, getNode().getIdentity());
+			} catch (NetworkException tExc) {
+				tAttemptNr++;
+				tRetryConnection = true;
+				Logging.warn(this, "Cannot connect to: " + pDestinationL2Address + " , connect attempt nr. " + tAttemptNr);
+				//Logging.err(this, "Cannot connect to: " + pDestinationL2Address, tExc);
+			}
+	    }while(tRetryConnection);
+	    
 	    Logging.log(this, "    ..connectBlock() FINISHED");
 		if(tConnection != null) {
 
