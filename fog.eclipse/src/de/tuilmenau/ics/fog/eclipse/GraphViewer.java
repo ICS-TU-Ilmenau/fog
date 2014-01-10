@@ -46,6 +46,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.IController;
 import de.tuilmenau.ics.fog.eclipse.ui.Activator;
 import de.tuilmenau.ics.fog.eclipse.utils.SWTAWTConverter;
@@ -535,7 +536,11 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 					
 					if(tMarkers.length > 0) {
 						if(tMarkers.length > 1) {
-							return MULTIPLE_MARKING_COLOR;
+							if(Config.Routing.USE_SPECIAL_MULTIPLE_MARKING_COLOR){
+								return MULTIPLE_MARKING_COLOR;
+							}else{
+								return tMarkers[tMarkers.length - 1].getColor();
+							}
 						} else {
 							return tMarkers[0].getColor();
 						}
@@ -562,7 +567,11 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 				
 				if(tMarkers.length > 0) {
 					if(tMarkers.length > 1) {
-						return MULTIPLE_MARKING_COLOR;
+						if(Config.Routing.USE_SPECIAL_MULTIPLE_MARKING_COLOR){
+							return MULTIPLE_MARKING_COLOR;
+						}else{
+							return tMarkers[tMarkers.length - 1].getColor();
+						}
 					} else {
 						return tMarkers[0].getColor();
 					}

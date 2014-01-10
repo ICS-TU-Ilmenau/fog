@@ -345,6 +345,11 @@ public class Config
 		 * This can be used to simulate the routing of demands through the network.
 		 */
 		public static final boolean REROUTING_EXECUTOR_ALLOCATES_BANDWIDTH = false;
+	
+		/**
+		 * Defines a GraphViewer uses a special color for multiple markings
+		 */
+		public static final boolean USE_SPECIAL_MULTIPLE_MARKING_COLOR = false;
 		
 		/**
 		 * Activates for rerouting the automatic instantiation of a VideoTranscoding gate in case 
