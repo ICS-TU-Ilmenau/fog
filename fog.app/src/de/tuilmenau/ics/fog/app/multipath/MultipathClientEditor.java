@@ -43,7 +43,7 @@ public class MultipathClientEditor extends EditorPart implements IApplicationEve
 {
 	public MultipathClientEditor()
 	{
-		Logging.log(this, "Created relay client");
+		Logging.log(this, "Created multipath client");
 		mDisplay = Display.getCurrent();
 		mShell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 	}
