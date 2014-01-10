@@ -36,6 +36,7 @@ import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.BlockingEventHandling;
+import de.tuilmenau.ics.fog.util.SimpleName;
 
 /**
  * In order to create simulations this class sends packets from one node to another randomly chosen node. Or from one 
@@ -49,7 +50,7 @@ public class ProbeRouting extends EclipseCommand
 	/**
 	 * Defines the node name which is used to send a packet to all nodes. 
 	 */
-	private static final String SEND_TO_ALL_ADDRESSES_OF_TARGET_NODE = "all nodes";
+	public static final String SEND_TO_ALL_ADDRESSES_OF_TARGET_NODE = "all nodes";
 	
 	/**
 	 * Stores a reference to the NMS instance.
@@ -61,11 +62,16 @@ public class ProbeRouting extends EclipseCommand
 	 */
 	private static int sLastTargetSelection = -1;
 
+	/**
+	 * Stores the current node where the probe routing should start
+	 */
 	private Node mNode = null;
 	
+	/**
+	 * Constructor
+	 */
 	public ProbeRouting()
-	{
-		
+	{		
 	}
 
 	/**
@@ -129,47 +135,23 @@ public class ProbeRouting extends EclipseCommand
 					mNMS = HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
 				}
 	
+				/**
+				 * We determine detailed data about the target node here.
+				 * This is the same as if the user would have directly selected this string. Thus, the two following operations are allowed - and eases the handling of the FoG GUI.
+				 */
+
 				// send to all nodes?
 				if(!tSendToAllNodes) {	
 					/**
-					 * We determine detailed data about the target node here.
-					 * This is the same as if the user would have directly selected this string. Thus, the two following operations are allowed - and eases the handling of our FoG GUI.
-					 */
-					// get a reference to the target node: this is possible for the GUI only
-					Node tTargetNode = tNodeList.get(tTargetSelection - 1 /* be aware of "all nodes" entry */);
-					
-					// get the recursive FoG layer
-					FoGEntity tFoGLayer = (FoGEntity) tTargetNode.getLayer(FoGEntity.class);
-					
-					// get the central FN of this node
-					Multiplexer tCentralFN = tFoGLayer.getCentralFN();
-
-					// get the name of the central FN
-					Name tTargetNodeName = tCentralFN.getName();
-	
-					/**
 					 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
 					 */
-					sendProbeConnectionRequest(tTargetNodeName, tTargetNode, 53, 1 * 1000);
+					sendProbeConnectionRequest(tTargetName, 53, 1 * 1000);
 				} else {
 					for(Node tTargetNode : tNodeList) {
 						/**
-						 * We determine detailed data about the target node here.
-						 * This is the same as if the user would have directly selected this string. Thus, the following operation is allowed - and eases the handling of our FoG GUI.
-						 */
-						// get the recursive FoG layer
-						FoGEntity tFoGLayer = (FoGEntity) tTargetNode.getLayer(FoGEntity.class);
-						
-						// get the central FN of this node
-						Multiplexer tCentralFN = tFoGLayer.getCentralFN();
-
-						// get the name of the central FN
-						Name tTargetNodeName = tCentralFN.getName();
-		
-						/**
 						 * Send a probe-packet to each HRMID, which is found in the NMS instance. 
 						 */
-						sendProbeConnectionRequest(tTargetNodeName, tTargetNode, 53, 1 * 1000);
+						sendProbeConnectionRequest(tTargetNode.getName(), 53, 1 * 1000);
 					}
 				}
 			}else{
@@ -181,97 +163,58 @@ public class ProbeRouting extends EclipseCommand
 	/**
 	 * Send a HRM probe-packet to the defined target.
 	 * 
-	 * @param pTargetNodeName the name (e.g., HRMID) of the target
-	 * @param pTargetNode the target node (reference is only used for debugging purposes)
+	 * @param pDestinationNodeNameStr the name (as string) of the destination node
 	 * @param pDesiredDelay the desired delay
 	 * @param pDataRate the desired data rate
 	 */
-	private void sendProbeConnectionRequest(Name pTargetNodeName, Node pTargetNode, int pDesiredDelay, int pDataRate)
+	private void sendProbeConnectionRequest(String pDestinationNodeNameStr, int pDesiredDelay, int pDataRate)
 	{
-		Logging.log(this, "\n\n\n############## Sending probe packet to " + pTargetNodeName + ", which belongs to node " + pTargetNode);
-		
-		// get the recursive FoG layer
-		FoGEntity tFoGLayer = (FoGEntity) mNode.getLayer(FoGEntity.class);
-		
-		// get the central FN of this node
-		Multiplexer tCentralFN = tFoGLayer.getCentralFN();
-		
+		Logging.log(this, "\n\n\n############## Sending probe packet to " + pDestinationNodeNameStr);
+	
 		// check if we have a valid NMS
 		if (mNMS == null){
-			Logging.err(this, "Reference to NMS is invalid, cannot send a packet to " + pTargetNodeName);
+			Logging.err(this, "Reference to NMS is invalid, cannot send a packet to " + pDestinationNodeNameStr);
 			return;
 		}
 		
-		/**
-		 * Create QoS description
-		 */
-		Description tDesiredQoSValues = Description.createQoS(pDesiredDelay, pDataRate);
-		
+		// get the name of the central FN
+		Name tDestinationNodeName = new SimpleName(Node.NAMESPACE_HOST, pDestinationNodeNameStr);
+
 		// send a HRM probe-packet to each registered address for the given target name
 		try {
 			
-			for(NameMappingEntry<?> tNMSEntryForTarget : mNMS.getAddresses(pTargetNodeName)) {
+			for(NameMappingEntry<?> tNMSEntryForTarget : mNMS.getAddresses(tDestinationNodeName)) {
 				if(tNMSEntryForTarget.getAddress() instanceof HRMID) {
 					// get the HRMID of the target node
 					HRMID tTargetNodeHRMID = (HRMID)tNMSEntryForTarget.getAddress();
 					
-					Logging.log(this, "Found in the NMS the HRMID " + tTargetNodeHRMID.toString() + " for node " + pTargetNode);
+					Logging.log(this, "Found in the NMS the HRMID " + tTargetNodeHRMID.toString() + " for node " + tDestinationNodeName);
 				}
 			}
 			
-			for(NameMappingEntry<?> tNMSEntryForTarget : mNMS.getAddresses(pTargetNodeName)) {
+			for(NameMappingEntry<?> tNMSEntryForTarget : mNMS.getAddresses(tDestinationNodeName)) {
 				if(tNMSEntryForTarget.getAddress() instanceof HRMID) {
 					// get the HRMID of the target node
 					HRMID tTargetNodeHRMID = (HRMID)tNMSEntryForTarget.getAddress();
 					
-					Logging.log(this, "Probing the HRMID " + tTargetNodeHRMID.toString() + " for node " + pTargetNode);  
+					Logging.log(this, "Probing the HRMID " + tTargetNodeHRMID.toString() + " for node " + tDestinationNodeName);  
 					
 					if ((HRMConfig.DebugOutput.GUI_SHOW_RELATIVE_ADDRESSES) || (!tTargetNodeHRMID.isRelativeAddress())){
 						if(!tTargetNodeHRMID.isClusterAddress()){
 							/**
 							 * Connect to the destination node
 							 */
-							// create requirements with probe-routing property and DestinationApplication property
-							Description tConnectionReqs = tDesiredQoSValues.clone();
-							tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), tTargetNodeHRMID, pDesiredDelay, pDataRate, true));
-							tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
-							tConnectionReqs.set(new DedicatedQoSReservationProperty(false));
-							// probe connection
-							Connection tConnection = null;
-							Logging.log(this, "\n\n\nProbing a connection to " + tTargetNodeHRMID + " with requirements " + tConnectionReqs);
-							tConnection = mNode.getLayer(null).connect(tTargetNodeHRMID, tConnectionReqs, mNode.getIdentity());
-
-							/**
-							 * Waiting for connect() result							
-							 */
-							boolean tSuccessfulConnection = false;
+							Connection tConnection = createProbeRoutingConnection(mNode, tTargetNodeHRMID, pDesiredDelay, pDataRate, false);
 							
-							// create blocking event handler
-							BlockingEventHandling tBlockingEventHandling = new BlockingEventHandling(tConnection, 1);
-							
-							// wait for the first event
-							Event tEvent = tBlockingEventHandling.waitForEvent();
-							Logging.log(this, "        ..=====> got connection " + tTargetNodeHRMID + " event: " + tEvent);
-							
-							if(tEvent instanceof ConnectedEvent) {
-								if(!tConnection.isConnected()) {
-									Logging.log(this, "Received \"connected\" " + tTargetNodeHRMID + " event but connection is not connected.");
-								} else {
-									tSuccessfulConnection = true;
-								}
-							}else if(tEvent instanceof ErrorEvent) {
-								Exception tExc = ((ErrorEvent) tEvent).getException();
-								
-								Logging.err(this, "Got connection " + tTargetNodeHRMID + " exception", tExc);
-							}else{
-								Logging.err(this, "Got connection " + tTargetNodeHRMID + " event: "+ tEvent);
-							}
-
 							/**
 							 * Check if connect request was successful
 							 */
-							if(tSuccessfulConnection){
-								Logging.log(this, "        ..found valid connection to " + tTargetNodeHRMID + "(" + pTargetNodeName + ")");
+							if(tConnection != null){
+								Logging.log(this, "        ..found valid connection to " + tTargetNodeHRMID + "(" + tDestinationNodeName + ")");
+								
+								/**
+								 * Send some test data
+								 */
 								for(int i = 0; i < 5; i++){
 									try {
 										Logging.log(this, "      ..sending test data " + i);
@@ -280,12 +223,10 @@ public class ProbeRouting extends EclipseCommand
 										Logging.err(this, "Couldn't send test data", tExc);
 									}
 								}
-							}
 
-							/**
-							 * Disconnect by closing the connection
-							 */
-							if(tConnection != null) {
+								/**
+								 * Disconnect by closing the connection
+								 */
 								tConnection.close();
 							}
 						}else{
@@ -297,14 +238,85 @@ public class ProbeRouting extends EclipseCommand
 						Logging.log(this, "     ..address " + tTargetNodeHRMID + " is ignored because it is a relative one");
 					}
 				}else{
-					Logging.log(this, "Found in the NMS the unsupported address " + tNMSEntryForTarget.getAddress() + " for node " + pTargetNode);
+					Logging.log(this, "Found in the NMS the unsupported address " + tNMSEntryForTarget.getAddress() + " for node " + tDestinationNodeName);
 				}
 			}
 		} catch (RemoteException tExc) {
-			Logging.err(this, "Unable to determine addresses for node " + pTargetNode, tExc);
+			Logging.err(this, "Unable to determine addresses for node " + tDestinationNodeName, tExc);
 		}
 	}
 	
+	/**
+	 * @param pMNode
+	 * @param pTargetNodeHRMID
+	 * @param pDesiredDelay
+	 * @param pDataRate
+	 * @return
+	 */
+	public static Connection createProbeRoutingConnection(Node pNode, HRMID pTargetNodeHRMID, int pDesiredDelay, int pDataRate, boolean pDirectionalQoSReservation)
+	{
+		Connection tConnection = null;
+
+		// get the recursive FoG layer
+		FoGEntity tFoGLayer = (FoGEntity) pNode.getLayer(FoGEntity.class);
+		
+		// get the central FN of this node
+		Multiplexer tCentralFN = tFoGLayer.getCentralFN();
+
+		/**
+		 * Connect to the destination node
+		 */
+		// create QoS requirements with probe-routing property and DestinationApplication property
+		Description tConnectionReqs = Description.createQoS(pDesiredDelay, pDataRate);
+		tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), pTargetNodeHRMID, pDesiredDelay, pDataRate, true));
+		tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
+		tConnectionReqs.set(new DedicatedQoSReservationProperty(pDirectionalQoSReservation));
+		// probe connection
+		Logging.log(ProbeRouting.class, "\n\n\nProbing a connection to " + pTargetNodeHRMID + " with requirements " + tConnectionReqs);
+		tConnection = pNode.getLayer(null).connect(pTargetNodeHRMID, tConnectionReqs, pNode.getIdentity());
+
+		/**
+		 * Waiting for connect() result							
+		 */
+		boolean tSuccessfulConnection = false;
+		
+		// create blocking event handler
+		BlockingEventHandling tBlockingEventHandling = new BlockingEventHandling(tConnection, 1);
+		
+		// wait for the first event
+		Event tEvent = tBlockingEventHandling.waitForEvent();
+		Logging.log(ProbeRouting.class, "        ..=====> got connection " + pTargetNodeHRMID + " event: " + tEvent);
+		
+		if(tEvent instanceof ConnectedEvent) {
+			if(!tConnection.isConnected()) {
+				Logging.log(ProbeRouting.class, "Received \"connected\" " + pTargetNodeHRMID + " event but connection is not connected.");
+			} else {
+				tSuccessfulConnection = true;
+			}
+		}else if(tEvent instanceof ErrorEvent) {
+			Exception tExc = ((ErrorEvent) tEvent).getException();
+			
+			Logging.err(ProbeRouting.class, "Got connection " + pTargetNodeHRMID + " exception", tExc);
+		}else{
+			Logging.err(ProbeRouting.class, "Got connection " + pTargetNodeHRMID + " event: "+ tEvent);
+		}
+
+		/**
+		 * Check if connect request was successful
+		 */
+		if(!tSuccessfulConnection){
+			/**
+			 * Disconnect the connection if the connect() request failed somehow
+			 */
+			if(tConnection != null) {
+				tConnection.close();
+			}
+			tConnection = null;
+		}
+		
+		return tConnection;
+	}
+
 	/**
 	 * Returns a descriptive string about the object
 	 * 
