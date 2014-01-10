@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.ui.eclipse.editors;
 
 import java.io.FileNotFoundException;
 import java.text.Collator;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Locale;
@@ -1802,11 +1803,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						
 						/**
 						 * Column 3:  utilization
-						 */
-						if(tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION)
-							tTableRow.setText(3,  Double.toString(tEntry.getUtilization()));
-						else
-							tTableRow.setText(3,  "none");
+						 */						
+						if(tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION){
+							DecimalFormat tFormat = new DecimalFormat("0.#");
+							String tUtilizationStr = tFormat.format(tEntry.getUtilization());
+							tTableRow.setText(3, tUtilizationStr);
+						}else
+							tTableRow.setText(3, "none");
 						
 						/**
 						 * Column 4: min. delay
