@@ -923,7 +923,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tColumnParentHRMID.setText("Parent HRMID");
 
 		TableColumn tColumnQueue = new TableColumn(tTable, SWT.NONE, 12);
-		tColumnQueue.setText("Queue");
+		tColumnQueue.setText("Input queue");
 
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
@@ -1110,6 +1110,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						{
 							//Logging.log(this, "Widget selected: " + pEvent);
 							showPackets(tfComChannels.get(tSelectedIndex));
+						}
+					});
+					MenuItem tMenuItem0 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem0.setText("Show pending packets");
+					tMenuItem0.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showPendingPackets(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showPendingPackets(tfComChannels.get(tSelectedIndex));
 						}
 					});
 					MenuItem tMenuItem1 = new MenuItem(tMenu, SWT.NONE);
@@ -1368,6 +1382,25 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket() + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
 				}else{
 					Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket());
+				}
+				i++;
+			}
+		}		
+	}
+	
+	private void showPendingPackets(ComChannel pComChannel)
+	{
+		Logging.log(this, "Pending packets for: " + pComChannel);
+		LinkedList<SignalingMessageHrm> tPendingPackets = pComChannel.getPacketQueue();
+		if(tPendingPackets != null){
+			int i = 0;
+			for (SignalingMessageHrm tPendingPacket: tPendingPackets){
+				if(tPendingPacket instanceof AnnounceCoordinator){
+					AnnounceCoordinator tAnnounceCoordinatorPacket = (AnnounceCoordinator)tPendingPacket;
+	
+					Logging.log(this, "     ..[" + i + "] : " + tPendingPacket + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
+				}else{
+					Logging.log(this, "     ..[" + i + "] : " + tPendingPacket);
 				}
 				i++;
 			}
