@@ -200,7 +200,11 @@ public abstract class Application
 	protected final void terminated(Exception pExc)
 	{
 		if(isRunning()) {
-			throw new IllegalStateException(this +" - Application is terminated but still running.");
+			if(pExc != null){
+				throw new IllegalStateException(this +" - Application is terminated but still running. Application was terminated because of exception: " + pExc);
+			}else{
+				throw new IllegalStateException(this +" - Application is terminated but still running.");
+			}
 		}
 		
 		if(pExc != null) {
