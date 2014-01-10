@@ -67,6 +67,16 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	HashMap<Connection, Marker> mMarkers = new HashMap<Connection, Marker>();
 	
+	/**
+	 * Stores the default max. desired delay
+	 */
+	private int mDefaultDelay = 53;  // some random number above 0
+	
+	/**
+	 * Stores the default min. desired data rate
+	 */
+	private int mDefaultDataRate = 1000;
+	
 	boolean mQoSTestNeeded = true;
 	boolean mQoSTestRunning = false;
 	
@@ -163,6 +173,46 @@ public class QoSTestApp extends ThreadApplication
 	}
 
 	/**
+	 * Returns the default delay
+	 * 
+	 * @return the default delay
+	 */
+	public int getDefaultDelay()
+	{
+		return mDefaultDelay;
+	}
+
+	/**
+	 * Sets a new default delay for future connections
+	 * 
+	 * @param pDefaultDelay the new default delay
+	 */
+	public void setDefaultDelay(int pDefaultDelay)
+	{
+		mDefaultDelay = pDefaultDelay;
+	}
+	
+	/**
+	 * Returns the default data rate
+	 * 
+	 * @return the default data rate
+	 */
+	public int getDefaultDataRate()
+	{
+		return mDefaultDataRate;
+	}
+
+	/**
+	 * Sets a new default data rate for future connections
+	 * 
+	 * @param pDefaultDataRate the new default data rate
+	 */
+	public void setDefaultDataRate(int pDefaultDataRate)
+	{
+		mDefaultDataRate = pDefaultDataRate;
+	}
+
+	/**
 	 * Sends a marker along an established connection
 	 * 
 	 * @param pConnection the connection, whose route should be marked
@@ -220,7 +270,7 @@ public class QoSTestApp extends ThreadApplication
 			/**
 			 * Connect to the destination node
 			 */
-			Connection tConnection = ProbeRouting.createProbeRoutingConnection(mNode, tDestinationHRMID, 53 /* ms */, 1000 /* kbit/s */, false);
+			Connection tConnection = ProbeRouting.createProbeRoutingConnection(mNode, tDestinationHRMID, mDefaultDelay /* ms */, mDefaultDataRate /* kbit/s */, false);
 			
 			/**
 			 * Check if connect request was successful
@@ -307,6 +357,8 @@ public class QoSTestApp extends ThreadApplication
 		
 		return tResult;
 	}
+	
+	
 	
 	/**
 	 * Waits for the next wake-up signal (a new event was triggered)

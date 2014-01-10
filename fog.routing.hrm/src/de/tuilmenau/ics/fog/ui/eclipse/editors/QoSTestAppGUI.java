@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
@@ -52,12 +53,19 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 	private Label mDestinationHRMID = null;
 	private Label mConnectionCounter = null;
 	
-	private static final String TEXT_BTN_ADD_CONNECTION		= "Add new connection";
 	private static final String TEXT_BTN_DEL_CONNECTION		= "Del last connection";
+	private static final String TEXT_BTN_DEL_ALL_CONNECTIONS= "Del all connections";
+	private static final String TEXT_BTN_ADD_CONNECTION		= "Add new connection";
 
+	private Button mBtnDelAllConns = null;
 	private Button mBtnIncConns = null;
     private Button mBtnDecConns = null;
 
+	private static final String TEXT_SPN_DATA_RATE		= "Data rate: ";
+	private static final String TEXT_SPN_DELAY			= "Delay: ";
+
+	private Spinner mSpnDataRate = null;
+	private Spinner mSpnDelay = null;
 	
 	private QoSTestApp mQoSTestApp = null;
 	private Display mDisplay = null;
@@ -194,6 +202,20 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 	    mDestinationHRMID = createPartControlLine(tContainer, TEXT_DESTINATION_HRMID);
 	    mConnectionCounter = createPartControlLine(tContainer, TEXT_CONNECTION_COUNTER);
 
+		Label tDRLabel = new Label(tContainer, SWT.NONE);
+		tDRLabel.setText(TEXT_SPN_DATA_RATE);
+		tDRLabel.setLayoutData(createGridData(false, 1));
+		mSpnDataRate = new Spinner(tContainer, SWT.BORDER);
+	    mSpnDataRate.setValues(mQoSTestApp.getDefaultDataRate(), 100, 1000 * 1000, 0, 100, 1000);
+	    mSpnDataRate.setLayoutData(createGridData(true, 1));
+
+		Label tDelayLabel = new Label(tContainer, SWT.NONE);
+		tDelayLabel.setText(TEXT_SPN_DELAY);
+		tDelayLabel.setLayoutData(createGridData(false, 1));
+		mSpnDelay = new Spinner(tContainer, SWT.BORDER);
+		mSpnDelay.setValues(mQoSTestApp.getDefaultDelay(), 0, 500, 0, 1, 10);
+		mSpnDelay.setLayoutData(createGridData(true, 1));
+
 	    mBtnIncConns = new Button(tContainer, SWT.PUSH);
 	    mBtnIncConns.setText(TEXT_BTN_ADD_CONNECTION);
 	    mBtnIncConns.setLayoutData(createGridData(true, 2));
@@ -201,6 +223,15 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 			@Override
 			public void widgetSelected(SelectionEvent pEvent) {					
 				Logging.log(this, "Increasing connections");
+				
+				String tGUIDataRateStr = mSpnDataRate.getText();
+				int tGUIDataRate = Integer.parseInt(tGUIDataRateStr);
+				mQoSTestApp.setDefaultDataRate(tGUIDataRate);
+				
+				String tGUIDelayStr = mSpnDelay.getText();
+				int tGUIDelay = Integer.parseInt(tGUIDelayStr);
+				mQoSTestApp.setDefaultDelay(tGUIDelay);
+
 				mQoSTestApp.eventIncreaseConnections();
 				updateGUI();
 			}
@@ -209,7 +240,7 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 				return mQoSTestAppGUI.toString();
 			}
 		});
-
+	    
 	    mBtnDecConns = new Button(tContainer, SWT.PUSH);
 	    mBtnDecConns.setText(TEXT_BTN_DEL_CONNECTION);
 	    mBtnDecConns.setLayoutData(createGridData(true, 2));
@@ -218,6 +249,25 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 			public void widgetSelected(SelectionEvent pEvent) {					
 				Logging.log(this, "Decreasing connections");
 				mQoSTestApp.eventDecreaseConnections();
+				updateGUI();
+			}
+			public String toString()
+			{
+				return mQoSTestAppGUI.toString();
+			}
+		});
+
+	    mBtnDelAllConns = new Button(tContainer, SWT.PUSH);
+	    mBtnDelAllConns.setText(TEXT_BTN_DEL_ALL_CONNECTIONS);
+	    mBtnDelAllConns.setLayoutData(createGridData(true, 2));
+	    mBtnDelAllConns.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				int tConns = mQoSTestApp.countConnections();
+				for (int i = 0; i < tConns; i++){
+					Logging.log(this, "Decreasing connections");
+					mQoSTestApp.eventDecreaseConnections();
+				}
 				updateGUI();
 			}
 			public String toString()
