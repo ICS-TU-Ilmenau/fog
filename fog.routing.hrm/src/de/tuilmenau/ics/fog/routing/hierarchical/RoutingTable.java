@@ -272,6 +272,9 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		RoutingEntry tResult = null;
 		RoutingEntry tBestResultHopCount = null;
 		RoutingEntry tBestResultQoS = null;
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ROUTING;
+		
+		Logging.log(this, "### Searching for best routing table entry towards: " + pDestination +", desired max. delay=" + pDesiredMaxDelay + ", desired min. data rate=" + pDesiredMinDataRate);
 		
 		/**
 		 * DATA RATE has the highest priority:
@@ -314,18 +317,18 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 						  ) 
 						  ){
 							
-							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							if (DEBUG){
 								Logging.log(this, "      ..found better (BE) entry: " + tEntry);
 							}
 
 							tBestResultHopCount = tEntry.clone();
 						}else{
-							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							if (DEBUG){
 								Logging.log(this, "      ..found uninteresting (BE) entry: " + tEntry);
 							}
 						}
 					}else{
-						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+						if (DEBUG){
 							Logging.log(this, "      ..found first matching (BE) entry: " + tEntry);
 						}
 
@@ -338,7 +341,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					 * 		2.) delay (if desired)
 					 * 		3.) hop count 		
 					 */
-					if (((pDesiredMaxDelay > 0) && (pDesiredMaxDelay <= tEntry.getMinDelay()) || (pDesiredMaxDelay <= 0)) && 
+					if (((pDesiredMaxDelay > 0) && (pDesiredMaxDelay >= tEntry.getMinDelay()) || (pDesiredMaxDelay <= 0)) && 
 					   ((pDesiredMinDataRate > 0) && (pDesiredMinDataRate <= tEntry.getMaxAvailableDataRate())) || (pDesiredMinDataRate <= 0)){
 						if(tBestResultQoS != null){						
 							
@@ -351,23 +354,23 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 							  
 							  ( (pDesiredMaxDelay > 0) && ( (pDesiredMinDataRate <= 0) || (tBestResultQoS.getMaxAvailableDataRate() == tEntry.getMaxAvailableDataRate()) ) &&  	  
      						  // better delay towards destination?
-							  ( (tBestResultQoS.getMinDelay() < tEntry.getMinDelay()) ||
+							  ( (tBestResultQoS.getMinDelay() > tEntry.getMinDelay()) ||
 						      // same delay towards destination and a better hop count?
 							  ( (tBestResultQoS.getMinDelay() == tEntry.getMinDelay()) && (tBestResultQoS.getHopCount() > tEntry.getHopCount()) ) ) )
 							  ){
 
-								if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								if (DEBUG){
 									Logging.log(this, "      ..found better (QoS) entry: " + tEntry);
 								}
 	
 								tBestResultQoS = tEntry.clone();
 							}else{
-								if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+								if (DEBUG){
 									Logging.log(this, "      ..found uninteresting (QoS) entry: " + tEntry);
 								}
 							}
 						}else{
-							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							if (DEBUG){
 								Logging.log(this, "      ..found first matching (QoS) entry: " + tEntry);
 							}
 	
@@ -376,7 +379,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					}
 					
 				}else{
-					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					if (DEBUG){
 						Logging.log(this, "      ..ignoring entry: " + tEntry);
 					}
 				}
@@ -396,11 +399,18 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				}
 			}			
 		}else{
-			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			if (DEBUG){
 				Logging.log(this, "      ..found empty routing table");
 			}
 		}
 		
+		Logging.log(this, "### BEST ROUTE is: " + tResult);
+		
 		return tResult;
+	}
+	
+	public String toString()
+	{
+		return "[" + getClass().getSimpleName() + " with " + size() + "entries]"; 
 	}
 }
