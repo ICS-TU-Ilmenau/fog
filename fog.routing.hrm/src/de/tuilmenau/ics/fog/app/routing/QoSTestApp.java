@@ -351,7 +351,30 @@ public class QoSTestApp extends ThreadApplication
 			
 			waitForNextEvent();
 		}
-		
+
+		/**
+		 * Close all existing connections
+		 */
+		Connection tConnection = null;
+		do{
+			/**
+			 * get the last connection
+			 */
+			tConnection = null;
+			synchronized (mConnections) {
+				if(countConnections() > 0){
+					tConnection = mConnections.removeLast();
+				}
+			}
+			
+			/**
+			 * Disconnect by closing the connection
+			 */
+			if(tConnection != null){
+				tConnection.close();
+			}
+		}while(tConnection != null);
+
 		/**
 		 * END
 		 */
