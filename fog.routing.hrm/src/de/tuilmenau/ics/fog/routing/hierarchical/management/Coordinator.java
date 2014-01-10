@@ -81,7 +81,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * Stores the last received routing table from the superior coordinator
 	 */
 	private RoutingTable mReceivedSharedRoutingTable = new RoutingTable();
-	
+
+	/**
+	 * Stores if a warning about an invalid channel to the superior coordinator was already printed.
+	 */
+	boolean mWarnedAboutInvalidChannelToSuperiorCoordinator = false;
+
 	private static final long serialVersionUID = 6824959379284820010L;
 	
 	/**
@@ -760,7 +765,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						}
 					}
 				}else{
-					Logging.warn(this, "reportPhase() aborted because channel to superior coordinator [" + superiorCoordinatorID() + "] is invalid for: " + superiorCoordinatorDescription());
+					if(!mWarnedAboutInvalidChannelToSuperiorCoordinator){
+						mWarnedAboutInvalidChannelToSuperiorCoordinator = true;
+						Logging.warn(this, "reportPhase() aborted because channel to superior coordinator [" + superiorCoordinatorID() + "] is invalid for: " + superiorCoordinatorDescription());
+					}
 				}
 			}else{
 				// nothing to be done here: we are the highest hierarchy level, no one to send topology reports to

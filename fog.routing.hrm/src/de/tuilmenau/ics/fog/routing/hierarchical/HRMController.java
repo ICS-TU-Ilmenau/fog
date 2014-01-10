@@ -322,6 +322,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private static boolean sResetNMS = false;
 	
 	/**
+	 * Stores if the results were already validated
+	 */
+	private boolean mResultsValidated = false;
+	
+	/**
 	 * @param pAS the autonomous system at which this HRMController is instantiated
 	 * @param pNode the node on which this controller was started
 	 * @param pHRS is the hierarchical routing service that should be used
@@ -3497,7 +3502,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void validateResults()
 	{
-		if((!HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS) || (!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
+		if ((!mResultsValidated) && ((!HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS) || (!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS))){
+			mResultsValidated = true;
+			
 			/**
 			 * Check coordinators
 			 */
