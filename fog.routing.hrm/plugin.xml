@@ -34,6 +34,11 @@
             id="de.tuilmenau.ics.fog.argviewer"
             name="Abstract Routing Graph Viewer">
       </editor>
+      <editor
+            class="de.tuilmenau.ics.fog.ui.eclipse.editors.QoSTestAppGUI"
+            id="de.tuilmenau.ics.fog.qostestappgui"
+            name="QoS test APP">
+      </editor>
    </extension>
    
    <extension
@@ -46,7 +51,7 @@
             name="HRM packets"
             class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverviewPackets"
             id="de.tuilmenau.ics.fog.hrmOverviewPackets"
-            icon="icons/de.tuilmenau.ics.fog.HRMOverview.gif"
+            icon="icons/HRMOverview.gif"
             category="de.tuilmenau.ics.fog.views">
       </view>
       <view
@@ -60,6 +65,17 @@
    
    <extension
          point="de.tuilmenau.ics.fog.commands">
+      <editor
+            name="Open QoS test app GUI"
+            editorID="de.tuilmenau.ics.fog.qostestappgui"
+            filter="de.tuilmenau.ics.fog.app.routing.QoSTestApp"
+            onCreation="true">
+      </editor>
+      <plugin
+            name="Start QoS test APP"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.StartQoSTestApp"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
        <plugin
             name="Create node"
             class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateNode"
