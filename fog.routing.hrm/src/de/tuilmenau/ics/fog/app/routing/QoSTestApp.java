@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.app.routing;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.HashMap;
 
 import de.tuilmenau.ics.fog.application.ThreadApplication;
 import de.tuilmenau.ics.fog.facade.Connection;
@@ -25,9 +26,12 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Marker;
+import de.tuilmenau.ics.fog.ui.MarkerContainer;
 import de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.ProbeRouting;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
+
+		
 /**
  * This class is responsible for creating QoS-probe connections and also for their destruction.
  */
@@ -58,6 +62,10 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	LinkedList<Connection> mConnections = new LinkedList<Connection>();
 	
+	/**
+	 * Stores the marker per connection
+	 */
+	HashMap<Connection, Marker> mMarkers = new HashMap<Connection, Marker>();
 	
 	boolean mQoSTestNeeded = true;
 	boolean mQoSTestRunning = false;
@@ -173,6 +181,10 @@ public class QoSTestApp extends ThreadApplication
 		
 		Marker tMarker = new Marker(tMarkerText, tMarkerColor);
 		InvisibleMarker tMarkerPacketPayload = new InvisibleMarker(tMarker, tMarkerOperation);
+		
+		// store the marker for this connection in order to be able to remove the marker later
+		mMarkers.put(pConnection, tMarker);
+		
 		//Logging.log(this, "Sending: " + tMarkerPacketPayload);
 
 		try {
@@ -257,10 +269,21 @@ public class QoSTestApp extends ThreadApplication
 			}
 		}
 		
-		/**
-		 * Disconnect by closing the connection
-		 */
 		if(tConnection != null){
+			/**
+			 * Remove the marker
+			 */
+			synchronized(mMarkers){
+				Marker tMarker = mMarkers.get(tConnection);
+				if(tMarker != null){
+					mMarkers.remove(tConnection);
+					MarkerContainer.getInstance().removeMarker(tMarker);
+				}
+			}
+			
+			/**
+			 * Disconnect by closing the connection
+			 */
 			tConnection.close();
 		}
 	}
@@ -355,25 +378,9 @@ public class QoSTestApp extends ThreadApplication
 		/**
 		 * Close all existing connections
 		 */
-		Connection tConnection = null;
-		do{
-			/**
-			 * get the last connection
-			 */
-			tConnection = null;
-			synchronized (mConnections) {
-				if(countConnections() > 0){
-					tConnection = mConnections.removeLast();
-				}
-			}
-			
-			/**
-			 * Disconnect by closing the connection
-			 */
-			if(tConnection != null){
-				tConnection.close();
-			}
-		}while(tConnection != null);
+		while(countConnections() > 0){
+			decConnections();
+		}
 
 		/**
 		 * END
