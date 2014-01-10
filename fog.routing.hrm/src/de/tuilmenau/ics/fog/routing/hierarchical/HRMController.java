@@ -3562,6 +3562,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								Logging.err(this, "validateResults() wasn't able to find node: " + tChanPeerL2Address + " as peer of: " + tComChannel);
 							}
 						}
+						if(tComChannel.getPacketQueue().size() > 0){
+							Logging.err(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel); 
+						}
 					}
 				}
 			}
