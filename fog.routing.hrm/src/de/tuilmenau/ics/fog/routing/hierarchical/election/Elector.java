@@ -277,6 +277,35 @@ public class Elector implements Localization
 		}
 	}
 	
+	/**
+	 * (De-)activates the participation for an election group of a cluster head
+	 * 
+	 * @param pComChannel the comm. channel towards the cluster head
+	 * @param pState the new participation state
+	 * @param pCauseForStateChange the cause for this state change 
+	 */
+	private void setElectionParticipation(ComChannel pComChannel, boolean pState, String pCauseForStateChange)
+	{
+		Logging.log(this, "Changing for election participation to " + Boolean.toString(pState) + " for comm. channel: " + pComChannel);
+		
+		if(pState){
+			// create the packet
+			ElectionReturn tElectionReturnPacket = new ElectionReturn(mHRMController.getNodeName(), pComChannel.getParent().getPriority());
+
+			pComChannel.setLinkActivation(pState, "LEAVE[" + tElectionReturnPacket.getOriginalMessageNumber() + "], " + pCauseForStateChange);
+
+			// send
+			pComChannel.sendPacket(tElectionReturnPacket);
+		}else{
+			// create the packet
+			ElectionLeave tElectionLeavePacket = new ElectionLeave(mHRMController.getNodeName(), pComChannel.getParent().getPriority());
+
+			pComChannel.setLinkActivation(pState, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "], " + pCauseForStateChange);
+
+			// send
+			pComChannel.sendPacket(tElectionLeavePacket);
+		}
+	}
 
 	/**
 	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
@@ -301,7 +330,9 @@ public class Elector implements Localization
 				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tCoordinatorAsClusterMembers){
 					if(!tCoordinatorAsClusterMember.equals(mParent)){
 						Logging.log(this, "      ..reactivating link for: " + tCoordinatorAsClusterMember);
-						tCoordinatorAsClusterMember.getComChannelToClusterHead().setLinkActivation(true, this + "::eventInvalidation()");
+		
+						setElectionParticipation(tCoordinatorAsClusterMember.getComChannelToClusterHead(), true, this + "::eventInvalidation()");
+//TODO						tCoordinatorAsClusterMember.getComChannelToClusterHead().setLinkActivation(true, this + "::eventInvalidation()");
 					}
 				}
 			}
@@ -740,14 +771,16 @@ public class Elector implements Localization
 				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 
 				if(tComChannelToPeer.isLinkActive()){
-					// create the packet
-					ElectionLeave tElectionLeavePacket = new ElectionLeave(mHRMController.getNodeName(), mParent.getPriority());
-			
-					// deactivate link
-					tComChannelToPeer.setLinkActivation(false, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "] broadcast - " + pCause);
-			
-					// send
-					tComChannelToPeer.sendPacket(tElectionLeavePacket);
+					setElectionParticipation(tComChannelToPeer, false, this + "::distributeLEAVE(" + pCause +")");
+//TODO:
+//					// create the packet
+//					ElectionLeave tElectionLeavePacket = new ElectionLeave(mHRMController.getNodeName(), mParent.getPriority());
+//			
+//					// deactivate link
+//					tComChannelToPeer.setLinkActivation(false, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "] broadcast - " + pCause);
+//			
+//					// send
+//					tComChannelToPeer.sendPacket(tElectionLeavePacket);
 				}else{
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "    ..skipped LEAVE");
@@ -783,14 +816,17 @@ public class Elector implements Localization
 					ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 					
 					if(!tComChannelToPeer.isLinkActive()){
-						// create the packet
-						ElectionReturn ElectionReturntPacket = new ElectionReturn(mHRMController.getNodeName(), mParent.getPriority());
-		
-						// deactivate link
-						tComChannelToPeer.setLinkActivation(true, "RETURN[" + ElectionReturntPacket.getOriginalMessageNumber() + "] broadcast - " + pCause);
-				
-						// send
-						tComChannelToPeer.sendPacket(ElectionReturntPacket);
+						setElectionParticipation(tComChannelToPeer, true, this + "::distributeRETURN(" + pCause +")");
+
+//TODO:						
+//						// create the packet
+//						ElectionReturn ElectionReturntPacket = new ElectionReturn(mHRMController.getNodeName(), mParent.getPriority());
+//		
+//						// deactivate link
+//						tComChannelToPeer.setLinkActivation(true, "RETURN[" + ElectionReturntPacket.getOriginalMessageNumber() + "] broadcast - " + pCause);
+//				
+//						// send
+//						tComChannelToPeer.sendPacket(ElectionReturntPacket);
 					}else{
 						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 							Logging.log(this, "    ..skipped RETURN");
