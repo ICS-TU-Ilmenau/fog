@@ -366,6 +366,11 @@ public class HRMConfig
 		 * Defines the maximum for the hop count to a remote coordinator (distance between a local CoordinatorProxy and a distant Coordinator instance) 
 		 */
 		public static final int MAX_HOPS_TO_A_REMOTE_COORDINATOR = 256;
+
+		/**
+		 * Defines the timeout for a connect() try.
+		 */
+		public static final double CONNECT_TIMEOUT = 3.0;
 	}
 	
 	/**

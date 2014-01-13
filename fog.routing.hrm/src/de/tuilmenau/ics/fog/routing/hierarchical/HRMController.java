@@ -1950,6 +1950,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns the HRM processor of this HRM controller
+	 * 
+	 * @return the HRM processor
+	 */
+	public HRMControllerProcessor getProcessor()
+	{
+		return mProcessorThread;
+	}
+	
+	/**
 	 * Registers an outgoing communication session
 	 * 
 	 * @param pComSession the new session
@@ -2665,25 +2675,29 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		BlockingEventHandling tBlockingEventHandling = new BlockingEventHandling(tConnection, 1);
 		
 		// wait for the first event
-		Event tEvent = tBlockingEventHandling.waitForEvent();
+		Event tEvent = tBlockingEventHandling.waitForEvent(HRMConfig.Hierarchy.CONNECT_TIMEOUT);
 		Logging.log(this, "        ..=====> got connection event: " + tEvent);
 		
-		if(tEvent instanceof ConnectedEvent) {
-			if(!tConnection.isConnected()) {
-				throw new NetworkException(this, "Connected event but connection is not connected.");
-			} else {
-				return tConnection;
-			}
-		}else if(tEvent instanceof ErrorEvent) {
-			Exception exc = ((ErrorEvent) tEvent).getException();
-			
-			if(exc instanceof NetworkException) {
-				throw (NetworkException) exc;
-			} else {
-				throw new NetworkException(this, "Can not connect to " + pDestination +".", exc);
+		if(tEvent != null){
+			if(tEvent instanceof ConnectedEvent) {
+				if(!tConnection.isConnected()) {
+					throw new NetworkException(this, "Connected event but connection is not connected.");
+				} else {
+					return tConnection;
+				}
+			}else if(tEvent instanceof ErrorEvent) {
+				Exception exc = ((ErrorEvent) tEvent).getException();
+				
+				if(exc instanceof NetworkException) {
+					throw (NetworkException) exc;
+				} else {
+					throw new NetworkException(this, "Can not connect to " + pDestination +".", exc);
+				}
+			}else{
+				throw new NetworkException(this, "Can not connect to " + pDestination +" due to " + tEvent);
 			}
 		}else{
-			throw new NetworkException(this, "Can not connect to " + pDestination +" due to " + tEvent);
+			throw new NetworkException(this, "Can not connect to " + pDestination +" due to timeout");
 		}
 	}
 
@@ -2702,7 +2716,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(null, "EVENT: simulation restarted");
 		
+		/**
+		 * Kill all processors of the previous simulation run
+		 */
+		if(mRegisteredHRMControllers != null){
+			for(HRMController tHRMController : mRegisteredHRMControllers){
+				tHRMController.getProcessor().exit();
+			}
+		}
+		
 		// reset the stored HRMController database
+		Logging.log("Remaining registered HRMController instances: " + mRegisteredHRMControllers);
 		mRegisteredHRMControllers = new LinkedList<HRMController>();
 		sRegisteredCoordinators = 0;
 		sRegisteredCoordinatorsCounter = new HashMap<Integer, Integer>();
@@ -2837,7 +2861,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public void distributeHierarchyNodePriorityUpdate(HierarchyLevel pHierarchyLevel)
 	{
 		long tNewPrio = getHierarchyNodePriority(pHierarchyLevel);
+		LinkedList<CoordinatorAsClusterMember> tLocalCoordinatorAsClusterMembers = getAllCoordinatorAsClusterMembers();
+		LinkedList<Cluster> tLocalClusters = getAllClusters();
 		
+		Logging.log(this, "Distributing priority (" + tNewPrio + ") update (last: " + mHierarchyPriorityUpdates + ") for hierarchy level: " + pHierarchyLevel.getValue());
+		int i = 0;
+		for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tLocalCoordinatorAsClusterMembers){
+			if((tCoordinatorAsClusterMember.getHierarchyLevel().equals(pHierarchyLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
+				Logging.log(this, "      ..distributing update (last: " + mHierarchyPriorityUpdates + ") to peer[" + i + "]: " + tCoordinatorAsClusterMember);
+			}
+		}		
+		i = 0;
+		for(Cluster tLocalCluster : tLocalClusters){
+			if((tLocalCluster.getHierarchyLevel().equals(pHierarchyLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
+				Logging.log(this, "      ..distributing update (last: " + mHierarchyPriorityUpdates + ") to peer[" + i + "]: " + tLocalCluster);
+			}
+		}
+				
 		/**
 		 * Inform all local CoordinatorAsClusterMemeber objects about the change
 		 * HINT: we have to enforce a permanent lock of mLocalCoordinatorAsClusterMemebers, 
@@ -2845,23 +2885,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 *       could be created while we are updating the priorities of all the 
 		 *       formerly known ones)
 		 */
-		Logging.log(this, "  ..informing about the priority (" + tNewPrio + ") update (" + mHierarchyPriorityUpdates + ")");
 		// get a copy of the list about local CoordinatorAsClusterMember instances in order to avoid dead lock between HRMControllerProcessor and main EventHandler
-		LinkedList<CoordinatorAsClusterMember> tLocalCoordinatorAsClusterMembers = getAllCoordinatorAsClusterMembers();
-		int i = 0;
+		i = 0;
 		for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tLocalCoordinatorAsClusterMembers){
 			if((tCoordinatorAsClusterMember.getHierarchyLevel().equals(pHierarchyLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
-				Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tCoordinatorAsClusterMember);
+				Logging.log(this, "      ..update (last: " + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tCoordinatorAsClusterMember);
 				tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pHierarchyLevel));
 				i++;
 			}
 		}
 		// get a copy of the list about local CoordinatorAsClusterMember instances in order to avoid dead lock between HRMControllerProcessor and main EventHandler
-		LinkedList<Cluster> tLocalClusters = getAllClusters();
 		i = 0;
 		for(Cluster tLocalCluster : tLocalClusters){
 			if((tLocalCluster.getHierarchyLevel().equals(pHierarchyLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
-				Logging.log(this, "      ..update (" + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tLocalCluster);
+				Logging.log(this, "      ..update (last: " + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tLocalCluster);
 				tLocalCluster.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pHierarchyLevel));
 				i++;
 			}
@@ -2889,6 +2926,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */ 
 		if(mProcessorThread != null){
 			mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel);
+		}else{
+			Logging.warn(this, "Processor thread is invalid, ignoring priority (" + pPriority + ") update (" + mHierarchyPriorityUpdates + ")");
 		}
 		//HINT: for synchronous execution use here "distributeHierarchyNodePriorityUpdate(pHierarchyLevel)"
 		//      instead of "mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel)"
@@ -3436,6 +3475,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		if(mSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
 			double tTimeWithFixedHierarchyData = getSimulationTime() - mSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+			double tTimeWithFixedHierarchyDataThreshold = /* TODO 2 * */ HRMConfig.Hierarchy.COORDINATOR_TIMEOUT;
 			//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
 			if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
 	
@@ -3443,12 +3483,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
 					 */
-					if(tTimeWithFixedHierarchyData > 2 * HRMConfig.Hierarchy.COORDINATOR_TIMEOUT){
+					if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
 						GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
 						
 						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 						Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
-						Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + (HRMConfig.Hierarchy.COORDINATOR_TIMEOUT * 2) + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
+						Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + tTimeWithFixedHierarchyDataThreshold + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
 						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 						
 						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
@@ -4579,7 +4619,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					} // for()
 				}else{
 					if(pRefDeletedLinks == null){
-						Logging.err(this, "getRoutingEntryHRG() found an empty inter-cluster path from " + pFrom + " to " + pTo);
+						//Logging.err(this, "getRoutingEntryHRG() found an empty inter-cluster path from " + pFrom + " to " + pTo);
 					}else{
 						// no further alternative route found
 					}
