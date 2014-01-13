@@ -853,14 +853,14 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	 * Physical max. data rate in [kbit/s] (1000 bit/s)
 	 */
 	@Viewable("PhysMaxDataRate")
-	private Number mPhysMaxDataRate; 
+	private Number mPhysMaxDataRate = 0;
 	@Viewable("Delay (sec)")
-	private double mDelaySec;
+	private double mDelaySec = 0;
 	@Viewable("Delay constant")
-	private boolean mDelayConstant;
+	private boolean mDelayConstant = false;
 	@Viewable("Loss probability")
-	private float mPacketLossRate;
+	private float mPacketLossRate = 0;
 	@Viewable("Bit error probability")
-	private float mBitErrorRate;
+	private float mBitErrorRate = 0;
 }
 
