@@ -82,6 +82,9 @@ public class SimulationView extends ViewPart
 
 	private static final String TEXT_SHOW_THREAD_STATS_BUTTON = "Show thread stats";
 	
+	private static final String TEXT_SIM_STARTED = "Started simulations: ";
+	private static final String TEXT_SIM_THREADS = "Running threads: ";
+	
 	private long MB = 1024*1024;
 	
 	private Runtime mRuntime = null;
@@ -206,19 +209,58 @@ public class SimulationView extends ViewPart
 		
 		mValueHwMemFree = new Label(tContainer, SWT.NONE);
 		mValueHwMemFree.setLayoutData(createGridData(true, 1));
+	}
+	
+	/**
+	 * @param comp
+	 */
+	private void createPartControlNewSimulations(Composite pParent) 
+	{
+		Label tLabelHw = new Label(pParent, SWT.NONE);
+		tLabelHw.setText("Simulations:");
+		tLabelHw.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		Composite tContainer = new Composite(pParent, SWT.NONE);
+	    GridLayout gridLayout = new GridLayout(2, false);
+	    tContainer.setLayout(gridLayout);
+	    tContainer.setLayoutData(createGridData(true, 1));
+
+	    Label tLabelStartedSims = new Label(tContainer, SWT.NONE);
+	    tLabelStartedSims.setText(TEXT_SIM_STARTED);
+	    tLabelStartedSims.setLayoutData(createGridData(false, 1));
 		
-		Button showThreadStatsButton = new Button(pParent, SWT.PUSH);
+		mSimStarted = new Label(tContainer, SWT.NONE);
+		mSimStarted.setLayoutData(createGridData(true, 1));
+
+		Button startButton = new Button(tContainer, SWT.PUSH);
+		startButton.setText(TEXT_START_BUTTON);
+		startButton.setLayoutData(createGridData(true, 2));
+		startButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(org.eclipse.swt.events.SelectionEvent evt) {
+				startNewSimulation();
+			}
+		});
+
+		Label tLabelStartedThreads = new Label(tContainer, SWT.NONE);
+	    tLabelStartedThreads.setText(TEXT_SIM_THREADS);
+	    tLabelStartedThreads.setLayoutData(createGridData(false, 1));
+		
+		mSimThreadsStarted = new Label(tContainer, SWT.NONE);
+		mSimThreadsStarted.setLayoutData(createGridData(true, 1));
+
+		
+		Button showThreadStatsButton = new Button(tContainer, SWT.PUSH);
 		showThreadStatsButton.setText(TEXT_SHOW_THREAD_STATS_BUTTON);
-		showThreadStatsButton.setLayoutData(createGridData(false, 1));
+		showThreadStatsButton.setLayoutData(createGridData(true, 2));
 		showThreadStatsButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(org.eclipse.swt.events.SelectionEvent evt) {
 				showThreadStats();
 			}
 		});
-
 	}
-	
+
 	/**
 	 * Create GUI
 	 */
@@ -231,22 +273,36 @@ public class SimulationView extends ViewPart
 	    comp.setLayout(gridLayout);
 		
 	    createPartControlHardware(comp);
-
-		Button startButton = new Button(comp, SWT.PUSH);
-		startButton.setText(TEXT_START_BUTTON);
-		startButton.setLayoutData(createGridData(true, 1));
-		startButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(org.eclipse.swt.events.SelectionEvent evt) {
-				handleButtonPressed();
+	    createPartControlNewSimulations(comp);
+		createPartControlRunningSimulations(comp);
+		createPartControlEventHandler(comp);
+		
+		// start periodical updates of GUI elements
+		Runnable timer = new Runnable() {
+			public void run()
+			{
+				if(!eventHandlerTime.isDisposed()) {
+					updateSimulationControl();
+					
+					display.timerExec(EVENT_HANDLER_STATUS_REFRESH_MSEC, this);
+				}
 			}
-		});
-
-		Label label = new Label(comp, SWT.NONE);
+		};
+		timer.run();
+	}
+	
+	private static boolean isTimeBasedSim()
+	{
+		return Simulator.MODE != SimulatorMode.STEP_SIM;
+	}
+	
+	public void createPartControlRunningSimulations(Composite parent)
+	{
+		Label label = new Label(parent, SWT.NONE);
 		label.setText("Running simulations:");
 		label.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-		Composite treeComp = new Composite(comp, SWT.NONE);
+		Composite treeComp = new Composite(parent, SWT.NONE);
 		treeComp.setLayout(new FillLayout());
 		treeComp.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
@@ -278,31 +334,9 @@ public class SimulationView extends ViewPart
 		viewer.setSorter(new ViewerSorter());
 
 		getSite().setSelectionProvider(viewer);
-
-		createPartControlSimulation(comp);
-		createPartControlEventHandler(comp);
 		
-		// start periodical updates of GUI elements
-		Runnable timer = new Runnable() {
-			public void run()
-			{
-				if(!eventHandlerTime.isDisposed()) {
-					updateSimulationControl();
-					
-					display.timerExec(EVENT_HANDLER_STATUS_REFRESH_MSEC, this);
-				}
-			}
-		};
-		timer.run();
-	}
-	
-	private static boolean isTimeBasedSim()
-	{
-		return Simulator.MODE != SimulatorMode.STEP_SIM;
-	}
-	
-	public void createPartControlSimulation(Composite parent)
-	{
+		
+		
 		Composite comp = new Composite(parent, SWT.NONE);
 	    GridLayout gridLayout = new GridLayout(4, false);
 	    comp.setLayout(gridLayout);
@@ -412,6 +446,22 @@ public class SimulationView extends ViewPart
 		return Math.round(time *1000.0d);
 	}
 	
+	private int countThreads()
+	{
+		int tResult = 0;
+		
+		ThreadMXBean tThreadMXBean = ManagementFactory.getThreadMXBean();
+		if(tThreadMXBean != null){
+			if(!tThreadMXBean.isThreadContentionMonitoringEnabled()){
+				tThreadMXBean.setThreadContentionMonitoringEnabled(true);
+			}
+			long tThreadIds[] = tThreadMXBean.getAllThreadIds();
+			tResult = tThreadIds.length;
+		}
+		
+		return tResult;
+	}
+	
 	private void showThreadStats()
 	{
 		double tSimNow = 1;
@@ -442,6 +492,8 @@ public class SimulationView extends ViewPart
 	private void updateSimulationControl()
 	{
 		if(Thread.currentThread() == display.getThread()) {
+			mSimStarted.setText(Integer.toString(Simulation.mStartedSimulations));
+			mSimThreadsStarted.setText(Integer.toString(countThreads()));
 			if(currentSim != null) {
 				EventHandler timeBase = currentSim.getTimeBase();
 				
@@ -624,7 +676,7 @@ public class SimulationView extends ViewPart
 	/**
 	 * Called when the user presses the start/stop button
 	 */
-	private void handleButtonPressed()
+	private void startNewSimulation()
 	{
 		DebugUITools.openLaunchConfigurationDialogOnGroup(getSite().getShell(), null, "org.eclipse.debug.ui.launchGroup.run");
 	}
@@ -684,6 +736,8 @@ public class SimulationView extends ViewPart
 	private Label eventHandlerNumberEvents;
 	private Label mValueHwMemTotal;
 	private Label mValueHwMemFree;
+	private Label mSimStarted;
+	private Label mSimThreadsStarted;
 	private TreeViewer viewer;
 	
 	/**
@@ -701,7 +755,7 @@ public class SimulationView extends ViewPart
 	 * Even if view is not shown, list should be updated.
 	 */
 	private static LinkedList<Simulation> simulations = new LinkedList<Simulation>();
-	
+
 	private final Runnable simControlUpdateRunnable = new Runnable() {
 		@Override
 		public void run()
