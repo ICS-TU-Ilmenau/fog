@@ -658,8 +658,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Check if the hierarchy is continuous
 		 */
 		if((!pCoordinator.getHierarchyLevel().isBaseLevel()) && (tFoundAnInferiorCoordinator == null)){
-			Logging.err(this, "Hierarchy is temporary non continuous, detected an error in the Matrix!?");
-			Logging.err(this, "    ..registered a coordinator at hierarchy level: " + pCoordinator.getHierarchyLevel().getValue() + " and haven't found a coordinator at level: " + (pCoordinator.getHierarchyLevel().getValue() - 1));
+			Logging.warn(this, "Hierarchy is temporary non continuous, detected an error in the Matrix or is this only a temporary issue!?");
+			Logging.warn(this, "    ..registered a coordinator at hierarchy level: " + pCoordinator.getHierarchyLevel().getValue() + " and haven't found a coordinator at level: " + (pCoordinator.getHierarchyLevel().getValue() - 1));
 		}
 			
 		synchronized (mLocalCoordinators) {
