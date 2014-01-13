@@ -781,7 +781,11 @@ public class ComSession extends Session
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.log(this, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD ANSWER " + tAnnouncePhysicalNeighborhoodAnswer);
 			}
-			write(tAnnouncePhysicalNeighborhoodAnswer);
+			if(write(tAnnouncePhysicalNeighborhoodAnswer)){
+				Logging.log(mHRMController, "     ..sent (answer) ANNOUNCE PHYSICAL NEIGHBORHOOD: " + tAnnouncePhysicalNeighborhoodAnswer);	
+			}else{
+				Logging.err(mHRMController, "     ..unable to send (answer) ANNOUNCE PHYSICAL NEIGHBORHOOD: " + tAnnouncePhysicalNeighborhoodAnswer);	
+			}
 		}
 		
 		/**
