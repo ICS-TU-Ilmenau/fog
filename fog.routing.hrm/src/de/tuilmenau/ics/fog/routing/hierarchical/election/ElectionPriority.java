@@ -86,15 +86,8 @@ public class ElectionPriority
 			return null;
 		}
 
-		ElectionPriority tResult = new ElectionPriority(pHRMController.getHierarchyNodePriority(pControlEntity.getHierarchyLevel()));
+		ElectionPriority tResult = new ElectionPriority(pHRMController.getNodePriority(pControlEntity.getHierarchyLevel()));
 
-		/**
-		 * Overwrite the Election priority by the connectivity priority for simple ClusterMember objects at base hierarchy level
-		 */
-		if((pControlEntity instanceof ClusterMember) && (!(pControlEntity instanceof CoordinatorAsClusterMember)) && (pControlEntity.getHierarchyLevel().isBaseLevel())){
-			tResult = new ElectionPriority(pHRMController.getConnectivityNodePriority());
-		}
-		
 		if (DEBUG_CREATION){
 			Logging.log(pControlEntity, "Created Election priority object (initial priority is " + tResult.getValue() + ")");
 		}

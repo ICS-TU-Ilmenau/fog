@@ -819,10 +819,17 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Inform all superior clusters about our invalidation and invalidate the cluster membership (we leave all elections because we are no longer a possible election winner)
 		 */
 		if (!getHierarchyLevel().isHighest()){
-			Logging.log(this, "     ..invalidating these cluster memberships: " + mClusterMemberships);
-			while(mClusterMemberships.size() > 0) {
-				CoordinatorAsClusterMember tCoordinatorAsClusterMember = mClusterMemberships.getLast();
-				tCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
+			synchronized (mClusterMemberships) {
+				Logging.log(this, "     ..invalidating these cluster memberships: ");
+				int i = 0;
+				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mClusterMemberships){
+					Logging.log(this, "       ..membership[" + i + "]: " + tCoordinatorAsClusterMember);
+					i++;
+				}				
+				while(mClusterMemberships.size() > 0) {
+					CoordinatorAsClusterMember tCoordinatorAsClusterMember = mClusterMemberships.getLast();
+					tCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
+				}
 			}
 		}else{
 			Logging.log(this, "eventCoordinatorRoleInvalid() skips further signaling because hierarchy end is already reached at: " + getHierarchyLevel().getValue());
@@ -1186,41 +1193,44 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		Logging.log(this, "EVENT: got cluster membership request (" + mClusterMembershipRequestNr + ") from: " + pRemoteClusterName);
 		
 		if(isThisEntityValid()){
-			/**
-			 * Create new cluster (member) object
-			 */
-			if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-				Logging.log(this, "    ..creating new local cluster membership for: " + pRemoteClusterName + ", remote node: " + pSourceComSession.getPeerL2Address());
+			// avoid that the membership gets invalidated in the meanwhile
+			synchronized (mClusterMemberships) {
+				/**
+				 * Create new cluster (member) object
+				 */
+				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+					Logging.log(this, "    ..creating new local cluster membership for: " + pRemoteClusterName + ", remote node: " + pSourceComSession.getPeerL2Address());
+				}
+				CoordinatorAsClusterMember tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
+				
+				/**
+				 * Create the communication channel for the described cluster member
+				 */
+				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+					Logging.log(this, "     ..creating communication channel");
+				}
+				ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
+		
+				/**
+				 * Set the remote ClusterName of the communication channel
+				 */
+				tComChannel.setRemoteClusterName(pRemoteClusterName);
+		
+				/**
+				 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
+				 */
+				tComChannel.signalRequestClusterMembershipAck(createCoordinatorName());
+	
+				/**
+				 * Trigger: comm. channel established 
+				 */
+				tClusterMembership.eventComChannelEstablished(tComChannel);
+		
+				/**
+				 * Trigger: joined a remote cluster (sends an ElectionPriorityUpdate)
+				 */
+				tClusterMembership.eventJoinedRemoteCluster(tComChannel);
 			}
-			CoordinatorAsClusterMember tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
-			
-			/**
-			 * Create the communication channel for the described cluster member
-			 */
-			if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-				Logging.log(this, "     ..creating communication channel");
-			}
-			ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
-	
-			/**
-			 * Set the remote ClusterName of the communication channel
-			 */
-			tComChannel.setRemoteClusterName(pRemoteClusterName);
-	
-			/**
-			 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
-			 */
-			tComChannel.signalRequestClusterMembershipAck(createCoordinatorName());
-
-			/**
-			 * Trigger: comm. channel established 
-			 */
-			tClusterMembership.eventComChannelEstablished(tComChannel);
-	
-			/**
-			 * Trigger: joined a remote cluster (sends an ElectionPriorityUpdate)
-			 */
-			tClusterMembership.eventJoinedRemoteCluster(tComChannel);
 		}else{
 			Logging.warn(this, "eventClusterMembershipRequest() aborted because coordinator role is already invalidated");
 
@@ -1383,7 +1393,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public ElectionPriority getPriority() 
 	{
-		return ElectionPriority.create(this, mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
+		ElectionPriority tResult = ElectionPriority.create(this, mHRMController.getNodePriority(getHierarchyLevel()));
+		
+		Logging.log(this, "Created coordinator priority: " + tResult + ", hier. node prio=" + mHRMController.getNodePriority(getHierarchyLevel()) + ", hier. lvl.=" + getHierarchyLevel());
+		
+		return tResult;
 	}
 	
 	/**

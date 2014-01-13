@@ -859,12 +859,16 @@ public class ClusterMember extends ClusterName
 	 */
 	protected void eventJoinedRemoteCluster(ComChannel pComChannelToRemoteCluster)
 	{
-		Logging.log(this, "HAVE JOINED remote cluster");
-		
-		/**
-		 * Trigger: joined remote cluster (in Elector)
-		 */
-		mElector.eventJoinedRemoteCluster(pComChannelToRemoteCluster);
+		if(isThisEntityValid()){
+			Logging.log(this, "HAVE JOINED remote cluster");
+			
+			/**
+			 * Trigger: joined remote cluster (in Elector)
+			 */
+			mElector.eventJoinedRemoteCluster(pComChannelToRemoteCluster);
+		}else{
+			Logging.warn(this, "eventJoinedRemoteCluster() because membership is already invalidated");
+		}
 	}
 
 	/**
@@ -885,7 +889,7 @@ public class ClusterMember extends ClusterName
 		L2Address tLocalL2Address = mHRMController.getHRS().getCentralFNL2Address();
 		
 		if (DEBUG){
-			Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getHierarchyNodePriority(getHierarchyLevel()));
+			Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getNodePriority(getHierarchyLevel()));
 		}
 		
 		for(ComChannel tComChannel : tComChannels) {

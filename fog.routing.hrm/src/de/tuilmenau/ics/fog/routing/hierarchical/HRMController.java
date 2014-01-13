@@ -39,7 +39,30 @@ import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
 import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
+import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
+import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnouncePhysicalEndPoint;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAnnounceWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResignWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
@@ -999,7 +1022,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		mDecoratorActiveHRMInfrastructure.setText("- [Active clusters: " + tActiveHRMInfrastructureText + "]");
 		String tHierPrio = "";
-		for(int i = 1; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
 			if (tHierPrio != ""){
 				tHierPrio += ", ";
 			}
@@ -1206,7 +1229,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		boolean tNewEntry = false;
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
 			// make sure the Election priority is the right one, avoid race conditions here
-			pCoordinatorAsClusterMember.setPriority(ElectionPriority.create(this, getHierarchyNodePriority(pCoordinatorAsClusterMember.getHierarchyLevel())));
+			pCoordinatorAsClusterMember.setPriority(ElectionPriority.create(this, getNodePriority(pCoordinatorAsClusterMember.getHierarchyLevel())));
 
 			if(!mLocalCoordinatorAsClusterMemebers.contains(pCoordinatorAsClusterMember)){				
 				// register as known coordinator-as-cluster-member
@@ -2675,6 +2698,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		BlockingEventHandling tBlockingEventHandling = new BlockingEventHandling(tConnection, 1);
 		
 		// wait for the first event
+		Logging.log(this, "        ..waiting for connect() event");
 		Event tEvent = tBlockingEventHandling.waitForEvent(HRMConfig.Hierarchy.CONNECT_TIMEOUT);
 		Logging.log(this, "        ..=====> got connection event: " + tEvent);
 		
@@ -2732,6 +2756,31 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		sRegisteredCoordinatorsCounter = new HashMap<Integer, Integer>();
 		sUnregisteredCoordinators = 0;
 		sResetNMS = true;
+
+		AnnouncePhysicalEndPoint.sCreatedPackets = 0;
+		MultiplexHeader.sCreatedPackets = 0;
+		SignalingMessageHrm.sCreatedPackets = 0;
+		ProbePacket.sCreatedPackets = 0;
+		AnnounceHRMIDs.sCreatedPackets = 0;
+		AssignHRMID.sCreatedPackets = 0;
+		RevokeHRMIDs.sCreatedPackets = 0;
+		InformClusterLeft.sCreatedPackets = 0;
+		InformClusterMembershipCanceled.sCreatedPackets = 0;
+		RequestClusterMembership.sCreatedPackets = 0;
+		RequestClusterMembershipAck.sCreatedPackets = 0;
+		SignalingMessageElection.sCreatedPackets = 0;
+		ElectionAlive.sCreatedPackets = 0;
+		ElectionAnnounceWinner.sCreatedPackets = 0;
+		ElectionElect.sCreatedPackets = 0;
+		ElectionLeave.sCreatedPackets = 0;
+		ElectionPriorityUpdate.sCreatedPackets = 0;
+		ElectionReply.sCreatedPackets = 0;
+		ElectionResignWinner.sCreatedPackets = 0;
+		ElectionReturn.sCreatedPackets = 0;
+		AnnounceCoordinator.sCreatedPackets = 0;
+		InvalidCoordinator.sCreatedPackets = 0;
+		RouteReport.sCreatedPackets = 0;
+		RouteShare.sCreatedPackets = 0;
 	}
 
 	/**
@@ -2771,7 +2820,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the hierarchy node priority
 	 */
-	public long getHierarchyNodePriority(HierarchyLevel pLevel)
+	public long getNodePriority(HierarchyLevel pLevel)
 	{
 		if (HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY){
 			// the used hierarchy level is always "1" above of the one from the causing entity
@@ -2781,7 +2830,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tHierLevel = 1;
 			}
 
-			return mNodeHierarchyPriority[tHierLevel];
+			if(pLevel.isBaseLevel())
+				return getConnectivityNodePriority();
+			else
+				return mNodeHierarchyPriority[tHierLevel];
+			
 		}else{
 			return getConnectivityNodePriority();
 		}
@@ -2792,7 +2845,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the connectivity node priority
 	 */
-	public long getConnectivityNodePriority()
+	private long getConnectivityNodePriority()
 	{
 		return mNodeConnectivityPriority;
 	}
@@ -2860,7 +2913,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void distributeHierarchyNodePriorityUpdate(HierarchyLevel pHierarchyLevel)
 	{
-		long tNewPrio = getHierarchyNodePriority(pHierarchyLevel);
+		long tNewPrio = getNodePriority(pHierarchyLevel);
 		LinkedList<CoordinatorAsClusterMember> tLocalCoordinatorAsClusterMembers = getAllCoordinatorAsClusterMembers();
 		LinkedList<Cluster> tLocalClusters = getAllClusters();
 		
@@ -2890,7 +2943,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tLocalCoordinatorAsClusterMembers){
 			if((tCoordinatorAsClusterMember.getHierarchyLevel().equals(pHierarchyLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
 				Logging.log(this, "      ..update (last: " + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tCoordinatorAsClusterMember);
-				tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pHierarchyLevel));
+				tCoordinatorAsClusterMember.eventHierarchyNodePriorityUpdate(getNodePriority(pHierarchyLevel));
 				i++;
 			}
 		}
@@ -2899,7 +2952,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		for(Cluster tLocalCluster : tLocalClusters){
 			if((tLocalCluster.getHierarchyLevel().equals(pHierarchyLevel)) || (!HRMConfig.Hierarchy.USE_SEPARATE_HIERARCHY_NODE_PRIORITY_PER_LEVEL)){
 				Logging.log(this, "      ..update (last: " + mHierarchyPriorityUpdates + ") - informing[" + i + "]: " + tLocalCluster);
-				tLocalCluster.eventHierarchyNodePriorityUpdate(getHierarchyNodePriority(pHierarchyLevel));
+				tLocalCluster.eventHierarchyNodePriorityUpdate(getNodePriority(pHierarchyLevel));
 				i++;
 			}
 		}
@@ -3589,7 +3642,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								if(tHRMController.getNodeL2Address().equals(tChanPeerL2Address)){
 	//								Logging.log(this, "MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
 									tFound = true;
-									long tFoundPriority = tHRMController.getHierarchyNodePriority(tClusterLevel);
+									long tFoundPriority = tHRMController.getNodePriority(tClusterLevel);
 									if(tFoundPriority != tChannelPeerPriority.getValue()){
 										Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
 									}
@@ -4414,10 +4467,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * EXAMPLE 1: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
 						 */
 					}else{
-						Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
+						//Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
 					}
 				}else{
-					Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
+					//Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
 				}
 				
 				if(tResult != null){
