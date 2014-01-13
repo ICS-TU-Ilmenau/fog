@@ -79,6 +79,35 @@ public class HRMControllerProcessor extends Thread
 	}
 	
 	/**
+	 * Logs all pending requests
+	 */
+	public void logPendingEvents()
+	{
+		Logging.log(this, "### Logging pending events");
+		Logging.log(this, "Pending clustering requests:");
+		synchronized (mPendingClusterRequests) {
+			for(int i = 0; i < mPendingClusterRequests.length; i++){
+				Logging.log(this, "  ..lvl[" + i + "]: " + mPendingClusterRequests[i]);
+			}			
+		}
+		
+		Logging.log(this, "Pending packet requests:");
+		synchronized (mPendingPacketRequests) {
+			for(int i = 0; i < mPendingPacketRequests.size(); i++){
+				Logging.log(this, "  ..entry[" + i + "]: " + mPendingPacketRequests.get(i));
+			}			
+		}
+
+		Logging.log(this, "Pending hierarchy priority update requests:");
+		synchronized (mPendingHierarchyUpdates) {
+			for(int i = 0; i < mPendingHierarchyUpdates.size(); i++){
+				Logging.log(this, "  ..entry[" + i + "]: " + mPendingHierarchyUpdates.get(i));
+			}			
+		}
+		Logging.log(this, "### logged pending events");
+	}
+	
+	/**
 	 * EVENT: "update cluster" for a given hierarchy level
 	 * 
 	 * @param pCause the causing control entity
@@ -337,6 +366,7 @@ public class HRMControllerProcessor extends Thread
 
 	public synchronized void exit()
 	{
+		Logging.log(this, "Exiting this processor");
 		mProcessorNeeded = false;
 		notify();
 	}
