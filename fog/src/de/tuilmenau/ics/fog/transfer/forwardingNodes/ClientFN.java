@@ -109,7 +109,7 @@ public class ClientFN implements ForwardingNode
 	} 
 
 	@Override
-	public boolean unregisterGate(AbstractGate oldgate)
+	public synchronized boolean unregisterGate(AbstractGate oldgate)
 	{
 		if((mOutgoingGate == oldgate) && (mOutgoingGate != null)) {
 			if(mEntity.getTransferPlane() != null){
