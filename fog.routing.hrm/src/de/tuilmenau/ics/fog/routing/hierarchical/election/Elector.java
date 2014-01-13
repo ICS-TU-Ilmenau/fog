@@ -1353,26 +1353,30 @@ public class Elector implements Localization
 	 */
 	private void sendREPLY(ComChannel pComChannel)
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+		if(mParent.isThisEntityValid()){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDRESPONSE()-START, electing cluster is " + mParent);
-				Logging.log(this, "SENDRESPONSE(), cluster members: " + mParent.getComChannels().size());
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					Logging.log(this, "SENDRESPONSE()-START, electing cluster is " + mParent);
+					Logging.log(this, "SENDRESPONSE(), cluster members: " + mParent.getComChannels().size());
+				}
 			}
-		}
-
-		// create REPLY packet
-		ElectionReply tReplyPacket = new ElectionReply(mHRMController.getNodeName(), pComChannel.getPeerHRMID(), mParent.getPriority());
-			
-		// send the answer packet
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "BULLY-sending to \"" + pComChannel + "\" a REPLY: " + tReplyPacket);
-		}
-
-		// send message
-		pComChannel.sendPacket(tReplyPacket);
-
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "SENDRESPONSE()-END");
+	
+			// create REPLY packet
+			ElectionReply tReplyPacket = new ElectionReply(mHRMController.getNodeName(), pComChannel.getPeerHRMID(), mParent.getPriority());
+				
+			// send the answer packet
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "BULLY-sending to \"" + pComChannel + "\" a REPLY: " + tReplyPacket);
+			}
+	
+			// send message
+			pComChannel.sendPacket(tReplyPacket);
+	
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "SENDRESPONSE()-END");
+			}
+		}else{
+			Logging.warn(this, "sendREPLY() for comm. channel \"" + pComChannel + "\" skipped because parent entity is already invalidated");
 		}
 	}
 
@@ -2107,14 +2111,18 @@ public class Elector implements Localization
 	 */
 	private synchronized boolean hasClusterLowerPriorityThan(L2Address pSourceL2Address, ElectionPriority pSourcePriority)
 	{
-		LinkedList<ComChannel> tChannels = mParent.getComChannels();
-
-		if(tChannels.size() == 1){
-			ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
-				
-			return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer, true);
+		if(mParent.isThisEntityValid()){
+			LinkedList<ComChannel> tChannels = mParent.getComChannels();
+	
+			if(tChannels.size() == 1){
+				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
+					
+				return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer, true);
+			}else{
+				Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
+			}
 		}else{
-			Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
+			Logging.warn(this, "hasClusterLowerPriorityThan() skipped for \"" + pSourceL2Address + "\" with prio " + pSourcePriority.getValue() + " because entity is already invalidated");
 		}
 		
 		return false;
