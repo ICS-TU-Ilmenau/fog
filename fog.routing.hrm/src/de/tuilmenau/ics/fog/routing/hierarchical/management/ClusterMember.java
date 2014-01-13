@@ -1067,14 +1067,16 @@ public class ClusterMember extends ClusterName
 		/**
 		 * Set the new priority if it differs from the old one
 		 */
-		if((getPriority() != null) && (getPriority().getValue() != pNewHierarchyNodePriority)){
-			Logging.log(this, "Got new base node priority, updating own priority from " + getPriority().getValue() + " to " + pNewHierarchyNodePriority);
+		if((getPriority() == null) || (getPriority().getValue() != pNewHierarchyNodePriority)){
+			Logging.log(this, "eventHierarchyNodePriorityUpdate() got new hierarchy node priority, updating own priority from " + getPriority().getValue() + " to " + pNewHierarchyNodePriority);
 			setPriority(ElectionPriority.create(this, pNewHierarchyNodePriority));
+		}else{
+			Logging.log(this, "eventHierarchyNodePriorityUpdate() ignores gotten new hierarchy node priority: " + pNewHierarchyNodePriority);
 		}
 	}
 	
 	/**
-	 * EVENT: cluster memeber role invalid
+	 * EVENT: cluster member role invalid
 	 * 
 	 *  @param: pComChannel the comm. channel towards the cluster head
 	 */
