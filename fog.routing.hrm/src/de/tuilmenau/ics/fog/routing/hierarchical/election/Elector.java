@@ -601,25 +601,28 @@ public class Elector implements Localization
 	private void distributeELECT()
 	{
 		if (mState == ElectorState.ELECTING){
-			if (isTimingOkayOfElectBroadcast()){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParent);
-					Logging.log(this, "SENDELECTIONS(), external cluster members: " + mParent.countConnectedRemoteClusterMembers());
-				}
-		
-				// create the packet
-				ElectionElect tElectionElectPacket = new ElectionElect(mHRMController.getNodeName(), mParent.getPriority());
-				
-				// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority				
-				mParent.sendClusterBroadcast(tElectionElectPacket, true);
-				
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "SENDELECTIONS()-END");
+			if(mParent.isThisEntityValid()){
+				if (isTimingOkayOfElectBroadcast()){
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+						Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParent);
+						Logging.log(this, "SENDELECTIONS(), external cluster members: " + mParent.countConnectedRemoteClusterMembers());
+					}
+			
+					// create the packet
+					ElectionElect tElectionElectPacket = new ElectionElect(mHRMController.getNodeName(), mParent.getPriority());
+					
+					// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority				
+					mParent.sendClusterBroadcast(tElectionElectPacket, true);
+					
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+						Logging.log(this, "SENDELECTIONS()-END");
+					}
+				}else{
+					Logging.warn(this, "signalElectBroadcast() was triggered too frequently, timeout isn't reached yet, skipping this action");
 				}
 			}else{
-				Logging.warn(this, "signalElectBroadcast() was triggered too frequently, timeout isn't reached yet, skipping this action");
+				Logging.warn(this, "distributeELECT() skipped because parent entity is already invalidated");
 			}
-
 		}else{
 			Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION START, ELECTING expected");
 
@@ -991,14 +994,18 @@ public class Elector implements Localization
 	 */
 	private void leaveWorseAlternativeElections(String pCause)
 	{
-		LinkedList<ComChannel> tChannels = mParent.getComChannels();
-
-		if(tChannels.size() == 1){
-			ComChannel tComChannelToCoordinator = tChannels.getFirst();
-			
-			leaveWorseAlternativeElections(tComChannelToCoordinator.getPeerL2Address(), tComChannelToCoordinator.getPeerPriority(), pCause);
+		if(mParent.isThisEntityValid()){
+			LinkedList<ComChannel> tChannels = mParent.getComChannels();
+	
+			if(tChannels.size() == 1){
+				ComChannel tComChannelToCoordinator = tChannels.getFirst();
+				
+				leaveWorseAlternativeElections(tComChannelToCoordinator.getPeerL2Address(), tComChannelToCoordinator.getPeerPriority(), pCause);
+			}else{
+				Logging.err(this, "leaveWorseAlternativeElections() found an unplausible amount of comm. channels: " + tChannels + ", call cause=" + pCause);
+			}
 		}else{
-			Logging.err(this, "leaveWorseAlternativeElections() found an unplausible amount of comm. channels: " + tChannels + ", call cause=" + pCause);
+			Logging.warn(this, "leaveWorseAlternativeElections() because entity is already invalidated, cause=" + pCause);
 		}
 	}
 	
