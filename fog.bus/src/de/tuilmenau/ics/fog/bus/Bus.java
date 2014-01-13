@@ -659,7 +659,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	public String toString()
 	{
 		String tBandwith = "";
-		if(mPhysMaxDataRate.intValue() != -1){
+		if ((mAvailableDataRate.doubleValue() >= 0) && (mPhysMaxDataRate.intValue() != -1)){
 			tBandwith = " BW=";
 			if(!mAvailableDataRate.equals(mPhysMaxDataRate)){
 				if(mPhysMaxDataRate.intValue() >= 1000 * 1000)
