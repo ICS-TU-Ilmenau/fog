@@ -87,6 +87,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	boolean mWarnedAboutInvalidChannelToSuperiorCoordinator = false;
 
+	/**
+	 * Stores how many coordinators were created per hierarchy level
+	 */
+	public static int mCreatedCoordinators[] = null;
+	
 	private static final long serialVersionUID = 6824959379284820010L;
 	
 	/**
@@ -123,6 +128,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				// register next trigger for 
 				mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL * 2, this);
 			}
+		}
+		
+		if(mCreatedCoordinators == null){
+			mCreatedCoordinators = new int[HRMConfig.Hierarchy.HEIGHT];
+			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+				mCreatedCoordinators[i] = 0;
+			}
+		}
+		synchronized (mCreatedCoordinators) {
+			mCreatedCoordinators[getHierarchyLevel().getValue()]++;
 		}
 	}
 	

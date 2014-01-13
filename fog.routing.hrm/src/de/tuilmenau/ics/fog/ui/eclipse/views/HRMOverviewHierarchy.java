@@ -32,10 +32,12 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 public class HRMOverviewHierarchy extends ViewPart
 {
 	private static final String TEXT_CLUSTERS_CREATED	= "Created clusters: ";
-	private Label mCreatedClusters = null;
-	
+	private Label mClusters = null;
+	private Label mCreatedClusters[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
+
 	private static final String TEXT_COORDINATORS_CREATED	= "Created coordinators: ";
-	private Label mCreatedCoordinators = null;
+	private Label mCoordinators = null;
+	private Label mCreatedCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
 	
 	private static final String TEXT_COORDINATORS_RUN 		= "Running coordinators: ";
 	private Label mRunningCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
@@ -61,9 +63,14 @@ public class HRMOverviewHierarchy extends ViewPart
 	{
 		//Logging.log(this, "Update view " + ++sUpdateLoop);
 		
-		mCreatedClusters.setText(Long.toString(Cluster.countCreatedClusters()));
-		mCreatedCoordinators.setText(Long.toString(Coordinator.countCreatedCoordinators()));
-		
+		mClusters.setText(Long.toString(Cluster.countCreatedClusters()));
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			mCreatedClusters[i].setText(Integer.toString(Cluster.mCreatedClusters[i]));
+		}		
+		mCoordinators.setText(Long.toString(Coordinator.countCreatedCoordinators()));
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			mCreatedCoordinators[i].setText(Integer.toString(Coordinator.mCreatedCoordinators[i]));
+		}
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
 			Integer tCounter = HRMController.sRegisteredCoordinatorsCounter.get(i);
 			if(tCounter != null){
@@ -143,8 +150,16 @@ public class HRMOverviewHierarchy extends ViewPart
 		tGrpHierarchy.setLayout(tGrpHierarchyLayout);
 		tGrpHierarchy.setLayoutData(tGrpHierarchyLayoutData);
 
-		mCreatedClusters = createPartControlLine(tGrpHierarchy, TEXT_CLUSTERS_CREATED);
-		mCreatedCoordinators = createPartControlLine(tGrpHierarchy, TEXT_COORDINATORS_CREATED);
+		mClusters = createPartControlLine(tGrpHierarchy, TEXT_CLUSTERS_CREATED);
+		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
+			mCreatedClusters[i] = createPartControlLine(tGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
+		}		
+		
+		mCoordinators = createPartControlLine(tGrpHierarchy, TEXT_COORDINATORS_CREATED);
+		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
+			mCreatedCoordinators[i] = createPartControlLine(tGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
+		}		
+
 		createPartControlLine(tGrpHierarchy, TEXT_COORDINATORS_RUN);
 		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
 			mRunningCoordinators[i] = createPartControlLine(tGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");

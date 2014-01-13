@@ -82,6 +82,11 @@ public class Cluster extends ClusterMember
 	private String mDescriptionHRMIDAllocation = new String();
 	
 	/**
+	 * Stores how many clusters were created per hierarchy level
+	 */
+	public static int mCreatedClusters[] = null;
+
+	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
 	 * ID and the hierarchical level. Later on - once a coordinator is found, it is additionally identified
 	 * by a token the coordinator sends to all participants. In contrast to the cluster token the identity is used
@@ -110,6 +115,16 @@ public class Cluster extends ClusterMember
 			setClusterID(pClusterID);
 
 			Logging.log(this, "ClusterID - using pre-defined clusterID " + getClusterID() + "(" + getGUIClusterID() + ")");
+		}
+		
+		if(mCreatedClusters == null){
+			mCreatedClusters = new int[HRMConfig.Hierarchy.HEIGHT];
+			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+				mCreatedClusters[i] = 0;
+			}
+		}
+		synchronized (mCreatedClusters) {
+			mCreatedClusters[getHierarchyLevel().getValue()]++;
 		}
 	}
 	
