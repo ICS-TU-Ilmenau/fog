@@ -296,7 +296,11 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	 */
 	public double getUtilization() 
 	{
-		double tResult = 100 - ((double)100 * mAvailableDataRate.doubleValue() / mPhysMaxDataRate.doubleValue());
+		double tResult = 0;
+
+		if(mAvailableDataRate.doubleValue() >= 0){
+			tResult = 100 - ((double)100 * mAvailableDataRate.doubleValue() / mPhysMaxDataRate.doubleValue());
+		}
 		
 		//mLogger.log(this, "Utilization: " + tResult);
 		
@@ -659,18 +663,18 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 			tBandwith = " BW=";
 			if(!mAvailableDataRate.equals(mPhysMaxDataRate)){
 				if(mPhysMaxDataRate.intValue() >= 1000 * 1000)
-					tBandwith += (mAvailableDataRate.intValue() / 1000000) + "/" + (mPhysMaxDataRate.intValue() / 1000000) + "Gbit/s";
+					tBandwith += (mAvailableDataRate.intValue() / 1000000) + "/" + (mPhysMaxDataRate.intValue() / 1000000) + " Gbit/s";
 				else if(mPhysMaxDataRate.intValue() >= 1000)
-					tBandwith += (mAvailableDataRate.intValue() / 1000) + "/" + (mPhysMaxDataRate.intValue() / 1000) + "Mbit/s";
+					tBandwith += (mAvailableDataRate.intValue() / 1000) + "/" + (mPhysMaxDataRate.intValue() / 1000) + " Mbit/s";
 				else
-					tBandwith += mAvailableDataRate.intValue() + "/" + mPhysMaxDataRate.intValue() + "kbit/s";
+					tBandwith += mAvailableDataRate.intValue() + "/" + mPhysMaxDataRate.intValue() + " kbit/s";
 			}else{
 				if(mPhysMaxDataRate.intValue() >= 1000 * 1000)
-					tBandwith += (mPhysMaxDataRate.intValue() / 1000000) + "Gbit/s";
+					tBandwith += (mPhysMaxDataRate.intValue() / 1000000) + " Gbit/s";
 				else if(mPhysMaxDataRate.intValue() >= 1000)
-					tBandwith += (mPhysMaxDataRate.intValue() / 1000) + "Mbit/s";
+					tBandwith += (mPhysMaxDataRate.intValue() / 1000) + " Mbit/s";
 				else
-					tBandwith += mPhysMaxDataRate.intValue() + "kbit/s";
+					tBandwith += mPhysMaxDataRate.intValue() + " kbit/s";
 			}
 		}
 		String tDelay = (mDelaySec != 0 ? " Del=" + mDelaySec * 1000 + "ms" : "");
@@ -848,7 +852,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	 * Currently available data rate in [kbit/s] (1000 bit/s)
 	 */
 	@Viewable("AvailDataRate")
-	private Number mAvailableDataRate; 
+	private Number mAvailableDataRate = 0; 
 	/**
 	 * Physical max. data rate in [kbit/s] (1000 bit/s)
 	 */
