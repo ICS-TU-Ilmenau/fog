@@ -176,7 +176,7 @@ public class HRMOverviewConfig extends ViewPart
 		label.setLayoutData(createGridData(false, 1));
 		
 		Label tResult = new Label(pParent, SWT.NONE);
-		tResult.setLayoutData(createGridData(true, 1));
+		tResult.setLayoutData(createGridData(false, 1));
 		
 		return tResult;
 	}

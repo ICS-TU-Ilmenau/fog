@@ -2721,6 +2721,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				throw new NetworkException(this, "Can not connect to " + pDestination +" due to " + tEvent);
 			}
 		}else{
+			Logging.warn(this, "Can not connect to " + pDestination +" due to timeout");
 			throw new NetworkException(this, "Can not connect to " + pDestination +" due to timeout");
 		}
 	}
