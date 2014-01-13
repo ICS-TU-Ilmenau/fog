@@ -125,6 +125,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Composite mToolChkBoxContainer = null;
     private ScrolledComposite mScroller = null;
     
+    private Button mBtnProcessorQueues = null;
     private Button mBtnPriorityLog = null;
     private Button mBtnClusteringLog = null;
     private Button mBtnClusterMembersLog = null;
@@ -222,7 +223,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(mGuiCounter == 1){
 			mToolBtnContainer = new Composite(pParent, SWT.NONE);
 	
-			GridLayout tLayout1 = new GridLayout(8, false);
+			GridLayout tLayout1 = new GridLayout(9, false);
 			mToolBtnContainer.setLayout(tLayout1);
 			mToolBtnContainer.setLayoutData(createGridData(true, 1));
 			
@@ -236,6 +237,22 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * Push buttons
 		 */
+		// **** show pending processor events ****
+		if(mGuiCounter == 1){
+			mBtnProcessorQueues = new Button(mToolBtnContainer, SWT.PUSH);
+			mBtnProcessorQueues.setText("Show processor queues");
+			mBtnProcessorQueues.setLayoutData(createGridData(false, 1));
+			mBtnProcessorQueues.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent pEvent) {
+					mHRMController.getProcessor().logPendingEvents();
+				}
+				public String toString()
+				{
+					return mHRMViewer.toString();
+				}
+			});
+		}
 		// **** show priority update log ****
 		if(mGuiCounter == 1){
 			mBtnPriorityLog = new Button(mToolBtnContainer, SWT.PUSH);
