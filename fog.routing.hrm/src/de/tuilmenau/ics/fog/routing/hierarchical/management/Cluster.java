@@ -166,6 +166,16 @@ public class Cluster extends ClusterMember
 	}
 	
 	/**
+	 * Counts all registered clusters
+	 * 
+	 * @return the number of already created clusters
+	 */
+	public static long countCreatedClusters()
+	{
+		return (sNextFreeClusterID - 1);
+	}
+
+	/**
 	 * Creates a ClusterName object which describes this cluster
 	 * 
 	 * @return the new ClusterName object

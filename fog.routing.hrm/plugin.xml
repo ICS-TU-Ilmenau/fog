@@ -55,6 +55,13 @@
             category="de.tuilmenau.ics.fog.views">
       </view>
       <view
+            name="HRM hierarchy"
+            class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverviewHierarchy"
+            id="de.tuilmenau.ics.fog.hrmOverviewHierarchy"
+            icon="icons/HRMOverview.gif"
+            category="de.tuilmenau.ics.fog.views">
+      </view>      
+      <view
             name="HRM configuration"
             class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverviewConfig"
             id="de.tuilmenau.ics.fog.hrmOverviewConfig"

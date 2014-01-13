@@ -147,6 +147,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
+	 * Counts all registered coordinators
+	 * 
+	 * @return the number of already created coordinators
+	 */
+	public static long countCreatedCoordinators()
+	{
+		return (sNextFreeCoordinatorID - 1);
+	}
+	
+	/**
 	 * Sets the communication channel to the superior coordinator.
 	 * For a base hierarchy level cluster, this is a level 0 coordinator.
 	 * For a level n coordinator, this is a level n+1 coordinator.

@@ -59,9 +59,6 @@ public class HRMOverviewConfig extends ViewPart
 	private Label mConfigDebugHRMViewerUpdateInterval = null;
 	private Label mConfigDebugHRGViewerUpdateInterval = null;
 	
-	private static final String TEXT_CFG_COORDINATORS 		= "Coordinators: ";
-	private Label mConfigRegisteredCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
-	
 	private static final int VIEW_UPDATE_TIME = 1000; // in ms
 		
 	private Display mDisplay = null;
@@ -127,13 +124,6 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigDebugChannelStorage.setText(Integer.toString(HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE) + " packets");
 		mConfigDebugHRMViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRM_VIEWERS_UPDATE_INTERVAL) + " s");
 		mConfigDebugHRGViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRG_VIEWERS_UPDATE_INTERVAL) + " s");
-		
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
-			Integer tCounter = HRMController.sRegisteredCoordinatorsCounter.get(i);
-			if(tCounter != null){
-				mConfigRegisteredCoordinators[i].setText(Integer.toString(tCounter));
-			}
-		}
 	}
 	
 
@@ -225,7 +215,7 @@ public class HRMOverviewConfig extends ViewPart
 		GridLayout tGrpConfigLayout = new GridLayout(2, true);
 		tGrpConfigLayout.marginWidth = 20;
 		tGrpConfigLayout.marginHeight = 10;
-		tGrpConfig.setLayout(tGrpSignalingLayout);
+		tGrpConfig.setLayout(tGrpConfigLayout);
 		tGrpConfig.setLayoutData(tGrpConfigLayoutData);
 
 		mConfigReportSharePhaseTimeBase = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIME_BASE);
@@ -237,11 +227,6 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigDebugChannelStorage = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_CHANNEL_STORAGE);
 		mConfigDebugHRMViewerUpdateInterval = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_HRM_VIEWER_INT);
 		mConfigDebugHRGViewerUpdateInterval = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_HRG_VIEWER_INT);
-		
-		createPartControlLine(tGrpConfig,  TEXT_CFG_COORDINATORS);
-		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
-			mConfigRegisteredCoordinators[i] = createPartControlLine(tGrpConfig, "   ..level " + Integer.toString(i) + ": ");
-		}
 		
 		mDisplay.timerExec(100, ViewRepaintTimer);
 	}
