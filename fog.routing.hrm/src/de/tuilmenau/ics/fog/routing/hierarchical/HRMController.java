@@ -2104,6 +2104,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	    Logging.log(this, "    ..CONNECTING to: " + pDestinationL2Address + " with requirements: " + tConnectionRequirements);
 	    
 	    boolean tRetryConnection = false;
+	    boolean tRetriedConnection = false;
 	    int tAttemptNr = 1;
 	    do{
 	    	tRetryConnection = false;
@@ -2112,10 +2113,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			} catch (NetworkException tExc) {
 				tAttemptNr++;
 				tRetryConnection = true;
-				Logging.warn(this, "Cannot connect to: " + pDestinationL2Address + " , connect attempt nr. " + tAttemptNr);
+				tRetriedConnection = true;
+				Logging.warn(this, "Cannot connect to: " + pDestinationL2Address + ", connect attempt nr. " + tAttemptNr);
 				//Logging.err(this, "Cannot connect to: " + pDestinationL2Address, tExc);
 			}
 	    }while(tRetryConnection);
+	    if(tRetriedConnection){
+			Logging.warn(this, "Successfully recovered from connection problems towards: " + pDestinationL2Address + ", connect attempts: " + tAttemptNr);
+	    }
 	    
 	    Logging.log(this, "    ..connectBlock() FINISHED");
 		if(tConnection != null) {
@@ -2715,14 +2720,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(exc instanceof NetworkException) {
 					throw (NetworkException) exc;
 				} else {
-					throw new NetworkException(this, "Can not connect to " + pDestination +".", exc);
+					throw new NetworkException(this, "Cannot connect to " + pDestination +".", exc);
 				}
 			}else{
-				throw new NetworkException(this, "Can not connect to " + pDestination +" due to " + tEvent);
+				throw new NetworkException(this, "Cannot connect to " + pDestination +" due to " + tEvent);
 			}
 		}else{
-			Logging.warn(this, "Can not connect to " + pDestination +" due to timeout");
-			throw new NetworkException(this, "Can not connect to " + pDestination +" due to timeout");
+			Logging.warn(this, "Cannot connect to " + pDestination +" due to timeout");
+			throw new NetworkException(this, "Cannot connect to " + pDestination +" due to timeout");
 		}
 	}
 
