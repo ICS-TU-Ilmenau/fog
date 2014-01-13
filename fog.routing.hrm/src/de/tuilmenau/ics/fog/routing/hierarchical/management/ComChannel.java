@@ -692,7 +692,7 @@ public class ComChannel
 	{
 		Logging.log(this, "EVENT: established");
 		
-		mChannelState = ChannelState.OPEN;
+		setState(ChannelState.OPEN, "::eventEstablished()");
 	}
 	
 	/**
@@ -715,6 +715,18 @@ public class ComChannel
 		return mChannelState;
 	}
 	
+	/**
+	 * Sets a new state for the channel
+	 * 
+	 * @param pState new channel state
+	 * @param pCause the cause for this state change
+	 */
+	public void setState(ChannelState pState, String pCause)
+	{
+		Logging.log(this, "Setting channel state to: " + pState.toString() + ", cause=" + pCause);
+		mChannelState = pState;
+	}
+
 	/**
 	 * Handles a SignalingMessageHrm packet.
 	 * 
@@ -1272,9 +1284,9 @@ public class ComChannel
 			/**
 			 * Change the channel state
 			 */
-			mChannelState = ChannelState.CLOSED;
+			setState(ChannelState.CLOSED, "::closeChannel()");
 		}else{
-		    Logging.log(this, "       ..channel wasn't established");
+		    Logging.log(this, "       ..channel wasn't established, parent is: " + mParent);
 		}
 		
 		// unregister from the parent comm. session
