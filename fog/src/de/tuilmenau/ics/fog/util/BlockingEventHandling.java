@@ -82,7 +82,7 @@ public class BlockingEventHandling implements EventListener
 			}
 			tAttempt++;
 		}
-		while((res == null) && (!tInterrupted));
+		while((res == null) && (!tInterrupted) && (tAttempt < 2));
 		
 		return res;
 	}
