@@ -2753,11 +2753,29 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// reset the stored HRMController database
 		Logging.log("Remaining registered HRMController instances: " + mRegisteredHRMControllers);
 		mRegisteredHRMControllers = new LinkedList<HRMController>();
-		sRegisteredCoordinators = 0;
-		sRegisteredCoordinatorsCounter = new HashMap<Integer, Integer>();
-		sUnregisteredCoordinators = 0;
 		sResetNMS = true;
 
+		resetHierarchyStatistic();
+		resetPacketStatistic();
+	}
+
+	/**
+	 * Resets the statistic about the HRM hierarchy (clusters & coordinators)
+	 */
+	private static void resetHierarchyStatistic()
+	{
+		sRegisteredCoordinators = 0;
+		sUnregisteredCoordinators = 0;
+		sRegisteredCoordinatorsCounter = new HashMap<Integer, Integer>();
+		Coordinator.mCreatedCoordinators = null;
+		Cluster.mCreatedClusters = null;
+	}
+	
+	/**
+	 * Resets the statistic about used signaling packets
+	 */
+	private static void resetPacketStatistic()
+	{
 		AnnouncePhysicalEndPoint.sCreatedPackets = 0;
 		MultiplexHeader.sCreatedPackets = 0;
 		SignalingMessageHrm.sCreatedPackets = 0;
@@ -2783,7 +2801,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		RouteReport.sCreatedPackets = 0;
 		RouteShare.sCreatedPackets = 0;
 	}
-
+	
 	/**
 	 * Checks if the entire simulation was created
 	 * 
