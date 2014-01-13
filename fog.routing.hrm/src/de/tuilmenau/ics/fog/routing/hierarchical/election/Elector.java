@@ -292,7 +292,7 @@ public class Elector implements Localization
 			// create the packet
 			ElectionReturn tElectionReturnPacket = new ElectionReturn(mHRMController.getNodeName(), pComChannel.getParent().getPriority());
 
-			pComChannel.setLinkActivation(pState, "LEAVE[" + tElectionReturnPacket.getOriginalMessageNumber() + "], " + pCauseForStateChange);
+			pComChannel.setLinkActivation(pState, "LEAVE[" + tElectionReturnPacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 
 			// send
 			pComChannel.sendPacket(tElectionReturnPacket);
@@ -300,7 +300,7 @@ public class Elector implements Localization
 			// create the packet
 			ElectionLeave tElectionLeavePacket = new ElectionLeave(mHRMController.getNodeName(), pComChannel.getParent().getPriority());
 
-			pComChannel.setLinkActivation(pState, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "], " + pCauseForStateChange);
+			pComChannel.setLinkActivation(pState, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 
 			// send
 			pComChannel.sendPacket(tElectionLeavePacket);
@@ -332,7 +332,6 @@ public class Elector implements Localization
 						Logging.log(this, "      ..reactivating link for: " + tCoordinatorAsClusterMember);
 		
 						setElectionParticipation(tCoordinatorAsClusterMember.getComChannelToClusterHead(), true, this + "::eventInvalidation()");
-//TODO						tCoordinatorAsClusterMember.getComChannelToClusterHead().setLinkActivation(true, this + "::eventInvalidation()");
 					}
 				}
 			}
@@ -442,7 +441,7 @@ public class Elector implements Localization
 			mCounterReelects++;
 
 			synchronized (mReelectCauses) {
-				mReelectCauses.add("[" + mState.toString() + (isWinner() ? " WINNER, prio=" + mParent.getPriority().getValue() : "") + "]" + pCause);
+				mReelectCauses.add("[" + mState.toString() + (isWinner() ? " WINNER, prio=" + mParent.getPriority().getValue() : "") + "]\n   ^^^^" + pCause);
 			}
 			
 			//reset ELECT BROADCAST timer
@@ -482,7 +481,7 @@ public class Elector implements Localization
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "RESTARTING ELECTION, old coordinator was valid: " + finished());
 					}
-					reelect("startElection() because of " + pCause);
+					reelect(this + "::startElection()\n   ^^^^" + pCause);
 					break;
 				case ELECTING:
 					Logging.log(this, "Election is already running");
@@ -778,16 +777,7 @@ public class Elector implements Localization
 				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 
 				if(tComChannelToPeer.isLinkActive()){
-					setElectionParticipation(tComChannelToPeer, false, this + "::distributeLEAVE(" + pCause +")");
-//TODO:
-//					// create the packet
-//					ElectionLeave tElectionLeavePacket = new ElectionLeave(mHRMController.getNodeName(), mParent.getPriority());
-//			
-//					// deactivate link
-//					tComChannelToPeer.setLinkActivation(false, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "] broadcast - " + pCause);
-//			
-//					// send
-//					tComChannelToPeer.sendPacket(tElectionLeavePacket);
+					setElectionParticipation(tComChannelToPeer, false, this + "::distributeLEAVE\n   ^^^^" + pCause);
 				}else{
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "    ..skipped LEAVE");
@@ -824,16 +814,6 @@ public class Elector implements Localization
 					
 					if(!tComChannelToPeer.isLinkActive()){
 						setElectionParticipation(tComChannelToPeer, true, this + "::distributeRETURN(" + pCause +")");
-
-//TODO:						
-//						// create the packet
-//						ElectionReturn ElectionReturntPacket = new ElectionReturn(mHRMController.getNodeName(), mParent.getPriority());
-//		
-//						// deactivate link
-//						tComChannelToPeer.setLinkActivation(true, "RETURN[" + ElectionReturntPacket.getOriginalMessageNumber() + "] broadcast - " + pCause);
-//				
-//						// send
-//						tComChannelToPeer.sendPacket(ElectionReturntPacket);
 					}else{
 						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 							Logging.log(this, "    ..skipped RETURN");
@@ -1116,10 +1096,12 @@ public class Elector implements Localization
 					 * AVOID multiple LEAVES/RETURNS
 					 */
 					synchronized (mNodeActiveClusterMembers){
-						/**
-						 * React similar to a received ANNOUNCE/RESIGN if the election is already finished
-						 */
 						if(finished()){
+							/***********************************
+							 ** ELECTED: React similar to a received ANNOUNCE/RESIGN if the election is already finished
+							 ***********************************/
+
+							
 							/**
 							 * Do we belong to an active cluster with an existing (remote) coordinator?
 							 */
@@ -1138,6 +1120,9 @@ public class Elector implements Localization
 								//we skip returnToAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority()) here because this step was already processed based on the already received RESIGN, a priority update doesn't change anything
 							}
 						}else{
+							/***********************************
+							 * NOT ELECTED:
+							 ***********************************/
 							LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
 	
 							/**
