@@ -1232,7 +1232,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				tClusterMembership.eventJoinedRemoteCluster(tComChannel);
 			}
 		}else{
-			Logging.warn(this, "eventClusterMembershipRequest() aborted because coordinator role is already invalidated");
+			Logging.log(this, "eventClusterMembershipRequest() aborted because coordinator role is already invalidated");
 
 			/**
 			 * Inform the peer by the help of a InformClusterLeft packet
