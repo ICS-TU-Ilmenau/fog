@@ -39,7 +39,7 @@ public class Cluster extends ClusterMember
 	/**
 	 * This is the cluster counter, which allows for globally (related to a physical simulation machine) unique cluster IDs.
 	 */
-	private static long sNextFreeClusterID = 1;
+	public static long sNextFreeClusterID = 1;
 	
 	/**
 	 * Stores a reference to the local coordinator instance if the local router is also the coordinator for this cluster
@@ -84,7 +84,7 @@ public class Cluster extends ClusterMember
 	/**
 	 * Stores how many clusters were created per hierarchy level
 	 */
-	public static int mCreatedClusters[] = null;
+	public static int mCreatedClusters[] = new int[HRMConfig.Hierarchy.HEIGHT];
 
 	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
@@ -117,12 +117,6 @@ public class Cluster extends ClusterMember
 			Logging.log(this, "ClusterID - using pre-defined clusterID " + getClusterID() + "(" + getGUIClusterID() + ")");
 		}
 		
-		if(mCreatedClusters == null){
-			mCreatedClusters = new int[HRMConfig.Hierarchy.HEIGHT];
-			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
-				mCreatedClusters[i] = 0;
-			}
-		}
 		synchronized (mCreatedClusters) {
 			mCreatedClusters[getHierarchyLevel().getValue()]++;
 		}

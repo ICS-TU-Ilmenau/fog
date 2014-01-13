@@ -53,7 +53,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * This is the coordinator counter, which allows for globally (related to a physical simulation machine) unique coordinator IDs.
 	 */
-	private static int sNextFreeCoordinatorID = 1;
+	public static int sNextFreeCoordinatorID = 1;
 
 	/**
 	 * Stores the cluster memberships of this coordinator
@@ -90,7 +90,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * Stores how many coordinators were created per hierarchy level
 	 */
-	public static int mCreatedCoordinators[] = null;
+	public static int mCreatedCoordinators[] = new int[HRMConfig.Hierarchy.HEIGHT];
 	
 	private static final long serialVersionUID = 6824959379284820010L;
 	
@@ -130,12 +130,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			}
 		}
 		
-		if(mCreatedCoordinators == null){
-			mCreatedCoordinators = new int[HRMConfig.Hierarchy.HEIGHT];
-			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
-				mCreatedCoordinators[i] = 0;
-			}
-		}
 		synchronized (mCreatedCoordinators) {
 			mCreatedCoordinators[getHierarchyLevel().getValue()]++;
 		}

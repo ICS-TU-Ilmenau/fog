@@ -2767,8 +2767,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		sRegisteredCoordinators = 0;
 		sUnregisteredCoordinators = 0;
 		sRegisteredCoordinatorsCounter = new HashMap<Integer, Integer>();
-		Coordinator.mCreatedCoordinators = null;
-		Cluster.mCreatedClusters = null;
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			Coordinator.mCreatedCoordinators[i] = 0;
+		}
+		Coordinator.sNextFreeCoordinatorID = 1;
+		Cluster.sNextFreeClusterID = 1;
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			Cluster.mCreatedClusters[i] = 0;
+		}
 	}
 	
 	/**
