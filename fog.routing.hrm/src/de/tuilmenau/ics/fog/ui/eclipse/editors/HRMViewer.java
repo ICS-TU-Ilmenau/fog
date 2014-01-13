@@ -1853,13 +1853,17 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						
 						/**
 						 * Column 3:  utilization
-						 */						
-						if(tEntry.getUtilization() != RoutingEntry.NO_UTILIZATION){
-							DecimalFormat tFormat = new DecimalFormat("0.#");
-							String tUtilizationStr = tFormat.format(tEntry.getUtilization());
-							tTableRow.setText(3, tUtilizationStr);
-						}else
-							tTableRow.setText(3, "none");
+						 */
+						double tUtilization = tEntry.getUtilization(); 
+						if (tUtilization == RoutingEntry.NO_UTILIZATION){
+							tUtilization = 0;
+						}
+						if(tUtilization < 0){
+							tUtilization = Double.NaN;
+						}
+						DecimalFormat tFormat = new DecimalFormat("0.#");
+						String tUtilizationStr = tFormat.format(tUtilization);
+						tTableRow.setText(3, tUtilizationStr);
 						
 						/**
 						 * Column 4: min. delay
@@ -1873,10 +1877,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						/**
 						 * Column 5: max. data rate
 						 */
-						if (tEntry.getMaxAvailableDataRate() != RoutingEntry.INFINITE_DATARATE){
-							tTableRow.setText(5, Long.toString(tEntry.getMaxAvailableDataRate()));				
-						}else{
+						double tDataRate = tEntry.getMaxAvailableDataRate();
+						if (tDataRate == RoutingEntry.INFINITE_DATARATE){
 							tTableRow.setText(5, "inf.");
+						}else if(tDataRate < 0){
+							tTableRow.setText(5, "undef.");
+						}else{
+							tTableRow.setText(5, Double.toString(tDataRate));
 						}
 						
 						/**
