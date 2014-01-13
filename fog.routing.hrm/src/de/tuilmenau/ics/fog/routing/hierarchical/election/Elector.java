@@ -709,19 +709,23 @@ public class Elector implements Localization
 	 */
 	private void distributePRIRORITY_UPDATE()
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "SENDPRIOUPDATE()-START, electing cluster is " + mParent);
-			Logging.log(this, "SENDPRIOUPDATE(), cluster members: " + mParent.getComChannels().size());
-		}
-
-		ElectionPriorityUpdate tElectionPriorityUpdatePacket = new ElectionPriorityUpdate(mHRMController.getNodeName(), mParent.getPriority());
-
-		// send broadcast
-		Logging.log(this, "Distributing priority update: " + tElectionPriorityUpdatePacket);
-		mParent.sendClusterBroadcast(tElectionPriorityUpdatePacket, true);
-
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "SENDPRIOUPDATE()-END");
+		if(mParent.isThisEntityValid()){
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "SENDPRIOUPDATE()-START, electing cluster is " + mParent);
+				Logging.log(this, "SENDPRIOUPDATE(), cluster members: " + mParent.getComChannels().size());
+			}
+	
+			ElectionPriorityUpdate tElectionPriorityUpdatePacket = new ElectionPriorityUpdate(mHRMController.getNodeName(), mParent.getPriority());
+	
+			// send broadcast
+			Logging.log(this, "Distributing priority update: " + tElectionPriorityUpdatePacket);
+			mParent.sendClusterBroadcast(tElectionPriorityUpdatePacket, true);
+	
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "SENDPRIOUPDATE()-END");
+			}
+		}else{
+			Logging.warn(this, "distributePRIRORITY_UPDATE() skipped because parent entity is already invalidated");
 		}
 	}
 
