@@ -50,12 +50,15 @@ public class Simulation
 	private static final String CMD_LOGLEVEL = "loglevel";
 	private static final String CMD_SWITCH = "switch";
 	private static final String CMD_AT = "@";
+
+	public static int mStartedSimulations = 0;
 	
 	public Simulation(String pBaseDirectory, Level pLogLevel)
 	{
 		mLogLevel = pLogLevel;
 		mTimeBase = new EventHandler();
 		mLogger = new Logger(null);
+		mStartedSimulations ++;
 		
 		mBaseDirectory = pBaseDirectory;
 		if(mBaseDirectory == null) {
