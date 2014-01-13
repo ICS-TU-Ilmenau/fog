@@ -204,7 +204,7 @@ public class Elector implements Localization
 			if(!tLevelList.contains(mParent)){
 				tLevelList.add(mParent);
 				Logging.log(this, "    ..added");
-				mHRMController.addGUIDescriptionNodeElectionStateChange("\n + " + mParent + " <== " + pCause);
+				mHRMController.addGUIDescriptionNodeElectionStateChange("\n + " + mParent + "\n   ^^^^" + pCause);
 				
 				mParentIsActiveMember = true;
 			}else{
@@ -232,7 +232,7 @@ public class Elector implements Localization
 			if(tLevelList.contains(pClusterMember)){
 				tLevelList.remove(pClusterMember);
 				Logging.log(this, "    ..removed");
-				mHRMController.addGUIDescriptionNodeElectionStateChange("\n - " + pClusterMember + " <== " + pCause);
+				mHRMController.addGUIDescriptionNodeElectionStateChange("\n - " + pClusterMember + "\n   ^^^^" + pCause);
 				pClusterMember.getElector().mParentIsActiveMember = false;
 			}else{
 				Logging.log(this, "    ..NOT removed");
@@ -813,7 +813,7 @@ public class Elector implements Localization
 					ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 					
 					if(!tComChannelToPeer.isLinkActive()){
-						setElectionParticipation(tComChannelToPeer, true, this + "::distributeRETURN(" + pCause +")");
+						setElectionParticipation(tComChannelToPeer, true, this + "::distributeRETURN()\n   ^^^^" + pCause);
 					}else{
 						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 							Logging.log(this, "    ..skipped RETURN");
@@ -889,7 +889,7 @@ public class Elector implements Localization
 											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 												Logging.log(this, "      ..losing active ClusterMember: " + tLevelClusterMember);
 											}
-											removeActiveClusterMember(tLevelClusterMember, "leaveWorseAlternativeElections() [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + "] <== " + pCause);
+											removeActiveClusterMember(tLevelClusterMember, "leaveWorseAlternativeElections() [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + "]\n   ^^^^" + pCause);
 
 											/**
 											 * Distribute "LEAVE" for the alternative election process
@@ -897,23 +897,23 @@ public class Elector implements Localization
 											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 												Logging.log(this, "      ..LEAVING: " + tAlternativeElection);
 											}
-											tAlternativeElection.distributeLEAVE("leaveWorseAlternativeElections() for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "] <== " + pCause);
+											tAlternativeElection.distributeLEAVE("leaveWorseAlternativeElections() for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " < WinPrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "]\n   ^^^^" + pCause);
 										}else{
 											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 												Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
 											}
-											Logging.log(this, "leaveWorseAlternativeElections() aborted for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " > SourcePrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "] <== " + pCause);
+											Logging.log(this, "leaveWorseAlternativeElections() aborted for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " > SourcePrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "]\n   ^^^^ " + pCause);
 										}
 										/**********************************************************************************************************************************/
 									}else{
 										throw new RuntimeException("Found invalid elector for: " + tLevelClusterMember);
 									}
 								}else{
-									Logging.log(this, "leaveWorseAlternativeElections() aborted (same cluster!) for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " > SourcePrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "] <== " + pCause);
+									Logging.log(this, "leaveWorseAlternativeElections() aborted (same cluster!) for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " > SourcePrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "]\n   ^^^^ " + pCause);
 									// we have found a local cluster member which belongs to the same cluster like we do
 								}
 							}else{
-								Logging.log(this, "leaveWorseAlternativeElections() aborted (same cluster!) for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " > SourcePrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "] <== " + pCause);
+								Logging.log(this, "leaveWorseAlternativeElections() aborted (same cluster!) for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tLevelClusterMember.getPriority().getValue() + " > SourcePrio: " + pSourcePriority.getValue() + ", " + pSourceL2Address + "]\n   ^^^^ " + pCause);
 								// we have found this election process
 							}
 						}// for
@@ -1052,7 +1052,7 @@ public class Elector implements Localization
 											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 												Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
 											}
-											tAlternativeElection.distributeRETURN("returnToAlternativeElections() <== " + pCause);
+											tAlternativeElection.distributeRETURN(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
 										}else{
 											throw new RuntimeException("Found invalid elector for: " + tLevelClusterMember);
 										}
@@ -1768,14 +1768,14 @@ public class Elector implements Localization
 							 */
 							if(tIsWinner) {
 								Logging.log(this, "	        ..I AM WINNER");
-								eventElectionWon("checkForWinner() <== " + pCause);
+								eventElectionWon("checkForWinner()\n   ^^^^" + pCause);
 							}else{
 								if (tExternalWinner != null){
 									Logging.log(this, "	        ..seeing " + tExternalWinner.getPeerL2Address() + " as better coordinator candidate");
 								}else{
 									Logging.err(this, "External winner is unknown but also I am not the winner");
 								}
-								eventElectionLost("checkForWinner() [" + tActiveChannels.size() + " active channels, winner: " + tExternalWinner + "] <== " + pCause);
+								eventElectionLost("checkForWinner() [" + tActiveChannels.size() + " active channels, winner: " + tExternalWinner + "]\n   ^^^^" + pCause);
 							}
 						}else{
 							Logging.log(this, "	        ..incomplete election");
@@ -2144,9 +2144,9 @@ public class Elector implements Localization
 		 * check for winner
 		 */
 		if(mState == ElectorState.ELECTING){
-			checkForWinner("updatePriority() <== " + pCause);
+			checkForWinner(this + "::updatePriority()\n   ^^^^" + pCause);
 		}else if(mState == ElectorState.ELECTED){
-			startElection("updatePriority() " + pCause);
+			startElection(this + "::updatePriority()\n   ^^^^" + pCause);
 		}
 	}
 
