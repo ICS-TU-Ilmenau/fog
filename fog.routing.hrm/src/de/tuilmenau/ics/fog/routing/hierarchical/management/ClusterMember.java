@@ -782,9 +782,9 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * EVENT: notifies that a communication channel is became available
+	 * EVENT: notifies that a communication channel is now available
 	 * 
-	 * @param pComChannel the communication channel which became available
+	 * @param pComChannel the communication channel which is now available
 	 */
 	public void eventComChannelEstablished(ComChannel pComChannel)
 	{
