@@ -19,6 +19,7 @@ import de.tuilmenau.ics.fog.facade.EventSource;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.EventSource.EventListener;
 import de.tuilmenau.ics.fog.facade.events.Event;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 
 public class BlockingEventHandling implements EventListener
@@ -51,7 +52,14 @@ public class BlockingEventHandling implements EventListener
 	
 	public synchronized Event waitForEvent()
 	{
+		return waitForEvent(0);
+	}
+	
+	public synchronized Event waitForEvent(double pTimeout)
+	{
 		Event res = null;
+		boolean tInterrupted = false;
+		int tAttempt = 0;
 		
 		do {
 			if(firstEvent != null) {
@@ -64,16 +72,17 @@ public class BlockingEventHandling implements EventListener
 					}
 				}
 			}
-			
 			if(res == null) {
+				Logging.getInstance().log(this, "Waiting for event for " + pTimeout + " s - attempt " + tAttempt);
 				try {
-					wait();
+					wait((long)(pTimeout * 1000));
 				} catch (InterruptedException exc) {
-					// ignore it
+					tInterrupted = true;
 				}
 			}
+			tAttempt++;
 		}
-		while(res == null);
+		while((res == null) && (!tInterrupted));
 		
 		return res;
 	}
