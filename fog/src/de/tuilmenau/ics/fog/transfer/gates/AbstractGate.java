@@ -237,7 +237,7 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 	}
 	
 	@Override
-	final public void initialise()
+	final synchronized public void initialise()
 	{
 		// run init only once
 		if(getState() == GateState.START) {
