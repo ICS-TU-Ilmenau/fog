@@ -364,7 +364,7 @@ public class ComSession extends Session
 	 * 
 	 * @param pComChannel the communication channel, which should be registered
 	 */
-	public void registerComChannel(ComChannel pComChannel)
+	public synchronized void registerComChannel(ComChannel pComChannel)
 	{
 		Logging.log(this, "Registering communication channel: " + pComChannel);
 		
@@ -378,7 +378,7 @@ public class ComSession extends Session
 	 * 
 	 * @param pComChannel the communication channel, which should be registered
 	 */
-	public void unregisterComChannel(ComChannel pComChannel)
+	public synchronized void unregisterComChannel(ComChannel pComChannel)
 	{
 		Logging.log(this, "Unregistering communication channel: " + pComChannel);
 		
@@ -542,7 +542,7 @@ public class ComSession extends Session
 	 * 
 	 * @param pMultiplexHeader the multiplex-header
 	 */
-	private void eventMultiplexPacket(MultiplexHeader pMultiplexHeader)
+	private synchronized void eventReceivedMultiplexPacket(MultiplexHeader pMultiplexHeader)
 	{
 		/**
 		 * Get the target from the Multiplex-Header
@@ -689,7 +689,7 @@ public class ComSession extends Session
 	 * 
 	 * @param pAnnouncePhysicalNeighborhood the packet
 	 */
-	private void eventAnnouncePhysicalEndPoint(AnnouncePhysicalEndPoint pAnnouncePhysicalNeighborhood)
+	private void eventReceivedAnnouncePhysicalEndPoint(AnnouncePhysicalEndPoint pAnnouncePhysicalNeighborhood)
 	{
 		// get the L2Address of the peer
 		setPeerL2Address(pAnnouncePhysicalNeighborhood.getSenderCentralAddress());
@@ -853,7 +853,7 @@ public class ComSession extends Session
 				Logging.log(this, "ANNOUNCE PHYSICAL NEIGHBORHOOD received: " + tAnnouncePhysicalNeighborhood);
 			}
 			
-			eventAnnouncePhysicalEndPoint(tAnnouncePhysicalNeighborhood);
+			eventReceivedAnnouncePhysicalEndPoint(tAnnouncePhysicalNeighborhood);
 
 			return true;
 		} 
@@ -903,7 +903,7 @@ public class ComSession extends Session
 				Logging.log(this, "#### RECEIVED PROBE_PACKET: " + tMultiplexPacket.getPayload());
 			}
 
-			eventMultiplexPacket(tMultiplexPacket);
+			eventReceivedMultiplexPacket(tMultiplexPacket);
 
 			return true;
 		}
