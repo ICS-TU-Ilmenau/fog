@@ -1022,7 +1022,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		mDecoratorActiveHRMInfrastructure.setText("- [Active clusters: " + tActiveHRMInfrastructureText + "]");
 		String tHierPrio = "";
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 1; i < HRMConfig.Hierarchy.HEIGHT; i++){
 			if (tHierPrio != ""){
 				tHierPrio += ", ";
 			}
