@@ -51,12 +51,12 @@ public class ElectionPriority
 	/**
 	 * This value represents the closeness to level 0 coordinators. It is used when a remote coordinator announcement is received ==> instantiate coordinators far away from one-way network parts, instantiate them close to the network core
 	 */
-	public static int OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR = 10000;
+	public static long OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR = 10000;
 
 	/**
 	 * This value represents the closeness to level 1+ coordinators. It is used when a remote coordinator announcement is received ==> instantiate coordinators far away from one-way network parts, instantiate them close to the network core
 	 */
-	public static int OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR = 10;
+	public static long OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR = 10;
 
 	/**
 	 * This is the priority counter, which allows for globally (related to a physical simulation machine) unique ElectionPriority IDs.
