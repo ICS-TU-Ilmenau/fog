@@ -295,6 +295,19 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
 					Logging.log(this, "Active ClusterMember updates: " + ((String)mHRMController.getGUIDescriptionNodeElectionStateChanges()));
+
+					Logging.log(this, "  ..resulting active cluster members: ");
+					@SuppressWarnings("unchecked")
+					LinkedList<ClusterMember>[] tActiveClusterMembers = (LinkedList<ClusterMember>[])mHRMController.getNodeElectionState();
+					for(int tLevel = 0; tLevel < HRMConfig.Hierarchy.HEIGHT; tLevel++)
+					{
+						LinkedList<ClusterMember> tLevelList = tActiveClusterMembers[tLevel];
+						Logging.trace(this, "      ..level " + tLevel + ":");
+						int i = 0;
+						for(ClusterMember tActiveClusterMember : tLevelList){
+							Logging.trace(this, "        ..[" + i + "]: " + tActiveClusterMember);
+						}		
+					}
 				}
 				public String toString()
 				{
