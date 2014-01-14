@@ -76,8 +76,9 @@ public class SimulationView extends ViewPart
 	private static final int MAX_NUMBER_AS_OPEN_AT_START = 4;
 
 	private static final String TEXT_HW_PROCESSORS = "Processors (cores):";
-	private static final String TEXT_HW_MEM_MAX = "Memory (max. allocated):";
-	private static final String TEXT_HW_MEM_TOTAL = "Memory (allocated):";
+	private static final String TEXT_HW_MEM_MAX = "Memory (allocation limit):";
+	private static final String TEXT_HW_MEM_TOTAL = "Memory (available):";
+	private static final String TEXT_HW_MEM_USED = "Memory (used):";
 	private static final String TEXT_HW_MEM_FREE = "Memory (free):";
 
 	private static final String TEXT_SHOW_THREAD_STATS_BUTTON = "Show thread stats";
@@ -195,6 +196,13 @@ public class SimulationView extends ViewPart
 		Label tValueHwMemMax = new Label(tContainer, SWT.NONE);
 		tValueHwMemMax.setText(Long.toString(mRuntime.maxMemory() / MB) + " MB");
 		tValueHwMemMax.setLayoutData(createGridData(true, 1));
+
+		Label tLabelHwMemUsed = new Label(tContainer, SWT.NONE);
+		tLabelHwMemUsed.setText(TEXT_HW_MEM_USED);
+		tLabelHwMemUsed.setLayoutData(createGridData(false, 1));
+		
+		mValueHwMemUsed = new Label(tContainer, SWT.NONE);
+		mValueHwMemUsed.setLayoutData(createGridData(true, 1));
 
 		Label tLabelHwMemTotal = new Label(tContainer, SWT.NONE);
 		tLabelHwMemTotal.setText(TEXT_HW_MEM_TOTAL);
@@ -519,6 +527,7 @@ public class SimulationView extends ViewPart
 				eventHandlerDiff.setText(toMilliSeconds(timeBase.getLastEventDiff()) +" msec");
 				eventHandlerNumberEvents.setText(timeBase.getEventCounter() +" (queued: " +timeBase.getNumberScheduledEvents() +")");
 				mValueHwMemTotal.setText(Long.toString(mRuntime.totalMemory() / MB) + " MB");
+				mValueHwMemUsed.setText(Long.toString((mRuntime.totalMemory() - mRuntime.freeMemory()) / MB) + " MB");
 				mValueHwMemFree.setText(Long.toString(mRuntime.freeMemory() / MB) + " MB");
 			} else {
 				pauseButton.setEnabled(false);
@@ -529,6 +538,7 @@ public class SimulationView extends ViewPart
 				eventHandlerDiff.setText("-");
 				eventHandlerNumberEvents.setText("-");
 				mValueHwMemTotal.setText("-");
+				mValueHwMemUsed.setText("-");
 				mValueHwMemFree.setText("-");
 			}
 		} else {
@@ -735,6 +745,7 @@ public class SimulationView extends ViewPart
 	private Label eventHandlerDiff;
 	private Label eventHandlerNumberEvents;
 	private Label mValueHwMemTotal;
+	private Label mValueHwMemUsed;
 	private Label mValueHwMemFree;
 	private Label mSimStarted;
 	private Label mSimThreadsStarted;
