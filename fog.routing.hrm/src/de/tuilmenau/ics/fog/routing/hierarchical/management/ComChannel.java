@@ -31,6 +31,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig.Routing.REPORT_SHARE_TIMINGS;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -1058,8 +1059,8 @@ public class ComChannel
 				mPackets.removeFirst();
 			}
 			
-			// add the packet to the storage
-			if(!(pPacket instanceof AnnounceCoordinator)){
+			// add the packet to the storage: filter AnnounceCoordinator, RouteReport, RouteShare
+			if(!((pPacket instanceof AnnounceCoordinator) || (pPacket instanceof RouteReport) || (pPacket instanceof RouteShare))){
 				mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent, mHRMController.getSimulationTime()));
 			}
 		}
