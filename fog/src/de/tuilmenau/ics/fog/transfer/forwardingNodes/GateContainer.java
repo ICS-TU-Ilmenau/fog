@@ -51,7 +51,7 @@ abstract public class GateContainer implements ForwardingNode
 	 * be locally unique only. But for simulation it makes debugging
 	 * much easier.
 	 */
-	private static int sLastUsedGateNumber = 0;
+	public static int sLastUsedGateNumber = 0;
 	
 	
 	public GateContainer(FoGEntity pNode, Name pName, NamingLevel pLevel)
