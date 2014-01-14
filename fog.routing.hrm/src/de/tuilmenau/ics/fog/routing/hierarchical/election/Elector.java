@@ -823,7 +823,7 @@ public class Elector implements Localization
 					if(tChannels.size() > 1){
 						throw new RuntimeException("Found an invalid comm. channel list: " + tChannels);
 					}else{
-						Logging.err(this, "Found empty channel list for: " + mParent);
+						Logging.warn(this, "Found empty channel list for: " + mParent + ", event cause=" + pCause);
 					}
 				}
 			}
