@@ -986,7 +986,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					tIsSuperiorCoordinatorChannel = "*";
 				}
 				CoordinatorAsClusterMember tCoordinatorAsClusterMember =  (CoordinatorAsClusterMember) tComChannel.getParent();
-				if(tCoordinatorAsClusterMember.isActiveCluster()){
+				if(tCoordinatorAsClusterMember.hasClusterValidCoordinator()){
 					tIsActiveCluster = "+";
 				}
 			}
@@ -1116,7 +1116,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					 */
 					Menu tMenu = new Menu(tTable);
 					MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
-					tMenuItem.setText("Show packet I/O");
+					tMenuItem.setText("Show (filtered) packet I/O");
 					tMenuItem.addSelectionListener(new SelectionListener() {
 						public void widgetDefaultSelected(SelectionEvent pEvent)
 						{
@@ -1389,6 +1389,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private void showPackets(ComChannel pComChannel)
 	{
 		Logging.log(this, "Packet I/O for: " + pComChannel);
+		Logging.log(this, "  (filtered packet types: AnnounceCoordinator, RouteReport, RouteShare)");
 		LinkedList<ComChannelPacketMetaData> tPacketsMetaData = pComChannel.getSeenPackets();
 		if(tPacketsMetaData != null){
 			int i = 0;
@@ -1507,7 +1508,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				if(pEntity instanceof ClusterMember){
 					ClusterMember tClusterMember = (ClusterMember)pEntity;
 					
-					tClusterMemberOfInactiveCluster = !tClusterMember.isActiveCluster();
+					tClusterMemberOfInactiveCluster = !tClusterMember.hasClusterValidCoordinator();
 
 					if(tClusterMemberOfInactiveCluster){
 						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 222));

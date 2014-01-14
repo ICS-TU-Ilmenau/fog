@@ -687,10 +687,10 @@ public class Cluster extends ClusterMember
 		 */
 		if(pCoordinator != null){
 			// mark this cluster as active
-			setClusterActivation(true);
+			setClusterWithValidCoordinator(true);
 		}else{
 			// mark this cluster as inactive
-			setClusterActivation(false);
+			setClusterWithValidCoordinator(false);
 		}
 		
 		// update the stored unique ID for the coordinator
@@ -714,7 +714,7 @@ public class Cluster extends ClusterMember
 	@Override
 	public void detectNeighborhood()
 	{
-		if(isActiveCluster()){
+		if(hasClusterValidCoordinator()){
 			if(getHierarchyLevel().isBaseLevel()){
 				super.detectNeighborhood();
 				if(countConnectedRemoteClusterMembers() > 1){

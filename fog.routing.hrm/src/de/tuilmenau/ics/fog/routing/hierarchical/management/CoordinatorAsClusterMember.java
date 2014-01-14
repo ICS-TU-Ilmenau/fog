@@ -292,11 +292,11 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 * @param pState the new state
 	 */
 	@Override
-	public void setClusterActivation(boolean pState)
+	public void setClusterWithValidCoordinator(boolean pState)
 	{
-		boolean tOldState = isActiveCluster();
+		boolean tOldState = hasClusterValidCoordinator();
 		
-		super.setClusterActivation(pState);
+		super.setClusterWithValidCoordinator(pState);
 		
 		/**
 		 * Is it a transition from "true" to " false"?

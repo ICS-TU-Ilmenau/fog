@@ -224,7 +224,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			Logging.err(this, "sendSuperiorCoordinator() aborted because the comm. channel to the superior coordinator is invalid" + ", dropping: " + pPacket);
 			int i = 0;
 			for(CoordinatorAsClusterMember tMembership : mClusterMemberships){
-				Logging.err(this, "  ..possible comm. channel [" + i + "] " + (tMembership.isActiveCluster() ? "(A)" : "") + ":" + tMembership.getComChannelToClusterHead());
+				Logging.err(this, "  ..possible comm. channel [" + i + "] " + (tMembership.hasClusterValidCoordinator() ? "(A)" : "") + ":" + tMembership.getComChannelToClusterHead());
 				i++;
 			}
 		}
@@ -922,7 +922,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						 */
 						LinkedList<Cluster> tInactiveL0Clusters = new LinkedList<Cluster>();
 						for(Cluster tCluster : tL0Clusters){
-							if(!tCluster.isActiveCluster()){
+							if(!tCluster.hasClusterValidCoordinator()){
 								tInactiveL0Clusters.add(tCluster);
 							}
 						}					

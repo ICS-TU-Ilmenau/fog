@@ -49,7 +49,7 @@ public class ClusterMember extends ClusterName
 	/**
 	 * Returns the cluster activation
 	 */
-	private boolean mClusterActivation = false;
+	private boolean mClusterHasValidCoordinator = false;
 	
 	/**
 	 * Stores the network interface for base hierarchy level
@@ -162,7 +162,7 @@ public class ClusterMember extends ClusterName
 	 */
 	public void detectNeighborhood()
 	{
-		if(isActiveCluster()){
+		if(hasClusterValidCoordinator()){
 			if(getHierarchyLevel().isBaseLevel()){
 				LinkedList<ComChannel> tChannels = getComChannels();
 				for(ComChannel tComChannel : tChannels){
@@ -293,7 +293,7 @@ public class ClusterMember extends ClusterName
 			RoutingTable tNewReportedRoutingTable = new RoutingTable();
 			LinkedList<ClusterMember> tSiblings = mHRMController.getAllClusterMembers(getHierarchyLevel());
 			for(ClusterMember tSibling : tSiblings){
-				if(tSibling.isActiveCluster()){
+				if(tSibling.hasClusterValidCoordinator()){
 					HRMID tSiblingL0Address = tSibling.getL0HRMID();
 					// has the sibling a valid L0 address?
 					if((tSiblingL0Address != null) && (!tSiblingL0Address.isZero())){
@@ -425,7 +425,7 @@ public class ClusterMember extends ClusterName
 			 */
 			LinkedList<ClusterMember> tClusterMembers = mHRMController.getAllClusterMembers(getHierarchyLevel());
 			for(ClusterMember tClusterMember : tClusterMembers){
-				if(tClusterMember.isActiveCluster()){
+				if(tClusterMember.hasClusterValidCoordinator()){
 					tClusterMember.eventNeedHRGUpdate(this + "::setL0HRMID()(" + mCallsSetL0HRMID + ")");
 				}
 			}
@@ -459,7 +459,7 @@ public class ClusterMember extends ClusterName
 				throw new RuntimeException(this + "::getComChannelToClusterHead() found an invalid amount of comm. channels: " + tChannels);
 			}else{
 				// no comm. channel -> can occur if the entity was already invalidated and the object reference is still included in some lists
-				Logging.warn(this, "getComChannelToClusterHead() hasn't found any remaining comm. channel, entity valid?: " + isThisEntityValid() + ", cluster activation: " + isActiveCluster());
+				Logging.warn(this, "getComChannelToClusterHead() hasn't found any remaining comm. channel, entity valid?: " + isThisEntityValid() + ", cluster activation: " + hasClusterValidCoordinator());
 			}
 		}
 			
@@ -473,7 +473,7 @@ public class ClusterMember extends ClusterName
 	{
 		if(getHierarchyLevel().isBaseLevel()){
 			// only announce in active clusters, avoid unnecessary packets here
-			if(isActiveCluster()){
+			if(hasClusterValidCoordinator()){
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 					Logging.log(this, "Distributing AnnounceHRMIDs...");
 				}
@@ -1174,21 +1174,21 @@ public class ClusterMember extends ClusterName
 	}
 	
 	/**
-	 * Sets the cluster activation, triggered by the Elector or the Cluster which got a new local Coordinator
+	 * Sets the cluster activation (has active coordinator), triggered by the Elector or the Cluster which got a new local Coordinator
 	 * 
 	 * @param pState the new state
 	 */
-	public void setClusterActivation(boolean pState)
+	public void setClusterWithValidCoordinator(boolean pState)
 	{
-		boolean tOldState = mClusterActivation;
+		boolean tOldState = mClusterHasValidCoordinator;
 		
 		/**
 		 * Update the cluster state 
 		 */
-		if(mClusterActivation != pState){
-			Logging.log(this, "Setting cluster activation to: " + pState);
+		if(mClusterHasValidCoordinator != pState){
+			Logging.log(this, "Setting cluster activation (has valid coordinator) to: " + pState);
 			
-			mClusterActivation = pState;
+			mClusterHasValidCoordinator = pState;
 		}
 
 		/**
@@ -1200,13 +1200,13 @@ public class ClusterMember extends ClusterName
 	}
 	
 	/**
-	 * Returns the cluster activation
+	 * Returns the cluster activation (has valid coordinator)
 	 *  
 	 * @return true or false
 	 */
-	public boolean isActiveCluster()
+	public boolean hasClusterValidCoordinator()
 	{
-		return mClusterActivation;
+		return mClusterHasValidCoordinator;
 	}
 
 	/**
