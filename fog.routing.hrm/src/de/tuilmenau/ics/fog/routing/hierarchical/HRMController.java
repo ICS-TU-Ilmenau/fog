@@ -409,7 +409,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Initialize the node hierarchy priority
 		 */
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
-			mNodeHierarchyPriority[i] = i;//HRMConfig.Election.DEFAULT_BULLY_PRIORITY;
+			mNodeHierarchyPriority[i] = HRMConfig.Election.DEFAULT_PRIORITY;
 		}
 		
 		/**
@@ -2997,18 +2997,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Sets new hierarchy node priority for Election processes
 	 * 
-	 * @param pPriority the new hierarchy node priority
+	 * @param pPriorityOffset the offset for the hierarchy node priority
 	 * @param pHierarchyLevel the hierarchy level
 	 */
 	private int mHierarchyPriorityUpdates = 0;
-	private synchronized void setHierarchyPriority(long pPriority, HierarchyLevel pHierarchyLevel)
+	private synchronized void updateHierarchyPriority(long pPriorityOffset, HierarchyLevel pHierarchyLevel)
 	{
-		Logging.log(this, "Setting new hierarchy node priority: " + pPriority);
-		mNodeHierarchyPriority[pHierarchyLevel.getValue()] = pPriority;
+		long tPriority = mNodeHierarchyPriority[pHierarchyLevel.getValue()];
+
+		// update priority
+		tPriority += pPriorityOffset; 
+				
+		Logging.log(this, "Setting new hierarchy node priority: " + tPriority);
+		mNodeHierarchyPriority[pHierarchyLevel.getValue()] = tPriority;
 
 		mHierarchyPriorityUpdates++;
 		
-		Logging.log(this, "  ..informing about the priority (" + pPriority + ") update (" + mHierarchyPriorityUpdates + ")");
+		Logging.log(this, "  ..informing about the priority (" + tPriority + ") update (" + mHierarchyPriorityUpdates + ")");
 		/**
 		 * Asynchronous execution of "distributeHierarchyNodePriorityUpdate()" inside context of HRMControllerProcessor.
 		 * This also reduces convergence time for finding the correct network clustering 
@@ -3016,7 +3021,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(mProcessorThread != null){
 			mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel);
 		}else{
-			Logging.warn(this, "Processor thread is invalid, ignoring priority (" + pPriority + ") update (" + mHierarchyPriorityUpdates + ")");
+			Logging.warn(this, "Processor thread is invalid, ignoring priority (" + tPriority + ") update (" + mHierarchyPriorityUpdates + ")");
 		}
 		//HINT: for synchronous execution use here "distributeHierarchyNodePriorityUpdate(pHierarchyLevel)"
 		//      instead of "mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel)"
@@ -3049,16 +3054,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		Logging.log(this, "Increasing hierarchy node priority (CONNECTIVITY) by " + ElectionPriority.OFFSET_FOR_CONNECTIVITY);
 		
-		// get the current priority
-		long tHierarchyPriority = mNodeHierarchyPriority[1];
-
-		// increase priority
-		tHierarchyPriority += ElectionPriority.OFFSET_FOR_CONNECTIVITY;
+		// get the current priority offset
+		long tOffset = ElectionPriority.OFFSET_FOR_CONNECTIVITY;
 
 		mDesriptionHierarchyPriorityUpdates += "\n + " + ElectionPriority.OFFSET_FOR_CONNECTIVITY + " <== Cause: " + pCausingInterfaceToNeighbor;
 
 		// update priority
-		setHierarchyPriority(tHierarchyPriority, new HierarchyLevel(this,  1));
+		updateHierarchyPriority(tOffset, new HierarchyLevel(this,  1));
 	}
 	
 	/**
@@ -3083,16 +3085,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		Logging.log(this, "Decreasing hierarchy node priority (CONNECTIVITY) by " + ElectionPriority.OFFSET_FOR_CONNECTIVITY);
 		
-		// get the current priority
-		long tHierarchyPriority = mNodeHierarchyPriority[1];
-
-		// increase priority
-		tHierarchyPriority -= ElectionPriority.OFFSET_FOR_CONNECTIVITY;
+		// get the current priority offset
+		long tOffset = -ElectionPriority.OFFSET_FOR_CONNECTIVITY;
 
 		mDesriptionHierarchyPriorityUpdates += "\n - " + ElectionPriority.OFFSET_FOR_CONNECTIVITY + " <== Cause: " + pCausingInterfaceToNeighbor;
 
 		// update priority
-		setHierarchyPriority(tHierarchyPriority, new HierarchyLevel(this, 1));
+		updateHierarchyPriority(tOffset, new HierarchyLevel(this, 1));
 	}
 
 	/**
@@ -3127,26 +3126,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// get the current priority
 				long tPriority = mNodeHierarchyPriority[tHierLevel];
 				
-				float tOffset = 0;
+				long tOffset = 0;
 				if (pCausingEntity.getHierarchyLevel().isBaseLevel()){
-					tOffset = (float)ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
+					tOffset = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
 				}else{
-					tOffset = (float)ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
+					tOffset = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
 				}
 						
 				Logging.log(this, "Increasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + tDistance + "/" + tMaxDistance);
 		
-				// increase priority
-				tPriority += (long)(tOffset);
-				
 				String tSpace = "";
 				for(int i = 0; i < tHierLevel; i++){
 					tSpace += "  "; 
 				}
-				mDesriptionHierarchyPriorityUpdates += "\n + " + tSpace + tPriority + "-L" + tHierLevel + ": " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+				mDesriptionHierarchyPriorityUpdates += "\n + " + tSpace + (tPriority + tOffset) + "-L" + tHierLevel + ": " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
 	
 				// update priority
-				setHierarchyPriority(tPriority, new HierarchyLevel(this, tHierLevel));
+				updateHierarchyPriority(tOffset, new HierarchyLevel(this, tHierLevel));
 			}else{
 				Logging.err(this, "Detected invalid distance: " + tDistance + "/" + tMaxDistance);
 			}
@@ -3185,26 +3181,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// get the current priority
 				long tPriority = mNodeHierarchyPriority[tHierLevel];
 				
-				float tOffset = 0;
+				long tOffset = 0;
 				if (pCausingEntity.getHierarchyLevel().isBaseLevel()){
-					tOffset = (float)ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
+					tOffset = -ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
 				}else{
-					tOffset = (float)ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
+					tOffset = -ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
 				}
 				
 				Logging.log(this, "Decreasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + tDistance + "/" + tMaxDistance);
 		
-				// decrease priority
-				tPriority -= (long)(tOffset);
-				
 				String tSpace = "";
 				for(int i = 0; i < tHierLevel; i++){
 					tSpace += "  "; 
 				}
-				mDesriptionHierarchyPriorityUpdates += "\n - " + tSpace + tPriority + "-L" + tHierLevel + ": " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+				mDesriptionHierarchyPriorityUpdates += "\n - " + tSpace + (tPriority - tOffset) + "-L" + tHierLevel + ": " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
 	
 				// update priority
-				setHierarchyPriority(tPriority, new HierarchyLevel(this, tHierLevel));
+				updateHierarchyPriority(tOffset, new HierarchyLevel(this, tHierLevel));
 			}else{
 				Logging.err(this, "Detected invalid distance: " + tDistance + "/" + tMaxDistance);
 			}
@@ -3660,6 +3653,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						Logging.err(this, "validateResults() detected invalid hierarchy, haven't found local inferior coordinator for: " + tCoordinator);
 					}
 				}
+				
+				/**
+				 * Check coordinator on highest hierarchy level
+				 */
+				if(tCoordinator.getHierarchyLevel().isHighest()){
+					long tTopPriorityThisNode = getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.HEIGHT - 1));
+					
+					for(HRMController tHRMController : getALLHRMControllers()){
+						if(tHRMController != this){
+							long tTopPriorityCheckNode = tHRMController.getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.HEIGHT - 1));
+							
+							if(tTopPriorityCheckNode > tTopPriorityThisNode){
+								Logging.err(this, "validateResults() detected top coordinator at this node, better candidate would be node: " + tHRMController.getNodeGUIName());
+							}
+						}
+					}					
+				}
+				
 //				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
 //					if(tComChannel.getPeerPriority().isUndefined()){
 //						Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
