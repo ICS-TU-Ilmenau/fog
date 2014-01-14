@@ -80,6 +80,7 @@ import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
+import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Decoration;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -2745,6 +2746,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static void eventSimulationRestarted()
 	{
 		Logging.log(null, "EVENT: simulation restarted");
+
+		/**
+		 * FoG-specific: reset Gate numbering
+		 */
+		GateContainer.sLastUsedGateNumber = 0;
 		
 		/**
 		 * Kill all processors of the previous simulation run
@@ -3647,6 +3653,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						Logging.err(this, "validateResults() detected invalid comm. channel to superior coordinator for: " + tCoordinator);
 					}
 				}
+				
+				if(!tCoordinator.getHierarchyLevel().isBaseLevel()){
+					Coordinator tFoundAnInferiorCoordinator = getCoordinator(tCoordinator.getHierarchyLevel().getValue() - 1);
+					if(tFoundAnInferiorCoordinator == null){
+						Logging.err(this, "validateResults() detected invalid hierarchy, haven't found local inferior coordinator for: " + tCoordinator);
+					}
+				}
 //				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
 //					if(tComChannel.getPeerPriority().isUndefined()){
 //						Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
@@ -3685,7 +3698,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								Logging.err(this, "validateResults() wasn't able to find node: " + tChanPeerL2Address + " as peer of: " + tComChannel);
 							}
 						}
-						if(tComChannel.getPacketQueue().size() > 0){
+						if(tComChannel.getPacketQueue().size() > 1 /* we allow one pending packet because the event handler might be processing a packet at the moment */){
 							Logging.err(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel); 
 						}
 					}
