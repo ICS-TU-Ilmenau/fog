@@ -469,7 +469,7 @@ public class HRMConfig
 		/**
 		 * Default priority for election process. This value is used when no value is explicitly defined for a node.
 		 */
-		public static final long DEFAULT_PRIORITY = 1; //TV
+		public static final long DEFAULT_PRIORITY = 0;
 		
 		/**
 		 * (De-)activate sending of "alive" messages in order to detect dead cluster members.
