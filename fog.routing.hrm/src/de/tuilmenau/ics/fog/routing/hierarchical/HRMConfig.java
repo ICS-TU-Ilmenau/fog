@@ -133,7 +133,7 @@ public class HRMConfig
 		 * Defines the minimum time period between two updates of the node specific HRM viewer.
 		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
 		 */
-		public static final double GUI_HRM_VIEWERS_UPDATE_INTERVAL = 3.0;
+		public static final double GUI_HRM_VIEWERS_UPDATE_INTERVAL = 1.0;
 
 		/**
 		 * Defines if the hierarchy creation should start once the entire simulation was created. 
@@ -184,7 +184,7 @@ public class HRMConfig
 		 * Defines the minimum time period between two updates of the node specific HRG viewer.
 		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
 		 */
-		public static final double GUI_HRG_VIEWERS_UPDATE_INTERVAL = 10.0;
+		public static final double GUI_HRG_VIEWERS_UPDATE_INTERVAL = 5.0;
 
 		/**
 		 * Defines if very verbose debugging should be active.
