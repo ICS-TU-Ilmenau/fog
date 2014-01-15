@@ -2786,7 +2786,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Resets the statistic about the HRM hierarchy (clusters & coordinators)
 	 */
-	private static void resetHierarchyStatistic()
+	public static void resetHierarchyStatistic()
 	{
 		sRegisteredCoordinators = 0;
 		sUnregisteredCoordinators = 0;
@@ -2804,7 +2804,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Resets the statistic about used signaling packets
 	 */
-	private static void resetPacketStatistic()
+	public static void resetPacketStatistic()
 	{
 		AnnouncePhysicalEndPoint.sCreatedPackets = 0;
 		MultiplexHeader.sCreatedPackets = 0;
