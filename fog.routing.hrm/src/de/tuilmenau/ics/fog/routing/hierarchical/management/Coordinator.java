@@ -811,10 +811,31 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		
 		synchronized (mReceivedSharedRoutingTable) {
 			mReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
-			mHRMController.addHRMRouteShare(mReceivedSharedRoutingTable, getHierarchyLevel(), pSourceComChannel.getPeerHRMID(), this + "::eventReceivedRouteShare() from " + pSourceComChannel.getPeerHRMID());			
+			learnLocallyTheLastSharedRoutingTable(this + "::eventReceivedRouteShare() from " + pSourceComChannel.getPeerHRMID());
 		}		
 	}
 
+	/**
+	 * Learns locally the received routing table from the superior coordinator
+	 *  
+	 * @param pCause the cause for this learning step
+	 */
+	public void learnLocallyTheLastSharedRoutingTable(String pCause)
+	{
+		/**
+		 * determine the sender of the shared routes
+		 */
+		HRMID tSuperiorCoordinatorHRMID = null;
+		if(superiorCoordinatorComChannel() != null){
+			tSuperiorCoordinatorHRMID = superiorCoordinatorComChannel().getPeerHRMID();
+		}
+
+		/**
+		 * learn locally the shared routes
+		 */
+		mHRMController.addHRMRouteShare(mReceivedSharedRoutingTable, getHierarchyLevel(), tSuperiorCoordinatorHRMID, pCause);
+	}
+	
 	/**
 	 * EVENT: "eventCoordinatorRoleInvalid", triggered by the Elector, the reaction is:
 	 * 	 	1.) create signaling packet "ElectionLeave"
