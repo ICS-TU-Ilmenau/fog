@@ -3315,22 +3315,26 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public void eventQoSReservation(L2Address pNextHopL2Address, Description pQoSReservationDescription)
 	{
 		Logging.warn(this, "EVENT: QoS reservation detected to node: " + pNextHopL2Address);
-		Logging.warn(this, "   ..QoS reservation: " + pQoSReservationDescription);
+		Logging.log(this, "   ..QoS reservation: " + pQoSReservationDescription);
 		
 		/**
 		 * Update the learned routes based on neighborhood data
 		 */
 		LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
 		for(ClusterMember tClusterMember : tL0ClusterMembers){
-			tClusterMember.detectNeighborhood();
+			if(tClusterMember.hasClusterValidCoordinator()){
+				Logging.warn(this, "   ..auto-update shared routing data of: " + tClusterMember); 
+				tClusterMember.detectNeighborhood();
+			}
 		}
 		
 		/**
 		 * Update the learned routes based on received RouteShare packets (inside hierarchy)
 		 */
-		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i >= 0; i--){
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT - 1; i++){
 			LinkedList<Coordinator> tLevelCoordinators = getAllCoordinators(i);
 			for(Coordinator tCoordinator : tLevelCoordinators){
+				Logging.warn(this, "   ..auto-update shared routing data of: " + tCoordinator); 
 				tCoordinator.learnLocallyTheLastSharedRoutingTable(this + "::eventQoSReservation() towards " + pNextHopL2Address);
 			}
 		}
