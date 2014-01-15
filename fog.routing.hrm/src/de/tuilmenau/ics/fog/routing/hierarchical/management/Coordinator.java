@@ -820,8 +820,13 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 *  
 	 * @param pCause the cause for this learning step
 	 */
-	public void learnLocallyTheLastSharedRoutingTable(String pCause)
+	public synchronized void learnLocallyTheLastSharedRoutingTable(String pCause)
 	{
+		RoutingTable tReceivedSharedRoutingTable = null;
+		synchronized (mReceivedSharedRoutingTable) {
+			tReceivedSharedRoutingTable = (RoutingTable) mReceivedSharedRoutingTable.clone();
+		}
+
 		/**
 		 * determine the sender of the shared routes
 		 */
@@ -833,7 +838,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * learn locally the shared routes
 		 */
-		mHRMController.addHRMRouteShare(mReceivedSharedRoutingTable, getHierarchyLevel(), tSuperiorCoordinatorHRMID, pCause);
+		mHRMController.addHRMRouteShare(tReceivedSharedRoutingTable, getHierarchyLevel(), tSuperiorCoordinatorHRMID, pCause);
 	}
 	
 	/**
