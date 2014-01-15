@@ -970,6 +970,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				
 				Logging.log(this, "Found new physical link: " + tDirectDownGate + ", description=" + tGateDescription);
 			}else{
+				// tell the HRMController instance that we have reserved some resources and it should trigger an early routing data update
+				mHRMController.eventQoSReservation(tToL2Address, tGateDescription);
+
 				Logging.log(this, "Found new QoS reservation link: " + tDirectDownGate + ", description=" + tGateDescription);
 			}
 		}else{
