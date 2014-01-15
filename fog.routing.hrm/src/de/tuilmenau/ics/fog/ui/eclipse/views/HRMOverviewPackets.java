@@ -10,9 +10,12 @@
 package de.tuilmenau.ics.fog.ui.eclipse.views;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
@@ -45,6 +48,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This viewer shows global statistics about HRM.
@@ -76,6 +81,10 @@ public class HRMOverviewPackets extends ViewPart
 	private static final String TEXT_SIG_ROUTE_REPORT						= "      RouteReport: ";
 	private static final String TEXT_SIG_ROUTE_SHARE						= "      RouteShare: ";
 
+	private static final String TEXT_BTN_RESET_STATS						= "Reset packet statistic";
+	
+	private Button mBtnResetPacketStats = null;
+	
 	private Label mAnnouncePhysicalEndPoint = null;
 	private Label mMultiplexHeader = null;
 	private Label mSignalingMessageHrm = null;
@@ -244,6 +253,16 @@ public class HRMOverviewPackets extends ViewPart
 		mRouteReport = createPartControlLine(tGrpPackets, TEXT_SIG_ROUTE_REPORT);
 		mRouteShare = createPartControlLine(tGrpPackets, TEXT_SIG_ROUTE_SHARE);
 
+	    mBtnResetPacketStats = new Button(tContainer, SWT.PUSH);
+	    mBtnResetPacketStats.setText(TEXT_BTN_RESET_STATS);
+	    mBtnResetPacketStats.setLayoutData(createGridData(true, 2));
+	    mBtnResetPacketStats.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				HRMController.resetPacketStatistic();
+			}
+		});
+		
 		mDisplay.timerExec(100, ViewRepaintTimer);
 	}
 	
