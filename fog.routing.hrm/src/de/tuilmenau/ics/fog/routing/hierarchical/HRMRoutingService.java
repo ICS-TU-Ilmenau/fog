@@ -24,8 +24,11 @@ import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
+import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
 import de.tuilmenau.ics.fog.facade.properties.DedicatedQoSReservationProperty;
+import de.tuilmenau.ics.fog.facade.properties.DelayProperty;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
+import de.tuilmenau.ics.fog.facade.properties.MinMaxProperty.Limit;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
 import de.tuilmenau.ics.fog.routing.RouteSegmentAddress;
@@ -1503,8 +1506,8 @@ public class HRMRoutingService implements RoutingService, Localization
 
 				/**
 				 * Search for a DirectDownGate:
-				 * 		+ A.) hard QoS reservations -> FoG-specific: trigger creation of dedicated QoS gate
-				 * 		+ B.) derive the NEXT BUS -> use it later to record the gotten QoS values
+				 * 		+ A.) derive the NEXT BUS -> use it later to record the gotten QoS values
+				 * 		+ B.) hard QoS reservations -> FoG-specific: trigger creation of dedicated QoS gate
 				 */
 				RouteSegmentPath tRoutingResultFirstGateListWithoutDirectDownGates = new RouteSegmentPath();
 				RouteSegmentMissingPart tQoSReservation = null;
@@ -1549,24 +1552,63 @@ public class HRMRoutingService implements RoutingService, Localization
 									DirectDownGate tDirectDownGate = (DirectDownGate)tGate;
 									
 									/**
-									 * A.) describe a missing QoS reservation, which is later is used in order to trigger QoS RESERVATION within the FoG transfer service
+									 * A.) get the network interface to the neighbor
+									 */ 
+									tNextNetworkBus = (Bus)tDirectDownGate.getNextNode();//getNetworkInterface();
+
+									/**
+									 * B.) describe a missing QoS reservation, which is later is used in order to trigger QoS RESERVATION within the FoG transfer service
 									 */
 									if((HRMConfig.QoS.QOS_RESERVATIONS) && (tDedicatedQoSReservationProperty != null)){
 										AbstractGate tParallelGate = tGate;
 //										if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 											Logging.log(this, "Needing QoS gate parallel to: " + tParallelGate + " with non-functional requirements: " +tNonFunctionalDescription);
 //										}
+											
+										/**
+										 * Check if the desired data rate can be fulfilled -> otherwise use the best possible value
+										 */
+										int tDataRate = tNonFunctionalDescription.getDesiredDataRate();
+										if(tDataRate > 0){
+											if(tDataRate > tNextNetworkBus.getAvailableDataRate()){
+												tDataRate = (int) tNextNetworkBus.getAvailableDataRate();
+												tNonFunctionalDescription.set(new DatarateProperty(tDataRate, Limit.MIN));
+											}
+										}
+										
+										/**
+										 * Check if the desired delay can be fulfilled -> otherwise drop this property
+										 */
+										int tDelay = tNonFunctionalDescription.getDesiredDelay();
+										if(tDelay > 0){
+											if(tDelay < tNextNetworkBus.getDelayMSec()){
+												tNonFunctionalDescription.set(new DelayProperty(0, Limit.MIN));
+											}
+										}
+
+										
 										Description tCapabilities = tParallelGate.getDescription();
 										Logging.log(this, "  ..original gate has caps.: " + tCapabilities);
-										Description tNeededReservationRequirements;
+										Description tNeededReservationRequirements = null;
 										
 										if(tCapabilities != null) {
-											try {
-												tNeededReservationRequirements = tCapabilities.deriveRequirements(tNonFunctionalDescription);
-											}
-											catch(PropertyException tExc) {
-												throw new RoutingException(this, "Requirements " + tNonFunctionalDescription +" can not be fullfilled.", tExc);
-											}
+											boolean tRepeat = false;
+											do{
+												try {
+													tNeededReservationRequirements = tCapabilities.deriveRequirements(tNonFunctionalDescription);
+												}
+												catch(PropertyException tExc) {
+													// reset data rate
+													tNonFunctionalDescription.set(new DatarateProperty(0, Limit.MIN));
+													
+													// reset delay
+													tNonFunctionalDescription.set(new DelayProperty(0, Limit.MIN));
+													
+													// repeat
+													tRepeat = true;
+													//avoid: throw new RoutingException(this, "Requirements " + tNonFunctionalDescription +" can not be fulfilled.", tExc);
+												}
+											}while(tRepeat);
 										} else {
 											tNeededReservationRequirements = null;
 										}
@@ -1581,11 +1623,6 @@ public class HRMRoutingService implements RoutingService, Localization
 										// mark as described QoS reservation
 										tHaveDescribedMissingQoSReservation = true;
 									}
-
-									/**
-									 * B.) get the network interface to the neighbor
-									 */ 
-									tNextNetworkBus = (Bus)tDirectDownGate.getNextNode();//getNetworkInterface();
 								}
 								
 								/**
