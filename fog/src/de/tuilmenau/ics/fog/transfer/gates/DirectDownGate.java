@@ -22,6 +22,7 @@ import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.DedicatedQoSReservationProperty;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.PleaseCloseConnection;
@@ -31,6 +32,8 @@ import de.tuilmenau.ics.fog.topology.NeighborInformation;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.ILowerLayer.SendResult;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
+import de.tuilmenau.ics.fog.transfer.ForwardingNode;
+import de.tuilmenau.ics.fog.transfer.manager.Process;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.BrokenType;
 import de.tuilmenau.ics.fog.ui.Viewable;
 
@@ -41,7 +44,7 @@ import de.tuilmenau.ics.fog.ui.Viewable;
  */
 public class DirectDownGate extends DownGate
 {
-	public DirectDownGate(int localProcessNumber, FoGEntity entity, NetworkInterface networkInterface, NeighborInformation toLowerLayerID, Description description, Identity owner)
+	public DirectDownGate(ForwardingNode pFN, int localProcessNumber, FoGEntity entity, NetworkInterface networkInterface, NeighborInformation toLowerLayerID, Description description, Identity owner)
 	{
 		super(entity, networkInterface, description, owner);
 
@@ -57,7 +60,8 @@ public class DirectDownGate extends DownGate
 		
 		mLocalProcessNumber = localProcessNumber;
 		mToLowerLayerID = toLowerLayerID;
-
+		mFN = pFN;
+		
 		networkInterface.attachDownGate(this);
 	}
 	
@@ -153,7 +157,10 @@ public class DirectDownGate extends DownGate
 			mLogger.log(this, "Deleting myself");
 			shutdown();
 			delete();
-			//getEntity().getProcessRegister().getProcess(pFN, getOwner(), mLocalProcessNumber);
+			Process tParentProcess = getEntity().getProcessRegister().getProcess(mFN, getOwner(), mLocalProcessNumber);
+			
+			mLogger.log(this, "Terminating parent process...");
+			tParentProcess.terminate(new NetworkException(this, this + " should be removed now, process termination required"));
 		}
 	}
 	
@@ -211,6 +218,8 @@ public class DirectDownGate extends DownGate
 		return tResult;
 	}
 
+	ForwardingNode mFN = null;
+	
 	@Viewable("Local process number")
 	private int mLocalProcessNumber = -1;
 	

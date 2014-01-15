@@ -184,7 +184,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 
 		// Create gate
 		//mLogger.log(this, "  ..actually creating DirectDownGate");
-		DirectDownGate tRes = new DirectDownGate(getID(), entity, mInterface, mLowerLayerID, mRequirements, getOwner());
+		DirectDownGate tRes = new DirectDownGate(getBase(), getID(), entity, mInterface, mLowerLayerID, mRequirements, getOwner());
 		
 		if(Config.Connection.TERMINATE_WHEN_IDLE) {
 			if(mRequirements != null) {
