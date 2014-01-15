@@ -341,6 +341,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private static double mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
 	
 	/**
+	 * Stores a time for the next check for deprecated CoordinatorProxy instances -> allows for a pausing of autoRemoveObsoleteCoordinatorProxies() after re-enabling the AnnounceCoordinator messages
+	 */
+	private static double mNextCheckForDeprecatedCoordinatorProxies = 0;
+	
+	/**
 	 * Stores if the simulation was restarted and the global NMS should be reset
 	 */
 	private static boolean sResetNMS = false;
@@ -366,7 +371,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
 		GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
 		GUI_USER_CTRL_ADDRESS_DISTRUTION = HRMConfig.Addressing.ASSIGN_AUTOMATICALLY;
-		resetAnnounceCoordinatorGUI();
 		
 		// define the local name "routing://"
 		mApplicationName = new SimpleName(ROUTING_NAMESPACE, null);
@@ -483,11 +487,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Reset the AnnounceCoordinator handling.
 	 * This function is not part of the concept. It is only useful for debugging purposes and user control. 
 	 */
-	public void resetAnnounceCoordinatorGUI()
+	public void resetAnnounceCoordinatorMechanism()
 	{
-		Logging.log(this, "##### Reseting AnnounceCoordinator mechanism");
-		GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
-		mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+		if(!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+			Logging.log(this, "##### Reseting AnnounceCoordinator mechanism");
+			GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
+			double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 0.5 /* make sure that we don't hit the timer */; 
+			mNextCheckForDeprecatedCoordinatorProxies = getSimulationTime() + tTimeWithFixedHierarchyDataThreshold;
+			mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+		}else{
+			// nothing to reset, everything is still online
+		}
 	}
 
 	/**
@@ -2507,10 +2517,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tRoutingEntry.extendCause(this + "::registerAutoHRG() as " + tRoutingEntry);
 				tRoutingEntry.setTimeout(pRoutingEntry.getTimeout());
 				
-				double tBefore = HRMController.getRealTime();
+				double tBefore = getRealTime();
 				registerLinkHRG(pRoutingEntry.getSource(), pRoutingEntry.getNextHop(), tRoutingEntry);
 
-				double tSpentTime = HRMController.getRealTime() - tBefore;
+				double tSpentTime = getRealTime() - tBefore;
 				if(tSpentTime > 30){
 					Logging.log(this, "      ..registerAutoHRG()::registerLinkHRG() took " + tSpentTime + " ms for processing " + pRoutingEntry);
 				}
@@ -2766,6 +2776,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mRegisteredHRMControllers = new LinkedList<HRMController>();
 		sResetNMS = true;
 
+		mNextCheckForDeprecatedCoordinatorProxies = 0;
+		mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+		
 		resetHierarchyStatistic();
 		resetPacketStatistic();
 	}
@@ -3349,6 +3362,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 		
+		if((!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS)){
+			Logging.warn(this, "### AnnounceCoordinator packets were already disabled, reenabling them due to topology changes");
+			resetAnnounceCoordinatorMechanism();
+		}
+		
 		/**
 		 * Helper for having access to the HRMController within the created thread
 		 */
@@ -3500,7 +3518,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getSimulationTime()
 	{
-		return mAS.getTimeBase().now();
+		double tResult = 0;
+		
+		if(mAS != null){
+			if(mAS.getTimeBase() != null){
+				tResult = mAS.getTimeBase().now();
+			}
+		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -3532,7 +3558,21 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoRemoveObsoleteCoordinatorProxies()
 	{
-		if(HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+		if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+			/**
+			 * Abort if a pausing time was defined
+			 */
+			if((mNextCheckForDeprecatedCoordinatorProxies > 0) && (getSimulationTime() < mNextCheckForDeprecatedCoordinatorProxies)){
+				Logging.warn(this,  "autoRemoveObsoleteCoordinatorProxies() aborted because a pause is defined until simulation time: " + mNextCheckForDeprecatedCoordinatorProxies);
+				return;
+			}else{
+				// reset the mechanism
+				mNextCheckForDeprecatedCoordinatorProxies = 0;
+			}
+			
+			/**
+			 * Remove deprecated CoordinatorProxy instances
+			 */
 			LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
 			for(CoordinatorProxy tProxy : tProxies){
 				// does the link have a timeout?
@@ -3552,12 +3592,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Auto-deactivates AnnounceCoordinator packets.
 	 * This function is only useful for measurement speedup or to ease debugging. It is neither part of the concept nor it is used to derive additional data. It only reduces packet overhead in the network.
 	 */
-	@SuppressWarnings("unused")
-	private void autoDeactivateAnnounceCoordinator()
+	private void autoDeactivateAnnounceCoordinatorMechanism()
 	{
 		if(mSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
 			double tTimeWithFixedHierarchyData = getSimulationTime() - mSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-			double tTimeWithFixedHierarchyDataThreshold = /* TODO 2 * */ HRMConfig.Hierarchy.COORDINATOR_TIMEOUT;
+			double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_TIMEOUT;
 			//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
 			if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
 	
@@ -3596,7 +3635,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// iterate over all HRMControllers
 		int tFound = 0;
-		for(HRMController tHRMController : HRMController.getALLHRMControllers()) {
+		for(HRMController tHRMController : getALLHRMControllers()) {
 			LinkedList<Coordinator> tHighestCoordinators = tHRMController.getAllCoordinators(HRMConfig.Hierarchy.HEIGHT - 1);
 			if(!tHighestCoordinators.isEmpty()){
 				for (Coordinator tHighestCoordinator : tHighestCoordinators){
@@ -3728,9 +3767,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 
 		/**
-		 * auto-deactivate AnnounceCoordinator 
+		 * auto-deactivate AnnounceCoordinator broadcast
 		 */
-		autoDeactivateAnnounceCoordinator();
+		autoDeactivateAnnounceCoordinatorMechanism();
 		
 		/**
 		 * auto-remove old CoordinatorProxies
@@ -4063,7 +4102,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "Creating a HRMController destination description");
 		}
 
-		tResult.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE, null, null));
+		tResult.set(new DestinationApplicationProperty(ROUTING_NAMESPACE, null, null));
 		
 		return tResult;
 	}
@@ -4288,11 +4327,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			/**
 			 * Derive the link
 			 */
-			double tBefore4 = HRMController.getRealTime();
+			double tBefore4 = getRealTime();
 			pRoutingEntry.assignToHRG(mHierarchicalRoutingGraph);
 			AbstractRoutingGraphLink tLink = new AbstractRoutingGraphLink(new Route(pRoutingEntry));
 			tLink.setTimeout(pRoutingEntry.getTimeout());
-			double tSpentTime4 = HRMController.getRealTime() - tBefore4;
+			double tSpentTime4 = getRealTime() - tBefore4;
 			if(tSpentTime4 > 10){
 				Logging.log(this, "      ..registerLinkHRG()::AbstractRoutingGraphLink() took " + tSpentTime4 + " ms for processing " + pRoutingEntry);
 			}
@@ -4303,22 +4342,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mHierarchicalRoutingGraph) {
 				boolean tLinkAlreadyKnown = false;
 
-				double tBefore = HRMController.getRealTime();
+				double tBefore = getRealTime();
 				Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(pFrom);
-				double tSpentTime = HRMController.getRealTime() - tBefore;
+				double tSpentTime = getRealTime() - tBefore;
 				if(tSpentTime > 10){
 					Logging.log(this, "      ..registerLinkHRG()::getOutEdges() took " + tSpentTime + " ms for processing " + pRoutingEntry);
 				}
 
 				if(tLinks != null){
-					double tBefore3 = HRMController.getRealTime();
+					double tBefore3 = getRealTime();
 					for(AbstractRoutingGraphLink tKnownLink : tLinks){
 						// check if both links are equal 
 						if(tKnownLink.equals(tLink)){
 							// check of the end points of the already known link are equal to the pFrom/pTo
-							double tBefore2 = HRMController.getRealTime();
+							double tBefore2 = getRealTime();
 							Pair<HRMID> tEndPoints = mHierarchicalRoutingGraph.getEndpoints(tKnownLink);
-							double tSpentTime2 = HRMController.getRealTime() - tBefore2;
+							double tSpentTime2 = getRealTime() - tBefore2;
 							if(tSpentTime2 > 10){
 								Logging.log(this, "      ..registerLinkHRG()::getEndpoints() took " + tSpentTime2 + " ms for processing " + pRoutingEntry);
 							}
@@ -4343,7 +4382,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 						}
 					}
-					double tSpentTime3 = HRMController.getRealTime() - tBefore3;
+					double tSpentTime3 = getRealTime() - tBefore3;
 					if(tSpentTime3 > 10){
 						Logging.log(this, "      ..registerLinkHRG()::for() took " + tSpentTime3 + " ms for processing " + pRoutingEntry);
 					}
@@ -4351,7 +4390,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(!tLinkAlreadyKnown){
 					mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
 
-					double tBefore1 = HRMController.getRealTime();
+					double tBefore1 = getRealTime();
 					HRMID tFrom = pFrom.clone();
 					HRMID tTo = pTo.clone(); 
 					tLink.setFirstVertex(tFrom);
@@ -4361,7 +4400,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					// it's time to update the HRG-GUI
 					notifyHRGGUI(tLink);
 
-					double tSpentTime1 = HRMController.getRealTime() - tBefore1;
+					double tSpentTime1 = getRealTime() - tBefore1;
 					if(tSpentTime1 > 10){
 						Logging.log(this, "      ..registerLinkHRG()::link() took " + tSpentTime1 + " ms for processing " + pRoutingEntry);
 					}

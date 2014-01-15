@@ -456,7 +456,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
 					if(!HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-						mHRMController.resetAnnounceCoordinatorGUI();
+						mHRMController.resetAnnounceCoordinatorMechanism();
 					}else{
 						HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
 					}
