@@ -64,6 +64,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
 import de.tuilmenau.ics.fog.routing.Route;
+import de.tuilmenau.ics.fog.routing.RouteSegmentMissingPart;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
@@ -534,26 +535,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 	/**
 	 * Notifies the GUI about essential updates within the HRM system
+	 * 
+	 * @param pReason the reason for this notification
 	 */
-	private void notifyGUI(Object pArgument)
+	private void notifyGUI(Object pReason)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
-			Logging.log(this, "Got notification with argument " + pArgument);
+			Logging.log(this, "Got notification with argument " + pReason);
 		}
 		
-		mGUIInformer.notifyObservers(pArgument);
+		mGUIInformer.notifyObservers(pReason);
 	}
 
 	/**
 	 * Notifies the HRGViewer about essential updates within the HRG graph
+	 * 
+	 * @param pReason the reason for this notification
 	 */
-	private void notifyHRGGUI(Object pArgument)
+	private void notifyHRGGUI(Object pReason)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
-			Logging.log(this, "Got HRG notification with argument " + pArgument);
+			Logging.log(this, "Got HRG notification with argument " + pReason);
 		}
 		
-		mHRGGUIInformer.notifyObservers(pArgument);
+		mHRGGUIInformer.notifyObservers(pReason);
 	}
 
 	/**
@@ -3299,6 +3304,42 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * EVENT: a new QoS reservation was created and we should update the local routing data
+	 * 
+	 * @param pNextHopL2Address  the L2Address of the node to which special QoS requirements were processed
+	 * @param pQoSReservationDescription the description of the QoS reservation
+	 */
+	public void eventQoSReservation(L2Address pNextHopL2Address, Description pQoSReservationDescription)
+	{
+		Logging.warn(this, "EVENT: QoS reservation detected to node: " + pNextHopL2Address);
+		Logging.warn(this, "   ..QoS reservation: " + pQoSReservationDescription);
+		
+		/**
+		 * Update the learned routes based on neighborhood data
+		 */
+		LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
+		for(ClusterMember tClusterMember : tL0ClusterMembers){
+			tClusterMember.detectNeighborhood();
+		}
+		
+		/**
+		 * Update the learned routes based on received RouteShare packets (inside hierarchy)
+		 */
+		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i >= 0; i--){
+			LinkedList<Coordinator> tLevelCoordinators = getAllCoordinators(i);
+			for(Coordinator tCoordinator : tLevelCoordinators){
+				tCoordinator.learnLocallyTheLastSharedRoutingTable(this + "::eventQoSReservation() towards " + pNextHopL2Address);
+			}
+		}
+		
+		/**
+		 * Trigger update of routing table view
+		 */
+		RoutingEntry tDummyEntry = RoutingEntry.createLocalhostEntry(new HRMID(0), this + "::eventQoSReservation() towards " + pNextHopL2Address);
+		notifyGUI(tDummyEntry);
 	}
 
 	/**
