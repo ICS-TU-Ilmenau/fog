@@ -274,7 +274,9 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		RoutingEntry tBestResultQoS = null;
 		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ROUTING;
 		
-		Logging.log(this, "### Searching for best routing table entry towards: " + pDestination +", desired max. delay=" + pDesiredMaxDelay + ", desired min. data rate=" + pDesiredMinDataRate);
+		if (DEBUG){
+			Logging.log(this, "### Searching for best routing table entry towards: " + pDestination +", desired max. delay=" + pDesiredMaxDelay + ", desired min. data rate=" + pDesiredMinDataRate);
+		}
 		
 		/**
 		 * DATA RATE has the highest priority:
@@ -404,7 +406,9 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			}
 		}
 		
-		Logging.log(this, "### BEST ROUTE is: " + tResult);
+		if (DEBUG){
+			Logging.log(this, "### BEST ROUTE is: " + tResult);
+		}
 		
 		return tResult;
 	}
