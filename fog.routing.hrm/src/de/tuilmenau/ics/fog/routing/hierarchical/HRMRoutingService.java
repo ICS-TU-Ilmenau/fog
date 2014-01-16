@@ -1036,9 +1036,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		if(tIsPhysicalLinkToPhysicalNeigborNode) {
 			L2Address tThisHostL2Address = getL2AddressFor(getCentralFN());
 
-//			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.log(this, "      ..NODE " + tThisHostL2Address + " FOUND POSSIBLE DIRECT NEIGHBOR: " + tToL2Address + "?");
-//			}
+			}
 
 			if(tLinkIsNew){
 				if((!pFrom.equals(tThisHostL2Address)) && (!tToL2Address.equals(tThisHostL2Address))) {
@@ -1050,7 +1050,9 @@ public class HRMRoutingService implements RoutingService, Localization
 					Logging.warn(this, "registerLink() ignores the new link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is linked to the central FN " + tThisHostL2Address);
 				}
 			}else{
-				Logging.warn(this, "registerLink() ignores the link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is already known");
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.warn(this, "registerLink() ignores the link to a possible neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is already known");
+				}
 			}
 		}
 	}
