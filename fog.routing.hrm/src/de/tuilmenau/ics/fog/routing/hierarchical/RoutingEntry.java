@@ -805,14 +805,16 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public void addOwner(HRMID pOwner)
 	{
-		synchronized (mOwners) {
-			// remove the olf entry and move the owner to the end of the list
-			if(mOwners.contains(pOwner)){
-				mOwners.remove(pOwner);
+		if(pOwner != null){
+			synchronized (mOwners) {
+				// remove the old entry and move the owner to the end of the list
+				if(mOwners.contains(pOwner)){
+					mOwners.remove(pOwner);
+				}
+				
+				// add the owner to the list
+				mOwners.add(pOwner);
 			}
-			
-			// add the owner to the list
-			mOwners.add(pOwner);
 		}
 	}
 
