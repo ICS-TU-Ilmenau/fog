@@ -98,7 +98,7 @@ public abstract class ProcessGateConstruction extends Process
 			if(peerIdentity != null) {
 				// check for impossible identity
 				if(peerIdentity.equals(getBase().getEntity().getIdentity())) {
-					throw new NetworkException(this, "Can not set peer " +peerIdentity +", since it is equal to node itself. Maybe peer did not sign message?");
+					throw new NetworkException(this, "Can not set peer " +peerIdentity +", since it is equal to the base (" + getBase().getEntity() + ") itself. Maybe peer did not sign message?");
 				} else {
 					mPeerIdentity = peerIdentity;
 				}
