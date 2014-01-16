@@ -103,41 +103,73 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				tResult = true;
 			}else{
 				/**
-				 * Update TIMEOUT
+				 * Check if known route was defined by a higher authority
 				 */
-				if(pRoutingTableEntry.getTimeout() > tFoundDuplicate.getTimeout()){
-					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-						Logging.log(this, "Updating timeout for: " + tFoundDuplicate + " to: " + pRoutingTableEntry.getTimeout());
-					}
-					tFoundDuplicate.setTimeout(pRoutingTableEntry.getTimeout());
-					tFoundDuplicate.setCause(pRoutingTableEntry.getCause());
-					
-					tResult = true;
-				}else{
-					if (tFoundDuplicate.getTimeout() > 0){
-						//Logging.err(this, "Expected monotonous growing timeout values for: " + pRoutingTableEntry);
+				boolean tKnownRouteIsFromHigherAuthotiry = false;
+				if(pRoutingTableEntry.getOwner() != null){
+					if(tFoundDuplicate.getOwner() != null){
+						if(tFoundDuplicate.getOwner().getHierarchyLevel() > pRoutingTableEntry.getOwner().getHierarchyLevel()){
+							// indeed, we already know this route from a higher authority
+							tKnownRouteIsFromHigherAuthotiry = true;
+						}
 					}
 				}
 				
 				/**
-				 * Update DELAY
+				 * Apply the given route
 				 */
-				tFoundDuplicate.setMinDelay(pRoutingTableEntry.getMinDelay());
-
-				/**
-				 * Update BANDWIDTH
-				 */
-				tFoundDuplicate.setMaxAvailableDataRate(pRoutingTableEntry.getMaxAvailableDataRate());
-
-				/**
-				 * Update UTILIZATION
-				 */
-				tFoundDuplicate.setUtilization(pRoutingTableEntry.getUtilization());
-				
-				/**
-				 * Update ORIGIN
-				 */
-				tFoundDuplicate.setOrigin(pRoutingTableEntry.getOrigin());
+				if(!tKnownRouteIsFromHigherAuthotiry){
+					/**
+					 * Update TIMEOUT
+					 */
+					if(pRoutingTableEntry.getTimeout() > tFoundDuplicate.getTimeout()){
+						if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+							Logging.log(this, "Updating timeout for: " + tFoundDuplicate + " to: " + pRoutingTableEntry.getTimeout());
+						}
+						tFoundDuplicate.setTimeout(pRoutingTableEntry.getTimeout());
+						tFoundDuplicate.setCause(pRoutingTableEntry.getCause());
+						
+						tResult = true;
+					}else{
+						if (tFoundDuplicate.getTimeout() > 0){
+							//Logging.err(this, "Expected monotonous growing timeout values for: " + pRoutingTableEntry);
+						}
+					}
+					
+					/**
+					 * Update DELAY
+					 */
+					tFoundDuplicate.setMinDelay(pRoutingTableEntry.getMinDelay());
+	
+					/**
+					 * Update BANDWIDTH
+					 */
+					tFoundDuplicate.setMaxAvailableDataRate(pRoutingTableEntry.getMaxAvailableDataRate());
+	
+					/**
+					 * Update UTILIZATION
+					 */
+					tFoundDuplicate.setUtilization(pRoutingTableEntry.getUtilization());
+					
+					/**
+					 * Update ORIGIN
+					 */
+					tFoundDuplicate.setOrigin(pRoutingTableEntry.getOrigin());
+	
+					/**
+					 * Update OWNER
+					 */
+					tFoundDuplicate.addOwner(pRoutingTableEntry.getOwner());
+	
+					/**
+					 * Update SHARER
+					 */
+					if(pRoutingTableEntry.isSharedLink()){
+						tFoundDuplicate.setSharedLink(pRoutingTableEntry.getShareSender());
+					}
+				}else{
+					// known route is from higher authority
+				}
 			}
 			
 			/**
