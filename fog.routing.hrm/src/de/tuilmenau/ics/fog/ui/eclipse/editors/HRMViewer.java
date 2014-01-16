@@ -788,6 +788,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		// col. 11
 		TableColumn tTableColTimeout = new TableColumn(mTableRoutingTable, SWT.NONE, 11);
 		tTableColTimeout.setText("Timeout");
+		// col. 12
+		TableColumn tTableColOwner = new TableColumn(mTableRoutingTable, SWT.NONE, 12);
+		tTableColOwner.setText("Owner");
+		// col. 13
+		TableColumn tTableColSender = new TableColumn(mTableRoutingTable, SWT.NONE, 13);
+		tTableColSender.setText("Sender");
 		
 		updateRoutingTable();
 		
@@ -813,6 +819,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutRoutingTable2.setColumnData(tTableColNextL2, new ColumnWeightData(3));
 		tLayoutRoutingTable2.setColumnData(tTableColOrigin, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColTimeout, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColOwner, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColSender, new ColumnWeightData(1));
 		
 		/**
 		 * Add a listener to allow re-sorting of the table based on the destination per table row
@@ -1452,6 +1460,16 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			i++;
 		}		
 	}
+	
+	private void showRoutingEntryOwners(RoutingEntry pRoutingEntry)
+	{
+		Logging.log(this, "Owners for: " + pRoutingEntry);
+		int i = 0;
+		for (HRMID tOwner : pRoutingEntry.getOwners()){
+			Logging.trace(this, "    ..[" + i + "]: " + tOwner);
+			i++;
+		}		
+	}	
 
 	private void printNAME(Composite pParent, ControlEntity pEntity)
 	{
@@ -1942,7 +1960,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						if (tEntry.getTimeout() > 0) {
 							tTableRow.setText(10, (tEntry.getOrigin() != null ? tEntry.getOrigin().toString() : "??"));
 						}else{
-							tTableRow.setText(10, "none");
+							tTableRow.setText(10, "undef.");
 						}
 	
 						/**
@@ -1951,13 +1969,31 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						if (tEntry.getTimeout() > 0) {
 							tTableRow.setText(11, Double.toString(tEntry.getTimeout()));
 						}else{
-							tTableRow.setText(11, "none");
+							tTableRow.setText(11, "undef.");
+						}
+
+						/**
+						 * Column 12: owner
+						 */
+						if (tEntry.getTimeout() > 0) {
+							tTableRow.setText(12, (tEntry.getOwner() != null ? tEntry.getOwner().toString() : "??"));
+						}else{
+							tTableRow.setText(12, "undef.");
+						}
+
+						/**
+						 * Column 13: sender
+						 */
+						if (tEntry.getTimeout() > 0) {
+							tTableRow.setText(13, (tEntry.getShareSender() != null ? tEntry.getShareSender().toString() : "??"));
+						}else{
+							tTableRow.setText(13, "undef.");
 						}
 
 						/**
 						 * Cells coloring
 						 */
-						for(int i = 0; i < 12; i++){
+						for(int i = 0; i < 14; i++){
 							if(tEntry.isLocalLoop()){
 								tTableRow.setBackground(i, tColLoop);
 							}else if (tEntry.isRouteToDirectNeighbor()){
@@ -2010,6 +2046,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							{
 								//Logging.log(this, "Widget selected: " + pEvent);
 								showRoutingEntryCause(tfRoutingTable.get(tSelectedIndex));
+							}
+						});
+						MenuItem tMenuItem1 = new MenuItem(tMenu, SWT.NONE);
+						tMenuItem1.setText("Which entities have ever set this entry?");
+						tMenuItem1.addSelectionListener(new SelectionListener() {
+							public void widgetDefaultSelected(SelectionEvent pEvent)
+							{
+								//Logging.log(this, "Default selected: " + pEvent);
+								showRoutingEntryOwners(tfRoutingTable.get(tSelectedIndex));
+							}
+							public void widgetSelected(SelectionEvent pEvent)
+							{
+								//Logging.log(this, "Widget selected: " + pEvent);
+								showRoutingEntryOwners(tfRoutingTable.get(tSelectedIndex));
 							}
 						});
 	
