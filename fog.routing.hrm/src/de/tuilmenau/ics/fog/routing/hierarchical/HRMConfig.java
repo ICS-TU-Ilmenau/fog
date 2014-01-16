@@ -424,7 +424,7 @@ public class HRMConfig
 		 * 
 		 * measured in: [s]
 		 */		
-		public static final double REPORT_SHARE_PHASE_TIME_BASE = 3.0; // default: 2.0
+		public static final double REPORT_SHARE_PHASE_TIME_BASE = 1.0; // default: 2.0
 		
 		/**
 		 * Define if the HRM based route should be recorded in a ProbeRoutingProperty if the connection  request uses this property.
