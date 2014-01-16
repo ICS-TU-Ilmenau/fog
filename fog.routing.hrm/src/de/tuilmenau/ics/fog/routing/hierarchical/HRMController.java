@@ -2384,10 +2384,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pReceivedSharedRoutingTable the received shared routing table
 	 * @param pReceiverHierarchyLevel the hierarchy level of the receiver
+	 * @param pOwnerHRMID  the HRMID of the owner
 	 * @param pSenderHRMID the HRMID of the sender 
 	 * @param pCause the cause for this addition of routes
 	 */
-	public void addHRMRouteShare(RoutingTable pReceivedSharedRoutingTable, HierarchyLevel pReceiverHierarchyLevel, HRMID pSenderHRMID, String pCause)
+	public void addHRMRouteShare(RoutingTable pReceivedSharedRoutingTable, HierarchyLevel pReceiverHierarchyLevel, HRMID pOwnerHRMID, HRMID pSenderHRMID, String pCause)
 	{
 		boolean DEBUG = false;
 //		if(pReceiverHierarchyLevel.isBaseLevel()){
@@ -2402,11 +2403,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				Logging.log(this, "  ..received shared route: " + tReceivedSharedRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tReceivedSharedRoutingEntry.getDest()));
 			}
 				
-			/**
-			 * Mark as shared entry
-			 */
-			tReceivedSharedRoutingEntry.setSharedLink(pSenderHRMID);
-
 			boolean tDropRoute = false;
 			
 			/**
@@ -2474,6 +2470,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							double tTimeoffset = 2 * getPeriodSharePhase(pReceiverHierarchyLevel.getValue() + 1 /* the sender is one level above */);
 							tReceivedSharedRoutingEntry.setTimeout(getSimulationTime() + tTimeoffset);
 							
+							/**
+							 * Mark as shared entry
+							 */
+							tReceivedSharedRoutingEntry.setSharedLink(pSenderHRMID);
+
+							/**
+							 * sets the owner of this route
+							 */
+							tReceivedSharedRoutingEntry.addOwner(pOwnerHRMID);
+
 							/**
 							 * Store the found route
 							 */
@@ -3314,8 +3320,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void eventQoSReservation(L2Address pNextHopL2Address, Description pQoSReservationDescription)
 	{
-		Logging.warn(this, "EVENT: QoS reservation detected to node: " + pNextHopL2Address);
-		Logging.log(this, "   ..QoS reservation: " + pQoSReservationDescription);
+		Logging.log(this, "EVENT: QoS reservation detected to node: " + pNextHopL2Address);
+//		Logging.log(this, "   ..QoS reservation: " + pQoSReservationDescription);
 		
 		/**
 		 * Update the learned routes based on neighborhood data
@@ -3323,7 +3329,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
 		for(ClusterMember tClusterMember : tL0ClusterMembers){
 			if(tClusterMember.hasClusterValidCoordinator()){
-				Logging.warn(this, "   ..auto-update shared routing data of: " + tClusterMember); 
+//				Logging.log(this, "   ..auto-update shared routing data of: " + tClusterMember); 
 				tClusterMember.detectNeighborhood();
 			}
 		}
@@ -3334,7 +3340,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT - 1; i++){
 			LinkedList<Coordinator> tLevelCoordinators = getAllCoordinators(i);
 			for(Coordinator tCoordinator : tLevelCoordinators){
-				Logging.warn(this, "   ..auto-update shared routing data of: " + tCoordinator); 
+//				Logging.log(this, "   ..auto-update shared routing data of: " + tCoordinator); 
 				tCoordinator.learnLocallyTheLastSharedRoutingTable(this + "::eventQoSReservation() towards " + pNextHopL2Address);
 			}
 		}

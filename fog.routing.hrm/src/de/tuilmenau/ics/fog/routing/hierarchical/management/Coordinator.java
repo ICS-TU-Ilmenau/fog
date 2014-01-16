@@ -832,13 +832,18 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 */
 		HRMID tSuperiorCoordinatorHRMID = null;
 		if(superiorCoordinatorComChannel() != null){
-			tSuperiorCoordinatorHRMID = superiorCoordinatorComChannel().getPeerHRMID();
+			if(getHierarchyLevel().getValue() < HRMConfig.Hierarchy.HEIGHT - 2){
+				tSuperiorCoordinatorHRMID = superiorCoordinatorComChannel().getPeerHRMID();
+			}else{
+				// set 0.0.0 for the highest coordinator because it doesn't have a valid HRMID
+				tSuperiorCoordinatorHRMID = new HRMID(0);
+			}
 		}
 
 		/**
 		 * learn locally the shared routes
 		 */
-		mHRMController.addHRMRouteShare(tReceivedSharedRoutingTable, getHierarchyLevel(), tSuperiorCoordinatorHRMID, pCause);
+		mHRMController.addHRMRouteShare(tReceivedSharedRoutingTable, getHierarchyLevel(), getHRMID(), tSuperiorCoordinatorHRMID, pCause);
 	}
 	
 	/**

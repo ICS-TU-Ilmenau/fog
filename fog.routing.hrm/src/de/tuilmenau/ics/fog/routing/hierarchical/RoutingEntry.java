@@ -60,6 +60,11 @@ public class RoutingEntry implements RouteSegment
 	private HRMID mOrigin = null;
 
 	/**
+	 * Stores the owner of this entry
+	 */
+	private LinkedList<HRMID> mOwners = new LinkedList<HRMID>();
+
+	/**
 	 * Stores the destination of this route entry.
 	 */
 	private HRMID mDestination = null;
@@ -763,7 +768,54 @@ public class RoutingEntry implements RouteSegment
 	{
 		mOrigin = pOrigin;
 	}
+
+	/**
+	 * Returns the owner of this entry
+	 * 
+	 * @return the HRMID of the owner
+	 */
+	public HRMID getOwner()
+	{
+		HRMID tResult = null;
+		
+		synchronized (mOwners) {
+			if(mOwners.size() > 0){
+				tResult = mOwners.getLast();
+			}
+		}
+
+		return tResult;
+	}
 	
+	/**
+	 * Returns the owners of this entry
+	 * 
+	 * @return the HRMIDs of the owners
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<HRMID> getOwners()
+	{
+		return (LinkedList<HRMID>) mOwners.clone();
+	}
+
+	/**
+	 * Adds an owner to the internal list
+	 * 
+	 * @param pOwner the additional owner
+	 */
+	public void addOwner(HRMID pOwner)
+	{
+		synchronized (mOwners) {
+			// remove the olf entry and move the owner to the end of the list
+			if(mOwners.contains(pOwner)){
+				mOwners.remove(pOwner);
+			}
+			
+			// add the owner to the list
+			mOwners.add(pOwner);
+		}
+	}
+
 	/**
 	 * Combines this entry with another one
 	 * 
@@ -881,6 +933,7 @@ public class RoutingEntry implements RouteSegment
 	 * 
 	 * @return the identical duplicate
 	 */
+	@SuppressWarnings("unchecked")
 	public RoutingEntry clone()
 	{
 		// create object copy
@@ -910,6 +963,8 @@ public class RoutingEntry implements RouteSegment
 		tResult.mReporter = mReporter;
 		
 		tResult.mOrigin = mOrigin;
+		
+		tResult.mOwners = (LinkedList<HRMID>) mOwners.clone();
 		
 		return tResult;
 	}
