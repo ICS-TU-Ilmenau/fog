@@ -132,8 +132,10 @@ public class HRMConfig
 		/**
 		 * Defines the minimum time period between two updates of the node specific HRM viewer.
 		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
+		 * 
+		 * measured in: [s]
 		 */
-		public static final double GUI_HRM_VIEWERS_UPDATE_INTERVAL = 1.0;
+		public static final double GUI_HRM_VIEWERS_UPDATE_INTERVAL = 1.0; // default 3.0
 
 		/**
 		 * Defines if the hierarchy creation should start once the entire simulation was created. 
@@ -183,8 +185,10 @@ public class HRMConfig
 		/**
 		 * Defines the minimum time period between two updates of the node specific HRG viewer.
 		 * IMPORTANT: The value shouldn't be too low. Otherwise, the GUI updates might slow down the FoGSiEm environment.
+		 * 
+		 * measured in: [s]
 		 */
-		public static final double GUI_HRG_VIEWERS_UPDATE_INTERVAL = 5.0;
+		public static final double GUI_HRG_VIEWERS_UPDATE_INTERVAL = 5.0; // default: 5.0
 
 		/**
 		 * Defines if very verbose debugging should be active.
@@ -278,8 +282,9 @@ public class HRMConfig
 		 *  t = COORDINATOR_ANNOUNCEMENTS_INITIAL_THRESHOLD
 		 *  f = COORDINATOR_ANNOUNCEMENTS_INTERVAL_LONG_TERM_FACTOR
 		 *  
+		 * measured in: [s]
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 2.0;
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 2.0; // default: 2.0
 		
 		/**
 		 * Defines how many initial announces should be sent.
@@ -369,8 +374,10 @@ public class HRMConfig
 
 		/**
 		 * Defines the timeout for a connect() try.
+		 * 
+		 * measured in: [s]
 		 */
-		public static final double CONNECT_TIMEOUT = 3.0;
+		public static final double CONNECT_TIMEOUT = 3.0; // default: 3.0
 	}
 	
 	/**
@@ -414,8 +421,10 @@ public class HRMConfig
 		/**
 		 * Defines the time between two triggers for the HRMController/node specific "report/share phase"
 		 * The higher in the hierarchy a coordinator is, the higher is the multiplier for this value.
-		 */
-		public static final double REPORT_SHARE_PHASE_TIME_BASE = 2.0; // in seconds
+		 * 
+		 * measured in: [s]
+		 */		
+		public static final double REPORT_SHARE_PHASE_TIME_BASE = 3.0; // default: 2.0
 		
 		/**
 		 * Define if the HRM based route should be recorded in a ProbeRoutingProperty if the connection  request uses this property.
