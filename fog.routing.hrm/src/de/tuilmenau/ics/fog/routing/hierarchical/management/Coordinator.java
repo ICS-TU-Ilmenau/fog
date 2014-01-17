@@ -921,7 +921,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
 				if (HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 					LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
-					AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController, mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
+					AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
 					
 					/**
 					 * Count the sent announces
@@ -985,7 +985,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		// trigger periodic Cluster announcements
 		if((HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS) && (HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
-			InvalidCoordinator tInvalidCoordinatorPacket = new InvalidCoordinator(mHRMController, mHRMController.getNodeName(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
+			InvalidCoordinator tInvalidCoordinatorPacket = new InvalidCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
 
 			/**
 			 * Count the sent announces

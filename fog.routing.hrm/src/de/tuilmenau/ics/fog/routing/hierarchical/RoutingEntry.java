@@ -18,6 +18,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraph
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * HRM Routing: The class describes a routing entry consisting of
@@ -80,11 +81,6 @@ public class RoutingEntry implements RouteSegment
 	private HRMID mNextHop = null;
 	
 	/**
-	 * Stores the last next hop of a route entry which was determined by combining multiple routing entries and this instance is the result.
-	 */
-	private HRMID mLastNextHop = null;
-
-	/**
 	 * Stores the hop costs (physical hop count) the described route causes.
 	 */
 	private int mHopCount = NO_HOP_COSTS;
@@ -105,26 +101,35 @@ public class RoutingEntry implements RouteSegment
 	private long mMaxAvailableDataRate = INFINITE_DATARATE;
 
 	/**
+	 * Stores the L2 address of the next hop if known
+	 * This variable is not part of the concept. It is only used to simplify the implementation.
+	 */
+	private L2Address mNextHopL2Address = new L2Address(0);
+
+	/**
+	 * Stores the last next hop of a route entry which was determined by combining multiple routing entries and this instance is the result.
+	 * This variable is not part of the concept. It is only used to simplify the implementation.
+	 */
+	private HRMID mLastNextHop = null;
+
+	/**
 	 * Stores if the route describes a local loop.
+	 * This variable is not part of the concept. It is only for GUI/debugging use.
 	 */
 	private boolean mLocalLoop = false; 
 	
 	/**
 	 * Stores if the route describes a link to a neighbor node.
-	 * ONLY FOR GUI: This value is not part of the concept. It is only used for debugging purposes.
+	 * This variable is not part of the concept. It is only for GUI/debugging use.
 	 */
 	private boolean mRouteToDirectNeighbor = false;
 
 	/**
 	 * Stores of the route describes a route for traversing a cluster
+	 * This variable is not part of the concept. It is only for GUI/debugging use.
 	 */
 	private boolean mRouteForClusterTraversal = false;
 	
-	/**
-	 * Stores the L2 address of the next hop if known
-	 */
-	private L2Address mNextHopL2Address = null;
-
 	/**
 	 * Stores the cause for this entry.
 	 * This variable is not part of the concept. It is only for GUI/debugging use.
@@ -139,32 +144,33 @@ public class RoutingEntry implements RouteSegment
 	
 	/**
 	 * Stores the timeout value of this route entry
+	 * This variable is never transmitted along a physical link. It is used node-internal in order to derive which route is deprecated due to timeouts.
 	 */
 	private double mTimeout = 0;
 	
 	/**
 	 * Stores if the link was reported
-	 * ONLY FOR GUI: This value is not part of the concept. It is only used for debugging purposes.
+	 * This variable is not part of the concept. It is only for GUI/debugging use.
 	 */
 	private boolean mReportedLink = false;
 	
 	/**
 	 * Stores the sender of this shared link
-	 * ONLY FOR GUI: This value is not part of the concept. It is only used for debugging purposes.
+	 * This variable is not part of the concept. It is only for GUI/debugging use.
 	 */
-	private HRMID mReporter = null;
+	private HRMID mReporter = new HRMID(-1);
 
 	/**
 	 * Stores if the link was shared 
-	 * ONLY FOR GUI: This value is not part of the concept. It is only used for debugging purposes.
+	 * This variable is not part of the concept. It is only for GUI/debugging use.
 	 */
 	private boolean mSharedLink = false;
 
 	/**
 	 * Stores the sender of this shared link
-	 * ONLY FOR GUI: This value is not part of the concept. It is only used for debugging purposes.
+	 * This variable is not part of the concept. It is only for GUI/debugging use.
 	 */
-	private HRMID mSharer = null;
+	private HRMID mSharer = new HRMID(-1);
 
 	/**
 	 * Constructor
@@ -1024,8 +1030,27 @@ public class RoutingEntry implements RouteSegment
 	@Override
 	public int getSerialisedSize()
 	{
-		// TODO: implement me
-		return 0;
+		return getDefaultSize();
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		int tResult = 0;
+		
+		tResult += new HRMID(0).getSerialisedSize(); //	private HRMID mDestination = null;
+		tResult += new HRMID(0).getSerialisedSize(); //	private HRMID mSource = null;
+		tResult += new HRMID(0).getSerialisedSize(); //	private HRMID mNextHop = null;
+		tResult += 2; // use only 2 bytes // private int mHopCount = NO_HOP_COSTS;
+		tResult += 4; // use only 4 bytes for a standard float encoded value, private double mUtilization = NO_UTILIZATION;
+		tResult += 4; // use only 4 bytes // private long mMinDelay = NO_DELAY;
+		tResult += 4; // use only 4 btes // private long mMaxAvailableDataRate = INFINITE_DATARATE;
+		
+		return tResult;
 	}
 
 	/**

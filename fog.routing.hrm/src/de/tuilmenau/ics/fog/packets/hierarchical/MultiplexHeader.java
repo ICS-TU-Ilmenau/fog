@@ -9,8 +9,10 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical;
 
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This header is used for inter-HRMController communication. It encapsulates a payload which 
@@ -26,12 +28,12 @@ public class MultiplexHeader implements ProtocolHeader
 	/**
 	 * Stores the source ClusterName
 	 */
-	private ClusterName mSenderClusterName;
+	private ClusterName mSenderClusterName = new ClusterName(null, null, null, 0);
 
 	/**
 	 * Stores the destination ClusterName
 	 */
-	private ClusterName mReceiverClusterName;
+	private ClusterName mReceiverClusterName = new ClusterName(null, null, null, 0);
 
 	/**
 	 * Stores the packet payload
@@ -45,10 +47,18 @@ public class MultiplexHeader implements ProtocolHeader
 
 	/**
 	 * Stores the HRM message number
+	 * This value is not part of the concept. It is only useful for debugging purposes.
 	 */
 	private int mMessageNumber = -1;
 
-	public static long sCreatedPackets = 0;
+	public static Long sCreatedPackets = new Long(0);
+
+	/**
+	 * Constructor for getDefaultSize()
+	 */
+	private MultiplexHeader()
+	{
+	}
 
 	/**
 	 * Constructor
@@ -63,7 +73,9 @@ public class MultiplexHeader implements ProtocolHeader
 		mReceiverClusterName = pReceiverClusterName;
 		mPayload = pPayload;
 		mMessageNumber = createMessageNumber();
-		sCreatedPackets++;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
 	}
 	
 	/**
@@ -130,8 +142,82 @@ public class MultiplexHeader implements ProtocolHeader
 	@Override
 	public int getSerialisedSize()
 	{
-		// TODO
-		return 0;
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		Sender entity         = 9
+		 * 		Receiver entity       = 9
+		 * 		Payload               = dynamic
+		 * 
+		 *************************************************************/
+		int tResult = 0;
+
+		tResult += getDefaultSize();
+		tResult += mReceiverClusterName.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		Default packet size in byte:
+		 * 		Sender entity         = 9
+		 * 		Receiver entity       = 9
+		 * 
+		 *************************************************************/
+		int tResult = 0;
+		
+		MultiplexHeader tTest = new MultiplexHeader();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += tTest.mSenderClusterName.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += tTest.mReceiverClusterName.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns if this packet type has a dynamic size
+	 * 
+	 * @return true or false
+	 */
+	public static boolean hasDynamicSize()
+	{
+		return true;
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
 	}
 
 	/**

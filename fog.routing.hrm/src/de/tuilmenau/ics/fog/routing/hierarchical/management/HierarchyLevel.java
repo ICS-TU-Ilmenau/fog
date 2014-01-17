@@ -40,6 +40,23 @@ public class HierarchyLevel
 	private int mLevel = UNDEFINED_LEVEL;
 
 	/**
+	 * Defines the size of this object if it is serialized
+	 * 
+	 * measured in [bytes]
+	 */
+	private final static int SERIALIZED_SIZE = 1; // 1 bytes for the actual hierarchy value  
+
+	/**
+	 * Constructor
+	 * 
+	 * @param pLevel the given priority value
+	 */
+	private HierarchyLevel(int pLevel)
+	{
+		mLevel = pLevel;
+	}
+
+	/**
 	 * Constructor: initializes the hierarchy level with the given value.
 	 * 
 	 * @param pHierarchyLevelValue the defined new hierarchy level value
@@ -190,11 +207,22 @@ public class HierarchyLevel
 		return new HierarchyLevel(BASE_LEVEL);
 	}	
 
-	private HierarchyLevel(int pLevel)
+	/**
+	 * Returns the size of a serialized representation.
+	 * 
+	 * @return the size of a serialized representation
+	 */
+	public int getSerialisedSize()
 	{
-		mLevel = pLevel;
+		return SERIALIZED_SIZE;
 	}
-	
+
+	/**
+	 * Returns a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
+	@Override
 	public String toString()
 	{
 		return "HierLevel(Lvl=" + Long.toString(getValue()) + ")";

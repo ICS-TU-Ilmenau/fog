@@ -37,18 +37,18 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	/**
 	 * Stores the hierarchy level of this cluster.
 	 */
-	private HierarchyLevel mHierarchyLevel = null;
+	private HierarchyLevel mHierarchyLevel = HierarchyLevel.createBaseLevel();
 	
 	/**
 	 * Stores the Election priority of this node for this cluster.
 	 * The value is also used inside the Elector of this cluster.
 	 */
-	private ElectionPriority mPriority = null;
+	private ElectionPriority mPriority = ElectionPriority.create(this);
 
 	/**
 	 * The HRM ID of this cluster.
 	 */
-	private HRMID mHRMID = null;
+	private HRMID mHRMID = new HRMID(0); // initialize the HRMID of the cluster to "0.0.0"
 
 	/**
 	 * Stores a description of former HRMIDs
@@ -94,7 +94,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	/**
 	 * Stores the unique cluster ID
 	 */
-	private Long mClusterID = null;
+	private Long mClusterID = new Long(-1);
 
 	/**
 	 * Stores the unique coordinator ID
@@ -113,14 +113,20 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private boolean mRoleValid = true;
 
 	private static boolean DEBUG_EQUALS = false;
+	
+	/**
+	 * Constructor
+	 */
+	protected ControlEntity()
+	{
+		
+	}
+	
 	/**
 	 * Constructor
 	 */
 	public ControlEntity(HRMController pHRMController, HierarchyLevel pHierarchyLevel)
 	{
-		// initialize the HRMID of the cluster to ".0.0.0"
-		mHRMID = new HRMID(0);
-
 		// the hierarchy level is defined from outside
 		mHierarchyLevel = pHierarchyLevel;
 		
@@ -128,7 +134,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		mHRMController = pHRMController;
 
 		// create a new standard Election priority
-		mPriority = ElectionPriority.createForControlEntity(mHRMController, this);
+		if(mHRMController != null){
+			mPriority = ElectionPriority.createForControlEntity(mHRMController, this);
+		}
 	}
 
 	/**
@@ -481,7 +489,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @return the name of the node
 	 */
-	public Name superiorCoordinatorNodeName() {
+	public Name superiorCoordinatorNodeName() 
+	{
 		return mSuperiorCoordinatorNodeName;
 	}
 

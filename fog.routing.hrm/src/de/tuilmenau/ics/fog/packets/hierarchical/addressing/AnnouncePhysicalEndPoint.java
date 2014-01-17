@@ -14,44 +14,60 @@ import java.io.Serializable;
 import de.tuilmenau.ics.fog.packets.LoggableElement;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * PACKET: This packet is used to inform the neighbor about the association between the central FN and the FN between the central FN and the bus.
  * 		   It is necessary to inform the neighbor about the FN which it should use to route to the central FN of a neighbor node.
+ * 		   This packet type is only needed for the FoG specific implementation. It is not mandatory for HRM.
  */
-public class AnnouncePhysicalEndPoint extends LoggableElement implements Serializable
+public class AnnouncePhysicalEndPoint extends LoggableElement implements Serializable, ProtocolHeader
 {
 	/**
 	 * Stores the L2Address of the central FN.
 	 */
-	private L2Address mCentralFN = null;
+	private L2Address mCentralFN = new L2Address(0);
 	
 	/**
 	 * Stores the L2Address of the FN which should be used as routing target 
 	 */
-	private L2Address mRoutingTargetFN = null;
+	private L2Address mRoutingTargetFN = new L2Address(0);
 
 	/**
 	 * Stores if this packet is an answer to another packet of this type
 	 */
-	private boolean mIsAnswer = false;
+	public boolean mIsAnswer = false;
+
 	public static final boolean INIT_PACKET = false;
 	public static final boolean ANSWER_PACKET = true;
-
-	public static long sCreatedPackets = 0;
-
-	/**
-	 * For using the class within (de-)serialization. 
-	 */
+	public static Long sCreatedPackets = new Long(0);
 	private static final long serialVersionUID = 7253912074438961613L;
 
+	/**
+	 * Constructor for getDefaultSize()
+	 */
+	private AnnouncePhysicalEndPoint()
+	{
+		
+	}
+	
+	/**
+	 * Constructor 
+	 * 
+	 * @param pCentralFN the central FN of the sender
+	 * @param pRoutingTargetFN the name of the first FN, which should be used for routing from the receiver towards the sender
+	 * @param pIsAnswer true if this packet is answer to a previous AnnouncePhysicalEndPoint packet
+	 */
 	public AnnouncePhysicalEndPoint(L2Address pCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
 	{
 		mCentralFN = pCentralFN;
 		mRoutingTargetFN = pRoutingTargetFN;
 		mIsAnswer = pIsAnswer;
-		sCreatedPackets++;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING){
 			Logging.log(getClass().getSimpleName() + "(SenderCentralAddress=" + getSenderCentralAddress()  + ", SenderAddress=" + getSenderAddress() + "): CREATED");
@@ -88,6 +104,91 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 		return mRoutingTargetFN;
 	}
 	
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		CentralFN				= 16
+		 * 		RoutingTargetFN			= 16
+		 * 		IsAnswer				= 1
+		 * 
+		 *************************************************************/
+
+		return getDefaultSize();
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		CentralFN				= 16
+		 * 		RoutingTargetFN			= 16
+		 * 		IsAnswer				= 1
+		 * 
+		 *************************************************************/
+
+		int tResult = 0;
+		
+		AnnouncePhysicalEndPoint tTest = new AnnouncePhysicalEndPoint();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += tTest.mCentralFN.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += tTest.mRoutingTargetFN.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += Size.sizeOf(tTest.mIsAnswer);
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns if this packet type has a dynamic size
+	 * 
+	 * @return true or false
+	 */
+	public static boolean hasDynamicSize()
+	{
+		return false;
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Returns an object describing string
 	 * 

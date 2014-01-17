@@ -9,8 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
 /**
  * PACKET: It is used when an answer to ElectionElect should be signaled.
@@ -19,7 +19,11 @@ public class ElectionReply  extends SignalingMessageElection
 {
 	private static final long serialVersionUID = -4666721123778977947L;
 	
-	public static long sCreatedPackets = 0;
+	/**
+	 * Stores the counter of created packets from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sCreatedPackets = new Long(0);
 
 	/**
 	 * Constructor
@@ -28,9 +32,27 @@ public class ElectionReply  extends SignalingMessageElection
 	 * @param pReceiverName the name of the message receiver
 	 * @param pSenderPriority the priority of the message sender
 	 */
-	public ElectionReply(Name pSenderName, Name pReceiverName, ElectionPriority pSenderPriority)
+	public ElectionReply(HRMName pSenderName, HRMName pReceiverName, ElectionPriority pSenderPriority)
 	{
 		super(pSenderName, pReceiverName, pSenderPriority);
-		sCreatedPackets++;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
+	}
+	
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
 	}
 }

@@ -9,11 +9,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
 /**
  * PACKET: If the priority of a node changes this object has to be used to inform other cluster members about the change.
@@ -23,7 +23,11 @@ public class ElectionPriorityUpdate extends SignalingMessageElection implements 
 {
 	private static final long serialVersionUID = -8819106581802846812L;
 	
-	public static long sCreatedPackets = 0;
+	/**
+	 * Stores the counter of created packets from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sCreatedPackets = new Long(0);
 
 	/**
 	 * Constructor
@@ -31,10 +35,12 @@ public class ElectionPriorityUpdate extends SignalingMessageElection implements 
 	 * @param pSenderName the name of the message sender
 	 * @param pSenderPriroity the priority of the message sender
 	 */
-	public ElectionPriorityUpdate(Name pSenderName, ElectionPriority pSenderPriroity)
+	public ElectionPriorityUpdate(HRMName pSenderName, ElectionPriority pSenderPriroity)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriroity);
-		sCreatedPackets++;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
 	}
 
 	/**
@@ -51,6 +57,22 @@ public class ElectionPriorityUpdate extends SignalingMessageElection implements 
 		super.duplicate(tResult);
 
 		//Logging.log(this, "Created duplicate packet: " + tResult);
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
 		
 		return tResult;
 	}

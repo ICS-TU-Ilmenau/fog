@@ -9,9 +9,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
-import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 
@@ -26,14 +28,27 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	/**
 	 * Stores the unique coordinator ID of the announcing coordinator
 	 */
-	private long mCoordinatorID;
+	private long mCoordinatorID = -1;
 	
 	/**
 	 * Stores some GUI description about the announcing coordinator
+	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
 	private String mCoordinatorDescription = null;
 	
-	public static long sCreatedPackets = 0;
+	/**
+	 * Stores the counter of created packets from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sCreatedPackets = new Long(0);
+
+	/**
+	 * Constructor for getDefaultSize()
+	 */
+	private ElectionAnnounceWinner()
+	{
+		super();
+	}
 
 	/**
 	 * Constructor
@@ -43,12 +58,14 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	 * @param pCoordinatorID the unique ID of the message sender (coordinator)
 	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public ElectionAnnounceWinner(Name pSenderName, ElectionPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
+	public ElectionAnnounceWinner(HRMName pSenderName, ElectionPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
 		mCoordinatorID = pCoordinatorID;
-		sCreatedPackets++;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
 	}
 	
 	/**
@@ -85,6 +102,61 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 		super.duplicate(tResult);
 
 		//Logging.log(this, "Created duplicate packet: " + tResult);
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	     = 1
+		 * 		SignalingMessageElection = 4
+		 * 		CoordinatorID			 = 4
+		 * 
+		 *************************************************************/
+
+		return getDefaultSize();
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	     = 1
+		 * 		SignalingMessageElection = 4
+		 * 		CoordinatorID			 = 4
+		 * 
+		 *************************************************************/
+
+		int tResult = 0;
+		
+		ElectionAnnounceWinner tTest = new ElectionAnnounceWinner();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += SignalingMessageElection.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += 4; // use only 4 bytes // private long mCoordinatorID
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
 		
 		return tResult;
 	}

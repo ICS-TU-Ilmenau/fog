@@ -11,7 +11,11 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * This class is used to identify a cluster (independent from its physical location)
@@ -19,6 +23,11 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 public class ClusterName extends ControlEntity implements Serializable, AbstractRoutingGraphNode
 {
 	private static final long serialVersionUID = 3027076881853652810L;
+	
+	private ClusterName()
+	{
+		super();
+	}
 	
 	/**
 	 * Constructor
@@ -39,6 +48,61 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 		setCoordinatorID(pCoordinatorID);
 	}
 	
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		/*
+		 * Serialized size in byte:
+		 * Hierarchy level       = 1
+		 * ClusterID             = 4
+		 * CoordinatorID		 = 4
+		 */
+
+		return getDefaultSize();
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*
+		 * Serialized size in byte:
+		 * Hierarchy level       = 1
+		 * ClusterID             = 4
+		 * CoordinatorID		 = 4
+		 */
+
+		int tResult = 0;
+		
+		ClusterName tTest = new ClusterName();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+//			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += tTest.getHierarchyLevel().getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+//			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += Size.sizeOf(tTest.getClusterID());
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+//			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += Size.sizeOf(tTest.getCoordinatorID());
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+//			Logging.log("   ..resulting size: " + tResult);
+		}
+
+		return tResult;
+	}
+
 	/**
 	 * Returns a descriptive string about this object
 	 * 

@@ -12,9 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.election;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterMember;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorAsClusterMember;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -57,23 +55,29 @@ public class ElectionPriority
 	 * This value represents the closeness to level 1+ coordinators. It is used when a remote coordinator announcement is received ==> instantiate coordinators far away from one-way network parts, instantiate them close to the network core
 	 */
 	public static long OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR = 10;
-
-	/**
-	 * This is the priority counter, which allows for globally (related to a physical simulation machine) unique ElectionPriority IDs.
-	 */
-	private static long sNextFreePriorityID = 0;
 	
 	/**
-	 * Stores the physical simulation machine specific multiplier, which is used to create unique priority IDs even if multiple physical simulation machines are connected by FoGSiEm instances
-	 * The value "-1" is important for initialization!
+	 * Stores the priority value
 	 */
-	private static long sPriorityIDMachineMultiplier = -1;
+	private long mPriority = HRMConfig.Election.DEFAULT_PRIORITY;
 
 	/**
-	 * Stores the unique ElectionPriorityID
+	 * Defines the size of this object if it is serialized
+	 * 
+	 * measured in [bytes]
 	 */
-	private long mPriorityId = sNextFreePriorityID++;
-	
+	private final static int SERIALIZED_SIZE = 4; // 4 bytes for the actual priority value  
+
+	/**
+	 * Constructor
+	 * 
+	 * @param pPriority the new priority value
+	 */
+	private ElectionPriority(long pPriority)
+	{
+		mPriority = pPriority;
+	}
+
 	/**
 	 * Factory function: initializes the Election priority for a cluster depending on the node configuration and the hierarchy level.
 	 * 
@@ -100,8 +104,10 @@ public class ElectionPriority
 	 */
 	public static ElectionPriority create(Object pParent)
 	{
-		if ((pParent instanceof Integer) || (pParent instanceof Long)){
-			Logging.warn(pParent, "This object is an Integer/Long class, this often means a wrong call to ElectionPriority::create()");
+		if(pParent != null){
+			if ((pParent instanceof Integer) || (pParent instanceof Long)){
+				Logging.warn(pParent, "This object is an Integer/Long class, this often means a wrong call to ElectionPriority::create()");
+			}
 		}
 
 		ElectionPriority tResult = new ElectionPriority(UNDEFINED_PRIORITY);
@@ -112,7 +118,7 @@ public class ElectionPriority
 		 */
 		
 		if (DEBUG_CREATION){
-			Logging.log(pParent, "Created ElectionPriority object (undefined priority) for class \"" + pParent.getClass().getSimpleName() + "\"");
+			Logging.log(pParent, "Created ElectionPriority object (undefined priority) for class \"" + (pParent != null ? pParent.getClass().getSimpleName() : "null") + "\"");
 		}
 		
 		return tResult;
@@ -135,41 +141,6 @@ public class ElectionPriority
 	}
 
 	/**
-	 * Determines the physical simulation machine specific ClusterID multiplier
-	 * 
-	 * @return the generated multiplier
-	 */
-	private long priorityIDMachineMultiplier()
-	{
-		if (sPriorityIDMachineMultiplier < 0){
-			String tHostName = HRMController.getHostName();
-			if (tHostName != null){
-				sPriorityIDMachineMultiplier = (tHostName.hashCode() % 10000) * 10000;
-			}else{
-				Logging.err(this, "Unable to determine the machine-specific ClusterID multiplier because host name couldn't be indentified");
-			}
-		}
-
-		return sPriorityIDMachineMultiplier;
-	}
-
-	/**
-	 * Generates a new priority ID
-	 * 
-	 * @return the ID
-	 */
-	private long createPriorityID()
-	{
-		// get the current unique ID counter
-		long tResult = sNextFreePriorityID * priorityIDMachineMultiplier();
-
-		// make sure the next ID isn't equal
-		sNextFreePriorityID++;
-		
-		return tResult;
-	}
-
-	/**
 	 * Returns the Election priority value.
 	 * 
 	 * @return Election priority
@@ -179,16 +150,6 @@ public class ElectionPriority
 		return mPriority;
 	}
 
-	/**
-	 * Returns the unique ElectionPriority ID
-	 * 
-	 * @return the ID
-	 */
-	public long getUniqueID()
-	{
-		return mPriorityId;
-	}
-	
 	/**
 	 * Check if the priority is still undefined.
 	 * 
@@ -242,6 +203,11 @@ public class ElectionPriority
 		return false;
 	}
 
+	/**
+	 * Compares two priority objects
+	 * 
+	 * @return true if both represent the same priority value
+	 */
 	@Override
 	public boolean equals(Object pObj)
 	{
@@ -261,16 +227,24 @@ public class ElectionPriority
 		return false;
 	}
 
-	private ElectionPriority(long pPriority)
+	/**
+	 * Returns the size of a serialized representation.
+	 * 
+	 * @return the size of a serialized representation
+	 */
+	public int getSerialisedSize()
 	{
-		mPriority = pPriority;
-		mPriorityId = createPriorityID();
+		return SERIALIZED_SIZE;
 	}
 
+	/**
+	 * Returns a descriptive string about this object
+	 * 
+	 *  @return the descriptive string
+	 */
+	@Override
 	public String toString()
 	{
 		return "ElectionPriority(Prio=" + Long.toString(getValue()) + ")";
 	}
-	
-	private long mPriority = HRMConfig.Election.DEFAULT_PRIORITY;
 }

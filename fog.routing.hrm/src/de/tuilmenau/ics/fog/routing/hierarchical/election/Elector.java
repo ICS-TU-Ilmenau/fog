@@ -558,7 +558,7 @@ public class Elector implements Localization
 					}
 			
 					// create the packet
-					ElectionElect tElectionElectPacket = new ElectionElect(mHRMController.getNodeName(), mParent.getPriority());
+					ElectionElect tElectionElectPacket = new ElectionElect(mHRMController.getNodeL2Address(), mParent.getPriority());
 					
 					// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority				
 					mParent.sendClusterBroadcast(tElectionElectPacket, true);
@@ -598,7 +598,7 @@ public class Elector implements Localization
 
 			if (mParent.getCoordinator() != null){
 				// create the packet
-				ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeName(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+				ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
 		
 				// send broadcast
 				mParent.sendClusterBroadcast(tElectionAnnounceWinnerPacket, true);
@@ -636,7 +636,7 @@ public class Elector implements Localization
 
 			if (mParent.getCoordinator() != null){
 				// create the packet
-				ElectionResignWinner tElectionResignWinnerPacket = new ElectionResignWinner(mHRMController.getNodeName(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+				ElectionResignWinner tElectionResignWinnerPacket = new ElectionResignWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
 		
 				// send broadcast
 				mParent.sendClusterBroadcast(tElectionResignWinnerPacket, true);
@@ -667,7 +667,7 @@ public class Elector implements Localization
 				Logging.log(this, "SENDPRIOUPDATE(), cluster members: " + mParent.getComChannels().size());
 			}
 	
-			ElectionPriorityUpdate tElectionPriorityUpdatePacket = new ElectionPriorityUpdate(mHRMController.getNodeName(), mParent.getPriority());
+			ElectionPriorityUpdate tElectionPriorityUpdatePacket = new ElectionPriorityUpdate(mHRMController.getNodeL2Address(), mParent.getPriority());
 	
 			// send broadcast
 			Logging.log(this, "Distributing priority update: " + tElectionPriorityUpdatePacket);
@@ -693,7 +693,7 @@ public class Elector implements Localization
 			}
 	
 			// create the packet
-			ElectionAlive tElectionAlivePacket = new ElectionAlive(mHRMController.getNodeName(), mParent.getPriority());
+			ElectionAlive tElectionAlivePacket = new ElectionAlive(mHRMController.getNodeL2Address(), mParent.getPriority());
 	
 			// send broadcast
 			mParent.sendClusterBroadcast(tElectionAlivePacket, true);
@@ -722,7 +722,7 @@ public class Elector implements Localization
 				/**
 				 * create the packet
 				 */
-				ElectionReturn tElectionReturnPacket = new ElectionReturn(mHRMController.getNodeName(), pComChannel.getParent().getPriority());
+				ElectionReturn tElectionReturnPacket = new ElectionReturn(mHRMController.getNodeL2Address(), pComChannel.getParent().getPriority());
 	
 				/**
 				 * Update local link activation
@@ -737,7 +737,7 @@ public class Elector implements Localization
 				/**
 				 * create the LEAVE packet
 				 */
-				ElectionLeave tElectionLeavePacket = new ElectionLeave(mHRMController.getNodeName(), pComChannel.getParent().getPriority());
+				ElectionLeave tElectionLeavePacket = new ElectionLeave(mHRMController.getNodeL2Address(), pComChannel.getParent().getPriority());
 	
 				/**
 				 * Update the list of active ClusterMembers:  (it represents the best choices per hier. level)
@@ -1478,7 +1478,7 @@ public class Elector implements Localization
 			}
 	
 			// create REPLY packet
-			ElectionReply tReplyPacket = new ElectionReply(mHRMController.getNodeName(), pComChannel.getPeerHRMID(), mParent.getPriority());
+			ElectionReply tReplyPacket = new ElectionReply(mHRMController.getNodeL2Address(), pComChannel.getPeerHRMID(), mParent.getPriority());
 				
 			// send the answer packet
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
@@ -1504,7 +1504,7 @@ public class Elector implements Localization
 	private void sendANNOUNCE(ComChannel pComChannel)
 	{
 		// create the packet
-		ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeName(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+		ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
 
 		// send message
 		pComChannel.sendPacket(tElectionAnnounceWinnerPacket);

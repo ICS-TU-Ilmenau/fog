@@ -11,14 +11,16 @@ package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * PACKET: This packet is used within the HRM infrastructure in order to tell other clusters about the invalidation of a remote cluster.
@@ -70,12 +72,12 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	/**
 	 * Stores the ClusterName of the sender
 	 */
-	private ClusterName mSenderClusterName = null;
+	private ClusterName mSendingCoordinator = new ClusterName(null, null, null, 0);
 	
 	/**
 	 * Stores the L2 address of the node where the coordinator of the announced cluster is located
 	 */
-	private L2Address mCoordinatorNodeL2Address = null;
+	private L2Address mCoordinatorNodeL2Address = new L2Address(0);
 	
 	/**
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
@@ -92,7 +94,19 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	 */
 	private LinkedList<L2Address> mPassedNodes = new LinkedList<L2Address>();
 
-	public static long sCreatedPackets = 0;
+	/**
+	 * Stores the counter of created packets from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sCreatedPackets = new Long(0);
+
+	/**
+	 * Constructor for getDefaultSize()
+	 */
+	private InvalidCoordinator()
+	{
+		super();
+	}
 
 	/**
 	 * Constructor
@@ -102,11 +116,11 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	 * @param pSenderClusterName the ClusterName of the sender
 	 * @param pCoordinatorNodeL2Address the L2 address of the node where the coordinator is located
 	 */
-	public InvalidCoordinator(HRMController pHRMController, Name pSenderName, ClusterName pSenderClusterName, L2Address pCoordinatorNodeL2Address)
+	public InvalidCoordinator(HRMController pHRMController, HRMName pSenderName, ClusterName pSenderClusterName, L2Address pCoordinatorNodeL2Address)
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
-		mSenderClusterName = pSenderClusterName;
+		mSendingCoordinator = pSenderClusterName;
 		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
 		
 		/**
@@ -115,7 +129,9 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		if(pHRMController != null){
 			addPassedNode(pHRMController.getNodeL2Address());
 		}
-		sCreatedPackets++;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
 	}
 	
 	/**
@@ -171,7 +187,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	 */
 	public ClusterName getSenderClusterName()
 	{
-		return mSenderClusterName;
+		return mSendingCoordinator;
 	}
 	
 	/**
@@ -275,6 +291,117 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		return tResult;
 	}
 	
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	    	= 1
+		 * 		SendingCoordinator        	= 9
+		 * 		CoordinatorNodeL2Address  	= 16
+		 * 		TTL					     	= 2
+		 * 		EnteredSidewardForwarding 	= 1
+		 * 		PassedNodes.length		 	= 1
+		 * 		PassedNodes				 	= dynamic
+		 * 
+		 *************************************************************/
+
+		int tResult = 0;
+		
+		tResult += getDefaultSize();
+		tResult += 1; // size of the following list
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += (mPassedNodes.size() * new L2Address(0).getSerialisedSize());
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	     	= 1
+		 * 		SendingCoordinator        	= 9
+		 * 		CoordinatorNodeL2Address  	= 16
+		 * 		TTL					     	= 2
+		 * 		EnteredSidewardForwarding 	= 1
+		 * 
+		 *************************************************************/
+
+		int tResult = 0;
+		
+		InvalidCoordinator tTest = new InvalidCoordinator();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += SignalingMessageHrm.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += tTest.mSendingCoordinator.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += tTest.mCoordinatorNodeL2Address.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += 2; // TTL: use only 2 bytes here
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += Size.sizeOf(tTest.mEnteredSidewardForwarding);
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Returns if this packet type has a dynamic size
+	 * 
+	 * @return true or false
+	 */
+	public static boolean hasDynamicSize()
+	{
+		return true;
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Returns an object describing string
 	 * 

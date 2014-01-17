@@ -9,11 +9,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -30,7 +30,19 @@ public class RouteReport extends SignalingMessageHrm
 	 */
 	private RoutingTable mRoutingTable = new RoutingTable();
 
-	public static long sCreatedPackets = 0;
+	/**
+	 * Stores the counter of created packets from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sCreatedPackets = new Long(0);
+
+	/**
+	 * Constructor for getDefaultSize()
+	 */
+	private RouteReport()
+	{
+		super();
+	}
 
 	/**
 	 * Constructor
@@ -39,13 +51,15 @@ public class RouteReport extends SignalingMessageHrm
 	 * @param pReceiverName the receiver name
 	 * @param pRoutingTable the routing table which is reported
 	 */
-	public RouteReport(Name pSenderName, Name pReceiverName, RoutingTable pRoutingTable)
+	public RouteReport(HRMName pSenderName, HRMName pReceiverName, RoutingTable pRoutingTable)
 	{
 		super(pSenderName, pReceiverName);
 		if(pRoutingTable != null){
 			mRoutingTable = pRoutingTable;
 		}
-		sCreatedPackets++;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
 	}
 	
 	/**
@@ -77,6 +91,93 @@ public class RouteReport extends SignalingMessageHrm
 		return mRoutingTable;
 	}
 	
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	     = 1
+		 * 		RoutingTable.length		 = 1
+		 * 		RoutingTable			 = dynamic
+		 * 
+		 *************************************************************/
+
+		int tResult = 0;
+		
+		tResult += getDefaultSize();
+		tResult += 1; // size of the following list
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += (mRoutingTable.size() * RoutingEntry.getDefaultSize());
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	     = 1
+		 * 
+		 *************************************************************/
+
+		int tResult = 0;
+		
+		RouteReport tTest = new RouteReport();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += SignalingMessageHrm.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns if this packet type has a dynamic size
+	 * 
+	 * @return true or false
+	 */
+	public static boolean hasDynamicSize()
+	{
+		return true;
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Returns an object describing string
 	 * 

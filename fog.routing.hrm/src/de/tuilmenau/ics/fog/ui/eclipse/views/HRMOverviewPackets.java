@@ -131,30 +131,30 @@ public class HRMOverviewPackets extends ViewPart
 	{
 		//Logging.log(this, "Update view " + ++sUpdateLoop);
 		
-		mAnnouncePhysicalEndPoint.setText(Long.toString(AnnouncePhysicalEndPoint.sCreatedPackets));
-		mMultiplexHeader.setText(Long.toString(MultiplexHeader.sCreatedPackets));
-		mSignalingMessageHrm.setText(Long.toString(SignalingMessageHrm.sCreatedPackets));
-		mProbePacket.setText(Long.toString(ProbePacket.sCreatedPackets));
-		mAnnounceHRMIDs.setText(Long.toString(AnnounceHRMIDs.sCreatedPackets));
-		mAssignHRMID.setText(Long.toString(AssignHRMID.sCreatedPackets));
-		mRevokeHRMIDs.setText(Long.toString(RevokeHRMIDs.sCreatedPackets));
-		mInformClusterLeft.setText(Long.toString(InformClusterLeft.sCreatedPackets));
-		mInformClusterMembershipCanceled.setText(Long.toString(InformClusterMembershipCanceled.sCreatedPackets));
-		mRequestClusterMembership.setText(Long.toString(RequestClusterMembership.sCreatedPackets));
-		mRequestClusterMembershipAck.setText(Long.toString(RequestClusterMembershipAck.sCreatedPackets));
-		mSignalingMessageElection.setText(Long.toString(SignalingMessageElection.sCreatedPackets));
-		mElectionAlive.setText(Long.toString(ElectionAlive.sCreatedPackets));
-		mElectionAnnounceWinner.setText(Long.toString(ElectionAnnounceWinner.sCreatedPackets));
-		mElectionElect.setText(Long.toString(ElectionElect.sCreatedPackets));
-		mElectionLeave.setText(Long.toString(ElectionLeave.sCreatedPackets));
-		mElectionPriorityUpdate.setText(Long.toString(ElectionPriorityUpdate.sCreatedPackets));
-		mElectionReply.setText(Long.toString(ElectionReply.sCreatedPackets));
-		mElectionResignWinner.setText(Long.toString(ElectionResignWinner.sCreatedPackets));
-		mElectionReturn.setText(Long.toString(ElectionReturn.sCreatedPackets));
-		mAnnounceCoordinator.setText(Long.toString(AnnounceCoordinator.sCreatedPackets));
-		mInvalidCoordinator.setText(Long.toString(InvalidCoordinator.sCreatedPackets));
-		mRouteReport.setText(Long.toString(RouteReport.sCreatedPackets));
-		mRouteShare.setText(Long.toString(RouteShare.sCreatedPackets));
+		mAnnouncePhysicalEndPoint.setText(Long.toString(AnnouncePhysicalEndPoint.getCreatedPackets()) + ",  each " + AnnouncePhysicalEndPoint.getDefaultSize() + " bytes" + (AnnouncePhysicalEndPoint.hasDynamicSize() ? " + more" : ""));
+		mMultiplexHeader.setText(Long.toString(MultiplexHeader.getCreatedPackets()) + ",  each " + MultiplexHeader.getDefaultSize() + " bytes" + (MultiplexHeader.hasDynamicSize() ? " + more" : ""));
+		mSignalingMessageHrm.setText(Long.toString(SignalingMessageHrm.getCreatedPackets()) + ",  each " + SignalingMessageHrm.getDefaultSize() + " bytes" + (SignalingMessageHrm.hasDynamicSize() ? " + more" : ""));
+		mProbePacket.setText(Long.toString(ProbePacket.getCreatedPackets()) + ",  each " + ProbePacket.getDefaultSize() + " bytes" + (ProbePacket.hasDynamicSize() ? " + more" : ""));
+		mAnnounceHRMIDs.setText(Long.toString(AnnounceHRMIDs.getCreatedPackets()) + ",  each " + AnnounceHRMIDs.getDefaultSize() + " bytes" + (AnnounceHRMIDs.hasDynamicSize() ? " + more" : ""));
+		mAssignHRMID.setText(Long.toString(AssignHRMID.getCreatedPackets()) + ",  each " + AssignHRMID.getDefaultSize() + " bytes" + (AssignHRMID.hasDynamicSize() ? " + more" : ""));
+		mRevokeHRMIDs.setText(Long.toString(RevokeHRMIDs.getCreatedPackets()) + ",  each " + RevokeHRMIDs.getDefaultSize() + " bytes" + (RevokeHRMIDs.hasDynamicSize() ? " + more" : ""));
+		mInformClusterLeft.setText(Long.toString(InformClusterLeft.getCreatedPackets()) + ",  each " + InformClusterLeft.getDefaultSize() + " bytes" + (InformClusterLeft.hasDynamicSize() ? " + more" : ""));
+		mInformClusterMembershipCanceled.setText(Long.toString(InformClusterMembershipCanceled.getCreatedPackets()) + ",  each " + InformClusterMembershipCanceled.getDefaultSize() + " bytes" + (InformClusterMembershipCanceled.hasDynamicSize() ? " + more" : ""));
+		mRequestClusterMembership.setText(Long.toString(RequestClusterMembership.getCreatedPackets()) + ",  each " + RequestClusterMembership.getDefaultSize() + " bytes" + (RequestClusterMembership.hasDynamicSize() ? " + more" : ""));
+		mRequestClusterMembershipAck.setText(Long.toString(RequestClusterMembershipAck.getCreatedPackets()) + ",  each " + RequestClusterMembershipAck.getDefaultSize() + " bytes" + (RequestClusterMembershipAck.hasDynamicSize() ? " + more" : ""));
+		mSignalingMessageElection.setText(Long.toString(SignalingMessageElection.getCreatedPackets()) + ",  each " + SignalingMessageElection.getDefaultSize() + " bytes" + (SignalingMessageElection.hasDynamicSize() ? " + more" : ""));
+		mElectionAlive.setText(Long.toString(ElectionAlive.getCreatedPackets()) + ",  each " + ElectionAlive.getDefaultSize() + " bytes" + (ElectionAlive.hasDynamicSize() ? " + more" : ""));
+		mElectionAnnounceWinner.setText(Long.toString(ElectionAnnounceWinner.getCreatedPackets()) + ",  each " + ElectionAnnounceWinner.getDefaultSize() + " bytes" + (ElectionAnnounceWinner.hasDynamicSize() ? " + more" : ""));
+		mElectionElect.setText(Long.toString(ElectionElect.getCreatedPackets()) + ",  each " + ElectionElect.getDefaultSize() + " bytes" + (ElectionElect.hasDynamicSize() ? " + more" : ""));
+		mElectionLeave.setText(Long.toString(ElectionLeave.getCreatedPackets()) + ",  each " + ElectionLeave.getDefaultSize() + " bytes" + (ElectionLeave.hasDynamicSize() ? " + more" : ""));
+		mElectionPriorityUpdate.setText(Long.toString(ElectionPriorityUpdate.getCreatedPackets()) + ",  each " + ElectionPriorityUpdate.getDefaultSize() + " bytes" + (ElectionPriorityUpdate.hasDynamicSize() ? " + more" : ""));
+		mElectionReply.setText(Long.toString(ElectionReply.getCreatedPackets()) + ",  each " + ElectionReply.getDefaultSize() + " bytes" + (ElectionReply.hasDynamicSize() ? " + more" : ""));
+		mElectionResignWinner.setText(Long.toString(ElectionResignWinner.getCreatedPackets()) + ",  each " + ElectionResignWinner.getDefaultSize() + " bytes" + (ElectionResignWinner.hasDynamicSize() ? " + more" : ""));
+		mElectionReturn.setText(Long.toString(ElectionReturn.getCreatedPackets()) + ",  each " + ElectionReturn.getDefaultSize() + " bytes" + (ElectionReturn.hasDynamicSize() ? " + more" : ""));
+		mAnnounceCoordinator.setText(Long.toString(AnnounceCoordinator.getCreatedPackets()) + ",  each " + AnnounceCoordinator.getDefaultSize() + " bytes" + (AnnounceCoordinator.hasDynamicSize() ? " + more" : ""));
+		mInvalidCoordinator.setText(Long.toString(InvalidCoordinator.getCreatedPackets()) + ",  each " + InvalidCoordinator.getDefaultSize() + " bytes" + (InvalidCoordinator.hasDynamicSize() ? " + more" : ""));
+		mRouteReport.setText(Long.toString(RouteReport.getCreatedPackets()) + ",  each " + RouteReport.getDefaultSize() + " bytes" + (RouteReport.hasDynamicSize() ? " + more" : ""));
+		mRouteShare.setText(Long.toString(RouteShare.getCreatedPackets()) + ",  each " + RouteShare.getDefaultSize() + " bytes" + (RouteShare.hasDynamicSize() ? " + more" : ""));
 	}
 	
 

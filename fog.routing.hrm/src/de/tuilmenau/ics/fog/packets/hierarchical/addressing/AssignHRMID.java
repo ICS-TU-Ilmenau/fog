@@ -9,9 +9,12 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.addressing;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * PACKET: This packet is used to assign a new address. Such packets are sent from a coordinator to all cluster members.
@@ -21,14 +24,26 @@ public class AssignHRMID  extends SignalingMessageHrm
 	/**
 	 * Stores the HRMID which was assign to the target of this packet.
 	 */
-	private HRMID mHRMID = null;
+	private HRMID mHRMID = new HRMID();
 
 	/**
 	 * For using the class within (de-)serialization processes.  
 	 */
 	private static final long serialVersionUID = -1674381264586284319L;
 
-	public static long sCreatedPackets = 0;
+	/**
+	 * Stores the counter of created packets from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sCreatedPackets = new Long(0);
+
+	/**
+	 * Constructor for getDefaultSize()
+	 */
+	private AssignHRMID()
+	{
+		super();
+	}
 
 	/**
 	 * Constructor
@@ -37,11 +52,13 @@ public class AssignHRMID  extends SignalingMessageHrm
 	 * @param pReceiverName the name of the message receiver
 	 * @param pAssignedHRMID the assigned new HRMID for the receiver
 	 */
-	public AssignHRMID(Name pSenderName, Name pReceiverName, HRMID pAssignedHRMID)
+	public AssignHRMID(HRMName pSenderName, HRMName pReceiverName, HRMID pAssignedHRMID)
 	{
 		super(pSenderName, pReceiverName);
 		mHRMID = pAssignedHRMID;
-		sCreatedPackets++;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
 	}
 	
 	/**
@@ -52,6 +69,79 @@ public class AssignHRMID  extends SignalingMessageHrm
 	public HRMID getHRMID()
 	{
 		return mHRMID;
+	}
+
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM		= 1
+		 * 		HRMIDs					= 4
+		 * 
+		 *************************************************************/
+
+		int tResult = 0;
+		
+		tResult += getDefaultSize();
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM		= 1
+		 * 		HRMIDs					= 4
+		 * 
+		 *************************************************************/
+
+		int tResult = 0;
+		
+		AssignHRMID tTest = new AssignHRMID();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += SignalingMessageHrm.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += tTest.mHRMID.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
 	}
 
 	/**

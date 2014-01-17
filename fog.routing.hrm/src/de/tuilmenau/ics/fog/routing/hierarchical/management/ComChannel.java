@@ -1200,7 +1200,7 @@ public class ComChannel
 			 * Revoke the HRMIDs from the peer
 			 */
 			// create the packet
-			RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeName(), getPeerHRMID(), tPeerHRMIDs);
+			RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeL2Address(), getPeerHRMID(), tPeerHRMIDs);
 			// send the packet
 			sendPacket(tRevokeHRMIDsPacket);
 		}
@@ -1248,7 +1248,7 @@ public class ComChannel
 	public void signalRequestClusterMembershipAck(ClusterName pSource)
 	{
 		// create the packet
-		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeName(), getPeerHRMID(), pSource);
+		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeL2Address(), getPeerHRMID(), pSource);
 		// send the packet
 		Logging.log(this, "Acknowledging cluster membership: " + tRequestClusterMembershipAckPacket + " for " + getRemoteClusterName());
 		sendPacket(tRequestClusterMembershipAckPacket);
@@ -1277,7 +1277,7 @@ public class ComChannel
 				/**
 				 * Send: "Leave" to all superior clusters
 				 */
-				InformClusterLeft tInformClusterLeft = new InformClusterLeft(mHRMController.getNodeName(), getPeerHRMID(), null, null);
+				InformClusterLeft tInformClusterLeft = new InformClusterLeft(mHRMController.getNodeL2Address(), getPeerHRMID(), null, null);
 			    Logging.log(this, "       ..sending cluster left: " + tInformClusterLeft);
 				sendPacket(tInformClusterLeft);
 			}
@@ -1616,9 +1616,9 @@ public class ComChannel
 
 			Logging.log(this, "INFORM_CLUSTER_MEMBERSHIP_CANCELED-received from \"" + getPeerHRMID() + "\": " + tInformClusterMembershipCanceledPacket + ", remote cluster name=" + getRemoteClusterName());
 
-			if(!tInformClusterMembershipCanceledPacket.getRequestingCluster().equals(getRemoteClusterName())){
+			if(!tInformClusterMembershipCanceledPacket.getSendingCluster().equals(getRemoteClusterName())){
 				Logging.err(this, "##########################");
-				Logging.err(this, "### handlePacket() got INFORM_CLUSTER_MEMBERSHIP_CANCELED packet with wrong requesting cluster: " + tInformClusterMembershipCanceledPacket.getRequestingCluster() + ", local remote cluster=" + getRemoteClusterName());
+				Logging.err(this, "### handlePacket() got INFORM_CLUSTER_MEMBERSHIP_CANCELED packet with wrong requesting cluster: " + tInformClusterMembershipCanceledPacket.getSendingCluster() + ", local remote cluster=" + getRemoteClusterName());
 				Logging.err(this, "##########################");
 			}
 			// no further transmissions
@@ -1680,7 +1680,7 @@ public class ComChannel
 	public void distributeRouteShare(RoutingTable pRoutingTable)
 	{
 		// create new RouteShare packet for the cluster member
-		RouteShare tRouteSharePacket = new RouteShare(mHRMController.getNodeName(), getPeerHRMID(), pRoutingTable);
+		RouteShare tRouteSharePacket = new RouteShare(mHRMController.getNodeL2Address(), getPeerHRMID(), pRoutingTable);
 		
 		// send the packet
 		sendPacket(tRouteSharePacket);
@@ -1692,7 +1692,7 @@ public class ComChannel
 	public void distributeProbePacket()
 	{
 		// create new ProbePacket packet
-		ProbePacket tProbePacket = new ProbePacket(mHRMController.getNodeName(),  getPeerHRMID());
+		ProbePacket tProbePacket = new ProbePacket(mHRMController.getNodeL2Address(),  getPeerHRMID());
 		
 		// send the packet
 		sendPacket(tProbePacket);

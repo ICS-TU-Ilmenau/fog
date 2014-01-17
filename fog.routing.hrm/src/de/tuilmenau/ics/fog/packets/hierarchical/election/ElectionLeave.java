@@ -9,11 +9,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 
 /**
  * PACKET: This packet is used to inform that a cluster member wants to be a passive candidate of an election.
@@ -23,7 +23,11 @@ public class ElectionLeave extends SignalingMessageElection implements ISignalin
 
 	private static final long serialVersionUID = 7774205916502000178L;
 
-	public static long sCreatedPackets = 0;
+	/**
+	 * Stores the counter of created packets from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sCreatedPackets = new Long(0);
 
 	/**
 	 * Constructor
@@ -31,10 +35,28 @@ public class ElectionLeave extends SignalingMessageElection implements ISignalin
 	 * @param pSenderName
 	 * @param pReceiverName
 	 */
-	public ElectionLeave(Name pSenderName, ElectionPriority pSenderPriority)
+	public ElectionLeave(HRMName pSenderName, ElectionPriority pSenderPriority)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
-		sCreatedPackets++;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
 	}
 
 	/**

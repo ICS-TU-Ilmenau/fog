@@ -9,9 +9,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.clustering;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This packet is used to leave a remote cluster. It is used by a cluster member to inform the cluster head.
@@ -49,14 +51,26 @@ public class InformClusterLeft extends SignalingMessageHrm
 	/**
 	 * Store the ClusterName of the sending ClusterMember
 	 */
-	private ClusterName mLeavingClusterMember = null;
+	private ClusterName mLeavingClusterMember = new ClusterName(null, null, null, 0);
 	
 	/**
 	 * Store the ClusterName of the destination Cluster
 	 */
-	private ClusterName mRequestDestination = null;
+	private ClusterName mLeftCluster = new ClusterName(null, null, null, 0);
 
-	public static long sCreatedPackets = 0;
+	/**
+	 * Stores the counter of created packets from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sCreatedPackets = new Long(0);
+
+	/**
+	 * Constructor for getDefaultSize()
+	 */
+	private InformClusterLeft()
+	{
+		super();
+	}
 
 	/**
 	 * Constructor
@@ -66,13 +80,15 @@ public class InformClusterLeft extends SignalingMessageHrm
 	 * @param pLeavingMember the ClusterName of the sender (a ClusterMember object)
 	 * @param pDestination the ClusterName of the target (a Cluster object)
 	 */
-	public InformClusterLeft(Name pSenderName, Name pReceiverName, ClusterName pLeavingMember, ClusterName pDestination)
+	public InformClusterLeft(HRMName pSenderName, HRMName pReceiverName, ClusterName pLeavingMember, ClusterName pDestination)
 	{
 		super(pSenderName, pReceiverName);
 		
 		mLeavingClusterMember = pLeavingMember;
-		mRequestDestination = pDestination;
-		sCreatedPackets++;
+		mLeftCluster = pDestination;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
 	}
 
 	/**
@@ -92,7 +108,82 @@ public class InformClusterLeft extends SignalingMessageHrm
 	 */
 	public ClusterName getDestination()
 	{
-		return mRequestDestination;
+		return mLeftCluster;
+	}
+
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	   	= 1
+		 * 		LeavingClusterMember    = 9
+		 * 		mLeftCluster			= 9
+		 * 
+		 *************************************************************/
+
+		return getDefaultSize();
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	   = 1
+		 * 		LeavingClusterMember   = 9
+		 * 		mLeftCluster		   = 9
+		 * 
+		 *************************************************************/
+
+		int tResult = 0;
+		
+		InformClusterLeft tTest = new InformClusterLeft();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += SignalingMessageHrm.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += tTest.mLeavingClusterMember.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += tTest.mLeftCluster.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
 	}
 
 	/**

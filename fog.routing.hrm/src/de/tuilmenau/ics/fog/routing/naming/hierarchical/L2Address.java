@@ -34,40 +34,47 @@ public class L2Address extends HRMName
 
 	/**
 	 * Is this an address for a server?
-	 * This function is not part of the concept. It is only useful for debugging purposes.
+	 * This value is not part of the concept. It is only useful for debugging purposes.
 	 */
 	private boolean mIsServer = false;
 
 	/**
 	 * Is this an address for a client?
-	 * This function is not part of the concept. It is only useful for debugging purposes.
+	 * This value is not part of the concept. It is only useful for debugging purposes.
 	 */
 	private boolean mIsClient = false;
 	
 	/**
 	 * Is this an address for a central node?
-	 * This function is not part of the concept. It is only useful for debugging purposes.
+	 * This value is not part of the concept. It is only useful for debugging purposes.
 	 */
 	private boolean mIsCentralNode = false;
 
 	/**
 	 * Is this an address for the central node of the host?
-	 * This function is not part of the concept. It is only useful for debugging purposes.
+	 * This value is not part of the concept. It is only useful for debugging purposes.
 	 */
 	private boolean mIsThisHostCentralNode = false;
 
 	/**
 	 * The description about the creator
-	 * This function is not part of the concept. It is only useful for debugging purposes.
+	 * This value is not part of the concept. It is only useful for debugging purposes.
 	 */
 	private String mCreatorDescription = "";
+	
+	/**
+	 * Defines the size of this object if it is serialized
+	 * 
+	 * measured in [bytes]
+	 */
+	private final static int SERIALIZED_SIZE = 16; // according to "distributed computing environment" (http://www.opengroup.org/dce/)  
 	
 	/**
 	 * Create an address that is used to identify a node at the MAC layer.
 	 * 
 	 * @param pAddress This can be a simple long value.
 	 */
-	private L2Address(long pAddress)
+	public L2Address(long pAddress)
 	{
 		super(BigInteger.valueOf(pAddress));
 	}
@@ -167,14 +174,6 @@ public class L2Address extends HRMName
 	}
 	
 	/**
-	 * Create a descriptive string about this object
-	 */
-	public String toString()
-	{
-		return getClass().getSimpleName() + (mAddress.longValue() / idMachineMultiplier()) + "(\"" + mOptionalDescr + "\")";
-	}
-
-	/**
 	 * Returns true or false, depending on the comparison
 	 * 
 	 * @param pOtherL2Address the other L2 address
@@ -272,5 +271,27 @@ public class L2Address extends HRMName
 	public void setHostCentralNode()
 	{
 		mIsThisHostCentralNode = true;
+	}
+
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		return SERIALIZED_SIZE; 
+	}
+
+	/**
+	 * Returns a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
+	public String toString()
+	{
+		return getClass().getSimpleName() + (mAddress.longValue() / idMachineMultiplier()) + "(\"" + mOptionalDescr + "\")";
 	}
 }

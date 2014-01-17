@@ -9,9 +9,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 public class SignalingMessageElection extends SignalingMessageHrm
 {
@@ -20,9 +22,21 @@ public class SignalingMessageElection extends SignalingMessageHrm
 	/**
 	 * This is the Election priority of the message sender.
 	 */
-	private ElectionPriority mSenderPriority = null;
+	private ElectionPriority mSenderPriority = ElectionPriority.create(this);
 
-	public static long sCreatedPackets = 0;
+	/**
+	 * Stores the counter of created packets from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sCreatedPackets = new Long(0);
+
+	/**
+	 * Constructor for getDefaultSize()
+	 */
+	protected SignalingMessageElection()
+	{
+		super();
+	}
 
 	/**
 	 * Constructor
@@ -31,11 +45,15 @@ public class SignalingMessageElection extends SignalingMessageHrm
 	 * @param pSenderPriority the priority of the message sender
 	 * @param pReceiverName the name of the message receiver
 	 */
-	public SignalingMessageElection(Name pSenderName, Name pReceiverName, ElectionPriority pSenderPriority)
+	public SignalingMessageElection(HRMName pSenderName, HRMName pReceiverName, ElectionPriority pSenderPriority)
 	{
 		super(pSenderName, pReceiverName);
-		mSenderPriority = pSenderPriority;
-		sCreatedPackets++;
+		if(pSenderPriority != null){
+			mSenderPriority = pSenderPriority;
+		}
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
 	}
 	
 	/**
@@ -65,6 +83,79 @@ public class SignalingMessageElection extends SignalingMessageHrm
 		
 		// update the recorded source route
 		pOtherPacket.mSenderPriority = getSenderPriority();
+	}
+
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	     = 1
+		 * 		SenderPriority			 = 4
+		 * 
+		 *************************************************************/
+
+		//HINT: the packet type of this election message is derived based on the packet type field from SignalingMessageHRM
+		
+		return getDefaultSize();
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	     = 1
+		 * 		SenderPriority			 = 4
+		 * 
+		 *************************************************************/
+
+		//HINT: the packet type of this election message is derived based on the packet type field from SignalingMessageHRM
+
+		int tResult = 0;
+		
+		SignalingMessageElection tTest = new SignalingMessageElection();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += SignalingMessageHrm.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += tTest.mSenderPriority.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
 	}
 
 	/**

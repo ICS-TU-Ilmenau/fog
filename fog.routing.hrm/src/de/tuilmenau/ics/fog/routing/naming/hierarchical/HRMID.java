@@ -28,6 +28,21 @@ public class HRMID extends HRMName
 	private static final long serialVersionUID = -8441496024628988477L;
 
 	/**
+	 * Defines the size of this object if it is serialized
+	 * 
+	 * measured in [bytes]
+	 */
+	private final static int SERIALIZED_SIZE = 4; // according to IPv6, e.g., "2001:0db8:85a3:08d3:1319:8a2e:0370:7344", we use the last two segments of the address space  
+
+	/**
+	 * Create an HRMID instance with an invalid value.
+	 */ 
+	public HRMID()
+	{
+		this(-1);
+	}
+	
+	/**
 	 * Create an HRMID instance based on a BigInteger value.
 	 * 
 	 * @param pAddress the BigInteger value which is used for HRMID address generation.
@@ -398,14 +413,6 @@ public class HRMID extends HRMName
 	
 	
 	
-	//TODO
-	@Override
-	public int getSerialisedSize()
-	{
-		return mAddress.bitLength();
-	}
-	
-	
 	
 	
 	
@@ -469,6 +476,18 @@ public class HRMID extends HRMName
 	{
 		// true if the first character is a leading zero
 		return toString().endsWith(".0");
+	}
+
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		return SERIALIZED_SIZE; 
 	}
 
 	/**

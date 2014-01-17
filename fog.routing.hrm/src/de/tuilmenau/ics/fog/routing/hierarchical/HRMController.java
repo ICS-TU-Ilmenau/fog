@@ -2817,30 +2817,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public static void resetPacketStatistic()
 	{
-		AnnouncePhysicalEndPoint.sCreatedPackets = 0;
-		MultiplexHeader.sCreatedPackets = 0;
-		SignalingMessageHrm.sCreatedPackets = 0;
-		ProbePacket.sCreatedPackets = 0;
-		AnnounceHRMIDs.sCreatedPackets = 0;
-		AssignHRMID.sCreatedPackets = 0;
-		RevokeHRMIDs.sCreatedPackets = 0;
-		InformClusterLeft.sCreatedPackets = 0;
-		InformClusterMembershipCanceled.sCreatedPackets = 0;
-		RequestClusterMembership.sCreatedPackets = 0;
-		RequestClusterMembershipAck.sCreatedPackets = 0;
-		SignalingMessageElection.sCreatedPackets = 0;
-		ElectionAlive.sCreatedPackets = 0;
-		ElectionAnnounceWinner.sCreatedPackets = 0;
-		ElectionElect.sCreatedPackets = 0;
-		ElectionLeave.sCreatedPackets = 0;
-		ElectionPriorityUpdate.sCreatedPackets = 0;
-		ElectionReply.sCreatedPackets = 0;
-		ElectionResignWinner.sCreatedPackets = 0;
-		ElectionReturn.sCreatedPackets = 0;
-		AnnounceCoordinator.sCreatedPackets = 0;
-		InvalidCoordinator.sCreatedPackets = 0;
-		RouteReport.sCreatedPackets = 0;
-		RouteShare.sCreatedPackets = 0;
+		AnnouncePhysicalEndPoint.sCreatedPackets = new Long(0);
+		MultiplexHeader.sCreatedPackets = new Long(0);
+		SignalingMessageHrm.sCreatedPackets = new Long(0);
+		ProbePacket.sCreatedPackets = new Long(0);
+		AnnounceHRMIDs.sCreatedPackets = new Long(0);
+		AssignHRMID.sCreatedPackets = new Long(0);
+		RevokeHRMIDs.sCreatedPackets = new Long(0);
+		InformClusterLeft.sCreatedPackets = new Long(0);
+		InformClusterMembershipCanceled.sCreatedPackets = new Long(0);
+		RequestClusterMembership.sCreatedPackets = new Long(0);
+		RequestClusterMembershipAck.sCreatedPackets = new Long(0);
+		SignalingMessageElection.sCreatedPackets = new Long(0);
+		ElectionAlive.sCreatedPackets = new Long(0);
+		ElectionAnnounceWinner.sCreatedPackets = new Long(0);
+		ElectionElect.sCreatedPackets = new Long(0);
+		ElectionLeave.sCreatedPackets = new Long(0);
+		ElectionPriorityUpdate.sCreatedPackets = new Long(0);
+		ElectionReply.sCreatedPackets = new Long(0);
+		ElectionResignWinner.sCreatedPackets = new Long(0);
+		ElectionReturn.sCreatedPackets = new Long(0);
+		AnnounceCoordinator.sCreatedPackets = new Long(0);
+		InvalidCoordinator.sCreatedPackets = new Long(0);
+		RouteReport.sCreatedPackets = new Long(0);
+		RouteShare.sCreatedPackets = new Long(0);
 	}
 	
 	/**
@@ -3500,7 +3500,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 * Send "RequestClusterMembership" along the comm. session
 					 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
 					 */
-					RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(getNodeName(), pNeighborL2Address, tParentCluster.createClusterName(), tParentCluster.createClusterName());
+					RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(getNodeL2Address(), pNeighborL2Address, tParentCluster.createClusterName(), tParentCluster.createClusterName());
 				    Logging.log(this, "           ..sending membership request: " + tRequestClusterMembership);
 					if (tComSession.write(tRequestClusterMembership)){
 						Logging.log(this, "          ..requested sucessfully for membership of: " + tParentCluster + " at node " + pNeighborL2Address);

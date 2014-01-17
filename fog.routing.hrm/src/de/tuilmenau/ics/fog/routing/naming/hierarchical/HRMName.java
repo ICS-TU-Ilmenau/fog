@@ -26,9 +26,21 @@ public class HRMName extends RoutingServiceAddress implements Decorator
 
 	private static final long serialVersionUID = 6612145890128148511L;
 	
+	
 	/**
+	 * Constructor
 	 * 
-	 * @param pAddress Provide the address 
+	 * @param pAddress a pre-defined address 
+	 */
+	public HRMName(int pAddress)
+	{
+		this(BigInteger.valueOf(pAddress));
+	}
+
+		/**
+	 * Constructor
+	 * 
+	 * @param pAddress a pre-defined address 
 	 */
 	public HRMName(BigInteger pAddress)
 	{
@@ -41,12 +53,6 @@ public class HRMName extends RoutingServiceAddress implements Decorator
 		return NAMESPACE_HRM;
 	}
 
-	@Override
-	public int getSerialisedSize()
-	{
-		return mAddress.bitLength();
-	}
-		
 	public boolean equals(Object pObj)
 	{
 		if(pObj == null){
@@ -97,5 +103,18 @@ public class HRMName extends RoutingServiceAddress implements Decorator
 	public String getImageName()
 	{
 		return null;
+	}
+
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		// use the longest possible value
+		return 16;   
 	}
 }

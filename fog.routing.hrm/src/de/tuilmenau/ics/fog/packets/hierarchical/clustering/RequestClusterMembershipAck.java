@@ -11,8 +11,12 @@ package de.tuilmenau.ics.fog.packets.hierarchical.clustering;
 
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * PACKET: This packet is used to acknowledge a RequestComChannel packet. It is send after the comm. channel was established.
@@ -48,10 +52,23 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 
 	/**
 	 * Store the ClusterName of the sender (a Coordinator or a new ClusterMember object)
+	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
-	private ClusterName mSource = null;
+	private ClusterName mRequestedClusterMember = new ClusterName(null, null, null, 0);
 	
-	public static long sCreatedPackets = 0;
+	/**
+	 * Stores the counter of created packets from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sCreatedPackets = new Long(0);
+
+	/**
+	 * Constructor for getDefaultSize()
+	 */
+	private RequestClusterMembershipAck()
+	{
+		super();
+	}
 
 	/**
 	 * Constructor
@@ -60,13 +77,78 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	 * @param pReceiverName the name of the message receiver
 	 * @param pSourceCoordinator the ClusterName of the sender (a coordinator)
 	 */
-	public RequestClusterMembershipAck(Name pSenderName, Name pReceiverName, ClusterName pSource)
+	public RequestClusterMembershipAck(HRMName pSenderName, HRMName pReceiverName, ClusterName pSource)
 	{
 		super(pSenderName, pReceiverName);
-		mSource = pSource;
-		sCreatedPackets++;
+		mRequestedClusterMember = pSource;
+		synchronized (sCreatedPackets) {
+			sCreatedPackets++;
+		}
 		
 		Logging.log(this, "CREATED");
+	}
+
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	   = 1
+		 * 
+		 *************************************************************/
+
+		return getDefaultSize();
+	}
+
+	/**
+	 * Returns the default size of this packet
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		SignalingMessageHRM	   = 1
+		 * 
+		 *************************************************************/
+
+		int tResult = 0;
+		
+		RequestClusterMembershipAck tTest = new RequestClusterMembershipAck();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += SignalingMessageHrm.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
 	}
 
 	/**
@@ -77,6 +159,6 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Source=" + mSource + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Source=" + mRequestedClusterMember + ")";
 	}
 }

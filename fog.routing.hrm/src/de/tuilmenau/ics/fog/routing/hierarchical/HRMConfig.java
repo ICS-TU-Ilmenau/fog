@@ -23,6 +23,11 @@ public class HRMConfig
 		 */
 		public static final boolean GUI_SHOW_NOTIFICATIONS = false; 
 
+		/**
+		 * Shows debug outputs about packet size calculations
+		 */
+		public static final boolean GUI_SHOW_PACKET_SIZE_CALCULATIONS = false;
+		
 		/** 
 		 * Show debug outputs about HRMID updates for nodes.
 		 */
