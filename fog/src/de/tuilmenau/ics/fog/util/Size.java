@@ -14,40 +14,73 @@
 package de.tuilmenau.ics.fog.util;
 
 import java.lang.reflect.*;
+import java.util.LinkedList;
+
+import de.tuilmenau.ics.fog.ui.Logging;
 
 
 public class Size {
 	private static final int sSizeReference = 4;
-
+	private static final boolean DEBUG = false;
+	
 	private static int sizeOfObject(Object pObject)
 	{
-        Field tDeclaredFields[] = pObject.getClass().getDeclaredFields();
-        int tResult = 0;
+		if(DEBUG){
+			Logging.getInstance().log("Size of: " + pObject);
+		}
+
+		Field tDeclaredFields[] = pObject.getClass().getDeclaredFields();
+		LinkedList<Field> tSeenFields = new LinkedList<Field>();
+		
+		if(DEBUG){
+			Logging.getInstance().log("  ..found fields: " + tDeclaredFields.length);
+		}
+		
+		int tResult = 0;
 
 		// check for all fields inside the object that are annotated
 		Class<?> checkedClass = pObject.getClass();
 		while(checkedClass != null) {
 			for (Field tField : tDeclaredFields) 
 	        {
-				boolean isAccessible = tField.isAccessible();
-				
-				if(tField.getType().isPrimitive())
-				{
-					tResult += sizeOfPrimitive(tField.getType());
-				}
-				else {
-					if(isAccessible)
-					{
-						try {
-							Object valueObj = tField.get(pObject);
-							tResult += sizeOf(valueObj);
-						} catch (Exception tExc) {
-							// ignore it and move on to next element
+				if(!tSeenFields.contains(tField)){
+					tSeenFields.add(tField);
+					
+					boolean isAccessible = tField.isAccessible();
+					boolean isStatic = (java.lang.reflect.Modifier.isStatic(tField.getModifiers()));
+					
+					if(DEBUG){
+						Logging.getInstance().log("  ..field: " + tField);
+					}
+								
+					if(!isStatic){
+						if(tField.getType().isPrimitive())
+						{
+							if(DEBUG){
+								Logging.getInstance().log("    .." + sizeOfPrimitive(tField.getType()) + " bytes for: " + tField.getName() + "[" +  java.lang.reflect.Modifier.toString(tField.getModifiers()) + " " + tField.getType() + "]");
+							}
+							tResult += sizeOfPrimitive(tField.getType());
+						}
+						else {
+							if(isAccessible)
+							{
+								try {
+									Object valueObj = tField.get(pObject);
+									if(DEBUG){
+										Logging.getInstance().log("    .." + sizeOf(valueObj) + " bytes for: " + valueObj);
+									}
+									tResult += sizeOf(valueObj);
+								} catch (Exception tExc) {
+									// ignore it and move on to next element
+								}
+							}
+							// else ignore it, because it is not accessible.
+							//      if we recursively evaluate them, we might
+							//      end up with a stack overflow
 						}
 					}
-					// else ignore it, because it is not accessible.
-					//      if we recursively evaluate them, we might
-					//      end up with a stack overflow
+				}else{
+					// we got the same field more than one time
 				}
 	        }
 			checkedClass = checkedClass.getSuperclass();
@@ -71,7 +104,7 @@ public class Size {
         else if (pPrimitive.equals(Integer.TYPE))
             tResult = 4;
         else if (pPrimitive.equals(Long.TYPE))
-            tResult = 8;
+            tResult = 4;
         else if (pPrimitive.equals(Float.TYPE))
             tResult = 4;
         else if (pPrimitive.equals(Double.TYPE))
