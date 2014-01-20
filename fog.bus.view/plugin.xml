@@ -19,12 +19,6 @@
             filter="de.tuilmenau.ics.fog.bus.Bus"
             default="true">
       </editor>
-
-      <plugin
-            name="Toggle broken flag"
-            class="de.tuilmenau.ics.fog.eclipse.commands.ToggleBrokenFlag"
-            filter="de.tuilmenau.ics.fog.bus.Bus">
-      </plugin>
    </extension>
 
 	<extension

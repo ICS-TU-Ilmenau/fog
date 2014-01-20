@@ -126,12 +126,12 @@
             filter="de.tuilmenau.ics.fog.topology.AutonomousSystem">
       </plugin>
       <plugin
-            name="Toggle broken flag"
+            name="Toggle broken flag for node"
             class="de.tuilmenau.ics.fog.eclipse.ui.commands.ToggleBrokenFlag"
             filter="de.tuilmenau.ics.fog.topology.Node">
       </plugin>
       <plugin
-            name="Toggle broken flag"
+            name="Toggle broken flag for LL"
             class="de.tuilmenau.ics.fog.eclipse.ui.commands.ToggleBrokenFlag"
             filter="de.tuilmenau.ics.fog.topology.ILowerLayer">
       </plugin>
