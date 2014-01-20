@@ -256,7 +256,7 @@ public class Elector implements Localization
 					/**
 					 * Send a priority update to all local cluster members
 					 */
-					distributePRIRORITY_UPDATE();
+					distributePRIRORITY_UPDATE("::elect()");
 				}
 				/**
 				 * trigger "detected isolation"
@@ -325,7 +325,7 @@ public class Elector implements Localization
 		/**
 		 * Send: priority update
 		 */
-		distributePRIRORITY_UPDATE();
+		distributePRIRORITY_UPDATE("eventJoinedRemoteCluster() for: " + pComChannelToRemoteCluster);
 	}
 
 	/**
@@ -658,12 +658,14 @@ public class Elector implements Localization
 
 	/**
 	 * SEND: ElectionPriorityUpdate
+	 * 
+	 * @param pCause the cause for the call
 	 */
-	private void distributePRIRORITY_UPDATE()
+	private void distributePRIRORITY_UPDATE(String pCause)
 	{
 		if(mParent.isThisEntityValid()){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDPRIOUPDATE()-START, electing cluster is " + mParent);
+				Logging.log(this, "SENDPRIOUPDATE()-START, cause=" + pCause);
 				Logging.log(this, "SENDPRIOUPDATE(), cluster members: " + mParent.getComChannels().size());
 			}
 	
@@ -2271,7 +2273,7 @@ public class Elector implements Localization
 		/**
 		 * trigger signaling of "priority update"
 		 */
-		distributePRIRORITY_UPDATE();
+		distributePRIRORITY_UPDATE("updatePriority(), cause=" + pCause);
 		
 		/**
 		 * check for winner
