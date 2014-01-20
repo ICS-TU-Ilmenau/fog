@@ -3727,8 +3727,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Validates the hierarchy creation
 	 */
-	private void validateResults()
+	public boolean validateResults()
 	{
+		boolean tResult = true;
+		
 		if ((!mResultsValidated) && ((!HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS) || (!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS))){
 			mResultsValidated = true;
 			
@@ -3739,6 +3741,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(!tCoordinator.getHierarchyLevel().isHighest()){
 					if(!tCoordinator.isSuperiorCoordinatorValid()){
 						Logging.err(this, "validateResults() detected invalid comm. channel to superior coordinator for: " + tCoordinator);
+						tResult = false;
 					}
 				}
 				
@@ -3746,6 +3749,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Coordinator tFoundAnInferiorCoordinator = getCoordinator(tCoordinator.getHierarchyLevel().getValue() - 1);
 					if(tFoundAnInferiorCoordinator == null){
 						Logging.err(this, "validateResults() detected invalid hierarchy, haven't found local inferior coordinator for: " + tCoordinator);
+						tResult = false;
 					}
 				}
 				
@@ -3761,6 +3765,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							
 							if(tTopPriorityCheckNode > tTopPriorityThisNode){
 								Logging.err(this, "validateResults() detected top coordinator at this node, better candidate would be node: " + tHRMController.getNodeGUIName());
+								tResult = false;
 							}
 						}
 					}					
@@ -3783,6 +3788,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					for (ComChannel tComChannel : tCluster.getComChannels()){
 						if(tComChannel.getPeerPriority().isUndefined()){
 							Logging.err(this, "validateResults() detected undefined peer priority for Cluster channel: " + tComChannel);
+							tResult = false;
 						}else{
 							ElectionPriority tChannelPeerPriority = tComChannel.getPeerPriority();
 							L2Address tChanPeerL2Address = tComChannel.getPeerL2Address();
@@ -3794,6 +3800,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									long tFoundPriority = tHRMController.getNodePriority(tClusterLevel);
 									if(tFoundPriority != tChannelPeerPriority.getValue()){
 										Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
+										tResult = false;
 									}
 									break;
 								}else{
@@ -3802,15 +3809,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 							if(!tFound){
 								Logging.err(this, "validateResults() wasn't able to find node: " + tChanPeerL2Address + " as peer of: " + tComChannel);
+								tResult = false;
 							}
 						}
 						if(tComChannel.getPacketQueue().size() > 1 /* we allow one pending packet because the event handler might be processing a packet at the moment */){
 							Logging.err(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel); 
+							tResult = false;
 						}
 					}
 				}
 			}
 		}
+		
+		return tResult;
 	}
 	
 	/**

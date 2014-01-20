@@ -9,10 +9,15 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.ui.eclipse.views;
 
+import java.util.LinkedList;
+
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
@@ -25,12 +30,15 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This viewer shows global statistics about HRM.
  */
 public class HRMOverviewHierarchy extends ViewPart
 {
+	private static final String TEXT_BTN_CHECK_HIERARCHY					= "Check hierarchy";
+
 	private static final String TEXT_CLUSTERS_CREATED	= "Created clusters: ";
 	private Label mClusters = null;
 	private Label mCreatedClusters[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
@@ -38,6 +46,8 @@ public class HRMOverviewHierarchy extends ViewPart
 	private static final String TEXT_COORDINATORS_CREATED	= "Created coordinators: ";
 	private Label mCoordinators = null;
 	private Label mCreatedCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
+	
+	private Button mBtnCheckHierarchy = null;
 	
 	private static final String TEXT_COORDINATORS_RUN 		= "Running coordinators: ";
 	private Label mRunningCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
@@ -164,6 +174,22 @@ public class HRMOverviewHierarchy extends ViewPart
 		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
 			mRunningCoordinators[i] = createPartControlLine(tGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
 		}
+		
+	    mBtnCheckHierarchy = new Button(tContainer, SWT.PUSH);
+	    mBtnCheckHierarchy.setText(TEXT_BTN_CHECK_HIERARCHY);
+	    mBtnCheckHierarchy.setLayoutData(createGridData(true, 2));
+	    mBtnCheckHierarchy.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				LinkedList<HRMController> tHRMControllers = HRMController.getALLHRMControllers();
+				for(HRMController tHRMController : tHRMControllers){
+					if(tHRMController.validateResults()){
+						Logging.log(this, "Hierarchy valid on node: " + tHRMController.getNodeGUIName());
+					}
+					
+				}
+			}
+		});
 		
 		mDisplay.timerExec(100, ViewRepaintTimer);
 	}
