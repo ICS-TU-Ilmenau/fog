@@ -12,7 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.properties;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -29,6 +29,8 @@ public class ProbeRoutingProperty extends AbstractProperty
 	
 	private long mRecordedDelay = 0;
 	
+	private long mRecordedMaxDataRate = RoutingEntry.INFINITE_DATARATE;
+	
 	private long mRecordedDataRate = -1;
 	
 	private long mDesiredDelay = 0;
@@ -37,12 +39,10 @@ public class ProbeRoutingProperty extends AbstractProperty
 	
 	private HRMID mDestination = null;
 	
-	private boolean mUseReservations = false;
-	
 	/**
 	 * Defines the max. hop count we allow
 	 */
-	public long MAX_HOP_COUNT = 32;
+	private long MAX_HOP_COUNT = 32;
 	
 	/**
 	 * Stores the description of the source of the corresponding packet/connection
@@ -56,13 +56,12 @@ public class ProbeRoutingProperty extends AbstractProperty
 	 * @param pDesiredMaxDelay the desired delay limit
 	 * @param pDesiredMinDataRate the desired data rate limit
 	 */
-	public ProbeRoutingProperty(String pSourceDescription, HRMID pDestination, long pDesiredMaxDelay, long pDesiredMinDataRate, boolean pUseRservations)
+	public ProbeRoutingProperty(String pSourceDescription, HRMID pDestination, long pDesiredMaxDelay, long pDesiredMinDataRate)
 	{
 		mSourceDescription = pSourceDescription;
 		mDestination = pDestination;
 		mDesiredDataRate = pDesiredMinDataRate;
 		mDesiredDelay = pDesiredMaxDelay;
-		mUseReservations = (pUseRservations && HRMConfig.QoS.QOS_RESERVATIONS);
 	}
 	
 	/**
@@ -122,19 +121,34 @@ public class ProbeRoutingProperty extends AbstractProperty
 	 */
 	public void recordAdditionalDelay(long pAdditionalDelay)
 	{
-		mRecordedDelay += pAdditionalDelay;
+		if(pAdditionalDelay > 0){
+			mRecordedDelay += pAdditionalDelay;
+		}
 	}
 
 	/**
-	 * Stores the max. data rate which is available along a taken route
+	 * Records the data rate
 	 * 
-	 * @param pDataRate the new max. data rate
+	 * @param pMaxAvailableDataRate the max. available DR for a link
 	 */
-	public void recordMaxDataRate(long pDataRate)
+	public void recordDataRate(long pMaxAvailableDataRate)
 	{
-		mRecordedDataRate = pDataRate;
-	}
+		if(pMaxAvailableDataRate > 0){
+			if(mDesiredDataRate > 0){
+				// assume that HRS::getRoute() automatically reserves MIN(desired DR, available DR)
+				if(pMaxAvailableDataRate < mDesiredDataRate){
+					mRecordedDataRate = pMaxAvailableDataRate;
+				}else{
+					mRecordedDataRate = mDesiredDataRate;
+				}
+			}
 	
+			if(mRecordedMaxDataRate > pMaxAvailableDataRate){
+				mRecordedMaxDataRate = pMaxAvailableDataRate;
+			}
+		}
+	}
+
 	/**
 	 * Returns the desired min.data rate from the sender
 	 * 
@@ -153,16 +167,6 @@ public class ProbeRoutingProperty extends AbstractProperty
 	public long getDesiredDelay()
 	{
 		return mDesiredDelay;
-	}
-
-	/**
-	 * Returns of reservations should be used
-	 * 
-	 * @return true or false
-	 */
-	public boolean useReservations()
-	{
-		return mUseReservations;
 	}
 	
 	/**
@@ -196,6 +200,16 @@ public class ProbeRoutingProperty extends AbstractProperty
 		return mRecordedDelay;	
 	}
 	
+	/**
+	 * Returns the recorded max. available data rate along the route
+	 * 
+	 * @return the recorded data rate
+	 */
+	public long getRecordedMaxDataRate()
+	{
+		return mRecordedMaxDataRate;
+	}
+
 	/**
 	 * Returns the recorded resulting data rate
 	 * 

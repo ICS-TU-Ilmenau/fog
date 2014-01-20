@@ -253,7 +253,7 @@ public class ProbeRouting extends EclipseCommand
 	 * @param pDataRate
 	 * @return
 	 */
-	public static Connection createProbeRoutingConnection(Node pNode, HRMID pTargetNodeHRMID, int pDesiredDelay, int pDataRate, boolean pDirectionalQoSReservation)
+	public static Connection createProbeRoutingConnection(Node pNode, HRMID pTargetNodeHRMID, int pDesiredDelay, int pDataRate, boolean pBiDirectionalQoSReservation)
 	{
 		Connection tConnection = null;
 
@@ -268,9 +268,9 @@ public class ProbeRouting extends EclipseCommand
 		 */
 		// create QoS requirements with probe-routing property and DestinationApplication property
 		Description tConnectionReqs = Description.createQoS(pDesiredDelay, pDataRate);
-		tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), pTargetNodeHRMID, pDesiredDelay, pDataRate, true));
+		tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), pTargetNodeHRMID, pDesiredDelay, pDataRate));
 		tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
-		tConnectionReqs.set(new DedicatedQoSReservationProperty(pDirectionalQoSReservation));
+		tConnectionReqs.set(new DedicatedQoSReservationProperty(pBiDirectionalQoSReservation));
 		// probe connection
 		Logging.log(ProbeRouting.class, "\n\n\nProbing a connection to " + pTargetNodeHRMID + " with requirements " + tConnectionReqs);
 		tConnection = pNode.getLayer(null).connect(pTargetNodeHRMID, tConnectionReqs, pNode.getIdentity());
