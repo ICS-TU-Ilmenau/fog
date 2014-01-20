@@ -3652,11 +3652,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
 			double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_TIMEOUT;
 			//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
-			if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
-				if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
-					/**
-					 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
-					 */
+			if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
+				/**
+				 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
+				 */
+				if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
 					if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 						Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
@@ -3664,14 +3664,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 						GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
 					}
-					
-					if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
-						autoActivateAddressDistribution();
-					}
-					if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
-						autoActivateReportingSharing();
-					}
-				}				
+				}
+				
+				if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
+					autoActivateAddressDistribution();
+				}
+				if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
+					autoActivateReportingSharing();
+				}
 			}
 		}
 		
@@ -3697,7 +3697,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							Logging.log(this, "Found highest coordinator: " + tHighestCoordinator);
 							tHighestCoordinator.getCluster().distributeAddresses();
 						}else{
-							Logging.err(this, "Found highest coordinator nr. " + tFound + ": " + tHighestCoordinator);
+							Logging.warn(this, "Found highest coordinator nr. " + tFound + ": " + tHighestCoordinator + ", is the network fragmented?");
 						}
 					}
 				}
