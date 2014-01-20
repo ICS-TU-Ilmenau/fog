@@ -89,6 +89,22 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	}
 
 	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Returns a duplicate of this packet
 	 * 
 	 * @return the duplicate packet
