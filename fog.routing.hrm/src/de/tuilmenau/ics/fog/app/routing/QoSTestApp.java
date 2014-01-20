@@ -164,7 +164,7 @@ public class QoSTestApp extends ThreadApplication
 	}
 	
 	/**
-	 * EVENT: descrease connections
+	 * EVENT: decrease connections
 	 */
 	public synchronized void eventDecreaseConnections()
 	{
