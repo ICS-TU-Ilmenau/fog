@@ -71,6 +71,7 @@ public class ScenarioSetup
 					case 35: scenario35(sim); break;
 
 					case 88: scenario88(sim); break;
+					case 89: scenario89(sim); break;
 					
 					// emulator scenario
 					case 99: emulator(sim); break;
@@ -94,10 +95,15 @@ public class ScenarioSetup
 	
 	public static void scenarioRow(Simulation sim, String asName, int numberNodes, long pDataRate)
 	{
+		scenarioRow(sim, asName, 1, numberNodes, pDataRate);
+	}
+	
+	public static void scenarioRow(Simulation sim, String asName, int pStartNode, int numberNodes, long pDataRate)
+	{
 		sim.executeCommand("@ - create as default");
 		sim.executeCommand("switch default");
 
-		for(int i=1; i<=numberNodes; i++) {
+		for(int i=pStartNode; i<=(pStartNode + numberNodes - 1); i++) {
 			String nodeName = "node" +i;
 			sim.executeCommand("create node " +nodeName);
 			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(sim);
@@ -108,7 +114,7 @@ public class ScenarioSetup
 			}
 			
 			// do not create bus for the last one
-			if(i < numberNodes) {
+			if(i < (pStartNode + numberNodes - 1)) {
 				String busName = "bus" +i +"_" +(i+1);
 				if(pDataRate > 0)
 					sim.executeCommand("create bus " +busName + " " + Long.toString(pDataRate));
@@ -141,6 +147,38 @@ public class ScenarioSetup
 		
 		pSim.executeCommand("connect node" +tNumberOfNodes +" " +busName);
 		pSim.executeCommand("connect node1 " +busName);
+	}
+
+	public static void scenario89(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
+		
+		int tNumberOfNodes = 3;
+		long tDataRate = 100 * 1000;
+	
+		scenario88(pSim);
+		
+		scenarioRow(pSim, DEFAULT_AS_NAME, 13, tNumberOfNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String tRingEndBusName = "bus13_" + (12 + tNumberOfNodes);
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tRingEndBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tRingEndBusName);
+		
+		pSim.executeCommand("connect node" + (12 + tNumberOfNodes) + " " + tRingEndBusName);
+		pSim.executeCommand("connect node13 " +tRingEndBusName);
+
+		// connect both networks
+		String tInterNetworkBusName = "bus7_13";
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tInterNetworkBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tInterNetworkBusName);
+		
+		pSim.executeCommand("connect node7 " +tInterNetworkBusName);
+		pSim.executeCommand("connect node13 " +tInterNetworkBusName);
 	}
 
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
