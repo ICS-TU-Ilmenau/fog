@@ -773,9 +773,15 @@ public class Cluster extends ClusterMember
 		 * Revoke HRMID of physical node if we are on base hierarchy level
 		 */ 
 		if(getHierarchyLevel().isBaseLevel()){
-			Logging.log(this, "Revoking physical node HRMID: " + getHRMID());
-			
-			eventRevokedHRMID(this, getHRMID());
+			if(getL0HRMID() != null){
+				Logging.log(this, "Unregistering physical node HRMID: " + getL0HRMID());
+
+				mDescriptionHRMIDAllocation += "\n     ..revoked " + getL0HRMID().toString() + " for " + this + ", cause=eventCoordinatorLost()";
+
+				freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
+
+				mHRMController.unregisterHRMID(this, getL0HRMID(), this + "::eventCoordinatorLost()");					
+			}
 		}
 		
 		// store the former coordinator ID
