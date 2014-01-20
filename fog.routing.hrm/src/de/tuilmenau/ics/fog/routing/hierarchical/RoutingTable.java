@@ -375,8 +375,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					 * 		2.) delay (if desired)
 					 * 		3.) hop count 		
 					 */
-					if (((pDesiredMaxDelay > 0) && (pDesiredMaxDelay >= tEntry.getMinDelay()) || (pDesiredMaxDelay <= 0)) && 
-					   ((pDesiredMinDataRate > 0) && (pDesiredMinDataRate <= tEntry.getMaxAvailableDataRate())) || (pDesiredMinDataRate <= 0)){
+					if ((pDesiredMaxDelay > 0) || (pDesiredMinDataRate > 0)){
 						if(tBestResultQoS != null){						
 							
 							if(
