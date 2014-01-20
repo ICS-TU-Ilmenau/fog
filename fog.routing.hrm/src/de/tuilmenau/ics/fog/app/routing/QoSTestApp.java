@@ -78,10 +78,29 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	private int mDefaultDataRate = 1000;
 	
-	private boolean mQoSTestNeeded = true;
+	/**
+	 * Stores if the QoSTestApp is still needed or is already exit  
+	 */
+	private boolean mQoSTestAppNeeded = true;
+	
+	/**
+	 * Stores if the QoSTestApp is running
+	 */
 	private boolean mQoSTestRunning = false;
 	
+	/**
+	 * Counts the number of connections with fulfilled QoS requirements
+	 */
+	private int mConnectionsWithFulfilledQoS = 0;
+	
+	/**
+	 * The possible operations: increase/decrease connection amount
+	 */
 	private enum Operation{INC_CONN, DEC_CONN};
+	
+	/**
+	 * The pending operations
+	 */
 	private LinkedList<Operation> mOperations = new LinkedList<Operation>();
 	
 	/**
@@ -360,6 +379,16 @@ public class QoSTestApp extends ThreadApplication
 	}
 
 	/**
+	 * Counts the already established connections which fulfill the desired QoS requirements
+	 * 
+	 * @return the number of connections
+	 */
+	public int countConnectionsWithFulfilledQoS()
+	{
+		return mConnectionsWithFulfilledQoS;
+	}
+	
+	/**
 	 * Counts the already established connections
 	 * 
 	 * @return the number of connections
@@ -413,7 +442,7 @@ public class QoSTestApp extends ThreadApplication
 		/**
 		 * MAIN LOOP
 		 */
-		while(mQoSTestNeeded){
+		while(mQoSTestAppNeeded){
 			Operation tNextOperation = null;
 			do{
 				/**
@@ -472,7 +501,7 @@ public class QoSTestApp extends ThreadApplication
 	public synchronized void exit()
 	{
 		Logging.log(this, "exit() starting... (running: " + isRunning() + ")");
-		mQoSTestNeeded = false;
+		mQoSTestAppNeeded = false;
 		
 		// wakeup
 		if(isRunning()){
@@ -528,6 +557,20 @@ public class QoSTestApp extends ThreadApplication
 				
 				Logging.log(mQoSTestApp, "Received ProbeRoutingProperty..");
 				tProbeRoutingProperty.logAll(mQoSTestApp);
+				
+				/**
+				 * Count the number of connections with fulfilled QoS requirements
+				 */
+				boolean tQoSFulfilled = true;
+				if((tProbeRoutingProperty.getDesiredDelay() > 0) && (tProbeRoutingProperty.getDesiredDelay() < tProbeRoutingProperty.getRecordedDelay())){
+					tQoSFulfilled = false;
+				}
+				if((tProbeRoutingProperty.getDesiredDataRate() > 0) && (tProbeRoutingProperty.getDesiredDataRate() < tProbeRoutingProperty.getRecordedDataRate())){
+					tQoSFulfilled = false;
+				}
+				if(tQoSFulfilled){
+					mConnectionsWithFulfilledQoS++;
+				}
 				
 				tResult = true;
 			}else{
