@@ -34,7 +34,9 @@ public class PleaseCloseConnection extends SignallingRequest
 			try {
 				fn.getEntity().getLogger().log(this, "Sending close connection message back to sender"); 
 				//TODO: check if the following can be improved by a better signaling approach
-				tClientFN.getConnectionEndPoint().write(new PleaseCloseConnection());
+				if(tClientFN.getConnectionEndPoint() != null){
+					tClientFN.getConnectionEndPoint().write(new PleaseCloseConnection());
+				}
 			}
 			catch(NetworkException exc) {
 				fn.getEntity().getLogger().err(this, "Can not send close connection message to the sender. Closing without it.", exc);
