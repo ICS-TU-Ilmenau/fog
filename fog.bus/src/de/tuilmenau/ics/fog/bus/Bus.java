@@ -88,7 +88,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		mDescription = new Description();
 		int tNewBandwidth = Config.getConfig().Scenario.DEFAULT_DATA_RATE_KBIT;
 		double tVariance = Config.getConfig().Scenario.DEFAULT_DATA_RATE_VARIANCE;
-		setAvailableDataRate(tNewBandwidth, tVariance);
+		setPhysicalDataRate(tNewBandwidth, tVariance);
 		setDelayMSec(mConfig.Scenario.DEFAULT_DELAY_MSEC);
 		setPacketLossProbability(mConfig.Scenario.DEFAULT_PACKET_LOSS_PROP);
 		setBitErrorProbability(mConfig.Scenario.DEFAULT_BIT_ERROR_PROP);
@@ -99,8 +99,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 			Property prop = pDescr.get(DatarateProperty.class);
 			if(prop != null) {
 				int tDataRate = ((DatarateProperty) prop).getMax();
-				setAvailableDataRate(tDataRate, ((DatarateProperty) prop).getVariance());
-				mPhysMaxDataRate = tDataRate;
+				setPhysicalDataRate(tDataRate, ((DatarateProperty) prop).getVariance());
 			}
 			
 			prop = pDescr.get(DelayProperty.class);
@@ -253,13 +252,14 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		mDescription.set(new LossRateProperty(getPacketLossProbability(), Limit.MIN));
 	}
 	
-	private void setAvailableDataRate(int newBandwidth, double newBandwidthVariance)
+	private void setPhysicalDataRate(int newBandwidth, double newBandwidthVariance)
 	{
 		mAvailableDataRate = newBandwidth;
+		mPhysMaxDataRate = newBandwidth;
 		
-		if(mAvailableDataRate.intValue() > 0) {
+		if(mPhysMaxDataRate.intValue() > 0) {
 			// update description
-			mDescription.set(new DatarateProperty(mAvailableDataRate.intValue(), newBandwidthVariance, Limit.MAX));
+			mDescription.set(new DatarateProperty(mPhysMaxDataRate.intValue(), newBandwidthVariance, Limit.MAX));
 		} else {
 			// Infinite data rate:
 			// remove previous limits from list
