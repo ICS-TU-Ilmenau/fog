@@ -232,7 +232,9 @@ public class HRMRoutingService implements RoutingService, Localization
 						if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 							Logging.log(this, "     ..adding " + tNextHopHRMID + " as address of a direct neighbor");
 						}
-						mDirectNeighborAddresses.add(tNextHopHRMID);
+						if(!mDirectNeighborAddresses.contains(tNextHopHRMID)){
+							mDirectNeighborAddresses.add(tNextHopHRMID);
+						}
 	
 						if (tNextHopL2Address != null){
 							// add L2 address for this direct neighbor
@@ -296,7 +298,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..removing " + tDestHRMID + " as address of a direct neighbor");
 				}
-				mDirectNeighborAddresses.remove(tDestHRMID);
+				synchronized (mDirectNeighborAddresses) {
+					mDirectNeighborAddresses.remove(tDestHRMID);
+				}
 
 				// add L2 address for this direct neighbor
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
@@ -1351,6 +1355,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public Route getRoute(ForwardingNode pSource, Name pDestination, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException
 	{		
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ROUTING;
 		Route tRoutingResult = null;
 		L2Address tDestinationL2Address = null;
 		L2Address tSourceL2Address = null;
@@ -1393,13 +1398,13 @@ public class HRMRoutingService implements RoutingService, Localization
 		 * Debug output about process start
 		 */
 		// debug output
-//		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+		if (DEBUG){
 			if(pRequirements == null) {
 				Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination +"\"");
 			} else {
 				Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination + "\" with requirements \"" + pRequirements.toString() + "\"");
 			}
-//		}
+		}
 
 		/**
 		 * Count the route request
@@ -1413,7 +1418,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		if (pDestination instanceof HRMID){
 			HRMID tDestHRMID = (HRMID)pDestination;
 			
-			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			if (DEBUG){
 				Logging.log(this, "      ..HRM based routing to " + tDestHRMID);
 			}
 			
@@ -1423,14 +1428,11 @@ public class HRMRoutingService implements RoutingService, Localization
 			 ************************************/
 			boolean tDestinationIsDirectNeighbor = false;
 			synchronized (mDirectNeighborAddresses) {
-				for (HRMID tHRMID : mDirectNeighborAddresses){
-					if (tHRMID.equals(tDestHRMID)){
-						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-							Logging.log(this, "      .." + tDestHRMID + " is an address of a direct neighbor node");
-						}
-						tDestinationIsDirectNeighbor = true;
-						break;
+				if(mDirectNeighborAddresses.contains(tDestHRMID)){
+					if (DEBUG){
+						Logging.log(this, "      .." + tDestHRMID + " is an address of a direct neighbor node, neighbors: " + mDirectNeighborAddresses);
 					}
+					tDestinationIsDirectNeighbor = true;
 				}
 			}
 
@@ -1463,14 +1465,14 @@ public class HRMRoutingService implements RoutingService, Localization
 				/**
 				 * Show debug output
 				 */
-				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				if (DEBUG){
 					Logging.log(this, "      ..NEXT HOP: " + tNextHopHRMID);
 					if(tLocalSourceHRMID != null){
 						Logging.log(this, "      ..VIA: " + tLocalSourceHRMID);
 					}
 				}
 			}else{
-				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				if (DEBUG){
 					Logging.trace(this, "      ..haven't found next hop (HRMID) for destination: " + tDestHRMID);
 				}
 			}
@@ -1494,7 +1496,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			if (tNextHopL2Address != null){
 				Route tL2RoutingResult = null;
 
-				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				if (DEBUG){
 					Logging.log(this, "      ..NEXT HOP(L2ADDRESS): " + tNextHopL2Address);
 				}
 				if (tNextHopL2Address != null){
@@ -1502,7 +1504,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					tL2RoutingResult = getL2Route(getCentralFNL2Address(), tNextHopL2Address);
 				}
 				
-				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				if (DEBUG){
 					Logging.log(this, "      ..ROUTE TO NEXT HOP: " + tL2RoutingResult);
 				}
 
@@ -1569,7 +1571,7 @@ public class HRMRoutingService implements RoutingService, Localization
 									 */
 									if((HRMConfig.QoS.QOS_RESERVATIONS) && (tUseHardQoSReservations)){
 										AbstractGate tParallelGate = tGate;
-										if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+										if (DEBUG){
 											Logging.log(this, "Needing QoS gate parallel to: " + tParallelGate + " with non-functional requirements: " +tNonFunctionalDescription);
 										}
 											
@@ -1667,7 +1669,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * ENCODE the first gate list (unlimited QoS)
 					 */
 					if(!tRoutingResultFirstGateListWithoutDirectDownGates.isEmpty()){
-						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+						if (DEBUG){
 							Logging.log(this, "   ..encoding first gate list: " + tRoutingResultFirstGateListWithoutDirectDownGates);
 						}
 						tRoutingResult.add(tRoutingResultFirstGateListWithoutDirectDownGates);
@@ -1677,7 +1679,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * ENCODE hard QoS reservation (limited QoS)
 					 */
 					if(!tRoutingResultFirstGateListWithoutDirectDownGates.isEmpty()){
-						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+						if (DEBUG){
 							Logging.log(this, "   ..encoding hard QoS reservation: " + tQoSReservation);
 						}
 						tRoutingResult.add(tQoSReservation);
@@ -1691,7 +1693,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					for(RouteSegment tRoutingResultPart : tL2RoutingResult){
 						// ignore the first gate list
 						if(i > 0){
-							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							if (DEBUG){
 								Logging.log(this, "     ..encoding [" + tRoutingResultPart.getClass().getSimpleName() + "]: " + tRoutingResultPart);
 							}
 							tRoutingResult.add(tRoutingResultPart);
@@ -1706,7 +1708,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					if(!tDestinationIsDirectNeighbor){
 						// do we already reached the destination?
 						if(!tL2RoutingResult.isEmpty()){
-							if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+							if (DEBUG){
 								Logging.log(this, "   ..encoding original destination: " + tDestHRMID);
 							}
 							tRoutingResult.addLast(new RouteSegmentAddress(tDestHRMID));
@@ -1718,7 +1720,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					 */
 					// do we already reached the destination?
 					if(!tL2RoutingResult.isEmpty()){
-						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+						if (DEBUG){
 							Logging.log(this, "   ..encoding original requirements: " + pRequirements);
 						}
 						tRoutingResult.addLast(new RouteSegmentDescription(pRequirements));
@@ -1730,7 +1732,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					if(tNextNetworkBus != null){
 						double tUtilization = 0.0;
 						
-						if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+						if (DEBUG){
 							Logging.log(this, "NEXT NETWORK BUS IS: " + tNextNetworkBus);
 							Logging.log(this, "   ..min. additional delay: " + tBusMinAdditionalDelay + " ms");
 							Logging.log(this, "   ..max. available data rate: " + tBusMaxAvailableDataRate + " kbit/s");
@@ -1780,9 +1782,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				 * show result
 				 */
 				if(tRoutingResult != null){
-//					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					if (DEBUG){
 						Logging.log(this, "      ..RESULT(getRoute() to HRMID): " + tRoutingResult);
-//					}
+					}
 				}
 			}
 		}
@@ -1791,7 +1793,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		 * L2 based routing to a FoG name
 		 ***********************************************************************/
 		if(tRoutingResult == null){
-			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			if (DEBUG){
 				Logging.log(this, "      ..L2 based routing to " + pDestination);
 			}
 			
@@ -1811,7 +1813,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					tDestinationL2Address = tDestinationL2Addresses[tDestinationL2Addresses.length - 1].getAddress();
 				}
 
-				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				if (DEBUG){
 					Logging.log(this, "      ..found destination L2Address: " + tDestinationL2Address);
 				}
 			}
@@ -1858,7 +1860,7 @@ public class HRMRoutingService implements RoutingService, Localization
 						}
 					}
 					
-					if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					if (DEBUG){
 						Logging.log(this, "      ..RESULT(getRoute() to " + pDestination + "): " + tRoutingResult);
 					}
 				}else{
@@ -1874,7 +1876,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		 */
 		if(tRoutingResult == null){
 			// no route found
-			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			if (DEBUG){
 				Logging.warn(this, "getRoute() couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
 				
 				// list known topology
