@@ -5424,9 +5424,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * EVENT: probe routing
 	 * 
+	 * @param pConnection the connection where the ProbeRouting property was received 
 	 * @param pProbeRoutingProperty the property of the received incoming connection
 	 */
-	private void eventProbeRouting(ProbeRoutingProperty pProbeRoutingProperty)
+	private void eventProbeRouting(Connection pConnection, ProbeRoutingProperty pProbeRoutingProperty)
 	{
 		/**
 		 * We have a probe-routing connection and will print some additional information about the taken route of the connection request
@@ -5479,6 +5480,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 			i++;
 		}
+		
+		// send the ProbeRoutingProperty back to the sender as feedback
+		try {
+			pConnection.write(pProbeRoutingProperty);
+		} catch (NetworkException tExc) {
+			Logging.err(this, "Failed to send feedback to the sender", tExc);
+		}
 	}
 	
 	/** 
@@ -5514,7 +5522,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "     ..starting communication session for the new connection");
 			tComSession.startConnection(null, pConnection);
 		}else{
-			eventProbeRouting(tPropProbeRouting);
+			eventProbeRouting(pConnection, tPropProbeRouting);
 		}
 	}
 	
