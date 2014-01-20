@@ -209,7 +209,7 @@ public class HRMConfig
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS = true;
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS = false;
 
 		/**
 		 * Defines if the address distribution should be automatically started right after AnnounceCoordinator packets were deactivated.
