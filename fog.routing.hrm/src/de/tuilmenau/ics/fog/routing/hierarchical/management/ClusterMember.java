@@ -168,6 +168,8 @@ public class ClusterMember extends ClusterName
 				for(ComChannel tComChannel : tChannels){
 					tComChannel.detectNeighborhood();
 				}
+				
+				detectLocalSiblings(this + "::detectNeighborhood()");
 			}else{
 				Logging.err(this, "detectNeighborhood() expects base hierarchy level");
 			}
@@ -268,120 +270,127 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * EVENT: need HRG update
+	 * Detects local siblings: 
 	 * This function updates the HRG based on locally detected ClusterMember siblings.
+	 * 
+	 * @param pCause the cause for the call
 	 */
-	private void eventNeedHRGUpdate(String pCause)
+	private void detectLocalSiblings(String pCause)
 	{
-		boolean tDebug = false;
-		Logging.log(this, "EVENT: need HRG update");
-		
-		if((mAssignedL0HRMID != null) && (!mAssignedL0HRMID.isZero())){
-			// backup old reported routing table
-			RoutingTable tDeprecatedReportedRoutingTable = null;
-			synchronized (mReportedRoutingTableL0HRMID) {
-				tDeprecatedReportedRoutingTable = (RoutingTable) mReportedRoutingTableL0HRMID.clone();
-				if(tDebug){
-					Logging.err(this, "   ..previously reported routing table: " + tDeprecatedReportedRoutingTable);
+		if(getHierarchyLevel().isBaseLevel()){
+			boolean tDebug = false;
+			double tTimeoffset = 2 * mHRMController.getPeriodReportPhase(getHierarchyLevel());
+			//Logging.log(this, "Detecting local siblings..");
+			
+			if((mAssignedL0HRMID != null) && (!mAssignedL0HRMID.isZero())){
+				// backup old reported routing table
+				RoutingTable tDeprecatedReportedRoutingTable = null;
+				synchronized (mReportedRoutingTableL0HRMID) {
+					tDeprecatedReportedRoutingTable = (RoutingTable) mReportedRoutingTableL0HRMID.clone();
+					if(tDebug){
+						Logging.err(this, "   ..previously reported routing table: " + tDeprecatedReportedRoutingTable);
+					}
 				}
-			}
+		
+				/**
+				 * Find other active ClusterMember instances and create a local loopback route to them
+				 */
+				// iterate over all siblings
+				RoutingTable tNewReportedRoutingTable = new RoutingTable();
+				LinkedList<ClusterMember> tSiblings = mHRMController.getAllClusterMembers(getHierarchyLevel());
+				for(ClusterMember tSibling : tSiblings){
+					if(tSibling.hasClusterValidCoordinator()){
+						HRMID tSiblingL0Address = tSibling.getL0HRMID();
+						// has the sibling a valid L0 address?
+						if((tSiblingL0Address != null) && (!tSiblingL0Address.isZero())){
+							// avoid recursion
+							if(!tSibling.equals(this)){
+								if(tDebug){
+									Logging.err(this, "  ..found active sibling: " + tSibling);
+								}
+								
+								HRMID tGeneralizedSiblingL0Address = mAssignedL0HRMID.getForeignCluster(tSiblingL0Address);
+										
+								// create the new reported routing table entry
+								RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(mAssignedL0HRMID /* this cluster */, tGeneralizedSiblingL0Address /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pCause);
+								tRoutingEntryToSibling.extendCause(this + "::eventNeedHRGUpdate()_1");
+								// even more details about the route to make it distinguishable from others
+								tRoutingEntryToSibling.setNextHopL2Address(mHRMController.getNodeL2Address());
+								// set the timeout for the found route to a sibling
+								tRoutingEntryToSibling.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
 	
-			/**
-			 * Find other active ClusterMember instances and create a local loopback route to them
-			 */
-			// iterate over all siblings
-			RoutingTable tNewReportedRoutingTable = new RoutingTable();
-			LinkedList<ClusterMember> tSiblings = mHRMController.getAllClusterMembers(getHierarchyLevel());
-			for(ClusterMember tSibling : tSiblings){
-				if(tSibling.hasClusterValidCoordinator()){
-					HRMID tSiblingL0Address = tSibling.getL0HRMID();
-					// has the sibling a valid L0 address?
-					if((tSiblingL0Address != null) && (!tSiblingL0Address.isZero())){
-						// avoid recursion
-						if(!tSibling.equals(this)){
-							if(tDebug){
-								Logging.err(this, "  ..found active sibling: " + tSibling);
+								// add the entry to the reported routing table
+								if(tDebug){							
+									Logging.err(this, "   ..found (" + pCause + ") local route: " + tRoutingEntryToSibling);
+								}
+								tNewReportedRoutingTable.addEntry(tRoutingEntryToSibling);
 							}
-							
-							HRMID tGeneralizedSiblingL0Address = mAssignedL0HRMID.getForeignCluster(tSiblingL0Address);
-									
-							// create the new reported routing table entry
-							RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(mAssignedL0HRMID /* this cluster */, tGeneralizedSiblingL0Address /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pCause);
-							tRoutingEntryToSibling.extendCause(this + "::eventNeedHRGUpdate()");
-							// even more details about the route to make it distinguishable from others
-							tRoutingEntryToSibling.setNextHopL2Address(mHRMController.getNodeL2Address());
-	
-							// add the entry to the reported routing table
-							if(tDebug){							
-								Logging.err(this, "   ..found (" + pCause + ") local route: " + tRoutingEntryToSibling);
-							}
-							tNewReportedRoutingTable.addEntry(tRoutingEntryToSibling);
 						}
 					}
 				}
-			}
-			
-			/**
-			 * Step 1: learn new routes:
-			 * 			- set the new value for reported routes based on setL0HRMID
-			 * 			- and inform the HRMController
-			 */ 
-			synchronized (mReportedRoutingTableL0HRMID) {
-				mReportedRoutingTableL0HRMID = tNewReportedRoutingTable;
-				for(RoutingEntry tEntry : mReportedRoutingTableL0HRMID){
-					if(tDebug){
-						Logging.err(this, "   ..adding (" + pCause + ") to the HRG the route: " + tEntry);
+				
+				/**
+				 * Step 1: learn new routes:
+				 * 			- set the new value for reported routes based on setL0HRMID
+				 * 			- and inform the HRMController
+				 */ 
+				synchronized (mReportedRoutingTableL0HRMID) {
+					mReportedRoutingTableL0HRMID = tNewReportedRoutingTable;
+					for(RoutingEntry tEntry : mReportedRoutingTableL0HRMID){
+						if(tDebug){
+							Logging.err(this, "   ..adding (" + pCause + ") to the HRG the route: " + tEntry);
+						}
+						
+						/**
+						 * Update HRG: register L0 link
+						 */
+						RoutingEntry tRoutingEntryToSibling2 = tEntry.clone();
+						tRoutingEntryToSibling2.extendCause(pCause);
+						tRoutingEntryToSibling2.extendCause(this + "::eventNeedHRGUpdate()_2");
+						mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tRoutingEntryToSibling2);
+						
+						/**
+						 * Update HRG: register cluster-2-cluster links
+						 */ 
+						RoutingEntry tRoutingEntryToSibling3 = tEntry.clone();
+						tRoutingEntryToSibling3.extendCause(pCause);
+						tRoutingEntryToSibling3.extendCause(this + "::eventNeedHRGUpdate()_3");
+						mHRMController.registerAutoHRG(tRoutingEntryToSibling3);
 					}
-					
-					/**
-					 * Update HRG: register L0 link
-					 */
-					RoutingEntry tRoutingEntryToSibling2 = tEntry.clone();
-					tRoutingEntryToSibling2.extendCause(pCause);
-					tRoutingEntryToSibling2.extendCause(this + "::registerLinkHRG()");
-					mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tRoutingEntryToSibling2);
-					
-					/**
-					 * Update HRG: register cluster-2-cluster links
-					 */ 
-					RoutingEntry tRoutingEntryToSibling3 = tEntry.clone();
-					tRoutingEntryToSibling3.extendCause(pCause);
-					tRoutingEntryToSibling3.extendCause(this + "::registerAutoHRG()");
-					mHRMController.registerAutoHRG(tRoutingEntryToSibling3);
 				}
-			}
-			
-			/**
-			 * Step 2: forget deprecated routes:
-			 * 			- derive the deprecated routes
-			 * 			- inform the HRS about the deprecated routing table entries
-			 */ 
-			tDeprecatedReportedRoutingTable.delEntries(tNewReportedRoutingTable);
-			synchronized (tDeprecatedReportedRoutingTable) {
-				for(RoutingEntry tEntry : tDeprecatedReportedRoutingTable){
-					if(tDebug){
-						Logging.err(this, "   ..removing (" + pCause + ") from the HRG the route: " + tEntry);
+				
+				/**
+				 * Step 2: forget deprecated routes:
+				 * 			- derive the deprecated routes
+				 * 			- inform the HRS about the deprecated routing table entries
+				 */ 
+				tDeprecatedReportedRoutingTable.delEntries(tNewReportedRoutingTable);
+				synchronized (tDeprecatedReportedRoutingTable) {
+					for(RoutingEntry tEntry : tDeprecatedReportedRoutingTable){
+						if(tDebug){
+							Logging.err(this, "   ..removing (" + pCause + ") from the HRG the route: " + tEntry);
+						}
+		
+						/**
+						 * Update HRG: unregister L0 link
+						 */
+						RoutingEntry tRoutingEntryToSibling2 = tEntry.clone();
+						tRoutingEntryToSibling2.extendCause(pCause);
+						tRoutingEntryToSibling2.extendCause(this + "::unregisterLinkHRG()");
+						mHRMController.unregisterLinkHRG(tEntry.getSource(),  tEntry.getNextHop(), tRoutingEntryToSibling2);
+						
+						/**
+						 * Update HRG: register cluster-2-cluster links
+						 */ 
+						RoutingEntry tRoutingEntryToSibling3 = tEntry.clone();
+						tRoutingEntryToSibling3.extendCause(pCause);
+						tRoutingEntryToSibling3.extendCause(this + "::unregisterAutoHRG()");
+						mHRMController.unregisterAutoHRG(tRoutingEntryToSibling3);
 					}
-	
-					/**
-					 * Update HRG: unregister L0 link
-					 */
-					RoutingEntry tRoutingEntryToSibling2 = tEntry.clone();
-					tRoutingEntryToSibling2.extendCause(pCause);
-					tRoutingEntryToSibling2.extendCause(this + "::unregisterLinkHRG()");
-					mHRMController.unregisterLinkHRG(tEntry.getSource(),  tEntry.getNextHop(), tRoutingEntryToSibling2);
-					
-					/**
-					 * Update HRG: register cluster-2-cluster links
-					 */ 
-					RoutingEntry tRoutingEntryToSibling3 = tEntry.clone();
-					tRoutingEntryToSibling3.extendCause(pCause);
-					tRoutingEntryToSibling3.extendCause(this + "::unregisterAutoHRG()");
-					mHRMController.unregisterAutoHRG(tRoutingEntryToSibling3);
 				}
+			}else{
+				Logging.log(this, "eventNeedHRGUpdate() skipped because local L0 HRMID is: " + mAssignedL0HRMID);
 			}
-		}else{
-			Logging.log(this, "eventNeedHRGUpdate() skipped because local L0 HRMID is: " + mAssignedL0HRMID);
 		}
 	}
 	
@@ -426,7 +435,7 @@ public class ClusterMember extends ClusterName
 			LinkedList<ClusterMember> tClusterMembers = mHRMController.getAllClusterMembers(getHierarchyLevel());
 			for(ClusterMember tClusterMember : tClusterMembers){
 				if(tClusterMember.hasClusterValidCoordinator()){
-					tClusterMember.eventNeedHRGUpdate(this + "::setL0HRMID()(" + mCallsSetL0HRMID + ")");
+					tClusterMember.detectLocalSiblings(this + "::setL0HRMID()(" + mCallsSetL0HRMID + ")");
 				}
 			}
 		}
