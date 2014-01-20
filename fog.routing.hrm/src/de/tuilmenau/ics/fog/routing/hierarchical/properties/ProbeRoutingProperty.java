@@ -240,6 +240,63 @@ public class ProbeRoutingProperty extends AbstractProperty
 	}
 
 	/**
+	 * Logs everything about this property
+	 * 
+	 * @param pParent the parent object
+	 */
+	public void logAll(Object pParent)
+	{
+		// get the recorded route from the property
+		LinkedList<HRMID> tRecordedHRMIDs = getRecordedHops();
+		
+		String tDesiredDataRate = "";
+		if(getDesiredDataRate() >= 1000000)
+			tDesiredDataRate += (getDesiredDataRate() / 1000000) + " Gbit/s";
+		else if(getDesiredDataRate() >= 1000)
+			tDesiredDataRate += (getDesiredDataRate() / 1000) + " Mbit/s";
+		else
+			tDesiredDataRate += getDesiredDataRate() + " kbit/s";
+
+		String tReservedDataRate = "";
+		if(getRecordedDataRate() >= 1000000)
+			tReservedDataRate += (getRecordedDataRate() / 1000000) + " Gbit/s";
+		else if(getRecordedDataRate() >= 1000)
+			tReservedDataRate += (getRecordedDataRate() / 1000) + " Mbit/s";
+		else
+			tReservedDataRate += getRecordedDataRate() + " kbit/s";
+
+		String tMaxAvailableDataRate = "";
+		if(getRecordedMaxDataRate() >= 1000000)
+			tMaxAvailableDataRate += (getRecordedMaxDataRate() / 1000000) + " Gbit/s";
+		else if(getRecordedMaxDataRate() >= 1000)
+			tMaxAvailableDataRate += (getRecordedMaxDataRate() / 1000) + " Mbit/s";
+		else
+			tMaxAvailableDataRate += getRecordedDataRate() + " kbit/s";
+		
+		Logging.log(pParent, "     ..detected a probe-routing connection(source=" + getSourceDescription());
+		Logging.log(pParent, "       ..source: " + tRecordedHRMIDs.getFirst());
+		Logging.log(pParent, "       ..destination: " + getDest());
+		Logging.log(pParent, "       ..desired E2E data rate: " + tDesiredDataRate);
+		Logging.log(pParent, "       ..desired E2E delay: " + getDesiredDelay() + " ms");
+		Logging.log(pParent, "       ..recorded E2E data rate: " + tReservedDataRate + " (this is the minimum of all data rate reservations  along the taken route)");
+		Logging.log(pParent, "       ..recorded E2E delay: " + getRecordedDelay() + " ms (this is the sum of all delays of all used links)");
+		Logging.log(pParent, "       ..recorded HOP count: " + getRecordedHopCount() + " nodes (this represents the list of passed physical hosts)");
+		Logging.log(pParent, "       ..recorded max. E2E data rate: " + tMaxAvailableDataRate + " (this is the max. avilable data rate along the taken route)");
+		Logging.log(pParent, "       ..passed " + tRecordedHRMIDs.size() + " HRM hops: (this represents the list of passed physical interfaces)");
+
+		// print the recorded route
+		int i = 0;
+		for(HRMID tHRMID : tRecordedHRMIDs){
+			if(i % 2 == 0){
+				Logging.log(pParent, "        ..source[" + i + "]: " + tHRMID);
+			}else{
+				Logging.log(pParent, "          ..hop[" + i + "]: " + tHRMID);
+			}
+			i++;
+		}
+	}
+
+	/**
 	 * Returns a descriptive string about the object
 	 * 
 	 * @return the descriptive string
