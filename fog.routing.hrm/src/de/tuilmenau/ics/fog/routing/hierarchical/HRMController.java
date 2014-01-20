@@ -492,7 +492,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 			Logging.log(this, "##### Reseting AnnounceCoordinator mechanism");
 			GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
-			double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 0.5 /* make sure that we don't hit the timer */; 
+			double tTimeWithFixedHierarchyDataThreshold = HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 0.5 /* make sure that we don't hit the timer */; 
 			sNextCheckForDeprecatedCoordinatorProxies = getSimulationTime() + tTimeWithFixedHierarchyDataThreshold;
 			eventHierarchyDataChanged();
 		}else{
