@@ -72,7 +72,7 @@ public class Cluster extends ClusterMember
 	private int mSentAddressBroadcast = 0;
 
 	/**
-	 * Stores the 
+	 * Stores the local HRMID of the last address distribution event
 	 */
 	private HRMID mHRMIDLastDistribution = null;	
 	
