@@ -64,6 +64,16 @@ public class QoSTestApp extends ThreadApplication
 	private HashMap<Connection, QoSTestAppSession> mConnectionSessions = new HashMap<Connection, QoSTestAppSession>();
 
 	/**
+	 * Stores the established connections with fulfilled QoS requirements
+	 */
+	private LinkedList<Connection> mConnectionsWithFulfilledQoS = new LinkedList<Connection>();
+
+	/**
+	 * Stores the established connections with feedback
+	 */
+	private LinkedList<Connection> mConnectionsWithFeedback = new LinkedList<Connection>();
+	
+	/**
 	 * Stores the marker per connection
 	 */
 	private HashMap<Connection, Marker> mMarkers = new HashMap<Connection, Marker>();
@@ -87,11 +97,6 @@ public class QoSTestApp extends ThreadApplication
 	 * Stores if the QoSTestApp is running
 	 */
 	private boolean mQoSTestRunning = false;
-	
-	/**
-	 * Counts the number of connections with fulfilled QoS requirements
-	 */
-	private int mConnectionsWithFulfilledQoS = 0;
 	
 	/**
 	 * The possible operations: increase/decrease connection amount
@@ -375,6 +380,21 @@ public class QoSTestApp extends ThreadApplication
 			 * Disconnect by closing the connection
 			 */
 			tConnection.close();
+			
+			/**
+			 * Remove as QoS connection
+			 */
+			synchronized (mConnectionsWithFulfilledQoS) {
+				if(mConnectionsWithFulfilledQoS.contains(tConnection)){
+					mConnectionsWithFulfilledQoS.remove(tConnection);
+				}
+			}
+			synchronized (mConnectionsWithFeedback) {
+				if(mConnectionsWithFeedback.contains(tConnection)){
+					mConnectionsWithFeedback.remove(tConnection);
+				}
+			}
+
 		}
 	}
 
@@ -385,9 +405,31 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	public int countConnectionsWithFulfilledQoS()
 	{
-		return mConnectionsWithFulfilledQoS;
+		int tResult = 0;
+		
+		synchronized (mConnectionsWithFulfilledQoS) {
+			tResult = mConnectionsWithFulfilledQoS.size();
+		}
+		
+		return tResult;
 	}
 	
+	/**
+	 * Counts the already established connections which have already a feedback from the server to the client (this app)
+	 * 
+	 * @return the number of connections
+	 */
+	public int countConnectionsWithFeedback()
+	{
+		int tResult = 0;
+		
+		synchronized (mConnectionsWithFeedback) {
+			tResult = mConnectionsWithFeedback.size();
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Counts the already established connections
 	 * 
@@ -407,8 +449,6 @@ public class QoSTestApp extends ThreadApplication
 		
 		return tResult;
 	}
-	
-	
 	
 	/**
 	 * Waits for the next wake-up signal (a new event was triggered)
@@ -565,11 +605,20 @@ public class QoSTestApp extends ThreadApplication
 				if((tProbeRoutingProperty.getDesiredDelay() > 0) && (tProbeRoutingProperty.getDesiredDelay() < tProbeRoutingProperty.getRecordedDelay())){
 					tQoSFulfilled = false;
 				}
-				if((tProbeRoutingProperty.getDesiredDataRate() > 0) && (tProbeRoutingProperty.getDesiredDataRate() < tProbeRoutingProperty.getRecordedDataRate())){
+				if((tProbeRoutingProperty.getDesiredDataRate() > 0) && (tProbeRoutingProperty.getDesiredDataRate() > tProbeRoutingProperty.getRecordedDataRate())){
 					tQoSFulfilled = false;
 				}
 				if(tQoSFulfilled){
-					mConnectionsWithFulfilledQoS++;
+					synchronized (mConnectionsWithFulfilledQoS) {
+						mConnectionsWithFulfilledQoS.add(getConnection());
+					}
+				}
+
+				/**
+				 * Count the number of connections with a valid feedback
+				 */
+				synchronized (mConnectionsWithFeedback) {
+					mConnectionsWithFeedback.add(getConnection());
 				}
 				
 				tResult = true;

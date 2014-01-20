@@ -48,10 +48,14 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserver
 {
 	private static final String TEXT_DESTINATION_HRMID		= "Destination HRMID: ";
-	private static final String TEXT_CONNECTION_COUNTER		= "Valid connections: ";
+	private static final String TEXT_CONNECTION_COUNTER		= "Running connections: ";
+	private static final String TEXT_CONNECTION_WITH_FEEDBACK    = "  ..with QoS feedback: ";
+	private static final String TEXT_CONNECTION_WITH_QOS_COUNTER = "    ..with valid QoS: ";
 
 	private Label mDestinationHRMID = null;
 	private Label mConnectionCounter = null;
+	private Label mConnectionWithQoSCounter = null;
+	private Label mConnectionWithFeedbackCounter = null;
 	
 	private static final String TEXT_BTN_DEL_CONNECTION		= "Del last connection";
 	private static final String TEXT_BTN_DEL_ALL_CONNECTIONS= "Del all connections";
@@ -201,7 +205,9 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 
 	    mDestinationHRMID = createPartControlLine(tContainer, TEXT_DESTINATION_HRMID);
 	    mConnectionCounter = createPartControlLine(tContainer, TEXT_CONNECTION_COUNTER);
-
+	    mConnectionWithFeedbackCounter = createPartControlLine(tContainer, TEXT_CONNECTION_WITH_FEEDBACK);
+	    mConnectionWithQoSCounter  = createPartControlLine(tContainer, TEXT_CONNECTION_WITH_QOS_COUNTER);	    
+	    
 		Label tDRLabel = new Label(tContainer, SWT.NONE);
 		tDRLabel.setText(TEXT_SPN_DATA_RATE);
 		tDRLabel.setLayoutData(createGridData(false, 1));
@@ -288,6 +294,8 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 		
 		mDestinationHRMID.setText(mQoSTestApp.getLastDestinationHRMID() != null ? mQoSTestApp.getLastDestinationHRMID().toString() : "not calculated");
 		mConnectionCounter.setText(Integer.toString(mQoSTestApp.countConnections()));
+		mConnectionWithQoSCounter.setText(Integer.toString(mQoSTestApp.countConnectionsWithFulfilledQoS()));
+		mConnectionWithFeedbackCounter.setText(Integer.toString(mQoSTestApp.countConnectionsWithFeedback()));		
 	}
 	
 	/* (non-Javadoc)
