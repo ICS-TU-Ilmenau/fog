@@ -15,10 +15,12 @@ import java.util.Random;
 import java.util.HashMap;
 
 import de.tuilmenau.ics.fog.application.ThreadApplication;
+import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.InvisibleMarker;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.ProbeRoutingProperty;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
@@ -61,7 +63,8 @@ public class QoSTestApp extends ThreadApplication
 	 * Stores the established connections
 	 */
 	LinkedList<Connection> mConnections = new LinkedList<Connection>();
-	
+	HashMap<Connection, QoSTestAppSession> mConnectionSessions = new HashMap<Connection, QoSTestAppSession>();
+
 	/**
 	 * Stores the marker per connection
 	 */
@@ -281,6 +284,15 @@ public class QoSTestApp extends ThreadApplication
 				synchronized (mConnections) {
 					mConnections.add(tConnection);
 				}
+
+				/**
+				 * Create the connection session
+				 */
+				QoSTestAppSession tConnectionSession = new QoSTestAppSession(this);
+				tConnectionSession.start(tConnection);
+				synchronized (mConnectionSessions) {
+					mConnectionSessions.put(tConnection, tConnectionSession);
+				}
 				
 				/**
 				 * Send some test data
@@ -330,7 +342,18 @@ public class QoSTestApp extends ThreadApplication
 					MarkerContainer.getInstance().removeMarker(tMarker);
 				}
 			}
-			
+		
+			/**
+			 * Stop the connection session
+			 */
+			QoSTestAppSession tConnectionSession = null;
+			synchronized (mConnectionSessions) {
+				tConnectionSession = mConnectionSessions.remove(tConnection);
+			}
+			if(tConnectionSession != null){
+				tConnectionSession.stop();
+			}
+					
 			/**
 			 * Disconnect by closing the connection
 			 */
@@ -485,4 +508,36 @@ public class QoSTestApp extends ThreadApplication
 	{
 		return getClass().getSimpleName() +"@" + mNode;
 	}
+	
+	
+	private class QoSTestAppSession extends Session
+	{
+		private QoSTestApp mQoSTestApp = null;
+		
+		public QoSTestAppSession(QoSTestApp pQoSTestApp)
+		{
+			super(false, mHost.getLogger(), null);
+			mQoSTestApp = pQoSTestApp;
+		}
+
+		@Override
+		public boolean receiveData(Object pData) {
+			boolean tResult = false;
+			
+			// incoming UDP encapsulation data
+			if (pData instanceof ProbeRoutingProperty){
+				ProbeRoutingProperty tProbeRoutingProperty = (ProbeRoutingProperty)pData;
+				
+				Logging.log(mQoSTestApp, "Received ProbeRoutingProperty..");
+				tProbeRoutingProperty.logAll(mQoSTestApp);
+				
+				tResult = true;
+			}else{
+				getLogger().warn(this, "Malformed received data from HRMController: " + pData);
+			}
+			
+			return tResult;
+		}
+	}
+
 }
