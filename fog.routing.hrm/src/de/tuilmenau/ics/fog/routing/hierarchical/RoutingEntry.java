@@ -18,7 +18,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraph
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * HRM Routing: The class describes a routing entry consisting of

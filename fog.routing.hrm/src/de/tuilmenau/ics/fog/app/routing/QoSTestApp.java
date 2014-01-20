@@ -31,8 +31,6 @@ import de.tuilmenau.ics.fog.ui.Marker;
 import de.tuilmenau.ics.fog.ui.MarkerContainer;
 import de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.ProbeRouting;
 import de.tuilmenau.ics.fog.util.SimpleName;
-
-
 		
 /**
  * This class is responsible for creating QoS-probe connections and also for their destruction.
@@ -52,23 +50,23 @@ public class QoSTestApp extends ThreadApplication
 	/**
 	 * Stores the name of the destination node
 	 */
-	Name mDestinationNodeName = null;
+	private Name mDestinationNodeName = null;
 	
 	/**
 	 * Stores the last destination HRMID
 	 */
-	HRMID mDestinationHRMID = null;
+	private HRMID mDestinationHRMID = null;
 	
 	/**
 	 * Stores the established connections
 	 */
-	LinkedList<Connection> mConnections = new LinkedList<Connection>();
-	HashMap<Connection, QoSTestAppSession> mConnectionSessions = new HashMap<Connection, QoSTestAppSession>();
+	private LinkedList<Connection> mConnections = new LinkedList<Connection>();
+	private HashMap<Connection, QoSTestAppSession> mConnectionSessions = new HashMap<Connection, QoSTestAppSession>();
 
 	/**
 	 * Stores the marker per connection
 	 */
-	HashMap<Connection, Marker> mMarkers = new HashMap<Connection, Marker>();
+	private HashMap<Connection, Marker> mMarkers = new HashMap<Connection, Marker>();
 	
 	/**
 	 * Stores the default max. desired delay
@@ -80,11 +78,11 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	private int mDefaultDataRate = 1000;
 	
-	boolean mQoSTestNeeded = true;
-	boolean mQoSTestRunning = false;
+	private boolean mQoSTestNeeded = true;
+	private boolean mQoSTestRunning = false;
 	
-	enum Operation{INC_CONN, DEC_CONN};
-	LinkedList<Operation> mOperations = new LinkedList<Operation>();
+	private enum Operation{INC_CONN, DEC_CONN};
+	private LinkedList<Operation> mOperations = new LinkedList<Operation>();
 	
 	/**
 	 * Constructor

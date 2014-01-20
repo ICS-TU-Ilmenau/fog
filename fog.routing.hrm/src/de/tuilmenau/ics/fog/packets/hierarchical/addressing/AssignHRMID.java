@@ -14,7 +14,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * PACKET: This packet is used to assign a new address. Such packets are sent from a coordinator to all cluster members.

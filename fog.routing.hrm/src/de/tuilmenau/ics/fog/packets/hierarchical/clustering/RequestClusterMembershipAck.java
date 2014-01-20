@@ -9,14 +9,11 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.clustering;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * PACKET: This packet is used to acknowledge a RequestComChannel packet. It is send after the comm. channel was established.

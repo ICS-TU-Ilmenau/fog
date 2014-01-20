@@ -38,7 +38,7 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 	/**
 	 * Stores if this packet is an answer to another packet of this type
 	 */
-	public boolean mIsAnswer = false;
+	private boolean mIsAnswer = false;
 
 	public static final boolean INIT_PACKET = false;
 	public static final boolean ANSWER_PACKET = true;
