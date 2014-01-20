@@ -273,7 +273,7 @@ public class ProbeRoutingProperty extends AbstractProperty
 		else
 			tMaxAvailableDataRate += getRecordedDataRate() + " kbit/s";
 		
-		Logging.log(pParent, "     ..detected a probe-routing connection(source=" + getSourceDescription());
+		Logging.log(pParent, "     ..detected a probe-routing connection(source=" + getSourceDescription() + ")");
 		Logging.log(pParent, "       ..source: " + tRecordedHRMIDs.getFirst());
 		Logging.log(pParent, "       ..destination: " + getDest());
 		Logging.log(pParent, "       ..desired E2E data rate: " + tDesiredDataRate);
