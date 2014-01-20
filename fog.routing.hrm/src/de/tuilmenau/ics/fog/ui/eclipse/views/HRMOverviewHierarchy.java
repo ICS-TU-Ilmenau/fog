@@ -38,6 +38,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class HRMOverviewHierarchy extends ViewPart
 {
 	private static final String TEXT_BTN_CHECK_HIERARCHY					= "Check hierarchy";
+	private static final String TEXT_BTN_RESET_EVERYTHING 					= "Reset everything";
 
 	private static final String TEXT_CLUSTERS_CREATED	= "Created clusters: ";
 	private Label mClusters = null;
@@ -48,6 +49,7 @@ public class HRMOverviewHierarchy extends ViewPart
 	private Label mCreatedCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
 	
 	private Button mBtnCheckHierarchy = null;
+	private Button mBtnResetEverything = null;
 	
 	private static final String TEXT_COORDINATORS_RUN 		= "Running coordinators: ";
 	private Label mRunningCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
@@ -191,7 +193,23 @@ public class HRMOverviewHierarchy extends ViewPart
 			}
 		});
 		
-		mDisplay.timerExec(100, ViewRepaintTimer);
+//	    mBtnResetEverything = new Button(tContainer, SWT.PUSH);
+//	    mBtnResetEverything.setText(TEXT_BTN_RESET_EVERYTHING);
+//	    mBtnResetEverything.setLayoutData(createGridData(true, 2));
+//	    mBtnResetEverything.addSelectionListener(new SelectionAdapter() {
+//			@Override
+//			public void widgetSelected(SelectionEvent pEvent) {
+//				LinkedList<HRMController> tHRMControllers = HRMController.getALLHRMControllers();
+//				for(HRMController tHRMController : tHRMControllers){
+//					if(tHRMController.validateResults()){
+//						Logging.log(this, "Hierarchy valid on node: " + tHRMController.getNodeGUIName());
+//					}
+//					
+//				}
+//			}
+//		});
+
+	    mDisplay.timerExec(100, ViewRepaintTimer);
 	}
 	
 	@Override
