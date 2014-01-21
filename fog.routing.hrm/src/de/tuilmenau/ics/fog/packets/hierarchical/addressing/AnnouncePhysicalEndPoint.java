@@ -26,9 +26,14 @@ import de.tuilmenau.ics.fog.util.Size;
 public class AnnouncePhysicalEndPoint extends LoggableElement implements Serializable, ProtocolHeader
 {
 	/**
-	 * Stores the L2Address of the central FN.
+	 * Stores the L2Address of the central FN of the sender
 	 */
-	private L2Address mCentralFN = new L2Address(0);
+	private L2Address mSenderCentralFN = new L2Address(0);
+	
+	/**
+	 * Stores the AsID of the sender
+	 */
+	private Long mSenderAsID = new Long(-1);
 	
 	/**
 	 * Stores the L2Address of the FN which should be used as routing target 
@@ -56,14 +61,16 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 	/**
 	 * Constructor 
 	 * 
-	 * @param pCentralFN the central FN of the sender
+	 * @param pSenderAsID the AsID of the sender
+	 * @param pSenderCentralFN the central FN of the sender
 	 * @param pRoutingTargetFN the name of the first FN, which should be used for routing from the receiver towards the sender
 	 * @param pIsAnswer true if this packet is answer to a previous AnnouncePhysicalEndPoint packet
 	 */
-	public AnnouncePhysicalEndPoint(L2Address pCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
+	public AnnouncePhysicalEndPoint(Long pSenderAsID, L2Address pSenderCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
 	{
-		mCentralFN = pCentralFN;
+		mSenderCentralFN = pSenderCentralFN;
 		mRoutingTargetFN = pRoutingTargetFN;
+		mSenderAsID = pSenderAsID;
 		mIsAnswer = pIsAnswer;
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
@@ -85,13 +92,23 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 	}
 	
 	/**
-	 * Determine the name of the central FN
+	 * Returns the name of the central FN
 	 * 
 	 * @return name of the central FN
 	 */
 	public L2Address getSenderCentralAddress()
 	{
-		return mCentralFN;
+		return mSenderCentralFN;
+	}
+
+	/**
+	 * Returns the AsID of the sender
+	 * 
+	 * @return the AsID of the sender
+	 */
+	public Long getSenderAsID()
+	{
+		return mSenderAsID;
 	}
 
 	/**
@@ -118,6 +135,7 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 		 * 
 		 * 		CentralFN				= 16
 		 * 		RoutingTargetFN			= 16
+		 * 		SenderAsID				= 4
 		 * 		IsAnswer				= 1
 		 * 
 		 *************************************************************/
@@ -137,6 +155,7 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 		 * 
 		 * 		CentralFN				= 16
 		 * 		RoutingTargetFN			= 16
+		 * 		SenderAsID				= 4
 		 * 		IsAnswer				= 1
 		 * 
 		 *************************************************************/
@@ -147,11 +166,15 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
-		tResult += tTest.mCentralFN.getSerialisedSize();
+		tResult += tTest.mSenderCentralFN.getSerialisedSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
 		tResult += tTest.mRoutingTargetFN.getSerialisedSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += 4; // SenderAsID: use only 4 bytes here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}

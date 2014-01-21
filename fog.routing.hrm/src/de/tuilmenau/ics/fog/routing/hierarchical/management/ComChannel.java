@@ -34,6 +34,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -677,6 +678,20 @@ public class ComChannel
 		}
 	}
 	
+	/**
+	 * Returns the machine-local AsID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local AsID
+	 */
+	public Long getGUIPeerAsID()
+	{
+		//TODO: if JINI is used, the function uniqueIDsSimulationMachineMultiplier() could return the wrong value here
+		if (getParentComSession().getPeerAsID() != null)
+			return getParentComSession().getPeerAsID() / Simulation.uniqueIDsSimulationMachineMultiplier();
+		else
+			return new Long(-1);
+	}
+
 	/**
 	 * Returns the direction of the communication  channel
 	 * 

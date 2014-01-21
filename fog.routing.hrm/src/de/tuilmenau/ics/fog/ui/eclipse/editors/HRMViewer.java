@@ -963,6 +963,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn tColumnQueue = new TableColumn(tTable, SWT.NONE, 12);
 		tColumnQueue.setText("Input queue");
 
+		TableColumn tColumnPeerAsID = new TableColumn(tTable, SWT.NONE, 13);
+		tColumnPeerAsID.setText("Peer AS");
+		
 		tTable.setHeaderVisible(true);
 		tTable.setLinesVisible(true);
 		
@@ -1089,6 +1092,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			 */
 			tRow.setText(12, Integer.toString(tComChannel.getPacketQueue().size()));
 
+			/**
+			 * Column 13:  
+			 */
+			Long tPeerAsID = tComChannel.getGUIPeerAsID();
+			tRow.setText(13, (tPeerAsID != null ? tPeerAsID.toString() : "undef."));
+
 			j++;
 		}
 		
@@ -1113,6 +1122,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutMappingTable.setColumnData(tColumnState, new ColumnWeightData(1));		
 		tLayoutMappingTable.setColumnData(tColumnParentHRMID, new ColumnWeightData(1));		
 		tLayoutMappingTable.setColumnData(tColumnQueue, new ColumnWeightData(1));		
+		tLayoutMappingTable.setColumnData(tColumnPeerAsID, new ColumnWeightData(1));		
 		
 		/**
 		 * The table context menu

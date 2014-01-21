@@ -96,6 +96,11 @@ public class ComSession extends Session
 	private long mSessionID = -1;
 
 	/**
+	 * Stores the unique ID of the autonomous system of the peer
+	 */
+	private Long mPeerAsID = new Long(-1); 
+
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController is the HRMController instance this connection end point is associated to
@@ -292,20 +297,32 @@ public class ComSession extends Session
 	}
 	
 	/**
+	 * Sets new AsID for the peer
+	 * 
+	 * @param pPeerAsID the new AsID of the peer
+	 */
+	private void setPeerAsID(Long pPeerAsID)
+	{
+		if(pPeerAsID != null){
+			mPeerAsID = pPeerAsID;
+		}
+	}
+	
+	/**
 	 * Sets new L2Address for peer (central FN)
 	 * 
-	 * @param pL2Address the new L2Address
+	 * @param pPeerL2Address the new L2Address
 	 */
-	private void setPeerL2Address(L2Address pL2Address)
+	private void setPeerL2Address(L2Address pPeerL2Address)
 	{
-		if(pL2Address != null){
+		if(pPeerL2Address != null){
 			synchronized (mPeerDescriptions) {
-				if(!mPeerDescriptions.contains(pL2Address)){
-					mPeerDescriptions.add(pL2Address);
+				if(!mPeerDescriptions.contains(pPeerL2Address)){
+					mPeerDescriptions.add(pPeerL2Address);
 				}
 			}
 		}
-		mPeerL2Address = pL2Address;
+		mPeerL2Address = pPeerL2Address;
 		
 		/**
 		 * The following is FoGSiEm specific for an easy detection of the network interface of each L0 cluster
@@ -328,6 +345,20 @@ public class ComSession extends Session
 		return mPeerL2Address;
 	}
 	
+	/**
+	 * Determines the AsID of the peer.
+	 * 
+	 * @return the AsID of the peer or "null"
+	 */
+	public Long getPeerAsID()
+	{
+		if(mPeerAsID != null){
+			return mPeerAsID;
+		}else{
+			return null;
+		}
+	}
+
 	/**
 	 * Returns if a given L2Address describes this ComSession's peer. 
 	 * 
@@ -691,11 +722,17 @@ public class ComSession extends Session
 	 */
 	private void eventReceivedAnnouncePhysicalEndPoint(AnnouncePhysicalEndPoint pAnnouncePhysicalNeighborhood)
 	{
-		// get the L2Address of the peer
+		// update the L2Address of the peer
 		setPeerL2Address(pAnnouncePhysicalNeighborhood.getSenderCentralAddress());
 
+		// update the AsID of the peer
+		setPeerAsID(pAnnouncePhysicalNeighborhood.getSenderAsID());
+		
 		// get the L2Address of the peer, which should be used as routing target
 		L2Address tSenderAddress = pAnnouncePhysicalNeighborhood.getSenderAddress();
+		
+		// get the ID of the AS of the sender
+		Long tSenderAsID = pAnnouncePhysicalNeighborhood.getSenderAsID();
 		
 		if (tSenderAddress != null){
 			/**
@@ -776,7 +813,7 @@ public class ComSession extends Session
 				}
 			}
 			// create a map between the central FN and the search FN
-			AnnouncePhysicalEndPoint tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalEndPoint(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.ANSWER_PACKET);
+			AnnouncePhysicalEndPoint tAnnouncePhysicalNeighborhoodAnswer = new AnnouncePhysicalEndPoint(getHRMController().getAS().getAsID(), tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.ANSWER_PACKET);
 			// tell the neighbor about the FN
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.log(this, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD ANSWER " + tAnnouncePhysicalNeighborhoodAnswer);
@@ -983,7 +1020,7 @@ public class ComSession extends Session
 		// get the name of the central FN
 		L2Address tCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
 		// create a map between the central FN and the search FN
-		AnnouncePhysicalEndPoint tAnnouncePhysicalEndPoint = new AnnouncePhysicalEndPoint(tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.INIT_PACKET);
+		AnnouncePhysicalEndPoint tAnnouncePhysicalEndPoint = new AnnouncePhysicalEndPoint(getHRMController().getAS().getAsID(), tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.INIT_PACKET);
 		// tell the neighbor about the FN
 		Logging.log(mHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
 		if(write(tAnnouncePhysicalEndPoint)){
