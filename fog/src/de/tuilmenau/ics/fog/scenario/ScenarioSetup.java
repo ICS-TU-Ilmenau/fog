@@ -72,6 +72,7 @@ public class ScenarioSetup
 
 					case 88: scenario88(sim); break;
 					case 89: scenario89(sim); break;
+					case 90: scenario90(sim); break;
 					
 					// emulator scenario
 					case 99: emulator(sim); break;
@@ -93,22 +94,24 @@ public class ScenarioSetup
 		scenarioRow(sim,asName,numberNodes, 0);
 	}
 	
-	public static void scenarioRow(Simulation sim, String asName, int numberNodes, long pDataRate)
+	public static void scenarioRow(Simulation sim, String pAsName, int numberNodes, long pDataRate)
 	{
-		scenarioRow(sim, asName, 1, numberNodes, pDataRate);
+		scenarioRow(sim, pAsName, 1, numberNodes, pDataRate);
 	}
 	
-	public static void scenarioRow(Simulation sim, String asName, int pStartNode, int numberNodes, long pDataRate)
+	public static void scenarioRow(Simulation sim, String pAsName, int pStartNode, int numberNodes, long pDataRate)
 	{
-		sim.executeCommand("@ - create as default");
-		sim.executeCommand("switch default");
+		if(pAsName != null){
+			sim.executeCommand("@ - create as " + pAsName);
+			sim.executeCommand("switch " + pAsName);
+		}
 
 		for(int i=pStartNode; i<=(pStartNode + numberNodes - 1); i++) {
 			String nodeName = "node" +i;
 			sim.executeCommand("create node " +nodeName);
 			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(sim);
 			try {
-				tNMS.setNodeASName(nodeName, "default");
+				tNMS.setNodeASName(nodeName, pAsName);
 			} catch (RemoteException tExc) {
 				tExc.printStackTrace();
 			}
@@ -131,12 +134,17 @@ public class ScenarioSetup
 	
 	public static void scenario88(Simulation pSim) // Thomas for testing/evaluating HRM
 	{
+		scenario88(pSim, DEFAULT_AS_NAME);
+	}
+	
+	public static void scenario88(Simulation pSim, String pAsName) // Thomas for testing/evaluating HRM
+	{
 		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
 		
 		int tNumberOfNodes = 12;
 		long tDataRate = 100 * 1000;
 		
-		scenarioRow(pSim, DEFAULT_AS_NAME, tNumberOfNodes, tDataRate);
+		scenarioRow(pSim, pAsName, tNumberOfNodes, tDataRate);
 		
 		// close row to a ring by connecting last and first node
 		String busName = "bus" +tNumberOfNodes +"_1";
@@ -156,7 +164,7 @@ public class ScenarioSetup
 		int tNumberOfNodes = 3;
 		long tDataRate = 100 * 1000;
 	
-		scenario88(pSim);
+		scenario88(pSim, DEFAULT_AS_NAME);
 		
 		scenarioRow(pSim, DEFAULT_AS_NAME, 13, tNumberOfNodes, tDataRate);
 		
@@ -181,6 +189,45 @@ public class ScenarioSetup
 		pSim.executeCommand("connect node13 " +tInterNetworkBusName);
 	}
 
+	public static void scenario90(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
+		
+		int tNumberOfNodes = 3;
+		long tDataRate = 100 * 1000;
+	
+		// ####### first AS
+
+		scenario88(pSim, "bigNet");
+		
+		// connect both networks - part 1
+		String tInterNetworkBusName = "bus7_13";
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tInterNetworkBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tInterNetworkBusName);
+		
+		pSim.executeCommand("connect node7 " +tInterNetworkBusName);
+
+		// ####### second AS
+		
+		// create another line of nodes
+		scenarioRow(pSim, "smallNet", 13, tNumberOfNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String tRingEndBusName = "bus13_" + (12 + tNumberOfNodes);
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tRingEndBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tRingEndBusName);
+		
+		pSim.executeCommand("connect node" + (12 + tNumberOfNodes) + " " + tRingEndBusName);
+		pSim.executeCommand("connect node13 " +tRingEndBusName);
+
+		// connect both networks - part 2
+		pSim.executeCommand("connect node13 " +tInterNetworkBusName);
+	}
+	
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
 	{
 		scenarioRow(sim, asName, numberNodes);
