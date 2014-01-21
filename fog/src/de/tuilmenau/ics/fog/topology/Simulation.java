@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.topology;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.IWorker;
 import de.tuilmenau.ics.fog.Worker;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Logging.Level;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.middleware.JiniHelper;
@@ -53,6 +55,12 @@ public class Simulation
 
 	public static int mStartedSimulations = 0;
 	
+	/**
+	 * Stores the physical simulation machine specific multiplier, which is used to create unique IDs even if multiple physical simulation machines are connected by FoGSiEm instances
+	 * The value "-1" is important for initialization!
+	 */
+	private static long sIDMachineMultiplier = -1;
+
 	public Simulation(String pBaseDirectory, Level pLogLevel)
 	{
 		mLogLevel = pLogLevel;
@@ -70,6 +78,44 @@ public class Simulation
 		Worker.registerSimulation(this);
 	}
 	
+	/**
+	 * Helper function to get the local machine's host name.
+	 * The output of this function is useful for distributed simulations if network entities coexist on different machines.
+	 * 
+	 * @return the host name
+	 */
+	public static String getSimulationHostName()
+	{
+		String tResult = null;
+		
+		try{	
+			tResult = java.net.InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException tExc) {
+			Logging.err(null, "Unable to determine the local host name", tExc);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Determines the physical simulation machine specific ID multiplier
+	 * 
+	 * @return the generated multiplier
+	 */
+	static protected long uniqueIDsSimulationMachineMultiplier()
+	{
+		if (sIDMachineMultiplier < 0){
+			String tHostName = getSimulationHostName();
+			if (tHostName != null){
+				sIDMachineMultiplier = Math.abs((tHostName.hashCode() % 10000) * 10000);
+			}else{
+				Logging.err(null, "Unable to determine the machine-specific ID multiplier because the simulation host name couldn't be indentified");
+			}
+		}
+
+		return sIDMachineMultiplier;
+	}
+
 	public synchronized boolean createAS(String pName, boolean pPartialRouting, String pPartialRoutingServiceName)
 	{
 		if(pName == null) throw new RuntimeException(this +": invalid paramter pName of createAS");
