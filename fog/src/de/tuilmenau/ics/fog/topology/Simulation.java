@@ -102,7 +102,7 @@ public class Simulation
 	 * 
 	 * @return the generated multiplier
 	 */
-	static protected long uniqueIDsSimulationMachineMultiplier()
+	static public long uniqueIDsSimulationMachineMultiplier()
 	{
 		if (sIDMachineMultiplier < 0){
 			String tHostName = getSimulationHostName();
