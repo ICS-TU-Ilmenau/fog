@@ -356,11 +356,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private boolean mResultsValidated = false;
 	
 	/**
-	 * @param pAS the autonomous system at which this HRMController is instantiated
-	 * @param pNode the node on which this controller was started
-	 * @param pHRS is the hierarchical routing service that should be used
+	 * @param pNode the node on which this controller is running
+	 * @param pHierarchicalRoutingService the parent hierarchical routing service instance
 	 */
-	public HRMController(AutonomousSystem pAS, Node pNode, HRMRoutingService pHierarchicalRoutingService)
+	public HRMController(Node pNode, HRMRoutingService pHierarchicalRoutingService)
 	{
 		// initialize the application context
 		super(pNode, null, pNode.getIdentity());
@@ -379,7 +378,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mNode = pNode;
 		
 		// reference to the AutonomousSystem object 
-		mAS = pAS;
+		mAS = mNode.getAS();
 		
 		// set the node-global election state
 		mNodeElectionState = Elector.createNodeElectionState();

@@ -76,7 +76,7 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 		Logging.log(this, "###### CONFIGURING NODE " + pName + " -START ###### ");
 		
 		// create a new HRM instance for this node
-		HRMRoutingService tHRS = new HRMRoutingService(pAS, pNode);
+		HRMRoutingService tHRS = new HRMRoutingService(pNode);
 		
 		// register HRM instance as routing service for the current node
 		FoGEntity.registerRoutingService(pNode, tHRS);

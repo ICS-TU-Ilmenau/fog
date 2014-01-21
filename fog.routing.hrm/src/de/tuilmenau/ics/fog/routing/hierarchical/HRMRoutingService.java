@@ -42,7 +42,6 @@ import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.*;
-import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
@@ -70,11 +69,6 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	private Node mNode = null;
 
-	/**
-	 * Stores the reference to the AutonomousSystem. 
-	 */
-	private AutonomousSystem mAS = null;
-	
 	/**
 	 * Stores the name mapping instance for mapping FoG names to L2 addresses
 	 */
@@ -126,19 +120,18 @@ public class HRMRoutingService implements RoutingService, Localization
 	private LinkedList<AbstractGate> mRegisteredLinks = new LinkedList<AbstractGate>();
 	
 	/**
-	 * Creates a local HRS instance for a node.
-	 * @param pAS the autonomous system at which the HRS is instantiated 
+	 * Constructor
+	 * 
 	 * @param pNode the node on which this routing service instance is created on
 	 */
-	public HRMRoutingService(AutonomousSystem pAS, Node pNode)
+	public HRMRoutingService(Node pNode)
 	{
 		Logging.log(this, "CREATED ON " + pNode);
 		
 		mNode = pNode;
-		mAS = pAS;
 		
 		// create name mapping instance to map FoG names to L2 addresses
-		mFoGNamesToL2AddressesMapping = new HierarchicalNameMappingService<L2Address>(HierarchicalNameMappingService.getGlobalNameMappingService(mAS.getSimulation()), null);
+		mFoGNamesToL2AddressesMapping = new HierarchicalNameMappingService<L2Address>(HierarchicalNameMappingService.getGlobalNameMappingService(mNode.getAS().getSimulation()), null);
 	}
 
 	/**
@@ -151,7 +144,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		Logging.log(this, "Got event \"ROUTING SERVICE REGISTERED\"");
 		
 		// create HRM controller instance 
-		mHRMController = new HRMController(mAS, mNode, this);
+		mHRMController = new HRMController(mNode, this);
 		
 		mWaitOnControllerstart = false;
 
