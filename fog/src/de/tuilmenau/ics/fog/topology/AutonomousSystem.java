@@ -43,6 +43,10 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	 */
 	private final static boolean ENABLE_SYNCHRONIZED_COMMAND_EXECUTION = true;
 	
+	/**
+	 * This is the AS, which allows for globally (related to a physical simulation machine) unique AS IDs.
+	 */
+	public static long sNextFreeAsID = 1;
 	
 	public AutonomousSystem(String pName, Simulation pSimulation, boolean pPartialRouting, String pPartialRoutingServiceName)
 	{	
@@ -50,6 +54,7 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		
 		mName = pName;
 		mSim = pSimulation;
+		mAsID = createAsID();
 		
 		RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance(pSimulation);
 		RemoteRoutingService tGrs = register.getGlobalRoutingService(mSim);
@@ -76,6 +81,46 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		mLogger.debug(this, "Registered Autonomous System with " + JiniHelper.getService(IAutonomousSystem.class, mName) );
 	}
 	
+	/**
+	 * Generates a new AsID
+	 * 
+	 * @return the AsID
+	 */
+	static public synchronized long createAsID()
+	{
+		// get the current unique ID counter
+		long tResult = sNextFreeAsID * Simulation.uniqueIDsSimulationMachineMultiplier();
+
+		// make sure the next ID isn't equal
+		sNextFreeAsID++;
+	
+		return tResult;
+	}
+
+	/**
+	 * Returns the full AsID (including the machine specific multiplier)
+	 * 
+	 *  @return the full AsID
+	 */
+	public Long getAsID()
+	{
+		return mAsID;
+	}
+
+	/**
+	 * Returns the machine-local AsID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local AsID
+	 */
+	public Long getGUIAsID()
+	{
+		//TODO: if JINI is used, the function uniqueIDsSimulationMachineMultiplier() could return the wrong value here
+		if (getAsID() != null)
+			return getAsID() / Simulation.uniqueIDsSimulationMachineMultiplier();
+		else
+			return new Long(-1);
+	}
+
 	public RemoteRoutingService getRoutingService()
 	{
 		return mRoutingService;
@@ -181,7 +226,7 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	@Override
 	public String toString()
 	{
-		return "AS:" +mName;
+		return "AS" + Long.toString(getGUIAsID()) + ":" + mName;
 	}
 	
 	public EventHandler getTimeBase()
@@ -231,4 +276,5 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	private RemoteRoutingService mRoutingService;
 	private String mName;
 	private Simulation mSim;
+	private long mAsID = 0;
 }
