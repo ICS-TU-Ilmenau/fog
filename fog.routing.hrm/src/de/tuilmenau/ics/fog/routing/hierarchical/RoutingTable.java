@@ -383,6 +383,8 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 							  ( (pDesiredMinDataRate > 0) &&
      						  // better remaining available data rate?
 							  ( (tBestResultQoS.getMaxAvailableDataRate() < tEntry.getMaxAvailableDataRate()) ||
+							  // same data rate, but the data rate to the next hop differs		  
+						      ( (tBestResultQoS.getMaxAvailableDataRate() == tEntry.getMaxAvailableDataRate()) && (tBestResultQoS.getNextHopMaxAvailableDataRate() < tEntry.getNextHopMaxAvailableDataRate()) ) || 
 						      // same date rate, delay isn't important and a better hop count?
 							  ( (tBestResultQoS.getMaxAvailableDataRate() == tEntry.getMaxAvailableDataRate()) && (pDesiredMaxDelay <= 0) && (tBestResultQoS.getHopCount() > tEntry.getHopCount()) ) ) ) ||
 							  
