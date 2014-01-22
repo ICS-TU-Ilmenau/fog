@@ -90,17 +90,17 @@ public class ScenarioSetup
 	}
 
 	
-	public static void scenarioRow(Simulation sim, String asName, int numberNodes)
+	public static void scenarioRow(Simulation sim, String pAsName, int numberNodes)
 	{
-		scenarioRow(sim,asName,numberNodes, 0);
+		scenarioRow(sim, pAsName, "bus", 1, numberNodes, 0);
 	}
 	
 	public static void scenarioRow(Simulation sim, String pAsName, int numberNodes, long pDataRate)
 	{
-		scenarioRow(sim, pAsName, 1, numberNodes, pDataRate);
+		scenarioRow(sim, pAsName, "bus", 1, numberNodes, pDataRate);
 	}
 	
-	public static void scenarioRow(Simulation sim, String pAsName, int pStartNode, int numberNodes, long pDataRate)
+	public static void scenarioRow(Simulation sim, String pAsName, String pBusDescriptor, int pStartNode, int numberNodes, long pDataRate)
 	{
 		if(pAsName != null){
 			sim.executeCommand("@ - create as " + pAsName);
@@ -119,16 +119,16 @@ public class ScenarioSetup
 			
 			// do not create bus for the last one
 			if(i < (pStartNode + numberNodes - 1)) {
-				String busName = "bus" +i +"_" +(i+1);
+				String busName = pBusDescriptor + i +"_" +(i+1);
 				if(pDataRate > 0)
 					sim.executeCommand("create bus " +busName + " " + Long.toString(pDataRate));
 				else
 					sim.executeCommand("create bus " +busName);
-				sim.executeCommand("connect " +nodeName +" " +busName);
+				sim.executeCommand("connect " + nodeName + " " + busName);
 			}
 			
 			if(i > 1) {
-				sim.executeCommand("connect " +nodeName +" bus" +(i-1) +"_" +i);
+				sim.executeCommand("connect " + nodeName + " " + pBusDescriptor + (i-1) + "_" + i);
 			}
 		}
 	}
@@ -148,7 +148,7 @@ public class ScenarioSetup
 		scenarioRow(pSim, pAsName, tNumberOfNodes, tDataRate);
 		
 		// close row to a ring by connecting last and first node
-		String busName = "bus" +tNumberOfNodes +"_1";
+		String busName = "link_" +tNumberOfNodes +"_1";
 		if(tDataRate > 0)
 			pSim.executeCommand("create bus " +busName  + " " + Long.toString(tDataRate));
 		else
@@ -167,10 +167,10 @@ public class ScenarioSetup
 	
 		scenario88(pSim, DEFAULT_AS_NAME);
 		
-		scenarioRow(pSim, DEFAULT_AS_NAME, 13, tNumberOfNodes, tDataRate);
+		scenarioRow(pSim, DEFAULT_AS_NAME, "link_", 13, tNumberOfNodes, tDataRate);
 		
 		// close row to a ring by connecting last and first node
-		String tRingEndBusName = "bus13_" + (12 + tNumberOfNodes);
+		String tRingEndBusName = "link_13_" + (12 + tNumberOfNodes);
 		if(tDataRate > 0)
 			pSim.executeCommand("create bus " +tRingEndBusName  + " " + Long.toString(tDataRate));
 		else
@@ -180,7 +180,7 @@ public class ScenarioSetup
 		pSim.executeCommand("connect node13 " +tRingEndBusName);
 
 		// connect both networks
-		String tInterNetworkBusName = "bus7_13";
+		String tInterNetworkBusName = "link_7_13";
 		if(tDataRate > 0)
 			pSim.executeCommand("create bus " +tInterNetworkBusName  + " " + Long.toString(tDataRate));
 		else
@@ -202,7 +202,7 @@ public class ScenarioSetup
 		scenarioRow(pSim, "firstNet", tNumberOfNodes, tDataRate);
 		
 		// close row to a ring by connecting last and first node
-		String busName = "bus" +tNumberOfNodes +"_1";
+		String busName = "link_" +tNumberOfNodes +"_1";
 		if(tDataRate > 0)
 			pSim.executeCommand("create bus " +busName  + " " + Long.toString(tDataRate));
 		else
@@ -213,7 +213,7 @@ public class ScenarioSetup
 
 				
 		// connect both networks - part 1
-		String tInterNetworkBusName = "bus" + tNumberOfNodes + "_" + (tNumberOfNodes + 1);
+		String tInterNetworkBusName = "link_" + tNumberOfNodes + "_" + (tNumberOfNodes + 1);
 		if(tDataRate > 0)
 			pSim.executeCommand("create bus " +tInterNetworkBusName  + " " + Long.toString(tDataRate));
 		else
@@ -224,10 +224,10 @@ public class ScenarioSetup
 		// ####### second AS
 		
 		// create another line of nodes
-		scenarioRow(pSim, "secondNet", tNumberOfNodes + 1, tNumberOfNodes, tDataRate);
+		scenarioRow(pSim, "secondNet", "link_", tNumberOfNodes + 1, tNumberOfNodes, tDataRate);
 		
 		// close row to a ring by connecting last and first node
-		String tRingEndBusName = "bus" + tNumberOfNodes + "_" + (2 * tNumberOfNodes);
+		String tRingEndBusName = "link_" + tNumberOfNodes + "_" + (2 * tNumberOfNodes);
 		if(tDataRate > 0)
 			pSim.executeCommand("create bus " +tRingEndBusName  + " " + Long.toString(tDataRate));
 		else
@@ -252,7 +252,7 @@ public class ScenarioSetup
 		scenario88(pSim, "bigNet");
 		
 		// connect both networks - part 1
-		String tInterNetworkBusName = "bus7_13";
+		String tInterNetworkBusName = "link_7_13";
 		if(tDataRate > 0)
 			pSim.executeCommand("create bus " +tInterNetworkBusName  + " " + Long.toString(tDataRate));
 		else
@@ -263,10 +263,10 @@ public class ScenarioSetup
 		// ####### second AS
 		
 		// create another line of nodes
-		scenarioRow(pSim, "smallNet", 13, tNumberOfNodes, tDataRate);
+		scenarioRow(pSim, "smallNet", "link_", 13, tNumberOfNodes, tDataRate);
 		
 		// close row to a ring by connecting last and first node
-		String tRingEndBusName = "bus13_" + (12 + tNumberOfNodes);
+		String tRingEndBusName = "link_13_" + (12 + tNumberOfNodes);
 		if(tDataRate > 0)
 			pSim.executeCommand("create bus " +tRingEndBusName  + " " + Long.toString(tDataRate));
 		else
@@ -377,7 +377,7 @@ public class ScenarioSetup
 						// no spaces allowed in command
 						ethName = ethName.replace(" ", "_");
 						
-						// create ethernet element in simulation and link it to node
+						// create Ethernet element in simulation and link it to node
 						pSim.executeCommand("create ethernet " +ethName +" " +netInf.getName() +" " +netInf.getName());
 						pSim.executeCommand("connect " +nodeName +" " +ethName);
 					} else {
