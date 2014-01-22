@@ -651,7 +651,7 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 					tName.append(")");
 				}
 				else if(edge instanceof NetworkInterface) {
-					return "LL_" +((NetworkInterface) edge).getLowerLayerID();
+					return "";//"LL_" +((NetworkInterface) edge).getLowerLayerID();
 				}
 
 				if(tName == null) return edge.toString();
