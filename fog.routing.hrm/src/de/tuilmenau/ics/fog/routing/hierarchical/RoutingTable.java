@@ -145,6 +145,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					 * Update BANDWIDTH
 					 */
 					tFoundDuplicate.setMaxAvailableDataRate(pRoutingTableEntry.getMaxAvailableDataRate());
+					tFoundDuplicate.setNextHopMaxAvailableDataRate(pRoutingTableEntry.getNextHopMaxAvailableDataRate());
 	
 					/**
 					 * Update UTILIZATION
