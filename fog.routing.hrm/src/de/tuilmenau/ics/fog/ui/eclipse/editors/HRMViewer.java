@@ -794,7 +794,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		// col. 13
 		TableColumn tTableColSender = new TableColumn(mTableRoutingTable, SWT.NONE, 13);
 		tTableColSender.setText("Sender");
-		
+		// col. 14
+		TableColumn tTableColNextHopDR = new TableColumn(mTableRoutingTable, SWT.NONE, 14);
+		tTableColNextHopDR.setText("MaxDR NextHop [kbit/s]");
+
 		updateRoutingTable();
 		
 		TableColumn[] columns2 = mTableRoutingTable.getColumns();
@@ -821,6 +824,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		tLayoutRoutingTable2.setColumnData(tTableColTimeout, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColOwner, new ColumnWeightData(1));
 		tLayoutRoutingTable2.setColumnData(tTableColSender, new ColumnWeightData(1));
+		tLayoutRoutingTable2.setColumnData(tTableColNextHopDR, new ColumnWeightData(1));
 		
 		/**
 		 * Add a listener to allow re-sorting of the table based on the destination per table row
@@ -1994,16 +1998,32 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						/**
 						 * Column 13: sender
 						 */
-						if (tEntry.getTimeout() > 0) {
-							tTableRow.setText(13, (tEntry.getShareSender() != null ? tEntry.getShareSender().toString() : "??"));
+						if(tEntry.isSharedLink()){
+							if (tEntry.getTimeout() > 0) {
+								tTableRow.setText(13, (tEntry.getShareSender() != null ? tEntry.getShareSender().toString() : "??"));
+							}else{
+								tTableRow.setText(13, "undef.");
+							}
 						}else{
-							tTableRow.setText(13, "undef.");
+							tTableRow.setText(13, "local");
+						}
+
+						/**
+						 * Column 14: next hop max. data rate
+						 */
+						double tNextHopDataRate = tEntry.getNextHopMaxAvailableDataRate();
+						if (tNextHopDataRate == RoutingEntry.INFINITE_DATARATE){
+							tTableRow.setText(14, "inf.");
+						}else if(tNextHopDataRate < 0){
+							tTableRow.setText(14, "undef.");
+						}else{
+							tTableRow.setText(14, Double.toString(tNextHopDataRate));
 						}
 
 						/**
 						 * Cells coloring
 						 */
-						for(int i = 0; i < 14; i++){
+						for(int i = 0; i < 15; i++){
 							if(tEntry.isLocalLoop()){
 								tTableRow.setBackground(i, tColLoop);
 							}else if (tEntry.isRouteToDirectNeighbor()){

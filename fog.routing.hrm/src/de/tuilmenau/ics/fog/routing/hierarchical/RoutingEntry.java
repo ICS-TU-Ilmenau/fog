@@ -90,20 +90,26 @@ public class RoutingEntry implements RouteSegment
 	private double mUtilization = NO_UTILIZATION;
 	
 	/**
-	 * Stores the minimum additional delay[ms] the described route causes.
+	 * Stores the minimum additional delay [ms] the described route causes.
 	 */
 	private long mMinDelay = NO_DELAY;
 	
 	/**
-	 * Stores the maximum data rate[kbit/s = 1000bit/s] the described route might provide.
+	 * Stores the maximum data rate [kbit/s = 1000bit/s] the described route might provide.
 	 */
 	private long mMaxAvailableDataRate = INFINITE_DATARATE;
 
 	/**
 	 * Stores the L2 address of the next hop if known
-	 * This variable is not part of the concept. It is only used to simplify the implementation.
+	 * This variable is never transmitted. It is only used locally in order to simplify the implementation.
 	 */
 	private L2Address mNextHopL2Address = new L2Address(0);
+
+	/**
+	 * Stores the maximum data rate [kbit/s = 1000bit/s] the described next link (to the next hop) might provide. 
+	 * This variable is never transmitted. It is only used locally in order to simplify the implementation.
+	 */
+	private long mNextHopMaxAvailableDataRate = INFINITE_DATARATE;
 
 	/**
 	 * Stores the last next hop of a route entry which was determined by combining multiple routing entries and this instance is the result.
@@ -386,6 +392,9 @@ public class RoutingEntry implements RouteSegment
 		// mark as local loop
 		tEntry.mRouteToDirectNeighbor = true;
 		
+		// sets the max. data rate along the next link
+		tEntry.mNextHopMaxAvailableDataRate = pMaxDataRate;
+		
 		// return with the entry
 		return tEntry;
 	}
@@ -652,6 +661,26 @@ public class RoutingEntry implements RouteSegment
 		return mMaxAvailableDataRate;
 	}
 	
+	/**
+	 * Sets a new max. data rate to the next hop
+	 * 
+	 * @param pNewMaxDataRate the new max. data rate
+	 */
+	public void setNextHopMaxAvailableDataRate(long pNewMaxDataRate)
+	{
+		mNextHopMaxAvailableDataRate = pNewMaxDataRate;
+	}
+	
+	/**
+	 * Returns the maximum data rate the next link might provide.
+	 * 
+	 * @return the maximum data rate
+	 */
+	public long getNextHopMaxAvailableDataRate()
+	{
+		return mNextHopMaxAvailableDataRate;
+	}
+
 	/**
 	 * Determines if the route describes a local loop.
 	 * (for GUI only)
@@ -970,6 +999,8 @@ public class RoutingEntry implements RouteSegment
 		tResult.mReporter = mReporter;
 		
 		tResult.mOrigin = mOrigin;
+		
+		tResult.mNextHopMaxAvailableDataRate = mNextHopMaxAvailableDataRate;
 		
 		tResult.mOwners = (LinkedList<HRMID>) mOwners.clone();
 		
