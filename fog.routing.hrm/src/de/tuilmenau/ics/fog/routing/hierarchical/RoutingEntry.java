@@ -1099,7 +1099,7 @@ public class RoutingEntry implements RouteSegment
 			tResult += getSource() + " <=" + (mRouteForClusterTraversal ? "TRAV" : "") + "=> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "");																																													 
 		}
 		
-		tResult += (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxAvailableDataRate() != INFINITE_DATARATE ? getMaxAvailableDataRate() : "inf.") : "");
+		tResult += (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxAvailableDataRate() != INFINITE_DATARATE ? getMaxAvailableDataRate() : "inf.") + ", NextHopMaxDR=" + (getNextHopMaxAvailableDataRate() != INFINITE_DATARATE ? getNextHopMaxAvailableDataRate() : "inf."): "");
 		
 		return tResult;
 	}
