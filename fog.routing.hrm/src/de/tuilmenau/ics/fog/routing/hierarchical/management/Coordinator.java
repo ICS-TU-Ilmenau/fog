@@ -1130,6 +1130,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * EVENT: coordinator announcement, we react on this by:
 	 *       1.) store the topology information locally
 	 *       2.) forward the announcement downward the hierarchy to all locally known clusters (where this node is the head) ("to the bottom")
+	 *       
+	 * (gets called by the CoordinatorAsClusterMember instance, which received the AnnounceCoordinator packet)
+	 * (responsible for downward forwarding of an AnnounceCoordinator packet)
 	 * 
 	 * @param pComChannel the source comm. channel
 	 * @param pAnnounceCoordinator the received announcement
