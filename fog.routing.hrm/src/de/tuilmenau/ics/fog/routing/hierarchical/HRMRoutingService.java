@@ -212,12 +212,33 @@ public class HRMRoutingService implements RoutingService, Localization
 	public boolean addHRMRoute(RoutingEntry pRoutingTableEntry)
 	{
 		/**
+		 * Check for the max. available data rate to the next hop
+		 */
+		// if the destination is a direct neighbor, the max. avail. DR to the next hop is automatically learned by RoutingEntry.createRouteToDirectNeighbor() 
+		if(pRoutingTableEntry.getDest().isClusterAddress()){
+			HRMID tNextHopHRMID = pRoutingTableEntry.getNextHop();
+			synchronized (mRoutingTable) {
+				for(RoutingEntry tEntry : mRoutingTable){
+					if(tEntry.isRouteToDirectNeighbor()){
+						if(tEntry.getDest().equals(tNextHopHRMID)){
+							pRoutingTableEntry.setNextHopMaxAvailableDataRate(tEntry.getMaxAvailableDataRate());
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		/**
 		 * Store the routing entry in the routing table
 		 */
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "Adding HRM route: " + pRoutingTableEntry);
 		}
-		boolean tResult = mRoutingTable.addEntry(pRoutingTableEntry);
+		boolean tResult = false;
+		synchronized (mRoutingTable) {
+			tResult = mRoutingTable.addEntry(pRoutingTableEntry);;
+		}
 		
 		/**
 		 * Store the destination HRMID in the HRMID-2-L2Address mapping and as direct neighbor
