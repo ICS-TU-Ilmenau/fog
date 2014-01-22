@@ -679,6 +679,20 @@ public class ComChannel
 	}
 	
 	/**
+	 * Determines the AsID of the peer.
+	 * 
+	 * @return the AsID of the peer or "null"
+	 */
+	public Long getPeerAsID()
+	{
+		if(getParentComSession().getPeerAsID() != null){
+			return getParentComSession().getPeerAsID();
+		}else{
+			return null;
+		}
+	}
+
+	/**
 	 * Returns the machine-local AsID (excluding the machine specific multiplier)
 	 * 
 	 * @return the machine-local AsID
@@ -686,8 +700,8 @@ public class ComChannel
 	public Long getGUIPeerAsID()
 	{
 		//TODO: if JINI is used, the function uniqueIDsSimulationMachineMultiplier() could return the wrong value here
-		if (getParentComSession().getPeerAsID() != null)
-			return getParentComSession().getPeerAsID() / Simulation.uniqueIDsSimulationMachineMultiplier();
+		if (getPeerAsID() != null)
+			return getPeerAsID() / Simulation.uniqueIDsSimulationMachineMultiplier();
 		else
 			return new Long(-1);
 	}

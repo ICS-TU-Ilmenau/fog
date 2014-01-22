@@ -15,6 +15,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastab
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageASSeparator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -561,6 +562,9 @@ public class ClusterMember extends ClusterName
 	 *       1.) store the topology information locally
 	 *       2.) forward the announcement within the same hierarchy level ("to the side")
 	 * 
+	 * (gets called by the ComChannel, which received the AnnounceCoordinator packet)
+	 * (responsible for sideward forwarding of an AnnounceCoordinator packet, also responsible for L0 downward forwarding of an AnnounceCoordinator pacet)
+	 * 
 	 * @param pComChannel the source comm. channel
 	 * @param pAnnounceCoordinator the received announcement
 	 */
@@ -576,7 +580,7 @@ public class ClusterMember extends ClusterName
 		 */
 		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
 		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderClusterName().getHierarchyLevel().isBaseLevel())){
-			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderClusterName());
+			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderClusterName()); //TODO: use timeouts here
 		}
 
 		/**
@@ -617,18 +621,20 @@ public class ClusterMember extends ClusterName
 			tForwardPacket.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
 		
 			/**
-			 * forward the announcement if the TTL is still okay
+			 * TTL is still okay?
 			 */
 			if(tForwardPacket.isTTLOkay()){
-				// do we have a loop?
+				/**
+				 * do we have a loop?
+				 */ 
 				if(!tForwardPacket.hasPassedNode(mHRMController.getNodeL2Address())){
 					/**
-					 * Record the passed nodes
+					 * STEP 1: record the passed nodes
 					 */
 					tForwardPacket.addPassedNode(mHRMController.getNodeL2Address());
 					
 					/**
-					 * Check if this announcement is already on its way sidewards
+					 * STEP 2: check if this announcement is already on its way sidewards, otherwise, mark it as sideward
 					 */
 					if(!tForwardPacket.enteredSidewardForwarding()){
 						// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
@@ -648,7 +654,7 @@ public class ClusterMember extends ClusterName
 					}
 		
 					/**
-					 * Forward the announcement within the same hierarchy level ("to the side")
+					 * STEP 3: forward the announcement within the same hierarchy level ("to the side")
 					 */
 					// get locally known neighbors for this cluster and hierarchy level
 					LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
@@ -727,12 +733,12 @@ public class ClusterMember extends ClusterName
 			// do we have a loop?
 			if(!tForwardPacket.hasPassedNode(mHRMController.getNodeL2Address())){
 				/**
-				 * Record the passed nodes
+				 * STEP 1: record the passed nodes
 				 */
 				tForwardPacket.addPassedNode(mHRMController.getNodeL2Address());
 
 				/**
-				 * Check if this announcement is already on its way sidewards
+				 * STEP 2: Check if this announcement is already on its way sidewards, otherwise, mark it as sidewarde
 				 */
 				if(!tForwardPacket.enteredSidewardForwarding()){
 					// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
@@ -752,7 +758,7 @@ public class ClusterMember extends ClusterName
 				}
 	
 				/**
-				 * Forward the announcement within the same hierarchy level ("to the side")
+				 * STEP 3: forward the announcement within the same hierarchy level ("to the side")
 				 */
 				// get locally known neighbors for this cluster and hierarchy level
 				LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
@@ -904,36 +910,62 @@ public class ClusterMember extends ClusterName
 		for(ComChannel tComChannel : tComChannels) {
 			boolean tIsLoopback = tComChannel.toLocalNode();
 			
-			if((pExcludeL2Address == null /* excluded peer address is null, we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */)){
-				if (DEBUG){
-					if (!tIsLoopback){
-						Logging.log(this, "       ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
-					}else{
-						Logging.log(this, "       ..to LOOPBACK " + tComChannel);
-					}
-				}
-	
-				if ((pIncludeLoopback) || (!tIsLoopback)){
-					if(tComChannel.isOpen()){
-						SignalingMessageHrm tNewPacket = pPacket.duplicate();
-						if (DEBUG){
-							Logging.log(this, "           ..sending duplicate packet: " + tNewPacket);
+			/**
+			 * check if this packet should enter the next AS behind this comm. channel
+			 */
+			boolean tIsAllowedToEnterNextAS = true;
+			if(pPacket instanceof ISignalingMessageASSeparator){
+				ISignalingMessageASSeparator tSignalingMessageASSeparator = (ISignalingMessageASSeparator)pPacket;
+				tIsAllowedToEnterNextAS = tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, tComChannel.getPeerAsID());				
+			}
+
+			/**
+			 * is this packet allowed to enter the next AS behind this comm. channel?
+			 */
+			if(tIsAllowedToEnterNextAS){
+				/**
+				 * should we deliver this packet to the destination node behind this comm. channel?
+				 */
+				if((pExcludeL2Address == null /* excluded peer address is null => we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */)){
+					if (DEBUG){
+						if (!tIsLoopback){
+							Logging.log(this, "  ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
+						}else{
+							Logging.log(this, "  ..to LOOPBACK " + tComChannel);
 						}
-						// send the packet to one of the possible cluster members
-						tComChannel.sendPacket(tNewPacket);
+					}
+		
+					/**
+					 * should we deliver this packet to the loopback destination behind this comm. channel?
+					 */
+					if ((pIncludeLoopback) || (!tIsLoopback)){
+						if(tComChannel.isOpen()){
+							SignalingMessageHrm tNewPacket = pPacket.duplicate();
+							if (DEBUG){
+								Logging.log(this, "      ..sending duplicate packet: " + tNewPacket);
+							}
+							// send the packet to one of the possible cluster members
+							tComChannel.sendPacket(tNewPacket);
+						}else{
+							if (DEBUG){
+								Logging.log(this, "        ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
+							}
+						}
 					}else{
 						if (DEBUG){
-							Logging.log(this, "             ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
+							Logging.log(this, "         ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
 						}
 					}
 				}else{
 					if (DEBUG){
-						Logging.log(this, "              ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
+						Logging.log(this, "         ..skipping EXCLUDED DESTINATION: " + pExcludeL2Address);
 					}
 				}
 			}else{
 				if (DEBUG){
-					Logging.log(this, "              ..skipping EXCLUDED DESTINATION: " + pExcludeL2Address);
+					Logging.log(this, "         ..skipping NEXT AS");
+					Logging.log(this, "           ..AS" + mHRMController.getGUIAsID() + " => AS" + tComChannel.getGUIPeerAsID());
+					Logging.log(this, "           ..skipping packet: " + pPacket);
 				}
 			}
 		}

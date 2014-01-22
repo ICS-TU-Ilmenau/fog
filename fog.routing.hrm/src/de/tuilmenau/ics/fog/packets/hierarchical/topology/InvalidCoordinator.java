@@ -65,7 +65,7 @@ import de.tuilmenau.ics.fog.util.Size;
  * ****************************************************************************************************************************
  * ****************************************************************************************************************************
 */
-public class InvalidCoordinator extends SignalingMessageHrm implements ISignalingMessageHrmBroadcastable
+public class InvalidCoordinator extends SignalingMessageHrm implements ISignalingMessageHrmBroadcastable, ISignalingMessageASSeparator
 {
 	private static final long serialVersionUID = -1548886959657058300L;
 
@@ -82,7 +82,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	/**
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
 	 */
-	private int mTTL = HRMConfig.Hierarchy.EXPANSION_RADIUS;
+	private int mTTL = HRMConfig.Hierarchy.RADIUS;
 	
 	/**
 	 * Stores if the packet is still forward top-downward or sidewards
@@ -253,6 +253,37 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		return (mTTL > 0);
 	}
 	
+	/**
+	 * Checks if the next AS may be entered by this packet
+	 * 
+	 * @param pHRMController the current HRMController instance
+	 * @param the AsID of the next AS
+	 * 
+	 * @return true or false
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageASSeparator#isAllowedToEnterAs(de.tuilmenau.ics.fog.routing.hierarchical.HRMController, java.lang.Long)
+	 */
+	@Override
+	public boolean isAllowedToEnterAs(HRMController pHRMController,	Long pNextAsID)
+	{
+		/**
+		 * Return always true for the highest hierarchy level
+		 */
+		if(getSenderClusterName().getHierarchyLevel().getValue() >= HRMConfig.Hierarchy.HEIGHT - 2){
+			return true;
+		}
+
+		/**
+		 * Return true if the given AsID describes the current AS
+		 */
+		if(pHRMController.getAsID().equals(pNextAsID)){
+			return true;
+		}
+		
+		return false;
+	}
+
 	/**
 	 * Returns the current TTL value
 	 * 

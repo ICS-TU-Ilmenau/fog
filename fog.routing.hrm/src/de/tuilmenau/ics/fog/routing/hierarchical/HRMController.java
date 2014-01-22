@@ -79,6 +79,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
@@ -2772,6 +2773,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		GateContainer.sLastUsedGateNumber = 0;
 		
 		/**
+		 * Reset numbering of AS
+		 */
+		AutonomousSystem.sNextFreeAsID = 1;
+		
+		/**
 		 * Kill all processors of the previous simulation run
 		 */
 		if(mRegisteredHRMControllers != null){
@@ -3139,7 +3145,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
 			}
 	
-			int tMaxDistance = HRMConfig.Hierarchy.EXPANSION_RADIUS;
+			int tMaxDistance = HRMConfig.Hierarchy.RADIUS;
 			if(!pCausingEntity.getHierarchyLevel().isBaseLevel()){
 				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 			}
@@ -3194,7 +3200,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
 			}
 			
-			int tMaxDistance = HRMConfig.Hierarchy.EXPANSION_RADIUS;
+			int tMaxDistance = HRMConfig.Hierarchy.RADIUS;
 			if(!pCausingEntity.getHierarchyLevel().isBaseLevel()){
 				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 			}
@@ -3530,6 +3536,26 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Returns the full AsID (including the machine specific multiplier)
+	 * 
+	 *  @return the full AsID
+	 */
+	public Long getAsID()
+	{
+		return getAS().getAsID();
+	}
+
+	/**
+	 * Returns the machine-local AsID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local AsID
+	 */
+	public Long getGUIAsID()
+	{
+		return getAS().getGUIAsID();
+	}
+
+	/**
 	 * Returns the node-global election state
 	 * 
 	 * @return the node-global election state
@@ -3693,10 +3719,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						tFound++;
 						if(tFound == 1){
 							Logging.log(this, "Found highest coordinator: " + tHighestCoordinator);
-							tHighestCoordinator.getCluster().distributeAddresses();
 						}else{
 							Logging.warn(this, "Found highest coordinator nr. " + tFound + ": " + tHighestCoordinator + ", is the network fragmented?");
 						}
+						tHighestCoordinator.getCluster().distributeAddresses();
 					}
 				}
 			}

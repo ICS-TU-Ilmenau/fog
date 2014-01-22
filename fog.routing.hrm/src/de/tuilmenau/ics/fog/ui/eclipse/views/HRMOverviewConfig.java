@@ -119,7 +119,7 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigReportSharePhaseTimingScheme.setText(HRMConfig.Routing.REPORT_SHARE_PHASE_TIMING_SCHEME.toString());
 		mConfigHierarchyAnnounceCoordinatorsInterval.setText(Double.toString(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL) + " s");
 		mConfigHierarchyHeight.setText(Integer.toString(HRMConfig.Hierarchy.HEIGHT) + " level(s)");
-		mConfigHierarchyExpansionRadius.setText(Integer.toString(HRMConfig.Hierarchy.EXPANSION_RADIUS) + " hop(s)");
+		mConfigHierarchyExpansionRadius.setText(Integer.toString(HRMConfig.Hierarchy.RADIUS) + " hop(s)");
 		mConfigHierarchyBitsPerLevel.setText(Integer.toString(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL) + " bits/lvl");
 		mConfigDebugChannelStorage.setText(Integer.toString(HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE) + " packets");
 		mConfigDebugHRMViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRM_VIEWERS_UPDATE_INTERVAL) + " s");
