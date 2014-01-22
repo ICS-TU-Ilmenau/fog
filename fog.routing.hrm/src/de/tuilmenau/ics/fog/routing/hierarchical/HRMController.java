@@ -2480,6 +2480,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							tReceivedSharedRoutingEntry.addOwner(pOwnerHRMID);
 
 							/**
+							 * Check for the max. available data rate to the next hop
+							 */
+							// if the destination is a direct neighbor, the max. avail. DR to the next hop is automatically learned by RoutingEntry.createRouteToDirectNeighbor() 
+							if(tReceivedSharedRoutingEntry.getDest().isClusterAddress()){
+								// if the max. avail. DR to the next hop is already defined, we abort this step
+								if(tReceivedSharedRoutingEntry.getNextHopMaxAvailableDataRate() == RoutingEntry.INFINITE_DATARATE){
+									//TODO
+								}
+							}
+							
+							/**
 							 * Store the found route
 							 */
 							if(DEBUG){
