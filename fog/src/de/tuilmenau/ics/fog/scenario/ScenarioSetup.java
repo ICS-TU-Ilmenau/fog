@@ -73,6 +73,7 @@ public class ScenarioSetup
 					case 88: scenario88(sim); break;
 					case 89: scenario89(sim); break;
 					case 90: scenario90(sim); break;
+					case 91: scenario91(sim); break;
 					
 					// emulator scenario
 					case 99: emulator(sim); break;
@@ -190,6 +191,56 @@ public class ScenarioSetup
 	}
 
 	public static void scenario90(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
+		
+		int tNumberOfNodes = 4;
+		long tDataRate = 100 * 1000;
+	
+		// ####### first AS
+
+		scenarioRow(pSim, "firstNet", tNumberOfNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String busName = "bus" +tNumberOfNodes +"_1";
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +busName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +busName);
+		
+		pSim.executeCommand("connect node" +tNumberOfNodes +" " +busName);
+		pSim.executeCommand("connect node1 " +busName);
+
+				
+		// connect both networks - part 1
+		String tInterNetworkBusName = "bus" + tNumberOfNodes + "_" + (tNumberOfNodes + 1);
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tInterNetworkBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tInterNetworkBusName);
+		
+		pSim.executeCommand("connect node" + tNumberOfNodes + " " +tInterNetworkBusName);
+
+		// ####### second AS
+		
+		// create another line of nodes
+		scenarioRow(pSim, "secondNet", tNumberOfNodes + 1, tNumberOfNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String tRingEndBusName = "bus" + tNumberOfNodes + "_" + (2 * tNumberOfNodes);
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tRingEndBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tRingEndBusName);
+		
+		pSim.executeCommand("connect node" + (2 * tNumberOfNodes) + " " + tRingEndBusName);
+		pSim.executeCommand("connect node" + (tNumberOfNodes + 1) + " " + tRingEndBusName);
+
+		// connect both networks - part 2
+		pSim.executeCommand("connect node" + (tNumberOfNodes + 1) + " " +tInterNetworkBusName);
+	}
+
+	public static void scenario91(Simulation pSim) // Thomas for testing/evaluating HRM
 	{
 		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
 		
