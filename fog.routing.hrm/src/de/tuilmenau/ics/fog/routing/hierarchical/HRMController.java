@@ -86,6 +86,8 @@ import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Decoration;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.eclipse.NodeDecorator;
+import de.tuilmenau.ics.fog.ui.eclipse.editors.HRMViewer;
+import de.tuilmenau.ics.fog.ui.eclipse.editors.QoSTestAppGUI;
 import de.tuilmenau.ics.fog.util.BlockingEventHandling;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import edu.uci.ics.jung.graph.util.Pair;
@@ -2776,6 +2778,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Reset numbering of AS
 		 */
 		AutonomousSystem.sNextFreeAsID = 1;
+		
+		/**
+		 * remove all QoSTestAppGui instances
+		 */
+		QoSTestAppGUI.removeAll();
+		
+		/**
+		 * remove all HRMViewer instances
+		 */
+		HRMViewer.removeAll();
 		
 		/**
 		 * Kill all processors of the previous simulation run

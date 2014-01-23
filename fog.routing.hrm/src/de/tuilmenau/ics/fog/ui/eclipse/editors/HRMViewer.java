@@ -56,6 +56,7 @@ import org.eclipse.swt.graphics.Point;
 
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
+import de.tuilmenau.ics.fog.eclipse.utils.EditorUtils;
 import de.tuilmenau.ics.fog.eclipse.utils.Resources;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
@@ -175,11 +176,24 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 */
 	private HRMViewer mHRMViewer = this;
 	
+	private static LinkedList<HRMViewer> mRegisteredHRMViewer = new LinkedList<HRMViewer>();
+
 	public HRMViewer()
 	{
-		
+		synchronized (mRegisteredHRMViewer) {
+			mRegisteredHRMViewer.add(this);
+		}
 	}
 	
+	public static void removeAll()
+	{
+		synchronized (mRegisteredHRMViewer) {
+			for(HRMViewer tHRMViewer : mRegisteredHRMViewer){
+				EditorUtils.closeEditor(tHRMViewer.getSite(), tHRMViewer);
+			}			
+		}
+	}
+
 	private GridData createGridData(boolean grabSpace, int colSpan)
 	{
 		GridData gridData = new GridData();
@@ -1781,6 +1795,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	 */
 	public void dispose()
 	{
+		synchronized (mRegisteredHRMViewer) {
+			mRegisteredHRMViewer.remove(this);				
+		}
+
 		// unregister this GUI at the corresponding HRMController
 		if (mHRMController != null){
 			mHRMController.unregisterGUI(this);
@@ -2165,7 +2183,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	@Override
 	public void update(Observable pSource, Object pReason)
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
+//		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
 			if(pReason instanceof RoutingEntry){
 				RoutingEntry tEntry = (RoutingEntry)pReason;
 				Logging.log(this, "Got notification from " + pSource + " because of:");
@@ -2174,7 +2192,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}else{
 				Logging.log(this, "Got notification from " + pSource + " because of \"" + pReason + "\"");
 			}
-		}
+//		}
 
 		if(pReason instanceof RoutingEntry){
 			startRoutingTableUpdateTimer();
