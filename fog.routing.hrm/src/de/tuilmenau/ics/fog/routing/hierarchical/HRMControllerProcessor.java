@@ -57,6 +57,11 @@ public class HRMControllerProcessor extends Thread
 	 */
 	private boolean mProcessorNeeded = true;
 	
+	/**
+	 * Stores if the main process loop is still running
+	 */
+	private boolean mProcessLoopIsRunning = false;
+	
 	private boolean DEBUG_NOTIFICATION = false;
 	
 	/**
@@ -290,6 +295,8 @@ public class HRMControllerProcessor extends Thread
 	{
 		Thread.currentThread().setName("Processor@" + mHRMController);
 
+		mProcessLoopIsRunning = true;
+		
 		while(mProcessorNeeded){
 			boolean tFoundEvent = false;
 			
@@ -362,6 +369,8 @@ public class HRMControllerProcessor extends Thread
 				waitForNextEvent();
 			}
 		}
+		
+		mProcessLoopIsRunning = false;
 	}
 
 	public synchronized void exit()
@@ -369,6 +378,11 @@ public class HRMControllerProcessor extends Thread
 		Logging.log(this, "Exiting this processor");
 		mProcessorNeeded = false;
 		notify();
+	}
+	
+	public boolean isRunning()
+	{
+		return mProcessLoopIsRunning;
 	}
 	
 	public String toString()
