@@ -2183,7 +2183,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	@Override
 	public void update(Observable pSource, Object pReason)
 	{
-//		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
+		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
 			if(pReason instanceof RoutingEntry){
 				RoutingEntry tEntry = (RoutingEntry)pReason;
 				Logging.log(this, "Got notification from " + pSource + " because of:");
@@ -2192,7 +2192,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}else{
 				Logging.log(this, "Got notification from " + pSource + " because of \"" + pReason + "\"");
 			}
-//		}
+		}
 
 		if(pReason instanceof RoutingEntry){
 			startRoutingTableUpdateTimer();
