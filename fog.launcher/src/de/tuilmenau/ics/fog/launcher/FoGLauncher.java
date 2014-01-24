@@ -91,6 +91,7 @@ public class FoGLauncher
 	
 	private static final double START_COMMAND_DELAY_AFTER_SETUP_SEC = 5.0d;
 
+	private FoGLauncher mFoGLauncher = this;
 	
 	public FoGLauncher()
 	{
@@ -104,20 +105,22 @@ public class FoGLauncher
 		}
 		
 		// store configuration for other methods
-		mConfiguration = pConfiguration;
+		if(pConfiguration != null){
+			mConfiguration = pConfiguration;
+		}
 		
 		// read configuration from Eclipse launch framework
-		String  baseDirectory   = pConfiguration.get(CONFIG_DIRECTORY, CONFIG_DIRECTORY_DEFAULT);
-		String  worker          = pConfiguration.get(CONFIG_WORKER, CONFIG_WORKER_DEFAULT);
-		Level   loglevel        = Level.valueOf(pConfiguration.get(CONFIG_LOG_LEVEL, CONFIG_LOG_LEVEL_DEFAULT));
-		String  configuratorRS  = pConfiguration.get(CONFIG_NODE_ROUTING_CONFIGURATOR, CONFIG_NODE_CONFIGURATOR_DEFAULT);
-		String  configuratorApp = pConfiguration.get(CONFIG_NODE_APPLICATION_CONFIGURATOR, CONFIG_NODE_CONFIGURATOR_DEFAULT);
+		String  baseDirectory   = mConfiguration.get(CONFIG_DIRECTORY, CONFIG_DIRECTORY_DEFAULT);
+		String  worker          = mConfiguration.get(CONFIG_WORKER, CONFIG_WORKER_DEFAULT);
+		Level   loglevel        = Level.valueOf(mConfiguration.get(CONFIG_LOG_LEVEL, CONFIG_LOG_LEVEL_DEFAULT));
+		String  configuratorRS  = mConfiguration.get(CONFIG_NODE_ROUTING_CONFIGURATOR, CONFIG_NODE_CONFIGURATOR_DEFAULT);
+		String  configuratorApp = mConfiguration.get(CONFIG_NODE_APPLICATION_CONFIGURATOR, CONFIG_NODE_CONFIGURATOR_DEFAULT);
 		
-		int linkDatarate = pConfiguration.get(CONFIG_LINK_DATA_RATE, CONFIG_LINK_DATA_RATE_DEFAULT);
-		int linkDelay = pConfiguration.get(CONFIG_LINK_DELAY, CONFIG_LINK_DELAY_DEFAULT);
-		boolean linkDelayConstant = pConfiguration.get(CONFIG_LINK_DELAY_CONSTANT, CONFIG_LINK_DELAY_CONSTANT_DEFAULT);
-		int linkLoss = pConfiguration.get(CONFIG_LINK_LOSS_PROB, CONFIG_LINK_LOSS_PROB_DEFAULT);
-		int linkBitError = pConfiguration.get(CONFIG_LINK_BIT_ERROR, CONFIG_LINK_BIT_ERROR_DEFAULT);
+		int linkDatarate = mConfiguration.get(CONFIG_LINK_DATA_RATE, CONFIG_LINK_DATA_RATE_DEFAULT);
+		int linkDelay = mConfiguration.get(CONFIG_LINK_DELAY, CONFIG_LINK_DELAY_DEFAULT);
+		boolean linkDelayConstant = mConfiguration.get(CONFIG_LINK_DELAY_CONSTANT, CONFIG_LINK_DELAY_CONSTANT_DEFAULT);
+		int linkLoss = mConfiguration.get(CONFIG_LINK_LOSS_PROB, CONFIG_LINK_LOSS_PROB_DEFAULT);
+		int linkBitError = mConfiguration.get(CONFIG_LINK_BIT_ERROR, CONFIG_LINK_BIT_ERROR_DEFAULT);
 		
 		// Overwrite log level with system properties
 		String logLevelParam = System.getProperty(CONFIG_LOG_LEVEL);
@@ -224,26 +227,58 @@ public class FoGLauncher
 		// End
 		//
 		// do not block: Create a new thread waiting for the end... 
-		new Thread() {
-			public void run()
-			{
-				mSimulation.waitForExit();
-				
-				mLogger.info(this, "Simulation finished. Informing observers.");
-				notifyObservers(FUNCTION.ENDED);
-				
-				// store old list in order to enable re-start
-				// of simulation during FINISHED callback
-				LinkedList<SimulationObserver> oldObservers = mObservers;
-				
-				mObservers = null;
-				mSimulation = null;
-				
-				mLogger.info(this, "Inform observer about finished cleanup.");
-				notifyObservers(FUNCTION.FINISHED, oldObservers);	
-				oldObservers.clear();
-			}
-		}.start();
+		if(pConfiguration != null){
+			new Thread() {
+				public void run()
+				{
+					Thread.currentThread().setName("SimulationWaitForExt");
+	
+					do{
+						mSimulation.waitForExit();
+						
+						mLogger.info(this, "Simulation finished. Informing observers.");
+						notifyObservers(FUNCTION.ENDED);
+						
+						// store old list in order to enable re-start
+						// of simulation during FINISHED callback
+						LinkedList<SimulationObserver> oldObservers = mObservers;
+						
+						mObservers = null;
+						mSimulation = null;
+						
+						mLogger.info(this, "Inform observer about finished cleanup.");
+						notifyObservers(FUNCTION.FINISHED, oldObservers);	
+						oldObservers.clear();
+						mLogger.warn(this, "############ SIMULATION END ###############");
+						
+						if(Simulation.remainingPlannedSimulations() > 0){
+							mLogger.warn(this, "############ SIMULATION RESTART ###############");
+							try{
+								mLogger.warn(this, "   ..CREATE");
+								mFoGLauncher.create(null);
+								mLogger.warn(this, "   ..INIT");
+								mFoGLauncher.init();
+								mLogger.warn(this, "   ..START");
+								mFoGLauncher.start();
+							}catch(Exception exc) {
+								// write error to log
+								Simulation sim = getSim();
+								if(sim != null) {
+									sim.getLogger().err(this, "Error while RELAUNCHING. Terminating again.", exc);
+								}
+								
+								// terminate started simulation
+								terminate();
+								
+								Simulation.setPlannedSimulations(0);
+							}
+						}
+					}while(Simulation.remainingPlannedSimulations() > 0);				
+				}
+			}.start();
+		}else{
+			// we restarted ourself
+		}
     }
 	
 	/**
