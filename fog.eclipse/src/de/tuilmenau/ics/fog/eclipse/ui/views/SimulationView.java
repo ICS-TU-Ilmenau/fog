@@ -84,6 +84,7 @@ public class SimulationView extends ViewPart
 	private static final String TEXT_SHOW_THREAD_STATS_BUTTON = "Show thread stats";
 	
 	private static final String TEXT_SIM_STARTED = "Started simulations: ";
+	private static final String TEXT_SIM_PLANNED = "Planned simulations: ";
 	private static final String TEXT_SIM_THREADS = "Running threads: ";
 	
 	private long MB = 1024*1024;
@@ -240,6 +241,13 @@ public class SimulationView extends ViewPart
 		mSimStarted = new Label(tContainer, SWT.NONE);
 		mSimStarted.setLayoutData(createGridData(true, 1));
 
+	    Label tLabelPlannedSims = new Label(tContainer, SWT.NONE);
+	    tLabelPlannedSims.setText(TEXT_SIM_PLANNED);
+	    tLabelPlannedSims.setLayoutData(createGridData(false, 1));
+		
+		mSimPlanned = new Label(tContainer, SWT.NONE);
+		mSimPlanned.setLayoutData(createGridData(true, 1));		
+		
 		Button startButton = new Button(tContainer, SWT.PUSH);
 		startButton.setText(TEXT_START_BUTTON);
 		startButton.setLayoutData(createGridData(true, 2));
@@ -501,6 +509,7 @@ public class SimulationView extends ViewPart
 	{
 		if(Thread.currentThread() == display.getThread()) {
 			mSimStarted.setText(Integer.toString(Simulation.mStartedSimulations));
+			mSimPlanned.setText(Integer.toString(Simulation.mPlannedSimulations));
 			mSimThreadsStarted.setText(Integer.toString(countThreads()));
 			if(currentSim != null) {
 				EventHandler timeBase = currentSim.getTimeBase();
@@ -748,6 +757,7 @@ public class SimulationView extends ViewPart
 	private Label mValueHwMemUsed;
 	private Label mValueHwMemFree;
 	private Label mSimStarted;
+	private Label mSimPlanned;
 	private Label mSimThreadsStarted;
 	private TreeViewer viewer;
 	
