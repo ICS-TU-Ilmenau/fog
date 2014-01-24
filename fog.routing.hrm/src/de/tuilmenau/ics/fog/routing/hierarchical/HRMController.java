@@ -2135,24 +2135,29 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				Logging.warn(this, "Cannot connect to: " + pDestinationL2Address + ", connect attempt nr. " + tAttemptNr);
 				//Logging.err(this, "Cannot connect to: " + pDestinationL2Address, tExc);
 			}
-	    }while(tRetryConnection);
-	    if(tRetriedConnection){
-			Logging.warn(this, "Successfully recovered from connection problems towards: " + pDestinationL2Address + ", connect attempts: " + tAttemptNr);
-	    }
+	    }while((tRetryConnection) && (mProcessorThread.isRunning()));
 	    
-	    Logging.log(this, "    ..connectBlock() FINISHED");
-		if(tConnection != null) {
-
-			mCounterOutgoingConnections++;
-			
-			Logging.log(this, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
-			tComSession.startConnection(pDestinationL2Address, tConnection);
-			
-			// return the created comm. session
-			tResult = tComSession;
-		}else{
-			Logging.err(this, "     ..connection failed to: " + pDestinationL2Address + " with requirements: " + tConnectionRequirements);
-		}
+	    if(mProcessorThread.isRunning()){
+		    if(tRetriedConnection){
+				Logging.warn(this, "Successfully recovered from connection problems towards: " + pDestinationL2Address + ", connect attempts: " + tAttemptNr);
+		    }
+		    
+		    Logging.log(this, "    ..connectBlock() FINISHED");
+			if(tConnection != null) {
+	
+				mCounterOutgoingConnections++;
+				
+				Logging.log(this, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
+				tComSession.startConnection(pDestinationL2Address, tConnection);
+				
+				// return the created comm. session
+				tResult = tComSession;
+			}else{
+				Logging.err(this, "     ..connection failed to: " + pDestinationL2Address + " with requirements: " + tConnectionRequirements);
+			}
+	    }else{
+	    	Logging.warn(this, "createComSession() aborted because processor loop isn't running anymore");
+	    }
 		
 		return tResult;
 	}
