@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 
 
@@ -72,6 +73,21 @@ public abstract class ParametersTab extends AbstractLaunchConfigurationTab
 		return text;
 	}
 
+	protected Spinner createSpinner(Composite parent, int pPreDefinedValue, int pMin, int pMax, int pIncrement, int colSpan, boolean grabHorizontal)
+	{
+		Spinner tResult = new Spinner(parent, SWT.BORDER);
+		tResult.setValues(pPreDefinedValue, pMin, pMax, 0, pIncrement, pIncrement * 10);
+		
+		setLayoutData(tResult, colSpan, grabHorizontal);
+		
+		tResult.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent evt) {
+				handleModification(evt);
+			}
+		});
+		return tResult;
+	}
+	
 	protected Label createLabel(Composite parent, String labelText)
 	{
 		Label label = new Label(parent, SWT.NONE);
