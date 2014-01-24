@@ -251,6 +251,7 @@ public class Worker implements IWorker
 
 		for(IWorker worker : workers) {
 			try {
+				pLogger.log("Executing for worker " + worker + " the command: " + pCmd);
 				res = res && worker.executeCommand(pCmd);
 			} catch(Exception tExc) {
 				pLogger.err(worker, "Ignoring exception in worker '" +worker +"' while executing '" +pCmd +"'.", tExc);
