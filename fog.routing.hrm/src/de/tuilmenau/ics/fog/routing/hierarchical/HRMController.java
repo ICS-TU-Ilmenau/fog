@@ -3790,17 +3790,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			GUI_USER_CTRL_REPORT_TOPOLOGY = true;
 			
 			// HINT: the report/share functions are triggered periodically and will start the start the reports/shares without any further setting
-			
-			/**
-			 * Auto-exit SIMULATION if more than one simulation run is planned
-			 */
-			if(Simulation.remainingPlannedSimulations() > 1){
-				if(!FOUND_GLOBAL_ERROR){
-					getAS().getSimulation().exit();
-				}else{
-					Logging.err(this, "Aborting simulation restarts because global error was detected");
-				}
-			}
 		}
 	}
 	
@@ -3906,7 +3895,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		FOUND_GLOBAL_ERROR = !tResult;
 		
+		if(tResult){
+			Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++");
+			Logging.warn(this, "+++++++++++ Result validation passed");
+			Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++");
+			
+			// auto-exit simulation
+			autoExitSimulation();
+		}
+		
 		return tResult;
+	}
+	
+	/**
+	 * Auto-exit SIMULATION if more than one simulation run is planned
+	 */
+	private void autoExitSimulation()
+	{
+		if(Simulation.remainingPlannedSimulations() > 1){
+			if(!FOUND_GLOBAL_ERROR){
+				getAS().getSimulation().exit();
+			}else{
+				Logging.err(this, "Aborting simulation restarts because global error was detected");
+			}
+		}
 	}
 	
 	/**
