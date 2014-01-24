@@ -61,9 +61,9 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 			sLastSimulation = tCurSimulation;
 		}else{
 			if(!tCurSimulation.equals(sLastSimulation)){
-				Logging.log(this, "####################### Detected simulation restart ####################### ");
-				Logging.log(this, "####################### Detected simulation restart ####################### ");
-				Logging.log(this, "####################### Detected simulation restart ####################### ");
+				Logging.warn(this, "####################### Detected simulation restart ####################### ");
+				Logging.warn(this, "####################### Detected simulation restart ####################### ");
+				Logging.warn(this, "####################### Detected simulation restart ####################### ");
 				
 				// trigger event: simulation restart
 				HRMController.eventSimulationRestarted();

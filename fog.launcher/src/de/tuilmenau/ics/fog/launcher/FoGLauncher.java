@@ -249,16 +249,16 @@ public class FoGLauncher
 						mLogger.info(this, "Inform observer about finished cleanup.");
 						notifyObservers(FUNCTION.FINISHED, oldObservers);	
 						oldObservers.clear();
-						mLogger.warn(this, "############ SIMULATION END ###############");
+						mLogger.info(this, "############ SIMULATION END ###############");
 						
 						if(Simulation.remainingPlannedSimulations() > 0){
-							mLogger.warn(this, "############ SIMULATION RESTART - run: " + Simulation.mStartedSimulations + " ###############");
+							mLogger.info(this, "############ SIMULATION RESTART - run: " + Simulation.mStartedSimulations + " ###############");
 							try{
-								mLogger.warn(this, "   ..CREATE");
+								mLogger.info(this, "   ..CREATE");
 								mFoGLauncher.create(null);
-								mLogger.warn(this, "   ..INIT");
+								mLogger.info(this, "   ..INIT");
 								mFoGLauncher.init();
-								mLogger.warn(this, "   ..START");
+								mLogger.info(this, "   ..START");
 								mFoGLauncher.start();
 							}catch(Exception exc) {
 								// write error to log
