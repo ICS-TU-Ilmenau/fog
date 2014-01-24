@@ -320,6 +320,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public static boolean GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
 
+	
+	/**
+	 * Stores if the simulation produced a global error.
+	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
+	 */
+	public static boolean FOUND_GLOBAL_ERROR = false;
+	
 	/**
 	 * Stores if the GUI user has selected to deactivate address distribution.
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
@@ -2775,6 +2782,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(null, "EVENT: simulation restarted");
 
+		if((Simulation.mPlannedSimulations > 1) && (FOUND_GLOBAL_ERROR)){
+			throw new RuntimeException("Global error in previous simulation detected");
+		}
+		
 		/**
 		 * FoG-specific: reset Gate numbering
 		 */
@@ -3779,6 +3790,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			GUI_USER_CTRL_REPORT_TOPOLOGY = true;
 			
 			// HINT: the report/share functions are triggered periodically and will start the start the reports/shares without any further setting
+			
+			/**
+			 * Auto-exit SIMULATION if more than one simulation run is planned
+			 */
+			if(Simulation.mPlannedSimulations > 1){
+				getAS().getSimulation().exit();
+			}
 		}
 	}
 	
@@ -3878,6 +3896,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}
 		}
+		
+		/**
+		 * Update global error report
+		 */
+		FOUND_GLOBAL_ERROR = !tResult;
 		
 		return tResult;
 	}
