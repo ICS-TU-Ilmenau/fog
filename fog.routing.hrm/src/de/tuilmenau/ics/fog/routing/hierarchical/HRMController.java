@@ -3888,21 +3888,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 			}
+
+			/**
+			 * React on the validation result -> auto-exit simulation if desired
+			 */
+			if(tResult){
+				Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++");
+				Logging.warn(this, "+++++++++++ Result validation passed");
+				Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++");
+				
+				// auto-exit simulation
+				autoExitSimulation();
+			}
 		}
 		
 		/**
 		 * Update global error report
 		 */
 		FOUND_GLOBAL_ERROR = !tResult;
-		
-		if(tResult){
-			Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++");
-			Logging.warn(this, "+++++++++++ Result validation passed");
-			Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++");
-			
-			// auto-exit simulation
-			autoExitSimulation();
-		}
 		
 		return tResult;
 	}
