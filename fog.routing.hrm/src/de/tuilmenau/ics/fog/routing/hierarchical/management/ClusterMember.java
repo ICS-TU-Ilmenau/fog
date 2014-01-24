@@ -276,6 +276,7 @@ public class ClusterMember extends ClusterName
 	 * 
 	 * @param pCause the cause for the call
 	 */
+	boolean mWarningDetectLocalSiblingsLocalL0HRMIDInvalid = false;
 	private void detectLocalSiblings(String pCause)
 	{
 		if(getHierarchyLevel().isBaseLevel()){
@@ -284,6 +285,13 @@ public class ClusterMember extends ClusterName
 			//Logging.log(this, "Detecting local siblings..");
 			
 			if((mAssignedL0HRMID != null) && (!mAssignedL0HRMID.isZero())){
+				if(mWarningDetectLocalSiblingsLocalL0HRMIDInvalid){
+					if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+						Logging.warn(this, "Successfully recovered from an invalid L0 HRMID, new one is: " + getL0HRMID());
+					}
+					mWarningDetectLocalSiblingsLocalL0HRMIDInvalid = false;
+				}
+				
 				// backup old reported routing table
 				RoutingTable tDeprecatedReportedRoutingTable = null;
 				synchronized (mReportedRoutingTableL0HRMID) {
@@ -314,7 +322,7 @@ public class ClusterMember extends ClusterName
 										
 								// create the new reported routing table entry
 								RoutingEntry tRoutingEntryToSibling = RoutingEntry.create(mAssignedL0HRMID /* this cluster */, tGeneralizedSiblingL0Address /* the sibling */, tSiblingL0Address, 0 /* loopback route */, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, pCause);
-								tRoutingEntryToSibling.extendCause(this + "::eventNeedHRGUpdate()_1");
+								tRoutingEntryToSibling.extendCause(this + "::detectLocalSiblings()_1");
 								// even more details about the route to make it distinguishable from others
 								tRoutingEntryToSibling.setNextHopL2Address(mHRMController.getNodeL2Address());
 								// set the timeout for the found route to a sibling
@@ -347,7 +355,7 @@ public class ClusterMember extends ClusterName
 						 */
 						RoutingEntry tRoutingEntryToSibling2 = tEntry.clone();
 						tRoutingEntryToSibling2.extendCause(pCause);
-						tRoutingEntryToSibling2.extendCause(this + "::eventNeedHRGUpdate()_2");
+						tRoutingEntryToSibling2.extendCause(this + "::detectLocalSiblings()_2");
 						mHRMController.registerLinkHRG(tEntry.getSource(), tEntry.getNextHop(), tRoutingEntryToSibling2);
 						
 						/**
@@ -355,7 +363,7 @@ public class ClusterMember extends ClusterName
 						 */ 
 						RoutingEntry tRoutingEntryToSibling3 = tEntry.clone();
 						tRoutingEntryToSibling3.extendCause(pCause);
-						tRoutingEntryToSibling3.extendCause(this + "::eventNeedHRGUpdate()_3");
+						tRoutingEntryToSibling3.extendCause(this + "::detectLocalSiblings()_3");
 						mHRMController.registerAutoHRG(tRoutingEntryToSibling3);
 					}
 				}
@@ -377,7 +385,7 @@ public class ClusterMember extends ClusterName
 						 */
 						RoutingEntry tRoutingEntryToSibling2 = tEntry.clone();
 						tRoutingEntryToSibling2.extendCause(pCause);
-						tRoutingEntryToSibling2.extendCause(this + "::unregisterLinkHRG()");
+						tRoutingEntryToSibling2.extendCause(this + "::detectLocalSiblings()_4");
 						mHRMController.unregisterLinkHRG(tEntry.getSource(),  tEntry.getNextHop(), tRoutingEntryToSibling2);
 						
 						/**
@@ -385,12 +393,19 @@ public class ClusterMember extends ClusterName
 						 */ 
 						RoutingEntry tRoutingEntryToSibling3 = tEntry.clone();
 						tRoutingEntryToSibling3.extendCause(pCause);
-						tRoutingEntryToSibling3.extendCause(this + "::unregisterAutoHRG()");
+						tRoutingEntryToSibling3.extendCause(this + "::detectLocalSiblings()_5");
 						mHRMController.unregisterAutoHRG(tRoutingEntryToSibling3);
 					}
 				}
 			}else{
-				Logging.log(this, "eventNeedHRGUpdate() skipped because local L0 HRMID is: " + mAssignedL0HRMID);
+				if(!mWarningDetectLocalSiblingsLocalL0HRMIDInvalid){
+					if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+						Logging.warn(this, "detectLocalSiblings() skipped because local L0 HRMID is: " + mAssignedL0HRMID);
+					}
+					
+					// avoid endless warnings
+					mWarningDetectLocalSiblingsLocalL0HRMIDInvalid = true;
+				}
 			}
 		}
 	}
