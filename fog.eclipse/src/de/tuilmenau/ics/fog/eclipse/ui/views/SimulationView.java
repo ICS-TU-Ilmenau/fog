@@ -509,7 +509,7 @@ public class SimulationView extends ViewPart
 	{
 		if(Thread.currentThread() == display.getThread()) {
 			mSimStarted.setText(Integer.toString(Simulation.mStartedSimulations));
-			mSimPlanned.setText(Integer.toString(Simulation.mPlannedSimulations));
+			mSimPlanned.setText(Integer.toString(Simulation.remainingPlannedSimulations()));
 			mSimThreadsStarted.setText(Integer.toString(countThreads()));
 			if(currentSim != null) {
 				EventHandler timeBase = currentSim.getTimeBase();

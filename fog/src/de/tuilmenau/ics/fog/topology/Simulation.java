@@ -54,7 +54,7 @@ public class Simulation
 	private static final String CMD_AT = "@";
 
 	public static int mStartedSimulations = 0;
-	public static int mPlannedSimulations = 0;	
+	private static int mPlannedSimulations = 0;	
 	
 	/**
 	 * Stores the physical simulation machine specific multiplier, which is used to create unique IDs even if multiple physical simulation machines are connected by FoGSiEm instances
@@ -600,7 +600,23 @@ public class Simulation
 		
 		mExitObserver.add(exitObserver);
 	}
-	
+
+	/**
+	 * @return
+	 */
+	public static int remainingPlannedSimulations() 
+	{
+		return mPlannedSimulations;
+	}
+
+	/**
+	 * @param tCycles
+	 */
+	public static void setPlannedSimulations(int pPlannedSimulationRuns) 
+	{
+		mPlannedSimulations = pPlannedSimulationRuns;
+	}
+
 	public String toString()
 	{
 		return getClass().getSimpleName();

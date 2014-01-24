@@ -2782,7 +2782,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(null, "EVENT: simulation restarted");
 
-		if((Simulation.mPlannedSimulations > 1) && (FOUND_GLOBAL_ERROR)){
+		if((Simulation.remainingPlannedSimulations() > 1) && (FOUND_GLOBAL_ERROR)){
 			throw new RuntimeException("Global error in previous simulation detected");
 		}
 		
@@ -3794,8 +3794,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			/**
 			 * Auto-exit SIMULATION if more than one simulation run is planned
 			 */
-			if(Simulation.mPlannedSimulations > 1){
-				getAS().getSimulation().exit();
+			if(Simulation.remainingPlannedSimulations() > 1){
+				if(!FOUND_GLOBAL_ERROR){
+					getAS().getSimulation().exit();
+				}else{
+					Logging.err(this, "Aborting simulation restarts because global error was detected");
+				}
 			}
 		}
 	}

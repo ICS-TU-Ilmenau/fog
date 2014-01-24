@@ -326,7 +326,7 @@ public class SimulationParametersTab extends ParametersTab
 			Logging.err(this, "Invalid input for exit time. '" +exitTimeText.getText() +"' is not a number.");
 		}
 		
-		Simulation.mPlannedSimulations = tCycles; 
+		Simulation.setPlannedSimulations(tCycles); 
 
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_IMPORTER, importer);
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_FILE, file);
