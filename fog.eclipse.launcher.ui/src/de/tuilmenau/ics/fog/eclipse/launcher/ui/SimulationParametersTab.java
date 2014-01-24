@@ -26,11 +26,13 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 
 import de.tuilmenau.ics.fog.eclipse.launcher.FoGLaunchConfigurationDelegate;
 import de.tuilmenau.ics.fog.importer.ScenarioImporterExtensionPoint;
 import de.tuilmenau.ics.fog.launcher.FoGLauncher;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Logging.Level;
 
@@ -54,6 +56,7 @@ public class SimulationParametersTab extends ParametersTab
 	private static final String TEXT_SCENARIO_FILE_BUTTON = "Browse";
 
 	private static final String TEXT_SCENARIO_CMD = "Command after scenario import";
+	private static final String TEXT_SCENARIO_CYCLES = "Restart cycles";
 
 	private static final String TEXT_DIRECTORY = "Directory";
 	private static final String TEXT_DIRECTORY_DEFAULT = "Default (Workspace)";
@@ -113,6 +116,9 @@ public class SimulationParametersTab extends ParametersTab
 		createLabel(comp, TEXT_SCENARIO_OPTIONS);
 		scenarioOptionsText = createText(comp, null, 2, true);
 		
+		createLabel(comp, TEXT_SCENARIO_CYCLES);
+		scenarioCycles = createSpinner(comp, 1, 1, 1000 * 1000, 100, 2, true); 
+				
 		createLabel(comp, TEXT_SCENARIO_CMD);
 		scenarioCmdText = createText(comp, null, 2, true);
 	}
@@ -228,6 +234,7 @@ public class SimulationParametersTab extends ParametersTab
 			String importer = configuration.getAttribute(FoGLauncher.CONFIG_SCENARIO_IMPORTER, FoGLauncher.CONFIG_SCENARIO_IMPORTER_DEFAULT);
 			String file = configuration.getAttribute(FoGLauncher.CONFIG_SCENARIO_FILE, FoGLauncher.CONFIG_SCENARIO_FILE_DEFAULT);
 			String options = configuration.getAttribute(FoGLauncher.CONFIG_SCENARIO_OPTIONS, FoGLauncher.CONFIG_SCENARIO_OPTIONS_DEFAULT);
+			int tCycles = configuration.getAttribute(FoGLauncher.CONFIG_SCENARIO_CYCLES, FoGLauncher.CONFIG_SCENARIO_CYCLES_DEFAULT);
 			String command = configuration.getAttribute(FoGLauncher.CONFIG_START_CMD, FoGLauncher.CONFIG_START_CMD_DEFAULT);
 			String directory = configuration.getAttribute(FoGLauncher.CONFIG_DIRECTORY, FoGLauncher.CONFIG_DIRECTORY_DEFAULT);
 			String worker = configuration.getAttribute(FoGLauncher.CONFIG_WORKER, FoGLauncher.CONFIG_WORKER_DEFAULT);
@@ -239,6 +246,7 @@ public class SimulationParametersTab extends ParametersTab
 	
 			scenarioTypeCombo.setText(importer);
 			scenarioFileText.setText(file);
+			scenarioCycles.setSelection(tCycles);
 			scenarioOptionsText.setText(options);
 			
 			if(command != null) {
@@ -286,6 +294,7 @@ public class SimulationParametersTab extends ParametersTab
 	{
 		String importer = scenarioTypeCombo.getText();
 		String file = scenarioFileText.getText();
+		int tCycles = Integer.parseInt(scenarioCycles.getText());
         String options = scenarioOptionsText.getText();
 		String command = null;
 		String directory = null;
@@ -317,9 +326,12 @@ public class SimulationParametersTab extends ParametersTab
 			Logging.err(this, "Invalid input for exit time. '" +exitTimeText.getText() +"' is not a number.");
 		}
 		
+		Simulation.mPlannedSimulations = tCycles; 
+
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_IMPORTER, importer);
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_FILE, file);
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_OPTIONS, options);
+		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_CYCLES, tCycles);		
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_START_CMD, command);
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_DIRECTORY, directory);
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_DIRECTORY_BY_PROJECT, project);
@@ -340,6 +352,7 @@ public class SimulationParametersTab extends ParametersTab
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_IMPORTER, FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_IMPORTER_DEFAULT);
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_FILE, FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_FILE_DEFAULT);
         configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_OPTIONS, FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_OPTIONS_DEFAULT);
+		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_CYCLES, FoGLaunchConfigurationDelegate.CONFIG_SCENARIO_CYCLES_DEFAULT);		
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_START_CMD, FoGLaunchConfigurationDelegate.CONFIG_START_CMD_DEFAULT);
         configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_DIRECTORY, FoGLaunchConfigurationDelegate.CONFIG_DIRECTORY_DEFAULT);
 		configuration.setAttribute(FoGLaunchConfigurationDelegate.CONFIG_DIRECTORY_BY_PROJECT, FoGLaunchConfigurationDelegate.CONFIG_DIRECTORY_BY_PROJECT_DEFAULT);
@@ -375,6 +388,8 @@ public class SimulationParametersTab extends ParametersTab
 	private Combo scenarioTypeCombo;
 	private Text scenarioFileText;
 	private Text scenarioOptionsText;
+	
+	private Spinner scenarioCycles;
 	
 	private Text scenarioCmdText;
 	
