@@ -412,6 +412,7 @@ public class SimulationView extends ViewPart
 				if(currentSim != null) {
 					currentSim.exit();
 				}
+				Simulation.setPlannedSimulations(0);
 				updateSimulationControl();
 			}
 		});
@@ -697,7 +698,7 @@ public class SimulationView extends ViewPart
 	 */
 	private void startNewSimulation()
 	{
-		if(Simulation.remainingPlannedSimulations() == 0){
+		if((Simulation.remainingPlannedSimulations() == 0) || (currentSim == null)){ 
 			DebugUITools.openLaunchConfigurationDialogOnGroup(getSite().getShell(), null, "org.eclipse.debug.ui.launchGroup.run");
 		}else{
 			Logging.err(this, "Currently, " + Simulation.remainingPlannedSimulations() + " simulations are still planned, a manual simulation start isn't allowed at the moment");
