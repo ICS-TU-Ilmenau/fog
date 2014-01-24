@@ -25,6 +25,7 @@ import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.util.ServerCallback;
 import de.tuilmenau.ics.fog.application.util.Service;
 import de.tuilmenau.ics.fog.eclipse.GraphViewer;
+import de.tuilmenau.ics.fog.eclipse.ui.editors.GraphEditor;
 import de.tuilmenau.ics.fog.facade.Binding;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -2783,6 +2784,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * remove all QoSTestAppGui instances
 		 */
 		QoSTestAppGUI.removeAll();
+		
+		/**
+		 * remove all GraphEditor instances
+		 */
+		GraphEditor.removeAll();
 		
 		/**
 		 * remove all HRMViewer instances
