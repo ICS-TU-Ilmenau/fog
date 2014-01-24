@@ -2250,7 +2250,11 @@ public class Elector implements Localization
 					
 				return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer, true);
 			}else{
-				Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
+				if(mState != ElectorState.IDLE){
+					Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
+				}else{
+					// Elector is in IDLE state and the election is neither running nor finished yet
+				}
 			}
 		}else{
 			Logging.warn(this, "hasClusterLowerPriorityThan() skipped for \"" + pSourceL2Address + "\" with prio " + pSourcePriority.getValue() + " because entity is already invalidated");
