@@ -692,15 +692,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			mLocalCoordinators.add(pCoordinator);
 		}
 		
-		sRegisteredCoordinators++;
-		
-		Integer tCounter = sRegisteredCoordinatorsCounter.get(pCoordinator.getHierarchyLevel().getValue());
-		if(tCounter == null){
-			tCounter = new Integer(1);
-		}else{
-			tCounter++;
+		synchronized (sRegisteredCoordinatorsCounter) {
+			sRegisteredCoordinators++;
+			
+			Integer tCounter = sRegisteredCoordinatorsCounter.get(pCoordinator.getHierarchyLevel().getValue());
+			if(tCounter == null){
+				tCounter = new Integer(1);
+			}else{
+				tCounter++;
+			}
+			sRegisteredCoordinatorsCounter.put(pCoordinator.getHierarchyLevel().getValue(), tCounter);
 		}
-		sRegisteredCoordinatorsCounter.put(pCoordinator.getHierarchyLevel().getValue(), tCounter);
 		
 		// increase hierarchy node priority
 		increaseHierarchyNodePriority_KnownCoordinator(pCoordinator);
@@ -734,15 +736,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 
-		Integer tCounter = sRegisteredCoordinatorsCounter.get(pCoordinator.getHierarchyLevel().getValue());
-		if(tCounter != null){
-			tCounter--;
-			sRegisteredCoordinatorsCounter.put(pCoordinator.getHierarchyLevel().getValue(), tCounter);
-		}else{
-			Logging.err(this, "Found an invalid counter about registered coordinators on hierarchy level: " + pCoordinator.getHierarchyLevel().getValue());
-		}
+		synchronized (sRegisteredCoordinatorsCounter) {
+			Integer tCounter = sRegisteredCoordinatorsCounter.get(pCoordinator.getHierarchyLevel().getValue());
+			if(tCounter != null){
+				tCounter--;
+				sRegisteredCoordinatorsCounter.put(pCoordinator.getHierarchyLevel().getValue(), tCounter);
+			}else{
+				Logging.err(this, "Found an invalid counter about registered coordinators on hierarchy level: " + pCoordinator.getHierarchyLevel().getValue());
+			}
 
-		sUnregisteredCoordinators++;
+			sUnregisteredCoordinators++;
+		}
 
 		// increase hierarchy node priority
 		decreaseHierarchyNodePriority_KnownCoordinator(pCoordinator);
@@ -3794,13 +3798,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * Validates the hierarchy creation
+	 * Validates the hierarchy creation for this node
 	 */
 	public boolean validateResults()
 	{
 		boolean tResult = true;
 		
-		if ((!mResultsValidated) && ((!HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS) || (!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS))){
+		if (!mResultsValidated){
+
 			mResultsValidated = true;
 			
 			/**
@@ -3856,7 +3861,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(tClusterLevel.isHigherLevel()){
 					for (ComChannel tComChannel : tCluster.getComChannels()){
 						if(tComChannel.getPeerPriority().isUndefined()){
-							Logging.err(this, "validateResults() detected undefined peer priority for Cluster channel: " + tComChannel);
+							Logging.err(this, "validateResults() detected undefined peer priority for comm. channel: " + tComChannel);
 							tResult = false;
 						}else{
 							ElectionPriority tChannelPeerPriority = tComChannel.getPeerPriority();
@@ -3890,26 +3895,61 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 
 			/**
-			 * React on the validation result -> auto-exit simulation if desired
+			 * error if validation has failed
 			 */
-			if(tResult){
-				Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++");
-				Logging.warn(this, "+++++++++++ Result validation passed");
-				Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++");
-				
-				// auto-exit simulation
-				autoExitSimulation();
+			if(!tResult){
+				Logging.err(this, "-------------------------------------------");
+				Logging.err(this, "----------- Result validation failed");
+				Logging.err(this, "-------------------------------------------");
+			}
+
+			/**
+			 * Update global error report
+			 */
+			if(!FOUND_GLOBAL_ERROR){
+				FOUND_GLOBAL_ERROR = !tResult;
 			}
 		}
-		
-		/**
-		 * Update global error report
-		 */
-		FOUND_GLOBAL_ERROR = !tResult;
 		
 		return tResult;
 	}
 	
+	/**
+	 * Validates the entire hierarchy
+	 */
+	private void validateAllResults()
+	{
+		if (GUI_USER_CTRL_REPORT_TOPOLOGY){
+			if(!mResultsValidated){
+				if(!FOUND_GLOBAL_ERROR){
+					Logging.warn(this, "?????????????????????????????????????????????????");
+					Logging.warn(this, "??? VALIDATING RESULTS (validated: " + mResultsValidated + ")");
+					Logging.warn(this, "?????????????????????????????????????????????????");
+			
+					/**
+					 * Validate results of all HRMController instances
+					 */
+					if(mRegisteredHRMControllers != null){
+						for(HRMController tHRMController : mRegisteredHRMControllers){
+							Logging.warn(null, "  ..validating: " + tHRMController.getNodeGUIName());
+							tHRMController.validateResults();
+							
+							/**
+							 * Abort if global error is detected
+							 */
+							if(FOUND_GLOBAL_ERROR){
+								break;
+							}
+						}
+					}
+					
+					// auto-exit simulation
+					autoExitSimulation();
+				}
+			}
+		}
+	}
+
 	/**
 	 * Auto-exit SIMULATION if more than one simulation run is planned
 	 */
@@ -3921,6 +3961,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}else{
 				Logging.err(this, "Aborting simulation restarts because global error was detected");
 			}
+		}else{
+			Logging.warn(this, "=================================================");
+			Logging.warn(this, "=== Auto-exit of simulation aborted");
+			Logging.warn(this, "=================================================");
 		}
 	}
 	
@@ -3954,7 +3998,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //		generalizeMeighborHRMRoutesAuto();
 		
 		if(HRMConfig.Measurement.VALIDATE_RESULTS){
-			validateResults();
+			validateAllResults();
 		}
 		
 		if(GUI_USER_CTRL_REPORT_TOPOLOGY){
