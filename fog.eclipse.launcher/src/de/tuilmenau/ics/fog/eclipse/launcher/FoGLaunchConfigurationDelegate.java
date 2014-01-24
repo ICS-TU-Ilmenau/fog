@@ -133,7 +133,7 @@ public class FoGLaunchConfigurationDelegate extends FoGLauncher implements ILaun
 				monitor.setTaskName(FUNCTION.START.toString());
 				Logging.warn(this, "####### STARTING SIMULATION ######");
 				start();
-				Logging.warn(this, "####### FINISHING SIMULATION ######");
+				Logging.warn(this, "####### FINISHED SIMULATION START ######");
 				monitor.worked(4);
 			} else {
 				Logging.err(this, "Simulation is already running.");
