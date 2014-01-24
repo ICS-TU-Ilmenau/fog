@@ -252,7 +252,7 @@ public class FoGLauncher
 						mLogger.warn(this, "############ SIMULATION END ###############");
 						
 						if(Simulation.remainingPlannedSimulations() > 0){
-							mLogger.warn(this, "############ SIMULATION RESTART ###############");
+							mLogger.warn(this, "############ SIMULATION RESTART - run: " + Simulation.mStartedSimulations + " ###############");
 							try{
 								mLogger.warn(this, "   ..CREATE");
 								mFoGLauncher.create(null);
