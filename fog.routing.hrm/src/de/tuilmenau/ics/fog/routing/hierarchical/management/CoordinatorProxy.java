@@ -79,7 +79,7 @@ public class CoordinatorProxy extends ClusterMember
 	 * @param pCoordinatorNodeL2Address the node L2 address where the coordinator is located
 	 * @param pHopCount the hop count to the coordinator node
 	 */
-	public static CoordinatorProxy create(HRMController pHRMController, ClusterName pClusterName, L2Address pCoordinatorNodeL2Address, int pHopCount)
+	public synchronized static CoordinatorProxy create(HRMController pHRMController, ClusterName pClusterName, L2Address pCoordinatorNodeL2Address, int pHopCount)
 	{	
 		CoordinatorProxy tResult = new CoordinatorProxy(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pCoordinatorNodeL2Address, pHopCount);
 		
@@ -95,7 +95,7 @@ public class CoordinatorProxy extends ClusterMember
 	 * EVENT: remote coordinator role invalid, triggered by ControlEntity::unregisterAnnouncedCoordinatorARG() if a coordinator invalidation is received, the reaction is:
 	 * 	 	1.) update the local ARG
 	 */
-	public void eventRemoteCoordinatorRoleInvalid()
+	public synchronized void eventRemoteCoordinatorRoleInvalid()
 	{
 		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid");
 
