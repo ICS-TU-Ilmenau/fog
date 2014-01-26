@@ -1661,7 +1661,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					final ClusterMember tClusterMember = (ClusterMember)tfControlEntity;
 					
 					MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
-					tMenuItem.setText("Show Election details");
+					tMenuItem.setText("Show election details");
 					tMenuItem.addSelectionListener(new SelectionListener() {
 						public void widgetDefaultSelected(SelectionEvent pEvent)
 						{
@@ -1672,6 +1672,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						{
 							//Logging.log(this, "Widget selected: " + pEvent);
 							showElectionDetails(tClusterMember);
+						}
+					});
+					MenuItem tMenuItem1 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem1.setText("Check isAllowedToWin()");
+					tMenuItem1.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							showElectionIsAllowedToWin(tClusterMember);
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							showElectionIsAllowedToWin(tClusterMember);
 						}
 					});
 				}
@@ -1699,6 +1713,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			Logging.log(this, "   ..[" + i + "]: " + tCause);
 			i++;
 		}		
+	}
+	
+	private void showElectionIsAllowedToWin(ClusterMember pClusterMember)
+	{
+		Logging.log(this, "IsAllowedToWin() for " + pClusterMember + " ==> " + pClusterMember.getElector().isAllowedToWin());
 	}
 	
 	/**
