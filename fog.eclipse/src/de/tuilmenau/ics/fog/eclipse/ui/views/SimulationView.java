@@ -713,21 +713,23 @@ public class SimulationView extends ViewPart
 	 */
 	private void refresh()
 	{
-		if(Thread.currentThread() == display.getThread()) {
-			viewer.refresh();
-			// per default expand all items in the treeView
-			viewer.expandAll();
-		} else {
-			display.asyncExec(new Runnable() {
-				@Override
-				public void run() {
-					if(!viewer.getTree().isDisposed()) {
-						viewer.refresh();
-						// per default expand all items in the treeView
-						viewer.expandAll();
+		if(!display.isDisposed()){
+			if(Thread.currentThread() == display.getThread()) {
+				viewer.refresh();
+				// per default expand all items in the treeView
+				viewer.expandAll();
+			} else {
+				display.asyncExec(new Runnable() {
+					@Override
+					public void run() {
+						if(!viewer.getTree().isDisposed()) {
+							viewer.refresh();
+							// per default expand all items in the treeView
+							viewer.expandAll();
+						}
 					}
-				}
-			});
+				});
+			}
 		}
 	}
 	
