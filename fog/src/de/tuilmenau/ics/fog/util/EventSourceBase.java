@@ -37,10 +37,11 @@ public class EventSourceBase implements EventSource
 			if(events != null) {
 				while(!events.isEmpty()) {
 					// maybe notifyObservers() has deleted all observers!
-					if(observers != null){
-						if(!observers.isEmpty()){
-							notifyObservers(events.removeFirst());
-						}
+					if((observers != null) &&  (!observers.isEmpty())){
+						notifyObservers(events.removeFirst());
+					}else{
+						// no observers here, return immediately
+						break;
 					}
 				}
 				
