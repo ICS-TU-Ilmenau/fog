@@ -145,7 +145,7 @@ public class ScenarioSetup
 		int tNumberOfNodes = 12;
 		long tDataRate = 100 * 1000;
 		
-		scenarioRow(pSim, pAsName, tNumberOfNodes, tDataRate);
+		scenarioRow(pSim, pAsName, "link_", 1, tNumberOfNodes, tDataRate);
 		
 		// close row to a ring by connecting last and first node
 		String busName = "link_" +tNumberOfNodes +"_1";
