@@ -15,6 +15,8 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
+import de.tuilmenau.ics.fog.topology.NetworkInterface;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -41,6 +43,11 @@ public class HRMControllerProcessor extends Thread
 	 * Stores pending requests for hierarchy priority update processing 
 	 */
 	private LinkedList<HierarchyLevel> mPendingHierarchyUpdates = new LinkedList<HierarchyLevel>();
+	
+	/**
+	 * Stores the pending requests for connectivity update processing
+	 */
+	private LinkedList<NetworkInterface> mPendingConnectivityUpdates = new LinkedList<NetworkInterface>();
 	
 	/**
 	 * Stores a log about "update" events
@@ -109,6 +116,14 @@ public class HRMControllerProcessor extends Thread
 				Logging.log(this, "  ..entry[" + i + "]: " + mPendingHierarchyUpdates.get(i));
 			}			
 		}
+
+		Logging.log(this, "Pending connectivity priority update requests:");
+		synchronized (mPendingConnectivityUpdates) {
+			for(int i = 0; i < mPendingConnectivityUpdates.size(); i++){
+				Logging.log(this, "  ..entry[" + i + "]: " + mPendingConnectivityUpdates.get(i));
+			}			
+		}
+
 		Logging.log(this, "### logged pending events");
 	}
 	
@@ -183,6 +198,27 @@ public class HRMControllerProcessor extends Thread
 	}
 
 	/**
+	 * EVENT: "new connectivity priority"
+	 *  
+	 * @param pCausingNetworkInterface the causing network interface 
+	 */
+	private long mEventNewConnectivityPriority = 0;
+	public synchronized void eventNewConnectivity(NetworkInterface pCausingNetworkInterface)
+	{
+		mEventNewHierarchyPriority++;
+		
+		synchronized (mPendingConnectivityUpdates) {
+			mPendingConnectivityUpdates.add(pCausingNetworkInterface);
+		}
+
+		// trigger wake-up
+		if(DEBUG_NOTIFICATION){
+			Logging.log(this, "Notify - [" + mEventNewConnectivityPriority + "] - mEventNewConnectivityPriority(" + pCausingNetworkInterface + ")");
+		}
+		notify();
+	}
+
+	/**
 	 * Returns the next "cluster event" (uses passive waiting)
 	 * 
 	 * @return the next cluster event (a hierarchy level)
@@ -229,6 +265,24 @@ public class HRMControllerProcessor extends Thread
 		synchronized (mPendingHierarchyUpdates) {
 			if(mPendingHierarchyUpdates.size() > 0){
 				tResult = mPendingHierarchyUpdates.removeFirst();
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the next connectivity event
+	 * 
+	 * @return the next connectivity event
+	 */
+	private synchronized NetworkInterface getNextConnectivityPriorityUpdate()
+	{
+		NetworkInterface tResult = null;
+		
+		synchronized (mPendingConnectivityUpdates) {
+			if(mPendingConnectivityUpdates.size() > 0){
+				tResult = mPendingConnectivityUpdates.removeFirst();
 			}
 		}
 		
@@ -293,7 +347,7 @@ public class HRMControllerProcessor extends Thread
 	 */
 	public void run()
 	{
-		Thread.currentThread().setName("Processor@" + mHRMController);
+		Thread.currentThread().setName("Sim" + Simulation.sStartedSimulations + "@Processor@" + mHRMController);
 
 		mProcessLoopIsRunning = true;
 		
@@ -344,6 +398,28 @@ public class HRMControllerProcessor extends Thread
 				tNextHierarchyLevel = getNextHierarchyLevelForPriorityUpdate();
 			}	
 
+			/************************
+			 * Connectivity priority processing
+			 ***********************/
+			NetworkInterface tNextNetworkInterfaceWithConnectivity = getNextConnectivityPriorityUpdate();
+			while(tNextNetworkInterfaceWithConnectivity != null){
+				tFoundEvent = true;
+				
+				double tBefore = HRMController.getRealTime();
+
+				// process the next hierarchy priority update
+				mHRMController.distributeConnectivityNodePriorityUpdate(tNextNetworkInterfaceWithConnectivity);
+
+				double tSpentTime = HRMController.getRealTime() - tBefore;
+
+				if(tSpentTime > 100){
+					Logging.log(this, "Processing a connectivity priority update took " + tSpentTime + " ms");
+				}
+
+				// get the next connectivity priority update
+				tNextNetworkInterfaceWithConnectivity = getNextConnectivityPriorityUpdate();
+			}	
+			
 			/***********************
 			 * Clustering
 			 ***********************/
@@ -373,13 +449,35 @@ public class HRMControllerProcessor extends Thread
 		mProcessLoopIsRunning = false;
 	}
 
+	/**
+	 * Returns if this processor is valid
+	 * 
+	 * @return true or false
+	 */
+	public boolean isValid()
+	{
+		return (isRunning() && mProcessorNeeded);
+	}
+	
+	/**
+	 * Terminates this processor
+	 */
 	public synchronized void exit()
 	{
 		Logging.log(this, "Exiting this processor");
-		mProcessorNeeded = false;
-		notify();
+		if(isValid()){
+			mProcessorNeeded = false;
+			notify();
+		}else{
+			Logging.log(this, "  ..was already killed");
+		}
 	}
 	
+	/**
+	 * Returns if this processor is still running
+	 * 
+	 * @return true or false
+	 */
 	public boolean isRunning()
 	{
 		return mProcessLoopIsRunning;
