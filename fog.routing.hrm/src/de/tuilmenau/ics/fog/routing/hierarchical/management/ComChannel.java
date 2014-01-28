@@ -1354,6 +1354,10 @@ public class ComChannel
 	 */
 	public boolean receivePacket(SignalingMessageHrm pPacket)
 	{
+//		if((pPacket instanceof AnnounceCoordinator) && (getParent().getGUIClusterID() == 16)){
+//			Logging.log(this, "Received: " + pPacket);
+//		}
+
 		/**
 		 * Store the packet in queue
 		 */
@@ -1400,6 +1404,10 @@ public class ComChannel
 		if(tSpentTime > 10){
 			Logging.log(this, "    ..processOnePacket() took " + tSpentTime + " ms for getting next packet: " + tNextPacket);
 		}
+
+//		if((tNextPacket instanceof AnnounceCoordinator) && (getParent().getGUIClusterID() == 16)){
+//			Logging.log(this, "Processing: " + tNextPacket);
+//		}
 
 		if(tNextPacket != null){
 			if(getParent().isThisEntityValid()){
@@ -1763,7 +1771,9 @@ public class ComChannel
 
 		mLinkActivation = pState;
 		
-		mDesccriptionLinkActivation += "\n ..[" +pState +"] <== " + pCause;
+//		if(HRMConfig.DebugOutput.MEMORY_CONSUMING_OPERATIONS){
+			mDesccriptionLinkActivation += "\n ..[" +pState +"] <== " + pCause;
+//		}
 	}
 	
 	/**
@@ -1793,6 +1803,6 @@ public class ComChannel
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "@" + mParent.toString() + "(Peer="+ (getPeerL2Address() != null ? (getPeer() != null ? getPeer() : getPeerL2Address()) + ", PeerHRMID=" + getPeerHRMID() : "") + " " + mChannelState.toString() + ")";
+		return getClass().getSimpleName() + "@" + mParent.toString() + "(Peer="+ (getPeerL2Address() != null ? (getPeer() != null ? getPeer() : getPeerL2Address()) + ", PeerHRMID=" + getPeerHRMID() : "") + ", " + mChannelState.toString() + ", " + (mLinkActivation ? "ActiveLINK" : "InactiveLINK") + ")";
 	}
 }
