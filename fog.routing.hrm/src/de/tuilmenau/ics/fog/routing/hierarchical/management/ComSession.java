@@ -101,6 +101,11 @@ public class ComSession extends Session
 	private Long mPeerAsID = new Long(-1); 
 
 	/**
+	 * Stores if the session is already available
+	 */
+	private boolean mSessionAvailable = false;
+	
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController is the HRMController instance this connection end point is associated to
@@ -223,6 +228,13 @@ public class ComSession extends Session
 			}
 			
 			/**
+			 * InformClusterLeft
+			 */
+			if(tMultiplexPacket.getPayload() instanceof InformClusterLeft){
+				Logging.log(this, "#### SENDING INFORM_CLUSTER_LEFT: " + tMultiplexPacket.getPayload());
+			}
+
+			/**
 			 * ProbePacket
 			 */
 			if(tMultiplexPacket.getPayload() instanceof ProbePacket){
@@ -231,6 +243,11 @@ public class ComSession extends Session
 		}
 		
 		if(!mLocalLoopback){
+			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
+				if(!isAvailable()){
+					Logging.warn(this, "Trying to send data when session is not yet marked as avilable, packet=" + pData);
+				}
+			}
 			if(mParentConnection != null && mParentConnection.isConnected()) {
 				try	{
 					if(HRMConfig.DebugOutput.SHOW_SENT_SESSION_PACKETS){
@@ -533,18 +550,32 @@ public class ComSession extends Session
 	/**
 	 * EVENT: available
 	 * This function gets called when the physical end point at remote side is locally known
+	 * 
+	 * @param pAnnouncePhysicalNeighborhood the causing packet 
 	 */
-	private void eventSessionAvailable()
+	private void eventSessionAvailable(AnnouncePhysicalEndPoint pAnnouncePhysicalNeighborhood)
 	{
-		Logging.log(this, "EVENT: session is available now");
+		Logging.log(this, "EVENT: session is available now, packet=" + pAnnouncePhysicalNeighborhood);
+		mSessionAvailable = true;
 	}
 
+	/**
+	 * Returns if the session is available for sending data
+	 * 
+	 * @return true or false
+	 */
+	private boolean isAvailable()
+	{
+		return mSessionAvailable;
+	}
+	
 	/**
 	 * EVENT: invalid
 	 */
 	public void eventSessionInvalid()
 	{
 		Logging.log(this, "EVENT: session is invalid");
+		mSessionAvailable = false;
 	}
 	
 	/**
@@ -639,11 +670,18 @@ public class ComSession extends Session
 						Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pMultiplexHeader + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
 					}
 				}else{
-					String tKnownChannels = "";
-					for (ComChannel tComChannel: getAllComChannels()){
-						tKnownChannels += "\n      .." + tComChannel.toString() + " [Peer=" + tComChannel.getRemoteClusterName() + "]";
+					Coordinator tCoordinator = mHRMController.getCoordinatorByID(tDestination.getCoordinatorID());
+					if(tCoordinator != null){
+						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+							Logging.warn(this, "Due to missing communication channel for existing destination coordinator, dropping packet: " + pMultiplexHeader + ", destination: " + tDestination);
+						}
+					}else{
+						String tKnownChannels = "";
+						for (ComChannel tComChannel: getAllComChannels()){
+							tKnownChannels += "\n      .." + tComChannel.toString() + " [Peer=" + tComChannel.getRemoteClusterName() + "]";
+						}
+						throw new RuntimeException("\n" + this + " >> is unable to find the communication channel\n   ..packet destination: " + tDestination + "\n   ..packet source: " + tSource + " @" + pMultiplexHeader.getPayload().getSenderName() + "\n   ..known communication channels are: " + tKnownChannels + "\n   ..known deleted channels are: " + mUnregisteredComChannels + "\n   ..dropped packet payload: " + pMultiplexHeader.getPayload());
 					}
-					throw new RuntimeException("\n" + this + " >> is unable to find the communication channel\n   ..packet destination: " + tDestination + "\n   ..packet source: " + tSource + " @" + pMultiplexHeader.getPayload().getSenderName() + "\n   ..known communication channels are: " + tKnownChannels + "\n   ..known deleted channels are: " + mUnregisteredComChannels + "\n   ..dropped packet payload: " + pMultiplexHeader.getPayload());
 				}
 			}
 		}
@@ -828,7 +866,7 @@ public class ComSession extends Session
 		/**
 		 * TRIGGER: session is available now
 		 */
-		eventSessionAvailable();		
+		eventSessionAvailable(pAnnouncePhysicalNeighborhood);		
 	}
 
 	/**
@@ -858,7 +896,11 @@ public class ComSession extends Session
 		 * Send the final packet
 		 */
 		Logging.log(this, "       ..sending cluster left: " + tMultiplexPacket + ", payload=" + tMultiplexPacket.getPayload());
-		write(tMultiplexPacket);
+		if(write(tMultiplexPacket)){
+			Logging.log(this, "   ..sent INFORM CLUSTER LEFT: " + tMultiplexPacket);	
+		}else{
+			Logging.err(this, "   ..unable to send INFORM CLUSTER LEFT: " + tMultiplexPacket);	
+		}
 	}
 
 	/**
@@ -940,6 +982,12 @@ public class ComSession extends Session
 				Logging.log(this, "#### RECEIVED PROBE_PACKET: " + tMultiplexPacket.getPayload());
 			}
 
+			/**
+			 * InformClusterLeft
+			 */
+			if(tMultiplexPacket.getPayload() instanceof InformClusterLeft){
+				Logging.log(this, "#### RECEIVED INFORM_CLUSTER_LEFT: " + tMultiplexPacket.getPayload());
+			}
 			eventReceivedMultiplexPacket(tMultiplexPacket);
 
 			return true;
