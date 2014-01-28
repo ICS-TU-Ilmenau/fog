@@ -509,7 +509,7 @@ public class SimulationView extends ViewPart
 	private void updateSimulationControl()
 	{
 		if(Thread.currentThread() == display.getThread()) {
-			mSimStarted.setText(Integer.toString(Simulation.mStartedSimulations));
+			mSimStarted.setText(Integer.toString(Simulation.sStartedSimulations));
 			mSimPlanned.setText(Integer.toString(Simulation.remainingPlannedSimulations()));
 			mSimThreadsStarted.setText(Integer.toString(countThreads()));
 			if(currentSim != null) {

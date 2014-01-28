@@ -53,8 +53,8 @@ public class Simulation
 	private static final String CMD_SWITCH = "switch";
 	private static final String CMD_AT = "@";
 
-	public static int mStartedSimulations = 0;
-	private static int mPlannedSimulations = 0;	
+	public static int sStartedSimulations = 0;
+	private static int sPlannedSimulations = 0;	
 	
 	/**
 	 * Stores the physical simulation machine specific multiplier, which is used to create unique IDs even if multiple physical simulation machines are connected by FoGSiEm instances
@@ -67,7 +67,7 @@ public class Simulation
 		mLogLevel = pLogLevel;
 		mTimeBase = new EventHandler();
 		mLogger = new Logger(null);
-		mStartedSimulations ++;
+		sStartedSimulations ++;
 		
 		mBaseDirectory = pBaseDirectory;
 		if(mBaseDirectory == null) {
@@ -459,7 +459,7 @@ public class Simulation
 	 */
 	public void exit()
 	{
-		mPlannedSimulations--;
+		sPlannedSimulations--;
 		Worker.executeForAll(mLogger, CMD_EXIT);
 	}
 	
@@ -606,7 +606,7 @@ public class Simulation
 	 */
 	public static int remainingPlannedSimulations() 
 	{
-		return mPlannedSimulations;
+		return sPlannedSimulations;
 	}
 
 	/**
@@ -614,12 +614,12 @@ public class Simulation
 	 */
 	public static void setPlannedSimulations(int pPlannedSimulationRuns) 
 	{
-		mPlannedSimulations = pPlannedSimulationRuns;
+		sPlannedSimulations = pPlannedSimulationRuns;
 	}
 
 	public String toString()
 	{
-		return getClass().getSimpleName();
+		return getClass().getSimpleName() + sStartedSimulations;
 	}
 
 	private EventHandler mTimeBase;
