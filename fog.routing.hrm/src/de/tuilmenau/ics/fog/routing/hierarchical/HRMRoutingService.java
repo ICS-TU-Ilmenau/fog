@@ -1004,7 +1004,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			//       Therefore, we ignore the first registerLink() request and wait for the (hopefully) appearing second request.
 			tToL2Address = (L2Address) pGate.getRemoteDestinationName();
 			if (tToL2Address == null){
-				Logging.log(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this registerLink() request and wait until the peer is known");
+				Logging.log(this, "Peer name wasn't available via AbstractGate.getRemoteDestinationName(), will skip this registerLink() request and wait until the peer is known");
 			}
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
