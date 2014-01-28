@@ -503,10 +503,14 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 												tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
 												tSharedRoutingTable.addEntry(tNewEntry);
 											}else{
-												Logging.err(this, "sharePhase() for " + tPeerHRMID + " couldn't find an intra-cluster route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " for using the received share route: " + tReceivedSharedRoutingEntry);
+												if(!HRMController.FOUND_GLOBAL_ERROR){
+													Logging.err(this, "sharePhase() for " + tPeerHRMID + " couldn't find an intra-cluster route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " for using the received share route: " + tReceivedSharedRoutingEntry);
+												}
 											}
 										}else{
-											Logging.err(this, "sharePhase() for " + tPeerHRMID + " detected a shared route from " + superiorCoordinatorComChannel().getPeerHRMID() + ", which does not start in this cluster: " + tReceivedSharedRoutingEntry);
+											if(!HRMController.FOUND_GLOBAL_ERROR){
+												Logging.err(this, "sharePhase() for " + tPeerHRMID + " detected a shared route from " + (superiorCoordinatorComChannel() != null ? superiorCoordinatorComChannel().getPeerHRMID() : "null") + ", which does not start in this cluster: " + tReceivedSharedRoutingEntry);
+											}
 										}
 									}
 								}else{
