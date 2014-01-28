@@ -878,64 +878,68 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * 	 	1.) create signaling packet "ElectionLeave"
 	 * 		2.) send the packet to the superior coordinator 
 	 */
-	public void eventCoordinatorRoleInvalid()
+	public synchronized void eventCoordinatorRoleInvalid()
 	{
 		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid");
 
-		/**
-		 * Trigger: role invalid
-		 */
-		eventInvalidation();
-		
-		/**
-		 * Trigger: invalid coordinator
-		 */
-		distributeCoordinatorInvalidation();
-		
-		/**
-		 * Inform all superior clusters about our invalidation and invalidate the cluster membership (we leave all elections because we are no longer a possible election winner)
-		 */
-		if (!getHierarchyLevel().isHighest()){
-			synchronized (mClusterMemberships) {
-				Logging.log(this, "     ..invalidating these cluster memberships: ");
-				int i = 0;
-				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mClusterMemberships){
-					Logging.log(this, "       ..membership[" + i + "]: " + tCoordinatorAsClusterMember);
-					i++;
-				}				
-				while(mClusterMemberships.size() > 0) {
-					CoordinatorAsClusterMember tCoordinatorAsClusterMember = mClusterMemberships.getLast();
-					tCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
+		if(isThisEntityValid()){
+			/**
+			 * Trigger: role invalid
+			 */
+			eventInvalidation();
+			
+			/**
+			 * Trigger: invalid coordinator
+			 */
+			distributeCoordinatorInvalidation();
+			
+			/**
+			 * Inform all superior clusters about our invalidation and invalidate the cluster membership (we leave all elections because we are no longer a possible election winner)
+			 */
+			if (!getHierarchyLevel().isHighest()){
+				synchronized (mClusterMemberships) {
+					Logging.log(this, "     ..invalidating these cluster memberships: ");
+					int i = 0;
+					for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : mClusterMemberships){
+						Logging.log(this, "       ..membership[" + i + "]: " + tCoordinatorAsClusterMember);
+						i++;
+					}				
+					while(mClusterMemberships.size() > 0) {
+						CoordinatorAsClusterMember tCoordinatorAsClusterMember = mClusterMemberships.getLast();
+						tCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
+					}
 				}
+			}else{
+				Logging.log(this, "eventCoordinatorRoleInvalid() skips further signaling because hierarchy end is already reached at: " + getHierarchyLevel().getValue());
 			}
+	
+			/**
+			 * Revoke own HRMID
+			 */ 
+			if((getHRMID() != null) && (!getHRMID().isZero())){
+				eventRevokedHRMID(this, getHRMID());
+			}
+			
+			/**
+			 * Trigger: revoke all assigned HRMIDs from all cluster members
+			 */
+			mParentCluster.eventAllClusterAddressesInvalid();
+			
+			/**
+			 * Unregister from local databases
+			 */
+			Logging.log(this, "============ Destroying this coordinator now...");
+			
+			// unregister from HRMController's internal database
+			mHRMController.unregisterCoordinator(this);
+			
+			/**
+			 * Inform the inferior cluster about our destruction
+			 */
+			mParentCluster.eventCoordinatorLost();
 		}else{
-			Logging.log(this, "eventCoordinatorRoleInvalid() skips further signaling because hierarchy end is already reached at: " + getHierarchyLevel().getValue());
+			Logging.warn(this, "This Coordinator is already invalid");
 		}
-
-		/**
-		 * Revoke own HRMID
-		 */ 
-		if((getHRMID() != null) && (!getHRMID().isZero())){
-			eventRevokedHRMID(this, getHRMID());
-		}
-		
-		/**
-		 * Trigger: revoke all assigned HRMIDs from all cluster members
-		 */
-		mParentCluster.eventAllClusterAddressesInvalid();
-		
-		/**
-		 * Unregister from local databases
-		 */
-		Logging.log(this, "============ Destroying this coordinator now...");
-		
-		// unregister from HRMController's internal database
-		mHRMController.unregisterCoordinator(this);
-		
-		/**
-		 * Inform the inferior cluster about our destruction
-		 */
-		mParentCluster.eventCoordinatorLost();
 	}
 	
 	/**
