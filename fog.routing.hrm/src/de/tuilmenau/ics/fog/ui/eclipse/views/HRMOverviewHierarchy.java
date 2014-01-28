@@ -38,6 +38,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class HRMOverviewHierarchy extends ViewPart
 {
 	private static final String TEXT_BTN_CHECK_HIERARCHY					= "Check hierarchy";
+	private static final String TEXT_BTN_TOP_COORDINATORS					= "Top coordinator stats";
 	private static final String TEXT_BTN_RESET_EVERYTHING 					= "Reset everything";
 
 	private static final String TEXT_CLUSTERS_CREATED	= "Created clusters: ";
@@ -49,7 +50,10 @@ public class HRMOverviewHierarchy extends ViewPart
 	private Label mCreatedCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
 	
 	private Button mBtnCheckHierarchy = null;
+	private Button mBtnTopCoordinators = null;
 	private Button mBtnResetEverything = null;
+	
+	private Group mGrpHierarchy = null;
 	
 	private static final String TEXT_COORDINATORS_RUN 		= "Running coordinators: ";
 	private Label mRunningCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
@@ -73,6 +77,9 @@ public class HRMOverviewHierarchy extends ViewPart
 	
 	void updateView() 
 	{
+		Color tColRed = mDisplay.getSystemColor(SWT.COLOR_DARK_RED);
+		Color tColGreen = mDisplay.getSystemColor(SWT.COLOR_DARK_GREEN);
+
 		//Logging.log(this, "Update view " + ++sUpdateLoop);
 		
 		mClusters.setText(Long.toString(Cluster.countCreatedClusters()));
@@ -87,6 +94,20 @@ public class HRMOverviewHierarchy extends ViewPart
 			Integer tCounter = HRMController.sRegisteredCoordinatorsCounter.get(i);
 			if(tCounter != null){
 				mRunningCoordinators[i].setText(Integer.toString(tCounter));
+			}
+		}
+		
+		if(HRMController.FOUND_GLOBAL_ERROR){
+			if(mBtnCheckHierarchy.isEnabled()){
+				mBtnCheckHierarchy.setEnabled(false);
+				mBtnCheckHierarchy.setForeground(tColRed);
+				mGrpHierarchy.setForeground(tColRed);
+			}
+		}else{
+			if(!mBtnCheckHierarchy.isEnabled()){
+				mBtnCheckHierarchy.setEnabled(true);
+				mBtnCheckHierarchy.setForeground(tColGreen);
+				mGrpHierarchy.setForeground(tColGreen);
 			}
 		}
 	}
@@ -142,6 +163,7 @@ public class HRMOverviewHierarchy extends ViewPart
 	public void createPartControl(Composite pParent)
 	{
 		Color tColGray = mDisplay.getSystemColor(SWT.COLOR_GRAY); 
+		Color tColGreen = mDisplay.getSystemColor(SWT.COLOR_DARK_GREEN);
 		pParent.setBackground(tColGray);
 		
 		Composite tContainer = new Composite(pParent, SWT.NONE);
@@ -154,27 +176,28 @@ public class HRMOverviewHierarchy extends ViewPart
 		// grouping HRM configuration
 		final GridData tGrpHierarchyLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		tGrpHierarchyLayoutData.horizontalSpan = 2;
-		Group tGrpHierarchy = new Group(tContainer, SWT.SHADOW_OUT);
-		tGrpHierarchy.setText("  HRM hierarchy  ");
+		mGrpHierarchy = new Group(tContainer, SWT.SHADOW_OUT);
+		mGrpHierarchy.setForeground(tColGreen);
+		mGrpHierarchy.setText("  HRM hierarchy  ");
 		GridLayout tGrpHierarchyLayout = new GridLayout(2, true);
 		tGrpHierarchyLayout.marginWidth = 20;
 		tGrpHierarchyLayout.marginHeight = 10;
-		tGrpHierarchy.setLayout(tGrpHierarchyLayout);
-		tGrpHierarchy.setLayoutData(tGrpHierarchyLayoutData);
+		mGrpHierarchy.setLayout(tGrpHierarchyLayout);
+		mGrpHierarchy.setLayoutData(tGrpHierarchyLayoutData);
 
-		mClusters = createPartControlLine(tGrpHierarchy, TEXT_CLUSTERS_CREATED);
+		mClusters = createPartControlLine(mGrpHierarchy, TEXT_CLUSTERS_CREATED);
 		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
-			mCreatedClusters[i] = createPartControlLine(tGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
+			mCreatedClusters[i] = createPartControlLine(mGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
 		}		
 		
-		mCoordinators = createPartControlLine(tGrpHierarchy, TEXT_COORDINATORS_CREATED);
+		mCoordinators = createPartControlLine(mGrpHierarchy, TEXT_COORDINATORS_CREATED);
 		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
-			mCreatedCoordinators[i] = createPartControlLine(tGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
+			mCreatedCoordinators[i] = createPartControlLine(mGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
 		}		
 
-		createPartControlLine(tGrpHierarchy, TEXT_COORDINATORS_RUN);
+		createPartControlLine(mGrpHierarchy, TEXT_COORDINATORS_RUN);
 		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
-			mRunningCoordinators[i] = createPartControlLine(tGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
+			mRunningCoordinators[i] = createPartControlLine(mGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
 		}
 		
 	    mBtnCheckHierarchy = new Button(tContainer, SWT.PUSH);
@@ -193,7 +216,22 @@ public class HRMOverviewHierarchy extends ViewPart
 			}
 		});
 		
-//	    mBtnResetEverything = new Button(tContainer, SWT.PUSH);
+	    mBtnTopCoordinators = new Button(tContainer, SWT.PUSH);
+	    mBtnTopCoordinators.setText(TEXT_BTN_TOP_COORDINATORS);
+	    mBtnTopCoordinators.setLayoutData(createGridData(true, 2));
+	    mBtnTopCoordinators.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				Logging.warn(this, "Top coordinators for " + HRMController.sRegisteredTopCoordinatorsCounter.size() + " nodes:");
+				synchronized (HRMController.sRegisteredTopCoordinatorsCounter) {
+					for (String tNodeName : HRMController.sRegisteredTopCoordinatorsCounter.keySet()){
+						Logging.warn(this, "   .." + tNodeName + ": " + HRMController.sRegisteredTopCoordinatorsCounter.get(tNodeName));
+					}
+				}
+			}
+		});
+
+ //	    mBtnResetEverything = new Button(tContainer, SWT.PUSH);
 //	    mBtnResetEverything.setText(TEXT_BTN_RESET_EVERYTHING);
 //	    mBtnResetEverything.setLayoutData(createGridData(true, 2));
 //	    mBtnResetEverything.addSelectionListener(new SelectionAdapter() {

@@ -598,6 +598,13 @@ public class ClusterMember extends ClusterName
 			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderClusterName()); //TODO: use timeouts here
 		}
 
+//		if(pAnnounceCoordinator.getSenderClusterName().getGUICoordinatorID() == 16){
+//			Logging.log(this, "EVENT: coordinator announcement (from side): " + pAnnounceCoordinator);
+//			Logging.log(this, "   ..route: " + pAnnounceCoordinator.getRoute());			
+//			Logging.log(this, "   ..sender coordinator L2Address: " + pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address());
+//			Logging.log(this, "   ..peer L2Address: " + pComChannel.getPeerL2Address());
+//		}
+
 		/**
 		 * Check if we should forward this announcement "to the side"
 		 */
@@ -622,6 +629,13 @@ public class ClusterMember extends ClusterName
 			}
 			tForwardPacket.addRouteHop(pComChannel.getRouteToPeer());
 			
+//			if(pAnnounceCoordinator.getSenderClusterName().getGUICoordinatorID() == 16){
+//				Logging.log(this, "EVENT: duplicated coordinator announcement (from side): " + tForwardPacket);
+//				Logging.log(this, "   ..dup route: " + tForwardPacket.getRoute());			
+//				Logging.log(this, "   ..dup sender coordinator L2Address: " + tForwardPacket.getSenderClusterCoordinatorNodeL2Address());
+//				Logging.log(this, "   ..dup peer L2Address: " + pComChannel.getPeerL2Address());
+//			}
+
 			/**
 			 * Store the announced remote coordinator in the ARG 
 			 */
@@ -907,8 +921,9 @@ public class ClusterMember extends ClusterName
 	 * @param pPacket the packet which has to be broadcasted
 	 * @param pIncludeLoopback should loopback communication be included?
 	 * @param pExcludeL2Address describe a node which shouldn't receive this broadcast if we are at base hierarchy level
+	 * @param pCheckLinkActivation define if the state of each link should be checked for activation before a packet is allowed to pass this link
 	 */
-	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, L2Address pExcludeL2Address)
+	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, L2Address pExcludeL2Address, boolean pCheckLinkActivation)
 	{
 		boolean DEBUG = false;
 		
@@ -935,45 +950,63 @@ public class ClusterMember extends ClusterName
 			}
 
 			/**
+			 * check if this packet is allowed to travel along this comm. channel
+			 */
+			boolean tIsAllowedToUseThisChannel = true;
+			if(pCheckLinkActivation){
+				tIsAllowedToUseThisChannel = tComChannel.isLinkActive();
+			}
+			
+			/**
 			 * is this packet allowed to enter the next AS behind this comm. channel?
 			 */
 			if(tIsAllowedToEnterNextAS){
 				/**
-				 * should we deliver this packet to the destination node behind this comm. channel?
+				 * is this packet allowed to use this comm. channel?
 				 */
-				if((pExcludeL2Address == null /* excluded peer address is null => we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */)){
-					if (DEBUG){
-						if (!tIsLoopback){
-							Logging.log(this, "  ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
-						}else{
-							Logging.log(this, "  ..to LOOPBACK " + tComChannel);
-						}
-					}
-		
+				if(tIsAllowedToUseThisChannel){
 					/**
-					 * should we deliver this packet to the loopback destination behind this comm. channel?
+					 * should we deliver this packet to the destination node behind this comm. channel?
 					 */
-					if ((pIncludeLoopback) || (!tIsLoopback)){
-						if(tComChannel.isOpen()){
-							SignalingMessageHrm tNewPacket = pPacket.duplicate();
-							if (DEBUG){
-								Logging.log(this, "      ..sending duplicate packet: " + tNewPacket);
+					if((pExcludeL2Address == null /* excluded peer address is null => we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */)){
+						if (DEBUG){
+							if (!tIsLoopback){
+								Logging.log(this, "  ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
+							}else{
+								Logging.log(this, "  ..to LOOPBACK " + tComChannel);
 							}
-							// send the packet to one of the possible cluster members
-							tComChannel.sendPacket(tNewPacket);
+						}
+			
+						/**
+						 * should we deliver this packet to the loopback destination behind this comm. channel?
+						 */
+						if ((pIncludeLoopback) || (!tIsLoopback)){
+							if(tComChannel.isOpen()){
+								SignalingMessageHrm tNewPacket = pPacket.duplicate();
+								if (DEBUG){
+									Logging.log(this, "      ..sending duplicate packet: " + tNewPacket);
+								}
+								// send the packet to one of the possible cluster members
+								tComChannel.sendPacket(tNewPacket);
+							}else{
+								if (DEBUG){
+									Logging.log(this, "        ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
+								}
+							}
 						}else{
 							if (DEBUG){
-								Logging.log(this, "        ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
+								Logging.log(this, "         ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
 							}
 						}
 					}else{
 						if (DEBUG){
-							Logging.log(this, "         ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
+							Logging.log(this, "         ..skipping EXCLUDED DESTINATION: " + pExcludeL2Address);
 						}
 					}
 				}else{
 					if (DEBUG){
-						Logging.log(this, "         ..skipping EXCLUDED DESTINATION: " + pExcludeL2Address);
+						Logging.log(this, "         ..skipping comm. channel (not allwoed because of its inactive state)");
+						Logging.log(this, "           ..skipping packet: " + pPacket);
 					}
 				}
 			}else{
@@ -985,27 +1018,17 @@ public class ClusterMember extends ClusterName
 			}
 		}
 	}
+	public void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, boolean pCheckLinkState)
+	{
+		sendClusterBroadcast(pPacket, pIncludeLoopback, null, pCheckLinkState);
+	}
 	public void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback)
 	{
-		sendClusterBroadcast(pPacket, pIncludeLoopback, null);
+		sendClusterBroadcast(pPacket, pIncludeLoopback, null, false);
 	}
-
-	/**
-	 * Sets a new link state for all comm. channels
-	 * 
-	 * @param pState the new state
-	 * @param pCause the cause for this change
-	 */
-	public void setLAllinksActivation(boolean pState, String pCause)
+	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, L2Address pExcludeL2Address)
 	{
-		// get all communication channels
-		LinkedList<ComChannel> tComChannels = getComChannels();
-		
-		Logging.log(this, "Setting new link state (" + pState + ") to all " + tComChannels.size() + " comm. channels");
-
-		for(ComChannel tComChannel : tComChannels) {
-			tComChannel.setLinkActivation(pState, pCause);
-		}
+		sendClusterBroadcast(pPacket, pIncludeLoopback, pExcludeL2Address, false);
 	}
 
 	/**
@@ -1131,7 +1154,7 @@ public class ClusterMember extends ClusterName
 			Logging.log(this, "eventHierarchyNodePriorityUpdate() got new hierarchy node priority, updating own priority from " + getPriority().getValue() + " to " + pNewHierarchyNodePriority);
 			setPriority(ElectionPriority.create(this, pNewHierarchyNodePriority));
 		}else{
-			Logging.log(this, "eventHierarchyNodePriorityUpdate() ignores gotten new hierarchy node priority: " + pNewHierarchyNodePriority);
+			Logging.log(this, "eventHierarchyNodePriorityUpdate() ignores new hierarchy node priority: " + pNewHierarchyNodePriority + ", old value: " + getPriority());
 		}
 	}
 	
@@ -1140,28 +1163,32 @@ public class ClusterMember extends ClusterName
 	 * 
 	 *  @param: pComChannel the comm. channel towards the cluster head
 	 */
-	public void eventClusterMemberRoleInvalid(ComChannel pComChannel)
+	public synchronized void eventClusterMemberRoleInvalid(ComChannel pComChannel)
 	{
 		Logging.log(this, "============ EVENT: cluster member role invalid, channel: " + pComChannel);
 		
-		/**
-		 * Trigger: Elector invalid
-		 */
-		getElector().eventInvalidation();
-
-		/**
-		 * Trigger: role invalid
-		 */
-		eventInvalidation();
-
-		unregisterComChannel(pComChannel);
-
-		Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
-
-		/**
-		 * Unregister from the HRMController's internal database
-		 */ 
-		mHRMController.unregisterClusterMember(this);
+		if(isThisEntityValid()){
+			/**
+			 * Trigger: Elector invalid
+			 */
+			getElector().eventInvalidation(this + "::eventClusterMemberRoleInvalid() for: " + pComChannel);
+	
+			/**
+			 * Trigger: role invalid
+			 */
+			eventInvalidation();
+	
+			unregisterComChannel(pComChannel);
+	
+			Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
+	
+			/**
+			 * Unregister from the HRMController's internal database
+			 */ 
+			mHRMController.unregisterClusterMember(this);
+		}else{
+			Logging.warn(this, "This ClusterMember is already invalid");
+		}
 	}
 
 	/**

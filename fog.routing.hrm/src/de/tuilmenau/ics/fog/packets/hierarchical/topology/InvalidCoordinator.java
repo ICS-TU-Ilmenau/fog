@@ -82,7 +82,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	/**
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
 	 */
-	private int mTTL = HRMConfig.Hierarchy.RADIUS;
+	private long mTTL = HRMConfig.Hierarchy.RADIUS;
 	
 	/**
 	 * Stores if the packet is still forward top-downward or sidewards
@@ -289,7 +289,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	 * 
 	 * @return the TTL value
 	 */
-	public int getTTL()
+	public long getTTL()
 	{
 		return mTTL;
 	}

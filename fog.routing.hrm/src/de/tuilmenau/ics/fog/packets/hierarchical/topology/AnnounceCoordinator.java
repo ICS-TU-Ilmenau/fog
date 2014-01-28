@@ -94,7 +94,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	/**
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
 	 */
-	private int mTTL = HRMConfig.Hierarchy.RADIUS;
+	private long mTTL = HRMConfig.Hierarchy.RADIUS;
 	
 	/**
 	 * Stores the logical hop count for the stored route 
@@ -352,7 +352,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	 * 
 	 * @return the TTL value
 	 */
-	public int getTTL()
+	public long getTTL()
 	{
 		return mTTL;
 	}

@@ -121,6 +121,11 @@ public class Elector implements Localization
 	 */
 	private LinkedList<ClusterMember>[] mNodeActiveClusterMembers = null;
 
+	private static final boolean SEND_ALL_ELECTION_PARTICIPANTS = false;
+	private static final boolean SEND_ONLY_ACTIVE_ELECTION_PARTICIPANTS = true;
+	private static final boolean IGNORE_LINK_STATE = true;
+	private static final boolean CHECK_LINK_STATE = false;
+	
 	/**
 	 * Constructor
 	 *  
@@ -270,22 +275,36 @@ public class Elector implements Localization
 	
 	/**
 	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
+	 * 
+	 * @param pCause the cause for the call
 	 */
-	public void eventInvalidation()
+	public void eventReset(String pCause)
 	{
-		Logging.log(this, "EVENT: invalidation");
-		
+		Logging.log(this, "EVENT: reset, cause=" + pCause);
+
 		if(mParentIsActiveMember){
 			// return to all other election processes because we have lost this ClusterMember at this hierarchy level
-			returnToAlternativeElections(this + "::eventInvalidation()");
+			returnToAlternativeElections(this + "::eventInvalidation()\n   ^^^^" + pCause);
 			
 			// mark/store as inactive ClusterMember
-			boolean tRemovedActiveClusterMember = removeActiveClusterMember(mParent, this + "::eventInvalidation()");
+			boolean tRemovedActiveClusterMember = removeActiveClusterMember(mParent, this + "::eventInvalidation()\n   ^^^^" + pCause);
 
 			if(!tRemovedActiveClusterMember){
 				Logging.err(this, "Haven't found parent in the list of active ClusterMembers (but it should be there), error in state machine, parent is: " + mParent);
 			}
 		}
+	}
+	
+	/**
+	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
+	 * 
+	 * @param pCause the cause for the call
+	 */
+	public void eventInvalidation(String pCause)
+	{
+		Logging.log(this, "EVENT: invalidation, cause=" + pCause);
+
+		eventReset(this + "::eventInvalidation()\n   ^^^^" + pCause);
 	}
 
 	/**
@@ -413,7 +432,7 @@ public class Elector implements Localization
 	 * 
 	 * @param pCause the cause for this election start
 	 */
-	public synchronized void startElection(String pCause)
+	public void startElection(String pCause)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "#### STARTING ELECTION");
@@ -545,7 +564,7 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * SEND: start the election by signaling BULLY ELECT to all cluster members
+	 * SEND: start the election by signaling ELECT to all cluster members
 	 */
 	private void distributeELECT()
 	{
@@ -561,7 +580,7 @@ public class Elector implements Localization
 					ElectionElect tElectionElectPacket = new ElectionElect(mHRMController.getNodeL2Address(), mParent.getPriority());
 					
 					// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority				
-					mParent.sendClusterBroadcast(tElectionElectPacket, true);
+					mParent.sendClusterBroadcast(tElectionElectPacket, true, SEND_ONLY_ACTIVE_ELECTION_PARTICIPANTS);
 					
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "SENDELECTIONS()-END");
@@ -581,7 +600,7 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SEND: ends the election by signaling BULLY ANNOUNCE to all cluster members 		
+	 * SEND: ends the election by signaling ANNOUNCE to all cluster members 		
 	 */
 	private void distributeANNOUNCE()
 	{
@@ -601,7 +620,7 @@ public class Elector implements Localization
 				ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
 		
 				// send broadcast
-				mParent.sendClusterBroadcast(tElectionAnnounceWinnerPacket, true);
+				mParent.sendClusterBroadcast(tElectionAnnounceWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 			}else{
 				Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION END, ELECTED expected");
 				
@@ -619,7 +638,7 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * SEND: ends the election by signaling BULLY RESIGN to all cluster members 		
+	 * SEND: ends the election by signaling RESIGN to all cluster members 		
 	 */
 	private void distributeRESIGN()
 	{
@@ -639,7 +658,7 @@ public class Elector implements Localization
 				ElectionResignWinner tElectionResignWinnerPacket = new ElectionResignWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
 		
 				// send broadcast
-				mParent.sendClusterBroadcast(tElectionResignWinnerPacket, true);
+				mParent.sendClusterBroadcast(tElectionResignWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 			}else{
 				Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION END, ELECTED expected");
 				
@@ -673,7 +692,7 @@ public class Elector implements Localization
 	
 			// send broadcast
 			Logging.log(this, "Distributing priority update: " + tElectionPriorityUpdatePacket);
-			mParent.sendClusterBroadcast(tElectionPriorityUpdatePacket, true);
+			mParent.sendClusterBroadcast(tElectionPriorityUpdatePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 	
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "SENDPRIOUPDATE()-END");
@@ -684,7 +703,7 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SEND: ElectionAlive, report itself as alive by signaling BULLY ALIVE to all cluster members
+	 * SEND: ElectionAlive, report itself as alive by signaling ALIVE to all cluster members
 	 */
 	public void distributeALIVE()
 	{
@@ -698,7 +717,7 @@ public class Elector implements Localization
 			ElectionAlive tElectionAlivePacket = new ElectionAlive(mHRMController.getNodeL2Address(), mParent.getPriority());
 	
 			// send broadcast
-			mParent.sendClusterBroadcast(tElectionAlivePacket, true);
+			mParent.sendClusterBroadcast(tElectionAlivePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 	
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "SENDALIVE()-END");
@@ -717,7 +736,7 @@ public class Elector implements Localization
 	 */
 	private void updateElectionParticipation(ComChannel pComChannel, boolean pState, String pCauseForStateChange)
 	{
-		Logging.log(this, "Changing for election participation to " + Boolean.toString(pState) + " for comm. channel: " + pComChannel);
+		Logging.log(this, "### Changing election participation to " + Boolean.toString(pState) + " for comm. channel: " + pComChannel);
 		
 		if(!head()){
 			if(pState){
@@ -729,7 +748,8 @@ public class Elector implements Localization
 				/**
 				 * Update local link activation
 				 */
-				pComChannel.setLinkActivation(pState, "LEAVE[" + tElectionReturnPacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
+				Logging.log(this, "  ..activating link(updateElectionParticipation): " + pComChannel + ", cause=" + "RETURN[" + tElectionReturnPacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
+				pComChannel.setLinkActivation(pState, "RETURN[" + tElectionReturnPacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 	
 				/**
 				 * Signal to peer
@@ -756,6 +776,7 @@ public class Elector implements Localization
 				/**
 				 * Update local link activation
 				 */
+				Logging.log(this, "  ..deactivating link(updateElectionParticipation): " + pComChannel+ ", cause=" + "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 				pComChannel.setLinkActivation(pState, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 	
 				/**
@@ -955,6 +976,8 @@ public class Elector implements Localization
 						 */
 						int tMemberCount = 0;
 						for (CoordinatorAsClusterMember tLevelClusterMember : tLevelClusterMembers){
+							Logging.log(this, "      ..### checking member: " + tLevelClusterMember);
+							
 							/**
 							 * Be aware of multiple local coordinators at the same hierarchy level -> search only for alternative CoordinatorAsClusterMember instances belong to the parent instance!
 							 * For example:
@@ -1003,7 +1026,7 @@ public class Elector implements Localization
 											 **********************************************************************************************************************************/
 											if((!tLevelClusterMember.equals(tRefParent)) /* avoid that we compare a control entity with itself and decide by mistake that the priority is lower and we should leave this election */ && 
 											   ((tAlternativeElectionRemoteClusterID == null) || (!tAlternativeElectionRemoteClusterID.equals(tRefClusterID))) /* avoid that we compare two local CoordinatorAsCluster instances, which belong to the same remote cluster*/ && 
-											   (tAlternativeElection.hasClusterLowerPriorityThan(tRefL2Address, tRefPriority)) /* compare the two priorities */){
+											   (tAlternativeElection.hasClusterLowerPriorityThan(tRefL2Address, tRefPriority, IGNORE_LINK_STATE)) /* compare the two priorities */){
 	
 												/**
 												 * Distribute "LEAVE" for the alternative election process
@@ -1061,7 +1084,7 @@ public class Elector implements Localization
 					Cluster tLocalCluster = mHRMController.getCluster(mParent.getHierarchyLevel().getValue());
 					if(tLocalCluster != null){
 						Elector tElectorCluster = tLocalCluster.getElector();
-						if(!tElectorCluster.havingHigherPrioriorityThan(pComChannel, true)){
+						if(!tElectorCluster.havingHigherPrioriorityThan(pComChannel, IGNORE_LINK_STATE)){
 							Logging.log(this, "Deactivating worse active clusters: " + tLocalCluster + ", better candidate: " + pComChannel);
 							
 							/**
@@ -1101,8 +1124,40 @@ public class Elector implements Localization
 	}
 	
 	/**
+	 * Rechecks the local cluster if it could be the new winner or the new loser, triggered if an ANNOUNCE/RESIGN packet was received from a neighbor coordinator
+	 * 
+	 * @param pCause the cause for this call
+	 */
+	private void recheckLocalClusterIsAllowedToWin(String pCause)
+	{
+		if(HRMConfig.Election.USE_LINK_STATES){
+			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(mParent.getHierarchyLevel());
+			for(Cluster tCluster : tLocalClusters){
+				Elector tClusterElector = tCluster.getElector();
+				/**
+				 * Check if this cluster has an election results which differs from the result of isAllowedToWin()
+				 */
+				if( ((!tClusterElector.isWinner()) && (tClusterElector.isAllowedToWin())) ||
+					((tClusterElector.isWinner()) && (!tClusterElector.isAllowedToWin()))
+				){
+					// go back to electing and compute a new election result here
+					tClusterElector.setElectorState(ElectorState.ELECTING);
+//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+						Logging.log(this, "Rechecking (checkForWinner()) the local cluster: " + tClusterElector + ", cause="+pCause);
+//					}
+						
+					/**
+					 * Recalculate an election result	
+					 */
+					tClusterElector.checkForWinner(this + "::recheckLocalClusterIsAllowedToWin()\n   ^^^^" + pCause);
+				}
+			}
+		}		
+	}
+	
+	/**
 	 * Return to alternative elections if the current parent is an active ClusterMember for this node
-	 * This function is triggered if a RESIGN is received.
+	 * This function is triggered if a RESIGN is received from a remote coordinator or the local cluster has lost the formerly won election.
 	 * 
 	 * @param pCause the cause for this call
 	 */
@@ -1111,7 +1166,7 @@ public class Elector implements Localization
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
 			if(mParent.getHierarchyLevel().isHigherLevel()){
-//				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+//				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 					Logging.log(this, "Returning to elections..");
 //				}
 				/**
@@ -1119,7 +1174,7 @@ public class Elector implements Localization
 				 */
 				synchronized (mNodeActiveClusterMembers){
 					LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
-//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_BULLY){
+//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tLevelList);
 //					}
 					
@@ -1317,7 +1372,7 @@ public class Elector implements Localization
 				Logging.log(this, "    ..coordinator is: " + tCoordinator);
 				
 				if(tCoordinator != null){
-					// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
+					// send ANNOUNCE in order to signal all cluster members that we are the coordinator
 					distributeANNOUNCE();
 		
 					// trigger event "announced" for the coordinator
@@ -1363,11 +1418,12 @@ public class Elector implements Localization
 			if(head()){
 				Coordinator tCoordinator = mParent.getCoordinator();
 				if (tCoordinator != null){
-					// send BULLY ANNOUNCE in order to signal all cluster members that we are the coordinator
+					// send ANNOUNCE in order to signal all cluster members that we are the coordinator
 					distributeRESIGN();
 
 					/**
 					 * Invalidate the coordinator
+					 * HINT: this call triggers also a call to Coordinator::Cluster::Elector::eventInvalidation()
 					 */
 					Logging.log(this, "     ..invalidating the coordinator role of: " + tCoordinator);
 					tCoordinator.eventCoordinatorRoleInvalid();
@@ -1389,7 +1445,7 @@ public class Elector implements Localization
 	private void eventReceivedLEAVE(ComChannel pComChannel, ElectionLeave pLeavePacket)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "EVENT: cluster member left election: " + pComChannel);
+			Logging.log(this, "EVENT: cluster member left election by packet: " + pLeavePacket + " via: " + pComChannel);
 		}
 
 		// check if the link state has changed	
@@ -1398,6 +1454,7 @@ public class Elector implements Localization
 			 * deactivate the link for the remote cluster member
 			 */
 			if(head()){
+				Logging.log(this, "  ..deactivating link(eventReceivedLEAVE): " + pComChannel);
 				pComChannel.setLinkActivation(false, "LEAVE[" + pLeavePacket.getOriginalMessageNumber() + "] received");
 
 				LinkedList<ComChannel> tActiveChannels = mParent.getActiveLinks();
@@ -1411,8 +1468,10 @@ public class Elector implements Localization
 							Logging.log(this, "   ..we are the winner and had a higher priority than ever other candidate, ignoring this LEAVE: " + pLeavePacket);
 						}
 					}else{
+						Logging.log(this, "eventReceivedLEAVE() by " + pLeavePacket + " via: " + pComChannel + " caused a REELECTION");
+						
 						// maybe it's time for a change -> send re-elect
-						reelect("eventReceivedLEAVE() from " + pComChannel);
+						reelect("eventReceivedLEAVE() by " + pLeavePacket + " via: " + pComChannel);
 					}
 				}else{
 					/**
@@ -1444,6 +1503,7 @@ public class Elector implements Localization
 			 * activate the link for the remote cluster member 
 			 */
 			if(head()){
+				Logging.log(this, "  ..activating link(eventReceivedRETURN): " + pComChannel);
 				pComChannel.setLinkActivation(true, "RETURN[" + pReturnPacket.getOriginalMessageNumber() + "] received");
 
 				// are we the winner?
@@ -1484,7 +1544,7 @@ public class Elector implements Localization
 				
 			// send the answer packet
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "BULLY-sending to \"" + pComChannel + "\" a REPLY: " + tReplyPacket);
+				Logging.log(this, "SENDRESPONSE-sending to \"" + pComChannel + "\" a REPLY: " + tReplyPacket);
 			}
 	
 			// send message
@@ -1526,7 +1586,7 @@ public class Elector implements Localization
 		// are we the cluster head?
 		if(head()){			
 			// do we have a higher priority than the peer?
-			if (havingHigherPrioriorityThan(pComChannel)){
+			if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
 				// are we already the election winner?
 				if(isWinner()){
 					sendANNOUNCE(pComChannel);
@@ -1548,18 +1608,19 @@ public class Elector implements Localization
 	 * EVENT: another cluster member has sent its Election priority
 	 * 
 	 * @param pSourceComChannel the source comm. channel 
+	 * @param pReplyPacket the reply packet
 	 */
-	private void eventReceivedREPLY(ComChannel pSourceComChannel)
+	private void eventReceivedREPLY(ComChannel pSourceComChannel, ElectionReply pReplyPacket)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "EVENT: received REPLY");
+			Logging.log(this, "EVENT: received REPLY by " + pReplyPacket + " via: " + pSourceComChannel);
 		}
 
 		/**
 		 * check for a winner
 		 */
 		if(mState == ElectorState.ELECTING){
-			checkForWinner("eventReceivedREPLY() via " + pSourceComChannel);
+			checkForWinner("eventReceivedREPLY() by " + pReplyPacket + " via: " + pSourceComChannel);
 		}else{
 			/**
 			 *  If we are in ELECTED state, we received a delayed reply. This can happen if:
@@ -1584,7 +1645,9 @@ public class Elector implements Localization
 	 */
 	private void eventReceivedANNOUNCE(ComChannel pComChannel, ElectionAnnounceWinner pAnnouncePacket)
 	{
-		Logging.log(this, "EVENT: announce: " + pAnnouncePacket);
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "EVENT: announce: " + pAnnouncePacket + " via: " + pComChannel);
+			}
 		
 		if(!head()){
 			Logging.log(this, "    ..we are a cluster member");
@@ -1601,9 +1664,16 @@ public class Elector implements Localization
 
 				// does the previous active ClusterMember for this hier. level has a lower priority than the new candidate?
 				if((tLevelList == null) || (tLevelList.isEmpty()) || 
-				   (tLevelList.getFirst().getElector().hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority())) || // the new ClusterMember is the better choice?
+				   (tLevelList.getFirst().getElector().hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)) || // the new ClusterMember is the better choice?
 				   ((tLevelList.getFirst().getComChannelToClusterHead().getPeerL2Address().equals(pComChannel.getPeerL2Address()) /* both have the coordinator at the same node? */) && (mParent.getHierarchyLevel().getValue() == 1 /* this exception is only possible for hierarchy level 1 because two L0 coordinator are allowed to e active ClusterMember simultaneously */))){
 					addActiveClusterMember(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
+				}else{
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+						Logging.log(this, "Avoid to set this entity as active ClusterMember, the list of active Clustermembers is: ");
+						for(ClusterMember tClusterMember :  tLevelList){
+							Logging.log(this, "   .." + tClusterMember);
+						}
+					} 
 				}
 				
 				// check local cluster head if it is active and has a lower priority than the peer -> in this case we have to deactivate it 
@@ -1612,7 +1682,11 @@ public class Elector implements Localization
 				// leave all alternative election processes with a lower priority than the peer
 				leaveWorseAlternativeElections(pComChannel, this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
 
-			}	
+			}else{
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					Logging.log(this, "    ..we received the ANNOUNCE via an inactive link");
+				}
+			}
 
 			// mark this cluster as active
 			mParent.setClusterWithValidCoordinator(true);
@@ -1622,6 +1696,12 @@ public class Elector implements Localization
 			
 			// trigger: superior coordinator available	
 			tControlEntity.eventClusterCoordinatorAvailable(pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
+			
+			/**
+			 * a reachable neighbor (logical neighbor on this hier. level) cluster signaled that its coordinator is available now
+			 * 		-> the local cluster should disappear 
+			 */				
+			recheckLocalClusterIsAllowedToWin(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
 		}else{
 			throw new RuntimeException("Got an ANNOUNCE as cluster head");
 		}
@@ -1660,6 +1740,12 @@ public class Elector implements Localization
 
 			// fake (for reset) trigger: superior coordinator available	
 			tControlEntity.eventClusterCoordinatorAvailable(pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
+			
+			/**
+			 * a reachable neighbor (logical neighbor on this hier. level) cluster signaled that its coordinator left the field
+			 * 		-> check if the local cluster could be a winner now 
+			 */				
+			recheckLocalClusterIsAllowedToWin(this + "::eventReceivedRESIGN() for " + pResignPacket);
 		}else{
 			throw new RuntimeException("Got a RESIGN as cluster head");
 		}
@@ -1669,10 +1755,11 @@ public class Elector implements Localization
 	 * EVENT: priority update
 	 * 
 	 * @param pComChannel the comm. channel from where the packet was received
+	 * @param pElectionPriorityUpdatePacket the priority update packet
 	 * 
 	 * @return true if the new priority could have influence on the election result
 	 */
-	private boolean eventReceivedPRIORITY_UPDATE(ComChannel pComChannel)
+	private boolean eventReceivedPRIORITY_UPDATE(ComChannel pComChannel, ElectionPriorityUpdate pElectionPriorityUpdatePacket)
 	{
 		boolean tNewPriorityCouldInfluenceElectionResult = false; 
 		
@@ -1680,7 +1767,7 @@ public class Elector implements Localization
 		ElectionPriority tSenderPriority = pComChannel.getPeerPriority();
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "EVENT: priority " + tSenderPriority.getValue() + " via comm. channel: " + pComChannel);
+			Logging.log(this, "EVENT: priority update by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
 		}
 
 		/**
@@ -1692,10 +1779,10 @@ public class Elector implements Localization
 			 */
 			if(isWinner()){
 				// do we have the higher priority?
-				if (havingHigherPrioriorityThan(pComChannel)){
-//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we are already the election winner");
-//					}
+					}
 				
 					/**
 					 * We (still) have the highest priority -> nothing to change here
@@ -1709,10 +1796,10 @@ public class Elector implements Localization
 				}
 			}else{
 				// do we have the higher priority?
-				if (havingHigherPrioriorityThan(pComChannel)){
-//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+				if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we lost the last election");
-//					}
+					}
 					/**
 					 * New received peer priority could influence the election result
 					 */
@@ -1722,9 +1809,9 @@ public class Elector implements Localization
 		}
 
 		if(tNewPriorityCouldInfluenceElectionResult){
-//			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_BULLY){
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "eventReceivedPRIORITY_UPDATE() triggers a re-election");
-//			}
+			}
 
 			/**
 			 * Trigger: election
@@ -1735,7 +1822,7 @@ public class Elector implements Localization
 			 * If the election wasn't finished yet, maybe all needed priorities are available now and the election could be finished.
 			 */
 			if(!finished()){
-				checkForWinner("eventReceivedPRIORITY_UPDATE(): received new priority " + pComChannel.getPeerPriority().getValue() + " from " + pComChannel);
+				checkForWinner("eventReceivedPRIORITY_UPDATE() by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
 			}
 		}
 
@@ -1764,7 +1851,9 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * Returns if this Cluster/ClusterMember is allowed to win
+	 * Returns if this Cluster/ClusterMember is allowed to win by:
+	 *    - iterate over all known CoordinatorAsClusterMember instances on this hierarchy level
+	 *    - search for a cluster membership to a cluster with a valid coordinator
 	 *  
 	 * @return true of false
 	 */	
@@ -1778,60 +1867,68 @@ public class Elector implements Localization
 		}
 		
 		if(mParent.getHierarchyLevel().isHigherLevel()){
-			synchronized (mNodeActiveClusterMembers) {
-//				LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
-				LinkedList<CoordinatorAsClusterMember> tCoordinatorAsClusterMembers = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
-				
-				//if(DEBUG){
-//					Logging.log(this, "       ..found list of known active ClusterMember entries: " + tLevelList);
-					Logging.log(this, "       ..found list of known CoordinatorAsClusterMember instances: " + tCoordinatorAsClusterMembers);
-				//}
-						
-				/**
-				 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
-				 */
-//				if(tLevelList.size() > 0){
-				if(tCoordinatorAsClusterMembers.size() > 0){
-					/**
-					 * Iterate over all known active ClusterMember entries
-					 */ 
-//					for(ClusterMember tClusterMember : tLevelList){
-					for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tCoordinatorAsClusterMembers){
-						/**
-						 * Only proceed for memberships of clusters with valid coordinator
-						 */
-						if(tCoordinatorAsClusterMember.hasClusterValidCoordinator()){
-							/**
-							 * Only proceed for memberships of foreign clusters
-							 */
-							if(tCoordinatorAsClusterMember.isRemoteCluster()){
-								Elector tElectorClusterMember = tCoordinatorAsClusterMember.getElector();
-								
-								/**
-								 * Only proceed if the remote cluster has a higher priority
-								 */
-								if(DEBUG){
-									Logging.log(this, "   ..checking if Cluster of ClusterMember " + tCoordinatorAsClusterMember + " has lower priority than local priority " + mParent.getPriority().getValue());
-								}							
-								if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority())){
-									if(DEBUG){
-										Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
-									}
-									tAllowedToWin = false;
-									break;
-								}
-							}
-						}else{
-							// cluster has no valid coordinator
-						}
-					}								
-				}else{
-					if(DEBUG){
-						// no active ClusterMember is known and the Cluster/ClusterMember is allowed to win
-						Logging.log(this, "       ..no active ClusterMember is known and the Cluster/ClusterMember is allowed to win");
-					}
+//			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
+			LinkedList<CoordinatorAsClusterMember> tCoordinatorAsClusterMembers = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
+			
+			if(DEBUG){
+//				Logging.log(this, "       ..found list of known active ClusterMember entries: " + tLevelList);
+				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tCoordinatorAsClusterMembers){
+					Logging.log(this, "       ..found known CoordinatorAsClusterMember instance: " + tCoordinatorAsClusterMember);
+					Logging.log(this, "         ..channel to head: " + tCoordinatorAsClusterMember.getComChannelToClusterHead());
+					Logging.log(this, "         ..valid coordinator: " + tCoordinatorAsClusterMember.hasClusterValidCoordinator());
+					Logging.log(this, "         ..elector: " + tCoordinatorAsClusterMember.getElector());
 				}
 			}
+					
+			/**
+			 * only proceed if a CoordinatorAsClusterMember is already locally known
+			 */
+//			if(tLevelList.size() > 0){
+			if(tCoordinatorAsClusterMembers.size() > 0){
+				/**
+				 * Iterate over all known active ClusterMember entries
+				 */ 
+//				for(ClusterMember tClusterMember : tLevelList){
+				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tCoordinatorAsClusterMembers){
+					/**
+					 * Only proceed for memberships of clusters with valid coordinator
+					 */
+					if(tCoordinatorAsClusterMember.hasClusterValidCoordinator()){
+						/**
+						 * Only proceed for memberships of foreign clusters
+						 */
+						if(tCoordinatorAsClusterMember.isRemoteCluster()){
+							Elector tElectorClusterMember = tCoordinatorAsClusterMember.getElector();
+							ElectionPriority tCoordinatorAsClusterMemberPriority = tCoordinatorAsClusterMember.getPriority();
+							
+							/**
+							 * Only proceed if the remote cluster has a higher priority
+							 */
+							if(DEBUG){
+								Logging.log(this, "   ..checking if Cluster of ClusterMember " + tCoordinatorAsClusterMember + " has lower priority than local priority: " + tCoordinatorAsClusterMemberPriority.getValue() + " < " + mParent.getPriority().getValue() + "?");
+								Logging.log(this, "   ..comm. channel is: " + tCoordinatorAsClusterMember.getComChannelToClusterHead());
+							}
+
+							if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), IGNORE_LINK_STATE)){
+								if(DEBUG){
+									Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
+								}
+								tAllowedToWin = false;
+								break;
+							}
+						}
+					}else{
+						// cluster has no valid coordinator
+					}
+				}								
+			}else{
+				if(DEBUG){
+					// no active ClusterMember is known and the Cluster/ClusterMember is allowed to win
+					Logging.log(this, "       ..no active ClusterMember is known and the Cluster/ClusterMember is allowed to win");
+				}
+			}
+		}else{
+			// it's an L0 Cluster/ClusterMember -> all of them are allowed to win
 		}
 		
 		if(DEBUG){
@@ -1846,7 +1943,7 @@ public class Elector implements Localization
 	 * 
 	 * @param pCause the cause for this event
 	 */
-	private synchronized void checkForWinner(String pCause)
+	private void checkForWinner(String pCause)
 	{
 		boolean tIsWinner = true;
 		boolean tElectionComplete = true;
@@ -1887,7 +1984,7 @@ public class Elector implements Localization
 							/**
 							 * compare our priority with each priority of a cluster member 
 							 */
-							if(!havingHigherPrioriorityThan(tComChannel)) {
+							if(!havingHigherPrioriorityThan(tComChannel, CHECK_LINK_STATE)) {
 								Logging.log(this, "		   ..found better candidate: " + tComChannel);
 								tExternalWinner = tComChannel;
 								tIsWinner = false;
@@ -1930,7 +2027,7 @@ public class Elector implements Localization
 				}
 			}else{
 				Logging.log(this, "	        ..NOT ALLOWED TO WIN because alternative better cluster membership exists");
-				eventElectionLost("checkForWinner() [not allowed to win] <== " + pCause);
+				eventElectionLost("checkForWinner() [not allowed to win]\n   ^^^^" + pCause);
 			}
 		}else{
 			Logging.err(this, "checkForWinner() EXPECTED STATE \"ELECTING\" here but got state: " + mState.toString());
@@ -1951,7 +2048,7 @@ public class Elector implements Localization
 		ControlEntity tControlEntity = pComChannel.getParent();
 		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS)
-			Logging.log(this, "RECEIVED BULLY MESSAGE " + pPacket.getClass().getSimpleName() + " FROM " + pComChannel);
+			Logging.log(this, "RECEIVED ELECTION MESSAGE " + pPacket.getClass().getSimpleName() + " FROM " + pComChannel);
 
 		if (pComChannel == null){
 			Logging.err(this, "Communication channel is invalid.");
@@ -1983,7 +2080,7 @@ public class Elector implements Localization
 				ElectionElect tElectionElectPacket = (ElectionElect)pPacket;
 				
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ELECT: " + tElectionElectPacket);
+					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" an ELECT: " + tElectionElectPacket);
 				}
 	
 				// update the state
@@ -1999,10 +2096,10 @@ public class Elector implements Localization
 				ElectionReply tReplyPacket = (ElectionReply)pPacket;
 	
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a REPLY: " + tReplyPacket);
+					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" a REPLY: " + tReplyPacket);
 				}
 	
-				eventReceivedREPLY(pComChannel);
+				eventReceivedREPLY(pComChannel, tReplyPacket);
 			}
 			
 			/**
@@ -2013,7 +2110,7 @@ public class Elector implements Localization
 				ElectionAnnounceWinner tAnnouncePacket = (ElectionAnnounceWinner)pPacket;
 	
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
+					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
 				}
 	
 				eventReceivedANNOUNCE(pComChannel, tAnnouncePacket);
@@ -2027,7 +2124,7 @@ public class Elector implements Localization
 				ElectionResignWinner tResignPacket = (ElectionResignWinner)pPacket;
 	
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an RESIGN: " + tResignPacket);
+					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" an RESIGN: " + tResignPacket);
 				}
 	
 				eventReceivedRESIGN(pComChannel, tResignPacket);
@@ -2041,10 +2138,10 @@ public class Elector implements Localization
 				ElectionPriorityUpdate tElectionPriorityUpdatePacket = (ElectionPriorityUpdate)pPacket;
 	
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a PRIORITY UPDATE: " + tElectionPriorityUpdatePacket);
+					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" a PRIORITY UPDATE: " + tElectionPriorityUpdatePacket);
 				}
 				
-				tReceivedNewPriority = eventReceivedPRIORITY_UPDATE(pComChannel);
+				tReceivedNewPriority = eventReceivedPRIORITY_UPDATE(pComChannel, tElectionPriorityUpdatePacket);
 			}
 			
 			/**
@@ -2055,7 +2152,7 @@ public class Elector implements Localization
 				ElectionLeave tLeavePacket = (ElectionLeave)pPacket;
 	
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a LEAVE: " + tLeavePacket);
+					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" a LEAVE: " + tLeavePacket);
 				}
 	
 				eventReceivedLEAVE(pComChannel, tLeavePacket);
@@ -2069,13 +2166,13 @@ public class Elector implements Localization
 				ElectionReturn tReturnPacket = (ElectionReturn)pPacket;
 	
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" a RETURN: " + tReturnPacket);
+					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" a RETURN: " + tReturnPacket);
 				}
 	
 				eventReceivedRETURN(pComChannel, tReturnPacket);
 			}
 		}else{
-			Logging.log(this, "HIGHER LEVEL SENT BULLY MESSAGE " + pPacket.getClass().getSimpleName() + " FROM " + pComChannel);
+			Logging.log(this, "HIGHER LEVEL SENT ELECTION MESSAGE " + pPacket.getClass().getSimpleName() + " FROM " + pComChannel);
 
 			/**
 			 * ANNOUNCE: a superior coordinator was elected and sends its announce towards its inferior coordinators 
@@ -2085,7 +2182,7 @@ public class Elector implements Localization
 				ElectionAnnounceWinner tAnnouncePacket = (ElectionAnnounceWinner)pPacket;
 	
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "BULLY-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
+					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
 				}
 	
 				if(tControlEntity instanceof Coordinator){
@@ -2145,15 +2242,15 @@ public class Elector implements Localization
 			}
 		}
 		
-		/**
-		 * Return false if the comm. channel hasn't received a valid priority yet
-		 */
-		if(pComChannelToPeer.getPeerPriority().isUndefined()){
-			if (tDEBUG){
-				Logging.log(this, "	        ..UNDEFINED PRIORITY value for: " + pComChannelToPeer);
-			}
-			return false;
-		}
+//		/**
+//		 * Return false if the comm. channel hasn't received a valid priority yet
+//		 */
+//		if(pComChannelToPeer.getPeerPriority().isUndefined()){
+//			if (tDEBUG){
+//				Logging.log(this, "	        ..UNDEFINED PRIORITY value for: " + pComChannelToPeer);
+//			}
+//			return false;
+//		}
 			
 		/**
 		 * Compare the priorities
@@ -2221,18 +2318,6 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Returns true if the local priority is higher than the one of the peer (from the communication channel)
-	 * 
-	 * @param pComChannelToPeer the comm. channel to the peer
-	 * 
-	 * @return true or false
-	 */
-	private synchronized boolean havingHigherPrioriorityThan(ComChannel pComChannelToPeer)
-	{
-		return hasSourceHigherPrioriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), pComChannelToPeer, false);
-	}
-
-	/**
 	 * Returns true if the source priority is higher than the one of the peer
 	 * 
 	 * @param pSourceL2Address the L2Address of the source (to which the priority should be compared to)
@@ -2240,7 +2325,7 @@ public class Elector implements Localization
 	 * 
 	 * @return true or false
 	 */
-	private synchronized boolean hasClusterLowerPriorityThan(L2Address pSourceL2Address, ElectionPriority pSourcePriority)
+	private synchronized boolean hasClusterLowerPriorityThan(L2Address pSourceL2Address, ElectionPriority pSourcePriority, boolean pIgnoreLinkState) 
 	{
 		if(mParent.isThisEntityValid()){
 			LinkedList<ComChannel> tChannels = mParent.getComChannels();
@@ -2248,7 +2333,7 @@ public class Elector implements Localization
 			if(tChannels.size() == 1){
 				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 					
-				return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer, true);
+				return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer, pIgnoreLinkState);
 			}else{
 				if(mState != ElectorState.IDLE){
 					Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
@@ -2297,7 +2382,7 @@ public class Elector implements Localization
 	@Override
 	public String toString()
 	{
-		return toLocation() + "@" + mParent.toString() +"[" + mState + ", " + mParentIsActiveMember + "]";
+		return toLocation() + "@" + mParent.toString() +"[" + mState + ", " + (mParentIsActiveMember  ? "ACTIVE" : "INACTIVE") + "]";
 	}
 
 	/**

@@ -136,14 +136,21 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 * @param pInvalidCoordinator the received invalidation
 	 */
 	@Override
-	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
+	public synchronized void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
 	{
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-			Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
-			Logging.log(this, "       ..fowarding invalidation to coordinator object: " + mCoordinator);
+		if(isThisEntityValid()){
+			// trigger invalidation
+			eventInvalidation();
+			
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+				Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
+				Logging.log(this, "       ..fowarding invalidation to coordinator object: " + mCoordinator);
+			}
+			
+			mCoordinator.eventCoordinatorInvalidation(pComChannel, pInvalidCoordinator);
+		}else{
+			Logging.warn(this, "This CoordinatorAsClusterMember is already invalid");
 		}
-		
-		mCoordinator.eventCoordinatorInvalidation(pComChannel, pInvalidCoordinator);
 	}
 
 	/**
@@ -172,7 +179,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		/**
 		 * Trigger: Elector invalid
 		 */
-		mElector.eventInvalidation();
+		mElector.eventInvalidation(this + "::eventCoordinatorAsClusterMemberRoleInvalid()");
 
 		/**
 		 * Trigger: role invalid
