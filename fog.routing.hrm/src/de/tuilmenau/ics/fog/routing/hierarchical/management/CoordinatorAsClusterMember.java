@@ -352,7 +352,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	private String idToString()
 	{
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "Cluster" + getGUIClusterID() + ", Peer Node=" + getCoordinatorNodeL2Address() + ", Remote=" + mRemoteClusterName;
+			return "Cluster" + getGUIClusterID() + ", Peer Node=" + getCoordinatorNodeL2Address();// + ", Remote=" + mRemoteClusterName;
 		}else{
 			return "Cluster" + getGUIClusterID() + ", Peer Node=" + getCoordinatorNodeL2Address() + ", HRMID=" + getHRMID().toString();
 		}

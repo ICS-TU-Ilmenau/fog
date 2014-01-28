@@ -43,7 +43,7 @@ public class MultiplexHeader implements ProtocolHeader
 	/**
 	 * Counts the multiplex headers
 	 */
-	private static int mMultiplexMessagesCounter = 0;
+	public static int sMultiplexMessagesCounter = 1;
 
 	/**
 	 * Stores the HRM message number
@@ -87,7 +87,8 @@ public class MultiplexHeader implements ProtocolHeader
 	{
 		int tResult = -1;		
 		
-		tResult = ++mMultiplexMessagesCounter;
+		tResult = sMultiplexMessagesCounter;
+		sMultiplexMessagesCounter++;
 		
 		//Logging.log("########### CREATING MULTIPLEX HEADER nr. " + tResult);
 		

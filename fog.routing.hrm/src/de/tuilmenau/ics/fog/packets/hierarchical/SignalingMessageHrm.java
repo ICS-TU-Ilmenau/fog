@@ -37,7 +37,7 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	 * Counts the HRM internal messages
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
-	private static int mHRMMessagesCounter = 0;
+	public static int sHRMMessagesCounter = 1;
 	
 	/**
 	 * Stores the HRM message number
@@ -112,7 +112,8 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	{
 		int tResult = -1;		
 		
-		tResult = ++mHRMMessagesCounter;
+		tResult = sHRMMessagesCounter;
+		sHRMMessagesCounter++;
 		
 		return tResult;
 	}

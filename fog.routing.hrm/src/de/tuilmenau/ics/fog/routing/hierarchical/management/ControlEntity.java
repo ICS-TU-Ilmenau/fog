@@ -480,7 +480,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	protected void setSuperiorCoordinatorDescription(String pDescription)
 	{
-		Logging.log(this, "Setting superior coordinator desription: " + pDescription);
+		Logging.log(this, "Setting superior coordinator description: " + pDescription);
 		mSuperiorCoordinatorDescription = pDescription;
 	}
 
@@ -801,7 +801,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 						Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
 					}
-					mHRMController.cluster(this, tSuperiorClusterLevel);
+					mHRMController.cluster(tCoordinatorProxy, tSuperiorClusterLevel);
 				}else{
 					//Logging.warn(this, "Skipped clustering at hierarchy level " + (tCoordinatorProxy.getHierarchyLevel().getValue() + 1) + " for remote coordinator: " + tCoordinatorProxy);
 				}
