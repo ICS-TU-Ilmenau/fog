@@ -1021,62 +1021,66 @@ public class Cluster extends ClusterMember
 	/**
 	 * EVENT: cluster role invalid
 	 */
-	public void eventClusterRoleInvalid()
+	public synchronized void eventClusterRoleInvalid()
 	{
 		Logging.log(this, "============ EVENT: cluster role invalid");
 		
-		/**
-		 * Trigger: role invalid
-		 */
-		eventInvalidation();
-		
-		/**
-		 * TRIGGER: event coordinator role invalid
-		 */
-		if (getCoordinator() != null){
-			Logging.log(this, "     ..eventClusterRoleInvalid() invalidates now the local coordinator: " + getCoordinator());
-			getCoordinator().eventCoordinatorRoleInvalid();
-		}else{
-			Logging.log(this, "eventClusterInvalid() can't deactivate the coordinator because there is none");
-		}
-		
-		Logging.log(this, "============ EVENT: canceling all memberships");
-		Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
-		LinkedList<ComChannel> tcomChannels = getComChannels();
-		for(ComChannel tComChannel: tcomChannels){
-			Logging.log(this, "     ..canceling: " + tComChannel);
+		if(isThisEntityValid()){
 			/**
-			 * Check if we have already received an ACK for the ClusterMembershipRequest packet
+			 * Trigger: role invalid
 			 */
-			if(!tComChannel.isOpen()){
-				// enforce "open" state for this comm. channel
-				Logging.log(this, "   ..enforcing OPEN state for this comm. channel: " + tComChannel);
-				tComChannel.eventEstablished();
+			eventInvalidation();
+			
+			/**
+			 * TRIGGER: event coordinator role invalid
+			 */
+			if (getCoordinator() != null){
+				Logging.log(this, "     ..eventClusterRoleInvalid() invalidates now the local coordinator: " + getCoordinator());
+				getCoordinator().eventCoordinatorRoleInvalid();
+			}else{
+				Logging.log(this, "eventClusterInvalid() can't deactivate the coordinator because there is none");
+			}
+			
+			Logging.log(this, "============ EVENT: canceling all memberships");
+			Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
+			LinkedList<ComChannel> tcomChannels = getComChannels();
+			for(ComChannel tComChannel: tcomChannels){
+				Logging.log(this, "     ..canceling: " + tComChannel);
+				/**
+				 * Check if we have already received an ACK for the ClusterMembershipRequest packet
+				 */
+				if(!tComChannel.isOpen()){
+					// enforce "open" state for this comm. channel
+					Logging.log(this, "   ..enforcing OPEN state for this comm. channel: " + tComChannel);
+					tComChannel.eventEstablished();
+				}
+				
+				/**
+				 * Destroy the channel
+				 */
+				unregisterComChannel(tComChannel);
 			}
 			
 			/**
-			 * Destroy the channel
+			 * Unregister from local databases
 			 */
-			unregisterComChannel(tComChannel);
-		}
-		
-		/**
-		 * Unregister from local databases
-		 */
-		Logging.log(this, "============ Destroying this cluster now...");
-		
-		// unregister the HRMID for this node from the HRM controller
-		if(getL0HRMID() != null){
+			Logging.log(this, "============ Destroying this cluster now...");
 			
-			mDescriptionHRMIDAllocation += "\n     ..revoked " + getL0HRMID().toString() + " for " + this + ", cause=eventClusterRoleInvalid()";
-
-			freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
-
-			mHRMController.unregisterHRMID(this, getL0HRMID(), this + "::eventClusterRoleInvalid()");					
+			// unregister the HRMID for this node from the HRM controller
+			if(getL0HRMID() != null){
+				
+				mDescriptionHRMIDAllocation += "\n     ..revoked " + getL0HRMID().toString() + " for " + this + ", cause=eventClusterRoleInvalid()";
+	
+				freeClusterMemberAddress(getL0HRMID().getLevelAddress(getHierarchyLevel()));
+	
+				mHRMController.unregisterHRMID(this, getL0HRMID(), this + "::eventClusterRoleInvalid()");					
+			}
+	
+			// unregister from HRMController's internal database
+			mHRMController.unregisterCluster(this);
+		}else{
+			Logging.warn(this, "This Cluster is already invalid");
 		}
-
-		// unregister from HRMController's internal database
-		mHRMController.unregisterCluster(this);
 	}
 
 	/**
