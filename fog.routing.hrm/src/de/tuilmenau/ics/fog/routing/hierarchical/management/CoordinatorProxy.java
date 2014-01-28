@@ -99,8 +99,15 @@ public class CoordinatorProxy extends ClusterMember
 	{
 		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid");
 
-		// register at HRMController's internal database
-		mHRMController.unregisterCoordinatorProxy(this);
+		if(isThisEntityValid()){
+			// trigger invalidation
+			eventInvalidation();
+			
+			// register at HRMController's internal database
+			mHRMController.unregisterCoordinatorProxy(this);
+		}else{
+			Logging.warn(this, "This CoordinatorProxy is already invalid");
+		}
 	}
 	
 	/**
