@@ -1666,12 +1666,10 @@ public class Elector implements Localization
 				   ((tLevelList.getFirst().getComChannelToClusterHead().getPeerL2Address().equals(pComChannel.getPeerL2Address()) /* both have the coordinator at the same node? */) && (mParent.getHierarchyLevel().getValue() == 1 /* this exception is only possible for hierarchy level 1 because two L0 coordinator are allowed to e active ClusterMember simultaneously */))){
 					addActiveClusterMember(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
 				}else{
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "### Avoid to set this entity as active ClusterMember, the list of active Clustermembers is: ");
-						for(ClusterMember tClusterMember :  tLevelList){
-							Logging.log(this, "   .." + tClusterMember);
-						}
-					} 
+					Logging.log(this, "### Avoid to set this entity as active ClusterMember, the list of active Clustermembers is: ");
+					for(ClusterMember tClusterMember :  tLevelList){
+						Logging.log(this, "   .." + tClusterMember);
+					}
 				}
 				
 				// check local cluster head if it is active and has a lower priority than the peer -> in this case we have to deactivate it 
