@@ -897,7 +897,7 @@ public class ComSession extends Session
 		 */
 		Logging.log(this, "       ..sending cluster left: " + tMultiplexPacket + ", payload=" + tMultiplexPacket.getPayload());
 		if(write(tMultiplexPacket)){
-			Logging.log(this, "   ..sent INFORM CLUSTER LEFT: " + tMultiplexPacket);	
+			Logging.warn(this, "   ..sent INFORM CLUSTER LEFT: " + tMultiplexPacket);	
 		}else{
 			Logging.err(this, "   ..unable to send INFORM CLUSTER LEFT: " + tMultiplexPacket);	
 		}
@@ -1096,7 +1096,7 @@ public class ComSession extends Session
 				Cluster tCluster =(Cluster)tParent;
 				Logging.log(this, "   ..invalidating Cluster: " + tCluster);
 				// trigger: cluster member is lost
-				tCluster.eventClusterMemberLost(tChannel);
+				tCluster.eventClusterMemberLost(tChannel, this + "::stopConnection()");
 			}else{
 				if(tParent instanceof ClusterMember){
 					ClusterMember tMember = (ClusterMember)tParent;

@@ -14,6 +14,7 @@ import java.math.BigInteger;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.bus.Bus;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
@@ -926,10 +927,11 @@ public class Cluster extends ClusterMember
 	 * EVENT: "lost cluster member", triggered by Elector in case a member left the election 
 
 	 * @param pComChannel the comm. channel of the lost cluster member
+	 * @param pCause the cause for the call
 	 */
-	public void eventClusterMemberLost(ComChannel pComChannel)
+	public void eventClusterMemberLost(ComChannel pComChannel, String pCause)
 	{
-		Logging.log(this, "EVENT: lost cluster member, comm. channel: " + pComChannel);
+		Logging.log(this, "EVENT: lost cluster member behind: " + pComChannel + "\n    cause=" + pCause);
 		
 		/**
 		 * Unregister all HRMID-2-L2Address mappings
@@ -1158,7 +1160,7 @@ public class Cluster extends ClusterMember
 		RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeL2Address(), pComSession.getPeerL2Address(), createClusterName(), pRemoteEndPointName);
 		Logging.log(this, "       ..sending membership request: " + tRequestClusterMembership);
 		if (pComSession.write(tRequestClusterMembership)){
-			Logging.log(this, "       ..requested sucessfully for membership of: " + pPeer);
+			Logging.log(this, "       ..requested successfully for membership of: " + pPeer);
 		}else{
 			Logging.err(this, "       ..failed to request for membership of: " + pPeer);
 		}

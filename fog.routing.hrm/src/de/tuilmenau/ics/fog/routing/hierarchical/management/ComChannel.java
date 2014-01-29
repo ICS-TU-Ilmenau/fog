@@ -1660,7 +1660,7 @@ public class ComChannel
 				Cluster tCluster = (Cluster)getParent();
 				
 				// trigger event "cluster member joined"
-				tCluster.eventClusterMemberLost(this);		
+				tCluster.eventClusterMemberLost(this, this + "::handlePacket() for " + tInformClusterLeftPacket);		
 			}else{
 				Logging.err(this, "Expected a Cluster object as parent for processing LeaveCluster data but parent is " + getParent());
 			}
