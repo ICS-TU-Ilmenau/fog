@@ -1110,9 +1110,11 @@ public class ComChannel
 				mPackets.removeFirst();
 			}
 			
-			// add the packet to the storage: filter AnnounceCoordinator, RouteReport, RouteShare
-			if(!((pPacket instanceof AnnounceCoordinator) || (pPacket instanceof RouteReport) || (pPacket instanceof RouteShare))){
-				mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent, mHRMController.getSimulationTime()));
+			if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS){
+				// add the packet to the storage: filter AnnounceCoordinator, RouteReport, RouteShare
+				if(!((pPacket instanceof AnnounceCoordinator) || (pPacket instanceof RouteReport) || (pPacket instanceof RouteShare))){
+					mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent, mHRMController.getSimulationTime()));
+				}
 			}
 		}
 	}

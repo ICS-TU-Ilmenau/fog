@@ -272,22 +272,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores a description about all connectivity priority updates
 	 */
-	private String mDesriptionConnectivityPriorityUpdates = new String();
+	private String mDesriptionConnectivityPriorityUpdates = new String(); // memory consuming
 
 	/**
 	 * Stores a description about all HRMID updates
 	 */
-	private String mDescriptionHRMIDUpdates = new String();
+	private String mDescriptionHRMIDUpdates = new String(); // memory consuming
 
 	/**
 	 * Stores a description about all HRG updates
 	 */
-	private String mDescriptionHRGUpdates = new String();
+	private String mDescriptionHRGUpdates = new String(); // memory consuming
 
 	/**
 	 * Stores a description about all hierarchy priority updates
 	 */
-	private String mDesriptionHierarchyPriorityUpdates = new String();
+	private String mDesriptionHierarchyPriorityUpdates = new String(); // memory consuming
 	
 	/**
 	 * Stores the thread for clustering tasks and packet processing
@@ -317,7 +317,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores the node-global election state change description
 	 */
-	private String mDescriptionNodeElectionState = new String();
+	private String mDescriptionNodeElectionState = new String();  // memory consuming
 
 	/**
 	 * Stores if the GUI user has selected to deactivate topology reports.
@@ -881,7 +881,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 					// register the new HRMID as local one -> allow duplicates here because two local entities might register the same HRMID and afterwards one of them unregisters its HRMID -> in case one HRMID registration remains!
 					mRegisteredOwnHRMIDs.add(pHRMID);
-					mDescriptionHRMIDUpdates += "\n + " + pHRMID.toString() + " <== " + pEntity + ", cause=" + pCause;
+					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_NODE_HRMIDIDS){
+						mDescriptionHRMIDUpdates += "\n + " + pHRMID.toString() + " <== " + pEntity + ", cause=" + pCause;
+					}
 
 					/**
 					 * Update the GUI
@@ -927,7 +929,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 					// unregister the HRMID as local one
 					mRegisteredOwnHRMIDs.remove(pOldHRMID);
-					mDescriptionHRMIDUpdates += "\n - " + pOldHRMID.toString() + " <== " + pEntity + ", cause=" + pCause;
+					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_NODE_HRMIDIDS){
+						mDescriptionHRMIDUpdates += "\n - " + pOldHRMID.toString() + " <== " + pEntity + ", cause=" + pCause;
+					}
 					
 					if (!mRegisteredOwnHRMIDs.contains(pOldHRMID)){
 						/**
@@ -3268,7 +3272,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// increase priority
 		tPriority += tOffset;
 		
-		mDesriptionConnectivityPriorityUpdates += "\n + " + ElectionPriority.OFFSET_FOR_CONNECTIVITY + " ==> " + pCausingInterfaceToNeighbor;
+		if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_CONNECTIVITY){
+			mDesriptionConnectivityPriorityUpdates += "\n + " + ElectionPriority.OFFSET_FOR_CONNECTIVITY + " ==> " + pCausingInterfaceToNeighbor;
+		}
 		
 		// update priority
 		updateConnectivityPriority(pCausingInterfaceToNeighbor, tPriority);
@@ -3301,7 +3307,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// increase priority
 		tPriority += tOffset;
 		
-		mDesriptionConnectivityPriorityUpdates += "\n - " + ElectionPriority.OFFSET_FOR_CONNECTIVITY + " ==> " + pCausingInterfaceToNeighbor;
+		if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_CONNECTIVITY){
+			mDesriptionConnectivityPriorityUpdates += "\n - " + ElectionPriority.OFFSET_FOR_CONNECTIVITY + " ==> " + pCausingInterfaceToNeighbor;
+		}
 		
 		// update priority
 		updateConnectivityPriority(pCausingInterfaceToNeighbor, tPriority);
@@ -3362,7 +3370,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					for(int i = 0; i < tHierLevel; i++){
 						tSpace += "  "; 
 					}
-					mDesriptionHierarchyPriorityUpdates += "\n + " + tSpace + (tPriority + tOffset) + "-L" + tHierLevel + ": " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_HIERARCHY){
+						mDesriptionHierarchyPriorityUpdates += "\n + " + tSpace + (tPriority + tOffset) + "-L" + tHierLevel + ": " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+					}
 		
 					// update priority
 					updateHierarchyPriority(tOffset, new HierarchyLevel(this, tHierLevel));
@@ -3421,7 +3431,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					for(int i = 0; i < tHierLevel; i++){
 						tSpace += "  "; 
 					}
-					mDesriptionHierarchyPriorityUpdates += "\n - " + tSpace + (tPriority + tOffset) + "-L" + tHierLevel + ": " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_HIERARCHY){
+						mDesriptionHierarchyPriorityUpdates += "\n - " + tSpace + (tPriority + tOffset) + "-L" + tHierLevel + ": " + tOffset + " <== HOPS: " + tDistance + "/" + tMaxDistance + ", Cause: " + pCausingEntity;
+					}
 		
 					// update priority
 					updateHierarchyPriority(tOffset, new HierarchyLevel(this, tHierLevel));
@@ -3785,7 +3797,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void addGUIDescriptionNodeElectionStateChange(String pAdd)
 	{
-		mDescriptionNodeElectionState += pAdd;
+		if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_ACTIVE_CLUSTERMEMBERS){
+			mDescriptionNodeElectionState += pAdd;
+		}
 	}
 	
 	/**
@@ -4041,8 +4055,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									tFound = true;
 									long tFoundPriority = tHRMController.getNodePriority(tClusterLevel);
 									if(tFoundPriority != tChannelPeerPriority.getValue()){
-										Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
-										tResult = false;
+										if(tChannelPeerPriority.getValue() <= 0){
+											Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
+											tResult = false;
+										}else{
+											Logging.warn(this, "validateResults() detected a temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + ", the final result should be " + tFoundPriority + " for: " + tComChannel);
+										}
 									}
 									break;
 								}else{
@@ -4669,13 +4687,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mHierarchicalRoutingGraph) {
 			if(!mHierarchicalRoutingGraph.contains(pNode)) {
-				mDescriptionHRGUpdates += "\n + " + pNode + " <== " + pCause;
+				if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
+					mDescriptionHRGUpdates += "\n + " + pNode + " <== " + pCause;
+				}
 				mHierarchicalRoutingGraph.add(pNode);
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..added to HRG");
 				}
 			}else{
-				mDescriptionHRGUpdates += "\n +/- " + pNode + " <== " + pCause;
+				if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
+					mDescriptionHRGUpdates += "\n +/- " + pNode + " <== " + pCause;
+				}
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..node for HRG already known: " + pNode);
 				}
@@ -4697,13 +4719,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mHierarchicalRoutingGraph) {
 			if(mHierarchicalRoutingGraph.contains(pNode)) {
-				mDescriptionHRGUpdates += "\n - " + pNode + " <== " + pCause;
+				if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
+					mDescriptionHRGUpdates += "\n - " + pNode + " <== " + pCause;
+				}
 				mHierarchicalRoutingGraph.remove(pNode);
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..removed from HRG");
 				}
 			}else{
-				mDescriptionHRGUpdates += "\n -/+ " + pNode + " <== " + pCause;
+				if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
+					mDescriptionHRGUpdates += "\n -/+ " + pNode + " <== " + pCause;
+				}
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "     ..node for HRG wasn't known: " + pNode);
 				}
@@ -4793,7 +4819,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 				if(!tLinkAlreadyKnown){
-					mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
+					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
+						mDescriptionHRGUpdates += "\n + " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
+					}
 
 					double tBefore1 = getRealTime();
 					HRMID tFrom = pFrom.clone();
@@ -4815,7 +4843,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 * 		- both end points are located on this node and both of them try to register the same route
 					 *      - a route was reported and received as shared
 					 */
-					if(HRMConfig.DebugOutput.MEMORY_CONSUMING_OPERATIONS){
+					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
 						mDescriptionHRGUpdates += "\n +" + (tLinkAlreadyKnown ? "(REF)" : "") + " " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
 					}
 				}
@@ -5349,7 +5377,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						// remove the link from the HRG
 						mHierarchicalRoutingGraph.unlink(tLink);
 						
-						mDescriptionHRGUpdates += "\n -(AUTO_DEL) " + tEndPoints.getFirst() + " to " + tEndPoints.getSecond() + " ==> " + tLink.getRoute().getFirst()  + " <== unregisterAutoHRG()";
+						if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
+							mDescriptionHRGUpdates += "\n -(AUTO_DEL) " + tEndPoints.getFirst() + " to " + tEndPoints.getSecond() + " ==> " + tLink.getRoute().getFirst()  + " <== unregisterAutoHRG()";
+						}
 					}
 				}
 			}		
@@ -5450,7 +5480,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				/**
 				 * The route was already removed -> this can occur if both end points of a link are located on this node and both of them try to unregister the same route
 				 */
-				mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
+				if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
+					mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
+				}
 				Logging.warn(this, "Haven't found " + pRoutingEntry + " as HRG link between " + pFrom + " and " + pTo);
 //				if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
 					synchronized (mHierarchicalRoutingGraph) {
@@ -5487,7 +5519,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 //				}
 			}else{
-				mDescriptionHRGUpdates += "\n -" + (tChangedRefCounter ? "(REF)" : "") +" " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
+				if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
+					mDescriptionHRGUpdates += "\n -" + (tChangedRefCounter ? "(REF)" : "") +" " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
+				}
 
 				/**
 				 * Unregister all isolated nodes
