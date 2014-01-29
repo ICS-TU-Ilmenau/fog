@@ -21,7 +21,7 @@ public class HRMConfig
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_CONNECTIVITY = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_HIERARCHY = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_NODE_HRMIDIDS = false;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_ACTIVE_CLUSTERMEMBERS = false;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_ACTIVE_CLUSTERMEMBERS = true;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS = true;
 
 		/**
