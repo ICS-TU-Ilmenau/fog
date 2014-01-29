@@ -897,7 +897,7 @@ public class ComSession extends Session
 		 */
 		Logging.log(this, "       ..sending cluster left: " + tMultiplexPacket + ", payload=" + tMultiplexPacket.getPayload());
 		if(write(tMultiplexPacket)){
-			Logging.warn(this, "   ..sent INFORM CLUSTER LEFT: " + tMultiplexPacket);	
+			Logging.log(this, "   ..sent INFORM CLUSTER LEFT: " + tMultiplexPacket);	
 		}else{
 			Logging.err(this, "   ..unable to send INFORM CLUSTER LEFT: " + tMultiplexPacket);	
 		}

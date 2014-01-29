@@ -984,8 +984,6 @@ public class ComChannel
 			mPeerPriority = ElectionPriority.create(this);
 		}
 			
-		//TODO: getPeerPriorityFreshness() integrieren und einen Timeout bauen, so das danach nur null geliefert wird
-		
 		return mPeerPriority;
 	}
 
