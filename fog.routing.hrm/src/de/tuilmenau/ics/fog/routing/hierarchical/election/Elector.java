@@ -920,6 +920,7 @@ public class Elector implements Localization
 				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 				
 				if(!tComChannelToPeer.isLinkActive()){
+					Logging.log(this, "   ..distributeRETURN() - enforcing a REACTIVATION of this link, cause=" + pCause);
 					updateElectionParticipation(tComChannelToPeer, true, this + "::distributeRETURN()\n   ^^^^" + pCause);
 				}else{
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
@@ -1651,15 +1652,21 @@ public class Elector implements Localization
 			Logging.log(this, "    ..we are a cluster member");
 			
 			ControlEntity tControlEntity = pComChannel.getParent();
+			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
 
 			/**
-			 * For an active link we do extended processing of this event for distributed election 
+			 * Continue processing if:
+			 * 		a.) the link is active
+			 * 		b.) we don't have a valid ACTIVe ClusterMember for this hierarchy level at the moemtn 
 			 */
-			if(pComChannel.isLinkActive()){
+			if((pComChannel.isLinkActive()) || (tLevelList == null) || (tLevelList.isEmpty())){
 				Logging.log(this, "    ..we received the ANNOUNCE via an active link, packet=" + pAnnouncePacket);
 
-				LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
-
+				if (!pComChannel.isLinkActive()){
+					Logging.log(this, "    ..found a possible superior coordinator, enforcing REACTIVATION of this link, packet=" + pAnnouncePacket);
+					updateElectionParticipation(pComChannel, true, this + "::eventReceivedANNOUNCE()\n   ^^^^announce packet=" + pAnnouncePacket);					
+				}
+				
 				// does the previous active ClusterMember for this hier. level has a lower priority than the new candidate?
 				if((tLevelList == null) || (tLevelList.isEmpty()) || 
 				   (tLevelList.getFirst().getElector().hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)) || // the new ClusterMember is the better choice?
