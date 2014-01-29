@@ -13,6 +13,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -220,6 +221,7 @@ public class HRMOverviewPackets extends ViewPart
 		final GridData tPacketsLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		tPacketsLayoutData.horizontalSpan = 2;
 		Group tGrpPackets = new Group(tContainer, SWT.SHADOW_OUT);
+		tGrpPackets.setFont(new Font(mDisplay, "Arial", 11, SWT.BOLD));
 		tGrpPackets.setText("  HRM packets  ");
 		GridLayout tGrpPacketsLayout = new GridLayout(2, true);
 		tGrpPacketsLayout.marginWidth = 20;

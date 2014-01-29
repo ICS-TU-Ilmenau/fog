@@ -15,6 +15,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -178,7 +179,8 @@ public class HRMOverviewHierarchy extends ViewPart
 		tGrpHierarchyLayoutData.horizontalSpan = 2;
 		mGrpHierarchy = new Group(tContainer, SWT.SHADOW_OUT);
 		mGrpHierarchy.setForeground(tColGreen);
-		mGrpHierarchy.setText("  HRM hierarchy  ");
+		mGrpHierarchy.setFont(new Font(mDisplay, "Arial", 11, SWT.BOLD));
+		mGrpHierarchy.setText("  HRM hierarchy result  ");
 		GridLayout tGrpHierarchyLayout = new GridLayout(2, true);
 		tGrpHierarchyLayout.marginWidth = 20;
 		tGrpHierarchyLayout.marginHeight = 10;

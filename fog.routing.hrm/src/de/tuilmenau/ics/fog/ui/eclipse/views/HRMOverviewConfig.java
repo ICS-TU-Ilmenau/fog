@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.ui.eclipse.views;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -211,6 +212,7 @@ public class HRMOverviewConfig extends ViewPart
 		final GridData tGrpConfigLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		tGrpConfigLayoutData.horizontalSpan = 2;
 		Group tGrpConfig = new Group(tContainer, SWT.SHADOW_OUT);
+		tGrpConfig.setFont(new Font(mDisplay, "Arial", 11, SWT.BOLD));
 		tGrpConfig.setText("  HRM configuration  ");
 		GridLayout tGrpConfigLayout = new GridLayout(2, true);
 		tGrpConfigLayout.marginWidth = 20;
