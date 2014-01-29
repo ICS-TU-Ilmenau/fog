@@ -224,12 +224,12 @@ public class Elector implements Localization
 			if(tLevelList.contains(pClusterMember)){
 				Logging.log(this, "Removing active ClusterMember: " + pClusterMember + ", cause=" + pCause);
 				tLevelList.remove(pClusterMember);
-				Logging.log(this, "    ..removed");
+				Logging.log(this, "    ..removed as ACTIVE ClusterMember");
 				mHRMController.addGUIDescriptionNodeElectionStateChange("\n - " + pClusterMember + "\n   ^^^^" + pCause);
 				pClusterMember.getElector().mParentIsActiveMember = false;
 				tResult = true;
 			}else{
-				Logging.log(this, "    ..NOT removed");
+				Logging.log(this, "    ..NOT removed as ACTIVE ClusterMember");
 			}
 		}
 		
@@ -976,7 +976,7 @@ public class Elector implements Localization
 						 */
 						int tMemberCount = 0;
 						for (CoordinatorAsClusterMember tLevelClusterMember : tLevelClusterMembers){
-							Logging.log(this, "      ..### checking member: " + tLevelClusterMember);
+							Logging.log(this, "      ..### leaveWorseAlternativeElections() checks member: " + tLevelClusterMember);
 							
 							/**
 							 * Be aware of multiple local coordinators at the same hierarchy level -> search only for alternative CoordinatorAsClusterMember instances belong to the parent instance!
@@ -1645,9 +1645,7 @@ public class Elector implements Localization
 	 */
 	private void eventReceivedANNOUNCE(ComChannel pComChannel, ElectionAnnounceWinner pAnnouncePacket)
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "EVENT: announce: " + pAnnouncePacket + " via: " + pComChannel);
-			}
+		Logging.log(this, "EVENT: announce: " + pAnnouncePacket + " via: " + pComChannel);
 		
 		if(!head()){
 			Logging.log(this, "    ..we are a cluster member");
@@ -1658,7 +1656,7 @@ public class Elector implements Localization
 			 * For an active link we do extended processing of this event for distributed election 
 			 */
 			if(pComChannel.isLinkActive()){
-				Logging.log(this, "    ..we received the ANNOUNCE via an active link");
+				Logging.log(this, "    ..we received the ANNOUNCE via an active link, packet=" + pAnnouncePacket);
 
 				LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
 
@@ -1669,7 +1667,7 @@ public class Elector implements Localization
 					addActiveClusterMember(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
 				}else{
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "Avoid to set this entity as active ClusterMember, the list of active Clustermembers is: ");
+						Logging.log(this, "### Avoid to set this entity as active ClusterMember, the list of active Clustermembers is: ");
 						for(ClusterMember tClusterMember :  tLevelList){
 							Logging.log(this, "   .." + tClusterMember);
 						}
