@@ -32,6 +32,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
+import de.tuilmenau.ics.fog.transfer.forwardingNodes.ConnectionEndPoint;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -212,6 +213,7 @@ public class ComSession extends Session
 	public boolean write(Serializable pData)
 	{
 		boolean tResult = false;
+		boolean tTraceRoutePacket = false;
 		
 		if (pData instanceof MultiplexHeader){
 			MultiplexHeader tMultiplexPacket = (MultiplexHeader)pData;
@@ -228,10 +230,25 @@ public class ComSession extends Session
 			}
 			
 			/**
+			 * RequestClusterMembership
+			 */
+			if(tMultiplexPacket.getPayload() instanceof RequestClusterMembership){
+				RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)tMultiplexPacket.getPayload();
+				Logging.log(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
+				if(tRequestClusterMembership.getDestination().getHierarchyLevel().isHighest()){
+					tTraceRoutePacket = true;
+				}
+			}
+
+			/**
 			 * InformClusterLeft
 			 */
 			if(tMultiplexPacket.getPayload() instanceof InformClusterLeft){
-				Logging.log(this, "#### SENDING INFORM_CLUSTER_LEFT: " + tMultiplexPacket.getPayload());
+				InformClusterLeft tInformClusterLeft = (InformClusterLeft)tMultiplexPacket.getPayload();
+				Logging.log(this, "#### SENDING INFORM_CLUSTER_LEFT: " + tInformClusterLeft);
+				if(tMultiplexPacket.getReceiverClusterName().getHierarchyLevel().isHighest()){
+					tTraceRoutePacket = true;
+				}
 			}
 
 			/**
@@ -254,6 +271,10 @@ public class ComSession extends Session
 						Logging.log(this, "SENDING PACKET: " + pData.getClass().getSimpleName());
 					}
 	
+					if(mParentConnection instanceof ConnectionEndPoint){
+						ConnectionEndPoint tConnectionEndPoint = (ConnectionEndPoint)mParentConnection;
+						tConnectionEndPoint.setPacketTraceRouting(tTraceRoutePacket);
+					}
 					mParentConnection.write(pData);
 					tResult = true;
 				} catch (NetworkException tExc) {
