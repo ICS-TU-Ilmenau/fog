@@ -228,6 +228,6 @@ public class MultiplexHeader implements ProtocolHeader
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Source=" + mSenderClusterName + ", Dest.=" + mReceiverClusterName + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Source=" + mSenderClusterName + ", Dest.=" + mReceiverClusterName + ", payload=" + getPayload() + ")";
 	}
 }
