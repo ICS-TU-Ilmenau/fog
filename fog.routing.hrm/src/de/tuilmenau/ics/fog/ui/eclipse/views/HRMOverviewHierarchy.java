@@ -31,6 +31,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -59,6 +60,11 @@ public class HRMOverviewHierarchy extends ViewPart
 	private static final String TEXT_COORDINATORS_RUN 		= "Running coordinators: ";
 	private Label mRunningCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
 	
+	private static final String TEXT_STABLE_HIERARCHY 		= "Time for stable hierarchy: ";
+	private Label mStableHierarchyMin = null;
+	private Label mStableHierarchyAvg = null;
+	private Label mStableHierarchyMax = null;
+
 	private static final int VIEW_UPDATE_TIME = 1000; // in ms
 		
 	private Display mDisplay = null;
@@ -96,6 +102,18 @@ public class HRMOverviewHierarchy extends ViewPart
 			if(tCounter != null){
 				mRunningCoordinators[i].setText(Integer.toString(tCounter));
 			}
+		}
+		
+		if(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin == Double.MAX_VALUE){
+			mStableHierarchyMin.setText("-");
+		}else{
+			mStableHierarchyMin.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin));
+		}
+		mStableHierarchyAvg.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum / Simulation.sStartedSimulations));
+		if(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax == 0){
+			mStableHierarchyMax.setText("-");
+		}else{
+			mStableHierarchyMax.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax));
 		}
 		
 		if(HRMController.FOUND_GLOBAL_ERROR){
@@ -201,6 +219,11 @@ public class HRMOverviewHierarchy extends ViewPart
 		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
 			mRunningCoordinators[i] = createPartControlLine(mGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
 		}
+		
+		createPartControlLine(mGrpHierarchy, TEXT_STABLE_HIERARCHY);
+		mStableHierarchyMin = createPartControlLine(mGrpHierarchy, "   ..min: ");
+		mStableHierarchyAvg = createPartControlLine(mGrpHierarchy, "   ..avg: ");
+		mStableHierarchyMax = createPartControlLine(mGrpHierarchy, "   ..max: ");		
 		
 	    mBtnCheckHierarchy = new Button(tContainer, SWT.PUSH);
 	    mBtnCheckHierarchy.setText(TEXT_BTN_CHECK_HIERARCHY);
