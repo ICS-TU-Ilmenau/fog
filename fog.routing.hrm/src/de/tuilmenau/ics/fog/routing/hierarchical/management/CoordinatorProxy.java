@@ -198,10 +198,11 @@ public class CoordinatorProxy extends ClusterMember
 	
 	/**
 	 * Sets a new distance (hop count to the coordinator node)
+	 * This function has to be synchronized in order to avoid concurrent manipulations of the internal distance value.
 	 * 
 	 * @param pDistance the new distance
 	 */
-	public void setDistance(int pDistance)
+	public synchronized void setDistance(int pDistance)
 	{
 		if (mDistance != pDistance){
 			/**
@@ -219,6 +220,7 @@ public class CoordinatorProxy extends ClusterMember
 				mDistance = pDistance;
 
 				// increase base node priority
+				//HINT: this step is atomic with the previous "decreasing" step because this function is marked with "synchronized"
 				mHRMController.increaseHierarchyNodePriority_KnownCoordinator(this);
 //			}else{
 //				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
@@ -235,7 +237,7 @@ public class CoordinatorProxy extends ClusterMember
 	 * 
 	 * @return the hop distance
 	 */
-	public int getDistance()
+	public synchronized int getDistance()
 	{
 		return mDistance;
 	}
