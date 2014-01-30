@@ -3201,7 +3201,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			tMultiplier = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR;
 		}
 		
-		long tCheckedOverallPriority = 0;
+		long tOverallPriority = 0;
 		long tPriority = 0;
 		synchronized (mNodeHierarchyPriority) {
 			/**
@@ -3210,7 +3210,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mLocalCoordinators) {
 				LinkedList<Coordinator> tCoordinators = getAllCoordinators(pHierarchyLevel.getValue() - 1);
 				for(Coordinator tCoordinator : tCoordinators){
-					tCheckedOverallPriority += tMultiplier * (2 + tMaxDistance - 0 /* distance */);
+					tOverallPriority += tMultiplier * (2 + tMaxDistance - 0 /* distance */);
 				}
 			}			
 			/**
@@ -3219,7 +3219,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mLocalCoordinatorProxies) {
 				LinkedList<CoordinatorProxy> tCoordinatorProxies = getAllCoordinatorProxies(pHierarchyLevel.getValue() - 1);
 				for(CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
-					tCheckedOverallPriority += tMultiplier * (2 + tMaxDistance - tCoordinatorProxy.getDistance());
+					tOverallPriority += tMultiplier * (2 + tMaxDistance - tCoordinatorProxy.getDistance());
 				}
 			}
 
@@ -3228,16 +3228,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			// update priority
 			tPriority += pPriorityOffset; 
 		
-			if(tPriority != tCheckedOverallPriority){
+			if(tPriority != tOverallPriority){
 				if(HRMConfig.DebugOutput.GUI_SHOW_PRIORITY_UPDATES){
-					Logging.warn(this, "Setting new L" + pHierarchyLevel.getValue() + " hierarchy node priority: " + tPriority + " when the overall calculation told us the priority: " + tCheckedOverallPriority);
+					Logging.warn(this, "Setting new L" + pHierarchyLevel.getValue() + " hierarchy node priority: " + tPriority + " when the overall calculation told us the priority: " + tOverallPriority);
 				}
 			}
 			
 			if(HRMConfig.DebugOutput.GUI_SHOW_PRIORITY_UPDATES){
 				Logging.log(this, "Setting new L" + pHierarchyLevel.getValue() + " hierarchy node priority: " + tPriority);
 			}
-			mNodeHierarchyPriority[pHierarchyLevel.getValue()] = tPriority;
+			mNodeHierarchyPriority[pHierarchyLevel.getValue()] = tOverallPriority;//tPriority;
 
 			mHierarchyPriorityUpdates++;
 		
