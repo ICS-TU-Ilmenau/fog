@@ -116,6 +116,10 @@ public class HRMOverviewHierarchy extends ViewPart
 			mStableHierarchyMax.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax));
 		}
 		
+		mStableHierarchyMin.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin));
+		mStableHierarchyAvg.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum / Simulation.sStartedSimulations));
+		mStableHierarchyMax.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax));
+		
 		if(HRMController.FOUND_GLOBAL_ERROR){
 			if(mBtnCheckHierarchy.isEnabled()){
 				mBtnCheckHierarchy.setEnabled(false);
