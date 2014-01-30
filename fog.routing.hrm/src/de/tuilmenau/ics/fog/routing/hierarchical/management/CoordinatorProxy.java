@@ -26,7 +26,7 @@ public class CoordinatorProxy extends ClusterMember
 	/**
 	 * Stores the hop distance to the coordinator node.
 	 */
-	private int mDistance = -1;
+	private Long mDistance = new Long(-1);
 	
 	/**
 	 * Stores the L2 address of the node where the coordinator is located
@@ -62,7 +62,7 @@ public class CoordinatorProxy extends ClusterMember
 	{	
 		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID, pCoordinatorNodeL2Address);
 
-		mDistance = pHopCount;
+		mDistance = new Long(pHopCount);
 		
 		// store the L2 address of the node where the coordinator is located
 		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
@@ -198,37 +198,42 @@ public class CoordinatorProxy extends ClusterMember
 	
 	/**
 	 * Sets a new distance (hop count to the coordinator node)
-	 * This function has to be synchronized in order to avoid concurrent manipulations of the internal distance value.
 	 * 
 	 * @param pDistance the new distance
 	 */
-	public synchronized void setDistance(int pDistance)
+	public void setDistance(long pDistance)
 	{
-		if (mDistance != pDistance){
-			/**
-			 * Update the base node priority
-			 */
-			// are we at base hierarchy level
-//			if(getHierarchyLevel().isBaseLevel()){
-				// distance is the init. value?
-				if(mDistance != -1){
-					// decrease base node priority
-					mHRMController.decreaseHierarchyNodePriority_KnownCoordinator(this);
-				}
+		/** 
+		 * The following block has to be synchronized in order to avoid concurrent manipulations of the internal distance value.
+		 * Moreover, the "decrease" and the "increase" steps have to atomic.
+		 */
+		synchronized (mDistance) {
+			if (mDistance != pDistance){
+				/**
+				 * Update the base node priority
+				 */
+				// are we at base hierarchy level
+	//			if(getHierarchyLevel().isBaseLevel()){
+					// distance is the init. value?
+					if(mDistance != -1){
+						// decrease base node priority
+						mHRMController.decreaseHierarchyNodePriority_KnownCoordinator(this);
+					}
+		
+					Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
+					mDistance = new Long(pDistance);
 	
-				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
-				mDistance = pDistance;
-
-				// increase base node priority
-				//HINT: this step is atomic with the previous "decreasing" step because this function is marked with "synchronized"
-				mHRMController.increaseHierarchyNodePriority_KnownCoordinator(this);
-//			}else{
-//				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
-//				mDistance = pDistance;
-//			}
-			
-		}else{
-			// old value == new value
+					// increase base node priority
+					//HINT: this step is atomic with the previous "decreasing" step because this function is marked with "synchronized"
+					mHRMController.increaseHierarchyNodePriority_KnownCoordinator(this);
+	//			}else{
+	//				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
+	//				mDistance = pDistance;
+	//			}
+				
+			}else{
+				// old value == new value
+			}
 		}
 	}
 	
@@ -238,9 +243,9 @@ public class CoordinatorProxy extends ClusterMember
 	 * 
 	 * @return the hop distance
 	 */
-	public int getDistance()
+	public long getDistance()
 	{
-		return mDistance;
+		return mDistance.longValue();
 	}
 
 	/**

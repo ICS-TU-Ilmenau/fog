@@ -3352,7 +3352,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tHierLevel = 1;
 			}
 			
-			int tDistance = 0;
+			long tDistance = 0;
 			if(pCausingEntity instanceof CoordinatorProxy){
 				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
 			}
@@ -3413,7 +3413,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tHierLevel = 1;
 			}
 
-			int tDistance = 0;
+			long tDistance = 0;
 			if(pCausingEntity instanceof CoordinatorProxy){
 				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
 			}
