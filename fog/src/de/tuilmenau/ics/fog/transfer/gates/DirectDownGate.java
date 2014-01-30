@@ -35,6 +35,7 @@ import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.ForwardingNode;
 import de.tuilmenau.ics.fog.transfer.manager.Process;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.BrokenType;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Viewable;
 
 
@@ -87,6 +88,10 @@ public class DirectDownGate extends DownGate
 	
 	public void handlePacket(Packet packet, ForwardingElement lastHop)
 	{
+		if(packet.isTraceRouting()){
+			Logging.warn(this, "TRACEROUTE-Sending packet: " + packet);
+		}
+
 		boolean tDeleteMe = false;
 		if(mDedicatedQoSReservation){
 			Serializable tPacketPayload = packet.getData();

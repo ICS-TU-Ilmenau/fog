@@ -184,6 +184,9 @@ public class ClientFN implements ForwardingNode
 			if(Config.Connection.LOG_PACKET_STATIONS){
 				Logging.log(this, "Sending: " + packet);
 			}
+			if(packet.isTraceRouting()){
+				Logging.warn(this, "TRACEROUTE-Sending packet: " + packet);
+			}
 			mOutgoingGate.handlePacket(packet, this);
 		} else {
 			throw new NetworkException(this, "No connection to tranfer plane. Can not send data.");

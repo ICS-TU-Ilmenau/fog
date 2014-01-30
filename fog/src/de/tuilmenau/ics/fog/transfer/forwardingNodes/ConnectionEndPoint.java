@@ -101,6 +101,11 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		}
 	}
 	
+	public void setPacketTraceRouting(boolean pState)
+	{
+		mPacketTraceRouting = pState;
+	}
+	
 	@Override
 	public void write(Serializable data) throws NetworkException
 	{
@@ -114,6 +119,9 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 				}
 				
 				Packet packet = new Packet(data);
+				if(mPacketTraceRouting){
+					packet.activateTraceRouting();
+				}
 				if(Config.Connection.LOG_PACKET_STATIONS){
 					Logging.log(this, "Sending: " + packet);
 				}
@@ -456,6 +464,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	
 	private Logger logger;
 	private ClientFN forwardingNode;
+	private boolean mPacketTraceRouting = false;
 	private LinkedList<Signature> authentications;
 	
 	private OutputStream mOutputStream;

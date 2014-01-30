@@ -209,6 +209,16 @@ public class Packet implements Serializable
 		}
 	}
 
+	public void activateTraceRouting()
+	{
+		mTraceRouting = true;
+	}
+	
+	public boolean isTraceRouting()
+	{
+		return mTraceRouting;
+	}
+
 	public boolean traceBackwardRoute()
 	{
 		return !isReturnRouteBroken();
@@ -698,6 +708,7 @@ public class Packet implements Serializable
 	private Route mRoute = null;
 	private int mChangeCounter = PACKET_MAX_CHANGE_COUNTER;
 	private Route mReturnRoute;
+	private boolean mTraceRouting = false;
 	private Serializable mPayload;
 	private LinkedList<Signature> mAuthentications; // lacy creation
 	private LinkedList<String> mLowerLayers = new LinkedList<String>();
