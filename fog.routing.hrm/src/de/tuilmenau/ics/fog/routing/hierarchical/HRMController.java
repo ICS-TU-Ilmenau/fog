@@ -3183,11 +3183,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private int mHierarchyPriorityUpdates = 0;
 	private void updateHierarchyPriority(long pPriorityOffset, HierarchyLevel pHierarchyLevel)
 	{
+		/**
+		 * Prepare check: calculate max. distance
+		 */
 		long tMaxDistance = HRMConfig.Hierarchy.RADIUS;
 		if(pHierarchyLevel.getValue() > 1){
 			tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 		}
 
+		/**
+		 * Prepare check: calculate multiplier
+		 */
 		long tMultiplier = 0;
 		if (pHierarchyLevel.getValue() == 1 /* we search for L1 prio and use the entities from L0 */){
 			tMultiplier = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR;
@@ -3198,12 +3204,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		long tCheckedOverallPriority = 0;
 		long tPriority = 0;
 		synchronized (mNodeHierarchyPriority) {
+			/**
+			 * check: iterate over local coordinators
+			 */
 			synchronized (mLocalCoordinators) {
 				LinkedList<Coordinator> tCoordinators = getAllCoordinators(pHierarchyLevel.getValue() - 1);
 				for(Coordinator tCoordinator : tCoordinators){
 					tCheckedOverallPriority += tMultiplier * (2 + tMaxDistance - 0 /* distance */);
 				}
 			}			
+			/**
+			 * check: iterate over local coordinator proxies
+			 */
 			synchronized (mLocalCoordinatorProxies) {
 				LinkedList<CoordinatorProxy> tCoordinatorProxies = getAllCoordinatorProxies(pHierarchyLevel.getValue() - 1);
 				for(CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
@@ -3890,7 +3902,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
 			double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-			double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_TIMEOUT;
+			double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 2.0 /* avoid that we hit the threshold value */;
 			//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
 			if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
 				/**
