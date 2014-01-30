@@ -234,10 +234,11 @@ public class CoordinatorProxy extends ClusterMember
 	
 	/**
 	 * Returns the hop distance to the coordinator
+	 * This function may not be synchronized. Otherwise, a deadlock can occur.
 	 * 
 	 * @return the hop distance
 	 */
-	public synchronized int getDistance()
+	public int getDistance()
 	{
 		return mDistance;
 	}
