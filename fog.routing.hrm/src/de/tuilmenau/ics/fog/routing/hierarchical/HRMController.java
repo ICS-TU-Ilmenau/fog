@@ -355,6 +355,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * This value is not part of the concept. It is only used for debugging purposes and measurement speedup. 
 	 */
 	private static double sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+	public static double sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum = 0;
+	public static double sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin = Double.MAX_VALUE;
+	public static double sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax = 0;
 	
 	/**
 	 * Stores a time for the next check for deprecated CoordinatorProxy instances -> allows for a pausing of autoRemoveObsoleteCoordinatorProxies() after re-enabling the AnnounceCoordinator messages
@@ -3237,7 +3240,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			if(HRMConfig.DebugOutput.GUI_SHOW_PRIORITY_UPDATES){
 				Logging.log(this, "Setting new L" + pHierarchyLevel.getValue() + " hierarchy node priority: " + tPriority);
 			}
-			mNodeHierarchyPriority[pHierarchyLevel.getValue()] = tOverallPriority;//tPriority;
+			mNodeHierarchyPriority[pHierarchyLevel.getValue()] = tPriority;
 
 			mHierarchyPriorityUpdates++;
 		
@@ -4151,6 +4154,29 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoExitSimulation()
 	{
+		
+		/**
+		 * MAX time for stable hierarchy
+		 */
+		if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact > sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax){
+			sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+		}
+		
+		/**
+		 * MIN time for stable hierarchy
+		 */
+		if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact < sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin){
+			sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+		}
+		
+		/**
+		 * SUM time for stable hierarchy
+		 */
+		sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum += sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+		
+		/**
+		 * EXIT the simulation
+		 */
 		if(Simulation.remainingPlannedSimulations() > 1){
 			if(!FOUND_GLOBAL_ERROR){
 				/**
