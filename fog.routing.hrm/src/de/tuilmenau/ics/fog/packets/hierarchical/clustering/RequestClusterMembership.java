@@ -90,7 +90,7 @@ public class RequestClusterMembership extends SignalingMessageHrm
 			sCreatedPackets++;
 		}
 		
-		Logging.log(this, "CREATED");
+		//Logging.log(this, "CREATED");
 	}
 
 	/**

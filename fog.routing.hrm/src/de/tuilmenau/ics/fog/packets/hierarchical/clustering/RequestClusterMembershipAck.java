@@ -82,7 +82,7 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 			sCreatedPackets++;
 		}
 		
-		Logging.log(this, "CREATED");
+		//Logging.log(this, "CREATED");
 	}
 
 	/**
