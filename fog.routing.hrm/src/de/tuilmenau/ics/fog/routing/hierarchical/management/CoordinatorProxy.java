@@ -201,38 +201,40 @@ public class CoordinatorProxy extends ClusterMember
 	 * 
 	 * @param pDistance the new distance
 	 */
-	public void setDistance(long pDistance)
+	public synchronized void setDistance(long pDistance)
 	{
-		/** 
-		 * The following block has to be synchronized in order to avoid concurrent manipulations of the internal distance value.
-		 * Moreover, the "decrease" and the "increase" steps have to atomic.
-		 */
-		synchronized (mDistance) {
-			if (mDistance != pDistance){
-				/**
-				 * Update the base node priority
-				 */
-				// are we at base hierarchy level
-	//			if(getHierarchyLevel().isBaseLevel()){
-					// distance is the init. value?
-					if(mDistance != -1){
-						// decrease base node priority
-						mHRMController.decreaseHierarchyNodePriority_KnownCoordinator(this);
-					}
+		if(isThisEntityValid()){
+			/** 
+			 * The following block has to be synchronized in order to avoid concurrent manipulations of the internal distance value.
+			 * Moreover, the "decrease" and the "increase" steps have to atomic.
+			 */
+			synchronized (mDistance) {
+				if (mDistance != pDistance){
+					/**
+					 * Update the base node priority
+					 */
+					// are we at base hierarchy level
+		//			if(getHierarchyLevel().isBaseLevel()){
+						// distance is the init. value?
+						if(mDistance != -1){
+							// decrease base node priority
+							mHRMController.decreaseHierarchyNodePriority_KnownCoordinator(this);
+						}
+			
+						Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
+						mDistance = new Long(pDistance);
 		
-					Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
-					mDistance = new Long(pDistance);
-	
-					// increase base node priority
-					//HINT: this step is atomic with the previous "decreasing" step because this function is marked with "synchronized"
-					mHRMController.increaseHierarchyNodePriority_KnownCoordinator(this);
-	//			}else{
-	//				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
-	//				mDistance = pDistance;
-	//			}
-				
-			}else{
-				// old value == new value
+						// increase base node priority
+						//HINT: this step is atomic with the previous "decreasing" step because this function is marked with "synchronized"
+						mHRMController.increaseHierarchyNodePriority_KnownCoordinator(this);
+		//			}else{
+		//				Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
+		//				mDistance = pDistance;
+		//			}
+					
+				}else{
+					// old value == new value
+				}
 			}
 		}
 	}
