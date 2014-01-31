@@ -376,6 +376,7 @@ public class Packet implements Serializable
 		tClone.mGatesPassed = mGatesPassed;
 		tClone.mInitRouteLength = mInitRouteLength;
 		tClone.mChangeCounter = mChangeCounter;
+		tClone.mTraceRouting = mTraceRouting;
 		
 		return tClone;
 	}
