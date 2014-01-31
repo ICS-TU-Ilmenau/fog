@@ -370,6 +370,10 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 			Logging.log(this, "Sending: " + packet + ", source: " + from + ", destination: " + destination);
 		}
 
+		if(packet.isTraceRouting()){
+			Logging.warn(this, "TRACEROUTE-Sending packet: " + packet + " to " + destination);
+		}
+
 		if(destination != null) {
 			if(!broken) {
 				if(!isPacketLost(packet)) {
