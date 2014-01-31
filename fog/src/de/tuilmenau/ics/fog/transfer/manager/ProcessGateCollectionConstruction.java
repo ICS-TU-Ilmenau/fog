@@ -119,7 +119,7 @@ public class ProcessGateCollectionConstruction extends ProcessConstruction
 				{
 					if(!isFinished()) {
 						if(!isOperational()) {
-							getLogger().warn(this, "Timeout for re-sending the signaling message.");
+							getLogger().warn(this, "Timeout for re-sending the signaling message: " + mCachedSignalingMessage + ", base=" + getBase());
 							
 							signal(null);
 						}
