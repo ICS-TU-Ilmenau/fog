@@ -919,7 +919,7 @@ public class ComSession extends Session
 		/**
 		 * Send the final packet
 		 */
-		Logging.log(this, "       ..sending cluster left: " + tMultiplexPacket + ", payload=" + tMultiplexPacket.getPayload());
+		Logging.log(this, "       ..sending cluster left: " + tMultiplexPacket);
 		if(write(tMultiplexPacket)){
 			Logging.log(this, "   ..sent INFORM CLUSTER LEFT: " + tMultiplexPacket);	
 		}else{
