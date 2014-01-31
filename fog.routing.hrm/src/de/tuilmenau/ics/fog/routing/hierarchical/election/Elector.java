@@ -274,28 +274,24 @@ public class Elector implements Localization
 			Logging.log(this, "ELECTING now...");
 		}
 		
-		if(head()){
-			// do we know more than 0 external cluster members?
-			if (mParent.countConnectedRemoteClusterMembers() > 0){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
-				}
-				distributeELECT();
-			}else{
-				// we don'T have external members - but do we have local members?
-				if(mParent.countConnectedClusterMembers() > 0){					
-					/**
-					 * Send a priority update to all local cluster members
-					 */
-					distributePRIRORITY_UPDATE("::elect()");
-				}
-				/**
-				 * trigger "detected isolation"
-				 */
-				eventDetectedIsolation();
+		// do we know more than 0 external cluster members?
+		if (mParent.countConnectedRemoteClusterMembers() > 0){
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
 			}
+			distributeELECT();
 		}else{
-			Logging.log(this, "elect() stops here because parent is not the cluster head, parent is: " + mParent);
+			// we don'T have external members - but do we have local members?
+			if(mParent.countConnectedClusterMembers() > 0){					
+				/**
+				 * Send a priority update to all local cluster members
+				 */
+				distributePRIRORITY_UPDATE("::elect()");
+			}
+			/**
+			 * trigger "detected isolation"
+			 */
+			eventDetectedIsolation();
 		}
 	}
 	
@@ -359,18 +355,35 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * EVENT: we have joined a remote cluster, triggered by ClusterMember
+	 * EVENT: participant joined
 	 * 
-	 * @param pComChannelToRemoteCluster the comm. channel to the cluster
+	 * @param pComChannel the comm. channel towards the new participant
 	 */
-	public void eventJoinedRemoteCluster(ComChannel pComChannelToRemoteCluster)
+	public void eventElectionAvailable(ComChannel pComChannel)
 	{
-		Logging.log(this, "HAVE JOINED remote cluster");
-
+		Logging.log(this, "EVENT: election available for: " + pComChannel);
+		
 		/**
-		 * Send: priority update
+		 * Trigger: start Election if HRMConfig allows this
 		 */
-		distributePRIRORITY_UPDATE("eventJoinedRemoteCluster() for: " + pComChannelToRemoteCluster);
+//		boolean tStartBaseLevel =  ((mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
+//		if(((!mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
+			if(mState == ElectorState.ELECTING){
+				/**
+				 * SEND PRIORITY UPDATE:
+				 * 		-> we are already electing, we should at least inform the peer about our priority
+				 * 		-> if we don't send our priority, the peer might never get informed about our priority because another cluster participant might have won the election 
+				 */
+				distributePRIRORITY_UPDATE(pComChannel, this + "::eventParticipantJoined() for " + pComChannel);
+			}else{
+				/**
+				 * (RE-)START ELECTION:
+				 * 		-> we either have already finished the election or we are still in IDLE state
+				 */
+				Logging.log(this, "      ..starting ELECTION, cause=" + pComChannel);
+				startElection(this + "::eventParticipantJoined() for " + pComChannel);
+			}
+//		}
 	}
 
 	/**
@@ -704,9 +717,10 @@ public class Elector implements Localization
 	/**
 	 * SEND: ElectionPriorityUpdate
 	 * 
+	 * @param pComChannel the comm. channel to which we want to send this update packet
 	 * @param pCause the cause for the call
 	 */
-	private void distributePRIRORITY_UPDATE(String pCause)
+	private void distributePRIRORITY_UPDATE(ComChannel pComChannel, String pCause)
 	{
 		if(mParent.isThisEntityValid()){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
@@ -716,9 +730,15 @@ public class Elector implements Localization
 	
 			ElectionPriorityUpdate tElectionPriorityUpdatePacket = new ElectionPriorityUpdate(mHRMController.getNodeL2Address(), mParent.getPriority());
 	
-			// send broadcast
-			Logging.log(this, "Distributing priority update: " + tElectionPriorityUpdatePacket);
-			mParent.sendClusterBroadcast(tElectionPriorityUpdatePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+			if(pComChannel == null){
+				// send broadcast
+				Logging.log(this, "Distributing priority update: " + tElectionPriorityUpdatePacket);
+				mParent.sendClusterBroadcast(tElectionPriorityUpdatePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+			}else{
+				// send explicit update
+				Logging.log(this, "Distributing explicit priority update: " + tElectionPriorityUpdatePacket);
+				pComChannel.sendPacket(tElectionPriorityUpdatePacket);
+			}
 	
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "SENDPRIOUPDATE()-END");
@@ -726,6 +746,10 @@ public class Elector implements Localization
 		}else{
 			Logging.warn(this, "distributePRIRORITY_UPDATE() skipped because parent entity is already invalidated");
 		}
+	}
+	private void distributePRIRORITY_UPDATE(String pCause)
+	{
+		distributePRIRORITY_UPDATE(null, pCause);
 	}
 
 	/**
@@ -831,7 +855,7 @@ public class Elector implements Localization
 	private void eventCoordinatorLeftAllPossibleElections()
 	{
 		if(mParent instanceof CoordinatorAsClusterMember){
-			Logging.err(this, "EVENT: coordinator left all possible elections");
+			Logging.log(this, "EVENT: coordinator left all possible elections");
 		}else{
 			Logging.err(this, "Expected a CoordinatorAsClustermember as parent, error in state machine, parent is: " + mParent);
 		}

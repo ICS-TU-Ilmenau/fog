@@ -850,13 +850,9 @@ public class ClusterMember extends ClusterName
 		}
 		
 		/**
-		 * Trigger: start Election if HRMConfig allows this
+		 * Trigger: tell elector that a new participant has joined
 		 */
-		boolean tStartBaseLevel =  ((getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
-		if(((!getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
-			Logging.log(this, "      ..starting ELECTION");
-			mElector.startElection(this + "::eventComChannelEstablished() for " + pComChannel);
-		}
+		mElector.eventElectionAvailable(pComChannel);
 	}
 
 	/**
@@ -881,38 +877,14 @@ public class ClusterMember extends ClusterName
 		tComChannel.setRemoteClusterName(pRemoteClusterName);
 
 		/**
-		 * Trigger: comm. channel established 
-		 */
-		eventComChannelEstablished(tComChannel);
-		
-		/**
 		 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
 		 */
 		tComChannel.signalRequestClusterMembershipAck(null);
 
 		/**
-		 * Trigger: joined a remote cluster (sends an ElectionPriorityUpdate message)
+		 * Trigger: comm. channel established 
 		 */
-		eventJoinedRemoteCluster(tComChannel);
-	}
-
-	/**
-	 * EVENT: we have joined the superior cluster, triggered by ourself or the CoordinatorAsClusterMemeber if a request for cluster membership was ack'ed
-	 * 
-	 * @param pComChannelToRemoteCluster the comm. channel to the cluster
-	 */
-	protected void eventJoinedRemoteCluster(ComChannel pComChannelToRemoteCluster)
-	{
-		if(isThisEntityValid()){
-			Logging.log(this, "HAVE JOINED remote cluster");
-			
-			/**
-			 * Trigger: joined remote cluster (in Elector)
-			 */
-			mElector.eventJoinedRemoteCluster(pComChannelToRemoteCluster);
-		}else{
-			Logging.warn(this, "eventJoinedRemoteCluster() because membership is already invalidated");
-		}
+		eventComChannelEstablished(tComChannel);
 	}
 
 	/**

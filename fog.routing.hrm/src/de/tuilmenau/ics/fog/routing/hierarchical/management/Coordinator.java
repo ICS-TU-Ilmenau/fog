@@ -1314,11 +1314,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				 * Trigger: comm. channel established 
 				 */
 				tClusterMembership.eventComChannelEstablished(tComChannel);
-		
-				/**
-				 * Trigger: joined a remote cluster (sends an ElectionPriorityUpdate)
-				 */
-				tClusterMembership.eventJoinedRemoteCluster(tComChannel);
 			}
 		}else{
 			Logging.log(this, "eventClusterMembershipRequest() aborted because coordinator role is already invalidated");
