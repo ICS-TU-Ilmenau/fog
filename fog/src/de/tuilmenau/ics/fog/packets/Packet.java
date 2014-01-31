@@ -671,7 +671,8 @@ public class Packet implements Serializable
 	 */
 	public void dropped(AbstractGate handler)
 	{
-		// TODO how do we get the corresponden node for a gate?
+		// TODO how do we get the correspond node for a gate?
+		Logging.warn(this, ">>> ### PACKET DROPPED ### <<<");
 	}
 	
 	/**
