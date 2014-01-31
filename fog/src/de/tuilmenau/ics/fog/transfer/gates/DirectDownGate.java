@@ -120,6 +120,11 @@ public class DirectDownGate extends DownGate
 			if(!invisible) incMessageCounter();
 			
 			SendResult res = ll.sendPacketTo(mToLowerLayerID, packet, this);
+			if(packet.isTraceRouting()){
+				if(res != SendResult.OK){
+					Logging.err(this, "TRACEROUTE-Failed (res=" + res.toString() + ") to send packet: " + packet);
+				}
+			}
 
 			// Error during transmission?
 			// Do not do any recovery for invisible packets.
