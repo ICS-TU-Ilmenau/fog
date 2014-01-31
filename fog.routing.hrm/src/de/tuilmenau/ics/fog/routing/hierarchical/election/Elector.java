@@ -912,7 +912,7 @@ public class Elector implements Localization
 			ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 
 			if(tComChannelToPeer.isLinkActive()){
-				updateElectionParticipation(tComChannelToPeer, false, this + "::distributeLEAVE\n   ^^^^" + pCause);
+				updateElectionParticipation(tComChannelToPeer, false, this + "::distributeLEAVE()\n   ^^^^" + pCause);
 			}else{
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 					Logging.log(this, "    ..skipped LEAVE");
@@ -1301,11 +1301,35 @@ public class Elector implements Localization
 					 * AVOID multiple LEAVES/RETURNS
 					 */
 					synchronized (mNodeActiveClusterMemberships){
+						LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
+
+						/***********************************
+						 * AUTO_LEAVE: if we are a simple ClusterMember: should we deactivate this election participation?
+						 ***********************************/
+						if(!head()){
+							if((tActiveClusterMemberships != null) && (!tActiveClusterMemberships.isEmpty())){
+								ClusterMember tActiveClusterMembership = tActiveClusterMemberships.getFirst();
+								Elector tActiveClusterMemberShipElector = tActiveClusterMembership.getElector();
+								
+								if(tActiveClusterMembership.hasClusterValidCoordinator()){
+									/**
+									 * is the currently active ClusterMembership (with a valid coordinator) not worse than this ClusterMembership? -> so, we have already found a better superior cluster/coordinator!
+									 *     -> we have to deactivate the participation to this election
+									 */
+									if(!tActiveClusterMemberShipElector.hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)){
+										// deactivate this ClusterMembership
+										updateElectionParticipation(pComChannel,  false, this + "::leaveReturnOnNewPeerPriority()_0 for " + pCausingPacket);
+									}
+								}else{
+									Logging.err(this, "Active ClusterMember does not have a valid coordinator, error in state machine, parent is: " + mParent);
+								}
+							}
+						}
+
 						if(finished()){
 							/***********************************
 							 ** ELECTED: React similar to a received ANNOUNCE/RESIGN if the election is already finished
 							 ***********************************/
-
 							
 							/**
 							 * Do we belong to an active cluster with an existing (remote) coordinator?
@@ -1328,7 +1352,6 @@ public class Elector implements Localization
 							/***********************************
 							 * NOT ELECTED:
 							 ***********************************/
-							LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
 	
 							/**
 							 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
@@ -2348,20 +2371,20 @@ public class Elector implements Localization
 	/**
 	 * Returns true if the source priority is higher than the one of the peer
 	 * 
-	 * @param pSourceL2Address the L2Address of the source (to which the priority should be compared to)
-	 * @param pSourcePriority the priority of the source (to which the priority should be compared to)
+	 * @param pRefL2Address the L2Address of the source (to which the priority should be compared to)
+	 * @param pRefPriority the priority of the source (to which the priority should be compared to)
 	 * 
 	 * @return true or false
 	 */
-	private synchronized boolean hasClusterLowerPriorityThan(L2Address pSourceL2Address, ElectionPriority pSourcePriority, boolean pIgnoreLinkState) 
+	private synchronized boolean hasClusterLowerPriorityThan(L2Address pRefL2Address, ElectionPriority pRefPriority, boolean pIgnoreLinkState) 
 	{
 		if(mParent.isThisEntityValid()){
 			LinkedList<ComChannel> tChannels = mParent.getComChannels();
 	
 			if(tChannels.size() == 1){
-				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
+				ComChannel tComChannelToPeer = mParent.getComChannelToClusterHead();
 					
-				return hasSourceHigherPrioriorityThan(pSourceL2Address, pSourcePriority, tComChannelToPeer, pIgnoreLinkState);
+				return hasSourceHigherPrioriorityThan(pRefL2Address, pRefPriority, tComChannelToPeer, pIgnoreLinkState);
 			}else{
 				if(mState != ElectorState.IDLE){
 					Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
@@ -2370,7 +2393,7 @@ public class Elector implements Localization
 				}
 			}
 		}else{
-			Logging.warn(this, "hasClusterLowerPriorityThan() skipped for \"" + pSourceL2Address + "\" with prio " + pSourcePriority.getValue() + " because entity is already invalidated");
+			Logging.warn(this, "hasClusterLowerPriorityThan() skipped for \"" + pRefL2Address + "\" with prio " + pRefPriority.getValue() + " because entity is already invalidated");
 		}
 		
 		return false;
