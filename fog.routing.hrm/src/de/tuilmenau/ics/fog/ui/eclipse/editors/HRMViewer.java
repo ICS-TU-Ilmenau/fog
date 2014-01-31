@@ -1427,11 +1427,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		Logging.log(this, "     ..session: " + pComChannel.getParentComSession());
 		LinkedList<ComChannel> tChannels = pComChannel.getParentComSession().getAllComChannels();
 		for(ComChannel tComChannel : tChannels){
-			Logging.log(this, "       ..channel: " + tComChannel);
+			Logging.log(this, "       ..channel: [" + tComChannel.hashCode() + "]" + tComChannel);
 		}
 		tChannels = pComChannel.getParentComSession().getAllFormerChannels();
 		for(ComChannel tComChannel : tChannels){
-			Logging.log(this, "       ..former channel: " + tComChannel);
+			Logging.log(this, "       ..former channel: [" + tComChannel.hashCode() + "]" + tComChannel);
 		}
 	}
 	

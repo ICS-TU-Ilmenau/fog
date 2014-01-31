@@ -659,7 +659,7 @@ public class Cluster extends ClusterMember
 			/**
 			 * Revoke all assigned HRMIDs from peers
 			 */
-			Logging.log(this, "   ..[" + i + "]: recoking HRMIDs via: " + tComChannel);
+			Logging.log(this, "   ..[" + i + "]: revoking HRMIDs via: " + tComChannel);
 			tComChannel.signalRevokeAssignedHRMIDs();
 			
 			i++;
