@@ -215,6 +215,20 @@ public class ComSession extends Session
 		boolean tResult = false;
 		boolean tTraceRoutePacket = false;
 		
+		/**
+		 * RequestClusterMembership
+		 */
+		if(pData instanceof RequestClusterMembership){
+			RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)pData;
+			Logging.warn(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
+			if(tRequestClusterMembership.getRequestingCluster().getHierarchyLevel().isHighest()){
+				tTraceRoutePacket = true;
+			}
+		}
+
+		/**
+		 * MultiplexHeader
+		 */
 		if (pData instanceof MultiplexHeader){
 			MultiplexHeader tMultiplexPacket = (MultiplexHeader)pData;
 			
@@ -229,17 +243,6 @@ public class ComSession extends Session
 				tSignalingHRMPacket.addSourceRoute("[S]: " + this.toString());
 			}
 			
-			/**
-			 * RequestClusterMembership
-			 */
-			if(tMultiplexPacket.getPayload() instanceof RequestClusterMembership){
-				RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)tMultiplexPacket.getPayload();
-				Logging.log(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
-				if(tRequestClusterMembership.getDestination().getHierarchyLevel().isHighest()){
-					tTraceRoutePacket = true;
-				}
-			}
-
 			/**
 			 * InformClusterLeft
 			 */
