@@ -109,16 +109,16 @@ public class HRMOverviewHierarchy extends ViewPart
 		}else{
 			mStableHierarchyMin.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin));
 		}
-		mStableHierarchyAvg.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum / Simulation.sStartedSimulations));
+		if(Simulation.sStartedSimulations == 0){
+			mStableHierarchyAvg.setText("-");
+		}else{
+			mStableHierarchyAvg.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum / Simulation.sStartedSimulations));
+		}
 		if(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax == 0){
 			mStableHierarchyMax.setText("-");
 		}else{
 			mStableHierarchyMax.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax));
 		}
-		
-		mStableHierarchyMin.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin));
-		mStableHierarchyAvg.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum / Simulation.sStartedSimulations));
-		mStableHierarchyMax.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax));
 		
 		if(HRMController.FOUND_GLOBAL_ERROR){
 			if(mBtnCheckHierarchy.isEnabled()){
