@@ -123,6 +123,10 @@ public class Multiplexer extends GateContainer
 			Logging.log(this, "Forwarding: " + packet);
 		}
 
+		if(packet.isTraceRouting()){
+			Logging.warn(this, "TRACEROUTE-Sending packet: " + packet);
+		}
+
 		// log packet for statistic
 		mPacketLog.add(packet);
 
@@ -237,6 +241,10 @@ public class Multiplexer extends GateContainer
 	 */
 	protected void handlePacket(Packet packet)
 	{
+		if(packet.isTraceRouting()){
+			Logging.warn(this, "TRACEROUTE-Forwarding upwards the packet: " + packet);
+		}
+		
 		packet.logStats(getEntity().getNode().getAS().getSimulation());
 		
 		if(packet.getData() instanceof Signalling) {
@@ -277,8 +285,11 @@ public class Multiplexer extends GateContainer
 	@Override
 	public String toString()
 	{
-		if(mName != null) return "FN(" +mName +")@" +mEntity;
-		else return "FN@" +mEntity;
+		if (mName != null){
+			return getClass().getSimpleName() + "(" + mName + ")@" + mEntity;
+		}else{
+			return getClass().getSimpleName() + "@" + mEntity;
+		}
 	}
 	
 	@Override
