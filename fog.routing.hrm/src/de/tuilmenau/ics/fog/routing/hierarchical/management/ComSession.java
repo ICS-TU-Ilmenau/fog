@@ -220,8 +220,8 @@ public class ComSession extends Session
 		 */
 		if(pData instanceof RequestClusterMembership){
 			RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)pData;
-			Logging.warn(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
-			if((tRequestClusterMembership.getRequestingCluster().getHierarchyLevel().isHighest()) && (tRequestClusterMembership.getRequestingCluster().getCoordinatorID() == 0)){
+			Logging.log(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
+			if(tRequestClusterMembership.getRequestingCluster().getHierarchyLevel().isHighest()){
 				tTraceRoutePacket = true;
 			}
 		}
