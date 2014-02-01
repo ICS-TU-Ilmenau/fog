@@ -3086,6 +3086,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * EVENT: hierarchy data changed
 	 */
+	boolean mWarnedAboutHierarchyChange = false;
 	private void eventHierarchyDataChanged()
 	{
 		/**
@@ -3093,25 +3094,28 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = getSimulationTime();
 		
-		/**
-		 * If GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS is deactivated and the topology changes, we have deactivated the 
-		 * AnnounceCoordinator packets too early or the user has deactivated it too early. -> this leads to faulty results with a high probability 
-		 */
-		if(!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-			Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
-			Logging.err(this, "--- Detected a hierarchy data change when GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS was already set to false, stack trace: ");
-			for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
-			    Logging.err(this, "    .." + tStep);
+		if(!mWarnedAboutHierarchyChange){
+			/**
+			 * If GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS is deactivated and the topology changes, we have deactivated the 
+			 * AnnounceCoordinator packets too early or the user has deactivated it too early. -> this leads to faulty results with a high probability 
+			 */
+			if(!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+				Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
+				Logging.err(this, "--- Detected a hierarchy data change when GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS was already set to false, stack trace: ");
+				for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+				    Logging.err(this, "    .." + tStep);
+				}
+				Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
 			}
-			Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
-		}
-		if(FOUND_GLOBAL_ERROR){
-			Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
-			Logging.err(this, "--- Detected a hierarchy data change when already a GLOBAL ERROR was detected, stack trace: ");
-			for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
-			    Logging.err(this, "    .." + tStep);
+			if(FOUND_GLOBAL_ERROR){
+				Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
+				Logging.err(this, "--- Detected a hierarchy data change when already a GLOBAL ERROR was detected, stack trace: ");
+				for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+				    Logging.err(this, "    .." + tStep);
+				}
+				Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
+				mWarnedAboutHierarchyChange = true;
 			}
-			Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
 		}
 	}
 
