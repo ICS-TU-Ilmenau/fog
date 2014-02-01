@@ -73,6 +73,11 @@ public class SimulationConsoleCreator implements SimulationObserver
 		mConsole = new EclipseConsoleLogObserver();
 	}
 	
+	static public ColoredEclipseConsoleLogObserver getLogConsoleErrWarn()
+	{
+		return sLogConsoleErrWarn;
+	}
+	
 	@Override
 	public void created(Simulation sim)
 	{
