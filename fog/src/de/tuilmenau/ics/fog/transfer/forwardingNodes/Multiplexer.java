@@ -124,7 +124,7 @@ public class Multiplexer extends GateContainer
 		}
 
 		if(packet.isTraceRouting()){
-			Logging.warn(this, "TRACEROUTE-Sending packet: " + packet);
+			Logging.warn(this, "TRACEROUTE-Processing packet: " + packet);
 		}
 
 		// log packet for statistic
@@ -202,6 +202,10 @@ public class Multiplexer extends GateContainer
 			// => search gate and forward packet
 			AbstractGate tNext = getGate(tID);
 			
+			if(packet.isTraceRouting()){
+				Logging.warn(this, "TRACEROUTE-Forwarding to next gate: " + tNext + ",readyToReceive=" + tNext.isReadyToReceive() + ", the packet: " + packet);
+			}
+
 			// was ID valid?
 			if(tNext != null) {
 				// Call the handle method from the FN; so we do not have to
@@ -220,6 +224,9 @@ public class Multiplexer extends GateContainer
 					
 					packet.forwarded(tNext);
 					
+					if(packet.isTraceRouting()){
+						Logging.warn(this, "TRACEROUTE-Forwarding to next FN the packet: " + packet);
+					}
 					tNext.handlePacket(packet, this);
 				} else {
 					if(!tInvisible) {

@@ -69,7 +69,7 @@ public class ServerFN extends Multiplexer
 	protected void handleDataPacket(Packet packet)
 	{
 		if(packet.isTraceRouting()){
-			Logging.warn(this, "TRACEROUTE-Sending packet: " + packet);
+			Logging.warn(this, "TRACEROUTE-Processing packet: " + packet);
 		}
 
 		// are we allowed to open connections implicitly?
