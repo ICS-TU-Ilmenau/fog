@@ -364,6 +364,12 @@ public class Elector implements Localization
 		Logging.log(this, "EVENT: election available for: " + pComChannel);
 		
 		/**
+		 * Check if there exist already a better choice (an active ClusterMembership) for a superior cluster/coordinator
+		 * 		-> leave this election immediately
+		 */
+		leaveForActiveBetterClusterMembership(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
+		
+		/**
 		 * Trigger: start Election if HRMConfig allows this
 		 */
 //		boolean tStartBaseLevel =  ((mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
@@ -1325,31 +1331,11 @@ public class Elector implements Localization
 					 * AVOID multiple LEAVES/RETURNS
 					 */
 					synchronized (mNodeActiveClusterMemberships){
-						LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
-
 						/***********************************
 						 * AUTO_LEAVE: if we are a simple ClusterMember: should we deactivate this election participation?
 						 ***********************************/
-						if(!head()){
-							if((tActiveClusterMemberships != null) && (!tActiveClusterMemberships.isEmpty())){
-								ClusterMember tActiveClusterMembership = tActiveClusterMemberships.getFirst();
-								Elector tActiveClusterMemberShipElector = tActiveClusterMembership.getElector();
-								
-								if(tActiveClusterMembership.hasClusterValidCoordinator()){
-									/**
-									 * is the currently active ClusterMembership (with a valid coordinator) not worse than this ClusterMembership? -> so, we have already found a better superior cluster/coordinator!
-									 *     -> we have to deactivate the participation to this election
-									 */
-									if(!tActiveClusterMemberShipElector.hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)){
-										// deactivate this ClusterMembership
-										updateElectionParticipation(pComChannel,  false, this + "::leaveReturnOnNewPeerPriority()_0 for " + pCausingPacket);
-									}
-								}else{
-									Logging.err(this, "Active ClusterMember does not have a valid coordinator, error in state machine, parent is: " + mParent);
-								}
-							}
-						}
-
+						leaveForActiveBetterClusterMembership(pComChannel, this + "::leaveReturnOnNewPeerPriority()_0 for " + pCausingPacket);
+						
 						if(finished()){
 							/***********************************
 							 ** ELECTED: React similar to a received ANNOUNCE/RESIGN if the election is already finished
@@ -1376,7 +1362,8 @@ public class Elector implements Localization
 							/***********************************
 							 * NOT ELECTED:
 							 ***********************************/
-	
+							LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
+
 							/**
 							 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
 							 */
@@ -1404,6 +1391,39 @@ public class Elector implements Localization
 					}
 				}else{
 					// link is not active
+				}
+			}
+		}
+	}
+
+	/**
+	 * Leave for an active better ClusterMember: if we are a simple ClusterMember, should we deactivate this election participation for an already selected better choice?
+	 * 
+	 * @param pComChannel the comm. channel towards the reference cluster
+	 * @param pCause the cause for this call
+	 */
+	private void leaveForActiveBetterClusterMembership(ComChannel pComChannel, String pCause)
+	{
+		if(!head()){
+			LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
+
+			if(!tActiveClusterMemberships.isEmpty()){
+				// get the first active ClusterMember
+				ClusterMember tActiveClusterMembership = tActiveClusterMemberships.getFirst();
+				// get its elector
+				Elector tActiveClusterMemberShipElector = tActiveClusterMembership.getElector();
+				
+				if(tActiveClusterMembership.hasClusterValidCoordinator()){
+					/**
+					 * is the currently active ClusterMembership (with a valid coordinator) not worse than this ClusterMembership? -> so, we have already found a better superior cluster/coordinator!
+					 *     -> we have to deactivate the participation to this election
+					 */
+					if(!tActiveClusterMemberShipElector.hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)){
+						// deactivate this ClusterMembership
+						updateElectionParticipation(pComChannel,  false, this + "::leaveForActiveBetterClusterMembership() for " + pComChannel + "\n   ^^^^" + pCause);
+					}
+				}else{
+					Logging.err(this, "Active ClusterMember does not have a valid coordinator, error in state machine, parent is: " + mParent);
 				}
 			}
 		}
