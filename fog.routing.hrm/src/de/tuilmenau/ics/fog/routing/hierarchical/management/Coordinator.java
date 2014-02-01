@@ -1269,14 +1269,17 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
-	 * EVENT: cluster membership request, a cluster requests of a coordinator to acknowledge cluster membership, triggered by the comm. session
+	 * EVENT: a cluster requests of a coordinator to acknowledge cluster membership, triggered by the comm. session
+	 * 		-> creates auto. a new comm. channel
 	 * 
 	 * @param pRemoteClusterName the description of the possible new cluster member
 	 * @param pSourceComSession the comm. session where the packet was received
 	 */
 	private int mClusterMembershipRequestNr = 0;
-	public void eventClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
+	public ComChannel eventClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
 	{
+		ComChannel tResult = null;
+		
 		mClusterMembershipRequestNr++;
 		
 		Logging.log(this, "EVENT: got cluster membership request (" + mClusterMembershipRequestNr + ") from: " + pRemoteClusterName);
@@ -1298,22 +1301,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 					Logging.log(this, "     ..creating communication channel");
 				}
-				ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
+				tResult = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
 		
 				/**
 				 * Set the remote ClusterName of the communication channel
 				 */
-				tComChannel.setRemoteClusterName(pRemoteClusterName);
-		
-				/**
-				 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
-				 */
-				tComChannel.signalRequestClusterMembershipAck(createCoordinatorName());
-	
-				/**
-				 * Trigger: comm. channel established 
-				 */
-				tClusterMembership.eventComChannelEstablished(tComChannel);
+				tResult.setRemoteClusterName(pRemoteClusterName);
 			}
 		}else{
 			Logging.log(this, "eventClusterMembershipRequest() aborted because coordinator role is already invalidated");
@@ -1323,9 +1316,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 */
 			pSourceComSession.denyClusterMembershipRequest(pRemoteClusterName, createCoordinatorName());			
 		}
+		
+		return tResult;
 	}
 
-	public void eventClusterMembershipToSuperiorCoordinator(CoordinatorAsClusterMember pMembership)
+	public void eventClusterMembershipEstablishedToSuperiorCoordinator(CoordinatorAsClusterMember pMembership)
 	{
 		Logging.log(this, "EVENT: cluster membership to superior coordinator updated to: " + pMembership);
 

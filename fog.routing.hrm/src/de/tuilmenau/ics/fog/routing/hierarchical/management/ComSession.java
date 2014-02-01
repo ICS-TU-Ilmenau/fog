@@ -221,7 +221,7 @@ public class ComSession extends Session
 		if(pData instanceof RequestClusterMembership){
 			RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)pData;
 			Logging.warn(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
-			if(tRequestClusterMembership.getRequestingCluster().getHierarchyLevel().isHighest()){
+			if((tRequestClusterMembership.getRequestingCluster().getHierarchyLevel().isHighest()) && (tRequestClusterMembership.getRequestingCluster().getCoordinatorID() == 0)){
 				tTraceRoutePacket = true;
 			}
 		}
@@ -441,7 +441,11 @@ public class ComSession extends Session
 		Logging.log(this, "Registering communication channel: " + pComChannel);
 		
 		synchronized (mRegisteredComChannels) {
-			mRegisteredComChannels.add(pComChannel);			
+			if(!mRegisteredComChannels.contains(pComChannel)){
+				mRegisteredComChannels.add(pComChannel);
+			}else{
+				Logging.err(this, "Avoid registration of channel duplicate: " + pComChannel);
+			}
 		}
 	}
 	
@@ -456,17 +460,21 @@ public class ComSession extends Session
 		
 		boolean tLastChannelClosed = false; //needed because of mutex usage below
 		synchronized (mRegisteredComChannels) {
-			mRegisteredComChannels.remove(pComChannel);
-			
-			if (mRegisteredComChannels.size() == 0){
-				Logging.log(this, "    ..last inferior comm. channel was unregistered");
+			if(mRegisteredComChannels.contains(pComChannel)){
+				mRegisteredComChannels.remove(pComChannel);
+				
+				if (mRegisteredComChannels.size() == 0){
+					Logging.log(this, "    ..last inferior comm. channel was unregistered");
+	
+					tLastChannelClosed = true;
+				}
 
-				tLastChannelClosed = true;
+				synchronized (mUnregisteredComChannels) {
+					mUnregisteredComChannels.add(pComChannel);
+				}
+			}else{
+				Logging.err(this, "Cannot unregister unknown channel: " + pComChannel);
 			}
-		}
-		
-		synchronized (mUnregisteredComChannels) {
-			mUnregisteredComChannels.add(pComChannel);
 		}
 		
 		if(tLastChannelClosed){
@@ -736,7 +744,11 @@ public class ComSession extends Session
 				
 				// is the parent a coordinator or a cluster?
 				if (tCoordinator != null){
-					tCoordinator.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
+					ComChannel tComChannel = tCoordinator.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
+					
+					if(tComChannel != null){
+						tComChannel.receivePacket(pRequestClusterMembershipPacket);
+					}
 				}else{
 					if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 						Logging.warn(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + pRequestClusterMembershipPacket + ", coordinator has gone in the meanwhile?");
@@ -773,7 +785,7 @@ public class ComSession extends Session
 			/**
 			 * Trigger: "cluster membership request" within the new ClusterMember object
 			 */
-			tNewClusterMember.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
+			tNewClusterMember.eventL0ClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
 		}
 	}
 

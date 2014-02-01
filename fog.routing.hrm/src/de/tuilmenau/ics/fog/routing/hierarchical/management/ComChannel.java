@@ -17,6 +17,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
+import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
@@ -1612,8 +1613,33 @@ public class ComChannel
 		}
 		
 		/**
+		 * RequestClusterMembership:
+		 * 			Cluster ==> Coordinator(CoordinatorAsClusterMember)
+		 *  
+		 */
+		if(pPacket instanceof RequestClusterMembership) {
+			if(mParent instanceof CoordinatorAsClusterMember){
+				CoordinatorAsClusterMember tParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
+				
+				RequestClusterMembership tRequestClusterMembershipPacket = (RequestClusterMembership)pPacket;
+				
+				/**
+				 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
+				 */
+				signalRequestClusterMembershipAck(tParentCoordinatorAsClusterMember.createCoordinatorName());
+	
+				/**
+				 * Trigger: comm. channel established 
+				 */
+				tParentCoordinatorAsClusterMember.eventComChannelEstablished(this);
+			}else{
+				Logging.err(this, "Expected a CoordinatorAsClusterMember object as parent for processing RequestClusterMembership data but parent is " + getParent());
+			}
+		}
+
+		/**
 		 * RequestClusterMembershipAck:
-		 * 			ClusterMember(CoordinatorAsClusterMember) ==> Cluster
+		 * 			Coordinator(CoordinatorAsClusterMember) ==> Cluster
 		 *  
 		 */
 		if(pPacket instanceof RequestClusterMembershipAck) {
@@ -1654,7 +1680,7 @@ public class ComChannel
 			mChannelState = ChannelState.CLOSED;
 
 			// is the parent a coordinator or a cluster?
-			if (getParent() instanceof Cluster){
+			if (mParent instanceof Cluster){
 				Cluster tCluster = (Cluster)getParent();
 				
 				// trigger event "cluster member joined"

@@ -861,7 +861,7 @@ public class ClusterMember extends ClusterName
 	 * @param pRemoteClusterName the description of the possible new cluster member
 	 * @param pSourceComSession the comm. session where the packet was received
 	 */
-	public void eventClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
+	public void eventL0ClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
 	{
 		Logging.log(this, "EVENT: got cluster membership request from: " + pRemoteClusterName);
 		

@@ -219,7 +219,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	{
 		Logging.log(this, "EVENT: cluster membership to superior coordinator updated to me");
 
-		mCoordinator.eventClusterMembershipToSuperiorCoordinator(this);
+		mCoordinator.eventClusterMembershipEstablishedToSuperiorCoordinator(this);
 	}
 	
 	/**
@@ -229,7 +229,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	{
 		Logging.log(this, "EVENT: cluster membership to superior coordinator lost");
 
-		mCoordinator.eventClusterMembershipToSuperiorCoordinator(null);
+		mCoordinator.eventClusterMembershipEstablishedToSuperiorCoordinator(null);
 	}
 	
 	/**
@@ -257,6 +257,20 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		}
 	}
 	
+	/**
+	 * Creates a ClusterName object which describes this coordinator
+	 * 
+	 * @return the new ClusterName object
+	 */
+	public ClusterName createCoordinatorName()
+	{
+		if(mCoordinator != null){
+			return mCoordinator.createCoordinatorName();
+		}else{
+			return null;
+		}
+	}
+
 	/**
 	 * Updates the membership state
 	 * 
