@@ -1635,6 +1635,8 @@ public class ComChannel
 			}else{
 				Logging.err(this, "Expected a CoordinatorAsClusterMember object as parent for processing RequestClusterMembership data but parent is " + getParent());
 			}
+
+			return true;
 		}
 
 		/**
