@@ -89,7 +89,7 @@ public class DirectDownGate extends DownGate
 	public void handlePacket(Packet packet, ForwardingElement lastHop)
 	{
 		if(packet.isTraceRouting()){
-			Logging.warn(this, "TRACEROUTE-Sending packet: " + packet);
+			Logging.log(this, "TRACEROUTE-Sending packet: " + packet);
 		}
 
 		boolean tDeleteMe = false;

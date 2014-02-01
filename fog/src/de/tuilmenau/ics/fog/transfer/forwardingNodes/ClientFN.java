@@ -185,7 +185,7 @@ public class ClientFN implements ForwardingNode
 				Logging.log(this, "Sending: " + packet);
 			}
 			if(packet.isTraceRouting()){
-				Logging.warn(this, "TRACEROUTE-Sending packet: " + packet);
+				Logging.log(this, "TRACEROUTE-Sending packet: " + packet);
 			}
 			mOutgoingGate.handlePacket(packet, this);
 		} else {

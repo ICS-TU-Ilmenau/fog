@@ -124,7 +124,7 @@ public class Multiplexer extends GateContainer
 		}
 
 		if(packet.isTraceRouting()){
-			Logging.warn(this, "TRACEROUTE-Processing packet: " + packet);
+			Logging.log(this, "TRACEROUTE-Processing packet: " + packet);
 		}
 
 		// log packet for statistic
@@ -182,6 +182,10 @@ public class Multiplexer extends GateContainer
 		GateID tID = packet.fetchNextGateID();
 		
 		if(tID == null) {
+			if(packet.isTraceRouting()){
+				Logging.log(this, "TRACEROUTE-Forwarding to this FN, route=" + packet.getRoute() + ", the packet: " + packet);
+			}
+
 			mLogger.log(this, "Route of packet is : " + packet.getRoute());
 			if(packet.getRoute().isEmpty()) {
 				// end of gate list reached
@@ -203,7 +207,7 @@ public class Multiplexer extends GateContainer
 			AbstractGate tNext = getGate(tID);
 			
 			if(packet.isTraceRouting()){
-				Logging.warn(this, "TRACEROUTE-Forwarding to next gate: " + tNext + ",readyToReceive=" + tNext.isReadyToReceive() + ", the packet: " + packet);
+				Logging.log(this, "TRACEROUTE-Forwarding to next gate: " + tNext + ",readyToReceive=" + tNext.isReadyToReceive() + ", the packet: " + packet);
 			}
 
 			// was ID valid?
@@ -225,10 +229,14 @@ public class Multiplexer extends GateContainer
 					packet.forwarded(tNext);
 					
 					if(packet.isTraceRouting()){
-						Logging.warn(this, "TRACEROUTE-Forwarding to next FN the packet: " + packet);
+						Logging.log(this, "TRACEROUTE-Forwarding to next FN the packet: " + packet);
 					}
 					tNext.handlePacket(packet, this);
 				} else {
+					if(packet.isTraceRouting()){
+						Logging.log(this, "TRACEROUTE-Invalid state for next gate: " + tNext + ", readyToReceive=" + tNext.isReadyToReceive() + ", the packet: " + packet);
+					}
+
 					if(!tInvisible) {
 						mErrorGate.invalidGateState(tNext, packet, this);
 					}
@@ -249,7 +257,7 @@ public class Multiplexer extends GateContainer
 	protected void handlePacket(Packet packet)
 	{
 		if(packet.isTraceRouting()){
-			Logging.warn(this, "TRACEROUTE-Forwarding upwards the packet: " + packet);
+			Logging.log(this, "TRACEROUTE-Forwarding upwards the packet: " + packet);
 		}
 		
 		packet.logStats(getEntity().getNode().getAS().getSimulation());
