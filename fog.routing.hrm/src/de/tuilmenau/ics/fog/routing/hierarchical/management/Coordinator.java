@@ -1310,11 +1310,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			}
 		}else{
 			Logging.log(this, "eventClusterMembershipRequest() aborted because coordinator role is already invalidated");
-
-			/**
-			 * Inform the peer by the help of a InformClusterLeft packet
-			 */
-			pSourceComSession.denyClusterMembershipRequest(pRemoteClusterName, createCoordinatorName());			
 		}
 		
 		return tResult;

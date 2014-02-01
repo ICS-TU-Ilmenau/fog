@@ -1355,10 +1355,6 @@ public class ComChannel
 	 */
 	public boolean receivePacket(SignalingMessageHrm pPacket)
 	{
-//		if((pPacket instanceof AnnounceCoordinator) && (getParent().getGUIClusterID() == 16)){
-//			Logging.log(this, "Received: " + pPacket);
-//		}
-
 		/**
 		 * Store the packet in queue
 		 */
@@ -1406,12 +1402,8 @@ public class ComChannel
 			Logging.log(this, "    ..processOnePacket() took " + tSpentTime + " ms for getting next packet: " + tNextPacket);
 		}
 
-//		if((tNextPacket instanceof AnnounceCoordinator) && (getParent().getGUIClusterID() == 16)){
-//			Logging.log(this, "Processing: " + tNextPacket);
-//		}
-
 		if(tNextPacket != null){
-			if(getParent().isThisEntityValid()){
+			if((getParent().isThisEntityValid()) || (tNextPacket instanceof RequestClusterMembership) /* never block this kind of packets */){
 				tBefore = HRMController.getRealTime();
 				handlePacket(tNextPacket);
 				tSpentTime = HRMController.getRealTime() - tBefore;
@@ -1618,20 +1610,28 @@ public class ComChannel
 		 *  
 		 */
 		if(pPacket instanceof RequestClusterMembership) {
+			RequestClusterMembership tRequestClusterMembershipPacket = (RequestClusterMembership)pPacket;
+
+//			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + getPeerHRMID() + "\": " + tRequestClusterMembershipPacket);
+
 			if(mParent instanceof CoordinatorAsClusterMember){
 				CoordinatorAsClusterMember tParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
 				
-				RequestClusterMembership tRequestClusterMembershipPacket = (RequestClusterMembership)pPacket;
-				
-				/**
-				 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
-				 */
-				signalRequestClusterMembershipAck(tParentCoordinatorAsClusterMember.createCoordinatorName());
-	
-				/**
-				 * Trigger: comm. channel established 
-				 */
-				tParentCoordinatorAsClusterMember.eventComChannelEstablished(this);
+				if(tParentCoordinatorAsClusterMember.isThisEntityValid()){
+					/**
+					 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
+					 */
+					signalRequestClusterMembershipAck(tParentCoordinatorAsClusterMember.createCoordinatorName());
+		
+					/**
+					 * Trigger: comm. channel established 
+					 */
+					tParentCoordinatorAsClusterMember.eventComChannelEstablished(this);
+				}else{
+					Logging.log(this, "  ..parent Coordinator is already invalid, denying request by " + tRequestClusterMembershipPacket);
+					mParentComSession.denyClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), tRequestClusterMembershipPacket.getDestination());
+				}
 			}else{
 				Logging.err(this, "Expected a CoordinatorAsClusterMember object as parent for processing RequestClusterMembership data but parent is " + getParent());
 			}
@@ -1646,7 +1646,7 @@ public class ComChannel
 			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)pPacket;
 
 //			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP_ACK-received from \"" + getPeerHRMID() + "\"");
+				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP_ACK-received from \"" + getPeerHRMID() + "\": " + tRequestClusterMembershipAckPacket);
 
 			// is the parent a coordinator or a cluster?
 			if (getParent() instanceof Cluster){

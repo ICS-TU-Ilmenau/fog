@@ -736,6 +736,7 @@ public class ComSession extends Session
 
 			// check the coordinator ID
 			if (tTargetCoordinatorID > 0){
+				boolean tDenyRequest = true;
 				
 				/**
 				 * Search for the coordinator and inform him about the cluster membership request
@@ -745,14 +746,23 @@ public class ComSession extends Session
 				// is the parent a coordinator or a cluster?
 				if (tCoordinator != null){
 					ComChannel tComChannel = tCoordinator.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
-					
+					Logging.log(this, "  ..created for " + pRequestClusterMembershipPacket + " a new comm. channel: " + tComChannel);
+							
 					if(tComChannel != null){
+						tDenyRequest = false;
 						tComChannel.receivePacket(pRequestClusterMembershipPacket);
 					}
 				}else{
 					if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 						Logging.warn(this, "receiveData() couldn't find the target coordinator for the incoming RequestClusterMembership packet: " + pRequestClusterMembershipPacket + ", coordinator has gone in the meanwhile?");
 					}
+				}
+
+				/**
+				 * DENY REQUEST
+				 */
+				if(tDenyRequest){
+					Logging.log(this, "  ..denying request by " + pRequestClusterMembershipPacket);
 					denyClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), pRequestClusterMembershipPacket.getDestination());
 				}
 			}else{
