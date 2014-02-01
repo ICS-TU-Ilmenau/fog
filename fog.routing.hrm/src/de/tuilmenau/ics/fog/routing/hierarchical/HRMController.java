@@ -3909,32 +3909,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
 			double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-			double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 2.0 /* avoid that we hit the threshold value */;
+			double tTimeWithFixedHierarchyDataThreshold = HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 1.0 /* avoid that we hit the threshold value */;
 			//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
 			if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
-				/**
-				 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
-				 */
-				if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
-					if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-						Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
-						Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + tTimeWithFixedHierarchyDataThreshold + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
-						Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-						GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
+				if(!hasAnyControllerPendingPackets()){
+					/**
+					 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
+					 */
+					if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
+						if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+							Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+							Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
+							Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + tTimeWithFixedHierarchyDataThreshold + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
+							Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+							GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
+						}
 					}
-				}
 				
-				if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
-					validateAllResults();
-//					autoActivateAddressDistribution();
-				}
-				if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
-					autoActivateReportingSharing();
+					if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
+						validateAllResults();
+	//					autoActivateAddressDistribution();
+					}
+					if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
+						autoActivateReportingSharing();
+					}
 				}
 			}
 		}
-		
 	}
 
 	private void autoActivateAddressDistribution()
@@ -3985,7 +3986,59 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Check if pending packets exist for some ClusterMember instance
+	 * 
+	 * @return true or false
+	 */
+	private boolean hasPendingPackets()
+	{
+		boolean tResult = false;
+		
+		for (ClusterMember tClusterMember : getAllClusterMembers()) {
+			for (ComChannel tComChannel : tClusterMember.getComChannels()){
+				if(tComChannel.getPacketQueue().size() > 0){
+					Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel);
+					tResult = true;
+				}
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Validates the entire hierarchy
+	 * 
+	 * @return true or false
+	 */
+	private boolean hasAnyControllerPendingPackets()
+	{
+		boolean tResult = false;
+		
+		Logging.warn(this, "=================================================");
+		Logging.warn(this, "=== CHECKING for PENDING PACKETS");
+		Logging.warn(this, "=================================================");
+		
+		/**
+		 * Validate results of all HRMController instances
+		 */
+		if(mRegisteredHRMControllers != null){
+			for(HRMController tHRMController : mRegisteredHRMControllers){
+				Logging.warn(null, "  ..checking: " + tHRMController.getNodeGUIName());
+				if(tHRMController.hasPendingPackets()){
+					tResult = true;
+					break;
+				}
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Validates the hierarchy creation for this node
+	 * 
+	 * @return true or false
 	 */
 	public boolean validateResults()
 	{
@@ -4092,7 +4145,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 						}
 						if(tComChannel.getPacketQueue().size() > 1 /* we allow one pending packet because the event handler might be processing a packet at the moment */){
-							Logging.err(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel); 
+							Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel); 
 						}
 					}
 				}
