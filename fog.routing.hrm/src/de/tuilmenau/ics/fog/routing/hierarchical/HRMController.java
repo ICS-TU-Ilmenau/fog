@@ -4093,7 +4093,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 						if(tComChannel.getPacketQueue().size() > 1 /* we allow one pending packet because the event handler might be processing a packet at the moment */){
 							Logging.err(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel); 
-							tResult = false;
 						}
 					}
 				}
