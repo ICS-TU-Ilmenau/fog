@@ -333,6 +333,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static boolean FOUND_GLOBAL_ERROR = false;
 	
 	/**
+	 * Stores if the global check if already passed
+	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
+	 */
+	public static boolean FOUND_ALREADY_NO_PENDING_PACKETS = false;
+	
+	/**
 	 * Stores if the GUI user has selected to deactivate address distribution.
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
@@ -2832,6 +2838,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Logging.log(null, "EVENT: simulation restarted");
 
 		FOUND_GLOBAL_ERROR = false;
+		FOUND_ALREADY_NO_PENDING_PACKETS = false;
 		
 //		if((Simulation.remainingPlannedSimulations() > 1) && (FOUND_GLOBAL_ERROR)){
 //			throw new RuntimeException("Global error in previous simulation detected");
@@ -4023,20 +4030,26 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		boolean tResult = false;
 		
-		Logging.warn(this, "=================================================");
-		Logging.warn(this, "=== CHECKING for PENDING PACKETS");
-		Logging.warn(this, "=================================================");
-		
-		/**
-		 * Validate results of all HRMController instances
-		 */
-		if(mRegisteredHRMControllers != null){
-			for(HRMController tHRMController : mRegisteredHRMControllers){
-				Logging.warn(null, "  ..checking: " + tHRMController.getNodeGUIName());
-				if(tHRMController.hasPendingPackets()){
-					tResult = true;
-					break;
+		if(!FOUND_ALREADY_NO_PENDING_PACKETS){
+			Logging.warn(this, "=================================================");
+			Logging.warn(this, "=== CHECKING for PENDING PACKETS");
+			Logging.warn(this, "=================================================");
+			
+			/**
+			 * Validate results of all HRMController instances
+			 */
+			if(mRegisteredHRMControllers != null){
+				for(HRMController tHRMController : mRegisteredHRMControllers){
+					Logging.warn(null, "  ..checking: " + tHRMController.getNodeGUIName());
+					if(tHRMController.hasPendingPackets()){
+						tResult = true;
+						break;
+					}
 				}
+			}
+			
+			if(!tResult){
+				FOUND_ALREADY_NO_PENDING_PACKETS = true;
 			}
 		}
 		

@@ -19,10 +19,11 @@ public class HRMConfig
 		 */
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_CONNECTIVITY = false;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_HIERARCHY = true;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_HIERARCHY = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_NODE_HRMIDIDS = false;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_ACTIVE_CLUSTERMEMBERS = true;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS = true;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_ACTIVE_CLUSTERMEMBERS = false;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS = false;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS = false;
 
 		/**
 		 * Limits the size of the packet storage in a comm. channel

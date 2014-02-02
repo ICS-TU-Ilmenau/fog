@@ -274,9 +274,11 @@ public class ComSession extends Session
 						Logging.log(this, "SENDING PACKET: " + pData.getClass().getSimpleName());
 					}
 	
-					if(mParentConnection instanceof ConnectionEndPoint){
-						ConnectionEndPoint tConnectionEndPoint = (ConnectionEndPoint)mParentConnection;
-						tConnectionEndPoint.setPacketTraceRouting(tTraceRoutePacket);
+					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS){
+						if(mParentConnection instanceof ConnectionEndPoint){
+							ConnectionEndPoint tConnectionEndPoint = (ConnectionEndPoint)mParentConnection;
+							tConnectionEndPoint.setPacketTraceRouting(tTraceRoutePacket);
+						}
 					}
 					mParentConnection.write(pData);
 					tResult = true;
