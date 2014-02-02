@@ -3868,34 +3868,36 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoRemoveObsoleteCoordinatorProxies()
 	{
-		if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-			/**
-			 * Abort if a pausing time was defined
-			 */
-			if(sNextCheckForDeprecatedCoordinatorProxies > 0){
-				if (getSimulationTime() < sNextCheckForDeprecatedCoordinatorProxies){
-					Logging.warn(this,  "autoRemoveObsoleteCoordinatorProxies() aborted because a pause is defined until simulation time: " + sNextCheckForDeprecatedCoordinatorProxies);
-					return;
-				}else{
-					// reset the mechanism
-					Logging.warn(this,  "autoRemoveObsoleteCoordinatorProxies() resets the mechanism because pause is finished, desired simulation time was: " + sNextCheckForDeprecatedCoordinatorProxies);
-					sNextCheckForDeprecatedCoordinatorProxies = 0;
+		if(!FOUND_GLOBAL_ERROR){
+			if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+				/**
+				 * Abort if a pausing time was defined
+				 */
+				if(sNextCheckForDeprecatedCoordinatorProxies > 0){
+					if (getSimulationTime() < sNextCheckForDeprecatedCoordinatorProxies){
+						Logging.warn(this,  "autoRemoveObsoleteCoordinatorProxies() aborted because a pause is defined until simulation time: " + sNextCheckForDeprecatedCoordinatorProxies);
+						return;
+					}else{
+						// reset the mechanism
+						Logging.warn(this,  "autoRemoveObsoleteCoordinatorProxies() resets the mechanism because pause is finished, desired simulation time was: " + sNextCheckForDeprecatedCoordinatorProxies);
+						sNextCheckForDeprecatedCoordinatorProxies = 0;
+					}
 				}
-			}
-			
-			/**
-			 * Remove deprecated CoordinatorProxy instances
-			 */
-			LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
-			for(CoordinatorProxy tProxy : tProxies){
-				// does the link have a timeout?
-				if(tProxy.isObsolete()){
-					Logging.log(this, "AUTO REMOVING COORDINATOR PROXY: " + tProxy);
-	
-					/**
-					 * Trigger: remote coordinator role invalid
-					 */
-					tProxy.eventRemoteCoordinatorRoleInvalid();
+				
+				/**
+				 * Remove deprecated CoordinatorProxy instances
+				 */
+				LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
+				for(CoordinatorProxy tProxy : tProxies){
+					// does the link have a timeout?
+					if(tProxy.isObsolete()){
+						Logging.log(this, "AUTO REMOVING COORDINATOR PROXY: " + tProxy);
+		
+						/**
+						 * Trigger: remote coordinator role invalid
+						 */
+						tProxy.eventRemoteCoordinatorRoleInvalid();
+					}
 				}
 			}
 		}
@@ -3907,31 +3909,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoDeactivateAnnounceCoordinatorMechanism()
 	{
-		if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
-			double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-			double tTimeWithFixedHierarchyDataThreshold = HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 1.0 /* avoid that we hit the threshold value */;
-			//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
-			if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
-				if(!hasAnyControllerPendingPackets()){
-					/**
-					 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
-					 */
-					if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
-						if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-							Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-							Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
-							Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + tTimeWithFixedHierarchyDataThreshold + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
-							Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-							GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
+		if(!FOUND_GLOBAL_ERROR){
+			if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
+				double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+				double tTimeWithFixedHierarchyDataThreshold = HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 1.0 /* avoid that we hit the threshold value */;
+				//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
+				if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
+					if(!hasAnyControllerPendingPackets()){
+						/**
+						 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
+						 */
+						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
+							if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+								Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+								Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
+								Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + tTimeWithFixedHierarchyDataThreshold + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
+								Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+								GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
+							}
 						}
-					}
-				
-					if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
-						validateAllResults();
-	//					autoActivateAddressDistribution();
-					}
-					if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
-						autoActivateReportingSharing();
+					
+						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
+							validateAllResults();
+		//					autoActivateAddressDistribution();
+						}
+						if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
+							autoActivateReportingSharing();
+						}
 					}
 				}
 			}
@@ -3940,31 +3944,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 	private void autoActivateAddressDistribution()
 	{
-		if(!GUI_USER_CTRL_ADDRESS_DISTRUTION){
-			Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
-			Logging.warn(this, "+++ Activating address distribution");
-			Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
-	
-			GUI_USER_CTRL_ADDRESS_DISTRUTION = true;
-			
-			// iterate over all HRMControllers
-			int tFound = 0;
-			for(HRMController tHRMController : getALLHRMControllers()) {
-				LinkedList<Coordinator> tHighestCoordinators = tHRMController.getAllCoordinators(HRMConfig.Hierarchy.HEIGHT - 1);
-				if(!tHighestCoordinators.isEmpty()){
-					for (Coordinator tHighestCoordinator : tHighestCoordinators){
-						tFound++;
-						if(tFound == 1){
-							Logging.log(this, "Found highest coordinator: " + tHighestCoordinator);
-						}else{
-							Logging.warn(this, "Found highest coordinator nr. " + tFound + ": " + tHighestCoordinator + ", is the network fragmented?");
+		if(!FOUND_GLOBAL_ERROR){
+			if(!GUI_USER_CTRL_ADDRESS_DISTRUTION){
+				Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
+				Logging.warn(this, "+++ Activating address distribution");
+				Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
+		
+				GUI_USER_CTRL_ADDRESS_DISTRUTION = true;
+				
+				// iterate over all HRMControllers
+				int tFound = 0;
+				for(HRMController tHRMController : getALLHRMControllers()) {
+					LinkedList<Coordinator> tHighestCoordinators = tHRMController.getAllCoordinators(HRMConfig.Hierarchy.HEIGHT - 1);
+					if(!tHighestCoordinators.isEmpty()){
+						for (Coordinator tHighestCoordinator : tHighestCoordinators){
+							tFound++;
+							if(tFound == 1){
+								Logging.log(this, "Found highest coordinator: " + tHighestCoordinator);
+							}else{
+								Logging.warn(this, "Found highest coordinator nr. " + tFound + ": " + tHighestCoordinator + ", is the network fragmented?");
+							}
+							tHighestCoordinator.getCluster().distributeAddresses();
 						}
-						tHighestCoordinator.getCluster().distributeAddresses();
 					}
 				}
-			}
-			if(tFound == 0){
-				Logging.err(this, "autoActivateAddressDistribution() hasn't found the highest coordinator");
+				if(tFound == 0){
+					Logging.err(this, "autoActivateAddressDistribution() hasn't found the highest coordinator");
+				}
 			}
 		}
 	}
@@ -3974,6 +3980,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoActivateReportingSharing()
 	{
+		if(!FOUND_GLOBAL_ERROR){
 //		if(!GUI_USER_CTRL_REPORT_TOPOLOGY){
 //			Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
 //			Logging.warn(this, "+++ Activating reporting/sharing of topology data");
@@ -3983,6 +3990,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //			
 //			// HINT: the report/share functions are triggered periodically and will start the start the reports/shares without any further setting
 //		}
+		}
 	}
 	
 	/**
