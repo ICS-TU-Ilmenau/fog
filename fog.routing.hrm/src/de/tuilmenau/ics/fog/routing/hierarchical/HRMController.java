@@ -251,7 +251,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores if the entire FoGSiEm simulation was already created.
 	 * This is only used for debugging purposes. This is NOT a way for avoiding race conditions in signaling.
 	 */
-	private static boolean mFoGSiEmSimulationCreationFinished = false;
+	private static Boolean mFoGSiEmSimulationCreationFinished = false;
 	
 	/**
 	 * Stores the node priority per hierarchy level.
@@ -4149,8 +4149,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									long tFoundPriority = tHRMController.getNodePriority(tClusterLevel);
 									if(tFoundPriority != tChannelPeerPriority.getValue()){
 										if(tChannelPeerPriority.getValue() <= 0){
-											Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
-											tResult = false;
+											if(tComChannel.isOpen()){
+												Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
+												tResult = false;
+											}else{
+												//TODO: avoid this situation
+												Logging.warn(this, "validateResults() detected temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for HALF-OPEN channel: " + tComChannel);
+											}
 										}else{
 											Logging.warn(this, "validateResults() detected a temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + ", the final result should be " + tFoundPriority + " for: " + tComChannel);
 										}
