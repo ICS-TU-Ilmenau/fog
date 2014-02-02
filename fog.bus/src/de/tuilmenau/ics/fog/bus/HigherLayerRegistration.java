@@ -235,7 +235,9 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 		// ignore this warning in batch mode, since the duration of the handle
 		// packet method is not important in this non-real-time environment
 		if(Config.Simulator.MODE != SimulatorMode.FAST_SIM) {
-			mLogger.warn(this, "Packet " +packet +" took " +lastPacketDurationMSec +" msec at higher layer " +mHL);
+			if(Config.Transfer.DEBUG_PACKET_TIMINGS){
+				mLogger.warn(this, "Packet " +packet +" took " +lastPacketDurationMSec +" msec at higher layer " +mHL);
+			}
 		}
 	}
 

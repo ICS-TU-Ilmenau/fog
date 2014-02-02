@@ -126,7 +126,7 @@ public class Config
 		 * Enables the logging of individual packets at several
 		 * measurement points in the simulation. 
 		 */
-		public static final boolean PACKET_LOGGER_ENABLED = true;
+		public static final boolean PACKET_LOGGER_ENABLED = false;
 		
 		/**
 		 * Defines after how many seconds packets are removed from
@@ -270,6 +270,7 @@ public class Config
 		 * otherwise no message will occur for a processed packet.
 		 */
 		public static final boolean DEBUG_PACKETS = false;
+		public static final boolean DEBUG_PACKET_TIMINGS = false;
 		
 		public static final double GATE_STD_TIMEOUT_SEC = 30;
 		
