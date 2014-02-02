@@ -86,6 +86,7 @@ import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Decoration;
 import de.tuilmenau.ics.fog.ui.Logging;
+import de.tuilmenau.ics.fog.ui.Statistic;
 import de.tuilmenau.ics.fog.ui.eclipse.NodeDecorator;
 import de.tuilmenau.ics.fog.ui.eclipse.editors.HRMViewer;
 import de.tuilmenau.ics.fog.ui.eclipse.editors.QoSTestAppGUI;
@@ -252,6 +253,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * This is only used for debugging purposes. This is NOT a way for avoiding race conditions in signaling.
 	 */
 	private static Boolean mFoGSiEmSimulationCreationFinished = false;
+	
+	/**
+	 * Stores if this is the first simulation turn or not
+	 * This is only used for debugging purposes. This is NOT a way for avoiding race conditions in signaling.
+	 */
+	private static Boolean mFoGSiEmFirstSimulation = true;
+	private static Statistic mHRMStatistic = null;
 	
 	/**
 	 * Stores the node priority per hierarchy level.
@@ -2840,6 +2848,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		FOUND_GLOBAL_ERROR = false;
 		FOUND_ALREADY_NO_PENDING_PACKETS = false;
 		
+		if(mFoGSiEmFirstSimulation){
+			mFoGSiEmFirstSimulation = false;
+		}
+
 //		if((Simulation.remainingPlannedSimulations() > 1) && (FOUND_GLOBAL_ERROR)){
 //			throw new RuntimeException("Global error in previous simulation detected");
 //		}
@@ -4232,11 +4244,132 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Writes statistics to file
+	 */
+	private void writeStatisticsToFile()
+	{
+		if(mFoGSiEmFirstSimulation){
+			try {
+				mHRMStatistic = Statistic.getInstance(mAS.getSimulation(), HRMController.class, ";", true);
+			} catch (Exception tExc) {
+				Logging.err(this, "Can not write statistic log file", tExc);
+			}
+
+			if(mHRMStatistic != null){
+				Runtime.getRuntime().addShutdownHook(new Thread() {
+					@Override
+					public void run()
+					{
+						Logging.getInstance().warn(this, "Closing HRMController statistics log file");
+						mHRMStatistic.close();
+					}
+				});
+			}
+
+			LinkedList<String> tTableHeader = new LinkedList<String>();
+			tTableHeader.add("Turn");
+			tTableHeader.add("SimulationTimeToStableHierarchy");
+			tTableHeader.add("AnnouncePhysicalEndPoint");
+			tTableHeader.add("MultiplexHeader");
+			tTableHeader.add("SignalingMessageHrm");
+			tTableHeader.add("ProbePacket");
+			tTableHeader.add("AnnounceHRMIDs");
+			tTableHeader.add("AssignHRMID");
+			tTableHeader.add("RevokeHRMIDs");
+			tTableHeader.add("InformClusterLeft");
+			tTableHeader.add("InformClusterMembershipCanceled");
+			tTableHeader.add("RequestClusterMembership");
+			tTableHeader.add("RequestClusterMembershipAck");
+			tTableHeader.add("SignalingMessageElection");
+			tTableHeader.add("ElectionAlive");
+			tTableHeader.add("ElectionAnnounceWinner");
+			tTableHeader.add("ElectionElect");
+			tTableHeader.add("ElectionLeave");
+			tTableHeader.add("ElectionPriorityUpdate");
+			tTableHeader.add("ElectionReply");
+			tTableHeader.add("ElectionResignWinner");
+			tTableHeader.add("ElectionReturn");
+			tTableHeader.add("AnnounceCoordinator");
+			tTableHeader.add("InvalidCoordinator");
+			tTableHeader.add("RouteReport");
+			tTableHeader.add("RouteShare");
+			tTableHeader.add("-");
+			tTableHeader.add("HierarchyHeight");
+			tTableHeader.add("ClusteringRadius");
+			tTableHeader.add("-");
+			tTableHeader.add("CreatedClusters");
+			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+				tTableHeader.add("CreatedClusters_L" + Integer.toString(i));
+			}
+			tTableHeader.add("CreatedCoordinators");
+			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+				tTableHeader.add("CreatedCoordinators_L" + Integer.toString(i));
+			}
+			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+				tTableHeader.add("RunningCoordinators_L" + Integer.toString(i));
+			}
+
+			if(mHRMStatistic != null){
+				mHRMStatistic.log(tTableHeader);
+			}
+		}
+		
+		LinkedList<String> tTableRow = new LinkedList<String>();
+		tTableRow.add(Integer.toString(Simulation.sStartedSimulations));
+		tTableRow.add(Long.toString((long)(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact * 1000)));
+		tTableRow.add(Long.toString(AnnouncePhysicalEndPoint.getCreatedPackets()));
+		tTableRow.add(Long.toString(MultiplexHeader.getCreatedPackets()));
+		tTableRow.add(Long.toString(SignalingMessageHrm.getCreatedPackets()));
+		tTableRow.add(Long.toString(ProbePacket.getCreatedPackets()));
+		tTableRow.add(Long.toString(AnnounceHRMIDs.getCreatedPackets()));
+		tTableRow.add(Long.toString(AssignHRMID.getCreatedPackets()));
+		tTableRow.add(Long.toString(RevokeHRMIDs.getCreatedPackets()));
+		tTableRow.add(Long.toString(InformClusterLeft.getCreatedPackets()));
+		tTableRow.add(Long.toString(InformClusterMembershipCanceled.getCreatedPackets()));
+		tTableRow.add(Long.toString(RequestClusterMembership.getCreatedPackets()));
+		tTableRow.add(Long.toString(RequestClusterMembershipAck.getCreatedPackets()));
+		tTableRow.add(Long.toString(SignalingMessageElection.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionAlive.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionAnnounceWinner.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionElect.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionLeave.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionPriorityUpdate.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionReply.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionResignWinner.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionReturn.getCreatedPackets()));
+		tTableRow.add(Long.toString(AnnounceCoordinator.getCreatedPackets()));
+		tTableRow.add(Long.toString(InvalidCoordinator.getCreatedPackets()));
+		tTableRow.add(Long.toString(RouteReport.getCreatedPackets()));
+		tTableRow.add("-");
+		tTableRow.add(Integer.toString(HRMConfig.Hierarchy.HEIGHT));
+		tTableRow.add(Long.toString(HRMConfig.Hierarchy.RADIUS));
+		tTableRow.add("-");
+		tTableRow.add(Long.toString(Cluster.countCreatedClusters()));
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			tTableRow.add(Integer.toString(Cluster.mCreatedClusters[i]));
+		}
+		tTableRow.add(Long.toString(Coordinator.countCreatedCoordinators()));
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			tTableRow.add(Integer.toString(Coordinator.mCreatedCoordinators[i]));
+		}
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			Integer tCounter = HRMController.sRegisteredCoordinatorsCounter.get(i);
+			if(tCounter != null){
+				tTableRow.add(Integer.toString(tCounter));
+			}
+		}
+
+		if(mHRMStatistic != null){
+			mHRMStatistic.log(tTableRow);
+			mHRMStatistic.flush();
+		}
+	}
+	
+	/**
 	 * Auto-exit SIMULATION if more than one simulation run is planned
 	 */
 	private void autoExitSimulation()
 	{
-		
 		/**
 		 * MAX time for stable hierarchy
 		 */
@@ -4255,6 +4388,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * SUM time for stable hierarchy
 		 */
 		sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum += sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+		
+		/**
+		 * Write statistics to log file
+		 */
+		writeStatisticsToFile();
 		
 		/**
 		 * EXIT the simulation
