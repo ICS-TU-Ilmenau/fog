@@ -63,7 +63,7 @@ public class Statistic
 	 * @return != null
 	 * @throws Exception On error
 	 */
-	public static Statistic getInstance(Simulation pSim, Object pForObj, String pSeparator) throws Exception
+	public static Statistic getInstance(Simulation pSim, Object pForObj, String pSeparator, boolean pValidForMultipleSimulationRuns) throws Exception
 	{
 		// get/create central repository for statistics
 		if(sInstances == null) {
@@ -92,8 +92,9 @@ public class Statistic
 				sInstances.put(pForObj, new Statistic(pSim));
 				throw new Exception("Exception while creating statistic handler. Next calls will be answered with dummy handler.", exc);
 			}
-			
-			sInstances.put(pForObj, tStat);
+			if(!pValidForMultipleSimulationRuns){
+				sInstances.put(pForObj, tStat);
+			}
 		}
 		
 		return tStat;
@@ -101,9 +102,20 @@ public class Statistic
 	
 	public static Statistic getInstance(Simulation pSim, Object pForObj) throws Exception
 	{
-		return getInstance(pSim, pForObj, "\t");
+		return getInstance(pSim, pForObj, "\t", false);
 	}
 
+	public void flush()
+	{
+		if(mStatsFile != null) {
+			try {
+				mStatsFile.flush();
+			}
+			catch(IOException exc) {
+				
+			}
+		}
+	}
 	public void close()
 	{
 		if(mStatsFile != null) {
@@ -128,6 +140,8 @@ public class Statistic
 				} catch (IOException exc) {
 					Logging.getInstance().err(this, "Unable to write statistics to file.", exc);
 				}
+			}else{
+				Logging.err(this, "Stats file invalid");
 			}
 		}
 	}
