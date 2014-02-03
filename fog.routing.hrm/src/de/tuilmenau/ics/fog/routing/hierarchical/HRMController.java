@@ -374,6 +374,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static double sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax = 0;
 	
 	/**
+	 * Stores the simulation time of the last AssignHRMID, which had impact on the current address structure
+	 * This value is not part of the concept. It is only used for debugging purposes and measurement speedup. 
+	 */
+	private static double sSimulationTimeOfLastAddressAssignmenttWithImpact = 0;
+
+	/**
 	 * Stores a time for the next check for deprecated CoordinatorProxy instances -> allows for a pausing of autoRemoveObsoleteCoordinatorProxies() after re-enabling the AnnounceCoordinator messages
 	 */
 	private static double sNextCheckForDeprecatedCoordinatorProxies = 0;
@@ -884,6 +890,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 							Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
 						}
+						
+						/**
+						 * Trigger: addressing data changed
+						 */
+						eventAddressingDataChanged();
 					}else{
 						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 							Logging.warn(this, "Found a HRMID duplicate for " + pHRMID.toString() + ", additional registration is triggered by " + pEntity);
@@ -2907,6 +2918,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		sNextCheckForDeprecatedCoordinatorProxies = 0;
 		sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+		sSimulationTimeOfLastAddressAssignmenttWithImpact = 0;
 		
 		resetHierarchyStatistic();
 		resetPacketStatistic();
@@ -3138,6 +3150,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 	}
 
+	/**
+	 * EVENT: addressing data changed
+	 */
+	private void eventAddressingDataChanged()
+	{
+		/**
+		 * Refresh the stored simulation time describing when the last AssignHRMID packet had impact on the addressing
+		 */
+		sSimulationTimeOfLastAddressAssignmenttWithImpact = getSimulationTime();
+	}
+	
 	/**
 	 * Distributes hierarchy node priority update to all important local entities
 	 * 
@@ -3947,10 +3970,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
 							}
 						}
-					
 						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
-							validateAllResults();
-		//					autoActivateAddressDistribution();
+							autoActivateAddressDistribution();
 						}
 						if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
 							autoActivateReportingSharing();
@@ -4000,6 +4021,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private void autoActivateReportingSharing()
 	{
 		if(!FOUND_GLOBAL_ERROR){
+			if(sSimulationTimeOfLastAddressAssignmenttWithImpact != 0){
+				double tTimeWithFixedAddresses = getSimulationTime() - sSimulationTimeOfLastAddressAssignmenttWithImpact;
+				double tTimeWithFixedAddressesThreshold = HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 1.0 /* avoid that we hit the threshold value */;
+				//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
+				if(tTimeWithFixedAddresses > tTimeWithFixedAddressesThreshold){
 //		if(!GUI_USER_CTRL_REPORT_TOPOLOGY){
 //			Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
 //			Logging.warn(this, "+++ Activating reporting/sharing of topology data");
@@ -4009,6 +4035,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //			
 //			// HINT: the report/share functions are triggered periodically and will start the start the reports/shares without any further setting
 //		}
+					validateAllResults();
+				}
+			}
 		}
 	}
 	
@@ -4248,6 +4277,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void writeStatisticsToFile()
 	{
+		Logging.warn(this, ">>>>>>>>>> Writing statistics to file..");
+
 		if(mFoGSiEmFirstSimulation){
 			try {
 				mHRMStatistic = Statistic.getInstance(mAS.getSimulation(), HRMController.class, ";", true);
@@ -4461,14 +4492,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		autoRemoveObsoleteHRGLinks();
 		
-		/**
-		 * generalize all known HRM routes to neighbors 
-		 */
-//		generalizeMeighborHRMRoutesAuto();
-		
 		if(HRMConfig.Measurement.VALIDATE_RESULTS){
 			if (GUI_USER_CTRL_REPORT_TOPOLOGY){
-				validateAllResults();
+//				validateAllResults();
 			}
 		}
 		
