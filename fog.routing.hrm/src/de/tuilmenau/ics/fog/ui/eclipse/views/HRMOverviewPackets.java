@@ -236,10 +236,10 @@ public class HRMOverviewPackets extends ViewPart
 		mAnnounceHRMIDs = createPartControlLine(tGrpPackets, TEXT_SIG_ANC_HRMIDS);
 		mAssignHRMID = createPartControlLine(tGrpPackets, TEXT_SIG_ASG_HRMID);
 		mRevokeHRMIDs = createPartControlLine(tGrpPackets, TEXT_SIG_REV_HRMID);
-		mInformClusterLeft = createPartControlLine(tGrpPackets, TEXT_SIG_INFO_CLUSTER_LEFT);
-		mInformClusterMembershipCanceled = createPartControlLine(tGrpPackets, TEXT_SIG_INFO_CLUSTER_MEMBERSHIP_CANCELED);
 		mRequestClusterMembership = createPartControlLine(tGrpPackets, TEXT_SIG_REQ_CLUSTER_MEMBERSHIP);
 		mRequestClusterMembershipAck = createPartControlLine(tGrpPackets, TEXT_SIG_REQ_CLUSTER_MEMBERSHIP_ACK);
+		mInformClusterMembershipCanceled = createPartControlLine(tGrpPackets, TEXT_SIG_INFO_CLUSTER_MEMBERSHIP_CANCELED);
+		mInformClusterLeft = createPartControlLine(tGrpPackets, TEXT_SIG_INFO_CLUSTER_LEFT);
 		mSignalingMessageElection = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT);
 		mElectionAlive = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT_ALIVE);
 		mElectionAnnounceWinner = createPartControlLine(tGrpPackets, TEXT_SIG_ELECT_ANC_WINNER);
