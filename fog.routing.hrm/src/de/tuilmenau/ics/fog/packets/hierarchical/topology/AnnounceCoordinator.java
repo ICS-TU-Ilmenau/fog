@@ -591,6 +591,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	@Override
 	public void accountBroadcast()
 	{
+		super.accountBroadcast();
 		synchronized (sCreatedPackets) {
 			sCreatedPackets--;
 			sSentBroadcasts++;

@@ -447,6 +447,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	@Override
 	public void accountBroadcast()
 	{
+		super.accountBroadcast();
 		synchronized (sCreatedPackets) {
 			sCreatedPackets--;
 			sSentBroadcasts++;

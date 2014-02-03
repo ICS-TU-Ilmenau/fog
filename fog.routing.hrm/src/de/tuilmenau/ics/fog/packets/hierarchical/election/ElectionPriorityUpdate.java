@@ -91,6 +91,7 @@ public class ElectionPriorityUpdate extends SignalingMessageElection implements 
 	@Override
 	public void accountBroadcast()
 	{
+		super.accountBroadcast();
 		synchronized (sCreatedPackets) {
 			sCreatedPackets--;
 			sSentBroadcasts++;

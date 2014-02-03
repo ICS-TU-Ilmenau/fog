@@ -91,6 +91,7 @@ public class ElectionLeave extends SignalingMessageElection implements ISignalin
 	@Override
 	public void accountBroadcast()
 	{
+		super.accountBroadcast();
 		synchronized (sCreatedPackets) {
 			sCreatedPackets--;
 			sSentBroadcasts++;

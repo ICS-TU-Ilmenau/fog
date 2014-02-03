@@ -193,6 +193,7 @@ public class AnnounceHRMIDs extends SignalingMessageHrm implements ISignalingMes
 	@Override
 	public void accountBroadcast()
 	{
+		super.accountBroadcast();
 		synchronized (sCreatedPackets) {
 			sCreatedPackets--;
 			sSentBroadcasts++;

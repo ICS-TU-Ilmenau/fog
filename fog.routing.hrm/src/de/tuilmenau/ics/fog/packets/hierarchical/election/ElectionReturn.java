@@ -91,6 +91,7 @@ public class ElectionReturn extends SignalingMessageElection implements ISignali
 	@Override
 	public void accountBroadcast()
 	{
+		super.accountBroadcast();
 		synchronized (sCreatedPackets) {
 			sCreatedPackets--;
 			sSentBroadcasts++;

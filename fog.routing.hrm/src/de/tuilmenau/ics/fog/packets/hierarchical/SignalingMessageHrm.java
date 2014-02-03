@@ -70,6 +70,12 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	public static Long sCreatedPackets = new Long(0);
 
 	/**
+	 * Stores the counter of sent broadcasts from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sSentBroadcasts = new Long(0);
+
+	/**
 	 * For using the class within (de-)serialization. 
 	 */
 	private static final long serialVersionUID = 7253912074438961613L;
@@ -195,8 +201,6 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	 */
 	public void duplicate(SignalingMessageHrm pOtherPacket)
 	{
-		sCreatedPackets--;
-
 		// update the recorded source route
 		pOtherPacket.mSourceRoute = getSourceRoute();
 		
@@ -278,6 +282,20 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Accounts a broadcast of this packet type
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable#accountBroadcast()
+	 */
+	public void accountBroadcast()
+	{
+		synchronized (sCreatedPackets) {
+			sCreatedPackets--;
+			sSentBroadcasts++;
+		}
 	}
 
 	/**

@@ -191,6 +191,7 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 	@Override
 	public void accountBroadcast()
 	{
+		super.accountBroadcast();
 		synchronized (sCreatedPackets) {
 			sCreatedPackets--;
 			sSentBroadcasts++;

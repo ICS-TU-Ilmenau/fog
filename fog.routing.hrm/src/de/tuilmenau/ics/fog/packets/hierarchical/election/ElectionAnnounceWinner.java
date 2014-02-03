@@ -191,6 +191,7 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	@Override
 	public void accountBroadcast()
 	{
+		super.accountBroadcast();
 		synchronized (sCreatedPackets) {
 			sCreatedPackets--;
 			sSentBroadcasts++;
