@@ -909,6 +909,11 @@ public class ClusterMember extends ClusterName
 			Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getNodePriority(getHierarchyLevel()));
 		}
 		
+		/**
+		 * Account the broadcast
+		 */
+		pPacket.accountBroadcast();
+
 		for(ComChannel tComChannel : tComChannels) {
 			boolean tIsLoopback = tComChannel.toLocalNode();
 			
@@ -928,11 +933,6 @@ public class ClusterMember extends ClusterName
 			if(pCheckLinkActivation){
 				tIsAllowedToUseThisChannel = tComChannel.isLinkActive();
 			}
-			
-			/**
-			 * Account the broadcast
-			 */
-			pPacket.accountBroadcast();
 			
 			/**
 			 * is this packet allowed to enter the next AS behind this comm. channel?
