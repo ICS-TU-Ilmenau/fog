@@ -19,4 +19,9 @@ public interface ISignalingMessageHrmBroadcastable
 	 * Clones the packet for broadcasts
 	 */
 	abstract public SignalingMessageHrm duplicate();
+	
+	/**
+	 * Accounts a broadcast of the corresponding packet type
+	 */
+	abstract public void accountBroadcast();
 }

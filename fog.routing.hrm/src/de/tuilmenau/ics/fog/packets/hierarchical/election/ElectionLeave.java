@@ -30,6 +30,12 @@ public class ElectionLeave extends SignalingMessageElection implements ISignalin
 	public static Long sCreatedPackets = new Long(0);
 
 	/**
+	 * Stores the counter of sent broadcasts from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sSentBroadcasts = new Long(0);
+
+	/**
 	 * Constructor
 	 * 
 	 * @param pSenderName
@@ -68,12 +74,26 @@ public class ElectionLeave extends SignalingMessageElection implements ISignalin
 	public SignalingMessageHrm duplicate()
 	{
 		ElectionLeave tResult = new ElectionLeave(getSenderName(), getSenderPriority());
-		sCreatedPackets--;
 
 		super.duplicate(tResult);
 
 		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
 		return tResult;
+	}
+	
+	/**
+	 * Accounts a broadcast of this packet type
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable#accountBroadcast()
+	 */
+	@Override
+	public void accountBroadcast()
+	{
+		synchronized (sCreatedPackets) {
+			sCreatedPackets--;
+			sSentBroadcasts++;
+		}
 	}
 }

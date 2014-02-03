@@ -101,6 +101,12 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	public static Long sCreatedPackets = new Long(0);
 
 	/**
+	 * Stores the counter of sent broadcasts from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sSentBroadcasts = new Long(0);
+
+	/**
 	 * Constructor for getDefaultSize()
 	 */
 	private InvalidCoordinator()
@@ -304,7 +310,6 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	public SignalingMessageHrm duplicate()
 	{
 		InvalidCoordinator tResult = new InvalidCoordinator(null, getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
-		sCreatedPackets--;
 		
 		super.duplicate(tResult);
 
@@ -431,6 +436,21 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Accounts a broadcast of this packet type
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable#accountBroadcast()
+	 */
+	@Override
+	public void accountBroadcast()
+	{
+		synchronized (sCreatedPackets) {
+			sCreatedPackets--;
+			sSentBroadcasts++;
+		}
 	}
 
 	/**

@@ -129,6 +129,12 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	public static Long sCreatedPackets = new Long(0);
 
 	/**
+	 * Stores the counter of sent broadcasts from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sSentBroadcasts = new Long(0);
+
+	/**
 	 * Constructor for getDefaultSize()
 	 */
 	private AnnounceCoordinator()
@@ -420,7 +426,6 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	public SignalingMessageHrm duplicate()
 	{
 		AnnounceCoordinator tResult = new AnnounceCoordinator(null, getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
-		sCreatedPackets--;
 		
 		super.duplicate(tResult);
 
@@ -575,6 +580,21 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Accounts a broadcast of this packet type
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable#accountBroadcast()
+	 */
+	@Override
+	public void accountBroadcast()
+	{
+		synchronized (sCreatedPackets) {
+			sCreatedPackets--;
+			sSentBroadcasts++;
+		}
 	}
 
 	/**

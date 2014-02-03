@@ -930,6 +930,11 @@ public class ClusterMember extends ClusterName
 			}
 			
 			/**
+			 * Account the broadcast
+			 */
+			pPacket.accountBroadcast();
+			
+			/**
 			 * is this packet allowed to enter the next AS behind this comm. channel?
 			 */
 			if(tIsAllowedToEnterNextAS){

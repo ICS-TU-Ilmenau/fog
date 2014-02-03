@@ -43,6 +43,12 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 	public static Long sCreatedPackets = new Long(0);
 
 	/**
+	 * Stores the counter of sent broadcasts from this type
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	public static Long sSentBroadcasts = new Long(0);
+
+	/**
 	 * Constructor for getDefaultSize()
 	 */
 	private ElectionResignWinner()
@@ -97,7 +103,6 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 	public SignalingMessageHrm duplicate()
 	{
 		ElectionResignWinner tResult = new ElectionResignWinner(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
-		sCreatedPackets--;
 
 		super.duplicate(tResult);
 
@@ -175,6 +180,21 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Accounts a broadcast of this packet type
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable#accountBroadcast()
+	 */
+	@Override
+	public void accountBroadcast()
+	{
+		synchronized (sCreatedPackets) {
+			sCreatedPackets--;
+			sSentBroadcasts++;
+		}
 	}
 
 	/**
