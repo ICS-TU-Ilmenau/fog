@@ -121,6 +121,8 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigHierarchyAnnounceCoordinatorsInterval.setText(Double.toString(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL) + " s");
 		mConfigHierarchyHeight.setText(Integer.toString(HRMConfig.Hierarchy.HEIGHT) + " level(s)");
 		mConfigHierarchyExpansionRadius.setText(Long.toString(HRMConfig.Hierarchy.RADIUS) + " hop(s)");
+		Font tFont = new Font(mDisplay, "Arial", 10, SWT.BOLD);
+		mConfigHierarchyExpansionRadius.setFont(tFont);
 		mConfigHierarchyBitsPerLevel.setText(Integer.toString(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL) + " bits/lvl");
 		mConfigDebugChannelStorage.setText(Integer.toString(HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE) + " packets");
 		mConfigDebugHRMViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRM_VIEWERS_UPDATE_INTERVAL) + " s");
@@ -191,6 +193,7 @@ public class HRMOverviewConfig extends ViewPart
 		final GridData tGrpSignalingLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		tGrpSignalingLayoutData.horizontalSpan = 2;
 		Group tGrpSignaling = new Group(tContainer, SWT.SHADOW_OUT);
+		tGrpSignaling.setFont(new Font(mDisplay, "Arial", 11, SWT.BOLD));
 		tGrpSignaling.setText("  HRM signaling  ");
 		GridLayout tGrpSignalingLayout = new GridLayout(2, true);
 		tGrpSignalingLayout.marginWidth = 20;
@@ -220,11 +223,11 @@ public class HRMOverviewConfig extends ViewPart
 		tGrpConfig.setLayout(tGrpConfigLayout);
 		tGrpConfig.setLayoutData(tGrpConfigLayoutData);
 
+		mConfigHierarchyExpansionRadius = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_RADIUS);
 		mConfigReportSharePhaseTimeBase = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIME_BASE);
 		mConfigReportSharePhaseTimingScheme = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIMING_SCHEME);
 		mConfigHierarchyAnnounceCoordinatorsInterval = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_ANC_COORD_INT);
 		mConfigHierarchyHeight = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_HEIGHT);
-		mConfigHierarchyExpansionRadius = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_RADIUS);
 		mConfigHierarchyBitsPerLevel = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_BITS_PER_LVL);
 		mConfigDebugChannelStorage = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_CHANNEL_STORAGE);
 		mConfigDebugHRMViewerUpdateInterval = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_HRM_VIEWER_INT);
