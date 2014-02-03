@@ -1097,7 +1097,7 @@ public class Elector implements Localization
 												if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 													Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
 												}
-												Logging.log(this, "leaveWorseAlternativeElections() aborted for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+												Logging.log(this, "leaveWorseAlternativeElections() aborted for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [" + tLevelClusterMember.getComChannelToClusterHead().getPeerL2Address() + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
 											}
 											/**********************************************************************************************************************************/
 										}else{
@@ -1861,9 +1861,9 @@ public class Elector implements Localization
 		// get the priority of the sender
 		ElectionPriority tSenderPriority = pComChannel.getPeerPriority();
 		
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+//		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "EVENT: priority update by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
-		}
+//		}
 
 		/**
 		 * React only if the link is active
