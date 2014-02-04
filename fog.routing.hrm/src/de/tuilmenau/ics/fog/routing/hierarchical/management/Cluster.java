@@ -50,12 +50,12 @@ public class Cluster extends ClusterMember
 	/**
 	 * Stores the connect inferior local coordinators.
 	 */
-	private LinkedList<Coordinator> mInferiorLocalCoordinators = new LinkedList<Coordinator>();
+	private LinkedList<Coordinator> mInferiorLocalCoordinators = new LinkedList<Coordinator>(); //TODO: register and auto-remove if coordinator is invalidated
 	
 	/**
 	 * Stores the connect inferior local coordinators.
 	 */
-	private LinkedList<CoordinatorProxy> mInferiorRemoteCoordinators = new LinkedList<CoordinatorProxy>();
+	private LinkedList<CoordinatorProxy> mInferiorRemoteCoordinators = new LinkedList<CoordinatorProxy>(); //TODO: register and auto-remove if coordinatorProxy is invalidated
 
 	/**
 	 * Stores a description of former GUICoordinatorIDs
@@ -973,7 +973,11 @@ public class Cluster extends ClusterMember
 					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 						Logging.log(this, "      ..removing local cluster member: " + tChannelPeer);
 					}
-					mInferiorLocalCoordinators.remove(tChannelPeer);					
+					if(mInferiorLocalCoordinators.contains(tChannelPeer)){
+						mInferiorLocalCoordinators.remove(tChannelPeer);
+					}else{
+						Logging.err(this, "Cannot remove unknown local inferior coordinator: " + tChannelPeer);
+					}
 				}
 			}else
 			// does this comm. channel end at a remote coordinator (a coordinator proxy)?
@@ -982,7 +986,11 @@ public class Cluster extends ClusterMember
 					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 						Logging.log(this, "      ..removing remote cluster member: " + tChannelPeer);
 					}
-					mInferiorRemoteCoordinators.remove(tChannelPeer);					
+					if(mInferiorRemoteCoordinators.contains(tChannelPeer)){
+						mInferiorRemoteCoordinators.remove(tChannelPeer);
+					}else{
+						Logging.err(this, "Cannot remove unknown remote inferior coordinator: " + tChannelPeer);
+					}
 				}
 			}else{
 				Logging.err(this, "Comm. channel peer has unsupported type: " + tChannelPeer);
@@ -1211,7 +1219,11 @@ public class Cluster extends ClusterMember
 						
 						// add this local coordinator to the list of connected coordinators
 						synchronized (mInferiorLocalCoordinators) {
-							mInferiorLocalCoordinators.add(tCoordinator);
+							if(!mInferiorLocalCoordinators.contains(tCoordinator)){
+								mInferiorLocalCoordinators.add(tCoordinator);
+							}else{
+								Logging.err(this, "Cannot add a duplicate of the local inferior coordinator: " + tCoordinator);
+							}
 						}
 	
 						if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
@@ -1274,7 +1286,11 @@ public class Cluster extends ClusterMember
 									
 									// add this remote coordinator to the list of connected coordinators
 									synchronized (mInferiorRemoteCoordinators) {
-										mInferiorRemoteCoordinators.add(tCoordinatorProxy);
+										if(!mInferiorRemoteCoordinators.contains(tCoordinatorProxy)){
+											mInferiorRemoteCoordinators.add(tCoordinatorProxy);
+										}else{
+											Logging.err(this, "Cannot add a duplicate of the remote inferior coordinator: " + tCoordinatorProxy);
+										}
 									}
 									
 									ComSession tComSession = mHRMController.getCreateComSession(tCoordinatorProxy.getCoordinatorNodeL2Address());		
