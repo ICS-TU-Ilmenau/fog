@@ -1344,6 +1344,10 @@ public class ComChannel
 		
 		// unregister from the parent comm. session
 		mParentComSession.unregisterComChannel(this);
+		
+		// some early memory freeing
+		mPacketQueue.clear();
+		mPackets.clear();
 	}
 	
 	/**
