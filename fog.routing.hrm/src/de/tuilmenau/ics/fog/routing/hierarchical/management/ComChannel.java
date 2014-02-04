@@ -1346,6 +1346,7 @@ public class ComChannel
 		mParentComSession.unregisterComChannel(this);
 		
 		// some early memory freeing
+		//HINT: closed channels (-> marked as "deleted") are stored in a list but their former packets are not interesting anymore in this case
 		mPacketQueue.clear();
 		mPackets.clear();
 	}
