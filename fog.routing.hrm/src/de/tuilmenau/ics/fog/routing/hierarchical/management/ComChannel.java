@@ -1102,29 +1102,33 @@ public class ComChannel
 	 */
 	private void storePacket(SignalingMessageHrm pPacket, boolean pWasSent)
 	{
-		synchronized (mPackets) {
-			if (pWasSent){
-				/**
-				 * count the packets
-				 */
-				mSentPackets++;
-			}else{
-				/**
-				 * count the packets
-				 */
-				mReceivedPackets++;
-			}
-			// limit the storage size
-			while(mPackets.size() > HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE){
-				mPackets.removeFirst();
-			}
-			
-			if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS){
-				// add the packet to the storage: filter AnnounceCoordinator, RouteReport, RouteShare
-				if(!((pPacket instanceof AnnounceCoordinator) || (pPacket instanceof RouteReport) || (pPacket instanceof RouteShare))){
-					mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent, mHRMController.getSimulationTime()));
+		if(!isClosed()){
+			synchronized (mPackets) {
+				if (pWasSent){
+					/**
+					 * count the packets
+					 */
+					mSentPackets++;
+				}else{
+					/**
+					 * count the packets
+					 */
+					mReceivedPackets++;
+				}
+				// limit the storage size
+				while(mPackets.size() > HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE){
+					mPackets.removeFirst();
+				}
+				
+				if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS){
+					// add the packet to the storage: filter AnnounceCoordinator, RouteReport, RouteShare
+					if(!((pPacket instanceof AnnounceCoordinator) || (pPacket instanceof RouteReport) || (pPacket instanceof RouteShare))){
+						mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent, mHRMController.getSimulationTime()));
+					}
 				}
 			}
+		}else{
+			// channel already closed, we are not interested in old packets anymore
 		}
 	}
 	/**
@@ -1355,7 +1359,11 @@ public class ComChannel
 		// unregister from the parent comm. session
 		mParentComSession.unregisterComChannel(this);
 		
-		//HINT: closed channels (-> marked as "deleted") are stored in a list and their remaining buffered packets are processed anyway
+		// some early memory freeing
+		//HINT: closed channel (-> marked as "deleted") are stored in a list but their former packets are not interesting anymore in this case
+		mPackets.clear();
+
+		//HINT: closed channel (-> marked as "deleted") are stored in a list and their remaining buffered packets are processed anyway -> DO NOT clear mPacketQueue
 	}
 	
 	/**
