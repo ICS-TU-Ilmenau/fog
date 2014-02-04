@@ -759,6 +759,16 @@ public class ComChannel
 	}
 	
 	/**
+	 * Returns if the comm. channel is closed
+	 * 
+	 * @return true or false
+	 */
+	public boolean isClosed()
+	{
+		return (mChannelState == ChannelState.CLOSED);
+	}
+
+	/**
 	 * Returns the state of the channel
 	 * 
 	 * @return the channel state
@@ -1345,10 +1355,7 @@ public class ComChannel
 		// unregister from the parent comm. session
 		mParentComSession.unregisterComChannel(this);
 		
-		// some early memory freeing
-		//HINT: closed channels (-> marked as "deleted") are stored in a list but their former packets are not interesting anymore in this case
-		mPacketQueue.clear();
-		mPackets.clear();
+		//HINT: closed channels (-> marked as "deleted") are stored in a list and their remaining buffered packets are processed anyway
 	}
 	
 	/**
