@@ -467,7 +467,7 @@ public class Elector implements Localization
 			elect();
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "Reelection needed but we aren't the cluster head, we hope that the other local Cluster object will trigger a reelection" );
+				Logging.log(this, "REELECTION needed but we aren't the cluster head, we hope that the other local Cluster object will trigger a REELECTION" );
 			}
 		}
 	}
@@ -1866,43 +1866,64 @@ public class Elector implements Localization
 //		}
 
 		/**
-		 * React only if the link is active
+		 * Are we a ClusterMember and received an update from the local Cluster or are we the Cluster and received an update from the local ClusterMember? 
+		 * 		-> we always have the same priority as the sending Cluster/ClusterMember -> no influence on the election result -> ignore this
 		 */
-		if(pComChannel.isLinkActive()){
+		if (pComChannel.toRemoteNode()){
 			/**
-			 * Have we already won the election and the new priority still lower than ours?
+			 * React only if the link is active
 			 */
-			if(isWinner()){
-				// do we have the higher priority?
-				if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we are already the election winner");
+			if(pComChannel.isLinkActive()){
+				/**
+				 * Have we already won the election and the new priority still lower than ours?
+				 */
+				if(isWinner()){
+					// do we have the higher priority?
+					if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+							Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we are already the election winner");
+						}
+					
+						/**
+						 * We (still) have the highest priority -> nothing to change here
+						 */
+						// ..
+					}else{
+						/**
+						 * New received peer priority could influence the election result
+						 */
+						tNewPriorityCouldInfluenceElectionResult = true;
 					}
-				
-					/**
-					 * We (still) have the highest priority -> nothing to change here
-					 */
-					// ..
 				}else{
-					/**
-					 * New received peer priority could influence the election result
-					 */
-					tNewPriorityCouldInfluenceElectionResult = true;
+					// do we have the higher priority?
+					if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+							Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we lost the last election");
+						}
+						/**
+						 * New received peer priority could influence the election result
+						 */
+						tNewPriorityCouldInfluenceElectionResult = true;
+					}
 				}
 			}else{
-				// do we have the higher priority?
-				if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we lost the last election");
-					}
-					/**
-					 * New received peer priority could influence the election result
-					 */
-					tNewPriorityCouldInfluenceElectionResult = true;
+				// link is inactive -> no influence on the election result
+			}			
+			
+			/**
+			 * Deactivate local active cluster if it has a lower priority than the received priority from the remote active (with coordinator!) cluster head 
+			 */
+			if(pComChannel.getParent() instanceof CoordinatorAsClusterMember){
+				CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)pComChannel.getParent();
+				
+				if(tCoordinatorAsClusterMember.hasClusterValidCoordinator()){
+					deactivateWorseLocalActiveCluster(pComChannel);
 				}
 			}
+		}else{
+			// prio. update was received from a local entity -> no influence on the election result
 		}
-
+		
 		if(tNewPriorityCouldInfluenceElectionResult){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "eventReceivedPRIORITY_UPDATE() triggers a re-election");
@@ -1918,17 +1939,6 @@ public class Elector implements Localization
 			 */
 			if(!finished()){
 				checkForWinner("eventReceivedPRIORITY_UPDATE() by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
-			}
-		}
-
-		/**
-		 * Deactivate local active cluster if it has a lower priority than the currently received priority from the peer 
-		 */
-		if(pComChannel.getParent() instanceof CoordinatorAsClusterMember){
-			CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)pComChannel.getParent();
-			
-			if(tCoordinatorAsClusterMember.hasClusterValidCoordinator()){
-				deactivateWorseLocalActiveCluster(pComChannel);
 			}
 		}
 
@@ -2043,6 +2053,7 @@ public class Elector implements Localization
 		boolean tIsWinner = true;
 		boolean tElectionComplete = true;
 		ComChannel tExternalWinner = null;
+		boolean DEBUG = false;
 		
 		if(mState == ElectorState.ELECTING){
 			Logging.log(this, "Checking for election winner..");
@@ -2057,7 +2068,9 @@ public class Elector implements Localization
 						/**
 						 * Iterate over all cluster members and check if their priority is available, check every cluster member if it has a higher priority
 						 */
-						Logging.log(this, "   ..searching for highest priority...");
+						if(DEBUG){
+							Logging.log(this, "   ..searching for highest priority...");
+						}
 						for(ComChannel tComChannel : tActiveChannels) {
 							ElectionPriority tPriority = tComChannel.getPeerPriority(); 
 							
@@ -2065,7 +2078,9 @@ public class Elector implements Localization
 							 * are we still waiting for the Election priority of some cluster member?
 							 */
 							if ((tPriority == null) || (tPriority.isUndefined())){
-								Logging.log(this, "		   ..missing peer priority for: " + tComChannel);
+								if(DEBUG){
+									Logging.log(this, "		   ..missing peer priority for: " + tComChannel);
+								}
 								
 								// election is incomplete
 								tElectionComplete = false;
@@ -2074,13 +2089,17 @@ public class Elector implements Localization
 								break;
 							}
 							
-							Logging.log(this, "		..cluster member " + tComChannel + " has priority " + tPriority.getValue());
+							if(DEBUG){
+								Logging.log(this, "		..cluster member " + tComChannel + " has priority " + tPriority.getValue());
+							}
 							
 							/**
 							 * compare our priority with each priority of a cluster member 
 							 */
 							if(!havingHigherPrioriorityThan(tComChannel, CHECK_LINK_STATE)) {
-								Logging.log(this, "		   ..found better candidate: " + tComChannel);
+								if(DEBUG){
+									Logging.log(this, "		   ..found better candidate: " + tComChannel);
+								}
 								tExternalWinner = tComChannel;
 								tIsWinner = false;
 							}
