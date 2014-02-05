@@ -1215,7 +1215,7 @@ public class Elector implements Localization
 	
 	/**
 	 * Return to alternative elections if the current parent is an active ClusterMember for this node
-	 * This function is triggered if a RESIGN is received from a remote coordinator or the local cluster has lost the formerly won election.
+	 * This function is triggered if a RESIGN is received from a remote coordinator or the local ClusterMember is reset
 	 * 
 	 * @param pCause the cause for this call
 	 */
@@ -1247,17 +1247,19 @@ public class Elector implements Localization
 							Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
 						}
 						
-						// get all possible elections
+						// get all possible elections on this hierarchy level
 						LinkedList<CoordinatorAsClusterMember> tLevelClusterMembers = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
 						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 							Logging.log(this, "Distributing RETURN, found CoordinatorAsClusterMembers: " + tLevelClusterMembers);
 						}
 						
 						// have we found elections?
-						if(tLevelClusterMembers.size() > 0){					
-							/**
-							 * Iterate over all alternatives
-							 */
+						if(tLevelClusterMembers.size() > 0){
+							boolean tStillAnAlternativeElectionWithValidCoordinatorExists = false;
+							
+							/***************************************************************************************************
+							 * Search for an alternative election in which this node is still an active participant 
+							 ***************************************************************************************************/
 							for (CoordinatorAsClusterMember tLevelClusterMember : tLevelClusterMembers){
 								/**
 								 * Be aware of multiple local coordinators at the same hierarchy level -> search only for alternative CoordinatorAsClusterMember instances belong to the parent instance!
@@ -1267,38 +1269,67 @@ public class Elector implements Localization
 								 */
 								if(mParent.getClusterID().equals(tLevelClusterMember.getClusterID())){
 									/**
-									 * don't return to the same election!
+									 * don't check the same election!
 									 */ 
 									if(!mParent.equals(tLevelClusterMember)){
-										// are we the coordinator (so, the coordinator is on this node!)?
-										//if(!mHRMController.getNodeL2Address().equals(tLevelClusterMember.getCoordinatorNodeL2Address())){
-											// get the elector
-											Elector tAlternativeElection = tLevelClusterMember.getElector();
-											if(tAlternativeElection != null){
-												/**
-												 * Distribute "RETURN" for the alternative election process
-												 */
-												if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-													Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
-												}
-												tAlternativeElection.distributeRETURN(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
-											}else{
-												throw new RuntimeException("Found invalid elector for: " + tLevelClusterMember);
-											}
-	//									}else{
-	//										Logging.log(this, "      ..skipping reference to local cluster member which belongs to the same cluster like we do: " + tLevelClusterMember + ", coordinator=" + tLevelClusterMember.getCoordinatorNodeL2Address());
-	//									}
-									}else{
-										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-											Logging.log(this, "      ..skipping reference to ourself");
+										// is this ClusterMember still a participant of this election?
+										if(tLevelClusterMember.getComChannelToClusterHead().isLinkActive()){
+											tStillAnAlternativeElectionWithValidCoordinatorExists = true;
+											break;
 										}
-									}
-								}else{
-									if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-										Logging.log(this, "      ..skipping CoordinatorAsClusterMember instance of sibling coordinator found: " + tLevelClusterMember);
 									}
 								}
 							}// for
+							
+							/**********************************************************
+							 * Return to all alternative elections 
+							 **********************************************************/
+							if(!tStillAnAlternativeElectionWithValidCoordinatorExists){
+								/**
+								 * Iterate over all alternatives
+								 */
+								for (CoordinatorAsClusterMember tLevelClusterMember : tLevelClusterMembers){
+									/**
+									 * Be aware of multiple local coordinators at the same hierarchy level -> search only for alternative CoordinatorAsClusterMember instances belong to the parent instance!
+									 * For example:
+									 *  	- a node can have two coordinators, each for a separate link
+									 *  	=> leads to two coordinators with own CoordinatorAsClusterMember instances, the amount depends on the clustering radius   			 
+									 */
+									if(mParent.getClusterID().equals(tLevelClusterMember.getClusterID())){
+										/**
+										 * don't return to the same election!
+										 */ 
+										if(!mParent.equals(tLevelClusterMember)){
+											// are we the coordinator (so, the coordinator is on this node!)?
+											//if(!mHRMController.getNodeL2Address().equals(tLevelClusterMember.getCoordinatorNodeL2Address())){
+												// get the elector
+												Elector tAlternativeElection = tLevelClusterMember.getElector();
+												if(tAlternativeElection != null){
+													/**
+													 * Distribute "RETURN" for the alternative election process
+													 */
+													if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+														Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
+													}
+													tAlternativeElection.distributeRETURN(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
+												}else{
+													throw new RuntimeException("Found invalid elector for: " + tLevelClusterMember);
+												}
+		//									}else{
+		//										Logging.log(this, "      ..skipping reference to local cluster member which belongs to the same cluster like we do: " + tLevelClusterMember + ", coordinator=" + tLevelClusterMember.getCoordinatorNodeL2Address());
+		//									}
+										}else{
+											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+												Logging.log(this, "      ..skipping reference to ourself");
+											}
+										}
+									}else{
+										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+											Logging.log(this, "      ..skipping CoordinatorAsClusterMember instance of sibling coordinator found: " + tLevelClusterMember);
+										}
+									}
+								}// for
+							}// if
 						}else{
 							Logging.err(this, "We haven't even found our parent as ClusterMember at hierarchy level: " + mParent.getHierarchyLevel().getValue());
 						}
@@ -1821,9 +1852,9 @@ public class Elector implements Localization
 			 * For an active link we do extended processing of this event for distributed election 
 			 */
 			if(pComChannel.isLinkActive()){
-				Logging.log(this, "    ..we received the RESIGN via an active link");
+				Logging.log(this, "    ..we received the RESIGN via an ACTIVE LINK");
 
-				// return to all other election processes because we have lost this coordinator at this hierarchy level
+				// return to best alternative election process because we have lost the active superior coordinator on this hierarchy level
 				returnToAlternativeElections(this + "::eventReceivedRESIGN() for " + pResignPacket);
 
 				// mark/store as inactive ClusterMember
