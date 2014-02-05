@@ -1257,9 +1257,9 @@ public class Elector implements Localization
 						if(tLevelClusterMembers.size() > 0){
 							boolean tStillAnAlternativeElectionWithValidCoordinatorExists = false;
 							
-							/***************************************************************************************************
-							 * Search for an alternative election in which this node is still an active participant 
-							 ***************************************************************************************************/
+							/**************************************************************************************************************************************
+							 * Search for an alternative election in which this node is still an active participant and the election has found a valid coordinator 
+							 **************************************************************************************************************************************/
 							for (CoordinatorAsClusterMember tLevelClusterMember : tLevelClusterMembers){
 								/**
 								 * Be aware of multiple local coordinators at the same hierarchy level -> search only for alternative CoordinatorAsClusterMember instances belong to the parent instance!
@@ -1272,10 +1272,13 @@ public class Elector implements Localization
 									 * don't check the same election!
 									 */ 
 									if(!mParent.equals(tLevelClusterMember)){
-										// is this ClusterMember still a participant of this election?
-										if(tLevelClusterMember.getComChannelToClusterHead().isLinkActive()){
-											tStillAnAlternativeElectionWithValidCoordinatorExists = true;
-											break;
+										// check if this election has a valid coordinator
+										if(tLevelClusterMember.hasClusterValidCoordinator()){
+											// is this ClusterMember still a participant of this election?
+											if(tLevelClusterMember.getComChannelToClusterHead().isLinkActive()){
+												tStillAnAlternativeElectionWithValidCoordinatorExists = true;
+												break;
+											}
 										}
 									}
 								}
