@@ -1092,7 +1092,7 @@ public class Elector implements Localization
 												if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 													Logging.log(this, "      ..LEAVING: " + tAlternativeElection);
 												}                                            
-												tAlternativeElection.distributeLEAVE(this + "::leaveWorseAlternativeElections() for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " < ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^" + pCause);
+												tAlternativeElection.distributeLEAVE(this + "::leaveWorseAlternativeElections() for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [" + (tLevelClusterMember.getComChannelToClusterHead() != null ? tLevelClusterMember.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " < ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^" + pCause);
 											}else{
 												if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 													Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
