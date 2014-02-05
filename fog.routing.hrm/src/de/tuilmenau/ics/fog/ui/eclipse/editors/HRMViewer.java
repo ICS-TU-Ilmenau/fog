@@ -1688,6 +1688,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							showElectionIsAllowedToWin(tClusterMember);
 						}
 					});
+					MenuItem tMenuItem2 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem2.setText("Trigger neighborhood detection");
+					tMenuItem2.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							triggerNeighborhoodElection(tClusterMember);
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							triggerNeighborhoodElection(tClusterMember);
+						}
+					});
 				}
 
 				tfContainerName.setMenu(tMenu);
@@ -1718,6 +1732,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private void showElectionIsAllowedToWin(ClusterMember pClusterMember)
 	{
 		Logging.log(this, "IsAllowedToWin() for " + pClusterMember + " ==> " + pClusterMember.getElector().isAllowedToWin());
+	}
+	
+	private void triggerNeighborhoodElection(ClusterMember pClusterMember)
+	{
+		Logging.log(this, "### >>> Triggering clustering (neighborhood detection) on hierarchy level: " + pClusterMember.getHierarchyLevel().getValue());
+		mHRMController.cluster(pClusterMember, pClusterMember.getHierarchyLevel());		
 	}
 	
 	/**
