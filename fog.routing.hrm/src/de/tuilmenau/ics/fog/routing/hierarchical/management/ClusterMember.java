@@ -69,6 +69,11 @@ public class ClusterMember extends ClusterName
 	private RoutingTable mReportedRoutingTableL0HRMID = new RoutingTable();
 	
 	/**
+	 * Stores if the warning about invalid L0 neighborhood detection was already sent to debug output
+	 */
+	private boolean mWarningDetectLocalSiblingsLocalL0HRMIDInvalid = false;
+	
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
@@ -276,7 +281,6 @@ public class ClusterMember extends ClusterName
 	 * 
 	 * @param pCause the cause for the call
 	 */
-	boolean mWarningDetectLocalSiblingsLocalL0HRMIDInvalid = false;
 	private void detectLocalSiblings(String pCause)
 	{
 		if(getHierarchyLevel().isBaseLevel()){
