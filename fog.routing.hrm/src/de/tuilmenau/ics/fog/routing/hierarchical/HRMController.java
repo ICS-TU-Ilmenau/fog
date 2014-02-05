@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
+import java.io.Serializable;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.Collection;
@@ -344,7 +345,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores if the global check if already passed
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
-	public static boolean FOUND_ALREADY_NO_PENDING_PACKETS = false;
+	private static boolean FOUND_ALREADY_NO_PENDING_PACKETS = false;
 	
 	/**
 	 * Stores if the GUI user has selected to deactivate address distribution.
@@ -640,6 +641,71 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "Unregistering HRG-GUI " + pHRGGUI);
 		}
 		mHRGGUIInformer.deleteObserver(pHRGGUI);
+	}
+
+	/**
+	 * Stores per packet type the amount of packets, which were actually sent to the network 
+	 */
+	private HashMap<Class<?>, Integer> mSentNetworkPackets = new HashMap<Class<?>, Integer>();
+	
+	/**
+	 * Accounts a sent packet
+	 * 
+	 * @param pPacket the actual packet
+	 */
+	public void accountSentPacket(Serializable pPacket)
+	{
+		// the HRM message
+		SignalingMessageHrm tHRMMessage = null;
+		
+		if(pPacket instanceof SignalingMessageHrm){
+			// get the encapsulated HRM message
+			tHRMMessage = (SignalingMessageHrm) pPacket;			
+		}
+		
+		if(pPacket instanceof MultiplexHeader){
+			// get a reference to the multiplex header
+			MultiplexHeader tMultiplexHeader = (MultiplexHeader)pPacket;
+			
+			// get the encapsulated HRM message
+			tHRMMessage = tMultiplexHeader.getPayload();
+		}
+
+		if(tHRMMessage != null){
+			// the reference packet type for which we account
+			Class<?> tRefPacketType = tHRMMessage.getClass();
+			
+			synchronized (mSentNetworkPackets) {
+				Integer tSentPacketsOfThisType = new Integer(0);
+				if(mSentNetworkPackets.containsKey(tRefPacketType)){
+					tSentPacketsOfThisType = mSentNetworkPackets.get(tRefPacketType);
+				}
+				tSentPacketsOfThisType++;
+				mSentNetworkPackets.put(tRefPacketType, tSentPacketsOfThisType);
+			}
+		}else{
+			Logging.err(this, "Cannot account unsupported packet type: " + pPacket);
+		}
+	}
+	
+	/**
+	 * Returns the number of packets which were actually sent to the network
+	 * 
+	 * @param pClass the reference message class
+	 * 
+	 * @return number of packets
+	 */
+	public int sentPackets(Class<?> pClass)
+	{
+		int tResult = 0;
+		
+		synchronized (mSentNetworkPackets) {
+			if(mSentNetworkPackets.containsKey(pClass)){
+				tResult = mSentNetworkPackets.get(pClass);
+			}
+		}
+		
+		return tResult;
 	}
 
 	/**
@@ -3971,10 +4037,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 						}
 						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
-							autoActivateAddressDistribution();
+validateAllResults();
+//							autoActivateAddressDistribution();
 						}
 						if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
-							autoActivateReportingSharing();
+//							autoActivateReportingSharing();
 						}
 					}
 				}
