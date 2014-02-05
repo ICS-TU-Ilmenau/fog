@@ -11,6 +11,10 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 public class HRMConfig
 {
+	/**
+	 * This class defines every setting for the debug outputs.
+	 * Usually, every entry should be set to "false". 
+	 */
 	public static class DebugOutput
 	{
 		/**
@@ -19,11 +23,11 @@ public class HRMConfig
 		 */
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_CONNECTIVITY = false;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_HIERARCHY = false;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_HIERARCHY = true;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_NODE_HRMIDIDS = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_ACTIVE_CLUSTERMEMBERS = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS = true;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS = false;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS = true;
 
 		/**
 		 * Limits the size of the packet storage in a comm. channel
@@ -213,6 +217,9 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_PRIORITY_UPDATES = false;
 	}
 
+	/**
+	 * This class defines all setting, which are important for fast and goal-oriented measurements
+	 */
 	public static class Measurement
 	{
 		/**
@@ -249,6 +256,9 @@ public class HRMConfig
 		public static final boolean VALIDATE_RESULTS_EXTENSIVE = false;
 	}
 	
+	/**
+	 * This class defines all algorithm settings, which are used for the address distribution. 
+	 */
 	public static class Addressing
 	{
 		/**
@@ -274,6 +284,9 @@ public class HRMConfig
 		public static final boolean REUSE_ADDRESSES = true;
 	}
 	
+	/**
+	 * This class defines all algorithm settings, which are used for the hierarchy creation and maintenance. 
+	 */
 	public static class Hierarchy
 	{
 		/**
@@ -338,7 +351,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 1;
+		public static final long RADIUS = 2;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
@@ -397,7 +410,7 @@ public class HRMConfig
 	}
 	
 	/**
-	 * Configuration parameters for the routing process and routing service
+	 * This class defines all algorithm settings, which are used for the route data distribution and route calculation 
 	 */
 	public static class Routing
 	{
@@ -462,6 +475,9 @@ public class HRMConfig
 		public static REPORT_SHARE_TIMINGS REPORT_SHARE_PHASE_TIMING_SCHEME = REPORT_SHARE_TIMINGS.CONSTANT;
 	}
 
+	/**
+	 * This class defines all algorithm settings, which are used for the handling of QoS requirements and network capabilities. 
+	 */
 	public static class QoS
 	{
 		/**
@@ -481,9 +497,9 @@ public class HRMConfig
 	}
 	
 	/**
-	 * Configuration for the election process
+	 * This class defines all algorithm settings, which are used for the election process. 
 	 */
-	public static class Election //TV
+	public static class Election
 	{
 		/**
 		 * Defines if link states should be used.
