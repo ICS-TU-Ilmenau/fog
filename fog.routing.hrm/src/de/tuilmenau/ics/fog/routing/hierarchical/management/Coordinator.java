@@ -85,7 +85,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * Stores if a warning about an invalid channel to the superior coordinator was already printed.
 	 */
-	boolean mWarnedAboutInvalidChannelToSuperiorCoordinator = false;
+	private boolean mWarnedAboutInvalidChannelToSuperiorCoordinator = false;
 
 	/**
 	 * Stores how many coordinators were created per hierarchy level
