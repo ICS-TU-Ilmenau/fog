@@ -277,12 +277,20 @@ public class Elector implements Localization
 		// do we know more than 0 external cluster members?
 		if (mParent.countConnectedRemoteClusterMembers() > 0){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
+				Logging.log(this, "elect()-trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
 			}
 			distributeELECT();
 		}else{
-			// we don'T have external members - but do we have local members?
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "elect()-don't have external cluster members");
+			}
+			
+			// we don't have external members - but do we have local members?
 			if(mParent.countConnectedClusterMembers() > 0){					
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					Logging.log(this, "elect()-having " + mParent.countConnectedClusterMembers() + " local cluster members");
+				}
+				
 				/**
 				 * Send a priority update to all local cluster members
 				 */
@@ -609,7 +617,7 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * SEND: start the election by signaling ELECT to all cluster members
+	 * SEND: start the election by signaling ELECT to all cluster members, triggered by elect()
 	 */
 	private void distributeELECT()
 	{
