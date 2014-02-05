@@ -1438,26 +1438,45 @@ public class Elector implements Localization
 	 */
 	private void leaveForActiveBetterClusterMembership(ComChannel pComChannel, String pCause)
 	{
+		Logging.log(this, "leaveForActiveBetterClusterMembership() for: " + pComChannel + ",cause=" + pCause);
+		
 		if(!head()){
 			LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
 
 			if(!tActiveClusterMemberships.isEmpty()){
-				// get the first active ClusterMember
-				ClusterMember tActiveClusterMembership = tActiveClusterMemberships.getFirst();
-				// get its elector
-				Elector tActiveClusterMemberShipElector = tActiveClusterMembership.getElector();
-				
-				if(tActiveClusterMembership.hasClusterValidCoordinator()){
+				if(mParent instanceof CoordinatorAsClusterMember){
+					CoordinatorAsClusterMember tThisCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
+					
+					// get the first active ClusterMember
+					CoordinatorAsClusterMember tActiveClusterMembership = (CoordinatorAsClusterMember)tActiveClusterMemberships.getFirst();
+					// get its elector
+					Elector tActiveClusterMemberShipElector = tActiveClusterMembership.getElector();
+					
 					/**
-					 * is the currently active ClusterMembership (with a valid coordinator) not worse than this ClusterMembership? -> so, we have already found a better superior cluster/coordinator!
-					 *     -> we have to deactivate the participation to this election
-					 */
-					if(!tActiveClusterMemberShipElector.hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)){
-						// deactivate this ClusterMembership
-						updateElectionParticipation(pComChannel,  false, this + "::leaveForActiveBetterClusterMembership() for " + pComChannel + "\n   ^^^^" + pCause);
+					 * abort if the active ClusterMember and this ClusterMember belong to the same remote cluster 
+					 * HINT: we cannot not simply compare the local instances and have to use the remote cluster ID in order to support multiple local L0 coordinators which belong to the same remote cluster
+					 */ 
+					if(!tThisCoordinatorAsClusterMember.getRemoteClusterName().getClusterID().equals(tActiveClusterMembership.getRemoteClusterName().getClusterID())){
+						/**
+						 * Plausibility check: does it really have a valid coordinator?
+						 */
+						if(tActiveClusterMembership.hasClusterValidCoordinator()){
+							/**
+							 * is the currently active ClusterMembership (with a valid coordinator) not worse than this ClusterMembership? -> so, we have already found a better superior cluster/coordinator!
+							 *     -> we have to deactivate the participation to this election
+							 */
+							if(!tActiveClusterMemberShipElector.hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)){
+								// deactivate this ClusterMembership
+								updateElectionParticipation(pComChannel,  false, this + "::leaveForActiveBetterClusterMembership() for " + pComChannel + "\n   ^^^^" + pCause);
+							}
+						}else{
+							Logging.err(this, "Active ClusterMember does not have a valid coordinator, error in state machine, parent is: " + mParent);
+						}
+					}else{
+						Logging.log(this, "leaveForActiveBetterClusterMembership() aborted because active ClusterMember belongs to the same remote cluster than this ClusterMember");
 					}
 				}else{
-					Logging.err(this, "Active ClusterMember does not have a valid coordinator, error in state machine, parent is: " + mParent);
+					Logging.log(this, "leaveForActiveBetterClusterMembership() aborted because parent is a simple ClusterMember on base hierarchy level");
 				}
 			}
 		}
