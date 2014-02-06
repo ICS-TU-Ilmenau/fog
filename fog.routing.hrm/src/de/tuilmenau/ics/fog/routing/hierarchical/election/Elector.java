@@ -407,7 +407,7 @@ public class Elector implements Localization
 	 */
 	public void eventLostCandidate(ComChannel pComChannelToCandidate)
 	{
-		//nothing to be done
+		Logging.log(this, "Lost election candidate: " + pComChannelToCandidate);
 	}
 
 	/**
@@ -1498,7 +1498,7 @@ public class Elector implements Localization
 	private synchronized void eventElectionWon(String pCause)
 	{
 		if ((!isWinner()) || (!finished())){
-			Logging.log(this, "ELECTION WON for cluster " + mParent);
+			Logging.log(this, "ELECTION WON for cluster " + mParent +", cause=" + pCause);
 			
 			// mark as election winner
 			mElectionWon = true;
@@ -1549,7 +1549,7 @@ public class Elector implements Localization
 	 */
 	private synchronized void eventElectionLost(String pCause)
 	{
-		Logging.log(this, "ELECTION LOST for cluster " + mParent);
+		Logging.log(this, "ELECTION LOST for cluster " + mParent +", cause=" + pCause);
 	
 		// store the old election result
 		boolean tWasFormerWinner = mElectionWon;
@@ -2114,6 +2114,7 @@ public class Elector implements Localization
 		boolean tIsWinner = true;
 		boolean tElectionComplete = true;
 		ComChannel tExternalWinner = null;
+		long tExternalWinnerPriority = -2;
 		boolean DEBUG = false;
 		
 		if(mState == ElectorState.ELECTING){
@@ -2162,6 +2163,7 @@ public class Elector implements Localization
 									Logging.log(this, "		   ..found better candidate: " + tComChannel);
 								}
 								tExternalWinner = tComChannel;
+								tExternalWinnerPriority = tComChannel.getPeerPriority().getValue();
 								tIsWinner = false;
 							}
 						}
@@ -2182,7 +2184,7 @@ public class Elector implements Localization
 								}else{
 									Logging.err(this, "External winner is unknown but also I am not the winner");
 								}
-								eventElectionLost("checkForWinner() [" + tActiveChannels.size() + " active channels, winner: " + tExternalWinner + "]\n   ^^^^" + pCause);
+								eventElectionLost("checkForWinner() [" + tActiveChannels.size() + " active channels, winner[prio: " + tExternalWinnerPriority + "]: " + tExternalWinner + "]\n   ^^^^" + pCause);
 							}
 						}else{
 							Logging.log(this, "	        ..incomplete election");
