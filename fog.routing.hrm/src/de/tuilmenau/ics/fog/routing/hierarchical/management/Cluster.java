@@ -1019,8 +1019,11 @@ public class Cluster extends ClusterMember
 	 */
 	private void checkClusterNecessity()
 	{
+		Logging.log(this, "Checking necessity of this cluster");
 		// no further external candidates available/known (all candidates are gone) or has the last local inferior coordinator left the area?
 		if ((countConnectedClusterMembers() < 1 /* do we still have cluster members? */) || (mInferiorLocalCoordinators.size() == 0 /* has the last local coordinator left this cluster? */)){
+			Logging.log(this, "checkClusterNecessity() detected an unneeded cluster");
+			
 			/**
 			 * TRIGGER: cluster invalid
 			 */
@@ -1055,7 +1058,7 @@ public class Cluster extends ClusterMember
 			Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
 			LinkedList<ComChannel> tcomChannels = getComChannels();
 			for(ComChannel tComChannel: tcomChannels){
-				Logging.log(this, "     ..canceling: " + tComChannel);
+				Logging.log(this, "     ..cancelling: " + tComChannel);
 				/**
 				 * Check if we have already received an ACK for the ClusterMembershipRequest packet
 				 */

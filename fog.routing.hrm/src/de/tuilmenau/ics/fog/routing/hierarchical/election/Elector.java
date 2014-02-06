@@ -1361,9 +1361,9 @@ public class Elector implements Localization
 	 */
 	private void leaveReturnOnNewPeerPriority(ComChannel pComChannel, SignalingMessageElection pCausingPacket)
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-			Logging.log(this, "LEAVE/RETURN because of new priority from: " + pComChannel);
-		}
+//		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+			Logging.log(this, "leaveReturnOnNewPeerPriority() by " + pCausingPacket + " for: " + pComChannel);
+//		}
 
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
@@ -1401,6 +1401,10 @@ public class Elector implements Localization
 								//we skip returnToAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority()) here because this step was already processed based on the already received RESIGN, a priority update doesn't change anything
 							}
 						}else{
+//							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+								Logging.log(this, "    ..leaveReturnOnNewPeerPriority() for unfinished election");
+//							}
+							
 							/***********************************
 							 * NOT ELECTED:
 							 ***********************************/
@@ -1420,9 +1424,9 @@ public class Elector implements Localization
 									 * don't leave this election: is the parent the alternative?
 									 */ 
 									if(!mParent.equals(tActiveClusterMembership)){
-										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-											Logging.log(this, "      ..leave all alternative election processes in relation to foreign election: " + tElectorClusterMember);
-										}
+//										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+											Logging.log(this, "    ..leaveReturnOnNewPeerPriority() triggers leaveWorseAlternativeElections for all alternative election processes in relation to foreign election: " + tElectorClusterMember);
+//										}
 										tElectorClusterMember.leaveWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()_2 for " + pCausingPacket);
 									}
 								}								
