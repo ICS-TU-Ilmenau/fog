@@ -4037,11 +4037,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 						}
 						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
-validateAllResults();
-//							autoActivateAddressDistribution();
+							autoActivateAddressDistribution();
 						}
 						if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
-//							autoActivateReportingSharing();
+							autoActivateReportingSharing();
 						}
 					}
 				}
@@ -4201,7 +4200,7 @@ validateAllResults();
 				 */
 				if(tCoordinator.getHierarchyLevel().isHighest()){
 					Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-					if(!getNodeGUIName().equals("node7")){
+					if(!getNodeGUIName().equals("node6")){
 						tResult = false;
 					}
 
