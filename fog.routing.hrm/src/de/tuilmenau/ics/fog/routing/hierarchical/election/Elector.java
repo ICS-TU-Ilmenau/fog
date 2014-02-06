@@ -197,7 +197,7 @@ public class Elector implements Localization
 				
 				mParentIsActiveMember = true;
 			}else{
-				Logging.log(this, "    ..NOT added");
+				Logging.log(this, "    ..NOT added because it was added in a previous turn");
 			}
 		}
 	}
@@ -1116,7 +1116,7 @@ public class Elector implements Localization
 										// we have found a local cluster member which belongs to the same cluster like we do
 									}
 								}else{
-									Logging.log(this, "leaveWorseAlternativeElections() aborted (same cluster!) for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+									Logging.log(this, "leaveWorseAlternativeElections() aborted (same entity!) for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
 									// we have found this election process
 								}
 							}else{
