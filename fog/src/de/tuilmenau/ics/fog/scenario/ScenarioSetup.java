@@ -73,6 +73,10 @@ public class ScenarioSetup
 					case 44: scenario44(sim); break;
 					case 45: scenario45(sim); break;
 
+					case 53: scenario53(sim); break;
+					case 54: scenario54(sim); break;
+					case 55: scenario55(sim); break;
+
 					case 88: scenario88(sim); break;
 					case 89: scenario89(sim); break;
 					case 90: scenario90(sim); break;
@@ -435,6 +439,27 @@ public class ScenarioSetup
 		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 5, 2, tDataRate);
 	}
 
+	public static void scenario53(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+	
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 3, 1, tDataRate);
+	}
+
+	public static void scenario54(Simulation pSim) // Thomas for testing/evaluating HRM
+	{ 
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 4, 1, tDataRate);
+	}
+
+	public static void scenario55(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 5, 1, tDataRate);
+	}
+
 	public static void scenario3(Simulation pSim)
 	{
 		pSim.executeCommand("@ - create as default");
@@ -482,6 +507,39 @@ public class ScenarioSetup
 	}
 
 
+	public static void scenarioMesh(Simulation pSim, String pAsName, String pBusDescriptor, int pStartNode, int pNumberOuterNodes, int pNumberRedundantLinks, long pDataRate)
+	{
+		pSim.executeCommand("@ - create as " + pAsName);
+		pSim.executeCommand("switch " + pAsName);
+
+		for(int i = pStartNode; i <= (pStartNode + pNumberOuterNodes - 1); i++) {
+			String tNodeName = "node" + i;
+			pSim.executeCommand("create node " + tNodeName);
+			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(pSim);
+			try {
+				tNMS.setNodeASName(tNodeName, pAsName);
+			} catch (RemoteException tExc) {
+				tExc.printStackTrace();
+			}
+		}
+		for(int i = pStartNode; i <= (pStartNode + pNumberOuterNodes - 1); i++) {
+			for(int j = i + 1; j <= (pStartNode + pNumberOuterNodes - 1); j++){
+				for(int k = 1; k < pNumberRedundantLinks + 1; k++){
+					String tBusName = pBusDescriptor + i + "_" + j;
+					if(k > 0){
+						tBusName += "#" + j;
+					}
+					if(pDataRate > 0)
+						pSim.executeCommand("create bus " + tBusName + " " + Long.toString(pDataRate));
+					else
+						pSim.executeCommand("create bus " + tBusName);
+	
+					pSim.executeCommand("connect node" + i + " " + tBusName);
+					pSim.executeCommand("connect node" + j + " " + tBusName);
+				}
+			}
+		}
+	}
 
 	/**
 	 * Create a star topology
