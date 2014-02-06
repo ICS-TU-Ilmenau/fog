@@ -3801,31 +3801,35 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			public void run()
 			{
-				Thread.currentThread().setName("NeighborConnector@" + tHRMController.getNodeGUIName() + " for " + pNeighborL2Address);
-
-				/**
-				 * Create/get the cluster on base hierarchy level
-				 */
 				Cluster tParentCluster = null;
-				synchronized (mLocalNetworkInterfaces) {
+				
+				// synchronized access to HRMController instance in order to avoid simultaneous/concurrent L0 cluster creation for the same network interface
+				synchronized (tHRMController) {
+					Thread.currentThread().setName("NeighborConnector@" + tHRMController.getNodeGUIName() + " for " + pNeighborL2Address);
+	
 					/**
-					 * add the network interface to the database about known network interfaces
+					 * Create/get the cluster on base hierarchy level
 					 */
-					if(!mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
-						Logging.log(this, "\n######### Detected new network interface: " + pInterfaceToNeighbor);
-						mLocalNetworkInterfaces.add(pInterfaceToNeighbor);
+					synchronized (mLocalNetworkInterfaces) {
+						/**
+						 * add the network interface to the database about known network interfaces
+						 */
+						if(!mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
+							Logging.log(this, "\n######### Detected new network interface: " + pInterfaceToNeighbor);
+							mLocalNetworkInterfaces.add(pInterfaceToNeighbor);
+						}
+						
+						/**
+						 * increase the ref. coutner for this network interface
+						 */
+						Integer tRefCount = mLocalNetworkInterfacesRefCount.get(pInterfaceToNeighbor);
+						if(tRefCount == null){
+							tRefCount = new Integer(1);
+						}else{
+							tRefCount++;
+						}
+						mLocalNetworkInterfacesRefCount.put(pInterfaceToNeighbor, tRefCount);
 					}
-					
-					/**
-					 * increase the ref. coutner for this network interface
-					 */
-					Integer tRefCount = mLocalNetworkInterfacesRefCount.get(pInterfaceToNeighbor);
-					if(tRefCount == null){
-						tRefCount = new Integer(1);
-					}else{
-						tRefCount++;
-					}
-					mLocalNetworkInterfacesRefCount.put(pInterfaceToNeighbor, tRefCount);
 					
 					//HINT: we make sure that we use only one Cluster object per Bus
 					Cluster tExistingCluster = getBaseHierarchyLevelCluster(pInterfaceToNeighbor);
@@ -4222,7 +4226,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				if(tCoordinator.getHierarchyLevel().isHighest()){
 					Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-					if(!getNodeGUIName().equals("node6")){
+					if(!getNodeGUIName().equals("node7")){
 						tResult = false;
 					}
 
