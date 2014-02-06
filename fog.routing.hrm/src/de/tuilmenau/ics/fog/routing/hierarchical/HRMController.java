@@ -382,19 +382,28 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 	/**
 	 * Stores a time for the next check for deprecated CoordinatorProxy instances -> allows for a pausing of autoRemoveObsoleteCoordinatorProxies() after re-enabling the AnnounceCoordinator messages
+	 * This value is not part of the concept. It is only used for debugging purposes and measurement speedup. 
 	 */
 	private static double sNextCheckForDeprecatedCoordinatorProxies = 0;
 	
 	/**
 	 * Stores if the simulation was restarted and the global NMS should be reset
+	 * This value is not part of the concept. It is only used for debugging purposes and measurement speedup. 
 	 */
 	private static boolean sResetNMS = false;
 	
 	/**
 	 * Stores if the results were already validated
+	 * This value is not part of the concept. It is only used for debugging purposes and measurement speedup. 
 	 */
 	private boolean mResultsValidated = false;
-	
+
+	/**
+	 * Stores if a warning about hierarchy changes was already sent to debug output
+	 * This value is not part of the concept. It is only used for debugging purposes and measurement speedup. 
+	 */
+	private boolean mWarnedAboutHierarchyChange = false;
+
 	/**
 	 * @param pNode the node on which this controller is running
 	 * @param pHierarchicalRoutingService the parent hierarchical routing service instance
@@ -3205,7 +3214,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * EVENT: hierarchy data changed
 	 */
-	boolean mWarnedAboutHierarchyChange = false;
 	private void eventHierarchyDataChanged()
 	{
 		/**
@@ -3776,6 +3784,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pInterfaceToNeighbor the network interface to the neighbor 
 	 * @param pNeighborL2Address the L2 address of the detected physical neighbor's first FN towards the common bus.
 	 */
+	@SuppressWarnings("unused")
 	public synchronized void eventDetectedPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, final L2Address pNeighborL2Address)
 	{
 		Logging.log(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
