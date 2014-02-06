@@ -83,6 +83,7 @@ public class ScenarioSetup
 					case 89: scenario89(sim); break;
 					case 90: scenario90(sim); break;
 					case 91: scenario91(sim); break;
+					case 92: scenario92(sim); break;
 					
 					// emulator scenario
 					case 99: emulator(sim); break;
@@ -248,6 +249,31 @@ public class ScenarioSetup
 		pSim.executeCommand("connect node13 " +tInterNetworkBusName);
 	}
 	
+	public static void scenario92(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		pSim.executeCommand("@ - create as " + DEFAULT_AS_NAME);
+		pSim.executeCommand("switch " + DEFAULT_AS_NAME);
+		pSim.executeCommand("create node node1");
+		pSim.executeCommand("create node node2");
+		pSim.executeCommand("create bus link1_2 1000000");
+		pSim.executeCommand("connect node1 link1_2");
+		pSim.executeCommand("connect node2 link1_2");
+		pSim.executeCommand("create node node3");
+		pSim.executeCommand("create bus link2_3#1 11000");
+		pSim.executeCommand("connect node2 link2_3#1");
+		pSim.executeCommand("connect node3 link2_3#1");
+		pSim.executeCommand("create bus link2_3#2 54000");
+		pSim.executeCommand("connect node2 link2_3#2");
+		pSim.executeCommand("connect node3 link2_3#2");
+		pSim.executeCommand("create node node4");
+		pSim.executeCommand("create bus link3_4 1000000");
+		pSim.executeCommand("connect node3 link3_4");
+		pSim.executeCommand("connect node4 link3_4");
+		pSim.executeCommand("create bus link1_4 100000");
+		pSim.executeCommand("connect node1 link1_4");
+		pSim.executeCommand("connect node4 link1_4");
+	}
+
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
 	{
 		scenarioLine(sim, asName, numberNodes);
