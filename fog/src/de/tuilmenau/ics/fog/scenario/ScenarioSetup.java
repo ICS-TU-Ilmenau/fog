@@ -76,6 +76,8 @@ public class ScenarioSetup
 					case 53: scenario53(sim); break;
 					case 54: scenario54(sim); break;
 					case 55: scenario55(sim); break;
+					case 56: scenario56(sim); break;
+					case 57: scenario57(sim); break;
 
 					case 88: scenario88(sim); break;
 					case 89: scenario89(sim); break;
@@ -458,6 +460,20 @@ public class ScenarioSetup
 		long tDataRate = 100 * 1000;
 		
 		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 5, 1, tDataRate);
+	}
+
+	public static void scenario56(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 6, 1, tDataRate);
+	}
+
+	public static void scenario57(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 7, 1, tDataRate);
 	}
 
 	public static void scenario3(Simulation pSim)
