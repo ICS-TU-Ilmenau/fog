@@ -658,23 +658,45 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// the HRM message
 		SignalingMessageHrm tHRMMessage = null;
 		
+		// the reference packet type for which we account
+		Class<?> tRefPacketType = null;
+
+		/**
+		 * 0.) AnnouncePhysicalEndPoint
+		 */
+		if(pPacket instanceof AnnouncePhysicalEndPoint){
+			AnnouncePhysicalEndPoint tAnnouncePhysicalEndPoint = (AnnouncePhysicalEndPoint)pPacket;	 
+			
+			// get the reference packet type for which we account
+			tRefPacketType = tAnnouncePhysicalEndPoint.getClass();
+		}
+		
+		/**
+		 * 1.) Basic signaling message of HRM
+		 */
 		if(pPacket instanceof SignalingMessageHrm){
 			// get the encapsulated HRM message
 			tHRMMessage = (SignalingMessageHrm) pPacket;			
+
+			// get the reference packet type for which we account
+			tRefPacketType = tHRMMessage.getClass();
 		}
 		
+		/**
+		 * 2.) Encapsulated signaling message of HRM between two HRM entities
+		 */
 		if(pPacket instanceof MultiplexHeader){
 			// get a reference to the multiplex header
 			MultiplexHeader tMultiplexHeader = (MultiplexHeader)pPacket;
 			
 			// get the encapsulated HRM message
 			tHRMMessage = tMultiplexHeader.getPayload();
+
+			// get the reference packet type for which we account
+			tRefPacketType = tHRMMessage.getClass();
 		}
 
-		if(tHRMMessage != null){
-			// the reference packet type for which we account
-			Class<?> tRefPacketType = tHRMMessage.getClass();
-			
+		if(tRefPacketType != null){
 			synchronized (mSentNetworkPackets) {
 				Integer tSentPacketsOfThisType = new Integer(0);
 				if(mSentNetworkPackets.containsKey(tRefPacketType)){

@@ -277,12 +277,20 @@ public class Elector implements Localization
 		// do we know more than 0 external cluster members?
 		if (mParent.countConnectedRemoteClusterMembers() > 0){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "Trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
+				Logging.log(this, "elect()-trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
 			}
 			distributeELECT();
 		}else{
-			// we don'T have external members - but do we have local members?
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "elect()-don't have external cluster members");
+			}
+			
+			// we don't have external members - but do we have local members?
 			if(mParent.countConnectedClusterMembers() > 0){					
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					Logging.log(this, "elect()-having " + mParent.countConnectedClusterMembers() + " local cluster members");
+				}
+				
 				/**
 				 * Send a priority update to all local cluster members
 				 */
@@ -399,7 +407,7 @@ public class Elector implements Localization
 	 */
 	public void eventLostCandidate(ComChannel pComChannelToCandidate)
 	{
-		//nothing to be done
+		Logging.log(this, "Lost election candidate: " + pComChannelToCandidate);
 	}
 
 	/**
@@ -609,7 +617,7 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * SEND: start the election by signaling ELECT to all cluster members
+	 * SEND: start the election by signaling ELECT to all cluster members, triggered by elect()
 	 */
 	private void distributeELECT()
 	{
@@ -1490,7 +1498,7 @@ public class Elector implements Localization
 	private synchronized void eventElectionWon(String pCause)
 	{
 		if ((!isWinner()) || (!finished())){
-			Logging.log(this, "ELECTION WON for cluster " + mParent);
+			Logging.log(this, "ELECTION WON for cluster " + mParent +", cause=" + pCause);
 			
 			// mark as election winner
 			mElectionWon = true;
@@ -1541,7 +1549,7 @@ public class Elector implements Localization
 	 */
 	private synchronized void eventElectionLost(String pCause)
 	{
-		Logging.log(this, "ELECTION LOST for cluster " + mParent);
+		Logging.log(this, "ELECTION LOST for cluster " + mParent +", cause=" + pCause);
 	
 		// store the old election result
 		boolean tWasFormerWinner = mElectionWon;
@@ -1760,9 +1768,9 @@ public class Elector implements Localization
 	 */
 	private void eventReceivedREPLY(ComChannel pSourceComChannel, ElectionReply pReplyPacket)
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+//		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "EVENT: received REPLY by " + pReplyPacket + " via: " + pSourceComChannel);
-		}
+//		}
 
 		/**
 		 * check for a winner
@@ -2106,6 +2114,7 @@ public class Elector implements Localization
 		boolean tIsWinner = true;
 		boolean tElectionComplete = true;
 		ComChannel tExternalWinner = null;
+		long tExternalWinnerPriority = -2;
 		boolean DEBUG = false;
 		
 		if(mState == ElectorState.ELECTING){
@@ -2154,6 +2163,7 @@ public class Elector implements Localization
 									Logging.log(this, "		   ..found better candidate: " + tComChannel);
 								}
 								tExternalWinner = tComChannel;
+								tExternalWinnerPriority = tComChannel.getPeerPriority().getValue();
 								tIsWinner = false;
 							}
 						}
@@ -2174,7 +2184,7 @@ public class Elector implements Localization
 								}else{
 									Logging.err(this, "External winner is unknown but also I am not the winner");
 								}
-								eventElectionLost("checkForWinner() [" + tActiveChannels.size() + " active channels, winner: " + tExternalWinner + "]\n   ^^^^" + pCause);
+								eventElectionLost("checkForWinner() [" + tActiveChannels.size() + " active channels, winner[prio: " + tExternalWinnerPriority + "]: " + tExternalWinner + "]\n   ^^^^" + pCause);
 							}
 						}else{
 							Logging.log(this, "	        ..incomplete election");

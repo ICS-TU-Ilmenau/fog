@@ -280,6 +280,15 @@ public class ComSession extends Session
 							tConnectionEndPoint.setPacketTraceRouting(tTraceRoutePacket);
 						}
 					}
+					
+					/**
+					 * Account network traffic
+					 */
+					mHRMController.accountSentPacket(pData);
+
+					/**
+					 * Actually, send the packet
+					 */
 					mParentConnection.write(pData);
 					tResult = true;
 				} catch (NetworkException tExc) {
