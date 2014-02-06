@@ -2134,37 +2134,47 @@ public class Elector implements Localization
 							Logging.log(this, "   ..searching for highest priority...");
 						}
 						for(ComChannel tComChannel : tActiveChannels) {
-							ElectionPriority tPriority = tComChannel.getPeerPriority(); 
+							ElectionPriority tPriority = tComChannel.getPeerPriority();
 							
 							/**
-							 * are we still waiting for the Election priority of some cluster member?
+							 * Only external cluster members can prevent us from winning this election!
+							 * A local cluster member has always the same priority as we have.
 							 */
-							if ((tPriority == null) || (tPriority.isUndefined())){
-								if(DEBUG){
-									Logging.log(this, "		   ..missing peer priority for: " + tComChannel);
+							if(tComChannel.toRemoteNode()){								
+								/**
+								 * are we still waiting for the Election priority of some cluster member?
+								 */
+								if ((tPriority == null) || (tPriority.isUndefined())){
+									if(DEBUG){
+										Logging.log(this, "		   ..missing peer priority for: " + tComChannel);
+									}
+									
+									// election is incomplete
+									tElectionComplete = false;
+								
+									// leave the loop because we already known that the election is incomplete
+									break;
 								}
 								
-								// election is incomplete
-								tElectionComplete = false;
-							
-								// leave the loop because we already known that the election is incomplete
-								break;
-							}
-							
-							if(DEBUG){
-								Logging.log(this, "		..cluster member " + tComChannel + " has priority " + tPriority.getValue());
-							}
-							
-							/**
-							 * compare our priority with each priority of a cluster member 
-							 */
-							if(!havingHigherPrioriorityThan(tComChannel, CHECK_LINK_STATE)) {
 								if(DEBUG){
-									Logging.log(this, "		   ..found better candidate: " + tComChannel);
+									Logging.log(this, "		..cluster member " + tComChannel + " has priority " + tPriority.getValue());
 								}
-								tExternalWinner = tComChannel;
-								tExternalWinnerPriority = tComChannel.getPeerPriority().getValue();
-								tIsWinner = false;
+								
+								/**
+								 * compare our priority with each priority of a cluster member 
+								 */
+								if(!havingHigherPrioriorityThan(tComChannel, CHECK_LINK_STATE)) {
+									if(DEBUG){
+										Logging.log(this, "		   ..found better candidate: " + tComChannel);
+									}
+									tExternalWinner = tComChannel;
+									tExternalWinnerPriority = tComChannel.getPeerPriority().getValue();
+									tIsWinner = false;
+								}
+							}else{
+								if(DEBUG){
+									Logging.log(this, "		..found local coordinator as cluster member " + tComChannel + " with priority " + tPriority.getValue());
+								}
 							}
 						}
 						
