@@ -1768,9 +1768,9 @@ public class Elector implements Localization
 	 */
 	private void eventReceivedREPLY(ComChannel pSourceComChannel, ElectionReply pReplyPacket)
 	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+//		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "EVENT: received REPLY by " + pReplyPacket + " via: " + pSourceComChannel);
-		}
+//		}
 
 		/**
 		 * check for a winner
