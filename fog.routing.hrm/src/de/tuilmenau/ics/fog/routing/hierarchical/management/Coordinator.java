@@ -206,7 +206,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				if(tCoordinatorAsClusterMember.isThisEntityValid()){
 					if(tCoordinatorAsClusterMember.getComChannelToClusterHead() != null){
 						// plausibility check if we actually use an active link
-						if(tCoordinatorAsClusterMember.getComChannelToClusterHead().isLinkActive()){
+						if(tCoordinatorAsClusterMember.getComChannelToClusterHead().isLinkActiveForElection()){
 							superiorCoordinatorComChannel().sendPacket(pPacket);
 						}else{
 							Logging.err(this, "sendSuperiorCoordinator() expected an active link, link is: " + superiorCoordinatorComChannel() + ", dropping: " + pPacket);
@@ -311,7 +311,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					/**
 					 * Only proceed if the link is actually active
 					 */
-					if(tComChannel.isLinkActive()){
+					if(tComChannel.isLinkActiveForElection()){
 						RoutingTable tSharedRoutingTable = new RoutingTable();
 						HRMID tPeerHRMID = tComChannel.getPeerHRMID();
 						if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){

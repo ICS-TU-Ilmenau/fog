@@ -212,9 +212,9 @@ public class ComChannel
 	private int mSentPackets = 0;
 	
 	/**
-	 * Stores if this comm. channel is end-point of an active HRM link between the parent and the peer
+	 * Stores if this comm. channel is end-point of an active HRM link between the parent and the peer, active for election and topology distribution
 	 */
-	private boolean mLinkActivation = true;
+	private boolean mLinkActiveForElection = true;
 	
 	/**
 	 * Stores a description about all link activation changes
@@ -1801,16 +1801,16 @@ public class ComChannel
 	}
 
 	/**
-	 * (De-)activates the HRM link.
+	 * (De-)activates the HRM link for election and later topology distribution
 	 * 
 	 * @param pState the new state
 	 * @param pCause describes the cause for this change
 	 */
-	public void setLinkActivation(boolean pState, String pCause)
+	public void setLinkActivationForElection(boolean pState, String pCause)
 	{
-		Logging.log(this, "Updating link activation from: " + mLinkActivation + " to: " + pState);
+		Logging.log(this, "Updating link activation from: " + mLinkActiveForElection + " to: " + pState);
 
-		mLinkActivation = pState;
+		mLinkActiveForElection = pState;
 		
 //		if(HRMConfig.DebugOutput.MEMORY_CONSUMING_OPERATIONS){
 			mDesccriptionLinkActivation += "\n ..[" +pState +"] <== " + pCause;
@@ -1828,13 +1828,13 @@ public class ComChannel
 	}
 	
 	/**
-	 * Returns true if the parent and the peer use actively this link for HRM topology distribution (e.g., a cluster member is link to a cluster)
+	 * Returns true if the parent and the peer use actively this link for election and topology distribution (e.g., a cluster member is link to a cluster)
 	 * 
 	 * @return true or false
 	 */
-	public boolean isLinkActive()
+	public boolean isLinkActiveForElection()
 	{
-		return mLinkActivation;
+		return mLinkActiveForElection;
 	}	
 	
 	/**
@@ -1844,6 +1844,6 @@ public class ComChannel
 	 */
 	public String toString()
 	{
-		return getClass().getSimpleName() + "@" + mParent.toString() + "(Peer="+ (getPeerL2Address() != null ? (getPeer() != null ? getPeer() : getPeerL2Address()) + ", PeerHRMID=" + getPeerHRMID() : "") + ", " + mChannelState.toString() + ", " + (mLinkActivation ? "ActiveLINK" : "InactiveLINK") + ")";
+		return getClass().getSimpleName() + "@" + mParent.toString() + "(Peer="+ (getPeerL2Address() != null ? (getPeer() != null ? getPeer() : getPeerL2Address()) + ", PeerHRMID=" + getPeerHRMID() : "") + ", " + mChannelState.toString() + ", " + (mLinkActiveForElection ? "ActiveLINK" : "InactiveLINK") + ")";
 	}
 }

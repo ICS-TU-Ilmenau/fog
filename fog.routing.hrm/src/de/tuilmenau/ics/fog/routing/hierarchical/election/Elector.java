@@ -813,7 +813,7 @@ public class Elector implements Localization
 				 * Update local link activation
 				 */
 				Logging.log(this, "  ..activating link(updateElectionParticipation): " + pComChannel + ", cause=" + "RETURN[" + tElectionReturnPacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
-				pComChannel.setLinkActivation(pState, "RETURN[" + tElectionReturnPacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
+				pComChannel.setLinkActivationForElection(pState, "RETURN[" + tElectionReturnPacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 	
 				/**
 				 * Signal to peer
@@ -841,7 +841,7 @@ public class Elector implements Localization
 				 * Update local link activation
 				 */
 				Logging.log(this, "  ..deactivating link(updateElectionParticipation): " + pComChannel+ ", cause=" + "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
-				pComChannel.setLinkActivation(pState, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
+				pComChannel.setLinkActivationForElection(pState, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 	
 				/**
 				 * Signal to peer
@@ -869,7 +869,7 @@ public class Elector implements Localization
 	private void eventCoordinatorLeftAllPossibleElections()
 	{
 		if(mParent instanceof CoordinatorAsClusterMember){
-			Logging.log(this, "EVENT: coordinator left all possible elections");
+			Logging.warn(this, "EVENT: coordinator left all possible elections");
 		}else{
 			Logging.err(this, "Expected a CoordinatorAsClustermember as parent, error in state machine, parent is: " + mParent);
 		}
@@ -908,7 +908,7 @@ public class Elector implements Localization
 						/**
 						 * Have we found a sibling with still active election participation?
 						 */
-						if(tLevelClusterMember.getComChannelToClusterHead().isLinkActive()){
+						if(tLevelClusterMember.getComChannelToClusterHead().isLinkActiveForElection()){
 							// update result
 							tResult = true;
 							
@@ -949,7 +949,7 @@ public class Elector implements Localization
 		if(tChannels.size() == 1){
 			ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 
-			if(tComChannelToPeer.isLinkActive()){
+			if(tComChannelToPeer.isLinkActiveForElection()){
 				updateElectionParticipation(tComChannelToPeer, false, this + "::distributeLEAVE()\n   ^^^^" + pCause);
 			}else{
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
@@ -983,7 +983,7 @@ public class Elector implements Localization
 			if(tChannels.size() == 1){
 				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 				
-				if(!tComChannelToPeer.isLinkActive()){
+				if(!tComChannelToPeer.isLinkActiveForElection()){
 					Logging.log(this, "   ..distributeRETURN() - enforcing a REACTIVATION of this link, cause=" + pCause);
 					updateElectionParticipation(tComChannelToPeer, true, this + "::distributeRETURN()\n   ^^^^" + pCause);
 				}else{
@@ -1283,7 +1283,7 @@ public class Elector implements Localization
 										// check if this election has a valid coordinator
 										if(tLevelClusterMember.hasClusterValidCoordinator()){
 											// is this ClusterMember still a participant of this election?
-											if(tLevelClusterMember.getComChannelToClusterHead().isLinkActive()){
+											if(tLevelClusterMember.getComChannelToClusterHead().isLinkActiveForElection()){
 												tStillAnAlternativeElectionWithValidCoordinatorExists = true;
 												break;
 											}
@@ -1368,7 +1368,7 @@ public class Elector implements Localization
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
 			if(mParent.getHierarchyLevel().isHigherLevel()){
-				if((mParent instanceof Cluster) || (mParent.getComChannelToClusterHead().isLinkActive())){
+				if((mParent instanceof Cluster) || (mParent.getComChannelToClusterHead().isLinkActiveForElection())){
 					/**
 					 * AVOID multiple LEAVES/RETURNS
 					 */
@@ -1609,13 +1609,13 @@ public class Elector implements Localization
 		}
 
 		// check if the link state has changed	
-		if(pComChannel.isLinkActive()){
+		if(pComChannel.isLinkActiveForElection()){
 			/**
 			 * deactivate the link for the remote cluster member
 			 */
 			if(head()){
 				Logging.log(this, "  ..deactivating link(eventReceivedLEAVE): " + pComChannel);
-				pComChannel.setLinkActivation(false, "LEAVE[" + pLeavePacket.getOriginalMessageNumber() + "] received");
+				pComChannel.setLinkActivationForElection(false, "LEAVE[" + pLeavePacket.getOriginalMessageNumber() + "] received");
 
 				LinkedList<ComChannel> tActiveChannels = mParent.getActiveLinks();
 				
@@ -1658,13 +1658,13 @@ public class Elector implements Localization
 		}
 		
 		// check if the link state has changed	
-		if(!pComChannel.isLinkActive()){
+		if(!pComChannel.isLinkActiveForElection()){
 			/**
 			 * activate the link for the remote cluster member 
 			 */
 			if(head()){
 				Logging.log(this, "  ..activating link(eventReceivedRETURN): " + pComChannel);
-				pComChannel.setLinkActivation(true, "RETURN[" + pReturnPacket.getOriginalMessageNumber() + "] received");
+				pComChannel.setLinkActivationForElection(true, "RETURN[" + pReturnPacket.getOriginalMessageNumber() + "] received");
 
 				// are we the winner?
 //				if(isWinner()){
@@ -1818,10 +1818,10 @@ public class Elector implements Localization
 			 * 		a.) the link is active
 			 * 		b.) we don't have a valid ACTIVe ClusterMember for this hierarchy level at the moment 
 			 */
-			if((pComChannel.isLinkActive()) || (tActiveClusterMemberships == null) || (tActiveClusterMemberships.isEmpty())){
+			if((pComChannel.isLinkActiveForElection()) || (tActiveClusterMemberships == null) || (tActiveClusterMemberships.isEmpty())){
 				Logging.log(this, "    ..we received the ANNOUNCE via an active link, packet=" + pAnnouncePacket);
 
-				if (!pComChannel.isLinkActive()){
+				if (!pComChannel.isLinkActiveForElection()){
 					Logging.log(this, "    ..found a possible superior coordinator, enforcing REACTIVATION of this link, packet=" + pAnnouncePacket);
 					updateElectionParticipation(pComChannel, true, this + "::eventReceivedANNOUNCE()\n   ^^^^announce packet=" + pAnnouncePacket);					
 				}
@@ -1885,7 +1885,7 @@ public class Elector implements Localization
 			/**
 			 * For an active link we do extended processing of this event for distributed election 
 			 */
-			if(pComChannel.isLinkActive()){
+			if(pComChannel.isLinkActiveForElection()){
 				Logging.log(this, "    ..we received the RESIGN via an ACTIVE LINK");
 
 				// return to best alternative election process because we have lost the active superior coordinator on this hierarchy level
@@ -1938,7 +1938,7 @@ public class Elector implements Localization
 			/**
 			 * React only if the link is active
 			 */
-			if(pComChannel.isLinkActive()){
+			if(pComChannel.isLinkActiveForElection()){
 				/**
 				 * Have we already won the election and the new priority still lower than ours?
 				 */
@@ -2419,7 +2419,7 @@ public class Elector implements Localization
 		 */
 		if(HRMConfig.Election.USE_LINK_STATES){
 			if (!pIgnoreLinkState){
-				if (!pComChannelToPeer.isLinkActive()){
+				if (!pComChannelToPeer.isLinkActiveForElection()){
 					return true;
 				}
 			}

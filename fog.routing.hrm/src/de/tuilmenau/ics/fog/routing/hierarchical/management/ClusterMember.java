@@ -935,7 +935,7 @@ public class ClusterMember extends ClusterName
 			 */
 			boolean tIsAllowedToUseThisChannel = true;
 			if(pCheckLinkActivation){
-				tIsAllowedToUseThisChannel = tComChannel.isLinkActive();
+				tIsAllowedToUseThisChannel = tComChannel.isLinkActiveForElection();
 			}
 			
 			/**
@@ -1025,7 +1025,7 @@ public class ClusterMember extends ClusterName
 		LinkedList<ComChannel> tComChannels = getComChannels();
 		
 		for(ComChannel tComChannel : tComChannels) {
-			if(tComChannel.isLinkActive()){
+			if(tComChannel.isLinkActiveForElection()){
 				tResult.add(tComChannel);
 			}
 		}
