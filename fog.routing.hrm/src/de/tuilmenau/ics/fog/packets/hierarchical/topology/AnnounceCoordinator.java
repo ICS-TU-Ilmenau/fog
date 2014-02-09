@@ -92,9 +92,9 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	private L2Address mCoordinatorNodeL2Address = new L2Address(0);
 	
 	/**
-	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
+	 * Time to announce: stores the current "TTL value". If it reaches 0, the packet will be dropped
 	 */
-	private long mTTL = HRMConfig.Hierarchy.RADIUS;
+	private long mTTA = HRMConfig.Hierarchy.RADIUS;
 	
 	/**
 	 * Stores the logical hop count for the stored route 
@@ -288,19 +288,19 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	}
 	
 	/**
-	 * Decreases the TTL value by one 
+	 * Increase hop count (decreases the TTL value by one) 
 	 */
-	public void decreaseTTL()
+	public void incHopCount()
 	{
-		mTTL--;
+		mTTA--;
 	}
 	
 	/**
-	 * Returns true if the TTL is still okay
+	 * Returns true if the TTA is still okay
 	 * 
 	 * @return true or false
 	 */
-	public boolean isTTLOkay()
+	public boolean isTTAOkay()
 	{
 		/**
 		 * Return always true for the highest hierarchy level ==> e.g., for a hierarchy height of 2, all L1 coordinators should get informed about the global L2 coordinator
@@ -317,9 +317,9 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		}
 		
 		/**
-		 * Return true depending on the TTL value
+		 * Return true depending on the TTA value
 		 */
-		return (mTTL > 0);
+		return (mTTA > 0);
 	}
 	
 	/**
@@ -354,13 +354,13 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	}
 
 	/**
-	 * Returns the current TTL value
+	 * Returns the current TTA value
 	 * 
-	 * @return the TTL value
+	 * @return the TTA value
 	 */
-	public long getTTL()
+	public long getTTA()
 	{
-		return mTTL;
+		return mTTA;
 	}
 	
 	/**
@@ -429,8 +429,8 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		
 		super.duplicate(tResult);
 
-		// update TTL
-		tResult.mTTL = getTTL();
+		// update TTA
+		tResult.mTTA = getTTA();
 		
 		// update the route to the announced cluster
 		tResult.mRoute = getRoute();
@@ -606,6 +606,6 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + getTTL() + ", SenderCluster="+ getSenderClusterName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + getTTA() + ", SenderCluster="+ getSenderClusterName() + ")";
 	}
 }
