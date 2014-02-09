@@ -202,6 +202,40 @@ public class HRMOverviewPackets extends ViewPart
 		return tResult;
 	}
 	
+	@Override
+	public void dispose()
+	{
+		mBtnResetPacketStats.dispose();
+		mAnnouncePhysicalEndPoint.dispose();
+		mMultiplexHeader.dispose();
+		mSignalingMessageHrm.dispose();
+		mProbePacket.dispose();
+		mAnnounceHRMIDs.dispose();
+		mAssignHRMID.dispose();
+		mRevokeHRMIDs.dispose();
+		mInformClusterLeft.dispose();
+		mInformClusterMembershipCanceled.dispose();
+		mRequestClusterMembership.dispose();
+		mRequestClusterMembershipAck.dispose();
+		mSignalingMessageElection.dispose();
+		mElectionAlive.dispose();
+		mElectionAnnounceWinner.dispose();
+		mElectionElect.dispose();
+		mElectionLeave.dispose();
+		mElectionPriorityUpdate.dispose();
+		mElectionReply.dispose();
+		mElectionResignWinner.dispose();
+		mElectionReturn.dispose();
+		mAnnounceCoordinator.dispose();
+		mInvalidCoordinator.dispose();
+		mRouteReport.dispose();
+		mRouteShare.dispose();
+		
+		ViewRepaintTimer = null;
+
+		super.dispose();
+	}
+	
 	/**
 	 * Create GUI
 	 */

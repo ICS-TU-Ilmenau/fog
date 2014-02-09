@@ -142,6 +142,32 @@ public class HRMOverviewHierarchy extends ViewPart
 		mShell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 	}
 
+	@Override
+	public void dispose()
+	{
+		mClusters.dispose();
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			mCreatedClusters[i].dispose();
+		}
+		mCoordinators.dispose();
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			mCreatedCoordinators[i].dispose();
+		}
+		mBtnCheckHierarchy.dispose();
+		 mBtnTopCoordinators.dispose();
+		mBtnResetEverything.dispose();
+		mGrpHierarchy.dispose();
+		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			mRunningCoordinators[i].dispose();
+		}
+		mStableHierarchyMin.dispose();
+		mStableHierarchyAvg.dispose();
+		mStableHierarchyMax.dispose();
+		ViewRepaintTimer = null;
+
+		super.dispose();
+	}
+	
 	/**
 	 * Small helper function
 	 * 

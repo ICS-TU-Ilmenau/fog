@@ -1843,6 +1843,21 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			mHRMController.unregisterGUI(this);
 		}
 		
+	    mBtnProcessorQueues.dispose();
+	    mBtnPriorityLog.dispose();
+	    mBtnClusteringLog.dispose();
+	    mBtnClusterMembersLog.dispose();
+	    mBtnHRMIDLog.dispose();
+	    mBtnHRGLog.dispose();
+	    mBtnSuperiorCoordinatorsLog.dispose();
+	    mBtnUsedClusterAddressesLog.dispose();
+	    mBtnTopologyReports.dispose();
+	    mBtnShareRoutes.dispose();
+	    mBtnClusterMembers.dispose();
+	    mBtnCoordClusterMembers.dispose();
+	    mBtnCoordAnnounce.dispose();
+	    mTableRoutingTable.dispose();
+
 		// call the original implementation
 		super.dispose();
 	}

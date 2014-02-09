@@ -158,8 +158,20 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 			
 			// terminate application
 			mQoSTestApp.exit();
+			
+			mQoSTestApp = null;
 		}
 		
+		mDestinationHRMID.dispose();
+		mConnectionCounter.dispose();
+		mConnectionWithQoSCounter.dispose();
+		mConnectionWithFeedbackCounter.dispose();
+		mBtnDelAllConns.dispose();
+		mBtnIncConns.dispose();
+	    mBtnDecConns.dispose();
+		mSpnDataRate.dispose();
+		mSpnDelay.dispose();
+
 		super.dispose();
 	}
 	

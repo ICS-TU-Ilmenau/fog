@@ -61,7 +61,8 @@ public class HRMOverviewConfig extends ViewPart
 	private Label mConfigDebugHRGViewerUpdateInterval = null;
 	
 	private static final int VIEW_UPDATE_TIME = 1000; // in ms
-		
+	
+	private Font mBigFont = null;
 	private Display mDisplay = null;
 	private Shell mShell = null;
 	public static int sUpdateLoop = 0;
@@ -121,8 +122,7 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigHierarchyAnnounceCoordinatorsInterval.setText(Double.toString(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL) + " s");
 		mConfigHierarchyHeight.setText(Integer.toString(HRMConfig.Hierarchy.HEIGHT) + " level(s)");
 		mConfigHierarchyExpansionRadius.setText(Long.toString(HRMConfig.Hierarchy.RADIUS) + " hop(s)");
-		Font tFont = new Font(mDisplay, "Arial", 10, SWT.BOLD);
-		mConfigHierarchyExpansionRadius.setFont(tFont);
+		mConfigHierarchyExpansionRadius.setFont(mBigFont);
 		mConfigHierarchyBitsPerLevel.setText(Integer.toString(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL) + " bits/lvl");
 		mConfigDebugChannelStorage.setText(Integer.toString(HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE) + " packets");
 		mConfigDebugHRMViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRM_VIEWERS_UPDATE_INTERVAL) + " s");
@@ -174,11 +174,40 @@ public class HRMOverviewConfig extends ViewPart
 		return tResult;
 	}
 	
+	@Override
+	public void dispose()
+	{
+		if(mBigFont != null){
+			mBigFont.dispose();
+		}
+		
+		ViewRepaintTimer = null;
+		
+		mUserCtrlCoordinatorAnnouncements.dispose();
+		mUserCtrlAddressDistribution.dispose();
+		mUserCtrlDistributeReports.dispose();
+		mUserCtrlDistributeShares.dispose();
+		mConfigReportSharePhaseTimeBase.dispose();
+		mConfigReportSharePhaseTimingScheme.dispose();
+		mConfigHierarchyAnnounceCoordinatorsInterval.dispose();
+		mConfigHierarchyHeight.dispose();
+		mConfigHierarchyExpansionRadius.dispose();
+		mConfigHierarchyBitsPerLevel.dispose();
+		mConfigDebugChannelStorage.dispose();
+		mConfigDebugHRMViewerUpdateInterval.dispose();
+		mConfigDebugHRGViewerUpdateInterval.dispose();
+		mBigFont.dispose();
+
+		super.dispose();
+	}
+	
 	/**
 	 * Create GUI
 	 */
 	public void createPartControl(Composite pParent)
 	{
+		mBigFont = new Font(mDisplay, "Arial", 11, SWT.BOLD);
+		
 		Color tColGray = mDisplay.getSystemColor(SWT.COLOR_GRAY); 
 		pParent.setBackground(tColGray);
 		
@@ -193,7 +222,7 @@ public class HRMOverviewConfig extends ViewPart
 		final GridData tGrpSignalingLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		tGrpSignalingLayoutData.horizontalSpan = 2;
 		Group tGrpSignaling = new Group(tContainer, SWT.SHADOW_OUT);
-		tGrpSignaling.setFont(new Font(mDisplay, "Arial", 11, SWT.BOLD));
+		tGrpSignaling.setFont(mBigFont);
 		tGrpSignaling.setText("  HRM signaling  ");
 		GridLayout tGrpSignalingLayout = new GridLayout(2, true);
 		tGrpSignalingLayout.marginWidth = 20;
@@ -215,7 +244,7 @@ public class HRMOverviewConfig extends ViewPart
 		final GridData tGrpConfigLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		tGrpConfigLayoutData.horizontalSpan = 2;
 		Group tGrpConfig = new Group(tContainer, SWT.SHADOW_OUT);
-		tGrpConfig.setFont(new Font(mDisplay, "Arial", 11, SWT.BOLD));
+		tGrpConfig.setFont(mBigFont);
 		tGrpConfig.setText("  HRM configuration  ");
 		GridLayout tGrpConfigLayout = new GridLayout(2, true);
 		tGrpConfigLayout.marginWidth = 20;
