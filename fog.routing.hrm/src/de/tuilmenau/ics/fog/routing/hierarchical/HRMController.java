@@ -4127,15 +4127,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				double tTimeWithFixedAddressesThreshold = HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 1.0 /* avoid that we hit the threshold value */;
 				//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
 				if(tTimeWithFixedAddresses > tTimeWithFixedAddressesThreshold){
-//		if(!GUI_USER_CTRL_REPORT_TOPOLOGY){
-//			Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
-//			Logging.warn(this, "+++ Activating reporting/sharing of topology data");
-//			Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
-//	
-//			GUI_USER_CTRL_REPORT_TOPOLOGY = true;
-//			
-//			// HINT: the report/share functions are triggered periodically and will start the start the reports/shares without any further setting
-//		}
+					if(!GUI_USER_CTRL_REPORT_TOPOLOGY){
+						Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
+						Logging.warn(this, "+++ Activating reporting/sharing of topology data");
+						Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
+				
+						GUI_USER_CTRL_REPORT_TOPOLOGY = true;
+						
+						// HINT: the report/share functions are triggered periodically and will start the start the reports/shares without any further setting
+					}
 					validateAllResults();
 				}
 			}
@@ -5304,7 +5304,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private RoutingEntry getRoutingEntryHRG(AbstractRoutingGraph<HRMID, AbstractRoutingGraphLink> pHRG, HRMID pFrom, HRMID pTo, String pCause, LinkedList<LinkedList<AbstractRoutingGraphLink>> pRefDeletedLinks)
 	{
-		boolean DEBUG = false;
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_HRG_ROUTING;
 		RoutingEntry tResult = null;
 		LinkedList<AbstractRoutingGraphLink> tDeletedLinks = null;
 		if(pRefDeletedLinks != null){
@@ -6121,7 +6121,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		List<AbstractRoutingGraphLink> tResult = null;
 		
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+		if (HRMConfig.DebugOutput.GUI_SHOW_HRG_ROUTING){
 			Logging.log(this, "GET ROUTE (HRG) from \"" + pSource + "\" to \"" + pDestination +"\"");
 		}
 
@@ -6129,7 +6129,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			tResult = pHRG.getRoute(pSource, pDestination);
 		}
 
-		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+		if (HRMConfig.DebugOutput.GUI_SHOW_HRG_ROUTING){
 			Logging.log(this, "        ..getRouteHRG() result: " + tResult);
 		}
 		
@@ -6187,7 +6187,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pConnection the connection where the ProbeRouting property was received 
 	 * @param pProbeRoutingProperty the property of the received incoming connection
 	 */
-	private void eventProbeRouting(Connection pConnection, ProbeRoutingProperty pProbeRoutingProperty)
+	private void eventProbeRouting(Connection pConnection, HRMRoutingProperty pProbeRoutingProperty)
 	{
 		/**
 		 * We have a probe-routing connection and will print some additional information about the taken route of the connection request
@@ -6219,7 +6219,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * check if the new connection is a probe-routing connection
 		 */
-		ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) tConnectionRequirements.get(ProbeRoutingProperty.class);
+		HRMRoutingProperty tPropProbeRouting = (HRMRoutingProperty) tConnectionRequirements.get(HRMRoutingProperty.class);
 
 		// do we have a probe-routing connection?
 		if (tPropProbeRouting == null){

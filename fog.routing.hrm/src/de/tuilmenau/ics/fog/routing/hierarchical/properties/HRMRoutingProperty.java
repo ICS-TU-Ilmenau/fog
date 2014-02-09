@@ -12,43 +12,76 @@ package de.tuilmenau.ics.fog.routing.hierarchical.properties;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This property is used to mark a probe-packet to allow the HRMController application detect this packet type
+ * This property is used for HRM based application data routing.
+ * For HRM internal routing, this property should NOT be used.
  */
-public class ProbeRoutingProperty extends AbstractProperty
+public class HRMRoutingProperty extends AbstractProperty
 {
 	private static final long serialVersionUID = 5927732011559094117L;
 	
+	/**
+	 * Time to route: recorded hop count
+	 * This value is not part of the concept. It is only used for debugging purposes and logging measurements. 
+	 */
+	private long mTTR = HRMConfig.Routing.MAX_HOP_COUNT;
+
+	/**
+	 * Recorded route
+	 * This value is not part of the concept. It is only used for debugging purposes and logging measurements. 
+	 */
 	private LinkedList<HRMID> mRecordedRoute = new LinkedList<HRMID>();
-	
-	private int mRecordedHopCount = 0;
-	
+
+	/**
+	 * Recorded delay
+	 * This value is not part of the concept. It is only used for debugging purposes and logging measurements. 
+	 */
 	private long mRecordedDelay = 0;
-	
+
+	/**
+	 * Recorded max. data rate, which is theoretically possible along the taken route
+	 * This value is not part of the concept. It is only used for debugging purposes and logging measurements. 
+	 */
 	private long mRecordedMaxDataRate = RoutingEntry.INFINITE_DATARATE;
 	
-	private long mRecordedDataRate = -1;
-	
-	private long mDesiredDelay = 0;
-	
-	private long mDesiredDataRate = 0;
-	
-	private HRMID mDestination = null;
-	
 	/**
-	 * Defines the max. hop count we allow
+	 * Recorded max. data rate, which is assigned to this flow along the taken route
+	 * This value is not part of the concept. It is only used for debugging purposes and logging measurements. 
 	 */
-	private long MAX_HOP_COUNT = 32;
-	
+	private long mRecordedDataRate = -1;
+
+	/**
+	 * The destination HRMID
+	 * This value is not part of the concept. It is only used for debugging purposes and logging measurements. 
+	 */
+	private HRMID mDestination = null;
+
 	/**
 	 * Stores the description of the source of the corresponding packet/connection
+	 * This value is not part of the concept. It is only used for debugging purposes and logging measurements. 
 	 */
 	private String mSourceDescription = null;
+
+	/**
+	 * The desired delay from the sending application
+	 */
+	private long mDesiredDelay = 0;
 	
+	/**
+	 * The desired data rate from the sending application
+	 */
+	private long mDesiredDataRate = 0;
+	
+	/**
+	 * The HRMID of the last hop
+	 */
+	private HRMID mLastHopHRMID = null;
+
 	/**
 	 * Constructor
 	 * 
@@ -56,7 +89,7 @@ public class ProbeRoutingProperty extends AbstractProperty
 	 * @param pDesiredMaxDelay the desired delay limit
 	 * @param pDesiredMinDataRate the desired data rate limit
 	 */
-	public ProbeRoutingProperty(String pSourceDescription, HRMID pDestination, long pDesiredMaxDelay, long pDesiredMinDataRate)
+	public HRMRoutingProperty(String pSourceDescription, HRMID pDestination, long pDesiredMaxDelay, long pDesiredMinDataRate)
 	{
 		mSourceDescription = pSourceDescription;
 		mDestination = pDestination;
@@ -79,12 +112,12 @@ public class ProbeRoutingProperty extends AbstractProperty
 	 * 
 	 * @param pHRMID the HRMID of the recorded hop
 	 */
-	public void addHop(HRMID pHRMID)
+	public void addRecordedHop(HRMID pHRMID)
 	{
 		synchronized (mRecordedRoute) {
 			mRecordedRoute.add(pHRMID);
-			if(mRecordedRoute.size() > MAX_HOP_COUNT){
-				Logging.err(this, "The max. hop count " + MAX_HOP_COUNT + " was reached at: " + mRecordedRoute.size() + ", passed:");
+			if(mRecordedRoute.size() > HRMConfig.Routing.MAX_HOP_COUNT){
+				Logging.err(this, "The max. hop count " + HRMConfig.Routing.MAX_HOP_COUNT + " was reached at: " + mRecordedRoute.size() + ", passed:");
 				for(HRMID tHRMID : mRecordedRoute){
 					Logging.log(this, "   .." + tHRMID);
 				}
@@ -95,9 +128,9 @@ public class ProbeRoutingProperty extends AbstractProperty
 	/**
 	 * Returns the last hop(its HRMID) of the recorded route
 	 * 
-	 * @param pHRMID the HRMID of the last hop
+	 * @param pHRMID the HRMID of the last recorded hop
 	 */
-	public HRMID getLastHop()
+	public HRMID getLastRecordedHop()
 	{
 		if (mRecordedRoute.size() > 0){
 			return mRecordedRoute.getLast();
@@ -107,13 +140,37 @@ public class ProbeRoutingProperty extends AbstractProperty
 	}
 
 	/**
+	 * Returns the HRMID of the last hop
+	 * 
+	 * @param pHRMID the HRMID of the last hop
+	 */
+	public HRMID getLastHopHRMID()
+	{
+		return mLastHopHRMID;
+	}	
+	
+	/**
 	 * Increases the recorded hop count 
 	 */
-	public void incHopCount()
+	public void incHopCount(HRMID pNewLastHopHRMID)
 	{
-		mRecordedHopCount++;
+		mTTR--;
+		mLastHopHRMID = pNewLastHopHRMID;
 	}
 
+	/**
+	 * Returns true if the TTR is still okay
+	 * 
+	 * @return true or false
+	 */
+	public boolean isTTROkay()
+	{
+		/**
+		 * Return true depending on the TTR value
+		 */
+		return (mTTR > 0);
+	}
+	
 	/**
 	 * Adds delay to the recorded delay value
 	 * 
@@ -185,9 +242,9 @@ public class ProbeRoutingProperty extends AbstractProperty
 	 * 
 	 * @return the recorded hop count
 	 */
-	public int getRecordedHopCount()
+	public long getRecordedHopCount()
 	{
-		return mRecordedHopCount;
+		return (HRMConfig.Routing.MAX_HOP_COUNT - mTTR);
 	}
 	
 	/**

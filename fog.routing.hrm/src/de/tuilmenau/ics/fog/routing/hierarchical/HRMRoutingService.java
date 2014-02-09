@@ -1069,19 +1069,24 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * Check if the link is new
 		 */
-		boolean tLinkIsNew = true;
-		if(!mRegisteredLinks.contains(pGate)){
-			mRegisteredLinks.add(pGate);
-		}else{
-			Logging.log(this, "   ..link is already known: " + pGate);
-			tLinkIsNew = false;
+		boolean tLinkIsNew = false;
+		synchronized (mRegisteredLinks) {
+			if(!mRegisteredLinks.contains(pGate)){
+				mRegisteredLinks.add(pGate);
+				tLinkIsNew = true;
+			}
+			
 		}
-
+		
 		/**
 		 * Add link to L2 specific routing graph
 		 */
-		storeL2Link(tFromL2Address, tToL2Address, new RoutingServiceLink(pGate.getGateID(), null));
-		
+		if(tLinkIsNew){
+			storeL2Link(tFromL2Address, tToL2Address, new RoutingServiceLink(pGate.getGateID(), null));
+		}else{
+			Logging.log(this, "   ..link is already known: " + pGate);
+		}
+
 		/**
 		 * DIRECT NEIGHBOR FOUND: create a HRM connection to it
 		 */
@@ -1437,6 +1442,8 @@ public class HRMRoutingService implements RoutingService, Localization
 
 		/**
 		 * Determine the desired QoS values
+		 * HINT: We use the standard FoG mechanism to determine the QoS values in order to be more compatible to FoG applications.
+		 * 		 However, the same QoS values should be stored within the HRMRoutingProperty.
 		 */
 		int tDesiredDelay = pRequirements.getDesiredDelay();
 		int tDesiredDataRate = pRequirements.getDesiredDataRate();
@@ -1469,7 +1476,18 @@ public class HRMRoutingService implements RoutingService, Localization
 			if (DEBUG){
 				Logging.log(this, "      ..HRM based routing to " + tDestHRMID);
 			}
-			
+
+			/*************************************
+			 * CHECK TTR
+			 ************************************/
+			// search for the ProbeRoutingProperty property
+			HRMRoutingProperty tHRMRoutingProp = (HRMRoutingProperty) pRequirements.get(HRMRoutingProperty.class);
+			if(tHRMRoutingProp != null){
+				if(!tHRMRoutingProp.isTTROkay()){
+					throw new RoutingException("TTR exceeded for a route to: " + pDestination + ", requirements=" + pRequirements);	
+				}
+			}
+				
 			/*************************************
 			 * CHECK NEIGHBORHOD
 			 * Check if the destination is a direct neighbor
@@ -1490,8 +1508,12 @@ public class HRMRoutingService implements RoutingService, Localization
 			 *************************************/
 			HRMID tNextHopHRMID = null;
 			HRMID tLocalSourceHRMID = null;
+			HRMID tLastHopHRMID = null;
+			if(tHRMRoutingProp != null){
+				tLastHopHRMID = tHRMRoutingProp.getLastHopHRMID();
+			}
 			boolean tDestHRMIDIsLocalHRMID = false;
-			RoutingEntry tRoutingEntryNextHop = mRoutingTable.getBestEntry(tDestHRMID, tDesiredDelay, tDesiredDataRate);
+			RoutingEntry tRoutingEntryNextHop = mRoutingTable.getBestEntry(tDestHRMID, tDesiredDelay, tDesiredDataRate, tLastHopHRMID);
 			if(tRoutingEntryNextHop != null){
 				if(!tRoutingEntryNextHop.isLocalLoop()){
 					// derive the next hop HRMID
@@ -1504,6 +1526,13 @@ public class HRMRoutingService implements RoutingService, Localization
 				// mark HRMID as local
 				tDestHRMIDIsLocalHRMID = tRoutingEntryNextHop.isLocalLoop(); 
 			}
+			/**
+			 * Increase the HOP COUNT (for TTR update)
+			 */
+			if(tHRMRoutingProp != null){
+				tHRMRoutingProp.incHopCount(tLocalSourceHRMID);
+			}	
+
 			/**
 			 * Record the HRM based route
 			 */
@@ -1963,15 +1992,15 @@ public class HRMRoutingService implements RoutingService, Localization
 			// check if we have valid requirements
 			if (pRequirements != null){
 				// search for the ProbeRoutingProperty property
-				ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) pRequirements.get(ProbeRoutingProperty.class);
-				if(tPropProbeRouting != null) {
-					HRMID tLastHopHRMID = tPropProbeRouting.getLastHop();
+				HRMRoutingProperty tHRMRoutingProp = (HRMRoutingProperty) pRequirements.get(HRMRoutingProperty.class);
+				if(tHRMRoutingProp != null) {
+					HRMID tLastRecordedHopHRMID = tHRMRoutingProp.getLastRecordedHop();
 					
 					/**
 					 * Check if last and current hop have the same HRMID
 					 */
 					boolean tDuplicate = false;
-					if ((tLastHopHRMID != null) && (tLastHopHRMID.equals(pNextHopHRMID))){
+					if ((tLastRecordedHopHRMID != null) && (tLastRecordedHopHRMID.equals(pNextHopHRMID))){
 						tDuplicate = true;
 					}
 					
@@ -1979,7 +2008,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * Store the HRMID of the current node
 					 */
 					if(pSourceHRMID != null){
-						tPropProbeRouting.addHop(pSourceHRMID);
+						tHRMRoutingProp.addRecordedHop(pSourceHRMID);
 					}
 					
 					/**
@@ -1989,18 +2018,11 @@ public class HRMRoutingService implements RoutingService, Localization
 						// don't store the same entry two times
 						if(!pNextHopHRMID.equals(pSourceHRMID)){
 							// store the HRMID
-							tPropProbeRouting.addHop(pNextHopHRMID);
+							tHRMRoutingProp.addRecordedHop(pNextHopHRMID);
 						}
 					}else{
 						// we have the same hop like last time
 					}
-					
-					/**
-					 * Increase the HOP COUNT
-					 */
-					if(pHopCount > 0){
-						tPropProbeRouting.incHopCount();
-					}					
 				}else{
 					Logging.warn(this, "Cannot record HRM Route (next=" + pNextHopHRMID + " via " + pSourceHRMID + ") because the needed property wasn't found within the requirements");
 				}
@@ -2037,7 +2059,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			// check if we have valid requirements
 			if (pRequirements != null){
 				// search for the ProbeRoutingProperty property
-				ProbeRoutingProperty tPropProbeRouting = (ProbeRoutingProperty) pRequirements.get(ProbeRoutingProperty.class);
+				HRMRoutingProperty tPropProbeRouting = (HRMRoutingProperty) pRequirements.get(HRMRoutingProperty.class);
 				if(tPropProbeRouting != null) {
 					/**
 					 * record the minimum DELAY along the route

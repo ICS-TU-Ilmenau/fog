@@ -297,10 +297,11 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	 * @param pDestination the desired destination
 	 * @param pDesiredMaxDelay the desired max. E2E delay
 	 * @param pDesiredMinDataRate the desired min. data rate
+	 * @param pForbiddenNextHopHRMID the HRMID of a forbidden next hop
 	 * 
 	 * @return the found best entry
 	 */
-	public synchronized RoutingEntry getBestEntry(HRMID pDestination, int pDesiredMaxDelay, int pDesiredMinDataRate)
+	public synchronized RoutingEntry getBestEntry(HRMID pDestination, int pDesiredMaxDelay, int pDesiredMinDataRate, HRMID pForbiddenNextHopHRMID)
 	{
 		RoutingEntry tResult = null;
 		RoutingEntry tBestResultHopCount = null;
@@ -330,62 +331,108 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				 */ 
 				if(pDestination.isCluster(tEntry.getDest())){
 					/**
-					 * BE metrics, optimize for:
-					 * 		1.) hop count
-					 * 		2.) data rate
-					 * 		3.) delay
+					 * Check if the next hop has a forbidden HRMID
 					 */
-					if(tBestResultHopCount != null){
-						if( 
-						  // better hop count?
-						  (tBestResultHopCount.getHopCount() > tEntry.getHopCount()) || 
-						  (
-						      // hop count is the same and and another criterion is better?
-							  (tBestResultHopCount.getHopCount() == tEntry.getHopCount()) && 
-							  ( 
-							      // better data rate along the route?		  
-						          (tBestResultHopCount.getMaxAvailableDataRate() < tEntry.getMaxAvailableDataRate()) ||
+					if(!tEntry.getNextHop().equals(pForbiddenNextHopHRMID)){
+						/**
+						 * BE metrics, optimize for:
+						 * 		1.) hop count
+						 * 		2.) data rate
+						 * 		3.) delay
+						 */
+						if(tBestResultHopCount != null){
+							if( 
+							  // better hop count?
+							  (tBestResultHopCount.getHopCount() > tEntry.getHopCount()) || 
+							  (
+							      // hop count is the same and and another criterion is better?
+								  (tBestResultHopCount.getHopCount() == tEntry.getHopCount()) && 
 								  ( 
-									  // date rate is also the same, but the delay is better along the route?	  
-								      (tBestResultHopCount.getMaxAvailableDataRate() == tEntry.getMaxAvailableDataRate()) && (tBestResultHopCount.getMinDelay() > tEntry.getMinDelay()) 
-								  )
+								      // better data rate along the route?		  
+							          (tBestResultHopCount.getMaxAvailableDataRate() < tEntry.getMaxAvailableDataRate()) ||
+									  ( 
+										  // date rate is also the same, but the delay is better along the route?	  
+									      (tBestResultHopCount.getMaxAvailableDataRate() == tEntry.getMaxAvailableDataRate()) && (tBestResultHopCount.getMinDelay() > tEntry.getMinDelay()) 
+									  )
+								  ) 
 							  ) 
-						  ) 
-						  ){
-							
-							if (DEBUG){
-								Logging.log(this, "      ..found better (BE) entry: " + tEntry);
+							  ){
+								
+								if (DEBUG){
+									Logging.log(this, "      ..found better (BE) entry: " + tEntry);
+								}
+	
+								tBestResultHopCount = tEntry.clone();
+							}else{
+								if (DEBUG){
+									Logging.log(this, "      ..found uninteresting (BE) entry: " + tEntry);
+								}
 							}
-
-							tBestResultHopCount = tEntry.clone();
 						}else{
 							if (DEBUG){
-								Logging.log(this, "      ..found uninteresting (BE) entry: " + tEntry);
+								Logging.log(this, "      ..found first matching (BE) entry: " + tEntry);
 							}
+	
+							tBestResultHopCount = tEntry.clone();
 						}
-					}else{
-						if (DEBUG){
-							Logging.log(this, "      ..found first matching (BE) entry: " + tEntry);
-						}
-
-						tBestResultHopCount = tEntry.clone();
-					}
-					
-					/**
-					 * QoS metrics, optimize for:
-					 * 		1.) data rate (if desired)
-					 * 		2.) delay (if desired)
-					 * 		3.) hop count 		
-					 */
-					if ((pDesiredMaxDelay > 0) || (pDesiredMinDataRate > 0)){
+						
 						/**
-						 * Determine best matching QoS related entry
+						 * QoS metrics, optimize for:
+						 * 		1.) data rate (if desired)
+						 * 		2.) delay (if desired)
+						 * 		3.) hop count 		
 						 */
-						if( 
-						  ( (pDesiredMinDataRate <= 0) || (pDesiredMinDataRate <= tEntry.getMaxAvailableDataRate()) ) /* matching data rate */ && 
-						  ( (pDesiredMaxDelay <= 0) || (pDesiredMaxDelay >= tEntry.getMinDelay()) ) /* matching delay */
-						  ){
-							if(tBestResultMatchingQoS != null){
+						if ((pDesiredMaxDelay > 0) || (pDesiredMinDataRate > 0)){
+							/**
+							 * Determine best matching QoS related entry
+							 */
+							if( 
+							  ( (pDesiredMinDataRate <= 0) || (pDesiredMinDataRate <= tEntry.getMaxAvailableDataRate()) ) /* matching data rate */ && 
+							  ( (pDesiredMaxDelay <= 0) || (pDesiredMaxDelay >= tEntry.getMinDelay()) ) /* matching delay */
+							  ){
+								if(tBestResultMatchingQoS != null){
+									/******************************************************************
+									 * condition matrix:
+									 * 
+									 *       +---------+----------+-----------+----------+------------+    
+									 *       |  cond.  |    DR    | nextHopDR |   Delay  | HopCount   |
+									 *       +---------+----------+-----------+----------+------------+    
+									 *       |    1    |    >     |           |          |            |
+									 *       |    2    |    =     |     >     |          |            |
+									 *       |    3    |    =     |     =     |     <    |            |
+									 *       |    4    |    =     |     =     |     =    |     <      |
+									 *       +---------+----------+-----------+----------+------------+    
+									 * 
+									 ******************************************************************/
+									if(
+									  ( (tEntry.getMaxAvailableDataRate()  > tBestResultMatchingQoS.getMaxAvailableDataRate()) ) ||
+								      ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate()  > tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) ) || 
+									  ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay()  < tBestResultMatchingQoS.getMinDelay()) ) ||  
+									  ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay() == tBestResultMatchingQoS.getMinDelay()) && (tEntry.getHopCount() < tBestResultMatchingQoS.getHopCount()) )
+									  ){
+										if (DEBUG){
+											Logging.log(this, "      ..found better (QoS match) entry: " + tEntry);
+										}
+			
+										tBestResultMatchingQoS = tEntry.clone();
+									}else{
+										if (DEBUG){
+											Logging.log(this, "      ..found uninteresting (QoS match) entry: " + tEntry);
+										}
+									}
+								}else{
+									if (DEBUG){
+										Logging.log(this, "      ..found first matching (QoS match) entry: " + tEntry);
+									}
+			
+									tBestResultMatchingQoS = tEntry.clone();
+								}
+							}							
+								
+							/**
+							 * Determine best available QoS related entry
+							 */
+							if(tBestResultQoS != null){						
 								/******************************************************************
 								 * condition matrix:
 								 * 
@@ -400,72 +447,35 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 								 * 
 								 ******************************************************************/
 								if(
-								  ( (tEntry.getMaxAvailableDataRate()  > tBestResultMatchingQoS.getMaxAvailableDataRate()) ) ||
-							      ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate()  > tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) ) || 
-								  ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay()  < tBestResultMatchingQoS.getMinDelay()) ) ||  
-								  ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay() == tBestResultMatchingQoS.getMinDelay()) && (tEntry.getHopCount() < tBestResultMatchingQoS.getHopCount()) )
+								  ( (tEntry.getMaxAvailableDataRate()  > tBestResultQoS.getMaxAvailableDataRate()) ) ||
+							      ( (tEntry.getMaxAvailableDataRate() == tBestResultQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate()  > tBestResultQoS.getNextHopMaxAvailableDataRate()) ) || 
+								  ( (tEntry.getMaxAvailableDataRate() == tBestResultQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay()  < tBestResultQoS.getMinDelay()) ) ||  
+								  ( (tEntry.getMaxAvailableDataRate() == tBestResultQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay() == tBestResultQoS.getMinDelay()) && (tEntry.getHopCount() < tBestResultQoS.getHopCount()) )
 								  ){
 									if (DEBUG){
-										Logging.log(this, "      ..found better (QoS match) entry: " + tEntry);
+										Logging.log(this, "      ..found better (QoS) entry: " + tEntry);
 									}
 		
-									tBestResultMatchingQoS = tEntry.clone();
+									tBestResultQoS = tEntry.clone();
 								}else{
 									if (DEBUG){
-										Logging.log(this, "      ..found uninteresting (QoS match) entry: " + tEntry);
+										Logging.log(this, "      ..found uninteresting (QoS) entry: " + tEntry);
 									}
 								}
 							}else{
 								if (DEBUG){
-									Logging.log(this, "      ..found first matching (QoS match) entry: " + tEntry);
+									Logging.log(this, "      ..found first matching (QoS) entry: " + tEntry);
 								}
 		
-								tBestResultMatchingQoS = tEntry.clone();
-							}
-						}							
-							
-						/**
-						 * Determine best available QoS related entry
-						 */
-						if(tBestResultQoS != null){						
-							/******************************************************************
-							 * condition matrix:
-							 * 
-							 *       +---------+----------+-----------+----------+------------+    
-							 *       |  cond.  |    DR    | nextHopDR |   Delay  | HopCount   |
-							 *       +---------+----------+-----------+----------+------------+    
-							 *       |    1    |    >     |           |          |            |
-							 *       |    2    |    =     |     >     |          |            |
-							 *       |    3    |    =     |     =     |     <    |            |
-							 *       |    4    |    =     |     =     |     =    |     <      |
-							 *       +---------+----------+-----------+----------+------------+    
-							 * 
-							 ******************************************************************/
-							if(
-							  ( (tEntry.getMaxAvailableDataRate()  > tBestResultQoS.getMaxAvailableDataRate()) ) ||
-						      ( (tEntry.getMaxAvailableDataRate() == tBestResultQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate()  > tBestResultQoS.getNextHopMaxAvailableDataRate()) ) || 
-							  ( (tEntry.getMaxAvailableDataRate() == tBestResultQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay()  < tBestResultQoS.getMinDelay()) ) ||  
-							  ( (tEntry.getMaxAvailableDataRate() == tBestResultQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay() == tBestResultQoS.getMinDelay()) && (tEntry.getHopCount() < tBestResultQoS.getHopCount()) )
-							  ){
-								if (DEBUG){
-									Logging.log(this, "      ..found better (QoS) entry: " + tEntry);
-								}
-	
 								tBestResultQoS = tEntry.clone();
-							}else{
-								if (DEBUG){
-									Logging.log(this, "      ..found uninteresting (QoS) entry: " + tEntry);
-								}
 							}
-						}else{
-							if (DEBUG){
-								Logging.log(this, "      ..found first matching (QoS) entry: " + tEntry);
-							}
-	
-							tBestResultQoS = tEntry.clone();
 						}
+					}else{
+						//if (DEBUG){
+							Logging.log(this, "### Searched for a best routing table entry towards: " + pDestination +", desired max. delay=" + pDesiredMaxDelay + ", desired min. data rate=" + pDesiredMinDataRate);
+							Logging.log(this, "      ..found forbidden (next hop forbidden) entry: " + tEntry);
+						//}
 					}
-					
 				}else{
 					if (DEBUG){
 						Logging.log(this, "      ..ignoring entry: " + tEntry);

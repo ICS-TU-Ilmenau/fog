@@ -87,7 +87,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for each clustering process.
 		 */
-		public static final boolean SHOW_CLUSTERING_STEPS = false;
+		public static final boolean SHOW_CLUSTERING_STEPS = true;
 
 		/**
 		 * Shows debug outputs for the report phase
@@ -115,6 +115,11 @@ public class HRMConfig
 		public static final boolean GUI_SHOW_ROUTING = false;
 
 		/**
+		 * Shows debug outputs about the HRG based routing process 
+		 */
+		public static final boolean GUI_SHOW_HRG_ROUTING = false;
+
+		/**
 		 * Show debug outputs about node/link detection
 		 */
 		public static final boolean GUI_SHOW_TOPOLOGY_DETECTION = false;
@@ -132,12 +137,12 @@ public class HRMConfig
 		/**
 		 * Shows detailed debug outputs about Election related signaling messages
 		 */
-		public static final boolean GUI_SHOW_SIGNALING_ELECTIONS = false;
+		public static final boolean GUI_SHOW_SIGNALING_ELECTIONS = true;
 		
 		/**
 		 * Shows detailed debug outputs about distributed Election related signaling messages
 		 */
-		public static final boolean GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS = false;
+		public static final boolean GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS = true;
 
 		/**
 		 * Shows detailed debug outputs about HRMViewer steps
@@ -470,6 +475,11 @@ public class HRMConfig
 		 * This value should be set to "true". Otherwise, only the best-effort (hop costs!) route will be shared top-to-down.
 		 */
 		public static final boolean MULTIPATH_ROUTING = true;
+
+		/**
+		 * Defines the max. hop count we allow during routing process
+		 */
+		public static final long MAX_HOP_COUNT = 32;
 
 		public enum REPORT_SHARE_TIMINGS {CONSTANT, LINEAR, EXPONENTIAL}; 
 		public static REPORT_SHARE_TIMINGS REPORT_SHARE_PHASE_TIMING_SCHEME = REPORT_SHARE_TIMINGS.CONSTANT;

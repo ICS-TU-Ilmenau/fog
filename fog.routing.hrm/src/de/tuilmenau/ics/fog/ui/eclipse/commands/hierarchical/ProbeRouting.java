@@ -26,7 +26,7 @@ import de.tuilmenau.ics.fog.facade.properties.DedicatedQoSReservationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.DestinationApplicationProperty;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ProbeRoutingProperty;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.HRMRoutingProperty;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
@@ -268,7 +268,7 @@ public class ProbeRouting extends EclipseCommand
 		 */
 		// create QoS requirements with probe-routing property and DestinationApplication property
 		Description tConnectionReqs = Description.createQoS(pDesiredDelay, pDataRate);
-		tConnectionReqs.set(new ProbeRoutingProperty(tCentralFN.getName().toString(), pTargetNodeHRMID, pDesiredDelay, pDataRate));
+		tConnectionReqs.set(new HRMRoutingProperty(tCentralFN.getName().toString(), pTargetNodeHRMID, pDesiredDelay, pDataRate));
 		tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
 		tConnectionReqs.set(new DedicatedQoSReservationProperty(pBiDirectionalQoSReservation));
 		// probe connection

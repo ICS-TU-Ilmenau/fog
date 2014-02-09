@@ -20,7 +20,7 @@ import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.InvisibleMarker;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.ProbeRoutingProperty;
+import de.tuilmenau.ics.fog.routing.hierarchical.properties.HRMRoutingProperty;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
@@ -592,8 +592,8 @@ public class QoSTestApp extends ThreadApplication
 			boolean tResult = false;
 			
 			// incoming UDP encapsulation data
-			if (pData instanceof ProbeRoutingProperty){
-				ProbeRoutingProperty tProbeRoutingProperty = (ProbeRoutingProperty)pData;
+			if (pData instanceof HRMRoutingProperty){
+				HRMRoutingProperty tProbeRoutingProperty = (HRMRoutingProperty)pData;
 				
 				Logging.log(mQoSTestApp, "Received ProbeRoutingProperty..");
 				tProbeRoutingProperty.logAll(mQoSTestApp);
