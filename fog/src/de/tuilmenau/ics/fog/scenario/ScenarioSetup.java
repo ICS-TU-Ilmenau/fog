@@ -460,14 +460,14 @@ public class ScenarioSetup
 	{
 		long tDataRate = 100 * 1000;
 		
-		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 7, tDataRate);
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 9, tDataRate);
 	}
 
 	public static void scenario38(Simulation pSim) // Thomas for testing/evaluating HRM
 	{
 		long tDataRate = 100 * 1000;
 		
-		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 8, tDataRate);
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 12, tDataRate);
 	}
 
 	public static void scenario43(Simulation pSim) // Thomas for testing/evaluating HRM
