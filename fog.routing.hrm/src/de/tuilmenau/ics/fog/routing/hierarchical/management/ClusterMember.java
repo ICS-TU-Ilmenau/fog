@@ -698,15 +698,22 @@ public class ClusterMember extends ClusterName
 			
 						for(Cluster tLocalCluster: tLocalClusters){
 							/**
-							 * Forward the announcement
-							 * HINT: we avoid loops by excluding the sender from the forwarding process
+							 * Do NOT forward the announcement to L0 clusters of the same network interface, they got already informed by the original sender
 							 */
-							if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-								Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+							if((getBaseHierarchyLevelNetworkInterface() == null) || (!getBaseHierarchyLevelNetworkInterface().equals(tLocalCluster.getBaseHierarchyLevelNetworkInterface()))){
+								/**
+								 * Forward the announcement
+								 * HINT: we avoid loops by excluding the sender from the forwarding process
+								 */
+								if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+									Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+								}
+								
+								// forward this announcement to all cluster members
+								tLocalCluster.sendClusterBroadcast(tForwardPacket, true, pComChannel.getPeerL2Address() /* exclude this from the forwarding process */);
+							}else{
+								// L0 cluster for the same network interface -> skip this
 							}
-							
-							// forward this announcement to all cluster members
-							tLocalCluster.sendClusterBroadcast(tForwardPacket, true, pComChannel.getPeerL2Address() /* exclude this from the forwarding process */);
 						}
 					}else{
 						if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
@@ -802,15 +809,22 @@ public class ClusterMember extends ClusterName
 		
 					for(Cluster tLocalCluster: tLocalClusters){
 						/**
-						 * Forward the announcement
-						 * HINT: we avoid loops by excluding the sender from the forwarding process
+						 * Do NOT forward the announcement to L0 clusters of the same network interface, they got already informed by the original sender
 						 */
-						if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-							Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+						if((getBaseHierarchyLevelNetworkInterface() == null) || (!getBaseHierarchyLevelNetworkInterface().equals(tLocalCluster.getBaseHierarchyLevelNetworkInterface()))){
+							/**
+							 * Forward the announcement
+							 * HINT: we avoid loops by excluding the sender from the forwarding process
+							 */
+							if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+								Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+							}
+							
+							// forward this announcement to all cluster members
+							tLocalCluster.sendClusterBroadcast(tForwardPacket, true, pComChannel.getPeerL2Address() /* exclude this from the forwarding process */);
+						}else{
+							// L0 cluster for the same network interface -> skip this
 						}
-						
-						// forward this announcement to all cluster members
-						tLocalCluster.sendClusterBroadcast(tForwardPacket, true, pComChannel.getPeerL2Address() /* exclude this from the forwarding process */);
 					}
 				}else{
 					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
