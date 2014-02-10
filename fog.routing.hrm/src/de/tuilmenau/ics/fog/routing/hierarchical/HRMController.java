@@ -405,6 +405,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private boolean mWarnedAboutHierarchyChange = false;
 
 	/**
+	 * Stores if a warning about hierarchy changes was already sent to debug output
+	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
+	 */
+	public static boolean ENFORCE_BE_ROUTING = false;
+	
+	/**
 	 * @param pNode the node on which this controller is running
 	 * @param pHierarchicalRoutingService the parent hierarchical routing service instance
 	 */
@@ -4235,7 +4241,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				if(tCoordinator.getHierarchyLevel().isHighest()){
 					Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-					if(!getNodeGUIName().equals("node7")){
+					if(!getNodeGUIName().equals("node3")){
 						tResult = false;
 					}
 
