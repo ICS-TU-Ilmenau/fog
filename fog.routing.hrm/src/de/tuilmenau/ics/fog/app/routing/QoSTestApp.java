@@ -112,9 +112,8 @@ public class QoSTestApp extends ThreadApplication
 	 * Constructor
 	 * 
 	 * @param pLocalNode the local node where this app. instance is running
-	 * @param pDestinationNodeNameStr the name of the destination node as string
 	 */
-	public QoSTestApp(Node pLocalNode, String pDestinationNodeNameStr)
+	public QoSTestApp(Node pLocalNode)
 	{
 		super(pLocalNode, null);
 		mNode = pLocalNode;
@@ -127,13 +126,30 @@ public class QoSTestApp extends ThreadApplication
 		} catch (RuntimeException tExc) {
 			mNMS = HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
 		}
-
-		/**
-		 * get the name of the central FN
-		 */ 
-		mDestinationNodeName = new SimpleName(Node.NAMESPACE_HOST, pDestinationNodeNameStr);
 	}
 
+	/**
+	 * Constructor
+	 * 
+	 * @param pLocalNode the local node where this app. instance is running
+	 * @param pDestinationNodeNameStr the name of the destination node as string
+	 */
+	public QoSTestApp(Node pLocalNode, String pDestinationNodeNameStr)
+	{
+		this(pLocalNode);
+		setDestination(pDestinationNodeNameStr);
+	}
+
+	/**
+	 * Sets a new destination node name
+	 * 
+	 * @param pDestinationNodeNamestr the new destination node name
+	 */
+	public void setDestination(String pDestinationNodeNameStr)
+	{
+		mDestinationNodeName = new SimpleName(Node.NAMESPACE_HOST, pDestinationNodeNameStr);
+	}
+	
 	/**
 	 * Determines the HRMIDs of the destination node
 	 * 
