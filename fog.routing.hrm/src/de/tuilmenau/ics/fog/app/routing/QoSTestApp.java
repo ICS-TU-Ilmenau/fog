@@ -96,7 +96,7 @@ public class QoSTestApp extends ThreadApplication
 	/**
 	 * Stores if the QoSTestApp is running
 	 */
-	private boolean mQoSTestRunning = false;
+	private boolean mQoSTestAppRunning = false;
 	
 	/**
 	 * The possible operations: increase/decrease connection amount
@@ -493,7 +493,7 @@ public class QoSTestApp extends ThreadApplication
 		 * START
 		 */
 		Logging.log(this, "Main loop started");		
-		mQoSTestRunning = true;
+		mQoSTestAppRunning = true;
 
 		/**
 		 * MAIN LOOP
@@ -544,7 +544,7 @@ public class QoSTestApp extends ThreadApplication
 		 * END
 		 */
 		Logging.log(this, "Main loop finished");
-		mQoSTestRunning = false;
+		mQoSTestAppRunning = false;
 	}
 
 	/**
@@ -578,7 +578,7 @@ public class QoSTestApp extends ThreadApplication
 	@Override
 	public boolean isRunning()
 	{
-		return mQoSTestRunning;
+		return mQoSTestAppRunning;
 	}
 	
 	/**
