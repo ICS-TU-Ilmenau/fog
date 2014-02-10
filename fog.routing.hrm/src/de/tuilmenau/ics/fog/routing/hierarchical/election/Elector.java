@@ -1041,7 +1041,9 @@ public class Elector implements Localization
 						 */
 						int tMemberCount = 0;
 						for (CoordinatorAsClusterMember tLevelClusterMember : tLevelClusterMembers){
-							Logging.log(this, "      ..### leaveWorseAlternativeElections() checks member: " + tLevelClusterMember);
+							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+								Logging.log(this, "      ..### leaveWorseAlternativeElections() checks member: " + tLevelClusterMember);
+							}
 							
 							/**
 							 * Be aware of multiple local coordinators at the same hierarchy level -> search only for alternative CoordinatorAsClusterMember instances belong to the parent instance!
