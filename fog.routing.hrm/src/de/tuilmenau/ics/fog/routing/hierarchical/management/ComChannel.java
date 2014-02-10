@@ -876,6 +876,9 @@ public class ComChannel
 		
 		if(tDeprecatedSharedRoutingTable.size() > 0){
 			Logging.log(this, "Lost shared routing data (last message included it): " + tDeprecatedSharedRoutingTable);
+			for(RoutingEntry tEntry : tDeprecatedSharedRoutingTable){
+				Logging.log(this, "   lost: " + tEntry);	
+			}
 		}
 		
 		if(mParent instanceof CoordinatorAsClusterMember){
