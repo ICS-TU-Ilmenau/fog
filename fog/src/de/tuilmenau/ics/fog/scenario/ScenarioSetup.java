@@ -68,6 +68,9 @@ public class ScenarioSetup
 					case 34: scenario34(sim); break;
 					// a bus with 5 connected nodes
 					case 35: scenario35(sim); break;
+					case 36: scenario36(sim); break;
+					case 37: scenario37(sim); break;
+					case 38: scenario38(sim); break;
 
 					case 43: scenario43(sim); break;
 					case 44: scenario44(sim); break;
@@ -444,6 +447,27 @@ public class ScenarioSetup
 		long tDataRate = 100 * 1000;
 		
 		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 5, tDataRate);
+	}
+
+	public static void scenario36(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 6, tDataRate);
+	}
+
+	public static void scenario37(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 7, tDataRate);
+	}
+
+	public static void scenario38(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 8, tDataRate);
 	}
 
 	public static void scenario43(Simulation pSim) // Thomas for testing/evaluating HRM
