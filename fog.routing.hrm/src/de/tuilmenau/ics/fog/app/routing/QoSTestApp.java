@@ -366,6 +366,7 @@ public class QoSTestApp extends ThreadApplication
 		synchronized (mConnections) {
 			if(countConnections() > 0){
 				tConnection = mConnections.removeLast();
+				Logging.log(this, "  ..seleted for renoving the connection: " + tConnection);
 			}
 		}
 		
