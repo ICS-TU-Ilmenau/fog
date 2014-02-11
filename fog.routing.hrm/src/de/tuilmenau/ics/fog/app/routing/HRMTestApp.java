@@ -66,8 +66,10 @@ public class HRMTestApp extends ThreadApplication
 	/**
 	 * Defines how many connections we want to have per test turn
 	 */
-	private final int NUMBER_CONNECTIONS = 20;
-
+	private final int NUMBER_NODE_COMBINATIONS = 6;
+	private final int NUMBER_SUB_CONNECTIONS = 25;
+	private final int NUMBER_MEASUREMENT_TURNS = 10;
+	
 	private HashMap<Node, QoSTestApp> mQoSTestApps = new HashMap<Node, QoSTestApp>();
 	private LinkedList<Node> mSource = new LinkedList<Node>();
 	private LinkedList<Node> mDestination = new LinkedList<Node>();
@@ -78,7 +80,8 @@ public class HRMTestApp extends ThreadApplication
 	private int mCntNodes = 0;
 	private Statistic mStatistic = null;
 	private int mCntBuss = 0;
-
+	private boolean GLOBAL_ERROR = false;
+			
 	/**
 	 * Constructor
 	 * 
@@ -162,6 +165,17 @@ public class HRMTestApp extends ThreadApplication
 			Thread.sleep(5000);
 		} catch (InterruptedException tExc) {
 		}
+		
+		for(int i = 0; i < mCntBuss; i++){
+			Bus tBus = mGlobalBusList.get(i);
+			if(tBus.getUtilization() > 0){
+				Logging.err(this, "###############################");
+				Logging.err(this, "### Bus " + tBus + " has still some reservations");
+				Logging.err(this, "###############################");
+				GLOBAL_ERROR = true;
+			}
+		}
+
 	}
 	
 	/**
@@ -205,14 +219,14 @@ public class HRMTestApp extends ThreadApplication
 		/**
 		 * MAIN LOOP
 		 */
-		while(mHRMTestAppNeeded){
+		while((mHRMTestAppNeeded) & (!GLOBAL_ERROR)){
 			
 			/**
 			 * Create connection scenario
 			 */
 			mSource.clear();
 			mDestination.clear();
-			for(int i = 0; i < NUMBER_CONNECTIONS; i++){
+			for(int i = 0; i < NUMBER_NODE_COMBINATIONS; i++){
 				int tSourceNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
 				Logging.warn(this, "Selected source node: " + tSourceNodeNumber);
 				int tDestinationNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
@@ -242,9 +256,15 @@ public class HRMTestApp extends ThreadApplication
 			}
 
 			/**
-			 * Create statistics
+			 * Create statistics for HRM
 			 */
 			int tHRMConnectionsWithFulfilledQoS = countConnectionsWithFulfilledQoS();
+			LinkedList<Double> tStoredUtilBasedOnHRM = new LinkedList<Double>();
+			for(int i = 0; i < mCntBuss; i++){
+				Bus tBus = mGlobalBusList.get(i);
+				Logging.warn(this, tBus + " (HRM)=> " + tBus.getUtilization());
+				tStoredUtilBasedOnHRM.add(tBus.getUtilization());
+			}
 			
 			/**
 			 * Destroy all QoS connections
@@ -271,13 +291,14 @@ public class HRMTestApp extends ThreadApplication
 			}
 
 			/**
-			 * Create statistics
+			 * Create statistics for BE
 			 */
 			int tBEConnectionsWithFulfilledQoS = countConnectionsWithFulfilledQoS();
-			LinkedList<Double> tStoredUtilBasedOnHRM = new LinkedList<Double>();
+			LinkedList<Double> tStoredUtilBasedOnBE = new LinkedList<Double>();
 			for(int i = 0; i < mCntBuss; i++){
 				Bus tBus = mGlobalBusList.get(i);
-				tStoredUtilBasedOnHRM.add(tBus.getUtilization());
+				Logging.warn(this, tBus + " (BE)=> " + tBus.getUtilization());
+				tStoredUtilBasedOnBE.add(tBus.getUtilization());
 			}
 
 			/**
@@ -329,11 +350,11 @@ public class HRMTestApp extends ThreadApplication
 				tTableRow.add(Double.toString(tStoredUtilBasedOnHRM.get(i)));
 			}			
 			for(int i = 0; i < mCntBuss; i++){
-				Bus tBus = mGlobalBusList.get(i);
-				tTableRow.add(Double.toString(tBus.getUtilization()));
+				tTableRow.add(Double.toString(tStoredUtilBasedOnBE.get(i)));
 			}
 			if(mStatistic != null){
 				mStatistic.log(tTableRow);
+				Logging.log(this, ">>>>>>>>>> Writing statistics to file..");
 				mStatistic.flush();
 			}
 
@@ -344,6 +365,11 @@ public class HRMTestApp extends ThreadApplication
 			resetAllConnetions();
 
 			tTurn++;
+			
+			if(tTurn >= NUMBER_MEASUREMENT_TURNS){
+				Logging.warn(this, "########## END OF MEASUREMENTS #########");
+				break;
+			}
 		}//while
 
 		/**
@@ -358,7 +384,7 @@ public class HRMTestApp extends ThreadApplication
 	 */
 	private void createConnections()
 	{
-		for(int i = 0; (i < NUMBER_CONNECTIONS) && (mHRMTestAppNeeded); i++){
+		for(int i = 0; (i < NUMBER_NODE_COMBINATIONS) && (mHRMTestAppNeeded); i++){
 			/**
 			 * Get source/destination node
 			 */
@@ -370,16 +396,30 @@ public class HRMTestApp extends ThreadApplication
 			 */
 			QoSTestApp tQoSTestApp = mQoSTestApps.get(tSourceNode);
 			tQoSTestApp.setDestination(tDestinationNode.getName());
-			Logging.warn(this, "Firing QoS test connection " + i);
-			tQoSTestApp.eventIncreaseConnections();
-			
-			/**
-			 * Wait some time
-			 */
-			try {
-				Thread.sleep((long) 2000);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
-			} catch (InterruptedException tExc) {
+			for(int j = 0; j < NUMBER_SUB_CONNECTIONS; j++){
+				tQoSTestApp.eventIncreaseConnections();
+
+				/**
+				 * Wait some time
+				 */
+				try {
+					if(!HRMController.ENFORCE_BE_ROUTING){
+						Logging.warn(this, "Created HRM connection " + (i * NUMBER_SUB_CONNECTIONS + j));
+						Thread.sleep((long) 500);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+					}else{
+						Logging.warn(this, "Created BE connection " + (i * NUMBER_SUB_CONNECTIONS + j));
+						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+					}
+				} catch (InterruptedException tExc) {
+				}
 			}
+		}
+		/**
+		 * Wait some time
+		 */
+		try {
+			Thread.sleep((long) 2000);
+		} catch (InterruptedException tExc) {
 		}
 	}
 
