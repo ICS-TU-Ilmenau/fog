@@ -952,6 +952,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * 
 	 * @param pTrackedPackets defines if the packets should be tracked         
 	 */
+	@SuppressWarnings("unused")
 	public synchronized void distributeCoordinatorAnnouncement(boolean pTrackedPackets)
 	{
 		if(isThisEntityValid()){
@@ -970,7 +971,19 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						 */
 						mSentAnnounces++;
 						
-						if(getHierarchyLevel().isBaseLevel()){
+						/**
+						 * We have two algorithms here:
+						 * 	1.) we send the announcement along the L0 clusters only sidewards and limit the distribution by the help of an automatically increased hop counter (TTL)
+						 *  2.) a.) we send the announcement top-down the hierarchy in order to let each inferior entity know, to which higher coordinators it belongs -> this allows each entity to decide if an announcement comes from its superior coordinator or from a foreign one
+						 *      b.) we send the announcement along the L0 clusters sidewards and let each entity decide - based on the data from step a.) - if a logical hop (a cluster region) ends or not -> this allows each entity to decide if the max. hop count (TTL) is reached or the packet should continue its journey 
+						 * 
+						 * HINT: For hierarchy heights below 4, we always use option 1. For example, a height of 3 means:
+						 * 			L0 -> we decide based on the physical hop count and decrease automatically the TTL
+						 * 			L1 -> we don't use the TTL mechanism because every node should know such a coordinator
+						 * 			L2 -> no announcements needed because no superior cluster may exist
+						 * 
+						 */
+						if((getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.HEIGHT <= 3)){
 							/**
 							 * Send cluster broadcasts in all other active L0 clusters if we are at level 0 
 							 */
