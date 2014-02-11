@@ -16,6 +16,7 @@ import java.util.HashMap;
 
 import de.tuilmenau.ics.fog.application.ThreadApplication;
 import de.tuilmenau.ics.fog.application.util.Session;
+import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
@@ -28,10 +29,12 @@ import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
+import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Marker;
 import de.tuilmenau.ics.fog.ui.MarkerContainer;
+import de.tuilmenau.ics.fog.ui.Statistic;
 import de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.ProbeRouting;
 import de.tuilmenau.ics.fog.util.SimpleName;
 		
@@ -63,7 +66,7 @@ public class HRMTestApp extends ThreadApplication
 	/**
 	 * Defines how many connections we want to have per test turn
 	 */
-	private final int NUMBER_CONNECTIONS = 10;
+	private final int NUMBER_CONNECTIONS = 20;
 
 	private HashMap<Node, QoSTestApp> mQoSTestApps = new HashMap<Node, QoSTestApp>();
 	private LinkedList<Node> mSource = new LinkedList<Node>();
@@ -71,7 +74,10 @@ public class HRMTestApp extends ThreadApplication
 	private Random mRandom = new Random(System.currentTimeMillis());
 	private AutonomousSystem mLocalNodeAS = null;
 	private LinkedList<Node> mGlobalNodeList = new LinkedList<Node>();
+	private LinkedList<Bus> mGlobalBusList = new LinkedList<Bus>();
 	private int mCntNodes = 0;
+	private Statistic mStatistic = null;
+	private int mCntBuss = 0;
 
 	/**
 	 * Constructor
@@ -102,6 +108,7 @@ public class HRMTestApp extends ThreadApplication
 		 */
 		for(AutonomousSystem tAS : mLocalNodeAS.getSimulation().getAllAS()) {
 			for(Node tNode : tAS.getNodelist().values()) {
+				Logging.warn(this, "Found node: " + tNode.getName());
 				mGlobalNodeList.add(tNode);
 			}
 		}
@@ -109,10 +116,28 @@ public class HRMTestApp extends ThreadApplication
 		mCntNodes = mGlobalNodeList.size();
 		
 		/**
+		 * determine all busses from the simulation
+		 */
+		for(AutonomousSystem tAS : mLocalNodeAS.getSimulation().getAllAS()) {
+			for(ILowerLayer tLL : tAS.getBuslist().values()) {
+				if(tLL instanceof Bus){
+					Bus tBus = (Bus)tLL;
+					Logging.warn(this, "Found bus: " + tBus.getName());
+					mGlobalBusList.add(tBus);
+				}else{
+					Logging.err(this, "Found unsupported LL: " + tLL);
+				}
+			}
+		}
+		
+		mCntBuss = mGlobalBusList.size();
+		
+		/**
 		 * Create all QoS test APPs
 		 */
 		for (Node tNode: mGlobalNodeList){
 			QoSTestApp tQoSTestApp = new QoSTestApp(tNode);
+			//tQoSTestApp.setDefaultDataRate(10 * 1000);
 			tQoSTestApp.start();			
 			mQoSTestApps.put(tNode, tQoSTestApp);
 		}
@@ -140,6 +165,22 @@ public class HRMTestApp extends ThreadApplication
 	}
 	
 	/**
+	 * Counts all connections with fulfilled QoS requirements
+	 * 
+	 * @return the number of QoS connections
+	 */
+	private int countConnectionsWithFulfilledQoS()
+	{
+		int tResult = 0;
+		
+		for(QoSTestApp tQoSTestApp: mQoSTestApps.values()){
+			tResult += tQoSTestApp.countConnectionsWithFulfilledQoS();
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * The main loop
 	 */
 	/* (non-Javadoc)
@@ -148,6 +189,8 @@ public class HRMTestApp extends ThreadApplication
 	@Override
 	protected void execute()
 	{
+		int tTurn = 0;
+
 		/**
 		 * START
 		 */
@@ -167,6 +210,8 @@ public class HRMTestApp extends ThreadApplication
 			/**
 			 * Create connection scenario
 			 */
+			mSource.clear();
+			mDestination.clear();
 			for(int i = 0; i < NUMBER_CONNECTIONS; i++){
 				int tSourceNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
 				Logging.warn(this, "Selected source node: " + tSourceNodeNumber);
@@ -185,29 +230,7 @@ public class HRMTestApp extends ThreadApplication
 			 */
 			Logging.warn(this, "########## Creating QoS connections now...");
 			HRMController.ENFORCE_BE_ROUTING = false;
-			for(int i = 0; (i < NUMBER_CONNECTIONS) && (mHRMTestAppNeeded); i++){
-				/**
-				 * Get source/destination node
-				 */
-				Node tSourceNode = mSource.get(i);
-				Node tDestinationNode = mDestination.get(i);
-				
-				/**
-				 * Create connection
-				 */
-				QoSTestApp tQoSTestApp = mQoSTestApps.get(tSourceNode);
-				tQoSTestApp.setDestination(tDestinationNode.getName());
-				Logging.warn(this, "Firing QoS test connection " + i);
-				tQoSTestApp.eventIncreaseConnections();
-				
-				/**
-				 * Wait some time
-				 */
-				try {
-					Thread.sleep((long) (2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
-				} catch (InterruptedException tExc) {
-				}
-			}
+			createConnections();
 
 			/**
 			 * Wait some time
@@ -219,16 +242,24 @@ public class HRMTestApp extends ThreadApplication
 			}
 
 			/**
+			 * Create statistics
+			 */
+			int tHRMConnectionsWithFulfilledQoS = countConnectionsWithFulfilledQoS();
+			
+			/**
 			 * Destroy all QoS connections
 			 */
 			Logging.warn(this, "########## Destroying QoS connections now...");
 			resetAllConnetions();
+			
+			
 			
 			/**
 			 * Create the BE connections
 			 */
 			Logging.warn(this, "########## Creating BE connections now...");
 			HRMController.ENFORCE_BE_ROUTING = true;
+			createConnections();
 
 			/**
 			 * Wait some time
@@ -240,17 +271,116 @@ public class HRMTestApp extends ThreadApplication
 			}
 
 			/**
+			 * Create statistics
+			 */
+			int tBEConnectionsWithFulfilledQoS = countConnectionsWithFulfilledQoS();
+			LinkedList<Double> tStoredUtilBasedOnHRM = new LinkedList<Double>();
+			for(int i = 0; i < mCntBuss; i++){
+				Bus tBus = mGlobalBusList.get(i);
+				tStoredUtilBasedOnHRM.add(tBus.getUtilization());
+			}
+
+			/**
+			 * Write statistics to file
+			 */
+			Logging.warn(this, "   ..HRM connections with fulfilled QoS: " + tHRMConnectionsWithFulfilledQoS);
+			Logging.warn(this, "   ..BE connections with fulfilled QoS: " + tBEConnectionsWithFulfilledQoS);
+			if(tTurn == 0){
+				try {
+					mStatistic = Statistic.getInstance(mLocalNodeAS.getSimulation(), HRMTestApp.class, ";", false);
+				} catch (Exception tExc) {
+					Logging.err(this, "Can not write statistic log file", tExc);
+				}
+
+				if(mStatistic != null){
+					Runtime.getRuntime().addShutdownHook(new Thread() {
+						@Override
+						public void run()
+						{
+							Logging.getInstance().warn(this, "Closing HRMController statistics log file");
+							mStatistic.close();
+						}
+					});
+				}
+
+				LinkedList<String> tTableHeader = new LinkedList<String>();
+				tTableHeader.add("Turn");
+				tTableHeader.add("Good HRM routing");
+				tTableHeader.add("Good BE routing");
+				tTableHeader.add("-");
+				tTableHeader.add("BusCounter");
+				for(int i = 0; i < mCntBuss; i++){
+					tTableHeader.add("HRM_" + mGlobalBusList.get(i).getName());
+				}
+				for(int i = 0; i < mCntBuss; i++){
+					tTableHeader.add("BE_" + mGlobalBusList.get(i).getName());
+				}
+				if(mStatistic != null){
+					mStatistic.log(tTableHeader);
+				}
+			}
+			LinkedList<String> tTableRow = new LinkedList<String>();
+			tTableRow.add(Integer.toString(tTurn));
+			tTableRow.add(Integer.toString(tHRMConnectionsWithFulfilledQoS));
+			tTableRow.add(Integer.toString(tBEConnectionsWithFulfilledQoS));
+			tTableRow.add("-");
+			tTableRow.add(Integer.toString(mCntBuss));
+			for(int i = 0; i < mCntBuss; i++){
+				tTableRow.add(Double.toString(tStoredUtilBasedOnHRM.get(i)));
+			}			
+			for(int i = 0; i < mCntBuss; i++){
+				Bus tBus = mGlobalBusList.get(i);
+				tTableRow.add(Double.toString(tBus.getUtilization()));
+			}
+			if(mStatistic != null){
+				mStatistic.log(tTableRow);
+				mStatistic.flush();
+			}
+
+			/**
 			 * Destroy all QoS connections
 			 */
 			Logging.warn(this, "########## Destroying BE connections now...");
 			resetAllConnetions();
-		}
+
+			tTurn++;
+		}//while
 
 		/**
 		 * END
 		 */
 		Logging.log(this, "Main loop finished");
 		mHRMTestAppRunning = false;
+	}
+
+	/**
+	 * Creates the connections 
+	 */
+	private void createConnections()
+	{
+		for(int i = 0; (i < NUMBER_CONNECTIONS) && (mHRMTestAppNeeded); i++){
+			/**
+			 * Get source/destination node
+			 */
+			Node tSourceNode = mSource.get(i);
+			Node tDestinationNode = mDestination.get(i);
+			
+			/**
+			 * Create connection
+			 */
+			QoSTestApp tQoSTestApp = mQoSTestApps.get(tSourceNode);
+			tQoSTestApp.setDestination(tDestinationNode.getName());
+			Logging.warn(this, "Firing QoS test connection " + i);
+			tQoSTestApp.eventIncreaseConnections();
+			
+			/**
+			 * Wait some time
+			 */
+			try {
+				Thread.sleep((long) 2000);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+			} catch (InterruptedException tExc) {
+			}
+		}
 	}
 
 	/**
