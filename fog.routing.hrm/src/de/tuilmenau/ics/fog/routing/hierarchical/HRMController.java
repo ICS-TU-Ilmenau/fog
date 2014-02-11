@@ -22,6 +22,7 @@ import java.util.Observer;
 
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
+import de.tuilmenau.ics.fog.app.routing.HRMTestApp;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.util.ServerCallback;
 import de.tuilmenau.ics.fog.application.util.Service;
@@ -4209,136 +4210,139 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return true or false
 	 */
+	private Object mValidationMutex = new Object();
 	public boolean validateResults()
 	{
 		boolean tResult = true;
 		
-		if (!mResultsValidated){
-
-			mResultsValidated = true;
-			
-			/**
-			 * Check coordinators
-			 */
-			for (Coordinator tCoordinator : getAllCoordinators()) {
-				if(!tCoordinator.getHierarchyLevel().isHighest()){
-					if(!tCoordinator.isSuperiorCoordinatorValid()){
-						Logging.err(this, "validateResults() detected invalid comm. channel to superior coordinator for: " + tCoordinator);
-						tResult = false;
-					}
-				}
+		synchronized (mValidationMutex) {
+			if (!mResultsValidated){
+	
+				mResultsValidated = true;
 				
-				if(!tCoordinator.getHierarchyLevel().isBaseLevel()){
-					Coordinator tFoundAnInferiorCoordinator = getCoordinator(tCoordinator.getHierarchyLevel().getValue() - 1);
-					if(tFoundAnInferiorCoordinator == null){
-						Logging.err(this, "validateResults() detected invalid hierarchy, haven't found local inferior coordinator for: " + tCoordinator);
-						tResult = false;
+				/**
+				 * Check coordinators
+				 */
+				for (Coordinator tCoordinator : getAllCoordinators()) {
+					if(!tCoordinator.getHierarchyLevel().isHighest()){
+						if(!tCoordinator.isSuperiorCoordinatorValid()){
+							Logging.err(this, "validateResults() detected invalid comm. channel to superior coordinator for: " + tCoordinator);
+							tResult = false;
+						}
 					}
+					
+					if(!tCoordinator.getHierarchyLevel().isBaseLevel()){
+						Coordinator tFoundAnInferiorCoordinator = getCoordinator(tCoordinator.getHierarchyLevel().getValue() - 1);
+						if(tFoundAnInferiorCoordinator == null){
+							Logging.err(this, "validateResults() detected invalid hierarchy, haven't found local inferior coordinator for: " + tCoordinator);
+							tResult = false;
+						}
+					}
+					
+					/**
+					 * Check coordinator on highest hierarchy level
+					 */
+					if(tCoordinator.getHierarchyLevel().isHighest()){
+						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
+						if(!getNodeGUIName().equals("node7")){
+							tResult = false;
+						}
+	
+						synchronized (sRegisteredTopCoordinatorsCounter) {
+							Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
+							if(tAlreadyRegisterTopCoordinators == null){
+								tAlreadyRegisterTopCoordinators = new Integer(0);
+							}
+							tAlreadyRegisterTopCoordinators++;
+							sRegisteredTopCoordinatorsCounter.put(getNodeGUIName(), tAlreadyRegisterTopCoordinators);
+						}
+						
+						long tTopPriorityThisNode = getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.HEIGHT - 1));
+						
+						for(HRMController tHRMController : getALLHRMControllers()){
+							if(tHRMController != this){
+								long tTopPriorityCheckNode = tHRMController.getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.HEIGHT - 1));
+								
+								if(tTopPriorityCheckNode > tTopPriorityThisNode){
+									Logging.err(this, "validateResults() detected top coordinator at this node, better candidate would be node: " + tHRMController.getNodeGUIName());
+									tResult = false;
+								}
+							}
+						}					
+					}
+					
+	//				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
+	//					if(tComChannel.getPeerPriority().isUndefined()){
+	//						Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
+	//					}
+	//				}
 				}
 				
 				/**
-				 * Check coordinator on highest hierarchy level
+				 * Check cluster
 				 */
-				if(tCoordinator.getHierarchyLevel().isHighest()){
-					Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-					if(!getNodeGUIName().equals("node3")){
-						tResult = false;
-					}
-
-					synchronized (sRegisteredTopCoordinatorsCounter) {
-						Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
-						if(tAlreadyRegisterTopCoordinators == null){
-							tAlreadyRegisterTopCoordinators = new Integer(0);
-						}
-						tAlreadyRegisterTopCoordinators++;
-						sRegisteredTopCoordinatorsCounter.put(getNodeGUIName(), tAlreadyRegisterTopCoordinators);
-					}
-					
-					long tTopPriorityThisNode = getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.HEIGHT - 1));
-					
-					for(HRMController tHRMController : getALLHRMControllers()){
-						if(tHRMController != this){
-							long tTopPriorityCheckNode = tHRMController.getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.HEIGHT - 1));
-							
-							if(tTopPriorityCheckNode > tTopPriorityThisNode){
-								Logging.err(this, "validateResults() detected top coordinator at this node, better candidate would be node: " + tHRMController.getNodeGUIName());
-								tResult = false;
-							}
-						}
-					}					
-				}
-				
-//				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
-//					if(tComChannel.getPeerPriority().isUndefined()){
-//						Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
-//					}
-//				}
-			}
+				for (Cluster tCluster : getAllClusters()) {
+					HierarchyLevel tClusterLevel = tCluster.getHierarchyLevel();
 			
-			/**
-			 * Check cluster
-			 */
-			for (Cluster tCluster : getAllClusters()) {
-				HierarchyLevel tClusterLevel = tCluster.getHierarchyLevel();
-		
-				if(tClusterLevel.isHigherLevel()){
-					for (ComChannel tComChannel : tCluster.getComChannels()){
-						if(tComChannel.getPeerPriority().isUndefined()){
-							Logging.err(this, "validateResults() detected undefined peer priority for comm. channel: " + tComChannel);
-							tResult = false;
-						}else{
-							ElectionPriority tChannelPeerPriority = tComChannel.getPeerPriority();
-							L2Address tChanPeerL2Address = tComChannel.getPeerL2Address();
-							boolean tFound = false;
-							for(HRMController tHRMController : getALLHRMControllers()){
-								if(tHRMController.getNodeL2Address().equals(tChanPeerL2Address)){
-	//								Logging.log(this, "MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
-									tFound = true;
-									long tFoundPriority = tHRMController.getNodePriority(tClusterLevel);
-									if(tFoundPriority != tChannelPeerPriority.getValue()){
-										if(tChannelPeerPriority.getValue() <= 0){
-											if(tComChannel.isOpen()){
-												Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
-												tResult = false;
+					if(tClusterLevel.isHigherLevel()){
+						for (ComChannel tComChannel : tCluster.getComChannels()){
+							if(tComChannel.getPeerPriority().isUndefined()){
+								Logging.err(this, "validateResults() detected undefined peer priority for comm. channel: " + tComChannel);
+								tResult = false;
+							}else{
+								ElectionPriority tChannelPeerPriority = tComChannel.getPeerPriority();
+								L2Address tChanPeerL2Address = tComChannel.getPeerL2Address();
+								boolean tFound = false;
+								for(HRMController tHRMController : getALLHRMControllers()){
+									if(tHRMController.getNodeL2Address().equals(tChanPeerL2Address)){
+		//								Logging.log(this, "MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
+										tFound = true;
+										long tFoundPriority = tHRMController.getNodePriority(tClusterLevel);
+										if(tFoundPriority != tChannelPeerPriority.getValue()){
+											if(tChannelPeerPriority.getValue() <= 0){
+												if(tComChannel.isOpen()){
+													Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
+													tResult = false;
+												}else{
+													//TODO: avoid this situation
+													Logging.warn(this, "validateResults() detected temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for HALF-OPEN channel: " + tComChannel);
+												}
 											}else{
-												//TODO: avoid this situation
-												Logging.warn(this, "validateResults() detected temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for HALF-OPEN channel: " + tComChannel);
+												Logging.warn(this, "validateResults() detected a temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + ", the final result should be " + tFoundPriority + " for: " + tComChannel);
 											}
-										}else{
-											Logging.warn(this, "validateResults() detected a temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + ", the final result should be " + tFoundPriority + " for: " + tComChannel);
 										}
+										break;
+									}else{
+		//								Logging.log(this, "NO MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
 									}
-									break;
-								}else{
-	//								Logging.log(this, "NO MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
+								}
+								if(!tFound){
+									Logging.err(this, "validateResults() wasn't able to find node: " + tChanPeerL2Address + " as peer of: " + tComChannel);
+									tResult = false;
 								}
 							}
-							if(!tFound){
-								Logging.err(this, "validateResults() wasn't able to find node: " + tChanPeerL2Address + " as peer of: " + tComChannel);
-								tResult = false;
+							if(tComChannel.getPacketQueue().size() > 1 /* we allow one pending packet because the event handler might be processing a packet at the moment */){
+								Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel); 
 							}
-						}
-						if(tComChannel.getPacketQueue().size() > 1 /* we allow one pending packet because the event handler might be processing a packet at the moment */){
-							Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel); 
 						}
 					}
 				}
-			}
-
-			/**
-			 * error if validation has failed
-			 */
-			if(!tResult){
-				Logging.err(this, "-------------------------------------------");
-				Logging.err(this, "----------- Result validation failed");
-				Logging.err(this, "-------------------------------------------");
-			}
-
-			/**
-			 * Update global error report
-			 */
-			if(!FOUND_GLOBAL_ERROR){
-				FOUND_GLOBAL_ERROR = !tResult;
+	
+				/**
+				 * error if validation has failed
+				 */
+				if(!tResult){
+					Logging.err(this, "-------------------------------------------");
+					Logging.err(this, "----------- Result validation failed");
+					Logging.err(this, "-------------------------------------------");
+				}
+	
+				/**
+				 * Update global error report
+				 */
+				if(!FOUND_GLOBAL_ERROR){
+					FOUND_GLOBAL_ERROR = !tResult;
+				}
 			}
 		}
 		
@@ -4350,31 +4354,41 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void validateAllResults()
 	{
-		if(!mResultsValidated){
-			if(!FOUND_GLOBAL_ERROR){
-				Logging.warn(this, "?????????????????????????????????????????????????");
-				Logging.warn(this, "??? VALIDATING RESULTS (validated: " + mResultsValidated + ")");
-				Logging.warn(this, "?????????????????????????????????????????????????");
-		
-				/**
-				 * Validate results of all HRMController instances
-				 */
-				if(mRegisteredHRMControllers != null){
-					for(HRMController tHRMController : mRegisteredHRMControllers){
-						Logging.warn(null, "  ..validating: " + tHRMController.getNodeGUIName());
-						tHRMController.validateResults();
-						
-						/**
-						 * Abort if global error is detected
-						 */
-						if(FOUND_GLOBAL_ERROR){
-							break;
+		synchronized (mValidationMutex) {
+			if(!mResultsValidated){
+				if(!FOUND_GLOBAL_ERROR){
+					Logging.warn(this, "?????????????????????????????????????????????????");
+					Logging.warn(this, "??? VALIDATING RESULTS (validated: " + mResultsValidated + ")");
+					Logging.warn(this, "?????????????????????????????????????????????????");
+			
+					/**
+					 * Validate results of all HRMController instances
+					 */
+					if(mRegisteredHRMControllers != null){
+						for(HRMController tHRMController : mRegisteredHRMControllers){
+							Logging.warn(null, "  ..validating: " + tHRMController.getNodeGUIName());
+							tHRMController.validateResults();
+							
+							/**
+							 * Abort if global error is detected
+							 */
+							if(FOUND_GLOBAL_ERROR){
+								break;
+							}
 						}
 					}
+					
+					/**
+					 * HRM test app
+					 */
+					HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
+					tHRMTestApp.start();
+					
+					/**
+					 * auto-exit simulation
+					 */ 
+					autoExitSimulation();
 				}
-				
-				// auto-exit simulation
-				autoExitSimulation();
 			}
 		}
 	}
@@ -4527,6 +4541,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * SUM time for stable hierarchy
 		 */
 		sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum += sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+		
 		
 		/**
 		 * Write statistics to log file
