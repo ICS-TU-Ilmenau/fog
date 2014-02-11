@@ -420,6 +420,10 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 */
 	public synchronized void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
+		if(pAnnounceCoordinator.isPacketTracking()){
+			Logging.warn(this, "Detected tracked AnnounceCoordinator packet: " + pAnnounceCoordinator);
+		}
+
 		Logging.warn(this, "Fired event COORDINATOR_ANNOUNCEMENT: " + pAnnounceCoordinator);
 		Logging.warn(this, "Ignoring COORDINATOR_ANNOUNCEMENT from comm. channel: " + pComChannel);
 	}

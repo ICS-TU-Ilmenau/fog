@@ -1657,6 +1657,25 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				 * Create the context menu
 				 */
 				Menu tMenu = new Menu(mTableRoutingTable);
+				if(tfControlEntity instanceof Coordinator){
+					final Coordinator tCoordinator = (Coordinator)tfControlEntity;
+					
+					MenuItem tMenuItem = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem.setText("Send tracked AnnounceCoordinator packet");
+					tMenuItem.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							sendTrackedAnnounceCoordinator(tCoordinator);
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							sendTrackedAnnounceCoordinator(tCoordinator);
+						}
+					});
+				}
+				
 				if(tfControlEntity instanceof ClusterMember){
 					final ClusterMember tClusterMember = (ClusterMember)tfControlEntity;
 					
@@ -1707,6 +1726,12 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				tfContainerName.setMenu(tMenu);
 			}
 		});
+	}
+	
+	private void sendTrackedAnnounceCoordinator(Coordinator pCoordinator)
+	{
+		Logging.log(this, "Sending tracked AnnounceCoordinator for: " + pCoordinator);
+		pCoordinator.distributeCoordinatorAnnouncement(true);		
 	}
 	
 	private void showElectionDetails(ClusterMember pClusterMember)

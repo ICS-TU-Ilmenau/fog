@@ -594,6 +594,10 @@ public class ClusterMember extends ClusterName
 			Logging.log(this, "EVENT: coordinator announcement (from side): " + pAnnounceCoordinator);
 		}
 		
+		if(pAnnounceCoordinator.isPacketTracking()){
+			Logging.warn(this, "Detected tracked AnnounceCoordinator packet: " + pAnnounceCoordinator);
+		}
+		
 		/**
 		 * Storing that the announced coordinator is a superior one of this node
 		 */
