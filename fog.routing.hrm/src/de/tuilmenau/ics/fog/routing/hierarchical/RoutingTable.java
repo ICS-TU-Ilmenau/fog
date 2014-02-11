@@ -345,6 +345,8 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 							  // better hop count?
 							  (tBestResultHopCount.getHopCount() > tEntry.getHopCount()) || 
 							  (
+							      // should we enforce BE routing?
+								  (!HRMController.ENFORCE_BE_ROUTING) && 
 							      // hop count is the same and and another criterion is better?
 								  (tBestResultHopCount.getHopCount() == tEntry.getHopCount()) && 
 								  ( 
@@ -491,13 +493,15 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			/**
 			 * QoS result
 			 */
-			if((pDesiredMinDataRate > 0) || (pDesiredMaxDelay > 0)) {
-				if(tBestResultMatchingQoS != null){
-					// use route with best matching QoS values
-					tResult = tBestResultMatchingQoS;
-				}else if (tBestResultQoS != null){
-					// fall-back to best QoS values
-					tResult = tBestResultQoS;
+			if(!HRMController.ENFORCE_BE_ROUTING){
+				if((pDesiredMinDataRate > 0) || (pDesiredMaxDelay > 0)) {
+					if(tBestResultMatchingQoS != null){
+						// use route with best matching QoS values
+						tResult = tBestResultMatchingQoS;
+					}else if (tBestResultQoS != null){
+						// fall-back to best QoS values
+						tResult = tBestResultQoS;
+					}
 				}
 			}			
 		}else{

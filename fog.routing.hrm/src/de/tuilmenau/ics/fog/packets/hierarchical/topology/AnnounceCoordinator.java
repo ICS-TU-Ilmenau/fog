@@ -135,6 +135,12 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	public static Long sSentBroadcasts = new Long(0);
 
 	/**
+	 * Defines if packet tracking is active
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	private boolean mPacketTracking = false;
+	
+	/**
 	 * Constructor for getDefaultSize()
 	 */
 	private AnnounceCoordinator()
@@ -352,16 +358,6 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		
 		return false;
 	}
-
-	/**
-	 * Returns the current TTA value
-	 * 
-	 * @return the TTA value
-	 */
-	public long getTTA()
-	{
-		return mTTA;
-	}
 	
 	/**
 	 * Adds an entry to the recorded route towards the announced cluster
@@ -429,8 +425,8 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		
 		super.duplicate(tResult);
 
-		// update TTA
-		tResult.mTTA = getTTA();
+		// update TTL
+		tResult.mTTA = mTTA;
 		
 		// update the route to the announced cluster
 		tResult.mRoute = getRoute();
@@ -450,6 +446,9 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		// update the recorded nodes
 		tResult.mPassedNodes = (LinkedList<L2Address>) mPassedNodes.clone();
 
+		// packet tracking
+		tResult.mPacketTracking = mPacketTracking;
+		
 		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
 		return tResult;
@@ -599,6 +598,22 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	}
 
 	/**
+	 * Activates packet tracking
+	 */
+	public void activateTracking()
+	{
+		mPacketTracking = true;		
+	}
+
+	/**
+	 * Returns if packet tracking is active
+	 */
+	public boolean isPacketTracking()
+	{
+		return mPacketTracking;
+	}
+	
+	/**
 	 * Returns an object describing string
 	 * 
 	 *  @return the describing string
@@ -606,6 +621,6 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + getTTA() + ", SenderCluster="+ getSenderClusterName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTA + ", SenderCluster="+ getSenderClusterName() + ")";
 	}
 }

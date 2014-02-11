@@ -119,12 +119,16 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 */
 	@Override
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
-	{
+	{		
 		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 			Logging.log(this, "EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
 			Logging.log(this, "       ..fowarding announcement to coordinator object: " + mCoordinator);
 		}
-		
+	
+		if(pAnnounceCoordinator.isPacketTracking()){
+			Logging.warn(this, "Detected tracked AnnounceCoordinator packet: " + pAnnounceCoordinator);
+		}
+
 		mCoordinator.eventCoordinatorAnnouncement(pComChannel, pAnnounceCoordinator);
 	}
 
