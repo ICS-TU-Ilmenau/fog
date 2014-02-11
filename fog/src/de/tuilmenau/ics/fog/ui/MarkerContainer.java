@@ -65,7 +65,7 @@ public class MarkerContainer
 	
 
 	
-	public void add(Object pObject, Marker pMarker)
+	public synchronized void add(Object pObject, Marker pMarker)
 	{
 		if(mMarkedElements == null) {
 			mMarkedElements = new HashMap<Object, LinkedList<Marker>>();
@@ -82,7 +82,7 @@ public class MarkerContainer
 		notifyObservers(pObject);
 	}
 	
-	public boolean remove(Object pObject, Marker pMarker)
+	public synchronized boolean remove(Object pObject, Marker pMarker)
 	{
 		if(mMarkedElements != null) {
 			LinkedList<Marker> tMarkers = mMarkedElements.get(pObject);
@@ -107,7 +107,7 @@ public class MarkerContainer
 	 * @param pObject Reference object
 	 * @return All markers listed for the reference object
 	 */
-	public Marker[] get(Object pObject)
+	public synchronized Marker[] get(Object pObject)
 	{
 		if(mMarkedElements != null) {
 			LinkedList<Marker> tMarkers = mMarkedElements.get(pObject);
@@ -123,7 +123,7 @@ public class MarkerContainer
 	/**
 	 * @return List of all markers (!= null)
 	 */
-	public Marker[] getMarkers()
+	public synchronized Marker[] getMarkers()
 	{
 		if(mMarkedElements != null) {
 			LinkedList<Marker> tMarkers = new LinkedList<Marker>();
@@ -148,7 +148,7 @@ public class MarkerContainer
 	 * 
 	 * @param pMarker Marker to remove
 	 */
-	public void removeMarker(Marker pMarker)
+	public synchronized void removeMarker(Marker pMarker)
 	{
 		if(pMarker != null) {
 			LinkedList<Marker> tDelMarkerList = new LinkedList<Marker>();
