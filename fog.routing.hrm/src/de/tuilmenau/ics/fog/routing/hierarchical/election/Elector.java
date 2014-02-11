@@ -2080,9 +2080,9 @@ public class Elector implements Localization
 							}
 
 							if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), IGNORE_LINK_STATE)){
-								if(DEBUG){
+								//if(DEBUG){
 									Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
-								}
+								//}
 								tAllowedToWin = false;
 								break;
 							}
