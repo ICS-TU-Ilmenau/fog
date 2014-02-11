@@ -496,9 +496,17 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			if(!HRMController.ENFORCE_BE_ROUTING){
 				if((pDesiredMinDataRate > 0) || (pDesiredMaxDelay > 0)) {
 					if(tBestResultMatchingQoS != null){
+						if (DEBUG){
+							Logging.log(this, "      ..setting best matching QoS route: " + tBestResultMatchingQoS);
+						}
+
 						// use route with best matching QoS values
 						tResult = tBestResultMatchingQoS;
 					}else if (tBestResultQoS != null){
+						if (DEBUG){
+							Logging.log(this, "      ..setting best QoS route: " + tBestResultMatchingQoS);
+						}
+
 						// fall-back to best QoS values
 						tResult = tBestResultQoS;
 					}
