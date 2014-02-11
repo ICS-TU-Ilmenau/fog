@@ -67,7 +67,7 @@ public class HRMTestApp extends ThreadApplication
 	 * Defines how many connections we want to have per test turn
 	 */
 	private final int NUMBER_NODE_COMBINATIONS = 6;
-	private final int NUMBER_SUB_CONNECTIONS = 25;
+	private final int NUMBER_SUB_CONNECTIONS = 30;
 	private final int NUMBER_MEASUREMENT_TURNS = 10;
 	
 	private HashMap<Node, QoSTestApp> mQoSTestApps = new HashMap<Node, QoSTestApp>();
@@ -152,11 +152,15 @@ public class HRMTestApp extends ThreadApplication
 	private void resetAllConnetions()
 	{
 		for(QoSTestApp tQoSTestApp: mQoSTestApps.values()){
-			int tConns = tQoSTestApp.countConnections();
-			if(tConns > 0){
-				for (int i = 0; i < tConns; i++){
-					Logging.log(this, "Decreasing connections");
-					tQoSTestApp.eventDecreaseConnections();
+			while(tQoSTestApp.countConnections() > 0){
+				int tBefore = tQoSTestApp.countConnections();
+				tQoSTestApp.eventDecreaseConnections();
+				while(tQoSTestApp.countConnections() == tBefore){
+					try {
+						Logging.log(this, "Waiting for end of QoSTestApp connection of: " + tQoSTestApp);
+						Thread.sleep(50);
+					} catch (InterruptedException tExc) {
+					}
 				}
 			}
 		}
@@ -166,6 +170,23 @@ public class HRMTestApp extends ThreadApplication
 		} catch (InterruptedException tExc) {
 		}
 		
+		boolean tFoundRemainingReservation = false;
+		do{
+			tFoundRemainingReservation = false;
+			for(int i = 0; i < mCntBuss; i++){
+				Bus tBus = mGlobalBusList.get(i);
+				if(tBus.getUtilization() > 0){
+					tFoundRemainingReservation = true;
+					Logging.warn(this, "### Bus " + tBus + " has still some reservations");
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException tExc) {
+					}
+					break;
+				}
+			}
+		}while(tFoundRemainingReservation);
+			
 		for(int i = 0; i < mCntBuss; i++){
 			Bus tBus = mGlobalBusList.get(i);
 			if(tBus.getUtilization() > 0){
@@ -192,6 +213,50 @@ public class HRMTestApp extends ThreadApplication
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Creates the connections 
+	 */
+	private void createConnections()
+	{
+		for(int i = 0; (i < NUMBER_NODE_COMBINATIONS) && (mHRMTestAppNeeded); i++){
+			/**
+			 * Get source/destination node
+			 */
+			Node tSourceNode = mSource.get(i);
+			Node tDestinationNode = mDestination.get(i);
+			
+			/**
+			 * Create connection
+			 */
+			QoSTestApp tQoSTestApp = mQoSTestApps.get(tSourceNode);
+			tQoSTestApp.setDestination(tDestinationNode.getName());
+			for(int j = 0; j < NUMBER_SUB_CONNECTIONS; j++){
+				tQoSTestApp.eventIncreaseConnections();
+
+				/**
+				 * Wait some time
+				 */
+				try {
+					if(!HRMController.ENFORCE_BE_ROUTING){
+						Logging.warn(this, "Created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j));
+						Thread.sleep((long) 500);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+					}else{
+						Logging.warn(this, "Created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j));
+						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+					}
+				} catch (InterruptedException tExc) {
+				}
+			}
+		}
+		/**
+		 * Wait some time
+		 */
+		try {
+			Thread.sleep((long) 2000);
+		} catch (InterruptedException tExc) {
+		}
 	}
 
 	/**
@@ -273,89 +338,90 @@ public class HRMTestApp extends ThreadApplication
 			resetAllConnetions();
 			
 			
-			
-			/**
-			 * Create the BE connections
-			 */
-			Logging.warn(this, "########## Creating BE connections now...");
-			HRMController.ENFORCE_BE_ROUTING = true;
-			createConnections();
-
-			/**
-			 * Wait some time
-			 */
-			Logging.warn(this, "########## Waiting for BE connections now...");
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException tExc) {
-			}
-
-			/**
-			 * Create statistics for BE
-			 */
-			int tBEConnectionsWithFulfilledQoS = countConnectionsWithFulfilledQoS();
-			LinkedList<Double> tStoredUtilBasedOnBE = new LinkedList<Double>();
-			for(int i = 0; i < mCntBuss; i++){
-				Bus tBus = mGlobalBusList.get(i);
-				Logging.warn(this, tBus + " (BE)=> " + tBus.getUtilization());
-				tStoredUtilBasedOnBE.add(tBus.getUtilization());
-			}
-
-			/**
-			 * Write statistics to file
-			 */
-			Logging.warn(this, "   ..HRM connections with fulfilled QoS: " + tHRMConnectionsWithFulfilledQoS);
-			Logging.warn(this, "   ..BE connections with fulfilled QoS: " + tBEConnectionsWithFulfilledQoS);
-			if(tTurn == 0){
+			if(!GLOBAL_ERROR){
+				/**
+				 * Create the BE connections
+				 */
+				Logging.warn(this, "########## Creating BE connections now...");
+				HRMController.ENFORCE_BE_ROUTING = true;
+				createConnections();
+	
+				/**
+				 * Wait some time
+				 */
+				Logging.warn(this, "########## Waiting for BE connections now...");
 				try {
-					mStatistic = Statistic.getInstance(mLocalNodeAS.getSimulation(), HRMTestApp.class, ";", false);
-				} catch (Exception tExc) {
-					Logging.err(this, "Can not write statistic log file", tExc);
+					Thread.sleep(2000);
+				} catch (InterruptedException tExc) {
 				}
-
-				if(mStatistic != null){
-					Runtime.getRuntime().addShutdownHook(new Thread() {
-						@Override
-						public void run()
-						{
-							Logging.getInstance().warn(this, "Closing HRMController statistics log file");
-							mStatistic.close();
-						}
-					});
-				}
-
-				LinkedList<String> tTableHeader = new LinkedList<String>();
-				tTableHeader.add("Turn");
-				tTableHeader.add("Good HRM routing");
-				tTableHeader.add("Good BE routing");
-				tTableHeader.add("-");
-				tTableHeader.add("BusCounter");
+	
+				/**
+				 * Create statistics for BE
+				 */
+				int tBEConnectionsWithFulfilledQoS = countConnectionsWithFulfilledQoS();
+				LinkedList<Double> tStoredUtilBasedOnBE = new LinkedList<Double>();
 				for(int i = 0; i < mCntBuss; i++){
-					tTableHeader.add("HRM_" + mGlobalBusList.get(i).getName());
+					Bus tBus = mGlobalBusList.get(i);
+					Logging.warn(this, tBus + " (BE)=> " + tBus.getUtilization());
+					tStoredUtilBasedOnBE.add(tBus.getUtilization());
 				}
+	
+				/**
+				 * Write statistics to file
+				 */
+				Logging.warn(this, "   ..HRM connections with fulfilled QoS: " + tHRMConnectionsWithFulfilledQoS);
+				Logging.warn(this, "   ..BE connections with fulfilled QoS: " + tBEConnectionsWithFulfilledQoS);
+				if(tTurn == 0){
+					try {
+						mStatistic = Statistic.getInstance(mLocalNodeAS.getSimulation(), HRMTestApp.class, ";", false);
+					} catch (Exception tExc) {
+						Logging.err(this, "Can not write statistic log file", tExc);
+					}
+	
+					if(mStatistic != null){
+						Runtime.getRuntime().addShutdownHook(new Thread() {
+							@Override
+							public void run()
+							{
+								Logging.getInstance().warn(this, "Closing HRMController statistics log file");
+								mStatistic.close();
+							}
+						});
+					}
+	
+					LinkedList<String> tTableHeader = new LinkedList<String>();
+					tTableHeader.add("Turn");
+					tTableHeader.add("Good HRM routing");
+					tTableHeader.add("Good BE routing");
+					tTableHeader.add("-");
+					tTableHeader.add("BusCounter");
+					for(int i = 0; i < mCntBuss; i++){
+						tTableHeader.add("HRM_" + mGlobalBusList.get(i).getName());
+					}
+					for(int i = 0; i < mCntBuss; i++){
+						tTableHeader.add("BE_" + mGlobalBusList.get(i).getName());
+					}
+					if(mStatistic != null){
+						mStatistic.log(tTableHeader);
+					}
+				}
+				LinkedList<String> tTableRow = new LinkedList<String>();
+				tTableRow.add(Integer.toString(tTurn));
+				tTableRow.add(Integer.toString(tHRMConnectionsWithFulfilledQoS));
+				tTableRow.add(Integer.toString(tBEConnectionsWithFulfilledQoS));
+				tTableRow.add("-");
+				tTableRow.add(Integer.toString(mCntBuss));
 				for(int i = 0; i < mCntBuss; i++){
-					tTableHeader.add("BE_" + mGlobalBusList.get(i).getName());
+					tTableRow.add(Double.toString(tStoredUtilBasedOnHRM.get(i)));
+				}			
+				for(int i = 0; i < mCntBuss; i++){
+					tTableRow.add(Double.toString(tStoredUtilBasedOnBE.get(i)));
 				}
 				if(mStatistic != null){
-					mStatistic.log(tTableHeader);
+					mStatistic.log(tTableRow);
+					Logging.log(this, ">>>>>>>>>> Writing statistics to file..");
+					mStatistic.flush();
 				}
-			}
-			LinkedList<String> tTableRow = new LinkedList<String>();
-			tTableRow.add(Integer.toString(tTurn));
-			tTableRow.add(Integer.toString(tHRMConnectionsWithFulfilledQoS));
-			tTableRow.add(Integer.toString(tBEConnectionsWithFulfilledQoS));
-			tTableRow.add("-");
-			tTableRow.add(Integer.toString(mCntBuss));
-			for(int i = 0; i < mCntBuss; i++){
-				tTableRow.add(Double.toString(tStoredUtilBasedOnHRM.get(i)));
-			}			
-			for(int i = 0; i < mCntBuss; i++){
-				tTableRow.add(Double.toString(tStoredUtilBasedOnBE.get(i)));
-			}
-			if(mStatistic != null){
-				mStatistic.log(tTableRow);
-				Logging.log(this, ">>>>>>>>>> Writing statistics to file..");
-				mStatistic.flush();
 			}
 
 			/**
@@ -370,6 +436,11 @@ public class HRMTestApp extends ThreadApplication
 				Logging.warn(this, "########## END OF MEASUREMENTS #########");
 				break;
 			}
+			
+			if(GLOBAL_ERROR){
+				Logging.err(this, "########## GLOBAL ERROR - END OF MEASUREMENTS #########");
+				break;
+			}
 		}//while
 
 		/**
@@ -377,50 +448,6 @@ public class HRMTestApp extends ThreadApplication
 		 */
 		Logging.log(this, "Main loop finished");
 		mHRMTestAppRunning = false;
-	}
-
-	/**
-	 * Creates the connections 
-	 */
-	private void createConnections()
-	{
-		for(int i = 0; (i < NUMBER_NODE_COMBINATIONS) && (mHRMTestAppNeeded); i++){
-			/**
-			 * Get source/destination node
-			 */
-			Node tSourceNode = mSource.get(i);
-			Node tDestinationNode = mDestination.get(i);
-			
-			/**
-			 * Create connection
-			 */
-			QoSTestApp tQoSTestApp = mQoSTestApps.get(tSourceNode);
-			tQoSTestApp.setDestination(tDestinationNode.getName());
-			for(int j = 0; j < NUMBER_SUB_CONNECTIONS; j++){
-				tQoSTestApp.eventIncreaseConnections();
-
-				/**
-				 * Wait some time
-				 */
-				try {
-					if(!HRMController.ENFORCE_BE_ROUTING){
-						Logging.warn(this, "Created HRM connection " + (i * NUMBER_SUB_CONNECTIONS + j));
-						Thread.sleep((long) 500);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
-					}else{
-						Logging.warn(this, "Created BE connection " + (i * NUMBER_SUB_CONNECTIONS + j));
-						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
-					}
-				} catch (InterruptedException tExc) {
-				}
-			}
-		}
-		/**
-		 * Wait some time
-		 */
-		try {
-			Thread.sleep((long) 2000);
-		} catch (InterruptedException tExc) {
-		}
 	}
 
 	/**
