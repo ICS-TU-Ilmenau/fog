@@ -768,12 +768,12 @@ public class ClusterMember extends ClusterName
 		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
 			Logging.log(this, "Deacreasing TTL of: " + tForwardPacket);
 		}
-		tForwardPacket.decreaseTTL(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
+		tForwardPacket.incHopCount(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
 	
 		/**
 		 * forward the announcement if the TTL is still okay
 		 */
-		if(tForwardPacket.isTTLOkay()){
+		if(tForwardPacket.isTTIOkay()){
 			// do we have a loop?
 			if(!tForwardPacket.hasPassedNode(mHRMController.getNodeL2Address())){
 				/**

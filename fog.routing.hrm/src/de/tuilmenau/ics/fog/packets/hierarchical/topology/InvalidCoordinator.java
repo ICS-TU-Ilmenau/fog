@@ -82,7 +82,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	/**
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
 	 */
-	private long mTTL = HRMConfig.Hierarchy.RADIUS;
+	private long mTTI = HRMConfig.Hierarchy.RADIUS;
 	
 	/**
 	 * Stores if the packet is still forward top-downward or sidewards
@@ -227,17 +227,17 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	/**
 	 * Decreases the TTL value by one 
 	 */
-	public void decreaseTTL()
+	public void incHopCount()
 	{
-		mTTL--;
+		mTTI--;
 	}
 	
 	/**
-	 * Returns true if the TTL is still okay
+	 * Returns true if the TTI is still okay
 	 * 
 	 * @return true or false
 	 */
-	public boolean isTTLOkay()
+	public boolean isTTIOkay()
 	{
 		/**
 		 * Return always true for the highest hierarchy level
@@ -256,7 +256,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		/**
 		 * Return true depending on the TTL value
 		 */
-		return (mTTL > 0);
+		return (mTTI > 0);
 	}
 	
 	/**
@@ -289,16 +289,6 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		
 		return false;
 	}
-
-	/**
-	 * Returns the current TTL value
-	 * 
-	 * @return the TTL value
-	 */
-	public long getTTL()
-	{
-		return mTTL;
-	}
 	
 	/**
 	 * Returns a duplicate of this packet
@@ -314,7 +304,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		super.duplicate(tResult);
 
 		// update TTL
-		tResult.mTTL = getTTL();
+		tResult.mTTI = mTTI;
 		
 		// update "sideward forwarding" marker
 		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
@@ -462,6 +452,6 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + getTTL() + ", SenderCluster="+ getSenderClusterName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTI + ", SenderCluster="+ getSenderClusterName() + ")";
 	}
 }

@@ -358,16 +358,6 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		
 		return false;
 	}
-
-	/**
-	 * Returns the current TTA value
-	 * 
-	 * @return the TTA value
-	 */
-	public long getTTA()
-	{
-		return mTTA;
-	}
 	
 	/**
 	 * Adds an entry to the recorded route towards the announced cluster
@@ -435,8 +425,8 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		
 		super.duplicate(tResult);
 
-		// update TTA
-		tResult.mTTA = getTTA();
+		// update TTL
+		tResult.mTTA = mTTA;
 		
 		// update the route to the announced cluster
 		tResult.mRoute = getRoute();
@@ -631,6 +621,6 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + getTTA() + ", SenderCluster="+ getSenderClusterName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTA + ", SenderCluster="+ getSenderClusterName() + ")";
 	}
 }
