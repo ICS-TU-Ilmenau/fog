@@ -255,7 +255,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 			
 			forwardingNode.closed();
 		}else {
-			logger.err(this, "CEP cannot be closed because it is not connected");
+			logger.log(this, "CEP cannot be closed because it is not connected");
 		}
 			
 		

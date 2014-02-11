@@ -79,12 +79,12 @@ public class QoSTestApp extends ThreadApplication
 	private HashMap<Connection, Marker> mMarkers = new HashMap<Connection, Marker>();
 	
 	/**
-	 * Stores the default max. desired delay
+	 * Stores the default max. desired delay in [ms]
 	 */
 	private int mDefaultDelay = 53;  // some random number above 0
 	
 	/**
-	 * Stores the default min. desired data rate
+	 * Stores the default min. desired data rate in [kbit/s]
 	 */
 	private int mDefaultDataRate = 1000;
 	
