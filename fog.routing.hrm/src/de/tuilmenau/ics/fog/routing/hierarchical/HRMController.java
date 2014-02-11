@@ -5400,10 +5400,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * EXAMPLE 1: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
 						 */
 					}else{
-						//Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
+						Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
 					}
 				}else{
-					//Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
+					Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
 				}
 				
 				if(tResult != null){
@@ -5644,7 +5644,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}else{
 				if(!FOUND_GLOBAL_ERROR){
-					Logging.err(this, "getRoutingEntryHRG() couldn't determine an HRG based inter-cluster route from " + pFrom + " to " + pTo);
+					Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG based inter-cluster route from " + pFrom + " to " + pTo);
 				}
 			}
 		}
