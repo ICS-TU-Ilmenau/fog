@@ -284,21 +284,25 @@ public class ProbeRouting extends EclipseCommand
 		BlockingEventHandling tBlockingEventHandling = new BlockingEventHandling(tConnection, 1);
 		
 		// wait for the first event
-		Event tEvent = tBlockingEventHandling.waitForEvent();
+		Event tEvent = tBlockingEventHandling.waitForEvent(HRMConfig.Hierarchy.CONNECT_TIMEOUT);
 		Logging.log(ProbeRouting.class, "        ..=====> got connection " + pTargetNodeHRMID + " event: " + tEvent);
 		
-		if(tEvent instanceof ConnectedEvent) {
-			if(!tConnection.isConnected()) {
-				Logging.log(ProbeRouting.class, "Received \"connected\" " + pTargetNodeHRMID + " event but connection is not connected.");
-			} else {
-				tSuccessfulConnection = true;
+		if(tEvent != null){
+			if(tEvent instanceof ConnectedEvent) {
+				if(!tConnection.isConnected()) {
+					Logging.log(ProbeRouting.class, "Received \"connected\" " + pTargetNodeHRMID + " event but connection is not connected.");
+				} else {
+					tSuccessfulConnection = true;
+				}
+			}else if(tEvent instanceof ErrorEvent) {
+				Exception tExc = ((ErrorEvent) tEvent).getException();
+				
+				Logging.err(ProbeRouting.class, "Got connection " + pTargetNodeHRMID + " exception", tExc);
+			}else{
+				Logging.err(ProbeRouting.class, "Got connection " + pTargetNodeHRMID + " event: "+ tEvent);
 			}
-		}else if(tEvent instanceof ErrorEvent) {
-			Exception tExc = ((ErrorEvent) tEvent).getException();
-			
-			Logging.err(ProbeRouting.class, "Got connection " + pTargetNodeHRMID + " exception", tExc);
 		}else{
-			Logging.err(ProbeRouting.class, "Got connection " + pTargetNodeHRMID + " event: "+ tEvent);
+			Logging.warn(null, "Cannot connect to " + pTargetNodeHRMID +" due to timeout");
 		}
 
 		/**

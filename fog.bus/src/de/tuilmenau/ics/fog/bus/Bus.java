@@ -268,7 +268,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	}
 
 	@Override
-	public void modifyAvailableDataRate(int pDataRateOffset)
+	public synchronized void modifyAvailableDataRate(int pDataRateOffset)
 	{
 		DatarateProperty tPropDataRate = (DatarateProperty) mDescription.get(DatarateProperty.class);
 		

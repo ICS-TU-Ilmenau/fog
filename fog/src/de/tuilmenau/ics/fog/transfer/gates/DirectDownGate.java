@@ -100,7 +100,7 @@ public class DirectDownGate extends DownGate
 				tDeleteMe = true;
 			}
 				
-			mLogger.log(this, "Forwarding with QoS reservation the packet: " + packet);	
+			//mLogger.log(this, "Forwarding with QoS reservation the packet: " + packet);	
 		}
 		
 		packet.addToDownRoute(getGateID());
