@@ -48,16 +48,18 @@ public class ProcessList implements Iterable<Process>
 	 */
 	public Process getProcess(Identity owner, int processID)
 	{
-		for(Process process : mProcesses) {
-			if(process.getID() == processID) {
-				// do we filter for owners?
-				if(owner != null) {
-					// check if the entities are the same
-					if(process.isChangableBy(owner)) {
+		if(mProcesses != null){
+			for(Process process : mProcesses) {
+				if(process.getID() == processID) {
+					// do we filter for owners?
+					if(owner != null) {
+						// check if the entities are the same
+						if(process.isChangableBy(owner)) {
+							return process;
+						}
+					} else {
 						return process;
 					}
-				} else {
-					return process;
 				}
 			}
 		}
