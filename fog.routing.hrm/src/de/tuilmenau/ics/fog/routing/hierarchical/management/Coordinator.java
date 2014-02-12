@@ -830,7 +830,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * @param pSourceComChannel the source comm. channel
 	 * @param pRouteSharePacket the packet
 	 */
-	public void eventReceivedRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
+	public synchronized void eventReceivedRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
 	{
 		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.log(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
