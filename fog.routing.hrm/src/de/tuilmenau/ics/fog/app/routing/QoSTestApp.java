@@ -303,68 +303,71 @@ public class QoSTestApp extends ThreadApplication
 		Logging.log(this, "Increasing connections (currently: " + countConnections() + ")");
 		
 		LinkedList<HRMID> tDestinationHRMIDs = getDestinationHRMIDs();
-		
-		HRMID tDestinationHRMID = tDestinationHRMIDs.getFirst();
-		mDestinationHRMID = tDestinationHRMID;
-				
-		if(!tDestinationHRMIDs.isEmpty()){
-			/**
-			 * Connect to the destination node
-			 */
-		    boolean tRetryConnection = false;
-		    boolean tRetriedConnection = false;
-		    int tAttemptNr = 1;
-		    Connection tConnection = null;
-		    do{
-		    	tRetryConnection = false;
-				tConnection = ProbeRouting.createProbeRoutingConnection(this, mNode, tDestinationHRMID, mDefaultDelay /* ms */, mDefaultDataRate /* kbit/s */, false);
-				if(tConnection == null){
-					tAttemptNr++;
-					tRetryConnection = true;
-					tRetriedConnection = true;
-					Logging.warn(this, "Cannot connect to: " + tDestinationHRMID + ", connect attempt nr. " + tAttemptNr);
-				}
-		    }while((tRetryConnection) && (mQoSTestAppNeeded));
-		    if(tRetriedConnection){
-				Logging.warn(this, "Successfully recovered from connection problems towards: " + tDestinationHRMID + ", connect attempts: " + tAttemptNr);
-		    }
-
-			/**
-			 * Check if connect request was successful
-			 */
-			if(tConnection != null){
-				Logging.log(this, "        ..found valid connection to " + tDestinationHRMID);
-				
-				synchronized (mConnections) {
-					mConnections.add(tConnection);
-				}
-
+		if((tDestinationHRMIDs != null) && (!tDestinationHRMIDs.isEmpty())){
+			HRMID tDestinationHRMID = tDestinationHRMIDs.getFirst();
+			mDestinationHRMID = tDestinationHRMID;
+					
+			if(!tDestinationHRMIDs.isEmpty()){
 				/**
-				 * Create the connection session
+				 * Connect to the destination node
 				 */
-				QoSTestAppSession tConnectionSession = new QoSTestAppSession(this);
-				tConnectionSession.start(tConnection);
-				synchronized (mConnectionSessions) {
-					mConnectionSessions.put(tConnection, tConnectionSession);
+			    boolean tRetryConnection = false;
+			    boolean tRetriedConnection = false;
+			    int tAttemptNr = 1;
+			    Connection tConnection = null;
+			    do{
+			    	tRetryConnection = false;
+					tConnection = ProbeRouting.createProbeRoutingConnection(this, mNode, tDestinationHRMID, mDefaultDelay /* ms */, mDefaultDataRate /* kbit/s */, false);
+					if(tConnection == null){
+						tAttemptNr++;
+						tRetryConnection = true;
+						tRetriedConnection = true;
+						Logging.warn(this, "Cannot connect to: " + tDestinationHRMID + ", connect attempt nr. " + tAttemptNr);
+					}
+			    }while((tRetryConnection) && (mQoSTestAppNeeded));
+			    if(tRetriedConnection){
+					Logging.warn(this, "Successfully recovered from connection problems towards: " + tDestinationHRMID + ", connect attempts: " + tAttemptNr);
+			    }
+	
+				/**
+				 * Check if connect request was successful
+				 */
+				if(tConnection != null){
+					Logging.log(this, "        ..found valid connection to " + tDestinationHRMID);
+					
+					synchronized (mConnections) {
+						mConnections.add(tConnection);
+					}
+	
+					/**
+					 * Create the connection session
+					 */
+					QoSTestAppSession tConnectionSession = new QoSTestAppSession(this);
+					tConnectionSession.start(tConnection);
+					synchronized (mConnectionSessions) {
+						mConnectionSessions.put(tConnection, tConnectionSession);
+					}
+					
+					/**
+					 * Send some test data
+					 */
+	//				for(int i = 0; i < 3; i++){
+	//					try {
+	//						//Logging.log(this, "      ..sending test data " + i);
+	//						tConnection.write("TEST DATA " + Integer.toString(i));
+	//					} catch (NetworkException tExc) {
+	//						Logging.err(this, "Couldn't send test data", tExc);
+	//					}
+	//				}
+					
+					/**
+					 * Send connection marker
+					 */
+					sendMarker(tConnection);
 				}
-				
-				/**
-				 * Send some test data
-				 */
-//				for(int i = 0; i < 3; i++){
-//					try {
-//						//Logging.log(this, "      ..sending test data " + i);
-//						tConnection.write("TEST DATA " + Integer.toString(i));
-//					} catch (NetworkException tExc) {
-//						Logging.err(this, "Couldn't send test data", tExc);
-//					}
-//				}
-				
-				/**
-				 * Send connection marker
-				 */
-				sendMarker(tConnection);
-			}	
+			}
+		}else{
+			Logging.err(this, "No destination HRMID found for: " + mDestinationNodeName);
 		}
 	}
 
