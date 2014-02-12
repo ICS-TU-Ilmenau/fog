@@ -28,13 +28,15 @@ public class ProcessList implements Iterable<Process>
 	{
 	}
 	
-	public synchronized void registerProcess(Process process)
+	public void registerProcess(Process process)
 	{
 		Process existingProcess = getProcess(process.getOwner(), process.getID());
 		
 		// is there already a process registered for the ID?
 		if(existingProcess == null) {
-			mProcesses.addFirst(process);
+			synchronized (mProcesses) {
+				mProcesses.addFirst(process);
+			}
 		} else {
 			// maybe it is the same process?
 			if(existingProcess != process) {
@@ -46,19 +48,21 @@ public class ProcessList implements Iterable<Process>
 	/**
 	 * Returns a process if it is changeable by the entity and has the given process number.
 	 */
-	public synchronized Process getProcess(Identity owner, int processID)
+	public Process getProcess(Identity owner, int processID)
 	{
-		if(mProcesses != null){
-			for(Process process : mProcesses) {
-				if(process.getID() == processID) {
-					// do we filter for owners?
-					if(owner != null) {
-						// check if the entities are the same
-						if(process.isChangableBy(owner)) {
+		synchronized (mProcesses) {
+			if(mProcesses != null){
+				for(Process process : mProcesses) {
+					if(process.getID() == processID) {
+						// do we filter for owners?
+						if(owner != null) {
+							// check if the entities are the same
+							if(process.isChangableBy(owner)) {
+								return process;
+							}
+						} else {
 							return process;
 						}
-					} else {
-						return process;
 					}
 				}
 			}
@@ -67,23 +71,29 @@ public class ProcessList implements Iterable<Process>
 		return null;
 	}
 	
-	public synchronized boolean unregisterProcess(Process process)
+	public boolean unregisterProcess(Process process)
 	{
-		return mProcesses.remove(process);
+		synchronized (mProcesses) {
+			return mProcesses.remove(process);
+		}
 	}
 
-	public synchronized int size()
+	public int size()
 	{
-		return mProcesses.size();
+		synchronized (mProcesses) {
+			return mProcesses.size();
+		}
 	}
 	
 	@Override
-	public synchronized Iterator<Process> iterator()
+	public Iterator<Process> iterator()
 	{
-		if(mProcesses.size() > 0) {
-			return mProcesses.iterator();
-		} else {
-			return null;
+		synchronized (mProcesses) {
+			if(mProcesses.size() > 0) {
+				return mProcesses.iterator();
+			} else {
+				return null;
+			}
 		}
 	}
 
