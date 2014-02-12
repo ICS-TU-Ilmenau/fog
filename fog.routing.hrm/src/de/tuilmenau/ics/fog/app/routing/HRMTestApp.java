@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.app.routing;
 
 import java.rmi.RemoteException;
+import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.HashMap;
@@ -167,6 +168,10 @@ public class HRMTestApp extends ThreadApplication
 					try {
 						Logging.log(this, "Waiting for end of QoSTestApp connection of: " + tQoSTestApp);
 						Thread.sleep(50);
+						if(!tQoSTestApp.isRunning()){
+							Logging.err(this, "QoSTestApp isn't running anymore: " + tQoSTestApp);
+							break;
+						}
 						tQoSTestApp.eventDecreaseConnections();
 					} catch (InterruptedException tExc) {
 					}
@@ -247,6 +252,11 @@ public class HRMTestApp extends ThreadApplication
 				tQoSTestApp.setDefaultDataRate(tDataRate);
 				tQoSTestApp.eventIncreaseConnections();
 				while(tQoSTestApp.countConnections() == tBefore){
+					if(!tQoSTestApp.isRunning()){
+						Logging.err(this, "QoSTestApp isn't running anymore: " + tQoSTestApp);
+						break;
+					}
+
 					try {
 						Logging.log(this, "Waiting for a start of QoSTestApp connection of: " + tQoSTestApp);
 						Thread.sleep(50);
@@ -255,9 +265,9 @@ public class HRMTestApp extends ThreadApplication
 				}
 
 				if(!HRMController.ENFORCE_BE_ROUTING){
-					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, (mTurn + 1) + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}else{
-					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, (mTurn + 1) + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}
 
 				/**
@@ -485,6 +495,11 @@ public class HRMTestApp extends ThreadApplication
 					tTableHeader.add("Good HRM routing");
 					tTableHeader.add("Good BE routing");
 					tTableHeader.add("-");
+					tTableHeader.add("Ref source");
+					tTableHeader.add("Ref destination");
+					tTableHeader.add("Good HRM Ref routing");
+					tTableHeader.add("Good BE Ref routing");
+					tTableHeader.add("-");
 					tTableHeader.add("BusCounter");
 					for(int i = 0; i < mCntBuss; i++){
 						tTableHeader.add("HRM_" + mGlobalBusList.get(i).getName());
@@ -492,9 +507,6 @@ public class HRMTestApp extends ThreadApplication
 					for(int i = 0; i < mCntBuss; i++){
 						tTableHeader.add("BE_" + mGlobalBusList.get(i).getName());
 					}
-					tTableHeader.add("-");
-					tTableHeader.add("Good HRM Ref routing");
-					tTableHeader.add("Good BE Ref routing");
 					if(mStatistic != null){
 						mStatistic.log(tTableHeader);
 					}
@@ -504,16 +516,22 @@ public class HRMTestApp extends ThreadApplication
 				tTableRow.add(Integer.toString(tHRMConnectionsWithFulfilledQoS));
 				tTableRow.add(Integer.toString(tBEConnectionsWithFulfilledQoS));
 				tTableRow.add("-");
-				tTableRow.add(Integer.toString(mCntBuss));
-				for(int i = 0; i < mCntBuss; i++){
-					tTableRow.add(Double.toString(tStoredUtilBasedOnHRM.get(i)));
-				}			
-				for(int i = 0; i < mCntBuss; i++){
-					tTableRow.add(Double.toString(tStoredUtilBasedOnBE.get(i)));
-				}
-				tTableRow.add("-");
+				tTableRow.add(mRefSource.toString());
+				tTableRow.add(mRefDestination.toString());
 				tTableRow.add(Integer.toString(mRefHRMConnections));
 				tTableRow.add(Integer.toString(mRefBEConnections));
+				tTableRow.add("-");
+				tTableRow.add(Integer.toString(mCntBuss));
+				for(int i = 0; i < mCntBuss; i++){
+					DecimalFormat tFormat = new DecimalFormat("0.#");
+					String tUtilizationStr = tFormat.format(tStoredUtilBasedOnHRM.get(i));
+					tTableRow.add(tUtilizationStr);
+				}			
+				for(int i = 0; i < mCntBuss; i++){
+					DecimalFormat tFormat = new DecimalFormat("0.#");
+					String tUtilizationStr = tFormat.format(tStoredUtilBasedOnBE.get(i));
+					tTableRow.add(tUtilizationStr);
+				}
 				if(mStatistic != null){
 					mStatistic.log(tTableRow);
 					Logging.log(this, ">>>>>>>>>> Writing statistics to file..");
