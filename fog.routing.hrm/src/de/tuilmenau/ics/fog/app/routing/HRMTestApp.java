@@ -9,36 +9,21 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.app.routing;
 
-import java.rmi.RemoteException;
 import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.HashMap;
 
 import de.tuilmenau.ics.fog.application.ThreadApplication;
-import de.tuilmenau.ics.fog.application.util.Session;
 import de.tuilmenau.ics.fog.bus.Bus;
-import de.tuilmenau.ics.fog.facade.Connection;
-import de.tuilmenau.ics.fog.facade.Name;
-import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.packets.InvisibleMarker;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.HRMRoutingProperty;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
-import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.Node;
-import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.ui.Marker;
-import de.tuilmenau.ics.fog.ui.MarkerContainer;
 import de.tuilmenau.ics.fog.ui.Statistic;
-import de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.ProbeRouting;
-import de.tuilmenau.ics.fog.util.SimpleName;
 		
 /**
  * This class is responsible for creating QoS-probe connections and also for their destruction.
@@ -90,7 +75,7 @@ public class HRMTestApp extends ThreadApplication
 	private Statistic mStatistic = null;
 	private int mCntBuss = 0;
 	private boolean GLOBAL_ERROR = false;
-	private int mTurn = 0;
+	private int mTurn = 1;
 			
 	/**
 	 * Constructor
@@ -265,9 +250,9 @@ public class HRMTestApp extends ThreadApplication
 				}
 
 				if(!HRMController.ENFORCE_BE_ROUTING){
-					Logging.warn(this, (mTurn + 1) + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}else{
-					Logging.warn(this, (mTurn + 1) + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}
 
 				/**
@@ -472,7 +457,7 @@ public class HRMTestApp extends ThreadApplication
 				Logging.warn(this, "   ..BE connections with fulfilled QoS: " + tBEConnectionsWithFulfilledQoS);
 				Logging.warn(this, "   ..HRM REF connections with fulfilled QoS: " + mRefHRMConnections);
 				Logging.warn(this, "   ..BE REF connections with fulfilled QoS: " + mRefBEConnections);
-				if(mTurn == 0){
+				if(mTurn == 1){
 					try {
 						mStatistic = Statistic.getInstance(mLocalNodeAS.getSimulation(), HRMTestApp.class, ";", false);
 					} catch (Exception tExc) {
