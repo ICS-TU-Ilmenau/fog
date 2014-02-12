@@ -1604,11 +1604,13 @@ public class HRMRoutingService implements RoutingService, Localization
 						 * get the first part of the routing result: [[gateID list], [an L2 address]] => [gateID list]
 						 */
 						RouteSegmentPath tRoutingResultOriginalFirstPart = (RouteSegmentPath)tL2RoutingResult.getFirst().clone();
-						Logging.log(this, "Temporary routing result: " + tL2RoutingResult);
-						for(RouteSegment tRoutingResultPart : tL2RoutingResult){
-							Logging.log(this, "   ..[" + tRoutingResultPart.getClass().getSimpleName() + "]: " + tRoutingResultPart);
+						if (DEBUG){
+							Logging.log(this, "Temporary routing result: " + tL2RoutingResult);
+							for(RouteSegment tRoutingResultPart : tL2RoutingResult){
+								Logging.log(this, "   ..[" + tRoutingResultPart.getClass().getSimpleName() + "]: " + tRoutingResultPart);
+							}
+							Logging.log(this, "Temporary routing result - first part (gate list): " + tRoutingResultOriginalFirstPart);
 						}
-						Logging.log(this, "Temporary routing result - first part (gate list): " + tRoutingResultOriginalFirstPart);
 						
 						/**
 						 * Search for DedicatedQoSReservationProperty property
@@ -1681,6 +1683,7 @@ public class HRMRoutingService implements RoutingService, Localization
 										if(tCapabilities != null) {
 											boolean tRepeat = false;
 											do{
+												tRepeat = false;
 												try {
 													tNeededReservationRequirements = tCapabilities.deriveRequirements(tNonFunctionalDescription);
 												}
@@ -1693,6 +1696,7 @@ public class HRMRoutingService implements RoutingService, Localization
 													
 													// repeat
 													tRepeat = true;
+													Logging.log(this, "Repeat deriveRequirements()");
 													//avoid: throw new RoutingException(this, "Requirements " + tNonFunctionalDescription +" can not be fulfilled.", tExc);
 												}
 											}while(tRepeat);
@@ -2099,7 +2103,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		 */
 		DestinationApplicationProperty tPropDestApp = (DestinationApplicationProperty) pRequirements.get(DestinationApplicationProperty.class);
 		if(tPropDestApp != null) {
-			Logging.log(this, "    ..found destination application property: " + tPropDestApp);
+			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				Logging.log(this, "    ..found destination application property: " + tPropDestApp);
+			}
 			
 			// remove the found property from the requirements
 			pRequirements.remove(tPropDestApp);
@@ -2118,7 +2124,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				}
 				tResult = new SimpleName(tPropDestApp.getAppNamespace());
 			}
-			Logging.log(this, "    ..found destination app.: " + tResult);
+			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+				Logging.log(this, "    ..found destination app.: " + tResult);
+			}
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
 				Logging.log(this, "getDestinationApp() wasn't able to derive the destination app. from: " + pRequirements);
