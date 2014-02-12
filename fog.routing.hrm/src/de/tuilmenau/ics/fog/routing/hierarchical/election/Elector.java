@@ -1597,7 +1597,7 @@ public class Elector implements Localization
 					Logging.log(this, "     ..invalidating the coordinator role of: " + tCoordinator);
 					tCoordinator.eventCoordinatorRoleInvalid();
 				}else{
-					Logging.err(this, "We were the former winner of the election but the coordinator is invalid");
+					Logging.warn(this, "We were the former winner of the election and the coordinator is already invalid");
 				}
 			}else{
 				// we are not the cluster header, so we can't be the coordinator
