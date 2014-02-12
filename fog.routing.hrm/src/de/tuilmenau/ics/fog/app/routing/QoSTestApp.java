@@ -311,8 +311,24 @@ public class QoSTestApp extends ThreadApplication
 			/**
 			 * Connect to the destination node
 			 */
-			Connection tConnection = ProbeRouting.createProbeRoutingConnection(mNode, tDestinationHRMID, mDefaultDelay /* ms */, mDefaultDataRate /* kbit/s */, false);
-			
+		    boolean tRetryConnection = false;
+		    boolean tRetriedConnection = false;
+		    int tAttemptNr = 1;
+		    Connection tConnection = null;
+		    do{
+		    	tRetryConnection = false;
+				tConnection = ProbeRouting.createProbeRoutingConnection(this, mNode, tDestinationHRMID, mDefaultDelay /* ms */, mDefaultDataRate /* kbit/s */, false);
+				if(tConnection == null){
+					tAttemptNr++;
+					tRetryConnection = true;
+					tRetriedConnection = true;
+					Logging.warn(this, "Cannot connect to: " + tDestinationHRMID + ", connect attempt nr. " + tAttemptNr);
+				}
+		    }while((tRetryConnection) && (mQoSTestAppNeeded));
+		    if(tRetriedConnection){
+				Logging.warn(this, "Successfully recovered from connection problems towards: " + tDestinationHRMID + ", connect attempts: " + tAttemptNr);
+		    }
+
 			/**
 			 * Check if connect request was successful
 			 */
