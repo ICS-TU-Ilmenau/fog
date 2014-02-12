@@ -4244,7 +4244,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-						if(!getNodeGUIName().equals("node7")){
+						if(!getNodeGUIName().equals("node12")){
 							tResult = false;
 						}
 	
@@ -6213,7 +6213,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * We have a probe-routing connection and will print some additional information about the taken route of the connection request
 		 */
-		pProbeRoutingProperty.logAll(this);
+		//pProbeRoutingProperty.logAll(this);
 		
 		// send the ProbeRoutingProperty back to the sender as feedback
 		try {

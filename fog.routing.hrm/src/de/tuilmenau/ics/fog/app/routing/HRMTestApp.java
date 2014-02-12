@@ -31,6 +31,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.Node;
+import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Marker;
 import de.tuilmenau.ics.fog.ui.MarkerContainer;
@@ -66,9 +67,9 @@ public class HRMTestApp extends ThreadApplication
 	/**
 	 * Defines how many connections we want to have per test turn
 	 */
-	private final int NUMBER_NODE_COMBINATIONS = 6;
-	private final int NUMBER_SUB_CONNECTIONS = 30;
-	private final int NUMBER_MEASUREMENT_TURNS = 10;
+	private final int NUMBER_NODE_COMBINATIONS = 5;
+	private final int NUMBER_SUB_CONNECTIONS = 40;
+	private final int NUMBER_MEASUREMENT_TURNS = 100;
 	
 	private HashMap<Node, QoSTestApp> mQoSTestApps = new HashMap<Node, QoSTestApp>();
 	private LinkedList<Node> mSource = new LinkedList<Node>();
@@ -140,7 +141,7 @@ public class HRMTestApp extends ThreadApplication
 		 */
 		for (Node tNode: mGlobalNodeList){
 			QoSTestApp tQoSTestApp = new QoSTestApp(tNode);
-			//tQoSTestApp.setDefaultDataRate(10 * 1000);
+			tQoSTestApp.setDefaultDataRate(1 * 1000);
 			tQoSTestApp.start();			
 			mQoSTestApps.put(tNode, tQoSTestApp);
 		}
@@ -159,6 +160,7 @@ public class HRMTestApp extends ThreadApplication
 					try {
 						Logging.log(this, "Waiting for end of QoSTestApp connection of: " + tQoSTestApp);
 						Thread.sleep(50);
+						tQoSTestApp.eventDecreaseConnections();
 					} catch (InterruptedException tExc) {
 					}
 				}
@@ -233,18 +235,30 @@ public class HRMTestApp extends ThreadApplication
 			QoSTestApp tQoSTestApp = mQoSTestApps.get(tSourceNode);
 			tQoSTestApp.setDestination(tDestinationNode.getName());
 			for(int j = 0; j < NUMBER_SUB_CONNECTIONS; j++){
+//				int tBefore = tQoSTestApp.countConnections();
 				tQoSTestApp.eventIncreaseConnections();
+//				while(tQoSTestApp.countConnections() == tBefore){
+//					try {
+//						Logging.log(this, "Waiting for a start of QoSTestApp connection of: " + tQoSTestApp);
+//						Thread.sleep(50);
+//					} catch (InterruptedException tExc) {
+//					}
+//				}
+
+				if(!HRMController.ENFORCE_BE_ROUTING){
+					Logging.warn(this, "Created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+				}else{
+					Logging.warn(this, "Created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+				}
 
 				/**
 				 * Wait some time
 				 */
 				try {
 					if(!HRMController.ENFORCE_BE_ROUTING){
-						Logging.warn(this, "Created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j));
 						Thread.sleep((long) 500);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 					}else{
-						Logging.warn(this, "Created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j));
-						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+						Thread.sleep((long) 500);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 					}
 				} catch (InterruptedException tExc) {
 				}
@@ -269,6 +283,7 @@ public class HRMTestApp extends ThreadApplication
 	protected void execute()
 	{
 		int tTurn = 0;
+		Thread.currentThread().setName(getClass().getSimpleName() + "@" + mNode);
 
 		/**
 		 * START

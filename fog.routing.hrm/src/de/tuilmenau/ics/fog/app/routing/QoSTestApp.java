@@ -335,14 +335,14 @@ public class QoSTestApp extends ThreadApplication
 				/**
 				 * Send some test data
 				 */
-				for(int i = 0; i < 3; i++){
-					try {
-						//Logging.log(this, "      ..sending test data " + i);
-						tConnection.write("TEST DATA " + Integer.toString(i));
-					} catch (NetworkException tExc) {
-						Logging.err(this, "Couldn't send test data", tExc);
-					}
-				}
+//				for(int i = 0; i < 3; i++){
+//					try {
+//						//Logging.log(this, "      ..sending test data " + i);
+//						tConnection.write("TEST DATA " + Integer.toString(i));
+//					} catch (NetworkException tExc) {
+//						Logging.err(this, "Couldn't send test data", tExc);
+//					}
+//				}
 				
 				/**
 				 * Send connection marker
@@ -490,6 +490,8 @@ public class QoSTestApp extends ThreadApplication
 	@Override
 	protected void execute()
 	{
+		Thread.currentThread().setName(getClass().getSimpleName() + "@" + mNode);
+
 		/**
 		 * START
 		 */
@@ -613,7 +615,7 @@ public class QoSTestApp extends ThreadApplication
 				HRMRoutingProperty tProbeRoutingProperty = (HRMRoutingProperty)pData;
 				
 				Logging.log(mQoSTestApp, "Received ProbeRoutingProperty..");
-				tProbeRoutingProperty.logAll(mQoSTestApp);
+				//tProbeRoutingProperty.logAll(mQoSTestApp);
 				
 				/**
 				 * Count the number of connections with fulfilled QoS requirements

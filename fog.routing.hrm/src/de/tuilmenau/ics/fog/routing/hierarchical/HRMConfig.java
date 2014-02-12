@@ -137,12 +137,12 @@ public class HRMConfig
 		/**
 		 * Shows detailed debug outputs about Election related signaling messages
 		 */
-		public static final boolean GUI_SHOW_SIGNALING_ELECTIONS = true;
+		public static final boolean GUI_SHOW_SIGNALING_ELECTIONS = false;
 		
 		/**
 		 * Shows detailed debug outputs about distributed Election related signaling messages
 		 */
-		public static final boolean GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS = true;
+		public static final boolean GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS = false;
 
 		/**
 		 * Shows detailed debug outputs about HRMViewer steps
@@ -356,7 +356,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 2;
+		public static final long RADIUS = 6;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
@@ -480,6 +480,16 @@ public class HRMConfig
 		 * Defines the max. hop count we allow during routing process
 		 */
 		public static final long MAX_HOP_COUNT = 32;
+
+		/**
+		 * Defines the max. value for link utilization in [%]
+		 */
+		public static final double MAX_DESIRED_LINK_UTILIZATION = 95;
+
+		/**
+		 * Defines the desired min. remaining data rate for a link in [kbit/s] 
+		 */
+		public static final long MIN_REMAINING_BE_DATA_RATE = 128;
 
 		public enum REPORT_SHARE_TIMINGS {CONSTANT, LINEAR, EXPONENTIAL}; 
 		public static REPORT_SHARE_TIMINGS REPORT_SHARE_PHASE_TIMING_SCHEME = REPORT_SHARE_TIMINGS.CONSTANT;
