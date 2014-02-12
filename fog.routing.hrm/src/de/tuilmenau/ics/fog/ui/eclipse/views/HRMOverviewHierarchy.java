@@ -155,7 +155,7 @@ public class HRMOverviewHierarchy extends ViewPart
 		}
 		mBtnCheckHierarchy.dispose();
 		 mBtnTopCoordinators.dispose();
-		mBtnResetEverything.dispose();
+		//mBtnResetEverything.dispose();
 		mGrpHierarchy.dispose();
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
 			mRunningCoordinators[i].dispose();
