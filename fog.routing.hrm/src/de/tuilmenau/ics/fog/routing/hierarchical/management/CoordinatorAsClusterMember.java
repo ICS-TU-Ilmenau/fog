@@ -140,21 +140,17 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 * @param pInvalidCoordinator the received invalidation
 	 */
 	@Override
-	public synchronized void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
+	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
 	{
-		if(isThisEntityValid()){
-			// trigger invalidation
-			eventInvalidation();
-			
-			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-				Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
-				Logging.log(this, "       ..fowarding invalidation to coordinator object: " + mCoordinator);
-			}
-			
-			mCoordinator.eventCoordinatorInvalidation(pComChannel, pInvalidCoordinator);
-		}else{
-			Logging.warn(this, "This CoordinatorAsClusterMember is already invalid");
+		// trigger invalidation
+		eventInvalidation();
+		
+		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+			Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
+			Logging.log(this, "       ..fowarding invalidation to coordinator object: " + mCoordinator);
 		}
+		
+		mCoordinator.eventCoordinatorInvalidation(pComChannel, pInvalidCoordinator);
 	}
 
 	/**
@@ -176,44 +172,48 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	/**
 	 * EVENT: cluster member role invalid
 	 */
-	public void eventCoordinatorAsClusterMemberRoleInvalid()
+	public synchronized void eventCoordinatorAsClusterMemberRoleInvalid()
 	{
 		Logging.log(this, "============ EVENT: Coordinator_As_ClusterMember_Role_Invalid");
 
-		/**
-		 * Trigger: Elector invalid
-		 */
-		mElector.eventInvalidation(this + "::eventCoordinatorAsClusterMemberRoleInvalid()");
-
-		/**
-		 * Trigger: role invalid
-		 */
-		eventInvalidation();
-
-		LinkedList<ComChannel> tComChannels = getComChannels();
-		for(ComChannel tComChannel : tComChannels){
-			Logging.log(this, "  ==== unregistering comm. channel: " + tComChannel);
-			unregisterComChannel(tComChannel);
-		}
-		
-		if(isActiveMembership()){
+		if(isThisEntityValid()){
 			/**
-			 * Trigger: cluster membership to superior coordinator lost
+			 * Trigger: Elector invalid
 			 */
-			eventClusterMembershipToSuperiorCoordinatorLost();	
+			mElector.eventInvalidation(this + "::eventCoordinatorAsClusterMemberRoleInvalid()");
+	
+			/**
+			 * Trigger: role invalid
+			 */
+			eventInvalidation();
+	
+			LinkedList<ComChannel> tComChannels = getComChannels();
+			for(ComChannel tComChannel : tComChannels){
+				Logging.log(this, "  ==== unregistering comm. channel: " + tComChannel);
+				unregisterComChannel(tComChannel);
+			}
+			
+			if(isActiveMembership()){
+				/**
+				 * Trigger: cluster membership to superior coordinator lost
+				 */
+				eventClusterMembershipToSuperiorCoordinatorLost();	
+			}
+	
+			Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
+	
+			/**
+			 * Unregister from the HRMController's internal database
+			 */ 
+			mHRMController.unregisterCoordinatorAsClusterMember(this);
+	
+			/**
+			 * Unregister from the parent coordinator's internal database
+			 */ 
+			mCoordinator.unregisterClusterMembership(this);
+		}else{
+			Logging.warn(this, "This CoordinatorAsClusterMember is already invalid");
 		}
-
-		Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
-
-		/**
-		 * Unregister from the HRMController's internal database
-		 */ 
-		mHRMController.unregisterCoordinatorAsClusterMember(this);
-
-		/**
-		 * Unregister from the parent coordinator's internal database
-		 */ 
-		mCoordinator.unregisterClusterMembership(this);
 	}
 
 	/**
