@@ -322,7 +322,6 @@ public class Elector implements Localization
 			if(!tRemovedActiveClusterMember){
 				Logging.err(this, "Haven't found parent in the list of active ClusterMembers (but it should be there), error in state machine, parent is: " + mParent);
 			}
-			
 		}
 
 		recheckLocalClusterIsAllowedToWin(this + "::eventInvalidation()\n   ^^^^" + pCause);
@@ -1866,7 +1865,9 @@ public class Elector implements Localization
 			 * a reachable neighbor (logical neighbor on this hier. level) cluster signaled that its coordinator is available now
 			 * 		-> the local cluster should disappear 
 			 */				
-			recheckLocalClusterIsAllowedToWin(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
+			if(pComChannel.toRemoteNode()){
+				recheckLocalClusterIsAllowedToWin(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
+			}
 		}else{
 			throw new RuntimeException("Got an ANNOUNCE as cluster head");
 		}
@@ -1910,7 +1911,9 @@ public class Elector implements Localization
 			 * a reachable neighbor (logical neighbor on this hier. level) cluster signaled that its coordinator left the field
 			 * 		-> check if the local cluster could be a winner now 
 			 */				
-			recheckLocalClusterIsAllowedToWin(this + "::eventReceivedRESIGN() for " + pResignPacket);
+			if(pComChannel.toRemoteNode()){
+				recheckLocalClusterIsAllowedToWin(this + "::eventReceivedRESIGN() for " + pResignPacket);
+			}
 		}else{
 			throw new RuntimeException("Got a RESIGN as cluster head");
 		}
@@ -2066,34 +2069,41 @@ public class Elector implements Localization
 //				for(ClusterMember tClusterMember : tLevelList){
 				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tCoordinatorAsClusterMembers){
 					/**
-					 * Only proceed for memberships of clusters with valid coordinator
+					 * Only proceed if the membership is still valid
 					 */
-					if(tCoordinatorAsClusterMember.hasClusterValidCoordinator()){
+					if(tCoordinatorAsClusterMember.isThisEntityValid()){
 						/**
-						 * Only proceed for memberships of foreign clusters
+						 * Only proceed for memberships of clusters with valid coordinator
 						 */
-						if(tCoordinatorAsClusterMember.isRemoteCluster()){
-							Elector tElectorClusterMember = tCoordinatorAsClusterMember.getElector();
-							ElectionPriority tCoordinatorAsClusterMemberPriority = tCoordinatorAsClusterMember.getPriority();
-							
+						if(tCoordinatorAsClusterMember.hasClusterValidCoordinator()){
 							/**
-							 * Only proceed if the remote cluster has a higher priority
+							 * Only proceed for memberships of foreign clusters
 							 */
-							if(DEBUG){
-								Logging.log(this, "   ..checking if Cluster of ClusterMember " + tCoordinatorAsClusterMember + " has lower priority than local priority: " + tCoordinatorAsClusterMemberPriority.getValue() + " < " + mParent.getPriority().getValue() + "?");
-								Logging.log(this, "   ..comm. channel is: " + tCoordinatorAsClusterMember.getComChannelToClusterHead());
+							if(tCoordinatorAsClusterMember.isRemoteCluster()){
+								Elector tElectorClusterMember = tCoordinatorAsClusterMember.getElector();
+								ElectionPriority tCoordinatorAsClusterMemberPriority = tCoordinatorAsClusterMember.getPriority();
+								
+								/**
+								 * Only proceed if the remote cluster has a higher priority
+								 */
+								if(DEBUG){
+									Logging.log(this, "   ..checking if Cluster of ClusterMember " + tCoordinatorAsClusterMember + " has lower priority than local priority: " + tCoordinatorAsClusterMemberPriority.getValue() + " < " + mParent.getPriority().getValue() + "?");
+									Logging.log(this, "   ..comm. channel is: " + tCoordinatorAsClusterMember.getComChannelToClusterHead());
+								}
+	
+								if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), IGNORE_LINK_STATE)){
+									//if(DEBUG){
+										Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
+									//}
+									tAllowedToWin = false;
+									break;
+								}
 							}
-
-							if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), IGNORE_LINK_STATE)){
-								//if(DEBUG){
-									Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
-								//}
-								tAllowedToWin = false;
-								break;
-							}
+						}else{
+							// cluster has no valid coordinator
 						}
 					}else{
-						// cluster has no valid coordinator
+						// entity is already invalidated
 					}
 				}								
 			}else{
