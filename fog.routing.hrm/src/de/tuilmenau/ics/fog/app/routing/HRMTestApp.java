@@ -55,7 +55,7 @@ public class HRMTestApp extends ThreadApplication
 	 */
 	private final int NUMBER_NODE_COMBINATIONS = 50;
 	private final int NUMBER_SUB_CONNECTIONS = 1;
-	private final int NUMBER_MEASUREMENT_TURNS = 100;
+	private final int NUMBER_MEASUREMENT_TURNS = 50;
 	private final int MAX_DATA_RATE_PER_CONNECTION = 1000;
 	private final int MAX_REF_CONNECTIONS = 200;
 	

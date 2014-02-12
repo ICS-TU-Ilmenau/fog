@@ -4244,7 +4244,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-						if(!getNodeGUIName().equals("node12")){
+						if(!getNodeGUIName().equals("node7")){
 							tResult = false;
 						}
 	
