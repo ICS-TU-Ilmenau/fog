@@ -304,9 +304,10 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	public synchronized RoutingEntry getBestEntry(HRMID pDestination, int pDesiredMaxDelay, int pDesiredMinDataRate, HRMID pForbiddenNextHopHRMID)
 	{
 		RoutingEntry tResult = null;
-		RoutingEntry tBestResultHopCount = null;
+		RoutingEntry tBestResultBERouting = null;
 		RoutingEntry tBestResultQoS = null;
 		RoutingEntry tBestResultMatchingQoS = null;
+		
 		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ROUTING;
 		
 		if (DEBUG){
@@ -340,31 +341,30 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 						 * 		2.) data rate
 						 * 		3.) delay
 						 */
-						if(tBestResultHopCount != null){
+						if(tBestResultBERouting != null){
 							if( 
-							  // better hop count?
-							  (tBestResultHopCount.getHopCount() > tEntry.getHopCount()) || 
-							  (
-							      // should we enforce BE routing?
-								  (!HRMController.ENFORCE_BE_ROUTING) && 
-							      // hop count is the same and and another criterion is better?
-								  (tBestResultHopCount.getHopCount() == tEntry.getHopCount()) && 
-								  ( 
-								      // better data rate along the route?		  
-							          (tBestResultHopCount.getMaxAvailableDataRate() < tEntry.getMaxAvailableDataRate()) ||
-									  ( 
-										  // date rate is also the same, but the delay is better along the route?	  
-									      (tBestResultHopCount.getMaxAvailableDataRate() == tEntry.getMaxAvailableDataRate()) && (tBestResultHopCount.getMinDelay() > tEntry.getMinDelay()) 
-									  )
-								  ) 
-							  ) 
-							  ){
-								
+								// better hop count?
+								(tEntry.getHopCount() < tBestResultBERouting.getHopCount()) || 
+								(
+									// should we enforce BE routing?
+									(!HRMController.ENFORCE_BE_ROUTING) && 
+									// hop count is the same and and another criterion is better?
+									(tEntry.getHopCount() == tBestResultBERouting.getHopCount()) && 
+									( 
+										// better data rate along the route?		  
+										(tEntry.getMaxAvailableDataRate() > tBestResultBERouting.getMaxAvailableDataRate()) ||
+										( 
+											// date rate is also the same, but the delay is better along the route?	  
+											(tEntry.getMaxAvailableDataRate() == tBestResultBERouting.getMaxAvailableDataRate()) && (tEntry.getMinDelay() < tBestResultBERouting.getMinDelay()) 
+										)
+									) 
+								) 
+							){
 								if (DEBUG){
 									Logging.log(this, "      ..found better (BE) entry: " + tEntry);
 								}
-	
-								tBestResultHopCount = tEntry.clone();
+
+								tBestResultBERouting = tEntry.clone();
 							}else{
 								if (DEBUG){
 									Logging.log(this, "      ..found uninteresting (BE) entry: " + tEntry);
@@ -375,7 +375,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 								Logging.log(this, "      ..found first matching (BE) entry: " + tEntry);
 							}
 	
-							tBestResultHopCount = tEntry.clone();
+							tBestResultBERouting = tEntry.clone();
 						}
 						
 						/**
@@ -488,27 +488,42 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			/**
 			 * BE result
 			 */
-			tResult = tBestResultHopCount;
+			tResult = tBestResultBERouting;
+			boolean tBERouteMatchesQoS = true;
+			if((pDesiredMaxDelay > 0) && (tBestResultBERouting.getMinDelay() > pDesiredMaxDelay)){
+				if (DEBUG){
+					Logging.err(this, "      ..BE route doesn't match QoS because of the determined delay along the BE route");
+				}
+				tBERouteMatchesQoS = false;
+			}
+			if((pDesiredMinDataRate > 0) && ((tBestResultBERouting.getMaxAvailableDataRate() < pDesiredMinDataRate) || (tBestResultBERouting.getNextHopMaxAvailableDataRate() < pDesiredMinDataRate))){
+				if (DEBUG){
+					Logging.err(this, "      ..BE route doesn't match QoS because of the determined data rate along the BE route");
+				}
+				tBERouteMatchesQoS = false;
+			}
 			
 			/**
 			 * QoS result
 			 */
 			if(!HRMController.ENFORCE_BE_ROUTING){
 				if((pDesiredMinDataRate > 0) || (pDesiredMaxDelay > 0)) {
-					if(tBestResultMatchingQoS != null){
-						if (DEBUG){
-							Logging.log(this, "      ..setting best matching QoS route: " + tBestResultMatchingQoS);
+					if((!tBERouteMatchesQoS) || (tBestResultBERouting.getUtilization() >= HRMConfig.Routing.MAX_DESIRED_LINK_UTILIZATION) || (tBestResultBERouting.getMaxAvailableDataRate() - pDesiredMinDataRate <= HRMConfig.Routing.MIN_REMAINING_BE_DATA_RATE)){
+						if(tBestResultMatchingQoS != null){
+							if (DEBUG){
+								Logging.err(this, "      ..setting best matching QoS route: " + tBestResultMatchingQoS);
+							}
+	
+							// use route with best matching QoS values
+							tResult = tBestResultMatchingQoS;
+						}else if (tBestResultQoS != null){
+							if (DEBUG){
+								Logging.err(this, "      ..setting best QoS route: " + tBestResultMatchingQoS);
+							}
+	
+							// fall-back to best QoS values
+							tResult = tBestResultQoS;
 						}
-
-						// use route with best matching QoS values
-						tResult = tBestResultMatchingQoS;
-					}else if (tBestResultQoS != null){
-						if (DEBUG){
-							Logging.log(this, "      ..setting best QoS route: " + tBestResultMatchingQoS);
-						}
-
-						// fall-back to best QoS values
-						tResult = tBestResultQoS;
 					}
 				}
 			}			
