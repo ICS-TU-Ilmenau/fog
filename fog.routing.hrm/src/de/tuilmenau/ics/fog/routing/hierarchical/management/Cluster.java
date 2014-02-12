@@ -440,7 +440,7 @@ public class Cluster extends ClusterMember
 		 * Reset the list of used addresses because we got a new HRMID
 		 */
 		synchronized (mUsedAddresses) {
-			Logging.log(this, "Reseting list of used addresses: " + mUsedAddresses);
+			Logging.log(this, "Resetting list of used addresses: " + mUsedAddresses);
 			mUsedAddresses.clear();
 			
 			mDescriptionHRMIDAllocation += "\n     ..reset list of used cluster addresses" + ", cause=" + pCause;
