@@ -204,7 +204,7 @@ public class ProbeRouting extends EclipseCommand
 							/**
 							 * Connect to the destination node
 							 */
-							Connection tConnection = createProbeRoutingConnection(mNode, tTargetNodeHRMID, pDesiredDelay, pDataRate, false);
+							Connection tConnection = createProbeRoutingConnection(this, mNode, tTargetNodeHRMID, pDesiredDelay, pDataRate, false);
 							
 							/**
 							 * Check if connect request was successful
@@ -247,13 +247,16 @@ public class ProbeRouting extends EclipseCommand
 	}
 	
 	/**
-	 * @param pMNode
+	 * Creates a new connection for probing the routing
+	 * 
+	 * @param pCaller
+	 * @param pNode
 	 * @param pTargetNodeHRMID
 	 * @param pDesiredDelay
 	 * @param pDataRate
 	 * @return
 	 */
-	public static Connection createProbeRoutingConnection(Node pNode, HRMID pTargetNodeHRMID, int pDesiredDelay, int pDataRate, boolean pBiDirectionalQoSReservation)
+	public static Connection createProbeRoutingConnection(Object pCaller, Node pNode, HRMID pTargetNodeHRMID, int pDesiredDelay, int pDataRate, boolean pBiDirectionalQoSReservation)
 	{
 		Connection tConnection = null;
 
@@ -272,7 +275,7 @@ public class ProbeRouting extends EclipseCommand
 		tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
 		tConnectionReqs.set(new DedicatedQoSReservationProperty(pBiDirectionalQoSReservation));
 		// probe connection
-		Logging.log(ProbeRouting.class, "\n\n\nProbing a connection to " + pTargetNodeHRMID + " with requirements " + tConnectionReqs);
+		Logging.log(pCaller, "\n\n\nProbing a connection to " + pTargetNodeHRMID + " with requirements " + tConnectionReqs);
 		tConnection = pNode.getLayer(null).connect(pTargetNodeHRMID, tConnectionReqs, pNode.getIdentity());
 
 		/**
@@ -285,7 +288,7 @@ public class ProbeRouting extends EclipseCommand
 		
 		// wait for the first event
 		Event tEvent = tBlockingEventHandling.waitForEvent(HRMConfig.Hierarchy.CONNECT_TIMEOUT);
-		Logging.log(ProbeRouting.class, "        ..=====> got connection " + pTargetNodeHRMID + " event: " + tEvent);
+		Logging.log(pCaller, "        ..=====> got connection " + pTargetNodeHRMID + " event: " + tEvent);
 		
 		if(tEvent != null){
 			if(tEvent instanceof ConnectedEvent) {
@@ -297,12 +300,12 @@ public class ProbeRouting extends EclipseCommand
 			}else if(tEvent instanceof ErrorEvent) {
 				Exception tExc = ((ErrorEvent) tEvent).getException();
 				
-				Logging.err(ProbeRouting.class, "Got connection " + pTargetNodeHRMID + " exception", tExc);
+				Logging.err(pCaller, "Got connection " + pTargetNodeHRMID + " exception", tExc);
 			}else{
-				Logging.err(ProbeRouting.class, "Got connection " + pTargetNodeHRMID + " event: "+ tEvent);
+				Logging.err(pCaller, "Got connection " + pTargetNodeHRMID + " event: "+ tEvent);
 			}
 		}else{
-			Logging.warn(null, "Cannot connect to " + pTargetNodeHRMID +" due to timeout");
+			Logging.warn(pCaller, "Cannot connect to " + pTargetNodeHRMID +" due to timeout");
 		}
 
 		/**

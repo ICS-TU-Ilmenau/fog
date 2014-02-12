@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.app.routing;
 
 import java.rmi.RemoteException;
+import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.HashMap;
@@ -67,13 +68,20 @@ public class HRMTestApp extends ThreadApplication
 	/**
 	 * Defines how many connections we want to have per test turn
 	 */
-	private final int NUMBER_NODE_COMBINATIONS = 5;
-	private final int NUMBER_SUB_CONNECTIONS = 40;
+	private final int NUMBER_NODE_COMBINATIONS = 50;
+	private final int NUMBER_SUB_CONNECTIONS = 1;
 	private final int NUMBER_MEASUREMENT_TURNS = 100;
+	private final int MAX_DATA_RATE_PER_CONNECTION = 1000;
+	private final int MAX_REF_CONNECTIONS = 200;
 	
 	private HashMap<Node, QoSTestApp> mQoSTestApps = new HashMap<Node, QoSTestApp>();
 	private LinkedList<Node> mSource = new LinkedList<Node>();
 	private LinkedList<Node> mDestination = new LinkedList<Node>();
+	private LinkedList<Integer> mDataRates = new LinkedList<Integer>();
+	private Node mRefSource = null;
+	private Node mRefDestination = null;
+	private int mRefBEConnections = 0;
+	private int mRefHRMConnections = 0;
 	private Random mRandom = new Random(System.currentTimeMillis());
 	private AutonomousSystem mLocalNodeAS = null;
 	private LinkedList<Node> mGlobalNodeList = new LinkedList<Node>();
@@ -142,7 +150,6 @@ public class HRMTestApp extends ThreadApplication
 		 */
 		for (Node tNode: mGlobalNodeList){
 			QoSTestApp tQoSTestApp = new QoSTestApp(tNode);
-			tQoSTestApp.setDefaultDataRate(1 * 1000);
 			tQoSTestApp.start();			
 			mQoSTestApps.put(tNode, tQoSTestApp);
 		}
@@ -161,6 +168,10 @@ public class HRMTestApp extends ThreadApplication
 					try {
 						Logging.log(this, "Waiting for end of QoSTestApp connection of: " + tQoSTestApp);
 						Thread.sleep(50);
+						if(!tQoSTestApp.isRunning()){
+							Logging.err(this, "QoSTestApp isn't running anymore: " + tQoSTestApp);
+							break;
+						}
 						tQoSTestApp.eventDecreaseConnections();
 					} catch (InterruptedException tExc) {
 					}
@@ -229,6 +240,7 @@ public class HRMTestApp extends ThreadApplication
 			 */
 			Node tSourceNode = mSource.get(i);
 			Node tDestinationNode = mDestination.get(i);
+			int tDataRate = mDataRates.get(i);
 			
 			/**
 			 * Create connection
@@ -236,20 +248,26 @@ public class HRMTestApp extends ThreadApplication
 			QoSTestApp tQoSTestApp = mQoSTestApps.get(tSourceNode);
 			tQoSTestApp.setDestination(tDestinationNode.getName());
 			for(int j = 0; j < NUMBER_SUB_CONNECTIONS; j++){
-//				int tBefore = tQoSTestApp.countConnections();
+				int tBefore = tQoSTestApp.countConnections();
+				tQoSTestApp.setDefaultDataRate(tDataRate);
 				tQoSTestApp.eventIncreaseConnections();
-//				while(tQoSTestApp.countConnections() == tBefore){
-//					try {
-//						Logging.log(this, "Waiting for a start of QoSTestApp connection of: " + tQoSTestApp);
-//						Thread.sleep(50);
-//					} catch (InterruptedException tExc) {
-//					}
-//				}
+				while(tQoSTestApp.countConnections() == tBefore){
+					if(!tQoSTestApp.isRunning()){
+						Logging.err(this, "QoSTestApp isn't running anymore: " + tQoSTestApp);
+						break;
+					}
+
+					try {
+						Logging.log(this, "Waiting for a start of QoSTestApp connection of: " + tQoSTestApp);
+						Thread.sleep(50);
+					} catch (InterruptedException tExc) {
+					}
+				}
 
 				if(!HRMController.ENFORCE_BE_ROUTING){
-					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, (mTurn + 1) + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}else{
-					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, (mTurn + 1) + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}
 
 				/**
@@ -257,14 +275,67 @@ public class HRMTestApp extends ThreadApplication
 				 */
 				try {
 					if(!HRMController.ENFORCE_BE_ROUTING){
-						Thread.sleep((long) 2000);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 					}else{
-						Thread.sleep((long) 2000);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 					}
 				} catch (InterruptedException tExc) {
 				}
 			}
 		}
+
+		/**
+		 * Reference connections
+		 */
+		if(mRefSource != null){
+			QoSTestApp tQoSTestApp = mQoSTestApps.get(mRefSource);
+			tQoSTestApp.setDestination(mRefDestination.getName());
+			tQoSTestApp.setDefaultDataRate(1000);
+			int tConnsBefore = tQoSTestApp.countConnectionsWithFulfilledQoS();
+			for(int j = 0; j < MAX_REF_CONNECTIONS; j++){
+				int tBefore = tQoSTestApp.countConnections();
+				tQoSTestApp.eventIncreaseConnections();
+				while(tQoSTestApp.countConnections() == tBefore){
+					try {
+						Logging.log(this, "Waiting for a start of QoSTestApp REF connection of: " + tQoSTestApp);
+						Thread.sleep(50);
+					} catch (InterruptedException tExc) {
+					}
+				}
+
+				if(!HRMController.ENFORCE_BE_ROUTING){
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM REFERENCE connection " + (1 + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+				}else{
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE REFERENCE connection " + (1 + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+				}
+
+				/**
+				 * Wait some time
+				 */
+				try {
+					if(!HRMController.ENFORCE_BE_ROUTING){
+						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+					}else{
+						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+					}
+				} catch (InterruptedException tExc) {
+				}
+			}
+
+			try {
+				Thread.sleep((long) 1000);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+			} catch (InterruptedException tExc) {
+			}
+
+			
+			if(!HRMController.ENFORCE_BE_ROUTING){
+				mRefHRMConnections = tQoSTestApp.countConnectionsWithFulfilledQoS() - tConnsBefore;
+			}else{
+				mRefBEConnections = tQoSTestApp.countConnectionsWithFulfilledQoS() - tConnsBefore;
+			}
+		}
+
+		
 		/**
 		 * Wait some time
 		 */
@@ -306,18 +377,31 @@ public class HRMTestApp extends ThreadApplication
 			 */
 			mSource.clear();
 			mDestination.clear();
+			mDataRates.clear();
+			int tSourceNodeNumber = 0;
+			int tDestinationNodeNumber = 0;
 			for(int i = 0; i < NUMBER_NODE_COMBINATIONS; i++){
-				int tSourceNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
+				tSourceNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
 				Logging.warn(this, "Selected source node: " + tSourceNodeNumber);
-				int tDestinationNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
+				tDestinationNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
 				Logging.warn(this, "Selected destination node: " + tDestinationNodeNumber);
 				while(tSourceNodeNumber == tDestinationNodeNumber){
 					tDestinationNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
 					Logging.warn(this, "Selected destination node: " + tDestinationNodeNumber);
 				}
 				mSource.add(mGlobalNodeList.get(tSourceNodeNumber));
-				mDestination.add(mGlobalNodeList.get(tDestinationNodeNumber));				
+				mDestination.add(mGlobalNodeList.get(tDestinationNodeNumber));
+				mDataRates.add((int)(mRandom.nextFloat() * MAX_DATA_RATE_PER_CONNECTION));
 			}
+			tSourceNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
+			tDestinationNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
+			Logging.warn(this, "Selected REF destination node: " + tDestinationNodeNumber);
+			while(tSourceNodeNumber == tDestinationNodeNumber){
+				tDestinationNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
+				Logging.warn(this, "Selected REF destination node: " + tDestinationNodeNumber);
+			}
+			mRefSource = mGlobalNodeList.get(tSourceNodeNumber);
+			mRefDestination = mGlobalNodeList.get(tDestinationNodeNumber);
 			
 			/**
 			 * Create the QoS connections
@@ -386,6 +470,8 @@ public class HRMTestApp extends ThreadApplication
 				 */
 				Logging.warn(this, "   ..HRM connections with fulfilled QoS: " + tHRMConnectionsWithFulfilledQoS);
 				Logging.warn(this, "   ..BE connections with fulfilled QoS: " + tBEConnectionsWithFulfilledQoS);
+				Logging.warn(this, "   ..HRM REF connections with fulfilled QoS: " + mRefHRMConnections);
+				Logging.warn(this, "   ..BE REF connections with fulfilled QoS: " + mRefBEConnections);
 				if(mTurn == 0){
 					try {
 						mStatistic = Statistic.getInstance(mLocalNodeAS.getSimulation(), HRMTestApp.class, ";", false);
@@ -409,6 +495,11 @@ public class HRMTestApp extends ThreadApplication
 					tTableHeader.add("Good HRM routing");
 					tTableHeader.add("Good BE routing");
 					tTableHeader.add("-");
+					tTableHeader.add("Ref source");
+					tTableHeader.add("Ref destination");
+					tTableHeader.add("Good HRM Ref routing");
+					tTableHeader.add("Good BE Ref routing");
+					tTableHeader.add("-");
 					tTableHeader.add("BusCounter");
 					for(int i = 0; i < mCntBuss; i++){
 						tTableHeader.add("HRM_" + mGlobalBusList.get(i).getName());
@@ -425,12 +516,21 @@ public class HRMTestApp extends ThreadApplication
 				tTableRow.add(Integer.toString(tHRMConnectionsWithFulfilledQoS));
 				tTableRow.add(Integer.toString(tBEConnectionsWithFulfilledQoS));
 				tTableRow.add("-");
+				tTableRow.add(mRefSource.toString());
+				tTableRow.add(mRefDestination.toString());
+				tTableRow.add(Integer.toString(mRefHRMConnections));
+				tTableRow.add(Integer.toString(mRefBEConnections));
+				tTableRow.add("-");
 				tTableRow.add(Integer.toString(mCntBuss));
 				for(int i = 0; i < mCntBuss; i++){
-					tTableRow.add(Double.toString(tStoredUtilBasedOnHRM.get(i)));
+					DecimalFormat tFormat = new DecimalFormat("0.#");
+					String tUtilizationStr = tFormat.format(tStoredUtilBasedOnHRM.get(i));
+					tTableRow.add(tUtilizationStr);
 				}			
 				for(int i = 0; i < mCntBuss; i++){
-					tTableRow.add(Double.toString(tStoredUtilBasedOnBE.get(i)));
+					DecimalFormat tFormat = new DecimalFormat("0.#");
+					String tUtilizationStr = tFormat.format(tStoredUtilBasedOnBE.get(i));
+					tTableRow.add(tUtilizationStr);
 				}
 				if(mStatistic != null){
 					mStatistic.log(tTableRow);

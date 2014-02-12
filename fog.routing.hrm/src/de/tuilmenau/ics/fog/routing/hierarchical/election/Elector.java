@@ -322,6 +322,8 @@ public class Elector implements Localization
 			if(!tRemovedActiveClusterMember){
 				Logging.err(this, "Haven't found parent in the list of active ClusterMembers (but it should be there), error in state machine, parent is: " + mParent);
 			}
+			
+			recheckLocalClusterIsAllowedToWin(this + "::eventInvalidation()\n   ^^^^" + pCause);
 		}
 	}
 	
