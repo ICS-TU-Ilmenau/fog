@@ -28,7 +28,7 @@ public class ProcessList implements Iterable<Process>
 	{
 	}
 	
-	public void registerProcess(Process process)
+	public synchronized void registerProcess(Process process)
 	{
 		Process existingProcess = getProcess(process.getOwner(), process.getID());
 		
@@ -46,7 +46,7 @@ public class ProcessList implements Iterable<Process>
 	/**
 	 * Returns a process if it is changeable by the entity and has the given process number.
 	 */
-	public Process getProcess(Identity owner, int processID)
+	public synchronized Process getProcess(Identity owner, int processID)
 	{
 		if(mProcesses != null){
 			for(Process process : mProcesses) {
@@ -67,18 +67,18 @@ public class ProcessList implements Iterable<Process>
 		return null;
 	}
 	
-	public boolean unregisterProcess(Process process)
+	public synchronized boolean unregisterProcess(Process process)
 	{
 		return mProcesses.remove(process);
 	}
 
-	public int size()
+	public synchronized int size()
 	{
 		return mProcesses.size();
 	}
 	
 	@Override
-	public Iterator<Process> iterator()
+	public synchronized Iterator<Process> iterator()
 	{
 		if(mProcesses.size() > 0) {
 			return mProcesses.iterator();
