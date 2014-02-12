@@ -82,6 +82,7 @@ public class HRMTestApp extends ThreadApplication
 	private Statistic mStatistic = null;
 	private int mCntBuss = 0;
 	private boolean GLOBAL_ERROR = false;
+	private int mTurn = 0;
 			
 	/**
 	 * Constructor
@@ -246,9 +247,9 @@ public class HRMTestApp extends ThreadApplication
 //				}
 
 				if(!HRMController.ENFORCE_BE_ROUTING){
-					Logging.warn(this, "Created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}else{
-					Logging.warn(this, "Created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}
 
 				/**
@@ -256,9 +257,9 @@ public class HRMTestApp extends ThreadApplication
 				 */
 				try {
 					if(!HRMController.ENFORCE_BE_ROUTING){
-						Thread.sleep((long) 500);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+						Thread.sleep((long) 2000);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 					}else{
-						Thread.sleep((long) 500);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+						Thread.sleep((long) 2000);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 					}
 				} catch (InterruptedException tExc) {
 				}
@@ -282,7 +283,6 @@ public class HRMTestApp extends ThreadApplication
 	@Override
 	protected void execute()
 	{
-		int tTurn = 0;
 		Thread.currentThread().setName(getClass().getSimpleName() + "@" + mNode);
 
 		/**
@@ -386,7 +386,7 @@ public class HRMTestApp extends ThreadApplication
 				 */
 				Logging.warn(this, "   ..HRM connections with fulfilled QoS: " + tHRMConnectionsWithFulfilledQoS);
 				Logging.warn(this, "   ..BE connections with fulfilled QoS: " + tBEConnectionsWithFulfilledQoS);
-				if(tTurn == 0){
+				if(mTurn == 0){
 					try {
 						mStatistic = Statistic.getInstance(mLocalNodeAS.getSimulation(), HRMTestApp.class, ";", false);
 					} catch (Exception tExc) {
@@ -421,7 +421,7 @@ public class HRMTestApp extends ThreadApplication
 					}
 				}
 				LinkedList<String> tTableRow = new LinkedList<String>();
-				tTableRow.add(Integer.toString(tTurn));
+				tTableRow.add(Integer.toString(mTurn));
 				tTableRow.add(Integer.toString(tHRMConnectionsWithFulfilledQoS));
 				tTableRow.add(Integer.toString(tBEConnectionsWithFulfilledQoS));
 				tTableRow.add("-");
@@ -445,9 +445,9 @@ public class HRMTestApp extends ThreadApplication
 			Logging.warn(this, "########## Destroying BE connections now...");
 			resetAllConnetions();
 
-			tTurn++;
+			mTurn++;
 			
-			if(tTurn >= NUMBER_MEASUREMENT_TURNS){
+			if(mTurn >= NUMBER_MEASUREMENT_TURNS){
 				Logging.warn(this, "########## END OF MEASUREMENTS #########");
 				break;
 			}
