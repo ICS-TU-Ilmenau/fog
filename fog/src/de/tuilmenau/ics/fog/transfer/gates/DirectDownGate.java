@@ -170,7 +170,9 @@ public class DirectDownGate extends DownGate
 			Process tParentProcess = getEntity().getProcessRegister().getProcess(mFN, getOwner(), mLocalProcessNumber);
 			
 			mLogger.log(this, "Terminating parent process...");
-			tParentProcess.terminate(new NetworkException(this, this + " should be removed now, process termination required"));
+			if(tParentProcess != null){
+				tParentProcess.terminate(new NetworkException(this, this + " should be removed now, process termination required"));
+			}
 		}
 	}
 	
