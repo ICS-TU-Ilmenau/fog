@@ -1192,6 +1192,7 @@ public class ClusterMember extends ClusterName
 
 	/**
 	 * Sets a new Election priority
+	 * 		HINT: This function might be called from within a separate thread (HRMControllerProcessor).
 	 * 
 	 * @param pPriority the new Election priority
 	 */
