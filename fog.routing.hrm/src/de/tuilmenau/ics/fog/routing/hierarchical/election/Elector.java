@@ -1530,7 +1530,12 @@ public class Elector implements Localization
 					// create new coordinator instance
 					tCoordinator = new Coordinator(tParentCluster);
 				}else{
-					Logging.log(this, "Cluster " + mParent + " has already a coordinator");
+					if(tCoordinator.isThisEntityValid()){
+						Logging.log(this, "Cluster " + mParent + " has already a coordinator");
+					}else{
+						Logging.err(this, "Cluster " + mParent + " has already a coordinator but it is already invalidated, data inconsistency detected");
+					}
+						
 				}
 	
 				Logging.log(this, "    ..coordinator is: " + tCoordinator);
@@ -2556,10 +2561,11 @@ public class Elector implements Localization
 
 	/**
 	 * SEND: priority update, triggered by ClusterMember when the priority is changed (e.g., if the base node priority was changed)
+	 * 		HINT: This function has to be synchronized because it can be called from within a separate thread (HRMControllerProcessor)
 	 * 
 	 * @param pCause the cause for this update
 	 */
-	public void updatePriority(String pCause)
+	public synchronized void updatePriority(String pCause)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "Updating local priority");
