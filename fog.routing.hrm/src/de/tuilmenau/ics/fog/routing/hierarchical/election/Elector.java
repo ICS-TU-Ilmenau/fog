@@ -1585,11 +1585,11 @@ public class Elector implements Localization
 			 * TRIGGER: invalidate the local coordinator because it was deselected by another coordinator
 			 */
 			if(head()){
+				// send ANNOUNCE in order to signal all cluster members that we are the coordinator
+				distributeRESIGN();
+
 				Coordinator tCoordinator = mParent.getCoordinator();
 				if (tCoordinator != null){
-					// send ANNOUNCE in order to signal all cluster members that we are the coordinator
-					distributeRESIGN();
-
 					/**
 					 * Invalidate the coordinator
 					 * HINT: this call triggers also a call to Coordinator::Cluster::Elector::eventInvalidation()
