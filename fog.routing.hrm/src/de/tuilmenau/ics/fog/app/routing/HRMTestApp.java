@@ -532,7 +532,7 @@ public class HRMTestApp extends ThreadApplication
 
 			mTurn++;
 			
-			if(mTurn >= NUMBER_MEASUREMENT_TURNS){
+			if(mTurn > NUMBER_MEASUREMENT_TURNS){
 				Logging.warn(this, "########## END OF MEASUREMENTS #########");
 				break;
 			}
