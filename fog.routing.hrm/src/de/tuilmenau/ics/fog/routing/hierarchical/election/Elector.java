@@ -706,20 +706,11 @@ public class Elector implements Localization
 				Logging.log(this, "SENDRESIGN(), cluster members: " + tKnownClusterMembers);
 			}
 	
-			// HINT: the coordinator has to be already created here
-
-			if (mParent.getCoordinator() != null){
-				// create the packet
-				ElectionResignWinner tElectionResignWinnerPacket = new ElectionResignWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
-		
-				// send broadcast
-				mParent.sendClusterBroadcast(tElectionResignWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
-			}else{
-				Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION END, ELECTED expected");
-				
-				// set correct elector state
-				setElectorState(ElectorState.ERROR);
-			}
+			// create the packet
+			ElectionResignWinner tElectionResignWinnerPacket = new ElectionResignWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
+	
+			// send broadcast
+			mParent.sendClusterBroadcast(tElectionResignWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 	
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "SENDRESIGN()-END");
@@ -1585,11 +1576,11 @@ public class Elector implements Localization
 			 * TRIGGER: invalidate the local coordinator because it was deselected by another coordinator
 			 */
 			if(head()){
+				// send ANNOUNCE in order to signal all cluster members that we are the coordinator
+				distributeRESIGN();
+
 				Coordinator tCoordinator = mParent.getCoordinator();
 				if (tCoordinator != null){
-					// send ANNOUNCE in order to signal all cluster members that we are the coordinator
-					distributeRESIGN();
-
 					/**
 					 * Invalidate the coordinator
 					 * HINT: this call triggers also a call to Coordinator::Cluster::Elector::eventInvalidation()

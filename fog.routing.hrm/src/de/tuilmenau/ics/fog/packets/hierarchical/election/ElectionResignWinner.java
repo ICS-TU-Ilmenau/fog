@@ -25,11 +25,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 public class ElectionResignWinner extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = 794175467972815277L;
-
-	/**
-	 * Stores the unique coordinator ID of the resigning coordinator
-	 */
-	private long mCoordinatorID = -1;
 	
 	/**
 	 * Stores some GUI description about the resigning coordinator
@@ -61,14 +56,12 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 	 * 
 	 * @param pSenderName the name of the message sender (coordinator)
 	 * @param pSenderPriority the priority of the message sender (coordinator)
-	 * @param pCoordinatorID the unique ID of the message sender (coordinator)
 	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public ElectionResignWinner(HRMName pSenderName, ElectionPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
+	public ElectionResignWinner(HRMName pSenderName, ElectionPriority pSenderPriority, String pCoordinatorDescription)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
-		mCoordinatorID = pCoordinatorID;
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
 		}
@@ -79,21 +72,11 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 	 * 
 	 * @return the descriptive string
 	 */
-	public String getCoordinatorDescription()
+	private String getCoordinatorDescription()
 	{
 		return new String(mCoordinatorDescription);
 	}
 	
-	/**
-	 * Returns the unique coordinator ID
-	 * 
-	 * @return the unique coordinator ID
-	 */
-	public long getCoordinatorID()
-	{
-		return mCoordinatorID;
-	}
-
 	/**
 	 * Returns a duplicate of this packet
 	 * 
@@ -102,7 +85,7 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		ElectionResignWinner tResult = new ElectionResignWinner(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
+		ElectionResignWinner tResult = new ElectionResignWinner(getSenderName(), getSenderPriority(), getCoordinatorDescription());
 
 		super.duplicate(tResult);
 
@@ -125,7 +108,6 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 		 * 
 		 * 		SignalingMessageHRM	     = 1
 		 * 		SignalingMessageElection = 4
-		 * 		CoordinatorID			 = 4
 		 * 
 		 *************************************************************/
 
@@ -144,7 +126,6 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 		 * 
 		 * 		SignalingMessageHRM	     = 1
 		 * 		SignalingMessageElection = 4
-		 * 		CoordinatorID			 = 4
 		 * 
 		 *************************************************************/
 
@@ -155,10 +136,6 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
 		tResult += SignalingMessageElection.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += 4; // use only 4 bytes // private long mCoordinatorID
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
