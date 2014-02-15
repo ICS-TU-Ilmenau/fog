@@ -63,7 +63,7 @@ public class ClientFN implements ForwardingNode
 	 * they are the last element in the chain to the higher layer.
 	 */
 	@Override
-	public GateID registerGate(AbstractGate newgate)
+	public synchronized GateID registerGate(AbstractGate newgate)
 	{
 		unregisterGate(mOutgoingGate);
 		
@@ -87,7 +87,7 @@ public class ClientFN implements ForwardingNode
 	}
 	
 	@Override
-	public boolean replaceGate(AbstractGate oldGate, AbstractGate byNewGate)
+	public synchronized boolean replaceGate(AbstractGate oldGate, AbstractGate byNewGate)
 	{
 		if(oldGate == mOutgoingGate) {
 			return registerGate(byNewGate) != null;
@@ -167,7 +167,7 @@ public class ClientFN implements ForwardingNode
 	/**
 	 * Packets from CEP that should be send to peer
 	 */
-	public void send(Packet packet) throws NetworkException
+	public synchronized void send(Packet packet) throws NetworkException
 	{
 		packet.forwarded(this);
 		if(mOutgoingGate != null) {
@@ -189,7 +189,11 @@ public class ClientFN implements ForwardingNode
 			}
 			mOutgoingGate.handlePacket(packet, this);
 		} else {
-			throw new NetworkException(this, "No connection to tranfer plane. Can not send data.");
+			if(!mClosing){
+				throw new NetworkException(this, "No connection to tranfer plane. Can not send data.");
+			}else{
+				Logging.warn(this, "This ClientFN is already closed - connection to transfer plane already closed.");
+			}
 		}
 	}
 	
@@ -225,7 +229,7 @@ public class ClientFN implements ForwardingNode
 	/**
 	 * Might be called recursively from Process.terminate or IReceiveCallback.closed
 	 */
-	public void closed()
+	public synchronized void closed()
 	{
 		if(!mClosing) {
 			mClosing = true;
@@ -333,5 +337,5 @@ public class ClientFN implements ForwardingNode
 	private Name mServerName;
 	
 	private ConnectionEndPoint mCEP;
-	private boolean mClosing;
+	private boolean mClosing = false;
 }
