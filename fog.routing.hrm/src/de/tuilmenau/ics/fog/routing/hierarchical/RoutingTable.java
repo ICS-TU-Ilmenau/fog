@@ -490,16 +490,21 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			 */
 			tResult = tBestResultBERouting;
 			boolean tBERouteMatchesQoS = true;
-			if((pDesiredMaxDelay > 0) && (tBestResultBERouting.getMinDelay() > pDesiredMaxDelay)){
-				if (DEBUG){
-					Logging.err(this, "      ..BE route doesn't match QoS because of the determined delay along the BE route");
+			if(tBestResultBERouting != null){
+				if((pDesiredMaxDelay > 0) && (tBestResultBERouting.getMinDelay() > pDesiredMaxDelay)){
+					if (DEBUG){
+						Logging.err(this, "      ..BE route doesn't match QoS because of the determined delay along the BE route");
+					}
+					tBERouteMatchesQoS = false;
 				}
-				tBERouteMatchesQoS = false;
-			}
-			if((pDesiredMinDataRate > 0) && ((tBestResultBERouting.getMaxAvailableDataRate() < pDesiredMinDataRate) || (tBestResultBERouting.getNextHopMaxAvailableDataRate() < pDesiredMinDataRate))){
-				if (DEBUG){
-					Logging.err(this, "      ..BE route doesn't match QoS because of the determined data rate along the BE route");
+				if((pDesiredMinDataRate > 0) && ((tBestResultBERouting.getMaxAvailableDataRate() < pDesiredMinDataRate) || (tBestResultBERouting.getNextHopMaxAvailableDataRate() < pDesiredMinDataRate))){
+					if (DEBUG){
+						Logging.err(this, "      ..BE route doesn't match QoS because of the determined data rate along the BE route");
+					}
+					tBERouteMatchesQoS = false;
 				}
+			}else{
+				// no valid BE route found
 				tBERouteMatchesQoS = false;
 			}
 			
