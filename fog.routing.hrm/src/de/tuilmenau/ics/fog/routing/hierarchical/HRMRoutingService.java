@@ -1124,9 +1124,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate)
 	{
-		//if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "UNREGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
-		//}
+		}
 
 		/**
 		 * Determine the L2Address of the starting point.
@@ -1169,10 +1169,12 @@ public class HRMRoutingService implements RoutingService, Localization
 			//				* 2.) the peer has answered by a packet of "OpenGateResponse" and the peer name is now known
 			//       Therefore, we ignore the first registerLink() request and wait for the (hopefully) appearing second request.
 			tToL2Address = (L2Address) pGate.getRemoteDestinationName();
-			if (tToL2Address == null){
-				Logging.warn(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this unregisterLink() request and wait until the peer is known");
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				if (tToL2Address == null){
+					Logging.warn(this, "Peer name wasn't avilable via AbstractGate.getRemoteDestinationName(), will skip this unregisterLink() request and wait until the peer is known");
+				}
 			}
-
+			
 			/**
 			 * Detect if the DirectDownGate belongs to a dedicated QoS reservation
 			 */
@@ -1185,9 +1187,13 @@ public class HRMRoutingService implements RoutingService, Localization
 				// mark as link to another node
 				tIsPhysicalLinkToPhysicalNeigborNode = true;
 
-				Logging.log(this, "Found deprecated physical link: " + tDirectDownGate + ", description=" + tGateDescription);
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "Found deprecated physical link: " + tDirectDownGate + ", description=" + tGateDescription);
+				}
 			}else{
-				Logging.log(this, "Found deprecated QoS reservation link: " + tDirectDownGate + ", description=" + tGateDescription);
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "Found deprecated QoS reservation link: " + tDirectDownGate + ", description=" + tGateDescription);
+				}
 			}
 		}
 			
@@ -1234,7 +1240,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				}
 				getHRMController().eventLostPhysicalNeighborNode(tInterfaceToNeighbor, tToL2Address);
 			}else{
-				Logging.warn(this, "unregisterLink() ignores the lost link to the neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is linked to the central FN " + tThisHostL2Address);
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.warn(this, "unregisterLink() ignores the lost link to the neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is linked to the central FN " + tThisHostL2Address);
+				}
 			}
 		}
 
