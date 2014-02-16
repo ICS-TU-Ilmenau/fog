@@ -108,6 +108,9 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	private LinkedList<Operation> mOperations = new LinkedList<Operation>();
 	
+	// debugging?
+	private boolean DEBUG = false;
+	
 	/**
 	 * Constructor
 	 * 
@@ -169,7 +172,9 @@ public class QoSTestApp extends ThreadApplication
 					// get the HRMID of the target node
 					HRMID tTargetNodeHRMID = (HRMID)tNMSEntryForTarget.getAddress();
 					
-					Logging.log(this, "Found in the NMS the HRMID " + tTargetNodeHRMID.toString() + " for node " + mDestinationNodeName);
+					if(DEBUG){
+						Logging.log(this, "Found in the NMS the HRMID " + tTargetNodeHRMID.toString() + " for node " + mDestinationNodeName);
+					}
 				}
 			}
 			
@@ -194,7 +199,9 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	public synchronized void eventIncreaseConnections()
 	{
-		Logging.log(this, "EVENT: increase connections (currently: " + countConnections() + ")");
+		if(DEBUG){
+			Logging.log(this, "EVENT: increase connections (currently: " + countConnections() + ")");
+		}
 		synchronized (mOperations) {
 			mOperations.add(Operation.INC_CONN);
 		}
@@ -206,7 +213,9 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	public synchronized void eventDecreaseConnections()
 	{
-		Logging.log(this, "EVENT: decrease connections (currently: " + countConnections() + ")");
+		if(DEBUG){
+			Logging.log(this, "EVENT: decrease connections (currently: " + countConnections() + ")");
+		}
 		synchronized (mOperations) {
 			mOperations.add(Operation.DEC_CONN);
 		}
@@ -264,7 +273,9 @@ public class QoSTestApp extends ThreadApplication
 		int tRed = (int)(tRandom.nextFloat() * 128) + 127;
 		int tGreen = (int)(tRandom.nextFloat() * 128) + 127;
 		int tBlue = (int)(tRandom.nextFloat() * 128) + 127;
-		Logging.log("Creating marker with coloring (" + tRed + ", " + tGreen + ", " + tBlue + ")");
+		if(DEBUG){
+			Logging.log("Creating marker with coloring (" + tRed + ", " + tGreen + ", " + tBlue + ")");
+		}
 
 		java.awt.Color tMarkerColor = new java.awt.Color(tRed, tGreen, tBlue);
 		String tMarkerText = "Marker " +new Random().nextInt();
@@ -276,7 +287,9 @@ public class QoSTestApp extends ThreadApplication
 		// store the marker for this connection in order to be able to remove the marker later
 		mMarkers.put(pConnection, tMarker);
 		
-		//Logging.log(this, "Sending: " + tMarkerPacketPayload);
+		if(DEBUG){
+			//Logging.log(this, "Sending: " + tMarkerPacketPayload);
+		}
 
 		try {
 			pConnection.write(tMarkerPacketPayload);
@@ -300,7 +313,9 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	private void incConnections()
 	{
-		Logging.log(this, "Increasing connections (currently: " + countConnections() + ")");
+		if(DEBUG){
+			Logging.log(this, "Increasing connections (currently: " + countConnections() + ")");
+		}
 		
 		LinkedList<HRMID> tDestinationHRMIDs = getDestinationHRMIDs();
 		if((tDestinationHRMIDs != null) && (!tDestinationHRMIDs.isEmpty())){
@@ -333,7 +348,9 @@ public class QoSTestApp extends ThreadApplication
 				 * Check if connect request was successful
 				 */
 				if(tConnection != null){
-					Logging.log(this, "        ..found valid connection to " + tDestinationHRMID);
+					if(DEBUG){
+						Logging.log(this, "        ..found valid connection to " + tDestinationHRMID);
+					}
 					
 					synchronized (mConnections) {
 						mConnections.add(tConnection);
@@ -376,7 +393,9 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	private void decConnections()
 	{
-		Logging.log(this, "Decreasing connections (currently: " + countConnections() + ")");
+		if(DEBUG){
+			Logging.log(this, "Decreasing connections (currently: " + countConnections() + ")");
+		}
 
 		/**
 		 * get the last connection
@@ -385,7 +404,9 @@ public class QoSTestApp extends ThreadApplication
 		synchronized (mConnections) {
 			if(countConnections() > 0){
 				tConnection = mConnections.removeLast();
-				Logging.log(this, "  ..seleted for renoving the connection: " + tConnection);
+				if(DEBUG){
+					Logging.log(this, "  ..seleted for renoving the connection: " + tConnection);
+				}
 			}
 		}
 		
@@ -481,7 +502,9 @@ public class QoSTestApp extends ThreadApplication
 			}
 		}
 
-		//Logging.log(this, "Connections: " + tResult);
+		if(DEBUG){
+			//Logging.log(this, "Connections: " + tResult);
+		}
 		
 		return tResult;
 	}
@@ -514,7 +537,7 @@ public class QoSTestApp extends ThreadApplication
 		/**
 		 * START
 		 */
-		Logging.log(this, "Main loop started");		
+		Logging.log(this, "Main loop started");
 		mQoSTestAppRunning = true;
 
 		/**
@@ -537,7 +560,9 @@ public class QoSTestApp extends ThreadApplication
 				 * Process the next operation
 				 */
 				if(tNextOperation != null){
-					Logging.log(this, "Processing operation: " + tNextOperation);
+					if(DEBUG){
+						Logging.log(this, "Processing operation: " + tNextOperation);
+					}
 					switch(tNextOperation)
 					{
 						case INC_CONN:
@@ -633,7 +658,9 @@ public class QoSTestApp extends ThreadApplication
 			if (pData instanceof HRMRoutingProperty){
 				HRMRoutingProperty tProbeRoutingProperty = (HRMRoutingProperty)pData;
 				
-				Logging.log(mQoSTestApp, "Received ProbeRoutingProperty..");
+				if(DEBUG){
+					Logging.log(mQoSTestApp, "Received ProbeRoutingProperty..");
+				}
 				//tProbeRoutingProperty.logAll(mQoSTestApp);
 				
 				/**
