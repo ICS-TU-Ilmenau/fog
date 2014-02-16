@@ -309,7 +309,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	public boolean isTTAOkay()
 	{
 		/**
-		 * Return always true for the highest hierarchy level ==> e.g., for a hierarchy height of 2, all L1 coordinators should get informed about the global L2 coordinator
+		 * Return always true for the highest hierarchy level, but on this hierarchy level no announces should be sent
 		 */
 		if(getSenderClusterName().getHierarchyLevel().isHighest()){
 			return true;
