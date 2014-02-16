@@ -1617,12 +1617,14 @@ public class HRMRoutingService implements RoutingService, Localization
 						 */
 						DedicatedQoSReservationProperty tDedicatedQoSReservationProperty = (DedicatedQoSReservationProperty) pRequirements.get(DedicatedQoSReservationProperty.class);
 						boolean tUseHardQoSReservations = (tDedicatedQoSReservationProperty != null);
-						if(tDedicatedQoSReservationProperty != null){
-							Logging.log(this, "Found DedicatedQoSReservationProperty property: " + tDedicatedQoSReservationProperty);
-						}else{
-							Logging.log(this, "Havent found DedicatedQoSReservationProperty property");
+						if (DEBUG){
+							if(tDedicatedQoSReservationProperty != null){
+								Logging.log(this, "Found DedicatedQoSReservationProperty property: " + tDedicatedQoSReservationProperty);
+							}else{
+								Logging.log(this, "Have not found DedicatedQoSReservationProperty property");
+							}
 						}
-
+						
 						/**
 						 * Iterate over all given gateIDs in [gateID list]
 						 */
@@ -1677,7 +1679,9 @@ public class HRMRoutingService implements RoutingService, Localization
 
 										
 										Description tCapabilities = tParallelGate.getDescription();
-										Logging.log(this, "  ..original gate has caps.: " + tCapabilities);
+										if (DEBUG){
+											Logging.log(this, "  ..original gate has caps.: " + tCapabilities);
+										}
 										Description tNeededReservationRequirements = null;
 										
 										if(tCapabilities != null) {
@@ -1708,7 +1712,9 @@ public class HRMRoutingService implements RoutingService, Localization
 										tNeededReservationRequirements.set(new DedicatedQoSReservationProperty(tDedicatedQoSReservationProperty.isBidirectional()));
 										
 										// describe the needed QoS reservation					
-										Logging.log(this, "Creating QoS reservation with requirements: " + tNeededReservationRequirements);
+										if (DEBUG){
+											Logging.log(this, "Creating QoS reservation with requirements: " + tNeededReservationRequirements);
+										}
 										tQoSReservation = new RouteSegmentMissingPart(tNeededReservationRequirements, tParallelGate, pRequester);
 										
 										// mark as described QoS reservation
@@ -1769,7 +1775,9 @@ public class HRMRoutingService implements RoutingService, Localization
 					/**
 					 * ENCODE the remaining parts of the original routing result
 					 */
-					Logging.log(this, "   ..encoding additional destination description");
+					if (DEBUG){
+						Logging.log(this, "   ..encoding additional destination description");
+					}
 					int i = 0;
 					for(RouteSegment tRoutingResultPart : tL2RoutingResult){
 						// ignore the first gate list
