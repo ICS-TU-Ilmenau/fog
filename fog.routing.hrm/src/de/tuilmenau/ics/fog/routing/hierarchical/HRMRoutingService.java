@@ -1003,11 +1003,10 @@ public class HRMRoutingService implements RoutingService, Localization
 			//				* 2.) the peer has answered by a packet of "OpenGateResponse" and the peer name is now known
 			//       Therefore, we ignore the first registerLink() request and wait for the (hopefully) appearing second request.
 			tToL2Address = (L2Address) pGate.getRemoteDestinationName();
-			if (tToL2Address == null){
-				Logging.log(this, "Peer name wasn't available via AbstractGate.getRemoteDestinationName(), will skip this registerLink() request and wait until the peer is known");
-			}
-
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				if (tToL2Address == null){
+					Logging.log(this, "Peer name wasn't available via AbstractGate.getRemoteDestinationName(), will skip this registerLink() request and wait until the peer is known");
+				}
 				Logging.log(this, "      ..external link, which ends at the physical node: " + tToL2Address);
 			}
 
@@ -1023,12 +1022,16 @@ public class HRMRoutingService implements RoutingService, Localization
 				// mark as link to another node
 				tIsPhysicalLinkToPhysicalNeigborNode = true;
 				
-				Logging.log(this, "Found new physical link: " + tDirectDownGate + ", description=" + tGateDescription);
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "Found new physical link: " + tDirectDownGate + ", description=" + tGateDescription);
+				}
 			}else{
 				// tell the HRMController instance that we have reserved some resources and it should trigger an early routing data update
 				mHRMController.eventQoSReservation(tToL2Address, tGateDescription);
 
-				Logging.log(this, "Found new QoS reservation link: " + tDirectDownGate + ", description=" + tGateDescription);
+				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					Logging.log(this, "Found new QoS reservation link: " + tDirectDownGate + ", description=" + tGateDescription);
+				}
 			}
 		}else{
 			// we have any kind of a gate, we determine its ending point
@@ -1084,7 +1087,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		if(tLinkIsNew){
 			storeL2Link(tFromL2Address, tToL2Address, new RoutingServiceLink(pGate.getGateID(), null));
 		}else{
-			Logging.log(this, "   ..link is already known: " + pGate);
+			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+				Logging.log(this, "   ..link is already known: " + pGate);
+			}
 		}
 
 		/**
