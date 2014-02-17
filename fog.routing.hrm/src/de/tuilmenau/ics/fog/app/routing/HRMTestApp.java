@@ -283,7 +283,7 @@ public class HRMTestApp extends ThreadApplication
 				tQoSTestApp.eventIncreaseConnections();
 				while(tQoSTestApp.countConnections() == tBefore){
 					try {
-						Logging.log(this, "Waiting for a start of QoSTestApp REF connection of: " + tQoSTestApp);
+						Logging.log(this, "Waiting for a start of " + (tBefore + 1) + ". QoSTestApp REF connection of: " + tQoSTestApp);
 						Thread.sleep(50);
 					} catch (InterruptedException tExc) {
 					}
