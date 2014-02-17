@@ -44,6 +44,7 @@ import de.tuilmenau.ics.fog.topology.NeighborList;
 import de.tuilmenau.ics.fog.topology.RemoteMedium;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.headers.NumberingHeader;
+import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
 import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.IPacketObserver;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -446,6 +447,12 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 					// log packet for statistic
 					packetLog.add(packet);
 		
+					// account the packet
+					if(packet.getData() instanceof ProtocolHeader){
+						ProtocolHeader tProtocolHeader = (ProtocolHeader)packet.getData();
+						tProtocolHeader.accountLinkUsage(this);
+					}
+					
 					synchronized (nodelist) {
 						for(HigherLayerRegistration hl : nodelist) {
 							if(hl.getNeighbor().equals(destination) || (destination.equals(BROADCAST))) {
