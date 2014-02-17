@@ -153,7 +153,7 @@ public class HRMTestApp extends ThreadApplication
 				while(tQoSTestApp.countConnections() == tBefore){
 					try {
 						Logging.log(this, "Waiting for end of QoSTestApp connection of: " + tQoSTestApp);
-						Thread.sleep(50);
+						Thread.sleep(30);
 						if(!tQoSTestApp.isRunning()){
 							Logging.err(this, "QoSTestApp isn't running anymore: " + tQoSTestApp);
 							break;
@@ -166,7 +166,7 @@ public class HRMTestApp extends ThreadApplication
 		}
 		
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(2000);
 		} catch (InterruptedException tExc) {
 		}
 		
@@ -179,7 +179,7 @@ public class HRMTestApp extends ThreadApplication
 					tFoundRemainingReservation = true;
 					Logging.warn(this, "### Bus " + tBus + " has still some reservations");
 					try {
-						Thread.sleep(1000);
+						Thread.sleep(500);
 					} catch (InterruptedException tExc) {
 					}
 					break;
@@ -245,7 +245,7 @@ public class HRMTestApp extends ThreadApplication
 
 					try {
 						Logging.log(this, "Waiting for a start of QoSTestApp connection of: " + tQoSTestApp);
-						Thread.sleep(50);
+						Thread.sleep(30);
 					} catch (InterruptedException tExc) {
 					}
 				}
@@ -261,9 +261,9 @@ public class HRMTestApp extends ThreadApplication
 				 */
 				try {
 					if(!HRMController.ENFORCE_BE_ROUTING){
-						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+						Thread.sleep((long) 10);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 					}else{
-						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+						Thread.sleep((long) 10);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 					}
 				} catch (InterruptedException tExc) {
 				}
@@ -309,7 +309,7 @@ public class HRMTestApp extends ThreadApplication
 			}
 
 			try {
-				Thread.sleep((long) 1000);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
+				Thread.sleep((long) 500);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 			} catch (InterruptedException tExc) {
 			}
 
@@ -326,7 +326,7 @@ public class HRMTestApp extends ThreadApplication
 		 * Wait some time
 		 */
 		try {
-			Thread.sleep((long) 2000);
+			Thread.sleep((long) 1000);
 		} catch (InterruptedException tExc) {
 		}
 	}
@@ -401,7 +401,7 @@ public class HRMTestApp extends ThreadApplication
 			 */
 			Logging.warn(this, "########## Waiting for QoS connections now...");
 			try {
-				Thread.sleep(2000);
+				Thread.sleep(1000);
 			} catch (InterruptedException tExc) {
 			}
 
@@ -436,7 +436,7 @@ public class HRMTestApp extends ThreadApplication
 				 */
 				Logging.warn(this, "########## Waiting for BE connections now...");
 				try {
-					Thread.sleep(2000);
+					Thread.sleep(1000);
 				} catch (InterruptedException tExc) {
 				}
 	
