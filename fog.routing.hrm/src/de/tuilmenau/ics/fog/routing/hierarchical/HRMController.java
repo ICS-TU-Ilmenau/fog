@@ -414,6 +414,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static boolean ENFORCE_BE_ROUTING = false;
 	
 	/**
+	 * Stores a counter about seen packets per packet type and link
+	 */
+	public static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketCounterPerLink = new HashMap<Bus, HashMap<Class<?>,Integer>>();
+
+	/**
 	 * @param pNode the node on which this controller is running
 	 * @param pHierarchicalRoutingService the parent hierarchical routing service instance
 	 */
@@ -548,8 +553,44 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public static void accountPacket(Bus pLink, ProtocolHeader pPacket)
 	{
+		Class <?> tPacketClass = pPacket.getClass();
+		
 		int tPacketSize = pPacket.getSerialisedSize();
-		Logging.err(null, "Accounting for link " + pLink + " a packet of " + (tPacketSize < 10 ? "0" : "") + tPacketSize + " bytes for " + pPacket);
+		//Logging.err(null, "Accounting for link " + pLink + " a packet of " + (tPacketSize < 10 ? "0" : "") + tPacketSize + " bytes for " + pPacket);
+		
+		synchronized (sPacketCounterPerLink) {
+			HashMap<Class<?>, Integer> tPacketsForBus = sPacketCounterPerLink.get(pLink);
+			if(tPacketsForBus == null){
+				tPacketsForBus = new HashMap<Class<?>, Integer>();
+			}
+	
+			Integer tPacketCount = tPacketsForBus.get(tPacketClass);
+			if(tPacketCount == null){
+				tPacketCount = new Integer(0);
+			}		
+			tPacketCount++;
+			
+			tPacketsForBus.put(tPacketClass, tPacketCount);
+			
+			sPacketCounterPerLink.put(pLink, tPacketsForBus);
+		}
+	}
+	
+	/**
+	 * Logs the values of accounted packets per packet type and bus
+	 */
+	public static void logPacketsPerLink()
+	{
+		synchronized (sPacketCounterPerLink) {
+			for (Bus tBus: sPacketCounterPerLink.keySet()){
+				Logging.log("LINK: " + tBus + "..");
+				HashMap<Class<?>, Integer> tPacketsForBus = sPacketCounterPerLink.get(tBus);
+				for (Class<?> tPacketType : tPacketsForBus.keySet()){
+					Integer tCounter = tPacketsForBus.get(tPacketType);
+					Logging.log("   .." + tPacketType.getSimpleName() + ": " + tCounter);
+				}
+			}
+		}				
 	}
 	
 	/**
