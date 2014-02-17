@@ -11,9 +11,11 @@ package de.tuilmenau.ics.fog.packets.hierarchical.addressing;
 
 import java.io.Serializable;
 
+import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.packets.LoggableElement;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Size;
@@ -210,6 +212,20 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 		}
 		
 		return tResult;
+	}
+	
+	/**
+	 * Accounts link usage
+	 * 
+	 * @param pLink the link which is used
+	 */
+	@Override
+	public void accountLinkUsage(ILowerLayer pLink)
+	{
+		if(pLink instanceof Bus){
+			Bus tBus = (Bus)pLink;
+			
+		}
 	}
 
 	/**

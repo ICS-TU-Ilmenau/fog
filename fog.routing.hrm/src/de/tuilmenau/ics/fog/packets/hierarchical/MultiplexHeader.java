@@ -9,8 +9,10 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical;
 
+import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
+import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -219,6 +221,26 @@ public class MultiplexHeader implements ProtocolHeader
 		}
 		
 		return tResult;
+	}
+
+	/**
+	 * Accounts link usage
+	 * 
+	 * @param pLink the link which is used
+	 */
+	@Override
+	public void accountLinkUsage(ILowerLayer pLink)
+	{
+		if(mPayload instanceof ProtocolHeader){
+			ProtocolHeader tPayloadProtocol = (ProtocolHeader)mPayload;
+			
+			tPayloadProtocol.accountLinkUsage(pLink);
+		}else{
+			if(pLink instanceof Bus){
+				Bus tBus = (Bus)pLink;
+				
+			}
+		}
 	}
 
 	/**

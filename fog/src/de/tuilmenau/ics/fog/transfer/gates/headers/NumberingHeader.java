@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.gates.headers;
 
+import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.ui.Viewable;
 import de.tuilmenau.ics.fog.util.Size;
 
@@ -112,6 +113,15 @@ public class NumberingHeader implements ProtocolHeader
 		return false;
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#accountLinkUsage(de.tuilmenau.ics.fog.topology.ILowerLayer)
+	 */
+	@Override
+	public void accountLinkUsage(ILowerLayer pLink) 
+	{
+		
+	}
+
 	public String toString()
 	{
 		return "NumberingHeader(no=" +mCounter +", data=" +mData +")";
@@ -128,6 +138,5 @@ public class NumberingHeader implements ProtocolHeader
 	
 	@Viewable("Payload")
 	private Object mData;
-
 }
 

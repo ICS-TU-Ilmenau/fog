@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.transfer.gates.headers;
 
 import java.io.Serializable;
 
+import de.tuilmenau.ics.fog.topology.ILowerLayer;
 
 public interface ProtocolHeader extends Serializable
 {
@@ -22,4 +23,11 @@ public interface ProtocolHeader extends Serializable
 	 * @return Size of serialized version in byte
 	 */
 	public int getSerialisedSize();
+	
+	/**
+	 * Accounts the traversal of a link (to a lower layer)
+	 * 
+	 * @param pLink the passed link
+	 */
+	public void accountLinkUsage(ILowerLayer pLink);
 }
