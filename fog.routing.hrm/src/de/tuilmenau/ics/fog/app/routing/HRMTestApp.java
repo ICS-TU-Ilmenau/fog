@@ -152,7 +152,7 @@ public class HRMTestApp extends ThreadApplication
 				tQoSTestApp.eventDecreaseConnections();
 				while(tQoSTestApp.countConnections() == tBefore){
 					try {
-						Logging.log(this, "Waiting for end of QoSTestApp connection of: " + tQoSTestApp);
+						Logging.log(this, "Waiting for end of " + tBefore + ". QoSTestApp connection of: " + tQoSTestApp);
 						Thread.sleep(30);
 						if(!tQoSTestApp.isRunning()){
 							Logging.err(this, "QoSTestApp isn't running anymore: " + tQoSTestApp);
@@ -244,7 +244,7 @@ public class HRMTestApp extends ThreadApplication
 					}
 
 					try {
-						Logging.log(this, "Waiting for a start of QoSTestApp connection of: " + tQoSTestApp);
+						Logging.log(this, "Waiting for a start of " + (tBefore + 1) + ". QoSTestApp connection of: " + tQoSTestApp);
 						Thread.sleep(30);
 					} catch (InterruptedException tExc) {
 					}
