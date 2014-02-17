@@ -26,6 +26,7 @@ import de.tuilmenau.ics.fog.app.routing.HRMTestApp;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.util.ServerCallback;
 import de.tuilmenau.ics.fog.application.util.Service;
+import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.eclipse.GraphViewer;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.GraphEditor;
 import de.tuilmenau.ics.fog.facade.Binding;
@@ -86,6 +87,7 @@ import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
+import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
 import de.tuilmenau.ics.fog.ui.Decoration;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Statistic;
@@ -538,6 +540,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		start();
 	}
 
+	/**
+	 * Accounts a packet for a given link (FoG calls it "Bus")
+	 * 
+	 * @param pLink the link for which the packet is accounted
+	 * @param pPacket the packet
+	 */
+	public static void accountPacket(Bus pLink, ProtocolHeader pPacket)
+	{
+		int tPacketSize = pPacket.getSerialisedSize();
+		Logging.err(null, "Accounting for link " + pLink + " a packet of " + (tPacketSize < 10 ? "0" : "") + tPacketSize + " bytes for " + pPacket);
+	}
+	
 	/**
 	 * Reset the AnnounceCoordinator handling.
 	 * This function is not part of the concept. It is only useful for debugging purposes and user control. 
@@ -4244,9 +4258,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-						if(!getNodeGUIName().equals("node7")){
-							tResult = false;
-						}
+//						if(!getNodeGUIName().equals("node7")){
+//							tResult = false;
+//						}
 	
 						synchronized (sRegisteredTopCoordinatorsCounter) {
 							Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
@@ -4381,8 +4395,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * HRM test app
 					 */
-					HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
-					tHRMTestApp.start();
+//					HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
+//					tHRMTestApp.start();
 					
 					/**
 					 * auto-exit simulation

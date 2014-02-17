@@ -14,6 +14,7 @@ import java.io.Serializable;
 import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.packets.LoggableElement;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
@@ -311,6 +312,7 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		if(pLink instanceof Bus){
 			Bus tBus = (Bus)pLink;
 			
+			HRMController.accountPacket(tBus, this);
 		}
 	}
 
