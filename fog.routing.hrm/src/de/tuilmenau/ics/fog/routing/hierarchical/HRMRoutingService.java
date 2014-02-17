@@ -2175,7 +2175,9 @@ public class HRMRoutingService implements RoutingService, Localization
 			 */
 			DestinationApplicationProperty tPropDestApp = (DestinationApplicationProperty) pRequirements.get(DestinationApplicationProperty.class);
 			if(tPropDestApp != null) {
-				Logging.log(this, "    ..found destination application property: " + tPropDestApp);
+				if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+					Logging.log(this, "    ..found destination application property: " + tPropDestApp);
+				}
 				
 				// remove the found property from the requirements
 				pRequirements.remove(tPropDestApp);
