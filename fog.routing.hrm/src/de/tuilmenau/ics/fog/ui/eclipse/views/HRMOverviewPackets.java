@@ -82,10 +82,12 @@ public class HRMOverviewPackets extends ViewPart
 	private static final String TEXT_SIG_ROUTE_SHARE						= "      RouteShare: ";
 
 	private static final String TEXT_BTN_RESET_STATS						= "Reset packet statistic";
-	private static final String TEXT_BTN_SHOW_PER_LINK_STATS				= "Show packets per link";
+	private static final String TEXT_BTN_SHOW_PACKETS_PER_LINK_STATS		= "Show packets per link";
+	private static final String TEXT_BTN_SHOW_PACKETS_PER_TYPE_STATS		= "Show packets per type";
 	
 	private Button mBtnResetPacketStats = null;
 	private Button mBtnShowPacketsPerLinkStats = null;
+	private Button mBtnShowPacketsPerTypeStats = null;
 	
 	private Label mAnnouncePhysicalEndPoint = null;
 	private Label mMultiplexHeader = null;
@@ -301,7 +303,7 @@ public class HRMOverviewPackets extends ViewPart
 		});
 		
 	    mBtnShowPacketsPerLinkStats = new Button(tContainer, SWT.PUSH);
-	    mBtnShowPacketsPerLinkStats.setText(TEXT_BTN_SHOW_PER_LINK_STATS);
+	    mBtnShowPacketsPerLinkStats.setText(TEXT_BTN_SHOW_PACKETS_PER_LINK_STATS);
 	    mBtnShowPacketsPerLinkStats.setLayoutData(createGridData(true, 2));
 	    mBtnShowPacketsPerLinkStats.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -310,6 +312,16 @@ public class HRMOverviewPackets extends ViewPart
 			}
 		});
 
+	    mBtnShowPacketsPerTypeStats = new Button(tContainer, SWT.PUSH);
+	    mBtnShowPacketsPerTypeStats.setText(TEXT_BTN_SHOW_PACKETS_PER_TYPE_STATS);
+	    mBtnShowPacketsPerTypeStats.setLayoutData(createGridData(true, 2));
+	    mBtnShowPacketsPerTypeStats.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				HRMController.logPacketsPerType();
+			}
+		});	    
+	    
 	    mDisplay.timerExec(100, ViewRepaintTimer);
 	}
 	

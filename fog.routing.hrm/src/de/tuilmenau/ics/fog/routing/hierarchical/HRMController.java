@@ -577,7 +577,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * Logs the values of accounted packets per packet type and bus
+	 * Logs the values of accounted packets per bus and packet type
 	 */
 	public static void logPacketsPerLink()
 	{
@@ -592,6 +592,48 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}				
 	}
+	
+	/**
+	 * Logs the values of accounted packets per packet type and bus
+	 */
+	public static void logPacketsPerType()
+	{
+		HashMap<Class<?>, HashMap<Bus, Integer>> tDB = new HashMap<Class<?>, HashMap<Bus,Integer>>();
+		
+		synchronized (sPacketCounterPerLink) {
+			for (Bus tBus: sPacketCounterPerLink.keySet()){
+				HashMap<Class<?>, Integer> tPacketsForBus = sPacketCounterPerLink.get(tBus);
+				for (Class<?> tPacketType : tPacketsForBus.keySet()){
+					Integer tCounter = tPacketsForBus.get(tPacketType);
+					
+					HashMap<Bus, Integer> tDBCounterPerBus = tDB.get(tPacketType);
+					if(tDBCounterPerBus == null){
+						tDBCounterPerBus = new HashMap<Bus, Integer>();
+					}
+					
+					Integer tDBPacketCount = tDBCounterPerBus.get(tPacketType);
+					if(tDBPacketCount == null){
+						tDBPacketCount = new Integer(0);
+					}		
+					tDBPacketCount += tCounter;
+
+					tDBCounterPerBus.put(tBus, tDBPacketCount);
+					
+					tDB.put(tPacketType, tDBCounterPerBus);
+				}
+			}
+		}
+		
+		for (Class<?> tPacketType: tDB.keySet()){
+			Logging.log("PACKET_TYPE: " + tPacketType.getSimpleName() + "..");
+			HashMap<Bus, Integer> tPacketsForType = tDB.get(tPacketType);
+			for (Bus tBus : tPacketsForType.keySet()){
+				Integer tCounter = tPacketsForType.get(tBus);
+				Logging.log("   .." + tBus + ": " + tCounter);
+			}
+		}
+	}
+
 	
 	/**
 	 * Reset the AnnounceCoordinator handling.
