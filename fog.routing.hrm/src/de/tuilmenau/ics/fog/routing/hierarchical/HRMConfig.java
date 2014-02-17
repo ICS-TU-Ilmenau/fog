@@ -23,11 +23,11 @@ public class HRMConfig
 		 */
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_CONNECTIVITY = false;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_HIERARCHY = true;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_HIERARCHY = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_NODE_HRMIDIDS = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_ACTIVE_CLUSTERMEMBERS = false;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS = true;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS = true;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS = false;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS = false;
 
 		/**
 		 * Limits the size of the packet storage in a comm. channel
@@ -87,7 +87,7 @@ public class HRMConfig
 		/**
 		 * Shows debug outputs for each clustering process.
 		 */
-		public static final boolean SHOW_CLUSTERING_STEPS = true;
+		public static final boolean SHOW_CLUSTERING_STEPS = false;
 
 		/**
 		 * Shows debug outputs for the report phase
@@ -356,7 +356,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 5;
+		public static final long RADIUS = 6;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
