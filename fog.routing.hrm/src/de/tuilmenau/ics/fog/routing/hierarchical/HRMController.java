@@ -583,11 +583,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		synchronized (sPacketCounterPerLink) {
 			for (Bus tBus: sPacketCounterPerLink.keySet()){
-				Logging.log("LINK: " + tBus + "..");
+				Logging.warn(tBus, "PACKETS:..");
 				HashMap<Class<?>, Integer> tPacketsForBus = sPacketCounterPerLink.get(tBus);
 				for (Class<?> tPacketType : tPacketsForBus.keySet()){
 					Integer tCounter = tPacketsForBus.get(tPacketType);
-					Logging.log("   .." + tPacketType.getSimpleName() + ": " + tCounter);
+					Logging.warn(tBus, "   .." + tPacketType.getSimpleName() + ": " + tCounter);
 				}
 			}
 		}				
@@ -625,11 +625,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		for (Class<?> tPacketType: tDB.keySet()){
-			Logging.log("PACKET_TYPE: " + tPacketType.getSimpleName() + "..");
+			String tPacketTypeStr = tPacketType.getSimpleName();
+			String tPacketTypeStrSpace = "";
+			for(int i = 1; i + tPacketTypeStr.length() < 30; i++){
+				tPacketTypeStrSpace += " ";
+			}
+			tPacketTypeStr += tPacketTypeStrSpace;
+			
+			Logging.warn(tPacketTypeStr, "..PACKETS:");
 			HashMap<Bus, Integer> tPacketsForType = tDB.get(tPacketType);
 			for (Bus tBus : tPacketsForType.keySet()){
 				Integer tCounter = tPacketsForType.get(tBus);
-				Logging.log("   .." + tBus + ": " + tCounter);
+				Logging.warn(tPacketTypeStr, "   .." + tBus + ": " + tCounter);
 			}
 		}
 	}
