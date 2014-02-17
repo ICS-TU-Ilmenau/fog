@@ -240,7 +240,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	public boolean isTTIOkay()
 	{
 		/**
-		 * Return always true for the highest hierarchy level
+		 * Return always true for the highest hierarchy level, but on this hierarchy level no invalidations should be sent
 		 */
 		if(getSenderClusterName().getHierarchyLevel().isHighest()){
 			return true;
