@@ -3188,6 +3188,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		HRMViewer.removeAll();
 		
+		resetPacketOverheadCounting();
+
 		/**
 		 * Kill all processors of the previous simulation run
 		 */
@@ -3208,7 +3210,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		resetHierarchyStatistic();
 		resetPacketStatistic();
-		resetPacketOverheadCounting();
 	}
 
 	/**
@@ -4427,9 +4428,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-//						if(!getNodeGUIName().equals("node7")){
-//							tResult = false;
-//						}
+						if(!getNodeGUIName().equals("node7")){
+							tResult = false;
+						}
 	
 						synchronized (sRegisteredTopCoordinatorsCounter) {
 							Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
