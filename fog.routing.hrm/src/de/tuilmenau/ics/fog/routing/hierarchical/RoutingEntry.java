@@ -1076,9 +1076,9 @@ public class RoutingEntry implements RouteSegment
 		tResult += new HRMID(0).getSerialisedSize(); //	private HRMID mSource = null;
 		tResult += new HRMID(0).getSerialisedSize(); //	private HRMID mNextHop = null;
 		tResult += 2; // use only 2 bytes // private int mHopCount = NO_HOP_COSTS;
-		tResult += 4; // use only 4 bytes for a standard float encoded value, private double mUtilization = NO_UTILIZATION;
-		tResult += 4; // use only 4 bytes // private long mMinDelay = NO_DELAY;
-		tResult += 4; // use only 4 btes // private long mMaxAvailableDataRate = INFINITE_DATARATE;
+		tResult += 2; // use only 2 bytes for a fixed comma float value, private double mUtilization = NO_UTILIZATION;
+		tResult += 2; // use only 2 bytes // private long mMinDelay = NO_DELAY;
+		tResult += 4; // use only 4 bytes // private long mMaxAvailableDataRate = INFINITE_DATARATE;
 		
 		return tResult;
 	}
