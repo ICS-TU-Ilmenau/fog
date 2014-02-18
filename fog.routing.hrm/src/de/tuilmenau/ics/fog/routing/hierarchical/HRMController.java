@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 import java.io.Serializable;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
+import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
@@ -215,7 +216,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores a database including all HRMControllers of this physical simulation machine
 	 */
-	private static LinkedList<HRMController> mRegisteredHRMControllers = new LinkedList<HRMController>();
+	private static LinkedList<HRMController> sRegisteredHRMControllers = new LinkedList<HRMController>();
 	
 	/**
 	 * Stores the amount of registered coordinators globally
@@ -415,9 +416,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	
 	/**
 	 * Stores a counter about seen packets per packet type and link
+	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
 	 */
-	public static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketCounterPerLink = new HashMap<Bus, HashMap<Class<?>,Integer>>();
+	public static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();
 
+	/**
+	 * Stores byte counter per packet type and link
+	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
+	 */
+	public static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketOverheadCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();
+
+	/**
+	 * Stores the simulation time when the packet overhead measurement started
+	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
+	 */
+	public static double sPacketOverheadMeasurementStart = 0;
+	
 	/**
 	 * @param pNode the node on which this controller is running
 	 * @param pHierarchicalRoutingService the parent hierarchical routing service instance
@@ -574,6 +588,70 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			sPacketCounterPerLink.put(pLink, tPacketsForBus);
 		}
+		
+		synchronized (sPacketOverheadCounterPerLink) {
+			HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLink.get(pLink);
+			if(tPacketsForBus == null){
+				tPacketsForBus = new HashMap<Class<?>, Integer>();
+			}
+	
+			Integer tPacketCount = tPacketsForBus.get(tPacketClass);
+			if(tPacketCount == null){
+				tPacketCount = new Integer(0);
+			}		
+			tPacketCount += tPacketSize;
+			
+			tPacketsForBus.put(tPacketClass, tPacketCount);
+			
+			sPacketOverheadCounterPerLink.put(pLink, tPacketsForBus);
+		}
+	}
+	
+	/**
+	 * Resets the counting of packet overhead per link and packet type
+	 */
+	public static void resetPacketOverheadCounting()
+	{
+		synchronized (sPacketOverheadCounterPerLink) {
+			sPacketOverheadCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();	
+			
+			synchronized (sRegisteredHRMControllers) {
+				HRMController tHRMController = sRegisteredHRMControllers.getFirst();
+				Logging.log(tHRMController, "Resetting the packet overhead measurement");
+				sPacketOverheadMeasurementStart = tHRMController.getSimulationTime();				
+			}
+		}
+	}
+
+	/**
+	 * Logs the values of accounted packet bytes per bus and packet type
+	 */
+	public static void logPacketsOverheadPerLink()
+	{
+		synchronized (sPacketOverheadCounterPerLink) {
+			double tPeriod = 0;
+			HRMController tHRMController = null;
+			
+			synchronized (sRegisteredHRMControllers) {
+				tHRMController = sRegisteredHRMControllers.getFirst();
+				tPeriod = tHRMController.getSimulationTime() - sPacketOverheadMeasurementStart;				
+			}
+			Logging.warn(tHRMController, "Measured packet overhead since: " + sPacketOverheadMeasurementStart);
+			Logging.warn(tHRMController, "   ..results in a measurement period of: " + tPeriod + " seconds");
+			
+			
+			for (Bus tBus: sPacketOverheadCounterPerLink.keySet()){
+				Logging.warn(tBus, "PACKETS OVERHEAD:..");
+				HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLink.get(tBus);
+				for (Class<?> tPacketType : tPacketsForBus.keySet()){
+					Integer tCounter = tPacketsForBus.get(tPacketType);
+					double tDataRate = ((double)Math.round(100 * (double)tCounter / tPeriod)) / 100;
+					DecimalFormat tFormat = new DecimalFormat("0.#");
+					String tDataRateStr = tFormat.format(tDataRate);
+					Logging.warn(tBus, "   .." + tPacketType.getSimpleName() + ": " + tCounter + " bytes, " + tDataRateStr + " bytes/s");
+				}
+			}
+		}				
 	}
 	
 	/**
@@ -3113,15 +3191,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Kill all processors of the previous simulation run
 		 */
-		if(mRegisteredHRMControllers != null){
-			for(HRMController tHRMController : mRegisteredHRMControllers){
+		if(sRegisteredHRMControllers != null){
+			for(HRMController tHRMController : sRegisteredHRMControllers){
 				tHRMController.getProcessor().exit();
 			}
 		}
 		
 		// reset the stored HRMController database
-		Logging.log("Remaining registered HRMController instances: " + mRegisteredHRMControllers);
-		mRegisteredHRMControllers = new LinkedList<HRMController>();
+		Logging.log("Remaining registered HRMController instances: " + sRegisteredHRMControllers);
+		sRegisteredHRMControllers = new LinkedList<HRMController>();
 		sResetNMS = true;
 
 		sNextCheckForDeprecatedCoordinatorProxies = 0;
@@ -3130,6 +3208,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		resetHierarchyStatistic();
 		resetPacketStatistic();
+		resetPacketOverheadCounting();
 	}
 
 	/**
@@ -4076,7 +4155,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * Determines the current simulation time
+	 * Determines the current simulation time in [s]
 	 * 
 	 * @return the simulation time
 	 */
@@ -4291,8 +4370,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			/**
 			 * Validate results of all HRMController instances
 			 */
-			if(mRegisteredHRMControllers != null){
-				for(HRMController tHRMController : mRegisteredHRMControllers){
+			if(sRegisteredHRMControllers != null){
+				for(HRMController tHRMController : sRegisteredHRMControllers){
 					Logging.warn(null, "  ..checking: " + tHRMController.getNodeGUIName());
 					if(tHRMController.hasPendingPackets()){
 						tResult = true;
@@ -4468,8 +4547,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * Validate results of all HRMController instances
 					 */
-					if(mRegisteredHRMControllers != null){
-						for(HRMController tHRMController : mRegisteredHRMControllers){
+					if(sRegisteredHRMControllers != null){
+						for(HRMController tHRMController : sRegisteredHRMControllers){
 							Logging.warn(null, "  ..validating: " + tHRMController.getNodeGUIName());
 							tHRMController.validateResults();
 							
@@ -4930,8 +5009,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mApplicationStarted = true;
 		
 		// register in the global HRMController database
-		synchronized (mRegisteredHRMControllers) {
-			mRegisteredHRMControllers.add(this);
+		synchronized (sRegisteredHRMControllers) {
+			sRegisteredHRMControllers.add(this);
 		}
 		
 		/**
@@ -4990,8 +5069,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// register in the global HRMController database
 		Logging.log(this, "     ..removing from the global HRMController database");
-		synchronized (mRegisteredHRMControllers) {
-			mRegisteredHRMControllers.remove(this);
+		synchronized (sRegisteredHRMControllers) {
+			sRegisteredHRMControllers.remove(this);
 		}
 	}
 
@@ -5016,8 +5095,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		LinkedList<HRMController> tResult = null;
 		
-		synchronized (mRegisteredHRMControllers) {
-			tResult = (LinkedList<HRMController>) mRegisteredHRMControllers.clone();
+		synchronized (sRegisteredHRMControllers) {
+			tResult = (LinkedList<HRMController>) sRegisteredHRMControllers.clone();
 		}
 		
 		return tResult;

@@ -82,12 +82,16 @@ public class HRMOverviewPackets extends ViewPart
 	private static final String TEXT_SIG_ROUTE_SHARE						= "      RouteShare: ";
 
 	private static final String TEXT_BTN_RESET_STATS						= "Reset packet statistic";
+	private static final String TEXT_BTN_RESET_PACKET_OVERHEAD_STATS		= "Reset overhead statistic";
 	private static final String TEXT_BTN_SHOW_PACKETS_PER_LINK_STATS		= "Show packets per link";
 	private static final String TEXT_BTN_SHOW_PACKETS_PER_TYPE_STATS		= "Show packets per type";
+	private static final String TEXT_BTN_SHOW_PACKET_OVERHEAD_PER_LINK_STATS= "Show overhead per link";
 	
 	private Button mBtnResetPacketStats = null;
+	private Button mBtnResetPacketOverheadStats = null;
 	private Button mBtnShowPacketsPerLinkStats = null;
 	private Button mBtnShowPacketsPerTypeStats = null;
+	private Button mBtnShowPacketOverheadPerLink = null;
 	
 	private Label mAnnouncePhysicalEndPoint = null;
 	private Label mMultiplexHeader = null;
@@ -210,6 +214,10 @@ public class HRMOverviewPackets extends ViewPart
 	public void dispose()
 	{
 		mBtnResetPacketStats.dispose();
+		mBtnResetPacketOverheadStats.dispose();
+		mBtnShowPacketOverheadPerLink.dispose();
+		mBtnShowPacketsPerLinkStats.dispose();
+		mBtnShowPacketsPerTypeStats.dispose();
 		mAnnouncePhysicalEndPoint.dispose();
 		mMultiplexHeader.dispose();
 		mSignalingMessageHrm.dispose();
@@ -302,6 +310,16 @@ public class HRMOverviewPackets extends ViewPart
 			}
 		});
 		
+	    mBtnResetPacketOverheadStats = new Button(tContainer, SWT.PUSH);
+	    mBtnResetPacketOverheadStats.setText(TEXT_BTN_RESET_PACKET_OVERHEAD_STATS);
+	    mBtnResetPacketOverheadStats.setLayoutData(createGridData(true, 2));
+	    mBtnResetPacketOverheadStats.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				HRMController.resetPacketOverheadCounting();
+			}
+		});
+
 	    mBtnShowPacketsPerLinkStats = new Button(tContainer, SWT.PUSH);
 	    mBtnShowPacketsPerLinkStats.setText(TEXT_BTN_SHOW_PACKETS_PER_LINK_STATS);
 	    mBtnShowPacketsPerLinkStats.setLayoutData(createGridData(true, 2));
@@ -322,6 +340,16 @@ public class HRMOverviewPackets extends ViewPart
 			}
 		});	    
 	    
+	    mBtnShowPacketOverheadPerLink = new Button(tContainer, SWT.PUSH);
+	    mBtnShowPacketOverheadPerLink.setText(TEXT_BTN_SHOW_PACKET_OVERHEAD_PER_LINK_STATS);
+	    mBtnShowPacketOverheadPerLink.setLayoutData(createGridData(true, 2));
+	    mBtnShowPacketOverheadPerLink.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				HRMController.logPacketsOverheadPerLink();;
+			}
+		});	    
+
 	    mDisplay.timerExec(100, ViewRepaintTimer);
 	}
 	
