@@ -82,7 +82,7 @@ public class RouteShare extends SignalingMessageHrm
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		SignalingMessageHRM	     = 1
-		 * 		RoutingTable.length		 = 1
+		 * 		RoutingTable.length		 = 2
 		 * 		RoutingTable			 = dynamic
 		 * 
 		 *************************************************************/
@@ -90,7 +90,7 @@ public class RouteShare extends SignalingMessageHrm
 		int tResult = 0;
 		
 		tResult += getDefaultSize();
-		tResult += 1; // size of the following list
+		tResult += 2; // size of the following list
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
