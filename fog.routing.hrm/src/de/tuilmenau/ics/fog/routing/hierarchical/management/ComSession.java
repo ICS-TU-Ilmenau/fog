@@ -676,6 +676,9 @@ public class ComSession extends Session
 		 */
 		SignalingMessageHrm tPayload = pMultiplexHeader.getPayload();
 
+		/**
+		 * DEBUG: InformClusterLeft?
+		 */
 		if(tPayload instanceof InformClusterLeft){
 			InformClusterLeft tInformClusterLeftPacket = (InformClusterLeft)tPayload;
 			
@@ -684,6 +687,9 @@ public class ComSession extends Session
 			Logging.log(this, "   ..destination channel: " + tDestinationComChannel);
 		}
 		
+		/**
+		 * DEBUG: RequestClusterMembershipAck?
+		 */
 		if(tPayload instanceof RequestClusterMembershipAck){
 			RequestClusterMembershipAck tRequestClusterMembershipAckPAcket = (RequestClusterMembershipAck)tPayload;
 			
@@ -691,6 +697,7 @@ public class ComSession extends Session
 			Logging.log(this, "   ..data: " + tRequestClusterMembershipAckPAcket);
 			Logging.log(this, "   ..destination channel: " + tDestinationComChannel);
 		}
+		
 		/**
 		 * Forward the payload to the correct communication channel
 		 */
