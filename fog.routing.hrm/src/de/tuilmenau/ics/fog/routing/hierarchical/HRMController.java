@@ -65,10 +65,10 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResignWinner;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
+import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
+import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
@@ -426,6 +426,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
 	 */
 	public static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketOverheadCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();
+
+	/**
+	 * Stores byte counter per packet type and link, additional IP overhead is added per packet
+	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
+	 */
+	public static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketOverheadCounterPerLinkForIP = new HashMap<Bus, HashMap<Class<?>, Integer>>();
 
 	/**
 	 * Stores the simulation time when the packet overhead measurement started

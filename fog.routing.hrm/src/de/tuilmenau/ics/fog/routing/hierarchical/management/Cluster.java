@@ -14,9 +14,8 @@ import java.math.BigInteger;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.bus.Bus;
-import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
+import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;

@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets.hierarchical.topology;
+package de.tuilmenau.ics.fog.packets.hierarchical.routing;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -17,19 +17,18 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * PACKET: This packet is used within the HRM "report" phase. 
- * 		   Either a coordinator uses this packet in order to report topology to a superior coordinator,
- * 		   or a cluster member of base hierarchy level uses this packet to report topology to its coordinator.
+ * PACKET: This packet is used within the HRM "share" phase. 
+ * 		   A coordinator uses this packet in order to share route with cluster members.
  */
-public class RouteReport extends SignalingMessageHrm
+public class RouteShare extends SignalingMessageHrm
 {
-	private static final long serialVersionUID = -2825988490853163023L;
+	private static final long serialVersionUID = 2105684166786450748L;
 	
 	/**
 	 * Stores the database with routing entries.
 	 */
 	private RoutingTable mRoutingTable = new RoutingTable();
-
+	
 	/**
 	 * Stores the counter of created packets from this type
 	 * This value is only used for debugging. It is not part of the HRM concept. 
@@ -39,7 +38,7 @@ public class RouteReport extends SignalingMessageHrm
 	/**
 	 * Constructor for getDefaultSize()
 	 */
-	private RouteReport()
+	private RouteShare()
 	{
 		super();
 	}
@@ -47,40 +46,19 @@ public class RouteReport extends SignalingMessageHrm
 	/**
 	 * Constructor
 	 * 
-	 * @param pSenderName the sender name
-	 * @param pReceiverName the receiver name
-	 * @param pRoutingTable the routing table which is reported
+	 * @param pSenderName the name of the message sender
+	 * @param pReceiverName the name of the message receiver
+	 * @param pRoutingTable the routing table which is shared
 	 */
-	public RouteReport(HRMName pSenderName, HRMName pReceiverName, RoutingTable pRoutingTable)
+	public RouteShare(HRMName pSenderName, HRMName pReceiverName, RoutingTable pRoutingTable)
 	{
 		super(pSenderName, pReceiverName);
 		if(pRoutingTable != null){
 			mRoutingTable = pRoutingTable;
 		}
-		synchronized (sCreatedPackets) {
-			sCreatedPackets++;
-		}
+		sCreatedPackets++;
 	}
-	
-	/**
-	 * Adds a route to the database of routing entries.
-	 * 
-	 * @param pRoutingEntry the new route
-	 */
-	public void addRoute(RoutingEntry pRoutingEntry)
-	{
-		if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-			Logging.log(this, "Adding routing entry: " + pRoutingEntry);
-		}
-		
-		if (mRoutingTable.contains(pRoutingEntry)){
-			Logging.err(this, "Duplicated entries detected, skipping this \"addRoute\" request");
-			return;
-		}
-		
-		mRoutingTable.add(pRoutingEntry);
-	}
-	
+
 	/**
 	 * Returns the database of routing entries.
 	 * 
@@ -88,7 +66,7 @@ public class RouteReport extends SignalingMessageHrm
 	 */
 	public RoutingTable getRoutes()
 	{
-		return mRoutingTable;
+		return (RoutingTable) mRoutingTable.clone();
 	}
 	
 	/**
@@ -140,7 +118,7 @@ public class RouteReport extends SignalingMessageHrm
 
 		int tResult = 0;
 		
-		RouteReport tTest = new RouteReport();
+		RouteShare tTest = new RouteShare();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
@@ -186,6 +164,6 @@ public class RouteReport extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", "+ mRoutingTable.size() + " reported routes)";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", "+ mRoutingTable.size() + " shared routes)";
 	}
 }
