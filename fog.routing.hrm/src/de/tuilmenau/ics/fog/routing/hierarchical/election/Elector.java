@@ -1484,6 +1484,8 @@ public class Elector implements Localization
 	 */
 	private synchronized void eventElectionWon(String pCause)
 	{
+		boolean tWasFormerWinner = isWinner();
+		
 		if ((!isWinner()) || (!finished())){
 			Logging.log(this, "ELECTION WON for cluster " + mParent +", cause=" + pCause);
 			
@@ -1511,10 +1513,7 @@ public class Elector implements Localization
 				}else{
 					if(tCoordinator.isThisEntityValid()){
 						Logging.log(this, "Cluster " + mParent + " has already a coordinator");
-					}else{
-						Logging.err(this, "Cluster " + mParent + " has already a coordinator but it is already invalidated, data inconsistency detected");
 					}
-						
 				}
 	
 				Logging.log(this, "    ..coordinator is: " + tCoordinator);
