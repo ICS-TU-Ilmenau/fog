@@ -26,7 +26,7 @@ import de.tuilmenau.ics.fog.util.Size;
  * 		   It is necessary to inform the neighbor about the FN which it should use to route to the central FN of a neighbor node.
  * 		   This packet type is only needed for the FoG specific implementation. It is not mandatory for HRM.
  */
-public class AnnouncePhysicalEndPoint extends LoggableElement implements Serializable, ProtocolHeader
+public class AnnouncePhysicalEndPoint extends LoggableElement implements Serializable, ProtocolHeader, IEthernetPayload
 {
 	/**
 	 * Stores the L2Address of the central FN of the sender

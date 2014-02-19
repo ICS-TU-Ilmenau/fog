@@ -19,7 +19,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 /**
  * This abstract interface allows the receiver to detect the sender of a message.
  */
-public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm
+public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm implements IEthernetPayload
 {
 	/**
 	 * Stores the ClusterName of the sender.
