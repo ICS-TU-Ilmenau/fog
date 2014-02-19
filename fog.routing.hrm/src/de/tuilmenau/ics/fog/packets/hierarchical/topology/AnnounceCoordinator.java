@@ -93,6 +93,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	
 	/**
 	 * Stores the route to the announced cluster
+	 * This value is FoG-specific and eases the implementation. The recorded L2Address values of the passed nodes (variable "mPassedNodes") are enough to determine a valid route to the sending coordinator. 
 	 */
 	private Route mRoute = new Route();
 	
@@ -443,9 +444,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		 * 		TTL					     	= 2
 		 * 		RouteHopCount 			 	= 2
 		 * 		EnteredSidewardForwarding 	= 1
-		 * 		Route.length    	 		= 1
 		 * 		PassedNodes.length    	 	= 1
-		 * 		Route					 	= dynamic
 		 * 		PassedNodes				 	= dynamic
 		 * 
 		 *************************************************************/
@@ -453,14 +452,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		int tResult = 0;
 		
 		tResult += getDefaultSize();
-		tResult += 1; // size of the following list
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += mRoute.getSerialisedSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
 		tResult += 1; // size of the following list
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
