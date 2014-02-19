@@ -627,17 +627,39 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns the time period of the packet overhead measurement in [s]
+	 * 
+	 * @return the time period in [s]
+	 */
+	public static double getPacketOverheadPerLinkMeasurementPeriod()
+	{
+		double tResult = 0;
+		HRMController tHRMController = null;
+		
+		if(sRegisteredHRMControllers != null){
+			synchronized (sRegisteredHRMControllers) {
+				if(sRegisteredHRMControllers.size() > 0){
+					tHRMController = sRegisteredHRMControllers.getFirst();
+					tResult = tHRMController.getSimulationTime() - sPacketOverheadMeasurementStart;
+				}
+			}
+		}
+		
+		tResult = ((double)Math.round(100 * tResult)) / 100; 
+				
+		return tResult;
+	}
+	
+	/**
 	 * Logs the values of accounted packet bytes per bus and packet type
 	 */
 	public static void logPacketsOverheadPerLink()
 	{
 		synchronized (sPacketOverheadCounterPerLink) {
-			double tPeriod = 0;
+			double tPeriod = getPacketOverheadPerLinkMeasurementPeriod();
 			HRMController tHRMController = null;
-			
 			synchronized (sRegisteredHRMControllers) {
 				tHRMController = sRegisteredHRMControllers.getFirst();
-				tPeriod = tHRMController.getSimulationTime() - sPacketOverheadMeasurementStart;				
 			}
 			Logging.warn(tHRMController, "Measured packet overhead since: " + sPacketOverheadMeasurementStart);
 			Logging.warn(tHRMController, "   ..results in a measurement period of: " + tPeriod + " seconds");

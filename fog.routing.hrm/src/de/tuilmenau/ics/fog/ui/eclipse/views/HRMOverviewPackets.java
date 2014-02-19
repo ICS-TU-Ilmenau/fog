@@ -50,6 +50,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This viewer shows global statistics about HRM.
@@ -81,6 +82,8 @@ public class HRMOverviewPackets extends ViewPart
 	private static final String TEXT_SIG_ROUTE_REPORT						= "      RouteReport: ";
 	private static final String TEXT_SIG_ROUTE_SHARE						= "      RouteShare: ";
 
+	private static final String TEXT_PACKET_OVERHEAD_MEASUREMENT_PERIOD  	= "Packet overhead measurement period: ";
+	
 	private static final String TEXT_BTN_RESET_STATS						= "Reset packet statistic";
 	private static final String TEXT_BTN_RESET_PACKET_OVERHEAD_STATS		= "Reset overhead statistic";
 	private static final String TEXT_BTN_SHOW_PACKETS_PER_LINK_STATS		= "Show packets per link";
@@ -92,6 +95,8 @@ public class HRMOverviewPackets extends ViewPart
 	private Button mBtnShowPacketsPerLinkStats = null;
 	private Button mBtnShowPacketsPerTypeStats = null;
 	private Button mBtnShowPacketOverheadPerLink = null;
+	
+	private Label mPacketsOverheadMeasurementPeriod = null;
 	
 	private Label mAnnouncePhysicalEndPoint = null;
 	private Label mMultiplexHeader = null;
@@ -163,6 +168,10 @@ public class HRMOverviewPackets extends ViewPart
 		mInvalidCoordinator.setText(Long.toString(InvalidCoordinator.getCreatedPackets()) + ",  each " + InvalidCoordinator.getDefaultSize() + " bytes" + (InvalidCoordinator.hasDynamicSize() ? " + more" : ""));
 		mRouteReport.setText(Long.toString(RouteReport.getCreatedPackets()) + ",  each " + RouteReport.getDefaultSize() + " bytes" + (RouteReport.hasDynamicSize() ? " + more" : ""));
 		mRouteShare.setText(Long.toString(RouteShare.getCreatedPackets()) + ",  each " + RouteShare.getDefaultSize() + " bytes" + (RouteShare.hasDynamicSize() ? " + more" : ""));
+		
+		//Logging.log(this, "Period: " + Double.toString(HRMController.getPacketOverheadPerLinkMeasurementPeriod()));
+		
+		mPacketsOverheadMeasurementPeriod.setText(Double.toString(HRMController.getPacketOverheadPerLinkMeasurementPeriod()) + " s");
 	}
 	
 
@@ -242,6 +251,7 @@ public class HRMOverviewPackets extends ViewPart
 		mInvalidCoordinator.dispose();
 		mRouteReport.dispose();
 		mRouteShare.dispose();
+		mPacketsOverheadMeasurementPeriod.dispose();
 		
 		ViewRepaintTimer = null;
 
@@ -310,6 +320,19 @@ public class HRMOverviewPackets extends ViewPart
 			}
 		});
 		
+		final GridData tPacketsOverheadLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
+		tPacketsOverheadLayoutData.horizontalSpan = 2;
+		Group tGrpPacketsOverhead = new Group(tContainer, SWT.SHADOW_OUT);
+		tGrpPacketsOverhead.setFont(new Font(mDisplay, "Arial", 11, SWT.BOLD));
+		tGrpPacketsOverhead.setText("  HRM packets overhead  ");
+		GridLayout tGrpPacketsOverheadLayout = new GridLayout(2, true);
+		tGrpPacketsOverheadLayout.marginWidth = 20;
+		tGrpPacketsOverheadLayout.marginHeight = 10;
+		tGrpPacketsOverhead.setLayout(tGrpPacketsOverheadLayout);
+		tGrpPacketsOverhead.setLayoutData(tPacketsOverheadLayoutData);
+
+		mPacketsOverheadMeasurementPeriod = createPartControlLine(tGrpPacketsOverhead, TEXT_PACKET_OVERHEAD_MEASUREMENT_PERIOD);
+
 	    mBtnResetPacketOverheadStats = new Button(tContainer, SWT.PUSH);
 	    mBtnResetPacketOverheadStats.setText(TEXT_BTN_RESET_PACKET_OVERHEAD_STATS);
 	    mBtnResetPacketOverheadStats.setLayoutData(createGridData(true, 2));
