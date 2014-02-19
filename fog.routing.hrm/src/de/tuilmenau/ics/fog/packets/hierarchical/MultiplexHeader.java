@@ -17,13 +17,29 @@ import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
 import de.tuilmenau.ics.fog.ui.Logging;
 
-/**
+/*************************************************************************************************************************
+ * 
  * PACKET: This header is used for inter-HRMController communication. It encapsulates a payload which 
- * 		   has to be delivered from one Cluster object to another Cluster object. Both object may be
- * 		   instantiated on different nodes. They communicate via their dedicated communication channel,
- * 		   which is known at both communication end points. The header is used to identify the correct
- * 		   destination communication channel at receiver side. 
- */
+ * 		   has to be delivered from one HRM control entity to another. Both entities may be instantiated 
+ * 		   on different nodes. They communicate via the dedicated communication channel, which is known 
+ * 		   on both communication end nodes. 
+ * 		   Hence, this header is nothing else than an addressing header, used to identify the correct
+ * 		   destination communication channel at receiver side and tell the receiving entity, which entity
+ * 		   sent this packet.
+ * 
+ *  The general structure of this header is as follows:
+ *  
+ *  			 Bytes |        Content       |
+ *  		===========#======================#====   
+ *		      	0 - 8  | name of the sender   | 
+ *  		-----------+----------------------+----   
+ *      		9 -17  | name of the receiver |
+ *   
+ *   Starting from byte 18, the payload (must be of type "SignalingMessageHrm") follows and has a dynamic size depending 
+ *   on its internal encoding.   
+ *     
+ *  
+ *************************************************************************************************************************/
 public class MultiplexHeader implements ProtocolHeader
 {
 	private static final long serialVersionUID = 5178731557132270381L;
