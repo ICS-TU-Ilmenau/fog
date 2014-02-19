@@ -16,10 +16,13 @@ package de.tuilmenau.ics.fog.ipv4;
 import java.io.Serializable;
 
 /**
- * Represents a IPv4-Packet
+ * Represents an IPv4-Packet
  */
 public class IPv4Packet implements Serializable{
 	private static final long serialVersionUID = -4283738105925209811L;
+	public static final int HEADER_SIZE = 20;
+	public static final int HEADER_OPTIONS_SIZE = 40;
+	
 	protected IPv4Address source;
 	protected IPv4Address destination;
 	protected IPv4Protocol protocol;
