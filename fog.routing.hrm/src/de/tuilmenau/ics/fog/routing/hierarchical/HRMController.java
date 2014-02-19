@@ -3267,6 +3267,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		HRMViewer.removeAll();
 		
 		resetPacketOverheadCounting();
+		sPacketOverheadMeasurementStart = 0;
 
 		/**
 		 * Kill all processors of the previous simulation run
