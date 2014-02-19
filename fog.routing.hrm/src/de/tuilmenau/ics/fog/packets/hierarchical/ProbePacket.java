@@ -65,7 +65,8 @@ public class ProbePacket  extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 
 		 *************************************************************/
 
@@ -82,7 +83,8 @@ public class ProbePacket  extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 
 		 *************************************************************/
 

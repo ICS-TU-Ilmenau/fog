@@ -81,7 +81,8 @@ public class RouteShare extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		RoutingTable.length		 = 2
 		 * 		RoutingTable			 = dynamic
 		 * 
@@ -112,7 +113,8 @@ public class RouteShare extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 
 		 *************************************************************/
 

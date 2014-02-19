@@ -123,7 +123,8 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	   = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		SendingCluster    	   = 9
 		 * 		mDroppedClusterMember  = 9
 		 * 
@@ -142,7 +143,8 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	   = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		SendingCluster    	   = 9
 		 * 		mDroppedClusterMember  = 9
 		 * 

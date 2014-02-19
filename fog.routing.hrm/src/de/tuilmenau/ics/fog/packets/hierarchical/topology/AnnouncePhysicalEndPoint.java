@@ -12,7 +12,8 @@ package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.bus.Bus;
-import de.tuilmenau.ics.fog.packets.LoggableElement;
+import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
+import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -24,9 +25,11 @@ import de.tuilmenau.ics.fog.util.Size;
 /**
  * PACKET: This packet is used to inform the neighbor about the association between the central FN and the FN between the central FN and the bus.
  * 		   It is necessary to inform the neighbor about the FN which it should use to route to the central FN of a neighbor node.
- * 		   This packet type is only needed for the FoG specific implementation. It is not mandatory for HRM.
+ * 		   This packet part is only needed for the FoG specific implementation. It is not mandatory for HRM.
+ * 
+ * 		   Additionally, this packet is used to inform the peer about the local AS number.
  */
-public class AnnouncePhysicalEndPoint extends LoggableElement implements Serializable, ProtocolHeader, IEthernetPayload
+public class AnnouncePhysicalEndPoint extends SignalingMessageHrm implements Serializable, ProtocolHeader, IEthernetPayload
 {
 	/**
 	 * Stores the L2Address of the central FN of the sender
@@ -136,6 +139,7 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
+		 * 		[SignalingMessageHrm]
 		 * 		CentralFN				= 16
 		 * 		RoutingTargetFN			= 16
 		 * 		SenderAsID				= 4
@@ -156,6 +160,7 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
+		 * 		[SignalingMessageHrm]
 		 * 		CentralFN				= 16
 		 * 		RoutingTargetFN			= 16
 		 * 		SenderAsID				= 4
@@ -185,6 +190,9 @@ public class AnnouncePhysicalEndPoint extends LoggableElement implements Seriali
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
+
+		// correct the calculation because SignalingMessageHrm::getDefaultSize() adds too much overhead
+		tResult -= MultiplexHeader.getDefaultSize();
 
 		return tResult;
 	}

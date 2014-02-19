@@ -125,7 +125,8 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	   = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		RequestingCluster  	   = 9
 		 * 		RequestDestination     = 9
 		 * 
@@ -144,7 +145,8 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	   = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		RequestingCluster  	   = 9
 		 * 		RequestDestination     = 9
 		 * 

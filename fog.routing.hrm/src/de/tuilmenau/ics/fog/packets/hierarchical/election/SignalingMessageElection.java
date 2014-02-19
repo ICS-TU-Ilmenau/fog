@@ -101,7 +101,8 @@ public class SignalingMessageElection extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		SenderPriority			 = 4
 		 * 
 		 *************************************************************/
@@ -121,7 +122,8 @@ public class SignalingMessageElection extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		SenderPriority			 = 4
 		 * 
 		 *************************************************************/

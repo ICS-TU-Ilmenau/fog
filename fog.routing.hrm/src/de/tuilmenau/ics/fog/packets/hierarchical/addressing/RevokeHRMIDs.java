@@ -86,7 +86,8 @@ public class RevokeHRMIDs  extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM		= 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		HRMIDs.length			= 1
 		 * 		HRMIDs					= dynamic
 		 * 
@@ -117,7 +118,8 @@ public class RevokeHRMIDs  extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM		= 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 
 		 *************************************************************/
 

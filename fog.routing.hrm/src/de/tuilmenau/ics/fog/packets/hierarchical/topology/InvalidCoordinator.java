@@ -300,9 +300,8 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	    	= 1
-		 * 		SendingEntityName        	= 9
-		 * 		SendingEntityNodeL2Address 	= 16
+		 * 		[SignalingMessageHrm]
+		 * 		[SignalingMessageHrmTopologyUpdate]
 		 * 		TTL					     	= 2
 		 * 		EnteredSidewardForwarding 	= 1
 		 * 		PassedNodes.length		 	= 1
@@ -335,9 +334,8 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     	= 1
-		 * 		SendingEntityName        	= 9
-		 * 		SendingEntityNodeL2Address 	= 16
+		 * 		[SignalingMessageHrm]
+		 * 		[SignalingMessageHrmTopologyUpdate]
 		 * 		TTL					     	= 2
 		 * 		EnteredSidewardForwarding 	= 1
 		 * 

@@ -9,6 +9,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
+import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
@@ -104,7 +105,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     	= 1
+		 * 		[SignalingMessageHrm]
 		 * 		SenderEntityName		 	= 9
 		 * 		SendingEntityNodeL2Address 	= 16
 		 * 
@@ -125,7 +126,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     	= 1
+		 * 		[SignalingMessageHrm]
 		 * 		SenderEntityName		 	= 9
 		 * 		SendingEntityNodeL2Address 	= 16
 		 * 
@@ -151,6 +152,9 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
+		
+		// correct the calculation because SignalingMessageHrm::getDefaultSize() adds too much overhead
+		tResult -= MultiplexHeader.getDefaultSize();
 		
 		return tResult;
 	}

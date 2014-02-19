@@ -82,7 +82,8 @@ public class AssignHRMID  extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM		= 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		HRMIDs					= 4
 		 * 
 		 *************************************************************/
@@ -104,7 +105,8 @@ public class AssignHRMID  extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM		= 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		HRMIDs					= 4
 		 * 
 		 *************************************************************/

@@ -438,9 +438,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	    /*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     	= 1
-		 * 		SendingEntityName        	= 9
-		 * 		SenderEntityNodeL2Address  	= 16
+		 * 		[SignalingMessageHrm]
+		 * 		[SignalingMessageHrmTopologyUpdate]
 		 * 		TTL					     	= 2
 		 * 		RouteHopCount 			 	= 2
 		 * 		EnteredSidewardForwarding 	= 1
@@ -474,9 +473,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 		
-		 * 		SignalingMessageHRM	     	= 1
-		 * 		SendingEntityName        	= 9
-		 * 		SenderEntityNodeL2Address  	= 16
+		 * 		[SignalingMessageHrm]
+		 * 		[SignalingMessageHrmTopologyUpdate]
 		 * 		TTL					     	= 2
 		 *		RouteHopCount 			 	= 2
 		 *		EnteredSidewardForwarding 	= 1

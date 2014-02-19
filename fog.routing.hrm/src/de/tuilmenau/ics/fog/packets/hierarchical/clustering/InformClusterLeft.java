@@ -142,7 +142,8 @@ public class InformClusterLeft extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	   = 1
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 		LeavingClusterMember   = 9
 		 * 		mLeftCluster		   = 9
 		 * 

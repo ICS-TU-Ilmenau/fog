@@ -226,6 +226,7 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
+		 * 		[MultiplexHeader]
 		 * 		Signaling packet type = 1
 		 * 
 		 *************************************************************/
@@ -242,7 +243,8 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	{
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
-		 * 
+		 *
+		 * 		[MultiplexHeader]
 		 * 		Signaling packet type = 1
 		 * 
 		 *************************************************************/
@@ -252,6 +254,10 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		SignalingMessageHrm tTest = new SignalingMessageHrm();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
+		}
+		tResult += MultiplexHeader.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
 		}
 		tResult += 1;
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
