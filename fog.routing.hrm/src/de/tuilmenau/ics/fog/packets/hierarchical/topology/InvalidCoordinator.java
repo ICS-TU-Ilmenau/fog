@@ -65,20 +65,10 @@ import de.tuilmenau.ics.fog.util.Size;
  * ****************************************************************************************************************************
  * ****************************************************************************************************************************
 */
-public class InvalidCoordinator extends SignalingMessageHrm implements ISignalingMessageHrmBroadcastable, ISignalingMessageASSeparator
+public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implements ISignalingMessageHrmBroadcastable, ISignalingMessageHrmTopologyASSeparator
 {
 	private static final long serialVersionUID = -1548886959657058300L;
 
-	/**
-	 * Stores the ClusterName of the sender
-	 */
-	private ClusterName mSendingCoordinator = new ClusterName(null, null, null, 0);
-	
-	/**
-	 * Stores the L2 address of the node where the coordinator of the announced cluster is located
-	 */
-	private L2Address mCoordinatorNodeL2Address = new L2Address(0);
-	
 	/**
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
 	 */
@@ -126,8 +116,9 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
-		mSendingCoordinator = pSenderClusterName;
-		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
+		setSenderEntityName(pSenderClusterName);
+		
+		setSenderEntityNodeL2Address(pCoordinatorNodeL2Address);
 		
 		/**
 		 * Record the sender node
@@ -187,26 +178,6 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	}
 
 	/**
-	 * Returns the ClusterName of the sender
-	 * 
-	 * @return
-	 */
-	public ClusterName getSenderClusterName()
-	{
-		return mSendingCoordinator;
-	}
-	
-	/**
-	 * Returns the L2 address of the node where the coordinator of the announced cluster is located
-	 * 
-	 * @return the L2 address
-	 */
-	public L2Address getSenderClusterCoordinatorNodeL2Address()
-	{
-		return mCoordinatorNodeL2Address;
-	}
-	
-	/**
 	 * Returns if the sideward forwarding was already started
 	 * 
 	 * @return true or false
@@ -242,14 +213,14 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		/**
 		 * Return always true for the highest hierarchy level, but on this hierarchy level no invalidations should be sent
 		 */
-		if(getSenderClusterName().getHierarchyLevel().isHighest()){
+		if(getSenderEntityName().getHierarchyLevel().isHighest()){
 			return true;
 		}
 
 		/**
 		 * Return always true for the second highest hierarchy level
 		 */
-		if(getSenderClusterName().getHierarchyLevel().getValue() == HRMConfig.Hierarchy.HEIGHT -2){
+		if(getSenderEntityName().getHierarchyLevel().getValue() == HRMConfig.Hierarchy.HEIGHT -2){
 			return true;
 		}
 		
@@ -276,7 +247,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		/**
 		 * Return always true for the highest hierarchy level
 		 */
-		if(getSenderClusterName().getHierarchyLevel().getValue() >= HRMConfig.Hierarchy.HEIGHT - 2){
+		if(getSenderEntityName().getHierarchyLevel().getValue() >= HRMConfig.Hierarchy.HEIGHT - 2){
 			return true;
 		}
 
@@ -299,7 +270,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		InvalidCoordinator tResult = new InvalidCoordinator(null, getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
+		InvalidCoordinator tResult = new InvalidCoordinator(null, getSenderName(), getSenderEntityName(), getSenderEntityNodeL2Address());
 		
 		super.duplicate(tResult);
 
@@ -330,8 +301,8 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		SignalingMessageHRM	    	= 1
-		 * 		SendingCoordinator        	= 9
-		 * 		CoordinatorNodeL2Address  	= 16
+		 * 		SendingEntityName        	= 9
+		 * 		SendingEntityNodeL2Address 	= 16
 		 * 		TTL					     	= 2
 		 * 		EnteredSidewardForwarding 	= 1
 		 * 		PassedNodes.length		 	= 1
@@ -365,8 +336,8 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		SignalingMessageHRM	     	= 1
-		 * 		SendingCoordinator        	= 9
-		 * 		CoordinatorNodeL2Address  	= 16
+		 * 		SendingEntityName        	= 9
+		 * 		SendingEntityNodeL2Address 	= 16
 		 * 		TTL					     	= 2
 		 * 		EnteredSidewardForwarding 	= 1
 		 * 
@@ -378,15 +349,7 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
-		tResult += SignalingMessageHrm.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mSendingCoordinator.getSerialisedSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mCoordinatorNodeL2Address.getSerialisedSize();
+		tResult += SignalingMessageHrmTopologyUpdate.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
@@ -452,6 +415,6 @@ public class InvalidCoordinator extends SignalingMessageHrm implements ISignalin
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTI + ", SenderCluster="+ getSenderClusterName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTI + ", SenderCluster="+ getSenderEntityName() + ")";
 	}
 }

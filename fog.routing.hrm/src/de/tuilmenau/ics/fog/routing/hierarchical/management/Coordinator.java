@@ -1201,8 +1201,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Storing that the announced coordinator is a superior one of this node
 		 */
 		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
-		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderClusterName().getHierarchyLevel().isBaseLevel())){
-			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderClusterName());
+		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
+			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderEntityName());
 		}
 
 		//HINT: we don't store the announced remote coordinator in the ARG here because we are waiting for the side-ward forwarding of the announcement
@@ -1244,7 +1244,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * Store the announced remote coordinator in the ARG 
 		 */
-		if(!pInvalidCoordinator.getSenderClusterName().equals(this)){
+		if(!pInvalidCoordinator.getSenderEntityName().equals(this)){
 			unregisterAnnouncedCoordinatorARG(this, pInvalidCoordinator);
 		}else{
 			Logging.err(this, "eventCoordinatorInvalidation() was triggered for an invalidation of ourself, announcement: " + pInvalidCoordinator);

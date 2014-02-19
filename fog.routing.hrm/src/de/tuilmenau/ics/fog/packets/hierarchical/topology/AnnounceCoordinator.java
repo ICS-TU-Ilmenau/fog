@@ -77,20 +77,10 @@ import de.tuilmenau.ics.fog.util.Size;
  * ****************************************************************************************************************************
  * ****************************************************************************************************************************
 */
-public class AnnounceCoordinator extends SignalingMessageHrm implements ISignalingMessageHrmBroadcastable, ISignalingMessageASSeparator
+public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate implements ISignalingMessageHrmBroadcastable, ISignalingMessageHrmTopologyASSeparator
 {
 	private static final long serialVersionUID = -1548886959657058300L;
 
-	/**
-	 * Stores the ClusterName of the sender
-	 */
-	private ClusterName mSendingCoordinator = new ClusterName(null, null, null, 0);
-	
-	/**
-	 * Stores the L2 address of the node where the coordinator of the announced cluster is located
-	 */
-	private L2Address mCoordinatorNodeL2Address = new L2Address(0);
-	
 	/**
 	 * Time to announce: stores the current "TTL value". If it reaches 0, the packet will be dropped
 	 */
@@ -160,8 +150,9 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
-		mSendingCoordinator = pSenderClusterName;
-		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
+		setSenderEntityName(pSenderClusterName);
+
+		setSenderEntityNodeL2Address(pCoordinatorNodeL2Address);
 		
 		if(pHRMController != null){
 			/**
@@ -254,26 +245,6 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 
 		return tResult;
 	}
-
-	/**
-	 * Returns the ClusterName of the sender
-	 * 
-	 * @return
-	 */
-	public ClusterName getSenderClusterName()
-	{
-		return mSendingCoordinator;
-	}
-	
-	/**
-	 * Returns the L2 address of the node where the coordinator of the announced cluster is located
-	 * 
-	 * @return the L2 address
-	 */
-	public L2Address getSenderClusterCoordinatorNodeL2Address()
-	{
-		return mCoordinatorNodeL2Address;
-	}
 	
 	/**
 	 * Returns if the sideward forwarding was already started
@@ -311,14 +282,14 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		/**
 		 * Return always true for the highest hierarchy level, but on this hierarchy level no announces should be sent
 		 */
-		if(getSenderClusterName().getHierarchyLevel().isHighest()){
+		if(getSenderEntityName().getHierarchyLevel().isHighest()){
 			return true;
 		}
 
 		/**
 		 * Return always true for the second highest hierarchy level
 		 */
-		if(getSenderClusterName().getHierarchyLevel().getValue() == HRMConfig.Hierarchy.HEIGHT -2){
+		if(getSenderEntityName().getHierarchyLevel().getValue() == HRMConfig.Hierarchy.HEIGHT -2){
 			return true;
 		}
 		
@@ -345,7 +316,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		/**
 		 * Return always true for the highest hierarchy level
 		 */
-		if(getSenderClusterName().getHierarchyLevel().getValue() >= HRMConfig.Hierarchy.HEIGHT - 2){
+		if(getSenderEntityName().getHierarchyLevel().getValue() >= HRMConfig.Hierarchy.HEIGHT - 2){
 			return true;
 		}
 
@@ -421,7 +392,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		AnnounceCoordinator tResult = new AnnounceCoordinator(null, getSenderName(), getSenderClusterName(), getSenderClusterCoordinatorNodeL2Address());
+		AnnounceCoordinator tResult = new AnnounceCoordinator(null, getSenderName(), getSenderEntityName(), getSenderEntityNodeL2Address());
 		
 		super.duplicate(tResult);
 
@@ -463,12 +434,12 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	@Override
 	public int getSerialisedSize()
 	{
-		/*************************************************************
+	    /*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		SignalingMessageHRM	     	= 1
-		 * 		SendingCoordinator        	= 9
-		 * 		CoordinatorNodeL2Address  	= 16
+		 * 		SendingEntityName        	= 9
+		 * 		SenderEntityNodeL2Address  	= 16
 		 * 		TTL					     	= 2
 		 * 		RouteHopCount 			 	= 2
 		 * 		EnteredSidewardForwarding 	= 1
@@ -513,8 +484,8 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		 * Size of serialized elements in [bytes]:
 		 * 		
 		 * 		SignalingMessageHRM	     	= 1
-		 * 		SendingCoordinator        	= 9
-		 * 		CoordinatorNodeL2Address  	= 16
+		 * 		SendingEntityName        	= 9
+		 * 		SenderEntityNodeL2Address  	= 16
 		 * 		TTL					     	= 2
 		 *		RouteHopCount 			 	= 2
 		 *		EnteredSidewardForwarding 	= 1
@@ -527,15 +498,7 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
-		tResult += SignalingMessageHrm.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mSendingCoordinator.getSerialisedSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mCoordinatorNodeL2Address.getSerialisedSize();
+		tResult += SignalingMessageHrmTopologyUpdate.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
@@ -621,6 +584,6 @@ public class AnnounceCoordinator extends SignalingMessageHrm implements ISignali
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTA + ", SenderCluster="+ getSenderClusterName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTA + ", SenderCluster="+ getSenderEntityName() + ")";
 	}
 }

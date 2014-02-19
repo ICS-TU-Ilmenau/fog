@@ -15,7 +15,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastab
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageASSeparator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageHrmTopologyASSeparator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.RouteShare;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -602,8 +602,8 @@ public class ClusterMember extends ClusterName
 		 * Storing that the announced coordinator is a superior one of this node
 		 */
 		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
-		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderClusterName().getHierarchyLevel().isBaseLevel())){
-			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderClusterName()); //TODO: use timeouts here
+		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
+			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderEntityName()); //TODO: use timeouts here
 		}
 
 //		if(pAnnounceCoordinator.getSenderClusterName().getGUICoordinatorID() == 16){
@@ -618,7 +618,7 @@ public class ClusterMember extends ClusterName
 		 */
 		// is this the 2+ passed ClusterMember OR (in case it is the first passed ClusterMember) the peer is the origin of the announce -> forward the announcement 
 		Route tRoute = pAnnounceCoordinator.getRoute();
-		if(((tRoute != null) && (!tRoute.isEmpty()) && (tRoute.getFirst() != null)) || (pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(pComChannel.getPeerL2Address()))){
+		if(((tRoute != null) && (!tRoute.isEmpty()) && (tRoute.getFirst() != null)) || (pAnnounceCoordinator.getSenderEntityNodeL2Address().equals(pComChannel.getPeerL2Address()))){
 			/**
 			 * Duplicate the packet and write to the duplicate
 			 */
@@ -675,7 +675,7 @@ public class ClusterMember extends ClusterName
 					 */
 					if(!tForwardPacket.enteredSidewardForwarding()){
 						// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
-						if (pComChannel.getPeerL2Address().equals(tForwardPacket.getSenderClusterCoordinatorNodeL2Address())){
+						if (pComChannel.getPeerL2Address().equals(tForwardPacket.getSenderEntityNodeL2Address())){
 							/**
 							 * mark packet as "sideward forwarded"
 							 */
@@ -786,7 +786,7 @@ public class ClusterMember extends ClusterName
 				 */
 				if(!tForwardPacket.enteredSidewardForwarding()){
 					// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
-					if (pComChannel.getPeerL2Address().equals(tForwardPacket.getSenderClusterCoordinatorNodeL2Address())){
+					if (pComChannel.getPeerL2Address().equals(tForwardPacket.getSenderEntityNodeL2Address())){
 						/**
 						 * mark packet as "sideward forwarded"
 						 */
@@ -943,8 +943,8 @@ public class ClusterMember extends ClusterName
 			 * check if this packet should enter the next AS behind this comm. channel
 			 */
 			boolean tIsAllowedToEnterNextAS = true;
-			if(pPacket instanceof ISignalingMessageASSeparator){
-				ISignalingMessageASSeparator tSignalingMessageASSeparator = (ISignalingMessageASSeparator)pPacket;
+			if(pPacket instanceof ISignalingMessageHrmTopologyASSeparator){
+				ISignalingMessageHrmTopologyASSeparator tSignalingMessageASSeparator = (ISignalingMessageHrmTopologyASSeparator)pPacket;
 				tIsAllowedToEnterNextAS = tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, tComChannel.getPeerAsID());				
 			}
 

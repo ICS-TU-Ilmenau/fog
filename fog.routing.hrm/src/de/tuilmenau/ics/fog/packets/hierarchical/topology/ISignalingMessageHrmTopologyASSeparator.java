@@ -14,7 +14,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 /**
  * This abstract interface checks if the packet may pass the next AS.
  */
-public interface ISignalingMessageASSeparator
+public interface ISignalingMessageHrmTopologyASSeparator
 {
 	/**
 	 * Checks if the next AS may be entered by this packet

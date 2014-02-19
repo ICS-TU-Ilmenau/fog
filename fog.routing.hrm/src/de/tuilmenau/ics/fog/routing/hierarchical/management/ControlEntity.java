@@ -705,8 +705,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	protected void registerAnnouncedCoordinatorARG(ControlEntity pSourceEntity, AnnounceCoordinator pAnnounceCoordinator)
 	{
 		// check if the "remote" coordinator isn't stored at this physical node
-		if(!pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(mHRMController.getNodeL2Address())){
-			ClusterName tRemoteClusterName = pAnnounceCoordinator.getSenderClusterName();
+		if(!pAnnounceCoordinator.getSenderEntityNodeL2Address().equals(mHRMController.getNodeL2Address())){
+			ClusterName tRemoteClusterName = pAnnounceCoordinator.getSenderEntityName();
 			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 				Logging.log(this, "Registering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS_ROUTE){
@@ -721,7 +721,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			boolean tNewCoordinatorProxy = false;
 			CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
 			if(tCoordinatorProxy == null){
-				tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderClusterCoordinatorNodeL2Address(), pAnnounceCoordinator.getRouteHopCount());
+				tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderEntityNodeL2Address(), pAnnounceCoordinator.getRouteHopCount());
 				tNewCoordinatorProxy = true;
 			}else{
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
@@ -824,8 +824,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	protected void unregisterAnnouncedCoordinatorARG(ControlEntity pSourceEntity, InvalidCoordinator pInvalidCoordinator)
 	{
 		// check if the "remote" coordinator isn't stored at this physical node
-		if(!pInvalidCoordinator.getSenderClusterCoordinatorNodeL2Address().equals(mHRMController.getNodeL2Address())){
-			ClusterName tRemoteClusterName = pInvalidCoordinator.getSenderClusterName();
+		if(!pInvalidCoordinator.getSenderEntityNodeL2Address().equals(mHRMController.getNodeL2Address())){
+			ClusterName tRemoteClusterName = pInvalidCoordinator.getSenderEntityName();
 //			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 				Logging.log(this, "Unregistering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
 //			}
@@ -834,8 +834,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			 * Remove the invalid coordinator as superior one of this node from the HRMController database
 			 */
 			// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
-			if((!pInvalidCoordinator.enteredSidewardForwarding()) && (!pInvalidCoordinator.getSenderClusterName().getHierarchyLevel().isBaseLevel())){
-				mHRMController.unregisterSuperiorCoordinator(pInvalidCoordinator.getSenderClusterName());
+			if((!pInvalidCoordinator.enteredSidewardForwarding()) && (!pInvalidCoordinator.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
+				mHRMController.unregisterSuperiorCoordinator(pInvalidCoordinator.getSenderEntityName());
 			}
 
 			// search for an already existing CoordintorProxy instance
