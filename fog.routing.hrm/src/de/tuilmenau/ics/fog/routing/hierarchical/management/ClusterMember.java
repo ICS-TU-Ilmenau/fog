@@ -1168,14 +1168,14 @@ public class ClusterMember extends ClusterName
 		
 		if(isThisEntityValid()){
 			/**
-			 * Trigger: Elector invalid
-			 */
-			getElector().eventInvalidation(this + "::eventClusterMemberRoleInvalid() for: " + pComChannel);
-	
-			/**
 			 * Trigger: role invalid
 			 */
 			eventInvalidation();
+
+			/**
+			 * Trigger: Elector invalid
+			 */
+			getElector().eventInvalidation(this + "::eventClusterMemberRoleInvalid() for: " + pComChannel);
 	
 			unregisterComChannel(pComChannel);
 	

@@ -884,15 +884,15 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 
 		if(isThisEntityValid()){
 			/**
-			 * Trigger: Elector invalid for the inferior cluster
-			 */
-			mParentCluster.getElector().eventReset(this + "::eventCoordinatorRoleInvalid()");
-
-			/**
 			 * Trigger: role invalid
 			 */
 			eventInvalidation();
 			
+			/**
+			 * Trigger: Elector invalid for the inferior cluster
+			 */
+			mParentCluster.getElector().eventInvalidation(this + "::eventCoordinatorRoleInvalid()");
+
 			/**
 			 * Trigger: invalid coordinator
 			 */

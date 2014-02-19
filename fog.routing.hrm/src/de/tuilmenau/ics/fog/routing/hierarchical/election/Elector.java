@@ -308,35 +308,23 @@ public class Elector implements Localization
 	 * 
 	 * @param pCause the cause for the call
 	 */
-	public void eventReset(String pCause)
+	public void eventInvalidation(String pCause)
 	{
-		Logging.log(this, "EVENT: reset, cause=" + pCause);
+		Logging.log(this, "EVENT: invalidation, cause=" + pCause);
 
 		if(mParentIsActiveMember){
 			// return to all other election processes because we have lost this ClusterMember at this hierarchy level
-			returnToAlternativeElections(this + "::eventInvalidation()\n   ^^^^" + pCause);
+			returnToAlternativeElections(this + "::eventReset()\n   ^^^^" + pCause);
 			
 			// mark/store as inactive ClusterMember
-			boolean tRemovedActiveClusterMember = removeActiveClusterMember(mParent, this + "::eventInvalidation()\n   ^^^^" + pCause);
+			boolean tRemovedActiveClusterMember = removeActiveClusterMember(mParent, this + "::eventReset()\n   ^^^^" + pCause);
 
 			if(!tRemovedActiveClusterMember){
 				Logging.err(this, "Haven't found parent in the list of active ClusterMembers (but it should be there), error in state machine, parent is: " + mParent);
 			}
 		}
 
-		recheckLocalClusterIsAllowedToWin(this + "::eventInvalidation()\n   ^^^^" + pCause);
-	}
-	
-	/**
-	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
-	 * 
-	 * @param pCause the cause for the call
-	 */
-	public void eventInvalidation(String pCause)
-	{
-		Logging.log(this, "EVENT: invalidation, cause=" + pCause);
-
-		eventReset(this + "::eventInvalidation()\n   ^^^^" + pCause);
+		recheckLocalClusterIsAllowedToWin(this + "::eventReset()\n   ^^^^" + pCause);
 	}
 
 	/**
