@@ -1195,6 +1195,9 @@ public class Cluster extends ClusterMember
 
 		if(isThisEntityValid()){
 			LinkedList<Coordinator> tCoordinators = mHRMController.getAllCoordinators(getHierarchyLevel().getValue() - 1);
+			if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+				Logging.log(this, "      ..inferior local coordinators: " + tCoordinators.size());
+			}
 			
 			/**
 			 * Copy list of inferior local coordinators
@@ -1264,7 +1267,10 @@ public class Cluster extends ClusterMember
 						Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR REMOTE COORDINATORS STARTED");
 					}
 					LinkedList<CoordinatorProxy> tCoordinatorProxies = mHRMController.getAllCoordinatorProxies(getHierarchyLevel().getValue() - 1);
-					
+					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+						Logging.log(this, "      ..inferior remote coordinators: " + tCoordinatorProxies.size());
+					}
+
 					if(tCoordinatorProxies.size() > 0){
 						/**
 						 * Copy list of inferior local coordinators
