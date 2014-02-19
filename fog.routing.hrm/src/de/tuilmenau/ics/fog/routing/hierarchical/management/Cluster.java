@@ -1202,22 +1202,22 @@ public class Cluster extends ClusterMember
 			/**
 			 * Copy list of inferior local coordinators
 			 */
-			LinkedList<Coordinator> tInferiorLocalCoordinators = null;
+			LinkedList<Coordinator> tOldInferiorLocalCoordinators = null;
 			synchronized (mInferiorLocalCoordinators) {
-				tInferiorLocalCoordinators = (LinkedList<Coordinator>) mInferiorLocalCoordinators.clone();
+				tOldInferiorLocalCoordinators = (LinkedList<Coordinator>) mInferiorLocalCoordinators.clone();
 			}
 
 			/**
 			 * Iterate over all found inferior local coordinators
 			 */
-			synchronized (tInferiorLocalCoordinators) {
+			synchronized (tOldInferiorLocalCoordinators) {
 				if(mCountDistributeMembershipRequests > 1){
 					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-						Logging.log(this, "      ..having connections to these inferior local coordinators: " + tInferiorLocalCoordinators.toString());
+						Logging.log(this, "      ..having connections to these inferior local coordinators: " + tOldInferiorLocalCoordinators.toString());
 					}
 				}
 				for (Coordinator tCoordinator : tCoordinators){
-					if (!tInferiorLocalCoordinators.contains(tCoordinator)){
+					if (!tOldInferiorLocalCoordinators.contains(tCoordinator)){
 						if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 							Logging.log(this, "      ..found inferior local coordinator [NEW]: " + tCoordinator);
 						}
@@ -1262,7 +1262,7 @@ public class Cluster extends ClusterMember
 				/************************************
 				 * Requests for remote coordinators
 				 ************************************/
-				if(tInferiorLocalCoordinators.size() > 0){
+				if(mInferiorLocalCoordinators.size() > 0){
 					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 						Logging.log(this, "\n\n\n################ REQUESTING MEMBERSHIP FOR REMOTE COORDINATORS STARTED");
 					}
@@ -1275,22 +1275,22 @@ public class Cluster extends ClusterMember
 						/**
 						 * Copy list of inferior local coordinators
 						 */
-						LinkedList<Coordinator> tInferiorRemoteCoordinators = null;
+						LinkedList<Coordinator> tOldInferiorRemoteCoordinators = null;
 						synchronized (mInferiorRemoteCoordinators) {
-							tInferiorRemoteCoordinators = (LinkedList<Coordinator>) mInferiorRemoteCoordinators.clone();
+							tOldInferiorRemoteCoordinators = (LinkedList<Coordinator>) mInferiorRemoteCoordinators.clone();
 						}
 
 						/**
 						 * Iterate over all found remote coordinators
 						 */
-						synchronized (tInferiorRemoteCoordinators) {
+						synchronized (tOldInferiorRemoteCoordinators) {
 							if(mCountDistributeMembershipRequests > 1){
 								if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-									Logging.log(this, "      ..having connections to these inferior remote coordinators: " + tInferiorRemoteCoordinators.toString());
+									Logging.log(this, "      ..having connections to these inferior remote coordinators: " + tOldInferiorRemoteCoordinators.toString());
 								}
 							}
 							for (CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
-								if (!tInferiorRemoteCoordinators.contains(tCoordinatorProxy)){
+								if (!tOldInferiorRemoteCoordinators.contains(tCoordinatorProxy)){
 									if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 										Logging.log(this, "      ..found remote inferior coordinator[NEW]: " + tCoordinatorProxy);
 									}
@@ -1334,7 +1334,7 @@ public class Cluster extends ClusterMember
 					}
 				}else{
 					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-						Logging.log(this, "  ..no local inferior coordinators found");
+						Logging.log(this, "  ..no local inferior coordinators existing");
 					}
 				}
 			}
