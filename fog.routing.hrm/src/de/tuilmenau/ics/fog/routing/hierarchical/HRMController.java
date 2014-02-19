@@ -67,6 +67,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElecti
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnouncePhysicalEndPoint;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.IEthernetPayload;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -614,6 +615,34 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			sPacketOverheadCounterPerLink.put(pLink, tPacketsForBus);
 		}
+		
+		synchronized (sPacketOverheadCounterPerLinkForIP) {
+			HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLinkForIP.get(pLink);
+			if(tPacketsForBus == null){
+				tPacketsForBus = new HashMap<Class<?>, Integer>();
+			}
+	
+			Integer tPacketCount = tPacketsForBus.get(tPacketClass);
+			if(tPacketCount == null){
+				tPacketCount = new Integer(0);
+			}		
+			
+			/**
+			 * ADD: the packet size
+			 */
+			tPacketCount += tPacketSize;
+			
+			/**
+			 * ADD: IP header size
+			 */
+			if(!(pPacket instanceof IEthernetPayload)){
+				tPacketCount += IPv6Packet.HEADER_SIZE;						
+			}
+			
+			tPacketsForBus.put(tPacketClass, tPacketCount);
+			
+			sPacketOverheadCounterPerLinkForIP.put(pLink, tPacketsForBus);
+		}
 	}
 	
 	/**
@@ -629,6 +658,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				Logging.log(tHRMController, "Resetting the packet overhead measurement");
 				sPacketOverheadMeasurementStart = tHRMController.getSimulationTime();				
 			}
+		}
+		
+		synchronized (sPacketOverheadCounterPerLink) {
+			sPacketOverheadCounterPerLinkForIP = new HashMap<Bus, HashMap<Class<?>, Integer>>();	
 		}
 	}
 
@@ -662,24 +695,38 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static void logPacketsOverheadPerLink()
 	{
 		synchronized (sPacketOverheadCounterPerLink) {
-			double tPeriod = getPacketOverheadPerLinkMeasurementPeriod();
-			HRMController tHRMController = null;
-			synchronized (sRegisteredHRMControllers) {
-				tHRMController = sRegisteredHRMControllers.getFirst();
-			}
-			Logging.warn(tHRMController, "Measured packet overhead since: " + sPacketOverheadMeasurementStart);
-			Logging.warn(tHRMController, "   ..results in a measurement period of: " + tPeriod + " seconds");
-			
-			
-			for (Bus tBus: sPacketOverheadCounterPerLink.keySet()){
-				Logging.warn(tBus, "PACKETS OVERHEAD:..");
-				HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLink.get(tBus);
-				for (Class<?> tPacketType : tPacketsForBus.keySet()){
-					Integer tCounter = tPacketsForBus.get(tPacketType);
-					double tDataRate = ((double)Math.round(100 * (double)tCounter / tPeriod)) / 100;
-					DecimalFormat tFormat = new DecimalFormat("0.#");
-					String tDataRateStr = tFormat.format(tDataRate);
-					Logging.warn(tBus, "   .." + tPacketType.getSimpleName() + ": " + tCounter + " bytes, " + tDataRateStr + " bytes/s");
+			synchronized (sPacketOverheadCounterPerLinkForIP) {
+				double tPeriod = getPacketOverheadPerLinkMeasurementPeriod();
+				HRMController tHRMController = null;
+				synchronized (sRegisteredHRMControllers) {
+					tHRMController = sRegisteredHRMControllers.getFirst();
+				}
+				Logging.warn(tHRMController, "Measured packet overhead since: " + sPacketOverheadMeasurementStart);
+				Logging.warn(tHRMController, "   ..results in a measurement period of: " + tPeriod + " seconds");
+				
+				
+				for (Bus tBus: sPacketOverheadCounterPerLink.keySet()){
+					Logging.warn(tBus, "PACKETS OVERHEAD:..");
+					HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLink.get(tBus);
+					HashMap<Class<?>, Integer> tPacketsForBusForIP = sPacketOverheadCounterPerLinkForIP.get(tBus);
+
+					for (Class<?> tPacketType : tPacketsForBus.keySet()){
+						Integer tCounter = tPacketsForBus.get(tPacketType);
+						Integer tCounterForIP = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(tPacketType) : null);
+
+						double tDataRate = ((double)Math.round(100 * (double)tCounter / tPeriod)) / 100;
+						DecimalFormat tFormat = new DecimalFormat("0.#");
+						String tDataRateStr = tFormat.format(tDataRate);
+						
+						String tDataRateStrForIP = "";
+						if(tCounterForIP != null){
+							double tDataRateForIP = ((double)Math.round(100 * (double)tCounterForIP / tPeriod)) / 100;
+							DecimalFormat tFormatForIP = new DecimalFormat("0.#");
+							tDataRateStrForIP = tFormatForIP.format(tDataRateForIP);
+						}
+						
+						Logging.warn(tBus, "   .." + tPacketType.getSimpleName() + ": " + tCounter + " bytes, " + tDataRateStr + " bytes/s, ## for IP: " + tCounterForIP + " bytes, " + tDataRateStrForIP + " bytes/s");
+					}
 				}
 			}
 		}				
