@@ -44,6 +44,7 @@ import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
 import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
+import de.tuilmenau.ics.fog.ipv6.IPv6Packet;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
@@ -570,7 +571,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Class <?> tPacketClass = pPacket.getClass();
 		
 		int tPacketSize = pPacket.getSerialisedSize();
-		//Logging.err(null, "Accounting for link " + pLink + " a packet of " + (tPacketSize < 10 ? "0" : "") + tPacketSize + " bytes for " + pPacket);
+		if(tPacketSize > 1280 /* IPv6 packet size */ - IPv6Packet.HEADER_SIZE){
+			Logging.warn(null, "ACCOUNTING for link " + pLink + " a BIG PACKET of " + (tPacketSize < 10 ? "0" : "") + tPacketSize + " bytes for " + pPacket);
+		}
 		
 		synchronized (sPacketCounterPerLink) {
 			HashMap<Class<?>, Integer> tPacketsForBus = sPacketCounterPerLink.get(pLink);
