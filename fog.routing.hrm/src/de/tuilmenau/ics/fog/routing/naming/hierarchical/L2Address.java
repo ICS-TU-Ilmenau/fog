@@ -67,7 +67,7 @@ public class L2Address extends HRMName
 	 * 
 	 * measured in [bytes]
 	 */
-	private final static int SERIALIZED_SIZE = 16; // according to "distributed computing environment" (http://www.opengroup.org/dce/)  
+	private final static int SERIALIZED_SIZE = 16; // UUID according to "distributed computing environment" (http://www.opengroup.org/dce/)  
 	
 	/**
 	 * Create an address that is used to identify a node at the MAC layer.
