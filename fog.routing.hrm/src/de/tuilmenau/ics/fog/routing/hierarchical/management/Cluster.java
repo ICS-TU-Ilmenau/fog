@@ -1252,6 +1252,9 @@ public class Cluster extends ClusterMember
 						}
 					}
 				}
+				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+					Logging.log(this, "    ..finished clustering of local inferior coordinators");
+				}
 	
 				/************************************
 				 * Requests for remote coordinators
@@ -1324,7 +1327,9 @@ public class Cluster extends ClusterMember
 						eventDetectedIsolation();
 					}
 				}else{
-					// no local inferior coordinators -> this cluster isn't needed
+					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+						Logging.log(this, "  ..no local inferior coordinators found");
+					}
 				}
 			}
 		}else{
