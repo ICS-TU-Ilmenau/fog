@@ -20,4 +20,5 @@ import java.io.Serializable;
  */
 public class IPv6Packet implements Serializable{
 	public static final int HEADER_SIZE = 40;
+	public static final int PATH_MTU = 1280;
 }

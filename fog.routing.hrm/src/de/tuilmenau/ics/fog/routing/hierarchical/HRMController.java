@@ -571,7 +571,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Class <?> tPacketClass = pPacket.getClass();
 		
 		int tPacketSize = pPacket.getSerialisedSize();
-		if(tPacketSize > 1280 /* IPv6 packet size */ - IPv6Packet.HEADER_SIZE){
+		if(tPacketSize > IPv6Packet.PATH_MTU - IPv6Packet.HEADER_SIZE){
 			Logging.warn(null, "ACCOUNTING for link " + pLink + " a BIG PACKET of " + (tPacketSize < 10 ? "0" : "") + tPacketSize + " bytes for " + pPacket);
 		}
 		
