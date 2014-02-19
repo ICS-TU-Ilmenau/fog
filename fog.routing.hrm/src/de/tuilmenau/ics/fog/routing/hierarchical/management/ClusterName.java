@@ -11,10 +11,8 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 
-import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Size;
 
 /**
@@ -104,6 +102,16 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	}
 
 	/**
+	 * Clones this object
+	 * 
+	 * @return the object clone
+	 */
+	public ClusterName clone()
+	{
+		return new ClusterName(mHRMController, getHierarchyLevel(), getClusterID(), getCoordinatorID());
+	}
+	
+	/**
 	 * Returns a descriptive string about this object
 	 * 
 	 * @return the descriptive string
@@ -119,7 +127,7 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	@Override
 	public String toLocation()
 	{
-		String tResult = "Cluster" + getGUIClusterID() + "@" + getHierarchyLevel().getValue();
+		String tResult = "Cluster" + getGUIClusterID() + "@" + (getHierarchyLevel() != null ? getHierarchyLevel().getValue() : "-");
 		
 		return tResult;
 	}
