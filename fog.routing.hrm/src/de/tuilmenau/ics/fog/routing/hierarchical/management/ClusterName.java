@@ -70,7 +70,7 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	 * 
 	 * @return the default size
 	 */
-	public static int getDefaultSize()
+	private static int getDefaultSize()
 	{
 		/*
 		 * Serialized size in byte:
