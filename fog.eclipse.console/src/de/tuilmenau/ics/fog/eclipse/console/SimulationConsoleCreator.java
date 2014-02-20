@@ -109,6 +109,8 @@ public class SimulationConsoleCreator implements SimulationObserver
 		
 		mConsole.log(this, "Simulation ended");
 		mConsole.close();
+		Logging.getInstance().removeLogObserver(mConsole);
+		mConsole = null;
 	}
 
 	@Override
