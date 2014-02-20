@@ -114,6 +114,11 @@ public class Elector implements Localization
 	private Double mTimestampLastElectBroadcast =  new Double(0);
 	
 	/**
+	 * Stores the number of the current election round
+	 */
+	private int mElectionRounds = 0;
+	
+	/**
 	 * Stores the node-global election state: the active best ClusterMember instances per hierarchy level.
 	 * All entries per higher (!) hierarchy level have to be part of the same superior cluster. This fact is enforced by leaveWorseAlternativeElections().
 	 * For example, two or more ClusterAsClusterMember instances can be registered, which are part of the same local superior cluster.
@@ -263,10 +268,23 @@ public class Elector implements Localization
 	}
 
 	/**
+	 * Returns if the current election round is the first one
+	 * 
+	 * @return true or false
+	 */
+	private boolean isFirstElection()
+	{
+		return (mElectionRounds == 1);
+	}
+	
+	/**
 	 * Elects the coordinator for this cluster.
 	 */
 	private void elect()
 	{
+		// increase the counter for election rounds
+		mElectionRounds++;
+		
 		// set correct elector state
 		setElectorState(ElectorState.ELECTING);
 
@@ -279,7 +297,13 @@ public class Elector implements Localization
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "elect()-trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
 			}
-			distributeELECT();
+			if(isFirstElection()){
+				Logging.log(this, "FIRST ELECTION round");
+				distributeELECT();
+			}else{
+				Logging.log(this, "ELECTION round " + mElectionRounds);
+				checkForWinner(this + "::elect()");
+			}
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "elect()-don't have external cluster members");
