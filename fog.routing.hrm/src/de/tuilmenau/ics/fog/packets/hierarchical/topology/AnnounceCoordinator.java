@@ -234,7 +234,24 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	 * 
 	 * @return the list of passed nodes
 	 */
-	public String getPassedNodes()
+	@SuppressWarnings("unchecked")
+	public LinkedList<L2Address> getPassedNodes()
+	{
+		LinkedList<L2Address> tResult = null;
+		
+		synchronized (mPassedNodes) {
+			tResult = (LinkedList<L2Address>) mPassedNodes.clone();
+		}
+		
+		return tResult; 
+	}
+	
+	/**
+	 * Returns a list of passed nodes
+	 * 
+	 * @return the list of passed nodes
+	 */
+	public String getPassedNodesStr()
 	{
 		String tResult = "";
 		

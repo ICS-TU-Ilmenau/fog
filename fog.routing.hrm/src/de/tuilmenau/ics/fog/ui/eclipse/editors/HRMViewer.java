@@ -1446,7 +1446,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				if(tPacketMetaData.getPacket() instanceof AnnounceCoordinator){
 					AnnounceCoordinator tAnnounceCoordinatorPacket = (AnnounceCoordinator)tPacketMetaData.getPacket();
 	
-					Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket() + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
+					Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket() + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodesStr());
 				}else{
 					Logging.log(this, "     ..[" + i + "] (" + (tPacketMetaData.wasSent() ? "S" : "R") + " @ " + tPacketMetaData.getTimetstamp() + "): " + tPacketMetaData.getPacket());
 				}
@@ -1465,7 +1465,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				if(tPendingPacket instanceof AnnounceCoordinator){
 					AnnounceCoordinator tAnnounceCoordinatorPacket = (AnnounceCoordinator)tPendingPacket;
 	
-					Logging.log(this, "     ..[" + i + "] : " + tPendingPacket + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodes());
+					Logging.log(this, "     ..[" + i + "] : " + tPendingPacket + ", passed clusters: " + tAnnounceCoordinatorPacket.getGUIPassedClusters()+ ", passed nodes: " + tAnnounceCoordinatorPacket.getPassedNodesStr());
 				}else{
 					Logging.log(this, "     ..[" + i + "] : " + tPendingPacket);
 				}
@@ -1730,7 +1730,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	
 	private void sendTrackedAnnounceCoordinator(Coordinator pCoordinator)
 	{
-		Logging.log(this, "Sending tracked AnnounceCoordinator for: " + pCoordinator);
+		Logging.warn(this, "\n\n##### Sending tracked AnnounceCoordinator for: " + pCoordinator);
 		pCoordinator.distributeCoordinatorAnnouncement(true);		
 	}
 	

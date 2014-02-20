@@ -713,8 +713,13 @@ public class ClusterMember extends ClusterName
 									Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
 								}
 								
+								// create list of prohibited nodes
+								@SuppressWarnings("unchecked")
+								LinkedList<L2Address> tProhibitedNodes = (LinkedList<L2Address>) tForwardPacket.getPassedNodes().clone();
+								tProhibitedNodes.add(tForwardPacket.getSenderEntityNodeL2Address());
+
 								// forward this announcement to all cluster members
-								tLocalCluster.sendClusterBroadcast(tForwardPacket, true, pComChannel.getPeerL2Address() /* exclude this from the forwarding process */);
+								tLocalCluster.sendClusterBroadcast(tForwardPacket, true, tProhibitedNodes /* pComChannel.getPeerL2Address() <- exclude this and all other already passed nodes from the forwarding process */);
 							}else{
 								// L0 cluster for the same network interface -> skip this
 							}
@@ -726,7 +731,7 @@ public class ClusterMember extends ClusterName
 					}
 				}else{
 					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-						Logging.warn(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + tForwardPacket + "\n   ..passed clusters: " + tForwardPacket.getGUIPassedClusters()+ "\n   ..passed nodes: " + tForwardPacket.getPassedNodes());
+						Logging.warn(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + tForwardPacket + "\n   ..passed clusters: " + tForwardPacket.getGUIPassedClusters()+ "\n   ..passed nodes: " + tForwardPacket.getPassedNodesStr());
 					}
 				}
 			}else{
@@ -824,8 +829,13 @@ public class ClusterMember extends ClusterName
 								Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
 							}
 							
+							// create list of prohibited nodes
+							@SuppressWarnings("unchecked")
+							LinkedList<L2Address> tProhibitedNodes = (LinkedList<L2Address>) tForwardPacket.getPassedNodes().clone();
+							tProhibitedNodes.add(tForwardPacket.getSenderEntityNodeL2Address());
+
 							// forward this announcement to all cluster members
-							tLocalCluster.sendClusterBroadcast(tForwardPacket, true, pComChannel.getPeerL2Address() /* exclude this from the forwarding process */);
+							tLocalCluster.sendClusterBroadcast(tForwardPacket, true, tProhibitedNodes /* pComChannel.getPeerL2Address() <- exclude this and all other already passed nodes from the forwarding process */);
 						}else{
 							// L0 cluster for the same network interface -> skip this
 						}
@@ -837,7 +847,7 @@ public class ClusterMember extends ClusterName
 				}
 			}else{
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-					Logging.warn(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + tForwardPacket + "\n   ..passed nodes: " + tForwardPacket.getPassedNodes());
+					Logging.warn(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + tForwardPacket + "\n   ..passed nodes: " + tForwardPacket.getPassedNodesStr());
 				}
 			}
 		}else{
@@ -914,10 +924,10 @@ public class ClusterMember extends ClusterName
 	 * 
 	 * @param pPacket the packet which has to be broadcasted
 	 * @param pIncludeLoopback should loopback communication be included?
-	 * @param pExcludeL2Address describe a node which shouldn't receive this broadcast if we are at base hierarchy level
+	 * @param pExcludeL2Addresses describe nodes which shouldn't receive this broadcast
 	 * @param pCheckLinkActivation define if the state of each link should be checked for activation before a packet is allowed to pass this link
 	 */
-	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, L2Address pExcludeL2Address, boolean pCheckLinkActivation)
+	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, LinkedList<L2Address> pExcludeL2Addresses, boolean pCheckLinkActivation)
 	{
 		boolean DEBUG = false;
 		
@@ -967,10 +977,10 @@ public class ClusterMember extends ClusterName
 					/**
 					 * should we deliver this packet to the destination node behind this comm. channel?
 					 */
-					if((pExcludeL2Address == null /* excluded peer address is null => we send everywhere */) || (!pExcludeL2Address.equals(tComChannel.getPeerL2Address()) /* should the peer be excluded? */)){
+					if((pExcludeL2Addresses == null /* excluded peer address is null => we send everywhere */) || (!pExcludeL2Addresses.contains(tComChannel.getPeerL2Address()) /* should the peer be excluded? */)){
 						if (DEBUG){
 							if (!tIsLoopback){
-								Logging.log(this, "  ..to " + tComChannel + ", excluded: " + pExcludeL2Address);
+								Logging.log(this, "  ..to " + tComChannel + ", excluded: " + pExcludeL2Addresses);
 							}else{
 								Logging.log(this, "  ..to LOOPBACK " + tComChannel);
 							}
@@ -999,7 +1009,7 @@ public class ClusterMember extends ClusterName
 						}
 					}else{
 						if (DEBUG){
-							Logging.log(this, "         ..skipping EXCLUDED DESTINATION: " + pExcludeL2Address);
+							Logging.log(this, "         ..skipping EXCLUDED DESTINATION: " + pExcludeL2Addresses);
 						}
 					}
 				}else{
@@ -1025,9 +1035,9 @@ public class ClusterMember extends ClusterName
 	{
 		sendClusterBroadcast(pPacket, pIncludeLoopback, null, false);
 	}
-	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, L2Address pExcludeL2Address)
+	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, LinkedList<L2Address> pExcludeL2Addresses)
 	{
-		sendClusterBroadcast(pPacket, pIncludeLoopback, pExcludeL2Address, false);
+		sendClusterBroadcast(pPacket, pIncludeLoopback, pExcludeL2Addresses, false);
 	}
 
 	/**

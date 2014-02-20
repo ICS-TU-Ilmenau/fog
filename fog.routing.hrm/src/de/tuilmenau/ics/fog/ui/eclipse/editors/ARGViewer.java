@@ -124,7 +124,7 @@ public class ARGViewer extends EditorAWT implements IController
 			if(tAnnounceCoordinator != null){
 				Logging.log(this, "  ..last refresh: " + tAnnounceCoordinator);
 				Logging.log(this, "    ..passed clusters: " + tAnnounceCoordinator.getGUIPassedClusters());
-				Logging.log(this, "    ..passed clusters: " + tAnnounceCoordinator.getPassedNodes());
+				Logging.log(this, "    ..passed clusters: " + tAnnounceCoordinator.getPassedNodesStr());
 			}
 		}
 		
