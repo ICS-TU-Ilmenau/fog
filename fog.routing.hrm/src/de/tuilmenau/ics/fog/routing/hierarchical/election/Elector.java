@@ -384,7 +384,7 @@ public class Elector implements Localization
 				 * (RE-)START ELECTION:
 				 * 		-> we either have already finished the election or we are still in IDLE state
 				 */
-				Logging.log(this, "      ..starting ELECTION, cause=" + pComChannel);
+				Logging.log(this, "      ..eventElectionAvailable() starts ELECTION, cause=" + pComChannel);
 				startElection(this + "::eventParticipantJoined() for " + pComChannel);
 			}
 //		}
@@ -1088,7 +1088,11 @@ public class Elector implements Localization
 												if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 													Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
 												}
-												Logging.log(this, "leaveWorseAlternativeElections() aborted for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [" + (tLevelClusterMember.getComChannelToClusterHead() != null ? tLevelClusterMember.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+												if(tAlternativeElectionClusterHeadPriority.isUndefined()){
+													Logging.log(this, "leaveWorseAlternativeElections() aborted (undef. prio.) for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [" + (tLevelClusterMember.getComChannelToClusterHead() != null ? tLevelClusterMember.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+												}else{
+													Logging.log(this, "leaveWorseAlternativeElections() aborted for " + tMemberCount + "/" + tLevelClusterMembers.size() + " member [" + (tLevelClusterMember.getComChannelToClusterHead() != null ? tLevelClusterMember.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+												}
 											}
 											/**********************************************************************************************************************************/
 										}else{
@@ -1461,8 +1465,11 @@ public class Elector implements Localization
 							 *     -> we have to deactivate the participation to this election
 							 */
 							if(!tActiveClusterMemberShipElector.hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)){
+								Logging.log(this, "leaveForActiveBetterClusterMembership() triggers the LEAVING of election");
 								// deactivate this ClusterMembership
 								updateElectionParticipation(pComChannel,  false, this + "::leaveForActiveBetterClusterMembership() for " + pComChannel + "\n   ^^^^" + pCause);
+							}else{
+								Logging.log(this, "leaveForActiveBetterClusterMembership() DOES NOT trigger the LEAVING of election");
 							}
 						}else{
 							Logging.err(this, "Active ClusterMember does not have a valid coordinator, error in state machine, parent is: " + mParent);
@@ -1839,7 +1846,11 @@ public class Elector implements Localization
 			mParent.setClusterWithValidCoordinator(true);
 	
 			// trigger "election lost"
-			eventElectionLost("eventReceivedANNOUNCE() via " + pComChannel);
+			if(pComChannel.toLocalNode()){
+				eventElectionLost("LOCAL CLUSTER has won and triggered eventReceivedANNOUNCE() via " + pComChannel);
+			}else{
+				eventElectionLost("eventReceivedANNOUNCE() via " + pComChannel);
+			}
 			
 			// trigger: superior coordinator available	
 			tControlEntity.eventClusterCoordinatorAvailable(pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
@@ -1849,6 +1860,7 @@ public class Elector implements Localization
 			 * 		-> the local cluster should disappear 
 			 */				
 			if(pComChannel.toRemoteNode()){
+				Logging.log(this, "    ..eventReceivedANNOUNCE() triggers rechecking if the local cluster is allowed to win");
 				recheckLocalClusterIsAllowedToWin(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
 			}
 		}else{
@@ -2572,7 +2584,7 @@ public class Elector implements Localization
 	@Override
 	public String toString()
 	{
-		return toLocation() + "@" + mParent.toString() +"[" + mState + ", " + (mParentIsActiveMember  ? "ACTIVE" : "INACTIVE") + "]";
+		return toLocation() + "@" + mParent.toString() +"[" + mState + ", " + mElectionWon + ", " + (mParentIsActiveMember  ? "ACTIVE" : "INACTIVE") + "]";
 	}
 
 	/**
