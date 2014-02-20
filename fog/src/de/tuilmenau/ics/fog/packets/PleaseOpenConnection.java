@@ -147,7 +147,7 @@ public class PleaseOpenConnection extends SignallingRequest
 		Process tProcess = null;
 		try {
 			if(!(pFN instanceof Multiplexer)) {
-				throw new NetworkException("open connection request can only be executed at multiplexing FNs, current FN is: " + pFN);
+				throw new NetworkException("open connection request can only be executed at multiplexing FNs\n   -> current FN is: " + pFN + "\n    -> signaling packet: " + pPacket);
 			}
 			if(pPacket == null) {
 				throw new NetworkException("missing packet argument to execute open connection request");
