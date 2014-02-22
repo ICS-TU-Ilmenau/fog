@@ -927,10 +927,9 @@ public class ClusterMember extends ClusterName
 	 * @param pExcludeL2Addresses describe nodes which shouldn't receive this broadcast
 	 * @param pCheckLinkActivation define if the state of each link should be checked for activation before a packet is allowed to pass this link
 	 */
-	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, LinkedList<L2Address> pExcludeL2Addresses, boolean pCheckLinkActivation)
+	private void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, LinkedList<L2Address> pExcludeL2Addresses, boolean pCheckLinkActivation)
 	{
 		boolean DEBUG = false;
-		boolean tDidSomeWork = false;
 		
 		// get all communication channels
 		LinkedList<ComChannel> tComChannels = getComChannels();
@@ -942,6 +941,11 @@ public class ClusterMember extends ClusterName
 			Logging.log(this, "Sending BROADCASTS from " + tLocalL2Address + " the packet " + pPacket + " to " + tComChannels.size() + " communication channels, local base prio: " + mHRMController.getNodePriority(getHierarchyLevel()));
 		}
 		
+		/**
+		 * Account the broadcast
+		 */
+		pPacket.accountBroadcast();
+
 		for(ComChannel tComChannel : tComChannels) {
 			boolean tIsLoopback = tComChannel.toLocalNode();
 			
@@ -993,7 +997,6 @@ public class ClusterMember extends ClusterName
 								}
 								// send the packet to one of the possible cluster members
 								tComChannel.sendPacket(tNewPacket);
-								tDidSomeWork = true;
 							}else{
 								if (DEBUG){
 									Logging.log(this, "        ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
@@ -1022,13 +1025,6 @@ public class ClusterMember extends ClusterName
 					Logging.log(this, "           ..skipping packet: " + pPacket);
 				}
 			}
-		}
-		
-		/**
-		 * Account the broadcast if there was some
-		 */
-		if(tDidSomeWork){
-			pPacket.accountBroadcast();
 		}
 	}
 	public void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, boolean pCheckLinkState)
