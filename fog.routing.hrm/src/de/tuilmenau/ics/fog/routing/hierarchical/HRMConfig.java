@@ -259,6 +259,11 @@ public class HRMConfig
 		 * Defines if additionally verbose validation checks should be applied.
 		 */
 		public static final boolean VALIDATE_RESULTS_EXTENSIVE = false;
+
+		/**
+		 * Defines how long the packets overhead is measured until the statistics are written to the log file
+		 */
+		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 10;
 	}
 	
 	/**
@@ -356,7 +361,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 12;
+		public static final long RADIUS = 1;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level

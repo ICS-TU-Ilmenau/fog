@@ -84,6 +84,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
+import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.topology.Simulation;
@@ -346,6 +347,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
 	public static boolean FOUND_GLOBAL_ERROR = false;
+	
+	/**
+	 * Stores if the global packets overhead statistics was already written to the log file
+	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
+	 */
+	public static boolean GLOBAL_PACKET_OVERHEAD_WRITTE = false;
 	
 	/**
 	 * Stores if the global check if already passed
@@ -616,6 +623,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //			Logging.warn(null, "ACCOUNTING for link " + pLink + " a BIG PACKET of " + (tPacketSize < 10 ? "0" : "") + tPacketSize + " bytes for " + pPacket);
 		}
 		
+		if(getPacketOverheadPerLinkMeasurementPeriod() > HRMConfig.Measurement.TIME_FOR_MEASURING_PACKETS_OVERHEAD){
+			writePacketsOverheadStatisticsToFile();
+		}
+		
 		synchronized (sPacketCounterPerLink) {
 			HashMap<Class<?>, Integer> tPacketsForBus = sPacketCounterPerLink.get(pLink);
 			if(tPacketsForBus == null){
@@ -684,12 +695,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public static void resetPacketOverheadCounting()
 	{
+		GLOBAL_PACKET_OVERHEAD_WRITTE = false;
+		
 		synchronized (sPacketOverheadCounterPerLink) {
 			sPacketOverheadCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();	
 			
 			synchronized (sRegisteredHRMControllers) {
 				HRMController tHRMController = sRegisteredHRMControllers.getFirst();
-				Logging.log(tHRMController, "Resetting the packet overhead measurement");
+				Logging.warn(tHRMController, "Resetting the packet overhead measurement");
 				sPacketOverheadMeasurementStart = tHRMController.getSimulationTime();				
 			}
 		}
@@ -3255,6 +3268,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Logging.log(null, "EVENT: simulation restarted");
 
 		FOUND_GLOBAL_ERROR = false;
+		GLOBAL_PACKET_OVERHEAD_WRITTE = false;
 		FOUND_ALREADY_NO_PENDING_PACKETS = false;
 		
 		if(mFoGSiEmFirstSimulation){
@@ -4439,6 +4453,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						GUI_USER_CTRL_REPORT_TOPOLOGY = true;
 						
 						// HINT: the report/share functions are triggered periodically and will start the start the reports/shares without any further setting
+						
+						// auto log packet overhead
+						resetPacketOverheadCounting();
 					}
 					validateAllResults();
 				}
@@ -4691,17 +4708,145 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Calculates the data rate based in given data amount and a measurement time
+	 * 
+	 * @param pBytes the amount of data in [bytes]
+	 * @param pPeriod the measurement time period in [s]
+	 * 
+	 * @return the calculated data rate as a string
+	 */
+	private static String getDataRateStr(Integer pBytes, double pPeriod)
+	{
+		String tResult = "0";
+	
+		if((pBytes != null) && (pPeriod > 0)){
+			double tDataRate = ((double)Math.round(100 * (double)pBytes / pPeriod)) / 100;
+			DecimalFormat tFormat = new DecimalFormat("0.#");
+			tResult = tFormat.format(tDataRate);
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Writes packet overhead statistics to the log file
+	 */
+	private static void writePacketsOverheadStatisticsToFile()
+	{
+		if(GUI_USER_CTRL_REPORT_TOPOLOGY){
+			if(!GLOBAL_PACKET_OVERHEAD_WRITTE){
+				GLOBAL_PACKET_OVERHEAD_WRITTE = true;
+				
+				/**
+				 * get a reference to an HRMController instance 
+				 */
+				HRMController tHRMController = null;
+				if(sRegisteredHRMControllers != null){
+					synchronized (sRegisteredHRMControllers) {
+						if(sRegisteredHRMControllers.size() > 0){
+							tHRMController = sRegisteredHRMControllers.getFirst();
+						}
+					}
+				}
+	
+				/**
+				 * determine all busses from the simulation
+				 */
+				LinkedList<Bus> tGlobalBusList = new LinkedList<Bus>();
+				for(AutonomousSystem tAS : tHRMController.mAS.getSimulation().getAllAS()) {
+					for(ILowerLayer tLL : tAS.getBuslist().values()) {
+						if(tLL instanceof Bus){
+							Bus tBus = (Bus)tLL;
+							Logging.warn(tHRMController, "Found bus: " + tBus.getName());
+							tGlobalBusList.add(tBus);
+						}else{
+							Logging.err(tHRMController, "Found unsupported LL: " + tLL);
+						}
+					}
+				}
+				
+				int tCntBuss = tGlobalBusList.size();
+				
+				double tPeriod = getPacketOverheadPerLinkMeasurementPeriod();
+				Logging.warn(tHRMController, ">>>>>>>>>> Writing packets overhead statistics after " + tPeriod + " seconds measurement to file..");
+	
+				Statistic tHRMPacketsOverheadStatistic = null;
+		
+				try {
+					tHRMPacketsOverheadStatistic = Statistic.getInstance(tHRMController.mAS.getSimulation(), SignalingMessageHrm.class, ";", true);
+				} catch (Exception tExc) {
+					Logging.err(tHRMController, "Can not write packets overhead statistic log file", tExc);
+				}
+		
+				if(tHRMPacketsOverheadStatistic != null){
+					synchronized (sPacketOverheadCounterPerLink) {
+						synchronized (sPacketOverheadCounterPerLinkForIP) {
+							LinkedList<String> tTableHeader = new LinkedList<String>();
+							for(int i = 0; i < tCntBuss; i++){
+								tTableHeader.add("AnnounceCoord_" + tGlobalBusList.get(i).getName());
+								tTableHeader.add("Report_" + tGlobalBusList.get(i).getName());
+								tTableHeader.add("Share_" + tGlobalBusList.get(i).getName());
+							}
+							tTableHeader.add("-");
+							for(int i = 0; i < tCntBuss; i++){
+								tTableHeader.add("IP_AnnounceCoord_" + tGlobalBusList.get(i).getName());
+								tTableHeader.add("IP_Report_" + tGlobalBusList.get(i).getName());
+								tTableHeader.add("IP_Share_" + tGlobalBusList.get(i).getName());
+							}
+							tHRMPacketsOverheadStatistic.log(tTableHeader);
+							tHRMPacketsOverheadStatistic.flush();
+	
+							LinkedList<String> tTableRow = new LinkedList<String>();
+							for(int i = 0; i < tCntBuss; i++){
+								Bus tBus = tGlobalBusList.get(i);
+								HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLink.get(tBus);
+				
+								Integer tCountAnnounceCoord = tPacketsForBus.get(AnnounceCoordinator.class);
+								Integer tReports = tPacketsForBus.get(RouteReport.class);
+								Integer tShares = tPacketsForBus.get(RouteShare.class);
+								
+								tTableRow.add(getDataRateStr(tCountAnnounceCoord, tPeriod));
+								tTableRow.add(getDataRateStr(tReports, tPeriod));
+								tTableRow.add(getDataRateStr(tShares, tPeriod));
+							}
+							tTableRow.add("-");
+							for(int i = 0; i < tCntBuss; i++){
+								Bus tBus = tGlobalBusList.get(i);
+								HashMap<Class<?>, Integer> tPacketsForBusForIP = sPacketOverheadCounterPerLinkForIP.get(tBus);
+				
+								Integer tIPCountAnnounceCoord = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(AnnounceCoordinator.class) : new Integer(0));
+								Integer tIPReports = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(RouteReport.class) : new Integer(0));
+								Integer tIPShares = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(RouteShare.class) : new Integer(0));
+								
+								tTableRow.add(getDataRateStr(tIPCountAnnounceCoord, tPeriod));
+								tTableRow.add(getDataRateStr(tIPReports, tPeriod));
+								tTableRow.add(getDataRateStr(tIPShares, tPeriod));
+							}
+							
+							tHRMPacketsOverheadStatistic.log(tTableRow);
+							tHRMPacketsOverheadStatistic.flush();
+	
+							Logging.getInstance().warn(tHRMController, "Closing SignalingMessageHrm packets overhead statistics log file");
+							tHRMPacketsOverheadStatistic.close();
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/**
 	 * Writes packet statistics to file
 	 */
 	private void writePacketsStatisticsToFile()
 	{
-		Logging.warn(this, ">>>>>>>>>> Writing statistics to file..");
+		Logging.warn(this, ">>>>>>>>>> Writing packets statistics to file..");
 
 		if(mFoGSiEmFirstSimulation){
 			try {
 				mHRMPacketsStatistic = Statistic.getInstance(mAS.getSimulation(), HRMController.class, ";", true);
 			} catch (Exception tExc) {
-				Logging.err(this, "Can not write statistic log file", tExc);
+				Logging.err(this, "Can not write packets statistic log file", tExc);
 			}
 
 			if(mHRMPacketsStatistic != null){
