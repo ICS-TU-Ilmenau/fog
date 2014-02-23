@@ -59,6 +59,7 @@ public class Statistic
 	 * @param pSim the simulation object
 	 * @param pForObj Key for which statistic is collected
 	 * @param pSeparator the separator for a row
+	 * @param pValidForMultipleSimulationRuns should this statistics file remain valid for multiple simulation runs
 	 * 
 	 * @return != null
 	 * @throws Exception On error
