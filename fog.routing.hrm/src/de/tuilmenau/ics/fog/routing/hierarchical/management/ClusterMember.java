@@ -624,6 +624,8 @@ public class ClusterMember extends ClusterName
 			 */
 			AnnounceCoordinator tForwardPacket = (AnnounceCoordinator)pAnnounceCoordinator.duplicate();
 
+			int tCorrectionForPacketCounter = -1;
+			
 			/**
 			 * Record the passed clusters
 			 */
@@ -720,6 +722,8 @@ public class ClusterMember extends ClusterName
 
 								// forward this announcement to all cluster members
 								tLocalCluster.sendClusterBroadcast(tForwardPacket, true, tProhibitedNodes /* pComChannel.getPeerL2Address() <- exclude this and all other already passed nodes from the forwarding process */);
+								
+								tCorrectionForPacketCounter++;
 							}else{
 								// L0 cluster for the same network interface -> skip this
 							}
@@ -738,6 +742,16 @@ public class ClusterMember extends ClusterName
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 					Logging.log(this, "TTL exceeded for coordinator announcement: " + tForwardPacket);
 				}
+			}
+			
+			/**
+			 * HACK: correction of packet counter for AnnounceCoordinator packets
+			 */
+			synchronized (AnnounceCoordinator.sCreatedPackets) {
+				AnnounceCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
+			}
+			synchronized (SignalingMessageHrm.sCreatedPackets) {
+				SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
 			}
 		}
 	}
@@ -762,6 +776,8 @@ public class ClusterMember extends ClusterName
 		 */
 		InvalidCoordinator tForwardPacket = (InvalidCoordinator)pInvalidCoordinator.duplicate();
 
+		int tCorrectionForPacketCounter = -1;
+		
 		/**
 		 * Store the announced remote coordinator in the ARG 
 		 */
@@ -836,6 +852,8 @@ public class ClusterMember extends ClusterName
 
 							// forward this announcement to all cluster members
 							tLocalCluster.sendClusterBroadcast(tForwardPacket, true, tProhibitedNodes /* pComChannel.getPeerL2Address() <- exclude this and all other already passed nodes from the forwarding process */);
+							
+							tCorrectionForPacketCounter++;
 						}else{
 							// L0 cluster for the same network interface -> skip this
 						}
@@ -855,6 +873,17 @@ public class ClusterMember extends ClusterName
 				Logging.log(this, "TTL exceeded for coordinator invalidation: " + tForwardPacket);
 			}
 		}
+		
+		/**
+		 * HACK: correction of packet counter for InvalidCoordinator packets
+		 */
+		synchronized (InvalidCoordinator.sCreatedPackets) {
+			InvalidCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
+		}
+		synchronized (SignalingMessageHrm.sCreatedPackets) {
+			SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
+		}
+
 	}
 
 	/**
@@ -927,7 +956,7 @@ public class ClusterMember extends ClusterName
 	 * @param pExcludeL2Addresses describe nodes which shouldn't receive this broadcast
 	 * @param pCheckLinkActivation define if the state of each link should be checked for activation before a packet is allowed to pass this link
 	 */
-	protected void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, LinkedList<L2Address> pExcludeL2Addresses, boolean pCheckLinkActivation)
+	private void sendClusterBroadcast(ISignalingMessageHrmBroadcastable pPacket, boolean pIncludeLoopback, LinkedList<L2Address> pExcludeL2Addresses, boolean pCheckLinkActivation)
 	{
 		boolean DEBUG = false;
 		
