@@ -4713,7 +4713,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pBytes the amount of data in [bytes]
 	 * @param pPeriod the measurement time period in [s]
 	 * 
-	 * @return the calculated data rate as a string
+	 * @return the calculated data rate as a string in kbytes/s
+	 */
+	private static String getDataRatekBStr(Integer pBytes, double pPeriod)
+	{
+		String tResult = "0";
+	
+		if((pBytes != null) && (pPeriod > 0)){
+			double tDataRate = ((double)Math.round(100 * (double)pBytes / pPeriod)) / 100 / 1000 /* kbytes/s */;
+			DecimalFormat tFormat = new DecimalFormat("0.#");
+			tResult = tFormat.format(tDataRate);
+		}
+		
+		return tResult;
+	}
+	/**
+	 * Calculates the data rate based in given data amount and a measurement time
+	 * 
+	 * @param pBytes the amount of data in [bytes]
+	 * @param pPeriod the measurement time period in [s]
+	 * 
+	 * @return the calculated data rate as a string in kbytes/s
 	 */
 	private static String getDataRateStr(Integer pBytes, double pPeriod)
 	{
@@ -4784,6 +4804,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							LinkedList<String> tTableHeader = new LinkedList<String>();
 							tTableHeader.add("Radius");
 							for(int i = 0; i < tCntBuss; i++){
+								tTableHeader.add("Sum_" + tGlobalBusList.get(i).getName());
+							}
+							tTableHeader.add("-");
+							for(int i = 0; i < tCntBuss; i++){
+								tTableHeader.add("IP_Sum_" + tGlobalBusList.get(i).getName());
+							}
+							tTableHeader.add("-");
+							for(int i = 0; i < tCntBuss; i++){
 								tTableHeader.add("AnnounceCoord_" + tGlobalBusList.get(i).getName());
 								tTableHeader.add("Report_" + tGlobalBusList.get(i).getName());
 								tTableHeader.add("Share_" + tGlobalBusList.get(i).getName());
@@ -4798,14 +4826,63 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							tHRMPacketsOverheadStatistic.flush();
 	
 							LinkedList<String> tTableRow = new LinkedList<String>();
-							tTableRow.add(Long.toString(HRMConfig.Hierarchy.RADIUS));
+							tTableRow.add("Radius " + Long.toString(HRMConfig.Hierarchy.RADIUS));
 							for(int i = 0; i < tCntBuss; i++){
 								Bus tBus = tGlobalBusList.get(i);
 								HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLink.get(tBus);
 				
 								Integer tCountAnnounceCoord = tPacketsForBus.get(AnnounceCoordinator.class);
+								if(tCountAnnounceCoord == null){
+									tCountAnnounceCoord = new Integer(0);
+								}
 								Integer tReports = tPacketsForBus.get(RouteReport.class);
+								if(tReports == null){
+									tReports = new Integer(0);
+								}
 								Integer tShares = tPacketsForBus.get(RouteShare.class);
+								if(tShares == null){
+									tShares = new Integer(0);
+								}
+								
+								tTableRow.add(getDataRatekBStr(tCountAnnounceCoord + tReports + tShares, tPeriod));
+							}
+							tTableRow.add("-");
+							for(int i = 0; i < tCntBuss; i++){
+								Bus tBus = tGlobalBusList.get(i);
+								HashMap<Class<?>, Integer> tPacketsForBusForIP = sPacketOverheadCounterPerLinkForIP.get(tBus);
+				
+								Integer tIPCountAnnounceCoord = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(AnnounceCoordinator.class) : new Integer(0));
+								if(tIPCountAnnounceCoord == null){
+									tIPCountAnnounceCoord = new Integer(0);
+								}
+								Integer tIPReports = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(RouteReport.class) : new Integer(0));
+								if(tIPReports == null){
+									tIPReports = new Integer(0);
+								}
+								Integer tIPShares = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(RouteShare.class) : new Integer(0));
+								if(tIPShares == null){
+									tIPShares = new Integer(0);
+								}
+								
+								tTableRow.add(getDataRatekBStr(tIPCountAnnounceCoord + tIPReports + tIPShares, tPeriod));
+							}
+							tTableRow.add("-");
+							for(int i = 0; i < tCntBuss; i++){
+								Bus tBus = tGlobalBusList.get(i);
+								HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLink.get(tBus);
+				
+								Integer tCountAnnounceCoord = tPacketsForBus.get(AnnounceCoordinator.class);
+								if(tCountAnnounceCoord == null){
+									tCountAnnounceCoord = new Integer(0);
+								}
+								Integer tReports = tPacketsForBus.get(RouteReport.class);
+								if(tReports == null){
+									tReports = new Integer(0);
+								}
+								Integer tShares = tPacketsForBus.get(RouteShare.class);
+								if(tShares == null){
+									tShares = new Integer(0);
+								}
 								
 								tTableRow.add(getDataRateStr(tCountAnnounceCoord, tPeriod));
 								tTableRow.add(getDataRateStr(tReports, tPeriod));
@@ -4817,8 +4894,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								HashMap<Class<?>, Integer> tPacketsForBusForIP = sPacketOverheadCounterPerLinkForIP.get(tBus);
 				
 								Integer tIPCountAnnounceCoord = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(AnnounceCoordinator.class) : new Integer(0));
+								if(tIPCountAnnounceCoord == null){
+									tIPCountAnnounceCoord = new Integer(0);
+								}
 								Integer tIPReports = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(RouteReport.class) : new Integer(0));
+								if(tIPReports == null){
+									tIPReports = new Integer(0);
+								}
 								Integer tIPShares = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(RouteShare.class) : new Integer(0));
+								if(tIPShares == null){
+									tIPShares = new Integer(0);
+								}
 								
 								tTableRow.add(getDataRateStr(tIPCountAnnounceCoord, tPeriod));
 								tTableRow.add(getDataRateStr(tIPReports, tPeriod));
