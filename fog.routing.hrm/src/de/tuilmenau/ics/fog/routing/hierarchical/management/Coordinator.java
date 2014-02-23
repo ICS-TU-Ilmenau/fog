@@ -966,6 +966,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							tAnnounceCoordinatorPacket.activateTracking();
 						}
 						
+						int tCorrectionForPacketCounter = -1;
+
 						/**
 						 * Count the sent announces
 						 */
@@ -993,6 +995,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 */
 								for(Cluster tCluster : tL0Clusters){
 									tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+									tCorrectionForPacketCounter++;
 								}
 							}else{
 								/**
@@ -1005,6 +1008,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								}
 								for(Cluster tCluster : tClusters){
 									tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+									tCorrectionForPacketCounter++;
 								}
 								
 								/**
@@ -1022,9 +1026,21 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								}
 								for(Cluster tCluster : tInactiveL0Clusters){
 									tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+									tCorrectionForPacketCounter++;
 								}
 							}
 						}
+						
+						/**
+						 * HACK: correction of packet counter for AnnounceCoordinator packets
+						 */
+						synchronized (AnnounceCoordinator.sCreatedPackets) {
+							AnnounceCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
+						}
+						synchronized (SignalingMessageHrm.sCreatedPackets) {
+							SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
+						}
+
 					}else{
 						// highest hierarchy level -> no announcements
 					}
@@ -1051,6 +1067,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			if(!getHierarchyLevel().isHighest()){
 				InvalidCoordinator tInvalidCoordinatorPacket = new InvalidCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
 	
+				int tCorrectionForPacketCounter = -1;
+
 				/**
 				 * Count the sent announces
 				 */
@@ -1070,8 +1088,20 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		//			}
 					for(Cluster tCluster : tClusters){
 						tCluster.sendClusterBroadcast(tInvalidCoordinatorPacket, true);
+						tCorrectionForPacketCounter++;
 					}
 				}
+				
+				/**
+				 * HACK: correction of packet counter for InvalidCoordinator packets
+				 */
+				synchronized (InvalidCoordinator.sCreatedPackets) {
+					InvalidCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
+				}
+				synchronized (SignalingMessageHrm.sCreatedPackets) {
+					SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
+				}
+
 			}else{
 				// highest hierarchy level -> no announcements
 			}
@@ -1213,6 +1243,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 */
 		pAnnounceCoordinator.addGUIPassedCluster(new Long(getGUIClusterID()));
 
+		int tCorrectionForPacketCounter = 0;
+
 		/**
 		 * Forward the coordinator announcement to all locally known clusters at this hierarchy level
 		 */
@@ -1223,7 +1255,19 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 		for(Cluster tCluster : tClusters){
 			tCluster.sendClusterBroadcast(pAnnounceCoordinator, true);
+			tCorrectionForPacketCounter++;
 		}
+		
+		/**
+		 * HACK: correction of packet counter for AnnounceCoordinator packets
+		 */
+		synchronized (AnnounceCoordinator.sCreatedPackets) {
+			AnnounceCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
+		}
+		synchronized (SignalingMessageHrm.sCreatedPackets) {
+			SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
+		}
+
 	}
 	
 	/**
@@ -1250,6 +1294,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			Logging.err(this, "eventCoordinatorInvalidation() was triggered for an invalidation of ourself, announcement: " + pInvalidCoordinator);
 		}
 
+		int tCorrectionForPacketCounter = 0;
+
 		/**
 		 * Forward the coordinator invalidation to all locally known clusters at this hierarchy level
 		 */
@@ -1260,7 +1306,19 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 		for(Cluster tCluster : tClusters){
 			tCluster.sendClusterBroadcast(pInvalidCoordinator, true);
+			tCorrectionForPacketCounter++;
 		}
+		
+		/**
+		 * HACK: correction of packet counter for InvalidCoordinator packets
+		 */
+		synchronized (InvalidCoordinator.sCreatedPackets) {
+			InvalidCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
+		}
+		synchronized (SignalingMessageHrm.sCreatedPackets) {
+			SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
+		}
+
 	}
 
 	/**
