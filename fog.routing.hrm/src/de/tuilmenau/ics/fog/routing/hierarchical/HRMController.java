@@ -4558,9 +4558,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-						if(!getNodeGUIName().equals("node7")){
-							tResult = false;
-						}
+//						if(!getNodeGUIName().equals("node7")){
+//							tResult = false;
+//						}
 	
 						synchronized (sRegisteredTopCoordinatorsCounter) {
 							Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
@@ -4782,6 +4782,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					synchronized (sPacketOverheadCounterPerLink) {
 						synchronized (sPacketOverheadCounterPerLinkForIP) {
 							LinkedList<String> tTableHeader = new LinkedList<String>();
+							tTableHeader.add("Radius");
 							for(int i = 0; i < tCntBuss; i++){
 								tTableHeader.add("AnnounceCoord_" + tGlobalBusList.get(i).getName());
 								tTableHeader.add("Report_" + tGlobalBusList.get(i).getName());
@@ -4797,6 +4798,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							tHRMPacketsOverheadStatistic.flush();
 	
 							LinkedList<String> tTableRow = new LinkedList<String>();
+							tTableRow.add(Long.toString(HRMConfig.Hierarchy.RADIUS));
 							for(int i = 0; i < tCntBuss; i++){
 								Bus tBus = tGlobalBusList.get(i);
 								HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLink.get(tBus);
