@@ -441,10 +441,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static double sPacketOverheadMeasurementStart = 0;
 	
 	/**
+	 * Constructor
+	 * 
 	 * @param pNode the node on which this controller is running
 	 * @param pHierarchicalRoutingService the parent hierarchical routing service instance
 	 */
 	public HRMController(Node pNode, HRMRoutingService pHierarchicalRoutingService)
+	{
+		this(pNode, pHierarchicalRoutingService, HRMConfig.Election.DEFAULT_PRIORITY);
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param pNode the node on which this controller is running
+	 * @param pHierarchicalRoutingService the parent hierarchical routing service instance
+	 * @param pNodeWeight the weight of node during elections 
+	 */
+	public HRMController(Node pNode, HRMRoutingService pHierarchicalRoutingService, long pNodeWeight)
 	{
 		// initialize the application context
 		super(pNode, null, pNode.getIdentity());
@@ -494,10 +508,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mDecoratorActiveHRMInfrastructure = new NodeDecorator();
 		
 		/**
+		 * Initialize the node connectivity priority
+		 */
+		mNodeConnectivityPriority = pNodeWeight * ElectionPriority.OFFSET_FOR_CONNECTIVITY;
+		
+		/**
 		 * Initialize the node hierarchy priority
 		 */
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
-			mNodeHierarchyPriority[i] = HRMConfig.Election.DEFAULT_PRIORITY;
+			long tMaxDistance = HRMConfig.Hierarchy.RADIUS;
+			if(i > 1){
+				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
+			}
+
+			/**
+			 * Prepare check: calculate multiplier
+			 */
+			long tMultiplier = 0;
+			if (i == 1 /* we search for L1 prio and use the entities from L0 */){
+				tMultiplier = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR;
+			}else{
+				tMultiplier = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR;
+			}
+
+			mNodeHierarchyPriority[i] = pNodeWeight * tMultiplier * (2 + tMaxDistance - 0 /* distance */);
 		}
 		
 		/**
@@ -579,7 +613,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		int tPacketSize = pPacket.getSerialisedSize();
 		if(tPacketSize > IPv6Packet.PATH_MTU - IPv6Packet.HEADER_SIZE){
-			Logging.warn(null, "ACCOUNTING for link " + pLink + " a BIG PACKET of " + (tPacketSize < 10 ? "0" : "") + tPacketSize + " bytes for " + pPacket);
+//			Logging.warn(null, "ACCOUNTING for link " + pLink + " a BIG PACKET of " + (tPacketSize < 10 ? "0" : "") + tPacketSize + " bytes for " + pPacket);
 		}
 		
 		synchronized (sPacketCounterPerLink) {
