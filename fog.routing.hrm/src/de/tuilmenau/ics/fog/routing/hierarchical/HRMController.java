@@ -266,7 +266,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * This is only used for debugging purposes. This is NOT a way for avoiding race conditions in signaling.
 	 */
 	private static Boolean mFoGSiEmFirstSimulation = true;
-	private static Statistic mHRMStatistic = null;
+	private static Statistic mHRMPacketsStatistic = null;
 	
 	/**
 	 * Stores the node priority per hierarchy level.
@@ -4691,26 +4691,26 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Writes statistics to file
+	 * Writes packet statistics to file
 	 */
-	private void writeStatisticsToFile()
+	private void writePacketsStatisticsToFile()
 	{
 		Logging.warn(this, ">>>>>>>>>> Writing statistics to file..");
 
 		if(mFoGSiEmFirstSimulation){
 			try {
-				mHRMStatistic = Statistic.getInstance(mAS.getSimulation(), HRMController.class, ";", true);
+				mHRMPacketsStatistic = Statistic.getInstance(mAS.getSimulation(), HRMController.class, ";", true);
 			} catch (Exception tExc) {
 				Logging.err(this, "Can not write statistic log file", tExc);
 			}
 
-			if(mHRMStatistic != null){
+			if(mHRMPacketsStatistic != null){
 				Runtime.getRuntime().addShutdownHook(new Thread() {
 					@Override
 					public void run()
 					{
 						Logging.getInstance().warn(this, "Closing HRMController statistics log file");
-						mHRMStatistic.close();
+						mHRMPacketsStatistic.close();
 					}
 				});
 			}
@@ -4758,8 +4758,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tTableHeader.add("RunningCoordinators_L" + Integer.toString(i));
 			}
 
-			if(mHRMStatistic != null){
-				mHRMStatistic.log(tTableHeader);
+			if(mHRMPacketsStatistic != null){
+				mHRMPacketsStatistic.log(tTableHeader);
 			}
 		}
 		
@@ -4809,9 +4809,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 
-		if(mHRMStatistic != null){
-			mHRMStatistic.log(tTableRow);
-			mHRMStatistic.flush();
+		if(mHRMPacketsStatistic != null){
+			mHRMPacketsStatistic.log(tTableRow);
+			mHRMPacketsStatistic.flush();
 		}
 	}
 	
@@ -4843,7 +4843,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Write statistics to log file
 		 */
-		writeStatisticsToFile();
+		writePacketsStatisticsToFile();
 		
 		/**
 		 * EXIT the simulation
