@@ -1070,6 +1070,19 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public static int getDefaultSize()
 	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		Destination				 = 4
+		 * 		Source					 = 4
+		 * 		NextHop					 = 4
+		 * 		HopCount				 = 2
+		 * 		Utilization				 = 2
+		 * 		MinDelay				 = 2
+		 * 		MaxAvailableDataRate	 = 4
+		 * 
+		 *************************************************************/
+
 		int tResult = 0;
 		
 		tResult += new HRMID(0).getSerialisedSize(); //	private HRMID mDestination = null;
