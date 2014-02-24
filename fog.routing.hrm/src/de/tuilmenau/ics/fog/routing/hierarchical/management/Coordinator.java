@@ -344,66 +344,73 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								if(tReceivedSharedRoutingTable.size() > 0){
 									int j = -1;
 									for(RoutingEntry tReceivedSharedRoutingEntry : tReceivedSharedRoutingTable){
-										j++;
-										
 										/**
-										 * does the received route start at the peer? 
-										 * 		=> share: [original route from sup. coordinator]
+										 * DO NOT tell the direct neighbor about a locally starting cluster, it already learns this route based on neighborhood detection in ComChannel
 										 */
-										if(tReceivedSharedRoutingEntry.getSource().isCluster(tPeerHRMID)){
-											RoutingEntry tNewEntry = tReceivedSharedRoutingEntry.clone();
-											// reset L2Address for next hop
-											tNewEntry.setNextHopL2Address(null);
-											tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_1(" + mCallsSharePhase + ")(" + j + ") as " + tNewEntry);
-											tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
-											// share the received entry with the peer
+										if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (!mHRMController.isLocalCluster(tReceivedSharedRoutingEntry.getDest()))){
+											j++;
 											
 											/**
-											 * Tell the L0 ClusterMember only the interesting routes
+											 * does the received route start at the peer? 
+											 * 		=> share: [original route from sup. coordinator]
 											 */
-											if(tNewEntry.getHopCount() > 1){
-												if (DEBUG_SHARE_PHASE_DETAILS){
-													Logging.log(this, "   ..new shared route from superior coordinator_1: " + tNewEntry);
-												}
-												tSharedRoutingTable.addEntry(tNewEntry);
-											}
-											
-											continue;
-										}
-										
-										/**
-										 * does the received route start at this node and the next node isn't the peer?
-										 * 		=> share: [route from peer to this node] ==> [original route from sup. coordinator]
-										 */
-										if((tReceivedSharedRoutingEntry.getSource().equals(tThisNodeHRMID)) && (!tReceivedSharedRoutingEntry.getNextHop().equals(tPeerHRMID))){
-											RoutingEntry tRoutingEntryWithPeer = mHRMController.getNeighborRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
-											if(tRoutingEntryWithPeer != null){
-												RoutingEntry tNewEntry = tRoutingEntryWithPeer.clone(); 
-												if (DEBUG_SHARE_PHASE_DETAILS){
-													Logging.log(this, "   ..merging:");
-													Logging.log(this, "     .." + tNewEntry);
-													Logging.log(this, "     .." + tReceivedSharedRoutingEntry);
-												}
-												
+											if(tReceivedSharedRoutingEntry.getSource().isCluster(tPeerHRMID)){
+												RoutingEntry tNewEntry = tReceivedSharedRoutingEntry.clone();
 												// reset L2Address for next hop
 												tNewEntry.setNextHopL2Address(null);
-												tNewEntry.append(tReceivedSharedRoutingEntry, this + "::sharePhase()_append1_route_from_peer_via_me_to_destination(" + mCallsSharePhase + ")");
-												tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ") as combination of " + tRoutingEntryWithPeer + " and " + tReceivedSharedRoutingEntry + " as " + tNewEntry);
+												tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_1(" + mCallsSharePhase + ")(" + j + ") as " + tNewEntry);
 												tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
 												// share the received entry with the peer
-
+												
 												/**
 												 * Tell the L0 ClusterMember only the interesting routes
 												 */
 												if(tNewEntry.getHopCount() > 1){
 													if (DEBUG_SHARE_PHASE_DETAILS){
-														Logging.log(this, "   ..new shared route from superior coordinator_2: " + tNewEntry);
+														Logging.log(this, "   ..new shared route from superior coordinator_1: " + tNewEntry);
 													}
 													tSharedRoutingTable.addEntry(tNewEntry);
 												}
+												
+												continue;
 											}
 											
-											continue;
+											/**
+											 * does the received route start at this node and the next node isn't the peer?
+											 * 		=> share: [route from peer to this node] ==> [original route from sup. coordinator]
+											 */
+											if((tReceivedSharedRoutingEntry.getSource().equals(tThisNodeHRMID)) && (!tReceivedSharedRoutingEntry.getNextHop().equals(tPeerHRMID))){
+												RoutingEntry tRoutingEntryWithPeer = mHRMController.getNeighborRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
+												if(tRoutingEntryWithPeer != null){
+													RoutingEntry tNewEntry = tRoutingEntryWithPeer.clone(); 
+													if (DEBUG_SHARE_PHASE_DETAILS){
+														Logging.log(this, "   ..merging:");
+														Logging.log(this, "     .." + tNewEntry);
+														Logging.log(this, "     .." + tReceivedSharedRoutingEntry);
+													}
+													
+													// reset L2Address for next hop
+													tNewEntry.setNextHopL2Address(null);
+													tNewEntry.append(tReceivedSharedRoutingEntry, this + "::sharePhase()_append1_route_from_peer_via_me_to_destination(" + mCallsSharePhase + ")");
+													tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ") as combination of " + tRoutingEntryWithPeer + " and " + tReceivedSharedRoutingEntry + " as " + tNewEntry);
+													tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
+													// share the received entry with the peer
+	
+													/**
+													 * Tell the L0 ClusterMember only the interesting routes
+													 */
+													if(tNewEntry.getHopCount() > 1){
+														if (DEBUG_SHARE_PHASE_DETAILS){
+															Logging.log(this, "   ..new shared route from superior coordinator_2: " + tNewEntry);
+														}
+														tSharedRoutingTable.addEntry(tNewEntry);
+													}
+												}
+												
+												continue;
+											}
+										}else{
+											// received a shared route which leads to a local cluster -> no need to tell this direct neighbor because it already knows this route based on neighborhood detection in ComChannel
 										}
 									}
 								}else{
