@@ -312,278 +312,285 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					 * Only proceed if the link is actually active
 					 */
 					if(tComChannel.isLinkActiveForElection()){
-						RoutingTable tSharedRoutingTable = new RoutingTable();
-						HRMID tPeerHRMID = tComChannel.getPeerHRMID();
-						if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){
-							
-	//						DEBUG_SHARE_PHASE_DETAILS = false;
-	//						if(getHierarchyLevel().getValue() == 1){
-	//							if(tPeerHRMID.getLevelAddress(1) == 5){
-	//								DEBUG_SHARE_PHASE_DETAILS = true;
-	//							}
-	//						}
-							
-							/**
-							 * copy the received shared routing table from the superior coordinator
-							 */
-							RoutingTable tReceivedSharedRoutingTable = null;
-							synchronized (mReceivedSharedRoutingTable) {
-								tReceivedSharedRoutingTable = (RoutingTable) mReceivedSharedRoutingTable.clone();	
-							}
-	
-							if(getHierarchyLevel().isBaseLevel()){
-								if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-									Logging.log(this, "  ..sharing routes with node: " + tPeerHRMID);
+						/**
+						 * Only proceed if the peer is a remote node
+						 */
+						if(tComChannel.toRemoteNode()){
+							RoutingTable tSharedRoutingTable = new RoutingTable();
+							HRMID tPeerHRMID = tComChannel.getPeerHRMID();
+							if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){
+								
+		//						DEBUG_SHARE_PHASE_DETAILS = false;
+		//						if(getHierarchyLevel().getValue() == 1){
+		//							if(tPeerHRMID.getLevelAddress(1) == 5){
+		//								DEBUG_SHARE_PHASE_DETAILS = true;
+		//							}
+		//						}
+								
+								/**
+								 * copy the received shared routing table from the superior coordinator
+								 */
+								RoutingTable tReceivedSharedRoutingTable = null;
+								synchronized (mReceivedSharedRoutingTable) {
+									tReceivedSharedRoutingTable = (RoutingTable) mReceivedSharedRoutingTable.clone();	
 								}
-	
-								/*********************************************************************
-								 * SHARE 1: received routes from superior coordinator
-								 *********************************************************************/
-								HRMID tThisNodeHRMID = getCluster().getL0HRMID();
-	
-								if(tReceivedSharedRoutingTable.size() > 0){
-									int j = -1;
-									for(RoutingEntry tReceivedSharedRoutingEntry : tReceivedSharedRoutingTable){
-										j++;
-										
-										/**
-										 * does the received route start at the peer? 
-										 * 		=> share: [original route from sup. coordinator]
-										 */
-										if(tReceivedSharedRoutingEntry.getSource().isCluster(tPeerHRMID)){
-											RoutingEntry tNewEntry = tReceivedSharedRoutingEntry.clone();
-											// reset L2Address for next hop
-											tNewEntry.setNextHopL2Address(null);
-											tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_1(" + mCallsSharePhase + ")(" + j + ") as " + tNewEntry);
-											tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
-											// share the received entry with the peer
-											tSharedRoutingTable.addEntry(tNewEntry);
+		
+								if(getHierarchyLevel().isBaseLevel()){
+									if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+										Logging.log(this, "  ..sharing routes with node: " + tPeerHRMID);
+									}
+		
+									/*********************************************************************
+									 * SHARE 1: received routes from superior coordinator
+									 *********************************************************************/
+									HRMID tThisNodeHRMID = getCluster().getL0HRMID();
+		
+									if(tReceivedSharedRoutingTable.size() > 0){
+										int j = -1;
+										for(RoutingEntry tReceivedSharedRoutingEntry : tReceivedSharedRoutingTable){
+											j++;
 											
-											continue;
-										}
-										
-										/**
-										 * does the received route start at this node and the next node isn't the peer?
-										 * 		=> share: [route from peer to this node] ==> [original route from sup. coordinator]
-										 */
-										if((tReceivedSharedRoutingEntry.getSource().equals(tThisNodeHRMID)) && (!tReceivedSharedRoutingEntry.getNextHop().equals(tPeerHRMID))){
-											RoutingEntry tRoutingEntryWithPeer = mHRMController.getNeighborRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
-											if(tRoutingEntryWithPeer != null){
-												RoutingEntry tNewEntry = tRoutingEntryWithPeer.clone(); 
+											/**
+											 * does the received route start at the peer? 
+											 * 		=> share: [original route from sup. coordinator]
+											 */
+											if(tReceivedSharedRoutingEntry.getSource().isCluster(tPeerHRMID)){
+												RoutingEntry tNewEntry = tReceivedSharedRoutingEntry.clone();
 												// reset L2Address for next hop
 												tNewEntry.setNextHopL2Address(null);
-												tNewEntry.append(tReceivedSharedRoutingEntry, this + "::sharePhase()_append1_route_from_peer_via_me_to_destination(" + mCallsSharePhase + ")");
-												tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ") as combination of " + tRoutingEntryWithPeer + " and " + tReceivedSharedRoutingEntry + " as " + tNewEntry);
+												tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_1(" + mCallsSharePhase + ")(" + j + ") as " + tNewEntry);
 												tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
 												// share the received entry with the peer
 												tSharedRoutingTable.addEntry(tNewEntry);
+												
+												continue;
 											}
 											
-											continue;
-										}
-									}
-								}else{
-									if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-										Logging.log(this, "    ..NO routes from any superior coordinator, channel to superior coordinator is: " + superiorCoordinatorComChannel());
-									}
-								}
-								
-								/*********************************************************************
-								 * SHARE 2: routes to known siblings of the peer at hierarchy level 0
-								 *********************************************************************/
-								// find all siblings of the peer
-								//HINT: the peer is one hierarchy level below this coordinator
-								if(mParentCluster.countConnectedRemoteClusterMembers() > 1){
-									LinkedList<HRMID> tKnownPeerSiblings = mHRMController.getSiblingsHRG(tPeerHRMID);
-									for(HRMID tPossibleDestination : tKnownPeerSiblings){
-										if (DEBUG_SHARE_PHASE_DETAILS){
-											Logging.log(this, "    ..possible sibling destination for " + tPeerHRMID + " is: " + tPossibleDestination);
-											Logging.log(this, "      ..determining path from " + tPeerHRMID + " to " + tPossibleDestination);
-										}
-		
-										/**
-										 * Get the route from the local HRG from the peer to its sibling	
-										 */
-										RoutingEntry tRoutingEntryToPossibleDestination = mHRMController.getRoutingEntryHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
-										
-										/**
-										 * Add the found routing entry to the shared routing table
-										 */
-										if(tRoutingEntryToPossibleDestination != null){
-											tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
-											tRoutingEntryToPossibleDestination.setOrigin(getHRMID());
-											// set the L2Address of the next hop again
-											tRoutingEntryToPossibleDestination.setNextHopL2Address(mHRMController.getHRS().getL2AddressFor(tRoutingEntryToPossibleDestination.getNextHop()));
-											tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
-										}
-									}
-								}else{
-									if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-										Logging.log(this, "    ..NO routes to known siblings");
-									}
-								}
-	
-							}else{
-								if (DEBUG_SHARE_PHASE_DETAILS){
-									Logging.log(this, "  ..sharing routes with coordinator: " + tPeerHRMID);
-								}
-									
-								/*********************************************************************
-								 * SHARE 1: received routes from superior coordinator
-								 *********************************************************************/
-	
-								if(tReceivedSharedRoutingTable.size() > 0){
-									int j = -1;
-									for(RoutingEntry tReceivedSharedRoutingEntry : tReceivedSharedRoutingTable){
-										if (DEBUG_SHARE_PHASE_DETAILS){
-											Logging.log(this, "    ..found entry from super coordinator: " + tReceivedSharedRoutingEntry);
-										}
-										j++;
-		
-										/**
-										 * does the received route start at the peer (inferior cluster)? 
-										 * 		=> share: [original route from sup. coordinator]
-										 */
-										if(tReceivedSharedRoutingEntry.getSource().isCluster(tPeerHRMID)){
-											if (DEBUG_SHARE_PHASE_DETAILS){
-												Logging.log(this, "      .." + tReceivedSharedRoutingEntry.getSource() + " belongs to cluster " + tPeerHRMID);
-											}
-											RoutingEntry tNewEntry = tReceivedSharedRoutingEntry.clone();
-											// reset L2Address for next hop
-											tNewEntry.setNextHopL2Address(null);
-											tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2_1(" + mCallsSharePhase + ")(" + j + ") as " + tNewEntry);
-											tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
-											// share the received entry with the peer
-											tSharedRoutingTable.addEntry(tNewEntry);
-											
-											continue;
-										}else{
-											if (DEBUG_SHARE_PHASE_DETAILS){
-												Logging.log(this, "      .." + tReceivedSharedRoutingEntry.getSource() + " DOES NOT BELONG to cluster " + tPeerHRMID);
-											}
-										}
-										
-										/**
-										 * does the received route start in this cluster?
-										 */
-										if(tReceivedSharedRoutingEntry.getSource().isCluster(getHRMID())){
-											if (DEBUG_SHARE_PHASE_DETAILS){
-												Logging.log(this, "      ..source belongs to this topology sharing cluster: " + tReceivedSharedRoutingEntry);
-											}
-													
 											/**
-											 * Determine the destination gateway for the intra-cluster routing
+											 * does the received route start at this node and the next node isn't the peer?
+											 * 		=> share: [route from peer to this node] ==> [original route from sup. coordinator]
 											 */
-											HRMID tDestinationGatewayForIntraClusterRoute = tReceivedSharedRoutingEntry.getSource(); //NextHop().getClusterAddress(getHierarchyLevel().getValue() - 1);
-											if (DEBUG_SHARE_PHASE_DETAILS){
-												Logging.log(this, "      ..destination gateway for intra-cluster route: " + tDestinationGatewayForIntraClusterRoute);
+											if((tReceivedSharedRoutingEntry.getSource().equals(tThisNodeHRMID)) && (!tReceivedSharedRoutingEntry.getNextHop().equals(tPeerHRMID))){
+												RoutingEntry tRoutingEntryWithPeer = mHRMController.getNeighborRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
+												if(tRoutingEntryWithPeer != null){
+													RoutingEntry tNewEntry = tRoutingEntryWithPeer.clone(); 
+													// reset L2Address for next hop
+													tNewEntry.setNextHopL2Address(null);
+													tNewEntry.append(tReceivedSharedRoutingEntry, this + "::sharePhase()_append1_route_from_peer_via_me_to_destination(" + mCallsSharePhase + ")");
+													tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2(" + mCallsSharePhase + ")(" + j + ") as combination of " + tRoutingEntryWithPeer + " and " + tReceivedSharedRoutingEntry + " as " + tNewEntry);
+													tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
+													// share the received entry with the peer
+													tSharedRoutingTable.addEntry(tNewEntry);
+												}
+												
+												continue;
 											}
-											
+										}
+									}else{
+										if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+											Logging.log(this, "    ..NO routes from any superior coordinator, channel to superior coordinator is: " + superiorCoordinatorComChannel());
+										}
+									}
+									
+									/*********************************************************************
+									 * SHARE 2: routes to known siblings of the peer at hierarchy level 0
+									 *********************************************************************/
+									// find all siblings of the peer
+									//HINT: the peer is one hierarchy level below this coordinator
+									if(mParentCluster.countConnectedRemoteClusterMembers() > 1){
+										LinkedList<HRMID> tKnownPeerSiblings = mHRMController.getSiblingsHRG(tPeerHRMID);
+										for(HRMID tPossibleDestination : tKnownPeerSiblings){
+											if (DEBUG_SHARE_PHASE_DETAILS){
+												Logging.log(this, "    ..possible sibling destination for " + tPeerHRMID + " is: " + tPossibleDestination);
+												Logging.log(this, "      ..determining path from " + tPeerHRMID + " to " + tPossibleDestination);
+											}
+			
 											/**
 											 * Get the route from the local HRG from the peer to its sibling	
 											 */
-											RoutingEntry tIntraClusterRoutingEntry = mHRMController.getRoutingEntryHRG(tPeerHRMID, tDestinationGatewayForIntraClusterRoute, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " ==> ");
-											if (DEBUG_SHARE_PHASE_DETAILS){
-												Logging.log(this, "      ..determined intra-cluster route to gateway: " + tIntraClusterRoutingEntry);
-											}
-											
-											if(tIntraClusterRoutingEntry != null){
-												RoutingEntry tNewEntry = tIntraClusterRoutingEntry.clone();
-												
-												/**
-												 * Add the more abstract route which was received in a "share" message from the superior coordinator
-												 */
-												tNewEntry.append(tReceivedSharedRoutingEntry, this + "::sharePhase()_ReceivedRouteShare_2_2(" + mCallsSharePhase + "), appending: " + tReceivedSharedRoutingEntry);
-												
-												/**
-												 * Add the found routing entry to the shared routing table
-												 */
-												// reset L2Address for next hop
-												tNewEntry.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tNewEntry);
-												tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
-												tSharedRoutingTable.addEntry(tNewEntry);
-											}else{
-												if(!HRMController.FOUND_GLOBAL_ERROR){
-													Logging.err(this, "sharePhase() for " + tPeerHRMID + " couldn't find an intra-cluster route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " for using the received share route: " + tReceivedSharedRoutingEntry);
-												}
-											}
-										}else{
-											if(!HRMController.FOUND_GLOBAL_ERROR){
-												Logging.err(this, "sharePhase() for " + tPeerHRMID + " detected a shared route from " + (superiorCoordinatorComChannel() != null ? superiorCoordinatorComChannel().getPeerHRMID() : "null") + ", which does not start in this cluster: " + tReceivedSharedRoutingEntry);
-											}
-										}
-									}
-								}else{
-									if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-										Logging.log(this, "    ..NO routes from any superior coordinator, channel to superior coordinator is: " + superiorCoordinatorComChannel());
-									}
-								}
-								
-								/*********************************************************************
-								 * SHARE 2: routes to known siblings of the peer at the same hierarchy level
-								 *********************************************************************/
-								// find all siblings of the peer
-								//HINT: the peer is one hierarchy level below this coordinator
-								LinkedList<HRMID> tKnownPeerSiblings = mHRMController.getSiblingsHRG(tPeerHRMID);
-								if(tKnownPeerSiblings.size() > 0){
-									for(HRMID tPossibleDestination : tKnownPeerSiblings){
-										if (DEBUG_SHARE_PHASE_DETAILS){
-											Logging.log(this, "    ..possible sibling destination for " + tPeerHRMID + " is: " + tPossibleDestination);
-											Logging.log(this, "      ..determining path from " + tPeerHRMID + " to " + tPossibleDestination);
-										}
-		
-										/**
-										 * Get the route from the local HRG from the peer to its sibling	
-										 */
-										if(HRMConfig.Routing.MULTIPATH_ROUTING){
-											RoutingTable tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
-											if (DEBUG_SHARE_PHASE_DETAILS){
-												Logging.log(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to " + tPossibleDestination);
-											}
-											for(RoutingEntry tRoutingEntryToPossibleDestination : tAllRoutingEntriesToPossibleDestination){
-												if (DEBUG_SHARE_PHASE_DETAILS){
-													Logging.log(this, "     ..entry: " + tRoutingEntryToPossibleDestination);
-												}
-			
-												/**
-												 * Add the found routing entry to the shared routing table
-												 */
-												// reset L2Address for next hop
-												tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
-												tRoutingEntryToPossibleDestination.setOrigin(getHRMID());
-												tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
-											}
-										}else{
 											RoutingEntry tRoutingEntryToPossibleDestination = mHRMController.getRoutingEntryHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
+											
 											/**
 											 * Add the found routing entry to the shared routing table
 											 */
 											if(tRoutingEntryToPossibleDestination != null){
 												tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
 												tRoutingEntryToPossibleDestination.setOrigin(getHRMID());
+												// set the L2Address of the next hop again
+												tRoutingEntryToPossibleDestination.setNextHopL2Address(mHRMController.getHRS().getL2AddressFor(tRoutingEntryToPossibleDestination.getNextHop()));
 												tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
 											}
 										}
-									} // for(HRMID tPossibleDestination : tKnownPeerSiblings)
+									}else{
+										if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+											Logging.log(this, "    ..NO routes to known siblings");
+										}
+									}
+		
 								}else{
-									if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-										Logging.log(this, "    ..NO routes to known siblings");
+									if (DEBUG_SHARE_PHASE_DETAILS){
+										Logging.log(this, "  ..sharing routes with coordinator: " + tPeerHRMID);
+									}
+										
+									/*********************************************************************
+									 * SHARE 1: received routes from superior coordinator
+									 *********************************************************************/
+		
+									if(tReceivedSharedRoutingTable.size() > 0){
+										int j = -1;
+										for(RoutingEntry tReceivedSharedRoutingEntry : tReceivedSharedRoutingTable){
+											if (DEBUG_SHARE_PHASE_DETAILS){
+												Logging.log(this, "    ..found entry from super coordinator: " + tReceivedSharedRoutingEntry);
+											}
+											j++;
+			
+											/**
+											 * does the received route start at the peer (inferior cluster)? 
+											 * 		=> share: [original route from sup. coordinator]
+											 */
+											if(tReceivedSharedRoutingEntry.getSource().isCluster(tPeerHRMID)){
+												if (DEBUG_SHARE_PHASE_DETAILS){
+													Logging.log(this, "      .." + tReceivedSharedRoutingEntry.getSource() + " belongs to cluster " + tPeerHRMID);
+												}
+												RoutingEntry tNewEntry = tReceivedSharedRoutingEntry.clone();
+												// reset L2Address for next hop
+												tNewEntry.setNextHopL2Address(null);
+												tNewEntry.extendCause(this + "::sharePhase()_ReceivedRouteShare_2_1(" + mCallsSharePhase + ")(" + j + ") as " + tNewEntry);
+												tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
+												// share the received entry with the peer
+												tSharedRoutingTable.addEntry(tNewEntry);
+												
+												continue;
+											}else{
+												if (DEBUG_SHARE_PHASE_DETAILS){
+													Logging.log(this, "      .." + tReceivedSharedRoutingEntry.getSource() + " DOES NOT BELONG to cluster " + tPeerHRMID);
+												}
+											}
+											
+											/**
+											 * does the received route start in this cluster?
+											 */
+											if(tReceivedSharedRoutingEntry.getSource().isCluster(getHRMID())){
+												if (DEBUG_SHARE_PHASE_DETAILS){
+													Logging.log(this, "      ..source belongs to this topology sharing cluster: " + tReceivedSharedRoutingEntry);
+												}
+														
+												/**
+												 * Determine the destination gateway for the intra-cluster routing
+												 */
+												HRMID tDestinationGatewayForIntraClusterRoute = tReceivedSharedRoutingEntry.getSource(); //NextHop().getClusterAddress(getHierarchyLevel().getValue() - 1);
+												if (DEBUG_SHARE_PHASE_DETAILS){
+													Logging.log(this, "      ..destination gateway for intra-cluster route: " + tDestinationGatewayForIntraClusterRoute);
+												}
+												
+												/**
+												 * Get the route from the local HRG from the peer to its sibling	
+												 */
+												RoutingEntry tIntraClusterRoutingEntry = mHRMController.getRoutingEntryHRG(tPeerHRMID, tDestinationGatewayForIntraClusterRoute, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " ==> ");
+												if (DEBUG_SHARE_PHASE_DETAILS){
+													Logging.log(this, "      ..determined intra-cluster route to gateway: " + tIntraClusterRoutingEntry);
+												}
+												
+												if(tIntraClusterRoutingEntry != null){
+													RoutingEntry tNewEntry = tIntraClusterRoutingEntry.clone();
+													
+													/**
+													 * Add the more abstract route which was received in a "share" message from the superior coordinator
+													 */
+													tNewEntry.append(tReceivedSharedRoutingEntry, this + "::sharePhase()_ReceivedRouteShare_2_2(" + mCallsSharePhase + "), appending: " + tReceivedSharedRoutingEntry);
+													
+													/**
+													 * Add the found routing entry to the shared routing table
+													 */
+													// reset L2Address for next hop
+													tNewEntry.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tNewEntry);
+													tNewEntry.setOrigin(tReceivedSharedRoutingEntry.getOrigin());
+													tSharedRoutingTable.addEntry(tNewEntry);
+												}else{
+													if(!HRMController.FOUND_GLOBAL_ERROR){
+														Logging.err(this, "sharePhase() for " + tPeerHRMID + " couldn't find an intra-cluster route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " for using the received share route: " + tReceivedSharedRoutingEntry);
+													}
+												}
+											}else{
+												if(!HRMController.FOUND_GLOBAL_ERROR){
+													Logging.err(this, "sharePhase() for " + tPeerHRMID + " detected a shared route from " + (superiorCoordinatorComChannel() != null ? superiorCoordinatorComChannel().getPeerHRMID() : "null") + ", which does not start in this cluster: " + tReceivedSharedRoutingEntry);
+												}
+											}
+										}
+									}else{
+										if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+											Logging.log(this, "    ..NO routes from any superior coordinator, channel to superior coordinator is: " + superiorCoordinatorComChannel());
+										}
+									}
+									
+									/*********************************************************************
+									 * SHARE 2: routes to known siblings of the peer at the same hierarchy level
+									 *********************************************************************/
+									// find all siblings of the peer
+									//HINT: the peer is one hierarchy level below this coordinator
+									LinkedList<HRMID> tKnownPeerSiblings = mHRMController.getSiblingsHRG(tPeerHRMID);
+									if(tKnownPeerSiblings.size() > 0){
+										for(HRMID tPossibleDestination : tKnownPeerSiblings){
+											if (DEBUG_SHARE_PHASE_DETAILS){
+												Logging.log(this, "    ..possible sibling destination for " + tPeerHRMID + " is: " + tPossibleDestination);
+												Logging.log(this, "      ..determining path from " + tPeerHRMID + " to " + tPossibleDestination);
+											}
+			
+											/**
+											 * Get the route from the local HRG from the peer to its sibling	
+											 */
+											if(HRMConfig.Routing.MULTIPATH_ROUTING){
+												RoutingTable tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
+												if (DEBUG_SHARE_PHASE_DETAILS){
+													Logging.log(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to " + tPossibleDestination);
+												}
+												for(RoutingEntry tRoutingEntryToPossibleDestination : tAllRoutingEntriesToPossibleDestination){
+													if (DEBUG_SHARE_PHASE_DETAILS){
+														Logging.log(this, "     ..entry: " + tRoutingEntryToPossibleDestination);
+													}
+				
+													/**
+													 * Add the found routing entry to the shared routing table
+													 */
+													// reset L2Address for next hop
+													tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
+													tRoutingEntryToPossibleDestination.setOrigin(getHRMID());
+													tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
+												}
+											}else{
+												RoutingEntry tRoutingEntryToPossibleDestination = mHRMController.getRoutingEntryHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
+												/**
+												 * Add the found routing entry to the shared routing table
+												 */
+												if(tRoutingEntryToPossibleDestination != null){
+													tRoutingEntryToPossibleDestination.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tRoutingEntryToPossibleDestination);
+													tRoutingEntryToPossibleDestination.setOrigin(getHRMID());
+													tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
+												}
+											}
+										} // for(HRMID tPossibleDestination : tKnownPeerSiblings)
+									}else{
+										if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+											Logging.log(this, "    ..NO routes to known siblings");
+										}
 									}
 								}
-							}
-
-							/**
-							 * Distribute the RouteShare packet immediately
-							 * (also send RouteShare packets with 0 shared routes in order to update the state in the inferior coordinator)
-							 */
-							if (DEBUG_SHARE_PHASE_DETAILS){
-								Logging.log(this, "     SHARING with: " + tPeerHRMID);
-								for(RoutingEntry tEntry : tSharedRoutingTable){	
-									Logging.log(this, "      ..==> routing entry: " + tEntry);
+	
+								/**
+								 * Distribute the RouteShare packet immediately
+								 * (also send RouteShare packets with 0 shared routes in order to update the state in the inferior coordinator)
+								 */
+								if (DEBUG_SHARE_PHASE_DETAILS){
+									Logging.log(this, "     SHARING with: " + tPeerHRMID);
+									for(RoutingEntry tEntry : tSharedRoutingTable){	
+										Logging.log(this, "      ..==> routing entry: " + tEntry);
+									}
 								}
+								tComChannel.distributeRouteShare(tSharedRoutingTable);
 							}
-							tComChannel.distributeRouteShare(tSharedRoutingTable);
-						}	
+						}else{
+							// peer is on this node
+						}
 					}
 				}
 			}else{
