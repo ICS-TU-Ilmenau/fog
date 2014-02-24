@@ -263,7 +263,7 @@ public class HRMConfig
 		/**
 		 * Defines how long the packets overhead is measured until the statistics are written to the log file
 		 */
-		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 10;
+		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 60;
 	}
 	
 	/**
