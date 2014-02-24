@@ -862,6 +862,9 @@ public class ComChannel
 		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteSharePacket);
 			Logging.err(this, "   ..got routing share: " + pRouteSharePacket.getRoutes());
+//			for(RoutingEntry tEntry : pRouteSharePacket.getRoutes()){
+//				Logging.err(this, "   got: " + tEntry);	
+//			}
 		}
 		
 		/**
@@ -879,6 +882,10 @@ public class ComChannel
 			for(RoutingEntry tEntry : tDeprecatedSharedRoutingTable){
 				Logging.log(this, "   lost: " + tEntry);	
 			}
+//				Logging.err(this, "New shared routing data: " + pRouteSharePacket.getRoutes());
+//				for(RoutingEntry tEntry : pRouteSharePacket.getRoutes()){
+//					Logging.err(this, "   lost: " + tEntry);	
+//				}
 		}
 		
 		if(mParent instanceof CoordinatorAsClusterMember){
