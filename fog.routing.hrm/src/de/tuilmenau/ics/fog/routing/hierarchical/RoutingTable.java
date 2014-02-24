@@ -547,6 +547,6 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	
 	public String toString()
 	{
-		return "[" + getClass().getSimpleName() + " with " + size() + "entries]"; 
+		return "[" + getClass().getSimpleName() + " with " + size() + " entries]"; 
 	}
 }
