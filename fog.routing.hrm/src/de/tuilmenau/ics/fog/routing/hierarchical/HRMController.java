@@ -6209,7 +6209,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tRefDeletedLinks.clear();
 		tRefDeletedLinks.add(tDeletedLinks);
 		
-		boolean DEBUG = true;
+		boolean DEBUG = false;
 //		if(pFrom.getLevelAddress(2) == 5){
 //			DEBUG = true;
 //		}
