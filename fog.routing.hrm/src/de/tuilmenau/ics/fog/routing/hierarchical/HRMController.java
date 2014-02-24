@@ -4720,8 +4720,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		String tResult = "0";
 	
 		if((pBytes != null) && (pPeriod > 0)){
-			double tDataRate = ((double)Math.round(100 * (double)pBytes / pPeriod)) / 100 / 1000 /* kbytes/s */;
-			DecimalFormat tFormat = new DecimalFormat("0.#");
+			double tDataRate = ((double)Math.round(100 * (double)pBytes / pPeriod / 1000 /* kbytes/s */)) / 100;
+			DecimalFormat tFormat = new DecimalFormat("0.00#");
 			tResult = tFormat.format(tDataRate);
 		}
 		
