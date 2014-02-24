@@ -657,6 +657,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	public void reportPhase()
 	{
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_REPORT_PHASE;
+		
+		if(DEBUG){
+			Logging.warn(this, "REPORT PHASE");
+		}
+		
 		/**
 		 * Auto. delete deprecated routes
 		 */
@@ -681,7 +687,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						 * 			 If we are "1.2.0", we report forward/backward route with "1.3.0" and with "1.1.0" (if both clusters are direct neighbors)
 						 ***************************************************************************************************************************/
 						RoutingTable tRoutesToNeighbors = mHRMController.getReportRoutesToNeighborsHRG(getHRMID());
-						if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+						if (DEBUG){
 							Logging.log(this, "   ..got inter-cluster routing report: " + tRoutesToNeighbors);
 						}
 						// add the found routes to the report routing table
@@ -694,7 +700,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							/***************************************************************
 							 * (L0): routes to remote ClusterMember (physical neighbor nodes) based on node-to-node messages
 							 **************************************************************/
-							if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+							if (DEBUG){
 								Logging.log(this, "REPORT PHASE at hierarchy level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
 							}
 		
@@ -703,7 +709,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							// iterate over all comm. channels and fetch the recorded route reports
 							for(ComChannel tComChannel : tComChannels){
 								RoutingTable tComChannelTable = tComChannel.getReportedRoutingTable();
-								if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+								if (DEBUG){
 									Logging.log(this, "   ..got L0 intra-cluster routing report: " + tComChannelTable);
 								}
 								// add the found routes to the overall route report, which is later sent to the superior coordinator
@@ -720,7 +726,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							LinkedList<HRMID> tNeighbors = mHRMController.getNeighborsHRG(getHRMID());
 							if(!tNeighbors.isEmpty()){
 								for(HRMID tNeighbor : tNeighbors){
-									if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+									if (DEBUG){
 										Logging.log(this, "    ..found neighbor: " + tNeighbor);
 									}
 									// get the link to the neighbor
@@ -729,7 +735,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										HRMID tGateway = tRoutingEntryToNeighbor.getSource();
 										if(!tGateways.contains(tGateway)){
 											// get the cluster-internal source node for the inter-cluster link
-											if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+											if (DEBUG){
 												Logging.log(this, "      ..found gateway: " + tGateway);
 											}
 											tGateways.add(tGateway);
@@ -751,7 +757,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											HRMID tSourceGateway = tGateways.get(tOuter);
 											HRMID tDestinationGateway = tGateways.get(tInner);
 		
-											if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+											if (DEBUG){
 												Logging.log(this, "      ..need a route from " + tSourceGateway + " to " + tDestinationGateway);
 											}
 											
@@ -775,7 +781,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 															RoutingEntry tStepRoutingEntry = (RoutingEntry)tLink.getRoute().getFirst();
 															
 															// chain the routing entries
-															if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+															if (DEBUG){
 																Logging.log(this, "        ..step[ " + tStep + "]: " + tStepRoutingEntry);
 															}
 															tStep++;
@@ -795,7 +801,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		//														tFinalRoutingEntryBetweenGateways.setNextHop(tDestinationGateway);
 															tFinalRoutingEntryBetweenGateways.setRouteForClusterTraversal();
 		
-															if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+															if (DEBUG){
 																Logging.log(this, "   ..got L1+ intra-cluster routing report entry: " + tFinalRoutingEntryBetweenGateways);
 															}
 		
@@ -826,7 +832,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						 * Send the created report routing table to the superior coordinator
 						 */
 						if(tReportRoutingTable.size() > 0){
-							if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+							if (DEBUG){
 								Logging.log(this, "   ..reporting via " + superiorCoordinatorComChannel() + " the routing table:");
 								int i = 0;
 								for(RoutingEntry tEntry : tReportRoutingTable){
@@ -840,12 +846,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							// send the packet to the superior coordinator
 							sendSuperiorCoordinator(tRouteReportPacket);
 						}else{
-							if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+							if (DEBUG){
 								Logging.log(this, "reportPhase() aborted because no report for " + superiorCoordinatorComChannel() + " available");
 							}
 						}
 					}else{
-						if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+						if (DEBUG){
 							Logging.log(this, "reportPhase() aborted because no report in a loopback is allowed");
 						}
 					}
