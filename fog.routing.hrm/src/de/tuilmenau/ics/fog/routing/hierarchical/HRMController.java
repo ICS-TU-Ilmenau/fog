@@ -738,7 +738,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tResult = ((double)Math.round(100 * tResult)) / 100; 
 				
 		if(tResult == 0){
-			Logging.warn(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found a zero result (" + tHRMController.getSimulationTime() + " - " + sPacketOverheadMeasurementStart + ")");  
+			if(tHRMController != null){
+				Logging.warn(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found a zero result (" + tHRMController.getSimulationTime() + " - " + sPacketOverheadMeasurementStart + ")");  
+			}
 		}
 
 		return tResult;
@@ -6207,7 +6209,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tRefDeletedLinks.clear();
 		tRefDeletedLinks.add(tDeletedLinks);
 		
-		boolean DEBUG = false;
+		boolean DEBUG = true;
 //		if(pFrom.getLevelAddress(2) == 5){
 //			DEBUG = true;
 //		}
