@@ -727,12 +727,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(sRegisteredHRMControllers.size() > 0){
 					tHRMController = sRegisteredHRMControllers.getFirst();
 					tResult = tHRMController.getSimulationTime() - sPacketOverheadMeasurementStart;
+				}else{
+					Logging.warn(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found an empty HRMController database");
 				}
 			}
+		}else{
+			Logging.warn(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found an invalid HRMController database");
 		}
 		
 		tResult = ((double)Math.round(100 * tResult)) / 100; 
 				
+		if(tResult == 0){
+			Logging.warn(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found a zero result (" + tHRMController.getSimulationTime() + " - " + sPacketOverheadMeasurementStart + ")");  
+		}
+
 		return tResult;
 	}
 	
