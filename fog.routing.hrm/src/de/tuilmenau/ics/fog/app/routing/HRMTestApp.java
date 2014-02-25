@@ -150,7 +150,7 @@ public class HRMTestApp extends ThreadApplication
 			while(tQoSTestApp.countConnections() > 0){
 				int tBefore = tQoSTestApp.countConnections();
 				tQoSTestApp.eventDecreaseConnections();
-				while(tQoSTestApp.countConnections() == tBefore){
+				while((tQoSTestApp.countConnections() > 0) && (tQoSTestApp.countConnections() == tBefore)){
 					try {
 						Logging.log(this, "Waiting for end of " + tBefore + ". QoSTestApp connection of: " + tQoSTestApp);
 						Thread.sleep(30);
