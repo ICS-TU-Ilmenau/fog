@@ -205,11 +205,18 @@ public class QoSTestApp extends ThreadApplication
 		HRMID tResult = null;
 		
 		LinkedList<HRMID> tDestinationHRMIDs = getDestinationHRMIDsFromDNS();
-		for(HRMID tHRMID : tDestinationHRMIDs){
-			HRMController tHRMApi = HRMController.getAPI(mNode);
-			if(tHRMApi != null){
-				if(!tHRMApi.isLocalCluster(tHRMID.getClusterAddress(0))){
-					tResult = tHRMID;
+		if((tDestinationHRMIDs != null) && (!tDestinationHRMIDs.isEmpty())){
+			// use first HRMID as default value
+			tResult = tDestinationHRMIDs.getFirst();
+			
+			// search for a better choice
+			for(HRMID tHRMID : tDestinationHRMIDs){
+				HRMController tHRMApi = HRMController.getAPI(mNode);
+				if(tHRMApi != null){
+					if(!tHRMApi.isLocalCluster(tHRMID.getClusterAddress(0))){
+						tResult = tHRMID;
+						break;
+					}
 				}
 			}
 		}
