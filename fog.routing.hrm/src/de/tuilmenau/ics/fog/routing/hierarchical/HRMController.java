@@ -609,6 +609,29 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns the API of the local instance
+	 * 
+	 * @param pNode the local node
+	 * 
+	 * @return the API of the local instance
+	 */
+	public static HRMController getAPI(Node pNode)
+	{
+		HRMController tResult = null;
+		
+		synchronized (sRegisteredHRMControllers) {
+			for(HRMController tHRMController: sRegisteredHRMControllers){
+				if(tHRMController.getNode().equals(pNode)){
+					tResult = tHRMController;
+					break;
+				}
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Accounts a packet for a given link (FoG calls it "Bus")
 	 * 
 	 * @param pLink the link for which the packet is accounted
