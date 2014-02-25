@@ -27,6 +27,7 @@ import de.tuilmenau.ics.fog.routing.RoutingServiceInstanceRegister;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceSimulated;
 import de.tuilmenau.ics.fog.scenario.NodeConfiguratorContainer;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import de.tuilmenau.ics.fog.util.ParameterMap;
@@ -55,7 +56,7 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 		mName = pName;
 		mSim = pSimulation;
 		mAsID = createAsID();
-		
+		Logging.warn(this, "Created AS" + getGUIAsID() + ": " + mName);
 		RoutingServiceInstanceRegister register = RoutingServiceInstanceRegister.getInstance(pSimulation);
 		RemoteRoutingService tGrs = register.getGlobalRoutingService(mSim);
 		
@@ -86,7 +87,7 @@ public class AutonomousSystem extends Network implements IAutonomousSystem
 	 * 
 	 * @return the AsID
 	 */
-	static public synchronized long createAsID()
+	static private synchronized long createAsID()
 	{
 		// get the current unique ID counter
 		long tResult = sNextFreeAsID * Simulation.uniqueIDsSimulationMachineMultiplier();
