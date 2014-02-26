@@ -105,7 +105,7 @@ import edu.uci.ics.jung.graph.util.Pair;
 /**
  * This is the main HRM controller. It provides functions that are necessary to build up the hierarchical structure - every node contains such an object
  */
-public class HRMController extends Application implements ServerCallback, IEvent
+public class HRMController extends Application implements ServerCallback, IEvent, IHRMApi
 {
 	/**
 	 * Stores the node specific graph decorator for HRM coordinators and HRMIDs
@@ -448,6 +448,36 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static double sPacketOverheadMeasurementStart = 0;
 	
 	/**
+	 * The global name space which is used to identify the HRM instances on nodes.
+	 */
+	public final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
+
+	/**
+	 * Stores the identification string for HRM specific routing graph decorations (coordinators & HRMIDs)
+	 */
+	private final static String DECORATION_NAME_COORDINATORS_AND_HRMIDS = "HRM(1) - coordinators & HRMIDs";
+
+	/**
+	 * Stores the identification string for HRM specific routing graph decorations (node priorities)
+	 */
+	private final static String DECORATION_NAME_NODE_PRIORITIES = "HRM(3) - node priorities";
+	
+	/**
+	 * Stores the identification string for the active HRM infrastructure
+	 */
+	private final static String DECORATION_NAME_ACTIVE_HRM_INFRASTRUCTURE = "HRM(4) - active infrastructure";
+	
+	/**
+	 * Stores the identification string for HRM specific routing graph decorations (coordinators & clusters)
+	 */
+	private final static String DECORATION_NAME_COORDINATORS_AND_CLUSTERS = "HRM(2) - coordinators & clusters";
+	
+	/**
+	 * Stores the identification string for HRM specific routing graph decorations (NMS entries)
+	 */
+	private final static String DECORATION_NAME_NMS_ENTRIES = "HRM(5) - NMS entries";
+
+	/**
 	 * Constructor
 	 * 
 	 * @param pNode the node on which this controller is running
@@ -609,15 +639,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Returns the API of the local instance
+	 * Returns the API of the local HRMController instance
 	 * 
 	 * @param pNode the local node
 	 * 
 	 * @return the API of the local instance
 	 */
-	public static HRMController getAPI(Node pNode)
+	public static IHRMApi getHRMApi(Node pNode)
 	{
-		HRMController tResult = null;
+		IHRMApi tResult = null;
 		
 		synchronized (sRegisteredHRMControllers) {
 			for(HRMController tHRMController: sRegisteredHRMControllers){
@@ -2742,35 +2772,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Returns true if the local node belongs to the given Cluster 
-	 * 
-	 * @param pHRMID the HRMID of the Cluster
-	 * 
-	 * @return true if the local node belongs to the given Cluster
-	 */
-	public boolean isLocalCluster(HRMID pClusterHRMID)
-	{
-		boolean tResult = false;
-
-		if(!pClusterHRMID.isClusterAddress()){
-			pClusterHRMID.setLevelAddress(0, 0);
-		}
-
-		synchronized(mRegisteredOwnHRMIDs){
-			for(HRMID tKnownHRMID : mRegisteredOwnHRMIDs){
-				//Logging.err(this, "Checking isCluster for " + tKnownHRMID + " and if it is " + pHRMID);
-				if(tKnownHRMID.isCluster(pClusterHRMID)){
-					//Logging.err(this, " ..true");
-					tResult = true;
-					break;
-				}
-			}
-		}
-		
-		return tResult;
-	}
-
-	/**
 	 * Determines the local sender address for a route with a given next hop
 	 * 
 	 * @param pSource the given source
@@ -4728,8 +4729,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * HRM test app
 					 */
-//					HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
-//					tHRMTestApp.start();
+					HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
+					tHRMTestApp.start();
 					
 					/**
 					 * auto-exit simulation
@@ -6837,15 +6838,84 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Logging.log(this, "Got an error message because of \"" + pCause + "\"");
 	}
 
-	/**
-	 * Creates a descriptive string about this object
-	 * 
-	 * @return the descriptive string
+	/*****************************************************************************************************************************
+	 *****************************************************************************************************************************
+	 ********************************************************* HRM API *********************************************************** 
+	 *****************************************************************************************************************************
+	 *****************************************************************************************************************************/
+	
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.IHRMApi#isNeighbor(de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID)
 	 */
-	public String toString()
+	@Override
+	public boolean isNeighbor(HRMID pAddress)
 	{
-		return "HRM controller@" + getNode();
+		return getHRS().isNeighbor(pAddress);
 	}
+
+	/**
+	 * Returns true if the local node belongs to the given Cluster 
+	 * 
+	 * @param pHRMID the HRMID of the Cluster
+	 * 
+	 * @return true if the local node belongs to the given Cluster
+	 */
+	public boolean isLocalCluster(HRMID pClusterHRMID)
+	{
+		boolean tResult = false;
+
+		if(!pClusterHRMID.isClusterAddress()){
+			pClusterHRMID.setLevelAddress(0, 0);
+		}
+
+		synchronized(mRegisteredOwnHRMIDs){
+			for(HRMID tKnownHRMID : mRegisteredOwnHRMIDs){
+				//Logging.err(this, "Checking isCluster for " + tKnownHRMID + " and if it is " + pHRMID);
+				if(tKnownHRMID.isCluster(pClusterHRMID)){
+					//Logging.err(this, " ..true");
+					tResult = true;
+					break;
+				}
+			}
+		}
+		
+		return tResult;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.IHRMApi#getMaxDataRate(de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID)
+	 */
+	@Override
+	public long getMaxDataRate(HRMID pDestination)
+	{
+		long tResult = 0;
+		
+		RoutingEntry tRoutingEntry = getHRS().getBestRoutingEntryNextHop(pDestination, 0, RoutingEntry.INFINITE_DATARATE, null);
+		if(tRoutingEntry != null){
+			tResult = tRoutingEntry.getMaxAvailableDataRate();
+		}
+				
+		return tResult;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.IHRMApi#getMinDelay(de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID)
+	 */
+	@Override
+	public long getMinDelay(HRMID pDestination)
+	{
+		long tResult = 0;
+		
+		RoutingEntry tRoutingEntry = getHRS().getBestRoutingEntryNextHop(pDestination, -1, 0, null);
+		if(tRoutingEntry != null){
+			tResult = tRoutingEntry.getMaxAvailableDataRate();
+		}
+				
+		return tResult;
+	}
+
+	/*****************************************************************************************************************************
+	 *****************************************************************************************************************************/
 
 	/**
 	 * Determine the name of the central FN of this node
@@ -6886,32 +6956,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * The global name space which is used to identify the HRM instances on nodes.
+	 * Creates a descriptive string about this object
+	 * 
+	 * @return the descriptive string
 	 */
-	public final static Namespace ROUTING_NAMESPACE = new Namespace("routing");
-
-	/**
-	 * Stores the identification string for HRM specific routing graph decorations (coordinators & HRMIDs)
-	 */
-	private final static String DECORATION_NAME_COORDINATORS_AND_HRMIDS = "HRM(1) - coordinators & HRMIDs";
-
-	/**
-	 * Stores the identification string for HRM specific routing graph decorations (node priorities)
-	 */
-	private final static String DECORATION_NAME_NODE_PRIORITIES = "HRM(3) - node priorities";
-	
-	/**
-	 * Stores the identification string for the active HRM infrastructure
-	 */
-	private final static String DECORATION_NAME_ACTIVE_HRM_INFRASTRUCTURE = "HRM(4) - active infrastructure";
-	
-	/**
-	 * Stores the identification string for HRM specific routing graph decorations (coordinators & clusters)
-	 */
-	private final static String DECORATION_NAME_COORDINATORS_AND_CLUSTERS = "HRM(2) - coordinators & clusters";
-	
-	/**
-	 * Stores the identification string for HRM specific routing graph decorations (NMS entries)
-	 */
-	private final static String DECORATION_NAME_NMS_ENTRIES = "HRM(5) - NMS entries";
+	public String toString()
+	{
+		return "HRM controller@" + getNode();
+	}
 }

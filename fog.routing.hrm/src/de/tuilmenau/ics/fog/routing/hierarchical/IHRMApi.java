@@ -1,0 +1,54 @@
+/*******************************************************************************
+ * Forwarding on Gates Simulator/Emulator - Hierarchical Routing Management
+ * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
+ * 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html.
+ ******************************************************************************/
+package de.tuilmenau.ics.fog.routing.hierarchical;
+
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+
+/**
+ * This is the main HRM specific API
+ */
+public interface IHRMApi
+{
+	/**
+	 * Returns true if a given address belongs to a direct neighbor node
+	 *  
+	 * @param pAddress the address of a possible neighbor
+	 * 
+	 * @return true or false
+	 */
+	public boolean isNeighbor(HRMID pAddress);
+	
+	/**
+	 * Checks if a given address belongs to a local cluster
+	 * 
+	 * @param pDestination the HRMID of the destination
+	 * 
+	 * @return true or false
+	 */
+	public boolean isLocalCluster(HRMID pDestination);
+
+	/**
+	 * Returns the max. data rate, which is possible for a data transmission to a described destination
+	 * 
+	 * @param pDestination the HRMID of the destination
+	 * 
+	 * @return the max. possible data rate in [kbit/s] based on the local routing information
+	 */
+	public long getMaxDataRate(HRMID pDestination);
+	
+	/**
+	 * Returns the min. delay, which have to be accepted for a data transmission to a described destination
+	 *  
+	 * @param pDestination the HRMID of the destination
+	 * 
+	 * @return the min. accepted delay in [ms]
+	 */
+	public long getMinDelay(HRMID pDestination);
+}

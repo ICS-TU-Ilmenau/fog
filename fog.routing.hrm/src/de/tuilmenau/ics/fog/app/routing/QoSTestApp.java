@@ -21,6 +21,7 @@ import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.InvisibleMarker;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.hierarchical.IHRMApi;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.HRMRoutingProperty;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
@@ -211,7 +212,7 @@ public class QoSTestApp extends ThreadApplication
 			
 			// search for a better choice
 			for(HRMID tHRMID : tDestinationHRMIDs){
-				HRMController tHRMApi = HRMController.getAPI(mNode);
+				IHRMApi tHRMApi = HRMController.getHRMApi(mNode);
 				if(tHRMApi != null){
 					if(!tHRMApi.isLocalCluster(tHRMID.getClusterAddress(0))){
 						tResult = tHRMID;
