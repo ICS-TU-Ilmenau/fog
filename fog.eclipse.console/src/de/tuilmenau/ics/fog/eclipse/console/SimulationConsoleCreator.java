@@ -86,7 +86,9 @@ public class SimulationConsoleCreator implements SimulationObserver
 		mConsole.open("Command console: " +sim);
 		mConsole.log(this, "Init new simulation: " +sim);
 
-		Logging.getInstance().addLogObserver(mConsole);
+		if(Config.Logging.LOG_MESSAGES){
+			Logging.getInstance().addLogObserver(mConsole);
+		}
 		mCmdExe = new CommandExecutor(mConsole.getReader(), sim);
 	}
 	
