@@ -144,7 +144,13 @@ public class HRMRoutingService implements RoutingService, Localization
 		Logging.log(this, "Got event \"ROUTING SERVICE REGISTERED\"");
 		
 		// create HRM controller instance 
-		mHRMController = new HRMController(mNode, this);
+//		if(mNode.getName().equals("node8")){
+//			mHRMController = new HRMController(mNode, this, 4);
+//		}else if(mNode.getName().equals("node9")){
+//			mHRMController = new HRMController(mNode, this, 3);
+//		}else{
+			mHRMController = new HRMController(mNode, this);
+//		}
 		
 		mWaitOnControllerstart = false;
 
@@ -1407,7 +1413,27 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		return getRoute(getCentralFN(), pDestination, pRequirements, pRequester);
 	}
-	
+
+	/**
+	 * Checks if a given HRMID belongs to a direct neighbor
+	 * 
+	 * @param pAddress the HRMID of a possible direct neighbor
+	 * 
+	 * @return true or false
+	 */
+	public boolean isNeighbor(HRMID pAddress)
+	{
+		boolean tResult = false;
+		
+		synchronized (mDirectNeighborAddresses) {
+			if(mDirectNeighborAddresses.contains(pAddress)){
+				tResult = true;
+			}
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Determines a general route from a source to a destination with special requirements
 	 * 
@@ -1505,13 +1531,10 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * CHECK NEIGHBORHOD
 			 * Check if the destination is a direct neighbor
 			 ************************************/
-			boolean tDestinationIsDirectNeighbor = false;
-			synchronized (mDirectNeighborAddresses) {
-				if(mDirectNeighborAddresses.contains(tDestHRMID)){
-					if (DEBUG){
-						Logging.log(this, "      .." + tDestHRMID + " is an address of a direct neighbor node, neighbors: " + mDirectNeighborAddresses);
-					}
-					tDestinationIsDirectNeighbor = true;
+			boolean tDestinationIsDirectNeighbor = isNeighbor(tDestHRMID);
+			if(tDestinationIsDirectNeighbor){
+				if (DEBUG){
+					Logging.log(this, "      .." + tDestHRMID + " is an address of a direct neighbor node, neighbors: " + mDirectNeighborAddresses);
 				}
 			}
 
@@ -1526,7 +1549,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				tLastHopHRMID = tHRMRoutingProp.getLastHopHRMID();
 			}
 			boolean tDestHRMIDIsLocalHRMID = false;
-			RoutingEntry tRoutingEntryNextHop = mRoutingTable.getBestEntry(tDestHRMID, tDesiredDelay, tDesiredDataRate, tLastHopHRMID);
+			RoutingEntry tRoutingEntryNextHop = getBestRoutingEntryNextHop(tDestHRMID, tDesiredDelay, tDesiredDataRate, tLastHopHRMID);
 			if(tRoutingEntryNextHop != null){
 				if(!tRoutingEntryNextHop.isLocalLoop()){
 					// derive the next hop HRMID
@@ -2004,6 +2027,27 @@ public class HRMRoutingService implements RoutingService, Localization
 		return tRoutingResult;
 	}
 	
+	/**
+	 * Returns the best routing entry towards a given destination, aware of given QoS parameters
+	 * 
+	 * @param pDestination the HRMID of the destination
+	 * @param pDesiredDelay the desired max. delay
+	 * @param pDesiredDataRate the desired min. data rate reservation
+	 * @param pLastHopHRMID the HRMID of the last hop
+	 * 
+	 * @return the found routing entry
+	 */
+	public RoutingEntry getBestRoutingEntryNextHop(HRMID pDestination, long pDesiredDelay, long pDesiredDataRate, HRMID pLastHopHRMID)
+	{
+		RoutingEntry tResult = null;
+	
+		synchronized (mRoutingTable) {
+			tResult = mRoutingTable.getBestEntry(pDestination, pDesiredDelay, pDesiredDataRate, pLastHopHRMID);
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Records the current HOP within an possibly existing ProbeRoutingProperty property.
 	 * 
