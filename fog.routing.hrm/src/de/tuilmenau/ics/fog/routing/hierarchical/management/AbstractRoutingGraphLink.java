@@ -95,6 +95,22 @@ public class AbstractRoutingGraphLink implements Serializable
 	}
     
 	/**
+	 * Returns the routing entry of this link
+	 * 
+	 * @return the routing entry
+	 */
+	public RoutingEntry getRoutingEntry()
+	{
+		RoutingEntry tResult = null;
+		
+		if(mRoute.size() > 0){
+			tResult = ((RoutingEntry) mRoute.getFirst()).clone();
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Returns if both objects address the same cluster/coordinator
 	 * 
 	 * @return true or false
