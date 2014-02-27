@@ -123,7 +123,7 @@ public class AnnounceHRMIDs extends SignalingMessageHrm implements ISignalingMes
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += mHRMIDs.size() * (new HRMID(0).getSerialisedSize());
+		tResult += mHRMIDs.size() * HRMID.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}

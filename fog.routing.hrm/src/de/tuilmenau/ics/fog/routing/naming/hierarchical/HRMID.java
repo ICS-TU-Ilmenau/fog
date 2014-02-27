@@ -487,6 +487,16 @@ public class HRMID extends HRMName
 	@Override
 	public int getSerialisedSize()
 	{
+		return getDefaultSize(); 
+	}
+
+	/**
+	 * Returns the default size of this address
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
 		return SERIALIZED_SIZE; 
 	}
 

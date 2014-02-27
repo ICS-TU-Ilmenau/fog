@@ -507,7 +507,7 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public HRMID getSource()
 	{
-		return mSource.clone();
+		return (mSource != null ? mSource.clone() : null);
 	}
 
 	/**
@@ -1060,7 +1060,9 @@ public class RoutingEntry implements RouteSegment
 	@Override
 	public int getSerialisedSize()
 	{
-		return getDefaultSize();
+		int tResult = getDefaultSize();
+		
+		return tResult;
 	}
 
 	/**
@@ -1076,8 +1078,8 @@ public class RoutingEntry implements RouteSegment
 		 * 		Destination				 = 4
 		 * 		Source					 = 4
 		 * 		NextHop					 = 4
-		 * 		HopCount				 = 2
-		 * 		Utilization				 = 2
+		 * 		HopCount				 = 1
+		 * 		Utilization				 = 1
 		 * 		MinDelay				 = 2
 		 * 		MaxAvailableDataRate	 = 4
 		 * 
@@ -1085,11 +1087,11 @@ public class RoutingEntry implements RouteSegment
 
 		int tResult = 0;
 		
-		tResult += new HRMID(0).getSerialisedSize(); //	private HRMID mDestination = null;
-		tResult += new HRMID(0).getSerialisedSize(); //	private HRMID mSource = null;
-		tResult += new HRMID(0).getSerialisedSize(); //	private HRMID mNextHop = null;
-		tResult += 2; // use only 2 bytes // private int mHopCount = NO_HOP_COSTS;
-		tResult += 2; // use only 2 bytes for a fixed comma float value, private double mUtilization = NO_UTILIZATION;
+		tResult += HRMID.getDefaultSize(); //	private HRMID mDestination = null;
+		tResult += HRMID.getDefaultSize(); //	private HRMID mSource = null;
+		tResult += HRMID.getDefaultSize(); //	private HRMID mNextHop = null;
+		tResult += 1; // use only 2 bytes // private int mHopCount = NO_HOP_COSTS;
+		tResult += 1; // use only 1 byte for values between 0 and 100 %, private double mUtilization = NO_UTILIZATION;
 		tResult += 2; // use only 2 bytes // private long mMinDelay = NO_DELAY;
 		tResult += 4; // use only 4 bytes // private long mMaxAvailableDataRate = INFINITE_DATARATE;
 		

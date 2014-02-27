@@ -83,7 +83,6 @@ public class RouteShare extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		RoutingTable.length		 = 2
 		 * 		RoutingTable			 = dynamic
 		 * 
 		 *************************************************************/
@@ -91,11 +90,8 @@ public class RouteShare extends SignalingMessageHrm
 		int tResult = 0;
 		
 		tResult += getDefaultSize();
-		tResult += 2; // size of the following list
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += (mRoutingTable.size() * RoutingEntry.getDefaultSize());
+
+		tResult += mRoutingTable.getSerializedSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
