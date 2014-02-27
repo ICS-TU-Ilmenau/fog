@@ -103,6 +103,11 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				tResult = true;
 			}else{
 				/**
+				 * Update L2Address
+				 */
+				tFoundDuplicate.setNextHopL2Address(pRoutingTableEntry.getNextHopL2Address());
+
+				/**
 				 * Check if known route was defined by a higher authority
 				 */
 				boolean tKnownRouteIsFromHigherAuthotiry = false;
