@@ -1545,11 +1545,13 @@ public class HRMRoutingService implements RoutingService, Localization
 			HRMID tNextHopHRMID = null;
 			HRMID tLocalSourceHRMID = null;
 			HRMID tLastHopHRMID = null;
+			L2Address tLastHopL2Address = null;
 			if(tHRMRoutingProp != null){
 				tLastHopHRMID = tHRMRoutingProp.getLastHopHRMID();
+				tLastHopL2Address = tHRMRoutingProp.getLastHopL2Address();
 			}
 			boolean tDestHRMIDIsLocalHRMID = false;
-			RoutingEntry tRoutingEntryNextHop = getBestRoutingEntryNextHop(tDestHRMID, tDesiredDelay, tDesiredDataRate, tLastHopHRMID);
+			RoutingEntry tRoutingEntryNextHop = getBestRoutingEntryNextHop(tDestHRMID, tDesiredDelay, tDesiredDataRate, tLastHopHRMID, tLastHopL2Address);
 			if(tRoutingEntryNextHop != null){
 				if(!tRoutingEntryNextHop.isLocalLoop()){
 					// derive the next hop HRMID
@@ -1566,7 +1568,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * Increase the HOP COUNT (for TTR update)
 			 */
 			if(tHRMRoutingProp != null){
-				tHRMRoutingProp.incHopCount(tLocalSourceHRMID);
+				tHRMRoutingProp.incHopCount(tLocalSourceHRMID, mHRMController.getNodeL2Address());
 			}	
 
 			/**
@@ -2034,15 +2036,16 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pDesiredDelay the desired max. delay
 	 * @param pDesiredDataRate the desired min. data rate reservation
 	 * @param pLastHopHRMID the HRMID of the last hop
+	 * @param pLastHopL2Address the L2Address of the last hop
 	 * 
 	 * @return the found routing entry
 	 */
-	public RoutingEntry getBestRoutingEntryNextHop(HRMID pDestination, long pDesiredDelay, long pDesiredDataRate, HRMID pLastHopHRMID)
+	public RoutingEntry getBestRoutingEntryNextHop(HRMID pDestination, long pDesiredDelay, long pDesiredDataRate, HRMID pLastHopHRMID, L2Address pLastHopL2Address)
 	{
 		RoutingEntry tResult = null;
 	
 		synchronized (mRoutingTable) {
-			tResult = mRoutingTable.getBestEntry(pDestination, pDesiredDelay, pDesiredDataRate, pLastHopHRMID);
+			tResult = mRoutingTable.getBestEntry(pDestination, pDesiredDelay, pDesiredDataRate, pLastHopHRMID, pLastHopL2Address);
 		}
 		
 		return tResult;

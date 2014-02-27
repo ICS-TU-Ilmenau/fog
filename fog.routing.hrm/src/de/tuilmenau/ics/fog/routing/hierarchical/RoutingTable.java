@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -303,10 +304,11 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	 * @param pDesiredMaxDelay the desired max. E2E delay
 	 * @param pDesiredMinDataRate the desired min. data rate
 	 * @param pForbiddenNextHopHRMID the HRMID of a forbidden next hop
+	 * @param pForbiddenNextHopL2Address the L2Address of a forbidden next hop
 	 * 
 	 * @return the found best entry
 	 */
-	public synchronized RoutingEntry getBestEntry(HRMID pDestination, long pDesiredMaxDelay, long pDesiredMinDataRate, HRMID pForbiddenNextHopHRMID)
+	public synchronized RoutingEntry getBestEntry(HRMID pDestination, long pDesiredMaxDelay, long pDesiredMinDataRate, HRMID pForbiddenNextHopHRMID, L2Address pForbiddenNextHopL2Address)
 	{
 		RoutingEntry tResult = null;
 		RoutingEntry tBestResultBERouting = null;
@@ -337,9 +339,9 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				 */ 
 				if(pDestination.isCluster(tEntry.getDest())){
 					/**
-					 * Check if the next hop has a forbidden HRMID
+					 * Check if the next hop has a forbidden HRMID or L2Address
 					 */
-					if(!tEntry.getNextHop().equals(pForbiddenNextHopHRMID)){
+					if((!tEntry.getNextHop().equals(pForbiddenNextHopHRMID)) && ((tEntry.getNextHopL2Address() == null) || (!tEntry.getNextHopL2Address().equals(pForbiddenNextHopL2Address)))){
 						/**
 						 * BE metrics, optimize for:
 						 * 		1.) hop count

@@ -482,6 +482,12 @@ public class HRMConfig
 		public static final boolean MULTIPATH_ROUTING = true;
 
 		/**
+		 * Defines if loop routes based on sibling clusters towards cluster-internal destinations should be distributed
+		 * This value should be set to "true". Otherwise, cluster-internal destinations are only reachable via cluster-internal routes.
+		 */
+		public static final boolean LOOP_ROUTING = true;
+
+		/**
 		 * Defines the max. hop count we allow during routing process
 		 */
 		public static final long MAX_HOP_COUNT = 32;

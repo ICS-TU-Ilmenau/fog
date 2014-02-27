@@ -15,6 +15,7 @@ import de.tuilmenau.ics.fog.facade.properties.AbstractProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -81,6 +82,11 @@ public class HRMRoutingProperty extends AbstractProperty
 	 * The HRMID of the last hop
 	 */
 	private HRMID mLastHopHRMID = null;
+	
+	/**
+	 * The L2address of the last hop
+	 */
+	private L2Address mLastHopL2Address = null;
 
 	/**
 	 * Constructor
@@ -150,12 +156,23 @@ public class HRMRoutingProperty extends AbstractProperty
 	}	
 	
 	/**
+	 * Returns the L2Address of the last hop
+	 * 
+	 * @param pHRMID the L2Address of the last hop
+	 */
+	public L2Address getLastHopL2Address()
+	{
+		return mLastHopL2Address;
+	}
+	
+	/**
 	 * Increases the recorded hop count 
 	 */
-	public void incHopCount(HRMID pNewLastHopHRMID)
+	public void incHopCount(HRMID pNewLastHopHRMID, L2Address pNewLastHopL2Address)
 	{
 		mTTR--;
 		mLastHopHRMID = pNewLastHopHRMID;
+		mLastHopL2Address = pNewLastHopL2Address;
 	}
 
 	/**

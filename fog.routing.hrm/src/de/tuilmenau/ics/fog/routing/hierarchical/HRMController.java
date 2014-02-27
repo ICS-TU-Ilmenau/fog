@@ -6993,7 +6993,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		long tResult = 0;
 		
-		RoutingEntry tRoutingEntry = getHRS().getBestRoutingEntryNextHop(pDestination, 0, RoutingEntry.INFINITE_DATARATE, null);
+		RoutingEntry tRoutingEntry = getHRS().getBestRoutingEntryNextHop(pDestination, 0, RoutingEntry.INFINITE_DATARATE, null, null);
 		if(tRoutingEntry != null){
 			tResult = tRoutingEntry.getMaxAvailableDataRate();
 		}
@@ -7009,7 +7009,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		long tResult = 0;
 		
-		RoutingEntry tRoutingEntry = getHRS().getBestRoutingEntryNextHop(pDestination, -1, 0, null);
+		RoutingEntry tRoutingEntry = getHRS().getBestRoutingEntryNextHop(pDestination, -1, 0, null, null);
 		if(tRoutingEntry != null){
 			tResult = tRoutingEntry.getMaxAvailableDataRate();
 		}
