@@ -602,6 +602,16 @@ public class RoutingEntry implements RouteSegment
 	}
 	
 	/**
+	 * Returns true if this entry has no hop costs
+	 * 
+	 * @return true or false
+	 */
+	public boolean hasNoHopCosts()
+	{
+		return getHopCount() == NO_HOP_COSTS;
+	}
+	
+	/**
 	 * Sets a new utilization value
 	 * 
 	 * @param pNewUtilization the new utilization value
