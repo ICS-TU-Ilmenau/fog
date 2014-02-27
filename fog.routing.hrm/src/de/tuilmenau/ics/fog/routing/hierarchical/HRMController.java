@@ -3014,6 +3014,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							tReceivedSharedRoutingEntry.addOwner(pOwnerHRMID);
 
 							/**
+							 * set the L2 address of the next hop
+							 */
+							tReceivedSharedRoutingEntry.setNextHopL2Address(getHRS().getL2AddressFor(tReceivedSharedRoutingEntry.getNextHop()));
+							
+							/**
 							 * Store the found route
 							 */
 							if(DEBUG){
@@ -4729,8 +4734,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * HRM test app
 					 */
-					HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
-					tHRMTestApp.start();
+//					HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
+//					tHRMTestApp.start();
 					
 					/**
 					 * auto-exit simulation
@@ -6223,7 +6228,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pTo the ending point
 	 * @param pCause the cause for this call
 	 * 
-	 * @return the found routing entry
+	 * @return the found routing entries as routing table
 	 */
 	public RoutingTable getAllRoutingEntriesHRG(HRMID pFrom, HRMID pTo, String pCause)
 	{
@@ -6268,21 +6273,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			do{
 				tEntry = getRoutingEntryHRG(mHierarchicalRoutingGraph, pFrom, pTo, pCause, tRefDeletedLinks);
 				if(tEntry != null){
-					if(tEntry != null){
-						if(!tResult.contains(tEntry)){
-							if(DEBUG){
-								Logging.log(this, "  ..found entry[" + i + "]: " + tEntry);
-								Logging.log(this, "    ..deleted " + tDeletedLinks.size() + " links");
-							}
-		
-							// add the RoutingEntry to the result
-							tResult.add(tEntry);					
-							
-							i++;
-						}else{
-							if(DEBUG){
-								Logging.log(this, "  ..found repeated entry: " + tEntry);
-							}
+					if(!tResult.contains(tEntry)){
+						if(DEBUG){
+							Logging.log(this, "  ..found entry[" + i + "]: " + tEntry);
+							Logging.log(this, "    ..deleted " + tDeletedLinks.size() + " links");
+						}
+	
+						// add the RoutingEntry to the result
+						tResult.add(tEntry);					
+						
+						i++;
+					}else{
+						if(DEBUG){
+							Logging.log(this, "  ..found repeated entry: " + tEntry);
 						}
 					}
 				}
@@ -6331,6 +6334,100 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		return tResult;
 	}
 	
+	/**
+	 * Determines all routes in the HRG from a given node/cluster to another one
+	 * 
+	 * @param pFromTo the starting and end point
+	 * @param pCause the cause for this call
+	 * 
+	 * @return the found routing entries as routing table
+	 */
+	public RoutingTable getAllLoopRoutingEntriesHRG(HRMID pFromTo, String pCause)
+	{
+		RoutingTable tResult = new RoutingTable();
+		boolean DEBUG = true;
+
+		if(DEBUG){
+			Logging.log(this, "Determining all loop routes for: " + pFromTo);
+		}
+		
+		/***************************************************************************************************
+		 * Iterate over all direct neighbors
+		 ***************************************************************************************************/
+		if(DEBUG){
+			Logging.log(this, "Determining all direct neighbors for: " + pFromTo);
+		}
+		LinkedList<HRMID> tSiblings = getSiblingsHRG(pFromTo);
+		for(HRMID tSibling : tSiblings){
+			RoutingEntry tShortestRouteToSibling = getRoutingEntryHRG(pFromTo, tSibling, this + "::getAllLoopRoutingEntriesHRG() for " + pFromTo + ", tested sibling=" + tSibling);
+			// check a route with no hop costs was found
+			if((tShortestRouteToSibling != null) && (tShortestRouteToSibling.hasNoHopCosts())){
+				if(DEBUG){
+					Logging.log(this, "   ..found direct neighbor: " + tSibling);
+				}
+
+				RoutingTable tResultingRoutingTableViaDirectNeighbor = new RoutingTable();
+
+				LinkedList<AbstractRoutingGraphLink> tDeletedLinks = new LinkedList<AbstractRoutingGraphLink>();
+				LinkedList<LinkedList<AbstractRoutingGraphLink>> tRefDeletedLinks = new LinkedList<LinkedList<AbstractRoutingGraphLink>>();
+				tRefDeletedLinks.clear();
+				tRefDeletedLinks.add(tDeletedLinks);
+
+				/***************************************************************************************************************************************
+				 * Determine all known routes to the found direct neighbor, avoid repeated routes by deleting already used outgoing links from "pFrom"
+				 ***************************************************************************************************************************************/
+				synchronized (mHierarchicalRoutingGraph) {
+					RoutingEntry tEntry = null;
+					int i = 0;
+					do{
+						tEntry = getRoutingEntryHRG(mHierarchicalRoutingGraph, pFromTo, tSibling, pCause, tRefDeletedLinks);
+						if(tEntry != null){
+							if(!tResultingRoutingTableViaDirectNeighbor.contains(tEntry)){
+								if(DEBUG){
+//									Logging.log(this, "  ..found entry[" + i + "]: " + tEntry);
+//									Logging.log(this, "    ..deleted " + tDeletedLinks.size() + " links");
+								}
+			
+								// add the RoutingEntry to the result
+								tResultingRoutingTableViaDirectNeighbor.add(tEntry);					
+								
+								i++;
+							}else{
+								if(DEBUG){
+//									Logging.log(this, "  ..found repeated entry: " + tEntry);
+								}
+							}
+						}
+					}while(tEntry != null);
+				}
+				
+				/**************************************************
+				 * Add again the previously deleted HRG links
+				 **************************************************/
+				if(!tDeletedLinks.isEmpty()){
+					for(AbstractRoutingGraphLink tLink : tDeletedLinks){
+						if(DEBUG){
+//							Logging.log(this, "  ..restoring HRG link: " + tLink);
+						}
+								
+						/**
+						 * Add all previously deleted used inter-node links again to the HRG
+						 */
+						mHierarchicalRoutingGraph.link((HRMID)tLink.getFirstVertex(), (HRMID)tLink.getSecondVertex(), tLink);
+					}
+				}
+
+				if(DEBUG){
+					for(RoutingEntry tEntry: tResultingRoutingTableViaDirectNeighbor){
+						Logging.log(this, "      ..found route to direct neighbor: " + tEntry);
+					}
+				}
+			}
+		}
+		
+		return tResult;
+	}
+
 	/**
 	 * Unregisters automatically old links from the HRG based on each link's timeout value
 	 */
