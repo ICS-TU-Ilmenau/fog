@@ -861,14 +861,15 @@ public class ComChannel
 	{
 //		if(mHRMController.getNodeGUIName().equals("node4")){
 //		if(mParent.getHierarchyLevel().isBaseLevel()){
-		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteSharePacket);
-			Logging.log(this, "   ..got routing share: " + pRouteSharePacket.getRoutes());
-			for(RoutingEntry tEntry : pRouteSharePacket.getRoutes()){
-				Logging.log(this, "   got: " + tEntry);	
-			}
+//			if(!(mParent instanceof CoordinatorAsClusterMember)){
+////		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+//			Logging.err(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteSharePacket);
+//			Logging.err(this, "   ..got routing share: " + pRouteSharePacket.getRoutes());
+//			for(RoutingEntry tEntry : pRouteSharePacket.getRoutes()){
+//				Logging.err(this, "   got: " + tEntry);	
+//			}
 //		}
-		}
+//		}
 		
 		/**
 		 * Store the received shared routing info
