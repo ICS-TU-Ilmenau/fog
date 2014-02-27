@@ -2942,9 +2942,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Check if the route starts at this node.
 			 * If the route starts at a direct neighbor node, try to find a combined route and store this one instead of the original shared route.
 			 */ 
-			if(!isLocal(tReceivedSharedRoutingEntry.getSource())){
+			if((tReceivedSharedRoutingEntry.getSource() == null) || (!isLocal(tReceivedSharedRoutingEntry.getSource()))){
 				// check if the route starts - at least - at one of the direct neighbor nodes
-				if(isLocalCluster(tReceivedSharedRoutingEntry.getSource())){
+				if((tReceivedSharedRoutingEntry.getSource() == null) || (isLocalCluster(tReceivedSharedRoutingEntry.getSource()))){
 					/**
 					 * The received shared route starts at one of the direct neighbor nodes
 					 *  	=> we derive a new route as new combination of: [route to direct neighbor] ==> [received shared route]
@@ -6864,19 +6864,25 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		boolean tResult = false;
 
-		if(!pClusterHRMID.isClusterAddress()){
-			pClusterHRMID.setLevelAddress(0, 0);
-		}
-
-		synchronized(mRegisteredOwnHRMIDs){
-			for(HRMID tKnownHRMID : mRegisteredOwnHRMIDs){
-				//Logging.err(this, "Checking isCluster for " + tKnownHRMID + " and if it is " + pHRMID);
-				if(tKnownHRMID.isCluster(pClusterHRMID)){
-					//Logging.err(this, " ..true");
-					tResult = true;
-					break;
+		if(pClusterHRMID != null){
+			HRMID tClusterHRMID = pClusterHRMID.clone();
+			
+			if(!tClusterHRMID.isClusterAddress()){
+				tClusterHRMID.setLevelAddress(0, 0);
+			}
+	
+			synchronized(mRegisteredOwnHRMIDs){
+				for(HRMID tKnownHRMID : mRegisteredOwnHRMIDs){
+					//Logging.err(this, "Checking isCluster for " + tKnownHRMID + " and if it is " + pHRMID);
+					if(tKnownHRMID.isCluster(tClusterHRMID)){
+						//Logging.err(this, " ..true");
+						tResult = true;
+						break;
+					}
 				}
 			}
+		}else{
+			Logging.warn(this, "isLocalCluster() was called for an invalid address");
 		}
 		
 		return tResult;
