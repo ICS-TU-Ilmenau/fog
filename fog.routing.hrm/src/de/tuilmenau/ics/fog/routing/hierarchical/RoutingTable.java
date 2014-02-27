@@ -43,7 +43,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		if((pRoutingTableEntry.getDest() != null) && (pRoutingTableEntry.getDest().isZero())){
 			throw new RuntimeException(this + "::addEntry() got an entry with a wildcard destination");
 		}
-		if(pRoutingTableEntry.getSource().isZero()){
+		if((pRoutingTableEntry.getSource() != null) && (pRoutingTableEntry.getSource().isZero())){
 			throw new RuntimeException(this + "::addEntry() got an entry with a wildcard source");
 		}
 	
@@ -545,6 +545,28 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		return tResult;
 	}
 	
+	/**
+	 * Returns the size of a serialized representation of this packet
+	 * 
+	 *  @return the size of a serialized representation
+	 */
+	public int getSerializedSize()
+	{
+		int tResult = 0;
+		
+		tResult += 2; // size of the following list
+		for(RoutingEntry tEntry: this){
+			tResult += tEntry.getSerialisedSize();
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
 	public String toString()
 	{
 		return "[" + getClass().getSimpleName() + " with " + size() + " entries]"; 
