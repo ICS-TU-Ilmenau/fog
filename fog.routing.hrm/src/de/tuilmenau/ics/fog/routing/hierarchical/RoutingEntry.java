@@ -172,6 +172,12 @@ public class RoutingEntry implements RouteSegment
 	private boolean mSharedLink = false;
 
 	/**
+	 * Stores if this entry uses a route across the network
+	 * This variable is not part of the concept. It is only for GUI/debugging use.
+	 */
+	private boolean mRouteAcrossNetwork = false;
+	
+	/**
 	 * Stores the sender of this shared link
 	 * This variable is not part of the concept. It is only for GUI/debugging use.
 	 */
@@ -328,7 +334,7 @@ public class RoutingEntry implements RouteSegment
 					// is the RoutingEntry for the current link valid?
 					if((tLink.getRoute() != null) && (tLink.getRoute().size() == 1)){
 						// get the routing entry of the current link
-						RoutingEntry tNextRoutePart = (RoutingEntry) tLink.getRoute().getFirst();
+						RoutingEntry tNextRoutePart = tLink.getRoutingEntry();
 						// do we have the first path part? 
 						if(tResult != null){
 							if(tResult.getLastNextHop().equals(tNextRoutePart.getSource())){
@@ -754,6 +760,14 @@ public class RoutingEntry implements RouteSegment
 	}
 
 	/**
+	 * Marks this entry as "using a route across the network"
+	 */
+	public void setRouteAcrossNetwork()
+	{
+		mRouteAcrossNetwork = true;
+	}
+	
+	/**
 	 * Returns the sender of this shared link
 	 * 
 	 * @return the sender
@@ -783,6 +797,16 @@ public class RoutingEntry implements RouteSegment
 		return mSharedLink;
 	}
 
+	/**
+	 * Returns if this entry uses a route across the network
+	 * 
+	 * @return true or false
+	 */
+	public boolean usesRouteAcrossNetwork()
+	{
+		return mRouteAcrossNetwork;
+	}
+	
 	/**
 	 * Returns if this link was reported
 	 *  
@@ -1116,7 +1140,7 @@ public class RoutingEntry implements RouteSegment
 	@Override
 	public String toString()
 	{
-		String tResult = (mReportedLink ? "REP: " : "") + (mSharedLink ? "SHA: " : "");
+		String tResult = (mRouteAcrossNetwork ? "RAN: " : "") + (mReportedLink ? "REP: " : "") + (mSharedLink ? "SHA: " : "");
 
 		if(!mBelongstoHRG){
 			tResult += "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getLastNextHop() != null ? ", LastNext=" + getLastNextHop() : "") + (getOrigin() != null ? ", Origin=" + getOrigin() : "") + ")";
