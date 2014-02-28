@@ -558,9 +558,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									}
 								}
 								
-								/*********************************************************************
+								/***********************************************************************************
 								 * SHARE 2: routes to known siblings of the peer at the same hierarchy level
-								 *********************************************************************/
+								 ***********************************************************************************/
 								// find all siblings of the peer
 								//HINT: the peer is one hierarchy level below this coordinator
 								LinkedList<HRMID> tKnownPeerSiblings = mHRMController.getSiblingsHRG(tPeerHRMID);
@@ -609,6 +609,29 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										Logging.log(this, "    ..NO routes to known siblings");
 									}
 								}
+
+//								/*********************************************************************************************************
+//								 * SHARE 3: routes to cluster-internal destinations along sibling clusters at the same hierarchy level
+//								 *********************************************************************************************************/
+//								if(HRMConfig.Routing.LOOP_ROUTING){
+//									RoutingTable tAllLoopRoutingEntriesForPeer = mHRMController.getAllLoopRoutingEntriesHRG(tPeerHRMID, this + "::sharePhase()(" + mCallsSharePhase + ") for loops route for " + tPeerHRMID + " ==> ");
+//									if (DEBUG_SHARE_PHASE_DETAILS){
+//										Logging.log(this, "   ..found " + tAllLoopRoutingEntriesForPeer.size() + " loop routes for " + tPeerHRMID);
+//									}
+//									for(RoutingEntry tAllLoopRoutingEntryForPeer : tAllLoopRoutingEntriesForPeer){
+//										if (DEBUG_SHARE_PHASE_DETAILS){
+//											Logging.log(this, "     ..entry: " + tAllLoopRoutingEntryForPeer);
+//										}
+//	
+//										/**
+//										 * Add the found routing entry to the shared routing table
+//										 */
+//										// reset L2Address for next hop
+//										tAllLoopRoutingEntryForPeer.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tAllLoopRoutingEntryForPeer);
+//										tAllLoopRoutingEntryForPeer.setOrigin(getHRMID());
+////										tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
+//									}
+//								}								
 							}
 
 							/**
@@ -778,7 +801,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 														 */
 														int tStep = 0;
 														for(AbstractRoutingGraphLink tLink : tPath){
-															RoutingEntry tStepRoutingEntry = (RoutingEntry)tLink.getRoute().getFirst();
+															RoutingEntry tStepRoutingEntry = tLink.getRoutingEntry();
 															
 															// chain the routing entries
 															if (DEBUG){
