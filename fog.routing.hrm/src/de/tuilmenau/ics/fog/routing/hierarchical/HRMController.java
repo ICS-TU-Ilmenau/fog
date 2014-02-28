@@ -962,7 +962,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pReason the reason for this notification
 	 */
-	private void notifyGUI(Object pReason)
+	public void notifyGUI(Object pReason)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
 			Logging.log(this, "Got notification with argument " + pReason);
@@ -6626,7 +6626,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public boolean unregisterLinkHRG(HRMID pFrom, HRMID pTo, RoutingEntry pRoutingEntry)
 	{
 		boolean tResult = false;
-
+		boolean DEBUG = false;
+		
 		if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
 			Logging.log(this, "UNREGISTERING LINK (HRG):\n  SOURCE=" + pFrom + "\n  DEST.=" + pTo + "\n  LINK=" + pRoutingEntry);
 		}
@@ -6686,35 +6687,37 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
 					mDescriptionHRGUpdates += "\n -/+ " + pFrom + " to " + pTo + " ==> " + pRoutingEntry.toString() + " <== " + pRoutingEntry.getCause();
 				}
-				Logging.warn(this, "Haven't found " + pRoutingEntry + " as HRG link between " + pFrom + " and " + pTo);
-//				if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
-					synchronized (mHierarchicalRoutingGraph) {
-						
-						Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(pFrom);
-						if(tLinks != null){
-							if(tLinks.size() > 0){
-								Logging.warn(this, "   ..knowing FROM node: " + pFrom);
-								for(AbstractRoutingGraphLink tKnownLink : tLinks){
-									Logging.warn(this, "     ..has link: " + tKnownLink);
-									if(tKnownLink.equals(tSearchPattern)){
-										Logging.err(this, "       ..MATCH");
-									}else{
-										Logging.warn(this, "       ..NO MATCH");
+				if(DEBUG){
+					Logging.warn(this, "Haven't found " + pRoutingEntry + " as HRG link between " + pFrom + " and " + pTo);
+	//				if (HRMConfig.DebugOutput.GUI_SHOW_HRG_DETECTION){
+						synchronized (mHierarchicalRoutingGraph) {
+							
+							Collection<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getOutEdges(pFrom);
+							if(tLinks != null){
+								if(tLinks.size() > 0){
+									Logging.warn(this, "   ..knowing FROM node: " + pFrom);
+									for(AbstractRoutingGraphLink tKnownLink : tLinks){
+										Logging.warn(this, "     ..has link: " + tKnownLink);
+										if(tKnownLink.equals(tSearchPattern)){
+											Logging.err(this, "       ..MATCH");
+										}else{
+											Logging.warn(this, "       ..NO MATCH");
+										}
 									}
 								}
 							}
-						}
-						
-						tLinks = mHierarchicalRoutingGraph.getOutEdges(pTo);
-						if(tLinks != null){
-							if(tLinks.size() > 0){
-								Logging.warn(this, "   ..knowing TO node: " + pFrom);
-								for(AbstractRoutingGraphLink tKnownLink : tLinks){
-									Logging.warn(this, "     ..has link: " + tKnownLink);
-									if(tKnownLink.equals(tSearchPattern)){
-										Logging.err(this, "       ..MATCH");
-									}else{
-										Logging.warn(this, "       ..NO MATCH");
+							
+							tLinks = mHierarchicalRoutingGraph.getOutEdges(pTo);
+							if(tLinks != null){
+								if(tLinks.size() > 0){
+									Logging.warn(this, "   ..knowing TO node: " + pFrom);
+									for(AbstractRoutingGraphLink tKnownLink : tLinks){
+										Logging.warn(this, "     ..has link: " + tKnownLink);
+										if(tKnownLink.equals(tSearchPattern)){
+											Logging.err(this, "       ..MATCH");
+										}else{
+											Logging.warn(this, "       ..NO MATCH");
+										}
 									}
 								}
 							}
