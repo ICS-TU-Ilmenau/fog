@@ -1603,7 +1603,7 @@ public class ComChannel
 				Logging.log(this, "ASSIGN_HRMID-received from \"" + getPeerHRMID() + "\" assigned HRMID: " + tAssignHRMIDPacket.getHRMID().toString());
 
 			HRMID tAssignedHRMID = tAssignHRMIDPacket.getHRMID();
-			
+
 			// let the coordinator process the HRMID assignment
 			getParent().eventAssignedHRMID(this, tAssignedHRMID);
 			
