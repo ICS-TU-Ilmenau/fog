@@ -5921,8 +5921,71 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 			
 			/**********************************************
+			 * Is the destination address more abstract than the source one?
+			 * EXAMPLE 1: we are searching for a route from 1.4.2 to 1.3.0  
+			 *********************************************/
+			if(pFrom.getHierarchyLevel() < pTo.getHierarchyLevel()){
+				DEBUG = true;
+				
+				/**
+				 * EXAMPLE 1: derive cluster address 1.4.0 from 1.4.2
+				 */			
+				HRMID tAbstractSource = pFrom.getClusterAddress(pTo.getHierarchyLevel());
+				
+				if (DEBUG){
+					Logging.log(this, "getRoutingEntryHRG() searches a more abstract route from a more abstract source " + tAbstractSource + "(" + pFrom + ") to destination " + pTo);
+				}
+	
+				/**
+				 * EXAMPLE 1: determine the route from 1.4.0 to 1.3.0
+				 */
+				RoutingEntry tSecondRoutePart = getRoutingEntryHRG(pHRG, tAbstractSource, pTo, pCause, null);
+				if (DEBUG){
+					Logging.log(this, "          ..second route part: " + tSecondRoutePart);
+				}
+						
+				if(tSecondRoutePart != null){
+					HRMID tOutgressGatewayFromSourceCluster = tSecondRoutePart.getSource();
+					/**
+					 * EXAMPLE 1: determine the route from 1.4.2 to 1.4.1
+					 */
+					RoutingEntry tIntraClusterRoutePart = getRoutingEntryHRG(pHRG, pFrom, tOutgressGatewayFromSourceCluster, pCause, null);
+					if (DEBUG){
+						Logging.log(this, "          ..first route part: " + tIntraClusterRoutePart);
+					}
+	
+					if(tIntraClusterRoutePart != null){
+						// clone the first part and use it as first part of the result
+						tResult = tIntraClusterRoutePart.clone();
+						
+						/**
+						 * EXAMPLE 1: combine routes (1.4.2 => 1.4.1) AND (1.4.1 => 1.3.2) 
+						 */
+						tResult.append(tSecondRoutePart, pCause);
+						if (DEBUG){
+							Logging.log(this, "          ..resulting route (" + pFrom + " ==> " + pTo + "): " + tResult);
+						}
+						
+						/**
+						 * EXAMPLE 1: the result is a route from 1.4.2 (belonging to 1.4.0) to gateway 1.3.2
+						 */
+					}else{
+						Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tOutgressGatewayFromSourceCluster + " as first part for a route from " + pFrom + " to " + pTo);
+					}
+				}else{
+					Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tAbstractSource + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
+				}
+				
+				if(tResult != null){
+					tResult.extendCause(this + "::getRoutingEntry()");
+				}
+						
+				return tResult;
+			}
+			
+			/**********************************************
 			 * Is the source address more abstract than the destination one?
-			 * EXAMPLE 1: we are searching for a route from 1.3.0 to 1.4.2.  
+			 * EXAMPLE 2: we are searching for a route from 1.3.0 to 1.4.2.  
 			 *********************************************/
 			if(pFrom.getHierarchyLevel() > pTo.getHierarchyLevel()){
 				/**
@@ -5931,11 +5994,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				HRMID tAbstractDestination = pTo.getClusterAddress(pFrom.getHierarchyLevel());
 				
 				if (DEBUG){
-					Logging.log(this, "getRoutingEntryHRG() searches a more abstract route from " + pFrom + " to more abstract destination " + tAbstractDestination);
+					Logging.log(this, "getRoutingEntryHRG() searches a more abstract route from " + pFrom + " to more abstract destination " + tAbstractDestination + "(" + pTo + ")");
 				}
 	
 				/**
-				 * EXAMPLE 1: determine the route from 1.3.0 to 1.4.0
+				 * EXAMPLE 2: determine the route from 1.3.0 to 1.4.0
 				 * 			  (assumption: the found route starts at 1.3.2 and ends at 1.4.1) 
 				 */
 				RoutingEntry tFirstRoutePart = getRoutingEntryHRG(pHRG, pFrom, tAbstractDestination, pCause, null);
@@ -5946,7 +6009,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(tFirstRoutePart != null){
 					HRMID tIngressGatewayToDestinationCluster = tFirstRoutePart.getLastNextHop();
 					/**
-					 * EXAMPLE 1: determine the route from 1.4.1 to 1.4.2
+					 * EXAMPLE 2: determine the route from 1.4.1 to 1.4.2
 					 */
 					RoutingEntry tIntraClusterRoutePart = getRoutingEntryHRG(pHRG, tIngressGatewayToDestinationCluster, pTo, pCause, null);
 					if (DEBUG){
@@ -5958,7 +6021,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						tResult = tFirstRoutePart.clone();
 						
 						/**
-						 * EXAMPLE 1: combine routes (1.3.2 => 1.4.1) AND (1.4.1 => 1.4.2)
+						 * EXAMPLE 2: combine routes (1.3.2 => 1.4.1) AND (1.4.1 => 1.4.2)
 						 */
 						tResult.append(tIntraClusterRoutePart, pCause);
 						if (DEBUG){
@@ -5966,7 +6029,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 						
 						/**
-						 * EXAMPLE 1: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
+						 * EXAMPLE 2: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
 						 */
 					}else{
 						Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
@@ -5986,7 +6049,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 			/*********************************************
 			 * Determine the overall inter-cluster path
-			 *********************************************/ 
+			 *********************************************/
 			List<AbstractRoutingGraphLink> tPath = getRouteHRG(pHRG, pFrom, pTo);
 			AbstractRoutingGraphLink tFirstUsedInterClusterLink = null;
 			if(tPath != null){
@@ -6012,7 +6075,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						/*****************************************************
 						 * Determine the current INTER-cluster route part
 						 ****************************************************/
-						RoutingEntry tInterClusterRoutingEntry = (RoutingEntry)tInterClusterLink.getRoute().getFirst().clone();
+						RoutingEntry tInterClusterRoutingEntry = tInterClusterLink.getRoutingEntry();
 						
 						if(tResult != null){
 							if(tLastClusterGateway == null){
@@ -6368,19 +6431,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 				RoutingTable tResultingRoutingTableViaDirectNeighbor = new RoutingTable();
 
-				LinkedList<AbstractRoutingGraphLink> tDeletedLinks = new LinkedList<AbstractRoutingGraphLink>();
-				LinkedList<LinkedList<AbstractRoutingGraphLink>> tRefDeletedLinks = new LinkedList<LinkedList<AbstractRoutingGraphLink>>();
-				tRefDeletedLinks.clear();
-				tRefDeletedLinks.add(tDeletedLinks);
+				LinkedList<AbstractRoutingGraphLink> tUsedOutgoingLinks = new LinkedList<AbstractRoutingGraphLink>();
+				LinkedList<LinkedList<AbstractRoutingGraphLink>> tRefUsedOutgoingLinks = new LinkedList<LinkedList<AbstractRoutingGraphLink>>();
+				tRefUsedOutgoingLinks.clear();
+				tRefUsedOutgoingLinks.add(tUsedOutgoingLinks);
 
-				/***************************************************************************************************************************************
-				 * Determine all known routes to the found direct neighbor, avoid repeated routes by deleting already used outgoing links from "pFrom"
-				 ***************************************************************************************************************************************/
 				synchronized (mHierarchicalRoutingGraph) {
+					/***************************************************************************************************************************************
+					 * STEP 1: determine all known routes to the found direct neighbor, avoid repeated routes by deleting already used outgoing links from "pFrom"
+					 ***************************************************************************************************************************************/
 					RoutingEntry tEntry = null;
 					int i = 0;
 					do{
-						tEntry = getRoutingEntryHRG(mHierarchicalRoutingGraph, pFromTo, tSibling, pCause, tRefDeletedLinks);
+						tEntry = getRoutingEntryHRG(mHierarchicalRoutingGraph, pFromTo, tSibling, pCause, tRefUsedOutgoingLinks);
 						if(tEntry != null){
 							if(!tResultingRoutingTableViaDirectNeighbor.contains(tEntry)){
 								if(DEBUG){
@@ -6399,29 +6462,101 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 						}
 					}while(tEntry != null);
-				}
-				
-				/**************************************************
-				 * Add again the previously deleted HRG links
-				 **************************************************/
-				if(!tDeletedLinks.isEmpty()){
-					for(AbstractRoutingGraphLink tLink : tDeletedLinks){
-						if(DEBUG){
-//							Logging.log(this, "  ..restoring HRG link: " + tLink);
+					
+					/**************************************************
+					 * STEP 2: add again the previously deleted HRG links
+					 **************************************************/
+					if(!tUsedOutgoingLinks.isEmpty()){
+						for(AbstractRoutingGraphLink tLink : tUsedOutgoingLinks){
+							if(DEBUG){
+	//							Logging.log(this, "  ..restoring HRG link: " + tLink);
+							}
+									
+							/**
+							 * Add all previously deleted used inter-node links again to the HRG
+							 */
+							mHierarchicalRoutingGraph.link((HRMID)tLink.getFirstVertex(), (HRMID)tLink.getSecondVertex(), tLink);
 						}
-								
+					}
+	
+					/******************************************************************************************************************************
+					 * STEP 3: determine the routes from the direct neighbor to the source again - without using the corresponding links of STEP 1
+					 ******************************************************************************************************************************/
+					int tEntryNumber = 0;
+					for(RoutingEntry tRoutingEntryToDirectNeighbor: tResultingRoutingTableViaDirectNeighbor){
+						if(DEBUG){
+							Logging.log(this, "      ..found temporary route to direct neighbor: " + tRoutingEntryToDirectNeighbor);
+						}
+						
 						/**
-						 * Add all previously deleted used inter-node links again to the HRG
+						 * Delete all first used inter-node links from the HRG which use the same next hop
 						 */
-						mHierarchicalRoutingGraph.link((HRMID)tLink.getFirstVertex(), (HRMID)tLink.getSecondVertex(), tLink);
-					}
-				}
+						LinkedList<AbstractRoutingGraphLink> tDeletedLinks = new LinkedList<AbstractRoutingGraphLink>();
+						AbstractRoutingGraphLink tFirstLink = tUsedOutgoingLinks.get(tEntryNumber);
+						RoutingEntry tFirstLinkRoutingEntry = tFirstLink.getRoutingEntry();
+						
+						tDeletedLinks.add(tFirstLink);
+						if(DEBUG){
+							Logging.log(this, "      ..mark as deleted: " + tFirstLink);
+						}
+						mHierarchicalRoutingGraph.unlink(tFirstLink);
+						for(int tParallelEntryNumber = tEntryNumber + 1; tParallelEntryNumber < tResultingRoutingTableViaDirectNeighbor.size(); tParallelEntryNumber++){
+							AbstractRoutingGraphLink tAdditionalLinkToNextHop = tUsedOutgoingLinks.get(tParallelEntryNumber);
+							RoutingEntry tAdditionalLinkToNextHopRoutingEntry = tAdditionalLinkToNextHop.getRoutingEntry();
+							if((tAdditionalLinkToNextHopRoutingEntry.getNextHopL2Address() != null) && (tAdditionalLinkToNextHopRoutingEntry.getNextHopL2Address().equals(tFirstLinkRoutingEntry.getNextHopL2Address()))){
+								tDeletedLinks.add(tAdditionalLinkToNextHop);
+								if(DEBUG){
+									Logging.log(this, "      ..mark as deleted: " + tAdditionalLinkToNextHop);
+								}
+								mHierarchicalRoutingGraph.unlink(tAdditionalLinkToNextHop);
+							}							
+						}
+						
+						
+						/**
+						 * Search for a route from the direct neighbor cluster START (!) back to the source (without using the used links from STEP 1), combine it with the route part from STEP 1 and add the result to the resulting routing table of this function  
+						 */
+						RoutingEntry tSecondRoutePart = getRoutingEntryHRG(tFirstLinkRoutingEntry.getNextHop(), pFromTo, pCause);
+						if(tSecondRoutePart != null){
+							RoutingEntry tResultingEntry = tFirstLinkRoutingEntry.clone();
+							tResultingEntry.append(tSecondRoutePart, this + "getAllLoopRoutingEntriesHRG() for " + pFromTo);
+							
+							// mark as "across the network"
+							tResultingEntry.setRouteAcrossNetwork();
+							
+							// add to the function result
+							tResult.add(tResultingEntry);
+						}else{
+							if(DEBUG){
+								Logging.log(this, "    ..have not found an HRG based route from " + tFirstLinkRoutingEntry.getNextHop() + " to " + pFromTo);
+							}
+						}
 
-				if(DEBUG){
-					for(RoutingEntry tEntry: tResultingRoutingTableViaDirectNeighbor){
-						Logging.log(this, "      ..found route to direct neighbor: " + tEntry);
+						/**
+						 * add again the previously deleted HRG links
+						 */
+						if(!tDeletedLinks.isEmpty()){
+							for(AbstractRoutingGraphLink tLink : tDeletedLinks){
+								if(DEBUG){
+		//							Logging.log(this, "  ..restoring HRG link: " + tLink);
+								}
+										
+								/**
+								 * Add all previously deleted used inter-node links again to the HRG
+								 */
+								mHierarchicalRoutingGraph.link((HRMID)tLink.getFirstVertex(), (HRMID)tLink.getSecondVertex(), tLink);
+							}
+						}
+
+						tEntryNumber++;
+					}// for
+					
+					if(DEBUG){
+						for(RoutingEntry tResultEntry: tResult){
+							Logging.log(this, "      ..found for " + pFromTo + " the loop route: " + tResultEntry);
+						}
 					}
-				}
+				} // synchronized
 			}
 		}
 		
@@ -6446,7 +6581,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						mHierarchicalRoutingGraph.unlink(tLink);
 						
 						if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES){
-							mDescriptionHRGUpdates += "\n -(AUTO_DEL) " + tEndPoints.getFirst() + " to " + tEndPoints.getSecond() + " ==> " + tLink.getRoute().getFirst()  + " <== unregisterAutoHRG()";
+							mDescriptionHRGUpdates += "\n -(AUTO_DEL) " + tEndPoints.getFirst() + " to " + tEndPoints.getSecond() + " ==> " + tLink.getRoutingEntry()  + " <== unregisterAutoHRG()";
 						}
 					}
 				}
@@ -6835,7 +6970,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			if(tPath.size() == 1){
 				AbstractRoutingGraphLink tLink = tPath.get(0);
 				// get the routing entry from the last gateway to the next one
-				tResult = ((RoutingEntry) tLink.getRoute().getFirst()).clone();
+				tResult = tLink.getRoutingEntry();
 			}else{
 				Logging.warn(this, "getRoutingEntryHRG() found a complex intra-cluster route: " + tPath + " from " + pSource + " to " + pDestination);
 			}
