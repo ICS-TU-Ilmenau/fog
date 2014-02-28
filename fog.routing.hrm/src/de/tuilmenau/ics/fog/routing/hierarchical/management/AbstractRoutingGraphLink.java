@@ -132,8 +132,8 @@ public class AbstractRoutingGraphLink implements Serializable
 							if(tDebug){
 								Logging.trace(this, "  ..comparing routes");
 							}
-							RoutingEntry tThisEntry = (RoutingEntry)getRoute().getFirst();
-							RoutingEntry tOtherEntry = (RoutingEntry)tOtherLink.getRoute().getFirst();
+							RoutingEntry tThisEntry = getRoutingEntry();
+							RoutingEntry tOtherEntry = tOtherLink.getRoutingEntry();
 							// compare the routing entries of both instances
 							if(tThisEntry.equals(tOtherEntry)){
 								if(tDebug){
