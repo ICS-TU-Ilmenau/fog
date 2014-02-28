@@ -1480,14 +1480,16 @@ public class ComChannel
 		 */
 		if(mParent instanceof ClusterMember){
 			ClusterMember tParentClusterMember = (ClusterMember)mParent;
-			if(tParentClusterMember.enforcesASSplit()){
-				//Logging.warn(this, "Parent enforces AS-split, packet=" + pPacket);
-				if(pPacket instanceof ISignalingMessageHrmTopologyASSeparator){
-					ISignalingMessageHrmTopologyASSeparator tSignalingMessageASSeparator = (ISignalingMessageHrmTopologyASSeparator)pPacket;
-					if(!tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, new Long(-1 /* some invalid value which differs from the local one */))){
-						//Logging.warn(this, "Dropping packet due to AS-split, packet=" + pPacket);
-						return true;
-					}
+			if(pPacket instanceof ISignalingMessageHrmTopologyASSeparator){
+				ISignalingMessageHrmTopologyASSeparator tSignalingMessageASSeparator = (ISignalingMessageHrmTopologyASSeparator)pPacket;
+				if(!tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, getPeerAsID())){
+					//Logging.warn(this, "Dropping packet due to AS border, packet=" + pPacket);
+					return true;
+				}
+
+				if((tParentClusterMember.enforcesASSplit()) && (!tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, new Long(-1 /* some invalid value which differs from the local one */)))){
+					//Logging.warn(this, "Dropping packet due to AS-split, packet=" + pPacket);
+					return true;
 				}
 			}
 		}
