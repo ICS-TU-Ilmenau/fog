@@ -107,6 +107,9 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 {
+	private static final boolean DEBUG_VERSION = false;
+	private final HRMViewer tThis = this;
+	
 	private static boolean HRM_VIEWER_DEBUGGING = HRMConfig.DebugOutput.GUI_SHOW_VIEWER_STEPS;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = true;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS = true;
@@ -896,24 +899,26 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 1: tool box 
 		 */
-		if(pCoordinator != null) {
-			ToolBar tToolbar = new ToolBar(pParent, SWT.NONE);
-
-			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS){
-				if(!pCoordinator.getHierarchyLevel().isHighest()) {
-					if ((pCoordinator.getCluster().getElector() != null) && (pCoordinator.getCluster().getElector().isWinner()) && (!pCoordinator.isClustered())){
-					    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
-					    toolItem3.setText("[Create cluster]");
-					    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(this, pCoordinator));
+		if(DEBUG_VERSION){
+			if(pCoordinator != null) {
+				ToolBar tToolbar = new ToolBar(pParent, SWT.NONE);
+	
+				if (HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS){
+					if(!pCoordinator.getHierarchyLevel().isHighest()) {
+						if ((pCoordinator.getCluster().getElector() != null) && (pCoordinator.getCluster().getElector().isWinner()) && (!pCoordinator.isClustered())){
+						    ToolItem toolItem3 = new ToolItem(tToolbar, SWT.PUSH);
+						    toolItem3.setText("[Create cluster]");
+						    toolItem3.addListener(SWT.Selection, new ListenerClusterHierarchy(this, pCoordinator));
+						}
 					}
 				}
+	
+			    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
+			    toolItem4.setText("[Create all level " + pCoordinator.getHierarchyLevel().getValue() + " clusters]");
+			    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(this, pCoordinator));
+			    
+			    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 			}
-
-		    ToolItem toolItem4 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem4.setText("[Create all level " + pCoordinator.getHierarchyLevel().getValue() + " clusters]");
-		    toolItem4.addListener(SWT.Selection, new ListenerClusterHierarchyLevel(this, pCoordinator));
-		    
-		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
 		
 		/**
@@ -1552,29 +1557,33 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 */
 		if (GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES){
 			boolean tBackgroundSet = false;
-			if (pEntity instanceof Cluster){
-				Cluster tCluster =(Cluster) pEntity;
-				if ((tCluster.getElector() != null) && (tCluster.getElector().finished())){
-					if(tCluster.hasLocalCoordinator()){
-						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 111));
+			if(pEntity instanceof ClusterMember){
+				ClusterMember tClusterMember = (ClusterMember)pEntity;
+				if(!tClusterMember.enforcesASSplit()){
+					if (pEntity instanceof Cluster){
+						Cluster tCluster =(Cluster) pEntity;
+						if ((tCluster.getElector() != null) && (tCluster.getElector().finished())){
+							if(tCluster.hasLocalCoordinator()){
+								tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 111));
+							}else{
+								tClusterHeadWithoutCoordinator = true;
+								tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 222));
+							}
+							tBackgroundSet = true;
+						}
 					}else{
-						tClusterHeadWithoutCoordinator = true;
-						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 222));
+						tClusterMemberOfInactiveCluster = !tClusterMember.hasClusterValidCoordinator();
+		
+						if(tClusterMemberOfInactiveCluster){
+							tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 222));
+						}else{
+							tClusterLabel.setBackground(new Color(mShell.getDisplay(), 151, 222, 151));
+						}
+		
+						tBackgroundSet = true;
 					}
-					tBackgroundSet = true;
-				}
-			}else{
-				if(pEntity instanceof ClusterMember){
-					ClusterMember tClusterMember = (ClusterMember)pEntity;
-					
-					tClusterMemberOfInactiveCluster = !tClusterMember.hasClusterValidCoordinator();
-
-					if(tClusterMemberOfInactiveCluster){
-						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 111, 222, 222));
-					}else{
-						tClusterLabel.setBackground(new Color(mShell.getDisplay(), 151, 222, 151));
-					}
-
+				}else{
+					tClusterLabel.setBackground(new Color(mShell.getDisplay(), 222, 171, 222));
 					tBackgroundSet = true;
 				}
 			}
@@ -1674,6 +1683,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							sendTrackedAnnounceCoordinator(tCoordinator);
 						}
 					});
+					MenuItem tMenuItem1 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem1.setText("Distribute addresses");
+					tMenuItem1.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							tCoordinator.getCluster().distributeAddresses();
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							tCoordinator.getCluster().distributeAddresses();
+						}
+					});
 				}
 				
 				if(tfControlEntity instanceof ClusterMember){
@@ -1721,6 +1744,34 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							triggerNeighborhoodElection(tClusterMember);
 						}
 					});
+					if(tClusterMember.getHierarchyLevel().isBaseLevel()){
+						MenuItem tMenuItem3 = new MenuItem(tMenu, SWT.NONE);
+						if(tClusterMember.enforcesASSplit()){
+							tMenuItem3.setText("Deactivate AS-split");
+						}else{
+							tMenuItem3.setText("Enforce AS-split");
+						}
+						tMenuItem3.addSelectionListener(new SelectionListener() {
+							boolean tNewState = !tClusterMember.enforcesASSplit();
+							
+							public void widgetDefaultSelected(SelectionEvent pEvent)
+							{
+								//Logging.log(this, "Default selected: " + pEvent);
+								tClusterMember.setASSplit(tNewState, true);
+								
+								// GUI update
+								tThis.startGUIUpdateTimer("");
+							}
+							public void widgetSelected(SelectionEvent pEvent)
+							{
+								//Logging.log(this, "Widget selected: " + pEvent);
+								tClusterMember.setASSplit(tNewState, true);
+
+								// GUI update
+								tThis.startGUIUpdateTimer("");
+							}
+						});
+					}
 				}
 
 				tfContainerName.setMenu(tMenu);
@@ -1786,22 +1837,24 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 1: tool box 
 		 */
-		if(pClusterMember != null) {
-			ToolBar tToolbar = new ToolBar(pParent, SWT.NONE);
-
-			if (HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS){
-				if ((pClusterMember.getElector() != null) && (!pClusterMember.getElector().finished())){
-					ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
-				    toolItem1.setText("[Elect coordinator]");
-				    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(this, pClusterMember));
+		if(DEBUG_VERSION){
+			if(pClusterMember != null) {
+				ToolBar tToolbar = new ToolBar(pParent, SWT.NONE);
+	
+				if (HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS){
+					if ((pClusterMember.getElector() != null) && (!pClusterMember.getElector().finished())){
+						ToolItem toolItem1 = new ToolItem(tToolbar, SWT.PUSH);
+					    toolItem1.setText("[Elect coordinator]");
+					    toolItem1.addListener(SWT.Selection, new ListenerElectCoordinator(this, pClusterMember));
+					}
 				}
+	
+				ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
+			    toolItem2.setText("[Elect all level " + tHierarchyLevel + " coordinators]");
+			    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(this, pClusterMember));
+			    
+			    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 			}
-
-			ToolItem toolItem2 = new ToolItem(tToolbar, SWT.PUSH);
-		    toolItem2.setText("[Elect all level " + tHierarchyLevel + " coordinators]");
-		    toolItem2.addListener(SWT.Selection, new ListenerElectHierarchyLevelCoordinators(this, pClusterMember));
-		    
-		    tToolbar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1));
 		}
 		
 		/**

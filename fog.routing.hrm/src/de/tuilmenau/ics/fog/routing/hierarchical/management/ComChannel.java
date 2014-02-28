@@ -25,6 +25,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageHrmTopologyASSeparator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -1472,6 +1473,23 @@ public class ComChannel
 		if(pPacket == null) {
 			Logging.err(this, "Received invalid null pointer as data");
 			return false;
+		}
+
+		/**
+		 * Drop packet due to AS-Split
+		 */
+		if(mParent instanceof ClusterMember){
+			ClusterMember tParentClusterMember = (ClusterMember)mParent;
+			if(tParentClusterMember.enforcesASSplit()){
+				//Logging.warn(this, "Parent enforces AS-split, packet=" + pPacket);
+				if(pPacket instanceof ISignalingMessageHrmTopologyASSeparator){
+					ISignalingMessageHrmTopologyASSeparator tSignalingMessageASSeparator = (ISignalingMessageHrmTopologyASSeparator)pPacket;
+					if(!tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, new Long(-1 /* some invalid value which differs from the local one */))){
+						//Logging.warn(this, "Dropping packet due to AS-split, packet=" + pPacket);
+						return true;
+					}
+				}
+			}
 		}
 
 		/**

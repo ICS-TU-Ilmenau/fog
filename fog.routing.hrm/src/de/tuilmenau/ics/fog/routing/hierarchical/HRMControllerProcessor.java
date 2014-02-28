@@ -320,7 +320,7 @@ public class HRMControllerProcessor extends Thread
 					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 						Logging.log(this, "\n\n################ CLUSTERING STARTED at hierarchy level: " + pHierarchyLevel);
 					}
-					tTargetCluster.distributeMembershipRequests();
+					tTargetCluster.updateClusterMembers();
 				}
 				
 			}else{

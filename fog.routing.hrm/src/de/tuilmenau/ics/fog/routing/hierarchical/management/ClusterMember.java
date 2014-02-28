@@ -74,6 +74,11 @@ public class ClusterMember extends ClusterName
 	private boolean mWarningDetectLocalSiblingsLocalL0HRMIDInvalid = false;
 	
 	/**
+	 * Stores for an L0 cluster if the network should be split towards the peers
+	 */
+	private boolean mEnforceL0AsSplit = false;
+			
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
@@ -984,7 +989,7 @@ public class ClusterMember extends ClusterName
 			boolean tIsAllowedToEnterNextAS = true;
 			if(pPacket instanceof ISignalingMessageHrmTopologyASSeparator){
 				ISignalingMessageHrmTopologyASSeparator tSignalingMessageASSeparator = (ISignalingMessageHrmTopologyASSeparator)pPacket;
-				tIsAllowedToEnterNextAS = tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, tComChannel.getPeerAsID());				
+				tIsAllowedToEnterNextAS = tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, (enforcesASSplit() ? new Long(-1 /* some invalid value which differs from the local one */) : tComChannel.getPeerAsID()));				
 			}
 
 			/**
@@ -1332,6 +1337,42 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
+	 * Updates the state of the AS-Split
+	 * 
+	 * @param pState the new state
+	 * @param pFindReverseCluster should we search for the remote cluster?
+	 */
+	public void setASSplit(boolean pState, boolean pFindReverseCluster)
+	{
+		if(getHierarchyLevel().isHigherLevel()){
+			Logging.err(this, "AS-split has to be defined at hierarchy level 0");
+			return;
+		}
+		
+		Logging.warn(this, "Setting AS-split to: " + pState);
+		mEnforceL0AsSplit = pState;
+		
+		if(pFindReverseCluster){
+			LinkedList<ClusterMember> tAllClusterMembers = mHRMController.getAllL0ClusterMembers();
+			for(ClusterMember tClusterMember : tAllClusterMembers){
+				if((tClusterMember.getBaseHierarchyLevelNetworkInterface() != null) && (tClusterMember.getBaseHierarchyLevelNetworkInterface().equals(getBaseHierarchyLevelNetworkInterface()))){
+					tClusterMember.setASSplit(pState, false);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Returns the state of the AS-Split
+	 * 
+	 * @return true or false
+	 */
+	public boolean enforcesASSplit()
+	{
+		return mEnforceL0AsSplit;
+	}
+	
+	/**
 	 * Defines the decoration text for the ARG viewer
 	 * 
 	 * @return text for the control entity or null if no text is available
@@ -1369,11 +1410,17 @@ public class ClusterMember extends ClusterName
 	 * @return the complex string
 	 */
 	private String idToString()
-	{
-		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return (getGUICoordinatorID() > 0 ? "Coordinator" + getGUICoordinatorID() : "") + (getCoordinatorNodeL2Address() != null ? ", CoordNode.=" + getCoordinatorNodeL2Address() : "");
-		}else{
-			return (getGUICoordinatorID() > 0 ? "Coordinator" + getGUICoordinatorID() : "") + (getCoordinatorNodeL2Address() != null ? ", CoordNode.=" + getCoordinatorNodeL2Address() : "") + ", HRMID=" + getHRMID().toString();
+	{	
+		String tResult = (getGUICoordinatorID() > 0 ? "Coordinator" + getGUICoordinatorID() : "") + (getCoordinatorNodeL2Address() != null ? ", CoordNode.=" + getCoordinatorNodeL2Address() : ""); 
+				
+		if ((getHRMID() != null) && (!getHRMID().isRelativeAddress())){
+			tResult += ", HRMID=" + getHRMID().toString();
 		}
+		
+		if(mEnforceL0AsSplit){
+			tResult += ", AS-SPLIT";
+		}
+		
+		return tResult;
 	}
 }
