@@ -760,7 +760,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 		
-		synchronized (sPacketOverheadCounterPerLink) {
+		synchronized (sPacketOverheadCounterPerLinkForIP) {
 			sPacketOverheadCounterPerLinkForIP = new HashMap<Bus, HashMap<Class<?>, Integer>>();	
 		}
 	}
@@ -4869,7 +4869,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							for(int i = 0; i < tCntBuss; i++){
 								Bus tBus = tGlobalBusList.get(i);
 								HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLink.get(tBus);
-				
+								if(tPacketsForBus == null){
+									tPacketsForBus = new HashMap<Class<?>, Integer>(); 
+								}
+								
 								Integer tCountAnnounceCoord = tPacketsForBus.get(AnnounceCoordinator.class);
 								if(tCountAnnounceCoord == null){
 									tCountAnnounceCoord = new Integer(0);
@@ -4889,7 +4892,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							for(int i = 0; i < tCntBuss; i++){
 								Bus tBus = tGlobalBusList.get(i);
 								HashMap<Class<?>, Integer> tPacketsForBusForIP = sPacketOverheadCounterPerLinkForIP.get(tBus);
-				
+								if(tPacketsForBusForIP == null){
+									tPacketsForBusForIP = new HashMap<Class<?>, Integer>(); 
+								}
+
 								Integer tIPCountAnnounceCoord = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(AnnounceCoordinator.class) : new Integer(0));
 								if(tIPCountAnnounceCoord == null){
 									tIPCountAnnounceCoord = new Integer(0);
@@ -4909,7 +4915,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							for(int i = 0; i < tCntBuss; i++){
 								Bus tBus = tGlobalBusList.get(i);
 								HashMap<Class<?>, Integer> tPacketsForBus = sPacketOverheadCounterPerLink.get(tBus);
-				
+								if(tPacketsForBus == null){
+									tPacketsForBus = new HashMap<Class<?>, Integer>(); 
+								}
+
 								Integer tCountAnnounceCoord = tPacketsForBus.get(AnnounceCoordinator.class);
 								if(tCountAnnounceCoord == null){
 									tCountAnnounceCoord = new Integer(0);
@@ -4931,6 +4940,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							for(int i = 0; i < tCntBuss; i++){
 								Bus tBus = tGlobalBusList.get(i);
 								HashMap<Class<?>, Integer> tPacketsForBusForIP = sPacketOverheadCounterPerLinkForIP.get(tBus);
+								if(tPacketsForBusForIP == null){
+									tPacketsForBusForIP = new HashMap<Class<?>, Integer>(); 
+								}
 				
 								Integer tIPCountAnnounceCoord = (tPacketsForBusForIP != null ? tPacketsForBusForIP.get(AnnounceCoordinator.class) : new Integer(0));
 								if(tIPCountAnnounceCoord == null){
