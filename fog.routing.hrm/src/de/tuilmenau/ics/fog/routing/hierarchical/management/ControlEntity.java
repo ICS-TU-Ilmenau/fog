@@ -312,7 +312,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				}else{
 					if((getHRMID() != null) && (!getHRMID().isZero())){
 						//throw new RuntimeException(this + "cannot revoke unknown HRMID: " + pHRMID);
-						Logging.err(this, "Cannot revoke unknown HRMID: " + pHRMID + ", own HRMID: " + getHRMID());
+						Logging.warn(this, "Cannot revoke unknown HRMID: " + pHRMID + ", own HRMID: " + getHRMID());
 					}
 				}
 			}else{
