@@ -6378,10 +6378,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			return tResult;
 		}
 
-		/***************************************************************************************************
-		 * Determine all known routes, avoid repeated routes by deleting already used outgoing links from "pFrom"
-		 ***************************************************************************************************/
 		synchronized (mHierarchicalRoutingGraph) {
+			/***************************************************************************************************
+			 * Determine all known routes, avoid repeated routes by deleting already used outgoing links from "pFrom"
+			 ***************************************************************************************************/
 			RoutingEntry tEntry = null;
 			int i = 0;
 			do{
@@ -6404,21 +6404,21 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 			}while(tEntry != null);
-		}
 		
-		/**************************************************
-		 * Add again the previously deleted HRG links
-		 **************************************************/
-		if(!tDeletedLinks.isEmpty()){
-			for(AbstractRoutingGraphLink tLink : tDeletedLinks){
-				if(DEBUG){
-					Logging.log(this, "  ..restoring HRG link: " + tLink);
+			/**************************************************
+			 * Add again the previously deleted HRG links
+			 **************************************************/
+			if(!tDeletedLinks.isEmpty()){
+				for(AbstractRoutingGraphLink tLink : tDeletedLinks){
+					if(DEBUG){
+						Logging.log(this, "  ..restoring HRG link: " + tLink);
+					}
+							
+					/**
+					 * Add all previously deleted used inter-node links again to the HRG
+					 */
+					mHierarchicalRoutingGraph.link((HRMID)tLink.getFirstVertex(), (HRMID)tLink.getSecondVertex(), tLink);
 				}
-						
-				/**
-				 * Add all previously deleted used inter-node links again to the HRG
-				 */
-				mHierarchicalRoutingGraph.link((HRMID)tLink.getFirstVertex(), (HRMID)tLink.getSecondVertex(), tLink);
 			}
 		}
 		
