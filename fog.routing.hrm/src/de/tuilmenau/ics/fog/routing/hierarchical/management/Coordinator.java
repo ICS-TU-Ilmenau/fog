@@ -73,6 +73,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	private long mSentAnnounces = 0;
 	
 	/**
+	 * Stores if COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY is used
+	 */
+	private boolean mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = false;	
+	
+	/**
 	 * Stores how many invalidations were already sent
 	 */
 	private long mSentInvalidations = 0;
@@ -1217,12 +1222,20 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					distributeCoordinatorAnnouncement(false);
 				}
 				
-				if(mSentAnnounces < HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_THRESHOLD){
+				if(mHRMController.getTimeWithStableHierarchy() < HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME * 2 + HRMConfig.Hierarchy.MAX_E2E_DELAY){
+					if(mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
+						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = false;
+						Logging.warn(this, "Announcements - switching back to COORDINATOR_ANNOUNCEMENTS_INTERVAL");
+					}
 					// register next trigger for 
 					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL, this);
 				}else{
+					if(!mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
+						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = true;
+						Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY");
+					}
 					// register next trigger for 
-					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LONG_TERM_FACTOR, this);
+					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY, this);
 				}
 			}
 		}else{

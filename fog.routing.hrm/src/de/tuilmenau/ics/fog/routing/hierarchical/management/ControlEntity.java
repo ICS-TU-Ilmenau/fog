@@ -744,7 +744,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			/**
 			 * Refresh the coordinator proxy
 			 */
-			tCoordinatorProxy.refresh(pAnnounceCoordinator);
+			tCoordinatorProxy.refreshTimeout(pAnnounceCoordinator);
 			
 			/**
 			 * Storing the route to the announced remote coordinator
@@ -897,7 +897,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			CoordinatorAsClusterMember tComparedCoordinatorAsClusterMember = (CoordinatorAsClusterMember)pObj;
 			if ((tThisCoordinatorAsClusterMember.getCoordinator().equals(tComparedCoordinatorAsClusterMember.getCoordinator())) && 
 				(tThisCoordinatorAsClusterMember.getCoordinatorNodeL2Address().equals(tComparedCoordinatorAsClusterMember.getCoordinatorNodeL2Address())) &&
-				(tThisCoordinatorAsClusterMember.getRemoteClusterName().getClusterID().longValue() == tComparedCoordinatorAsClusterMember.getRemoteClusterName().getClusterID().longValue())){
+				(tThisCoordinatorAsClusterMember.getRemoteClusterName().getClusterID().longValue() == tComparedCoordinatorAsClusterMember.getRemoteClusterName().getClusterID().longValue())
+			){
 				if(DEBUG_EQUALS){
 					Logging.log(this, "  ..true!");
 				}

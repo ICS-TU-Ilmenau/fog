@@ -132,6 +132,11 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	private boolean mPacketTracking = false;
 	
 	/**
+	 * Defines the lifetime of this announcement in [s]. Allowed values are between 0 and 255.
+	 */
+	private double mLifetime = 0;
+	
+	/**
 	 * Constructor for getDefaultSize()
 	 */
 	private AnnounceCoordinator()
@@ -151,6 +156,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
+		mLifetime = calcLifetime(pHRMController);
+		
 		setSenderEntityName(pSenderClusterName);
 
 		setSenderEntityNodeL2Address(pCoordinatorNodeL2Address);
@@ -169,6 +176,18 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
 		}
+	}
+	
+	private double calcLifetime(HRMController pHRMController)
+	{
+		double tResult = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
+
+		if((pHRMController != null) && (pHRMController.getTimeWithStableHierarchy() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME)){
+			//Logging.err(this, "Using higher lifetime here");
+			tResult = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY +  + HRMConfig.Hierarchy.MAX_E2E_DELAY;
+		}
+
+		return tResult;
 	}
 	
 	/**
@@ -262,6 +281,16 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		}
 
 		return tResult;
+	}
+	
+	/**
+	 * Returns the lifetime of this announcement
+	 * 
+	 * @return the lifetime
+	 */
+	public double getLifetime()
+	{
+		return mLifetime;
 	}
 	
 	/**
@@ -438,6 +467,9 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		// packet tracking
 		tResult.mPacketTracking = mPacketTracking;
 		
+		// lifetime value
+		tResult.mLifetime = mLifetime;
+		
 		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
 		return tResult;
@@ -458,6 +490,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageHrmTopologyUpdate]
 		 * 		TTL					     	= 2
+		 * 		Lifetime					= 1
 		 * 		RouteHopCount 			 	= 2
 		 * 		EnteredSidewardForwarding 	= 1
 		 * 		PassedNodes.length    	 	= 1
@@ -493,6 +526,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageHrmTopologyUpdate]
 		 * 		TTL					     	= 2
+		 * 		Lifetime					= 1
 		 *		RouteHopCount 			 	= 2
 		 *		EnteredSidewardForwarding 	= 1
 		 *
@@ -509,6 +543,10 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 			Logging.log("   ..resulting size: " + tResult);
 		}
 		tResult += 2; // TTL: use only 2 bytes here
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += 1; // Lifetime: use only 1 byte here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}

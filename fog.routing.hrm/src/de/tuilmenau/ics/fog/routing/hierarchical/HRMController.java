@@ -379,6 +379,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static boolean GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
 
 	/**
+	 * Stores the simulation time of the last AnnounceCoordinator, which had impact on the locally stored hierarchy structure
+	 */
+	private static double mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+
+	/**
 	 * Stores the simulation time of the last AnnounceCoordinator, which had impact on the current hierarchy structure
 	 * This value is not part of the concept. It is only used for debugging purposes and measurement speedup. 
 	 */
@@ -917,7 +922,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 			Logging.log(this, "##### Reseting AnnounceCoordinator mechanism");
 			GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = true;
-			double tTimeWithFixedHierarchyDataThreshold = HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 0.5 /* make sure that we don't hit the timer */; 
+			double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + 1.0 /* avoid that we hit the timer */; 
 			sNextCheckForDeprecatedCoordinatorProxies = getSimulationTime() + tTimeWithFixedHierarchyDataThreshold;
 			eventHierarchyDataChanged();
 		}else{
@@ -1810,7 +1815,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				
 				tNewEntry = true;
 			}else{
-				Logging.err(this, "CoordinatorAsClusterMember already known: " + pCoordinatorAsClusterMember);
+				Logging.err(this, "CoordinatorAsClusterMember already known: " + pCoordinatorAsClusterMember + ", knowing these entries:");
+				for (CoordinatorAsClusterMember tCoordinatorAsClusterMember : mLocalCoordinatorAsClusterMemebers){
+					Logging.err(this, "  ..: " + tCoordinatorAsClusterMember);
+				}
 			}
 		}
 		
@@ -3585,6 +3593,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns the time for which the hierarchy remains stable
+	 * 
+	 * @return the time with stable hierarchy
+	 */
+	public double getTimeWithStableHierarchy()
+	{
+		if(mSimulationTimeOfLastCoordinatorAnnouncementWithImpact == 0){
+			return 0;
+		}else{
+			return getSimulationTime() - mSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+		}
+	}
+	
+	/**
 	 * EVENT: hierarchy data changed
 	 */
 	private void eventHierarchyDataChanged()
@@ -3592,8 +3614,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Refresh the stored simulation time describing when the last AnnounceCoordinator packet had impact on the hierarchy
 		 */
-		sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = getSimulationTime();
-		
+		mSimulationTimeOfLastCoordinatorAnnouncementWithImpact = getSimulationTime();
+		sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = mSimulationTimeOfLastCoordinatorAnnouncementWithImpact; 
+				
 		if(!mWarnedAboutHierarchyChange){
 			/**
 			 * If GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS is deactivated and the topology changes, we have deactivated the 
@@ -4420,15 +4443,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Auto-deactivates AnnounceCoordinator packets.
+	 * Auto-detect a stable hierarchy.
 	 * This function is only useful for measurement speedup or to ease debugging. It is neither part of the concept nor it is used to derive additional data. It only reduces packet overhead in the network.
 	 */
-	private void autoDeactivateAnnounceCoordinatorMechanism()
+	private void autoDetectStableHierarchy()
 	{
 		if(!FOUND_GLOBAL_ERROR){
 			if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
 				double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-				double tTimeWithFixedHierarchyDataThreshold = HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 1.0 /* avoid that we hit the threshold value */;
+				double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + 1.0 /* avoid that we hit the threshold value */;
 				//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
 				if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
 					if(!hasAnyControllerPendingPackets()){
@@ -4497,7 +4520,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(!FOUND_GLOBAL_ERROR){
 			if(sSimulationTimeOfLastAddressAssignmenttWithImpact != 0){
 				double tTimeWithFixedAddresses = getSimulationTime() - sSimulationTimeOfLastAddressAssignmenttWithImpact;
-				double tTimeWithFixedAddressesThreshold = HRMConfig.Hierarchy.COORDINATOR_TIMEOUT + 1.0 /* avoid that we hit the threshold value */;
+				double tTimeWithFixedAddressesThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + 1.0 /* avoid that we hit the threshold value */;
 				//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
 				if(tTimeWithFixedAddresses > tTimeWithFixedAddressesThreshold){
 					if(!GUI_USER_CTRL_REPORT_TOPOLOGY){
@@ -5199,7 +5222,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * auto-deactivate AnnounceCoordinator broadcast
 		 */
-		autoDeactivateAnnounceCoordinatorMechanism();
+		autoDetectStableHierarchy();
 		
 		/**
 		 * auto-remove old CoordinatorProxies

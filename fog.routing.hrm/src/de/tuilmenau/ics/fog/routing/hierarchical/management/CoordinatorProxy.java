@@ -108,9 +108,9 @@ public class CoordinatorProxy extends ClusterMember
 			// register at HRMController's internal database
 			mHRMController.unregisterCoordinatorProxy(this);
 			
-			Logging.warn(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
+			Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
 			mHRMController.cluster(this, tSuperiorClusterLevel);
-			Logging.warn(this, "     ..re-clustering triggered");
+			Logging.log(this, "     ..re-clustering triggered");
 		}else{
 			Logging.warn(this, "This CoordinatorProxy is already invalid");
 		}
@@ -156,11 +156,11 @@ public class CoordinatorProxy extends ClusterMember
 	 * 
 	 * @param pAnnounceCoordinatorPacket the current announce packet
 	 */
-	public void refresh(AnnounceCoordinator pAnnounceCoordinatorPacket)
+	public void refreshTimeout(AnnounceCoordinator pAnnounceCoordinatorPacket)
 	{
 		mLastAnnounceCoordinator = (AnnounceCoordinator)pAnnounceCoordinatorPacket.duplicate();
 		
-		mTimeout = mHRMController.getSimulationTime() + HRMConfig.Hierarchy.COORDINATOR_TIMEOUT;
+		mTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getLifetime();
 	}
 	
 	/**

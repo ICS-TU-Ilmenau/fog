@@ -93,7 +93,7 @@ public class Config
 		/**
 		 * Defines if message are logged to the console widget. 
 		 */
-		public static final boolean LOG_MESSAGES = false;
+		public static final boolean LOG_MESSAGES = true;
 
 		public Level LOG_LEVEL = Level.TRACE;
 		

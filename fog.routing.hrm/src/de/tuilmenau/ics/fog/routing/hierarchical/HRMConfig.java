@@ -263,7 +263,7 @@ public class HRMConfig
 		/**
 		 * Defines how long the packets overhead is measured until the statistics are written to the log file
 		 */
-		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 60;
+		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 5 * 60;
 	}
 	
 	/**
@@ -307,38 +307,19 @@ public class HRMConfig
 		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
 
 		/**
-		 * Defines the base time period for CoordinatorAnnounce distributions. Depending on this value, the following announce periods will be calculated as follows:
-		 * 		announce 				time period
-		 * 			1						x * 1
-		 * 			2						x * 2
-		 *          :						  :	
-		 * 			t						x * t
-		 * 	  	(t + 1)						x * f 
-		 * 	  	(t + 2)						x * f 
-		 *  		:						  :
-		 *  
-		 *  x = COORDINATOR_ANNOUNCEMENTS_INTERVAL
-		 *  t = COORDINATOR_ANNOUNCEMENTS_INITIAL_THRESHOLD
-		 *  f = COORDINATOR_ANNOUNCEMENTS_INTERVAL_LONG_TERM_FACTOR
-		 *  
-		 * measured in: [s]
+		 * Defines the base time period for CoordinatorAnnounce broadcasts in [s]
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 2.0; // default: 2.0
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 2.0; // default: 2
 		
 		/**
-		 * Defines how many initial announces should be sent.
+		 * Defines the time period for CoordinatorAnnounce broadcasts, which are sent when the hierarchy was detected as stable, in [s]
 		 */
-		public static final long COORDINATOR_ANNOUNCEMENTS_INITIAL_THRESHOLD = 10;
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = 30.0; // default: 30
 
 		/**
-		 * Defines the factor for long-term announces.
+		 * Defines the time period for a stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY.
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LONG_TERM_FACTOR = 1;
-
-		/**
-		 * Defines the default timeout for a coordinator proxy. If the proxy doesn't get any refresh in the defined time period, the proxy gets deleted.
-		 */
-		public static final double COORDINATOR_TIMEOUT = COORDINATOR_ANNOUNCEMENTS_INTERVAL * 2; 
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME = 10.0; // default: 10
 
 		/**
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
@@ -361,7 +342,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 1;
+		public static final long RADIUS = 0;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
@@ -417,6 +398,11 @@ public class HRMConfig
 		 * measured in: [s]
 		 */
 		public static final double CONNECT_TIMEOUT = 3.0; // default: 3.0
+
+		/**
+		 * Describes the max. expected E2E delay in [s]
+		 */
+		public static final double MAX_E2E_DELAY = 1;
 	}
 	
 	/**
