@@ -1222,7 +1222,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					distributeCoordinatorAnnouncement(false);
 				}
 				
-				if(mHRMController.getTimeWithStableHierarchy() < HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME * 2 + HRMConfig.Hierarchy.MAX_E2E_DELAY){
+				if(mHRMController.getTimeWithStableHierarchy() < HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME + HRMConfig.Hierarchy.MAX_E2E_DELAY){
 					if(mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
 						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = false;
 						Logging.warn(this, "Announcements - switching back to COORDINATOR_ANNOUNCEMENTS_INTERVAL");
