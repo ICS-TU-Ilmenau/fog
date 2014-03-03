@@ -1318,14 +1318,14 @@ public class Cluster extends ClusterMember
 					 ************************************/
 					synchronized (tOldInferiorRemoteCoordinators) {
 						for(CoordinatorProxy tCoordintorProxy : tOldInferiorRemoteCoordinators){
-							Logging.warn(this, "Found inferior remote coordinator behind proxy: " + tCoordintorProxy);
+							Logging.log(this, "Found inferior remote coordinator behind proxy: " + tCoordintorProxy);
 							
 							if(!tCoordintorProxy.isThisEntityValid()){
-								Logging.warn(this, "Found invalided coordinator proxy: " + tCoordintorProxy);
+								Logging.log(this, "Found invalided coordinator proxy: " + tCoordintorProxy);
 								ComChannel tComChannelToRemoteCoordinator = getComChannelToMember(tCoordintorProxy);
 								if(tComChannelToRemoteCoordinator != null){
-									Logging.warn(this, "   ..comm. channel is: " + tComChannelToRemoteCoordinator);
-									Logging.warn(this, "   ..deactivating membership of: " + tCoordintorProxy);
+									Logging.log(this, "   ..comm. channel is: " + tComChannelToRemoteCoordinator);
+									Logging.log(this, "   ..deactivating membership of: " + tCoordintorProxy);
 									eventClusterMemberLost(tComChannelToRemoteCoordinator, this + "updateClusterMembers()");
 									
 									tChanges = true;
