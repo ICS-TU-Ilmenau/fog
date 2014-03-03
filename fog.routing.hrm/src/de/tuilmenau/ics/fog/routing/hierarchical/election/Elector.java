@@ -1754,11 +1754,15 @@ public class Elector implements Localization
 	 */
 	private void sendANNOUNCE(ComChannel pComChannel)
 	{
-		// create the packet
-		ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
-
-		// send message
-		pComChannel.sendPacket(tElectionAnnounceWinnerPacket);
+		if(mParent.getCoordinator() != null){
+			// create the packet
+			ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+	
+			// send message
+			pComChannel.sendPacket(tElectionAnnounceWinnerPacket);
+		}else{
+			Logging.err(this, "Parent coordinator is invalid, aborting sendANNOUNCE()");
+		}
 	}
 	
 	/**
