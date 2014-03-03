@@ -46,6 +46,7 @@ public class HRMOverviewConfig extends ViewPart
 	private static final String TEXT_CFG_HIER_HEIGHT		= "Hierarchy height: ";
 	private static final String TEXT_CFG_HIER_RADIUS		= "Clustering radius: ";
 	private static final String TEXT_CFG_ROUTING_ENFORCE_BE = "Enforce BE routing: ";
+	private static final String TEXT_CFG_HIERARCHY_DETECT_GW = "Auto-detect gateways";
 	private static final String TEXT_CFG_HIER_BITS_PER_LVL	= "Address width: ";
 	private static final String TEXT_CFG_DBG_CHANNEL_STORAGE= "Channel packet storage: "; // in packets
 	private static final String TEXT_CFG_DBG_HRM_VIEWER_INT	= "HRMViewer update interval: "; // in s
@@ -57,6 +58,7 @@ public class HRMOverviewConfig extends ViewPart
 	private Label mConfigHierarchyHeight = null;
 	private Label mConfigHierarchyExpansionRadius = null;
 	private Label mConfigRoutingEnforceBERouting = null;
+	private Label mConfigHierarchyAutoDetectGateways = null;
 	private Label mConfigHierarchyBitsPerLevel = null;
 	private Label mConfigDebugChannelStorage = null;
 	private Label mConfigDebugHRMViewerUpdateInterval = null;
@@ -125,6 +127,8 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigHierarchyHeight.setText(Integer.toString(HRMConfig.Hierarchy.HEIGHT) + " level(s)");
 		mConfigHierarchyExpansionRadius.setText(Long.toString(HRMConfig.Hierarchy.RADIUS) + " hop(s)");
 		mConfigHierarchyExpansionRadius.setFont(mBigFont);
+		mConfigHierarchyAutoDetectGateways.setText(Boolean.toString(HRMConfig.Hierarchy.AUTO_DETECT_AND_SEPRATE_GATEWAYS));
+		mConfigHierarchyAutoDetectGateways.setFont(mBigFont);
 		mConfigRoutingEnforceBERouting.setText(Boolean.toString(HRMController.ENFORCE_BE_ROUTING));
 		mConfigRoutingEnforceBERouting.setFont(mBigFont);
 		mConfigHierarchyBitsPerLevel.setText(Integer.toString(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL) + " bits/lvl");
@@ -259,6 +263,7 @@ public class HRMOverviewConfig extends ViewPart
 
 		mConfigHierarchyExpansionRadius = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_RADIUS);
 		mConfigRoutingEnforceBERouting = createPartControlLine(tGrpConfig, TEXT_CFG_ROUTING_ENFORCE_BE);
+		mConfigHierarchyAutoDetectGateways = createPartControlLine(tGrpConfig, TEXT_CFG_HIERARCHY_DETECT_GW);
 		mConfigReportSharePhaseTimeBase = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIME_BASE);
 		mConfigReportSharePhaseTimingScheme = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIMING_SCHEME);
 		mConfigHierarchyAnnounceCoordinatorsInterval = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_ANC_COORD_INT);
