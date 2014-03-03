@@ -542,20 +542,24 @@ public class ComSession extends Session
 	{
 		ComChannel tResult = null;
 		
-		LinkedList<ComChannel> tComChannels = getAllComChannels();
-		for (ComChannel tComChannel : tComChannels){
-			ControlEntity tParent = tComChannel.getParent();
-			ClusterName tRemoteName = tComChannel.getRemoteClusterName();
-			
-			if((tParent.getClusterID().longValue() == pDestinationClusterName.getClusterID().longValue()) && 
-			   (tParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
-			   ((tParent.getCoordinatorID() == pDestinationClusterName.getCoordinatorID()) || (tParent.getCoordinatorID() < 1) || (pDestinationClusterName.getCoordinatorID() < 1) || (tParent instanceof Cluster /* a higher cluster receives a packet from one of its members (CoordinatorAsClusterMember) and the local coordinator changed since the comm. channel creation */)) &&
-			   (tRemoteName.getClusterID().longValue() == pSourceClusterName.getClusterID().longValue()) && 
-			   (tRemoteName.getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel())) &&
-			   ((tRemoteName.getCoordinatorID() == pSourceClusterName.getCoordinatorID()) || (tRemoteName.getCoordinatorID() < 1) || (pSourceClusterName.getCoordinatorID() < 1) || (tParent instanceof CoordinatorAsClusterMember /* a higher cluster sends a packet to one of its members (CoordinatorAsClusterMember) and the remote coordinator changed since the comm. channel creation */))
-			   ) {
-				tResult = tComChannel;
-				break;
+		if(pSourceClusterName != null){
+			LinkedList<ComChannel> tComChannels = getAllComChannels();
+			for (ComChannel tComChannel : tComChannels){
+				ControlEntity tParent = tComChannel.getParent();
+				ClusterName tRemoteName = tComChannel.getRemoteClusterName();
+				
+				if(tRemoteName != null){
+					if((tParent.getClusterID().longValue() == pDestinationClusterName.getClusterID().longValue()) && 
+					   (tParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
+					   ((tParent.getCoordinatorID() == pDestinationClusterName.getCoordinatorID()) || (tParent.getCoordinatorID() < 1) || (pDestinationClusterName.getCoordinatorID() < 1) || (tParent instanceof Cluster /* a higher cluster receives a packet from one of its members (CoordinatorAsClusterMember) and the local coordinator changed since the comm. channel creation */)) &&
+					   ((pSourceClusterName.getClusterID() != null) && (tRemoteName.getClusterID().longValue() == pSourceClusterName.getClusterID().longValue())) && 
+					   (tRemoteName.getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel())) &&
+					   ((tRemoteName.getCoordinatorID() == pSourceClusterName.getCoordinatorID()) || (tRemoteName.getCoordinatorID() < 1) || (pSourceClusterName.getCoordinatorID() < 1) || (tParent instanceof CoordinatorAsClusterMember /* a higher cluster sends a packet to one of its members (CoordinatorAsClusterMember) and the remote coordinator changed since the comm. channel creation */))
+					   ) {
+						tResult = tComChannel;
+						break;
+					}
+				}
 			}
 		}
 		
