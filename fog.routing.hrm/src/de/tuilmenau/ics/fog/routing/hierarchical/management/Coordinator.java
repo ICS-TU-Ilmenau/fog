@@ -982,9 +982,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						Logging.log(this, "       ..membership[" + i + "]: " + tCoordinatorAsClusterMember);
 						i++;
 					}				
+					int j = 0;
 					while(mClusterMemberships.size() > 0) {
 						CoordinatorAsClusterMember tCoordinatorAsClusterMember = mClusterMemberships.getLast();
+						if(j > 32){
+							Logging.warn(this, "       ..invalidating membership[" + j + "]: " + tCoordinatorAsClusterMember);
+						}else{
+							Logging.log(this, "       ..invalidating membership[" + j + "]: " + tCoordinatorAsClusterMember);
+						}
 						tCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
+						j++;
 					}
 				}
 			}else{

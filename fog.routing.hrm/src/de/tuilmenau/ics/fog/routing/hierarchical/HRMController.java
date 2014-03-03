@@ -797,7 +797,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				
 		if(tResult == 0){
 			if(tHRMController != null){
-				Logging.warn(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found a zero result (" + tHRMController.getSimulationTime() + " - " + sPacketOverheadMeasurementStart + ")");  
+				Logging.log(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found a zero result (" + tHRMController.getSimulationTime() + " - " + sPacketOverheadMeasurementStart + ")");  
 			}
 		}
 
