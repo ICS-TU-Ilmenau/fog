@@ -553,7 +553,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											}
 										}else{
 											if(!HRMController.FOUND_GLOBAL_ERROR){
-												Logging.err(this, "sharePhase() for " + tPeerHRMID + " detected a shared route from " + (superiorCoordinatorComChannel() != null ? superiorCoordinatorComChannel().getPeerHRMID() : "null") + ", which does not start in this cluster: " + tReceivedSharedRoutingEntry);
+												Logging.err(this, "sharePhase() for " + tPeerHRMID + " detected a shared route from \"" + (superiorCoordinatorComChannel() != null ? superiorCoordinatorComChannel().getPeerHRMID() : "null") + "\", which does not start in this cluster: " + tReceivedSharedRoutingEntry);
 											}
 										}
 									}
@@ -1479,20 +1479,29 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
 					Logging.log(this, "    ..creating new local cluster membership for: " + pRemoteClusterName + ", remote node: " + pSourceComSession.getPeerL2Address());
 				}
-				CoordinatorAsClusterMember tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
 				
-				/**
-				 * Create the communication channel for the described cluster member
-				 */
-				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-					Logging.log(this, "     ..creating communication channel");
+				// search for an already existing membership
+				CoordinatorAsClusterMember tClusterMembership = getMembership(pRemoteClusterName);
+				if(tClusterMembership != null){
+					tResult = tClusterMembership.getComChannel(pRemoteClusterName);
+					Logging.warn(this, "Received a ClusterMemberShipRequest more than once for: " + tClusterMembership);
+				}else{
+					// create a new one
+					tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
+
+					/**
+					 * Create the communication channel for the described cluster member
+					 */
+					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+						Logging.log(this, "     ..creating communication channel");
+					}
+					tResult = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
+
+					/**
+					 * Set the remote ClusterName of the communication channel
+					 */
+					tResult.setRemoteClusterName(pRemoteClusterName);
 				}
-				tResult = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
-		
-				/**
-				 * Set the remote ClusterName of the communication channel
-				 */
-				tResult.setRemoteClusterName(pRemoteClusterName);
 			}
 		}else{
 			Logging.log(this, "eventClusterMembershipRequest() aborted because coordinator role is already invalidated");
@@ -1610,21 +1619,21 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
-	 * Checks if a membership to a given cluster does already exist 
+	 * Returns the membership to a given cluster if it exists 
 	 * 
 	 * @param pCluster the ClusterName of a cluster for which the membership is searched
 	 */
-	private boolean hasMembership(ClusterName pCluster)
+	private CoordinatorAsClusterMember getMembership(ClusterName pCluster)
 	{
-		boolean tResult = false;
+		CoordinatorAsClusterMember tResult = null;
 		
 		//Logging.log(this, "Checking cluster membership for: " + pCluster);
 		synchronized (mClusterMemberships) {
 			for(CoordinatorAsClusterMember tClusterMembership : mClusterMemberships){
 				//Logging.log(this, "       ..cluster membership: " + tClusterMembership);
 				//Logging.log(this, "         ..comm. channels: " + tClusterMembership.getComChannels());
-				if(tClusterMembership.hasComChannel(pCluster)){
-					tResult = true;
+				if((tClusterMembership.getRemoteClusterName() != null)  && (tClusterMembership.getRemoteClusterName().equals(pCluster))){
+					tResult = tClusterMembership;
 					break;
 				}
 			}
@@ -1642,7 +1651,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// search for an existing cluster at this hierarchy level
 		Cluster tSuperiorCluster = mHRMController.getCluster(getHierarchyLevel().getValue() + 1);
 		
-		return ((getHierarchyLevel().isHighest()) || ((tSuperiorCluster != null) && (hasMembership(tSuperiorCluster))));
+		return ((getHierarchyLevel().isHighest()) || ((tSuperiorCluster != null) && (getMembership(tSuperiorCluster) != null)));
 	}
 
 	/**

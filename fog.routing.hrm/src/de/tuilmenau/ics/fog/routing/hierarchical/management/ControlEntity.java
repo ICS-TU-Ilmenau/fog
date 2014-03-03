@@ -354,19 +354,20 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
-	 * Returns if a comm. channel to the given control entity does exist
+	 * Returns the comm. channel towards the given remote entity
 	 * 
 	 * @param pPeer the peer to which a comm. channel is searched
 	 * 
-	 * @return true or false
+	 * @return the comm. channel
 	 */
-	protected boolean hasComChannel(ControlEntity pPeer)
+	protected ComChannel getComChannel(ClusterName pPeer)
 	{
-		boolean tResult = false;
+		ComChannel tResult = null;
 		
 		for(ComChannel tComChannel : getComChannels()){
 			if(tComChannel.getRemoteClusterName().equals(pPeer)){
-				tResult = true;
+				tResult = tComChannel;
+				break;
 			}
 		}
 		
