@@ -328,6 +328,11 @@ public class HRMConfig
 		public static final boolean PERIODIC_COORDINATOR_ANNOUNCEMENTS = true;
 
 		/**
+		 * Defines if the cluster should detect automatically all gateways and separate them as autonomous L1 cluster
+		 */
+		public static final boolean AUTO_DETECT_AND_SEPRATE_GATEWAYS = true;
+		
+		/**
 		 * This defines the amount of hierarchical levels in the simulation.
 		 * A maximum value of 5 is allowed.
 		 */
@@ -342,7 +347,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 0;
+		public static final long RADIUS = 12;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level

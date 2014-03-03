@@ -1034,6 +1034,30 @@ public class Cluster extends ClusterMember
 			mElector.eventLostCandidate(pComChannel);
 		}
 		
+		eventNumberOfMembersChanged();
+	}
+
+	/**
+	 * EVENT: number of members have changed
+	 */
+	private void eventNumberOfMembersChanged()
+	{
+		if(getHierarchyLevel().isBaseLevel()){
+			if(HRMConfig.Hierarchy.AUTO_DETECT_AND_SEPRATE_GATEWAYS){
+				if(countConnectedRemoteClusterMembers() > 1){
+					if(!enforcesASSplit()){
+						Logging.warn(this, "This node is gateway - separate this cluster also as own L1 cluster");
+						setASSplit(true, true);
+					}
+				}else{
+					if(enforcesASSplit()){
+						Logging.warn(this, "This node is not anymore a gateway - merge the superior L1 cluster with the surrounding");
+						setASSplit(false, true);
+					}
+				}
+			}
+		}
+		
 		// it's time to update the GUI
 		mHRMController.notifyGUI(this);
 	}
@@ -1167,8 +1191,7 @@ public class Cluster extends ClusterMember
 			Logging.log(this, "Coordinator missing, we cannot assign a new HRMID to the joined cluster member behind comm. channel: " + pComChannel);
 		}
 		
-		// it's time to update the GUI
-		mHRMController.notifyGUI(this);
+		eventNumberOfMembersChanged();
 	}
 
 	/**
