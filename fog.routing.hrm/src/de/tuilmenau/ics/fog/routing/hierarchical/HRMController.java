@@ -3503,6 +3503,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Determines the connectivity of this node
+	 * 
+	 * @return the connectivity of the node 
+	 */
+	public long getConnectivity()
+	{
+		long tResult = 0;
+		
+		synchronized (mNodeConnectivityPriority) {
+			tResult = (mNodeConnectivityPriority / ElectionPriority.OFFSET_FOR_CONNECTIVITY);
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Sets new connectivity node priority for Election processes
 	 * 
 	 * @param pCausingNetworkInterface the causing network interface

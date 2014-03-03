@@ -1001,6 +1001,17 @@ public class ClusterMember extends ClusterName
 			}
 			
 			/**
+			 * check for AnnounceCoordinator if the peer is located behind a network one-way
+			 */
+			boolean tAvoidAnnounceCoordinatorToOneWay = false;
+			if(pPacket instanceof AnnounceCoordinator){
+				if ((mHRMController.getConnectivity() > 1) && (tComChannel.getPeerConnectivity() == 1)){
+					tAvoidAnnounceCoordinatorToOneWay = true;
+				}
+						
+			}
+			
+			/**
 			 * is this packet allowed to enter the next AS behind this comm. channel?
 			 */
 			if(tIsAllowedToEnterNextAS){
@@ -1009,41 +1020,46 @@ public class ClusterMember extends ClusterName
 				 */
 				if(tIsAllowedToUseThisChannel){
 					/**
-					 * should we deliver this packet to the destination node behind this comm. channel?
+					 * avoid to send AnnounceCoordinator broadcasts into network one-ways
 					 */
-					if((pExcludeL2Addresses == null /* excluded peer address is null => we send everywhere */) || (!pExcludeL2Addresses.contains(tComChannel.getPeerL2Address()) /* should the peer be excluded? */)){
-						if (DEBUG){
-							if (!tIsLoopback){
-								Logging.log(this, "  ..to " + tComChannel + ", excluded: " + pExcludeL2Addresses);
-							}else{
-								Logging.log(this, "  ..to LOOPBACK " + tComChannel);
-							}
-						}
-			
+					if(!tAvoidAnnounceCoordinatorToOneWay){
 						/**
-						 * should we deliver this packet to the loopback destination behind this comm. channel?
+						 * should we deliver this packet to the destination node behind this comm. channel?
 						 */
-						if ((pIncludeLoopback) || (!tIsLoopback)){
-							if(tComChannel.isOpen()){
-								SignalingMessageHrm tNewPacket = pPacket.duplicate();
-								if (DEBUG){
-									Logging.log(this, "      ..sending duplicate packet: " + tNewPacket);
+						if((pExcludeL2Addresses == null /* excluded peer address is null => we send everywhere */) || (!pExcludeL2Addresses.contains(tComChannel.getPeerL2Address()) /* should the peer be excluded? */)){
+							if (DEBUG){
+								if (!tIsLoopback){
+									Logging.log(this, "  ..to " + tComChannel + ", excluded: " + pExcludeL2Addresses);
+								}else{
+									Logging.log(this, "  ..to LOOPBACK " + tComChannel);
 								}
-								// send the packet to one of the possible cluster members
-								tComChannel.sendPacket(tNewPacket);
+							}
+				
+							/**
+							 * should we deliver this packet to the loopback destination behind this comm. channel?
+							 */
+							if ((pIncludeLoopback) || (!tIsLoopback)){
+								if(tComChannel.isOpen()){
+									SignalingMessageHrm tNewPacket = pPacket.duplicate();
+									if (DEBUG){
+										Logging.log(this, "      ..sending duplicate packet: " + tNewPacket);
+									}
+									// send the packet to one of the possible cluster members
+									tComChannel.sendPacket(tNewPacket);
+								}else{
+									if (DEBUG){
+										Logging.log(this, "        ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
+									}
+								}
 							}else{
 								if (DEBUG){
-									Logging.log(this, "        ..sending skipped because we are still waiting for establishment of channel: " + tComChannel);
+									Logging.log(this, "         ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
 								}
 							}
 						}else{
 							if (DEBUG){
-								Logging.log(this, "         ..skipping " + (tIsLoopback ? "LOOPBACK CHANNEL" : ""));
+								Logging.log(this, "         ..skipping EXCLUDED DESTINATION: " + pExcludeL2Addresses);
 							}
-						}
-					}else{
-						if (DEBUG){
-							Logging.log(this, "         ..skipping EXCLUDED DESTINATION: " + pExcludeL2Addresses);
 						}
 					}
 				}else{

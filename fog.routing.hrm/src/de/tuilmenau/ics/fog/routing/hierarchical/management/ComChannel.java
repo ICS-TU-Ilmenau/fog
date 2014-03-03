@@ -1014,6 +1014,21 @@ public class ComChannel
 	}
 
 	/**
+	 * Determines the connectivity of the peer node
+	 * If the peer has a modified node weight, this leads to a higher connectivity value and delivers a correct value for comparing it with the local connectivity.
+	 * 
+	 * @return the connectivity of the node 
+	 */
+	public long getPeerConnectivity()
+	{
+		long tResult = 0;
+		
+		tResult = (getPeerPriority().getValue() / ElectionPriority.OFFSET_FOR_CONNECTIVITY);
+		
+		return tResult;
+	}
+	
+	/**
 	 * Returns the L2Address of the peer
 	 * 
 	 * @return the L2Address
