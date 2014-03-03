@@ -484,7 +484,8 @@ public class ComSession extends Session
 					mUnregisteredComChannels.add(pComChannel);
 				}
 			}else{
-				Logging.err(this, "Cannot unregister unknown channel: " + pComChannel);
+				// the comm. channel was already unregistered and is already unknown
+				Logging.warn(this, "Cannot unregister unknown channel: " + pComChannel);
 			}
 		}
 		
