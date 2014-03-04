@@ -160,7 +160,10 @@ public class CoordinatorProxy extends ClusterMember
 	{
 		mLastAnnounceCoordinator = (AnnounceCoordinator)pAnnounceCoordinatorPacket.duplicate();
 		
-		mTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getLifetime();
+		double tNewTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getLifetime();
+		if (tNewTimeout > mTimeout){
+			mTimeout = tNewTimeout;
+		}					 
 	}
 	
 	/**
