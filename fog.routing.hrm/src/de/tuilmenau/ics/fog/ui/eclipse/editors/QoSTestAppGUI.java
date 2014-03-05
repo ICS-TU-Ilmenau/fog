@@ -42,6 +42,8 @@ import de.tuilmenau.ics.fog.eclipse.utils.EditorUtils;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.RequirementsException;
 import de.tuilmenau.ics.fog.facade.RoutingException;
+import de.tuilmenau.ics.fog.routing.hierarchical.IHRMApi;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -49,14 +51,20 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserver
 {
-	private static final String TEXT_DESTINATION_HRMID		= "Destination HRMID: ";
-	private static final String TEXT_CONNECTION_COUNTER		= "Running connections: ";
-	private static final String TEXT_CONNECTION_WITH_FEEDBACK    = "  ..with QoS feedback: ";
-	private static final String TEXT_CONNECTION_WITH_QOS_COUNTER = "    ..with valid QoS: ";
+	private static final String TEXT_DESTINATION_HRMID				= "Destination HRMID: ";
+	private static final String TEXT_CONNECTION_COUNTER				= "Running connections: ";
+	private static final String TEXT_CONNECTION_WITH_FEEDBACK    	= "  ..with QoS feedback: ";
+	private static final String TEXT_CONNECTION_WITH_QOS_COUNTER 	= "    ..with valid QoS: ";
+	private static final String TEXT_QOS_REPORT						= "QoS report for destination: ";
+	private static final String TEXT_QOS_REPORT_DR					= "  ..max. data rate: ";
+	private static final String TEXT_QOS_REPORT_DELAY				= "  ..min. delay: ";
 
 	private Label mDestinationHRMID = null;
 	private Label mConnectionCounter = null;
 	private Label mConnectionWithQoSCounter = null;
+	private Label mQoSReport = null;
+	private Label mQoSReportDr = null;
+	private Label mQoSReportDelay = null;
 	private Label mConnectionWithFeedbackCounter = null;
 	
 	private static final String TEXT_BTN_DEL_CONNECTION		= "Del last connection";
@@ -238,7 +246,11 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 	    mDestinationHRMID = createPartControlLine(tContainer, TEXT_DESTINATION_HRMID);
 	    mConnectionCounter = createPartControlLine(tContainer, TEXT_CONNECTION_COUNTER);
 	    mConnectionWithFeedbackCounter = createPartControlLine(tContainer, TEXT_CONNECTION_WITH_FEEDBACK);
-	    mConnectionWithQoSCounter  = createPartControlLine(tContainer, TEXT_CONNECTION_WITH_QOS_COUNTER);	    
+	    mConnectionWithQoSCounter  = createPartControlLine(tContainer, TEXT_CONNECTION_WITH_QOS_COUNTER);
+	    
+	    mQoSReport  = createPartControlLine(tContainer, TEXT_QOS_REPORT);
+	    mQoSReportDr  = createPartControlLine(tContainer, TEXT_QOS_REPORT_DR);
+	    mQoSReportDelay  = createPartControlLine(tContainer, TEXT_QOS_REPORT_DELAY);
 	    
 		Label tDRLabel = new Label(tContainer, SWT.NONE);
 		tDRLabel.setText(TEXT_SPN_DATA_RATE);
@@ -327,7 +339,14 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 		mDestinationHRMID.setText(mQoSTestApp.getLastDestinationHRMID() != null ? mQoSTestApp.getLastDestinationHRMID().toString() : "not calculated");
 		mConnectionCounter.setText(Integer.toString(mQoSTestApp.countConnections()));
 		mConnectionWithQoSCounter.setText(Integer.toString(mQoSTestApp.countConnectionsWithFulfilledQoS()));
-		mConnectionWithFeedbackCounter.setText(Integer.toString(mQoSTestApp.countConnectionsWithFeedback()));		
+		mConnectionWithFeedbackCounter.setText(Integer.toString(mQoSTestApp.countConnectionsWithFeedback()));
+		
+		HRMID tDestinationHRMID = mQoSTestApp.getLastDestinationHRMID();
+		if(tDestinationHRMID != null){
+			IHRMApi tHRMApi = mQoSTestApp.getHRMApi();
+			mQoSReportDr.setText(Long.toString(tHRMApi.getMaxDataRate(tDestinationHRMID)) + "kbit/s @ " + Long.toString(tHRMApi.getMinDelayAtMaxDataRate(tDestinationHRMID)) + " ms");
+			mQoSReportDelay.setText(Long.toString(tHRMApi.getMinDelay(tDestinationHRMID)) + " ms @ " + Long.toString(tHRMApi.getMaxDataRateAtMinDelay(tDestinationHRMID)) + "kbit/s");
+		}
 	}
 	
 	/* (non-Javadoc)

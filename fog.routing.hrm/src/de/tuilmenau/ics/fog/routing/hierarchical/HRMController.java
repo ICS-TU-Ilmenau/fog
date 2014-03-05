@@ -7200,6 +7200,38 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		RoutingEntry tRoutingEntry = getHRS().getBestRoutingEntryNextHop(pDestination, -1, 0, null, null);
 		if(tRoutingEntry != null){
+			tResult = tRoutingEntry.getMinDelay();
+		}
+				
+		return tResult;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.IHRMApi#getMinDelayAtMaxDataRate(de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID)
+	 */
+	@Override
+	public long getMinDelayAtMaxDataRate(HRMID pDestination)
+	{
+		long tResult = 0;
+		
+		RoutingEntry tRoutingEntry = getHRS().getBestRoutingEntryNextHop(pDestination, 0, RoutingEntry.INFINITE_DATARATE, null, null);
+		if(tRoutingEntry != null){
+			tResult = tRoutingEntry.getMinDelay();
+		}
+				
+		return tResult;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.IHRMApi#getMaxDataRateAtMinDelay(de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID)
+	 */
+	@Override
+	public long getMaxDataRateAtMinDelay(HRMID pDestination)
+	{
+		long tResult = 0;
+		
+		RoutingEntry tRoutingEntry = getHRS().getBestRoutingEntryNextHop(pDestination, -1, 0, null, null);
+		if(tRoutingEntry != null){
 			tResult = tRoutingEntry.getMaxAvailableDataRate();
 		}
 				

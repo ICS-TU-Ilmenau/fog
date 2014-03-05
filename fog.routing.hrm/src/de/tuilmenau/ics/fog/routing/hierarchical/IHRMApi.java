@@ -44,6 +44,15 @@ public interface IHRMApi
 	public long getMaxDataRate(HRMID pDestination);
 	
 	/**
+	 * Returns the min. delay when the max. data rate would be acquired from the network for a data transmission to a described destination
+	 * 
+	 * @param pDestination the HRMID of the destination
+	 * 
+	 * @return the min. accepted delay in [ms]
+	 */
+	public long getMinDelayAtMaxDataRate(HRMID pDestination);
+
+	/**
 	 * Returns the min. delay, which have to be accepted for a data transmission to a described destination
 	 *  
 	 * @param pDestination the HRMID of the destination
@@ -51,4 +60,13 @@ public interface IHRMApi
 	 * @return the min. accepted delay in [ms]
 	 */
 	public long getMinDelay(HRMID pDestination);
+
+	/**
+	 * Returns the max. data rate when the min. delay would be acquired from the network for a data transmission to a described destination
+	 * 
+	 * @param pDestination the HRMID of the destination
+	 * 
+	 * @return the max. possible data rate in [kbit/s] based on the local routing information
+	 */
+	public long getMaxDataRateAtMinDelay(HRMID pDestination);
 }

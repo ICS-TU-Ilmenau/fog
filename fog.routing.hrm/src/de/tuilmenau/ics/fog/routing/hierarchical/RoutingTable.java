@@ -391,7 +391,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 						 * 		2.) delay (if desired)
 						 * 		3.) hop count 		
 						 */
-						if ((pDesiredMaxDelay > 0) || (pDesiredMinDataRate > 0)){
+						if ((pDesiredMaxDelay != 0) || (pDesiredMinDataRate != 0)){
 							/**
 							 * Determine best matching QoS related entry
 							 */
@@ -400,24 +400,40 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 							  ( (pDesiredMaxDelay <= 0) || (pDesiredMaxDelay >= tEntry.getMinDelay()) ) /* matching delay */
 							  ){
 								if(tBestResultMatchingQoS != null){
-									/******************************************************************
-									 * condition matrix:
-									 * 
-									 *       +---------+----------+-----------+----------+------------+    
-									 *       |  cond.  |    DR    | nextHopDR |   Delay  | HopCount   |
-									 *       +---------+----------+-----------+----------+------------+    
-									 *       |    1    |    >     |           |          |            |
-									 *       |    2    |    =     |     >     |          |            |
-									 *       |    3    |    =     |     =     |     <    |            |
-									 *       |    4    |    =     |     =     |     =    |     <      |
-									 *       +---------+----------+-----------+----------+------------+    
-									 * 
-									 ******************************************************************/
 									if(
+											
+									  (
+											  
+									 /******************************************************************
+									  * condition matrix for a given desired data rate:
+									  * 
+									  *       +---------+----------+-----------+----------+------------+    
+									  *       |  cond.  |    DR    | nextHopDR |   Delay  | HopCount   |
+									  *       +---------+----------+-----------+----------+------------+    
+									  *       |    1    |    >     |           |          |            |
+									  *       |    2    |    =     |     >     |          |            |
+									  *       |    3    |    =     |     =     |     <    |            |
+									  *       |    4    |    =     |     =     |     =    |     <      |
+									  *       +---------+----------+-----------+----------+------------+    
+									  * 
+									  ******************************************************************/
+									  ( pDesiredMinDataRate >= 0) &&
+									  (		
 									  ( (tEntry.getMaxAvailableDataRate()  > tBestResultMatchingQoS.getMaxAvailableDataRate()) ) ||
 								      ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate()  > tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) ) || 
 									  ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay()  < tBestResultMatchingQoS.getMinDelay()) ) ||  
 									  ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay() == tBestResultMatchingQoS.getMinDelay()) && (tEntry.getHopCount() < tBestResultMatchingQoS.getHopCount()) )
+									  )
+									  
+									  ) || (
+											  
+									  ( pDesiredMinDataRate < 0) &&
+									  (
+									  ( (tEntry.getMinDelay()  < tBestResultMatchingQoS.getMinDelay()) ) ||  
+									  ( (tEntry.getMinDelay() == tBestResultMatchingQoS.getMinDelay()) && (tEntry.getMaxAvailableDataRate() > tBestResultMatchingQoS.getMaxAvailableDataRate()) )
+									  )
+									  
+									  )
 									  ){
 										if (DEBUG){
 											Logging.log(this, "      ..found better (QoS match) entry: " + tEntry);
@@ -500,13 +516,13 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			if(tBestResultBERouting != null){
 				if((pDesiredMaxDelay > 0) && (tBestResultBERouting.getMinDelay() > pDesiredMaxDelay)){
 					if (DEBUG){
-						Logging.err(this, "      ..BE route doesn't match QoS because of the determined delay along the BE route");
+						Logging.log(this, "      ..BE route doesn't match QoS because of the determined delay along the BE route");
 					}
 					tBERouteMatchesQoS = false;
 				}
 				if((pDesiredMinDataRate > 0) && ((tBestResultBERouting.getMaxAvailableDataRate() < pDesiredMinDataRate) || (tBestResultBERouting.getNextHopMaxAvailableDataRate() < pDesiredMinDataRate))){
 					if (DEBUG){
-						Logging.err(this, "      ..BE route doesn't match QoS because of the determined data rate along the BE route");
+						Logging.log(this, "      ..BE route doesn't match QoS because of the determined data rate along the BE route");
 					}
 					tBERouteMatchesQoS = false;
 				}
@@ -519,18 +535,18 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			 * QoS result
 			 */
 			if(!HRMController.ENFORCE_BE_ROUTING){
-				if((pDesiredMinDataRate > 0) || (pDesiredMaxDelay > 0)) {
-					if((!tBERouteMatchesQoS) || (tBestResultBERouting.getUtilization() >= HRMConfig.Routing.MAX_DESIRED_LINK_UTILIZATION) || (tBestResultBERouting.getMaxAvailableDataRate() - pDesiredMinDataRate <= HRMConfig.Routing.MIN_REMAINING_BE_DATA_RATE)){
+				if((pDesiredMinDataRate != 0) || (pDesiredMaxDelay != 0)) {
+					if((pDesiredMaxDelay < 0) || (!tBERouteMatchesQoS) || (tBestResultBERouting.getUtilization() >= HRMConfig.Routing.MAX_DESIRED_LINK_UTILIZATION) || (tBestResultBERouting.getMaxAvailableDataRate() - pDesiredMinDataRate <= HRMConfig.Routing.MIN_REMAINING_BE_DATA_RATE)){
 						if(tBestResultMatchingQoS != null){
 							if (DEBUG){
-								Logging.err(this, "      ..setting best matching QoS route: " + tBestResultMatchingQoS);
+								Logging.log(this, "      ..setting best matching QoS route: " + tBestResultMatchingQoS);
 							}
 	
 							// use route with best matching QoS values
 							tResult = tBestResultMatchingQoS;
 						}else if (tBestResultQoS != null){
 							if (DEBUG){
-								Logging.err(this, "      ..setting best QoS route: " + tBestResultMatchingQoS);
+								Logging.log(this, "      ..setting best QoS route: " + tBestResultMatchingQoS);
 							}
 	
 							// fall-back to best QoS values
