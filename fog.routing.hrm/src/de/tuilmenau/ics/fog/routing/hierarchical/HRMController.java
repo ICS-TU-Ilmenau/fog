@@ -133,6 +133,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private NodeDecorator mDecoratorForNodePriorities = null;
 
 	/**
+	 * Stores the node specific graph decorator for IPv4
+	 */
+	private NodeDecorator mDecoratorIPv4 = null;
+
+	/**
+	 * Stores the node specific graph decorator for IPv6
+	 */
+	private NodeDecorator mDecoratorIPv6 = null;
+
+	/**
 	 * Stores the GUI observable, which is used to notify possible GUIs about changes within this HRMController instance.
 	 */
 	private HRMControllerObservable mGUIInformer = new HRMControllerObservable(this);
@@ -468,6 +478,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private final static String DECORATION_NAME_NODE_PRIORITIES = "HRM(3) - node priorities";
 	
 	/**
+	 * Stores the identification string for IPv4
+	 */
+	private final static String DECORATION_NAME_IPv4 = "HRM(6) - IPv4";	
+	
+	/**
+	 * Stores the identification string for IPv6
+	 */
+	private final static String DECORATION_NAME_IPv6 = "HRM(6) - IPv6";	
+
+	/**
 	 * Stores the identification string for the active HRM infrastructure
 	 */
 	private final static String DECORATION_NAME_ACTIVE_HRM_INFRASTRUCTURE = "HRM(4) - active infrastructure";
@@ -545,6 +565,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mDecoratorForNodePriorities = new NodeDecorator();
 		
 		/**
+		 * Create the node specific decorator for IPv4
+		 */
+		mDecoratorIPv4 = new NodeDecorator();
+
+		/**
+		 * Create the node specific decorator for IPv6
+		 */
+		mDecoratorIPv6 = new NodeDecorator();
+		
+		/**
 		 * Create the node specific decorator for the active HRM infrastructure
 		 */
 		mDecoratorActiveHRMInfrastructure = new NodeDecorator();
@@ -592,6 +622,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// create own decoration for HRM node priorities
 		tDecoration = Decoration.getInstance(DECORATION_NAME_NODE_PRIORITIES);
 		tDecoration.setDecorator(mNode,  mDecoratorForNodePriorities);
+		// create own decoration for IPv4
+		tDecoration = Decoration.getInstance(DECORATION_NAME_IPv4);
+		tDecoration.setDecorator(mNode,  mDecoratorIPv4);
+		// create own decoration for IPv6
+		tDecoration = Decoration.getInstance(DECORATION_NAME_IPv6);
+		tDecoration.setDecorator(mNode,  mDecoratorIPv6);
 		// create own decoration for HRM node priorities
 		tDecoration = Decoration.getInstance(DECORATION_NAME_ACTIVE_HRM_INFRASTRUCTURE);
 		tDecoration.setDecorator(mNode,  mDecoratorActiveHRMInfrastructure);
@@ -1667,6 +1703,38 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		} catch (RemoteException e) {
 		}
 		mDecoratorForNMSEntries.setText("- " + tRegisterNMSEntriesText);
+
+		tRegisterNMSEntriesText = "";
+		try {
+			for(NameMappingEntry<?> tNMSEntry : tNMS.getAddresses(getNodeName())) {
+				if(tNMSEntry.getAddress() instanceof HRMID) {
+					// get the HRMID of the target node
+					HRMID tNodeHRMID = (HRMID)tNMSEntry.getAddress();
+					
+					if(tRegisterNMSEntriesText != "")
+						tRegisterNMSEntriesText += ", ";
+					tRegisterNMSEntriesText += HRMConfig.IP.NET_V4 + tNodeHRMID.toString();
+				}
+			}
+		} catch (RemoteException e) {
+		}
+		mDecoratorIPv4.setText("- " + tRegisterNMSEntriesText);
+		
+		tRegisterNMSEntriesText = "";
+		try {
+			for(NameMappingEntry<?> tNMSEntry : tNMS.getAddresses(getNodeName())) {
+				if(tNMSEntry.getAddress() instanceof HRMID) {
+					// get the HRMID of the target node
+					HRMID tNodeHRMID = (HRMID)tNMSEntry.getAddress();
+					
+					if(tRegisterNMSEntriesText != "")
+						tRegisterNMSEntriesText += ", ";
+					tRegisterNMSEntriesText += HRMConfig.IP.NET_V6 + tNodeHRMID.toIPv6String();
+				}
+			}
+		} catch (RemoteException e) {
+		}
+		mDecoratorIPv6.setText("- " + tRegisterNMSEntriesText);
 
 		/**
 		 * Set the decoration images

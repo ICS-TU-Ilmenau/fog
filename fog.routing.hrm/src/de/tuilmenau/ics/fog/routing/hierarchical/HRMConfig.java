@@ -540,4 +540,23 @@ public class HRMConfig
 		 */
 		public static final boolean SEND_ALIVES = true;
 	}
+	
+	/**
+	 * This class defines all settings for IP support
+	 *
+	 */
+	public static class IP
+	{
+		/**
+		 * Define the IP prefix for version 4.
+		 * We use the "local network" (not routed) from RFC TODO defined as "10.0.0.0/8" here.
+		 */
+		public static final String NET_V4 = "10.";
+
+		/**
+		 * Define the IP prefix for version 6.
+		 * We use "Unique Local Unicast" from RFC 4193 defined as "fc00::/7" here.
+		 */ 
+		public static final String NET_V6 = "fc00::";
+	}
 }
