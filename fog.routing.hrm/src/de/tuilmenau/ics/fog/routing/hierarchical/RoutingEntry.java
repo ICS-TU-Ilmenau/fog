@@ -17,6 +17,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraph
 import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphLink;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
+import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -105,6 +106,12 @@ public class RoutingEntry implements RouteSegment
 	 */
 	private L2Address mNextHopL2Address = new L2Address(0);
 
+	/**
+	 * Stores the L2 network interface of the next hop if known
+	 * This variable is never transmitted. It is only used locally in order to simplify the implementation.
+	 */
+	private NetworkInterface mNextHopL2NetworkInterface = null;
+	
 	/**
 	 * Stores the maximum data rate [kbit/s = 1000bit/s] the described next link (to the next hop) might provide. 
 	 * This variable is never transmitted. It is only used locally in order to simplify the implementation.
@@ -494,6 +501,26 @@ public class RoutingEntry implements RouteSegment
 	public void setNextHopL2Address(L2Address pNextHopL2Address)
 	{
 		mNextHopL2Address = pNextHopL2Address;	
+	}
+	
+	/**
+	 * Defines the L2 network interface for the transfering data to the next hop
+	 * 
+	 * @param pNextHopL2NetworkInterface the network interface
+	 */
+	public void setNextHopL2NetworkInterace(NetworkInterface pNextHopL2NetworkInterface)
+	{
+		mNextHopL2NetworkInterface = pNextHopL2NetworkInterface;
+	}
+
+	/**
+	 * Returns the L2 network interface of this route (if known)
+	 * 
+	 * @return the L2 network interface of the next hop, returns null if none is known
+	 */
+	public NetworkInterface getNextHopL2NetworkInterface()
+	{
+		return mNextHopL2NetworkInterface;
 	}
 	
 	/**
@@ -1037,6 +1064,8 @@ public class RoutingEntry implements RouteSegment
 		tResult.mNextHopMaxAvailableDataRate = mNextHopMaxAvailableDataRate;
 		
 		tResult.mOwners = (LinkedList<HRMID>) mOwners.clone();
+		
+		tResult.mNextHopL2NetworkInterface = mNextHopL2NetworkInterface;
 		
 		return tResult;
 	}

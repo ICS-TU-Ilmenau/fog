@@ -598,8 +598,8 @@ public class Cluster extends ClusterMember
 	
 					// register this new HRMID in the local HRS and create a mapping to the right L2Address
 					if(!tNewHRMIDForPeer.isClusterAddress()){
-						Logging.log(this, "    ..creating MAPPING " + tNewHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
-						mHRMController.getHRS().mapHRMID(tNewHRMIDForPeer, pComChannel.getPeerL2Address());
+						Logging.log(this, "    ..creating MAPPING " + tNewHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address() + ", L2 route=" + mHRMController.getHRS().getL2Route(pComChannel.getPeerL2Address(), getBaseHierarchyLevelNetworkInterface()));
+						mHRMController.getHRS().mapHRMID(tNewHRMIDForPeer, pComChannel.getPeerL2Address(), mHRMController.getHRS().getL2Route(pComChannel.getPeerL2Address(), getBaseHierarchyLevelNetworkInterface()));
 					}
 					
 					tHRMIDForPeer = tNewHRMIDForPeer;

@@ -567,7 +567,10 @@ public class ComChannel
 										if(tLocalRoutingEntry != null){
 											// add the entry to the reported routing table
 											if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
-												Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") local route: " + tLocalRoutingEntry);
+												Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") local route: " + tLocalRoutingEntry + ", next network interface=" + tParentClusterMember.getBaseHierarchyLevelNetworkInterface());
+											}
+											if(tParentClusterMember.getBaseHierarchyLevelNetworkInterface() != null){
+												tLocalRoutingEntry.setNextHopL2NetworkInterace(tParentClusterMember.getBaseHierarchyLevelNetworkInterface());
 											}
 											tNewLocalRoutingTable.addEntry(tLocalRoutingEntry);
 										}
@@ -590,6 +593,11 @@ public class ComChannel
 								mHRMController.registerAutoHRG(tEntry);
 							}
 							// HRM routes
+//							synchronized (mLocalRoutingTablePeerHRMIDs) {
+//								for (RoutingEntry tEntry: mLocalRoutingTablePeerHRMIDs){
+//									Logging.log(this, "storing entry: " + tEntry + "\n   ..with network if: " + tEntry.getNextHopL2NetworkInterface());
+//								}
+//							}
 							mHRMController.addHRMRoutes(mLocalRoutingTablePeerHRMIDs);
 							synchronized (mReportedRoutingTable) {
 								mReportedRoutingTable.addEntries(mReportedRoutingTablePeerHRMIDs);

@@ -82,6 +82,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnouncePhysicalEndPoint;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
+import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
@@ -122,7 +123,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Display mDisplay = null;
 
     private Composite mContainerRoutingTable = null;
-	private Composite mContainerHRMID2L2ADDRTable = null;
+	private Composite mContainerHRMID2L2RouteTable = null;
 	private Composite mGlobalContainer = null;
     private Composite mContainer = null;
     private Composite mToolBtnContainer = null;
@@ -526,7 +527,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private void destroyPartControl()
 	{
 		mContainer.dispose();
-		mContainerHRMID2L2ADDRTable.dispose();
+		mContainerHRMID2L2RouteTable.dispose();
 		
 		//HINT: don't dispose the mScroller object here, this would lead to GUI display problems
 		
@@ -633,10 +634,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 
 		/**
-		 * GUI part 2: table of known mappings from HRMID to L2Addresses
+		 * GUI part 2: table of known mappings from HRMID to L2 route
 		 */
 		if (HRM_VIEWER_DEBUGGING){
-			Logging.log(this, "Printing HRMID-2-L2Address mapping...");
+			Logging.log(this, "Printing HRMID-2-L2Route mapping...");
 		}
 		// create the headline
 		StyledText tSignaturesLabel4 = new StyledText(mContainer, SWT.BORDER);
@@ -648,7 +649,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 			tHRMIDsStr += tHRMID.toString();
 		}
-		tSignaturesLabel4.setText("Mappings from HRMID to L2Address (local HRMIDs: " + tHRMIDsStr + ", neighbor HRMIDs: " + mHRMController.getHRS().getNeighborAddress() + ")");
+		tSignaturesLabel4.setText("Mappings from HRMID to L2Route (local HRMIDs: " + tHRMIDsStr + ", neighbor HRMIDs: " + mHRMController.getHRS().getNeighborAddress() + ")");
 		tSignaturesLabel4.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel4.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style4 = new StyleRange();
@@ -658,13 +659,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	    tSignaturesLabel4.setStyleRange(style4);
 	    
 	    // create the GUI container
-	    mContainerHRMID2L2ADDRTable = new Composite(mContainer, SWT.NONE);
+	    mContainerHRMID2L2RouteTable = new Composite(mContainer, SWT.NONE);
 	    GridData tLayoutDataMappingTable = new GridData(SWT.FILL, SWT.FILL, true, true);
 	    tLayoutDataMappingTable.horizontalSpan = 1;
-	    mContainerHRMID2L2ADDRTable.setLayoutData(tLayoutDataMappingTable); 
+	    mContainerHRMID2L2RouteTable.setLayoutData(tLayoutDataMappingTable); 
 	    
 	    // create the table
-		final Table tTableMappingTable = new Table(mContainerHRMID2L2ADDRTable, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+		final Table tTableMappingTable = new Table(mContainerHRMID2L2RouteTable, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		tTableMappingTable.setHeaderVisible(true);
 		tTableMappingTable.setLinesVisible(true);
 		
@@ -676,15 +677,15 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		TableColumn tTableL2Addr = new TableColumn(tTableMappingTable, SWT.NONE, 1);
 		tTableL2Addr.setText("L2 address");
 		
-		HashMap<HRMID, L2Address> tHRMIDToL2AddressMapping = mHRMController.getHRS().getHRMIDToL2AddressMapping();
+		HashMap<HRMID, Route> tHRMIDToL2RouteMapping = mHRMController.getHRS().getHRMIDToL2RouteMapping();
 		if (HRM_VIEWER_DEBUGGING){
-			Logging.log(this, "Found " + tHRMIDToL2AddressMapping.keySet().size() + " HRMID-to-L2Address mappings");
+			Logging.log(this, "Found " + tHRMIDToL2RouteMapping.keySet().size() + " HRMID-to-L2Route mappings");
 		}
 
-		if ((tHRMIDToL2AddressMapping != null) && (!tHRMIDToL2AddressMapping.isEmpty())) {
+		if ((tHRMIDToL2RouteMapping != null) && (!tHRMIDToL2RouteMapping.isEmpty())) {
 			int tRowNumber = 0;
-			for(HRMID tAddr : tHRMIDToL2AddressMapping.keySet()) {
-				L2Address tL2Addr = tHRMIDToL2AddressMapping.get(tAddr);
+			for(HRMID tAddr : tHRMIDToL2RouteMapping.keySet()) {
+				Route tL2Route = tHRMIDToL2RouteMapping.get(tAddr);
 				
 				// create the table row
 				TableItem tTableRow = new TableItem(tTableMappingTable, SWT.NONE, tRowNumber);
@@ -697,7 +698,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				/**
 				 * Column 1: route 
 				 */
-				tTableRow.setText(1, tL2Addr.toString());
+				tTableRow.setText(1, tL2Route.toString());
 
 				tRowNumber++;
 			}
@@ -711,7 +712,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 		// create the container layout
 		TableColumnLayout tLayoutMappingTable = new TableColumnLayout();
-		mContainerHRMID2L2ADDRTable.setLayout(tLayoutMappingTable);
+		mContainerHRMID2L2RouteTable.setLayout(tLayoutMappingTable);
 		// assign each column a layout weight
 		tLayoutMappingTable.setColumnData(tTableHRMID, new ColumnWeightData(3));
 		tLayoutMappingTable.setColumnData(tTableL2Addr, new ColumnWeightData(3));
@@ -732,7 +733,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
         mContainer.setSize(mContainer.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         mContainerRoutingTable.setSize(mContainerRoutingTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-        mContainerHRMID2L2ADDRTable.setSize(mContainerHRMID2L2ADDRTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        mContainerHRMID2L2RouteTable.setSize(mContainerHRMID2L2RouteTable.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         //mToolBtnContainer.setSize(mToolBtnContainer.computeSize(SWT.DEFAULT, 20));
 	}
 
