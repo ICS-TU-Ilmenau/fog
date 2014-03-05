@@ -9,14 +9,20 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
+import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
+import de.tuilmenau.ics.fog.transfer.gates.GateID;
 
 /**
  * This class is used to be able to store a logical link in a routing graph
  */
 public class L2LogicalLink extends  RoutingServiceLink
 {
+	public L2LogicalLink(GateID pID, Description pDescription)
+	{
+		super(pID, pDescription);
+	}
 
 	/**
 	 * Stores the route for the logical link
@@ -64,7 +70,8 @@ public class L2LogicalLink extends  RoutingServiceLink
 	{
 		if(mRoute != null) {
 			return "Route: " + mRoute.toString();
+		}else{
+			return super.toString();
 		}
-		else return UNNUMBERED_LINK_NAME;
 	}
 }
