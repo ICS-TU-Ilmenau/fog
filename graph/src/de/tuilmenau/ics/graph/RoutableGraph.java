@@ -452,6 +452,36 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 		return tRes;
 	}
 	
+	/**
+	 * Returns all edges between two graph nodes
+	 * 
+	 * @param pFrom first graph node
+	 * @param pTo second graph node
+	 * 
+	 * @return the collection of edges
+	 */
+	public LinkedList<LinkObject> getEdges(NodeObject pFrom, NodeObject pTo) 
+	{
+		LinkedList<LinkObject> tResult = new LinkedList<LinkObject>();
+		
+		if((pFrom != null) && (pTo != null)) {
+			// get equivalent object used for map for pFrom and pTo:
+			Collection<LinkObject> tOutEdges = getOutEdges(pFrom);
+			if(tResult != null) {
+				for(LinkObject tLink : tOutEdges) {
+	                NodeObject tTo = getDest(tLink);
+	                if(tTo != null) {
+		                if(tTo.equals(pTo)) {
+		                	tResult.add(tLink);
+		                }
+	                }
+				}
+			}
+		}
+		
+		return tResult;
+	}
+
 	public synchronized boolean isLinked(NodeObject pFrom, NodeObject pTo)
 	{
 		return mRoutingGraph.isNeighbor(pFrom, pTo);
