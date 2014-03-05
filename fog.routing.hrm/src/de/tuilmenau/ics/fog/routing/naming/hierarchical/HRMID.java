@@ -501,6 +501,20 @@ public class HRMID extends HRMName
 	}
 
 	/**
+	 * Returns the IPv6 representation of this HRMID as string
+	 * 
+	 * @return the IPv6 address string
+	 */
+	public String toIPv6String()
+	{
+		String tResult = toString();
+		
+		tResult.replaceAll(".", ":");
+		
+		return tResult;
+	}
+
+	/**
 	 * Generate an HRMID output, e.g., "4.7.2.3"
 	 */
 	@Override
