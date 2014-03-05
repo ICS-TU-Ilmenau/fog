@@ -134,6 +134,18 @@ public class QoSTestApp extends ThreadApplication
 	}
 
 	/**
+	 * Returns a reference to the local HRMApi
+	 * 
+	 * @return the HRMApi
+	 */
+	public IHRMApi getHRMApi()
+	{
+		IHRMApi tResult = HRMController.getHRMApi(mNode);
+		
+		return tResult;
+	}
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param pLocalNode the local node where this app. instance is running
