@@ -509,7 +509,8 @@ public class HRMID extends HRMName
 	{
 		String tResult = toString();
 		
-		tResult.replaceAll(".", ":");
+		tResult = tResult.replace(".", ":");
+		//Logging.log(this, " converted to: " + tResult);
 		
 		return tResult;
 	}
