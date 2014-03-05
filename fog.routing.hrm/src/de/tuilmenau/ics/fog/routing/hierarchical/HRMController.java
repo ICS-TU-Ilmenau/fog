@@ -485,7 +485,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores the identification string for IPv6
 	 */
-	private final static String DECORATION_NAME_IPv6 = "HRM(6) - IPv6";	
+	private final static String DECORATION_NAME_IPv6 = "HRM(7) - IPv6";	
 
 	/**
 	 * Stores the identification string for the active HRM infrastructure
