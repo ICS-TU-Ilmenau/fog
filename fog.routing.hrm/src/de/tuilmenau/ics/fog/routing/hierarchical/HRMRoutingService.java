@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import java.rmi.RemoteException;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -760,7 +761,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			if(pL2Route != null){
 				synchronized (mHRMIDToL2RouteMapping) {
 					Route tOldRoute = mHRMIDToL2RouteMapping.get(pHRMID);
-					if((tOldRoute == null) || (!tOldRoute.equals(pL2Route))){
+					if((tOldRoute == null) || ((!tOldRoute.equals(pL2Route)) && (pL2Route.isShorter(tOldRoute)))){
 						//Logging.warn(this, "Got new L2 route towards: " + pHRMID + " as: " + pL2Route);
 						mHRMIDToL2RouteMapping.put(pHRMID, pL2Route);
 					}
@@ -937,6 +938,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				if (tHRMID.equals(pHRMID)){
 					// get the L2 address
 					tResult = mHRMIDToL2RouteMapping.get(tHRMID);
+					if(HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+						Logging.warn(this, "Found explicit L2 mapping from: " + pHRMID + " to: " + tResult);
+					}
 					// leave the for-loop
 					break;
 				}
@@ -1560,33 +1564,43 @@ public class HRMRoutingService implements RoutingService, Localization
 			for(ForwardingNode tLocalFN : tLocalFoGFNs){
 				if(tLocalFN instanceof Multiplexer){
 					Multiplexer tLocalMux = (Multiplexer) tLocalFN;
-					GateIterator iter = tLocalMux.getIterator(DirectDownGate.class);
-					while(iter.hasNext()) {
-						DirectDownGate tDirectDownGate = (DirectDownGate) iter.next();
 
-						/**
-						 * A.) get the network interface to the neighbor
-						 */ 
-						Bus tNextNetworkBus = (Bus)tDirectDownGate.getNextNode();//getNetworkInterface();
-						if(tNextNetworkBus != null){
-							if(tNextNetworkBus.equals(tViaLink)){
-								if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-									Logging.log(this, "Found local matching Bus: " + tNextNetworkBus);
-								}
-								tIntermediaDestination = getL2AddressFor(tLocalFN);
-								if(tIntermediaDestination != null){
-									RouteSegmentPath tGateList = (RouteSegmentPath) getL2RouteBestEffort(mHRMController.getNodeL2Address(), tIntermediaDestination).getFirst();
-									if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-										Logging.log(this, "  ..route to intermediate FN " + tIntermediaDestination + ": " + tGateList);
-									}
-									tGateList.add(tDirectDownGate.getGateID());
-									tResult = new Route(tGateList);
-									tResult.add(new RouteSegmentAddress(pDestination));
-									if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-										Logging.log(this, "  ..resulting route: " + tResult);
+					boolean tWithoutException = false; //TODO: rework some software structures to avoid this ugly implementation
+					while(!tWithoutException){
+						GateIterator iter = tLocalMux.getIterator(DirectDownGate.class);
+						try{
+							while(iter.hasNext()) {
+								DirectDownGate tDirectDownGate = (DirectDownGate) iter.next();
+		
+								/**
+								 * A.) get the network interface to the neighbor
+								 */ 
+								Bus tNextNetworkBus = (Bus)tDirectDownGate.getNextNode();//getNetworkInterface();
+								if(tNextNetworkBus != null){
+									if(tNextNetworkBus.equals(tViaLink)){
+										if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+											Logging.log(this, "Found local matching Bus: " + tNextNetworkBus);
+										}
+										tIntermediaDestination = getL2AddressFor(tLocalFN);
+										if(tIntermediaDestination != null){
+											RouteSegmentPath tGateList = (RouteSegmentPath) getL2RouteBestEffort(mHRMController.getNodeL2Address(), tIntermediaDestination).getFirst();
+											if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+												Logging.log(this, "  ..route to intermediate FN " + tIntermediaDestination + ": " + tGateList);
+											}
+											tGateList.add(tDirectDownGate.getGateID());
+											tResult = new Route(tGateList);
+											tResult.add(new RouteSegmentAddress(pDestination));
+											if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+												Logging.log(this, "  ..resulting route: " + tResult);
+											}
+										}
 									}
 								}
 							}
+							tWithoutException = true;
+						}catch(ConcurrentModificationException tExc){
+							// FoG has manipulated the topology data and called the HRS for updating the L2 routing graph
+							continue;
 						}
 					}
 				}
@@ -1824,6 +1838,9 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * Get the stored explicit L2 route to the determined next HRMID
 					 */
 					tL2RoutingResult = getL2RouteExplicitMapping(tNextHopHRMID);
+					if (DEBUG){
+						Logging.log(this, "      ..explicit L2 ROUTE TO NEXT HOP: " + tL2RoutingResult);
+					}
 
 					/**
 					 * Fall back to BE based L2 routing
