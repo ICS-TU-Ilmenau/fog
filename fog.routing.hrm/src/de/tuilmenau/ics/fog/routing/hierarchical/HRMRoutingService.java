@@ -1665,7 +1665,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public Route getRoute(ForwardingNode pSource, Name pDestination, Description pRequirements, Identity pRequester) throws RoutingException, RequirementsException
 	{		
-		boolean DEBUG = true;//HRMConfig.DebugOutput.GUI_SHOW_ROUTING;
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ROUTING;
 		Route tRoutingResult = null;
 		L2Address tDestinationL2Address = null;
 		L2Address tSourceL2Address = null;
