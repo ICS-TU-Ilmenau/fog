@@ -105,7 +105,9 @@ public class NetworkInterface implements LayerObserverCallback
 					// Look for already known neighbors
 					updateNeighbors();
 				} else {
-					mEntity.getLogger().err(this, "Did not get valid lower layer ID from " +mLowerLayer);
+					if(mDownGates.size() > 0){
+						mEntity.getLogger().err(this, "Did not get valid lower layer ID from " +mLowerLayer);
+					}
 					detach();
 					return false;
 				}
@@ -273,6 +275,7 @@ public class NetworkInterface implements LayerObserverCallback
 				} else {
 					// we are not attached => try to attach again
 					if(!attach()) {
+						//Logging.warn(this, "triggering re-attaching of this network interface");
 						mEntity.getTimeBase().scheduleIn(REATTACH_TIMER_SEC, this);
 					}
 				}
