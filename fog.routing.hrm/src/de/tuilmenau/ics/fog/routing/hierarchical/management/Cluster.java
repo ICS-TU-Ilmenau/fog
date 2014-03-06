@@ -1025,16 +1025,21 @@ public class Cluster extends ClusterMember
 		}
 
 		// check necessity
-		checkClusterNecessity();
+		boolean tClusterStillNeeded = isClusterNeeded();
 		
-		/**
-		 * Trigger: "lost candidate" for election
-		 */		
-		if(isThisEntityValid()){
-			mElector.eventLostCandidate(pComChannel);
+		if(tClusterStillNeeded){
+			/**
+			 * Trigger: "lost candidate" for election
+			 */		
+			if(isThisEntityValid()){
+				mElector.eventLostCandidate(pComChannel);
+			}
+
+			/**
+			 * Trigger: number of members changed
+			 */
+			eventNumberOfMembersChanged();
 		}
-		
-		eventNumberOfMembersChanged();
 	}
 
 	/**
@@ -1065,18 +1070,23 @@ public class Cluster extends ClusterMember
 	/**
 	 * Checks the necessity of the cluster
 	 */
-	private void checkClusterNecessity()
+	private boolean isClusterNeeded()
 	{
+		boolean tResult = true;
+		
 		Logging.log(this, "Checking necessity of this cluster");
 		// no further external candidates available/known (all candidates are gone) or has the last local inferior coordinator left the area?
 		if ((countConnectedClusterMembers() < 1 /* do we still have cluster members? */) || (mInferiorLocalCoordinators.size() == 0 /* has the last local coordinator left this cluster? */)){
 			Logging.log(this, "checkClusterNecessity() detected an unneeded cluster");
 			
+			tResult = false;
 			/**
 			 * TRIGGER: cluster invalid
 			 */
 			eventClusterRoleInvalid();
 		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -1419,11 +1429,23 @@ public class Cluster extends ClusterMember
 				}
 			}
 		}else{
-			Logging.warn(this, "distributeMembershipRequests() skipped because cluster role is already invalidated");
+			Logging.warn(this, "updateClusterMembers() skipped because cluster role is already invalidated");
 		}
 		
 		// finally, check the necessity of this cluster again
-		checkClusterNecessity();
+		if(!isClusterNeeded()){
+			tChanges = false;
+		}
+		
+		/**
+		 * trigger election update if changes happened
+		 */
+		if(tChanges){
+			Logging.warn(this, "updateClusterMembers[" + mCountDistributeMembershipRequests + "] triggers a re-election due to topology changes");
+			mElector.startElection(this + "::updateClusterMembers()[" + mCountDistributeMembershipRequests + "]");
+		}else{
+			Logging.log(this, "updateClusterMembers[" + mCountDistributeMembershipRequests + "] detected no topology changes");
+		}
 	}
 
 	/**
