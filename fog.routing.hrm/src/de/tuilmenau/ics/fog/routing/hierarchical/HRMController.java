@@ -1213,6 +1213,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}			
 		
+		// update local hierarchy
+		detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator(pCoordinatorProxy);
+		
 		// updates the GUI decoration for this node
 		updateGUINodeDecoration();
 		
@@ -1221,6 +1224,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		// it's time to update the GUI
 		notifyGUI(pCoordinatorProxy);
+	}
+
+	/**
+	 * Detect and inform local coordinators about losing their superior coordinator
+	 * 
+	 * @param pCoordinatorProxy the lost coordinator (proxy)
+	 */
+	private void detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator(CoordinatorProxy pLostCoordinatorProxy)
+	{
+		/**
+		 * TODO: the following works until a hierarchy height of 3. if more than 3 levels are used, another keep-alive mechanism is needed here in order to be able to detect invalid superior clusters
+		 */
+		if(pLostCoordinatorProxy.getHierarchyLevel().isHigherLevel()){
+			LinkedList<Coordinator> tCoordinators = getAllCoordinators(pLostCoordinatorProxy.getHierarchyLevel().dec().getValue());
+			for(Coordinator tCoordinator : tCoordinators){
+				//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
+				if((tCoordinator.superiorCoordinatorComChannel() != null) && (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName() != null)){
+					if (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName().getClusterID() == pLostCoordinatorProxy.getClusterID()){
+						Logging.log(this, "Superior coordinator invalid for local coordinator: " + tCoordinator);
+						tCoordinator.eventSuperiorCoordinatorInvalid();						
+					}
+				}
+			}
+		}
 	}
 
 	/**
