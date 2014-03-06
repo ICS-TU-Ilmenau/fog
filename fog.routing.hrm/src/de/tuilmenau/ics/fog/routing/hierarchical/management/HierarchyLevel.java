@@ -135,6 +135,18 @@ public class HierarchyLevel
 	}
 
 	/**
+	 * Returns a hierarchy level which is one below this one
+	 * 
+	 * @return the new hierarchy level
+	 */
+	public HierarchyLevel dec()
+	{
+		HierarchyLevel tResult = new HierarchyLevel(getValue() - 1);
+
+		return tResult;
+	}
+
+	/**
 	 * Returns a hierarchy level which is one above this one
 	 * 
 	 * @return the new hierarchy level
