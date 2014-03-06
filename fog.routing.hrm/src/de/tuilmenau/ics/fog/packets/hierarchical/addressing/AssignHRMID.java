@@ -30,6 +30,12 @@ public class AssignHRMID  extends SignalingMessageHrm
 	 */
 	private static final long serialVersionUID = -1674381264586284319L;
 
+	
+	/**
+	 * Defines if the superior entity defined this assigned address as "firm". No further re-requests are allowed 
+	 */
+	private boolean mAddressIsFirm = false;
+	
 	/**
 	 * Stores the counter of created packets from this type
 	 * This value is only used for debugging. It is not part of the HRM concept. 
@@ -71,6 +77,24 @@ public class AssignHRMID  extends SignalingMessageHrm
 	}
 
 	/**
+	 * Defines this address as "firm"
+	 */
+	public void setFirmAddress()
+	{
+		mAddressIsFirm = true;
+	}
+	
+	/**
+	 * Returns if the address is defined as "firm"
+	 * 
+	 * @return true or false
+	 */
+	public boolean isFirmAddress()
+	{
+		return mAddressIsFirm;
+	}
+	
+	/**
 	 * Returns the size of a serialized representation of this packet 
 	 */
 	/* (non-Javadoc)
@@ -84,7 +108,8 @@ public class AssignHRMID  extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		HRMIDs					= 4
+		 * 		Firm					= 1
+		 * 		HRMID					= 4
 		 * 
 		 *************************************************************/
 
@@ -107,7 +132,8 @@ public class AssignHRMID  extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		HRMIDs					= 4
+		 * 		Firm					= 1
+		 * 		HRMID					= 4
 		 * 
 		 *************************************************************/
 
@@ -118,6 +144,10 @@ public class AssignHRMID  extends SignalingMessageHrm
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
 		tResult += SignalingMessageHrm.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += 1;
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
