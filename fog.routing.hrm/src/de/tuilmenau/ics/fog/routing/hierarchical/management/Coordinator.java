@@ -1438,10 +1438,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 
 		if((pHRMID != null) && (!pHRMID.isZero())){
-			if(getHierarchyLevel().getValue() == HRMConfig.Hierarchy.HEIGHT - 2){
+			if(!getHierarchyLevel().isHighest()){
 				if((getHRMID() != null) && (!getHRMID().isZero())){
 					if(!pHRMID.equals(getHRMID())){
-						Logging.warn(this, "Detected an address change at the top of the address hierarchy from " + getHRMID() + " to " + pHRMID);
+						Logging.warn(this, "Detected an address change from " + getHRMID() + " to " + pHRMID);
 					}
 				}
 			}
