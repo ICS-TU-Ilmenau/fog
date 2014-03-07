@@ -4229,18 +4229,33 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void eventLostPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, L2Address pNeighborL2Address)
 	{
-		Logging.log(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
+		Logging.warn(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 		
 		synchronized (mCommunicationSessions) {
-			Logging.log(this, "   ..known sessions: " + mCommunicationSessions);
-			for (ComSession tComSession : mCommunicationSessions){
-				if(tComSession.isPeer(pNeighborL2Address)){
-					Logging.log(this, "   ..stopping session: " + tComSession);
-					mProcessorThread.eventCloseSession(tComSession);
-				}else{
-					Logging.log(this, "   ..leaving session: " + tComSession);
+			Logging.warn(this, "   ..known sessions: " + mCommunicationSessions);
+			boolean tRepeatSearch = false;
+			
+			/**
+			 * We use this to ease the implementation.
+			 * (The given pNeighborL2Addres is the first FN towards the central FN of the neighbor node. 
+			 *  But we need the address of the actual central FN of the neighbor node in order to be able to identify all related com. sessions.)
+			 */			
+			L2Address tCorrectPeerL2Address = null;
+			
+			do{
+				tRepeatSearch = false;
+				for (ComSession tComSession : mCommunicationSessions){
+					if((tComSession.isPeer(pNeighborL2Address)) || ((tCorrectPeerL2Address != null) && tComSession.isPeer(tCorrectPeerL2Address))){
+						Logging.warn(this, "   ..stopping session: " + tComSession);
+						tCorrectPeerL2Address = tComSession.getPeerL2Address();
+						mProcessorThread.eventCloseSession(tComSession);
+						tRepeatSearch = true;
+						break; // only the inner "for"-loop
+					}else{
+						Logging.warn(this, "   ..leaving session: " + tComSession);
+					}
 				}
-			}
+			}while(tRepeatSearch);
 		}
 		synchronized (mLocalNetworkInterfaces) {
 			if(mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
