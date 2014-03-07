@@ -4230,26 +4230,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public synchronized void eventLostPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, L2Address pNeighborL2Address)
 	{
 		Logging.warn(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
-		
+
+		/**
+		 * Cleanup for list of known com. sessions
+		 */
 		synchronized (mCommunicationSessions) {
 			Logging.warn(this, "   ..known sessions: " + mCommunicationSessions);
 			boolean tRepeatSearch = false;
 			
+			@SuppressWarnings("unchecked")
+			LinkedList<ComSession> tComSessions = (LinkedList<ComSession>) mCommunicationSessions.clone();
+
 			/**
 			 * We use this to ease the implementation.
 			 * (The given pNeighborL2Addres is the first FN towards the central FN of the neighbor node. 
 			 *  But we need the address of the actual central FN of the neighbor node in order to be able to identify all related com. sessions.)
 			 */			
 			L2Address tCorrectPeerL2Address = null;
-			
 			do{
 				tRepeatSearch = false;
-				for (ComSession tComSession : mCommunicationSessions){
+				for (ComSession tComSession : tComSessions){
 					if((tComSession.isPeer(pNeighborL2Address)) || ((tCorrectPeerL2Address != null) && tComSession.isPeer(tCorrectPeerL2Address))){
 						Logging.warn(this, "   ..stopping session: " + tComSession);
 						tCorrectPeerL2Address = tComSession.getPeerL2Address();
 						mProcessorThread.eventCloseSession(tComSession);
 						tRepeatSearch = true;
+						tComSessions.remove(tComSession);
 						break; // only the inner "for"-loop
 					}else{
 						Logging.warn(this, "   ..leaving session: " + tComSession);
@@ -4257,6 +4263,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}while(tRepeatSearch);
 		}
+		
+		/**
+		 * Cleanup for list of known network interfaces
+		 */
 		synchronized (mLocalNetworkInterfaces) {
 			if(mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
 				Integer tRefCount = mLocalNetworkInterfacesRefCount.get(pInterfaceToNeighbor);
