@@ -824,7 +824,7 @@ public class ComChannel
 			HRMID tPeerHRMID = (HRMID)pSignalingMessageHrmPacket.getSenderName();
 			
 			if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){
-				Logging.log(this, "Extracted from received signaling message " + pSignalingMessageHrmPacket + " a new peer HRMID: " + tPeerHRMID);
+				//Logging.log(this, "Extracted from received signaling message " + pSignalingMessageHrmPacket + " a new peer HRMID: " + tPeerHRMID);
 				
 				// update peer's HRMID
 				setPeerHRMID(tPeerHRMID);
