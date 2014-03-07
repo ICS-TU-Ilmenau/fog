@@ -242,23 +242,30 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 * 
 	 * @param pSourceComChannel the source comm. channel
 	 * @param pHRMID the new HRMID
+	 * @param pIsFirmAddress is this address firm?
+	 *  
+	 * @return true if the signaled address was accepted, other (a former address is requested from the peer) false
 	 */
-	public void eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID)
+	public boolean eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID, boolean pIsFirmAddress)
 	{
+		boolean tResult = false;
+		
 		Logging.log(this, "EVENT: eventAssignedHRMID with assigned HRMID " + pHRMID.toString() + ", source comm. channel: " + pSourceComChannel);
 
 		if((pHRMID != null) && (!pHRMID.isZero())){
 			// setHRMID()
-			super.eventAssignedHRMID(pSourceComChannel, pHRMID);
+			tResult = super.eventAssignedHRMID(pSourceComChannel, pHRMID, pIsFirmAddress);
 		}
-		
+
 		if(isActiveMembership()){
 			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 				Logging.log(this, "     ..continuing the address distribution process via the coordinator: " + mCoordinator);
 			}
 
-			mCoordinator.eventAssignedHRMID(pSourceComChannel, pHRMID);
+			tResult = mCoordinator.eventAssignedHRMID(pSourceComChannel, pHRMID, pIsFirmAddress);
 		}
+		
+		return tResult;
 	}
 	
 	/**

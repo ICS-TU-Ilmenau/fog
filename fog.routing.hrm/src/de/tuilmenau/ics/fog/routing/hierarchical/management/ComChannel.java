@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RequestHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
@@ -327,49 +328,60 @@ public class ComChannel
 	 */
 	public void setPeerHRMID(HRMID pHRMID)
 	{
-		if((pHRMID != null) && (!pHRMID.equals(mPeerHRMID))){
-			if(!pHRMID.isZero()){
-				Logging.log(this, "Setting new peer HRMID: " + pHRMID);
-
-				mPeerHRMID = pHRMID.clone();
-				
-				boolean tPeerHRMIDIsNew = false;
-				
-				synchronized(mAssignedPeerHRMIDs){
-					if(!mAssignedPeerHRMIDs.contains(pHRMID)){
-						if(!(mParent instanceof Cluster)){
-							mAssignedPeerHRMIDs.clear();
-						}
-						mAssignedPeerHRMIDs.add(pHRMID);
-					}else{
-						//Logging.warn(this, "storePeerHRMID() skips storing the already known HRMID: " + pHRMID); 
-					}
-				}
+		if(pHRMID != null){
+			if(!pHRMID.equals(mPeerHRMID)){
+				if(!pHRMID.isZero()){
+					Logging.warn(this, "Setting new peer HRMID: " + pHRMID);
 	
-				/**
-				 * Add peerHRMID to peerHRMIDs
-				 */
-				synchronized (mPeerHRMIDs) {
-					if(!mPeerHRMIDs.contains(pHRMID)){
-						if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-							Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
+					mPeerHRMID = pHRMID.clone();
+					
+					boolean tPeerHRMIDIsNew = false;
+					
+					synchronized(mAssignedPeerHRMIDs){
+						if(!mAssignedPeerHRMIDs.contains(pHRMID)){
+							if(!(mParent instanceof Cluster)){
+								mAssignedPeerHRMIDs.clear();
+							}
+							mAssignedPeerHRMIDs.add(pHRMID);
+						}else{
+							//Logging.warn(this, "storePeerHRMID() skips storing the already known HRMID: " + pHRMID); 
 						}
-						mPeerHRMIDs.add(pHRMID);
-						tPeerHRMIDIsNew = true;
 					}
-				}
-				
-				/**
-				 * Inform the parent ClusterMember about the new peer HRMIDs
-				 */
-				if(tPeerHRMIDIsNew){
-					detectNeighborhood();
+		
+					/**
+					 * Add peerHRMID to peerHRMIDs
+					 */
+					synchronized (mPeerHRMIDs) {
+						if(!mPeerHRMIDs.contains(pHRMID)){
+							if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+								Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
+							}
+							mPeerHRMIDs.add(pHRMID);
+							tPeerHRMIDIsNew = true;
+						}
+					}
+					
+					/**
+					 * Inform the parent ClusterMember about the new peer HRMIDs
+					 */
+					if(tPeerHRMIDIsNew){
+						detectNeighborhood();
+					}
+				}else{
+					throw new RuntimeException(this + "::setPeerHRMID() got a zero HRMID as peer HRMID");
 				}
 			}else{
-				throw new RuntimeException(this + "::setPeerHRMID() got a zero HRMID as peer HRMID");
+				//Logging.warn(this, "Ignoring set-request of peer HRMID: " + pHRMID);
 			}
 		}else{
-			//Logging.warn(this, "Ignoring set-request of peer HRMID: " + pHRMID);
+			// reset
+			synchronized (mAssignedPeerHRMIDs) {
+				mAssignedPeerHRMIDs.remove(mPeerHRMID);
+			}
+			synchronized (mPeerHRMIDs) {
+				mPeerHRMIDs.remove(mPeerHRMID);
+			}
+			mPeerHRMID = null;
 		}
 	}
 			
@@ -477,12 +489,12 @@ public class ComChannel
 													if(!mHRMController.isLocalCluster(tGeneralizedNeighborHRMID)){
 														// create the new routing table entry
 														tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
-														tLocalRoutingEntry.addOwner(getParent().getHRMID());
-														tLocalRoutingEntry.setOrigin(getParent().getHRMID());
+														tLocalRoutingEntry.addOwner(mParent.getHRMID());
+														tLocalRoutingEntry.setOrigin(mParent.getHRMID());
 														tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
 														// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 														tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
-														tLocalRoutingEntry.setOrigin(getParent().getHRMID());
+														tLocalRoutingEntry.setOrigin(mParent.getHRMID());
 														// set the timeout for the found route to neighborhood
 														tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
 													}
@@ -492,8 +504,8 @@ public class ComChannel
 													 */
 													// create the forward routing table entry
 													tReportedRoutingEntryForward = RoutingEntry.create(getPeerHRMID(), tGeneralizedNeighborHRMID, tNeighborHRMID, 0, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, (String)null);
-													tReportedRoutingEntryForward.addOwner(getParent().getHRMID());
-													tReportedRoutingEntryForward.setOrigin(getParent().getHRMID());
+													tReportedRoutingEntryForward.addOwner(mParent.getHRMID());
+													tReportedRoutingEntryForward.setOrigin(mParent.getHRMID());
 													tReportedRoutingEntryForward.extendCause( this + "::eventNewPeerHRMIDs()_2(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryForward);
 													// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 													tReportedRoutingEntryForward.setNextHopL2Address(getPeerL2Address());
@@ -501,8 +513,8 @@ public class ComChannel
 													tReportedRoutingEntryForward.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
 													// create the backward routing table entry
 													tReportedRoutingEntryBackward = RoutingEntry.create(tNeighborHRMID, tGeneralizedNeighborHRMID.getForeignCluster(getPeerHRMID()), getPeerHRMID(), 0, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, (String)null);
-													tReportedRoutingEntryBackward.addOwner(getParent().getHRMID());
-													tReportedRoutingEntryBackward.setOrigin(getParent().getHRMID());
+													tReportedRoutingEntryBackward.addOwner(mParent.getHRMID());
+													tReportedRoutingEntryBackward.setOrigin(mParent.getHRMID());
 													tReportedRoutingEntryBackward.extendCause(this + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryBackward);
 													// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 													tReportedRoutingEntryBackward.setNextHopL2Address(mHRMController.getNodeL2Address());
@@ -518,12 +530,12 @@ public class ComChannel
 												 */
 												// create the new routing table entry
 												tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
-												tLocalRoutingEntry.addOwner(getParent().getHRMID());
-												tLocalRoutingEntry.setOrigin(getParent().getHRMID());
+												tLocalRoutingEntry.addOwner(mParent.getHRMID());
+												tLocalRoutingEntry.setOrigin(mParent.getHRMID());
 												tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_4(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
 												// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 												tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
-												tLocalRoutingEntry.setOrigin(getParent().getHRMID());
+												tLocalRoutingEntry.setOrigin(mParent.getHRMID());
 												// set the timeout for the found route to neighborhood
 												tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
 					
@@ -532,12 +544,12 @@ public class ComChannel
 												 */
 												// create the forward routing table entry
 												tReportedRoutingEntryForward = tLocalRoutingEntry.clone();
-												tReportedRoutingEntryForward.addOwner(getParent().getHRMID());
-												tReportedRoutingEntryForward.setOrigin(getParent().getHRMID());
+												tReportedRoutingEntryForward.addOwner(mParent.getHRMID());
+												tReportedRoutingEntryForward.setOrigin(mParent.getHRMID());
 												// create the backward routing table entry
 												tReportedRoutingEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tNeighborHRMID, tSourceForReportedRoutes, tSourceForReportedRoutes, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
-												tReportedRoutingEntryBackward.addOwner(getParent().getHRMID());
-												tReportedRoutingEntryBackward.setOrigin(getParent().getHRMID());
+												tReportedRoutingEntryBackward.addOwner(mParent.getHRMID());
+												tReportedRoutingEntryBackward.setOrigin(mParent.getHRMID());
 												tReportedRoutingEntryBackward.extendCause(this + "::eventNewPeerHRMIDs()_5(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryBackward);
 												// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 												tReportedRoutingEntryBackward.setNextHopL2Address(mHRMController.getNodeL2Address());
@@ -812,6 +824,8 @@ public class ComChannel
 			HRMID tPeerHRMID = (HRMID)pSignalingMessageHrmPacket.getSenderName();
 			
 			if((tPeerHRMID != null) && (!tPeerHRMID.isZero())){
+				Logging.log(this, "Extracted from received signaling message " + pSignalingMessageHrmPacket + " a new peer HRMID: " + tPeerHRMID);
+				
 				// update peer's HRMID
 				setPeerHRMID(tPeerHRMID);
 			}
@@ -1188,7 +1202,7 @@ public class ComChannel
 				}
 		
 				// create the source description
-				ClusterName tSourceClusterName = new ClusterName(mHRMController, getParent().getHierarchyLevel(), getParent().getClusterID(), getParent().getCoordinatorID());
+				ClusterName tSourceClusterName = new ClusterName(mHRMController, mParent.getHierarchyLevel(), mParent.getClusterID(), mParent.getCoordinatorID());
 				
 				// add source route entry
 				pPacket.addSourceRoute("[S]: " + this.toString());
@@ -1236,12 +1250,38 @@ public class ComChannel
 	}
 	
 	/**
+	 * Sends "RequestHRMID"
+	 * 
+	 * @param pHRMID the HRMID which is requested to be assigned
+	 */
+	public void requestHRMIDAssignment(HRMID pHRMID)
+	{
+		HRMID tSenderHRMID = mParent.getHRMID();
+		if(mParent instanceof ClusterMember){
+			ClusterMember tParentClusterMember = (ClusterMember)mParent;
+			if(tParentClusterMember.getL0HRMID() != null){
+				tSenderHRMID = tParentClusterMember.getL0HRMID();
+			}
+		}
+		
+		/**
+		 * Send RequestHRMID
+		 */
+		// create new AssignHRMID packet for the cluster member
+		RequestHRMID tRequestHRMIDPacket = new RequestHRMID(tSenderHRMID, getPeerHRMID(), pHRMID);
+		// send the packet
+		sendPacket(tRequestHRMIDPacket);
+	}
+
+	/**
 	 * Sends "AssignHRMID"
 	 * 
 	 * @param pHRMID the HRMID which is to be assigned
 	 */
-	public void distributeAssignHRMID(HRMID pHRMID)
+	public void distributeAssignHRMID(HRMID pHRMID, boolean pDistributeFirmAddress)
 	{
+		Logging.log(this, "Distributing assigned HRMID: " + pHRMID + ", firm=" + pDistributeFirmAddress);
+		
 		HRMID tSenderHRMID = mParent.getHRMID();
 		if(mParent instanceof ClusterMember){
 			ClusterMember tParentClusterMember = (ClusterMember)mParent;
@@ -1255,6 +1295,9 @@ public class ComChannel
 		 */
 		// create new AssignHRMID packet for the cluster member
 		AssignHRMID tAssignHRMIDPacket = new AssignHRMID(tSenderHRMID, getPeerHRMID(), pHRMID);
+		if(pDistributeFirmAddress){
+			tAssignHRMIDPacket.setFirmAddress();
+		}
 		// send the packet
 		sendPacket(tAssignHRMIDPacket);
 		
@@ -1292,7 +1335,8 @@ public class ComChannel
 				Logging.log(this, "    ..[" + i + "]: " + tHRMID);
 				i++;
 			}
-
+			mPeerHRMID = null;
+			
 			/**
 			 * Revoke the HRMIDs from the peer
 			 */
@@ -1454,7 +1498,7 @@ public class ComChannel
 		}
 
 		if(tNextPacket != null){
-			if((getParent().isThisEntityValid()) || (tNextPacket instanceof RequestClusterMembership) /* never block this kind of packets */){
+			if((mParent.isThisEntityValid()) || (tNextPacket instanceof RequestClusterMembership) /* never block this kind of packets */){
 				tBefore = HRMController.getRealTime();
 				handlePacket(tNextPacket);
 				tSpentTime = HRMController.getRealTime() - tBefore;
@@ -1628,13 +1672,37 @@ public class ComChannel
 			HRMID tAssignedHRMID = tAssignHRMIDPacket.getHRMID();
 
 			// let the coordinator process the HRMID assignment
-			getParent().eventAssignedHRMID(this, tAssignedHRMID);
+			mParent.eventAssignedHRMID(this, tAssignedHRMID, tAssignHRMIDPacket.isFirmAddress());
 			
 			/**
 			 * Trigger: new peer HRMIDs because we got a new HRMID assigned
 			 */
 			if(mParent.getHierarchyLevel().isBaseLevel()){
 				detectNeighborhood();
+			}
+			
+			return true;
+		}
+
+		/**
+		 * RequestHRMID:
+		 * 			an inferior local/remote ClusterMember ==> Coordinator (via Cluster)
+		 */
+		if(pPacket instanceof RequestHRMID) {
+			RequestHRMID tRequestHRMIDPacket = (RequestHRMID)pPacket;
+			
+			if(mParent instanceof Cluster){	
+				Cluster tParentCluster = (Cluster)mParent;
+				
+				if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
+					Logging.log(this, "REQUEST_HRMID-received from \"" + getPeerHRMID() + "\" requested HRMID: " + tRequestHRMIDPacket.getHRMID().toString());
+	
+				HRMID tRequestedHRMID = tRequestHRMIDPacket.getHRMID();
+	
+				// let the parent cluster process the HRMID request
+				tParentCluster.eventReceivedRequestedHRMID(this, tRequestedHRMID);
+			}else{
+				Logging.err(this, "handlePacket() expected a Cluster as parent, parent is: " + mParent + ", packet is: " + tRequestHRMIDPacket);
 			}
 			
 			return true;
@@ -1668,7 +1736,7 @@ public class ComChannel
 
 			// revoke the HRMIDs step-by-step
 			for(HRMID tHRMID: tRevokeHRMIDsPacket.getHRMIDs()){
-				getParent().eventRevokedHRMID(this, tHRMID);
+				mParent.eventRevokedHRMID(this, tHRMID);
 			}
 			
 			return true;
@@ -1703,7 +1771,7 @@ public class ComChannel
 					mParentComSession.denyClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), tRequestClusterMembershipPacket.getDestination());
 				}
 			}else{
-				Logging.err(this, "Expected a CoordinatorAsClusterMember object as parent for processing RequestClusterMembership data but parent is " + getParent());
+				Logging.err(this, "Expected a CoordinatorAsClusterMember object as parent for processing RequestClusterMembership data but parent is " + mParent);
 			}
 
 			return true;
@@ -1721,13 +1789,13 @@ public class ComChannel
 				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP_ACK-received from \"" + getPeerHRMID() + "\": " + tRequestClusterMembershipAckPacket);
 
 			// is the parent a coordinator or a cluster?
-			if (getParent() instanceof Cluster){
-				Cluster tCluster = (Cluster)getParent();
+			if (mParent instanceof Cluster){
+				Cluster tCluster = (Cluster)mParent;
 				
 				// trigger event "cluster member joined"
 				tCluster.eventClusterMemberJoined(this);		
 			}else{
-				Logging.err(this, "Expected a Cluster object as parent for processing RequestClusterMembershipAck data but parent is " + getParent());
+				Logging.err(this, "Expected a Cluster object as parent for processing RequestClusterMembershipAck data but parent is " + mParent);
 			}
 			
 			return true;
@@ -1753,12 +1821,12 @@ public class ComChannel
 
 			// is the parent a coordinator or a cluster?
 			if (mParent instanceof Cluster){
-				Cluster tCluster = (Cluster)getParent();
+				Cluster tCluster = (Cluster)mParent;
 				
 				// trigger event "cluster member joined"
 				tCluster.eventClusterMemberLost(this, this + "::handlePacket() for " + tInformClusterLeftPacket);		
 			}else{
-				Logging.err(this, "Expected a Cluster object as parent for processing LeaveCluster data but parent is " + getParent());
+				Logging.err(this, "Expected a Cluster object as parent for processing LeaveCluster data but parent is " + mParent);
 			}
 
 			return true;
@@ -1782,14 +1850,14 @@ public class ComChannel
 			mChannelState = ChannelState.CLOSED;
 			
 			// is the parent a coordinator or a cluster?
-			if (getParent() instanceof ClusterMember){
-				ClusterMember tClusterMember = (ClusterMember)getParent();
+			if (mParent instanceof ClusterMember){
+				ClusterMember tClusterMember = (ClusterMember)mParent;
 				
 				// trigger event "cluster member joined"
 				Logging.log(this, "   ..invalidating the ClusterMember role of: " + tClusterMember);
 				tClusterMember.eventClusterMemberRoleInvalid(this);		
 			}else{
-				Logging.err(this, "Expected a ClusterMember object as parent for processing LeaveCluster data but parent is " + getParent());
+				Logging.err(this, "Expected a ClusterMember object as parent for processing LeaveCluster data but parent is " + mParent);
 			}
 			
 			return true;
@@ -1805,7 +1873,7 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "ANNOUNCE_COORDINATOR-received from \"" + getPeerHRMID() + "\", announcement is: " + tAnnounceClusterPacket);
 		
-			getParent().eventCoordinatorAnnouncement(this, tAnnounceClusterPacket);
+			mParent.eventCoordinatorAnnouncement(this, tAnnounceClusterPacket);
 			
 			return true;
 		}
@@ -1820,7 +1888,7 @@ public class ComChannel
 			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
 				Logging.log(this, "INVALID_COORDINATOR-received from \"" + getPeerHRMID() + "\", invalidation is: " + tInvalidCoordinatorPacket);
 		
-			getParent().eventCoordinatorInvalidation(this, tInvalidCoordinatorPacket);
+			mParent.eventCoordinatorInvalidation(this, tInvalidCoordinatorPacket);
 			
 			return true;
 		}

@@ -674,12 +674,69 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @param pSourceComChannel the source comm. channel
 	 * @param pHRMID the new HRMID
+	 * @param pIsFirmAddress is this address firm? 
+	 * 
+	 * @return true if the signaled address was accepted, other (a former address is requested from the peer) false
 	 */
-	public void eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID)
+	public boolean eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID, boolean pIsFirmAddress)
 	{
+		boolean tResult = false;
+		
 		Logging.log(this, "EVENT: eventAssignedHRMID with assigned HRMID " + pHRMID.toString() + ", source comm. channel: " + pSourceComChannel);
 
+		/**
+		 * is the new address valid?
+		 */
 		if((pHRMID != null) && (!pHRMID.equals(getHRMID())) && (!pHRMID.isZero())){
+			/**
+			 * make sure we are not at the top of the hierarchy
+			 */
+			if(!getHierarchyLevel().isHighest()){
+				/**
+				 * is then old address valid?
+				 */
+				if((getHRMID() != null) && (!getHRMID().isZero())){
+					/**
+					 * do we have an address change?
+					 */
+					if(!pHRMID.equals(getHRMID())){
+						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							Logging.log(this, "Detected an address change from " + getHRMID() + " to " + pHRMID + ", new address is firm: " + pIsFirmAddress);
+						}
+						
+						/**
+						 * is the new address firm?
+						 */
+						if(!pIsFirmAddress){
+							HRMID tOldSuperiorCluster = getHRMID().getClusterAddress(getHierarchyLevel().getValue() + 1);
+							HRMID tNewSuperiorCluster = pHRMID.getClusterAddress(getHierarchyLevel().getValue() + 1);
+							if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+								Logging.log(this, "  ..former superior cluster: " + tOldSuperiorCluster);
+								Logging.log(this, "  ..new superior cluster: " + tNewSuperiorCluster);
+							}
+							if(tOldSuperiorCluster.equals(tNewSuperiorCluster)){
+								/**
+								 * request the previously assigned HRMID at the superior coordinator
+								 */
+								if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+									Logging.log(this, "  ..REQUESTING OLD HRMID: " + getHRMID());
+								}
+								pSourceComChannel.requestHRMIDAssignment(getHRMID());
+								
+								return tResult;
+							}else{
+								// above hierarchy changed too much
+								if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+									Logging.log(this, "  ..can not request old HRMID: " + getHRMID());
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			tResult = true;
+				
 			/**
 			 * Store the new HRMID
 			 */
@@ -695,6 +752,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 				Logging.warn(this, "     ..ignoring assigned HRMID " + pHRMID + " at hierachy level " + getHierarchyLevel().getValue());
 			}
 		}
+		
+		return tResult;
 	}
 
 	/**

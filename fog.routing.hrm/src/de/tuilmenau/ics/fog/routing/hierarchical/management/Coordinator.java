@@ -1445,37 +1445,40 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
      * 
 	 * @param pSourceComChannel the source comm. channel
 	 * @param pHRMID the new HRMID
+	 * @param pIsFirmAddress is this address firm?
+	 *  
+	 * @return true if the signaled address was accepted, other (a former address is requested from the peer) false
 	 */
 	@Override
-	public void eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID)
+	public boolean eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID, boolean pIsFirmAddress)
 	{
+		boolean tResult = false;
+		
 		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
 		}
 
+		/**
+		 * is the new address valid?
+		 */
 		if((pHRMID != null) && (!pHRMID.isZero())){
-			if(!getHierarchyLevel().isHighest()){
-				if((getHRMID() != null) && (!getHRMID().isZero())){
-					if(!pHRMID.equals(getHRMID())){
-						Logging.warn(this, "Detected an address change from " + getHRMID() + " to " + pHRMID);
+			// setHRMID()
+			tResult = super.eventAssignedHRMID(pSourceComChannel, pHRMID, pIsFirmAddress);
+			if(tResult){
+				/**
+				 * Automatic address distribution via the cluster
+				 */
+				// we should automatically continue the address distribution?
+				if (HRMController.GUI_USER_CTRL_ADDRESS_DISTRUTION){
+					if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						Logging.log(this, "     ..continuing the address distribution process via this cluster");
 					}
+					getCluster().distributeAddresses();				
 				}
 			}
-				
-			// setHRMID()
-			super.eventAssignedHRMID(pSourceComChannel, pHRMID);
-		
-			/**
-			 * Automatic address distribution via the cluster
-			 */
-			// we should automatically continue the address distribution?
-			if (HRMController.GUI_USER_CTRL_ADDRESS_DISTRUTION){
-				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-					Logging.log(this, "     ..continuing the address distribution process via this cluster");
-				}
-				getCluster().distributeAddresses();				
-			}			
 		}
+		
+		return tResult;
 	}
 
 	/**
@@ -1575,7 +1578,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 */
 			if((getHRMID() == null) || (getHRMID().isZero()) || (!getHRMID().equals(pMembership.getHRMID()))){
 				Logging.log(this, "eventClusterMembershipToSuperiorCoordinator() updates HRMID to: " + pMembership.getHRMID());
-				eventAssignedHRMID(pMembership.getComChannelToClusterHead(), pMembership.getHRMID());
+				eventAssignedHRMID(pMembership.getComChannelToClusterHead(), pMembership.getHRMID(), false);
 			}
 		}else{
 			/**
