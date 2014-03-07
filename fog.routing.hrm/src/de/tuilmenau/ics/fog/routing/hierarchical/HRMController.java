@@ -1575,20 +1575,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mCallsUpdateCoordinatorAddress++;
 		
 		HRMID tHRMID = pCoordinator.getHRMID();
-		if((pOldHRMID == null) || (!pOldHRMID.equals(tHRMID))){
-			/**
-			 * Unregister old
-			 */
-			if((pOldHRMID != null) && (!pOldHRMID.isZero())){
-				unregisterHRMID(pCoordinator, pOldHRMID, "updateCoordinatorAddress()(" + mCallsUpdateCoordinatorAddress + ") for " + pCoordinator + ", old HRMID=" + pOldHRMID);
-			}
-			
-			/**
-			 * Register new
-			 */
-			Logging.log(this, "Updating address from " + pOldHRMID + " to " + (tHRMID != null ? tHRMID.toString() : "null") + " for Coordinator " + pCoordinator + ", old HRMID=" + pOldHRMID);
-			registerHRMID(pCoordinator, "updateCoordinatorAddress()(" + mCallsUpdateCoordinatorAddress + ") for " + pCoordinator);
+		/**
+		 * Unregister old
+		 */
+		if((pOldHRMID != null) && (!pOldHRMID.isZero())){
+			unregisterHRMID(pCoordinator, pOldHRMID, "updateCoordinatorAddress()(" + mCallsUpdateCoordinatorAddress + ") for " + pCoordinator + ", old HRMID=" + pOldHRMID);
 		}
+		
+		/**
+		 * Register new
+		 */
+		Logging.log(this, "Updating address from " + pOldHRMID + " to " + (tHRMID != null ? tHRMID.toString() : "null") + " for Coordinator " + pCoordinator + ", old HRMID=" + pOldHRMID);
+		registerHRMID(pCoordinator, "updateCoordinatorAddress()(" + mCallsUpdateCoordinatorAddress + ") for " + pCoordinator);
 	}
 
 	/**
@@ -2180,20 +2178,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public void updateClusterAddress(Cluster pCluster, HRMID pOldHRMID)
 	{
 		HRMID tHRMID = pCluster.getHRMID();
-		if((pOldHRMID == null) || (!pOldHRMID.equals(tHRMID))){
-			/**
-			 * Unregister old
-			 */
-			if((pOldHRMID != null) && (!pOldHRMID.isZero())){
-				unregisterHRMID(pCluster, pOldHRMID, "updateClusterAddress() for " + pCluster);
-			}
-			
-			/**
-			 * Register new
-			 */
-			Logging.log(this, "Updating address from " + pOldHRMID + " to " + (tHRMID != null ? tHRMID.toString() : "null") + " for Cluster " + pCluster);
-			registerHRMID(pCluster, "updateClusterAddress() for " + pCluster);
+		/**
+		 * Unregister old
+		 */
+		if((pOldHRMID != null) && (!pOldHRMID.isZero())){
+			unregisterHRMID(pCluster, pOldHRMID, "updateClusterAddress() for " + pCluster);
 		}
+		
+		/**
+		 * Register new
+		 */
+		Logging.log(this, "Updating address from " + pOldHRMID + " to " + (tHRMID != null ? tHRMID.toString() : "null") + " for Cluster " + pCluster);
+		registerHRMID(pCluster, "updateClusterAddress() for " + pCluster);
 	}
 
 	/**
@@ -2205,28 +2201,26 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public void updateClusterMemberAddress(ClusterMember pClusterMember, HRMID pOldHRMID)
 	{
 		HRMID tHRMID = pClusterMember.getHRMID();
-		if((pOldHRMID == null) || (!pOldHRMID.equals(tHRMID))){
-			/**
-			 * Unregister old
-			 */
-			if((pOldHRMID != null) && (!pOldHRMID.isZero())){
-				unregisterHRMID(pClusterMember, pOldHRMID, "updateClusterMemberAddress() for " + pClusterMember + ", old HRMID=" + pOldHRMID);
-			}
-			
-			/**
-			 * Register new
-			 */
-			Logging.log(this, "Updating address from " + (pOldHRMID != null ? pOldHRMID.toString() : "null") + " to " + (tHRMID != null ? tHRMID.toString() : "null") + " for ClusterMember " + pClusterMember + ", old HRMID=" + pOldHRMID);
-	
-			// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
-			// the corresponding coordinator instance
-			if (pClusterMember.getHierarchyLevel().isBaseLevel()){
-				registerHRMID(pClusterMember, "updateClusterMemberAddress() for " + pClusterMember + ", old HRMID=" + pOldHRMID);
-			}else{
-				// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
-				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-					Logging.warn(this, "Skipping HRMID registration " + (tHRMID != null ? tHRMID.toString() : "null") + " for " + pClusterMember + ", old HRMID=" + pOldHRMID);
-				}
+		/**
+		 * Unregister old
+		 */
+		if((pOldHRMID != null) && (!pOldHRMID.isZero())){
+			unregisterHRMID(pClusterMember, pOldHRMID, "updateClusterMemberAddress() for " + pClusterMember + ", old HRMID=" + pOldHRMID);
+		}
+		
+		/**
+		 * Register new
+		 */
+		Logging.log(this, "Updating address from " + (pOldHRMID != null ? pOldHRMID.toString() : "null") + " to " + (tHRMID != null ? tHRMID.toString() : "null") + " for ClusterMember " + pClusterMember + ", old HRMID=" + pOldHRMID);
+
+		// process this only if we are at base hierarchy level, otherwise we will receive the same update from 
+		// the corresponding coordinator instance
+		if (pClusterMember.getHierarchyLevel().isBaseLevel()){
+			registerHRMID(pClusterMember, "updateClusterMemberAddress() for " + pClusterMember + ", old HRMID=" + pOldHRMID);
+		}else{
+			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				Logging.warn(this, "Skipping HRMID registration " + (tHRMID != null ? tHRMID.toString() : "null") + " for " + pClusterMember + ", old HRMID=" + pOldHRMID);
 			}
 		}
 	}
@@ -4229,13 +4223,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void eventLostPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, L2Address pNeighborL2Address)
 	{
-		Logging.warn(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
+		Logging.log(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 
 		/**
 		 * Cleanup for list of known com. sessions
 		 */
 		synchronized (mCommunicationSessions) {
-			Logging.warn(this, "   ..known sessions: " + mCommunicationSessions);
+			Logging.log(this, "   ..known sessions: " + mCommunicationSessions);
 			boolean tRepeatSearch = false;
 			
 			@SuppressWarnings("unchecked")
@@ -4251,14 +4245,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tRepeatSearch = false;
 				for (ComSession tComSession : tComSessions){
 					if((tComSession.isPeer(pNeighborL2Address)) || ((tCorrectPeerL2Address != null) && tComSession.isPeer(tCorrectPeerL2Address))){
-						Logging.warn(this, "   ..stopping session: " + tComSession);
+						Logging.log(this, "   ..stopping session: " + tComSession);
 						tCorrectPeerL2Address = tComSession.getPeerL2Address();
 						mProcessorThread.eventCloseSession(tComSession);
 						tRepeatSearch = true;
 						tComSessions.remove(tComSession);
 						break; // only the inner "for"-loop
 					}else{
-						Logging.warn(this, "   ..leaving session: " + tComSession);
+						Logging.log(this, "   ..leaving session: " + tComSession);
 					}
 				}
 			}while(tRepeatSearch);

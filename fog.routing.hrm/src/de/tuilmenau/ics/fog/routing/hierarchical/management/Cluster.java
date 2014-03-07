@@ -382,6 +382,10 @@ public class Cluster extends ClusterMember
 								// free the allocated address again
 								freeClusterMemberAddress(tThisNodesAddress.getLevelAddress(getHierarchyLevel()));
 							}
+						}else{
+							// do a refresh here -> otherwise, the local L0 might not been updated in case the clustering switched to an alternative/parallel cluster
+							Logging.log(this, "  ..refreshing L0 HRMID: " + tOldL0HRMID);
+							setL0HRMID(tOldL0HRMID);
 						}
 					}
 					if(tClusterIsTopOfHierarchy){
@@ -458,7 +462,8 @@ public class Cluster extends ClusterMember
 						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 							Logging.log(this, "     ..continuing the address distribution process via this cluster");
 						}
-						distributeAddresses();				
+						distributeAddresses();
+						applyAddressToAlternativeClusters(pHRMID);
 					}			
 				}else{
 					if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
@@ -485,13 +490,12 @@ public class Cluster extends ClusterMember
 		/**
 		 * Do we have a new HRMID?
 		 */
-		if((pHRMID == null) || (!pHRMID.equals(getHRMID()))){
-			freeAllClusterMemberAddresses("setHRMID() for " + pHRMID);
+		freeAllClusterMemberAddresses("setHRMID() for " + pHRMID);
 			
-			/**
-			 * Set the new HRMID
-			 */
-			super.setHRMID(pCaller, pHRMID);
+		/**
+		 * Set the new HRMID
+		 */
+		super.setHRMID(pCaller, pHRMID);
 			
 //			/**
 //			 * Update the local HRG: find other active Cluster instances and store a local loopback link to them
@@ -515,7 +519,6 @@ public class Cluster extends ClusterMember
 //					}
 //				}
 //			}
-		}
 	}
 
 	/**

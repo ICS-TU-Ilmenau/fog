@@ -61,7 +61,7 @@ public class ClusterMember extends ClusterName
 	 * Stores the HRMID which is assigned to this node.
 	 * This variable is only used for L0.
 	 */
-	private HRMID mAssignedL0HRMID = null;
+	protected HRMID mAssignedL0HRMID = null;
 
 	/**
 	 * Stores the currently reported routing table based on setL0HRMID calls
@@ -430,7 +430,7 @@ public class ClusterMember extends ClusterName
 		mCallsSetL0HRMID++;
 		
 		// is this a new HRMID?
-		if((pNewL0HRMID != null) && (!pNewL0HRMID.equals(mAssignedL0HRMID)) && (!pNewL0HRMID.isClusterAddress()) && (!pNewL0HRMID.isZero())){
+		if((pNewL0HRMID != null) && (!pNewL0HRMID.isClusterAddress()) && (!pNewL0HRMID.isZero())){
 			Logging.log(this, "ASSIGNED new (" + mCallsSetL0HRMID + ") L0 node HRMID: " + pNewL0HRMID);
 
 			/**
@@ -1247,6 +1247,71 @@ public class ClusterMember extends ClusterName
 			mHRMController.unregisterClusterMember(this);
 		}else{
 			Logging.warn(this, "This ClusterMember is already invalid");
+		}
+	}
+	
+	/**
+	 * EVENT: new HRMID assigned
+     * The function is called when an address update was received.
+	 * 
+	 * @param pSourceComChannel the source comm. channel
+	 * @param pHRMID the new HRMID
+	 * @param pIsFirmAddress is this address firm? 
+	 * 
+	 * @return true if the signaled address was accepted, other (a former address is requested from the peer) false
+	 */
+	@Override
+	public boolean eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID, boolean pIsFirmAddress)
+	{
+		boolean tResult = super.eventAssignedHRMID(pSourceComChannel, pHRMID, pIsFirmAddress);
+		
+		/**
+		 * Try to keep the assigned HRMID even if the hierarchy is restructured
+		 */
+		if(tResult){
+			applyAddressToAlternativeClusters(pHRMID);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Applies an assigned address to alternative clusters
+	 *   
+	 * @param pHRMID the assigned HRMID 
+	 */
+	protected void applyAddressToAlternativeClusters(HRMID pHRMID)
+	{
+		if(getHierarchyLevel().isBaseLevel()){
+			if(!(this instanceof CoordinatorAsClusterMember)){
+				// only proceed if we have an associated network interface
+				if(getBaseHierarchyLevelNetworkInterface() != null){
+					// iterate over all known L0 ClusterMember instances
+					LinkedList<ClusterMember> tL0ClusterMembers = mHRMController.getAllClusterMembers(0);
+					for(ClusterMember tClusterMember : tL0ClusterMembers){
+						// ignore ourself
+						if(!getClusterID().equals(tClusterMember.getClusterID())){
+							// search for ClusterMembers for the same network interface
+							if(getBaseHierarchyLevelNetworkInterface().equals(tClusterMember.getBaseHierarchyLevelNetworkInterface())){
+								/**
+								 * are we the head of the current cluster?
+								 * 	yes -> inform all parallel ClusterMember instances
+								 *  no  -> inform all parallel Cluster instances about a new L0 HRMID and a new cluster HRMID
+								 */
+								
+								if(this instanceof Cluster){
+									tClusterMember.mHRMID = mAssignedL0HRMID.clone();
+								}else{
+									Cluster tCluster = (Cluster)tClusterMember; // has to be a Cluster here, otherwise, we have a wished exception here
+									HRMID tClusterHRMID = pHRMID.getClusterAddress(0);
+									tCluster.mHRMID = tClusterHRMID;
+									tCluster.mAssignedL0HRMID = pHRMID.clone();
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 

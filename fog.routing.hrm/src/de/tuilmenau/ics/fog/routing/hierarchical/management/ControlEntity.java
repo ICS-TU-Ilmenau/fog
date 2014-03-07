@@ -48,7 +48,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	/**
 	 * The HRM ID of this cluster.
 	 */
-	private HRMID mHRMID = new HRMID(0); // initialize the HRMID of the cluster to "0.0.0"
+	protected HRMID mHRMID = new HRMID(0); // initialize the HRMID of the cluster to "0.0.0"
 
 	/**
 	 * Stores a description of former HRMIDs
@@ -203,49 +203,44 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		
 		Logging.log(this, "ASSINGED HRMID=" + pHRMID + " (old=" + (mHRMID != null ? mHRMID.toString() : "null") + ", assigner=" + pCaller + ")");
 	
-		// is this a new HRMID?
-		if((pHRMID == null) || (!pHRMID.equals(mHRMID))){
-			if((tOldHRMID != null) && (!tOldHRMID.isZero())){
-				mDescriptionFormerHRMIDs += " " + tOldHRMID.toString();
-			}
+		if((tOldHRMID != null) && (!tOldHRMID.isZero())){
+			mDescriptionFormerHRMIDs += " " + tOldHRMID.toString();
+		}
+		
+		// update the HRMID
+		mHRMID = (pHRMID != null ? pHRMID.clone() : null);
+		
+		if (this instanceof Cluster){
+			Cluster tCluster = (Cluster)this;
+
+			// inform HRM controller about the address change
+			mHRMController.updateClusterAddress(tCluster, tOldHRMID);
+
+			return;
+		}
+		if (this instanceof Coordinator){
+			Coordinator tCoordinator = (Coordinator)this;
+
+			// inform HRM controller about the address change
+			mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
+
+			return;
+		}
+		if (this instanceof CoordinatorAsClusterMember){
+			Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
 			
-			// update the HRMID
-			mHRMID = (pHRMID != null ? pHRMID.clone() : null);
+			// inform HRM controller about the address change
+			//do not do: mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
+
+			return;
+		}
+		if (this instanceof ClusterMember){
+			ClusterMember tClusterMember = (ClusterMember)this;
+
+			// inform HRM controller about the address change
+			mHRMController.updateClusterMemberAddress(tClusterMember, tOldHRMID);
 			
-			if (this instanceof Cluster){
-				Cluster tCluster = (Cluster)this;
-	
-				// inform HRM controller about the address change
-				mHRMController.updateClusterAddress(tCluster, tOldHRMID);
-	
-				return;
-			}
-			if (this instanceof Coordinator){
-				Coordinator tCoordinator = (Coordinator)this;
-	
-				// inform HRM controller about the address change
-				mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
-	
-				return;
-			}
-			if (this instanceof CoordinatorAsClusterMember){
-				Coordinator tCoordinator = ((CoordinatorAsClusterMember)this).getCoordinator();
-				
-				// inform HRM controller about the address change
-				//do not do: mHRMController.updateCoordinatorAddress(tCoordinator, tOldHRMID);
-	
-				return;
-			}
-			if (this instanceof ClusterMember){
-				ClusterMember tClusterMember = (ClusterMember)this;
-	
-				// inform HRM controller about the address change
-				mHRMController.updateClusterMemberAddress(tClusterMember, tOldHRMID);
-				
-				return;
-			}
-		}else{
-			Logging.log(this, "Got the same HRMID assignement again: " + pHRMID);
+			return;
 		}
 	}
 
@@ -687,13 +682,13 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		/**
 		 * is the new address valid?
 		 */
-		if((pHRMID != null) && (!pHRMID.equals(getHRMID())) && (!pHRMID.isZero())){
+		if((pHRMID != null) && (!pHRMID.isZero())){
 			/**
 			 * make sure we are not at the top of the hierarchy
 			 */
 			if(!getHierarchyLevel().isHighest()){
 				/**
-				 * is then old address valid?
+				 * is the old address valid?
 				 */
 				if((getHRMID() != null) && (!getHRMID().isZero())){
 					/**
