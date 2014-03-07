@@ -1158,7 +1158,7 @@ public class ComSession extends Session
 		{
 			// get the channel
 			ComChannel tChannel = mRegisteredComChannels.getLast();
-			Logging.log(this, "   ..found comm. channel: " + tChannel);
+			Logging.log(this, "   ..found deprecated comm. channel: " + tChannel);
 			// get the channel parent
 			ControlEntity tParent = tChannel.getParent();
 			if(tParent instanceof Cluster){
