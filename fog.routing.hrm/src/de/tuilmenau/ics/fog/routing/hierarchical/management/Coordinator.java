@@ -1455,7 +1455,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		boolean tResult = false;
 		
 		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + pHRMID.toString());
+			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + (pHRMID != null ? pHRMID.toString() : "null"));
 		}
 
 		/**

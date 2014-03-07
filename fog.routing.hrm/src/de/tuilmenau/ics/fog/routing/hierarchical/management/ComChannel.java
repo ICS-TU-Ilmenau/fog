@@ -331,7 +331,7 @@ public class ComChannel
 		if(pHRMID != null){
 			if(!pHRMID.equals(mPeerHRMID)){
 				if(!pHRMID.isZero()){
-					Logging.warn(this, "Setting new peer HRMID: " + pHRMID);
+					Logging.log(this, "Setting new peer HRMID: " + pHRMID);
 	
 					mPeerHRMID = pHRMID.clone();
 					
