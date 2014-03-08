@@ -2792,12 +2792,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	    }while((tRetryConnection) && (mProcessorThread != null) && (mProcessorThread.isValid()));
 	    
 	    if(mProcessorThread.isRunning()){
-		    if(tRetriedConnection){
-				Logging.warn(this, "Successfully recovered from connection problems towards: " + pDestinationL2Address + ", connect attempts: " + tAttemptNr);
-		    }
-		    
 		    Logging.log(this, "    ..connectBlock() FINISHED");
 			if(tConnection != null) {
+			    if(tRetriedConnection){
+					Logging.warn(this, "Successfully recovered from connection problems towards: " + pDestinationL2Address + ", connect attempts: " + tAttemptNr);
+			    }
 	
 				mCounterOutgoingConnections++;
 				
@@ -4162,6 +4161,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				i++;
 			}
 
+			tResult += "\n .." + tCluster + " has these reservations:";
+			HashMap<Integer, ComChannel> tReservations = tCluster.getReservedAddresses();
+			i = 0;
+			for(Integer tReservedAddr : tReservations.keySet()){
+				tResult += "\n     ..[" + i + "]: " + tReservedAddr + " => " + tReservations.get(tReservedAddr);
+				i++;
+			}
+			
 			LinkedList<ComChannel> tAllClusterChannels = tCluster.getComChannels();
 			tResult += "\n .." + tCluster + " channels:";
 			i = 0;
@@ -4223,7 +4230,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void eventLostPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, L2Address pNeighborL2Address)
 	{
-		Logging.log(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
+		Logging.warn(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 
 		/**
 		 * Cleanup for list of known com. sessions
@@ -4299,7 +4306,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	@SuppressWarnings("unused")
 	public synchronized void eventDetectedPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, final L2Address pNeighborL2Address)
 	{
-		Logging.log(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
+		Logging.warn(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 		
 		if((!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS)){
 			Logging.warn(this, "### AnnounceCoordinator packets were already disabled, reenabling them due to topology changes");
