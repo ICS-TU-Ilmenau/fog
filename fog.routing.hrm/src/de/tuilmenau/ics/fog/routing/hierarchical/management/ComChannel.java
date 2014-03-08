@@ -1654,7 +1654,7 @@ public class ComChannel
 		if (pPacket instanceof ProbePacket){
 			ProbePacket tProbePacket = (ProbePacket)pPacket;
 			
-			Logging.log(this, "RECEIVED PROBE_PACKET: " + tProbePacket);
+			Logging.warn(this, "RECEIVED PROBE_PACKET: " + tProbePacket);
 			
 			return true;
 		}
@@ -1920,9 +1920,8 @@ public class ComChannel
 		ProbePacket tProbePacket = new ProbePacket(mHRMController.getNodeL2Address(),  getPeerHRMID());
 		
 		// send the packet
+		Logging.warn(this, "SENDING PROBE_PACKET: " + tProbePacket);
 		sendPacket(tProbePacket);
-		
-		Logging.log(this, "SENDING PROBE_PACKET: " + tProbePacket);
 	}
 
 	/**
