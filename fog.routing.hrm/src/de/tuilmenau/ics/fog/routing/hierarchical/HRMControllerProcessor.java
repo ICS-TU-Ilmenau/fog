@@ -416,8 +416,8 @@ public class HRMControllerProcessor extends Thread
 				double tBefore = HRMController.getRealTime();
 
 				Logging.log(this, "\n\n################ CLOSING COM. SESSION: " + tComSession);
-				tComSession.stopConnection();
-
+				tComSession.eventSessionInvalidated();
+				
 				double tSpentTime = HRMController.getRealTime() - tBefore;
 
 				if(tSpentTime > 100){

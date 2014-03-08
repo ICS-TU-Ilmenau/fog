@@ -130,6 +130,19 @@ public class ComSession extends Session
 	}
 	
 	/**
+	 * EVENT: session got invalidated
+	 */
+	public void eventSessionInvalidated()
+	{
+		Logging.log(this, "Session got invalidaed");
+		
+		stopConnection();
+
+		// unregister from the HRMController instance
+		mHRMController.unregisterSession(this);
+	}
+	
+	/**
 	 * Factory function: creates a local loopback session
 	 * 
 	 * @param pHRMController the HRMController instance
@@ -258,7 +271,7 @@ public class ComSession extends Session
 			 * ProbePacket
 			 */
 			if(tMultiplexPacket.getPayload() instanceof ProbePacket){
-				Logging.log(this, "#### SENDING PROBE_PACKET: " + tMultiplexPacket.getPayload());
+				Logging.warn(this, "#### SENDING PROBE_PACKET: " + tMultiplexPacket.getPayload());
 			}
 		}
 		
@@ -1048,7 +1061,7 @@ public class ComSession extends Session
 			 * ProbePacket
 			 */
 			if(tMultiplexPacket.getPayload() instanceof ProbePacket){
-				Logging.log(this, "#### RECEIVED PROBE_PACKET: " + tMultiplexPacket.getPayload());
+				Logging.warn(this, "#### RECEIVED PROBE_PACKET: " + tMultiplexPacket.getPayload());
 			}
 
 			/**
