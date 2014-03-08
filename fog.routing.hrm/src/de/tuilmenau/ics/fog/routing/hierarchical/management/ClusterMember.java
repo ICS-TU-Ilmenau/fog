@@ -1305,7 +1305,7 @@ public class ClusterMember extends ClusterName
 									Cluster tCluster = (Cluster)tClusterMember; // has to be a Cluster here, otherwise, we have a wished exception here
 									HRMID tClusterHRMID = pHRMID.getClusterAddress(0);
 									tCluster.mHRMID = tClusterHRMID;
-									tCluster.mAssignedL0HRMID = pHRMID.clone();
+									tCluster.setL0HRMID(pHRMID.clone());
 								}
 							}
 						}

@@ -627,6 +627,25 @@ public class Cluster extends ClusterMember
 	}
 	
 	/**
+	 * Returns the list of used addresses
+	 * 
+	 * @return the list
+	 */
+	@SuppressWarnings("unchecked")
+	public HashMap<Integer, ComChannel> getReservedAddresses()
+	{
+		HashMap<Integer, ComChannel> tResult = null;
+		
+		Logging.log(this, "Having reserved these HRMIDs: " + mDescriptionHRMIDAllocation);
+		
+		synchronized (mAddressReservations) {
+			tResult = (HashMap<Integer, ComChannel>) mAddressReservations.clone();
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * EVENT: cluster member needs HRMID
 	 * 
 	 * @param pComChannel the comm. channel towards the cluster member, which needs a new HRMID
@@ -641,6 +660,7 @@ public class Cluster extends ClusterMember
 		 */
 		if (HRMController.GUI_USER_CTRL_ADDRESS_DISTRUTION){
 			HRMID tOldHRMIDForPeer = pComChannel.getPeerHRMID(); 
+			int tOldUsedAddress = (tOldHRMIDForPeer != null ? tOldHRMIDForPeer.getLevelAddress(getHierarchyLevel()) : -1);
 			HRMID tHRMIDForPeer = null;
 			/**
 			 * Check old assignment
@@ -651,7 +671,6 @@ public class Cluster extends ClusterMember
 				tOldHRMIDForPeer = null;
 			}
 			if((tOldHRMIDForPeer != null) && (!tOldHRMIDForPeer.isZero()) && ((tOldHRMIDForPeer.isCluster(getHRMID())) || (getHierarchyLevel().isHighest()))){
-				int tOldUsedAddress = tOldHRMIDForPeer.getLevelAddress(getHierarchyLevel());
 				synchronized (mUsedAddresses) {
 					if(!mUsedAddresses.contains(tOldUsedAddress)){
 						Logging.log(this, "     ..mark the address as used in this cluster");
@@ -671,9 +690,11 @@ public class Cluster extends ClusterMember
 			}
 					
 			/**
-			 * Check if we should actually assign a new HRMID 
+			 * Check if we should actually assign a NEW HRMID 
 			 */
-			if((tOldHRMIDForPeer == null) || (tOldHRMIDForPeer.isZero()) || (tOldHRMIDForPeer.isRelativeAddress()) || ((!tOldHRMIDForPeer.isCluster(getHRMID()) && (!getHierarchyLevel().isHighest())))){
+			boolean tOldAddrReservered = ((mAddressReservations.keySet().contains(tOldUsedAddress)) && (!mAddressReservations.get(tOldUsedAddress).equals(pComChannel))); 
+
+			if((tOldHRMIDForPeer == null) || (tOldHRMIDForPeer.isZero()) || (tOldHRMIDForPeer.isRelativeAddress()) || (tOldAddrReservered) || ((!tOldHRMIDForPeer.isCluster(getHRMID()) && (!getHierarchyLevel().isHighest())))){
 				HRMID tNewHRMIDForPeer = allocateClusterMemberAddress();
 				if(tNewHRMIDForPeer != null){
 					mDescriptionHRMIDAllocation += "\n     .." + tNewHRMIDForPeer.toString() + " for " + pComChannel + ", cause=" + pCause;
