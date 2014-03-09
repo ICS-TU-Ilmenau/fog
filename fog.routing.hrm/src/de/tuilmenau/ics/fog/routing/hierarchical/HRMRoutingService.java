@@ -1560,15 +1560,15 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * Fog-specific: find the FN which is responsible for traffic for the given via-network-interface
 			 */
 			L2Address tIntermediaDestination = null;
-			Set<ForwardingNode> tLocalFoGFNs = mFNToL2AddressMapping.keySet();
-			for(ForwardingNode tLocalFN : tLocalFoGFNs){
-				if(tLocalFN instanceof Multiplexer){
-					Multiplexer tLocalMux = (Multiplexer) tLocalFN;
-
-					boolean tWithoutException = false; //TODO: rework some software structures to avoid this ugly implementation
-					while(!tWithoutException){
-						GateIterator iter = tLocalMux.getIterator(DirectDownGate.class);
-						try{
+			boolean tWithoutException = false; //TODO: rework some software structures to avoid this ugly implementation
+			while(!tWithoutException){
+				try{
+					Set<ForwardingNode> tLocalFoGFNs = mFNToL2AddressMapping.keySet();
+					for(ForwardingNode tLocalFN : tLocalFoGFNs){
+						if(tLocalFN instanceof Multiplexer){
+							Multiplexer tLocalMux = (Multiplexer) tLocalFN;
+		
+							GateIterator iter = tLocalMux.getIterator(DirectDownGate.class);
 							while(iter.hasNext()) {
 								DirectDownGate tDirectDownGate = (DirectDownGate) iter.next();
 		
@@ -1597,12 +1597,12 @@ public class HRMRoutingService implements RoutingService, Localization
 									}
 								}
 							}
-							tWithoutException = true;
-						}catch(ConcurrentModificationException tExc){
-							// FoG has manipulated the topology data and called the HRS for updating the L2 routing graph
-							continue;
 						}
+						tWithoutException = true;
 					}
+				}catch(ConcurrentModificationException tExc){
+					// FoG has manipulated the topology data and called the HRS for updating the L2 routing graph
+					continue;
 				}
 			}
 		}		
