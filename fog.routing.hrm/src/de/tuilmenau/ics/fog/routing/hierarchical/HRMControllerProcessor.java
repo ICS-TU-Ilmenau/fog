@@ -555,8 +555,8 @@ public class HRMControllerProcessor extends Thread
 
 				double tBefore = HRMController.getRealTime();
 				
-				// process the next CoordinatorProxy los request
-				Logging.warn(this, "\n\n################ Updating coordinators because of: " + tNextLostCoordinatorProxy);
+				// process the next CoordinatorProxy lost request
+				//Logging.warn(this, "\n\n################ Updating coordinators because of: " + tNextLostCoordinatorProxy);
 				mHRMController.detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(tNextLostCoordinatorProxy);
 
 				double tSpentTime = HRMController.getRealTime() - tBefore;
