@@ -1192,10 +1192,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Unregisters a coordinator proxy from the local database.
 	 * 
 	 * @param pCoordinatorProxy the coordinator proxy for a defined coordinator
+	 * @param pCause the cause for this call
 	 */
-	public synchronized void unregisterCoordinatorProxy(CoordinatorProxy pCoordinatorProxy)
+	public synchronized void unregisterCoordinatorProxy(CoordinatorProxy pCoordinatorProxy, String pCause)
 	{
-		Logging.log(this, "Unregistering coordinator proxy " + pCoordinatorProxy + " at level " + pCoordinatorProxy.getHierarchyLevel().getValue());
+		Logging.log(this, "Unregistering coordinator proxy " + pCoordinatorProxy + " on level " + pCoordinatorProxy.getHierarchyLevel().getValue() + ", cause=" + pCause);
 
 		synchronized (mLocalCoordinatorProxies) {
 			if(mLocalCoordinatorProxies.contains(pCoordinatorProxy)){
@@ -1268,9 +1269,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
 						if((tCoordinator.superiorCoordinatorComChannel() != null) && (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName() != null)){
 							if (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName().getClusterID() == pLostCoordinatorProxy.getClusterID()){
-								Logging.warn(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
-								Logging.warn(this, "   ..knowing these remote coordinators: " + mLocalCoordinatorProxies);
-								tCoordinator.eventSuperiorCoordinatorInvalid();						
+								tCoordinator.superiorCoordinatorComChannel().setTimeout(2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY, pLostCoordinatorProxy.toString());
+
+								//								Logging.err(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
+//								Logging.err(this, "   ..knowing these remote coordinators:");
+//								for(CoordinatorProxy tProxy : mLocalCoordinatorProxies){
+//									Logging.err(this, "     .." + tProxy);	
+//								}
+//								tCoordinator.eventSuperiorCoordinatorInvalid();						
 							}
 						}
 					}
@@ -1287,9 +1293,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					for (ComChannel tChannelToSuperiorCluster : tChannelToSuperiorClusters){
 						if(tChannelToSuperiorCluster.getPeerL2Address() != null){
 							if (tChannelToSuperiorCluster.getPeerL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
-								CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToSuperiorCluster.getParent();
-								Logging.warn(this, "#### Remote superior cluster invalid (" + pLostCoordinatorProxy + ") for active local coordinator: " + tClusterMembership);
-								tClusterMembership.eventCoordinatorAsClusterMemberRoleInvalid();						
+								tChannelToSuperiorCluster.setTimeout(2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY, pLostCoordinatorProxy.toString());
+
+//								CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToSuperiorCluster.getParent();
+//								Logging.err(this, "#### Remote superior cluster invalid (" + pLostCoordinatorProxy + ") for active local coordinator: " + tClusterMembership);
+//								Logging.err(this, "   ..knowing these remote coordinators:");
+//								for(CoordinatorProxy tProxy : mLocalCoordinatorProxies){
+//									Logging.err(this, "     .." + tProxy);	
+//								}
+								//tClusterMembership.eventCoordinatorAsClusterMemberRoleInvalid();						
 							}
 						}
 					}
@@ -4295,7 +4307,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void eventLostPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, L2Address pNeighborL2Address)
 	{
-		Logging.warn(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
+		Logging.log(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 
 		/**
 		 * Cleanup for list of known com. sessions
@@ -4371,7 +4383,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	@SuppressWarnings("unused")
 	public synchronized void eventDetectedPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, final L2Address pNeighborL2Address)
 	{
-		Logging.warn(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
+		Logging.log(this, "\n\n\n############## FOUND DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 		
 		if((!GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS)){
 			Logging.warn(this, "### AnnounceCoordinator packets were already disabled, reenabling them due to topology changes");
@@ -4593,7 +4605,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Auto-removes all deprecated coordinator proxies
 	 */
-	private void autoRemoveObsoleteCoordinatorProxies()
+	private synchronized void autoRemoveObsoleteCoordinatorProxies()
 	{
 		if(!FOUND_GLOBAL_ERROR){
 			if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
@@ -4623,13 +4635,51 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						/**
 						 * Trigger: remote coordinator role invalid
 						 */
-						tProxy.eventRemoteCoordinatorRoleInvalid();
+						tProxy.eventRemoteCoordinatorRoleInvalid(this + "::autoRemoveObsoleteCoordinatorProxies()");
 					}
 				}
 			}
 		}
 	}
 
+	/**
+	 * Auto-removes all deprecated com. channels
+	 */
+	public synchronized void autoRemoveObsoleteComChannels()
+	{
+		/**
+		 * Remove deprecated CoordinatorProxy instances
+		 */
+		synchronized (mCommunicationSessions) {
+			boolean tFoundDeprecatedEntity = false;
+			do{
+				tFoundDeprecatedEntity = false;
+				for(ComSession tComSession : mCommunicationSessions){
+					LinkedList<ComChannel> tChannels = tComSession.getAllComChannels();
+					for(ComChannel tChannel : tChannels){
+						// does the channel have a timeout?
+						if(tChannel.isObsolete()){
+							Logging.err(this, "AUTO REMOVING COM CHANNEL: " + tChannel);
+							ControlEntity tChannelParent = tChannel.getParent();
+							if(tChannelParent instanceof CoordinatorAsClusterMember){
+								CoordinatorAsClusterMember tChannelParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)tChannelParent;
+								Logging.err(this, "AUTO REMOVING COORDINATOR-AS-CLUSTER-MEMBER: " + tChannelParentCoordinatorAsClusterMember);
+								tChannelParentCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
+								tFoundDeprecatedEntity = true;
+								break;
+							}else{
+								Logging.err(this, "Expected a CoordinatorAsClusterMember as parent of: " + tChannel);
+							}
+						}
+					}
+					if(tFoundDeprecatedEntity){
+						break;
+					}
+				}
+			}while(tFoundDeprecatedEntity);
+		}
+	}
+	
 	/**
 	 * Auto-detect a stable hierarchy.
 	 * This function is only useful for measurement speedup or to ease debugging. It is neither part of the concept nor it is used to derive additional data. It only reduces packet overhead in the network.
