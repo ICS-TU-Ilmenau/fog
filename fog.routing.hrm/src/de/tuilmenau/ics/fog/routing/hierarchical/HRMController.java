@@ -1245,46 +1245,50 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mLocalCoordinators) {
 			/**
-			 * If a remote coordinator on hierarchy level 1 is lost and it is a superior coordinator of this node, all local coordinators on hierarchy level 0 have lost their superior coordinator
-			 *		-> trigger event "superior coordinator lost"  
-			 */
-			if(pLostCoordinatorProxy.getHierarchyLevel().isHigherLevel()){
-				LinkedList<Coordinator> tCoordinators = getAllCoordinators(pLostCoordinatorProxy.getHierarchyLevel().dec().getValue());
-				for(Coordinator tCoordinator : tCoordinators){
-					//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
-					if((tCoordinator.superiorCoordinatorComChannel() != null) && (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName() != null)){
-						if (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName().getClusterID() == pLostCoordinatorProxy.getClusterID()){
-							Logging.warn(this, "#### Active superior coordinator invalid for active local coordinator: " + tCoordinator);
-							tCoordinator.eventSuperiorCoordinatorInvalid();						
-						}
-					}
+			 * search if still one coordinator at this remote node is known
+			 */ 
+			int tKnownRemainingRemoteCoordinatorsAtThisNodeAndLevel = 0;
+			LinkedList<CoordinatorProxy> tCoordinatorProxies = getAllCoordinatorProxies(pLostCoordinatorProxy.getHierarchyLevel().getValue());
+			for(CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
+				//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
+				if (tCoordinatorProxy.getCoordinatorNodeL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
+					tKnownRemainingRemoteCoordinatorsAtThisNodeAndLevel++;
 				}
 			}
-
-			/**
-			 * If a remote coordinator on hierarchy level 0 is lost and no other remote coordinator from this node is known, the remote cluster in hierarchy level 1 is also assumed to be lost
-			 * 		-> trigger event "CoordinatorAsClusterMember invalid" 
-			 */
-			LinkedList<Coordinator> tCoordinators = getAllCoordinators(pLostCoordinatorProxy.getHierarchyLevel().getValue());
-			for(Coordinator tCoordinator : tCoordinators){
-				//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
-				LinkedList<ComChannel> tChannelToSuperiorClusters = tCoordinator.getClusterMembershipComChannels();
-				// search if still one coordinator at this remote node is known
-				int tKnownRemoteCoordinatorsAtThisNode = 0;
-				for (ComChannel tChannelToSuperiorCluster : tChannelToSuperiorClusters){
-					if(tChannelToSuperiorCluster.getPeerL2Address() != null){
-						if (tChannelToSuperiorCluster.getPeerL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
-							tKnownRemoteCoordinatorsAtThisNode++;
+			
+			// react if this is the last known remote coordinator for this remote node
+			if(tKnownRemainingRemoteCoordinatorsAtThisNodeAndLevel == 0){
+				/**
+				 * If a remote coordinator on hierarchy level 1 is lost and it is a superior coordinator of this node, all local coordinators on hierarchy level 0 have lost their superior coordinator
+				 *		-> trigger event "superior coordinator lost"  
+				 */
+				if(pLostCoordinatorProxy.getHierarchyLevel().isHigherLevel()){
+					LinkedList<Coordinator> tCoordinators = getAllCoordinators(pLostCoordinatorProxy.getHierarchyLevel().dec().getValue());
+					for(Coordinator tCoordinator : tCoordinators){
+						//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
+						if((tCoordinator.superiorCoordinatorComChannel() != null) && (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName() != null)){
+							if (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName().getClusterID() == pLostCoordinatorProxy.getClusterID()){
+								Logging.warn(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
+								Logging.warn(this, "   ..knowing these remote coordinators: " + mLocalCoordinatorProxies);
+								tCoordinator.eventSuperiorCoordinatorInvalid();						
+							}
 						}
 					}
 				}
-				// react if this is the last known remote coordinator for this remote node
-				if(tKnownRemoteCoordinatorsAtThisNode < 2){
+	
+				/**
+				 * If a remote coordinator on hierarchy level 0 is lost and no other remote coordinator from this node is known, the remote cluster in hierarchy level 1 is also assumed to be lost
+				 * 		-> trigger event "CoordinatorAsClusterMember invalid" 
+				 */
+				LinkedList<Coordinator> tCoordinators = getAllCoordinators(pLostCoordinatorProxy.getHierarchyLevel().getValue());
+				for(Coordinator tCoordinator : tCoordinators){
+					//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
+					LinkedList<ComChannel> tChannelToSuperiorClusters = tCoordinator.getClusterMembershipComChannels();
 					for (ComChannel tChannelToSuperiorCluster : tChannelToSuperiorClusters){
 						if(tChannelToSuperiorCluster.getPeerL2Address() != null){
 							if (tChannelToSuperiorCluster.getPeerL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
 								CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToSuperiorCluster.getParent();
-								Logging.warn(this, "#### Remote superior cluster invalid for active local coordinator: " + tClusterMembership);
+								Logging.warn(this, "#### Remote superior cluster invalid (" + pLostCoordinatorProxy + ") for active local coordinator: " + tClusterMembership);
 								tClusterMembership.eventCoordinatorAsClusterMemberRoleInvalid();						
 							}
 						}
