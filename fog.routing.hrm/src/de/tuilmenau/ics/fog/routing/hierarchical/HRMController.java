@@ -4611,36 +4611,34 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private synchronized void autoRemoveObsoleteCoordinatorProxies()
 	{
-		if(!FOUND_GLOBAL_ERROR){
-			if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-				/**
-				 * Abort if a pausing time was defined
-				 */
-				if(sNextCheckForDeprecatedCoordinatorProxies > 0){
-					if (getSimulationTime() < sNextCheckForDeprecatedCoordinatorProxies){
-						Logging.warn(this,  "autoRemoveObsoleteCoordinatorProxies() aborted because a pause is defined until simulation time: " + sNextCheckForDeprecatedCoordinatorProxies);
-						return;
-					}else{
-						// reset the mechanism
-						Logging.warn(this,  "autoRemoveObsoleteCoordinatorProxies() resets the mechanism because pause is finished, desired simulation time was: " + sNextCheckForDeprecatedCoordinatorProxies);
-						sNextCheckForDeprecatedCoordinatorProxies = 0;
-					}
+		if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+			/**
+			 * Abort if a pausing time was defined
+			 */
+			if(sNextCheckForDeprecatedCoordinatorProxies > 0){
+				if (getSimulationTime() < sNextCheckForDeprecatedCoordinatorProxies){
+					Logging.warn(this,  "autoRemoveObsoleteCoordinatorProxies() aborted because a pause is defined until simulation time: " + sNextCheckForDeprecatedCoordinatorProxies);
+					return;
+				}else{
+					// reset the mechanism
+					Logging.warn(this,  "autoRemoveObsoleteCoordinatorProxies() resets the mechanism because pause is finished, desired simulation time was: " + sNextCheckForDeprecatedCoordinatorProxies);
+					sNextCheckForDeprecatedCoordinatorProxies = 0;
 				}
-				
-				/**
-				 * Remove deprecated CoordinatorProxy instances
-				 */
-				LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
-				for(CoordinatorProxy tProxy : tProxies){
-					// does the link have a timeout?
-					if(tProxy.isObsolete()){
-						Logging.log(this, "AUTO REMOVING COORDINATOR PROXY: " + tProxy);
-		
-						/**
-						 * Trigger: remote coordinator role invalid
-						 */
-						tProxy.eventRemoteCoordinatorRoleInvalid(this + "::autoRemoveObsoleteCoordinatorProxies()");
-					}
+			}
+			
+			/**
+			 * Remove deprecated CoordinatorProxy instances
+			 */
+			LinkedList<CoordinatorProxy> tProxies = getAllCoordinatorProxies();
+			for(CoordinatorProxy tProxy : tProxies){
+				// does the link have a timeout?
+				if(tProxy.isObsolete()){
+					Logging.log(this, "AUTO REMOVING COORDINATOR PROXY: " + tProxy);
+	
+					/**
+					 * Trigger: remote coordinator role invalid
+					 */
+					tProxy.eventRemoteCoordinatorRoleInvalid(this + "::autoRemoveObsoleteCoordinatorProxies()");
 				}
 			}
 		}
@@ -5471,6 +5469,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		autoRemoveObsoleteCoordinatorProxies();
 
+		/**
+		 * wake-up the processor and let it check for pending event: esp. important for auto-removing deprecated com. channels
+		 */
+		mProcessorThread.explicitCheckingQueues();
+		
 		/**
 		 * auto-remove old HRG links
 		 */

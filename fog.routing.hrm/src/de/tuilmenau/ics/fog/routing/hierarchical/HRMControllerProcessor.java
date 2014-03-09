@@ -289,6 +289,15 @@ public class HRMControllerProcessor extends Thread
 	}
 	
 	/**
+	 * Checks explicitly all queues for pending events
+	 * @return 
+	 */
+	public synchronized void explicitCheckingQueues()
+	{
+		notify();
+	}
+	
+	/**
 	 * Returns the next "cluster event" (uses passive waiting)
 	 * 
 	 * @return the next cluster event (a hierarchy level)
