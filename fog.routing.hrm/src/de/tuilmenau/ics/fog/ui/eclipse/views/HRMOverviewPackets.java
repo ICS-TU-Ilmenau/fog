@@ -30,6 +30,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RequestHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
@@ -63,6 +64,7 @@ public class HRMOverviewPackets extends ViewPart
 	private static final String TEXT_SIG_PROBE_PACKET	       				= "      ProbePacket: ";
 	private static final String TEXT_SIG_ANC_HRMIDS		       				= "      AnnounceHRMIDs: ";
 	private static final String TEXT_SIG_ASG_HRMID 		       				= "      AssignHRMID: ";
+	private static final String TEXT_SIG_REQ_HRMID 		       				= "      RequestHRMID: ";
 	private static final String TEXT_SIG_REV_HRMID 		      				= "      RevokeHRMIDs: ";
 	private static final String TEXT_SIG_INFO_CLUSTER_LEFT     				= "      InformClusterLeft: ";
 	private static final String TEXT_SIG_INFO_CLUSTER_MEMBERSHIP_CANCELED	= "      InformClusterMembershipCanceled: ";
@@ -104,6 +106,7 @@ public class HRMOverviewPackets extends ViewPart
 	private Label mProbePacket = null;
 	private Label mAnnounceHRMIDs = null;
 	private Label mAssignHRMID = null;
+	private Label mRequestHRMID = null;
 	private Label mRevokeHRMIDs = null;
 	private Label mInformClusterLeft = null;
 	private Label mInformClusterMembershipCanceled = null;
@@ -154,6 +157,7 @@ public class HRMOverviewPackets extends ViewPart
 		mProbePacket.setText(Long.toString(ProbePacket.getCreatedPackets()) + ",  each " + ProbePacket.getDefaultSize() + " bytes" + (ProbePacket.hasDynamicSize() ? " + more" : ""));
 		mAnnounceHRMIDs.setText(Long.toString(AnnounceHRMIDs.getCreatedPackets()) + ",  each " + AnnounceHRMIDs.getDefaultSize() + " bytes" + (AnnounceHRMIDs.hasDynamicSize() ? " + more" : ""));
 		mAssignHRMID.setText(Long.toString(AssignHRMID.getCreatedPackets()) + ",  each " + AssignHRMID.getDefaultSize() + " bytes" + (AssignHRMID.hasDynamicSize() ? " + more" : ""));
+		mRequestHRMID.setText(Long.toString(RequestHRMID.getCreatedPackets()) + ",  each " + RequestHRMID.getDefaultSize() + " bytes" + (RequestHRMID.hasDynamicSize() ? " + more" : ""));
 		mRevokeHRMIDs.setText(Long.toString(RevokeHRMIDs.getCreatedPackets()) + ",  each " + RevokeHRMIDs.getDefaultSize() + " bytes" + (RevokeHRMIDs.hasDynamicSize() ? " + more" : ""));
 		mInformClusterLeft.setText(Long.toString(InformClusterLeft.getCreatedPackets()) + ",  each " + InformClusterLeft.getDefaultSize() + " bytes" + (InformClusterLeft.hasDynamicSize() ? " + more" : ""));
 		mInformClusterMembershipCanceled.setText(Long.toString(InformClusterMembershipCanceled.getCreatedPackets()) + ",  each " + InformClusterMembershipCanceled.getDefaultSize() + " bytes" + (InformClusterMembershipCanceled.hasDynamicSize() ? " + more" : ""));
@@ -237,6 +241,7 @@ public class HRMOverviewPackets extends ViewPart
 		mProbePacket.dispose();
 		mAnnounceHRMIDs.dispose();
 		mAssignHRMID.dispose();
+		mRequestHRMID.dispose();
 		mRevokeHRMIDs.dispose();
 		mInformClusterLeft.dispose();
 		mInformClusterMembershipCanceled.dispose();
@@ -295,6 +300,7 @@ public class HRMOverviewPackets extends ViewPart
 		mProbePacket = createPartControlLine(tGrpPackets, TEXT_SIG_PROBE_PACKET);
 		mAnnounceHRMIDs = createPartControlLine(tGrpPackets, TEXT_SIG_ANC_HRMIDS);
 		mAssignHRMID = createPartControlLine(tGrpPackets, TEXT_SIG_ASG_HRMID);
+		mRequestHRMID = createPartControlLine(tGrpPackets, TEXT_SIG_REQ_HRMID);
 		mRevokeHRMIDs = createPartControlLine(tGrpPackets, TEXT_SIG_REV_HRMID);
 		mRequestClusterMembership = createPartControlLine(tGrpPackets, TEXT_SIG_REQ_CLUSTER_MEMBERSHIP);
 		mRequestClusterMembershipAck = createPartControlLine(tGrpPackets, TEXT_SIG_REQ_CLUSTER_MEMBERSHIP_ACK);
