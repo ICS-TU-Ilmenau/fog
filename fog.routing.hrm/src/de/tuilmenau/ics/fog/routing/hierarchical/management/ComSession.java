@@ -644,11 +644,11 @@ public class ComSession extends Session
 	 */
 	private void eventAllChannelsClosed()
 	{
-		Logging.warn(this, "EVENT: all channels are closed");
+		Logging.log(this, "EVENT: all channels are closed");
 		
 		if(!mLocalLoopback){
 			if (HRMConfig.Hierarchy.CONNECTION_AUTO_CLOSE_ON_USED){
-				Logging.warn(this, "\n\n\n########### Closing the parent connection(destination=" + getPeerL2Address() + ", requirements=" + mParentConnection.getRequirements() + ")");
+				Logging.log(this, "\n\n\n########### Closing the parent connection(destination=" + getPeerL2Address() + ", requirements=" + mParentConnection.getRequirements() + ")");
 				
 				mHRMController.getProcessor().eventCloseSession(this);
 			}
