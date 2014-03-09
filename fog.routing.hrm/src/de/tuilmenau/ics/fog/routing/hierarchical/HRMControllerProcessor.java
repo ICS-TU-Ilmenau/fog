@@ -413,7 +413,7 @@ public class HRMControllerProcessor extends Thread
 					if(!mHRMController.getAllCoordinators(pHierarchyLevel - 1).isEmpty()){
 						tTargetCluster = Cluster.create(mHRMController, new HierarchyLevel(this, pHierarchyLevel), Cluster.createClusterID());
 					}else{
-						Logging.log(this, "No local inferior coordinator found, skipping clustering request at hierarchy level: " + pHierarchyLevel);						
+						//Logging.log(this, "No local inferior coordinator found, skipping clustering request at hierarchy level: " + pHierarchyLevel);						
 					}
 				}
 				
@@ -587,6 +587,11 @@ public class HRMControllerProcessor extends Thread
 				}
 			}
 			
+			/***********************
+			 * Auto-remove old ComChannels
+			 ***********************/
+			mHRMController.autoRemoveObsoleteComChannels();
+
 			/**
 			 * Wait for next event
 			 */
