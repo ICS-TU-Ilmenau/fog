@@ -634,6 +634,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	@Override
 	public synchronized void close()
 	{
+		Logging.log(this, "Closing..");
 		synchronized (nodelist) {
 			nodelist.clear();
 		}

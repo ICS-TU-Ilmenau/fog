@@ -35,6 +35,7 @@ import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.transfer.gates.GateIterator;
 import de.tuilmenau.ics.fog.transfer.gates.LowerLayerReceiveGate;
 import de.tuilmenau.ics.fog.transfer.manager.Controller;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 
 public class NetworkInterface implements LayerObserverCallback
@@ -184,6 +185,8 @@ public class NetworkInterface implements LayerObserverCallback
 	 */
 	public void detach()
 	{
+		Logging.log(this, "Detaching..");
+		
 		synchronized (mMultiplexer) {
 			if(mAttached) {
 				mAttached = false;

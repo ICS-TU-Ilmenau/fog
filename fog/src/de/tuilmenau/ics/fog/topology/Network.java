@@ -177,6 +177,7 @@ public class Network implements GraphProvider
 	{
 		boolean tRes = false;
 		
+		Logging.log(this, "Removing bus: " + pName);
 		ILowerLayer tBus = buslist.remove(pName);
 		
 		if(tBus != null) {
