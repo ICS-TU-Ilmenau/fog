@@ -239,6 +239,11 @@ public class ComChannel
 	private LinkedList<ComChannelPacketMetaData> mPackets = new LinkedList<ComChannelPacketMetaData>();
 	
 	/**
+	 * Stores the timeout of this channel
+	 */
+	private double mTimeout = 0;
+
+	/**
 	 * Stores the packet queue
 	 */
 	private LinkedList<SignalingMessageHrm> mPacketQueue = new LinkedList<SignalingMessageHrm>();
@@ -1442,6 +1447,64 @@ public class ComChannel
 	}
 	
 	/**
+	 * Resets the timeout of this channel
+	 * 
+	 * @param pPacket the currently received packet
+	 */
+	public void refreshTimeout(SignalingMessageHrm pPacket)
+	{
+		// reset the timeout to 0
+		if(mTimeout != 0){
+			Logging.warn(this, "Resetting timeout now due to packet: " + pPacket);
+		}
+		mTimeout = 0;
+	}
+
+	/**
+	 * Returns the timeout of this channel
+	 * 
+	 * @return the timeout
+	 */
+	public double getTimeout()
+	{
+		return mTimeout;
+	}
+	
+	/**
+	 * Sets the timeout of this channel 
+	 * 
+	 * @param pTimerOffset the offset of the timer
+	 */
+	public void setTimeout(double pTimerOffset, String pCause)
+	{
+		mTimeout = mHRMController.getSimulationTime() + pTimerOffset;
+		Logging.warn(this, "Got a defined timeout of: " + pTimerOffset + ", will end at: " + mTimeout + ", cause=" + pCause);		
+	}
+
+	/**
+	 * Returns if this channel is obsolete due refresh timeout (peer isn't there anymore)
+	 * 
+	 * @return true or false
+	 */
+	public boolean isObsolete()
+	{
+		boolean tResult = false;
+		
+		if(getTimeout() > 0){
+			// timeout occurred?
+			if(getTimeout() < mHRMController.getSimulationTime()){
+				tResult = true;
+			}
+		}
+		
+		if(tResult){
+			Logging.warn(this, "This channel got deprecated due timeout");
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Main packet receive function. It is used by the parent ComSession.
 	 *  
 	 * @param pPacket the packet
@@ -1525,6 +1588,11 @@ public class ComChannel
 	@SuppressWarnings("unused")
 	private boolean handlePacket(SignalingMessageHrm pPacket)
 	{
+		/**
+		 * Refresh the timeout
+		 */
+		refreshTimeout(pPacket);
+		
 		/**
 		 * Store the packet 
 		 */

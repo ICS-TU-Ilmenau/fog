@@ -665,15 +665,21 @@ public class Cluster extends ClusterMember
 			/**
 			 * Check old assignment
 			 */
-			Logging.log(this, "   ..old peer HRMID: " + tOldHRMIDForPeer);
+			if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				Logging.log(this, "   ..old peer HRMID: " + tOldHRMIDForPeer);
+			}
 			if(!HRMConfig.Addressing.REUSE_ADDRESSES){
-				Logging.log(this, "     ..reseting the old HRMID to null because address reusage is disabled");
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					Logging.log(this, "     ..reseting the old HRMID to null because address reusage is disabled");
+				}
 				tOldHRMIDForPeer = null;
 			}
 			if((tOldHRMIDForPeer != null) && (!tOldHRMIDForPeer.isZero()) && ((tOldHRMIDForPeer.isCluster(getHRMID())) || (getHierarchyLevel().isHighest()))){
 				synchronized (mUsedAddresses) {
 					if(!mUsedAddresses.contains(tOldUsedAddress)){
-						Logging.log(this, "     ..mark the address as used in this cluster");
+						if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							Logging.log(this, "     ..mark the address as used in this cluster");
+						}
 						// add the peer address to the used addresses
 						mUsedAddresses.add(tOldUsedAddress);
 					}
@@ -717,7 +723,9 @@ public class Cluster extends ClusterMember
 	
 					// register this new HRMID in the local HRS and create a mapping to the right L2Address
 					if(!tNewHRMIDForPeer.isClusterAddress()){
-						Logging.log(this, "    ..creating MAPPING " + tNewHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address() + ", L2 route=" + mHRMController.getHRS().getL2Route(pComChannel.getPeerL2Address(), getBaseHierarchyLevelNetworkInterface()));
+						if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							Logging.log(this, "    ..creating MAPPING " + tNewHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address() + ", L2 route=" + mHRMController.getHRS().getL2Route(pComChannel.getPeerL2Address(), getBaseHierarchyLevelNetworkInterface()));
+						}
 						mHRMController.getHRS().mapHRMID(tNewHRMIDForPeer, pComChannel.getPeerL2Address(), mHRMController.getHRS().getL2Route(pComChannel.getPeerL2Address(), getBaseHierarchyLevelNetworkInterface()));
 					}
 					
@@ -728,16 +736,20 @@ public class Cluster extends ClusterMember
 			}else{
 				mDescriptionHRMIDAllocation += "\n     ..reassigned " + tOldHRMIDForPeer.toString() + " for " + pComChannel + ", cause=" + pCause;
 
-				Logging.log(this, "    ..reassigning " + tOldHRMIDForPeer.toString() + " for " + pComChannel);
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					Logging.log(this, "    ..reassigning " + tOldHRMIDForPeer.toString() + " for " + pComChannel);
+				}
 				tHRMIDForPeer = tOldHRMIDForPeer;
 			}
 	
 			// send the packet in every case
 			if(tHRMIDForPeer != null){
-				if ((pComChannel.getPeerHRMID() != null) && (!pComChannel.getPeerHRMID().equals(tHRMIDForPeer))){
-					Logging.log(this, "    ..replacing HRMID " + pComChannel.getPeerHRMID().toString() + " and assign new HRMID " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
-				}else
-					Logging.log(this, "    ..assigning new HRMID " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					if ((pComChannel.getPeerHRMID() != null) && (!pComChannel.getPeerHRMID().equals(tHRMIDForPeer))){
+						Logging.log(this, "    ..replacing HRMID " + pComChannel.getPeerHRMID().toString() + " and assign new HRMID " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
+					}else
+						Logging.log(this, "    ..assigning new HRMID " + tHRMIDForPeer.toString() + " to " + pComChannel.getPeerL2Address());
+				}
 	
 				pComChannel.distributeAssignHRMID(tHRMIDForPeer, false);
 			}else{
@@ -1064,6 +1076,22 @@ public class Cluster extends ClusterMember
 	}
 
 	/**
+	 * Returns all known inferior remote coordinators
+	 * 
+	 * @return the list of known inferior coordinators
+	 */
+	public LinkedList<CoordinatorProxy> getAllInferiorRemoteCoordinators()
+	{
+		LinkedList<CoordinatorProxy> tResult = null;
+		
+		synchronized (mInferiorRemoteCoordinators) {
+			tResult = (LinkedList<CoordinatorProxy>) mInferiorRemoteCoordinators.clone();
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * EVENT: "lost cluster member", triggered by Elector in case a member left the election 
 
 	 * @param pComChannel the comm. channel of the lost cluster member
@@ -1365,7 +1393,7 @@ public class Cluster extends ClusterMember
 	private int mCountDistributeMembershipRequests = 0;
 	public void updateClusterMembers()
 	{
-		boolean DEBUG = true;//HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS;
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS;
 		boolean tChanges = false;
 		
 		mCountDistributeMembershipRequests ++;
@@ -1470,22 +1498,49 @@ public class Cluster extends ClusterMember
 					 ************************************/
 					synchronized (tOldInferiorRemoteCoordinators) {
 						for(CoordinatorProxy tCoordintorProxy : tOldInferiorRemoteCoordinators){
-							Logging.log(this, "Found inferior remote coordinator behind proxy: " + tCoordintorProxy);
+							if(DEBUG){
+								Logging.log(this, "Found inferior remote coordinator behind proxy: " + tCoordintorProxy);
+							}
 							
 							if(!tCoordintorProxy.isThisEntityValid()){
-								Logging.log(this, "Found invalided coordinator proxy: " + tCoordintorProxy);
+								if(DEBUG){
+									Logging.log(this, "Found already invalided coordinator proxy: " + tCoordintorProxy);
+								}
 								ComChannel tComChannelToRemoteCoordinator = getComChannelToMember(tCoordintorProxy);
 								if(tComChannelToRemoteCoordinator != null){
-									Logging.log(this, "   ..comm. channel is: " + tComChannelToRemoteCoordinator);
-									Logging.log(this, "   ..deactivating membership of: " + tCoordintorProxy);
+									if(DEBUG){
+										Logging.log(this, "   ..comm. channel is: " + tComChannelToRemoteCoordinator);
+										Logging.log(this, "   ..deactivating membership of: " + tCoordintorProxy);
+									}
 									eventClusterMemberLost(tComChannelToRemoteCoordinator, this + "updateClusterMembers()");
 									
 									tChanges = true;
 								}
-							}					
+							}
 						}
 					}
 					
+					/************************************
+					 * Drop deprecated entry in list of connected remote coordinators
+					 ************************************/
+					synchronized (mInferiorRemoteCoordinators) {
+						LinkedList<CoordinatorProxy> tAllCoordinatorProxies = mHRMController.getAllCoordinatorProxies(getHierarchyLevel().dec().getValue());
+						for(CoordinatorProxy tCoordintorProxy : tAllCoordinatorProxies){
+							if(mInferiorRemoteCoordinators.contains(tCoordintorProxy)){
+								if(tCoordintorProxy.isThisEntityValid()){
+									ComChannel tComChannelToRemoteCoordinator = getComChannelToMember(tCoordintorProxy);
+									if(tComChannelToRemoteCoordinator == null){
+										if(DEBUG){
+											Logging.warn(this, "Found temporary invalided and returned coordinator proxy: " + tCoordintorProxy);
+										}
+										mInferiorRemoteCoordinators.remove(tCoordintorProxy);
+										tOldInferiorRemoteCoordinators = (LinkedList<CoordinatorProxy>) mInferiorRemoteCoordinators.clone();
+									}								
+								}
+							}
+						}
+					}
+
 					/*************************************
 					 * Detect new remote coordinators
 					 ************************************/

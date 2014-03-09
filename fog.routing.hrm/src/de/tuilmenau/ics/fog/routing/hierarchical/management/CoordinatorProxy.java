@@ -94,17 +94,19 @@ public class CoordinatorProxy extends ClusterMember
 	/**
 	 * EVENT: remote coordinator role invalid, triggered by ControlEntity::unregisterAnnouncedCoordinatorARG() if a coordinator invalidation is received, the reaction is:
 	 * 	 	1.) update the local ARG
+	 * 
+	 * @param pCause the cause for this invalidation
 	 */
-	public synchronized void eventRemoteCoordinatorRoleInvalid()
+	public synchronized void eventRemoteCoordinatorRoleInvalid(String pCause)
 	{
-		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid");
+		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid because of: " + pCause);
 
 		if(isThisEntityValid()){
 			// trigger invalidation
 			eventInvalidation();
 			
 			// register at HRMController's internal database
-			mHRMController.unregisterCoordinatorProxy(this);
+			mHRMController.unregisterCoordinatorProxy(this, pCause);
 		}else{
 			Logging.warn(this, "This CoordinatorProxy is already invalid");
 		}

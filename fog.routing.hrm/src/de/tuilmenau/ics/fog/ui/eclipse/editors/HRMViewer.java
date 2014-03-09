@@ -96,9 +96,9 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannelPacketMeta
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorAsClusterMember;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorProxy;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 
@@ -1456,6 +1456,16 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 	}
 	
+	private void showInferiorRemoteCoordinators(Cluster pCluster)
+	{
+		LinkedList<CoordinatorProxy> tInferiorRemoteCoordinators = pCluster.getAllInferiorRemoteCoordinators();
+		
+		Logging.log(this, "Known inferior remote coordinators for " + pCluster + ":");
+		for(CoordinatorProxy tCoordinatorProxy : tInferiorRemoteCoordinators){
+			Logging.log(this, "   .." + tCoordinatorProxy);
+		}
+	}
+	
 	private void showPackets(ComChannel pComChannel)
 	{
 		Logging.log(this, "Packet I/O for: " + pComChannel);
@@ -1760,6 +1770,24 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							triggerNeighborhoodElection(tClusterMember);
 						}
 					});
+					if(tClusterMember instanceof Cluster){
+						final Cluster tCluster = (Cluster)tClusterMember;
+						MenuItem tMenuItem10 = new MenuItem(tMenu, SWT.NONE);
+						tMenuItem10.setText("Show inferior remote coordinators");
+						tMenuItem10.addSelectionListener(new SelectionListener() {
+							public void widgetDefaultSelected(SelectionEvent pEvent)
+							{
+								//Logging.log(this, "Default selected: " + pEvent);
+								showInferiorRemoteCoordinators(tCluster);
+							}
+							public void widgetSelected(SelectionEvent pEvent)
+							{
+								//Logging.log(this, "Widget selected: " + pEvent);
+								showInferiorRemoteCoordinators(tCluster);
+							}
+						});
+					}
+
 					if(tClusterMember.getHierarchyLevel().isBaseLevel()){
 						MenuItem tMenuItem3 = new MenuItem(tMenu, SWT.NONE);
 						if(tClusterMember.enforcesASSplit()){
@@ -2311,15 +2339,17 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		// reset stored GUI update time
 		mTimeNextGUIUpdate = 0;
 
-		if(!mDisplay.isDisposed()) {
-			if(Thread.currentThread() != mDisplay.getThread()) {
-				//switches to different thread
-				mDisplay.asyncExec(this);
-			} else {
-				if(mNextGUIUpdateShouldUpdateFullView){
-					redrawGUI();					
-				}else if (mNextGUIUpdateShouldUpdateRoutingTable){
-					redrawRoutingTable();
+		if(mDisplay != null){
+			if(!mDisplay.isDisposed()) {
+				if(Thread.currentThread() != mDisplay.getThread()) {
+					//switches to different thread
+					mDisplay.asyncExec(this);
+				} else {
+					if(mNextGUIUpdateShouldUpdateFullView){
+						redrawGUI();					
+					}else if (mNextGUIUpdateShouldUpdateRoutingTable){
+						redrawRoutingTable();
+					}
 				}
 			}
 		}
