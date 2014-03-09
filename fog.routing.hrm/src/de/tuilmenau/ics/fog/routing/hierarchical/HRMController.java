@@ -2016,6 +2016,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				mLocalCoordinatorAsClusterMemebers.remove(pCoordinatorAsClusterMember);
 				
 				Logging.log(this, "    ..unregistered: " + pCoordinatorAsClusterMember);
+				
+				Logging.log(this, "     ..restarting clustering at hierarchy level: " + pCoordinatorAsClusterMember.getHierarchyLevel().getValue());
+				cluster(pCoordinatorAsClusterMember, pCoordinatorAsClusterMember.getHierarchyLevel());
+				Logging.log(this, "     ..re-clustering triggered");
 			}else{
 				Logging.log(this, "    ..not found: " + pCoordinatorAsClusterMember);
 			}
