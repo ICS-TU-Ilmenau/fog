@@ -144,6 +144,10 @@ public class HRMOverviewPackets extends ViewPart
 	{
 		//Logging.log(this, "Update view " + ++sUpdateLoop);
 		
+		if(mAnnouncePhysicalEndPoint.isDisposed()){
+			return;
+		}
+		
 		mAnnouncePhysicalEndPoint.setText(Long.toString(AnnouncePhysicalEndPoint.getCreatedPackets()) + ",  each " + AnnouncePhysicalEndPoint.getDefaultSize() + " bytes" + (AnnouncePhysicalEndPoint.hasDynamicSize() ? " + more" : ""));
 		mMultiplexHeader.setText(Long.toString(MultiplexHeader.getCreatedPackets()) + ",  each " + MultiplexHeader.getDefaultSize() + " bytes" + (MultiplexHeader.hasDynamicSize() ? " + more" : ""));
 		mSignalingMessageHrm.setText(Long.toString(SignalingMessageHrm.getCreatedPackets()) + ",  each " + SignalingMessageHrm.getDefaultSize() + " bytes" + (SignalingMessageHrm.hasDynamicSize() ? " + more" : ""));
