@@ -1199,11 +1199,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		synchronized (mLocalCoordinatorProxies) {
 			if(mLocalCoordinatorProxies.contains(pCoordinatorProxy)){
+				HierarchyLevel tSuperiorClusterLevel = pCoordinatorProxy.getHierarchyLevel().inc();
+				
 				// unregister as known coordinator proxy
 				mLocalCoordinatorProxies.remove(pCoordinatorProxy);
 
 				// increase hierarchy node priority
 				decreaseHierarchyNodePriority_KnownCoordinator(pCoordinatorProxy);
+				
+				Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
+				cluster(pCoordinatorProxy, tSuperiorClusterLevel);
+				Logging.log(this, "     ..re-clustering triggered");
 			}else{
 				Logging.warn(this, "unregisterCoordinatorProxy() cannot delete unknown CoordinatorProxy: " + pCoordinatorProxy + ", distance=" + pCoordinatorProxy.getDistance() + ", known list contains:");
 				for(CoordinatorProxy tCoordinatorProxy : mLocalCoordinatorProxies){
@@ -1214,7 +1220,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}			
 		
 		// update local hierarchy
-		detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator(pCoordinatorProxy);
+		mProcessorThread.eventUpdateCoordinatorsAboutLostRemoteCoordinator(pCoordinatorProxy);
 		
 		// updates the GUI decoration for this node
 		updateGUINodeDecoration();
@@ -1231,20 +1237,56 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pCoordinatorProxy the lost coordinator (proxy)
 	 */
-	private void detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator(CoordinatorProxy pLostCoordinatorProxy)
+	public void detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(CoordinatorProxy pLostCoordinatorProxy)
 	{
 		/**
 		 * TODO: the following works until a hierarchy height of 3. if more than 3 levels are used, another keep-alive mechanism is needed here in order to be able to detect invalid superior clusters
 		 */
-		if(pLostCoordinatorProxy.getHierarchyLevel().isHigherLevel()){
-			synchronized (mLocalCoordinators) {
+		
+		synchronized (mLocalCoordinators) {
+			/**
+			 * If a remote coordinator on hierarchy level 1 is lost and it is a superior coordinator of this node, all local coordinators on hierarchy level 0 have lost their superior coordinator
+			 *		-> trigger event "superior coordinator lost"  
+			 */
+			if(pLostCoordinatorProxy.getHierarchyLevel().isHigherLevel()){
 				LinkedList<Coordinator> tCoordinators = getAllCoordinators(pLostCoordinatorProxy.getHierarchyLevel().dec().getValue());
 				for(Coordinator tCoordinator : tCoordinators){
 					//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
 					if((tCoordinator.superiorCoordinatorComChannel() != null) && (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName() != null)){
 						if (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName().getClusterID() == pLostCoordinatorProxy.getClusterID()){
-							Logging.log(this, "Superior coordinator invalid for local coordinator: " + tCoordinator);
+							Logging.warn(this, "#### Active superior coordinator invalid for active local coordinator: " + tCoordinator);
 							tCoordinator.eventSuperiorCoordinatorInvalid();						
+						}
+					}
+				}
+			}
+
+			/**
+			 * If a remote coordinator on hierarchy level 0 is lost and no other remote coordinator from this node is known, the remote cluster in hierarchy level 1 is also assumed to be lost
+			 * 		-> trigger event "CoordinatorAsClusterMember invalid" 
+			 */
+			LinkedList<Coordinator> tCoordinators = getAllCoordinators(pLostCoordinatorProxy.getHierarchyLevel().getValue());
+			for(Coordinator tCoordinator : tCoordinators){
+				//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
+				LinkedList<ComChannel> tChannelToSuperiorClusters = tCoordinator.getClusterMembershipComChannels();
+				// search if still one coordinator at this remote node is known
+				int tKnownRemoteCoordinatorsAtThisNode = 0;
+				for (ComChannel tChannelToSuperiorCluster : tChannelToSuperiorClusters){
+					if(tChannelToSuperiorCluster.getPeerL2Address() != null){
+						if (tChannelToSuperiorCluster.getPeerL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
+							tKnownRemoteCoordinatorsAtThisNode++;
+						}
+					}
+				}
+				// react if this is the last known remote coordinator for this remote node
+				if(tKnownRemoteCoordinatorsAtThisNode < 2){
+					for (ComChannel tChannelToSuperiorCluster : tChannelToSuperiorClusters){
+						if(tChannelToSuperiorCluster.getPeerL2Address() != null){
+							if (tChannelToSuperiorCluster.getPeerL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
+								CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToSuperiorCluster.getParent();
+								Logging.warn(this, "#### Remote superior cluster invalid for active local coordinator: " + tClusterMembership);
+								tClusterMembership.eventCoordinatorAsClusterMemberRoleInvalid();						
+							}
 						}
 					}
 				}
@@ -2669,6 +2711,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Logs all com. sessions 
+	 */
+	public void logAllSessions()
+	{
+		synchronized (mCommunicationSessions) {
+			for(ComSession tComSession : mCommunicationSessions){
+				Logging.log(this, "Session: " + tComSession);
+				Logging.log(this, "     ..route to peer: " + tComSession.getRouteToPeer());
+				LinkedList<ComChannel> tChannels = tComSession.getAllComChannels();
+				for(ComChannel tComChannel : tChannels){
+					Logging.log(this, "       ..channel: [" + tComChannel.hashCode() + "]" + tComChannel);
+				}
+			}
+		}
+	}
+
+	/**
 	 * Determines the outgoing communication session for a desired target cluster
 	 * HINT: This function has to be called in a separate thread!
 	 * 
@@ -2777,17 +2836,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	    
 	    boolean tRetryConnection = false;
 	    boolean tRetriedConnection = false;
-	    int tAttemptNr = 1;
+	    int tAttemptNr = 0;
 	    do{
+			tAttemptNr++;
 	    	tRetryConnection = false;
 		    try {
 				tConnection = connectBlock(pDestinationL2Address, tConnectionRequirements, getNode().getIdentity());
 			} catch (NetworkException tExc) {
-				tAttemptNr++;
-				tRetryConnection = true;
-				tRetriedConnection = true;
-				Logging.warn(this, "Cannot connect to: " + pDestinationL2Address + ", connect attempt nr. " + tAttemptNr);
-				//Logging.err(this, "Cannot connect to: " + pDestinationL2Address, tExc);
+				if (tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES){
+					tRetryConnection = true;
+					tRetriedConnection = true;
+					Logging.warn(this, "Cannot connect to: " + pDestinationL2Address + ", connect attempt nr. " + tAttemptNr);
+					//Logging.err(this, "Cannot connect to: " + pDestinationL2Address, tExc);
+				}
 			}
 	    }while((tRetryConnection) && (mProcessorThread != null) && (mProcessorThread.isValid()));
 	    
@@ -3363,7 +3424,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// wait for the first event
 		Logging.log(this, "        ..waiting for connect() event");
 		Event tEvent = tBlockingEventHandling.waitForEvent(HRMConfig.Hierarchy.CONNECT_TIMEOUT);
-		Logging.log(this, "        ..=====> got connection event: " + tEvent);
+		Logging.log(this, "        ..=====> got for the connection to " + pDestination + " the event: " + tEvent);
 		
 		if(tEvent != null){
 			if(tEvent instanceof ConnectedEvent) {

@@ -1226,6 +1226,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							showSession(tfComChannels.get(tSelectedIndex));
 						}
 					});
+					MenuItem tMenuItem21 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem21.setText("Show all node sessions");
+					tMenuItem21.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							mHRMController.logAllSessions();
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							mHRMController.logAllSessions();
+						}
+					});
 					MenuItem tMenuItem3 = new MenuItem(tMenu, SWT.NONE);
 					tMenuItem3.setText("Show peer HRMIDs");
 					tMenuItem3.addSelectionListener(new SelectionListener() {

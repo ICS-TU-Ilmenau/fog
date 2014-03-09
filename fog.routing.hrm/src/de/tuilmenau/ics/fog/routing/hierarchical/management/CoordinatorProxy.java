@@ -100,17 +100,11 @@ public class CoordinatorProxy extends ClusterMember
 		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid");
 
 		if(isThisEntityValid()){
-			HierarchyLevel tSuperiorClusterLevel = getHierarchyLevel().inc();
-			
 			// trigger invalidation
 			eventInvalidation();
 			
 			// register at HRMController's internal database
 			mHRMController.unregisterCoordinatorProxy(this);
-			
-			Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
-			mHRMController.cluster(this, tSuperiorClusterLevel);
-			Logging.log(this, "     ..re-clustering triggered");
 		}else{
 			Logging.warn(this, "This CoordinatorProxy is already invalid");
 		}

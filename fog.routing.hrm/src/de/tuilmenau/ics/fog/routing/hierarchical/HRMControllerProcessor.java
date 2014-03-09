@@ -15,6 +15,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComSession;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorProxy;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.Simulation;
@@ -49,6 +50,11 @@ public class HRMControllerProcessor extends Thread
 	 * Stores the pending requests for connectivity update processing
 	 */
 	private LinkedList<NetworkInterface> mPendingConnectivityUpdates = new LinkedList<NetworkInterface>();
+	
+	/**
+	 * Stores the pending requests for update local coordinators
+	 */
+	private LinkedList<CoordinatorProxy> mPendingCoordinatorUpdates = new LinkedList<CoordinatorProxy>();
 	
 	/**
 	 * Stores the pending com. session closings
@@ -130,6 +136,13 @@ public class HRMControllerProcessor extends Thread
 			}			
 		}
 
+		Logging.log(this, "Pending coordinator update requests:");
+		synchronized (mPendingCoordinatorUpdates) {
+			for(int i = 0; i < mPendingCoordinatorUpdates.size(); i++){
+				Logging.log(this, "  ..entry[" + i + "]: " + mPendingCoordinatorUpdates.get(i));
+			}			
+		}
+		
 		Logging.log(this, "Pending com. session closing requests:");
 		synchronized (mPendingComSessionClosings) {
 			for(int i = 0; i < mPendingComSessionClosings.size(); i++){
@@ -232,6 +245,27 @@ public class HRMControllerProcessor extends Thread
 	}
 
 	/**
+	 * EVENT: "lost remote coordinator"
+	 * 
+	 * @param pCausingCoordinatorProxy the lost coordinator proxy
+	 */
+	private long mEventUpdateCoordinators = 0;
+	public synchronized void eventUpdateCoordinatorsAboutLostRemoteCoordinator(CoordinatorProxy pCausingCoordinatorProxy)
+	{
+		mEventUpdateCoordinators++;
+		
+		synchronized (mPendingCoordinatorUpdates) {
+			mPendingCoordinatorUpdates.add(pCausingCoordinatorProxy);
+		}
+
+		// trigger wake-up
+		if(DEBUG_NOTIFICATION){
+			Logging.log(this, "Notify - [" + mEventUpdateCoordinators + "] - mEventUpdateCoordinators(" + pCausingCoordinatorProxy + ")");
+		}
+		notify();
+	}
+	
+	/**
 	 * EVENT: "close the com. session"
 	 * 
 	 * @param pComSession the com. session
@@ -241,6 +275,8 @@ public class HRMControllerProcessor extends Thread
 	{
 		mEventClosedSessions++;
 		
+	    mHRMController.unregisterSession(pComSession);
+
 		synchronized (mPendingComSessionClosings) {
 			mPendingComSessionClosings.add(pComSession);
 		}
@@ -267,6 +303,22 @@ public class HRMControllerProcessor extends Thread
 		}
 		
 		return -1;
+	}
+
+	/**
+	 * Returns the next "coordinator update event" (uses passive waiting)
+	 * 
+	 * @return the next coordinator update event
+	 */
+	private synchronized CoordinatorProxy getNextCoordinatorUpdateEvent()
+	{
+		CoordinatorProxy tResult = null;
+		
+		if(mPendingCoordinatorUpdates.size() > 0){
+			tResult = mPendingCoordinatorUpdates.removeFirst();
+		}
+		
+		return tResult;
 	}
 
 	/**
@@ -410,7 +462,7 @@ public class HRMControllerProcessor extends Thread
 			 * Session closing
 			 ***********************/
 			ComSession tComSession = getNextComSessionClosing();
-			if(tComSession != null){
+			while(tComSession != null){
 				tFoundEvent = true;
 
 				double tBefore = HRMController.getRealTime();
@@ -423,6 +475,9 @@ public class HRMControllerProcessor extends Thread
 				if(tSpentTime > 100){
 					Logging.log(this, "Processing a com. session closing request for " + tComSession + " took " + tSpentTime + " ms");
 				}
+				
+				// get the next request
+				tComSession = getNextComSessionClosing();
 			}
 
 			/************************
@@ -489,6 +544,29 @@ public class HRMControllerProcessor extends Thread
 
 				// get the next connectivity priority update
 				tNextNetworkInterfaceWithConnectivity = getNextConnectivityPriorityUpdate();
+			}	
+			
+			/************************
+			 * Coordinator update
+			 ***********************/
+			CoordinatorProxy tNextLostCoordinatorProxy = getNextCoordinatorUpdateEvent();
+			while(tNextLostCoordinatorProxy != null){
+				tFoundEvent = true;
+
+				double tBefore = HRMController.getRealTime();
+				
+				// process the next CoordinatorProxy los request
+				Logging.warn(this, "\n\n################ Updating coordinators because of: " + tNextLostCoordinatorProxy);
+				mHRMController.detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(tNextLostCoordinatorProxy);
+
+				double tSpentTime = HRMController.getRealTime() - tBefore;
+
+				if(tSpentTime > 250){
+					Logging.log(this, "Processing a Coordinator update took " + tSpentTime + " ms for " + tNextLostCoordinatorProxy);
+				}
+				
+				// get the next waiting comm. channel
+				tNextLostCoordinatorProxy = getNextCoordinatorUpdateEvent();
 			}	
 			
 			/***********************

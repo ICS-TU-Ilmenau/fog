@@ -24,7 +24,7 @@ public class HRMConfig
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_HRG_UPDATES = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_CONNECTIVITY = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_PRIORITY_HIERARCHY = false;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_NODE_HRMIDIDS = false;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_NODE_HRMIDIDS = true;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_ACTIVE_CLUSTERMEMBERS = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS = false;
@@ -314,7 +314,7 @@ public class HRMConfig
 		/**
 		 * Defines the time period for CoordinatorAnnounce broadcasts, which are sent when the hierarchy was detected as stable, in [s]
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = 30.0; // default: 30
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = 2.0; // default: 20
 
 		/**
 		 * Defines the time period for a stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY.
@@ -372,7 +372,7 @@ public class HRMConfig
 		 * Defines if connection should remain open or be automatically closed if the last inferior comm. channel was closed
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean AUTO_CLEANUP_FOR_CONNECTIONS = false; //TODO: fuehrt zu race conditions wenn letzter Kanal geht und neuer sofort wieder hinzu kommt
+		public static final boolean CONNECTION_AUTO_CLOSE_ON_USED = true;
 
 		/**
 		 * Defines if elections at higher hierarchy levels should be based on a separate hierarchy priority per node.
@@ -406,8 +406,14 @@ public class HRMConfig
 
 		/**
 		 * Describes the max. expected E2E delay in [s]
+		 * This value should be more than 1. Otherwise, the simulation might interpret a short delay as a lost coordinator.
 		 */
-		public static final double MAX_E2E_DELAY = 1;
+		public static final double MAX_E2E_DELAY = 5;
+
+		/**
+		 * Limits the number of connection retries
+		 */
+		public static final int CONNECTION_MAX_RETRIES = 1; // default: 1
 	}
 	
 	/**
