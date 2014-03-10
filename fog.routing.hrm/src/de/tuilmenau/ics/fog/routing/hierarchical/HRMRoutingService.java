@@ -2208,7 +2208,10 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * Get a route from the source to the destination based on their L2 addresses
 					 */
 					tRoutingResult = getL2RouteBestEffort(tSourceL2Address, tDestinationL2Address);
-		
+					if(DEBUG){
+						Logging.log(this, "Determined the L2 route to " + tDestinationL2Address + " as: " + tRoutingResult);
+					}
+					
 					if (tRoutingResult != null){
 						encodeDestinationApplication(tRoutingResult, pRequirements);
 					}else{

@@ -1512,7 +1512,7 @@ public class Cluster extends ClusterMember
 										Logging.log(this, "   ..comm. channel is: " + tComChannelToRemoteCoordinator);
 										Logging.log(this, "   ..deactivating membership of: " + tCoordintorProxy);
 									}
-									eventClusterMemberLost(tComChannelToRemoteCoordinator, this + "updateClusterMembers()");
+									eventClusterMemberLost(tComChannelToRemoteCoordinator, this + "::updateClusterMembers() detected invalid remote coordinator behind: " + tCoordintorProxy);
 									
 									tChanges = true;
 								}
@@ -1581,7 +1581,7 @@ public class Cluster extends ClusterMember
 										
 										tChanges = true;
 									}else{
-										Logging.err(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + mHRMController.getNodeName() + " for remote coordinator: " + tCoordinatorProxy);
+										Logging.err(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + tCoordinatorProxy.getCoordinatorNodeL2Address() + " for remote coordinator: " + tCoordinatorProxy);
 									}
 								}else{
 									if(DEBUG){
