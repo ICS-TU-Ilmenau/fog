@@ -4272,7 +4272,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * EVENT: a new QoS reservation was created and we should update the local routing data
 	 * 
-	 * @param pNextHopL2Address  the L2Address of the node to which special QoS requirements were processed
+	 * @param pNextHopL2Address the L2Address of the node to which special QoS requirements were processed
 	 * @param pQoSReservationDescription the description of the QoS reservation
 	 */
 	public void eventQoSReservation(L2Address pNextHopL2Address, Description pQoSReservationDescription)
