@@ -20,6 +20,7 @@ import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.packets.InvisibleMarker;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.IHRMApi;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.HRMRoutingProperty;
@@ -373,21 +374,21 @@ public class QoSTestApp extends ThreadApplication
 		    do{
 		    	tRetryConnection = false;
 				tConnection = ProbeRouting.createProbeRoutingConnection(this, mNode, tDestinationHRMID, mDefaultDelay /* ms */, mDefaultDataRate /* kbit/s */, false);
-				if(tConnection == null){
+				if((tConnection == null) && (tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES)){
 					tAttemptNr++;
 					tRetryConnection = true;
 					tRetriedConnection = true;
 					Logging.warn(this, "Cannot connect to: " + tDestinationHRMID + ", connect attempt nr. " + tAttemptNr);
 				}
 		    }while((tRetryConnection) && (mQoSTestAppNeeded));
-		    if(tRetriedConnection){
-				Logging.warn(this, "Successfully recovered from connection problems towards: " + tDestinationHRMID + ", connect attempts: " + tAttemptNr);
-		    }
-
 			/**
 			 * Check if connect request was successful
 			 */
 			if(tConnection != null){
+			    if(tRetriedConnection){
+					Logging.warn(this, "Successfully recovered from connection problems towards: " + tDestinationHRMID + ", connect attempts: " + tAttemptNr);
+			    }
+			    
 				if(DEBUG){
 					Logging.log(this, "        ..found valid connection to " + tDestinationHRMID);
 				}
@@ -697,9 +698,10 @@ public class QoSTestApp extends ThreadApplication
 			if (pData instanceof HRMRoutingProperty){
 				HRMRoutingProperty tProbeRoutingProperty = (HRMRoutingProperty)pData;
 				
-				if(DEBUG){
-					Logging.log(mQoSTestApp, "Received ProbeRoutingProperty..");
-				}
+				//if(DEBUG){
+					Logging.log(mQoSTestApp, "Received ProbeRoutingProperty: ");
+					tProbeRoutingProperty.logAll(this);
+				//}
 				//tProbeRoutingProperty.logAll(mQoSTestApp);
 				
 				/**
