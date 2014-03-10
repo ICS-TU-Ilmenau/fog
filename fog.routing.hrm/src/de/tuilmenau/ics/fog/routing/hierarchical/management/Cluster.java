@@ -23,6 +23,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -1016,16 +1017,18 @@ public class Cluster extends ClusterMember
 	 */
 	public void eventReceivedRouteReport(ComChannel pSourceComChannel, RouteReport pRouteReportPacket)
 	{
-		if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-			Logging.log(this, "EVENT: ReceivedRouteReport: " + pRouteReportPacket);
-		}
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_REPORT_PHASE;
 		
+		if(DEBUG){
+			Logging.log(this, "EVENT: ReceivedRouteReport: " + pRouteReportPacket + " from " + pSourceComChannel.getPeerL2Address());
+		}
+			
 		/**
 		 * Iterate over all reported routes and derive new data for the HRG
 		 */
 		RoutingTable tNewReportedRoutingTable = pRouteReportPacket.getRoutes();
 		for(RoutingEntry tEntry : tNewReportedRoutingTable){
-			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+			if(DEBUG){
 				Logging.err(this, "   ..received route: " + tEntry);
 			}
 				
@@ -1055,22 +1058,25 @@ public class Cluster extends ClusterMember
 					 * For example, the local coordinator 1.0.0 exists and the foreign coordinator 2.0.0 reports a link from (1.0.0 <==> 2.0.0). 
 					 * In this case, the local coordinator 1.0.0 has already registered the corresponding HRG links.
 					 */
-					HRMID tFromCluster = tEntry.getNextHop().getForeignCluster(tEntry.getSource());
-					HRMID tToCluster = tEntry.getSource().getForeignCluster(tEntry.getNextHop());
-					boolean tLinkAlreadyKnown = false;
-					LinkedList<Coordinator> tLocalInferiorCoordinators = mHRMController.getAllCoordinators(getHierarchyLevel().getValue() - 1);
-					for(Coordinator tCoordinator : tLocalInferiorCoordinators){
-						if((tFromCluster.equals(tCoordinator.getHRMID())) || (tToCluster.equals(tCoordinator.getHRMID()))){
-							tLinkAlreadyKnown = true;
-						}
-					}
-					if(!tLinkAlreadyKnown){
+//					HRMID tFromCluster = tEntry.getNextHop().getForeignCluster(tEntry.getSource());
+//					HRMID tToCluster = tEntry.getSource().getForeignCluster(tEntry.getNextHop());
+//					boolean tLinkAlreadyKnown = false;
+//					LinkedList<Coordinator> tLocalInferiorCoordinators = mHRMController.getAllCoordinators(getHierarchyLevel().getValue() - 1);
+//					for(Coordinator tCoordinator : tLocalInferiorCoordinators){
+//						if((tFromCluster.equals(tCoordinator.getHRMID())) || (tToCluster.equals(tCoordinator.getHRMID()))){
+//							if(DEBUG){
+//								Logging.log(this, "  ..route already known between " + tFromCluster + " and " + tToCluster + ", route=" + tEntry);
+//							}
+//							tLinkAlreadyKnown = true;
+//						}
+//					}
+//					if(!tLinkAlreadyKnown){
 						mHRMController.registerAutoHRG(tEntry);
-					}else{
-						if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-							Logging.log(this, "Dropping uninteresting reported route: " + tEntry);
-						}
-					}
+//					}else{
+//						if(DEBUG){
+//							Logging.log(this, "  ..dropping uninteresting reported route: " + tEntry);
+//						}
+//					}
 
 					break;
 				case 1:
