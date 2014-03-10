@@ -467,6 +467,16 @@ public class HRMControllerProcessor extends Thread
 		while(mProcessorNeeded){
 			boolean tFoundEvent = false;
 			
+			/***********************
+			 * auto-remove old CoordinatorProxies
+			 ***********************/
+			mHRMController.autoRemoveObsoleteCoordinatorProxies();
+
+			/***********************
+			 * Auto-remove old ComChannels
+			 ***********************/
+			mHRMController.autoRemoveObsoleteComChannels();
+
 			/************************
 			 * Session closing
 			 ***********************/
@@ -596,11 +606,6 @@ public class HRMControllerProcessor extends Thread
 				}
 			}
 			
-			/***********************
-			 * Auto-remove old ComChannels
-			 ***********************/
-			mHRMController.autoRemoveObsoleteComChannels();
-
 			/**
 			 * Wait for next event
 			 */

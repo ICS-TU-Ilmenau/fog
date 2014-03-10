@@ -4630,7 +4630,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Auto-removes all deprecated coordinator proxies
 	 */
-	private synchronized void autoRemoveObsoleteCoordinatorProxies()
+	public synchronized void autoRemoveObsoleteCoordinatorProxies()
 	{
 		if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 			/**
@@ -5485,11 +5485,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		autoDetectStableHierarchy();
 		
-		/**
-		 * auto-remove old CoordinatorProxies
-		 */
-		autoRemoveObsoleteCoordinatorProxies();
-
 		/**
 		 * wake-up the processor and let it check for pending event: esp. important for auto-removing deprecated com. channels
 		 */
