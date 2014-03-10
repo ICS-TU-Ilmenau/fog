@@ -483,6 +483,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			 */
 			if(tNewLogicalLink){
 				boolean tDuplicate = false;
+				boolean tIsRouteToADistantNode = (pRoute.size() > 2 /* FoG-based route to the next hop has structure "[[gate list] , [L2Address]] and has a size of 2 */);
 				
 				/**
 				 * iterate over all known L2 links and check for duplicates
@@ -504,12 +505,23 @@ public class HRMRoutingService implements RoutingService, Localization
 				}					
 
 				if(!tDuplicate){
-					Logging.log(this, "      ..storing new ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
+					if(tIsRouteToADistantNode){
+						// iterate over all found already known links and delete them in order to use always the msot fresh route to a distant node
+						for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
+							if(tKnownL2Link instanceof L2LogicalLink){
+								mL2RoutingGraph.unlink(tKnownL2Link);
+							}
+						}
+						
+						Logging.warn(this, ">>>>>>>>>>>>>      ..storing a new ROUTE \"" + tNewRoute + "\" to distant destination: " + pToL2Address + " with size: " + pRoute.size());
+					}else{
+						Logging.log(this, "      ..storing new ROUTE \"" + tNewRoute + "\" to: " + pToL2Address + " with size: " + pRoute.size());
+					}
 	
 					// store the new route
 					storeL2Link(getCentralFNL2Address(), pToL2Address, new L2LogicalLink(tNewRoute));
 				}else{
-					Logging.log(this, "      ..already known ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
+					Logging.log(this, "      ..already known ROUTE \"" + tNewRoute + "\" to: " + pToL2Address);
 				}
 			}
 
