@@ -1269,7 +1269,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
 						if((tCoordinator.superiorCoordinatorComChannel() != null) && (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName() != null)){
 							if (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName().getClusterID() == pLostCoordinatorProxy.getClusterID()){
-								tCoordinator.superiorCoordinatorComChannel().setTimeout(2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY, pLostCoordinatorProxy.toString());
+								tCoordinator.superiorCoordinatorComChannel().setTimeout(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY, pLostCoordinatorProxy.toString());
 
 								//								Logging.err(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
 //								Logging.err(this, "   ..knowing these remote coordinators:");
@@ -1293,7 +1293,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					for (ComChannel tChannelToSuperiorCluster : tChannelToSuperiorClusters){
 						if(tChannelToSuperiorCluster.getPeerL2Address() != null){
 							if (tChannelToSuperiorCluster.getPeerL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
-								tChannelToSuperiorCluster.setTimeout(2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY, pLostCoordinatorProxy.toString());
+								tChannelToSuperiorCluster.setTimeout(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY, pLostCoordinatorProxy.toString());
 
 //								CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToSuperiorCluster.getParent();
 //								Logging.err(this, "#### Remote superior cluster invalid (" + pLostCoordinatorProxy + ") for active local coordinator: " + tClusterMembership);
@@ -4675,11 +4675,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					for(ComChannel tChannel : tChannels){
 						// does the channel have a timeout?
 						if(tChannel.isObsolete()){
-							Logging.err(this, "AUTO REMOVING COM CHANNEL: " + tChannel);
+							Logging.warn(this, "AUTO REMOVING COM CHANNEL: " + tChannel);
 							ControlEntity tChannelParent = tChannel.getParent();
 							if(tChannelParent instanceof CoordinatorAsClusterMember){
 								CoordinatorAsClusterMember tChannelParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)tChannelParent;
-								Logging.err(this, "AUTO REMOVING COORDINATOR-AS-CLUSTER-MEMBER: " + tChannelParentCoordinatorAsClusterMember);
+								Logging.warn(this, "AUTO REMOVING COORDINATOR-AS-CLUSTER-MEMBER: " + tChannelParentCoordinatorAsClusterMember);
 								tChannelParentCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
 								tFoundDeprecatedEntity = true;
 								break;
