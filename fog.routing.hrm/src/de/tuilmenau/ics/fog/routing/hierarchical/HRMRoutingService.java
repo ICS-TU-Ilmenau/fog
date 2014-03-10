@@ -1682,6 +1682,10 @@ public class HRMRoutingService implements RoutingService, Localization
 		L2Address tDestinationL2Address = null;
 		L2Address tSourceL2Address = null;
 
+		if(pDestination instanceof L2Address){
+			DEBUG = true;
+		}
+		
 		/**
 		 * Make sure that the HRMController is already started if the routing should lead to an application.
 		 * It can occur that a new node is created and the previous node already wants to connect to this node before the local HRMController is completely started.
@@ -2040,48 +2044,53 @@ public class HRMRoutingService implements RoutingService, Localization
 					/**
 					 * CREATE resulting routing result
 					 */
-					tRoutingResult = new Route();
-					
-					/**
-					 * ENCODE the first gate list (unlimited QoS)
-					 */
-					if(!tRoutingResultFirstGateListWithoutDirectDownGates.isEmpty()){
-						if (DEBUG){
-							Logging.log(this, "   ..encoding first gate list: " + tRoutingResultFirstGateListWithoutDirectDownGates);
-						}
-						tRoutingResult.add(tRoutingResultFirstGateListWithoutDirectDownGates);
-					}
-
-					/**
-					 * ENCODE hard QoS reservation (limited QoS)
-					 */
 					if(tQoSReservation != null){
+						tRoutingResult = new Route();
+						
+						/**
+						 * ENCODE the first gate list (unlimited QoS)
+						 */
+						if(!tRoutingResultFirstGateListWithoutDirectDownGates.isEmpty()){
+							if (DEBUG){
+								Logging.log(this, "   ..encoding first gate list: " + tRoutingResultFirstGateListWithoutDirectDownGates);
+							}
+							tRoutingResult.add(tRoutingResultFirstGateListWithoutDirectDownGates);
+						}
+	
+						/**
+						 * ENCODE hard QoS reservation (limited QoS)
+						 */
 						if(!tRoutingResultFirstGateListWithoutDirectDownGates.isEmpty()){
 							if (DEBUG){
 								Logging.log(this, "   ..encoding hard QoS reservation: " + tQoSReservation);
 							}
 							tRoutingResult.add(tQoSReservation);
 						}						
-					}else{
-						Logging.warn(this, "   ..invalid hard QoS reservation: " + tQoSReservation);
-					}
 
-					/**
-					 * ENCODE the remaining parts of the original routing result
-					 */
-					if (DEBUG){
-						Logging.log(this, "   ..encoding additional destination description");
-					}
-					int i = 0;
-					for(RouteSegment tRoutingResultPart : tL2RoutingResult){
-						// ignore the first gate list
-						if(i > 0){
-							if (DEBUG){
-								Logging.log(this, "     ..encoding [" + tRoutingResultPart.getClass().getSimpleName() + "]: " + tRoutingResultPart);
-							}
-							tRoutingResult.add(tRoutingResultPart);
+						/**
+						 * ENCODE the remaining parts of the original routing result
+						 */
+						if (DEBUG){
+							Logging.log(this, "   ..encoding additional destination description");
 						}
-						i++;
+						int i = 0;
+						for(RouteSegment tRoutingResultPart : tL2RoutingResult){
+							// ignore the first gate list
+							if(i > 0){
+								if (DEBUG){
+									Logging.log(this, "     ..encoding [" + tRoutingResultPart.getClass().getSimpleName() + "]: " + tRoutingResultPart);
+								}
+								tRoutingResult.add(tRoutingResultPart);
+							}
+							i++;
+						}
+					}else{
+						/**
+						 * Fall-back
+						 */
+						Logging.warn(this, "   ..invalid hard QoS reservation: " + tQoSReservation);
+						Logging.warn(this, "   ..using previously determined BE route: " + tL2RoutingResult);
+						tRoutingResult = tL2RoutingResult;
 					}
 
 					/**
