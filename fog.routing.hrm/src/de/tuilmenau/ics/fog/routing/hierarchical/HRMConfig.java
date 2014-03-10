@@ -319,7 +319,7 @@ public class HRMConfig
 		/**
 		 * Defines the time period for CoordinatorAnnounce broadcasts, which are sent when the hierarchy was detected as stable, in [s]
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = 2.0; // default: 20
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = 2.0; // default: 30
 
 		/**
 		 * Defines the time period for a stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY.
@@ -413,7 +413,7 @@ public class HRMConfig
 		 * Describes the max. expected E2E delay in [s]
 		 * This value should be more than 1. Otherwise, the simulation might interpret a short delay as a lost coordinator.
 		 */
-		public static final double MAX_E2E_DELAY = 5;
+		public static final double MAX_E2E_DELAY = 3;
 
 		/**
 		 * Limits the number of connection retries
