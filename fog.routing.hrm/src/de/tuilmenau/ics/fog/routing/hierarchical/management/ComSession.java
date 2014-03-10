@@ -134,12 +134,20 @@ public class ComSession extends Session
 	 */
 	public void eventSessionInvalidated()
 	{
-		Logging.log(this, "Session got invalidaed");
-		
-		stopConnection();
+		synchronized (mRegisteredComChannels) {
+			if(mRegisteredComChannels.size() == 0){
+				Logging.log(this, "===== Session got invalidaed");
 
-		// unregister from the HRMController instance
-		mHRMController.unregisterSession(this);
+				mSessionAvailable = false;
+
+				stopConnection();
+
+				// unregister from the HRMController instance
+				mHRMController.unregisterSession(this);
+			}else{
+				Logging.warn(this, "Invalidation aborted due to new com. channels: " + mRegisteredComChannels);
+			}
+		}
 	}
 	
 	/**
@@ -625,18 +633,9 @@ public class ComSession extends Session
 	 * 
 	 * @return true or false
 	 */
-	private boolean isAvailable()
+	public boolean isAvailable()
 	{
 		return mSessionAvailable;
-	}
-	
-	/**
-	 * EVENT: invalid
-	 */
-	public void eventSessionInvalid()
-	{
-		Logging.log(this, "EVENT: session is invalid");
-		mSessionAvailable = false;
 	}
 	
 	/**
