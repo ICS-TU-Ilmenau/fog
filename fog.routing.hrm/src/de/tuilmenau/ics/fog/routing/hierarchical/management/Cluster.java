@@ -88,6 +88,11 @@ public class Cluster extends ClusterMember
 	private String mDescriptionHRMIDAllocation = new String();
 	
 	/**
+	 * Stores the timeout for the next address distribution
+	 */
+	private double mAddressDistributionTimeout = 0;
+
+	/**
 	 * Stores how many clusters were created per hierarchy level
 	 */
 	public static int mCreatedClusters[] = new int[HRMConfig.Hierarchy.HEIGHT];
@@ -323,13 +328,45 @@ public class Cluster extends ClusterMember
 	}
 
 	/**
+	 * EVENT: cluster needs HRMIDs
+	 * This function sets a timer for a new address distribution
+	 */
+	public synchronized void eventClusterNeedsHRMIDs()
+	{
+		mAddressDistributionTimeout = mHRMController.getSimulationTime() + HRMConfig.Addressing.DELAY_ADDRESS_DISTRIBUTION; 
+	}
+	
+	/**
+	 * Checks if it is time to distribute address
+	 * 
+	 * @return true or false
+	 */
+	public synchronized boolean isTimeToDistributeAddresses()
+	{
+		boolean tResult = false;
+		
+		if (mAddressDistributionTimeout > 0){
+			if(mAddressDistributionTimeout < mHRMController.getSimulationTime()){
+				tResult = true;
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * DISTRIBUTE: distribute addresses among cluster members if:
 	 *           + an HRMID was received from a superior coordinator, used to distribute HRMIDs downwards the hierarchy,
 	 *           + we were announced as coordinator
 	 * This function is called for distributing HRMIDs among the cluster members.
+	 * Moreover, it implements the recursive address distribution.
+	 * 
 	 */
 	public void distributeAddresses()
 	{
+		// reset timer for address distribution
+		mAddressDistributionTimeout = 0;
+		
 		HRMID tOwnHRMID = getHRMID();
 
 		boolean tClusterIsTopOfHierarchy = getHierarchyLevel().isHighest(); 
@@ -745,7 +782,7 @@ public class Cluster extends ClusterMember
 					
 					tHRMIDForPeer = tNewHRMIDForPeer;
 				}else{
-					Logging.err(this, "::eventClusterMemberNeedsHRMID() [" + getHRMID() + "] got an invalid new cluster member address for: " + pComChannel);
+					Logging.err(this, "::eventClusterMemberNeedsHRMID() got the invalid new cluster member address [" + getHRMID() + "] for: " + pComChannel);
 				}
 			}else{
 				mDescriptionHRMIDAllocation += "\n     ..reassigned " + tOldHRMIDForPeer.toString() + " for " + pComChannel + ", cause=" + pCause;
@@ -913,6 +950,9 @@ public class Cluster extends ClusterMember
 	public void eventCoordinatorLost()
 	{
 		Logging.log(this, "EVENT: coordinator was lost");
+		
+		// reset timer for address distribution
+		mAddressDistributionTimeout = 0;
 		
 		/**
 		 * Revoke HRMID of physical node if we are on base hierarchy level

@@ -4755,7 +4755,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}else{
 								Logging.warn(this, "Found highest coordinator nr. " + tFound + ": " + tHighestCoordinator + ", is the network fragmented?");
 							}
-							tHighestCoordinator.getCluster().distributeAddresses();
+							tHighestCoordinator.getCluster().eventClusterNeedsHRMIDs();
 						}
 					}
 				}
@@ -5496,6 +5496,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(HRMConfig.Measurement.VALIDATE_RESULTS){
 			if (GUI_USER_CTRL_REPORT_TOPOLOGY){
 //				validateAllResults();
+			}
+		}
+		
+		/**
+		 * auto-distribute HRMIDs: start from the top and go downstairs
+		 */
+		for (int i = HRMConfig.Hierarchy.HEIGHT -1; i >= 0; i--){
+			for(Coordinator tCoordinator : getAllCoordinators(i)) {
+				Cluster tCluster = tCoordinator.getCluster();
+				if(tCluster.isTimeToDistributeAddresses()){
+					tCluster.distributeAddresses();
+				}
 			}
 		}
 		

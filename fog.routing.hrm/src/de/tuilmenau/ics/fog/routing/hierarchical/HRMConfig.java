@@ -292,6 +292,11 @@ public class HRMConfig
 		 * Defines if already assigned addresses should be reused during address distribution
 		 */
 		public static final boolean REUSE_ADDRESSES = true;
+		
+		/**
+		 * Defines the timeout after which a new address distribution cycle is triggered
+		 */
+		public static final double DELAY_ADDRESS_DISTRIBUTION = 3.0; 
 	}
 	
 	/**

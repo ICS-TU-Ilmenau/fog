@@ -1286,7 +1286,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		if (HRMController.GUI_USER_CTRL_ADDRESS_DISTRUTION){
 			//Logging.log(this, "EVENT ANNOUNCED - triggering address assignment for " + mParentCluster.getComChannels().size() + " cluster members");
 
-			getCluster().distributeAddresses();
+			getCluster().eventClusterNeedsHRMIDs();
 		}
 		
 
