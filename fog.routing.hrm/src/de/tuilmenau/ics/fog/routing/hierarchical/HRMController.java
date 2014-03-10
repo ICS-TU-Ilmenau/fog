@@ -3104,10 +3104,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		boolean DEBUG = false;
 //		if(pReceiverHierarchyLevel.isBaseLevel()){
-//			if(!getAllCoordinators(2).isEmpty()){
+//			if(getNodeGUIName().equals("node5")){
 //				DEBUG = true;
 //			}
+////			if(!getAllCoordinators(2).isEmpty()){
+////				DEBUG = true;
+////			}
 //		}
+		
+		if(DEBUG){
+			Logging.log(this, "Received shared routes from: " + pSenderHRMID);
+		}
 		
 		for(RoutingEntry tEntry : pReceivedSharedRoutingTable){
 			RoutingEntry tReceivedSharedRoutingEntry = tEntry.clone();
