@@ -207,7 +207,7 @@ public class HRMRoutingProperty extends AbstractProperty
 	 */
 	public void recordDataRate(long pMaxAvailableDataRate)
 	{
-		Logging.err(this,  "Recording DR: " + pMaxAvailableDataRate);
+		//Logging.log(this,  "Recording DR: " + pMaxAvailableDataRate);
 		
 		if(mDesiredDataRate > 0){
 			if((pMaxAvailableDataRate < mRecordedDataRate) || (mRecordedDataRate == -1)){
