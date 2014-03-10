@@ -207,8 +207,10 @@ public class HRMRoutingProperty extends AbstractProperty
 	 */
 	public void recordDataRate(long pMaxAvailableDataRate)
 	{
-		if(pMaxAvailableDataRate > 0){
-			if(mDesiredDataRate > 0){
+		Logging.err(this,  "Recording DR: " + pMaxAvailableDataRate);
+		
+		if(mDesiredDataRate > 0){
+			if((pMaxAvailableDataRate < mRecordedDataRate) || (mRecordedDataRate == -1)){
 				// assume that HRS::getRoute() automatically reserves MIN(desired DR, available DR)
 				if(pMaxAvailableDataRate < mDesiredDataRate){
 					mRecordedDataRate = pMaxAvailableDataRate;
@@ -216,10 +218,10 @@ public class HRMRoutingProperty extends AbstractProperty
 					mRecordedDataRate = mDesiredDataRate;
 				}
 			}
-	
-			if(mRecordedMaxDataRate > pMaxAvailableDataRate){
-				mRecordedMaxDataRate = pMaxAvailableDataRate;
-			}
+		}
+
+		if(mRecordedMaxDataRate > pMaxAvailableDataRate){
+			mRecordedMaxDataRate = pMaxAvailableDataRate;
 		}
 	}
 
@@ -352,7 +354,7 @@ public class HRMRoutingProperty extends AbstractProperty
 		Logging.log(pParent, "       ..destination: " + getDest());
 		Logging.log(pParent, "       ..desired E2E data rate: " + tDesiredDataRate);
 		Logging.log(pParent, "       ..desired E2E delay: " + getDesiredDelay() + " ms");
-		Logging.log(pParent, "       ..recorded E2E data rate: " + tReservedDataRate + " (this is the minimum of all data rate reservations  along the taken route)");
+		Logging.log(pParent, "       ..recorded E2E data rate: " + tReservedDataRate + " (this is the minimum of all data rate reservations along the taken route)");
 		Logging.log(pParent, "       ..recorded E2E delay: " + getRecordedDelay() + " ms (this is the sum of all delays of all used links)");
 		Logging.log(pParent, "       ..recorded HOP count: " + getRecordedHopCount() + " nodes (this represents the list of passed physical hosts)");
 		Logging.log(pParent, "       ..recorded max. E2E data rate: " + tMaxAvailableDataRate + " (this is the max. avilable data rate along the taken route)");
