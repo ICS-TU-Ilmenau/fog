@@ -513,7 +513,7 @@ public class HRMRoutingService implements RoutingService, Localization
 							}
 						}
 						
-						Logging.warn(this, ">>>>>>>>>>>>>      ..storing a new ROUTE \"" + tNewRoute + "\" to distant destination: " + pToL2Address + " with size: " + pRoute.size());
+						Logging.warn(this, ">>>>>>>>>>>>>      ..storing the new ROUTE \"" + tNewRoute + "\" to distant node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
 					}else{
 						Logging.log(this, "      ..storing new ROUTE \"" + tNewRoute + "\" to: " + pToL2Address + " with size: " + pRoute.size());
 					}

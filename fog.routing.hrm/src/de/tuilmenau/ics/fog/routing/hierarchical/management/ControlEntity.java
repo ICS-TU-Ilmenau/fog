@@ -714,7 +714,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 								 * request the previously assigned HRMID at the superior coordinator
 								 */
 								if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-									Logging.log(this, "  ..REQUESTING OLD HRMID: " + getHRMID());
+									Logging.warn(this, "  ..REQUESTING OLD HRMID: " + getHRMID());
 								}
 								pSourceComChannel.requestHRMIDAssignment(getHRMID());
 								
