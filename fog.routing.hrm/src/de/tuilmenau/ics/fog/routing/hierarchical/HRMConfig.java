@@ -319,7 +319,7 @@ public class HRMConfig
 		/**
 		 * Defines the time period for CoordinatorAnnounce broadcasts, which are sent when the hierarchy was detected as stable, in [s]
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = 2.0; // default: 30
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = 30.0; // default: 30
 
 		/**
 		 * Defines the time period for a stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY.
