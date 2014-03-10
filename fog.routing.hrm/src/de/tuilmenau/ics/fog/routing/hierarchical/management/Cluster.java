@@ -243,20 +243,24 @@ public class Cluster extends ClusterMember
 	 */
 	public void eventReceivedRequestedHRMID(ComChannel pComChannel,	HRMID pHRMID)
 	{
-//		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
 			Logging.warn(this, "Handling RequestHRMID with requested HRMID " + pHRMID.toString() + " for: " + pComChannel);
-//		}
+		}
 		HRMID tOldAssignedHRMID = pComChannel.getPeerHRMID();
 		
 		if((getHRMID() != null) && (!getHRMID().isZero())){
 			int tRequestedAddress = pHRMID.getLevelAddress(getHierarchyLevel());
-			Logging.warn(this, "Peer requested address: " + tRequestedAddress);
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				Logging.warn(this, "Peer requested address: " + tRequestedAddress);
+			}
 			synchronized (mUsedAddresses) {
 				synchronized (mAddressReservations) {
 					if((!mAddressReservations.keySet().contains(tRequestedAddress)) || (mAddressReservations.get(tRequestedAddress).equals(pComChannel))){
 						HRMID tNewOldHRMID = getHRMID().clone();
 						tNewOldHRMID.setLevelAddress(getHierarchyLevel().getValue(), tRequestedAddress);
-						Logging.warn(this, "  ..assignment of requested address " + tRequestedAddress + " is POSSIBLE");
+						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							Logging.warn(this, "  ..assignment of requested address " + tRequestedAddress + " is POSSIBLE");
+						}
 						
 						ComChannel tFormerOwner = null;
 						
@@ -275,7 +279,9 @@ public class Cluster extends ClusterMember
 									HRMID tAssignedHRMID = tChannel.getPeerHRMID();
 									if((tAssignedHRMID != null) && (tAssignedHRMID.equals(tNewOldHRMID))){
 										tFormerOwner = tChannel;
-										Logging.warn(this, "  ..revoking requested address " + tNewOldHRMID + " from: " + tChannel);
+										if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+											Logging.warn(this, "  ..revoking requested address " + tNewOldHRMID + " from: " + tChannel);
+										}
 										tChannel.signalRevokeAssignedHRMIDs();
 										tChannel.setPeerHRMID(null);
 									}
@@ -286,7 +292,9 @@ public class Cluster extends ClusterMember
 						/**
 						 * assign the address to the requesting cluster member	
 						 */
-						Logging.warn(this, "  ..assigning requested address " + tNewOldHRMID + " to: " + pComChannel);
+						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							Logging.warn(this, "  ..assigning requested address " + tNewOldHRMID + " to: " + pComChannel);
+						}
 						pComChannel.setPeerHRMID(tNewOldHRMID);
 						pComChannel.distributeAssignHRMID(tNewOldHRMID, true);
 	
@@ -298,14 +306,18 @@ public class Cluster extends ClusterMember
 							eventClusterMemberNeedsHRMID(tFormerOwner, this + "eventRequestedHRMID() for: " + pComChannel);
 						}
 					}else{
-						Logging.warn(this, "  ..assignment of requested address " + tRequestedAddress + " is IMPOSSIBLE, enforcing the assignment of " + tOldAssignedHRMID);
-						Logging.warn(this, "  ..current reservations are: " + mAddressReservations);
+						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							Logging.warn(this, "  ..assignment of requested address " + tRequestedAddress + " is IMPOSSIBLE, enforcing the assignment of " + tOldAssignedHRMID);
+							Logging.warn(this, "  ..current reservations are: " + mAddressReservations);
+						}
 						pComChannel.distributeAssignHRMID(tOldAssignedHRMID, true);
 					}
 				}
 			}
 		}else{
-			Logging.warn(this, "eventRequestedHRMID() skipped because the own HRMID is invalid: " + getHRMID());
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				Logging.warn(this, "eventRequestedHRMID() skipped because the own HRMID is invalid: " + getHRMID());
+			}
 		}
 			
 	}
@@ -425,7 +437,9 @@ public class Cluster extends ClusterMember
 		}else{
 			mDescriptionHRMIDAllocation += "\n     ..aborted distributeAddresses() because of own HRMID: " + tOwnHRMID;
 
-			Logging.warn(this, "distributeAddresses() skipped because the own HRMID is still invalid: " + getHRMID());
+			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				Logging.warn(this, "distributeAddresses() skipped because the own HRMID is still invalid: " + getHRMID());
+			}
 		}
 	}
 
