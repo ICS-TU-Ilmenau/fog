@@ -147,6 +147,7 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	public Connection connect(Name pName, Description pDescription, Identity pRequester)
 	{
 		ConnectionEndPoint tCEP = new ConnectionEndPoint(pName, getLogger(), null);
+		//Logging.warn(this, "Connecting to: " + pName);
 		
 		// do not start calculation without a useful name
 		if(pName == null) {
@@ -209,7 +210,8 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 			Description tIntermediateDescr = tProcess.getIntermediateDescr();
 			Logging.log(this, "Determined intermediate description: " + tIntermediateDescr + ", ORIGINAL REQS: " + pDescription);
 			Route tRoute = getTransferPlane().getRoute(tMultiplexer, pName, tIntermediateDescr, pRequester);
-	
+			//Logging.log(this, "Trying to connect to " + pName + " via: " + tRoute);
+			
 			/*
 			 * Register for notification of state changes now, since "handlePacket" might cause it immediately.
 			 */

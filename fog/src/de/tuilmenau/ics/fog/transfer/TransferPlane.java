@@ -91,6 +91,7 @@ public class TransferPlane implements TransferPlaneObserver
 				internalRequest = true;
 				resRoute = getRoute(pSource, tLocalDestination);
 			} else {
+				//Logging.log(this, "Searching for a route from " + pSource + " to " + pDestination);
 				resRoute = mRS.getRoute(pSource, pDestination, pRequirements, pRequester);
 			}
 			
@@ -221,7 +222,7 @@ public class TransferPlane implements TransferPlaneObserver
 		if(!pSource.equals(pTarget)) {
 			// Do path calculation itself
 			List<ForwardingElement> tPath = mMap.getRoute(pSource, pTarget);
-			
+			//Logging.log(this, "Got from internal map the route from " + pSource + " to " + pTarget + " as: " + tPath);
 			// is there a route from source to target?
 			if(!tPath.isEmpty()) {
 				tRes = new Route();

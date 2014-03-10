@@ -658,7 +658,7 @@ public class Packet implements Serializable
 	 */
 	public void dropped(ForwardingNode handler)
 	{
-		Logging.err(this, ">>> ### PACKET DROPPED ### <<<");
+		Logging.err(this, ">>> ### PACKET DROPPED ### <<<  @ " + handler);
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(handler, this);
 		}
@@ -674,7 +674,7 @@ public class Packet implements Serializable
 	public void dropped(AbstractGate handler)
 	{
 		// TODO how do we get the correspond node for a gate?
-		Logging.err(this, ">>> ### PACKET DROPPED ### <<<");
+		Logging.err(this, ">>> ### PACKET DROPPED ### <<< @ " + handler);
 	}
 	
 	/**

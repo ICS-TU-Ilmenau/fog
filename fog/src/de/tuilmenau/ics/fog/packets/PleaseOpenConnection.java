@@ -34,6 +34,7 @@ import de.tuilmenau.ics.fog.transfer.manager.Process;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessConnection;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessGateCollectionConstruction;
 import de.tuilmenau.ics.fog.transfer.manager.Process.ProcessState;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Viewable;
 
 
@@ -76,6 +77,7 @@ public class PleaseOpenConnection extends SignallingRequest
 			mPeerRoutingName = tFN.getEntity().getRoutingService().getNameFor(tFN);
 		}
 		mToApplication = pToApplication;
+		//Logging.log(this, "Create PleaseOpenConnection1 towards: " + mPeerRoutingName);
 	}
 	
 	/**
@@ -105,6 +107,7 @@ public class PleaseOpenConnection extends SignallingRequest
 		ForwardingNode tFN = pSendersProcess.getBase(); 
 		mPeerRoutingName = tFN.getEntity().getRoutingService().getNameFor(tFN);
 		setDescription(pDescription);
+		//Logging.log(this, "Create PleaseOpenConnection2 towards: " + mPeerRoutingName);
 	}
 	
 	/**
@@ -119,6 +122,7 @@ public class PleaseOpenConnection extends SignallingRequest
 		this(null, null, pDescription, true);
 		
 		mIsLocalDummy = true;
+		//Logging.log(this, "Create PleaseOpenConnection3 towards: " + mPeerRoutingName);
 	}
 	
 	/**
