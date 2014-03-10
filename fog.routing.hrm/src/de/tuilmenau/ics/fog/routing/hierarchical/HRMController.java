@@ -2786,7 +2786,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Logging.log(this, "getCreateComSession() could find a comm. session for destination: " + pDestinationL2Address + ", knowing these sessions and their channels:");
 					synchronized (mCommunicationSessions) {
 						for (ComSession tComSession : mCommunicationSessions){
-							Logging.log(this, "   ..ComSession: " + tComSession);
+							Logging.log(this, "   ..ComSession: " + tComSession + "[" + (tComSession.isAvailable() ? "AVAILABLE" : "UNAVAILABLE") + "]");
 							for(ComChannel tComChannel : tComSession.getAllComChannels()){
 								Logging.log(this, "     ..ComChannel: " + tComChannel);
 								Logging.log(this, "        ..RemoteCluster: " + tComChannel.getRemoteClusterName().toString());
@@ -4311,7 +4311,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void eventLostPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, L2Address pNeighborL2Address)
 	{
-		Logging.log(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
+		Logging.warn(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 
 		/**
 		 * Cleanup for list of known com. sessions
@@ -4366,8 +4366,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * delete the network interface from the database about known network interfaces
 				 */
 				if(tRefCount.intValue() <= 1){
-					Logging.log(this, "\n######### Detected lost network interface: " + pInterfaceToNeighbor);
+					Logging.warn(this, "\n######### Detected lost network interface: " + pInterfaceToNeighbor);
 					mLocalNetworkInterfaces.remove(pInterfaceToNeighbor);
+					
+					LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
+					for(ClusterMember tL0ClusterMember : tL0ClusterMembers){
+						if(tL0ClusterMember.getBaseHierarchyLevelNetworkInterface().equals(pInterfaceToNeighbor)){
+							if(tL0ClusterMember instanceof Cluster){
+								Cluster tL0Cluster = (Cluster)tL0ClusterMember;
+								Logging.warn(this, "\n#########   ..removing L0 cluster: " + tL0Cluster);
+								tL0Cluster.eventClusterRoleInvalid();
+							}else{
+								Logging.warn(this, "\n#########   ..removing L0 ClusterMember: " + tL0ClusterMember);
+								tL0ClusterMember.eventClusterMemberRoleInvalid(tL0ClusterMember.getComChannelToClusterHead());
+							}
+						}
+					}
 				}
 			}
 			decreaseNodePriority_Connectivity(pInterfaceToNeighbor);
