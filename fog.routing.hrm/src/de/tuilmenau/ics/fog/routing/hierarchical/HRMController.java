@@ -2934,7 +2934,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return true if the given HRMID is a local one
 	 */
-	private boolean isLocal(HRMID pHRMID)
+	public boolean isLocal(HRMID pHRMID)
 	{
 		boolean tResult = false;
 		
@@ -3104,7 +3104,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		boolean DEBUG = false;
 //		if(pReceiverHierarchyLevel.isBaseLevel()){
-//			if(getNodeGUIName().equals("node5")){
+//			if(getNodeGUIName().equals("node1")){
 //				DEBUG = true;
 //			}
 ////			if(!getAllCoordinators(2).isEmpty()){
@@ -3146,8 +3146,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						tReceivedSharedRoutingEntry.append(tSecondRoutePart, this + "::addHRMRouteShare(pCause) at lvl: " + pReceiverHierarchyLevel);
 						// set the origin of the shared routing entry as origin for the resulting local routing entry
 						tReceivedSharedRoutingEntry.setOrigin(tSecondRoutePart.getOrigin());
-						// reset the next hop L2 address
-						tReceivedSharedRoutingEntry.setNextHopL2Address(null);
+						// we need the next hop L2 address only for domains with more than 2 nodes
+						if(!isLocalCluster(tReceivedSharedRoutingEntry.getDest())){
+							tReceivedSharedRoutingEntry.setNextHopL2Address(null);
+						}
 					}else{
 						tDropRoute = true;
 
@@ -3202,7 +3204,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							/**
 							 * set the L2 address of the next hop
 							 */
-							tReceivedSharedRoutingEntry.setNextHopL2Address(getHRS().getL2AddressFor(tReceivedSharedRoutingEntry.getNextHop()));
+							// we do NOT reset the next hop L2 address for domains with more than 2 nodes
+							if(!isLocalCluster(tReceivedSharedRoutingEntry.getDest())){
+								tReceivedSharedRoutingEntry.setNextHopL2Address(getHRS().getL2AddressFor(tReceivedSharedRoutingEntry.getNextHop()));
+							}
 							
 							/**
 							 * Store the found route
