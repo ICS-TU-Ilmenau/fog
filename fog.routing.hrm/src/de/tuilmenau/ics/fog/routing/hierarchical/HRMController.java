@@ -1516,6 +1516,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 
 					/**
+					 * tell L0 clusters our new HRMIDs
+					 */
+					if(!pHRMID.isClusterAddress()){
+						distributeLocalL0HRMIDsInL0Clusters();
+					}
+					
+					/**
 					 * Update the GUI
 					 */
 					// updates the GUI decoration for this node
@@ -1606,6 +1613,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 
 					/**
+					 * tell L0 clusters our new HRMIDs
+					 */
+					if(!pOldHRMID.isClusterAddress()){
+						distributeLocalL0HRMIDsInL0Clusters();
+					}
+
+					/**
 					 * Update the GUI
 					 */
 					// updates the GUI decoration for this node
@@ -1621,6 +1635,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 	}
 	
+	/**
+	 * Distributes our new set of local L0 HRMIDs within all known L0 clusters
+	 */
+	private void distributeLocalL0HRMIDsInL0Clusters()
+	{
+		LinkedList<Cluster> tL0Clusters = getAllClusters(0);
+		for(Cluster tL0Cluster : tL0Clusters){
+			tL0Cluster.distributeAnnounceHRMIDs();
+		}
+	}
+
 	/**
 	 * Updates the registered HRMID for a defined coordinator.
 	 * 
@@ -3104,7 +3129,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		boolean DEBUG = false;
 //		if(pReceiverHierarchyLevel.isBaseLevel()){
-//			if(getNodeGUIName().equals("node1")){
+//			if(getNodeGUIName().equals("d_node1#5")){
 //				DEBUG = true;
 //			}
 ////			if(!getAllCoordinators(2).isEmpty()){
@@ -3119,7 +3144,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		for(RoutingEntry tEntry : pReceivedSharedRoutingTable){
 			RoutingEntry tReceivedSharedRoutingEntry = tEntry.clone();
 			if(DEBUG){
-				Logging.log(this, "  ..received shared route: " + tReceivedSharedRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tReceivedSharedRoutingEntry.getDest()));
+				Logging.log(this, "  ..received shared route: " + tReceivedSharedRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tReceivedSharedRoutingEntry.getDest()) + ", is source local: " + isLocal(tReceivedSharedRoutingEntry.getSource()));
 			}
 				
 			boolean tDropRoute = false;
@@ -3178,7 +3203,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 * 		=> such routes are already known based on neighborhood detection of the L0 comm. channels (Clusters) 
 					 */				
 					if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (!isLocalCluster(tReceivedSharedRoutingEntry.getDest()))){
-						if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (tReceivedSharedRoutingEntry.getHopCount() > 1)){
+						if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (tReceivedSharedRoutingEntry.getHopCount() >= 1)){
 							// patch the source with the correct local sender address
 							tReceivedSharedRoutingEntry.setSource(getLocalSenderAddress(tReceivedSharedRoutingEntry.getSource(), tReceivedSharedRoutingEntry.getNextHop()));
 							tReceivedSharedRoutingEntry.extendCause(pCause);

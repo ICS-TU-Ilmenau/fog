@@ -413,7 +413,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 													/**
 													 * Tell the L0 ClusterMember only the interesting routes
 													 */
-													if(tNewEntry.getHopCount() > 1){
+													if(tNewEntry.getHopCount() >= 1){
 														if (DEBUG_SHARE_PHASE_DETAILS){
 															Logging.log(this, "   ..new shared route from superior coordinator_2: " + tNewEntry);
 														}
