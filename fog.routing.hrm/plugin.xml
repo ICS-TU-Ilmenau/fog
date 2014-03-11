@@ -119,7 +119,12 @@
             class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.LinkToBus"
             filter="de.tuilmenau.ics.fog.topology.Node">
       </plugin>
-
+      <plugin
+            name="Create a node domain.."
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateDomain"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      
       <editor
             editorID="de.tuilmenau.ics.fog.hrmviewer"
             filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
