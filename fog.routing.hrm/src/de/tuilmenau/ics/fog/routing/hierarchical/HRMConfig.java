@@ -335,7 +335,7 @@ public class HRMConfig
 		/**
 		 * Defines if the cluster should detect automatically all gateways and separate them as autonomous L1 cluster
 		 */
-		public static final boolean AUTO_DETECT_AND_SEPRATE_GATEWAYS = false;
+		public static final boolean AUTO_DETECT_AND_SEPRATE_GATEWAYS = true;
 		
 		/**
 		 * This defines the amount of hierarchical levels in the simulation.
