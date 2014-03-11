@@ -1300,12 +1300,12 @@ public class ClusterMember extends ClusterName
 								 */
 								
 								if(this instanceof Cluster){
-									tClusterMember.mHRMID = mAssignedL0HRMID.clone();
-								}else{
-									Cluster tCluster = (Cluster)tClusterMember; // has to be a Cluster here, otherwise, we have a wished exception here
+									Cluster tCluster = (Cluster)tClusterMember;
 									HRMID tClusterHRMID = pHRMID.getClusterAddress(0);
 									tCluster.mHRMID = tClusterHRMID;
 									tCluster.setL0HRMID(pHRMID.clone());
+								}else{
+									tClusterMember.mHRMID = mAssignedL0HRMID.clone();
 								}
 							}
 						}
