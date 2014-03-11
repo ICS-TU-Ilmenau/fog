@@ -24,7 +24,7 @@ public class CreateDomain extends EclipseCommand
 	private Node mSourceNode = null;
 	private int mDomainSize = 0;
 	private AutonomousSystem mAs = null;
-	private static int sLastDomainSize = 4;
+	private static int sLastDomainSize = 6;
 	private Description mBusAttributes = null;
 	
 	public CreateDomain()
