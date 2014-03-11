@@ -132,7 +132,7 @@ public class ComSession extends Session
 	/**
 	 * EVENT: session got invalidated
 	 */
-	public void eventSessionInvalidated()
+	public synchronized void eventSessionInvalidated()
 	{
 		synchronized (mRegisteredComChannels) {
 			if(mRegisteredComChannels.size() == 0){
