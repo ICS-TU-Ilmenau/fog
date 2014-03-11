@@ -282,10 +282,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@SuppressWarnings("unused")
 	public void sharePhase()
 	{
-		boolean DEBUG_SHARE_PHASE_DETAILS = HRMConfig.DebugOutput.SHOW_SHARE_PHASE;
-//		if(getHierarchyLevel().isBaseLevel()){
-//			DEBUG_SHARE_PHASE_DETAILS = true;
-//		}
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_SHARE_PHASE;
+		boolean DEBUG_SHARE_PHASE_DETAILS = DEBUG;
 		
 		if(isThisEntityValid()){
 			// should we start the "share phase"?
@@ -337,7 +335,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							}
 	
 							if(getHierarchyLevel().isBaseLevel()){
-								if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+								if (DEBUG){
 									Logging.log(this, "  ..sharing routes with node: " + tPeerHRMID);
 								}
 	
@@ -349,6 +347,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								if(tReceivedSharedRoutingTable.size() > 0){
 									int j = -1;
 									for(RoutingEntry tReceivedSharedRoutingEntry : tReceivedSharedRoutingTable){
+										if (DEBUG){
+											Logging.log(this, "   ..checking from superior coordinator shared route: " + tReceivedSharedRoutingEntry);
+										}
+
 										/**
 										 * DO NOT tell the direct neighbor about a locally starting cluster, it already learns this route based on neighborhood detection in ComChannel
 										 */
@@ -360,6 +362,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											 * 		=> share: [original route from sup. coordinator]
 											 */
 											if(tReceivedSharedRoutingEntry.getSource().isCluster(tPeerHRMID)){
+												if (DEBUG){
+													Logging.log(this, "    ..route starts at the peer: " + tReceivedSharedRoutingEntry);
+												}
+
 												RoutingEntry tNewEntry = tReceivedSharedRoutingEntry.clone();
 												// reset L2Address for next hop
 												tNewEntry.setNextHopL2Address(null);
@@ -372,7 +378,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 												 */
 												if(tNewEntry.getHopCount() > 1){
 													if (DEBUG_SHARE_PHASE_DETAILS){
-														Logging.log(this, "   ..new shared route from superior coordinator_1: " + tNewEntry);
+														Logging.log(this, "     ..new shared route from superior coordinator_1: " + tNewEntry);
 													}
 													tSharedRoutingTable.addEntry(tNewEntry);
 												}
@@ -381,17 +387,20 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											}
 											
 											/**
-											 * does the received route start at this node and the next node isn't the peer?
-											 * 		=> share: [route from peer to this node] ==> [original route from sup. coordinator]
+											 * does the received route start at this node or another node of this cluster and the next node isn't the peer?
+											 * 		=> share: [route from peer to the node of this cluster] ==> [original route from sup. coordinator]
 											 */
-											if((tReceivedSharedRoutingEntry.getSource().equals(tThisNodeHRMID)) && (!tReceivedSharedRoutingEntry.getNextHop().equals(tPeerHRMID))){
-												RoutingEntry tRoutingEntryWithPeer = mHRMController.getNeighborRoutingEntryHRG(tPeerHRMID, tThisNodeHRMID);
+											if((tReceivedSharedRoutingEntry.getSource().isCluster(tThisNodeHRMID.getClusterAddress(0))) && (!tReceivedSharedRoutingEntry.getNextHop().equals(tPeerHRMID))){
+												if (DEBUG){
+													Logging.log(this, "    ..route starts not at the peer but in this cluster: " + tReceivedSharedRoutingEntry);
+												}
+												RoutingEntry tRoutingEntryWithPeer = mHRMController.getNeighborRoutingEntryHRG(tPeerHRMID, tReceivedSharedRoutingEntry.getSource());
 												if(tRoutingEntryWithPeer != null){
 													RoutingEntry tNewEntry = tRoutingEntryWithPeer.clone(); 
 													if (DEBUG_SHARE_PHASE_DETAILS){
-														Logging.log(this, "   ..merging:");
-														Logging.log(this, "     .." + tNewEntry);
-														Logging.log(this, "     .." + tReceivedSharedRoutingEntry);
+														Logging.log(this, "     ..merging:");
+														Logging.log(this, "       .." + tNewEntry);
+														Logging.log(this, "       .." + tReceivedSharedRoutingEntry);
 													}
 													
 													// reset L2Address for next hop
@@ -414,12 +423,20 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 												
 												continue;
 											}
+											
+											if (DEBUG){
+												Logging.log(this, "    ..received shared route ignored: " + tReceivedSharedRoutingEntry);
+											}
+
 										}else{
 											// received a shared route which leads to a local cluster -> no need to tell this direct neighbor because it already knows this route based on neighborhood detection in ComChannel
+											if (DEBUG){
+												Logging.log(this, "    ..shared route leads to a local cluster: " + tReceivedSharedRoutingEntry);
+											}
 										}
 									}
 								}else{
-									if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+									if (DEBUG){
 										Logging.log(this, "    ..NO routes from any superior coordinator, channel to superior coordinator is: " + superiorCoordinatorComChannel());
 									}
 								}
@@ -462,7 +479,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										}
 									}
 								}else{
-									if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+									if (DEBUG){
 										Logging.log(this, "    ..NO routes to known siblings");
 									}
 								}
@@ -558,7 +575,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										}
 									}
 								}else{
-									if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+									if (DEBUG){
 										Logging.log(this, "    ..NO routes from any superior coordinator, channel to superior coordinator is: " + superiorCoordinatorComChannel());
 									}
 								}
@@ -610,7 +627,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										}
 									} // for(HRMID tPossibleDestination : tKnownPeerSiblings)
 								}else{
-									if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+									if (DEBUG){
 										Logging.log(this, "    ..NO routes to known siblings");
 									}
 								}
