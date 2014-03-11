@@ -249,14 +249,16 @@ public class Cluster extends ClusterMember
 	 */
 	public void eventReceivedRequestedHRMID(ComChannel pComChannel,	HRMID pHRMID)
 	{
-		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION;
+		
+		if (DEBUG){
 			Logging.warn(this, "Handling RequestHRMID with requested HRMID " + pHRMID.toString() + " for: " + pComChannel);
 		}
 		HRMID tOldAssignedHRMID = pComChannel.getPeerHRMID();
 		
-		if((getHRMID() != null) && (!getHRMID().isZero())){
+		if((getHRMID() != null) && ((!getHRMID().isZero()) || (getHierarchyLevel().isHighest()))){
 			int tRequestedAddress = pHRMID.getLevelAddress(getHierarchyLevel());
-			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+			if (DEBUG){
 				Logging.warn(this, "Peer requested address: " + tRequestedAddress);
 			}
 			synchronized (mUsedAddresses) {
@@ -264,7 +266,7 @@ public class Cluster extends ClusterMember
 					if((!mAddressReservations.keySet().contains(tRequestedAddress)) || (mAddressReservations.get(tRequestedAddress).equals(pComChannel))){
 						HRMID tNewOldHRMID = getHRMID().clone();
 						tNewOldHRMID.setLevelAddress(getHierarchyLevel().getValue(), tRequestedAddress);
-						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						if (DEBUG){
 							Logging.warn(this, "  ..assignment of requested address " + tRequestedAddress + " is POSSIBLE");
 						}
 						
@@ -285,7 +287,7 @@ public class Cluster extends ClusterMember
 									HRMID tAssignedHRMID = tChannel.getPeerHRMID();
 									if((tAssignedHRMID != null) && (tAssignedHRMID.equals(tNewOldHRMID))){
 										tFormerOwner = tChannel;
-										if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+										if (DEBUG){
 											Logging.warn(this, "  ..revoking requested address " + tNewOldHRMID + " from: " + tChannel);
 										}
 										tChannel.signalRevokeAssignedHRMIDs();
@@ -298,7 +300,7 @@ public class Cluster extends ClusterMember
 						/**
 						 * assign the address to the requesting cluster member	
 						 */
-						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						if (DEBUG){
 							Logging.warn(this, "  ..assigning requested address " + tNewOldHRMID + " to: " + pComChannel);
 						}
 						pComChannel.setPeerHRMID(tNewOldHRMID);
@@ -312,7 +314,7 @@ public class Cluster extends ClusterMember
 							eventClusterMemberNeedsHRMID(tFormerOwner, this + "eventRequestedHRMID() for: " + pComChannel);
 						}
 					}else{
-						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						if (DEBUG){
 							Logging.warn(this, "  ..assignment of requested address " + tRequestedAddress + " is IMPOSSIBLE, enforcing the assignment of " + tOldAssignedHRMID);
 							Logging.warn(this, "  ..current reservations are: " + mAddressReservations);
 						}
@@ -321,7 +323,7 @@ public class Cluster extends ClusterMember
 				}
 			}
 		}else{
-			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+			if (DEBUG){
 				Logging.warn(this, "eventRequestedHRMID() skipped because the own HRMID is invalid: " + getHRMID());
 			}
 		}
