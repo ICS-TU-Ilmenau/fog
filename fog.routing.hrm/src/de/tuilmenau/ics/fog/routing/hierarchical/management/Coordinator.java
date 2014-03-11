@@ -458,6 +458,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										 * Get the route from the local HRG from the peer to its sibling	
 										 */
 										RoutingEntry tRoutingEntryToPossibleDestination = mHRMController.getRoutingEntryHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
+										if (DEBUG_SHARE_PHASE_DETAILS){
+											Logging.log(this, "      ..path is: " + tRoutingEntryToPossibleDestination);
+										}
 										
 										/**
 										 * Add the found routing entry to the shared routing table
@@ -467,10 +470,13 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											tRoutingEntryToPossibleDestination.setOrigin(getHRMID());
 											// set the L2Address of the next hop again
 											tRoutingEntryToPossibleDestination.setNextHopL2Address(mHRMController.getHRS().getL2AddressFor(tRoutingEntryToPossibleDestination.getNextHop()));
+											if (DEBUG_SHARE_PHASE_DETAILS){
+												Logging.log(this, "      ..setting next hop L2Address: " + mHRMController.getHRS().getL2AddressFor(tRoutingEntryToPossibleDestination.getNextHop()));
+											}
 											/**
 											 * Tell the L0 ClusterMember only the interesting routes
 											 */
-											if(tRoutingEntryToPossibleDestination.getHopCount() > 1){
+											if(tRoutingEntryToPossibleDestination.getHopCount() >= 1){
 												if (DEBUG_SHARE_PHASE_DETAILS){
 													Logging.log(this, "   ..new shared route to a sibling on L0: " + tRoutingEntryToPossibleDestination);
 												}
