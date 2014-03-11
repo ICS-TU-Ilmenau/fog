@@ -373,6 +373,7 @@ public class QoSTestApp extends ThreadApplication
 		    Connection tConnection = null;
 		    do{
 		    	tRetryConnection = false;
+		    	Logging.log(this, "\n\n=============== Creating QoS probing connection towards: " + tDestinationHRMID + " with QoS: " + mDefaultDelay + " ms, " + mDefaultDataRate + " kbit/s");
 				tConnection = ProbeRouting.createProbeRoutingConnection(this, mNode, tDestinationHRMID, mDefaultDelay /* ms */, mDefaultDataRate /* kbit/s */, false);
 				if(tConnection == null){
 					if(tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES){
