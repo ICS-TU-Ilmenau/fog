@@ -4718,6 +4718,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								CoordinatorAsClusterMember tChannelParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)tChannelParent;
 								Logging.warn(this, "AUTO REMOVING COORDINATOR-AS-CLUSTER-MEMBER: " + tChannelParentCoordinatorAsClusterMember);
 								tChannelParentCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
+
+								/**
+								 * Have we close the last comm. channel of this session?
+								 */
+								ComSession tSessionObsoleteChannel = tChannel.getParentComSession();
+								if(tSessionObsoleteChannel.getAllComChannels().size() == 0){
+									Logging.log(this, "\n\n################ CLOSING COM. SESSION: " + tSessionObsoleteChannel);
+									tSessionObsoleteChannel.eventSessionInvalidated();
+								}
+
+								/**
+								 * Break the for-loop because the iterator is invalid now
+								 */
 								tFoundDeprecatedEntity = true;
 								break;
 							}else{
@@ -7143,14 +7156,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		LinkedList<HRMID> tResult = new LinkedList<HRMID>();
 		
-		synchronized (mHierarchicalRoutingGraph) {
-			//Logging.warn(this, "   ..knowing node: " + pFrom + " as " + mHierarchicalRoutingGraph.containsVertex(pFrom));
-			// get all outgoing HRG links of "pFrom"
-			Collection<AbstractRoutingGraphLink> tOutLinks = mHierarchicalRoutingGraph.getOutEdges(pHRMID);
-			if(tOutLinks != null){
-				for(AbstractRoutingGraphLink tOutLink : tOutLinks){
-					HRMID tNeighbor = mHierarchicalRoutingGraph.getDest(tOutLink);
-					tResult.add(tNeighbor.clone());
+		if(pHRMID != null){
+			synchronized (mHierarchicalRoutingGraph) {
+				//Logging.warn(this, "   ..knowing node: " + pFrom + " as " + mHierarchicalRoutingGraph.containsVertex(pFrom));
+				// get all outgoing HRG links of "pFrom"
+				Collection<AbstractRoutingGraphLink> tOutLinks = mHierarchicalRoutingGraph.getOutEdges(pHRMID);
+				if(tOutLinks != null){
+					for(AbstractRoutingGraphLink tOutLink : tOutLinks){
+						HRMID tNeighbor = mHierarchicalRoutingGraph.getDest(tOutLink);
+						tResult.add(tNeighbor.clone());
+					}
 				}
 			}
 		}
