@@ -793,7 +793,9 @@ public class HRMRoutingService implements RoutingService, Localization
 				synchronized (mHRMIDToL2RouteMapping) {
 					Route tOldRoute = mHRMIDToL2RouteMapping.get(pHRMID);
 					if((tOldRoute == null) || ((!tOldRoute.equals(pL2Route)) && (pL2Route.isShorter(tOldRoute)))){
-						Logging.warn(this, "mapHRMID() - got new L2 route towards: " + pHRMID + " as: " + pL2Route);
+						if(DEBUG){
+							Logging.warn(this, "mapHRMID() - got new L2 route towards: " + pHRMID + " as: " + pL2Route);
+						}
 						mHRMIDToL2RouteMapping.put(pHRMID, pL2Route);
 					}
 				}					
@@ -823,7 +825,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		synchronized (mHRMIDToL2RouteMapping) {
 			for (HRMID tHRMID: mHRMIDToL2RouteMapping.keySet()){
 				if (tHRMID.equals(pHRMID)){
-					Logging.warn(this, "Dropping L2 route towards: " + pHRMID + " as: " + mHRMIDToL2RouteMapping.get(pHRMID));
+					//Logging.warn(this, "Dropping L2 route towards: " + pHRMID + " as: " + mHRMIDToL2RouteMapping.get(pHRMID));
 					mHRMIDToL2RouteMapping.remove(pHRMID);
 					break;
 				}
