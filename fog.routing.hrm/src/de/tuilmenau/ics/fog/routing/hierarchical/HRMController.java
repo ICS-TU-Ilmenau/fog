@@ -7168,52 +7168,53 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public RoutingTable getReportRoutesToNeighborsHRG(HRMID pHRMID)
 	{
 		RoutingTable tResult = new RoutingTable();
-		
-		synchronized (mHierarchicalRoutingGraph) {
-			//Logging.warn(this, "   ..knowing node: " + pFrom + " as " + mHierarchicalRoutingGraph.containsVertex(pFrom));
-			// get all outgoing HRG links of "pFrom"
-			Collection<AbstractRoutingGraphLink> tOutLinks = mHierarchicalRoutingGraph.getOutEdges(pHRMID);
-			if(tOutLinks != null){
-				// iterate over all found links
-				for(AbstractRoutingGraphLink tKnownLink : tOutLinks) {
-					Route tKnownLinkRoute = tKnownLink.getRoute();
-					if(tKnownLinkRoute.size() == 1){
-						if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
-							RoutingEntry tRouteToNeighbor = ((RoutingEntry)tKnownLinkRoute.getFirst()).clone();
-							tRouteToNeighbor.extendCause(this + "::getRoutesWithNeighborsHRG() for " + pHRMID);
-							// reset next hop L2Address
-							tRouteToNeighbor.setNextHopL2Address(null);
-							tResult.add(tRouteToNeighbor);
+		if(pHRMID != null){
+			synchronized (mHierarchicalRoutingGraph) {
+				//Logging.warn(this, "   ..knowing node: " + pFrom + " as " + mHierarchicalRoutingGraph.containsVertex(pFrom));
+				// get all outgoing HRG links of "pFrom"
+				Collection<AbstractRoutingGraphLink> tOutLinks = mHierarchicalRoutingGraph.getOutEdges(pHRMID);
+				if(tOutLinks != null){
+					// iterate over all found links
+					for(AbstractRoutingGraphLink tKnownLink : tOutLinks) {
+						Route tKnownLinkRoute = tKnownLink.getRoute();
+						if(tKnownLinkRoute.size() == 1){
+							if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
+								RoutingEntry tRouteToNeighbor = ((RoutingEntry)tKnownLinkRoute.getFirst()).clone();
+								tRouteToNeighbor.extendCause(this + "::getRoutesWithNeighborsHRG() for " + pHRMID);
+								// reset next hop L2Address
+								tRouteToNeighbor.setNextHopL2Address(null);
+								tResult.add(tRouteToNeighbor);
+							}else{
+								throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route type: " + tKnownLinkRoute);
+							}
 						}else{
-							throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route type: " + tKnownLinkRoute);
+							throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route size for: " + tKnownLinkRoute);
 						}
-					}else{
-						throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route size for: " + tKnownLinkRoute);
 					}
 				}
-			}
-			Collection<AbstractRoutingGraphLink> tInLinks = mHierarchicalRoutingGraph.getInEdges(pHRMID);
-			if(tInLinks != null){
-				// iterate over all found links
-				for(AbstractRoutingGraphLink tKnownLink : tInLinks) {
-					Route tKnownLinkRoute = tKnownLink.getRoute();
-					if(tKnownLinkRoute.size() == 1){
-						if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
-							RoutingEntry tRouteToNeighbor = ((RoutingEntry)tKnownLinkRoute.getFirst()).clone();
-							tRouteToNeighbor.extendCause(this + "::getRoutesWithNeighborsHRG() for " + pHRMID);
-							// reset next hop L2Address
-							tRouteToNeighbor.setNextHopL2Address(null);
-							tResult.add(tRouteToNeighbor);
+				Collection<AbstractRoutingGraphLink> tInLinks = mHierarchicalRoutingGraph.getInEdges(pHRMID);
+				if(tInLinks != null){
+					// iterate over all found links
+					for(AbstractRoutingGraphLink tKnownLink : tInLinks) {
+						Route tKnownLinkRoute = tKnownLink.getRoute();
+						if(tKnownLinkRoute.size() == 1){
+							if(tKnownLinkRoute.getFirst() instanceof RoutingEntry){
+								RoutingEntry tRouteToNeighbor = ((RoutingEntry)tKnownLinkRoute.getFirst()).clone();
+								tRouteToNeighbor.extendCause(this + "::getRoutesWithNeighborsHRG() for " + pHRMID);
+								// reset next hop L2Address
+								tRouteToNeighbor.setNextHopL2Address(null);
+								tResult.add(tRouteToNeighbor);
+							}else{
+								throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route type: " + tKnownLinkRoute);
+							}
 						}else{
-							throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route type: " + tKnownLinkRoute);
+							throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route size for: " + tKnownLinkRoute);
 						}
-					}else{
-						throw new RuntimeException("getRoutesToNeighborsHRG() detected an unsupported route size for: " + tKnownLinkRoute);
 					}
 				}
 			}
 		}
-
+		
 		return tResult;
 	}
 
