@@ -227,6 +227,11 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	public boolean addHRMRoute(RoutingEntry pRoutingTableEntry)
 	{
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION;
+//		if(mHRMController.getNodeGUIName().equals("node1")){
+//			DEBUG = true;
+//		}
+		
 		/**
 		 * Check for the max. available data rate to the next hop
 		 */
@@ -248,7 +253,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * Store the routing entry in the routing table
 		 */
-		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+		if (DEBUG){
 			Logging.log(this, "Adding HRM route: " + pRoutingTableEntry);
 		}
 		boolean tResult = false;
@@ -276,7 +281,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			if(pRoutingTableEntry.isRouteToDirectNeighbor()){
 				if(!tDestHRMID.isClusterAddress()){
 					// add address for a direct neighbor
-					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					if (DEBUG){
 						Logging.log(this, "     ..adding " + tDestHRMID + " as address of a direct neighbor");
 					}
 					synchronized(mDirectNeighborAddresses){
@@ -288,10 +293,13 @@ public class HRMRoutingService implements RoutingService, Localization
 			}
 
 			Route tNextHopL2Route = null;
-			if(pRoutingTableEntry.getNextHopL2NetworkInterface() != null)
+			if(tNextHopL2Address != null)
 			{
 				//Logging.log(this, "Found a next network interface entry in " + pRoutingTableEntry);
 				tNextHopL2Route = getL2Route(tNextHopL2Address, pRoutingTableEntry.getNextHopL2NetworkInterface());
+			}
+			if (DEBUG){
+				Logging.log(this, "     ..L2 route to next hop " + tNextHopL2Address + " is: " + tNextHopL2Route);
 			}
 			
 			/**
@@ -303,7 +311,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * Update HRMID-2-L2Address mapping
 					 */
 					// add L2 address for this direct neighbor
-					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					if (DEBUG){
 						Logging.log(this, "     ..add mapping from " + tNextHopHRMID + " to " + tNextHopL2Address);
 					}
 					mapHRMID(tNextHopHRMID, tNextHopL2Address, tNextHopL2Route);
@@ -317,7 +325,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * Update mapping HRMID-2-L2Address
 					 */
 					// add L2 address for this direct neighbor
-					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					if (DEBUG){
 						Logging.log(this, "     ..add mapping from " + tNextHopHRMID + " to " + getHRMController().getNodeL2Address());
 					}
 					mapHRMID(tNextHopHRMID, getHRMController().getNodeL2Address(), tNextHopL2Route);
@@ -742,6 +750,8 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	public void mapHRMID(HRMID pHRMID, L2Address pL2Address, Route pL2Route)
 	{
+		boolean DEBUG = false;
+		
 		if(!pHRMID.isClusterAddress()){
 			boolean tDuplicateFound = false;
 			
@@ -749,10 +759,16 @@ public class HRMRoutingService implements RoutingService, Localization
 				for (HRMID tHRMID: mHRMIDToL2AddressMapping.keySet()){
 					if (tHRMID.equals(pHRMID)){
 						tDuplicateFound = true;
+						if(DEBUG){
+							Logging.log(this, "mapHRMID() - found HRMID2L2Address mapping duplicate for: " + pHRMID);
+						}
 						break;
 					}
 				}
 				if (!tDuplicateFound){
+					if(DEBUG){
+						Logging.log(this, "mapHRMID() - adding HRMID2L2Address mapping for: " + pHRMID + " and " + pL2Address);
+					}
 					mHRMIDToL2AddressMapping.put(pHRMID, pL2Address);
 				}else{
 					// HRMID is already known, mapping already exists
@@ -765,6 +781,9 @@ public class HRMRoutingService implements RoutingService, Localization
 			if(pL2Route == null){
 				//Logging.log(this, "Searching for an L2 route to " + pHRMID);
 				pL2Route = mHRMController.getHRS().getL2Route(pL2Address, null);
+				if(DEBUG){
+					Logging.log(this, "mapHRMID() - found BE route for: " + pHRMID + " as: " + pL2Route);
+				}
 			}
 			
 			/**
@@ -774,11 +793,15 @@ public class HRMRoutingService implements RoutingService, Localization
 				synchronized (mHRMIDToL2RouteMapping) {
 					Route tOldRoute = mHRMIDToL2RouteMapping.get(pHRMID);
 					if((tOldRoute == null) || ((!tOldRoute.equals(pL2Route)) && (pL2Route.isShorter(tOldRoute)))){
-						//Logging.warn(this, "Got new L2 route towards: " + pHRMID + " as: " + pL2Route);
+						Logging.warn(this, "mapHRMID() - got new L2 route towards: " + pHRMID + " as: " + pL2Route);
 						mHRMIDToL2RouteMapping.put(pHRMID, pL2Route);
 					}
 				}					
+			}else{
+				Logging.warn(this, "mapHRMID() - have not found an L2 route for: " + pHRMID);
 			}
+		}else{
+			Logging.warn(this, "mapHRMID() - aborted due to found cluster address: " + pHRMID);
 		}
 	}
 
@@ -800,7 +823,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		synchronized (mHRMIDToL2RouteMapping) {
 			for (HRMID tHRMID: mHRMIDToL2RouteMapping.keySet()){
 				if (tHRMID.equals(pHRMID)){
-					Logging.warn(this, "Dropping L2 route towards: " + pHRMID);
+					Logging.warn(this, "Dropping L2 route towards: " + pHRMID + " as: " + mHRMIDToL2RouteMapping.get(pHRMID));
 					mHRMIDToL2RouteMapping.remove(pHRMID);
 					break;
 				}
@@ -916,7 +939,11 @@ public class HRMRoutingService implements RoutingService, Localization
 	public L2Address getL2AddressFor(HRMID pHRMID)
 	{
 		L2Address tResult = null;
-		
+	
+		if(mHRMController.isLocal(pHRMID)){
+			return mHRMController.getNodeL2Address();
+		}
+				
 		synchronized (mHRMIDToL2AddressMapping) {
 			// iterate over all mappings
 			for (HRMID tHRMID : mHRMIDToL2AddressMapping.keySet()){
