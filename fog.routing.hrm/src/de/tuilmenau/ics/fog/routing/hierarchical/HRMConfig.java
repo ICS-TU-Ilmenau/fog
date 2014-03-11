@@ -191,7 +191,7 @@ public class HRMConfig
 		/**
 		 * Defines if signaling messages for address distribution are shown
 		 */
-		public static final boolean SHOW_DEBUG_ADDRESS_DISTRIBUTION = false;
+		public static final boolean GUI_SHOW_ADDRESS_DISTRIBUTION = false;
 
 		/**
 		 * Defines if the address aggregation is shown in the debug output
@@ -335,7 +335,7 @@ public class HRMConfig
 		/**
 		 * Defines if the cluster should detect automatically all gateways and separate them as autonomous L1 cluster
 		 */
-		public static final boolean AUTO_DETECT_AND_SEPRATE_GATEWAYS = true;
+		public static final boolean AUTO_DETECT_AND_SEPRATE_GATEWAYS = false;
 		
 		/**
 		 * This defines the amount of hierarchical levels in the simulation.

@@ -1498,7 +1498,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 */
 						eventAddressingDataChanged();
 					}else{
-						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						if (HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 							Logging.warn(this, "Found a HRMID duplicate for " + pHRMID.toString() + ", additional registration is triggered by " + pEntity);
 						}
 					}
@@ -1600,7 +1600,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							Logging.log(this, "HRM router " + tLocalRouterName + " is now known under: " + tString);
 						}
 					}else{
-						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						if (HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 							Logging.warn(this, "Found duplicated HRMID " + pOldHRMID.toString() + ", an unregistration is triggered by " + pEntity);
 						}
 					}
@@ -2281,7 +2281,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			registerHRMID(pClusterMember, "updateClusterMemberAddress() for " + pClusterMember + ", old HRMID=" + pOldHRMID);
 		}else{
 			// we are at a higher hierarchy level and don't need the HRMID update because we got the same from the corresponding coordinator instance
-			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+			if (HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 				Logging.warn(this, "Skipping HRMID registration " + (tHRMID != null ? tHRMID.toString() : "null") + " for " + pClusterMember + ", old HRMID=" + pOldHRMID);
 			}
 		}
@@ -2302,7 +2302,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				unregisterHRMID(pClusterMember, pOldHRMID, "revokeClusterMemberAddress()");
 			}else{
 				// we are at a higher hierarchy level and don't need the HRMID revocation
-				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				if (HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 					Logging.warn(this, "Skipping HRMID revocation of " + pOldHRMID.toString() + " for " + pClusterMember);
 				}
 			}
@@ -2324,7 +2324,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				unregisterHRMID(pCluster, pOldHRMID, "revokeClusterAddress()");
 			}else{
 				// we are at a higher hierarchy level and don't need the HRMID revocation
-				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				if (HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 					Logging.warn(this, "Skipping HRMID revocation of " + pOldHRMID.toString() + " for " + pCluster);
 				}
 			}

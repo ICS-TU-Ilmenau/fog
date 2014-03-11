@@ -695,7 +695,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 					 * do we have an address change?
 					 */
 					if(!pHRMID.equals(getHRMID())){
-						if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						if (HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 							Logging.log(this, "Detected an address change from " + getHRMID() + " to " + pHRMID + ", new address is firm: " + pIsFirmAddress);
 						}
 						
@@ -705,7 +705,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 						if(!pIsFirmAddress){
 							HRMID tOldSuperiorCluster = getHRMID().getClusterAddress(getHierarchyLevel().getValue() + 1);
 							HRMID tNewSuperiorCluster = pHRMID.getClusterAddress(getHierarchyLevel().getValue() + 1);
-							if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							if (HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 								Logging.log(this, "  ..former superior cluster: " + tOldSuperiorCluster);
 								Logging.log(this, "  ..new superior cluster: " + tNewSuperiorCluster);
 							}
@@ -713,7 +713,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 								/**
 								 * request the previously assigned HRMID at the superior coordinator
 								 */
-								if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+								if (HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 									Logging.warn(this, "  ..REQUESTING OLD HRMID: " + getHRMID());
 								}
 								pSourceComChannel.requestHRMIDAssignment(getHRMID());
@@ -721,7 +721,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 								return tResult;
 							}else{
 								// above hierarchy changed too much
-								if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+								if (HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 									Logging.log(this, "  ..can not request old HRMID: " + getHRMID());
 								}
 							}
@@ -737,7 +737,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			 */
 			// we process such packets for cluster only on base hierarchy level and on all hierarchy level for coordinators
 			if ((getHierarchyLevel().isBaseLevel()) || (this instanceof Coordinator) || (this instanceof CoordinatorAsClusterMember)){
-				if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				if (HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 					Logging.log(this, "     ..setting assigned HRMID " + pHRMID.toString());
 				}
 				

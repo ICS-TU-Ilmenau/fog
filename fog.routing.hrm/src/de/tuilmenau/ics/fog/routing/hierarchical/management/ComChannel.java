@@ -358,7 +358,7 @@ public class ComChannel
 					 */
 					synchronized (mPeerHRMIDs) {
 						if(!mPeerHRMIDs.contains(pHRMID)){
-							if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+							if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 								Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
 							}
 							mPeerHRMIDs.add(pHRMID);
@@ -953,7 +953,7 @@ public class ComChannel
 	@SuppressWarnings("unchecked")
 	private void eventReceivedAnnounceHRMIDs(AnnounceHRMIDs pAnnounceHRMIDsPacket)
 	{
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+		if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 			Logging.log(this, "Received announced peer HRMIDs: " + pAnnounceHRMIDsPacket.getHRMIDs());
 		}
 				
@@ -970,7 +970,7 @@ public class ComChannel
 		if((getPeerHRMID() != null) && (!getPeerHRMID().isZero())){
 			synchronized (mPeerHRMIDs) {
 				if(!mPeerHRMIDs.contains(getPeerHRMID())){
-					if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 						Logging.err(this, "    ..adding to stored peerHRMIDs the peerHRMID: " + getPeerHRMID());
 					}
 					mPeerHRMIDs.add(getPeerHRMID());

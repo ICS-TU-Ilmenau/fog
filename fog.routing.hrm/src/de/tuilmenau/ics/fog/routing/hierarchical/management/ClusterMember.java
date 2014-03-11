@@ -270,7 +270,7 @@ public class ClusterMember extends ClusterName
 				 * Announce in all L0 clusters the new set of local node HRMIDs
 				 */				
 				LinkedList<ClusterMember> tL0ClusterMember = mHRMController.getAllL0ClusterMembers();
-				if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 					Logging.log(this, "    ..distributing AnnounceHRMIDs in: " + tL0ClusterMember);
 				}
 				for(ClusterMember tClusterMember : tL0ClusterMember){
@@ -508,12 +508,12 @@ public class ClusterMember extends ClusterName
 		if(getHierarchyLevel().isBaseLevel()){
 			// only announce in active clusters, avoid unnecessary packets here
 			if(hasClusterValidCoordinator()){
-				if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 					Logging.log(this, "Distributing AnnounceHRMIDs...");
 				}
 	
 				LinkedList<HRMID >tLocalHRMIDs = mHRMController.getHRMIDs();
-				if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+				if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 					Logging.log(this, "    ..found local HRMIDs: " + tLocalHRMIDs);
 				}
 				
@@ -525,7 +525,7 @@ public class ClusterMember extends ClusterName
 					// is the HRMID a cluster address?
 					if(!tLocalHRMID.isClusterAddress()){
 						// ignore this ClusterMember's node specific L0 HRMID, which is already known to the peer
-						if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 							if(!tLocalHRMID.equals(mAssignedL0HRMID)){
 								Logging.log(this, "    ..found L0 node HRMID: " + tLocalHRMID.toString());
 							}else{
@@ -534,14 +534,14 @@ public class ClusterMember extends ClusterName
 						}
 						tLocalL0HRMIDs.add(tLocalHRMID);
 					}else{
-						if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+						if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 							Logging.log(this, "    ..ignoring cluster HRMID: " + tLocalHRMID.toString());
 						}
 					}
 				}
 				
 				if (tLocalL0HRMIDs.size() > 0){
-					if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 						Logging.log(this, "Distributing AnnounceHRMIDs packets..");
 					}
 		
@@ -556,7 +556,7 @@ public class ClusterMember extends ClusterName
 					// create the packet
 					AnnounceHRMIDs tAnnounceHRMIDsPacket = new AnnounceHRMIDs(tSenderHRMID, null, tLocalL0HRMIDs);
 					// send the packet
-					if(HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
+					if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
 						Logging.err(this, "    ..broadcasting (L0-HRMID: " + mAssignedL0HRMID + "): " + tAnnounceHRMIDsPacket);
 					}
 					sendClusterBroadcast(tAnnounceHRMIDsPacket, false);

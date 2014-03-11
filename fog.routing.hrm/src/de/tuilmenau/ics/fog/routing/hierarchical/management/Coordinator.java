@@ -1452,10 +1452,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public boolean eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID, boolean pIsFirmAddress)
 	{
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION; 
 		boolean tResult = false;
 		
-		if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-			Logging.log(this, "Handling AssignHRMID with assigned HRMID " + (pHRMID != null ? pHRMID.toString() : "null"));
+		if (DEBUG){
+			Logging.warn(this, "Handling AssignHRMID with assigned HRMID " + (pHRMID != null ? pHRMID.toString() : "null"));
 		}
 
 		/**
@@ -1470,8 +1471,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				 */
 				// we should automatically continue the address distribution?
 				if (HRMController.GUI_USER_CTRL_ADDRESS_DISTRUTION){
-					if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-						Logging.log(this, "     ..continuing the address distribution process via this cluster");
+					if (DEBUG){
+						Logging.warn(this, "     ..continuing the address distribution process via this cluster");
 					}
 					getCluster().distributeAddresses();				
 				}

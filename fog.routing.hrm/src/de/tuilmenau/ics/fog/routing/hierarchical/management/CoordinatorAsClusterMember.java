@@ -248,9 +248,12 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 */
 	public boolean eventAssignedHRMID(ComChannel pSourceComChannel, HRMID pHRMID, boolean pIsFirmAddress)
 	{
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION; 
 		boolean tResult = false;
 		
-		Logging.log(this, "EVENT: eventAssignedHRMID with assigned HRMID " + pHRMID.toString() + ", source comm. channel: " + pSourceComChannel);
+		if(DEBUG){
+			Logging.log(this, "EVENT: eventAssignedHRMID with assigned HRMID " + pHRMID.toString() + ", source comm. channel: " + pSourceComChannel);
+		}
 
 		if((pHRMID != null) && (!pHRMID.isZero())){
 			// setHRMID()
@@ -258,8 +261,8 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		}
 
 		if(isActiveMembership()){
-			if (HRMConfig.DebugOutput.SHOW_DEBUG_ADDRESS_DISTRIBUTION){
-				Logging.log(this, "     ..continuing the address distribution process via the coordinator: " + mCoordinator);
+			if (DEBUG){
+				Logging.warn(this, "     ..continuing the address distribution process via the coordinator: " + mCoordinator);
 			}
 
 			tResult = mCoordinator.eventAssignedHRMID(pSourceComChannel, pHRMID, pIsFirmAddress);
