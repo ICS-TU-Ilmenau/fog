@@ -1972,6 +1972,7 @@ public class HRMRoutingService implements RoutingService, Localization
 										AbstractGate tParallelGate = tGate;
 										if (DEBUG){
 											Logging.log(this, "Needing QoS gate parallel to: " + tParallelGate + " with non-functional requirements: " +tNonFunctionalDescription);
+											Logging.log(this, "  ..remote node of next link is: " + tDirectDownGate.getRemoteDestinationName());
 										}
 											
 										/**
