@@ -1583,9 +1583,11 @@ public class HRMRoutingService implements RoutingService, Localization
 	 */
 	public Route getL2Route(L2Address pDestination, NetworkInterface pViaNetworkInterface)
 	{
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ROUTING;
+		
 		Route tResult = null;
 		if(pViaNetworkInterface == null){
-			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			if (DEBUG){
 				Logging.log(this, "Searching for an L2 based BE route to " + pDestination);
 			}
 
@@ -1593,7 +1595,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			tResult = getL2RouteBestEffort(mHRMController.getNodeL2Address(),  pDestination);
 		}else{
 			Bus tViaLink = (Bus) pViaNetworkInterface.getBus();
-			if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
+			if (DEBUG){
 				Logging.log(this, "Searching for an L2 route to " + pDestination + " via the link " + tViaLink);
 			}
 			
@@ -1610,6 +1612,9 @@ public class HRMRoutingService implements RoutingService, Localization
 							Multiplexer tLocalMux = (Multiplexer) tLocalFN;
 		
 							GateIterator iter = tLocalMux.getIterator(DirectDownGate.class);
+							/**
+							 * iterate over all logical links (FoG DirectDownGate instances)
+							 */
 							while(iter.hasNext()) {
 								DirectDownGate tDirectDownGate = (DirectDownGate) iter.next();
 		
@@ -1619,20 +1624,35 @@ public class HRMRoutingService implements RoutingService, Localization
 								Bus tNextNetworkBus = (Bus)tDirectDownGate.getNextNode();//getNetworkInterface();
 								if(tNextNetworkBus != null){
 									if(tNextNetworkBus.equals(tViaLink)){
-										if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-											Logging.log(this, "Found local matching Bus: " + tNextNetworkBus);
-										}
-										tIntermediaDestination = getL2AddressFor(tLocalFN);
-										if(tIntermediaDestination != null){
-											RouteSegmentPath tGateList = (RouteSegmentPath) getL2RouteBestEffort(mHRMController.getNodeL2Address(), tIntermediaDestination).getFirst();
-											if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-												Logging.log(this, "  ..route to intermediate FN " + tIntermediaDestination + ": " + tGateList);
+										//TODO: improve this ugly solution of the following 3 lines
+										String tDirectDownGatePeerNode = tDirectDownGate.getOwner().toString();
+										String tSearchedPeerNode = (String)pDestination.getDescr(); 
+										boolean tDirectDownGateLeadsToCorrectPeerNode = tSearchedPeerNode.endsWith("@" + tDirectDownGatePeerNode); 
+										
+										
+										/**
+										 * For domains with more than 2 nodes: find the correct FoG DirectDownGate towards the desired peer node
+										 */
+										if(tDirectDownGateLeadsToCorrectPeerNode){
+											if (DEBUG){
+												Logging.log(this, "Found matching logical link " + tDirectDownGate + " for target link: " + tNextNetworkBus + ", ending at: " + tDirectDownGate.getOwner() + "[" + tDirectDownGate.getOwner().getClass().getSimpleName() + "]");
 											}
-											tGateList.add(tDirectDownGate.getGateID());
-											tResult = new Route(tGateList);
-											tResult.add(new RouteSegmentAddress(pDestination));
-											if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
-												Logging.log(this, "  ..resulting route: " + tResult);
+											tIntermediaDestination = getL2AddressFor(tLocalFN);
+											if(tIntermediaDestination != null){
+												RouteSegmentPath tGateList = (RouteSegmentPath) getL2RouteBestEffort(mHRMController.getNodeL2Address(), tIntermediaDestination).getFirst();
+												if (DEBUG){
+													Logging.log(this, "  ..route to intermediate FN " + tIntermediaDestination + ": " + tGateList);
+												}
+												tGateList.add(tDirectDownGate.getGateID());
+												tResult = new Route(tGateList);
+												tResult.add(new RouteSegmentAddress(pDestination));
+												if (DEBUG){
+													Logging.log(this, "  ..resulting route: " + tResult);
+												}
+											}
+										}else{
+											if(DEBUG){
+												Logging.log(this, "  ..ignoring DirectDownGate leading to wrong peer node, gate=: " + tDirectDownGate);
 											}
 										}
 									}
@@ -1653,6 +1673,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		 */
 		if (tResult == null){
 			tResult = getL2RouteBestEffort(mHRMController.getNodeL2Address(), pDestination);
+			if (DEBUG){
+				Logging.log(this, "  ..resulting (fall-back) BE route: " + tResult);
+			}
 		}
 		
 		return tResult;
