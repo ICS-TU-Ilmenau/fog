@@ -413,8 +413,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	public boolean registerL2Route(L2Address pToL2Address, Route pRoute)
 	{
 		boolean tResult = true;
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION;
+				
+		if (DEBUG){
 			Logging.log(this, "REGISTERING LINK: dest.=" + pToL2Address + ", route=\"" + pRoute + "\"");
 		}
 
@@ -436,7 +437,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					// get the old route from the logical L2 link description
 					tOldRoute = tOldL2Link.getRoute();					
 
-					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					if (DEBUG){
 						Logging.log(this, "      ..found old route: " + tOldRoute + " to direct neighbor: " + pToL2Address);
 					}
 				}
@@ -454,7 +455,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			boolean tNewLogicalLink = true;
 			if (tOldRoute != null){
 				if (tNewRoute.isShorter(tOldRoute)){
-					if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+					if (DEBUG){
 						Logging.warn(this, "      ..updating to better ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
 					}
 										
@@ -491,7 +492,9 @@ public class HRMRoutingService implements RoutingService, Localization
 			 */
 			if(tNewLogicalLink){
 				boolean tDuplicate = false;
-				boolean tIsRouteToADistantNode = (pRoute.size() > 2 /* FoG-based route to the next hop has structure "[[gate list] , [L2Address]] and has a size of 2 */);
+				// detect multi-hop route: either a distant node or a route to a neighbor, which is not the shortest possible one
+				boolean tIsMultiHopRoute = (pRoute.size() > 2 /* FoG-based route to the next hop has structure "[[gate list] , [L2Address]] and has a size of 2 */);
+				boolean tOneHopRouteAlreadyKnown = false;
 				
 				/**
 				 * iterate over all known L2 links and check for duplicates
@@ -504,26 +507,53 @@ public class HRMRoutingService implements RoutingService, Localization
 						if(tKnownL2Link instanceof L2LogicalLink){
 							L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
 							Route tKnownL2Route = tKnownL2RouteLink.getRoute();
+							
+							/**
+							 * Check for route duplicates
+							 */
 							if(tKnownL2Route.equals(pRoute)){
 								tDuplicate = true;
 								break;
 							}
+							
+							/**
+							 * Check for one-hop route
+							 */
+							if(tKnownL2Route.size() <= 2){
+								tOneHopRouteAlreadyKnown = true;	
+							}							
 						}
 					}
 				}					
 
 				if(!tDuplicate){
-					if(tIsRouteToADistantNode){
-						// iterate over all found already known links and delete them in order to use always the msot fresh route to a distant node
-						for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
-							if(tKnownL2Link instanceof L2LogicalLink){
-								mL2RoutingGraph.unlink(tKnownL2Link);
+					/**
+					 * Do we have a multi-hop route?
+					 */
+					if(tIsMultiHopRoute){
+						/**
+						 * Is this multi-hop route maybe a too-long route to a direct neighbor?
+						 */
+						if(!tOneHopRouteAlreadyKnown){
+							// iterate over all found already known links and delete them in order to use always the most fresh route to a distant node
+							for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
+								if(tKnownL2Link instanceof L2LogicalLink){
+									mL2RoutingGraph.unlink(tKnownL2Link);
+								}
+							}
+							
+							if (DEBUG){
+								Logging.warn(this, ">>>>>>>>>>>>>      ..storing the new ROUTE \"" + tNewRoute + "\" to distant node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
+							}
+						}else{
+							if (DEBUG){
+								Logging.log(this, "      ..dropping too-long ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
 							}
 						}
-						
-						Logging.warn(this, ">>>>>>>>>>>>>      ..storing the new ROUTE \"" + tNewRoute + "\" to distant node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
 					}else{
-						Logging.log(this, "      ..storing new ROUTE \"" + tNewRoute + "\" to: " + pToL2Address + " with size: " + pRoute.size());
+						if (DEBUG){
+							Logging.log(this, "      ..storing new ROUTE \"" + tNewRoute + "\" to: " + pToL2Address + " with size: " + pRoute.size());
+						}
 					}
 	
 					// store the new route
