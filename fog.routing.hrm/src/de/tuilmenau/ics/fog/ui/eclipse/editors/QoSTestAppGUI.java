@@ -51,6 +51,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  */
 public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserver
 {
+	private static final String TEXT_DESTINATION_NODE 				= "Destination node: ";
 	private static final String TEXT_DESTINATION_HRMID				= "Destination HRMID: ";
 	private static final String TEXT_CONNECTION_COUNTER				= "Running connections: ";
 	private static final String TEXT_CONNECTION_WITH_FEEDBACK    	= "  ..with QoS feedback: ";
@@ -59,6 +60,7 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 	private static final String TEXT_QOS_REPORT_DR					= "  ..max. data rate: ";
 	private static final String TEXT_QOS_REPORT_DELAY				= "  ..min. delay: ";
 
+	private Label mDestinationNode = null;
 	private Label mDestinationHRMID = null;
 	private Label mConnectionCounter = null;
 	private Label mConnectionWithQoSCounter = null;
@@ -243,6 +245,7 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 	    tContainer.setLayout(tGridLayout);
 	    tContainer.setLayoutData(createGridData(true, 1));
 
+	    mDestinationNode = createPartControlLine(tContainer, TEXT_DESTINATION_NODE);
 	    mDestinationHRMID = createPartControlLine(tContainer, TEXT_DESTINATION_HRMID);
 	    mConnectionCounter = createPartControlLine(tContainer, TEXT_CONNECTION_COUNTER);
 	    mConnectionWithFeedbackCounter = createPartControlLine(tContainer, TEXT_CONNECTION_WITH_FEEDBACK);
@@ -336,6 +339,7 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 	{
 		//Logging.log(this, "Updating GUI");
 		
+		mDestinationNode.setText(mQoSTestApp.getDestinationNodeName() != null ? mQoSTestApp.getDestinationNodeName().toString() : "none");
 		mDestinationHRMID.setText(mQoSTestApp.getLastDestinationHRMID() != null ? mQoSTestApp.getLastDestinationHRMID().toString() : "not calculated");
 		mConnectionCounter.setText(Integer.toString(mQoSTestApp.countConnections()));
 		mConnectionWithQoSCounter.setText(Integer.toString(mQoSTestApp.countConnectionsWithFulfilledQoS()));

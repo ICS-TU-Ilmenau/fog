@@ -353,6 +353,16 @@ public class QoSTestApp extends ThreadApplication
 	}
 	
 	/**
+	 * Returns the destination node name
+	 * 
+	 * @return the destination node name
+	 */
+	public Name getDestinationNodeName()
+	{
+		return mDestinationNodeName;
+	}
+
+	/**
 	 * Adds another connection
 	 */
 	private void incConnections()
@@ -740,5 +750,4 @@ public class QoSTestApp extends ThreadApplication
 			return tResult;
 		}
 	}
-
 }
