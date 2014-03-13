@@ -3450,7 +3450,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
     	}
 
 		// inform the HRS about the new route
-		if(getHRS().registerL2Route(pToL2Address, pRoute)){
+		if(getHRS().registerL2RouteBestEffort(pToL2Address, pRoute)){
 			// it's time to update the GUI
 			notifyGUI(pRoute);
 		}

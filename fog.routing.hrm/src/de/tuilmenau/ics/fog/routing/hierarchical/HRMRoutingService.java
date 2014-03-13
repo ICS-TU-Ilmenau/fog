@@ -39,7 +39,6 @@ import de.tuilmenau.ics.fog.routing.RouteSegmentMissingPart;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.AbstractRoutingGraphLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
@@ -296,7 +295,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			if(tNextHopL2Address != null)
 			{
 				//Logging.log(this, "Found a next network interface entry in " + pRoutingTableEntry);
-				tNextHopL2Route = getL2Route(tNextHopL2Address, pRoutingTableEntry.getNextHopL2NetworkInterface());
+				tNextHopL2Route = getL2RouteViaNetworkInterface(tNextHopL2Address, pRoutingTableEntry.getNextHopL2NetworkInterface());
 			}
 			if (DEBUG){
 				Logging.log(this, "     ..L2 route to next hop " + tNextHopL2Address + " is: " + tNextHopL2Route);
@@ -402,7 +401,59 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 	
 	/**
-	 * Registers a route at the local L2 routing table.
+	 * Auto-cleans the L2 routing graph from deprecated routes
+	 */
+	private void autoCleanL2GraphFromDeprecatedEntries()
+	{
+		Multiplexer tCentralFN = getCentralFN();
+		
+		synchronized (mL2RoutingGraph) {
+			boolean tDeletedOne = false;
+			do{
+				tDeletedOne = false;
+				
+				// get the FoG-specific central FN and determine all outgoing links
+				Collection<RoutingServiceLink> tLinksFromCentralFN = (Collection<RoutingServiceLink>) mL2RoutingGraph.getOutEdges(mHRMController.getNodeL2Address());
+				
+				/**
+				 * iterate over all links outgoing from central FN and look for logical links (routes)
+				 */
+				for(RoutingServiceLink tKnownL2Link : tLinksFromCentralFN){
+					if(tKnownL2Link instanceof L2LogicalLink){
+						if(tKnownL2Link instanceof L2LogicalLink){
+							L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
+							Route tKnownL2Route = tKnownL2RouteLink.getRoute();
+							if(tKnownL2Route.getFirst() instanceof RouteSegmentPath){							
+								RouteSegmentPath tGateIDList = (RouteSegmentPath) tKnownL2Route.getFirst();
+								GateID tFirstGateID = tGateIDList.getFirst();
+								GateID tSecondGateID = tGateIDList.get(1);
+								boolean tDeprecated = true;
+								AbstractGate tFirstGate = tCentralFN.getGate(tFirstGateID);
+								if(tFirstGate != null){
+									Multiplexer tIntermediateFN = (Multiplexer)tFirstGate.getNextNode();
+									AbstractGate tSecondGate = tIntermediateFN.getGate(tSecondGateID);
+									if(tSecondGate != null){
+										tDeprecated = false;
+									}
+								}
+								
+								if(tDeprecated){
+									Logging.warn(this, ">>>>>>>>>>>>>>> Found deprecated L2 route: " + tKnownL2Route);
+									
+									mL2RoutingGraph.unlink(tKnownL2Link);
+									tDeletedOne = true;
+									break;
+								}
+							}
+						}
+					}
+				}			
+			}while(tDeletedOne);
+		}
+	}
+	
+	/**
+	 * Registers a BE route in the local L2 routing table.
 	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
 	 * 
 	 * @param pToL2Address the L2Address of the destination
@@ -410,15 +461,17 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * 
 	 * @return returns true if the route was stored and an GUI update is needed
 	 */
-	public boolean registerL2Route(L2Address pToL2Address, Route pRoute)
+	public boolean registerL2RouteBestEffort(L2Address pToL2Address, Route pRoute)
 	{
 		boolean tResult = true;
-		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION;
+		boolean DEBUG = true;//HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION;
 				
 		if (DEBUG){
-			Logging.log(this, "REGISTERING LINK: dest.=" + pToL2Address + ", route=\"" + pRoute + "\"");
+			Logging.log(this, "REGISTERING L2 BE ROUTE: dest.=" + pToL2Address + ", route=\"" + pRoute + "\"");
 		}
 
+		autoCleanL2GraphFromDeprecatedEntries();
+		
 		if (pToL2Address != null){
 			
 			/**
@@ -438,7 +491,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					tOldRoute = tOldL2Link.getRoute();					
 
 					if (DEBUG){
-						Logging.log(this, "      ..found old route: " + tOldRoute + " to direct neighbor: " + pToL2Address);
+						Logging.log(this, "      ..found old route: " + tOldRoute + " to: " + pToL2Address);
 					}
 				}
 			}
@@ -447,53 +500,48 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * Clone the route
 			 */
 			Route tNewRoute = pRoute.clone();
-			
+
 			/**
-			 * Check if the new route is shorter than the old known one.
-			 * In the latter case, update the old logical link.
+			 * Check if the new route is a duplicate of the best old one
 			 */
-			boolean tNewLogicalLink = true;
-			if (tOldRoute != null){
-				if (tNewRoute.isShorter(tOldRoute)){
-					if (DEBUG){
-						Logging.warn(this, "      ..updating to better ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
-					}
-										
-					// mark as an update instead of a new link
-					tNewLogicalLink = false;
+			boolean tDuplicate = (tOldRoute != null ? tNewRoute.equals(tOldRoute) : false);
 
-					// update the old logical link
-					tOldL2Link.setRoute(tNewRoute);
-
-					/**
-					 * delete all longer routes: they could be reported based on hierarchy communication
-					 */
-					@SuppressWarnings("unchecked")
-					LinkedList<RoutingServiceLink> tAllL2Routes = mL2RoutingGraph.getEdges(getCentralFNL2Address(), pToL2Address);
-					if(tAllL2Routes != null){
-						// iterate over all found links
-						for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
-							if(tKnownL2Link instanceof L2LogicalLink){
-								L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
-								if(!tKnownL2RouteLink.equals(tOldL2Link)){
+			/**
+			 * Check if the new route isn't too long -> otherwise, drop this route
+			 */
+			boolean tNewRouteIsTooLong = (tOldRoute != null ? tNewRoute.isLonger(tOldRoute) : false);
+			
+			
+			if((!tNewRouteIsTooLong) && (!tDuplicate)){
+				/**
+				 * Check if the new route is shorter than the best old known one. In this case, drop all longer old routes.
+				 */
+				if (tOldRoute != null){
+					if (tNewRoute.isShorter(tOldRoute)){
+						if (DEBUG){
+							Logging.warn(this, "      ..updating to better ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
+						}
+	
+						/**
+						 * delete all longer routes: they could be reported based on hierarchy communication
+						 */
+						@SuppressWarnings("unchecked")
+						LinkedList<RoutingServiceLink> tAllL2Routes = mL2RoutingGraph.getEdges(getCentralFNL2Address(), pToL2Address);
+						if(tAllL2Routes != null){
+							// iterate over all found links
+							for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
+								if(tKnownL2Link instanceof L2LogicalLink){
+									L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
 									Route tKnownL2Route = tKnownL2RouteLink.getRoute();
 									if(tNewRoute.isShorter(tKnownL2Route)){
 										mL2RoutingGraph.unlink(tKnownL2Link);
 									}
 								}
 							}
-						}
-					}					
+						}					
+					}
 				}
-			}
-			
-			/**
-			 * Create a new logical link
-			 */
-			if(tNewLogicalLink){
-				boolean tDuplicate = false;
-				// detect multi-hop route: either a distant node or a route to a neighbor, which is not the shortest possible one
-				boolean tIsMultiHopRoute = (pRoute.size() > 2 /* FoG-based route to the next hop has structure "[[gate list] , [L2Address]] and has a size of 2 */);
+				
 				boolean tOneHopRouteAlreadyKnown = false;
 				
 				/**
@@ -528,14 +576,16 @@ public class HRMRoutingService implements RoutingService, Localization
 
 				if(!tDuplicate){
 					/**
-					 * Do we have a multi-hop route?
+					 * Do we have a multi-hop route? -> either a distant node or a route to a neighbor, which is not the shortest possible one
 					 */
-					if(tIsMultiHopRoute){
+					if(pRoute.size() > 2 /* FoG-based route to the next hop has structure "[[gate list] , [L2Address]] and has a size of 2 */){
 						/**
 						 * Is this multi-hop route maybe a too-long route to a direct neighbor?
 						 */
 						if(!tOneHopRouteAlreadyKnown){
-							// iterate over all found already known links and delete them in order to use always the most fresh route to a distant node
+							/**
+							 * iterate over all found already known routes and delete them in order to use always the MOST FRESH route to a distant node
+							 */
 							for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
 								if(tKnownL2Link instanceof L2LogicalLink){
 									mL2RoutingGraph.unlink(tKnownL2Link);
@@ -546,23 +596,42 @@ public class HRMRoutingService implements RoutingService, Localization
 								Logging.warn(this, ">>>>>>>>>>>>>      ..storing the new ROUTE \"" + tNewRoute + "\" to distant node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
 							}
 						}else{
-							if (DEBUG){
-								Logging.log(this, "      ..dropping too-long ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
-							}
+							Logging.err(this, "      ..found unexpected a too-long ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
+							tNewRouteIsTooLong = true;
 						}
 					}else{
-						if (DEBUG){
-							Logging.log(this, "      ..storing new ROUTE \"" + tNewRoute + "\" to: " + pToL2Address + " with size: " + pRoute.size());
+						// iterate over all found already known routes and delete all too-long ones in order to use always the shortest one to the direct neighbor
+						for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
+							if(tKnownL2Link instanceof L2LogicalLink){
+								L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
+								Route tKnownL2Route = tKnownL2RouteLink.getRoute();
+								// is it multi-hop?
+								if(tKnownL2Route.size() > 2){
+									Logging.err(this, "      ..found unexpected the too-long ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
+									mL2RoutingGraph.unlink(tKnownL2Link);
+								}
+							}
 						}
+
 					}
-	
+				}
+			}
+			
+			if(!tDuplicate){
+				if(!tNewRouteIsTooLong){
+					if (DEBUG){
+						Logging.log(this, "      ..storing NEW ROUTE \"" + tNewRoute + "\" to: " + pToL2Address + " with size: " + pRoute.size());
+					}
 					// store the new route
 					storeL2Link(getCentralFNL2Address(), pToL2Address, new L2LogicalLink(tNewRoute));
 				}else{
-					Logging.log(this, "      ..already known ROUTE \"" + tNewRoute + "\" to: " + pToL2Address);
+					if (DEBUG){
+						Logging.log(this, "      ..dropping TOO-LONG ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
+					}
 				}
+			}else{
+				Logging.log(this, "      ..is DUPLICATE of already known ROUTE \"" + tNewRoute + "\" to: " + pToL2Address);
 			}
-
 		}else{
 			Logging.err(this, "addRouteToDirectNeighbor() got an invalid neighbor L2Address");
 
@@ -688,9 +757,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	{
 		boolean tAdded = false;
 		
-		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+//		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "REGISTERING LINK IN L2 GRAPH:  source=" + pFromL2Address + " ## dest.=" + pToL2Address + " ## link=" + pRoutingServiceLink);
-		}
+//		}
 		
 		synchronized (mL2RoutingGraph) {
 			L2Address tFrom = pFromL2Address;
@@ -810,7 +879,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			 */
 			if(pL2Route == null){
 				//Logging.log(this, "Searching for an L2 route to " + pHRMID);
-				pL2Route = mHRMController.getHRS().getL2Route(pL2Address, null);
+				pL2Route = mHRMController.getHRS().getL2RouteViaNetworkInterface(pL2Address, null);
 				if(DEBUG){
 					Logging.log(this, "mapHRMID() - found BE route for: " + pHRMID + " as: " + pL2Route);
 				}
@@ -1426,6 +1495,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		 * DIRECT NEIGHBOR FOUND: create a HRM connection to it
 		 */
 		if(tIsPhysicalLinkToPhysicalNeigborNode) {
+			// update L2 graph
+			autoCleanL2GraphFromDeprecatedEntries();
+			
 			L2Address tThisHostL2Address = getL2AddressFor(getCentralFN());
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
@@ -1604,14 +1676,15 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 	
 	/**
-	 * Returns the L2 route to a given destination, if a given network should be used
+	 * Returns the L2 route to a given destination, if a given network interface should be used.
+	 * This function uses the base data from layer 2 (FoG forwarding structure).
 	 * 
 	 * @param pDestination the destination of the route
 	 * @param pViaNetworkInterface the network interface via a route is searched
 	 * 
 	 * @return the searched route, "null" if none was found
 	 */
-	public Route getL2Route(L2Address pDestination, NetworkInterface pViaNetworkInterface)
+	public Route getL2RouteViaNetworkInterface(L2Address pDestination, NetworkInterface pViaNetworkInterface)
 	{
 		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ROUTING;
 		
