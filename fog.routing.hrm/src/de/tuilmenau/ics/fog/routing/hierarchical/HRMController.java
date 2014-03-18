@@ -5531,7 +5531,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * wake-up the processor and let it check for pending event: esp. important for auto-removing deprecated com. channels
 		 */
-		mProcessorThread.explicitCheckingQueues();
+		if(mProcessorThread != null){
+			if(mProcessorThread.isValid()){
+				mProcessorThread.explicitCheckingQueues();
+			}
+		}
 		
 		/**
 		 * auto-remove old HRG links
