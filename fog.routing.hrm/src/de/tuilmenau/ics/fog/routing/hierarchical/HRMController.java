@@ -227,6 +227,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private boolean mApplicationStarted = false;
 	
 	/**
+	 * Stores if the application was already stopped.
+	 */
+	private boolean mApplicationStopped = false;
+
+	/**
 	 * Stores a database including all HRMControllers of this physical simulation machine
 	 */
 	private static LinkedList<HRMController> sRegisteredHRMControllers = new LinkedList<HRMController>();
@@ -5523,81 +5528,88 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void reportAndShare()
 	{	
-		if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
-			Logging.log(this, "REPORT AND SHARE TRIGGER received");
-		}
-
 		/**
-		 * auto-deactivate AnnounceCoordinator broadcast
+		 * check if this HRMController isn't stopped yet
 		 */
-		autoDetectStableHierarchy();
-		
-		/**
-		 * wake-up the processor and let it check for pending event: esp. important for auto-removing deprecated com. channels
-		 */
-		if(mProcessorThread != null){
-			if(mProcessorThread.isValid()){
-				mProcessorThread.explicitCheckingQueues();
+		if(!mApplicationStopped){
+			if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
+				Logging.log(this, "REPORT AND SHARE TRIGGER received");
 			}
-		}
-		
-		/**
-		 * auto-remove old HRG links
-		 */
-		autoRemoveObsoleteHRGLinks();
-		
-		if(HRMConfig.Measurement.VALIDATE_RESULTS){
-			if (GUI_USER_CTRL_REPORT_TOPOLOGY){
-//				validateAllResults();
-			}
-		}
-		
-		/**
-		 * auto-distribute HRMIDs: start from the top and go downstairs
-		 */
-		for (int i = HRMConfig.Hierarchy.HEIGHT -1; i >= 0; i--){
-			for(Coordinator tCoordinator : getAllCoordinators(i)) {
-				Cluster tCluster = tCoordinator.getCluster();
-				if(tCluster.isTimeToDistributeAddresses()){
-					tCluster.distributeAddresses();
+	
+			/**
+			 * auto-deactivate AnnounceCoordinator broadcast
+			 */
+			autoDetectStableHierarchy();
+			
+			/**
+			 * wake-up the processor and let it check for pending event: esp. important for auto-removing deprecated com. channels
+			 */
+			if(mProcessorThread != null){
+				if(mProcessorThread.isValid()){
+					mProcessorThread.explicitCheckingQueues();
 				}
 			}
-		}
-		
-		if(GUI_USER_CTRL_REPORT_TOPOLOGY){
+			
 			/**
-			 * detect local neighborhood and update HRG/HRMRouting
+			 * auto-remove old HRG links
 			 */
-			for (ClusterMember tClusterMember : getAllL0ClusterMembers()) {
-				tClusterMember.detectNeighborhood();
+			autoRemoveObsoleteHRGLinks();
+			
+			if(HRMConfig.Measurement.VALIDATE_RESULTS){
+				if (GUI_USER_CTRL_REPORT_TOPOLOGY){
+	//				validateAllResults();
+				}
 			}
 			
 			/**
-			 * report phase
+			 * auto-distribute HRMIDs: start from the top and go downstairs
 			 */
-			for (Coordinator tCoordinator : getAllCoordinators()) {
-				tCoordinator.reportPhase();
+			for (int i = HRMConfig.Hierarchy.HEIGHT -1; i >= 0; i--){
+				for(Coordinator tCoordinator : getAllCoordinators(i)) {
+					Cluster tCluster = tCoordinator.getCluster();
+					if(tCluster.isTimeToDistributeAddresses()){
+						tCluster.distributeAddresses();
+					}
+				}
 			}
 			
-			/**
-			 * share phase
-			 */
-			if(GUI_USER_CTRL_SHARE_ROUTES){
+			if(GUI_USER_CTRL_REPORT_TOPOLOGY){
+				/**
+				 * detect local neighborhood and update HRG/HRMRouting
+				 */
+				for (ClusterMember tClusterMember : getAllL0ClusterMembers()) {
+					tClusterMember.detectNeighborhood();
+				}
+				
+				/**
+				 * report phase
+				 */
 				for (Coordinator tCoordinator : getAllCoordinators()) {
-					tCoordinator.sharePhase();
+					tCoordinator.reportPhase();
+				}
+				
+				/**
+				 * share phase
+				 */
+				if(GUI_USER_CTRL_SHARE_ROUTES){
+					for (Coordinator tCoordinator : getAllCoordinators()) {
+						tCoordinator.sharePhase();
+					}
 				}
 			}
-		}
-		
-		/**
-		 * auto-remove old HRM routes
-		 */
-		autoRemoveObsoleteHRMRoutes();
+			
+			/**
+			 * auto-remove old HRM routes
+			 */
+			autoRemoveObsoleteHRMRoutes();
 
-		/**
-		 * register next trigger
-		 */
-		mAS.getTimeBase().scheduleIn(HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE, this);
+			/**
+			 * register next trigger
+			 */
+			mAS.getTimeBase().scheduleIn(HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE, this);
+		}else{
+			Logging.warn(this, "reportAndShare() aborted due to stopped HRMController instance");
+		}
 	}
 	
 	/**
@@ -5804,6 +5816,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			return;
 		}			
 		
+		mApplicationStopped = true;
 		mApplicationStarted = false;
 		
 		Logging.log(this, "\n\n\n############## Exiting..");
