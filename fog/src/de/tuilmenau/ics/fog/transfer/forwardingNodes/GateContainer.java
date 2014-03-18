@@ -67,7 +67,11 @@ abstract public class GateContainer implements ForwardingNode
 	 */
 	public void open()
 	{
-		mEntity.getTransferPlane().registerNode(this, mName, mLevel, getDescription());
+		if(mEntity != null){
+			if(mEntity.getTransferPlane() != null){
+				mEntity.getTransferPlane().registerNode(this, mName, mLevel, getDescription());
+			}
+		}
 	}
 	
 	@Override
