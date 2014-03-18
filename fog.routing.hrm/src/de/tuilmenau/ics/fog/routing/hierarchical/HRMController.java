@@ -4372,7 +4372,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if((tComSession.isPeer(pNeighborL2Address)) || ((tCorrectPeerL2Address != null) && tComSession.isPeer(tCorrectPeerL2Address))){
 						Logging.log(this, "   ..stopping session: " + tComSession);
 						tCorrectPeerL2Address = tComSession.getPeerL2Address();
-						mProcessorThread.eventCloseSession(tComSession);
+						if(mProcessorThread != null){
+							if(mProcessorThread.isValid()){
+								mProcessorThread.eventCloseSession(tComSession);
+							}
+						}
 						tRepeatSearch = true;
 						tComSessions.remove(tComSession);
 						break; // only the inner "for"-loop
