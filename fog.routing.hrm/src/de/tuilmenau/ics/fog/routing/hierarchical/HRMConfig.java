@@ -413,7 +413,7 @@ public class HRMConfig
 		 * Describes the max. expected E2E delay in [s]
 		 * This value should be more than 1. Otherwise, the simulation might interpret a short delay as a lost coordinator.
 		 */
-		public static final double MAX_E2E_DELAY = 3;
+		public static final double MAX_E2E_DELAY = 5;
 
 		/**
 		 * Limits the number of connection retries
