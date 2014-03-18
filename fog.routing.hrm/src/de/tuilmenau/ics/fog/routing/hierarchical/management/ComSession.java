@@ -649,7 +649,11 @@ public class ComSession extends Session
 			if (HRMConfig.Hierarchy.CONNECTION_AUTO_CLOSE_ON_USED){
 				Logging.log(this, "\n\n\n########### Closing the parent connection(destination=" + getPeerL2Address() + ", requirements=" + mParentConnection.getRequirements() + ")");
 				
-				mHRMController.getProcessor().eventCloseSession(this);
+				if(mHRMController.getProcessor() != null){
+					if(mHRMController.getProcessor().isValid()){
+						mHRMController.getProcessor().eventCloseSession(this);
+					}
+				}
 			}
 		}
 	}
