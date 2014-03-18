@@ -208,20 +208,24 @@ public class NetworkInterface implements LayerObserverCallback
 				}
 				
 				// Unregister for msg from bus
-				mEntity.getTransferPlane().unregisterLink(mProxyForLL, mReceiveGate);
-				try {
-					mLowerLayer.detach(mReceiveGate);
+				if(mEntity != null){
+					if (mEntity.getTransferPlane() != null){
+						mEntity.getTransferPlane().unregisterLink(mProxyForLL, mReceiveGate);
+					}
+					try {
+						mLowerLayer.detach(mReceiveGate);
+					}
+					catch(RemoteException tExc) {
+						mEntity.getLogger().warn(this, "Ignoring remote exception during detaching from lower layer.", tExc);
+					}
+					// do not inform receive gate about closing
+					// (this would result in an calling of detach
+					// again)
+					
+					// unlink central multiplexer with multiplexer of interface
+					mEntity.getCentralFN().unregisterGatesTo(mMultiplexer);
+					mMultiplexer.unregisterGatesTo(mEntity.getCentralFN());
 				}
-				catch(RemoteException tExc) {
-					mEntity.getLogger().warn(this, "Ignoring remote exception during detaching from lower layer.", tExc);
-				}
-				// do not inform receive gate about closing
-				// (this would result in an calling of detach
-				// again)
-				
-				// unlink central multiplexer with multiplexer of interface
-				mEntity.getCentralFN().unregisterGatesTo(mMultiplexer);
-				mMultiplexer.unregisterGatesTo(mEntity.getCentralFN());
 				mMultiplexer.close();
 				
 				// invalidating gates
