@@ -319,12 +319,12 @@ public class HRMConfig
 		/**
 		 * Defines the time period for CoordinatorAnnounce broadcasts, which are sent when the hierarchy was detected as stable, in [s]
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = 30.0; // default: 30
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = 2.0; // default: 30
 
 		/**
 		 * Defines the time period for a stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY.
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME = 10.0; // default: 20
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME = 20.0; // default: 20
 
 		/**
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
@@ -377,7 +377,7 @@ public class HRMConfig
 		 * Defines if connection should remain open or be automatically closed if the last inferior comm. channel was closed
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean CONNECTION_AUTO_CLOSE_ON_USED = false;
+		public static final boolean CONNECTION_AUTO_CLOSE_ON_USED = true;
 
 		/**
 		 * Defines if elections at higher hierarchy levels should be based on a separate hierarchy priority per node.
