@@ -899,7 +899,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					}
 				}					
 			}else{
-				Logging.warn(this, "mapHRMID() - have not found an L2 route for: " + pHRMID);
+				Logging.log(this, "mapHRMID() - have not found an L2 route for: " + pHRMID);
 			}
 		}else{
 			Logging.warn(this, "mapHRMID() - aborted due to found cluster address: " + pHRMID);
