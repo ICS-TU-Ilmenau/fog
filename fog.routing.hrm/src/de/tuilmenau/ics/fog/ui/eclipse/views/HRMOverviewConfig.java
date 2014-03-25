@@ -10,10 +10,13 @@
 package de.tuilmenau.ics.fog.ui.eclipse.views;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
@@ -34,6 +37,8 @@ public class HRMOverviewConfig extends ViewPart
 	private static final String TEXT_USER_CTRL_DST_ADDRESSES		= "Distribute addresses: ";
 	private static final String TEXT_USER_CTRL_DST_REPORTS			= "Distribute reports: ";
 	private static final String TEXT_USER_CTRL_DST_SHARES			= "Distribute shares: ";
+
+	private static final String TEXT_BTN_TOGGLE_HRMBE_ROUTING	    = "Toggle HRM/BE routing";
 	
 	private Label mUserCtrlCoordinatorAnnouncements = null;
 	private Label mUserCtrlAddressDistribution = null;
@@ -63,6 +68,8 @@ public class HRMOverviewConfig extends ViewPart
 	private Label mConfigDebugChannelStorage = null;
 	private Label mConfigDebugHRMViewerUpdateInterval = null;
 	private Label mConfigDebugHRGViewerUpdateInterval = null;
+	
+	private Button mBtnToggleHRMBERouting = null;
 	
 	private static final int VIEW_UPDATE_TIME = 1000; // in ms
 	
@@ -273,6 +280,16 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigDebugHRMViewerUpdateInterval = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_HRM_VIEWER_INT);
 		mConfigDebugHRGViewerUpdateInterval = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_HRG_VIEWER_INT);
 		
+	    mBtnToggleHRMBERouting = new Button(tContainer, SWT.PUSH);
+	    mBtnToggleHRMBERouting.setText(TEXT_BTN_TOGGLE_HRMBE_ROUTING);
+	    mBtnToggleHRMBERouting.setLayoutData(createGridData(true, 2));
+	    mBtnToggleHRMBERouting.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				HRMController.ENFORCE_BE_ROUTING = !HRMController.ENFORCE_BE_ROUTING;
+			}
+		});
+
 		mDisplay.timerExec(100, ViewRepaintTimer);
 	}
 	
