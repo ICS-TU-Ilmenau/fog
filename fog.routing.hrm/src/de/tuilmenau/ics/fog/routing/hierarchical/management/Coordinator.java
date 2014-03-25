@@ -1532,36 +1532,39 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		Logging.log(this, "EVENT: got cluster membership request (" + mClusterMembershipRequestNr + ") from: " + pRemoteClusterName);
 		
 		if(isThisEntityValid()){
-			// avoid that the membership gets invalidated in the meanwhile
-			synchronized (mClusterMemberships) {
-				/**
-				 * Create new cluster (member) object
-				 */
-				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-					Logging.log(this, "    ..creating new local cluster membership for: " + pRemoteClusterName + ", remote node: " + pSourceComSession.getPeerL2Address());
-				}
-				
-				// search for an already existing membership
-				CoordinatorAsClusterMember tClusterMembership = getMembership(pRemoteClusterName);
-				if(tClusterMembership != null){
-					tResult = tClusterMembership.getComChannel(pRemoteClusterName);
-					Logging.warn(this, "Received a ClusterMemberShipRequest more than once for: " + tClusterMembership);
-				}else{
-					// create a new one
-					tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
-
+			// avoid that a CoordinatorAsClusterMember is unregistered in the meanwhile
+			synchronized(mHRMController){
+				// avoid that the membership gets invalidated in the meanwhile
+				synchronized (mClusterMemberships) {
 					/**
-					 * Create the communication channel for the described cluster member
+					 * Create new cluster (member) object
 					 */
 					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-						Logging.log(this, "     ..creating communication channel");
+						Logging.log(this, "    ..creating new local cluster membership for: " + pRemoteClusterName + ", remote node: " + pSourceComSession.getPeerL2Address());
 					}
-					tResult = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
-
-					/**
-					 * Set the remote ClusterName of the communication channel
-					 */
-					tResult.setRemoteClusterName(pRemoteClusterName);
+					
+					// search for an already existing membership
+					CoordinatorAsClusterMember tClusterMembership = getMembership(pRemoteClusterName);
+					if(tClusterMembership != null){
+						tResult = tClusterMembership.getComChannel(pRemoteClusterName);
+						Logging.warn(this, "Received a ClusterMemberShipRequest more than once for: " + tClusterMembership);
+					}else{
+						// create a new one
+						tClusterMembership = CoordinatorAsClusterMember.create(mHRMController, this, pRemoteClusterName, pSourceComSession.getPeerL2Address());
+	
+						/**
+						 * Create the communication channel for the described cluster member
+						 */
+						if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+							Logging.log(this, "     ..creating communication channel");
+						}
+						tResult = new ComChannel(mHRMController, ComChannel.Direction.IN, tClusterMembership, pSourceComSession);
+	
+						/**
+						 * Set the remote ClusterName of the communication channel
+						 */
+						tResult.setRemoteClusterName(pRemoteClusterName);
+					}
 				}
 			}
 		}else{
