@@ -107,17 +107,17 @@ public class HRMOverviewHierarchy extends ViewPart
 		if(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin == Double.MAX_VALUE){
 			mStableHierarchyMin.setText("-");
 		}else{
-			mStableHierarchyMin.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin));
+			mStableHierarchyMin.setText(Double.toString((double)Math.round(10 * HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin) / 10));
 		}
 		if(Simulation.sStartedSimulations == 0){
 			mStableHierarchyAvg.setText("-");
 		}else{
-			mStableHierarchyAvg.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum / Simulation.sStartedSimulations));
+			mStableHierarchyAvg.setText(Double.toString((double)Math.round(10 * HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum / Simulation.sStartedSimulations) / 10));
 		}
 		if(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax == 0){
 			mStableHierarchyMax.setText("-");
 		}else{
-			mStableHierarchyMax.setText(Double.toString(HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax));
+			mStableHierarchyMax.setText(Double.toString((double)Math.round(10 * HRMController.sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax) / 10 ));
 		}
 		
 		if(HRMController.FOUND_GLOBAL_ERROR){
