@@ -111,12 +111,12 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				/**
 				 * Check if known route was defined by a higher authority
 				 */
-				boolean tKnownRouteIsFromHigherAuthotiry = false;
+				boolean tKnownRouteIsFromHigherAuthority = false;
 				if(pRoutingTableEntry.getOwner() != null){
 					if(tFoundDuplicate.getOwner() != null){
 						if(tFoundDuplicate.getOwner().getHierarchyLevel() > pRoutingTableEntry.getOwner().getHierarchyLevel()){
 							// indeed, we already know this route from a higher authority
-							tKnownRouteIsFromHigherAuthotiry = true;
+							tKnownRouteIsFromHigherAuthority = true;
 						}
 					}
 				}
@@ -124,7 +124,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				/**
 				 * Apply the given route
 				 */
-				if(!tKnownRouteIsFromHigherAuthotiry){
+				if(!tKnownRouteIsFromHigherAuthority){
 					/**
 					 * Update TIMEOUT
 					 */
@@ -580,6 +580,10 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		tResult += 2; // size of the following list
 		for(RoutingEntry tEntry: this){
 			tResult += tEntry.getSerialisedSize();
+			//TODO
+			if(tEntry.getNextHopL2Address() != null){
+				//Logging.warn(this, "Size calculation should contain next L2 address for entry: " + tEntry);
+			}
 		}
 		
 		return tResult;
