@@ -3820,6 +3820,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Returns true if a long-term stable hierarchy is recognized
+	 * 
+	 * @return true or false
+	 */
+	public boolean hasLongTermStableHierarchy()
+	{
+		return  getTimeWithStableHierarchy() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME + HRMConfig.Hierarchy.MAX_E2E_DELAY;
+	}
+
+	/**
 	 * EVENT: hierarchy data changed
 	 */
 	private void eventHierarchyDataChanged()
