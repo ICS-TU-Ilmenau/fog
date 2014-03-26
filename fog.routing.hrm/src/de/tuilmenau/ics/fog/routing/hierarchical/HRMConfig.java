@@ -411,9 +411,10 @@ public class HRMConfig
 
 		/**
 		 * Describes the max. expected E2E delay in [s]
-		 * This value should be more than 1. Otherwise, the simulation might interpret a short delay as a lost coordinator.
+		 * This value should be more than 1. Otherwise, the simulation might interpret a short delay as a lost coordinator or a lost route
+		 * (For real environments, this value has to be high enough to include x retransmissions of a lost packet.) 
 		 */
-		public static final double MAX_E2E_DELAY = 5;
+		public static final double MAX_E2E_DELAY = 5.0;
 
 		/**
 		 * Limits the number of connection retries
@@ -473,9 +474,19 @@ public class HRMConfig
 		public static final boolean RECORD_ROUTE_FOR_PROBES = true;
 
 		/**
-		 * Defines the default timeout for a route. If the route doesn't get any refresh in the defined time period, the route gets deleted.
+		 * Defines the timeout for a route. If the route doesn't get any refresh in the defined time period, the route gets deleted.
 		 */
 		public static final double ROUTE_TIMEOUT = REPORT_SHARE_PHASE_TIME_BASE * 2;
+
+		/**
+		 * Defines if the route reporte rate should be reduced in case of stable hierarchy where possible
+		 */
+		public static final boolean REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY = true;
+		
+		/**
+		 * Defines the timeout for a route, if it is reported when the hierarchy was detected as stable, in [s]
+		 */
+		public static final double ROUTE_TIMEOUT_STABLE_HIERARCHY = 30.0; // default: 60
 
 		/**
 		 * Defines if multiple paths for the same destination should be distributed

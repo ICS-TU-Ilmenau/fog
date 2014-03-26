@@ -20,6 +20,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig.Hierarchy;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -87,6 +88,21 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private RoutingTable mReceivedSharedRoutingTable = new RoutingTable();
 
+	/**
+	 * Stores always the last reported routing table, which was sent towards the superior coordinator
+	 */
+	private RoutingTable mReportedRoutingTable = new RoutingTable();
+	
+	/**
+	 * Stores the time when the last full routing table was reported to the superior coordinator
+	 */
+	private double mTimeLastCompleteReportedRoutingTable = 0;
+	
+	/**
+	 * Stores if the last reported routing table was sent during an unstable hierarchy
+	 */
+	private boolean mLastReportedRoutingTableWasDuringUnstableHierarchy = true;
+	
 	/**
 	 * Stores if a warning about an invalid channel to the superior coordinator was already printed.
 	 */
@@ -901,10 +917,95 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									}
 								}
 								
-								// create new RouteReport packet for the superior coordinator
-								RouteReport tRouteReportPacket = new RouteReport(getHRMID(), superiorCoordinatorComChannel().getPeerHRMID(), tReportRoutingTable);
-								// send the packet to the superior coordinator
-								sendSuperiorCoordinator(tRouteReportPacket);
+								/**
+								 * Set the timeout for each entry depending on the state of the known HRM hierarchy
+								 */
+								boolean tReportOnlyADiff = false;
+								
+								if(mHRMController.hasLongTermStableHierarchy()){
+									/**
+									 * set timeout
+									 */
+									for (RoutingEntry tEntry: tReportRoutingTable){
+										tEntry.setTimeout(HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY + Hierarchy.MAX_E2E_DELAY);
+									}
+									
+									/**
+									 * should we report only a diff.? 
+									 */
+									if((HRMConfig.Routing.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteReportedRoutingTable + HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY) && (!mLastReportedRoutingTableWasDuringUnstableHierarchy)){
+										/**
+										 * we actually provide only a diff to the last diff/complete reported routing table
+										 */
+										tReportOnlyADiff = true;
+										
+										RoutingTable tDiffReportRoutingTable = new RoutingTable();
+										for(RoutingEntry tNewEntry : tReportRoutingTable){
+											boolean tEntryHasChanges = true;
+											for(RoutingEntry tOldEntry : mReportedRoutingTable){
+												/**
+												 * is the new entry rather an old one?
+												 */
+												if ((tOldEntry.equals(tNewEntry)) && (tOldEntry.equalsQoS(tNewEntry))){
+													tEntryHasChanges = false;
+													break;
+												}
+											}
+											
+											/**
+											 * add the entry with changes to the "diff" table
+											 */
+											if(tEntryHasChanges){
+												tDiffReportRoutingTable.add(tNewEntry);
+											}
+										}
+										
+										// store the complete routing table as last report but send only the diff
+										mReportedRoutingTable = (RoutingTable) tReportRoutingTable.clone();
+										// the "diff" table
+										tReportRoutingTable = tDiffReportRoutingTable;
+												
+										if (DEBUG){
+											Logging.log(this, "   ..reporting the DIFF TABLE via " + superiorCoordinatorComChannel() + ":");
+											int j = 0;
+											for(RoutingEntry tEntry : tReportRoutingTable){
+												Logging.log(this, "     ..[" + j +"]: " + tEntry);
+												j++;
+											}
+										}
+									}
+									
+									mLastReportedRoutingTableWasDuringUnstableHierarchy = false;
+								}else{
+									/**
+									 * set timeout
+									 */
+									for (RoutingEntry tEntry: tReportRoutingTable){
+										tEntry.setTimeout(HRMConfig.Routing.ROUTE_TIMEOUT  + Hierarchy.MAX_E2E_DELAY);
+									}
+									
+									mLastReportedRoutingTableWasDuringUnstableHierarchy = true;
+								}
+								
+								/**
+								 * Remember the time of the last reported complete routing table -> report every x seconds a complete table
+								 */
+								if(!tReportOnlyADiff){
+									// report a complete routing table
+									mReportedRoutingTable = (RoutingTable) tReportRoutingTable.clone();
+									// store the time
+									mTimeLastCompleteReportedRoutingTable = mHRMController.getSimulationTime();
+								}
+								
+								/**
+								 * SEND REPORT
+								 */
+								if((superiorCoordinatorComChannel() != null) && (tReportRoutingTable.size() > 0)){
+									// create new RouteReport packet for the superior coordinator
+									RouteReport tRouteReportPacket = new RouteReport(getHRMID(), superiorCoordinatorComChannel().getPeerHRMID(), tReportRoutingTable);
+									// send the packet to the superior coordinator
+									sendSuperiorCoordinator(tRouteReportPacket);
+								}
 							}else{
 								if (DEBUG){
 									Logging.log(this, "reportPhase() aborted because no report for " + superiorCoordinatorComChannel() + " available");
