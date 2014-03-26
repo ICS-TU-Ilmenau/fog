@@ -23,7 +23,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -1090,10 +1089,18 @@ public class Cluster extends ClusterMember
 			}
 				
 			double tBefore = HRMController.getRealTime();
+			
 			/**
-			 * Set the timeout for reported routes
+			 * make sure a relative timeout is set in the reported routing table entry
 			 */
-			tEntry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT);
+			if(tEntry.getTimeout() <= 0){
+				tEntry.setTimeout(HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
+			}
+
+			/**
+			 * Set the timeout for reported routes: use the previously stored relative timeout value from the reporter and form an absolute timeout
+			 */
+			tEntry.setTimeout(mHRMController.getSimulationTime() + tEntry.getTimeout());
 
 			/**
 			 * Mark as reported entry
