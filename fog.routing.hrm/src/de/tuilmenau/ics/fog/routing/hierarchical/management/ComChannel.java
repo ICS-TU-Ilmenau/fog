@@ -264,9 +264,14 @@ public class ComChannel
 	private RoutingTable mReportedRoutingTable = new RoutingTable();
 
 	/**
-	 * Stores the routing table, which was shared by the superior cluster
+	 * Stores the last reported routing table, which was received from an inferior coordinator
 	 */
-	private RoutingTable mSharedRoutingTable = new RoutingTable();
+	private RoutingTable mLastReceivedReportedRoutingTable = new RoutingTable();
+
+	/**
+	 * Stores the last shared routing table, which was shared by the superior coordinator/cluster
+	 */
+	private RoutingTable mLastReceivedSharedRoutingTable = new RoutingTable();
 	
 	/**
 	 * Constructor
@@ -682,19 +687,19 @@ public class ComChannel
 	}
 
 	/**
-	 * Returns the reported routing table
+	 * Returns the shared routing table
 	 * 
-	 * @return the reported routing table
+	 * @return the shared routing table
 	 */
 	public RoutingTable getSharedRoutingTable()
 	{
 		RoutingTable tResult = new RoutingTable();
 		
-		synchronized (mSharedRoutingTable) {
+		synchronized (mLastReceivedSharedRoutingTable) {
 			if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 				//Logging.err(this, "Reporting routing table: " + mReportedRoutingTable);
 			}
-			for(RoutingEntry tEntry : mSharedRoutingTable){
+			for(RoutingEntry tEntry : mLastReceivedSharedRoutingTable){
 				tResult.add(tEntry.clone());
 			}
 		}
@@ -847,10 +852,23 @@ public class ComChannel
 		}
 	
 		/**
+		 * have we received a full update? -> check for deprecated entries
+		 */
+		RoutingTable tDeprecatedReportedRoutingTable = null; 
+		RoutingTable tReceivedSharedRoutingTable = pRouteReportPacket.getRoutes();
+		if(!tReceivedSharedRoutingTable.isOnlyDiff()){
+			tDeprecatedReportedRoutingTable = (RoutingTable) mLastReceivedReportedRoutingTable.clone();
+			tDeprecatedReportedRoutingTable.delEntries(tReceivedSharedRoutingTable);
+		}
+			
+		/**
 		 * Store the received reported routing info
 		 */
-		synchronized (mReportedRoutingTable) {
-			mReportedRoutingTable = pRouteReportPacket.getRoutes(); 
+		synchronized (mLastReceivedReportedRoutingTable) {
+			if((tDeprecatedReportedRoutingTable != null) && (tDeprecatedReportedRoutingTable.size() > 0)){
+				mLastReceivedReportedRoutingTable.delEntries(tDeprecatedReportedRoutingTable);
+			}
+			mLastReceivedReportedRoutingTable.addEntries(pRouteReportPacket.getRoutes()); 
 		}
 
 		if(mParent instanceof Cluster){
@@ -867,7 +885,7 @@ public class ComChannel
 			 * Trigger: inform the cluster about the new routing report
 			 */
 //			double tBefore = HRMController.getRealTime();
-			tParentCluster.eventReceivedRouteReport(this, pRouteReportPacket);
+			tParentCluster.eventReceivedRouteReport(this, pRouteReportPacket, tDeprecatedReportedRoutingTable);
 //			double tSpentTime = HRMController.getRealTime() - tBefore;
 //			if(tSpentTime > 30){
 //				Logging.log(this, "      ..eventReceivedRouteReport() took " + tSpentTime + " ms for route report: " + pRouteReportPacket);
@@ -900,10 +918,10 @@ public class ComChannel
 		 * Store the received shared routing info
 		 */
 		RoutingTable tDeprecatedSharedRoutingTable = null;
-		synchronized (mSharedRoutingTable) {
-			tDeprecatedSharedRoutingTable = mSharedRoutingTable;
-			mSharedRoutingTable = pRouteSharePacket.getRoutes();
-			tDeprecatedSharedRoutingTable.delEntries(mSharedRoutingTable);
+		synchronized (mLastReceivedSharedRoutingTable) {
+			tDeprecatedSharedRoutingTable = mLastReceivedSharedRoutingTable;
+			mLastReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
+			tDeprecatedSharedRoutingTable.delEntries(mLastReceivedSharedRoutingTable);
 		}
 		
 		if(tDeprecatedSharedRoutingTable.size() > 0){
@@ -923,7 +941,7 @@ public class ComChannel
 			/**
 			 * Trigger: inform the CoordinatorAsClusterMember about the new routing report
 			 */
-			tParentCoordinatorAsClusterMember.getCoordinator().eventReceivedRouteShare(this, mSharedRoutingTable);
+			tParentCoordinatorAsClusterMember.getCoordinator().eventReceivedRouteShare(this, mLastReceivedSharedRoutingTable);
 			
 			return;
 		}
@@ -934,7 +952,7 @@ public class ComChannel
 			/**
 			 * Trigger: inform the ClusterMember about the new routing report
 			 */
-			tParentClusterMember.eventReceivedRouteShare(this, mSharedRoutingTable);
+			tParentClusterMember.eventReceivedRouteShare(this, mLastReceivedSharedRoutingTable);
 			
 			return;
 		}

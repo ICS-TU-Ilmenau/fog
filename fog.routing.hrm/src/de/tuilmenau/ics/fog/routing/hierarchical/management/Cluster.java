@@ -1069,14 +1069,60 @@ public class Cluster extends ClusterMember
 	 * EVENT: RouteReport from an inferior entity received, triggered by the comm. channel
 	 * 
 	 * @param pComChannel the source comm. channel 
-	 * @param pRouteReportPacket the packet
+	 * @param pRouteReportPacket the packet (use packet for better debugging here)
+	 * @param pDeprecatedRoutingTable the routing table with deprecated entries
 	 */
-	public void eventReceivedRouteReport(ComChannel pSourceComChannel, RouteReport pRouteReportPacket)
+	public void eventReceivedRouteReport(ComChannel pSourceComChannel, RouteReport pRouteReportPacket, RoutingTable pDeprecatedRoutingTable)
 	{
 		boolean DEBUG = HRMConfig.DebugOutput.SHOW_REPORT_PHASE;
 		
 		if(DEBUG){
 			Logging.log(this, "EVENT: ReceivedRouteReport: " + pRouteReportPacket + " from " + pSourceComChannel.getPeerL2Address());
+		}
+		
+		/**
+		 * mark deprecated entries for a near deletion
+		 */
+		if((pDeprecatedRoutingTable != null) && (pDeprecatedRoutingTable.size() > 0)){
+			Logging.warn(this, "Found deprecated reported routing table: " + pDeprecatedRoutingTable);
+			for(RoutingEntry tDeprecatedentry : pDeprecatedRoutingTable){
+				Logging.warn(this, "   ..found deprecated reported routing entry: " + tDeprecatedentry);
+				
+				/**
+				 * Set the timeout for deprecated reported routes to a short time period
+				 */
+				tDeprecatedentry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
+				
+				/**
+				 * Mark as reported entry
+				 */
+				tDeprecatedentry.setReportedLink(pSourceComChannel.getPeerHRMID());
+				
+				/**
+				 * Update the HRG in such a way that the deprecated will be removed automatically very soon if no other inferior coordinator reports the same route with a high timeout (the route is still known as active there)
+				 */
+				int tHopCount = tDeprecatedentry.getHopCount();
+				switch(tHopCount)
+				{
+					case 0:
+						// it's an inter-cluster link because local loopbacks aren't sent as report
+						tDeprecatedentry.extendCause(this + "::eventReceivedRouteReport()(0 hops) from " + pSourceComChannel.getPeerHRMID());
+						mHRMController.registerAutoHRG(tDeprecatedentry);
+
+						break;
+					case 1:
+					default: // 2+
+						// do we have an intra-cluster link?
+						if((!tDeprecatedentry.getDest().isClusterAddress()) && (tDeprecatedentry.getDest().equals(tDeprecatedentry.getLastNextHop()))){
+							tDeprecatedentry.extendCause(this + "::eventReceivedRouteReport()(1 hop) from " + pSourceComChannel.getPeerHRMID());
+							mHRMController.registerLinkHRG(tDeprecatedentry.getSource(), tDeprecatedentry.getLastNextHop(), tDeprecatedentry);
+						}else{
+							// strange, an inter-cluster link with ONE hop?!
+						}
+						break;
+				}
+			}
+			DEBUG = true;
 		}
 			
 		/**
@@ -1085,7 +1131,7 @@ public class Cluster extends ClusterMember
 		RoutingTable tNewReportedRoutingTable = pRouteReportPacket.getRoutes();
 		for(RoutingEntry tEntry : tNewReportedRoutingTable){
 			if(DEBUG){
-				Logging.err(this, "   ..received route: " + tEntry);
+				Logging.log(this, "   ..received route: " + tEntry);
 			}
 				
 			double tBefore = HRMController.getRealTime();
