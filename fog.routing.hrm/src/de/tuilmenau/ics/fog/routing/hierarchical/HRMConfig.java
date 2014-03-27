@@ -324,7 +324,7 @@ public class HRMConfig
 		/**
 		 * Defines the time period for a stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY.
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME = 15.0; // default: 15
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME = 60.0; // default: 60
 
 		/**
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
@@ -479,10 +479,15 @@ public class HRMConfig
 		public static final double ROUTE_TIMEOUT = REPORT_SHARE_PHASE_TIME_BASE * 2;
 
 		/**
-		 * Defines if the route reporte rate should be reduced in case of stable hierarchy where possible
+		 * Defines if the route report rate should be reduced in case of stable hierarchy where possible
 		 */
 		public static final boolean REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY = true;
 		
+		/**
+		 * Defines if the route share rate should be reduced in case of stable hierarchy where possible
+		 */
+		public static final boolean SHARE_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY = true;
+
 		/**
 		 * Defines the timeout for a route, if it is reported when the hierarchy was detected as stable, in [s]
 		 */

@@ -1850,7 +1850,7 @@ public class ComChannel
 					 */
 					tParentCoordinatorAsClusterMember.eventComChannelEstablished(this);
 				}else{
-					Logging.log(this, "  ..parent Coordinator is already invalid, denying request by " + tRequestClusterMembershipPacket);
+					Logging.log(this, "  ..parent CoordinatorAsClusterMember is already invalid, denying request by \"" + tRequestClusterMembershipPacket + "\", parent coordinator is: " + tParentCoordinatorAsClusterMember);
 					mParentComSession.denyClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), tRequestClusterMembershipPacket.getDestination());
 				}
 			}else{

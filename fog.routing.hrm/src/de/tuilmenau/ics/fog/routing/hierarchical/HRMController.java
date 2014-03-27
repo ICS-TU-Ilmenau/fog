@@ -4703,7 +4703,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			for(CoordinatorProxy tProxy : tProxies){
 				// does the link have a timeout?
 				if(tProxy.isObsolete()){
-					Logging.log(this, "AUTO REMOVING COORDINATOR PROXY: " + tProxy);
+					Logging.warn(this, "AUTO REMOVING COORDINATOR PROXY (LT stable hierarchy: " + hasLongTermStableHierarchy() + "): " + tProxy);
 	
 					/**
 					 * Trigger: remote coordinator role invalid
