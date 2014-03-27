@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical.routing;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -49,9 +50,10 @@ public class RouteReport extends SignalingMessageHrm
 	 * 
 	 * @param pSenderName the sender name
 	 * @param pReceiverName the receiver name
+	 * @param pHRMController the local HRMController instance
 	 * @param pRoutingTable the routing table which is reported
 	 */
-	public RouteReport(HRMName pSenderName, HRMName pReceiverName, RoutingTable pRoutingTable)
+	public RouteReport(HRMName pSenderName, HRMName pReceiverName, HRMController pHRMController,  RoutingTable pRoutingTable)
 	{
 		super(pSenderName, pReceiverName);
 		if(pRoutingTable != null){
@@ -60,6 +62,11 @@ public class RouteReport extends SignalingMessageHrm
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
 		}
+		
+		/**
+		 * set timeout for each routing table entry
+		 */
+		pRoutingTable.setTimeout(pHRMController);
 	}
 	
 	/**

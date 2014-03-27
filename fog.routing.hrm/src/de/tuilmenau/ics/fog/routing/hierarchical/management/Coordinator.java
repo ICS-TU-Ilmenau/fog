@@ -924,13 +924,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								
 								if(mHRMController.hasLongTermStableHierarchy()){
 									/**
-									 * set timeout
-									 */
-									for (RoutingEntry tEntry: tReportRoutingTable){
-										tEntry.setTimeout(HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY + Hierarchy.MAX_E2E_DELAY);
-									}
-									
-									/**
 									 * should we report only a diff.? 
 									 */
 									if((HRMConfig.Routing.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteReportedRoutingTable + HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY) && (!mLastReportedRoutingTableWasDuringUnstableHierarchy)){
@@ -977,13 +970,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									
 									mLastReportedRoutingTableWasDuringUnstableHierarchy = false;
 								}else{
-									/**
-									 * set timeout
-									 */
-									for (RoutingEntry tEntry: tReportRoutingTable){
-										tEntry.setTimeout(HRMConfig.Routing.ROUTE_TIMEOUT  + Hierarchy.MAX_E2E_DELAY);
-									}
-									
 									mLastReportedRoutingTableWasDuringUnstableHierarchy = true;
 								}
 								
@@ -1001,8 +987,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * SEND REPORT
 								 */
 								if((superiorCoordinatorComChannel() != null) && (tReportRoutingTable.size() > 0)){
-									// create new RouteReport packet for the superior coordinator
-									RouteReport tRouteReportPacket = new RouteReport(getHRMID(), superiorCoordinatorComChannel().getPeerHRMID(), tReportRoutingTable);
+									// create new RouteReport packet for the superior coordinator, constructor also sets the timeout for each routing table entry
+									RouteReport tRouteReportPacket = new RouteReport(getHRMID(), superiorCoordinatorComChannel().getPeerHRMID(), mHRMController, tReportRoutingTable);
 									// send the packet to the superior coordinator
 									sendSuperiorCoordinator(tRouteReportPacket);
 								}
