@@ -24,6 +24,30 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	private static final long serialVersionUID = -9166625971164847894L;
 
 	/**
+	 * REPORT/SHARE:
+	 * Stores if the transmitted routing table describes only a diff to the last update
+	 */
+	private boolean mIsARoutingTableDiff = false;
+
+	/**
+	 * Marks the table as diff to the last update
+	 */
+	public void markAsDiff()
+	{
+		mIsARoutingTableDiff = true;
+	}
+	
+	/**
+	 * Returns true if the table describes only a diff to the last update
+	 * 
+	 * @return true or false
+	 */
+	public boolean hasOnlyDiff()
+	{
+		return mIsARoutingTableDiff;
+	}
+	
+	/**
 	 * Sets the timeout for all routing table entries
 	 * 
 	 * @param pHRMController the local HRMController instance
@@ -610,8 +634,18 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	 */
 	public int getSerializedSize()
 	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		Flags					 = 1 (is a diff?)
+		 * 		Routing table length	 = 2
+		 * 		Routing table			 = dynamic
+		 * 
+		 *************************************************************/
+
 		int tResult = 0;
 		
+		tResult += 1;
 		tResult += 2; // size of the following list
 		for(RoutingEntry tEntry: this){
 			tResult += tEntry.getSerialisedSize();
