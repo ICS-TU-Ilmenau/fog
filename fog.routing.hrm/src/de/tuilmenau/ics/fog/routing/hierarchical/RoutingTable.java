@@ -42,7 +42,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	 * 
 	 * @return true or false
 	 */
-	public boolean hasOnlyDiff()
+	public boolean isOnlyDiff()
 	{
 		return mIsARoutingTableDiff;
 	}
@@ -324,9 +324,11 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	{
 		boolean tResult = false;
 		
-		for(RoutingEntry tEntry : pRoutingTable){
-
-			tResult |= delEntry(tEntry);
+		if(pRoutingTable.size() > 0){
+			for(RoutingEntry tEntry : pRoutingTable){
+	
+				tResult |= delEntry(tEntry);
+			}
 		}
 		
 		return tResult;
