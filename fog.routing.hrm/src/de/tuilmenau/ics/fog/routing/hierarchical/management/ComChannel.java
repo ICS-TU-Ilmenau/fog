@@ -862,9 +862,6 @@ public class ComChannel
 			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
 				Logging.err(this, "   ..got routing report: " + pRouteReportPacket.getRoutes());
 			}
-			synchronized (mReportedRoutingTable) {
-				mReportedRoutingTable = pRouteReportPacket.getRoutes();
-			}
 
 			/**
 			 * Trigger: inform the cluster about the new routing report
@@ -926,7 +923,7 @@ public class ComChannel
 			/**
 			 * Trigger: inform the CoordinatorAsClusterMember about the new routing report
 			 */
-			tParentCoordinatorAsClusterMember.getCoordinator().eventReceivedRouteShare(this, pRouteSharePacket);
+			tParentCoordinatorAsClusterMember.getCoordinator().eventReceivedRouteShare(this, mSharedRoutingTable);
 			
 			return;
 		}
@@ -937,7 +934,7 @@ public class ComChannel
 			/**
 			 * Trigger: inform the ClusterMember about the new routing report
 			 */
-			tParentClusterMember.eventReceivedRouteShare(this, pRouteSharePacket);
+			tParentClusterMember.eventReceivedRouteShare(this, mSharedRoutingTable);
 			
 			return;
 		}

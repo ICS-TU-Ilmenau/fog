@@ -571,16 +571,15 @@ public class ClusterMember extends ClusterName
 	 * EVENT: RouteShare
 	 * 
 	 * @param pSourceComChannel the source comm. channel
-	 * @param pRouteSharePacket the packet
+	 * @param pSharedRoutingTable the shared routing table
 	 */
-	public void eventReceivedRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
+	public void eventReceivedRouteShare(ComChannel pSourceComChannel, RoutingTable pSharedRoutingTable)
 	{
 		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.err(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
 		}
 		
-		RoutingTable tReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
-		mHRMController.addHRMRouteShare(tReceivedSharedRoutingTable, getHierarchyLevel(), getHRMID(), pSourceComChannel.getPeerHRMID(), this + "::eventReceivedRouteShare()");			
+		mHRMController.addHRMRouteShare(pSharedRoutingTable, getHierarchyLevel(), getHRMID(), pSourceComChannel.getPeerHRMID(), this + "::eventReceivedRouteShare()");			
 	}
 
 	/**

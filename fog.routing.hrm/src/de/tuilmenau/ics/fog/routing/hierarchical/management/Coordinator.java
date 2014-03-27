@@ -932,6 +932,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										mLastSentReportedRoutingTable = (RoutingTable) tReportRoutingTable.clone();
 										// the "diff" table
 										tReportRoutingTable = tDiffReportRoutingTable;
+										tReportRoutingTable.markAsDiff();
 												
 										if (DEBUG){
 											Logging.log(this, "   ..reporting the DIFF TABLE via " + superiorCoordinatorComChannel() + ":");
@@ -996,16 +997,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * EVENT: RouteShare
 	 * 
 	 * @param pSourceComChannel the source comm. channel
-	 * @param pRouteSharePacket the packet
+	 * @param pSharedRoutingTable the shared routing table
 	 */
-	public synchronized void eventReceivedRouteShare(ComChannel pSourceComChannel, RouteShare pRouteSharePacket)
+	public synchronized void eventReceivedRouteShare(ComChannel pSourceComChannel, RoutingTable pSharedRoutingTable)
 	{
 		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.log(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
 		}
 		
 		synchronized (mLastReceivedSharedRoutingTable) {
-			mLastReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
+			mLastReceivedSharedRoutingTable = pSharedRoutingTable;
 			learnLocallyTheLastSharedRoutingTable(this + "::eventReceivedRouteShare() from " + pSourceComChannel.getPeerHRMID());
 		}		
 	}
