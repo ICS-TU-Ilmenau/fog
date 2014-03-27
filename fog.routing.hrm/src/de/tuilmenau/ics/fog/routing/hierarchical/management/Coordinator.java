@@ -41,11 +41,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	private LinkedList<RoutingEntry> mSharedRoutes = new LinkedList<RoutingEntry>();
 	
 	/**
-	 * Stores whether the data of the "shared phase" has changed or not.
-	 */
-	private boolean mSharedRoutesHaveChanged = false; //TODO: update this value according to changes
-	
-	/**
 	 * Stores the parent cluster, which is managed by this coordinator instance.
 	 */
 	private Cluster mParentCluster = null;
@@ -279,22 +274,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 	
 	/**
-	 * Determines if new "share phase" data is available
-	 * 
-	 * @return true if new data is available, otherwise false
-	 */
-	private boolean hasNewSharePhaseData()
-	{
-		boolean tResult = false;
-		
-		synchronized (mSharedRoutes){
-			tResult = mSharedRoutesHaveChanged;
-		}
-		
-		return tResult;
-	}
-	
-	/**
 	 * This function implements the "share phase".
 	 * It distributes locally stored sharable routing data among the known cluster members
 	 */
@@ -319,13 +298,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					// store the time of this "share phase"
 					mTimeOfLastSharePhase = mHRMController.getSimulationTime();
 		
-					if ((!HRMConfig.Routing.PERIODIC_SHARE_PHASES) && (!hasNewSharePhaseData())){
-						if (DEBUG_SHARE_PHASE_DETAILS){
-							Logging.log(this, "SHARE PHASE aborted because routing data hasn't changed since last signaling round");
-						}
-						return;
-					}
-					
 					mCallsSharePhase++;
 					
 					// get all comm. channels to inferior cluster members
