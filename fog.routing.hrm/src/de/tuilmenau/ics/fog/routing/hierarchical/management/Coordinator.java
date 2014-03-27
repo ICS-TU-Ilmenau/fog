@@ -85,12 +85,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * Stores the last received routing table from the superior coordinator
 	 */
-	private RoutingTable mReceivedSharedRoutingTable = new RoutingTable();
+	private RoutingTable mLastReceivedSharedRoutingTable = new RoutingTable();
 
 	/**
 	 * Stores always the last reported routing table, which was sent towards the superior coordinator
 	 */
-	private RoutingTable mReportedRoutingTable = new RoutingTable();
+	private RoutingTable mLastSentReportedRoutingTable = new RoutingTable();
 	
 	/**
 	 * Stores the time when the last full routing table was reported to the superior coordinator
@@ -354,8 +354,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * copy the received shared routing table from the superior coordinator
 								 */
 								RoutingTable tReceivedSharedRoutingTable = null;
-								synchronized (mReceivedSharedRoutingTable) {
-									tReceivedSharedRoutingTable = (RoutingTable) mReceivedSharedRoutingTable.clone();	
+								synchronized (mLastReceivedSharedRoutingTable) {
+									tReceivedSharedRoutingTable = (RoutingTable) mLastReceivedSharedRoutingTable.clone();	
 								}
 		
 								if(getHierarchyLevel().isBaseLevel()){
@@ -687,8 +687,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								}
 	
 								/**
-								 * Distribute the RouteShare packet immediately
-								 * (also send RouteShare packets with 0 shared routes in order to update the state in the inferior coordinator)
+								 * SEND SHARE
 								 */
 								if (DEBUG_SHARE_PHASE_DETAILS){
 									Logging.log(this, "     SHARING with: " + tPeerHRMID);
@@ -939,7 +938,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										RoutingTable tDiffReportRoutingTable = new RoutingTable();
 										for(RoutingEntry tNewEntry : tReportRoutingTable){
 											boolean tEntryHasChanges = true;
-											for(RoutingEntry tOldEntry : mReportedRoutingTable){
+											for(RoutingEntry tOldEntry : mLastSentReportedRoutingTable){
 												/**
 												 * is the new entry rather an old one?
 												 */
@@ -958,7 +957,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										}
 										
 										// store the complete routing table as last report but send only the diff
-										mReportedRoutingTable = (RoutingTable) tReportRoutingTable.clone();
+										mLastSentReportedRoutingTable = (RoutingTable) tReportRoutingTable.clone();
 										// the "diff" table
 										tReportRoutingTable = tDiffReportRoutingTable;
 												
@@ -982,7 +981,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 */
 								if(!tReportOnlyADiff){
 									// report a complete routing table
-									mReportedRoutingTable = (RoutingTable) tReportRoutingTable.clone();
+									mLastSentReportedRoutingTable = (RoutingTable) tReportRoutingTable.clone();
 									// store the time
 									mTimeLastCompleteReportedRoutingTable = mHRMController.getSimulationTime();
 								}
@@ -1033,8 +1032,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			Logging.log(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
 		}
 		
-		synchronized (mReceivedSharedRoutingTable) {
-			mReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
+		synchronized (mLastReceivedSharedRoutingTable) {
+			mLastReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
 			learnLocallyTheLastSharedRoutingTable(this + "::eventReceivedRouteShare() from " + pSourceComChannel.getPeerHRMID());
 		}		
 	}
@@ -1047,8 +1046,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public synchronized void learnLocallyTheLastSharedRoutingTable(String pCause)
 	{
 		RoutingTable tReceivedSharedRoutingTable = null;
-		synchronized (mReceivedSharedRoutingTable) {
-			tReceivedSharedRoutingTable = (RoutingTable) mReceivedSharedRoutingTable.clone();
+		synchronized (mLastReceivedSharedRoutingTable) {
+			tReceivedSharedRoutingTable = (RoutingTable) mLastReceivedSharedRoutingTable.clone();
 		}
 
 		/**
