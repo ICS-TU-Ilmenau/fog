@@ -486,7 +486,7 @@ public class HRMConfig
 		/**
 		 * Defines the timeout for a route, if it is reported when the hierarchy was detected as stable, in [s]
 		 */
-		public static final double ROUTE_TIMEOUT_STABLE_HIERARCHY = 30.0; // default: 60
+		public static final double ROUTE_TIMEOUT_STABLE_HIERARCHY = 60.0; // default: 60
 
 		/**
 		 * Defines if multiple paths for the same destination should be distributed
