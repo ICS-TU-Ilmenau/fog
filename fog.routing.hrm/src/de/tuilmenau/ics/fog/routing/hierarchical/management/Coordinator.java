@@ -1348,6 +1348,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					if(!mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
 						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = true;
 						Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY");
+
+						// reset the packet overhead measurement
+						HRMController.resetPacketOverheadCounting();
 					}
 					
 					// register next trigger for 
@@ -1621,7 +1624,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					
 					// search for an already existing membership
 					CoordinatorAsClusterMember tClusterMembership = getMembership(pRemoteClusterName);
-					if(tClusterMembership != null){
+					if((tClusterMembership != null) && (!tClusterMembership.isThisEntityValid())){
+						Logging.warn(this, "Ignoring existing matching cluster membership because it was already invalidated: " + tClusterMembership);
+					}							
+					if((tClusterMembership != null) && (tClusterMembership.isThisEntityValid())){
 						tResult = tClusterMembership.getComChannel(pRemoteClusterName);
 						Logging.warn(this, "Received a ClusterMemberShipRequest more than once for: " + tClusterMembership);
 					}else{
