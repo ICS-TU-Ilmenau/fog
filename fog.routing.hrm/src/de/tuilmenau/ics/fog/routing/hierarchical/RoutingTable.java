@@ -24,6 +24,41 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	private static final long serialVersionUID = -9166625971164847894L;
 
 	/**
+	 * Sets the timeout for all routing table entries
+	 * 
+	 * @param pHRMController the local HRMController instance
+	 */
+	public void setTimeout(HRMController pHRMController)
+	{
+		/**
+		 * set timeout for each routing table entry
+		 */
+		double tLifetime = calcRoutingTableLifetime(pHRMController);
+		for (RoutingEntry tEntry: this){
+			tEntry.setTimeout(tLifetime);
+		}
+	}
+
+	/**
+	 * Calculates the timeout for all routing table entries
+	 * 
+	 * @param pHRMController the local HRMController instance
+	 * 
+	 * @return the timeout
+	 */
+	private double calcRoutingTableLifetime(HRMController pHRMController)
+	{
+		double tResult = HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
+	
+		if((pHRMController != null) && (pHRMController.hasLongTermStableHierarchy())){
+			//Logging.err(this, "Using higher lifetime here");
+			tResult = HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY;
+		}
+	
+		return tResult;
+	}
+
+	/**
 	 * Inserts/updates a routing table entry
 	 * 
 	 * @param pRoutingTableEntry the new entry
