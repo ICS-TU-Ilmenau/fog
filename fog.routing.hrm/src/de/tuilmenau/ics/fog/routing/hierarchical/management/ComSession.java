@@ -712,6 +712,8 @@ public class ComSession extends Session
 			
 			Logging.log(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + pMultiplexHeader);
 			Logging.log(this, "   ..data: " + tRequestClusterMembershipAckPAcket);
+			Logging.log(this, "   ..destination: " + tDestination);
+			Logging.log(this, "   ..source: " + tSource);
 			Logging.log(this, "   ..destination channel: " + tDestinationComChannel);
 		}
 		
