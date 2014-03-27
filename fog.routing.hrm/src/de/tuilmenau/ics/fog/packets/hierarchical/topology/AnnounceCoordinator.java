@@ -180,11 +180,11 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	
 	private double calcLifetime(HRMController pHRMController)
 	{
-		double tResult = 2 /* always 2 times */ * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
+		double tResult = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
 
 		if((pHRMController != null) && (pHRMController.hasLongTermStableHierarchy())){
 			//Logging.err(this, "Using higher lifetime here");
-			tResult = 2 /* always 2 times */ * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY;
+			tResult = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY;
 		}
 
 		return tResult;

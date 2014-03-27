@@ -20,7 +20,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.hierarchical.*;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig.Hierarchy;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -102,6 +101,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * Stores if the last reported routing table was sent during an unstable hierarchy
 	 */
 	private boolean mLastReportedRoutingTableWasDuringUnstableHierarchy = true;
+	
+	/**
+	 * Stores if the last AnnounceCoordinator was sent during an unstable hierarchy
+	 */
+	private boolean mLastCoordinatorAnnounceWasDuringUnstableHierarchy = true;
 	
 	/**
 	 * Stores if a warning about an invalid channel to the superior coordinator was already printed.
@@ -1365,20 +1369,33 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					distributeCoordinatorAnnouncement(false);
 				}
 				
-				if(mHRMController.getTimeWithStableHierarchy() < HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME){
+				/**
+				 * set the time for the next AnnounceCoordinator broadcast
+				 */
+				if((mHRMController.hasLongTermStableHierarchy()) && (!mLastCoordinatorAnnounceWasDuringUnstableHierarchy)){
+					if(!mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
+						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = true;
+						Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY");
+					}
+					
+					// register next trigger for 
+					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY, this);
+				}else{
 					if(mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
 						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = false;
 						Logging.warn(this, "Announcements - switching back to COORDINATOR_ANNOUNCEMENTS_INTERVAL");
 					}
 					// register next trigger for 
 					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL, this);
+				}
+
+				/**
+				 * remember the state of the last AnnounceCoordinator broadcast
+				 */
+				if(mHRMController.hasLongTermStableHierarchy()){
+					mLastCoordinatorAnnounceWasDuringUnstableHierarchy = false;
 				}else{
-					if(!mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
-						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = true;
-						Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY");
-					}
-					// register next trigger for 
-					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY, this);
+					mLastCoordinatorAnnounceWasDuringUnstableHierarchy = true;
 				}
 			}
 		}else{
