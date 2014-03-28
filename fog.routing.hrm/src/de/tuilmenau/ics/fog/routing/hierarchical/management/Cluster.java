@@ -1085,37 +1085,37 @@ public class Cluster extends ClusterMember
 		 */
 		if((pDeprecatedRoutingTable != null) && (pDeprecatedRoutingTable.size() > 0)){
 			Logging.warn(this, "Found deprecated reported routing table: " + pDeprecatedRoutingTable);
-			for(RoutingEntry tDeprecatedentry : pDeprecatedRoutingTable){
-				Logging.warn(this, "   ..found deprecated reported routing entry: " + tDeprecatedentry);
+			for(RoutingEntry tDeprecatedEntry : pDeprecatedRoutingTable){
+				Logging.warn(this, "   ..found deprecated reported routing entry: " + tDeprecatedEntry);
 				
 				/**
 				 * Set the timeout for deprecated reported routes to a short time period
 				 */
-				tDeprecatedentry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
+				tDeprecatedEntry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
 				
 				/**
 				 * Mark as reported entry
 				 */
-				tDeprecatedentry.setReportedLink(pSourceComChannel.getPeerHRMID());
+				tDeprecatedEntry.setReportedLink(pSourceComChannel.getPeerHRMID());
 				
 				/**
 				 * Update the HRG in such a way that the deprecated will be removed automatically very soon if no other inferior coordinator reports the same route with a high timeout (the route is still known as active there)
 				 */
-				int tHopCount = tDeprecatedentry.getHopCount();
+				int tHopCount = tDeprecatedEntry.getHopCount();
 				switch(tHopCount)
 				{
 					case 0:
 						// it's an inter-cluster link because local loopbacks aren't sent as report
-						tDeprecatedentry.extendCause(this + "::eventReceivedRouteReport()(0 hops) from " + pSourceComChannel.getPeerHRMID());
-						mHRMController.registerAutoHRG(tDeprecatedentry);
+						tDeprecatedEntry.extendCause(this + "::eventReceivedRouteReport()(0 hops) from " + pSourceComChannel.getPeerHRMID());
+						mHRMController.registerAutoHRG(tDeprecatedEntry);
 
 						break;
 					case 1:
 					default: // 2+
 						// do we have an intra-cluster link?
-						if((!tDeprecatedentry.getDest().isClusterAddress()) && (tDeprecatedentry.getDest().equals(tDeprecatedentry.getLastNextHop()))){
-							tDeprecatedentry.extendCause(this + "::eventReceivedRouteReport()(1 hop) from " + pSourceComChannel.getPeerHRMID());
-							mHRMController.registerLinkHRG(tDeprecatedentry.getSource(), tDeprecatedentry.getLastNextHop(), tDeprecatedentry);
+						if((!tDeprecatedEntry.getDest().isClusterAddress()) && (tDeprecatedEntry.getDest().equals(tDeprecatedEntry.getLastNextHop()))){
+							tDeprecatedEntry.extendCause(this + "::eventReceivedRouteReport()(1 hop) from " + pSourceComChannel.getPeerHRMID());
+							mHRMController.registerLinkHRG(tDeprecatedEntry.getSource(), tDeprecatedEntry.getLastNextHop(), tDeprecatedEntry);
 						}else{
 							// strange, an inter-cluster link with ONE hop?!
 						}
