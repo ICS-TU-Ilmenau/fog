@@ -3862,6 +3862,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				mWarnedAboutHierarchyChange = true;
 			}
 		}
+		
+		/**
+		 * Resets all life times of all local coordinators in order to trigger again a short refresh time (AnnounceCoordinator packets)
+		 */
+		LinkedList<Coordinator> tLocalCoordinators = getAllCoordinators();
+		for (Coordinator tCoordinator: tLocalCoordinators){
+			tCoordinator.resetLifeTime();
+		}
 	}
 
 	/**

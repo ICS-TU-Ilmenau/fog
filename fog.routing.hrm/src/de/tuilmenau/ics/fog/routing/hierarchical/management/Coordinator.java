@@ -113,7 +113,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public static int mCreatedCoordinators[] = new int[HRMConfig.Hierarchy.HEIGHT];
 	
 	/**
-	 * Stores the creation time of this coordinator
+	 * Stores the creation time of this coordinator.
+	 * This name is a bit misleading because it is the lifetime of this coordinator for all nodes in the local (radius!) surrounding.
+	 * Hence, if the local node detects a delayed (e.g., broken links) hierarchy change, it resets this life time value. 
 	 */
 	private double mCreationTime = 0;
 	
@@ -132,7 +134,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		mParentCluster = pCluster;
 
 		// store the creation time of this coordinator
-		mCreationTime = mHRMController.getSimulationTime();
+		resetLifeTime();
 				
 		// create an ID for the cluster
 		setCoordinatorID(createCoordinatorID());
@@ -201,6 +203,14 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	private double lifeTime()
 	{
 		return mHRMController.getSimulationTime() - mCreationTime;
+	}
+	
+	/**
+	 * Resets the life time of this coordinator (e.g., in case of a delayed hierarchy change).
+	 */
+	public void resetLifeTime()
+	{
+		mCreationTime = mHRMController.getSimulationTime();
 	}
 	
 	/**
