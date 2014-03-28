@@ -320,10 +320,15 @@ public class HRMConfig
 		/**
 		 * Defines the time period for CoordinatorAnnounce broadcasts, which are sent when the hierarchy was detected as stable, in [s]
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = 30.0; // default: 30
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE = 30.0; // default: 30
 
 		/**
-		 * Defines the time period for a stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY.
+		 * Defines the time period for a coordinator-specific stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE.
+		 */
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME = 15.0; // default: 15
+
+		/**
+		 * Defines the time period for a node-specific stable hierarchy -> used for CoordinatorProxy invalidation and route reports/shares
 		 */
 		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME = 60.0; // default: 60
 
@@ -421,6 +426,16 @@ public class HRMConfig
 		 * Limits the number of connection retries
 		 */
 		public static final int CONNECTION_MAX_RETRIES = 1; // default: 1
+
+		/**
+		 * Defines the time in which coordinators are announced immediately in any case
+		 */
+		public static final double COORDINATOR_ANNOUNCEMENTS_NODE_STARTUP_TIME = 10.0;
+
+		/**
+		 * Defines the time in which a coordinator is threaded as "young" and isn't announced
+		 */
+		public static final double COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME = 0.0;
 	}
 	
 	/**

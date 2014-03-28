@@ -204,6 +204,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 	
 	/**
+	 * Returns true if this coordinator has a long-term stability
+	 * 
+	 * @return true or false
+	 */
+	public boolean hasLongTermExistence()
+	{
+		return  lifeTime() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME + HRMConfig.Hierarchy.MAX_E2E_DELAY;
+	}
+	
+	/**
 	 * Sets the communication channel to the superior coordinator.
 	 * For a base hierarchy level cluster, this is a level 0 coordinator.
 	 * For a level n coordinator, this is a level n+1 coordinator.
@@ -1187,9 +1197,14 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
 				if (HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 					if(!getHierarchyLevel().isHighest()){
-						if((mHRMController.getSimulationTime() <= 10.0) || (lifeTime() > 3.0)){
+						/**
+						 * reduce the signaling overhead by
+						 * - do not announce a very young coordinator (might get destroyed in the next moment)
+						 * - keep on announcing an already announced coordinator or a quite older one
+						 */
+						if((mHRMController.getSimulationTime() <= HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_NODE_STARTUP_TIME) || (lifeTime() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME) || (mSentAnnounces > 0)){
 							LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
-							AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
+							AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address(), this);
 							if(pTrackedPackets){
 								tAnnounceCoordinatorPacket.activateTracking();
 							}
@@ -1386,7 +1401,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				/**
 				 * set the time for the next AnnounceCoordinator broadcast
 				 */
-				if((mHRMController.hasLongTermStableHierarchy()) && (!mLastCoordinatorAnnounceWasDuringUnstableHierarchy)){
+				if((hasLongTermExistence()) && (!mLastCoordinatorAnnounceWasDuringUnstableHierarchy)){
 					if(!mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
 						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = true;
 						Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY");
@@ -1396,7 +1411,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					}
 					
 					// register next trigger for 
-					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY, this);
+					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE, this);
 				}else{
 					if(mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
 						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = false;
@@ -1409,7 +1424,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				/**
 				 * remember the state of the last AnnounceCoordinator broadcast
 				 */
-				if(mHRMController.hasLongTermStableHierarchy()){
+				if(hasLongTermExistence()){
 					mLastCoordinatorAnnounceWasDuringUnstableHierarchy = false;
 				}else{
 					mLastCoordinatorAnnounceWasDuringUnstableHierarchy = true;

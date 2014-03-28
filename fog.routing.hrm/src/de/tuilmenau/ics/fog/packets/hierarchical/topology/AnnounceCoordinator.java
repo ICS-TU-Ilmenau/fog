@@ -17,6 +17,7 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -151,12 +152,13 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	 * @param pSenderName the name of the message sender
 	 * @param pSenderClusterName the ClusterName of the sender
 	 * @param pCoordinatorNodeL2Address the L2 address of the node where the coordinator is located
+	 * @param pCoordinator the coordinator for which the announcement should be sent
 	 */
-	public AnnounceCoordinator(HRMController pHRMController, HRMName pSenderName, ClusterName pSenderClusterName, L2Address pCoordinatorNodeL2Address)
+	public AnnounceCoordinator(HRMController pHRMController, HRMName pSenderName, ClusterName pSenderClusterName, L2Address pCoordinatorNodeL2Address, Coordinator pCoordinator)
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
-		mLifetime = calcLifetime(pHRMController);
+		mLifetime = calcLifetime(pCoordinator);
 		
 		setSenderEntityName(pSenderClusterName);
 
@@ -178,13 +180,13 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		}
 	}
 	
-	private double calcLifetime(HRMController pHRMController)
+	private double calcLifetime(Coordinator pCoordinator)
 	{
 		double tResult = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
 
-		if((pHRMController != null) && (pHRMController.hasLongTermStableHierarchy())){
+		if((pCoordinator != null) && (pCoordinator.hasLongTermExistence())){
 			//Logging.err(this, "Using higher lifetime here");
-			tResult = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY;
+			tResult = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE + HRMConfig.Hierarchy.MAX_E2E_DELAY;
 		}
 
 		return tResult;
@@ -439,7 +441,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		AnnounceCoordinator tResult = new AnnounceCoordinator(null, getSenderName(), getSenderEntityName(), getSenderEntityNodeL2Address());
+		AnnounceCoordinator tResult = new AnnounceCoordinator(null, getSenderName(), getSenderEntityName(), getSenderEntityNodeL2Address(), null);
 		
 		super.duplicate(tResult);
 
