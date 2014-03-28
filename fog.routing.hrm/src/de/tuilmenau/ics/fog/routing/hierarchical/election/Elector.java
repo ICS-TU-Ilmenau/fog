@@ -1243,9 +1243,9 @@ public class Elector implements Localization
 				){
 					// go back to electing and compute a new election result here
 					tClusterElector.setElectorState(ElectorState.ELECTING);
-//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "Rechecking (checkForWinner()) the local cluster: " + tClusterElector + ", cause="+pCause);
-//					}
+					}
 						
 					/**
 					 * Recalculate an election result	
@@ -1267,25 +1267,25 @@ public class Elector implements Localization
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
 			if(mParent.getHierarchyLevel().isHigherLevel()){
-//				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 					Logging.log(this, "Returning to elections..");
-//				}
+				}
 				/**
 				 * AVOID multiple RETURNS
 				 */
 				synchronized (mNodeActiveClusterMemberships){
 					LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
-//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tActiveClusterMemberships);
-//					}
+					}
 					
 					/**
 					 * ONLY PROCEED IF THE PARENT IS AN ACTIVE ClusterMember!
 					 */
 					if(tActiveClusterMemberships.contains(mParent)){
-//						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 							Logging.log(this, "      ..is ACTIVE ClusterMember");
-//						}
+						}
 						
 						/**
 						 * Mark/remove this ClusterMember (best choice election) because it's not active anymore
@@ -1322,9 +1322,9 @@ public class Elector implements Localization
 									}
 								}
 							}// for
-//							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 								Logging.log(this, "      ..still an alternative election with valid coordinator exists: " + tStillAnAlternativeElectionWithValidCoordinatorExists);
-//							}
+							}
 
 							/**********************************************************
 							 * Return to all alternative elections 
@@ -1346,9 +1346,9 @@ public class Elector implements Localization
 												/**
 												 * Distribute "RETURN" for the alternative election process
 												 */
-//													if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+													if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 													Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
-//													}
+													}
 												tAlternativeElection.distributeRETURN(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
 											}else{
 												throw new RuntimeException("Found invalid elector for: " + tClusterMembership);
@@ -1805,9 +1805,9 @@ public class Elector implements Localization
 	 */
 	private void eventReceivedREPLY(ComChannel pSourceComChannel, ElectionReply pReplyPacket)
 	{
-//		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "EVENT: received REPLY by " + pReplyPacket + " via: " + pSourceComChannel);
-//		}
+		}
 
 		/**
 		 * check for a winner
@@ -1969,9 +1969,9 @@ public class Elector implements Localization
 		// get the priority of the sender
 		ElectionPriority tSenderPriority = pComChannel.getPeerPriority();
 		
-//		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "EVENT: priority update by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
-//		}
+		}
 
 		/**
 		 * Are we a ClusterMember and received an update from the local Cluster or are we the Cluster and received an update from the local ClusterMember? 
@@ -2056,9 +2056,9 @@ public class Elector implements Localization
 			 * If the election wasn't finished yet, maybe all needed priorities are available now and the election could be finished.
 			 */
 			if(!finished()){
-//				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 					Logging.log(this, "   ..checking for election winner");
-//				}
+				}
 				checkForWinner("eventReceivedPRIORITY_UPDATE() by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
 			}
 		}
@@ -2318,9 +2318,9 @@ public class Elector implements Localization
 		ElectionPriority tOldPeerPriority = pComChannel.getPeerPriority();	
 		boolean tReceivedNewPriority = pComChannel.setPeerPriority(pPacket.getSenderPriority());
 		if(tReceivedNewPriority){
-	//		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "      ..updating peer priority from " + tOldPeerPriority.getValue() + " to: " + pPacket.getSenderPriority().getValue());
-	//		}		
+			}		
 		}
 		
 		/***************************
