@@ -782,8 +782,13 @@ public class RoutingEntry implements RouteSegment
 	 */
 	public void setSharedLink(HRMID pSender)
 	{
-		mSharedLink = true;
-		mSharer = pSender;
+		if(pSender == null){
+			mSharedLink = false;
+			mSharer = new HRMID(-1); 
+		}else{
+			mSharedLink = true;
+			mSharer = pSender;
+		}
 	}
 
 	/**
@@ -1192,7 +1197,7 @@ public class RoutingEntry implements RouteSegment
 	@Override
 	public String toString()
 	{
-		String tResult = (mRouteAcrossNetwork ? "RAN: " : "") + (mReportedLink ? "REP: " : "") + (mSharedLink ? "SHA: " : "");
+		String tResult = (mRouteToDirectNeighbor ? "NGH: " : "") + (mRouteAcrossNetwork ? "RAN: " : "") + (mReportedLink ? "REP: " : "") + (mSharedLink ? "SHA: " : "");
 
 		if(!mBelongstoHRG){
 			tResult += "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getLastNextHop() != null ? ", LastNext=" + getLastNextHop() : "") + (getOrigin() != null ? ", Origin=" + getOrigin() : "") + ")";
