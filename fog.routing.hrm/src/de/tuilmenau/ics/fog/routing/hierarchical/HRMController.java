@@ -3176,6 +3176,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						tReceivedSharedRoutingEntry.append(tSecondRoutePart, this + "::addHRMRouteShare(pCause) at lvl: " + pReceiverHierarchyLevel);
 						// set the origin of the shared routing entry as origin for the resulting local routing entry
 						tReceivedSharedRoutingEntry.setOrigin(tSecondRoutePart.getOrigin());
+						// apply the original timeout value here
+						tReceivedSharedRoutingEntry.setTimeout(tSecondRoutePart.getTimeout());
 						// we need the next hop L2 address only for domains with more than 2 nodes
 						if(!isLocalCluster(tReceivedSharedRoutingEntry.getDest())){
 							tReceivedSharedRoutingEntry.setNextHopL2Address(null);
