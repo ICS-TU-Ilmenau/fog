@@ -3149,7 +3149,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		for(RoutingEntry tEntry : pReceivedSharedRoutingTable){
 			RoutingEntry tReceivedSharedRoutingEntry = tEntry.clone();
 			if(DEBUG){
-				Logging.log(this, "  ..received shared route: " + tReceivedSharedRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tReceivedSharedRoutingEntry.getDest()) + ", is source local: " + isLocal(tReceivedSharedRoutingEntry.getSource()));
+				Logging.log(this, "  ..received (TO: " + tReceivedSharedRoutingEntry.getTimeout() + ") shared route: " + tReceivedSharedRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tReceivedSharedRoutingEntry.getDest()) + ", is source local: " + isLocal(tReceivedSharedRoutingEntry.getSource()));
 			}
 				
 			boolean tDropRoute = false;
@@ -3196,7 +3196,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 			}
-
 			
 			/**
 			 * Store only routes which start at this node
@@ -3204,11 +3203,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			if(!tDropRoute){
 				if(isLocal(tReceivedSharedRoutingEntry.getSource())){
 					/**
-					 * ignore routes to cluster this nodes belong to
+					 * ignore routes to clusters this nodes belong to
 					 * 		=> such routes are already known based on neighborhood detection of the L0 comm. channels (Clusters) 
 					 */				
 					if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (!isLocalCluster(tReceivedSharedRoutingEntry.getDest()))){
-						if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (tReceivedSharedRoutingEntry.getHopCount() >= 1)){
+						if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (tReceivedSharedRoutingEntry.getHopCount() > 1)){
 							// patch the source with the correct local sender address
 							tReceivedSharedRoutingEntry.setSource(getLocalSenderAddress(tReceivedSharedRoutingEntry.getSource(), tReceivedSharedRoutingEntry.getNextHop()));
 							tReceivedSharedRoutingEntry.extendCause(pCause);
@@ -3218,8 +3217,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							 * Set the timeout for the found shared route
 							 * 		=> 2 times the time period between two share phase for the sender's hierarchy level
 							 */
-							double tTimeoffset = 2 * getPeriodSharePhase(pReceiverHierarchyLevel.getValue() + 1 /* the sender is one level above */);
-							tReceivedSharedRoutingEntry.setTimeout(getSimulationTime() + tTimeoffset);
+							if(tReceivedSharedRoutingEntry.getTimeout() <= 0){
+								double tTimeoffset = 2 * getPeriodSharePhase(pReceiverHierarchyLevel.getValue() + 1 /* the sender is one level above */);
+								tReceivedSharedRoutingEntry.setTimeout(getSimulationTime() + tTimeoffset);
+							}
 							
 							/**
 							 * Mark as shared entry
@@ -3243,7 +3244,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							 * Store the found route
 							 */
 							if(DEBUG){
-								Logging.log(this, "    ..adding shared route (timeout=" + tReceivedSharedRoutingEntry.getTimeout() + ", time-offset=" + tTimeoffset + "): " + tReceivedSharedRoutingEntry);
+								Logging.log(this, "    ..adding shared route (timeout=" + tReceivedSharedRoutingEntry.getTimeout() + "): " + tReceivedSharedRoutingEntry);
 							}
 							addHRMRoute(tReceivedSharedRoutingEntry);
 					 	}else{
