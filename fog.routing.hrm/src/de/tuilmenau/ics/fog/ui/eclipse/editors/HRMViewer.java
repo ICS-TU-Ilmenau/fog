@@ -2291,6 +2291,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					}
 				}
 			});
+
+			tColLoop.dispose();
+		    tColNeighbor.dispose();
+		    tColGeneral.dispose();
 		}else{
 			Logging.warn(this, "Widget mTableRoutingTable was already disposed");
 		}
