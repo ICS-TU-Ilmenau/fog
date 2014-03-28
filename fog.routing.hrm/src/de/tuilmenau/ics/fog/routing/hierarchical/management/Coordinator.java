@@ -112,6 +112,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	public static int mCreatedCoordinators[] = new int[HRMConfig.Hierarchy.HEIGHT];
 	
+	/**
+	 * Stores the creation time of this coordinator
+	 */
+	private double mCreationTime = 0;
+	
 	private static final long serialVersionUID = 6824959379284820010L;
 	
 	/**
@@ -125,7 +130,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		super(pCluster.mHRMController, pCluster.getHierarchyLevel());
 		
 		mParentCluster = pCluster;
-		
+
+		// store the creation time of this coordinator
+		mCreationTime = mHRMController.getSimulationTime();
+				
 		// create an ID for the cluster
 		setCoordinatorID(createCoordinatorID());
 		
@@ -137,7 +145,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 
 		// register at HRMController's internal database
 		mHRMController.registerCoordinator(this);
-
+		
 		Logging.log(this, "\n\n\n################ CREATED COORDINATOR at hierarchy level: " + getHierarchyLevel().getValue());
 		
 		// trigger periodic Cluster announcements
@@ -183,6 +191,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public static long countCreatedCoordinators()
 	{
 		return (sNextFreeCoordinatorID - 1);
+	}
+	
+	/**
+	 * Returns the life time of this coordinator
+	 * 
+	 * @return the life time in [s]
+	 */
+	private double lifeTime()
+	{
+		return mHRMController.getSimulationTime() - mCreationTime;
 	}
 	
 	/**
@@ -1169,87 +1187,90 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
 				if (HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 					if(!getHierarchyLevel().isHighest()){
-						LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
-						AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
-						if(pTrackedPackets){
-							tAnnounceCoordinatorPacket.activateTracking();
-						}
-						
-						int tCorrectionForPacketCounter = -1;
-
-						/**
-						 * Count the sent announces
-						 */
-						mSentAnnounces++;
-						
-						/**
-						 * TTL is still okay?
-						 */
-						if(tAnnounceCoordinatorPacket.isTTAOkay()){
+						if((mHRMController.getSimulationTime() <= 10.0) || (lifeTime() > 3.0)){
+							LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
+							AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
+							if(pTrackedPackets){
+								tAnnounceCoordinatorPacket.activateTracking();
+							}
+							
+							int tCorrectionForPacketCounter = -1;
+	
 							/**
-							 * We have two algorithms here:
-							 * 	1.) we send the announcement along the L0 clusters only sidewards and limit the distribution by the help of an automatically increased hop counter (TTL)
-							 *  2.) a.) we send the announcement top-down the hierarchy in order to let each inferior entity know, to which higher coordinators it belongs -> this allows each entity to decide if an announcement comes from its superior coordinator or from a foreign one
-							 *      b.) we send the announcement along the L0 clusters sidewards and let each entity decide - based on the data from step a.) - if a logical hop (a cluster region) ends or not -> this allows each entity to decide if the max. hop count (TTL) is reached or the packet should continue its journey 
-							 * 
-							 * HINT: For hierarchy heights below 4, we always use option 1. For example, a height of 3 means:
-							 * 			L0 -> we decide based on the physical hop count and decrease automatically the TTL
-							 * 			L1 -> we don't use the TTL mechanism because every node should know such a coordinator
-							 * 			L2 -> no announcements needed because no superior cluster may exist
-							 * 
+							 * Count the sent announces
 							 */
-							if((getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.HEIGHT <= 3)){
+							mSentAnnounces++;
+							
+							/**
+							 * TTL is still okay?
+							 */
+							if(tAnnounceCoordinatorPacket.isTTAOkay()){
 								/**
-								 * Send cluster broadcasts in all other active L0 clusters if we are at level 0 
+								 * We have two algorithms here:
+								 * 	1.) we send the announcement along the L0 clusters only sidewards and limit the distribution by the help of an automatically increased hop counter (TTL)
+								 *  2.) a.) we send the announcement top-down the hierarchy in order to let each inferior entity know, to which higher coordinators it belongs -> this allows each entity to decide if an announcement comes from its superior coordinator or from a foreign one
+								 *      b.) we send the announcement along the L0 clusters sidewards and let each entity decide - based on the data from step a.) - if a logical hop (a cluster region) ends or not -> this allows each entity to decide if the max. hop count (TTL) is reached or the packet should continue its journey 
+								 * 
+								 * HINT: For hierarchy heights below 4, we always use option 1. For example, a height of 3 means:
+								 * 			L0 -> we decide based on the physical hop count and decrease automatically the TTL
+								 * 			L1 -> we don't use the TTL mechanism because every node should know such a coordinator
+								 * 			L2 -> no announcements needed because no superior cluster may exist
+								 * 
 								 */
-								for(Cluster tCluster : tL0Clusters){
-									tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
-									tCorrectionForPacketCounter++;
-								}
-							}else{
-								/**
-								 * Send cluster broadcast (to the bottom) in all active inferior clusters - either direct or indirect via the forwarding function of a higher cluster
-								 */
-								LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue());
-								if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-									Logging.log(this, "########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
-									Logging.log(this, "     ..distributing in clusters: " + tClusters);
-								}
-								for(Cluster tCluster : tClusters){
-									tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
-									tCorrectionForPacketCounter++;
-								}
-								
-								/**
-								 * Send cluster broadcasts in all known inactive L0 clusters
-								 */
-								LinkedList<Cluster> tInactiveL0Clusters = new LinkedList<Cluster>();
-								for(Cluster tCluster : tL0Clusters){
-									if(!tCluster.hasClusterValidCoordinator()){
-										tInactiveL0Clusters.add(tCluster);
+								if((getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.HEIGHT <= 3)){
+									/**
+									 * Send cluster broadcasts in all other active L0 clusters if we are at level 0 
+									 */
+									for(Cluster tCluster : tL0Clusters){
+										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+										tCorrectionForPacketCounter++;
 									}
-								}					
-								if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-									Logging.log(this, "########## Distributing Coordinator announcement (to the side): " + tAnnounceCoordinatorPacket);
-									Logging.log(this, "     ..distributing in inactive clusters: " + tClusters);
-								}
-								for(Cluster tCluster : tInactiveL0Clusters){
-									tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
-									tCorrectionForPacketCounter++;
+								}else{
+									/**
+									 * Send cluster broadcast (to the bottom) in all active inferior clusters - either direct or indirect via the forwarding function of a higher cluster
+									 */
+									LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue());
+									if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+										Logging.log(this, "########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
+										Logging.log(this, "     ..distributing in clusters: " + tClusters);
+									}
+									for(Cluster tCluster : tClusters){
+										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+										tCorrectionForPacketCounter++;
+									}
+									
+									/**
+									 * Send cluster broadcasts in all known inactive L0 clusters
+									 */
+									LinkedList<Cluster> tInactiveL0Clusters = new LinkedList<Cluster>();
+									for(Cluster tCluster : tL0Clusters){
+										if(!tCluster.hasClusterValidCoordinator()){
+											tInactiveL0Clusters.add(tCluster);
+										}
+									}					
+									if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+										Logging.log(this, "########## Distributing Coordinator announcement (to the side): " + tAnnounceCoordinatorPacket);
+										Logging.log(this, "     ..distributing in inactive clusters: " + tClusters);
+									}
+									for(Cluster tCluster : tInactiveL0Clusters){
+										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+										tCorrectionForPacketCounter++;
+									}
 								}
 							}
+							
+							/**
+							 * HACK: correction of packet counter for AnnounceCoordinator packets
+							 */
+							synchronized (AnnounceCoordinator.sCreatedPackets) {
+								AnnounceCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
+							}
+							synchronized (SignalingMessageHrm.sCreatedPackets) {
+								SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
+							}
+						}else{
+							// still too young
 						}
-						
-						/**
-						 * HACK: correction of packet counter for AnnounceCoordinator packets
-						 */
-						synchronized (AnnounceCoordinator.sCreatedPackets) {
-							AnnounceCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
-						}
-						synchronized (SignalingMessageHrm.sCreatedPackets) {
-							SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
-						}
-
 					}else{
 						// highest hierarchy level -> no announcements
 					}
@@ -1274,43 +1295,47 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// trigger periodic Cluster announcements
 		if((HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS) && (HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS)){
 			if(!getHierarchyLevel().isHighest()){
-				InvalidCoordinator tInvalidCoordinatorPacket = new InvalidCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
+				if(mSentAnnounces > 0){
+					InvalidCoordinator tInvalidCoordinatorPacket = new InvalidCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address());
+		
+					int tCorrectionForPacketCounter = -1;
 	
-				int tCorrectionForPacketCounter = -1;
-
-				/**
-				 * Count the sent announces
-				 */
-				mSentInvalidations++;
-
-				/**
-				 * TTL is still okay?
-				 */
-				if(tInvalidCoordinatorPacket.isTTIOkay()){
 					/**
-					 * Send broadcasts in all locally known clusters at this hierarchy level
+					 * Count the sent announces
 					 */
-					LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0); //HINT: we have to broadcast via level 0, otherwise, an inferior might already be destroyed and the invalidation message might get dropped
-		//			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-						Logging.log(this, "########## Distributing Coordinator invalidation [" + mSentInvalidations + "](to the bottom): " + tInvalidCoordinatorPacket);
-						Logging.log(this, "     ..distributing in clusters: " + tClusters);
-		//			}
-					for(Cluster tCluster : tClusters){
-						tCluster.sendClusterBroadcast(tInvalidCoordinatorPacket, true);
-						tCorrectionForPacketCounter++;
+					mSentInvalidations++;
+	
+					/**
+					 * TTL is still okay?
+					 */
+					if(tInvalidCoordinatorPacket.isTTIOkay()){
+						/**
+						 * Send broadcasts in all locally known clusters at this hierarchy level
+						 */
+						LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0); //HINT: we have to broadcast via level 0, otherwise, an inferior might already be destroyed and the invalidation message might get dropped
+			//			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+							Logging.log(this, "########## Distributing Coordinator invalidation [" + mSentInvalidations + "](to the bottom): " + tInvalidCoordinatorPacket);
+							Logging.log(this, "     ..distributing in clusters: " + tClusters);
+			//			}
+						for(Cluster tCluster : tClusters){
+							tCluster.sendClusterBroadcast(tInvalidCoordinatorPacket, true);
+							tCorrectionForPacketCounter++;
+						}
 					}
+					
+					/**
+					 * HACK: correction of packet counter for InvalidCoordinator packets
+					 */
+					synchronized (InvalidCoordinator.sCreatedPackets) {
+						InvalidCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
+					}
+					synchronized (SignalingMessageHrm.sCreatedPackets) {
+						SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
+					}
+	
+				}else{
+					// no one knows us, no one to say good bye ;)
 				}
-				
-				/**
-				 * HACK: correction of packet counter for InvalidCoordinator packets
-				 */
-				synchronized (InvalidCoordinator.sCreatedPackets) {
-					InvalidCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
-				}
-				synchronized (SignalingMessageHrm.sCreatedPackets) {
-					SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
-				}
-
 			}else{
 				// highest hierarchy level -> no announcements
 			}
