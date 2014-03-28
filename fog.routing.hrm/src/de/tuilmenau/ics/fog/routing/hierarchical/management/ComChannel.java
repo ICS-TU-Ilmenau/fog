@@ -272,7 +272,22 @@ public class ComChannel
 	 * Stores the last shared routing table, which was shared by the superior coordinator/cluster
 	 */
 	private RoutingTable mLastReceivedSharedRoutingTable = new RoutingTable();
+
+	/**
+	 * Stores the last sent shared routing table, which was shared with inferior coordinator/cluster member
+	 */
+	private RoutingTable mLastSentSharedRoutingTable = new RoutingTable();
 	
+	/**
+	 * Stores the time when the last full routing table was shared with the inferior control entity
+	 */
+	private double mTimeLastCompleteSharedRoutingTable = 0;
+
+	/**
+	 * Stores if the last shared routing table was sent during an unstable hierarchy
+	 */
+	private boolean mLastSharedRoutingTableWasDuringUnstableHierarchy = true;
+
 	/**
 	 * Constructor
 	 * 
@@ -399,19 +414,19 @@ public class ComChannel
 	 * Detects the local neighborhood.
 	 * 		  IMPORTANT: This is the main function for determining capacities and link usage
 	 */
-	private int mCallsEventNewPeerHRMIDs = 0;
+	private int mCallsDetectNeighborhood = 0;
 	public void detectNeighborhood()
 	{
 		if (mParent.getHierarchyLevel().isBaseLevel()){
 			if(mParent instanceof ClusterMember){
-				mCallsEventNewPeerHRMIDs++;
+				mCallsDetectNeighborhood++;
 	
 				// get the list of neighbor HRMIDs
 				LinkedList<HRMID> tNeighborHRMIDs = getPeerHRMIDs();
 	
 				if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
-					Logging.log(this, "EVENT: new neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + ") for: " + this);
-					Logging.log(this, "    ..neighbor HRMIDs (" + mCallsEventNewPeerHRMIDs + "): " + tNeighborHRMIDs);
+					Logging.log(this, "EVENT: new neighbor HRMIDs (" + mCallsDetectNeighborhood + ") for: " + this);
+					Logging.log(this, "    ..neighbor HRMIDs (" + mCallsDetectNeighborhood + "): " + tNeighborHRMIDs);
 				}
 				
 				/**
@@ -457,7 +472,7 @@ public class ComChannel
 								for(HRMID tNeighborHRMID : tNeighborHRMIDs){
 									if((tNeighborHRMID != null) && (!tNeighborHRMID.isZero())){
 										if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
-											Logging.err(this, "   ..found (" + mCallsEventNewPeerHRMIDs + ") neighbor HRMID: " + tNeighborHRMID);
+											Logging.err(this, "   ..found (" + mCallsDetectNeighborhood + ") neighbor HRMID: " + tNeighborHRMID);
 										}
 										RoutingEntry tLocalRoutingEntry = null;
 										RoutingEntry tReportedRoutingEntryForward = null;
@@ -501,10 +516,9 @@ public class ComChannel
 														tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, getPeerHRMID(), tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
 														tLocalRoutingEntry.addOwner(mParent.getHRMID());
 														tLocalRoutingEntry.setOrigin(mParent.getHRMID());
-														tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_1(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
+														tLocalRoutingEntry.extendCause(this + "::detectNeighborhood()_1(" + mCallsDetectNeighborhood + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
 														// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 														tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
-														tLocalRoutingEntry.setOrigin(mParent.getHRMID());
 														// set the timeout for the found route to neighborhood
 														tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
 													}
@@ -516,7 +530,7 @@ public class ComChannel
 													tReportedRoutingEntryForward = RoutingEntry.create(getPeerHRMID(), tGeneralizedNeighborHRMID, tNeighborHRMID, 0, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, (String)null);
 													tReportedRoutingEntryForward.addOwner(mParent.getHRMID());
 													tReportedRoutingEntryForward.setOrigin(mParent.getHRMID());
-													tReportedRoutingEntryForward.extendCause( this + "::eventNewPeerHRMIDs()_2(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryForward);
+													tReportedRoutingEntryForward.extendCause( this + "::detectNeighborhood()_2(" + mCallsDetectNeighborhood + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryForward);
 													// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 													tReportedRoutingEntryForward.setNextHopL2Address(getPeerL2Address());
 													// set the timeout for the found route to neighborhood
@@ -525,7 +539,7 @@ public class ComChannel
 													tReportedRoutingEntryBackward = RoutingEntry.create(tNeighborHRMID, tGeneralizedNeighborHRMID.getForeignCluster(getPeerHRMID()), getPeerHRMID(), 0, RoutingEntry.NO_UTILIZATION, RoutingEntry.NO_DELAY, RoutingEntry.INFINITE_DATARATE, (String)null);
 													tReportedRoutingEntryBackward.addOwner(mParent.getHRMID());
 													tReportedRoutingEntryBackward.setOrigin(mParent.getHRMID());
-													tReportedRoutingEntryBackward.extendCause(this + "::eventNewPeerHRMIDs()_3(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryBackward);
+													tReportedRoutingEntryBackward.extendCause(this + "::detectNeighborhood()_3(" + mCallsDetectNeighborhood + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryBackward);
 													// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 													tReportedRoutingEntryBackward.setNextHopL2Address(mHRMController.getNodeL2Address());
 													tReportedRoutingEntryBackward.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
@@ -542,10 +556,9 @@ public class ComChannel
 												tLocalRoutingEntry = RoutingEntry.createRouteToDirectNeighbor(tSourceForReportedRoutes, tGeneralizedNeighborHRMID, tNeighborHRMID, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
 												tLocalRoutingEntry.addOwner(mParent.getHRMID());
 												tLocalRoutingEntry.setOrigin(mParent.getHRMID());
-												tLocalRoutingEntry.extendCause(this + "::eventNewPeerHRMIDs()_4(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
+												tLocalRoutingEntry.extendCause(this + "::detectNeighborhood()_4(" + mCallsDetectNeighborhood + ") for peerHRMID " + tNeighborHRMID + " as " + tLocalRoutingEntry);
 												// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 												tLocalRoutingEntry.setNextHopL2Address(getPeerL2Address());
-												tLocalRoutingEntry.setOrigin(mParent.getHRMID());
 												// set the timeout for the found route to neighborhood
 												tLocalRoutingEntry.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
 					
@@ -560,7 +573,7 @@ public class ComChannel
 												tReportedRoutingEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tNeighborHRMID, tSourceForReportedRoutes, tSourceForReportedRoutes, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), null);
 												tReportedRoutingEntryBackward.addOwner(mParent.getHRMID());
 												tReportedRoutingEntryBackward.setOrigin(mParent.getHRMID());
-												tReportedRoutingEntryBackward.extendCause(this + "::eventNewPeerHRMIDs()_5(" + mCallsEventNewPeerHRMIDs + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryBackward);
+												tReportedRoutingEntryBackward.extendCause(this + "::detectNeighborhood()_5(" + mCallsDetectNeighborhood + ") for peerHRMID " + tNeighborHRMID + " as " + tReportedRoutingEntryBackward);
 												// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 												tReportedRoutingEntryBackward.setNextHopL2Address(mHRMController.getNodeL2Address());
 												// set the timeout for the found route to neighborhood
@@ -574,14 +587,14 @@ public class ComChannel
 										if(tReportedRoutingEntryForward != null){
 											// add the entry to the reported routing table
 											if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
-												Logging.err(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") reported forward route: " + tReportedRoutingEntryForward);
+												Logging.err(this, "   ..adding (" + mCallsDetectNeighborhood + ") reported forward route: " + tReportedRoutingEntryForward);
 											}
 											tNewReportedRoutingTable.addEntry(tReportedRoutingEntryForward);
 										}
 										if(tReportedRoutingEntryBackward != null){
 											// add the entry to the reported routing table
 											if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
-												Logging.err(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") reported backward route: " + tReportedRoutingEntryBackward);
+												Logging.err(this, "   ..adding (" + mCallsDetectNeighborhood + ") reported backward route: " + tReportedRoutingEntryBackward);
 											}
 											tNewReportedRoutingTable.addEntry(tReportedRoutingEntryBackward);
 										}
@@ -589,7 +602,7 @@ public class ComChannel
 										if(tLocalRoutingEntry != null){
 											// add the entry to the reported routing table
 											if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
-												Logging.log(this, "   ..adding (" + mCallsEventNewPeerHRMIDs + ") local route: " + tLocalRoutingEntry + ", next network interface=" + tParentClusterMember.getBaseHierarchyLevelNetworkInterface());
+												Logging.log(this, "   ..adding (" + mCallsDetectNeighborhood + ") local route: " + tLocalRoutingEntry + ", next network interface=" + tParentClusterMember.getBaseHierarchyLevelNetworkInterface());
 											}
 											if(tParentClusterMember.getBaseHierarchyLevelNetworkInterface() != null){
 												tLocalRoutingEntry.setNextHopL2NetworkInterace(tParentClusterMember.getBaseHierarchyLevelNetworkInterface());
@@ -624,7 +637,7 @@ public class ComChannel
 							synchronized (mReportedRoutingTable) {
 								mReportedRoutingTable.addEntries(mReportedRoutingTablePeerHRMIDs);
 								if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
-									Logging.err(this, "Added (" + mCallsEventNewPeerHRMIDs + ") to local routing table: " + mLocalRoutingTablePeerHRMIDs);
+									Logging.err(this, "Added (" + mCallsDetectNeighborhood + ") to local routing table: " + mLocalRoutingTablePeerHRMIDs);
 								}
 							}
 							
@@ -645,11 +658,11 @@ public class ComChannel
 							synchronized (mReportedRoutingTable) {
 								mReportedRoutingTable.delEntries(tDeprecatedReportedRoutingTable);
 								if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){
-									Logging.err(this, "Removed (" + mCallsEventNewPeerHRMIDs + ") from local routing table: " + tDeprecatedLocalRoutingTable);
+									Logging.err(this, "Removed (" + mCallsDetectNeighborhood + ") from local routing table: " + tDeprecatedLocalRoutingTable);
 								}
 							}
 						}else{
-							//Logging.warn(this, "eventNeighborHRMIDs()(" + mCallsEventNewPeerHRMIDs + ") skipped because own source HRMID is zero, ignoring neighbor HRMIDs: " + tNeighborHRMIDs);
+							//Logging.warn(this, "eventNeighborHRMIDs()(" + mCallsdetectNeighborhood + ") skipped because own source HRMID is zero, ignoring neighbor HRMIDs: " + tNeighborHRMIDs);
 						}
 					}else{
 						// we are at higher hierarchy level
@@ -658,7 +671,7 @@ public class ComChannel
 					// no network interface known
 				}
 			}else{
-				Logging.err(this, "eventNewPeerHRMID()(" + mCallsEventNewPeerHRMIDs + ") expected a ClusterMember as parent, parent is: " + mParent);
+				Logging.err(this, "eventNewPeerHRMID()(" + mCallsDetectNeighborhood + ") expected a ClusterMember as parent, parent is: " + mParent);
 			}
 		}else{
 			// higher hierarchy level -> this function is only needed for node-2-node neighborhood and not cluster-2-cluster
@@ -851,45 +864,46 @@ public class ComChannel
 			Logging.log(this, "REPORT PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteReportPacket);
 		}
 	
-		/**
-		 * have we received a full update? -> check for deprecated entries
-		 */
-		RoutingTable tDeprecatedReportedRoutingTable = null; 
-		RoutingTable tReceivedSharedRoutingTable = pRouteReportPacket.getRoutes();
-		if(!tReceivedSharedRoutingTable.isOnlyDiff()){
-			tDeprecatedReportedRoutingTable = (RoutingTable) mLastReceivedReportedRoutingTable.clone();
-			tDeprecatedReportedRoutingTable.delEntries(tReceivedSharedRoutingTable);
-		}
-			
-		/**
-		 * Store the received reported routing info
-		 */
+		RoutingTable tDeprecatedReportedRoutingTable = null;
+		RoutingTable tNewReceivedReportedRoutingTable = null;
 		synchronized (mLastReceivedReportedRoutingTable) {
+			/**
+			 * have we received a full update? -> check for deprecated entries
+			 */
+			tNewReceivedReportedRoutingTable = pRouteReportPacket.getRoutes();
+			if(!tNewReceivedReportedRoutingTable.isOnlyDiff()){
+				tDeprecatedReportedRoutingTable = (RoutingTable) mLastReceivedReportedRoutingTable.clone();
+				tDeprecatedReportedRoutingTable.delEntries(tNewReceivedReportedRoutingTable);
+			}
+				
+			/**
+			 * Store the received reported routing info
+			 */
 			if((tDeprecatedReportedRoutingTable != null) && (tDeprecatedReportedRoutingTable.size() > 0)){
 				mLastReceivedReportedRoutingTable.delEntries(tDeprecatedReportedRoutingTable);
 			}
-			mLastReceivedReportedRoutingTable.addEntries(pRouteReportPacket.getRoutes()); 
+			mLastReceivedReportedRoutingTable.addEntries(tNewReceivedReportedRoutingTable); 
+
+			/**
+			 * Record the routing report
+			 */
+			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+				Logging.err(this, "   ..got routing report: " + tNewReceivedReportedRoutingTable);
+			}
 		}
 
 		if(mParent instanceof Cluster){
 			Cluster tParentCluster = (Cluster)mParent;
 			
 			/**
-			 * Record the routing report
-			 */
-			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-				Logging.err(this, "   ..got routing report: " + pRouteReportPacket.getRoutes());
-			}
-
-			/**
 			 * Trigger: inform the cluster about the new routing report
 			 */
-//			double tBefore = HRMController.getRealTime();
+			double tBefore = HRMController.getRealTime();
 			tParentCluster.eventReceivedRouteReport(this, pRouteReportPacket, tDeprecatedReportedRoutingTable);
-//			double tSpentTime = HRMController.getRealTime() - tBefore;
-//			if(tSpentTime > 30){
-//				Logging.log(this, "      ..eventReceivedRouteReport() took " + tSpentTime + " ms for route report: " + pRouteReportPacket);
-//			}
+			double tSpentTime = HRMController.getRealTime() - tBefore;
+			if(tSpentTime > 50){
+				Logging.log(this, "      ..eventReceivedRouteReport() took " + tSpentTime + " ms for route report: " + pRouteReportPacket);
+			}
 		}else{
 			Logging.err(this, "eventReceivedRouteReport() expected a Cluster as parent, parent is: " + mParent);
 		}
@@ -902,46 +916,72 @@ public class ComChannel
 	 */
 	private void eventReceivedRouteShare(RouteShare pRouteSharePacket)
 	{
-//		if(mHRMController.getNodeGUIName().equals("node4")){
-//		if(mParent.getHierarchyLevel().isBaseLevel()){
-//			if(!(mParent instanceof CoordinatorAsClusterMember)){
-////		if (HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-//			Logging.err(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteSharePacket);
-//			Logging.err(this, "   ..got routing share: " + pRouteSharePacket.getRoutes());
-//			for(RoutingEntry tEntry : pRouteSharePacket.getRoutes()){
-//				Logging.err(this, "   got: " + tEntry);	
-//			}
-//		}
-//		}
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_SHARE_PHASE; 
+	
+		if (DEBUG){
+			Logging.log(this, "SHARE PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteSharePacket);
+		}
 		
-		/**
-		 * Store the received shared routing info
-		 */
-		RoutingTable tDeprecatedSharedRoutingTable = null;
+		RoutingTable tDeprecatedSharedRoutingTable = null; 
 		synchronized (mLastReceivedSharedRoutingTable) {
-			tDeprecatedSharedRoutingTable = mLastReceivedSharedRoutingTable;
-			mLastReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
-			tDeprecatedSharedRoutingTable.delEntries(mLastReceivedSharedRoutingTable);
-		}
-		
-		if(tDeprecatedSharedRoutingTable.size() > 0){
-			Logging.log(this, "Lost shared routing data (last message included it): " + tDeprecatedSharedRoutingTable);
-			for(RoutingEntry tEntry : tDeprecatedSharedRoutingTable){
-				Logging.log(this, "   lost: " + tEntry);	
+			/**
+			 * have we received a full update? -> check for deprecated entries
+			 */
+			RoutingTable tNewReceivedSharedRoutingTable = pRouteSharePacket.getRoutes();
+			if(!tNewReceivedSharedRoutingTable.isOnlyDiff()){
+				tDeprecatedSharedRoutingTable = (RoutingTable) mLastReceivedSharedRoutingTable.clone();
+				tDeprecatedSharedRoutingTable.delEntries(tNewReceivedSharedRoutingTable);
 			}
-//				Logging.err(this, "New shared routing data: " + pRouteSharePacket.getRoutes());
-//				for(RoutingEntry tEntry : pRouteSharePacket.getRoutes()){
-//					Logging.err(this, "   lost: " + tEntry);	
-//				}
+			
+			/**
+			 * set the absolute timeout values per received share routing entry
+			 */
+			for(RoutingEntry tEntry : tNewReceivedSharedRoutingTable){
+				/**
+				 * make sure a relative timeout is set in the reported routing table entry
+				 */
+				if(tEntry.getTimeout() <= 0){
+					tEntry.setTimeout(HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
+				}
+
+				/**
+				 * Set the timeout for reported routes: use the previously stored relative timeout value from the reporter and form an absolute timeout
+				 */
+				tEntry.setTimeout(mHRMController.getSimulationTime() + tEntry.getTimeout());
+
+				if(DEBUG){
+					Logging.log(this, "  ..got shared routing entry (TO: " + tEntry.getTimeout() + "): " + tEntry);					
+				}
+			}
+			
+			/**
+			 * Store the received shared routing info
+			 */
+			if((tDeprecatedSharedRoutingTable != null) && (tDeprecatedSharedRoutingTable.size() > 0)){
+				mLastReceivedSharedRoutingTable.delEntries(tDeprecatedSharedRoutingTable);
+			}
+			mLastReceivedSharedRoutingTable.addEntries(tNewReceivedSharedRoutingTable); 
+
+			if((tDeprecatedSharedRoutingTable != null) && (tDeprecatedSharedRoutingTable.size() > 0)){
+				Logging.warn(this, "Lost shared routing data (last message included it): " + tDeprecatedSharedRoutingTable);
+				for(RoutingEntry tEntry : tDeprecatedSharedRoutingTable){
+					Logging.warn(this, "   ..lost: " + tEntry);	
+				}
+//					Logging.err(this, "New shared routing data: " + pRouteSharePacket.getRoutes());
+//					for(RoutingEntry tEntry : pRouteSharePacket.getRoutes()){
+//						Logging.err(this, "   lost: " + tEntry);	
+//					}
+			}
 		}
-		
+
+
 		if(mParent instanceof CoordinatorAsClusterMember){
 			CoordinatorAsClusterMember tParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
 			
 			/**
 			 * Trigger: inform the CoordinatorAsClusterMember about the new routing report
 			 */
-			tParentCoordinatorAsClusterMember.getCoordinator().eventReceivedRouteShare(this, mLastReceivedSharedRoutingTable);
+			tParentCoordinatorAsClusterMember.getCoordinator().eventReceivedRouteShare(this, mLastReceivedSharedRoutingTable, tDeprecatedSharedRoutingTable);
 			
 			return;
 		}
@@ -952,7 +992,7 @@ public class ComChannel
 			/**
 			 * Trigger: inform the ClusterMember about the new routing report
 			 */
-			tParentClusterMember.eventReceivedRouteShare(this, mLastReceivedSharedRoutingTable);
+			tParentClusterMember.eventReceivedRouteShare(this, mLastReceivedSharedRoutingTable, tDeprecatedSharedRoutingTable);
 			
 			return;
 		}
@@ -1987,11 +2027,92 @@ public class ComChannel
 	 */
 	public void distributeRouteShare(RoutingTable pRoutingTable)
 	{
-		// create new RouteShare packet for the cluster member
-		RouteShare tRouteSharePacket = new RouteShare(mHRMController.getNodeL2Address(), getPeerHRMID(), pRoutingTable);
+		boolean DEBUG = false;
 		
-		// send the packet
-		sendPacket(tRouteSharePacket);
+		/**
+		 * Set the timeout for each entry depending on the state of the known HRM hierarchy
+		 */
+		boolean tReportOnlyADiff = false;
+		
+		if(mHRMController.hasLongTermStableHierarchy()){
+			/**
+			 * should we report only a diff.? 
+			 */
+			if((HRMConfig.Routing.SHARE_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteSharedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteSharedRoutingTable + HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY) && (!mLastSharedRoutingTableWasDuringUnstableHierarchy)){
+				/**
+				 * we actually provide only a diff to the last diff/complete reported routing table
+				 */
+				tReportOnlyADiff = true;
+				
+				RoutingTable tDiffReportRoutingTable = new RoutingTable();
+				for(RoutingEntry tNewEntry : pRoutingTable){
+					boolean tEntryHasChanges = true;
+					for(RoutingEntry tOldEntry : mLastSentSharedRoutingTable){
+						/**
+						 * is the new entry rather an old one?
+						 */
+						if ((tOldEntry.equals(tNewEntry)) && (tOldEntry.equalsQoS(tNewEntry))){
+							tEntryHasChanges = false;
+							break;
+						}
+					}
+					
+					/**
+					 * add the entry with changes to the "diff" table
+					 */
+					if(tEntryHasChanges){
+						tDiffReportRoutingTable.add(tNewEntry);
+					}
+				}
+				
+				// store the complete routing table as last report but send only the diff
+				mLastSentSharedRoutingTable = (RoutingTable) pRoutingTable.clone();
+				// the "diff" table
+				pRoutingTable = tDiffReportRoutingTable;
+				pRoutingTable.markAsDiff();
+						
+				if (DEBUG){
+					Logging.log(this, "   ..sharing the DIFF TABLE with " + getPeerL2Address() + ":");
+					int j = 0;
+					for(RoutingEntry tEntry : pRoutingTable){
+						Logging.log(this, "     ..[" + j +"]: " + tEntry);
+						j++;
+					}
+				}
+			}
+			
+			mLastSharedRoutingTableWasDuringUnstableHierarchy = false;
+		}else{
+			mLastSharedRoutingTableWasDuringUnstableHierarchy = true;
+		}
+		
+		/**
+		 * Remember the time of the last reported complete routing table -> report every x seconds a complete table
+		 */
+		if(!tReportOnlyADiff){
+			// report a complete routing table
+			mLastSentSharedRoutingTable = (RoutingTable) pRoutingTable.clone();
+			// store the time
+			mTimeLastCompleteSharedRoutingTable = mHRMController.getSimulationTime();
+			
+			if (DEBUG){
+				Logging.log(this, "   ..sharing the COMPLETE TABLE with " + getPeerL2Address() + ":");
+				int j = 0;
+				for(RoutingEntry tEntry : pRoutingTable){
+					Logging.log(this, "     ..[" + j +"]: " + tEntry);
+					j++;
+				}
+			}
+		}
+
+		
+		if(pRoutingTable.size() > 0){
+			// create new RouteShare packet for the cluster member
+			RouteShare tRouteSharePacket = new RouteShare(mHRMController.getNodeL2Address(), getPeerHRMID(), mHRMController, pRoutingTable);
+			
+			// send the packet
+			sendPacket(tRouteSharePacket);
+		}
 	}
 
 	/**
@@ -2019,9 +2140,9 @@ public class ComChannel
 
 		mLinkActiveForElection = pState;
 		
-//		if(HRMConfig.DebugOutput.MEMORY_CONSUMING_OPERATIONS){
+		if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_LINK_ACTIVATIONS){
 			mDesccriptionLinkActivation += "\n ..[" +pState +"] <== " + pCause;
-//		}
+		}
 	}
 	
 	/**

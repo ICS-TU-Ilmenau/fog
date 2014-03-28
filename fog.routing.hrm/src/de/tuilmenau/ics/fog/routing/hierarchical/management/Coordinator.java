@@ -998,17 +998,34 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * 
 	 * @param pSourceComChannel the source comm. channel
 	 * @param pSharedRoutingTable the shared routing table
+	 * @param pDeprecatedSharedRoutingTable the deprecated shared routing table
 	 */
-	public synchronized void eventReceivedRouteShare(ComChannel pSourceComChannel, RoutingTable pSharedRoutingTable)
+	public synchronized void eventReceivedRouteShare(ComChannel pSourceComChannel, RoutingTable pSharedRoutingTable, RoutingTable pDeprecatedSharedRoutingTable)
 	{
-		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_SHARE_PHASE; 
+		if(DEBUG){
 			Logging.log(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
 		}
 		
-		synchronized (mLastReceivedSharedRoutingTable) {
-			mLastReceivedSharedRoutingTable = pSharedRoutingTable;
+		if((pDeprecatedSharedRoutingTable != null) && (pDeprecatedSharedRoutingTable.size() > 0)){
+			Logging.warn(this, "Found deprecated shared routing table: " + pDeprecatedSharedRoutingTable);
+			for(RoutingEntry tDeprecatedEntry : pDeprecatedSharedRoutingTable){
+				Logging.warn(this, "   ..found deprecated reported routing entry: " + tDeprecatedEntry);
+			}
+		}
+
+		synchronized (mLastReceivedSharedRoutingTable){ 
+			mLastReceivedSharedRoutingTable.delEntries(pDeprecatedSharedRoutingTable);
+			mLastReceivedSharedRoutingTable.addEntries(pSharedRoutingTable);
 			learnLocallyTheLastSharedRoutingTable(this + "::eventReceivedRouteShare() from " + pSourceComChannel.getPeerHRMID());
-		}		
+		}
+		
+		if(DEBUG){
+			Logging.warn(this, "Received shared routes:");
+			for(RoutingEntry tEntry : mLastReceivedSharedRoutingTable){
+				Logging.warn(this, "  ..entry (TO: " + tEntry.getTimeout() + "): " + tEntry);
+			}
+		}
 	}
 
 	/**

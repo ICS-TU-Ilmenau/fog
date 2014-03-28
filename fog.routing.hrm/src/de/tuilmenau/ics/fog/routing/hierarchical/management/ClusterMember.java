@@ -572,13 +572,21 @@ public class ClusterMember extends ClusterName
 	 * 
 	 * @param pSourceComChannel the source comm. channel
 	 * @param pSharedRoutingTable the shared routing table
+	 * @param pDeprecatedSharedRoutingTable the deprecated shared routing table
 	 */
-	public void eventReceivedRouteShare(ComChannel pSourceComChannel, RoutingTable pSharedRoutingTable)
+	public void eventReceivedRouteShare(ComChannel pSourceComChannel, RoutingTable pSharedRoutingTable, RoutingTable pDeprecatedSharedRoutingTable)
 	{
 		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
 			Logging.err(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
 		}
 		
+		if((pDeprecatedSharedRoutingTable != null) && (pDeprecatedSharedRoutingTable.size() > 0)){
+			Logging.warn(this, "Found deprecated shared routing table: " + pDeprecatedSharedRoutingTable);
+			for(RoutingEntry tDeprecatedEntry : pDeprecatedSharedRoutingTable){
+				Logging.warn(this, "   ..found deprecated reported routing entry: " + tDeprecatedEntry);
+			}
+		}
+
 		mHRMController.addHRMRouteShare(pSharedRoutingTable, getHierarchyLevel(), getHRMID(), pSourceComChannel.getPeerHRMID(), this + "::eventReceivedRouteShare()");			
 	}
 

@@ -11,7 +11,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical.routing;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -48,15 +48,21 @@ public class RouteShare extends SignalingMessageHrm
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
+	 * @param pHRMController the local HRMController instance
 	 * @param pRoutingTable the routing table which is shared
 	 */
-	public RouteShare(HRMName pSenderName, HRMName pReceiverName, RoutingTable pRoutingTable)
+	public RouteShare(HRMName pSenderName, HRMName pReceiverName, HRMController pHRMController, RoutingTable pRoutingTable)
 	{
 		super(pSenderName, pReceiverName);
 		if(pRoutingTable != null){
 			mRoutingTable = pRoutingTable;
 		}
 		sCreatedPackets++;
+		
+		/**
+		 * set timeout for each routing table entry
+		 */
+		mRoutingTable.setTimeout(pHRMController);
 	}
 
 	/**
