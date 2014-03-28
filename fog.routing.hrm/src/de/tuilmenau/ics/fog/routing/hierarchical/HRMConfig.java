@@ -358,7 +358,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 12;
+		public static final long RADIUS = 1;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
