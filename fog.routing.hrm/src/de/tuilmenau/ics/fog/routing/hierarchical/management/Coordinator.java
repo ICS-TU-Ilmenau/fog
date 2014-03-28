@@ -1404,7 +1404,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				if((hasLongTermExistence()) && (!mLastCoordinatorAnnounceWasDuringUnstableHierarchy)){
 					if(!mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
 						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = true;
-						Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY");
+						Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE");
 
 						// reset the packet overhead measurement
 						HRMController.resetPacketOverheadCounting();
