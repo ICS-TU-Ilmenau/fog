@@ -722,10 +722,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //			Logging.warn(null, "ACCOUNTING for link " + pLink + " a BIG PACKET of " + (tPacketSize < 10 ? "0" : "") + tPacketSize + " bytes for " + pPacket);
 		}
 		
-		if(getPacketOverheadPerLinkMeasurementPeriod() > HRMConfig.Measurement.TIME_FOR_MEASURING_PACKETS_OVERHEAD){
-			writePacketsOverheadStatisticsToFile();
-		}
-		
 		synchronized (sPacketCounterPerLink) {
 			HashMap<Class<?>, Integer> tPacketsForBus = sPacketCounterPerLink.get(pLink);
 			if(tPacketsForBus == null){
@@ -5548,7 +5544,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
 				Logging.log(this, "REPORT AND SHARE TRIGGER received");
 			}
-	
+
+			/**
+			 * write packet overhead statistics to file
+			 */
+			if(getPacketOverheadPerLinkMeasurementPeriod() > HRMConfig.Measurement.TIME_FOR_MEASURING_PACKETS_OVERHEAD){
+				writePacketsOverheadStatisticsToFile();
+			}
+
 			/**
 			 * auto-deactivate AnnounceCoordinator broadcast
 			 */
