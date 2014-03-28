@@ -367,7 +367,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores if the global packets overhead statistics was already written to the log file
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
-	public static boolean GLOBAL_PACKET_OVERHEAD_WRITTE = false;
+	public static boolean GLOBAL_PACKET_OVERHEAD_WRITTEN = false;
 	
 	/**
 	 * Stores if the global check if already passed
@@ -794,7 +794,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public static void resetPacketOverheadCounting()
 	{
-		GLOBAL_PACKET_OVERHEAD_WRITTE = false;
+		GLOBAL_PACKET_OVERHEAD_WRITTEN = false;
 		
 		synchronized (sPacketOverheadCounterPerLink) {
 			sPacketOverheadCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();	
@@ -3531,7 +3531,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Logging.log(null, "EVENT: simulation restarted");
 
 		FOUND_GLOBAL_ERROR = false;
-		GLOBAL_PACKET_OVERHEAD_WRITTE = false;
+		GLOBAL_PACKET_OVERHEAD_WRITTEN = false;
 		FOUND_ALREADY_NO_PENDING_PACKETS = false;
 		
 		if(mFoGSiEmFirstSimulation){
@@ -5158,8 +5158,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private static void writePacketsOverheadStatisticsToFile()
 	{
 		if(GUI_USER_CTRL_REPORT_TOPOLOGY){
-			if(!GLOBAL_PACKET_OVERHEAD_WRITTE){
-				GLOBAL_PACKET_OVERHEAD_WRITTE = true;
+			if(!GLOBAL_PACKET_OVERHEAD_WRITTEN){
+				GLOBAL_PACKET_OVERHEAD_WRITTEN = true;
 				
 				/**
 				 * get a reference to an HRMController instance 
