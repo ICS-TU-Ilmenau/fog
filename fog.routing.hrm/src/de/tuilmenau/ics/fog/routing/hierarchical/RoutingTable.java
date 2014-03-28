@@ -232,6 +232,9 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					 */
 					if(pRoutingTableEntry.isSharedLink()){
 						tFoundDuplicate.setSharedLink(pRoutingTableEntry.getShareSender());
+					}else{
+						//Logging.warn(this, "Should reset SHARED state of: " + tFoundDuplicate);
+						tFoundDuplicate.setSharedLink(null);
 					}
 				}else{
 					// known route is from higher authority
@@ -303,11 +306,13 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	{
 		boolean tResult = false;
 		
-		for(RoutingEntry tEntry : pRoutingTable){
-			RoutingEntry tNewEntry = tEntry.clone();
-			tNewEntry.extendCause("RT::addEntries() as " + tNewEntry);
-			
-			tResult |= addEntry(tNewEntry);
+		if((pRoutingTable != null) &&(pRoutingTable.size() > 0)){
+			for(RoutingEntry tEntry : pRoutingTable){
+				RoutingEntry tNewEntry = tEntry.clone();
+				tNewEntry.extendCause("RT::addEntries() as " + tNewEntry);
+				
+				tResult |= addEntry(tNewEntry);
+			}
 		}
 		
 		return tResult;
@@ -324,7 +329,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	{
 		boolean tResult = false;
 		
-		if(pRoutingTable.size() > 0){
+		if((pRoutingTable != null) &&(pRoutingTable.size() > 0)){
 			for(RoutingEntry tEntry : pRoutingTable){
 	
 				tResult |= delEntry(tEntry);
