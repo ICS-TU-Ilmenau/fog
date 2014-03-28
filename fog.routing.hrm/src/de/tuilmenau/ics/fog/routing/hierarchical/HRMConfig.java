@@ -325,7 +325,7 @@ public class HRMConfig
 		/**
 		 * Defines the time period for a coordinator-specific stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE.
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME = 30.0; // default: 30
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME = 60.0; // default: 60
 
 		/**
 		 * Defines the time period for a node-specific stable hierarchy -> used for CoordinatorProxy invalidation and route reports/shares
