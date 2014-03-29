@@ -803,6 +803,16 @@ public class ComChannel
 	}
 	
 	/**
+	 * Returns if the comm. channel is half-open
+	 * 
+	 * @return true or false
+	 */
+	public boolean isHalfOpen()
+	{
+		return (mChannelState == ChannelState.HALF_OPEN);
+	}
+
+	/**
 	 * Returns if the comm. channel is closed
 	 * 
 	 * @return true or false

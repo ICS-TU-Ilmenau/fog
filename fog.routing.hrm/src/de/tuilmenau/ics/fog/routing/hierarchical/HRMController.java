@@ -5008,38 +5008,45 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 					if(tClusterLevel.isHigherLevel()){
 						for (ComChannel tComChannel : tCluster.getComChannels()){
-							if(tComChannel.getPeerPriority().isUndefined()){
-								Logging.err(this, "validateResults() detected undefined peer priority for comm. channel: " + tComChannel);
-								tResult = false;
-							}else{
-								ElectionPriority tChannelPeerPriority = tComChannel.getPeerPriority();
-								L2Address tChanPeerL2Address = tComChannel.getPeerL2Address();
-								boolean tFound = false;
-								for(HRMController tHRMController : getALLHRMControllers()){
-									if(tHRMController.getNodeL2Address().equals(tChanPeerL2Address)){
-		//								Logging.log(this, "MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
-										tFound = true;
-										long tFoundPriority = tHRMController.getNodePriority(tClusterLevel);
-										if(tFoundPriority != tChannelPeerPriority.getValue()){
-											if(tChannelPeerPriority.getValue() <= 0){
-												if(tComChannel.isOpen()){
-													Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
-													tResult = false;
+							if(tComChannel.isOpen()){
+								if(tComChannel.getPeerPriority().isUndefined()){
+									Logging.err(this, "validateResults() detected undefined peer priority for comm. channel: " + tComChannel);
+									tResult = false;
+								}else{
+									ElectionPriority tChannelPeerPriority = tComChannel.getPeerPriority();
+									L2Address tChanPeerL2Address = tComChannel.getPeerL2Address();
+									boolean tFound = false;
+									for(HRMController tHRMController : getALLHRMControllers()){
+										if(tHRMController.getNodeL2Address().equals(tChanPeerL2Address)){
+			//								Logging.log(this, "MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
+											tFound = true;
+											long tFoundPriority = tHRMController.getNodePriority(tClusterLevel);
+											if(tFoundPriority != tChannelPeerPriority.getValue()){
+												if(tChannelPeerPriority.getValue() <= 0){
+													if(tComChannel.isOpen()){
+														Logging.err(this, "validateResults() detected wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for: " + tComChannel);
+														tResult = false;
+													}else{
+														//TODO: avoid this situation
+														Logging.warn(this, "validateResults() detected temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for HALF-OPEN channel: " + tComChannel);
+													}
 												}else{
-													//TODO: avoid this situation
-													Logging.warn(this, "validateResults() detected temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + " but it should be " + tFoundPriority + " for HALF-OPEN channel: " + tComChannel);
+													Logging.warn(this, "validateResults() detected a temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + ", the final result should be " + tFoundPriority + " for: " + tComChannel);
 												}
-											}else{
-												Logging.warn(this, "validateResults() detected a temporarily wrong peer priority: " + tChannelPeerPriority.getValue() + ", the final result should be " + tFoundPriority + " for: " + tComChannel);
 											}
+											break;
+										}else{
+			//								Logging.log(this, "NO MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
 										}
-										break;
-									}else{
-		//								Logging.log(this, "NO MATCH: " + tHRMController.getNodeL2Address() + " <==> " + tChanPeerL2Address);
+									}
+									if(!tFound){
+										Logging.err(this, "validateResults() wasn't able to find node: " + tChanPeerL2Address + " as peer of: " + tComChannel);
+										tResult = false;
 									}
 								}
-								if(!tFound){
-									Logging.err(this, "validateResults() wasn't able to find node: " + tChanPeerL2Address + " as peer of: " + tComChannel);
+							}else{
+								if(tComChannel.isHalfOpen()){
+									Logging.err(this, "validateResults() detected a half-open com channel: " + tComChannel);
 									tResult = false;
 								}
 							}
