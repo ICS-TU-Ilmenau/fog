@@ -1561,7 +1561,7 @@ public class Cluster extends ClusterMember
 	 * 
 	 */
 	private int mCountDistributeMembershipRequests = 0;
-	public void updateClusterMembers()
+	public synchronized void updateClusterMembers()
 	{
 		boolean DEBUG = HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS;
 		boolean tChanges = false;
