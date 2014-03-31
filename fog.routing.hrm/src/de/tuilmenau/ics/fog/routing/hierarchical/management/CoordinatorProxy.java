@@ -163,6 +163,7 @@ public class CoordinatorProxy extends ClusterMember
 		mLastRefreshTime = mHRMController.getSimulationTime();
 		
 		double tNewTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getLifetime();
+		//Logging.warn(this, "Received refresh: " + mTimeout + " => " + tNewTimeout);
 		if (tNewTimeout > mTimeout){
 			mTimeout = tNewTimeout;
 		}					 

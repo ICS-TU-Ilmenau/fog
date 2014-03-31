@@ -1238,10 +1238,21 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * 
 								 */
 								if((getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.HEIGHT <= 3)){
+//									boolean tDebug = false;
+//									if(getHierarchyLevel().isBaseLevel()){
+//										if(mSentAnnounces < 5){
+//											Logging.err(this, "Announcing at: " + mHRMController.getSimulationTime());
+//											tDebug = true;
+//										}
+//									}
+									
 									/**
 									 * Send cluster broadcasts in all other active L0 clusters if we are at level 0 
 									 */
 									for(Cluster tCluster : tL0Clusters){
+//										if(tDebug){
+//											Logging.err(this, "   ..sending to: " + tCluster);
+//										}
 										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
 										tCorrectionForPacketCounter++;
 									}
@@ -1400,7 +1411,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					/**
 					 * Trigger: ClusterAnnounce distribution
 					 */
-					distributeCoordinatorAnnouncement(false);
+					distributeCoordinatorAnnouncement(false);					
 				}
 				
 				/**

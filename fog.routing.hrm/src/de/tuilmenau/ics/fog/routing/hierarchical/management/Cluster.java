@@ -1718,7 +1718,10 @@ public class Cluster extends ClusterMember
 						synchronized (tOldInferiorRemoteCoordinators) {
 							if(mCountDistributeMembershipRequests > 1){
 								if(DEBUG){
-									Logging.log(this, "      ..having connections to these inferior remote coordinators: " + tOldInferiorRemoteCoordinators.toString());
+									Logging.log(this, "      ..having connections to these inferior remote coordinators: ");
+									for(CoordinatorProxy tProxy : tOldInferiorRemoteCoordinators){
+										Logging.log(this, "          ..: " + tProxy);
+									}
 								}
 							}
 							for (CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
@@ -1730,6 +1733,9 @@ public class Cluster extends ClusterMember
 									// add this remote coordinator to the list of connected coordinators
 									synchronized (mInferiorRemoteCoordinators) {
 										if(!mInferiorRemoteCoordinators.contains(tCoordinatorProxy)){
+											if(DEBUG){
+												Logging.log(this, "      ..adding to connected remote inferior coordinators: " + tCoordinatorProxy);
+											}
 											mInferiorRemoteCoordinators.add(tCoordinatorProxy);
 										}else{
 											Logging.err(this, "Cannot add a duplicate of the remote inferior coordinator: " + tCoordinatorProxy);
