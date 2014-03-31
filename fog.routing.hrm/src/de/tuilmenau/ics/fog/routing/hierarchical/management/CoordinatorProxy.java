@@ -163,6 +163,14 @@ public class CoordinatorProxy extends ClusterMember
 		mLastRefreshTime = mHRMController.getSimulationTime();
 		
 		double tNewTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getLifetime();
+
+		/**
+		 * workaround for the performance problems due to high load in the simulation short after start
+		 */
+		if(mLastRefreshTime < 10){
+			tNewTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getLifetime() * 2;
+		}
+
 		//Logging.warn(this, "Received refresh: " + mTimeout + " => " + tNewTimeout);
 		if (tNewTimeout > mTimeout){
 			mTimeout = tNewTimeout;
@@ -214,7 +222,7 @@ public class CoordinatorProxy extends ClusterMember
 				/**
 				 * workaround for the performance problems due to high load in the simulation short after start
 				 */
-				if(getTimeout() > 10){
+				if(mLastRefreshTime > 3){
 					tResult = true;
 				}
 			}

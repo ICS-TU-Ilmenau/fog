@@ -393,7 +393,7 @@ public class HRMConfig
 		 * Defines if connection should remain open or be automatically closed if the last inferior comm. channel was closed
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean CONNECTION_AUTO_CLOSE_ON_USED = false;
+		public static final boolean CONNECTION_AUTO_CLOSE_ON_USED = true;
 
 		/**
 		 * Defines if elections at higher hierarchy levels should be based on a separate hierarchy priority per node.
@@ -435,7 +435,7 @@ public class HRMConfig
 		/**
 		 * Limits the number of connection retries
 		 */
-		public static final int CONNECTION_MAX_RETRIES = 1; // default: 1
+		public static final int CONNECTION_MAX_RETRIES = 2; // default: 2
 	}
 	
 	/**
