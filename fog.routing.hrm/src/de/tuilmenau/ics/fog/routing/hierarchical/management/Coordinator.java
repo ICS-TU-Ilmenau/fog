@@ -113,6 +113,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public static int mCreatedCoordinators[] = new int[HRMConfig.Hierarchy.HEIGHT];
 	
 	/**
+	 * Stores if the periodic announcements were already started
+	 */
+	private boolean mPeriodicAnnouncementsStarted = false;
+	
+	/**
 	 * Stores the creation time of this coordinator.
 	 * This name is a bit misleading because it is the lifetime of this coordinator for all nodes in the local (radius!) surrounding.
 	 * Hence, if the local node detects a delayed (e.g., broken links) hierarchy change, it resets this life time value. 
@@ -149,16 +154,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		mHRMController.registerCoordinator(this);
 		
 		Logging.log(this, "\n\n\n################ CREATED COORDINATOR at hierarchy level: " + getHierarchyLevel().getValue());
-		
-		// trigger periodic Cluster announcements
-		if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
-			if(HRMConfig.Hierarchy.PERIODIC_COORDINATOR_ANNOUNCEMENTS){
-				Logging.log(this, "Activating periodic coordinator announcements");
-				
-				// register next trigger for 
-				mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL * 2, this);
-			}
-		}
 		
 		synchronized (mCreatedCoordinators) {
 			mCreatedCoordinators[getHierarchyLevel().getValue()]++;
@@ -1391,7 +1386,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * Implementation for IEvent::fire()
 	 */
 	@Override
-	public void fire()
+	public synchronized void fire()
 	{
 		if(isThisEntityValid()){
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
@@ -1411,24 +1406,26 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				/**
 				 * set the time for the next AnnounceCoordinator broadcast
 				 */
-				if((hasLongTermExistence()) && (!mLastCoordinatorAnnounceWasDuringUnstableHierarchy)){
-					if(!mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
-						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = true;
-						Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE");
-
-						// reset the packet overhead measurement
-						HRMController.resetPacketOverheadCounting();
+				if(HRMConfig.Hierarchy.PERIODIC_COORDINATOR_ANNOUNCEMENTS){
+					if((hasLongTermExistence()) && (!mLastCoordinatorAnnounceWasDuringUnstableHierarchy)){
+						if(!mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
+							mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = true;
+							Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE");
+	
+							// reset the packet overhead measurement
+							HRMController.resetPacketOverheadCounting();
+						}
+						
+						// register next trigger for 
+						mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE, this);
+					}else{
+						if(mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
+							mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = false;
+							Logging.warn(this, "Announcements - switching back to COORDINATOR_ANNOUNCEMENTS_INTERVAL");
+						}
+						// register next trigger for 
+						mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL, this);
 					}
-					
-					// register next trigger for 
-					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE, this);
-				}else{
-					if(mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
-						mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = false;
-						Logging.warn(this, "Announcements - switching back to COORDINATOR_ANNOUNCEMENTS_INTERVAL");
-					}
-					// register next trigger for 
-					mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL, this);
 				}
 
 				/**
@@ -1455,9 +1452,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		Logging.log(this, "EVENT: announced as coordinator");
 
 		/**
-		 * Trigger: explicit cluster announcement to neighbors
+		 * Trigger: coordinator announcements to neighbors
 		 */ 
-		distributeCoordinatorAnnouncement(false);
+		if(!mPeriodicAnnouncementsStarted){
+			mPeriodicAnnouncementsStarted = true;
+			fire();
+		}
 
 		/**
 		 * AUTO ADDRESS DISTRIBUTION
