@@ -648,7 +648,7 @@ public class ComSession extends Session
 		Logging.log(this, "EVENT: all channels are closed");
 		
 		if(!mLocalLoopback){
-			if (HRMConfig.Hierarchy.CONNECTION_AUTO_CLOSE_ON_USED){
+			if (HRMConfig.Hierarchy.CONNECTION_AUTO_CLOSE_IF_UNUSED){
 				Logging.log(this, "\n\n\n########### Closing the parent connection(destination=" + getPeerL2Address() + ", requirements=" + mParentConnection.getRequirements() + ")");
 				
 				if(mHRMController.getProcessor() != null){
