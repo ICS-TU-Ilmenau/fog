@@ -242,7 +242,17 @@ public class ComChannel
 	 * Stores the timeout of this channel
 	 */
 	private double mTimeout = 0;
+	
+	/**
+	 * Stores the cause for the timeout
+	 */
+	private String mTimeoutCause = "";	
 
+	/**
+	 * Stores the time of the last refresh
+	 */
+	private double mLastRefreshTime = 0;
+	
 	/**
 	 * Stores the packet queue
 	 */
@@ -1514,13 +1524,13 @@ public class ComChannel
 	/**
 	 * Resets the timeout of this channel
 	 * 
-	 * @param pPacket the currently received packet
+	 * @param pCause the cause for this call
 	 */
-	public void refreshTimeout(SignalingMessageHrm pPacket)
+	public void resetTimeout(String pCause)
 	{
 		// reset the timeout to 0
 		if(mTimeout != 0){
-			Logging.warn(this, "Resetting timeout now due to packet: " + pPacket);
+			Logging.warn(this, "Resetting timeout now due: " + pCause);
 		}
 		mTimeout = 0;
 	}
@@ -1540,12 +1550,36 @@ public class ComChannel
 	 * 
 	 * @param pTimerOffset the offset of the timer
 	 */
-	public void setTimeout(double pTimerOffset, String pCause)
+	public void setTimeout(String pCause)
 	{
-		mTimeout = mHRMController.getSimulationTime() + pTimerOffset;
-		Logging.warn(this, "Got a defined timeout of: " + pTimerOffset + ", will end at: " + mTimeout + ", cause=" + pCause);		
+		double tOffset = HRMConfig.Hierarchy.MAX_E2E_DELAY;
+		mTimeout = mHRMController.getSimulationTime() + tOffset;
+		mLastRefreshTime = mHRMController.getSimulationTime();
+		mTimeoutCause = pCause;
+		
+		Logging.warn(this, "Got a defined timeout of: " + tOffset + ", will end at: " + mTimeout + ", cause=" + pCause);		
 	}
 
+	/**
+	 * Returns the time of the last refresh
+	 * 
+	 * @return the searched time
+	 */
+	public double lastRefreshTime()
+	{
+		return mLastRefreshTime;
+	}
+
+	/**
+	 * Returns the cause for the timeout
+	 * 
+	 * @return the cause
+	 */
+	public String getTimeoutCause()
+	{
+		return mTimeoutCause;
+	}
+	
 	/**
 	 * Returns if this channel is obsolete due refresh timeout (peer isn't there anymore)
 	 * 
@@ -1656,7 +1690,7 @@ public class ComChannel
 		/**
 		 * Refresh the timeout
 		 */
-		refreshTimeout(pPacket);
+		resetTimeout(pPacket.toString());
 		
 		/**
 		 * Store the packet 
