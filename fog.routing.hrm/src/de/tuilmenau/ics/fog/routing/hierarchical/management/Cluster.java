@@ -343,7 +343,7 @@ public class Cluster extends ClusterMember
 	 * 
 	 * @return true or false
 	 */
-	public synchronized boolean isTimeToDistributeAddresses()
+	public boolean isTimeToDistributeAddresses()
 	{
 		boolean tResult = false;
 		
