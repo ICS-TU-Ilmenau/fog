@@ -466,7 +466,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	public boolean registerL2RouteBestEffort(L2Address pToL2Address, Route pRoute)
 	{
 		boolean tResult = true;
-		boolean DEBUG = true;//HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION;
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION;
 				
 		if (DEBUG){
 			Logging.log(this, "REGISTERING L2 BE ROUTE: dest.=" + pToL2Address + ", route=\"" + pRoute + "\"");
@@ -1839,9 +1839,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		L2Address tDestinationL2Address = null;
 		L2Address tSourceL2Address = null;
 
-		if(pDestination instanceof L2Address){
-			DEBUG = true;
-		}
+//		if(pDestination instanceof L2Address){
+//			DEBUG = true;
+//		}
 		
 		/**
 		 * Make sure that the HRMController is already started if the routing should lead to an application.
