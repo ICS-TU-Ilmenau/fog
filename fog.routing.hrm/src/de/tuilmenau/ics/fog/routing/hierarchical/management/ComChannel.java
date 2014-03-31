@@ -353,7 +353,7 @@ public class ComChannel
 		this(pHRMController, pDirection, pParent, pParentComSession);
 		
 		// store the peer entity
-		mPeer = pPeer;
+		setPeer(pPeer);
 	}
 	
 	/**
@@ -782,6 +782,15 @@ public class ComChannel
 		return mDirection;
 	}
 	
+	/**
+	 * Sets a new peer entity
+	 */
+	public void setPeer(ControlEntity pPeer)
+	{
+		Logging.log(this, "Setting new peer: " + pPeer);
+		mPeer = pPeer;
+	}
+
 	/**
 	 * Returns the peer entity
 	 * 
@@ -1529,9 +1538,9 @@ public class ComChannel
 	public void resetTimeout(String pCause)
 	{
 		// reset the timeout to 0
-		if(mTimeout != 0){
-			Logging.warn(this, "Resetting timeout now due: " + pCause);
-		}
+//		if(mTimeout != 0){
+//			Logging.warn(this, "Resetting timeout now due: " + pCause);
+//		}
 		mTimeout = 0;
 	}
 
@@ -1557,7 +1566,7 @@ public class ComChannel
 		mLastRefreshTime = mHRMController.getSimulationTime();
 		mTimeoutCause = pCause;
 		
-		Logging.warn(this, "Got a defined timeout of: " + tOffset + ", will end at: " + mTimeout + ", cause=" + pCause);		
+//		Logging.warn(this, "Got a defined timeout of: " + tOffset + ", will end at: " + mTimeout + ", cause=" + pCause);		
 	}
 
 	/**
