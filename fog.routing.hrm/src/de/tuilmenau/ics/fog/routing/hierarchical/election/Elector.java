@@ -802,6 +802,29 @@ public class Elector implements Localization
 
 	/**
 	 * SEND: ElectionAlive, report itself as alive by signaling ALIVE to all cluster members
+	 * 	
+	 * @param pComChannel the comm. channel along the ElectionAlive should be sent
+	 */
+	public void sendALIVE(ComChannel pComChannel)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDALIVE()-START, electing cluster is " + mParent);
+			Logging.log(this, "SENDALIVE(), cluster members: " + mParent.getComChannels().size());
+		}
+
+		// create the packet
+		ElectionAlive tElectionAlivePacket = new ElectionAlive(mHRMController.getNodeL2Address(), mParent.getPriority());
+
+		// send packet
+		pComChannel.sendPacket(tElectionAlivePacket);
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDALIVE()-END");
+		}
+	}
+	
+	/**
+	 * SEND: ElectionAlive, report itself as alive by signaling ALIVE to all cluster members
 	 */
 	public void distributeALIVE()
 	{

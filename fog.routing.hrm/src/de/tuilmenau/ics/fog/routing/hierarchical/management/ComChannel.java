@@ -20,8 +20,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
+import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
-import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
@@ -1561,10 +1561,16 @@ public class ComChannel
 	 */
 	public void setTimeout(String pCause)
 	{
-		double tOffset = HRMConfig.Hierarchy.MAX_E2E_DELAY;
+		/**
+		 * need MAX_E2E_DELAY for 2 transmission: 1.) PING, 2.) ALIVE
+		 */
+		double tOffset = 2 * HRMConfig.Hierarchy.MAX_E2E_DELAY;
 		mTimeout = mHRMController.getSimulationTime() + tOffset;
 		mLastRefreshTime = mHRMController.getSimulationTime();
 		mTimeoutCause = pCause;
+		
+		// try to ping the peer entity -> if the peer answers this packet within 2*MAX_E2E_DELAY seconds, the peer (e.g., cluster head) is still alive.
+		signalPingPeerPacket(false);
 		
 //		Logging.warn(this, "Got a defined timeout of: " + tOffset + ", will end at: " + mTimeout + ", cause=" + pCause);		
 	}
@@ -1825,13 +1831,21 @@ public class ComChannel
 		}
 		
 		/**
-		 * ProbePacket
+		 * PingPeer:
+		 * 			CoordinatorAsClusterMember ==> Cluster (head)
 		 */
-		if (pPacket instanceof ProbePacket){
-			ProbePacket tProbePacket = (ProbePacket)pPacket;
+		if (pPacket instanceof PingPeer){
+			PingPeer tPingPeerPacket = (PingPeer)pPacket;
 			
-			Logging.warn(this, "RECEIVED PROBE_PACKET: " + tProbePacket);
+			if(tPingPeerPacket.isPacketTracking()){
+				Logging.warn(this, "RECEIVED PING_PACKET: " + tPingPeerPacket);
+			}
 			
+			if(mParent instanceof ClusterMember){
+				ClusterMember tParentClusterMember = (ClusterMember)mParent;
+				
+				tParentClusterMember.eventReceivedPing(this, tPingPeerPacket);
+			}
 			return true;
 		}
 		
@@ -1926,8 +1940,9 @@ public class ComChannel
 		if(pPacket instanceof RequestClusterMembership) {
 			RequestClusterMembership tRequestClusterMembershipPacket = (RequestClusterMembership)pPacket;
 
-//			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)
-				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + getPeerHRMID() + "\": " + tRequestClusterMembershipPacket);
+//			if (HRMConfig.DebugOutput.SHOW_RECEIVED_CHANNEL_PACKETS)}
+				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRequestClusterMembershipPacket.getSenderName() + "\": " + tRequestClusterMembershipPacket);
+			//}
 
 			if(mParent instanceof CoordinatorAsClusterMember){
 				CoordinatorAsClusterMember tParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
@@ -2169,16 +2184,22 @@ public class ComChannel
 	}
 
 	/**
-	 * SEND: ProbePacket
+	 * SEND: PingPeer
+	 * 
+	 * @param pTrackingActive is tracking active?
 	 */
-	public void distributeProbePacket()
+	public void signalPingPeerPacket(boolean pTrackingActive)
 	{
 		// create new ProbePacket packet
-		ProbePacket tProbePacket = new ProbePacket(mHRMController.getNodeL2Address(),  getPeerHRMID());
+		PingPeer tPingPeerPacket = new PingPeer(mHRMController.getNodeL2Address(),  getPeerHRMID());
+		if(pTrackingActive){
+			tPingPeerPacket.activateTracking();
+
+			Logging.warn(this, "SENDING PING_PEER_PACKET: " + tPingPeerPacket);
+		}
 		
 		// send the packet
-		Logging.warn(this, "SENDING PROBE_PACKET: " + tProbePacket);
-		sendPacket(tProbePacket);
+		sendPacket(tPingPeerPacket);
 	}
 
 	/**

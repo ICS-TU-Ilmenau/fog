@@ -58,8 +58,8 @@ import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.eclipse.utils.EditorUtils;
 import de.tuilmenau.ics.fog.eclipse.utils.Resources;
+import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
-import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
@@ -213,7 +213,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		Logging.log(this, "    ..AnnouncePhysicalEndPoint: " + AnnouncePhysicalEndPoint.sCreatedPackets);
 		Logging.log(this, "    ..MultiplexHeader: " + MultiplexHeader.sCreatedPackets);
 		Logging.log(this, "    ..SignalingMessageHrm: " + SignalingMessageHrm.sCreatedPackets);
-		Logging.log(this, "      ..ProbePacket: " + ProbePacket.sCreatedPackets);
+		Logging.log(this, "      ..PingPeer: " + PingPeer.sCreatedPackets);
 		Logging.log(this, "      ..AnnounceHRMIDs: " + AnnounceHRMIDs.sCreatedPackets);
 		Logging.log(this, "      ..AssignHRMID: " + AssignHRMID.sCreatedPackets);
 		Logging.log(this, "      ..RevokeHRMIDs: " + RevokeHRMIDs.sCreatedPackets);
@@ -1413,7 +1413,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 	private void sendProbePacket(ComChannel pComChannel)
 	{
-		pComChannel.distributeProbePacket();
+		pComChannel.signalPingPeerPacket(true);
 	}
 
 	private void sendElectionAlive(ComChannel pComChannel)

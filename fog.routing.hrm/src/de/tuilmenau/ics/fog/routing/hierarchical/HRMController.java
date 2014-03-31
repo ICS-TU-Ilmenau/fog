@@ -45,8 +45,8 @@ import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
 import de.tuilmenau.ics.fog.ipv6.IPv6Packet;
+import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
-import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
@@ -1287,7 +1287,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Coordinator tCoordinator = tHRMController.getCoordinatorByID(pLostCoordinatorProxy.getCoordinatorID());
 					if(tCoordinator != null){
 						if(tCoordinator.isThisEntityValid()){
-							Logging.warn(this, "FALSE-POSITIVE? for detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(): " + pLostCoordinatorProxy);
+							Logging.err(this, "FALSE-POSITIVE? for detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(): " + pLostCoordinatorProxy);
 						}
 					}
 				}
@@ -3681,7 +3681,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		AnnouncePhysicalEndPoint.sCreatedPackets = new Long(0);
 		MultiplexHeader.sCreatedPackets = new Long(0);
 		SignalingMessageHrm.sCreatedPackets = new Long(0);
-		ProbePacket.sCreatedPackets = new Long(0);
+		PingPeer.sCreatedPackets = new Long(0);
 		AnnounceHRMIDs.sCreatedPackets = new Long(0);
 		AssignHRMID.sCreatedPackets = new Long(0);
 		RevokeHRMIDs.sCreatedPackets = new Long(0);
@@ -4775,7 +4775,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								Coordinator tCoordinator = tHRMController.getCoordinatorByID(tProxy.getCoordinatorID());
 								if(tCoordinator != null){
 									if(tCoordinator.isThisEntityValid()){
-										Logging.warn(this, "FALSE-POSITIVE? (at: " + getSimulationTime() + ") for CoordinatorProxy invalidation: " + tProxy);
+										Logging.err(this, "FALSE-POSITIVE? (at: " + getSimulationTime() + ") for CoordinatorProxy invalidation: " + tProxy);
 									}
 								}
 							}
@@ -4810,6 +4810,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						if(tChannel.isObsolete()){
 							Logging.warn(this, "AUTO REMOVING COM CHANNEL (TO: " + tChannel.lastRefreshTime() + " => " + tChannel.getTimeout() + " / now: " + getSimulationTime() + "): " + tChannel);
 							Logging.warn(this, "   ..cause: " + tChannel.getTimeoutCause());
+							Logging.warn(this, "   ..knowing these remote coordinators: " + getAllCoordinatorProxies(tChannel.getParent().getHierarchyLevel().getValue()));
 							
 							ControlEntity tChannelParent = tChannel.getParent();
 							if(tChannelParent instanceof CoordinatorAsClusterMember){
@@ -5038,7 +5039,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-						if(!getNodeGUIName().equals("node12")){
+						if(!getNodeGUIName().equals("node7")){
 							tResult = false;
 						}
 	
@@ -5503,7 +5504,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tTableRow.add(Long.toString(AnnouncePhysicalEndPoint.getCreatedPackets()));
 		tTableRow.add(Long.toString(MultiplexHeader.getCreatedPackets()));
 		tTableRow.add(Long.toString(SignalingMessageHrm.getCreatedPackets()));
-		tTableRow.add(Long.toString(ProbePacket.getCreatedPackets()));
+		tTableRow.add(Long.toString(PingPeer.getCreatedPackets()));
 		tTableRow.add(Long.toString(AnnounceHRMIDs.getCreatedPackets()));
 		tTableRow.add(Long.toString(AssignHRMID.getCreatedPackets()));
 		tTableRow.add(Long.toString(RevokeHRMIDs.getCreatedPackets()));

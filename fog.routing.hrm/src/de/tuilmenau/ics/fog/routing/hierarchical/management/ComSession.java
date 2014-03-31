@@ -22,8 +22,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnouncePhysicalEndPoint;
+import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
-import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
@@ -280,8 +280,12 @@ public class ComSession extends Session
 			/**
 			 * ProbePacket
 			 */
-			if(tMultiplexPacket.getPayload() instanceof ProbePacket){
-				Logging.warn(this, "#### SENDING PROBE_PACKET: " + tMultiplexPacket.getPayload());
+			if(tMultiplexPacket.getPayload() instanceof PingPeer){
+				PingPeer tPingPeerPacket = (PingPeer)tMultiplexPacket.getPayload();
+				
+				if(tPingPeerPacket.isPacketTracking()){
+					Logging.warn(this, "#### SENDING PING_PACKET: " + tMultiplexPacket.getPayload());
+				}
 			}
 		}
 		
@@ -785,10 +789,11 @@ public class ComSession extends Session
 				// is the parent a coordinator or a cluster?
 				if (tCoordinator != null){
 					ComChannel tComChannel = tCoordinator.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
-					Logging.log(this, "  ..created for " + pRequestClusterMembershipPacket + " a new comm. channel: " + tComChannel);
+					Logging.log(this, "  ..created for " + pRequestClusterMembershipPacket + " the new comm. channel: " + tComChannel);
 							
 					if(tComChannel != null){
 						tDenyRequest = false;
+						Logging.log(this, "  ..deligating packet: " + pRequestClusterMembershipPacket + " to: " + tComChannel);
 						tComChannel.receivePacket(pRequestClusterMembershipPacket);
 					}
 				}else{
@@ -1063,8 +1068,12 @@ public class ComSession extends Session
 			/**
 			 * ProbePacket
 			 */
-			if(tMultiplexPacket.getPayload() instanceof ProbePacket){
-				Logging.warn(this, "#### RECEIVED PROBE_PACKET: " + tMultiplexPacket.getPayload());
+			if(tMultiplexPacket.getPayload() instanceof PingPeer){
+				PingPeer tPingPeerPacket = (PingPeer)tMultiplexPacket.getPayload();
+
+				if(tPingPeerPacket.isPacketTracking()){
+					Logging.warn(this, "#### RECEIVED PING_PACKET: " + tMultiplexPacket.getPayload());
+				}
 			}
 
 			/**

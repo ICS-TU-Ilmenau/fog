@@ -12,9 +12,9 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
+import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
-import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageHrmTopologyASSeparator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
@@ -577,17 +577,30 @@ public class ClusterMember extends ClusterName
 	public void eventReceivedRouteShare(ComChannel pSourceComChannel, RoutingTable pSharedRoutingTable, RoutingTable pDeprecatedSharedRoutingTable)
 	{
 		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
-			Logging.err(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
+			Logging.log(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
 		}
 		
 		if((pDeprecatedSharedRoutingTable != null) && (pDeprecatedSharedRoutingTable.size() > 0)){
-			Logging.warn(this, "Found deprecated shared routing table: " + pDeprecatedSharedRoutingTable);
+			Logging.log(this, "Found deprecated shared routing table: " + pDeprecatedSharedRoutingTable);
 			for(RoutingEntry tDeprecatedEntry : pDeprecatedSharedRoutingTable){
-				Logging.warn(this, "   ..found deprecated reported routing entry: " + tDeprecatedEntry);
+				Logging.log(this, "   ..found deprecated reported routing entry: " + tDeprecatedEntry);
 			}
 		}
 
 		mHRMController.addHRMRouteShare(pSharedRoutingTable, getHierarchyLevel(), getHRMID(), pSourceComChannel.getPeerHRMID(), this + "::eventReceivedRouteShare()");			
+	}
+
+	/**
+	 * EVENT: PingPeer
+	 * 
+	 * @param pSourceComChannel the source comm. channel
+	 * @param pPingPeerPacket the original packet
+	 */
+	public void eventReceivedPing(ComChannel pSourceComChannel, PingPeer pPingPeerPacket)
+	{
+		Logging.log(this, "EVENT: ReceivedPingPeer via: " + pSourceComChannel);
+		Logging.log(this, "   ..sending ALIVE via: " + pSourceComChannel);
+		getElector().sendALIVE(pSourceComChannel);
 	}
 
 	/**

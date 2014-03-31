@@ -9,16 +9,15 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical;
 
-import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * PACKET: This packet is used to probe a comm. channel.
- * 		   The packet is not part of the concept. It is only useful for debugging purposes. 
+ * 		   It is used, if a comm. channel is potentially lost. Such a packet is always answer.
  */
-public class ProbePacket  extends SignalingMessageHrm
+public class PingPeer extends SignalingMessageHrm
 {
 	/**
 	 * For using the class within (de-)serialization processes.  
@@ -30,11 +29,17 @@ public class ProbePacket  extends SignalingMessageHrm
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
 	public static Long sCreatedPackets = new Long(0);
-
+	
+	/**
+	 * Defines if packet tracking is active
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	private boolean mPacketTracking = false;
+	
 	/**
 	 * Constructor for getDefaultSize()
 	 */
-	private ProbePacket()
+	private PingPeer()
 	{
 		super();
 	}
@@ -45,12 +50,28 @@ public class ProbePacket  extends SignalingMessageHrm
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
 	 */
-	public ProbePacket(HRMName pSenderName, HRMName pReceiverName)
+	public PingPeer(HRMName pSenderName, HRMName pReceiverName)
 	{
 		super(pSenderName, pReceiverName);
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
 		}
+	}
+	
+	/**
+	 * Activates packet tracking
+	 */
+	public void activateTracking()
+	{
+		mPacketTracking = true;		
+	}
+
+	/**
+	 * Returns if packet tracking is active
+	 */
+	public boolean isPacketTracking()
+	{
+		return mPacketTracking;
 	}
 
 	/**
@@ -90,7 +111,7 @@ public class ProbePacket  extends SignalingMessageHrm
 
 		int tResult = 0;
 		
-		ProbePacket tTest = new ProbePacket();
+		PingPeer tTest = new PingPeer();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
@@ -98,7 +119,7 @@ public class ProbePacket  extends SignalingMessageHrm
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		
+
 		return tResult;
 	}
 

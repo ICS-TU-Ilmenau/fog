@@ -25,8 +25,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
-import de.tuilmenau.ics.fog.packets.hierarchical.ProbePacket;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
@@ -61,7 +61,7 @@ public class HRMOverviewPackets extends ViewPart
 	private static final String TEXT_ANNOUNCE_PHYSICAL_EP	   				= "AnnouncePhysicalEndPoint: ";
 	private static final String TEXT_MUX_HEADER    			   				= "MultiplexHeader: ";
 	private static final String TEXT_SIG_MSG	   		       				= "SignalingMessageHrm: ";
-	private static final String TEXT_SIG_PROBE_PACKET	       				= "      ProbePacket: ";
+	private static final String TEXT_SIG_PING_PEER	       				= "      PingPeer: ";
 	private static final String TEXT_SIG_ANC_HRMIDS		       				= "      AnnounceHRMIDs: ";
 	private static final String TEXT_SIG_ASG_HRMID 		       				= "      AssignHRMID: ";
 	private static final String TEXT_SIG_REQ_HRMID 		       				= "      RequestHRMID: ";
@@ -103,7 +103,7 @@ public class HRMOverviewPackets extends ViewPart
 	private Label mAnnouncePhysicalEndPoint = null;
 	private Label mMultiplexHeader = null;
 	private Label mSignalingMessageHrm = null;
-	private Label mProbePacket = null;
+	private Label mPingPeer = null;
 	private Label mAnnounceHRMIDs = null;
 	private Label mAssignHRMID = null;
 	private Label mRequestHRMID = null;
@@ -154,7 +154,7 @@ public class HRMOverviewPackets extends ViewPart
 		mAnnouncePhysicalEndPoint.setText(Long.toString(AnnouncePhysicalEndPoint.getCreatedPackets()) + ",  each " + AnnouncePhysicalEndPoint.getDefaultSize() + " bytes" + (AnnouncePhysicalEndPoint.hasDynamicSize() ? " + more" : ""));
 		mMultiplexHeader.setText(Long.toString(MultiplexHeader.getCreatedPackets()) + ",  each " + MultiplexHeader.getDefaultSize() + " bytes" + (MultiplexHeader.hasDynamicSize() ? " + more" : ""));
 		mSignalingMessageHrm.setText(Long.toString(SignalingMessageHrm.getCreatedPackets()) + ",  each " + SignalingMessageHrm.getDefaultSize() + " bytes" + (SignalingMessageHrm.hasDynamicSize() ? " + more" : ""));
-		mProbePacket.setText(Long.toString(ProbePacket.getCreatedPackets()) + ",  each " + ProbePacket.getDefaultSize() + " bytes" + (ProbePacket.hasDynamicSize() ? " + more" : ""));
+		mPingPeer.setText(Long.toString(PingPeer.getCreatedPackets()) + ",  each " + PingPeer.getDefaultSize() + " bytes" + (PingPeer.hasDynamicSize() ? " + more" : ""));
 		mAnnounceHRMIDs.setText(Long.toString(AnnounceHRMIDs.getCreatedPackets()) + ",  each " + AnnounceHRMIDs.getDefaultSize() + " bytes" + (AnnounceHRMIDs.hasDynamicSize() ? " + more" : ""));
 		mAssignHRMID.setText(Long.toString(AssignHRMID.getCreatedPackets()) + ",  each " + AssignHRMID.getDefaultSize() + " bytes" + (AssignHRMID.hasDynamicSize() ? " + more" : ""));
 		mRequestHRMID.setText(Long.toString(RequestHRMID.getCreatedPackets()) + ",  each " + RequestHRMID.getDefaultSize() + " bytes" + (RequestHRMID.hasDynamicSize() ? " + more" : ""));
@@ -238,7 +238,7 @@ public class HRMOverviewPackets extends ViewPart
 		mAnnouncePhysicalEndPoint.dispose();
 		mMultiplexHeader.dispose();
 		mSignalingMessageHrm.dispose();
-		mProbePacket.dispose();
+		mPingPeer.dispose();
 		mAnnounceHRMIDs.dispose();
 		mAssignHRMID.dispose();
 		mRequestHRMID.dispose();
@@ -297,7 +297,7 @@ public class HRMOverviewPackets extends ViewPart
 		mAnnouncePhysicalEndPoint = createPartControlLine(tGrpPackets, TEXT_ANNOUNCE_PHYSICAL_EP);
 		mMultiplexHeader = createPartControlLine(tGrpPackets, TEXT_MUX_HEADER);
 		mSignalingMessageHrm = createPartControlLine(tGrpPackets, TEXT_SIG_MSG);
-		mProbePacket = createPartControlLine(tGrpPackets, TEXT_SIG_PROBE_PACKET);
+		mPingPeer = createPartControlLine(tGrpPackets, TEXT_SIG_PING_PEER);
 		mAnnounceHRMIDs = createPartControlLine(tGrpPackets, TEXT_SIG_ANC_HRMIDS);
 		mAssignHRMID = createPartControlLine(tGrpPackets, TEXT_SIG_ASG_HRMID);
 		mRequestHRMID = createPartControlLine(tGrpPackets, TEXT_SIG_REQ_HRMID);
