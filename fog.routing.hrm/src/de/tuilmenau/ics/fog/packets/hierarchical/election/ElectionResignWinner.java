@@ -106,8 +106,9 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     = 1
-		 * 		SignalingMessageElection = 4
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
+		 * 		[SignalingMessageElection]
 		 * 
 		 *************************************************************/
 
@@ -124,8 +125,9 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     = 1
-		 * 		SignalingMessageElection = 4
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
+		 * 		[SignalingMessageElection]
 		 * 
 		 *************************************************************/
 

@@ -1222,7 +1222,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							mSentAnnounces++;
 							
 							/**
-							 * TTL is still okay?
+							 * TTL is still okay? -> for allowing a radius of 0 here
 							 */
 							if(tAnnounceCoordinatorPacket.isTTAOkay()){
 								/**

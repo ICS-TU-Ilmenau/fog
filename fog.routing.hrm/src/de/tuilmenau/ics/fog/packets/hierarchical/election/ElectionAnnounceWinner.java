@@ -139,8 +139,9 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     = 1
-		 * 		SignalingMessageElection = 4
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
+		 * 		[SignalingMessageElection]
 		 * 		CoordinatorID			 = 4
 		 * 
 		 *************************************************************/
@@ -158,8 +159,9 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	     = 1
-		 * 		SignalingMessageElection = 4
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
+		 * 		[SignalingMessageElection]
 		 * 		CoordinatorID			 = 4
 		 * 
 		 *************************************************************/
