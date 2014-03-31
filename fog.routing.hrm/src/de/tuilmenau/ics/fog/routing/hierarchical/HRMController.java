@@ -4710,8 +4710,21 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			for(CoordinatorProxy tProxy : tProxies){
 				// does the link have a timeout?
 				if(tProxy.isObsolete()){
-					Logging.warn(this, "AUTO REMOVING COORDINATOR PROXY (LT stable hierarchy: " + hasLongTermStableHierarchy() + "): " + tProxy);
+					Logging.warn(this, "AUTO REMOVING COORDINATOR PROXY (TO: " + tProxy.lastRefreshTime() + " => " + tProxy.getTimeout() + " / now: " + getSimulationTime() + ") node-specific LT stable hierarchy: " + hasLongTermStableHierarchy() + "): " + tProxy);
 	
+					if(HRMConfig.Measurement.VALIDATE_RESULTS){
+						synchronized (sRegisteredHRMControllers) {
+							for(HRMController tHRMController : sRegisteredHRMControllers){
+								Coordinator tCoordinator = tHRMController.getCoordinatorByID(tProxy.getCoordinatorID());
+								if(tCoordinator != null){
+									if(tCoordinator.isThisEntityValid()){
+										Logging.err(this, "False-positive for CoordinatorProxy invalidation: " + tProxy);
+									}
+								}
+							}
+						}
+					}
+
 					/**
 					 * Trigger: remote coordinator role invalid
 					 */
@@ -4966,9 +4979,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-//						if(!getNodeGUIName().equals("node7")){
-//							tResult = false;
-//						}
+						if(!getNodeGUIName().equals("node7")){
+							tResult = false;
+						}
 	
 						synchronized (sRegisteredTopCoordinatorsCounter) {
 							Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
@@ -5083,40 +5096,42 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void validateAllResults()
 	{
-		synchronized (mValidationMutex) {
-			if(!mResultsValidated){
-				if(!FOUND_GLOBAL_ERROR){
-					Logging.warn(this, "?????????????????????????????????????????????????");
-					Logging.warn(this, "??? VALIDATING RESULTS (validated: " + mResultsValidated + ")");
-					Logging.warn(this, "?????????????????????????????????????????????????");
-			
-					/**
-					 * Validate results of all HRMController instances
-					 */
-					if(sRegisteredHRMControllers != null){
-						for(HRMController tHRMController : sRegisteredHRMControllers){
-							Logging.warn(null, "  ..validating: " + tHRMController.getNodeGUIName());
-							tHRMController.validateResults();
-							
-							/**
-							 * Abort if global error is detected
-							 */
-							if(FOUND_GLOBAL_ERROR){
-								break;
+		if(HRMConfig.Measurement.VALIDATE_RESULTS){
+			synchronized (mValidationMutex) {
+				if(!mResultsValidated){
+					if(!FOUND_GLOBAL_ERROR){
+						Logging.warn(this, "?????????????????????????????????????????????????");
+						Logging.warn(this, "??? VALIDATING RESULTS (validated: " + mResultsValidated + ")");
+						Logging.warn(this, "?????????????????????????????????????????????????");
+				
+						/**
+						 * Validate results of all HRMController instances
+						 */
+						if(sRegisteredHRMControllers != null){
+							for(HRMController tHRMController : sRegisteredHRMControllers){
+								Logging.warn(null, "  ..validating: " + tHRMController.getNodeGUIName());
+								tHRMController.validateResults();
+								
+								/**
+								 * Abort if global error is detected
+								 */
+								if(FOUND_GLOBAL_ERROR){
+									break;
+								}
 							}
 						}
+						
+						/**
+						 * HRM test app
+						 */
+	//					HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
+	//					tHRMTestApp.start();
+						
+						/**
+						 * auto-exit simulation
+						 */ 
+						autoExitSimulation();
 					}
-					
-					/**
-					 * HRM test app
-					 */
-//					HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
-//					tHRMTestApp.start();
-					
-					/**
-					 * auto-exit simulation
-					 */ 
-					autoExitSimulation();
 				}
 			}
 		}
@@ -5585,12 +5600,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * auto-remove old HRG links
 			 */
 			autoRemoveObsoleteHRGLinks();
-			
-			if(HRMConfig.Measurement.VALIDATE_RESULTS){
-				if (GUI_USER_CTRL_REPORT_TOPOLOGY){
-	//				validateAllResults();
-				}
-			}
 			
 			/**
 			 * auto-distribute HRMIDs: start from the top and go downstairs

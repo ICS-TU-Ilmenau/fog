@@ -49,6 +49,11 @@ public class CoordinatorProxy extends ClusterMember
 	private AnnounceCoordinator mLastAnnounceCoordinator = null;
 	
 	/**
+	 * Stores the time of the last refresh
+	 */
+	private double mLastRefreshTime = 0;
+	
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
@@ -155,6 +160,7 @@ public class CoordinatorProxy extends ClusterMember
 	public void refreshTimeout(AnnounceCoordinator pAnnounceCoordinatorPacket)
 	{
 		mLastAnnounceCoordinator = (AnnounceCoordinator)pAnnounceCoordinatorPacket.duplicate();
+		mLastRefreshTime = mHRMController.getSimulationTime();
 		
 		double tNewTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getLifetime();
 		if (tNewTimeout > mTimeout){
@@ -162,6 +168,16 @@ public class CoordinatorProxy extends ClusterMember
 		}					 
 	}
 	
+	/**
+	 * Returns the time of the last refresh
+	 * 
+	 * @return the searched time
+	 */
+	public double lastRefreshTime()
+	{
+		return mLastRefreshTime;
+	}
+
 	/**
 	 * Returns the last received AnnounceCoordinator packet
 	 *  
