@@ -160,6 +160,15 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		
 		mLifetime = calcLifetime(pCoordinator);
 		
+		/**
+		 * workaround for the performance problems due to high load in the simulation short after start
+		 */
+		if(pHRMController != null){
+			if(pHRMController.getSimulationTime() < 10){
+				mLifetime = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + HRMConfig.Hierarchy.MAX_E2E_DELAY;
+			}
+		}
+		
 		setSenderEntityName(pSenderClusterName);
 
 		setSenderEntityNodeL2Address(pCoordinatorNodeL2Address);
@@ -183,7 +192,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	private double calcLifetime(Coordinator pCoordinator)
 	{
 		double tResult = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
-
+		
 		if((pCoordinator != null) && (pCoordinator.hasLongTermExistence())){
 			//Logging.err(this, "Using higher lifetime here");
 			tResult = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE + HRMConfig.Hierarchy.MAX_E2E_DELAY;
