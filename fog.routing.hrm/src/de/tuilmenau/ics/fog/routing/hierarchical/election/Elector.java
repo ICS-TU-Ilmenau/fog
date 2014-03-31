@@ -1065,9 +1065,9 @@ public class Elector implements Localization
 				 */
 				synchronized (mNodeActiveClusterMemberships){
 					LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
-//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tActiveClusterMemberships);
-//					}
+					}
 
 					// get all possible elections
 					LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getParentCoordinatorClusterMemberships();

@@ -425,24 +425,26 @@ public class HRMRoutingService implements RoutingService, Localization
 							Route tKnownL2Route = tKnownL2RouteLink.getRoute();
 							if(tKnownL2Route.getFirst() instanceof RouteSegmentPath){							
 								RouteSegmentPath tGateIDList = (RouteSegmentPath) tKnownL2Route.getFirst();
-								GateID tFirstGateID = tGateIDList.getFirst();
-								GateID tSecondGateID = tGateIDList.get(1);
-								boolean tDeprecated = true;
-								AbstractGate tFirstGate = tCentralFN.getGate(tFirstGateID);
-								if(tFirstGate != null){
-									Multiplexer tIntermediateFN = (Multiplexer)tFirstGate.getNextNode();
-									AbstractGate tSecondGate = tIntermediateFN.getGate(tSecondGateID);
-									if(tSecondGate != null){
-										tDeprecated = false;
+								if(tGateIDList.size() > 1){
+									GateID tFirstGateID = tGateIDList.getFirst();
+									GateID tSecondGateID = tGateIDList.get(1);
+									boolean tDeprecated = true;
+									AbstractGate tFirstGate = tCentralFN.getGate(tFirstGateID);
+									if(tFirstGate != null){
+										Multiplexer tIntermediateFN = (Multiplexer)tFirstGate.getNextNode();
+										AbstractGate tSecondGate = tIntermediateFN.getGate(tSecondGateID);
+										if(tSecondGate != null){
+											tDeprecated = false;
+										}
 									}
-								}
-								
-								if(tDeprecated){
-									Logging.warn(this, ">>>>>>>>>>>>>>> Found deprecated L2 route: " + tKnownL2Route);
 									
-									mL2RoutingGraph.unlink(tKnownL2Link);
-									tDeletedOne = true;
-									break;
+									if(tDeprecated){
+										Logging.warn(this, ">>>>>>>>>>>>>>> Found deprecated L2 route: " + tKnownL2Route);
+										
+										mL2RoutingGraph.unlink(tKnownL2Link);
+										tDeletedOne = true;
+										break;
+									}
 								}
 							}
 						}
@@ -464,7 +466,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	public boolean registerL2RouteBestEffort(L2Address pToL2Address, Route pRoute)
 	{
 		boolean tResult = true;
-		boolean DEBUG = true;//HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION;
+		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION;
 				
 		if (DEBUG){
 			Logging.log(this, "REGISTERING L2 BE ROUTE: dest.=" + pToL2Address + ", route=\"" + pRoute + "\"");
@@ -1837,9 +1839,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		L2Address tDestinationL2Address = null;
 		L2Address tSourceL2Address = null;
 
-		if(pDestination instanceof L2Address){
-			DEBUG = true;
-		}
+//		if(pDestination instanceof L2Address){
+//			DEBUG = true;
+//		}
 		
 		/**
 		 * Make sure that the HRMController is already started if the routing should lead to an application.

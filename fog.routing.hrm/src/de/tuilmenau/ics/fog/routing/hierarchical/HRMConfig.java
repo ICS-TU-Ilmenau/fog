@@ -335,12 +335,12 @@ public class HRMConfig
 		/**
 		 * Defines the time in which coordinators are announced immediately in any case
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_NODE_STARTUP_TIME = 10.0;
+		public static final double COORDINATOR_ANNOUNCEMENTS_NODE_STARTUP_TIME = 3.0;
 
 		/**
 		 * Defines the time in which a coordinator is threaded as "young" and isn't announced
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME = 0.0;
+		public static final double COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME = 3.0;
 
 		/**
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors
@@ -368,7 +368,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 1;
+		public static final long RADIUS = 12;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
