@@ -1287,7 +1287,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Coordinator tCoordinator = tHRMController.getCoordinatorByID(pLostCoordinatorProxy.getCoordinatorID());
 					if(tCoordinator != null){
 						if(tCoordinator.isThisEntityValid()){
-							Logging.warn(this, "FALSE-POSITIVE for detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(): " + pLostCoordinatorProxy);
+							Logging.warn(this, "FALSE-POSITIVE? for detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(): " + pLostCoordinatorProxy);
 						}
 					}
 				}
@@ -4775,7 +4775,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								Coordinator tCoordinator = tHRMController.getCoordinatorByID(tProxy.getCoordinatorID());
 								if(tCoordinator != null){
 									if(tCoordinator.isThisEntityValid()){
-										Logging.warn(this, "FALSE-POSITIVE (at: " + getSimulationTime() + ") for CoordinatorProxy invalidation: " + tProxy);
+										Logging.warn(this, "FALSE-POSITIVE? (at: " + getSimulationTime() + ") for CoordinatorProxy invalidation: " + tProxy);
 									}
 								}
 							}
