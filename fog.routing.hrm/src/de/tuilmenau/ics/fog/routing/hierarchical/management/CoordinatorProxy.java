@@ -211,7 +211,12 @@ public class CoordinatorProxy extends ClusterMember
 		if(getTimeout() > 0){
 			// timeout occurred?
 			if(getTimeout() < mHRMController.getSimulationTime()){
-				tResult = true;
+				/**
+				 * workaround for the performance problems due to high load in the simulation short after start
+				 */
+				if(getTimeout() > 10){
+					tResult = true;
+				}
 			}
 		}
 		
