@@ -4768,7 +4768,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// does the link have a timeout?
 				if(tProxy.isObsolete()){
 					Logging.warn(this, "AUTO REMOVING COORDINATOR PROXY (TO: " + tProxy.lastRefreshTime() + " => " + tProxy.getTimeout() + " / now: " + getSimulationTime() + ") node-specific LT stable hierarchy: " + hasLongTermStableHierarchy() + "): " + tProxy);
-	
+
 					if(HRMConfig.Measurement.VALIDATE_RESULTS){
 						synchronized (sRegisteredHRMControllers) {
 							for(HRMController tHRMController : sRegisteredHRMControllers){
