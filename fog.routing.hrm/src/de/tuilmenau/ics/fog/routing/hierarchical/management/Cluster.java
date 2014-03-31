@@ -1674,7 +1674,7 @@ public class Cluster extends ClusterMember
 							
 							if(!tCoordintorProxy.isThisEntityValid()){
 								if(DEBUG){
-									Logging.log(this, "Found already invalided coordinator proxy: " + tCoordintorProxy);
+									Logging.log(this, "Found already invalidated coordinator proxy: " + tCoordintorProxy);
 								}
 								ComChannel tComChannelToRemoteCoordinator = getComChannelToMember(tCoordintorProxy);
 								if(tComChannelToRemoteCoordinator != null){
