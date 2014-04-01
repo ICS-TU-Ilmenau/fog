@@ -134,20 +134,18 @@ public class ComSession extends Session
 	 */
 	public synchronized void eventSessionInvalidated()
 	{
-		synchronized (mHRMController) {
-			synchronized (mRegisteredComChannels) {
-				if(mRegisteredComChannels.size() == 0){
-					Logging.log(this, "===== Session got invalidaed");
-	
-					mSessionAvailable = false;
-	
-					stopConnection();
-	
-					// unregister from the HRMController instance
-					mHRMController.unregisterSession(this);
-				}else{
-					Logging.warn(this, "Invalidation aborted due to new com. channels: " + mRegisteredComChannels);
-				}
+		synchronized (mRegisteredComChannels) {
+			if(mRegisteredComChannels.size() == 0){
+				Logging.log(this, "===== Session got invalidaed");
+
+				mSessionAvailable = false;
+
+				stopConnection();
+
+				// unregister from the HRMController instance
+				mHRMController.unregisterSession(this);
+			}else{
+				Logging.warn(this, "Invalidation aborted due to new com. channels: " + mRegisteredComChannels);
 			}
 		}
 	}
