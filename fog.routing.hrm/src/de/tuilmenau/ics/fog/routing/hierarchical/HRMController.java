@@ -1209,6 +1209,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// unregister as known coordinator proxy
 				mLocalCoordinatorProxies.remove(pCoordinatorProxy);
 
+				// update local hierarchy
+				mProcessorThread.eventUpdateCoordinatorsAboutLostRemoteCoordinator(pCoordinatorProxy);
+				
 				// increase hierarchy node priority
 				decreaseHierarchyNodePriority_KnownCoordinator(pCoordinatorProxy);
 				
@@ -1223,9 +1226,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				
 			}
 		}			
-		
-		// update local hierarchy
-		mProcessorThread.eventUpdateCoordinatorsAboutLostRemoteCoordinator(pCoordinatorProxy);
 		
 		// updates the GUI decoration for this node
 		updateGUINodeDecoration();
@@ -1279,7 +1279,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(CoordinatorProxy pLostCoordinatorProxy)
 	{
-		//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy() for: " + pLostCoordinatorProxy);
+		Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy() for: " + pLostCoordinatorProxy);
 		
 		if(HRMConfig.Measurement.VALIDATE_RESULTS){
 			synchronized (sRegisteredHRMControllers) {
@@ -1318,7 +1318,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(tKnownRemainingRemoteCoordinatorsAtThisNodeAndLevel == 0){
 					/**
 					 * If a remote coordinator on hierarchy level 1 is lost and it is a superior coordinator of this node, all local coordinators on hierarchy level 0 have lost their superior coordinator
-					 *		-> trigger event "superior coordinator lost"  
+					 *		-> trigger timeout for the comm. channel  
 					 */
 					if(pLostCoordinatorProxy.getHierarchyLevel().isHigherLevel()){
 						LinkedList<Coordinator> tCoordinators = getAllCoordinators(pLostCoordinatorProxy.getHierarchyLevel().dec().getValue());
@@ -1326,6 +1326,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
 							if((tCoordinator.superiorCoordinatorComChannel() != null) && (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName() != null)){
 								if (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName().getClusterID() == pLostCoordinatorProxy.getClusterID()){
+									Logging.warn(this, "   ..setting timeout for com. channel (to sup. coord.): " + tCoordinator.superiorCoordinatorComChannel());
 									tCoordinator.superiorCoordinatorComChannel().setTimeout("detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy()_1 for: " + pLostCoordinatorProxy.toString());
 	
 									//								Logging.err(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
@@ -1340,16 +1341,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 		
 					/**
-					 * If a remote coordinator on hierarchy level 0 is lost and no other remote coordinator from this node is known, the remote cluster in hierarchy level 1 is also assumed to be lost
-					 * 		-> trigger event "CoordinatorAsClusterMember invalid" 
+					 * If a remote coordinator on level x is lost and no other remote coordinator from this node is known, the superior remote cluster on level (x + 1) might be unreachable anymore
+					 *		-> trigger timeout for all comm. channel towards the node, where the former coordinator was located  
 					 */
-					LinkedList<Coordinator> tCoordinators = getAllCoordinators(pLostCoordinatorProxy.getHierarchyLevel().getValue());
+					LinkedList<Coordinator> tCoordinators = getAllCoordinators();
 					for(Coordinator tCoordinator : tCoordinators){
 						//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
 						LinkedList<ComChannel> tChannelsToSuperiorClusters = tCoordinator.getClusterMembershipComChannels();
 						for (ComChannel tChannelToSuperiorCluster : tChannelsToSuperiorClusters){
 							if(tChannelToSuperiorCluster.getPeerL2Address() != null){
-								if (tChannelToSuperiorCluster.getRemoteClusterName().getClusterID().equals(pLostCoordinatorProxy.getClusterID())){
+								if (tChannelToSuperiorCluster.getPeerL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
+									Logging.warn(this, "   ..setting timeout for com. channel (to sup. cluster): " + tChannelToSuperiorCluster);
 									tChannelToSuperiorCluster.setTimeout("detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy()_2 for: " + pLostCoordinatorProxy.toString());
 	
 	//								CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToSuperiorCluster.getParent();
@@ -1361,6 +1363,36 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									//tClusterMembership.eventCoordinatorAsClusterMemberRoleInvalid();						
 								}
 							}
+						}
+					}
+
+					/**
+					 * If a remote coordinator on level x is lost and no other remote coordinator from this node is known, a superior local cluster on level (x + 1) might have lost its cluster member
+					 *		-> trigger timeout for all comm. channel towards the node, where the former coordinator was located  
+					 */
+					LinkedList<Cluster> tClusters = getAllClusters();
+					for(Cluster tCluster : tClusters){
+						if(tCluster.getHierarchyLevel().isHigherLevel()){
+							//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
+							LinkedList<ComChannel> tChannelsToInferiorClusterMembers = tCluster.getComChannels();
+							for (ComChannel tChannelToInferiorClusterMember : tChannelsToInferiorClusterMembers){
+								if(tChannelToInferiorClusterMember.getPeerL2Address() != null){
+									if (tChannelToInferiorClusterMember.getPeerL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
+										Logging.warn(this, "   ..setting timeout for com. channel (to sup. cluster): " + tChannelToInferiorClusterMember);
+										tChannelToInferiorClusterMember.setTimeout("detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy()_3 for: " + pLostCoordinatorProxy.toString());
+		
+		//								CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToSuperiorCluster.getParent();
+		//								Logging.err(this, "#### Remote superior cluster invalid (" + pLostCoordinatorProxy + ") for active local coordinator: " + tClusterMembership);
+		//								Logging.err(this, "   ..knowing these remote coordinators:");
+		//								for(CoordinatorProxy tProxy : mLocalCoordinatorProxies){
+		//									Logging.err(this, "     .." + tProxy);	
+		//								}
+										//tClusterMembership.eventCoordinatorAsClusterMemberRoleInvalid();
+									}
+								}
+							}
+						}else{
+							// base level 0 -> such cases are detected based on direct neighborhood probing
 						}
 					}
 				}
@@ -4808,7 +4840,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					for(ComChannel tChannel : tChannels){
 						// does the channel have a timeout?
 						if(tChannel.isObsolete()){
-							Logging.warn(this, "AUTO REMOVING COM CHANNEL (TO: " + tChannel.lastRefreshTime() + " => " + tChannel.getTimeout() + " / now: " + getSimulationTime() + "): " + tChannel);
+							Logging.warn(this, "AUTO REMOVING COM CHANNEL (TO: " + tChannel.timeoutStart() + " => " + tChannel.getTimeout() + " / now: " + getSimulationTime() + "): " + tChannel);
 							Logging.warn(this, "   ..cause: " + tChannel.getTimeoutCause());
 							Logging.warn(this, "   ..knowing these remote coordinators: " + getAllCoordinatorProxies(tChannel.getParent().getHierarchyLevel().getValue()));
 							
@@ -4832,8 +4864,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								 */
 								tFoundDeprecatedEntity = true;
 								break;
+							}else if(tChannelParent instanceof Cluster){
+								Cluster tChannelParentCluster = (Cluster)tChannelParent;
+								Logging.warn(this, "AUTO REMOVING CLUSTER-MEMBER: " + tChannelParentCluster);
+								tChannelParentCluster.eventClusterMemberLost(tChannel, this + "::autoRemoveObsoleteComChannels()");
+
+								/**
+								 * Have we close the last comm. channel of this session?
+								 */
+								ComSession tSessionObsoleteChannel = tChannel.getParentComSession();
+								if(tSessionObsoleteChannel.getAllComChannels().size() == 0){
+									Logging.log(this, "\n\n################ CLOSING COM. SESSION: " + tSessionObsoleteChannel);
+									tSessionObsoleteChannel.eventSessionInvalidated();
+								}
+
+								/**
+								 * Break the for-loop because the iterator is invalid now
+								 */
+								tFoundDeprecatedEntity = true;
+								break;
 							}else{
-								Logging.err(this, "Expected a CoordinatorAsClusterMember as parent of: " + tChannel);
+								Logging.err(this, "Expected a CoordinatorAsClusterMember/Cluster as parent of: " + tChannel);
 							}
 						}
 					}
@@ -5003,15 +5054,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Validates the hierarchy creation for this node
 	 * 
+	 * @param pEnforceRevalidation enforce a revalidation?
+	 * 
 	 * @return true or false
 	 */
 	private Object mValidationMutex = new Object();
-	public boolean validateResults()
+	public boolean validateResults(boolean pEnforceRevalidation)
 	{
 		boolean tResult = true;
 		
 		synchronized (mValidationMutex) {
-			if (!mResultsValidated){
+			if ((!mResultsValidated) || (pEnforceRevalidation)){
 	
 				mResultsValidated = true;
 				
@@ -5039,9 +5092,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-						if(!getNodeGUIName().equals("node7")){
-							tResult = false;
-						}
+//						if(!getNodeGUIName().equals("node12")){
+//							tResult = false;
+//						}
 	
 						synchronized (sRegisteredTopCoordinatorsCounter) {
 							Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
@@ -5170,7 +5223,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						if(sRegisteredHRMControllers != null){
 							for(HRMController tHRMController : sRegisteredHRMControllers){
 								Logging.warn(null, "  ..validating: " + tHRMController.getNodeGUIName());
-								tHRMController.validateResults();
+								tHRMController.validateResults(false);
 								
 								/**
 								 * Abort if global error is detected
@@ -6862,23 +6915,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**************************************************
 		 * Check if we have found too long routes 
 		 **************************************************/
-		RoutingTable tTooLongRoutes = new RoutingTable();
-		for(RoutingEntry tEntry : tResult){
-			if(tEntry.getDest().isClusterAddress()){
-				if(tEntry.getHopCount() > RoutingEntry.NO_HOP_COSTS){
-					HRMID tDestinationCluster = tEntry.getDest();
-					HRMID tSourceCluster = tEntry.getDest().getForeignCluster(tEntry.getSource());
-					RoutingEntry tShortestEntry = getRoutingEntryHRG(tSourceCluster, tDestinationCluster, this + "::getAllRoutingEntriesHRG()");
-					// are the source and the destination clusters directly connected?
-					if(tShortestEntry.getHopCount() == RoutingEntry.NO_HOP_COSTS){
-						if(DEBUG){
-							Logging.log(this, "  ..removing the too long route: " + tEntry);
-						}
-						tTooLongRoutes.add(tEntry);
-					}
-				}
-			}
-		}
+//		RoutingTable tTooLongRoutes = new RoutingTable();
+//		for(RoutingEntry tEntry : tResult){
+//			if(tEntry.getDest().isClusterAddress()){
+//				if(tEntry.getHopCount() > RoutingEntry.NO_HOP_COSTS){
+//					HRMID tDestinationCluster = tEntry.getDest();
+//					HRMID tSourceCluster = tEntry.getDest().getForeignCluster(tEntry.getSource());
+//					RoutingEntry tShortestEntry = getRoutingEntryHRG(tSourceCluster, tDestinationCluster, this + "::getAllRoutingEntriesHRG()");
+//					// are the source and the destination clusters directly connected?
+//					if(tShortestEntry.getHopCount() == RoutingEntry.NO_HOP_COSTS){
+//						if(DEBUG){
+//							Logging.log(this, "  ..removing the too long route: " + tEntry);
+//						}
+//						tTooLongRoutes.add(tEntry);
+//					}
+//				}
+//			}
+//		}
 		// delete entries with "too long routes"
 ///		tResult.delEntries(tTooLongRoutes);
 		

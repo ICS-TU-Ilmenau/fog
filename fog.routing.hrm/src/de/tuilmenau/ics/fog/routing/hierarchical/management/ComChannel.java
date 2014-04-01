@@ -242,6 +242,11 @@ public class ComChannel
 	 * Stores the timeout of this channel
 	 */
 	private double mTimeout = 0;
+
+	/**
+	 * Stores the time of the last PingPeer packet used to check the peer life state
+	 */
+	private double mTimeLastPingPeer = 0;
 	
 	/**
 	 * Stores the cause for the timeout
@@ -251,7 +256,7 @@ public class ComChannel
 	/**
 	 * Stores the time of the last refresh
 	 */
-	private double mLastRefreshTime = 0;
+	private double mTimeoutStart = 0;
 	
 	/**
 	 * Stores the packet queue
@@ -1542,6 +1547,7 @@ public class ComChannel
 //			Logging.warn(this, "Resetting timeout now due: " + pCause);
 //		}
 		mTimeout = 0;
+		mTimeLastPingPeer = 0;
 	}
 
 	/**
@@ -1562,15 +1568,13 @@ public class ComChannel
 	public void setTimeout(String pCause)
 	{
 		/**
-		 * need MAX_E2E_DELAY for 2 transmission: 1.) PING, 2.) ALIVE
+		 * need MAX_E2E_DELAY for 2 transmissions: 1.) PING, 2.) ALIVE
+		 * add additional MAX_E2E_DELAY to allow the peer to show its life state by "normal signaling traffic"
 		 */
-		double tOffset = 2 * HRMConfig.Hierarchy.MAX_E2E_DELAY;
+		double tOffset = HRMConfig.Hierarchy.TIME_BEFORE_CHANNEL_IS_PINGED + 2 * HRMConfig.Hierarchy.MAX_E2E_DELAY;
 		mTimeout = mHRMController.getSimulationTime() + tOffset;
-		mLastRefreshTime = mHRMController.getSimulationTime();
+		mTimeoutStart = mHRMController.getSimulationTime();
 		mTimeoutCause = pCause;
-		
-		// try to ping the peer entity -> if the peer answers this packet within 2*MAX_E2E_DELAY seconds, the peer (e.g., cluster head) is still alive.
-		signalPingPeerPacket(false);
 		
 //		Logging.warn(this, "Got a defined timeout of: " + tOffset + ", will end at: " + mTimeout + ", cause=" + pCause);		
 	}
@@ -1580,9 +1584,9 @@ public class ComChannel
 	 * 
 	 * @return the searched time
 	 */
-	public double lastRefreshTime()
+	public double timeoutStart()
 	{
-		return mLastRefreshTime;
+		return mTimeoutStart;
 	}
 
 	/**
@@ -1604,10 +1608,28 @@ public class ComChannel
 	{
 		boolean tResult = false;
 		
+		/**
+		 * timeout set?
+		 */
 		if(getTimeout() > 0){
-			// timeout occurred?
-			if(getTimeout() < mHRMController.getSimulationTime()){
-				tResult = true;
+			/**
+			 * should we actively ping the peer in order to get its life state?
+			 */
+			if((mTimeoutStart + HRMConfig.Hierarchy.TIME_BEFORE_CHANNEL_IS_PINGED < mHRMController.getSimulationTime()) && (mTimeLastPingPeer == 0) && (getTimeout() > mHRMController.getSimulationTime())){
+				mTimeLastPingPeer = mHRMController.getSimulationTime();
+				
+				// try to ping the peer entity -> if the peer answers this packet within 2*MAX_E2E_DELAY seconds, the peer (e.g., cluster head) is still alive.
+				Logging.warn(this, "CHECKING COM. TO PEER: " + getPeerL2Address());
+
+				signalPingPeerPacket(false);
+			}else{
+				/**
+				 * final timeout occurred?
+				 */
+				if(getTimeout() < mHRMController.getSimulationTime()){
+					mTimeLastPingPeer = 0;
+					tResult = true;
+				}
 			}
 		}
 		

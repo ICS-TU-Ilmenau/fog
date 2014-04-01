@@ -263,10 +263,11 @@ public class HRMOverviewHierarchy extends ViewPart
 			public void widgetSelected(SelectionEvent pEvent) {
 				LinkedList<HRMController> tHRMControllers = HRMController.getALLHRMControllers();
 				for(HRMController tHRMController : tHRMControllers){
-					if(tHRMController.validateResults()){
-						Logging.log(this, "Hierarchy valid on node: " + tHRMController.getNodeGUIName());
+					if(tHRMController.validateResults(true)){
+						Logging.warn(this, "Hierarchy valid on node: " + tHRMController.getNodeGUIName());
+					}else{
+						Logging.err(this, "Hierarchy invalid on node: " + tHRMController.getNodeGUIName());
 					}
-					
 				}
 			}
 		});

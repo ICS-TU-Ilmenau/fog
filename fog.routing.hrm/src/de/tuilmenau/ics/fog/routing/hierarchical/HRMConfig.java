@@ -436,6 +436,11 @@ public class HRMConfig
 		 * Limits the number of connection retries
 		 */
 		public static final int CONNECTION_MAX_RETRIES = 2; // default: 2
+
+		/**
+		 * Defines the time in [s] of idle time after a probably dead channel is pinged
+		 */
+		public static final double TIME_BEFORE_CHANNEL_IS_PINGED = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL;
 	}
 	
 	/**
