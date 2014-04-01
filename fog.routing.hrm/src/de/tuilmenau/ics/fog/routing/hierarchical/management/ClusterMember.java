@@ -1242,7 +1242,7 @@ public class ClusterMember extends ClusterName
 	/**
 	 * EVENT: cluster member role invalid
 	 * 
-	 *  @param: pComChannel the comm. channel towards the cluster head
+	 * @param: pComChannel the comm. channel towards the cluster head
 	 */
 	public synchronized void eventClusterMemberRoleInvalid(ComChannel pComChannel)
 	{
