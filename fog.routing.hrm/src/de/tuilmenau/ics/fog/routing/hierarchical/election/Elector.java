@@ -327,9 +327,15 @@ public class Elector implements Localization
 
 // TODO: checkForWinner() here produces a much higher startup time but is this result valid?		
 			if(isFirstElection()){
+				/**
+				 * Start the election process and trigger explicitly the transmission of priorities from the peers.
+				 */
 				Logging.log(this, "FIRST ELECTION round");
 				distributeELECT();
 			}else{
+				/**
+				 * The election process is an continuous action. Hence, it has to be started only once. After a successful start, the priorities of the other cluster members are continuously collected.
+				 */
 				Logging.log(this, "ELECTION round " + mElectionRounds);
 				checkForWinner(this + "::elect()");
 			}
