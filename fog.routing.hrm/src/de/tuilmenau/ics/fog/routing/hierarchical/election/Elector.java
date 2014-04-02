@@ -326,7 +326,7 @@ public class Elector implements Localization
 			}
 
 // TODO: checkForWinner() here produces a much higher startup time but is this result valid?		
-			if(isFirstElection()){
+			if((isFirstElection()) || (mParent.getHierarchyLevel().isBaseLevel())){
 				/**
 				 * Start the election process and trigger explicitly the transmission of priorities from the peers.
 				 */
@@ -787,7 +787,26 @@ public class Elector implements Localization
 			if(pComChannel == null){
 				// send broadcast
 				Logging.log(this, "Distributing priority update: " + tElectionPriorityUpdatePacket);
-				mParent.sendClusterBroadcast(tElectionPriorityUpdatePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+				//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionPriorityUpdatePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+				
+				int tSentPackets = 0;
+				LinkedList<ComChannel> tChannels = mParent.getComChannels();
+				for(ComChannel tComChannelToPeer : tChannels){
+					/**
+					 * is this priority update needed?
+					 */
+					if((tComChannelToPeer.getSignaledPriority().isUndefined()) || (!tComChannelToPeer.getSignaledPriority().equals(mParent.getPriority()))){
+						tComChannelToPeer.sendPacket(tElectionPriorityUpdatePacket.duplicate());
+						tSentPackets++;
+					}
+				}
+				
+				/**
+				 * account the broadcast if there was one
+				 */
+				if(tSentPackets > 0){
+					tElectionPriorityUpdatePacket.accountBroadcast();
+				}
 			}else{
 				// send explicit update
 				Logging.log(this, "Distributing explicit priority update: " + tElectionPriorityUpdatePacket);
@@ -1569,7 +1588,7 @@ public class Elector implements Localization
 
 			// set correct elector state
 			setElectorState(ElectorState.ELECTED);
-	
+
 			// is the parent the cluster head?
 			if(head()){
 				// get the coordinator from the parental cluster
@@ -1600,7 +1619,12 @@ public class Elector implements Localization
 				Logging.log(this, "We have won the election, parent isn't the cluster head: " + mParent + ", waiting for cluster head of alternative cluster");
 			}
 		}else{
-			Logging.warn(this, "Cluster " + mParent + " has still a valid and known coordinator, skipping eventElectionWon() here");
+			/**
+			 * we have re-won the election but since the last election turn a new cluster member joined the election and doen't know yet our own priority!?
+			 */
+			distributePRIRORITY_UPDATE(this + "::eventElectionWon()\n   ^^^^cause=" + pCause);
+			
+			Logging.warn(this, "Cluster " + mParent + " has still a valid and known coordinator");
 		}
 	}
 

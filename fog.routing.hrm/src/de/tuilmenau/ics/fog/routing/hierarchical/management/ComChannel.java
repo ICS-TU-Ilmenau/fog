@@ -173,6 +173,11 @@ public class ComChannel
 	private ElectionPriority mPeerPriority = null;
 	
 	/**
+	 * Stores the last Election priority which was signaled to the peer
+	 */
+	private ElectionPriority mSignaledPriority = null;
+	
+	/**
 	 * Stores the freshness of the Election priority of the peer
 	 */
 	private double mPeerPriorityTimestampLastUpdate = 0; 
@@ -1078,6 +1083,52 @@ public class ComChannel
 	}
 
 	/**
+	 * Sets the last signaled own priority
+	 * 
+	 * @param pNewPriority the new signaled priority
+	 */
+	private boolean setSignaledPriority(ElectionPriority pNewPriority)
+	{
+		boolean tResult = false;
+		
+		if (pNewPriority == null){
+			Logging.warn(this, "Trying to set a NULL POINTER as signaled priority, ignoring this request, current priority: " + mSignaledPriority);
+			return false;
+		}
+
+		if(pNewPriority.getValue() < 0){
+			throw new RuntimeException("Invalid priority update from " + getSignaledPriority().getValue() + " to " + pNewPriority.getValue());
+		}
+		
+		// is the new value equal to the old one?
+		if(!pNewPriority.equals(getSignaledPriority())){
+			Logging.log(this, "Updating peer priority from " + mPeerPriority.getValue() + " to " + pNewPriority.getValue());
+	
+			// update the peer Election priority itself
+			mSignaledPriority = pNewPriority;
+			
+			// we have a new priority
+			tResult = true;
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the Election priority which was last signaled to the communication peer
+	 * 
+	 * @return the Election priority
+	 */
+	public ElectionPriority getSignaledPriority()
+	{
+		if (mSignaledPriority == null){
+			mSignaledPriority = ElectionPriority.create(this);
+		}
+			
+		return mSignaledPriority;
+	}
+	
+	/**
 	 * Updates the Election priority of the peer.
 	 * 
 	 * @param pPeerPriority the Election priority
@@ -1265,10 +1316,13 @@ public class ComChannel
 				while(mPackets.size() > HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE){
 					mPackets.removeFirst();
 				}
-				
+
+				/**
+				 * TRACK PACKETS
+				 */
 				if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS){
 					// add the packet to the storage: filter AnnounceCoordinator, RouteReport, RouteShare
-					if(!((pPacket instanceof AnnounceCoordinator) || (pPacket instanceof RouteReport) || (pPacket instanceof RouteShare))){
+					if(!((pPacket instanceof AnnounceCoordinator) || (pPacket instanceof RouteReport) || (pPacket instanceof RouteShare) || (pPacket instanceof InvalidCoordinator))){
 						mPackets.add(new ComChannelPacketMetaData(pPacket, pWasSent, mHRMController.getSimulationTime()));
 					}
 				}
@@ -1277,6 +1331,7 @@ public class ComChannel
 			// channel already closed, we are not interested in old packets anymore
 		}
 	}
+	
 	/**
 	 * Sends a packet to the peer
 	 * 
@@ -1309,6 +1364,19 @@ public class ComChannel
 				 */
 				storePacket(pPacket, true);
 
+				/**
+				 * Store the election priority which the peer was told last
+				 */
+				if(pPacket instanceof SignalingMessageElection){
+					SignalingMessageElection tSignalingMessageElection = (SignalingMessageElection)pPacket;
+					
+					ElectionPriority tNewPriority = tSignalingMessageElection.getSenderPriority();
+					
+					if(!tNewPriority.isUndefined()){
+						setSignaledPriority(tNewPriority);
+					}
+				}
+				
 				// send the final packet (including multiplex-header)
 				return getParentComSession().write(tMultiplexHeader);
 			}else{
